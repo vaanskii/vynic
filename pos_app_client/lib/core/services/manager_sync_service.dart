@@ -53,6 +53,7 @@ class ManagerSyncService {
         _onLocalHiveChange(event);
       };
       DatabaseService.registerAuditChangedCallback(_syncAuditReportsDebounced);
+      DatabaseService.registerUsersChangedCallback(syncToManagerAppDebounced);
       _hooksRegistered = true;
     }
 
@@ -761,18 +762,14 @@ class ManagerSyncService {
           )
           .toList();
 
-      // 4. Sync Staff (only ADMIN / WAITER in this app setup)
+      // 4. Sync Staff — PIN + role required for mobile login (server stores bcrypt hash).
       final allUsers = DatabaseService.getAllUsers();
-      // Staff: username + role only — PINs stay on POS Hive; server hashes on explicit provision.
       final staffList = allUsers
           .map(
             (u) => {
               'username': u.username,
-              'role': () {
-                final role = u.role.toLowerCase();
-                if (role == 'admin') return 'ADMIN';
-                return 'WAITER';
-              }(),
+              'pin': u.pinCode,
+              'role': _staffRoleForSync(u.role),
             },
           )
           .toList();
@@ -1321,5 +1318,17 @@ class ManagerSyncService {
 
     _lastTableOccupiedByKey.removeWhere((k, _) => !seen.contains(k));
     return touched;
+  }
+
+  /// Maps Hive user roles to backend [StaffRole] enum values.
+  static String _staffRoleForSync(String role) {
+    switch (role.toLowerCase()) {
+      case 'admin':
+        return 'ADMIN';
+      case 'manager':
+        return 'MANAGER';
+      default:
+        return 'WAITER';
+    }
   }
 }

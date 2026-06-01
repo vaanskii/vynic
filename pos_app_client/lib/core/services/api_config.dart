@@ -5,29 +5,76 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 /// Central configuration for the backend API URL.
 ///
 /// Priority order:
-///   1. BACKEND_URL from .env (explicit production override)
+///   1. BACKEND_URL from .env (set this for iOS — see comments in `.env`)
 ///   2. Compile-time --dart-define=BACKEND_URL=... (CI/CD)
-///   3. Platform-based sensible defaults for development
+///   3. Platform-based defaults for local development
 class ApiConfig {
+  static bool _loggedResolvedUrl = false;
+
   static String get baseUrl {
-    // 1. Explicit env override (production / staging)
-    final envUrl = dotenv.env['BACKEND_URL']?.trim();
-    if (envUrl != null && envUrl.isNotEmpty) return envUrl;
+    final override = _explicitBackendUrl;
+    if (override != null) {
+      _logResolvedUrlOnce(override, source: '.env or dart-define');
+      return override;
+    }
 
-    // 2. Compile-time define
-    const dartDefine = String.fromEnvironment('BACKEND_URL');
-    if (dartDefine.isNotEmpty) return dartDefine;
+    final resolved = _defaultBaseUrl;
+    _logResolvedUrlOnce(resolved, source: 'platform default');
+    return resolved;
+  }
 
-    // 3. Development defaults
+  static String get _defaultBaseUrl {
     if (kIsWeb) return 'http://localhost:3000';
-    if (!kIsWeb && Platform.isAndroid) {
-      // Emulator → host PC. Physical device: set BACKEND_URL=http://<PC-LAN-IP>:3000 in .env
+
+    if (Platform.isAndroid) {
       return 'http://10.0.2.2:3000';
     }
-    if (!kIsWeb && Platform.isWindows) {
+
+    if (Platform.isIOS || Platform.isMacOS) {
       return 'http://127.0.0.1:3000';
     }
+
+    if (Platform.isWindows) {
+      return 'http://127.0.0.1:3000';
+    }
+
     return 'http://localhost:3000';
+  }
+
+  static String? get _explicitBackendUrl {
+    final envUrl = dotenv.env['BACKEND_URL']?.trim();
+    if (envUrl != null && envUrl.isNotEmpty) return envUrl;
+    const dartDefine = String.fromEnvironment('BACKEND_URL');
+    if (dartDefine.isNotEmpty) return dartDefine;
+    return null;
+  }
+
+  /// Physical iPhone/iPad (not Simulator).
+  static bool get isIosPhysicalDevice {
+    if (kIsWeb || !Platform.isIOS) return false;
+    return !_isIosSimulator;
+  }
+
+  static bool get _isIosSimulator {
+    if (kIsWeb || !Platform.isIOS) return false;
+    final triple = Platform.environment['LLVM_TARGET_TRIPLE'] ?? '';
+    if (triple.contains('simulator')) return true;
+    return Platform.environment.containsKey('SIMULATOR_DEVICE_NAME') ||
+        (Platform.environment['SIMULATOR_ROOT']?.isNotEmpty ?? false);
+  }
+
+  static void _logResolvedUrlOnce(String url, {required String source}) {
+    if (!kDebugMode || _loggedResolvedUrl) return;
+    _loggedResolvedUrl = true;
+    debugPrint('[ApiConfig] API base URL: $url ($source)');
+    // Only warn when using loopback default on a physical device (not when .env sets it).
+    final loopback = url.contains('127.0.0.1') || url.contains('localhost');
+    if (isIosPhysicalDevice && loopback && _explicitBackendUrl == null) {
+      debugPrint(
+        '[ApiConfig] Physical iPhone cannot use 127.0.0.1 for the Mac server. '
+        'Set BACKEND_URL=http://YOUR_MAC_LAN_IP:3000 in .env, then fully restart the app.',
+      );
+    }
   }
 
   /// Shared secret for POS → cloud push (`POST /sync/*`). Must match server POS_SYNC_API_KEY.

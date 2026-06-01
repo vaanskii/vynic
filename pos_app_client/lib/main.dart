@@ -22,10 +22,18 @@ void main() async {
 
   // Load environment variables gracefully preventing hard-crashes
   try {
-    await dotenv.load(fileName: ".env");
+    await dotenv.load(fileName: '.env');
+    if (kDebugMode) {
+      final backend = dotenv.env['BACKEND_URL']?.trim();
+      debugPrint(
+        backend != null && backend.isNotEmpty
+            ? '[main] Loaded .env — BACKEND_URL=$backend'
+            : '[main] Loaded .env — BACKEND_URL not set (using ApiConfig default)',
+      );
+    }
   } catch (e) {
     if (kDebugMode) {
-      print('Warning: .env file not found or could not be loaded.');
+      debugPrint('Warning: .env file not found or could not be loaded: $e');
     }
   }
 

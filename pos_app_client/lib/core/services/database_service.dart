@@ -92,6 +92,16 @@ class DatabaseService {
     _onAuditChanged = cb;
   }
 
+  /// Injected by ManagerSyncService so user/PIN changes sync to the backend.
+  static void Function()? _onUsersChanged;
+  static void registerUsersChangedCallback(void Function() cb) {
+    _onUsersChanged = cb;
+  }
+
+  static void _notifyUsersChanged() {
+    _onUsersChanged?.call();
+  }
+
   static const int _kitchenRoutingDefaultsVersion = 2;
   static int get dbVersion => _dbVersion;
 
@@ -862,6 +872,7 @@ class DatabaseService {
     final user = User(username: username, pinCode: pinCode, role: role);
 
     await _userBox!.add(user);
+    _notifyUsersChanged();
     return true;
   }
 
@@ -936,12 +947,14 @@ class DatabaseService {
     if (pinUsedByAnother) return false;
     user.pinCode = pinCode;
     await user.save();
+    _notifyUsersChanged();
     return true;
   }
 
   // Delete user
   static Future<void> deleteUser(User user) async {
     await user.delete();
+    _notifyUsersChanged();
   }
 
   static Future<bool> deleteUserByUsername(String username) async {
@@ -957,6 +970,7 @@ class DatabaseService {
       }
     }
     await user.delete();
+    _notifyUsersChanged();
     return true;
   }
 

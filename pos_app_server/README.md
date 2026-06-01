@@ -28,14 +28,22 @@
 ## Project setup
 
 ```bash
-$ npm install
+npm install
+```
+
+Create `.env` with `DATABASE_URL` (PostgreSQL), `JWT_SECRET`, and `POS_SYNC_API_KEY`.
+
+Apply database migrations **before** starting the server (required on a fresh DB):
+
+```bash
+npm run db:migrate
 ```
 
 ## Compile and run the project
 
 ```bash
 # development
-$ npm run start
+npm run start
 
 # watch mode
 $ npm run start:dev

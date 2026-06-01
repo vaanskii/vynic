@@ -1,16 +1,27 @@
-# pos_app
+# Vynic POS (Flutter client)
 
-A new Flutter project.
+## Run on macOS or iOS (simulator / device)
+
+If the repo is under **iCloud Desktop**, Xcode code signing often fails with
+`resource fork, Finder information, or similar detritus not allowed`. Run the
+one-time setup (redirects build output to `~/Developer/vynic_pos_build`):
+
+```bash
+cd pos_app_client
+chmod +x scripts/*.sh
+./scripts/setup_apple_build.sh
+```
+
+Then use the wrapper for `run` / `build` (or configure the same `build-dir` yourself):
+
+```bash
+./scripts/flutter.sh run -d macos
+./scripts/flutter.sh run -d "iPhone 17"
+```
+
+Requirements: Xcode, CocoaPods (`pod`), Flutter stable. Use a `.env` file in this
+directory (see `.env` example in repo; not committed).
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+See [Flutter documentation](https://docs.flutter.dev/) for general tooling setup.

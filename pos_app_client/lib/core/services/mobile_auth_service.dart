@@ -69,7 +69,9 @@ class MobileAuthService {
     } on MobileAuthError {
       rethrow;
     } catch (e) {
-      debugPrint('[MobileAuth] Network error: $e');
+      debugPrint(
+        '[MobileAuth] Network error (${ApiConfig.baseUrl}): $e',
+      );
       throw MobileAuthError.networkError;
     }
   }

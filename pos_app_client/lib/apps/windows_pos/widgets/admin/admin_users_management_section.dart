@@ -276,8 +276,15 @@ class _AdminUsersManagementSectionState
       return;
     }
 
-    user.pinCode = newPin;
-    await user.save();
+    final ok = await DatabaseService.updateUserPinByUsername(
+      username: user.username,
+      pinCode: newPin,
+    );
+    if (!ok) {
+      if (!mounted) return;
+      unawaited(showErrorToast(context, 'PIN-ის შენახვა ვერ მოხერხდა'));
+      return;
+    }
     if (!mounted) {
       return;
     }

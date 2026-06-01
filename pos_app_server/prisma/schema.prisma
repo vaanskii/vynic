@@ -1,0 +1,284 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Table {
+  id            String   @id @default(uuid())
+  tableNumber   String
+  floor         String
+  isReserved    Boolean  @default(false)
+  activeOrderId Int?
+  currentBill   Float    @default(0)
+  updatedAt     DateTime @updatedAt
+
+  @@unique([tableNumber, floor], name: "tableIdentifier")
+}
+
+model Order {
+  id                String      @id @default(uuid())
+  posOrderId        Int         @unique
+  status            String
+  totalAmount       Float
+  guestCount        Int         @default(0)
+  waiterName        String
+  floor             String      @default("")
+  businessDate      String      @default("")
+  customerName      String      @default("")
+  customerPhone     String      @default("")
+  pickupTime        String      @default("")
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  paymentType       String      @default("cash")
+  discountAmount    Float       @default(0)
+  includeServiceFee Boolean     @default(false)
+  serviceFeePercent Float       @default(10)
+  items             OrderItem[]
+}
+
+model OrderItem {
+  id       String @id @default(uuid())
+  orderId  String
+  name     String
+  quantity Int
+  price    Float
+  order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model MenuCategory {
+  id            String            @id @default(uuid())
+  slug          String            @unique
+  nameKa        String
+  nameEn        String
+  sendToKitchen Boolean           @default(true)
+  updatedAt     DateTime          @updatedAt
+  items         MenuItem[]
+  subcategories MenuSubcategory[]
+}
+
+model MenuSubcategory {
+  id         String       @id @default(uuid())
+  slug       String
+  nameKa     String
+  nameEn     String
+  categoryId String
+  updatedAt  DateTime     @updatedAt
+  items      MenuItem[]
+  category   MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([slug, categoryId])
+}
+
+model MenuItem {
+  id            String            @id @default(uuid())
+  categoryId    String?
+  nameKa        String
+  nameEn        String
+  price         Float
+  sendToKitchen Boolean           @default(true)
+  updatedAt     DateTime          @updatedAt
+  subcategoryId String?
+  category      MenuCategory?     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  subcategory   MenuSubcategory?  @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
+  variants      MenuItemVariant[]
+
+  @@index([categoryId])
+  @@index([subcategoryId])
+}
+
+model MenuItemVariant {
+  id         String   @id @default(uuid())
+  menuItemId String
+  size       Float
+  price      Float
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@index([menuItemId])
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  description String
+  amount      Float
+  category    String
+  createdAt   DateTime @default(now())
+  paymentType String   @default("cash")
+}
+
+model Staff {
+  id        String    @id @default(uuid())
+  username  String    @unique
+  pinHash   String
+  role      StaffRole @default(WAITER)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model AuditReport {
+  id           String       @id @default(uuid())
+  reportId     String       @unique
+  posOrderId   Int
+  tableNumbers String[]
+  floor        String       @default("first")
+  openedById   String
+  openedByName String
+  openedAt     DateTime
+  status       String
+  closedAt     DateTime?
+  closedById   String?
+  closedByName String?
+  locked       Boolean      @default(false)
+  updatedAt    DateTime     @updatedAt
+  events       AuditEvent[]
+
+  @@index([posOrderId])
+  @@index([status])
+}
+
+model AuditEvent {
+  id          String      @id @default(uuid())
+  reportId    String
+  type        String
+  itemName    String
+  previousQty Int
+  newQty      Int
+  waiterId    String
+  waiterName  String
+  eventTime   DateTime
+  note        String?
+  seq         Int         @default(0)
+  report      AuditReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+}
+
+model AuditEventLog {
+  id         String   @id @default(uuid())
+  action     String
+  userId     String
+  data       Json
+  deviceType String   // 'mobile' or 'windows'
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([action])
+}
+
+model DailySnapshot {
+  id            String   @id @default(uuid())
+  date          String   @unique
+  totalRevenue  Float    @default(0)
+  orderCount    Int      @default(0)
+  avgOrderValue Float    @default(0)
+  cashRevenue   Float    @default(0)
+  cardRevenue   Float    @default(0)
+  totalExpenses Float    @default(0)
+  topItemsJson  String   @default("[]")
+  updatedAt     DateTime @updatedAt
+}
+
+model QuickOrderDraft {
+  id                String                @id @default(uuid())
+  draftId           String                @unique
+  displayName       String?
+  subtotal          Float
+  serviceFeeAmount  Float
+  total             Float
+  includeServiceFee Boolean               @default(false)
+  serviceFeeRate    Float                 @default(0.1)
+  createdAt         DateTime              @default(now())
+  createdBy         String
+  updatedAt         DateTime              @updatedAt
+  items             QuickOrderDraftItem[]
+}
+
+model QuickOrderDraftItem {
+  id       String          @id @default(uuid())
+  draftId  String
+  name     String
+  quantity Int
+  price    Float
+  comment  String?
+  draft    QuickOrderDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  @@index([draftId])
+}
+
+enum StaffRole {
+  ADMIN
+  MANAGER
+  WAITER
+}
+
+/// Generic key-value store for server-side settings (e.g. currentBusinessDate).
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+/// Manager-facing notification persisted for audit + hybrid routing metadata.
+model ManagerNotification {
+  id        String   @id @default(uuid())
+  wsType    String
+  title     String
+  body      String
+  envelope  Json
+  createdAt DateTime @default(now())
+
+  deliveries ManagerNotificationDelivery[]
+}
+
+model ManagerNotificationDelivery {
+  id             String   @id @default(uuid())
+  notificationId String
+  staffUsername  String
+  channel        String // SOCKET | FCM
+  createdAt      DateTime @default(now())
+
+  notification ManagerNotification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@unique([notificationId, staffUsername])
+  @@index([staffUsername])
+}
+
+model PushDevice {
+  id            String   @id @default(uuid())
+  staffUsername String
+  fcmToken      String   @unique
+  platform      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([staffUsername])
+}
+
+/// Durable queue for cloud → Windows POS callbacks (mobile mutations that must
+/// reach Hive). Survives server restarts; a worker retries with backoff until
+/// the POS confirms delivery. See sync-7 in SYNC_CONTRACT.md.
+model PosCallbackOutbox {
+  id            String   @id @default(uuid())
+  endpoint      String // e.g. /mobile-order-update
+  payload       Json
+  posOrderId    Int?
+  /// endpoint + target id; pending rows with the same key collapse (latest wins).
+  dedupeKey     String?
+  status        String   @default("pending") // pending | delivered | failed
+  attempts      Int      @default(0)
+  maxAttempts   Int      @default(20)
+  lastError     String?
+  nextAttemptAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status, nextAttemptAt])
+  @@index([posOrderId])
+  @@index([dedupeKey])
+}

@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Order" ADD COLUMN     "discountAmount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "includeServiceFee" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "serviceFeePercent" DOUBLE PRECISION NOT NULL DEFAULT 10;

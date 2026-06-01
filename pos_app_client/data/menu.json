@@ -1,0 +1,1489 @@
+[
+  {
+    "slug": "cold-dishes",
+    "translations": {
+      "en": {"name": "Cold Dishes"},
+      "ka": {"name": "ცივი კერძები"}
+    },
+    "items": [
+      {
+        "price": 8,
+        "translations": {
+          "en": {"name": "Cucumber-Tomato Salad"},
+          "ka": {"name": "კ/პ სალათი"}
+        }
+      },
+      {
+        "price": 10,
+        "translations": {
+          "en": {"name": "Salad with Mayonnaise"},
+          "ka": {"name": "კ/პ სალათი მაიონეზით"}
+        }
+      },
+      {
+        "price": 12,
+        "translations": {
+          "en": {"name": "Salad with walnuts"},
+          "ka": {"name": "კ/პ სალათი ნიგვზით"}
+        }
+      },
+      {
+        "price": 12,
+        "translations": {
+          "en": {"name": "Chicken Salad"},
+          "ka": {"name": "ქათმის სალათი"}
+        }
+      },
+      {
+        "price": 14,
+        "translations": {
+          "en": {"name": "Greek salad"},
+          "ka": {"name": "ბერძნული სალათი"}
+        }
+      },
+      {
+        "price": 12,
+        "translations": {
+          "en": {"name": "Green salad"},
+          "ka": {"name": "მწვანე სალათი"}
+        }
+      },
+      {
+        "price": 12,
+        "translations": {
+          "en": {"name": "Mushroom Salad"},
+          "ka": {"name": "სოკოს სალათი"}
+        }
+      },
+      {
+        "price": 24,
+        "translations": {
+          "en": {"name": "Special Fruit Salad"},
+          "ka": {"name": "საფირმო სალათი ხილით"}
+        }
+      },
+      {
+        "price": 18,
+        "translations": {
+          "en": {"name": "Caesar Salad with Chicken"},
+          "ka": {"name": "ცეზარი ქათმით"}
+        }
+      },
+      {
+        "price": 25,
+        "translations": {
+          "en": {"name": "Ceasar Salad with Crevettes"},
+          "ka": {"name": "ცეზარი კრევეტებით"}
+        }
+      },
+      {
+        "price": 10,
+        "translations": {
+          "en": {"name": "Eggplant Walnut Rolls"},
+          "ka": {"name": "ბადრიჯანი ნიგვზით"}
+        }
+      },
+      {
+        "price": 18,
+        "translations": {
+          "en": {"name": "Phkali Board"},
+          "ka": {"name": "ფხალეულის დაფა"}
+        }
+      },
+      {
+        "price": 12,
+        "translations": {
+          "en": {"name": "Vegetables Board"},
+          "ka": {"name": "ბოსტნეულის დაფა"}
+        }
+      },
+      {
+        "price": 12,
+        "translations": {
+          "en": {"name": "Pickle board"},
+          "ka": {"name": "მწნილის დაფა"}
+        }
+      },
+      {
+        "price": 15,
+        "translations": {
+          "en": {"name": "Cheese board"},
+          "ka": {"name": "ყველის დაფა"}
+        }
+      },
+      {
+        "price": 12,
+        "translations": {
+          "en": {"name": "Cheese Sulguni"},
+          "ka": {"name": "ყველი სულგუნი"}
+        }
+      },
+      {
+        "price": 10,
+        "translations": {
+          "en": {"name": "Cheese Imeretian"},
+          "ka": {"name": "ყველი იმერული"}
+        }
+      },
+      {
+        "price": 15,
+        "translations": {
+          "en": {"name": "Satsivi"},
+          "ka": {"name": "საცივი"}
+        }
+      }
+    ]
+  },
+  {
+    "slug": "hot-dishes",
+    "translations": {
+      "en": {"name": "Hot Dishes"},
+      "ka": {"name": "ცხელი კერძები"}
+    },
+    "items": [
+      {
+        "price": 15,
+        "translations": {
+          "en": {"name": "Ostri"},
+          "ka": {"name": "ოსტრი"}
+        }
+      },
+      {
+        "price": 20,
+        "translations": {
+          "en": {"name": "Chakondrili"},
+          "ka": {"name": "ჩაქონდრილი"}
+        }
+      },
+      {
+        "price": 22,
+        "translations": {
+          "en": {"name": "Megrelian Kharcho"},
+          "ka": {"name": "მეგრული ხარშო"}
+        }
+      },
+       {
+        "price": 25,
+        "translations": {
+          "en": {"name": "Shkmeruli"},
+          "ka": {"name": "შქმერული"}
+        }
+      },
+      {
+        "price": 22,
+        "translations": {
+          "en": {"name": "Madambovari (Potato and Meat Casserole)"},
+          "ka": {"name": "მადამბოვარი"}
+        }
+      },
+      {
+        "price": 25,
+        "translations": {
+          "en": {"name": "Veal Ribs with Adjika"},
+          "ka": {"name": "ხბოს ნეკნი აჯიკით"}
+        }
+      },
+      {
+        "price": 18,
+        "translations": {
+          "en": {"name": "Chanakhi"},
+          "ka": {"name": "ჩანახი"}
+        }
+      },
+      {
+        "price": 14,
+        "translations": {
+          "en": {"name": "Chakhohbili"},
+          "ka": {"name": "ჩახოხბილი"}
+        }
+      },
+        {
+        "price": 25,
+        "translations": {
+          "en": {"name": "Khashlama Kakhetian-Style"},
+          "ka": {"name": "ხაშლამა კახურად"}
+        }
+      },
+      {
+        "price": 22,
+        "translations": {
+          "en": {"name": "Chick Tabaka"},
+          "ka": {"name": "წიწილა ტაბაკა"}
+        }
+      },
+      {
+        "price": 14,
+        "translations": {
+          "en": {"name": "Mushrooms Stewed"},
+          "ka": {"name": "სოკოს ჩაშუშული"}
+        }
+      },
+      {
+        "price": 10,
+        "translations": {
+          "en": {"name": "Mushrooms on a Griddle"},
+          "ka": {"name": "სოკო კეცზე"}
+        }
+      },
+      {
+        "price": 13,
+        "translations": {
+          "en": {"name": "Mushrooms on a Griddle with Sulguni"},
+          "ka": {"name": "სოკო კეცზე სულგუნით"}
+        }
+      },
+      {
+        "price": 10,
+        "translations": {
+          "en": {"name": "Mexican-style Potatoes"},
+          "ka": {"name": "კარტოფილი მექსიკურად"}
+        }
+      },
+      {
+        "price": 8,
+        "translations": {
+          "en": {"name": "French Fries"},
+          "ka": {"name": "კარტოფილი ფრი"}
+        }
+      },
+      {
+        "price": 10,
+        "translations": {
+          "en": {"name": "Potatoes \"Glekhurad\" (Georgian Style)"},
+          "ka": {"name": "კარტოფილი გლეხურად"}
+        }
+      },
+      {
+        "price": 12,
+        "translations": {
+          "en": {"name": "Mushroom Ojakhuri"},
+          "ka": {"name": "ოჯახური სოკოთი"}
+        }
+      },
+      {
+        "price": 14,
+        "translations": {
+          "en": {"name": "Chicken Ojakhuri"},
+          "ka": {"name": "ოჯახური ქათმის ხორცით"}
+        }
+      },
+      {
+        "price": 16,
+        "translations": {
+          "en": {"name": "Pork Ojakhuri"},
+          "ka": {"name": "ოჯახური ღორის ხორცით"}
+        }
+      },
+      {
+        "price": 14,
+        "translations": {
+          "en": {"name": "Beans with Leeks and Walnuts"},
+          "ka": {"name": "ლობიო პრასით და ნიგვზით"}
+        }
+      },
+      {
+        "price": 14,
+        "translations": {
+          "en": {"name": "Spaghetti Carbonara with Mushrooms"},
+          "ka": {"name": "კარბონარა სოკოთი"}
+        }
+      },
+      {
+        "price": 18,
+        "translations": {
+          "en": {"name": "Spaghetti Carbonara with Chicken"},
+          "ka": {"name": "კარბონარა ქათმის ხორცით"}
+        }
+      },
+      {
+        "price": 20,
+        "translations": {
+          "en": {"name": "Spaghetti Carbonara with Beef"},
+          "ka": {"name": "კარბონარა საქონლის ხორცით"}
+        }
+      },
+      {
+        "price": 12,
+        "translations": {
+          "en": {"name": "Sinori with Nadughi (ricotta-style Georgian cheese curds)"},
+          "ka": {"name": "სინორი ნადუღით"}
+        }
+      },
+      {
+        "price": 14,
+        "translations": {
+          "en": {"name": "Sinori with Walnuts and Honey"},
+          "ka": {"name": "სინორი ნიგვზით და თაფლით"}
+        }
+      },
+      {
+        "price": 5,
+        "translations": {
+          "en": {"name": "Ghomi"},
+          "ka": {"name": "ღომი"}
+        }
+      }
+    ]
+  },
+  {
+    "slug": "sauces",
+    "translations": {
+      "en": {"name": "Sauces"},
+      "ka": {"name": "სოუსები"}
+    },
+    "items": [
+      {
+        "price": 8,
+        "translations": {
+          "en": {"name": "Bazhe"},
+          "ka": {"name": "ბაჟე"}
+        }
+      },
+      {
+        "price": 4,
+        "translations": {
+          "en": {"name": "Spicy Sweet Sauce"},
+          "ka": {"name": "ტკბილ მწარე სოუსი"}
+        }
+      },
+      {
+        "price": 2,
+        "translations": {
+          "en": {"name": "Sacebeli"},
+          "ka": {"name": "საწებელი"}
+        }
+      },
+      {
+        "price": 2,
+        "translations": {
+          "en": {"name": "Tkemali"},
+          "ka": {"name": "ტყემალი"}
+        }
+      },
+      {
+        "price": 3,
+        "translations": {
+          "en": {"name": "Mayonnaise"},
+          "ka": {"name": "მაიონეზი"}
+        }
+      },
+      {
+        "price": 2,
+        "translations": {
+          "en": {"name": "Ketchup"},
+          "ka": {"name": "კეტჩუპი"}
+        }
+      },
+        {
+        "price": 3,
+        "translations": {
+          "en": {"name": "Sour Cream"},
+          "ka": {"name": "არაჟანი"}
+        }
+      }
+    ]
+  },
+  {
+    "slug": "soups",
+    "translations": {
+      "en": {"name": "Soups"},
+      "ka": {"name": "წვნიანები"}
+    },
+    "items": [
+      {
+        "price": 15,
+        "translations": {
+          "en": {"name": "Khashlama"},
+          "ka": {"name": "ხაშლამა"}
+        }
+      },
+      {
+        "price": 15,
+        "translations": {
+          "en": {"name": "Supkharcho"},
+          "ka": {"name": "სუპხარჩო"}
+        }
+      },
+      {
+        "price": 15,
+        "translations": {
+          "en": {"name": "Chikhirtma"},
+          "ka": {"name": "ჩიხირთმა"}
+        }
+      },
+       {
+        "price": 12,
+        "translations": {
+          "en": {"name": "Chicken Soup"},
+          "ka": {"name": "ქათმის სუპი"}
+        }
+      },
+      {
+        "price": 12,
+        "translations": {
+          "en": {"name": "Mushroom Soup"},
+          "ka": {"name": "სოკოს სუპი"}
+        }
+      },
+      {
+        "price": 12,
+        "translations": {
+          "en": {"name": "Mushroom Cream Soup"},
+          "ka": {"name": "სოკოს კრემსუპი"}
+        }
+      },
+      {
+        "price": 12,
+        "translations": {
+          "en": {"name": "Courgette Cream Soup"},
+          "ka": {"name": "ყაბაყის კრემსუპი"}
+        }
+      },
+      {
+        "price": 12,
+        "translations": {
+          "en": {"name": "Pumpkin Cream Soup"},
+          "ka": {"name": "გოგრის კრემსუპი"}
+        }
+      }
+    ]
+  },
+  {
+    "slug": "bakery",
+    "translations": {
+      "en": {"name": "Bakery"},
+      "ka": {"name": "ცომეული"}
+    },
+    "items": [
+       {
+        "price": 15,
+        "translations": {
+          "en": {"name": "Acharian Khachapuri"},
+          "ka": {"name": "აჭარული ხაჭაპური"}
+        }
+      },
+      {
+        "price": 16,
+        "translations": {
+          "en": {"name": "Imeretian Khachapuri"},
+          "ka": {"name": "იმერული ხაჭაპური"}
+        }
+      },
+      {
+        "price": 20,
+        "translations": {
+          "en": {"name": "Megrelian Khachapuri"},
+          "ka": {"name": "მეგრული ხაჭაპური"}
+        }
+      },
+      {
+        "price": 22,
+        "translations": {
+          "en": {"name": "Royal Khachapuri"},
+          "ka": {"name": "სამეფო ხაჭაპური"}
+        }
+      },
+      {
+        "price": 14,
+        "translations": {
+          "en": {"name": "Lobiani"},
+          "ka": {"name": "ლობიანი"}
+        }
+      },
+      {
+        "price": 16,
+        "translations": {
+          "en": {"name": "Vegetable pizza"},
+          "ka": {"name": "პიცა ბოსტნეულით"}
+        }
+      },
+      {
+        "price": 16,
+        "translations": {
+          "en": {"name": "Pizza Margherita"},
+          "ka": {"name": "პიცა მარგარიტა"}
+        }
+      },
+      {
+        "price": 20,
+        "translations": {
+          "en": {"name": "Combined Pizza"},
+          "ka": {"name": "პიცა კომბინირებული"}
+        }
+      },
+      {
+        "price": 20,
+        "translations": {
+          "en": {"name": "Pizza Pepperoni"},
+          "ka": {"name": "პიცა პეპერონი"}
+        }
+      },
+      {
+        "price": 2,
+        "translations": {
+          "en": {"name": "Mchadi"},
+          "ka": {"name": "მჭადი"}
+        }
+      },
+      {
+        "price": 3,
+        "translations": {
+          "en": {"name": "Bread"},
+          "ka": {"name": "პური"}
+        }
+      },
+      {
+        "price": 8,
+        "translations": {
+          "en": {"name": "Chvishtari"},
+          "ka": {"name": "ჭვიშტარი"}
+        }
+      }
+    ]
+  },
+  {
+    "slug": "khinkali",
+    "translations": {
+      "en": {"name": "Khinkali"},
+      "ka": {"name": "ხინკალი"}
+    },
+    "items": [
+      {
+        "price": 2,
+        "translations": {
+          "en": {"name": "Khinkali with Beef"},
+          "ka": {"name": "ხინკალი საქონლის ხორცით"}
+        }
+      },
+      {
+        "price": 2,
+        "translations": {
+          "en": {"name": "Khinkali Mtiuluri"},
+          "ka": {"name": "ხინკალი მთიულური"}
+        }
+      },
+      {
+        "price": 2,
+        "translations": {
+          "en": {"name": "Khinkali Kalakuri"},
+          "ka": {"name": "ხინკალი ქალაქური"}
+        }
+      },
+      {
+        "price": 1.8,
+        "translations": {
+          "en": {"name": "Khinkali with Mushrooms"},
+          "ka": {"name": "ხინკალი სოკოთი"}
+        }
+      },
+      {
+        "price": 1.8,
+        "translations": {
+          "en": {"name": "Khinkali with Cheese"},
+          "ka": {"name": "ხინკალი ყველით"}
+        }
+      }
+    ]
+  },
+  {
+    "slug": "grilled", 
+    "translations": {
+      "en": {"name": "Grilled"},
+      "ka": {"name": "კერძი მაყალზე"}
+    },
+    "items": [
+      {
+        "price": 15,
+        "translations": {
+          "en": {"name": "Kebab"},
+          "ka": {"name": "ქაბაბი"}
+        }
+      },
+      {
+        "price": 15,
+        "translations": {
+          "en": {"name": "Chicken Wings"},
+          "ka": {"name": "ქათმის ფრთები"}
+        }
+      },
+      {
+        "price": 15,
+        "translations": {
+          "en": {"name": "Chicken Barbeque"},
+          "ka": {"name": "ქათმის მწვადი"}
+        }
+      },
+      {
+        "price": 20,
+        "translations": {
+          "en": {"name": "Pork Barbeque"},
+          "ka": {"name": "ღორის მწვადი"}
+        }
+      },
+      {
+        "price": 25,
+        "translations": {
+          "en": {"name": "Veal Barbeque"},
+          "ka": {"name": "ხბოს მწვადი"}
+        }
+      }
+    ]
+  }, 
+
+  {
+    "slug": "seafood",
+    "translations": {
+      "en": {"name": "Seafood"},
+      "ka": {"name": "ზღვის პროდუქტები"}
+    },
+    "items": [
+      {
+        "price": 20,
+        "translations": {
+          "en": {"name": "Trout"},
+          "ka": {"name": "კალმახი"}
+        }
+      },
+      {
+        "price": 30,
+        "translations": {
+          "en": {"name": "Barabulka"},
+          "ka": {"name": "ბარაბულკა"}
+        }
+      },
+      {
+        "price": 30,
+        "translations": {
+          "en": {"name": "Sea Bass"},
+          "ka": {"name": "სიბასი"}
+        }
+      }
+    ]
+  },
+  {
+    "slug": "soft drinks",
+    "translations": {
+      "en": {"name": "Soft Drinks"},
+      "ka": {"name": "გამაგრილებელი სასმელები"}
+    },
+    "items": [
+      {
+        "price": 2,
+        "translations": {
+          "en": {"name": "Water Bakhmaro 0.5L"},
+          "ka": {"name": "წყალი ბახმარო 0.5ლ"}
+        }
+      },
+      {
+        "price": 3,
+        "translations": {
+          "en": {"name": "Water Geo Natura Glass 0.5L"},
+          "ka": {"name": "წყალი გეო ნატურა შუშა 0.5ლ"}
+        }
+      },
+      {
+        "price": 2,
+        "translations": {
+          "en": {"name": "Water Sno 0.5L"},
+          "ka": {"name": "წყალი სნო 0.5ლ"}
+        }
+      },
+      {
+        "price": 3,
+        "translations": {
+          "en": {"name": "Water Sno Glass 0.5L"},
+          "ka": {"name": "წყალი სნო შუშა 0.5ლ"}
+        }
+      },
+      {
+        "price": 3,
+        "translations": {
+          "en": {"name": "Nabeghlavi Glass 0.5L"},
+          "ka": {"name": "ნაბეღლავი შუშა 0.5ლ"}
+        }
+      },
+      {
+        "price": 3,
+        "translations": {
+          "en": {"name": "Kazbegi Lemonade 0.5L"},
+          "ka": {"name": "ყაზბეგის ლიმონათი 0.5ლ"}
+        }
+      },
+      {
+        "price": 8,
+        "translations": {
+          "en": {"name": "Bravo 1L"},
+          "ka": {"name": "ბრავო 1ლ"}
+        }
+      },
+      {
+        "price": 8,
+        "translations": {
+          "en": {"name": "Hopi 1L"},
+          "ka": {"name": "ჰოპი 1ლ"}
+        }
+      }
+    ]
+  },
+
+  {
+    "slug": "vodka",
+    "translations": {
+      "en": {"name": "Vodka"},
+      "ka": {"name": "არაყი"}
+    },
+    "items": [
+      {
+        "translations": {
+          "en": {"name": "9 Mile"},
+          "ka": {"name": "9 მილი"}
+        }, 
+        "variants": [
+          {"size": 0.05, "price": 5.5},
+          {"size": 0.5, "price": 35},
+          {"size": 0.7, "price": 45},
+          {"size": 1.0, "price": 65}
+        ]
+      },
+      {
+        "translations": {
+          "en": {"name": "Stalichnaya"},
+          "ka": {"name": "სტალიჩნაია"}
+        }, 
+        "variants": [
+          {"size": 0.05, "price": 6},
+          {"size": 0.5, "price": 40},
+          {"size": 0.7, "price": 50},
+          {"size": 1.0, "price": 70}
+        ]
+      },
+      {
+        "translations": {
+          "en": {"name": "Absolute"},
+          "ka": {"name": "აბსოლუტი"}
+        }, 
+        "variants": [
+          {"size": 0.05, "price": 6.5},
+          {"size": 0.5, "price": 45},
+          {"size": 0.7, "price": 65},
+          {"size": 1.0, "price": 80}
+        ]
+      },
+      {
+        "translations": {
+          "en": {"name": "Filnalandia"},
+          "ka": {"name": "ფილნალანდია"}
+        }, 
+        "variants": [
+          {"size": 0.05, "price": 6.5},
+          {"size": 0.5, "price": 45},
+          {"size": 0.7, "price": 65},
+          {"size": 1.0, "price": 80}
+        ]
+      },
+      {
+        "translations": {
+          "en": {"name": "Danzki"},
+          "ka": {"name": "დანსკი"}
+        }, 
+        "variants": [
+          {"size": 0.05, "price": 5.5},
+          {"size": 0.5, "price": 35},
+          {"size": 0.7, "price": 55},
+          {"size": 1.0, "price": 65}
+        ]
+      },
+      {
+        "translations": {
+          "en": {"name": "Khortytsa"},
+          "ka": {"name": "ხორტიცია"}
+        }, 
+        "variants": [
+          {"size": 0.05, "price": 4.5},
+          {"size": 0.5, "price": 30},
+          {"size": 0.7, "price": 40},
+          {"size": 1.0, "price": 50}
+        ]
+      }
+    ],
+
+    "subcategories": [
+      {
+        "slug": "house-vodka",
+        "translations": {
+          "en": {"name": "House Vodka"},
+          "ka": {"name": "ჩამოსასხმელი"}
+        },
+        "items": [
+          {
+            "translations": {
+              "en": {"name": "Grape Oak Aged Vodka"},
+              "ka": {"name": "ყურძნის მუხის არაყი"}
+            },
+            "variants": [
+              {"size": 0.25, "price": 9},
+              {"size": 0.5, "price": 16},
+              {"size": 1.0, "price": 30}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Grape Vodka"},
+              "ka": {"name": "ყურძნის არაყი"}
+            },
+            "variants": [
+              {"size": 0.25, "price": 9},
+              {"size": 0.5, "price": 16},
+              {"size": 1.0, "price": 30}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Peach Vodka"},
+              "ka": {"name": "ატმის არაყი"}
+            },
+            "variants": [
+              {"size": 0.25, "price": 5},
+              {"size": 0.5, "price": 9},
+              {"size": 1.0, "price": 16}
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "chacha",
+    "translations": {
+      "en": {"name": "Chacha"},
+      "ka": {"name": "ჭაჭა"}
+    },
+    "subcategories": [
+      {
+        "slug": "teliani-valley",
+        "translations": {
+          "en": {"name": "Teliani Valley"},
+          "ka": {"name": "თელიანი ველი"}
+        },
+        "items": [
+          {
+            "translations": {
+              "en": {"name": "Teliani Valley - Silver"},
+              "ka": {"name": "თელიანი ველი - სილვერი"}
+            },
+            "variants": [
+              {"size": 0.05, "price": 5},
+              {"size": 0.5, "price": 45}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Teliani Valley - Gold Aged in Oak"},
+              "ka": {"name": "თელიანი ველი - გოლდი მუხაში"}
+            },
+            "variants": [
+              {"size": 0.05, "price": 6},
+              {"size": 0.5, "price": 50}
+            ]
+          }
+        ]
+      },
+      {
+        "slug": "kakhuri",
+        "translations": {
+          "en": {"name": "Kakhuri"},
+          "ka": {"name": "კახური"}
+        },
+        "items": [
+          {
+            "translations": {
+              "en": {"name": "Kakhuri - Silver"},
+              "ka": {"name": "კახური - სილვერი"}
+            },
+            "variants": [
+              {"size": 0.05, "price": 4},
+              {"size": 0.5, "price": 30}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Kakhuri - Gold Aged in Oak"},
+              "ka": {"name": "კახური - გოლდი მუხაში"}
+            },
+            "variants": [
+              {"size": 0.05, "price": 5},
+              {"size": 0.5, "price": 35}
+            ]
+          }
+        ]
+      }
+    ]
+  },
+
+  {
+    "slug": "wine",
+    "translations": {
+      "en": {"name": "Wine"},
+      "ka": {"name": "ღვინო"}
+    },
+    "subcategories": [
+      {
+        "slug": "dry-wine",
+        "translations": {
+          "en": {"name": "Dry Wine"},
+          "ka": {"name": "მშრალი ღვინო"}
+        },
+         "items": [
+          {
+            "translations": {
+              "en": {"name": "Teliani Valley Saperavi Rose - Medium Dry"},
+              "ka": {"name": "თელიანი ველი საფერავი როზე - ნახევრად მშრალი"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 6},
+              {"size": 0.75, "price": 25}
+            ]
+          }
+        ]
+      },
+      {
+        "slug": "house-wine",
+        "translations": {
+          "en": {"name": "House Wine"},
+          "ka": {"name": "ჩამოსასხმელი ღვინო"}
+        },
+        "items": [
+          {
+            "translations": {
+              "en": {"name": "Mtsvane Manavi"},
+              "ka": {"name": "მწვანე მანავი"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 2.5},
+              {"size": 0.5, "price": 6},
+              {"size": 1.0, "price": 10}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Kindzmarauli"},
+              "ka": {"name": "ქინძმარაული"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 4},
+              {"size": 0.5, "price": 8},
+              {"size": 1.0, "price": 15}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Saperavi Red Dry"},
+              "ka": {"name": "საპერავი წითელი მშრალი"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 4},
+              {"size": 0.5, "price": 8},
+              {"size": 1.0, "price": 15}
+            ]
+          }
+        ]
+      },
+      {
+        "slug": "red-wine",
+        "translations": {
+          "en": {"name": "Red Wine"},
+          "ka": {"name": "წითელი ღვინო"}
+        },
+        "items" : [
+          {
+            "translations": {
+              "en": {"name": "Teliani Valley Saperavi"},
+              "ka": {"name": "თელიანი ველი საფერავი"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 7},
+              {"size": 0.75, "price": 30}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Kakhuri Mukuzani"},
+              "ka": {"name": "კახური მუკუზანი"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 7},
+              {"size": 0.75, "price": 30}
+            ]
+          }
+        ]
+      },
+      {
+        "slug": "red-medium-sweet",
+        "translations": {
+          "en": {"name": "Red Medium Sweet"},
+          "ka": {"name": "წითელი ნახევრად ტკბილი"}
+        },
+        "items" : [
+          {
+            "translations": {
+              "en": {"name": "Teliani Valley Kindzmarauli"},
+              "ka": {"name": "თელიანი ველი ქინძმარაული"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 9},
+              {"size": 0.75, "price": 40}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Teliani Valley Teluri Alazany Valley"},
+              "ka": {"name": "თელიანი ველი თელური ალაზნის ველი"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 7},
+              {"size": 0.75, "price": 30}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Kakhuri Khvanchkara"},
+              "ka": {"name": "კახური ხვანჭკარა"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 9},
+              {"size": 0.75, "price": 40}
+            ]
+          }
+        ]
+      },
+      {
+        "slug": "white-dry",
+        "translations": {
+          "en": {"name": "White Dry"},
+          "ka": {"name": "თეთრი მშრალი"}
+        },
+        "items" : [
+          {
+            "translations": {
+              "en": {"name": "Teliani Valley Tsinandali"},
+              "ka": {"name": "თელიანი ველი წინანდალი"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 6},
+              {"size": 0.75, "price": 25}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Teliani Valley Manavi"},
+              "ka": {"name": "თელიანი ველი მანავი"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 6},
+              {"size": 0.75, "price": 25}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Teliani Valley Tsolikauri"},
+              "ka": {"name": "თელიანი ველი ცოლიკაური"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 10},
+              {"size": 0.75, "price": 45}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Teliani Valley Teluri Evropuli"},
+              "ka": {"name": "თელიანი ველი თელური ევროპული"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 4},
+              {"size": 0.75, "price": 16}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Chelti Khikhvi"},
+              "ka": {"name": "ჩელთი ხიხვი"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 9},
+              {"size": 0.75, "price": 40}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Chelti Kisi"},
+              "ka": {"name": "ჩელთი ქისი"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 9},
+              {"size": 0.75, "price": 40}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Goletiani Rkatsiteli"},
+              "ka": {"name": "გოლეთიანი რქაწითელი"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 11},
+              {"size": 0.75, "price": 50}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Winiveria Goruli Mtsvane"},
+              "ka": {"name": "ვინივერია გორული მწვანე"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 11},
+              {"size": 0.75, "price": 50}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Dakishvili Family Kisi"},
+              "ka": {"name": "დაკიშვილის საოჯახო ქისი"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 11},
+              {"size": 0.75, "price": 50}
+            ]
+          }
+        ]
+      },
+      {
+        "slug": "white-medium-sweet",
+        "translations": {
+          "en": {"name": "White Medium Sweet"},
+          "ka": {"name": "თეთრი ნახევრად ტკბილი"}
+        },
+        "items" : [
+          {
+            "translations": {
+              "en": {"name": "Teliani Valley Tvishi"},
+              "ka": {"name": "თელიანი ველი ტვიში"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 11},
+              {"size": 0.75, "price": 50}
+            ]
+          }
+        ]
+      }
+    ]
+  }, 
+  {
+    "slug": "sparkling-wine",
+    "translations": {
+      "en": {"name": "Sparkling Wine"},
+      "ka": {"name": "ცქრიალა ღვინო"}
+    },
+    "subcategories": [
+      {
+        "slug": "red-sweet",
+        "translations": {
+          "en": {"name": "Red Sweet"},
+          "ka": {"name": "წითელი ტკბილი"}
+        },
+        "items": [
+          {
+            "translations": {
+              "en": {"name": "Badagoni Maestro Saperavi"},
+              "ka": {"name": "ბადაგონი მაესტრო საფერავი"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 11},
+              {"size": 0.75, "price": 50}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Badagoni Rose"},
+              "ka": {"name": "ბადაგონი როზე"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 9},
+              {"size": 0.75, "price": 40}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Marani Rose"},
+              "ka": {"name": "მარანი როზე"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 8},
+              {"size": 0.75, "price": 35}
+            ]
+          }
+        ]
+      },
+      {
+        "slug": "white-medium-sweet",
+        "translations": {
+          "en": {"name": "White Medium Dry"},
+          "ka": {"name": "თეთრი ნახევრად მშრალი"}
+        },
+        "items": [
+          {
+            "translations": {
+              "en": {"name": "Teliani Valley Saperavi"},
+              "ka": {"name": "ბადაგონი მაესტრო საფერავი"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 6},
+              {"size": 0.75, "price": 25}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Marani"},
+              "ka": {"name": "მარანი"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 7},
+              {"size": 0.75, "price": 30}
+            ]
+          }
+        ]
+      },
+      {
+        "slug": "white-dry",
+        "translations": {
+          "en": {"name": "White Dry"},
+          "ka": {"name": "თეთრი მშრალი"}
+        },
+        "items": [
+          {
+            "translations": {
+              "en": {"name": "Badagoni Maestro"},
+              "ka": {"name": "ბადაგონი მაესტრო"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 8},
+              {"size": 0.75, "price": 35}
+            ]
+          },
+          {
+            "translations": {
+              "en": {"name": "Teliani Valley Sparkling Wine Brut"},
+              "ka": {"name": "თელიანი ველი ცქრიალა ღვინო ბრუტი"}
+            },
+            "variants": [
+              {"size": 0.15, "price": 8},
+              {"size": 0.75, "price": 25}
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "cognac",
+    "translations": {
+      "en": {"name": "Cognac"},
+      "ka": {"name": "კონიაკი"}
+    },
+    "items": [
+      {
+        "translations": {
+          "en": {"name": "Sarajishvili V.S"},
+          "ka": {"name": "სარაჯიშვილი V.S"}
+        }, 
+        "variants": [
+          {"size": 0.05, "price": 11},
+          {"size": 0.5, "price": 90}
+        ]
+      },
+      {
+        "translations": {
+          "en": {"name": "Old Kakheti"},
+          "ka": {"name": "ძველი კახეთი"}
+        }, 
+        "variants": [
+          {"size": 0.05, "price": 6},
+          {"size": 0.5, "price": 45}
+        ]
+      },
+      {
+        "translations": {
+          "en": {"name": "Askaneli"},
+          "ka": {"name": "ასკანელი"}
+        }, 
+        "variants": [
+          {"size": 0.05, "price": 8},
+          {"size": 0.5, "price": 50}
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "whiskey",
+    "translations": {
+      "en": {"name": "Whiskey"},
+      "ka": {"name": "ვისკი"}
+    },
+    "items": [
+      {
+        "translations": {
+          "en": {"name": "Jack Daniel's"},
+          "ka": {"name": "ჯეკ დენიელსი"}
+        }, 
+        "variants": [
+          {"size": 0.05, "price": 9},
+          {"size": 1.0, "price": 160}
+        ]
+      },
+      {
+        "translations": {
+          "en": {"name": "Johnnie Walker Red Label"},
+          "ka": {"name": "ჯონ უოლკერი წითელი ლეიბლი"}
+        }, 
+        "variants": [
+          {"size": 0.05, "price": 6},
+          {"size": 1.0, "price": 100}
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "beer",
+    "translations": {
+      "en": {"name": "Beer"},
+      "ka": {"name": "ლუდი"}
+    },
+    "subcategories": [
+      {
+        "slug": "draft-beer",
+        "translations": {
+          "en": {"name": "Draft Beer"},
+          "ka": {"name": "ჩამოსასხმელი ლუდი"}
+        },
+        "items": [
+          {
+            "price": 4,
+            "translations": {
+              "en": {"name": "Black Lion Helles 0.5L"},
+              "ka": {"name": "შავი ლომი ჰელესი 0.5ლ"}
+            }
+          },
+          {
+            "price": 7,
+            "translations": {
+              "en": {"name": "Kazbegi 0.5L"},
+              "ka": {"name": "ყაზბეგი 0.5ლ"}
+            }
+          }
+        ]
+      },
+      {
+        "slug": "bottled-beer",
+        "translations": {
+          "en": {"name": "Bottled Beer"},
+          "ka": {"name": "შუშის ლუდი"}
+         },
+         "items": [
+          { 
+            "price": 10,
+            "translations": {
+              "en": {"name": "Korona Extra 0.35L"},
+              "ka": {"name": "კორონა ექსტრა 0.35ლ"}
+            }
+          },
+          { 
+            "price": 12,
+            "translations": {
+              "en": {"name": "Warsteiner 0.66L"},
+              "ka": {"name": "ვარშტაინერი 0.66ლ"}
+            }
+          },
+          { 
+            "price": 10,
+            "translations": {
+              "en": {"name": "Schofferhofer 0.5L"},
+              "ka": {"name": "შოფერჰოფერი გაუფილტრავი 0.5ლ"}
+            }
+          },
+          { 
+            "price": 12,
+            "translations": {
+              "en": {"name": "Shavi Lomi 0.5L"},
+              "ka": {"name": "შავი ლომი 0.5ლ"}
+            }
+          },
+          { 
+            "price": 7,
+            "translations": {
+              "en": {"name": "Kayaki 0.5L"},
+              "ka": {"name": "კაიაკი 0.5ლ"}
+            }
+          },
+          { 
+            "price": 8,
+            "translations": {
+              "en": {"name": "Bavaria 0.5L"},
+              "ka": {"name": "ბავარია 0.5ლ"}
+            }
+          }
+         ]   
+      }
+    ]
+  }, 
+  {
+    "slug": "Coffee and Tea",
+    "translations": {
+      "en": {"name": "Coffee and Tea"},
+      "ka": {"name": "ყავა და ჩაი"}
+    },
+    "items": [
+      {
+        "price": 3,
+        "translations": {
+          "en": {"name": "Black Coffee"},
+          "ka": {"name": "შავი ყავა"}
+        }
+      },
+      {
+        "price": 3,
+        "translations": {
+          "en": {"name": "Tea"},
+          "ka": {"name": "ჩაი"}
+        }
+      }
+    ]
+  },
+  {
+    "slug": "containers",
+    "translations": {
+      "en": {"name": "Containers"},
+      "ka": {"name": "კონტეინერები"}
+    },
+    "items": [
+      {
+        "price": 1,
+        "translations": {
+          "en": {"name": "Hot Dish Container"},
+          "ka": {"name": "ცხელი კერძების კონტეინერი"}
+        }
+      },
+      {
+        "price": 2,
+        "translations": {
+          "en": {"name": "Container for Pizza"},
+          "ka": {"name": "პიცის კონტეინერი"}
+        }
+      },
+      {
+        "price": 2,
+        "translations": {
+          "en": {"name": "Container for Khinkali"},
+          "ka": {"name": "ხინკლის კონტეინერი"}
+        }
+      }
+    ]
+  }
+]

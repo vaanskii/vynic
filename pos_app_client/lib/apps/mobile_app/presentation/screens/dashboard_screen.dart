@@ -21,14 +21,11 @@ class DashboardScreen extends StatefulWidget {
   final User user;
   final void Function(int index)? onNavigateTab;
   final VoidCallback? onOpenNotifications;
-  final VoidCallback? onLogout;
-
   const DashboardScreen({
     super.key,
     required this.user,
     this.onNavigateTab,
     this.onOpenNotifications,
-    this.onLogout,
   });
 
   @override
@@ -331,7 +328,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                                     greeting: _greeting(),
                                     name: widget.user.username,
                                     onNotifications: widget.onOpenNotifications,
-                                    onLogout: widget.onLogout,
                                   ),
                                 ),
                                 const SizedBox(height: 26),
@@ -518,13 +514,11 @@ class _Header extends StatelessWidget {
   final String greeting;
   final String name;
   final VoidCallback? onNotifications;
-  final VoidCallback? onLogout;
 
   const _Header({
     required this.greeting,
     required this.name,
     this.onNotifications,
-    this.onLogout,
   });
 
   @override
@@ -586,15 +580,6 @@ class _Header extends StatelessWidget {
                   );
                 },
               ),
-            ),
-          ),
-          const SizedBox(width: 14),
-          _BouncingButton(
-            onTap: () => onLogout?.call(),
-            child: _GlassContainer(
-              padding: const EdgeInsets.all(12),
-              shape: BoxShape.circle,
-              child: const Icon(Icons.logout_rounded, color: Colors.white),
             ),
           ),
         ],

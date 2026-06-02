@@ -45,58 +45,87 @@ class _UsersTabState extends State<_UsersTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_loading) return const _AdminLoading();
     if (_error != null) return _ErrorWidget(onRetry: _load);
 
-    final admins = _users.where((u) => (u['role'] as String?) == 'ADMIN').toList();
-    final waiters = _users
-        .where((u) => (u['role'] as String?) != 'ADMIN')
-        .toList();
+    final admins =
+        _users.where((u) => (u['role'] as String?) == 'ADMIN').toList();
+    final waiters =
+        _users.where((u) => (u['role'] as String?) != 'ADMIN').toList();
+    final activeCount =
+        _users.where((u) => (u['isActive'] as bool? ?? true)).length;
 
     return RefreshIndicator(
+      color: AdminTheme.primary,
+      backgroundColor: AdminTheme.surface,
       onRefresh: _load,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        padding: _adminScrollPadding(context),
         children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              onPressed: _showCreateUserDialog,
-              icon: const Icon(Icons.person_add_alt_1_rounded),
-              label: const Text('მომხმარებლის დამატება'),
-            ),
+          _AdminKpiGrid(
+            items: [
+              _AdminKpiItem(
+                label: 'სულ',
+                value: '${_users.length}',
+                icon: Icons.people_rounded,
+                color: AdminTheme.primary,
+              ),
+              _AdminKpiItem(
+                label: 'აქტიური',
+                value: '$activeCount',
+                icon: Icons.verified_user_rounded,
+                color: AdminTheme.good,
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
+          _AdminPrimaryButton(
+            label: 'მომხმარებლის დამატება',
+            icon: Icons.person_add_alt_1_rounded,
+            onPressed: _showCreateUserDialog,
+          ),
           if (admins.isNotEmpty) ...[
-            _sectionHeader('👑 ადმინისტრატორები', admins.length),
-            const SizedBox(height: 8),
-            ...admins.map(
+            const SizedBox(height: 20),
+            _AdminSection(
+              title: 'ადმინისტრატორები',
+              trailing: '${admins.length}',
+              child: Column(
+                children: admins.map(
               (u) => _UserCard(
                 user: u,
                 onChangePin: () => _showChangePinDialog(u),
                 onDelete: () => _confirmDeleteUser(u),
               ),
+            ).toList(),
+              ),
             ),
-            const SizedBox(height: 20),
           ],
           if (waiters.isNotEmpty) ...[
-            _sectionHeader('👤 ოფიციანტები', waiters.length),
-            const SizedBox(height: 8),
-            ...waiters.map(
+            const SizedBox(height: 20),
+            _AdminSection(
+              title: 'ოფიციანტები',
+              trailing: '${waiters.length}',
+              child: Column(
+                children: waiters.map(
               (u) => _UserCard(
                 user: u,
                 onChangePin: () => _showChangePinDialog(u),
                 onDelete: () => _confirmDeleteUser(u),
+              ),
+            ).toList(),
               ),
             ),
           ],
           if (_users.isEmpty)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(40),
+            Padding(
+              padding: const EdgeInsets.all(32),
+              child: Center(
                 child: Text(
                   'მომხმარებლები ვერ მოიძებნა',
-                  style: TextStyle(color: Color(0xFF64748B)),
+                  style: TextStyle(color: AdminTheme.textDim),
                 ),
               ),
             ),
@@ -113,22 +142,32 @@ class _UsersTabState extends State<_UsersTab>
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setLocal) => AlertDialog(
-          title: const Text('ახალი მომხმარებელი'),
+          backgroundColor: AdminTheme.surface,
+          title: const Text(
+            'ახალი მომხმარებელი',
+            style: TextStyle(color: AdminTheme.text),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: usernameCtrl,
-                decoration: const InputDecoration(labelText: 'სახელი'),
+                style: const TextStyle(color: AdminTheme.text),
+                decoration: _adminInput('სახელი'),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: pinCtrl,
-                decoration: const InputDecoration(labelText: 'PIN'),
+                style: const TextStyle(color: AdminTheme.text),
+                decoration: _adminInput('PIN'),
+                keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                initialValue: role,
+                value: role,
+                dropdownColor: const Color(0xFF1E1E28),
+                style: const TextStyle(color: AdminTheme.text),
+                decoration: _adminInput('როლი'),
                 items: const [
                   DropdownMenuItem(value: 'ADMIN', child: Text('ადმინისტრატორი')),
                   DropdownMenuItem(value: 'WAITER', child: Text('ოფიციანტი')),
@@ -140,10 +179,11 @@ class _UsersTabState extends State<_UsersTab>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('გაუქმება'),
+              child: const Text('გაუქმება', style: TextStyle(color: AdminTheme.textMuted)),
             ),
-            ElevatedButton(
+            FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
+              style: FilledButton.styleFrom(backgroundColor: AdminTheme.primary),
               child: const Text('დამატება'),
             ),
           ],
@@ -158,39 +198,27 @@ class _UsersTabState extends State<_UsersTab>
         role: role,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('მომხმარებელი დაემატა')),
-      );
+      _adminToast(context, 'მომხმარებელი დაემატა');
       await _load();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('შეცდომა: $e')),
-      );
+      _adminToast(context, 'შეცდომა: $e', error: true);
     }
   }
 
   Future<void> _showChangePinDialog(dynamic user) async {
     final ctrl = TextEditingController(text: (user['pinCode'] ?? '').toString());
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('PIN შეცვლა • ${user['username']}'),
-        content: TextField(
+    final ok = await _adminFormDialog(
+      context,
+      title: 'PIN შეცვლა • ${user['username']}',
+      fields: [
+        TextField(
           controller: ctrl,
-          decoration: const InputDecoration(labelText: 'ახალი PIN'),
+          style: const TextStyle(color: AdminTheme.text),
+          decoration: _adminInput('ახალი PIN'),
+          keyboardType: TextInputType.number,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('გაუქმება'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('შენახვა'),
-          ),
-        ],
-      ),
+      ],
     );
     if (ok != true) return;
     try {
@@ -199,85 +227,37 @@ class _UsersTabState extends State<_UsersTab>
         pinCode: ctrl.text.trim(),
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('PIN განახლდა')),
-      );
+      _adminToast(context, 'PIN განახლდა');
       await _load();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('შეცდომა: $e')),
-      );
+      _adminToast(context, 'შეცდომა: $e', error: true);
     }
   }
 
   Future<void> _confirmDeleteUser(dynamic user) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('წავშალოთ ${user['username']}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('არა'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('დიახ'),
-          ),
-        ],
-      ),
+    final confirm = await _adminConfirmDialog(
+      context,
+      title: 'წავშალოთ ${user['username']}?',
     );
     if (confirm != true) return;
     try {
       await MobileApiService.deleteUser((user['username'] ?? '').toString());
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('მომხმარებელი წაიშალა')),
-      );
+      _adminToast(context, 'მომხმარებელი წაიშალა');
       await _load();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('შეცდომა: $e')),
-      );
+      _adminToast(context, 'შეცდომა: $e', error: true);
     }
   }
-
-  Widget _sectionHeader(String title, int count) => Row(
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1E3A8A),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFF2563EB).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              '$count',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2563EB),
-              ),
-            ),
-          ),
-        ],
-      );
 }
 
 class _UserCard extends StatelessWidget {
   final dynamic user;
   final VoidCallback onChangePin;
   final VoidCallback onDelete;
+
   const _UserCard({
     required this.user,
     required this.onChangePin,
@@ -289,88 +269,87 @@ class _UserCard extends StatelessWidget {
     final role = user['role'] as String? ?? 'WAITER';
     final isActive = user['isActive'] as bool? ?? true;
     final isAdmin = role == 'ADMIN';
-    final color = isAdmin
-        ? const Color(0xFF7C3AED)
-        : const Color(0xFF1E3A8A);
+    final accent = isAdmin ? const Color(0xFF8B5CF6) : AdminTheme.accent;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(22),
-            ),
-            child: Icon(
-              isAdmin
-                  ? Icons.admin_panel_settings_rounded
-                  : Icons.person_rounded,
-              color: color,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  user['username'] as String? ?? '',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
-                  ),
-                ),
-                Text(
-                  _roleName(role),
-                  style: TextStyle(fontSize: 12, color: color),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'PIN: ${(user['pinCode'] ?? '').toString()}',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF475569)),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            tooltip: 'PIN',
-            onPressed: onChangePin,
-            icon: const Icon(Icons.pin_rounded, size: 18),
-          ),
-          IconButton(
-            tooltip: 'Delete',
-            onPressed: onDelete,
-            icon: const Icon(Icons.delete_outline_rounded, size: 18),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: isActive
-                  ? const Color(0xFF10B981).withValues(alpha: 0.1)
-                  : const Color(0xFFEF4444).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              isActive ? 'აქტიური' : 'გათიშული',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: isActive ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: _AdminPanel(
+        padding: const EdgeInsets.all(14),
+        accentBorder: accent.withValues(alpha: 0.35),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                isAdmin
+                    ? Icons.admin_panel_settings_rounded
+                    : Icons.person_rounded,
+                color: accent,
+                size: 22,
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user['username'] as String? ?? '',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: AdminTheme.text,
+                    ),
+                  ),
+                  Text(
+                    _roleName(role),
+                    style: TextStyle(fontSize: 12, color: accent),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'PIN: ${(user['pinCode'] ?? '').toString()}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AdminTheme.textDim,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: 'PIN',
+              onPressed: onChangePin,
+              icon: Icon(Icons.pin_rounded, size: 18, color: AdminTheme.textMuted),
+            ),
+            IconButton(
+              tooltip: 'Delete',
+              onPressed: onDelete,
+              icon: const Icon(Icons.delete_outline_rounded,
+                  size: 18, color: AdminTheme.bad),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: (isActive ? AdminTheme.good : AdminTheme.bad)
+                    .withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                isActive ? 'აქტიური' : 'გათიშული',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: isActive ? AdminTheme.good : AdminTheme.bad,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

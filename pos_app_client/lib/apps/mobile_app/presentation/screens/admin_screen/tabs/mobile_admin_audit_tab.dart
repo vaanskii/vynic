@@ -27,12 +27,6 @@ class _AuditTabState extends State<_AuditTab>
   @override
   bool get wantKeepAlive => true;
 
-  static const _primary = Color(0xFF2563EB);
-  static const _card = Colors.white;
-  static const _border = Color(0xFFE2E8F0);
-  static const _text = Color(0xFF0F172A);
-  static const _muted = Color(0xFF64748B);
-
   bool _loading = true;
   String? _error;
   List<AuditReport> _reports = [];
@@ -195,7 +189,7 @@ class _AuditTabState extends State<_AuditTab>
         _buildStats(),
         _buildStatusFilter(),
         if (_loading)
-          const Expanded(child: Center(child: CircularProgressIndicator()))
+          const Expanded(child: _AdminLoading())
         else if (_error != null)
           Expanded(child: _ErrorWidget(onRetry: _load))
         else if (_reports.isEmpty)
@@ -213,7 +207,7 @@ class _AuditTabState extends State<_AuditTab>
             IconButton(
               icon: const Icon(Icons.chevron_left),
               onPressed: _prevMonth,
-              color: _text,
+              color: AdminTheme.text,
               splashRadius: 20,
             ),
             Expanded(
@@ -223,20 +217,20 @@ class _AuditTabState extends State<_AuditTab>
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: _text,
+                  color: AdminTheme.text,
                 ),
               ),
             ),
             IconButton(
               icon: const Icon(Icons.chevron_right),
               onPressed: _isCurrentMonth ? null : _nextMonth,
-              color: _isCurrentMonth ? _muted : _text,
+              color: _isCurrentMonth ? AdminTheme.textMuted : Colors.white,
               splashRadius: 20,
             ),
             IconButton(
               icon: const Icon(Icons.refresh_rounded, size: 20),
               onPressed: _load,
-              color: _primary,
+              color: AdminTheme.primary,
               splashRadius: 18,
             ),
           ],
@@ -253,7 +247,7 @@ class _AuditTabState extends State<_AuditTab>
             const SizedBox(width: 8),
             _statChip('გაუქმებული', _count(AuditReportStatus.cancelled), const Color(0xFFEF4444)),
             const SizedBox(width: 8),
-            _statChip('სულ', _reports.length, _primary),
+            _statChip('სულ', _reports.length, AdminTheme.primary),
           ],
         ),
       );
@@ -262,9 +256,9 @@ class _AuditTabState extends State<_AuditTab>
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: _card,
+            color: AdminTheme.surface,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: _border),
+            border: Border.all(color: AdminTheme.border),
           ),
           child: Column(
             children: [
@@ -272,7 +266,7 @@ class _AuditTabState extends State<_AuditTab>
                 '$value',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: color),
               ),
-              Text(label, style: const TextStyle(fontSize: 10, color: _muted)),
+              Text(label, style: TextStyle(fontSize: 10, color: AdminTheme.textMuted)),
             ],
           ),
         ),
@@ -284,7 +278,7 @@ class _AuditTabState extends State<_AuditTab>
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              _FilterChip2(
+              _AdminFilterChip(
                 label: 'ყველა',
                 selected: _statusFilter == null,
                 onTap: () {
@@ -293,7 +287,7 @@ class _AuditTabState extends State<_AuditTab>
                 },
               ),
               const SizedBox(width: 8),
-              _FilterChip2(
+              _AdminFilterChip(
                 label: 'აქტიური',
                 selected: _statusFilter == 'OPEN',
                 onTap: () {
@@ -302,7 +296,7 @@ class _AuditTabState extends State<_AuditTab>
                 },
               ),
               const SizedBox(width: 8),
-              _FilterChip2(
+              _AdminFilterChip(
                 label: 'დახურული',
                 selected: _statusFilter == 'CLOSED',
                 onTap: () {
@@ -311,7 +305,7 @@ class _AuditTabState extends State<_AuditTab>
                 },
               ),
               const SizedBox(width: 8),
-              _FilterChip2(
+              _AdminFilterChip(
                 label: 'გაუქმებული',
                 selected: _statusFilter == 'CANCELLED',
                 onTap: () {
@@ -329,23 +323,23 @@ class _AuditTabState extends State<_AuditTab>
           padding: const EdgeInsets.all(32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: const [
-              Icon(Icons.security_outlined, size: 48, color: _muted),
-              SizedBox(height: 12),
-              Text(
+            children: [
+              Icon(Icons.security_outlined, size: 48, color: AdminTheme.textMuted),
+              const SizedBox(height: 12),
+              const Text(
                 'ამ პერიოდში Audit ჩანაწერები არ არის',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: _text,
+                  color: AdminTheme.text,
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              SizedBox(height: 6),
+              const SizedBox(height: 6),
               Text(
                 'Windows POS-ის მომხმარებლების ქმედებები გამოჩნდება აქ.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: _muted, fontSize: 13),
+                style: TextStyle(color: AdminTheme.textMuted, fontSize: 13),
               ),
             ],
           ),
@@ -355,7 +349,7 @@ class _AuditTabState extends State<_AuditTab>
   Widget _buildList() => RefreshIndicator(
         onRefresh: _load,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+          padding: _adminScrollPadding(context).copyWith(top: 10),
           children: _sortedDays
               .map(
                 (entry) => _DayGroup(
@@ -406,11 +400,6 @@ class _DayGroup extends StatelessWidget {
     required this.onTapReport,
   });
 
-  static const _primary = Color(0xFF2563EB);
-  static const _border = Color(0xFFE2E8F0);
-  static const _text = Color(0xFF0F172A);
-  static const _muted = Color(0xFF64748B);
-
   int _count(AuditReportStatus s) => reports.where((r) => r.status == s).length;
 
   @override
@@ -419,11 +408,11 @@ class _DayGroup extends StatelessWidget {
     final georgianDate = _georgianDate(date);
 
     return Card(
-      color: Colors.white,
+      color: AdminTheme.surfaceElevated,
       margin: const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: _border),
+        side: BorderSide(color: AdminTheme.border),
       ),
       elevation: 0,
       child: Theme(
@@ -431,20 +420,20 @@ class _DayGroup extends StatelessWidget {
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
           childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          iconColor: _primary,
-          collapsedIconColor: _muted,
-          leading: const Icon(Icons.calendar_month_outlined, color: _primary, size: 20),
+          iconColor: AdminTheme.primary,
+          collapsedIconColor: AdminTheme.textMuted,
+          leading: const Icon(Icons.calendar_month_outlined, color: AdminTheme.primary, size: 20),
           title: Text(
             georgianDate,
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
-              color: _text,
+              color: AdminTheme.text,
             ),
           ),
           subtitle: Text(
             '$dayKey • სულ ${reports.length}',
-            style: const TextStyle(fontSize: 12, color: _muted),
+            style: TextStyle(fontSize: 12, color: AdminTheme.textMuted),
           ),
           trailing: Wrap(
             spacing: 4,
@@ -516,11 +505,6 @@ class _AuditReportCard extends StatelessWidget {
 
   const _AuditReportCard({required this.report, required this.onTap});
 
-  static const _surface = Color(0xFFF8FAFF);
-  static const _border = Color(0xFFE2E8F0);
-  static const _text = Color(0xFF0F172A);
-  static const _muted = Color(0xFF64748B);
-
   static Color _statusColor(AuditReportStatus s) {
     switch (s) {
       case AuditReportStatus.open:
@@ -556,7 +540,7 @@ class _AuditReportCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: _surface,
+        color: AdminTheme.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
@@ -588,13 +572,13 @@ class _AuditReportCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: _text,
+                    color: AdminTheme.text,
                   ),
                 ),
               ),
               Text(
                 'Order #${report.orderId}',
-                style: const TextStyle(color: _muted, fontSize: 11),
+                style: TextStyle(color: AdminTheme.textMuted, fontSize: 11),
               ),
             ],
           ),
@@ -634,17 +618,17 @@ class _AuditReportCard extends StatelessWidget {
   Widget _chip(String label, String value) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AdminTheme.surfaceElevated,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: _border),
+          border: Border.all(color: AdminTheme.border),
         ),
         child: RichText(
           text: TextSpan(
-            style: const TextStyle(fontSize: 11, color: _muted),
+            style: TextStyle(fontSize: 11, color: AdminTheme.textMuted),
             children: [
               TextSpan(
                 text: '$label: ',
-                style: const TextStyle(fontWeight: FontWeight.w700, color: _text),
+                style: const TextStyle(fontWeight: FontWeight.w700, color: AdminTheme.text),
               ),
               TextSpan(text: value),
             ],
@@ -672,10 +656,6 @@ class _AuditDetailDialog extends StatelessWidget {
   final AuditReport report;
   const _AuditDetailDialog({required this.report});
 
-  static const _border = Color(0xFFE2E8F0);
-  static const _text = Color(0xFF0F172A);
-  static const _muted = Color(0xFF64748B);
-
   static String _fmtTs(DateTime dt) {
     final l = dt.toLocal();
     return '${l.year}-${l.month.toString().padLeft(2, '0')}-${l.day.toString().padLeft(2, '0')} ${l.hour.toString().padLeft(2, '0')}:${l.minute.toString().padLeft(2, '0')}';
@@ -686,8 +666,11 @@ class _AuditDetailDialog extends StatelessWidget {
     final events = report.sortedEvents;
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 24),
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      backgroundColor: AdminTheme.surfaceElevated,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: AdminTheme.border),
+      ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: 600,
@@ -709,12 +692,12 @@ class _AuditDetailDialog extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: _text,
+                            color: AdminTheme.text,
                           ),
                         ),
                         Text(
                           'სუფრა: ${report.tableNumbers.isEmpty ? 'TA-${report.orderId}' : report.tableNumbers.join(', ')}',
-                          style: const TextStyle(fontSize: 12, color: _muted),
+                          style: TextStyle(fontSize: 12, color: AdminTheme.textMuted),
                         ),
                       ],
                     ),
@@ -723,7 +706,7 @@ class _AuditDetailDialog extends StatelessWidget {
                     onPressed: () => MobileAdminScreen.viewCheckPdf(context, report.orderId),
                     icon: const Icon(
                       Icons.receipt_long_rounded,
-                      color: MobileAdminScreen._accent,
+                      color: AdminTheme.primary,
                       size: 20,
                     ),
                     tooltip: 'ქვითრის ნახვა',
@@ -731,7 +714,7 @@ class _AuditDetailDialog extends StatelessWidget {
                   const SizedBox(width: 4),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close, color: _muted, size: 20),
+                    icon: Icon(Icons.close, color: AdminTheme.textMuted, size: 20),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -753,15 +736,15 @@ class _AuditDetailDialog extends StatelessWidget {
               const SizedBox(height: 12),
               const Text(
                 'ქმედებების ქრონოლოგია (Who • What • When)',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _text),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AdminTheme.text),
               ),
               const SizedBox(height: 8),
               Expanded(
                 child: events.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
                           'ამ რეპორტზე ცვლილებები არ არის',
-                          style: TextStyle(color: _muted, fontSize: 13),
+                          style: TextStyle(color: AdminTheme.textMuted, fontSize: 13),
                         ),
                       )
                     : ListView.separated(
@@ -783,17 +766,17 @@ class _AuditDetailDialog extends StatelessWidget {
   Widget _chip(String label, String value) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AdminTheme.surfaceElevated,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: _border),
+          border: Border.all(color: AdminTheme.border),
         ),
         child: RichText(
           text: TextSpan(
-            style: const TextStyle(fontSize: 11, color: _muted),
+            style: TextStyle(fontSize: 11, color: AdminTheme.textMuted),
             children: [
               TextSpan(
                 text: '$label: ',
-                style: const TextStyle(fontWeight: FontWeight.w700, color: _text),
+                style: const TextStyle(fontWeight: FontWeight.w700, color: AdminTheme.text),
               ),
               TextSpan(text: value),
             ],
@@ -817,11 +800,6 @@ class _EventTile extends StatelessWidget {
   final AuditEvent event;
   final int seq;
   const _EventTile({required this.event, required this.seq});
-
-  static const _surface = Color(0xFFF8FAFF);
-  static const _border = Color(0xFFE2E8F0);
-  static const _text = Color(0xFF0F172A);
-  static const _muted = Color(0xFF64748B);
 
   static Color _color(AuditEventType t) {
     switch (t) {
@@ -879,9 +857,9 @@ class _EventTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: _surface,
+        color: AdminTheme.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _border),
+        border: Border.all(color: AdminTheme.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -904,13 +882,13 @@ class _EventTile extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: _text,
+                    color: AdminTheme.text,
                   ),
                 ),
               ),
               Text(
                 _fmtTs(event.timestamp),
-                style: const TextStyle(color: _muted, fontSize: 11),
+                style: TextStyle(color: AdminTheme.textMuted, fontSize: 11),
               ),
             ],
           ),
@@ -929,13 +907,13 @@ class _EventTile extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AdminTheme.surfaceElevated,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: _border),
+                border: Border.all(color: AdminTheme.border),
               ),
               child: Text(
                 event.note!,
-                style: const TextStyle(color: _muted, fontSize: 12),
+                style: TextStyle(color: AdminTheme.textMuted, fontSize: 12),
               ),
             ),
           ],
@@ -947,17 +925,17 @@ class _EventTile extends StatelessWidget {
   Widget _metaChip(String label, String value) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AdminTheme.text,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: const Color(0xFFE2E8F0)),
         ),
         child: RichText(
           text: TextSpan(
-            style: const TextStyle(fontSize: 11, color: _muted),
+            style: TextStyle(fontSize: 11, color: AdminTheme.textMuted),
             children: [
               TextSpan(
                 text: '$label: ',
-                style: const TextStyle(fontWeight: FontWeight.w700, color: _text),
+                style: const TextStyle(fontWeight: FontWeight.w700, color: AdminTheme.text),
               ),
               TextSpan(text: value),
             ],

@@ -343,7 +343,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       ['1', '2', '3'],
       ['4', '5', '6'],
       ['7', '8', '9'],
-      ['', '0', '⌫'],
+      ['C', '0', '⌫'],
     ];
 
     return Column(
@@ -353,9 +353,6 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: row.map((label) {
-              if (label.isEmpty) {
-                return const SizedBox(width: 84, height: 58);
-              }
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: _LoginPadButton(
@@ -363,6 +360,8 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                   onTap: () {
                     if (label == '⌫') {
                       _deleteDigit();
+                    } else if (label == 'C') {
+                      _clearPin();
                     } else {
                       _addDigit(label);
                     }
@@ -433,6 +432,8 @@ class _LoginPadButtonState extends State<_LoginPadButton> {
   @override
   Widget build(BuildContext context) {
     final isDelete = widget.label == '⌫';
+    final isClear = widget.label == 'C';
+    final isAction = isDelete || isClear;
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
@@ -458,12 +459,18 @@ class _LoginPadButtonState extends State<_LoginPadButton> {
                 border: Border.all(
                   color: isDelete
                       ? MobileGlassTheme.bad.withValues(alpha: _pressed ? 0.5 : 0.28)
-                      : MobileGlassTheme.border(_pressed ? 0.28 : 0.14),
+                      : isClear
+                          ? MobileGlassTheme.warn.withValues(alpha: _pressed ? 0.5 : 0.28)
+                          : MobileGlassTheme.border(_pressed ? 0.28 : 0.14),
                 ),
                 boxShadow: _pressed
                     ? [
                         BoxShadow(
-                          color: (isDelete ? MobileGlassTheme.bad : MobileGlassTheme.primary)
+                          color: (isDelete
+                                  ? MobileGlassTheme.bad
+                                  : isClear
+                                      ? MobileGlassTheme.warn
+                                      : MobileGlassTheme.primary)
                               .withValues(alpha: 0.2),
                           blurRadius: 14,
                         ),
@@ -474,9 +481,13 @@ class _LoginPadButtonState extends State<_LoginPadButton> {
                 child: Text(
                   widget.label,
                   style: TextStyle(
-                    fontSize: isDelete ? 20 : 24,
+                    fontSize: isAction ? 20 : 24,
                     fontWeight: FontWeight.w700,
-                    color: isDelete ? MobileGlassTheme.bad : Colors.white,
+                    color: isDelete
+                        ? MobileGlassTheme.bad
+                        : isClear
+                            ? MobileGlassTheme.warn
+                            : Colors.white,
                   ),
                 ),
               ),

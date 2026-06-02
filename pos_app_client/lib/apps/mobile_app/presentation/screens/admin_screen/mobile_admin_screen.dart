@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/models/audit_report.dart';
+import 'package:vynic/core/models/monitoring.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/api_config.dart';
 import 'package:vynic/core/services/mobile_api_service.dart';
@@ -15,13 +16,12 @@ part 'tabs/mobile_admin_audit_tab.dart';
 part 'tabs/mobile_admin_settings_tab.dart';
 part 'shared/mobile_admin_shared_widgets.dart';
 
-/// Mobile admin panel with 5 tabs:
-///   Users · Sales · Report · Audit · Settings
+/// Manager console (მართვა) — flat POS-style layout for mobile.
 class MobileAdminScreen extends StatefulWidget {
   final User user;
-  const MobileAdminScreen({super.key, required this.user});
+  final VoidCallback onLogout;
 
-  static const _accent = Color(0xFF2563EB);
+  const MobileAdminScreen({super.key, required this.user, required this.onLogout});
 
   @override
   State<MobileAdminScreen> createState() => _MobileAdminScreenState();
@@ -30,7 +30,9 @@ class MobileAdminScreen extends StatefulWidget {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: AdminTheme.primary),
+      ),
     );
 
     try {
@@ -62,17 +64,13 @@ class MobileAdminScreen extends StatefulWidget {
             title: 'ქვითარი #${order.orderId}',
           );
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('ქვითრის გენერაცია ვერ მოხერხდა')),
-          );
+          _adminToast(context, 'ქვითრის გენერაცია ვერ მოხერხდა', error: true);
         }
       }
     } catch (e) {
       if (context.mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('შეცდომა: $e')),
-        );
+        _adminToast(context, 'შეცდომა: $e', error: true);
       }
     }
   }
@@ -82,10 +80,18 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabs;
 
+  static const _tabDefs = <({String label, IconData icon})>[
+    (label: 'ანგარიში', icon: Icons.analytics_outlined),
+    (label: 'გაყიდვები', icon: Icons.receipt_long_outlined),
+    (label: 'აუდიტი', icon: Icons.fact_check_outlined),
+    (label: 'გუნდი', icon: Icons.people_outline),
+    (label: 'პარამეტრები', icon: Icons.settings_outlined),
+  ];
+
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 5, vsync: this);
+    _tabs = TabController(length: _tabDefs.length, vsync: this);
   }
 
   @override
@@ -96,48 +102,106 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
 
   @override
   Widget build(BuildContext context) {
+    final roleLabel =
+        widget.user.isAdmin ? 'ადმინისტრატორი' : 'მენეჯერი';
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        toolbarHeight: 80,
-        title: const Padding(
-          padding: EdgeInsets.only(top: 10),
-          child: Text(
-            'ადმინ პანელი',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-          ),
-        ),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
-        elevation: 0,
-        bottom: TabBar(
-          controller: _tabs,
-          labelColor: MobileAdminScreen._accent,
-          unselectedLabelColor: const Color(0xFF94A3B8),
-          indicatorColor: MobileAdminScreen._accent,
-          indicatorWeight: 2.5,
-          labelStyle: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-          ),
-          tabs: const [
-            Tab(icon: Icon(Icons.people_rounded, size: 18), text: 'მომხ.'),
-            Tab(icon: Icon(Icons.receipt_long_rounded, size: 18), text: 'გაყიდვები'),
-            Tab(icon: Icon(Icons.bar_chart_rounded, size: 18), text: 'ანგარიში'),
-            Tab(icon: Icon(Icons.history_rounded, size: 18), text: 'აუდიტი'),
-            Tab(icon: Icon(Icons.settings_rounded, size: 18), text: 'პარამ.'),
+      backgroundColor: AdminTheme.bg,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 12, 0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'მართვა',
+                          style: TextStyle(
+                            color: AdminTheme.text,
+                            fontSize: 26,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '$roleLabel · ${widget.user.username}',
+                          style: const TextStyle(
+                            color: AdminTheme.textDim,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const _AdminConnectionDot(size: 12),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              decoration: const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: AdminTheme.border, width: 1),
+                ),
+              ),
+              child: TabBar(
+                controller: _tabs,
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                labelPadding: const EdgeInsets.symmetric(horizontal: 14),
+                indicatorColor: AdminTheme.primary,
+                indicatorWeight: 3,
+                indicatorSize: TabBarIndicatorSize.label,
+                dividerColor: Colors.transparent,
+                labelColor: AdminTheme.text,
+                unselectedLabelColor: AdminTheme.textDim,
+                labelStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+                tabs: [
+                  for (final t in _tabDefs)
+                    Tab(
+                      height: 48,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(t.icon, size: 18),
+                          const SizedBox(width: 6),
+                          Text(t.label),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: _tabs,
+                children: [
+                  _ReportTab(),
+                  _SalesTab(),
+                  _AuditTab(),
+                  _UsersTab(currentUser: widget.user),
+                  _SettingsTab(user: widget.user, onLogout: widget.onLogout),
+                ],
+              ),
+            ),
           ],
         ),
-      ),
-      body: TabBarView(
-        controller: _tabs,
-        children: [
-          _UsersTab(currentUser: widget.user),
-          _SalesTab(),
-          _ReportTab(),
-          _AuditTab(),
-          _SettingsTab(user: widget.user),
-        ],
       ),
     );
   }

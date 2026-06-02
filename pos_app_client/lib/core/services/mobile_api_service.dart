@@ -484,7 +484,9 @@ class MobileApiService {
 
   // ── Restaurant settings ────────────────────────────────────────────────────
 
-  static Future<Map<String, dynamic>> getRestaurantSettings() async {
+  static Future<Map<String, dynamic>> getRestaurantSettings({
+    bool throwOnFailure = false,
+  }) async {
     try {
       final response = await _get('/mobile/restaurant-settings');
       if (response.statusCode == 200) {
@@ -492,6 +494,7 @@ class MobileApiService {
       }
       throw Exception('Status ${response.statusCode}');
     } catch (e) {
+      if (throwOnFailure) rethrow;
       debugPrint('[API] getRestaurantSettings failed ($e), using defaults');
       return {
         'serviceFeePercent': 10,

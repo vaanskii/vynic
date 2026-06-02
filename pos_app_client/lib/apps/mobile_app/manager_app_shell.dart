@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_login_screen.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/dashboard_screen.dart';
@@ -70,12 +69,11 @@ class _ManagerAppShellState extends State<ManagerAppShell>
         user: widget.user,
         onNavigateTab: _onItemTapped,
         onOpenNotifications: _openNotificationsSheet,
-        onLogout: _logout,
       ),
       LiveStatusScreen(user: widget.user),
       FinancialsScreen(user: widget.user),
       StaffPerformanceScreen(user: widget.user),
-      MobileAdminScreen(user: widget.user),
+      MobileAdminScreen(user: widget.user, onLogout: _logout),
     ];
   }
 
@@ -174,18 +172,6 @@ class _ManagerAppShellState extends State<ManagerAppShell>
     setState(() {
       _selectedIndex = index;
     });
-  }
-
-  /// Formats YYYY-MM-DD → e.g. "30 Apr 2026"
-  String _formatBusinessDate(String? raw) {
-    if (raw == null) return '';
-    try {
-      final parts = raw.split('-').map(int.parse).toList();
-      final dt = DateTime(parts[0], parts[1], parts[2]);
-      return DateFormat('d MMM yyyy').format(dt);
-    } catch (_) {
-      return raw;
-    }
   }
 
   Future<void> _logout() async {
@@ -331,176 +317,10 @@ class _ManagerAppShellState extends State<ManagerAppShell>
 
   @override
   Widget build(BuildContext context) {
-    // Tabs that use the dark "glass" design (own header, no shell app bar).
-    final isDarkTab =
-        _selectedIndex == 0 ||
-        _selectedIndex == 1 ||
-        _selectedIndex == 2 ||
-        _selectedIndex == 3;
     return Scaffold(
-      backgroundColor: isDarkTab
-          ? const Color(0xFF050508)
-          : const Color(0xFFF1F5F9),
-      extendBody: isDarkTab,
-      appBar: isDarkTab
-          ? null
-          : PreferredSize(
-              preferredSize: const Size.fromHeight(64),
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
-                ),
-                child: SafeArea(
-                  bottom: false,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // ── main bar ──────────────────────────────────────────────
-                      SizedBox(
-                        height: 56,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Row(
-                            children: [
-                              // Logo + brand name
-                              Image.asset(
-                                'assets/logo/vynic.png',
-                                height: 30,
-                                fit: BoxFit.contain,
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Vynic',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF1E3A8A),
-                                  letterSpacing: -0.3,
-                                ),
-                              ),
-                              const Spacer(),
-                              // Business date chip
-                              ValueListenableBuilder<String?>(
-                                valueListenable:
-                                    MonitoringSocketService.currentBusinessDate,
-                                builder: (_, date, __) {
-                                  final label = _formatBusinessDate(date);
-                                  if (label.isEmpty)
-                                    return const SizedBox.shrink();
-                                  return Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 5,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFEFF6FF),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        color: const Color(0xFFBFDBFE),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(
-                                          Icons.calendar_today_rounded,
-                                          size: 12,
-                                          color: Color(0xFF2563EB),
-                                        ),
-                                        const SizedBox(width: 5),
-                                        Text(
-                                          label,
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            color: Color(0xFF1D4ED8),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                              const SizedBox(width: 8),
-                              ValueListenableBuilder<int>(
-                                valueListenable: AppNotificationHistoryStore
-                                    .instance
-                                    .unreadCount,
-                                builder: (_, unread, __) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(right: 2),
-                                    child: Stack(
-                                      clipBehavior: Clip.none,
-                                      alignment: Alignment.center,
-                                      children: [
-                                        IconButton(
-                                          icon: Icon(
-                                            Icons.notifications_outlined,
-                                            color: unread > 0
-                                                ? const Color(0xFF2563EB)
-                                                : const Color(0xFF94A3B8),
-                                            size: 22,
-                                          ),
-                                          tooltip: 'შეტყობინებები',
-                                          onPressed: _openNotificationsSheet,
-                                          splashRadius: 20,
-                                        ),
-                                        if (unread > 0)
-                                          Positioned(
-                                            right: 4,
-                                            top: 6,
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 5,
-                                                    vertical: 2,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFFEF4444),
-                                                borderRadius:
-                                                    BorderRadius.circular(999),
-                                              ),
-                                              constraints: const BoxConstraints(
-                                                minWidth: 18,
-                                              ),
-                                              child: Text(
-                                                unread > 99 ? '99+' : '$unread',
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.w800,
-                                                ),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                              // Logout
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.logout_rounded,
-                                  color: Color(0xFF94A3B8),
-                                  size: 22,
-                                ),
-                                tooltip: 'გამოსვლა',
-                                onPressed: _logout,
-                                splashRadius: 20,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      // Connection issues use [ManagerToast] (gradient pills) instead of a slim banner.
-                    ],
-                  ),
-                ),
-              ),
-            ),
+      backgroundColor: const Color(0xFF050508),
+      extendBody: true,
+      appBar: null,
       body: IndexedStack(index: _selectedIndex, children: _screens),
       bottomNavigationBar: _buildFloatingNav(),
     );
@@ -587,30 +407,15 @@ class _ManagerAppShellState extends State<ManagerAppShell>
                                   : Colors.transparent,
                             ),
                           ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                item.icon,
-                                size: 23,
-                                color: isSelected
-                                    ? Colors.white
-                                    : Colors.white.withOpacity(0.5),
-                              ),
-                              if (isSelected) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  item.label,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ],
+                          child: Tooltip(
+                            message: item.label,
+                            child: Icon(
+                              item.icon,
+                              size: isSelected ? 25 : 23,
+                              color: isSelected
+                                  ? Colors.white
+                                  : Colors.white.withOpacity(0.45),
+                            ),
                           ),
                         ),
                       ),

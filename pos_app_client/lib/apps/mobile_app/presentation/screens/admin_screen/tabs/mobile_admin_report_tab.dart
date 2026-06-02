@@ -1,12 +1,5 @@
 part of '../mobile_admin_screen.dart';
 
-const _reportSurface = Color(0xFFF8FAFF);
-const _reportCard = Color(0xFFFFFFFF);
-const _reportBorder = Color(0xFFDDE7FF);
-const _reportPrimary = Color(0xFF3B82F6);
-const _reportText = Color(0xFF1E293B);
-const _reportMuted = Color(0xFF64748B);
-
 class _ReportTab extends StatefulWidget {
   @override
   State<_ReportTab> createState() => _ReportTabState();
@@ -61,27 +54,29 @@ class _ReportTabState extends State<_ReportTab>
   Widget build(BuildContext context) {
     super.build(context);
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildPeriodSelector(),
-        if (_loading)
-          const Expanded(child: Center(child: CircularProgressIndicator()))
-        else if (_error != null)
-          Expanded(child: _ErrorWidget(onRetry: _load))
-        else
-          Expanded(child: _buildReport()),
+        Expanded(
+          child: _loading
+              ? const _AdminLoading()
+              : _error != null
+                  ? _ErrorWidget(onRetry: _load)
+                  : _buildReport(),
+        ),
       ],
     );
   }
 
   Widget _buildPeriodSelector() => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
         child: Column(
           children: [
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
-                _PeriodChip(
+                _AdminFilterChip(
                   label: 'დღეს',
                   selected: _period == 'today',
                   onTap: () {
@@ -89,7 +84,7 @@ class _ReportTabState extends State<_ReportTab>
                     _load();
                   },
                 ),
-                _PeriodChip(
+                _AdminFilterChip(
                   label: 'კვირა',
                   selected: _period == 'week',
                   onTap: () {
@@ -97,7 +92,7 @@ class _ReportTabState extends State<_ReportTab>
                     _load();
                   },
                 ),
-                _PeriodChip(
+                _AdminFilterChip(
                   label: 'თვე',
                   selected: _period == 'month',
                   onTap: () {
@@ -109,40 +104,10 @@ class _ReportTabState extends State<_ReportTab>
             ),
             if (_period == 'month') ...[
               const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: _reportSurface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _reportBorder),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.calendar_month_outlined,
-                      size: 16,
-                      color: _reportPrimary,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      _monthKey,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: _reportText,
-                      ),
-                    ),
-                    const Spacer(),
-                    _ReportMonthNavButton(
-                      icon: Icons.chevron_left_rounded,
-                      onTap: _prevMonth,
-                    ),
-                    const SizedBox(width: 6),
-                    _ReportMonthNavButton(
-                      icon: Icons.chevron_right_rounded,
-                      onTap: _nextMonth,
-                    ),
-                  ],
-                ),
+              _AdminMonthNav(
+                label: _monthKey,
+                onPrev: _prevMonth,
+                onNext: _nextMonth,
               ),
             ],
           ],
@@ -174,9 +139,14 @@ class _ReportTabState extends State<_ReportTab>
     final nonFiscalRevenue = _nonFiscalFromBreakdown(paymentBreakdown);
 
     return RefreshIndicator(
+      color: AdminTheme.primary,
+      backgroundColor: AdminTheme.surface,
       onRefresh: _load,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        padding: _adminScrollPadding(context).copyWith(top: 0),
         children: [
           Row(
             children: [
@@ -259,9 +229,9 @@ class _ReportTabState extends State<_ReportTab>
               return Container(
                 margin: const EdgeInsets.only(bottom: 8),
                 decoration: BoxDecoration(
-                  color: _reportCard,
+                  color: AdminTheme.surface,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _reportBorder),
+                  border: Border.all(color: AdminTheme.border),
                 ),
                 child: ExpansionTile(
                   tilePadding: const EdgeInsets.fromLTRB(12, 2, 12, 2),
@@ -269,12 +239,12 @@ class _ReportTabState extends State<_ReportTab>
                     catName,
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: _reportText,
+                      color: AdminTheme.text,
                     ),
                   ),
                   subtitle: Text(
                     _money.format(catRevenue),
-                    style: const TextStyle(color: _reportMuted),
+                    style: TextStyle(color: AdminTheme.textMuted),
                   ),
                   childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
                   children: catItems.cast<Map<String, dynamic>>().asMap().entries.map((e) {
@@ -330,7 +300,7 @@ class _SectionTitle extends StatelessWidget {
         style: const TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.bold,
-          color: _reportPrimary,
+          color: AdminTheme.primary,
         ),
       );
 }
@@ -352,9 +322,9 @@ class _KpiCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: _reportCard,
+          color: AdminTheme.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _reportBorder),
+          border: Border.all(color: AdminTheme.border),
         ),
         child: Row(
           children: [
@@ -373,14 +343,14 @@ class _KpiCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(fontSize: 11, color: _reportMuted),
+                  style: TextStyle(fontSize: 11, color: AdminTheme.textMuted),
                 ),
                 Text(
                   value,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: _reportText,
+                    color: AdminTheme.text,
                   ),
                 ),
               ],
@@ -408,9 +378,9 @@ class _WaiterRow extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: _reportCard,
+          color: AdminTheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _reportBorder),
+          border: Border.all(color: AdminTheme.border),
         ),
         child: Row(
           children: [
@@ -422,7 +392,7 @@ class _WaiterRow extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: _reportText,
+                  color: AdminTheme.text,
                 ),
               ),
             ),
@@ -436,7 +406,7 @@ class _WaiterRow extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: _reportPrimary,
+                color: AdminTheme.primary,
               ),
             ),
           ],
@@ -464,9 +434,9 @@ class _TopItemRow extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: _reportCard,
+          color: AdminTheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _reportBorder),
+          border: Border.all(color: AdminTheme.border),
         ),
         child: Row(
           children: [
@@ -488,7 +458,7 @@ class _TopItemRow extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: _reportText,
+                  color: AdminTheme.text,
                 ),
               ),
             ),
@@ -502,71 +472,10 @@ class _TopItemRow extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: _reportPrimary,
+                color: AdminTheme.primary,
               ),
             ),
           ],
-        ),
-      );
-}
-
-class _PeriodChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _PeriodChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          decoration: BoxDecoration(
-            color: selected ? _reportPrimary : _reportCard,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: selected ? _reportPrimary : _reportBorder,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: selected ? Colors.white : _reportMuted,
-            ),
-          ),
-        ),
-      );
-}
-
-class _ReportMonthNavButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _ReportMonthNavButton({
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) => InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(9),
-        child: Ink(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: _reportCard,
-            borderRadius: BorderRadius.circular(9),
-            border: Border.all(color: _reportBorder),
-          ),
-          child: Icon(icon, size: 18, color: _reportText),
         ),
       );
 }

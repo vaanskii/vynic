@@ -20,13 +20,6 @@ class _SalesTabState extends State<_SalesTab>
     symbol: '₾',
     decimalDigits: 2,
   );
-  static const _surface = Color(0xFFF8FAFF);
-  static const _card = Color(0xFFFFFFFF);
-  static const _border = Color(0xFFDDE7FF);
-  static const _primary = Color(0xFF3B82F6);
-  static const _text = Color(0xFF1E293B);
-  static const _muted = Color(0xFF64748B);
-
   @override
   void initState() {
     super.initState();
@@ -56,67 +49,52 @@ class _SalesTabState extends State<_SalesTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_loading) return const _AdminLoading();
     if (_error != null) return _ErrorWidget(onRetry: _load);
     final monthDt = DateTime.tryParse('$_monthKey-01') ?? DateTime.now();
     final monthLabel = DateFormat('MMMM yyyy').format(monthDt);
 
+    final monthTotal = _rows.fold<double>(
+      0,
+      (s, r) => s + ((r['totalRevenue'] as num?)?.toDouble() ?? 0),
+    );
+
     return RefreshIndicator(
+      color: AdminTheme.primary,
+      backgroundColor: AdminTheme.surface,
       onRefresh: _load,
       child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        padding: _adminScrollPadding(context),
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: _surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: _border),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.calendar_month_outlined,
-                  size: 18,
-                  color: _primary,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'გაყიდვები • $monthLabel',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: _text,
-                    ),
-                  ),
-                ),
-                _MonthNavButton(
-                  icon: Icons.chevron_left_rounded,
-                  onTap: _prevMonth,
-                ),
-                const SizedBox(width: 6),
-                _MonthNavButton(
-                  icon: Icons.chevron_right_rounded,
-                  onTap: _nextMonth,
-                ),
-              ],
-            ),
+          _AdminMonthNav(
+            label: 'გაყიდვები • $monthLabel',
+            onPrev: _prevMonth,
+            onNext: _nextMonth,
           ),
+          if (_rows.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            _AdminStatCard(
+              label: 'თვის შემოსავალი',
+              value: _money.format(monthTotal),
+              icon: Icons.summarize_rounded,
+              accent: AdminTheme.good,
+              subtitle: '${_rows.length} დღე',
+            ),
+          ],
           const SizedBox(height: 10),
           if (_rows.isEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 14),
-              decoration: BoxDecoration(
-                color: _card,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: _border),
-              ),
-              child: const Center(
+            _AdminPanel(
+              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 14),
+              child: Center(
                 child: Text(
                   'ამ თვეში გაყიდვები არ არის',
-                  style: TextStyle(color: _muted, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    color: AdminTheme.textMuted,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             )
@@ -160,25 +138,24 @@ class _SalesTabState extends State<_SalesTab>
     final entries = breakdown.entries.toList()
       ..sort((a, b) => (b.value as num).compareTo(a.value as num));
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: _card,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _border),
-      ),
-      child: ExpansionTile(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: _AdminPanel(
+        padding: EdgeInsets.zero,
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
         tilePadding: const EdgeInsets.fromLTRB(14, 2, 14, 2),
         childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-        iconColor: _primary,
-        collapsedIconColor: const Color(0xFF94A3B8),
+        iconColor: AdminTheme.primary,
+        collapsedIconColor: AdminTheme.textDim,
         title: Text(
           date,
-          style: const TextStyle(fontWeight: FontWeight.w700, color: _text),
+          style: const TextStyle(fontWeight: FontWeight.w700, color: AdminTheme.text),
         ),
         subtitle: Text(
           'დახურული $closedOrders / გაუქმებული $cancelledOrders / სულ $totalOrders • ${_money.format(totalRevenue)}\nხარჯი: ${_money.format(totalExpenses)} • მოგება: ${_money.format(profit)}\nარაფისკალური დახურული: ${_money.format(nonFiscalAmount)}',
-          style: const TextStyle(fontSize: 12, color: _muted),
+          style: TextStyle(fontSize: 12, color: AdminTheme.textMuted),
         ),
         children: [
           if (nonFiscalAmount > 0)
@@ -212,13 +189,13 @@ class _SalesTabState extends State<_SalesTab>
               ),
             ),
           if (entries.isEmpty)
-            const Padding(
-              padding: EdgeInsets.only(bottom: 4),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'გადახდის დეტალი არ არის',
-                  style: TextStyle(color: _muted),
+                  style: TextStyle(color: AdminTheme.textMuted),
                 ),
               ),
             )
@@ -231,23 +208,23 @@ class _SalesTabState extends State<_SalesTab>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
-                  color: _surface,
+                  color: AdminTheme.surface,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: _border),
+                  border: Border.all(color: AdminTheme.border),
                 ),
                 child: Row(
                   children: [
                     Expanded(
                       child: Text(
                         _paymentLabel(key),
-                        style: const TextStyle(color: _text),
+                        style: const TextStyle(color: AdminTheme.text),
                       ),
                     ),
                     Text(
                       _money.format(amount),
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
-                        color: _primary,
+                        color: AdminTheme.primary,
                       ),
                     ),
                   ],
@@ -261,7 +238,7 @@ class _SalesTabState extends State<_SalesTab>
               child: Text(
                 'დახურული მაგიდები',
                 style: TextStyle(
-                  color: _text,
+                  color: AdminTheme.text,
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
                 ),
@@ -273,6 +250,8 @@ class _SalesTabState extends State<_SalesTab>
             ),
           ],
         ],
+          ),
+        ),
       ),
     );
   }
@@ -308,9 +287,9 @@ class _SalesTabState extends State<_SalesTab>
         margin: const EdgeInsets.only(bottom: 6),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
         decoration: BoxDecoration(
-          color: _surface,
+          color: AdminTheme.surface,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: _border),
+          border: Border.all(color: AdminTheme.border),
         ),
         child: Row(
           children: [
@@ -318,7 +297,7 @@ class _SalesTabState extends State<_SalesTab>
               child: Text(
                 title,
                 style: const TextStyle(
-                  color: _text,
+                  color: AdminTheme.text,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -343,7 +322,7 @@ class _SalesTabState extends State<_SalesTab>
               _money.format(totalAmount),
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
-                color: _primary,
+                color: AdminTheme.primary,
               ),
             ),
             const SizedBox(width: 4),
@@ -441,8 +420,8 @@ class _SalesTabState extends State<_SalesTab>
         return Container(
           height: MediaQuery.of(ctx).size.height * 0.72,
           decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+            color: AdminTheme.surfaceElevated,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
           ),
           child: Column(
             children: [
@@ -465,7 +444,7 @@ class _SalesTabState extends State<_SalesTab>
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: _text,
+                          color: AdminTheme.text,
                         ),
                       ),
                     ),
@@ -474,7 +453,7 @@ class _SalesTabState extends State<_SalesTab>
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: _primary,
+                        color: AdminTheme.primary,
                       ),
                     ),
                   ],
@@ -483,10 +462,10 @@ class _SalesTabState extends State<_SalesTab>
               const SizedBox(height: 10),
               Expanded(
                 child: items.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
                           'ამ გაყიდვაზე პოზიციები არ მოიძებნა',
-                          style: TextStyle(color: _muted),
+                          style: TextStyle(color: AdminTheme.textMuted),
                         ),
                       )
                     : ListView.builder(
@@ -507,9 +486,9 @@ class _SalesTabState extends State<_SalesTab>
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: _surface,
+                              color: AdminTheme.surface,
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: _border),
+                              border: Border.all(color: AdminTheme.border),
                             ),
                             child: Row(
                               children: [
@@ -517,15 +496,15 @@ class _SalesTabState extends State<_SalesTab>
                                   child: Text(
                                     name.isNotEmpty ? name : 'უცნობი პოზიცია',
                                     style: const TextStyle(
-                                      color: _text,
+                                      color: AdminTheme.text,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ),
                                 Text(
                                   '$qty x ${_money.format(unitPrice)}',
-                                  style: const TextStyle(
-                                    color: _muted,
+                                  style: TextStyle(
+                                    color: AdminTheme.textMuted,
                                     fontSize: 12,
                                   ),
                                 ),
@@ -533,7 +512,7 @@ class _SalesTabState extends State<_SalesTab>
                                 Text(
                                   _money.format(total),
                                   style: const TextStyle(
-                                    color: _primary,
+                                    color: AdminTheme.primary,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
@@ -549,30 +528,4 @@ class _SalesTabState extends State<_SalesTab>
       },
     );
   }
-}
-
-class _MonthNavButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _MonthNavButton({
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) => InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(9),
-        child: Ink(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: _SalesTabState._card,
-            borderRadius: BorderRadius.circular(9),
-            border: Border.all(color: _SalesTabState._border),
-          ),
-          child: Icon(icon, size: 18, color: _SalesTabState._text),
-        ),
-      );
 }

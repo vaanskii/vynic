@@ -840,11 +840,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _assignReservationToTable(Reservation reservation) async {
-    if (!widget.user.isAdmin) {
+    if (!widget.user.canManageReservationsOnHome) {
       unawaited(
         showPosToast(
           context: context,
-          message: 'სუფრაზე გადაყვანა მხოლოდ ადმინს შეუძლია.',
+          message:
+              'სუფრაზე გადაყვანა მხოლოდ მენეჯერს ან ზედამხედველს შეუძლია.',
           style: PosToastStyle.info,
         ),
       );

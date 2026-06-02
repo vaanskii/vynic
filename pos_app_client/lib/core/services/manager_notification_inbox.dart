@@ -23,6 +23,15 @@ class ManagerNotificationInbox {
     return '$d/$m/$y $hh:$mm';
   }
 
+  static bool _isDecreaseSummary(String summary) {
+    final m = RegExp(r'(\d+)\s*→\s*(\d+)').firstMatch(summary);
+    if (m == null) return false;
+    final prev = int.tryParse(m.group(1) ?? '');
+    final next = int.tryParse(m.group(2) ?? '');
+    if (prev == null || next == null) return false;
+    return next < prev;
+  }
+
   /// Meta stored on each entry so notification tap can open [MobileOrderDetailScreen].
   static Map<String, dynamic> orderNavMeta({
     required int posOrderId,
@@ -119,6 +128,7 @@ class ManagerNotificationInbox {
           final isPos = src == 'pos_sync';
           final touchesRaw = payloadMap?['touches'];
           if (touchesRaw is List && touchesRaw.isNotEmpty) {
+            final handledOrderIds = <int>{};
             for (final t in touchesRaw) {
               if (t is! Map) continue;
               final tm = _stringKeyedMap(t);
@@ -137,6 +147,12 @@ class ManagerNotificationInbox {
                   ? 'მაგიდა: $tableLabel — '
                   : '';
               final summary = (tm['changeSummary'] ?? '').toString().trim();
+              final kind = (tm['changeKind'] ?? '').toString().trim().toLowerCase();
+              // Requested behavior: ignore waiter increases; keep decreases + service fee only.
+              final shouldNotify = kind == 'service_fee' || _isDecreaseSummary(summary);
+              if (!shouldNotify) continue;
+              if (handledOrderIds.contains(id)) continue;
+              handledOrderIds.add(id);
               final isServiceFeeChange =
                   tm['changeKind']?.toString() == 'service_fee' ||
                   summary.contains('სერვისის საფასური');
@@ -219,6 +235,8 @@ class ManagerNotificationInbox {
           break;
         case 'tables_bulk_touch':
           final tableSrc = (payloadMap?['source'] ?? 'pos_sync').toString();
+          // Avoid duplicate table alerts with orders_bulk_touch during POS sync.
+          if (tableSrc == 'pos_sync') break;
           final tableTouchesRaw = payloadMap?['touches'];
           if (tableTouchesRaw is List && tableTouchesRaw.isNotEmpty) {
             for (final t in tableTouchesRaw) {
@@ -348,16 +366,8 @@ class ManagerNotificationInbox {
           );
           break;
         case 'table_updated':
-          if ((payloadMap?['source'] ?? '').toString() == 'pos_sync') {
-            break;
-          }
-          _add(
-            dedupeId: nid,
-            title: 'მაგიდები',
-            message: 'მაგიდების სტატუსი განახლდა',
-            source: source,
-            meta: payloadMap,
-          );
+          // Too noisy and often duplicated with order/touch events.
+          // Table-open notifications are surfaced via order_created / tables_bulk_touch.
           break;
         case 'data_updated':
           final inner = payloadMap?['type']?.toString();

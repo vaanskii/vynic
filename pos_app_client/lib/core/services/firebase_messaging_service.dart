@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:vynic/core/services/local_notifications_service.dart';
 import 'package:vynic/core/services/mobile_api_service.dart';
@@ -92,14 +94,14 @@ class FirebaseMessagingService {
   void _onForegroundMessage(RemoteMessage message) {
     print("foreground message received: ${message.data.toString()}");
 
-    final notificationData = message.notification;
-    if (notificationData != null) {
-      _localNotificationsService?.showNotification(
-        notificationData.title,
-        notificationData.body,
-        message.data.toString(),
-      );
-    }
+    _showNotificationFromMessage(
+      message,
+      show: (title, body, payload) async {
+        final service = _localNotificationsService;
+        if (service == null) return;
+        await service.showNotification(title, body, payload);
+      },
+    );
   }
 
   //Handle notification taps when the app is opened from background or terminated state
@@ -111,4 +113,80 @@ class FirebaseMessagingService {
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("background message received: ${message.data.toString()}");
+  final localNotifications = LocalNotificationsService.instance();
+  await localNotifications.init();
+  await _showNotificationFromMessage(
+    message,
+    show: (title, body, payload) =>
+        localNotifications.showNotification(title, body, payload),
+  );
+}
+
+Future<void> _showNotificationFromMessage(
+  RemoteMessage message, {
+  required Future<void> Function(String? title, String? body, String? payload)
+  show,
+}) async {
+  final notification = message.notification;
+  final title = notification?.title ?? _titleFromData(message.data);
+  final body = notification?.body ?? _bodyFromData(message.data);
+  if ((title == null || title.isEmpty) || (body == null || body.isEmpty)) {
+    return;
+  }
+  await show(title, body, jsonEncode(message.data));
+}
+
+String? _titleFromData(Map<String, dynamic> data) {
+  final envelopeRaw = data['envelope'];
+  if (envelopeRaw is String && envelopeRaw.isNotEmpty) {
+    try {
+      final decoded = jsonDecode(envelopeRaw);
+      if (decoded is Map<String, dynamic>) {
+        final eventType = decoded['type']?.toString();
+        if (eventType == 'orders_bulk_touch') return 'სალარო';
+        if (eventType == 'order_updated') return 'შეკვეთა';
+        if (eventType == 'order_created') return 'შეკვეთა';
+        if (eventType == 'order_cancelled') return 'შეკვეთა';
+        if (eventType == 'tables_bulk_touch') return 'მაგიდები';
+        if (eventType == 'table_updated') return null;
+        if (eventType == 'data_updated') return null;
+      }
+    } catch (_) {}
+  }
+  final eventType = data['eventType']?.toString();
+  if (eventType == 'orders_bulk_touch') return 'სალარო';
+  if (eventType == 'order_updated') return 'შეკვეთა';
+  if (eventType == 'order_created') return 'შეკვეთა';
+  if (eventType == 'order_cancelled') return 'შეკვეთა';
+  if (eventType == 'tables_bulk_touch') return 'მაგიდები';
+  if (eventType == 'table_updated' || eventType == 'data_updated') return null;
+  return null;
+}
+
+String? _bodyFromData(Map<String, dynamic> data) {
+  final envelopeRaw = data['envelope'];
+  if (envelopeRaw is String && envelopeRaw.isNotEmpty) {
+    try {
+      final decoded = jsonDecode(envelopeRaw);
+      if (decoded is Map<String, dynamic>) {
+        final payload = decoded['payload'];
+        if (payload is Map<String, dynamic>) {
+          final touches = payload['touches'];
+          if (touches is List && touches.isNotEmpty) {
+            final first = touches.first;
+            if (first is Map<String, dynamic>) {
+              final orderId = first['posOrderId']?.toString();
+              final summary = first['changeSummary']?.toString() ?? '';
+              if (orderId != null && orderId.isNotEmpty) {
+                return summary.isNotEmpty
+                    ? 'შეკვეთა #$orderId — $summary'
+                    : 'შეკვეთა #$orderId განახლდა';
+              }
+            }
+          }
+        }
+      }
+    } catch (_) {}
+  }
+  return null;
 }

@@ -71,6 +71,15 @@ class AppNotificationHistoryStore {
     if (entries.value.any((e) => e.id == id)) {
       return false;
     }
+    final duplicateByContent = entries.value.any(
+      (e) =>
+          e.title == (trimmedTitle.isEmpty ? 'შეტყობინება' : trimmedTitle) &&
+          e.message == trimmedMessage &&
+          DateTime.now().difference(e.at).inSeconds <= 8,
+    );
+    if (duplicateByContent) {
+      return false;
+    }
 
     final entry = AppNotificationEntry(
       id: id,

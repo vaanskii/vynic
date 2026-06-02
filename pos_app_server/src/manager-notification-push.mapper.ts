@@ -7,6 +7,31 @@ function asRecord(p: unknown): Record<string, unknown> | null {
   return null;
 }
 
+function asString(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  return '';
+}
+
+function asOrderId(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
+function isDecreaseSummary(summary: string): boolean {
+  const match = summary.match(/(\d+)\s*→\s*(\d+)/);
+  if (!match) return false;
+  const prev = Number(match[1]);
+  const next = Number(match[2]);
+  return Number.isFinite(prev) && Number.isFinite(next) && next < prev;
+}
+
 /**
  * Human-readable copy for FCM / DB when mirroring manager notification panel rules.
  * Returns null when this WS event should not create a stored manager notification.
@@ -19,43 +44,61 @@ export function buildManagerPushCopy(
 
   switch (type) {
     case 'takeaway_created': {
-      const id = p?.posOrderId;
+      const id = asOrderId(p?.posOrderId);
       return {
         title: 'გატანა',
         body:
-          id !== undefined && id !== null
+          id !== null
             ? `დაემატა შეკვეთა #${id}`
             : 'დაემატა შეკვეთა',
       };
     }
     case 'takeaway_deleted': {
-      const id = p?.posOrderId;
+      const id = asOrderId(p?.posOrderId);
       return {
         title: 'გატანა',
         body:
-          id !== undefined && id !== null
+          id !== null
             ? `შეკვეთა წაიშალა #${id}`
             : 'შეკვეთა წაიშალა',
       };
     }
-    case 'orders_bulk_touch':
+    case 'orders_bulk_touch': {
+      const touchesRaw = p?.touches;
+      const touches = Array.isArray(touchesRaw)
+        ? touchesRaw.filter(
+            (t): t is Record<string, unknown> =>
+              Boolean(t) && typeof t === 'object' && !Array.isArray(t),
+          )
+        : [];
+      const meaningful = touches.find((t) => {
+        const kind = asString(t.changeKind).trim().toLowerCase();
+        if (kind === 'service_fee') return true;
+        const summary = asString(t.changeSummary).trim();
+        if (!summary) return false;
+        return isDecreaseSummary(summary);
+      });
+      if (!meaningful) return null;
+      const orderId = asOrderId(meaningful.posOrderId);
+      const summary = asString(meaningful.changeSummary).trim();
+      const bodyCore = orderId !== null ? `შეკვეთა #${orderId}` : 'შეკვეთა';
       return {
         title: 'სალარო',
-        body: 'შეკვეთა განახლდა (მენიუ / რაოდენობა)',
+        body: summary.length > 0
+          ? `${bodyCore} — ${summary}`
+          : `${bodyCore} განახლდა`,
       };
+    }
     case 'tables_bulk_touch':
-      return {
-        title: 'მაგიდები',
-        body: 'მაგიდის სტატუსი შეიცვალა',
-      };
+      // POS often emits this together with orders_bulk_touch; keep mobile panel/push single-source.
+      return null;
     case 'order_updated': {
-      const src = String(p?.source ?? '');
+      const src = asString(p?.source);
       const isPos = src === 'pos_sync';
-      const singleId = p?.posOrderId ?? (Array.isArray(p?.posOrderIds) ? null : null);
-      const ids = Array.isArray(p?.posOrderIds)
-        ? (p!.posOrderIds as unknown[])
-            .map((e) => (typeof e === 'number' ? e : Number.parseInt(String(e), 10)))
-            .filter((n) => Number.isFinite(n))
+      const singleId = asOrderId(p?.posOrderId);
+      const idsRaw = p?.posOrderIds;
+      const ids = Array.isArray(idsRaw)
+        ? idsRaw.map((e) => asOrderId(e)).filter((id): id is number => id !== null)
         : [];
       if (ids.length > 1) {
         return {
@@ -63,8 +106,8 @@ export function buildManagerPushCopy(
           body: `განახლდა ${ids.length} შეკვეთა`,
         };
       }
-      const id = singleId ?? ids[0];
-      if (id === undefined || id === null || Number.isNaN(Number(id))) {
+      const id = singleId ?? ids[0] ?? null;
+      if (id === null) {
         return {
           title: isPos ? 'სალარო' : 'მენეჯერი',
           body: 'შეკვეთა განახლდა',
@@ -78,35 +121,28 @@ export function buildManagerPushCopy(
       };
     }
     case 'order_cancelled': {
-      const id = p?.posOrderId;
+      const id = asOrderId(p?.posOrderId);
       return {
         title: 'შეკვეთა',
-        body:
-          id !== undefined && id !== null ? `გაუქმდა #${id}` : 'გაუქმდა შეკვეთა',
+        body: id !== null ? `გაუქმდა #${id}` : 'გაუქმდა შეკვეთა',
       };
     }
     case 'order_created': {
-      const id = p?.posOrderId;
+      const id = asOrderId(p?.posOrderId);
       return {
         title: 'შეკვეთა',
-        body:
-          id !== undefined && id !== null
-            ? `შეიქმნა ახალი შეკვეთა #${id}`
-            : 'შეიქმნა ახალი შეკვეთა',
+        body: id !== null ? `შეიქმნა ახალი შეკვეთა #${id}` : 'შეიქმნა ახალი შეკვეთა',
       };
     }
     case 'table_updated':
-      return {
-        title: 'მაგიდები',
-        body: 'მაგიდების სტატუსი განახლდა',
-      };
+      return null;
     case 'day_closed':
       return {
         title: 'დღის დახურვა',
         body: 'ბიზნეს დღის სტატუსი შეიცვალა',
       };
     case 'data_updated': {
-      const inner = String(p?.type ?? '');
+      const inner = asString(p?.type);
       switch (inner) {
         case 'reservations':
           return {

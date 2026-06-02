@@ -5,6 +5,8 @@ import {
   Logger,
 } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
+import { getApps, initializeApp, applicationDefault } from 'firebase-admin/app';
+import { getMessaging } from 'firebase-admin/messaging';
 import { PrismaService } from './prisma.service';
 import { PresenceService } from './presence.service';
 import { MonitoringGateway } from './monitoring.gateway';
@@ -14,6 +16,8 @@ import type { BroadcastOptions, WsEvent, WsEventType } from './ws-events';
 @Injectable()
 export class HybridNotificationService {
   private readonly logger = new Logger(HybridNotificationService.name);
+  private _fcmInitialized = false;
+  private _fcmEnabled = false;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -62,11 +66,10 @@ export class HybridNotificationService {
         });
 
         const online = this.presence.getOnlineStaffUsernames();
-
         const deliveryRows = managers.map((m) => ({
           notificationId,
           staffUsername: m.username,
-          channel: 'SOCKET',
+          channel: online.has(m.username) ? 'SOCKET' : 'FCM',
         }));
 
         if (deliveryRows.length > 0) {
@@ -75,8 +78,14 @@ export class HybridNotificationService {
             skipDuplicates: true,
           });
         }
-
-        void online; // retained for possible future routing logic
+        await this.sendFcmToOfflineManagers({
+          notificationId,
+          envelope,
+          title: pushCopy.title,
+          body: pushCopy.body,
+          managerUsernames: managers.map((m) => m.username),
+          onlineUsernames: online,
+        });
       }
     } catch (e) {
       this.logger.warn(
@@ -85,5 +94,100 @@ export class HybridNotificationService {
     }
 
     this.gateway.emitEnvelope(envelope, options);
+  }
+
+  private ensureFcmInitialized(): boolean {
+    if (this._fcmInitialized) return this._fcmEnabled;
+    this._fcmInitialized = true;
+    try {
+      if (getApps().length === 0) {
+        initializeApp({
+          credential: applicationDefault(),
+        });
+      }
+      this._fcmEnabled = true;
+      this.logger.log('Firebase Admin Messaging initialized.');
+    } catch (error) {
+      this._fcmEnabled = false;
+      this.logger.warn(
+        `FCM disabled (missing credentials): ${(error as Error).message}`,
+      );
+    }
+    return this._fcmEnabled;
+  }
+
+  private async sendFcmToOfflineManagers(params: {
+    notificationId: string;
+    envelope: WsEvent & { notificationId: string };
+    title: string;
+    body: string;
+    managerUsernames: string[];
+    onlineUsernames: Set<string>;
+  }): Promise<void> {
+    if (!this.ensureFcmInitialized()) return;
+
+    const offlineManagers = params.managerUsernames.filter(
+      (u) => !params.onlineUsernames.has(u),
+    );
+    if (offlineManagers.length === 0) return;
+
+    const devices = await this.prisma.pushDevice.findMany({
+      where: { staffUsername: { in: offlineManagers } },
+      select: { fcmToken: true, staffUsername: true },
+    });
+    if (devices.length === 0) return;
+
+    const dedupedTokens = Array.from(
+      new Set(
+        devices
+          .map((d) => d.fcmToken?.trim())
+          .filter((t): t is string => Boolean(t)),
+      ),
+    );
+    if (dedupedTokens.length === 0) return;
+
+    const response = await getMessaging().sendEachForMulticast({
+      tokens: dedupedTokens,
+      data: {
+        title: params.title,
+        body: params.body,
+        notificationId: params.notificationId,
+        envelope: JSON.stringify(params.envelope),
+        eventType: params.envelope.type,
+        timestamp: params.envelope.timestamp,
+      },
+      android: {
+        priority: 'high',
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: 'default',
+          },
+        },
+      },
+    });
+
+    if (response.failureCount > 0) {
+      this.logger.warn(
+        `FCM send partial failure: ${response.failureCount}/${dedupedTokens.length}`,
+      );
+      const invalidTokens: string[] = [];
+      response.responses.forEach((r, index) => {
+        if (r.success) return;
+        const code = r.error?.code ?? '';
+        if (
+          code === 'messaging/registration-token-not-registered' ||
+          code === 'messaging/invalid-registration-token'
+        ) {
+          invalidTokens.push(dedupedTokens[index]);
+        }
+      });
+      if (invalidTokens.length > 0) {
+        await this.prisma.pushDevice.deleteMany({
+          where: { fcmToken: { in: invalidTokens } },
+        });
+      }
+    }
   }
 }

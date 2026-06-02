@@ -2,6 +2,10 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class LocalNotificationsService {
   LocalNotificationsService._internal();
+  static const String androidChannelId = 'vynic_manager_notifications';
+  static const String androidChannelName = 'Vynic Manager Notifications';
+  static const String androidChannelDescription =
+      'Order and manager updates from Vynic';
 
   static final LocalNotificationsService _instance =
       LocalNotificationsService._internal();
@@ -21,15 +25,17 @@ class LocalNotificationsService {
   );
 
   final _androidChannel = const AndroidNotificationChannel(
-    'channel_id',
-    'channel_name',
-    description: 'Android channel for local notifications',
+    androidChannelId,
+    androidChannelName,
+    description: androidChannelDescription,
     importance: Importance.max,
   );
 
   bool _isFlutterLocalNotificationsInitialized = false;
 
   int _notificationIdCounter = 0;
+  String? _lastNotificationFingerprint;
+  DateTime? _lastNotificationAt;
 
   Future<void> init() async {
     // check if already initialized
@@ -65,6 +71,19 @@ class LocalNotificationsService {
     String? body,
     String? payload,
   ) async {
+    final normalizedTitle = (title ?? '').trim();
+    final normalizedBody = (body ?? '').trim();
+    if (normalizedTitle.isEmpty || normalizedBody.isEmpty) return;
+    final fp = '$normalizedTitle|$normalizedBody';
+    final now = DateTime.now();
+    if (_lastNotificationFingerprint == fp &&
+        _lastNotificationAt != null &&
+        now.difference(_lastNotificationAt!).inSeconds <= 8) {
+      return;
+    }
+    _lastNotificationFingerprint = fp;
+    _lastNotificationAt = now;
+
     AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       _androidChannel.id,
       _androidChannel.name,
@@ -82,8 +101,8 @@ class LocalNotificationsService {
 
     await _flutterLocalNotificationsPlugin.show(
       id: _notificationIdCounter++,
-      title: title,
-      body: body,
+      title: normalizedTitle,
+      body: normalizedBody,
       notificationDetails: notificationDetails,
       payload: payload,
     );

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:vynic/core/services/local_notifications_service.dart';
+import 'package:vynic/core/services/manager_notification_inbox.dart';
 import 'package:vynic/core/services/mobile_api_service.dart';
 
 class FirebaseMessagingService {
@@ -127,6 +128,31 @@ Future<void> _showNotificationFromMessage(
   required Future<void> Function(String? title, String? body, String? payload)
   show,
 }) async {
+  final envelopeRaw = message.data['envelope'];
+  if (envelopeRaw is String && envelopeRaw.isNotEmpty) {
+    try {
+      final decoded = jsonDecode(envelopeRaw);
+      if (decoded is Map<String, dynamic>) {
+        ManagerNotificationInbox.ingestWsEnvelope(decoded, source: 'fcm');
+        final title =
+            message.data['title']?.toString() ??
+            message.notification?.title ??
+            _titleFromData(message.data);
+        final body =
+            message.data['body']?.toString() ??
+            message.notification?.body ??
+            _bodyFromData(message.data);
+        if (title != null &&
+            title.isNotEmpty &&
+            body != null &&
+            body.isNotEmpty) {
+          await show(title, body, jsonEncode(message.data));
+        }
+        return;
+      }
+    } catch (_) {}
+  }
+
   final notification = message.notification;
   final title = notification?.title ?? _titleFromData(message.data);
   final body = notification?.body ?? _bodyFromData(message.data);
@@ -143,7 +169,22 @@ String? _titleFromData(Map<String, dynamic> data) {
       final decoded = jsonDecode(envelopeRaw);
       if (decoded is Map<String, dynamic>) {
         final eventType = decoded['type']?.toString();
-        if (eventType == 'orders_bulk_touch') return 'სალარო';
+        if (eventType == 'orders_bulk_touch') {
+          final payload = decoded['payload'];
+          if (payload is Map<String, dynamic>) {
+            final touches = payload['touches'];
+            if (touches is List &&
+                touches.isNotEmpty &&
+                touches.first is Map<String, dynamic>) {
+              final kind = (touches.first['changeKind'] ?? '')
+                  .toString()
+                  .trim()
+                  .toLowerCase();
+              if (kind == 'service_fee') return 'მაგიდები';
+            }
+          }
+          return 'სალარო';
+        }
         if (eventType == 'order_updated') return 'შეკვეთა';
         if (eventType == 'order_created') return 'შეკვეთა';
         if (eventType == 'order_cancelled') return 'შეკვეთა';
@@ -154,7 +195,11 @@ String? _titleFromData(Map<String, dynamic> data) {
     } catch (_) {}
   }
   final eventType = data['eventType']?.toString();
-  if (eventType == 'orders_bulk_touch') return 'სალარო';
+  if (eventType == 'orders_bulk_touch') {
+    final body = data['body']?.toString() ?? '';
+    if (body.contains('სერვისის საფასური')) return 'მაგიდები';
+    return 'სალარო';
+  }
   if (eventType == 'order_updated') return 'შეკვეთა';
   if (eventType == 'order_created') return 'შეკვეთა';
   if (eventType == 'order_cancelled') return 'შეკვეთა';
@@ -176,10 +221,25 @@ String? _bodyFromData(Map<String, dynamic> data) {
             final first = touches.first;
             if (first is Map<String, dynamic>) {
               final orderId = first['posOrderId']?.toString();
+              final kind =
+                  (first['changeKind'] ?? '').toString().trim().toLowerCase();
+              final tableLabel = (first['tableLabel'] ?? '').toString().trim();
               final summary = first['changeSummary']?.toString() ?? '';
+              final orderIdInt = int.tryParse(orderId ?? '');
+              if (kind == 'service_fee' && orderIdInt != null) {
+                return ManagerNotificationInbox.formatServiceFeeMessage(
+                  orderId: orderIdInt,
+                  tableLabel: tableLabel,
+                  summary: summary,
+                );
+              }
               if (orderId != null && orderId.isNotEmpty) {
+                final normalized =
+                    ManagerNotificationInbox.normalizeServiceFeeSummary(
+                  summary,
+                );
                 return summary.isNotEmpty
-                    ? 'შეკვეთა #$orderId — $summary'
+                    ? 'შეკვეთა #$orderId — $normalized'
                     : 'შეკვეთა #$orderId განახლდა';
               }
             }

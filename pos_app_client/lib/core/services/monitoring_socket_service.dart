@@ -110,7 +110,7 @@ class MonitoringSocketService {
       updateCounter.value++;
     });
 
-    _socket!.on('data_updated', _handleEvent);
+    _socket!.on('data_updated', _handleDataUpdated);
     _socket!.on('order_created', _handleEvent);
     _socket!.on('order_updated', _handleEvent);
     _socket!.on('order_cancelled', _handleEvent);
@@ -146,6 +146,40 @@ class MonitoringSocketService {
 
   // ── Event handler ──────────────────────────────────────────────────────────
 
+  /// Server mirrors typed events on `data_updated`; only ingest notifications once.
+  static void _handleDataUpdated(dynamic data) {
+    if (data is Map) {
+      final innerType = data['type']?.toString() ?? '';
+      if (innerType != 'data_updated') {
+        _applyEventSideEffects(data);
+        debugPrint('[WS] data_updated mirror ($innerType) — UI refresh only');
+        updateCounter.value++;
+        return;
+      }
+    }
+    _handleEvent(data);
+  }
+
+  static void _applyEventSideEffects(Map<dynamic, dynamic> data) {
+    final ts = data['timestamp'] as String?;
+    final payload = data['payload'];
+    if (payload is Map && payload['tables'] is List) {
+      final tables = (payload['tables'] as List)
+          .whereType<Map<String, dynamic>>()
+          .toList();
+      MobileCacheService.applyTableDiff(tables);
+    }
+    if (ts != null) {
+      MobileCacheService.setLastServerTime(ts);
+    }
+    if (payload is Map && payload['type']?.toString() == 'reservations') {
+      final resDate = payload['reservationDate']?.toString().trim();
+      if (resDate != null && resDate.isNotEmpty) {
+        lastReservationDate.value = resDate;
+      }
+    }
+  }
+
   static void _handleEvent(dynamic data) {
     // Deduplication guard: skip only exact same event signature.
     // Using only timestamp can drop valid rapid events emitted in the same ms.
@@ -160,27 +194,7 @@ class MonitoringSocketService {
       }
       _lastEventSignature = signature;
 
-      // Update cache diff if table data is included
-      final payload = data['payload'];
-      if (payload is Map && payload['tables'] is List) {
-        final tables = (payload['tables'] as List)
-            .whereType<Map<String, dynamic>>()
-            .toList();
-        MobileCacheService.applyTableDiff(tables);
-      }
-
-      // Update lastServerTime for diff sync
-      if (ts != null) {
-        MobileCacheService.setLastServerTime(ts);
-      }
-
-      // Surface the reservation date so the reservations screen can jump to it.
-      if (payload is Map && payload['type']?.toString() == 'reservations') {
-        final resDate = payload['reservationDate']?.toString().trim();
-        if (resDate != null && resDate.isNotEmpty) {
-          lastReservationDate.value = resDate;
-        }
-      }
+      _applyEventSideEffects(data);
 
       ManagerNotificationInbox.ingestWsEnvelope(
         _stringKeyedMap(data),

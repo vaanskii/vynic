@@ -36,6 +36,7 @@ class LocalNotificationsService {
   int _notificationIdCounter = 0;
   String? _lastNotificationFingerprint;
   DateTime? _lastNotificationAt;
+  final Map<String, DateTime> _serviceFeePushAtByKey = {};
 
   Future<void> init() async {
     // check if already initialized
@@ -74,8 +75,16 @@ class LocalNotificationsService {
     final normalizedTitle = (title ?? '').trim();
     final normalizedBody = (body ?? '').trim();
     if (normalizedTitle.isEmpty || normalizedBody.isEmpty) return;
-    final fp = '$normalizedTitle|$normalizedBody';
     final now = DateTime.now();
+    final serviceFeeKey = _serviceFeeDedupeKey(normalizedTitle, normalizedBody);
+    if (serviceFeeKey != null) {
+      final last = _serviceFeePushAtByKey[serviceFeeKey];
+      if (last != null && now.difference(last).inSeconds <= 10) {
+        return;
+      }
+      _serviceFeePushAtByKey[serviceFeeKey] = now;
+    }
+    final fp = '$normalizedTitle|$normalizedBody';
     if (_lastNotificationFingerprint == fp &&
         _lastNotificationAt != null &&
         now.difference(_lastNotificationAt!).inSeconds <= 8) {
@@ -106,5 +115,20 @@ class LocalNotificationsService {
       notificationDetails: notificationDetails,
       payload: payload,
     );
+  }
+
+  /// Collapse rapid service-fee on/off pushes for the same table/order.
+  String? _serviceFeeDedupeKey(String title, String body) {
+    if (title != 'მაგიდები' && title != 'სალარო') return null;
+    if (!body.contains('სერვისის საფასური')) return null;
+    final tableMatch = RegExp(r'მაგიდა\s+(\S+)').firstMatch(body);
+    if (tableMatch != null) {
+      return 'service_fee:table:${tableMatch.group(1)}';
+    }
+    final orderMatch = RegExp(r'#(\d+)').firstMatch(body);
+    if (orderMatch != null) {
+      return 'service_fee:order:${orderMatch.group(1)}';
+    }
+    return 'service_fee:generic';
   }
 }

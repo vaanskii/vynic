@@ -177,6 +177,18 @@ interface SyncPayload {
   }>;
 }
 
+/** Keep the latest hint per order so rapid service-fee toggles emit one touch. */
+function dedupeOrderHintsByPosOrderId<
+  T extends { posOrderId: number },
+>(hints: T[]): T[] {
+  const byId = new Map<number, T>();
+  for (const h of hints) {
+    if (!Number.isFinite(h.posOrderId)) continue;
+    byId.set(h.posOrderId, h);
+  }
+  return [...byId.values()];
+}
+
 @Controller('sync')
 export class SyncController implements OnModuleInit {
   private static readonly POS_CALLBACK_URL_KEY = 'pos:callback_url';
@@ -1028,8 +1040,10 @@ export class SyncController implements OnModuleInit {
           }))
           .filter((h: any) => Number.isFinite(h.posOrderId))
       : [];
-    const filteredOrderHints = touchedOrderHints.filter(
-      (h: { posOrderId: number }) => !isPosEchoSuppressed(h.posOrderId),
+    const filteredOrderHints = dedupeOrderHintsByPosOrderId(
+      touchedOrderHints.filter(
+        (h: { posOrderId: number }) => !isPosEchoSuppressed(h.posOrderId),
+      ),
     );
     const hadOrderLineTouch = filteredOrderHints.length > 0;
     if (hadOrderLineTouch) {

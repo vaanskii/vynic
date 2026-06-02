@@ -15,11 +15,6 @@ class _SalesTabState extends State<_SalesTab>
   List<Map<String, dynamic>> _rows = const [];
   String _monthKey = DateFormat('yyyy-MM').format(DateTime.now());
 
-  static final _money = NumberFormat.currency(
-    locale: 'ka_GE',
-    symbol: '₾',
-    decimalDigits: 2,
-  );
   @override
   void initState() {
     super.initState();
@@ -76,12 +71,11 @@ class _SalesTabState extends State<_SalesTab>
           ),
           if (_rows.isNotEmpty) ...[
             const SizedBox(height: 10),
-            _AdminStatCard(
+            _AdminHeroMetric(
               label: 'თვის შემოსავალი',
-              value: _money.format(monthTotal),
-              icon: Icons.summarize_rounded,
+              value: _adminGel(monthTotal),
+              subtitle: '$monthLabel · ${_rows.length} დღე',
               accent: AdminTheme.good,
-              subtitle: '${_rows.length} დღე',
             ),
           ],
           const SizedBox(height: 10),
@@ -154,7 +148,7 @@ class _SalesTabState extends State<_SalesTab>
           style: const TextStyle(fontWeight: FontWeight.w700, color: AdminTheme.text),
         ),
         subtitle: Text(
-          'დახურული $closedOrders / გაუქმებული $cancelledOrders / სულ $totalOrders • ${_money.format(totalRevenue)}\nხარჯი: ${_money.format(totalExpenses)} • მოგება: ${_money.format(profit)}\nარაფისკალური დახურული: ${_money.format(nonFiscalAmount)}',
+          'დახურული $closedOrders / გაუქმებული $cancelledOrders / სულ $totalOrders • ${_adminGel(totalRevenue)}\nხარჯი: ${_adminGel(totalExpenses)} • მოგება: ${_adminGel(profit)}\nარაფისკალური დახურული: ${_adminGel(nonFiscalAmount)}',
           style: TextStyle(fontSize: 12, color: AdminTheme.textMuted),
         ),
         children: [
@@ -179,7 +173,7 @@ class _SalesTabState extends State<_SalesTab>
                     ),
                   ),
                   Text(
-                    _money.format(nonFiscalAmount),
+                    _adminGel(nonFiscalAmount),
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF9A3412),
@@ -200,37 +194,23 @@ class _SalesTabState extends State<_SalesTab>
               ),
             )
           else
-            ...entries.map((e) {
-              final key = e.key.toString();
-              final amount = (e.value as num).toDouble();
-              return Container(
-                margin: const EdgeInsets.only(bottom: 6),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AdminTheme.surface,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AdminTheme.border),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _paymentLabel(key),
-                        style: const TextStyle(color: AdminTheme.text),
-                      ),
-                    ),
-                    Text(
-                      _money.format(amount),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: AdminTheme.primary,
-                      ),
+            _AdminPanel(
+              margin: const EdgeInsets.only(bottom: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Column(
+                children: [
+                  for (var i = 0; i < entries.length; i++) ...[
+                    if (i > 0)
+                      const Divider(height: 1, color: AdminTheme.border),
+                    _AdminMetricRow(
+                      label: _adminPaymentLabel(entries[i].key),
+                      value: _adminGel((entries[i].value as num).toDouble()),
+                      color: _adminPaymentColor(entries[i].key),
                     ),
                   ],
-                ),
-              );
-            }),
+                ],
+              ),
+            ),
           if (closedTables.isNotEmpty) ...[
             const SizedBox(height: 8),
             const Align(
@@ -319,7 +299,7 @@ class _SalesTabState extends State<_SalesTab>
             ),
             const SizedBox(width: 8),
             Text(
-              _money.format(totalAmount),
+              _adminGel(totalAmount),
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
                 color: AdminTheme.primary,
@@ -335,21 +315,6 @@ class _SalesTabState extends State<_SalesTab>
         ),
       ),
     );
-  }
-
-  String _paymentLabel(String key) {
-    switch (key) {
-      case 'card-tbc':
-        return 'ბარათი TBC';
-      case 'card-bog':
-        return 'ბარათი BOG';
-      case 'cash':
-        return 'ნაღდი';
-      case 'non-fiscal':
-        return 'არაფისკალური';
-      default:
-        return key;
-    }
   }
 
   double _nonFiscalFromBreakdown(Map<String, dynamic> breakdown) {
@@ -449,7 +414,7 @@ class _SalesTabState extends State<_SalesTab>
                       ),
                     ),
                     Text(
-                      _money.format(totalAmount),
+                      _adminGel(totalAmount),
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
@@ -502,7 +467,7 @@ class _SalesTabState extends State<_SalesTab>
                                   ),
                                 ),
                                 Text(
-                                  '$qty x ${_money.format(unitPrice)}',
+                                  '$qty x ${_adminGel(unitPrice)}',
                                   style: TextStyle(
                                     color: AdminTheme.textMuted,
                                     fontSize: 12,
@@ -510,7 +475,7 @@ class _SalesTabState extends State<_SalesTab>
                                 ),
                                 const SizedBox(width: 10),
                                 Text(
-                                  _money.format(total),
+                                  _adminGel(total),
                                   style: const TextStyle(
                                     color: AdminTheme.primary,
                                     fontWeight: FontWeight.w700,

@@ -16,12 +16,6 @@ class _ReportTabState extends State<_ReportTab>
   String? _error;
   Map<String, dynamic>? _data;
 
-  static final _money = NumberFormat.currency(
-    locale: 'ka_GE',
-    symbol: '₾',
-    decimalDigits: 2,
-  );
-
   @override
   void initState() {
     super.initState();
@@ -128,6 +122,17 @@ class _ReportTabState extends State<_ReportTab>
     _load();
   }
 
+  String _periodLabel() {
+    switch (_period) {
+      case 'week':
+        return 'ბოლო 7 დღე';
+      case 'month':
+        return _monthKey;
+      default:
+        return 'დღეს';
+    }
+  }
+
   Widget _buildReport() {
     final d = _data!;
     final topItems = (d['topItems'] as List?) ?? [];
@@ -136,7 +141,14 @@ class _ReportTabState extends State<_ReportTab>
     final paymentBreakdown = Map<String, dynamic>.from(
       (d['paymentBreakdown'] as Map?) ?? const {},
     );
+    final totalRevenue = (d['totalRevenue'] as num?)?.toDouble() ?? 0;
+    final orderCount = d['orderCount'] ?? 0;
+    final avgOrder = (d['avgOrderValue'] as num?)?.toDouble() ?? 0;
+    final cashRevenue = (d['cashRevenue'] as num?)?.toDouble() ?? 0;
+    final cardRevenue = (d['cardRevenue'] as num?)?.toDouble() ?? 0;
     final nonFiscalRevenue = _nonFiscalFromBreakdown(paymentBreakdown);
+    final breakdownEntries = paymentBreakdown.entries.toList()
+      ..sort((a, b) => (b.value as num).compareTo(a.value as num));
 
     return RefreshIndicator(
       color: AdminTheme.primary,
@@ -148,75 +160,91 @@ class _ReportTabState extends State<_ReportTab>
         ),
         padding: _adminScrollPadding(context).copyWith(top: 0),
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: _KpiCard(
-                  label: 'შემოსავალი',
-                  value: _money.format((d['totalRevenue'] as num?)?.toDouble() ?? 0),
-                  icon: Icons.payments_rounded,
-                  color: const Color(0xFF10B981),
-                ),
+          _AdminHeroMetric(
+            label: 'შემოსავალი',
+            value: _adminGel(totalRevenue),
+            subtitle:
+                '${_periodLabel()} · $orderCount შეკვეთა · საშ. ${_adminGel(avgOrder)}',
+            accent: AdminTheme.good,
+          ),
+          const SizedBox(height: 16),
+          _AdminKpiGrid(
+            items: [
+              _AdminKpiItem(
+                label: 'ნაღდი',
+                value: _adminGel(cashRevenue),
+                subtitle: _adminShareSubtitle(cashRevenue, totalRevenue),
+                icon: Icons.payments_outlined,
+                color: AdminTheme.good,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _KpiCard(
-                  label: 'შეკვეთები',
-                  value: '${d['orderCount'] ?? 0}',
-                  icon: Icons.receipt_rounded,
-                  color: const Color(0xFF2563EB),
-                ),
+              _AdminKpiItem(
+                label: 'ბარათი',
+                value: _adminGel(cardRevenue),
+                subtitle: _adminShareSubtitle(cardRevenue, totalRevenue),
+                icon: Icons.credit_card_outlined,
+                color: AdminTheme.accent,
+              ),
+              _AdminKpiItem(
+                label: 'არაფისკალური',
+                value: _adminGel(nonFiscalRevenue),
+                subtitle: _adminShareSubtitle(nonFiscalRevenue, totalRevenue),
+                icon: Icons.receipt_long_outlined,
+                color: AdminTheme.warn,
+              ),
+              _AdminKpiItem(
+                label: 'შეკვეთები',
+                value: '$orderCount',
+                subtitle: 'საშ. ${_adminGel(avgOrder)}',
+                icon: Icons.receipt_outlined,
+                color: AdminTheme.primary,
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _KpiCard(
-                  label: 'ნაღდი',
-                  value: _money.format((d['cashRevenue'] as num?)?.toDouble() ?? 0),
-                  icon: Icons.money_rounded,
-                  color: const Color(0xFF059669),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _KpiCard(
-                  label: 'ბარათი',
-                  value: _money.format((d['cardRevenue'] as num?)?.toDouble() ?? 0),
-                  icon: Icons.credit_card_rounded,
-                  color: const Color(0xFF7C3AED),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _KpiCard(
-            label: 'არაფისკალური',
-            value: _money.format(nonFiscalRevenue),
-            icon: Icons.receipt_long_rounded,
-            color: const Color(0xFFF59E0B),
-          ),
-          const SizedBox(height: 12),
-          _KpiCard(
-            label: 'საშ. შეკვეთა',
-            value: _money.format((d['avgOrderValue'] as num?)?.toDouble() ?? 0),
-            icon: Icons.trending_up_rounded,
-            color: const Color(0xFFF59E0B),
+          const SizedBox(height: 16),
+          _AdminSection(
+            title: 'გადახდის დეტალი',
+            child: _AdminPanel(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              child: breakdownEntries.isEmpty
+                  ? const Padding(
+                      padding: EdgeInsets.all(14),
+                      child: Text(
+                        'გადახდის დეტალი არ არის',
+                        style: TextStyle(color: AdminTheme.textMuted),
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        for (var i = 0; i < breakdownEntries.length; i++) ...[
+                          if (i > 0)
+                            const Divider(height: 1, color: AdminTheme.border),
+                          _AdminMetricRow(
+                            label: _adminPaymentLabel(breakdownEntries[i].key),
+                            value: _adminGel(
+                              (breakdownEntries[i].value as num?)?.toDouble() ?? 0,
+                            ),
+                            color: _adminPaymentColor(breakdownEntries[i].key),
+                          ),
+                        ],
+                      ],
+                    ),
+            ),
           ),
           if (byWaiter.isNotEmpty) ...[
             const SizedBox(height: 20),
-            const _SectionTitle('ოფიციანტების შედეგები'),
-            const SizedBox(height: 8),
-            ...byWaiter.cast<Map<String, dynamic>>().map(
+            _AdminSection(
+              title: 'ოფიციანტები',
+              trailing: '${byWaiter.length}',
+              child: Column(
+                children: byWaiter.cast<Map<String, dynamic>>().map(
                   (w) => _WaiterRow(
                     name: w['waiterName'] as String? ?? '',
                     total: (w['totalSales'] as num?)?.toDouble() ?? 0,
                     count: w['orderCount'] as int? ?? 0,
-                    money: _money,
                   ),
-                ),
+                ).toList(),
+              ),
+            ),
           ],
           if (topItemsByCategory.isNotEmpty) ...[
             const SizedBox(height: 20),
@@ -243,7 +271,7 @@ class _ReportTabState extends State<_ReportTab>
                     ),
                   ),
                   subtitle: Text(
-                    _money.format(catRevenue),
+                    _adminGel(catRevenue),
                     style: TextStyle(color: AdminTheme.textMuted),
                   ),
                   childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
@@ -253,7 +281,6 @@ class _ReportTabState extends State<_ReportTab>
                       name: e.value['name'] as String? ?? '',
                       qty: (e.value['qty'] as num?)?.toInt() ?? 0,
                       revenue: (e.value['revenue'] as num?)?.toDouble() ?? 0,
-                      money: _money,
                     );
                   }).toList(),
                 ),
@@ -269,7 +296,6 @@ class _ReportTabState extends State<_ReportTab>
                     name: e.value['name'] as String? ?? '',
                     qty: e.value['qty'] as int? ?? 0,
                     revenue: (e.value['revenue'] as num?)?.toDouble() ?? 0,
-                    money: _money,
                   ),
                 ),
           ],
@@ -305,72 +331,15 @@ class _SectionTitle extends StatelessWidget {
       );
 }
 
-class _KpiCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  const _KpiCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AdminTheme.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AdminTheme.border),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: color, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(fontSize: 11, color: AdminTheme.textMuted),
-                ),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AdminTheme.text,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      );
-}
-
 class _WaiterRow extends StatelessWidget {
   final String name;
   final double total;
   final int count;
-  final NumberFormat money;
 
   const _WaiterRow({
     required this.name,
     required this.total,
     required this.count,
-    required this.money,
   });
 
   @override
@@ -402,7 +371,7 @@ class _WaiterRow extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Text(
-              money.format(total),
+              _adminGel(total),
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -419,14 +388,12 @@ class _TopItemRow extends StatelessWidget {
   final String name;
   final int qty;
   final double revenue;
-  final NumberFormat money;
 
   const _TopItemRow({
     required this.rank,
     required this.name,
     required this.qty,
     required this.revenue,
-    required this.money,
   });
 
   @override
@@ -468,7 +435,7 @@ class _TopItemRow extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Text(
-              money.format(revenue),
+              _adminGel(revenue),
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,

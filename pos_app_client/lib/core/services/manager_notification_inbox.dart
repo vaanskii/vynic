@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:vynic/core/services/app_notification_history_store.dart';
 import 'package:vynic/core/services/mobile_api_service.dart';
@@ -7,6 +9,10 @@ import 'package:vynic/core/services/mobile_edit_echo_guard.dart';
 /// Normalises Socket.IO / FCM payloads into the manager notification panel (dedupe-safe).
 class ManagerNotificationInbox {
   ManagerNotificationInbox._();
+
+  static const Duration _serviceFeeNotifyQuiet = Duration(milliseconds: 2500);
+  static final Map<int, Timer> _serviceFeeNotifyTimers = {};
+  static final Map<int, _PendingServiceFeeNotify> _serviceFeeNotifyPending = {};
 
   static Map<String, dynamic> _stringKeyedMap(Map<dynamic, dynamic> raw) {
     return raw.map((k, v) => MapEntry(k.toString(), v));
@@ -21,6 +27,39 @@ class ManagerNotificationInbox {
     final hh = dt.hour.toString().padLeft(2, '0');
     final mm = dt.minute.toString().padLeft(2, '0');
     return '$d/$m/$y $hh:$mm';
+  }
+
+  /// One line for service-fee alerts (dedupes merged POS hints).
+  static String normalizeServiceFeeSummary(String? raw) {
+    final text = (raw ?? '').trim();
+    if (text.isEmpty) return 'სერვისის საფასური განახლდა';
+
+    final unique = <String>[];
+    for (final line in text.split('\n')) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) continue;
+      if (!unique.contains(trimmed)) unique.add(trimmed);
+    }
+    for (var i = unique.length - 1; i >= 0; i--) {
+      final line = unique[i];
+      if (line.contains('ჩართული') || line.contains('გამორთული')) {
+        return line;
+      }
+    }
+    return unique.last;
+  }
+
+  static String formatServiceFeeMessage({
+    required int orderId,
+    required String tableLabel,
+    required String summary,
+  }) {
+    final state = normalizeServiceFeeSummary(summary);
+    final label = tableLabel.trim();
+    if (label.isNotEmpty && label != '-') {
+      return 'მაგიდა $label — $state';
+    }
+    return 'შეკვეთა #$orderId — $state';
   }
 
   static bool _isDecreaseSummary(String summary) {
@@ -47,6 +86,36 @@ class ManagerNotificationInbox {
       if (highlightItemKeys != null && highlightItemKeys.isNotEmpty)
         'highlightItemKeys': highlightItemKeys.toList(),
     };
+  }
+
+  static void _scheduleServiceFeeNotify({
+    required int posOrderId,
+    String? dedupeId,
+    required String title,
+    required String message,
+    required String source,
+    Map<String, dynamic>? meta,
+  }) {
+    _serviceFeeNotifyTimers[posOrderId]?.cancel();
+    _serviceFeeNotifyPending[posOrderId] = _PendingServiceFeeNotify(
+      dedupeId: dedupeId,
+      title: title,
+      message: message,
+      source: source,
+      meta: meta,
+    );
+    _serviceFeeNotifyTimers[posOrderId] = Timer(_serviceFeeNotifyQuiet, () {
+      _serviceFeeNotifyTimers.remove(posOrderId);
+      final pending = _serviceFeeNotifyPending.remove(posOrderId);
+      if (pending == null) return;
+      _add(
+        dedupeId: pending.dedupeId,
+        title: pending.title,
+        message: pending.message,
+        source: pending.source,
+        meta: pending.meta,
+      );
+    });
   }
 
   static void _add({
@@ -127,6 +196,19 @@ class ManagerNotificationInbox {
           final src = (payloadMap?['source'] ?? 'pos_sync').toString();
           final isPos = src == 'pos_sync';
           final touchesRaw = payloadMap?['touches'];
+          final touchesList =
+              touchesRaw is List ? touchesRaw : const <dynamic>[];
+          final serviceFeeOnly = touchesList.isNotEmpty &&
+              touchesList.every((t) {
+                if (t is! Map) return false;
+                final kind =
+                    (t['changeKind'] ?? '').toString().trim().toLowerCase();
+                return kind == 'service_fee';
+              });
+          // Realtime socket refresh (no notificationId) — wait for coalesced push.
+          if (serviceFeeOnly && (nid == null || nid.isEmpty)) {
+            break;
+          }
           if (touchesRaw is List && touchesRaw.isNotEmpty) {
             final handledOrderIds = <int>{};
             for (final t in touchesRaw) {
@@ -154,10 +236,8 @@ class ManagerNotificationInbox {
               if (handledOrderIds.contains(id)) continue;
               handledOrderIds.add(id);
               final isServiceFeeChange =
-                  tm['changeKind']?.toString() == 'service_fee' ||
+                  kind == 'service_fee' ||
                   summary.contains('სერვისის საფასური');
-              final summarySeg =
-                  summary.isNotEmpty ? '\n$summary' : '';
               final rawHighlights = tm['highlightItemKeys'];
               Iterable<String>? highlightKeys;
               if (rawHighlights is List && rawHighlights.isNotEmpty) {
@@ -167,23 +247,43 @@ class ManagerNotificationInbox {
               final title = isServiceFeeChange && tableLabel.isNotEmpty
                   ? 'მაგიდები'
                   : (isPos ? 'სალარო' : 'შეკვეთა');
-              final message = isServiceFeeChange && tableLabel.isNotEmpty
-                  ? 'მაგიდა $tableLabel — სერვისის საფასური განახლდა$summarySeg'
+              final summarySeg =
+                  summary.isNotEmpty ? '\n$summary' : '';
+              final message = isServiceFeeChange
+                  ? formatServiceFeeMessage(
+                      orderId: id,
+                      tableLabel: tableLabel,
+                      summary: summary,
+                    )
                   : (isPos
                       ? 'შეკვეთა #$id — $tableSegდრო: $when$summarySeg'
                       : 'შეკვეთა #$id განახლდა — $tableSegდრო: $when$summarySeg');
-              _add(
-                dedupeId: nid != null ? '$nid-$id' : null,
-                title: title,
-                message: message,
-                source: source,
-                meta: orderNavMeta(
-                  posOrderId: id,
-                  tableLabel: tableLabel.isNotEmpty ? tableLabel : null,
-                  floor: tm['floor']?.toString(),
-                  highlightItemKeys: highlightKeys,
-                ),
+              final meta = orderNavMeta(
+                posOrderId: id,
+                tableLabel: tableLabel.isNotEmpty && tableLabel != '-'
+                    ? tableLabel
+                    : null,
+                floor: tm['floor']?.toString(),
+                highlightItemKeys: highlightKeys,
               );
+              if (isServiceFeeChange) {
+                _scheduleServiceFeeNotify(
+                  posOrderId: id,
+                  dedupeId: nid,
+                  title: title,
+                  message: message.trim(),
+                  source: source,
+                  meta: meta,
+                );
+              } else {
+                _add(
+                  dedupeId: nid != null ? '$nid-$id' : null,
+                  title: title,
+                  message: message,
+                  source: source,
+                  meta: meta,
+                );
+              }
             }
             break;
           }
@@ -496,4 +596,20 @@ class ManagerNotificationInbox {
       return 0;
     }
   }
+}
+
+class _PendingServiceFeeNotify {
+  const _PendingServiceFeeNotify({
+    this.dedupeId,
+    required this.title,
+    required this.message,
+    required this.source,
+    this.meta,
+  });
+
+  final String? dedupeId;
+  final String title;
+  final String message;
+  final String source;
+  final Map<String, dynamic>? meta;
 }

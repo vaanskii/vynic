@@ -43,6 +43,7 @@ class ManagerSyncService {
   static bool _hooksRegistered = false;
   static bool _realtimeOnly = false;
   static Timer? _realtimeDebounceTimer;
+  static Timer? _serviceFeeSyncTimer;
 
   static void initialize() {
     // Always wire Hive → cloud (hot restart used to skip this when timer existed).
@@ -149,6 +150,8 @@ class ManagerSyncService {
                 : 'სერვისის საფასური გამორთულია',
             changeKind: 'service_fee',
           );
+          _syncServiceFeeToManagerDebounced();
+          return;
         }
       }
     }
@@ -232,6 +235,14 @@ class ManagerSyncService {
   static void syncRealtimeToManagerAppDebounced() {
     _realtimeDebounceTimer?.cancel();
     _realtimeDebounceTimer = Timer(const Duration(milliseconds: 350), () {
+      unawaited(syncRealtimeToManagerApp());
+    });
+  }
+
+  /// Service-fee toggles can fire many Hive updates; wait until settling before notify.
+  static void _syncServiceFeeToManagerDebounced() {
+    _serviceFeeSyncTimer?.cancel();
+    _serviceFeeSyncTimer = Timer(const Duration(milliseconds: 1500), () {
       unawaited(syncRealtimeToManagerApp());
     });
   }
@@ -950,6 +961,32 @@ class ManagerSyncService {
     return result;
   }
 
+  static String? _mergeChangeSummaries(
+    String? a,
+    String? b, {
+    bool preferServiceFee = false,
+  }) {
+    final lines = <String>[];
+    for (final raw in [a, b]) {
+      if (raw == null) continue;
+      for (final line in raw.split('\n')) {
+        final trimmed = line.trim();
+        if (trimmed.isEmpty) continue;
+        if (!lines.contains(trimmed)) lines.add(trimmed);
+      }
+    }
+    if (lines.isEmpty) return null;
+    if (preferServiceFee) {
+      for (var i = lines.length - 1; i >= 0; i--) {
+        final line = lines[i];
+        if (line.contains('ჩართული') || line.contains('გამორთული')) {
+          return line;
+        }
+      }
+    }
+    return lines.last;
+  }
+
   static String _tableLabelForSyncOrder(Map<String, dynamic> raw) {
     final floor = (raw['floor'] ?? '').toString().toLowerCase();
     if (floor.contains('takeaway')) {
@@ -1008,16 +1045,16 @@ class ManagerSyncService {
       if (id == null) continue;
       final existing = byId[id];
       if (existing != null) {
-        final summaries = <String>[
-          if ((existing['changeSummary'] as String?)?.trim().isNotEmpty == true)
-            (existing['changeSummary'] as String).trim(),
-          if ((h['changeSummary'] as String?)?.trim().isNotEmpty == true)
-            (h['changeSummary'] as String).trim(),
-        ];
+        final mergedSummary = _mergeChangeSummaries(
+          existing['changeSummary'] as String?,
+          h['changeSummary'] as String?,
+          preferServiceFee:
+              (h['changeKind'] ?? existing['changeKind']) == 'service_fee',
+        );
         byId[id] = {
           ...existing,
           ...h,
-          if (summaries.isNotEmpty) 'changeSummary': summaries.join('\n'),
+          if (mergedSummary != null) 'changeSummary': mergedSummary,
         };
       } else {
         byId[id] = Map<String, dynamic>.from(h);
@@ -1087,10 +1124,12 @@ class ManagerSyncService {
               ? 'სერვისის საფასური ჩართულია'
               : 'სერვისის საფასური გამორთულია';
           if (hint != null) {
-            final existing = (hint['changeSummary'] as String?) ?? '';
-            hint['changeSummary'] = existing.isEmpty
-                ? feeSummary
-                : '$existing\n$feeSummary';
+            hint['changeSummary'] = _mergeChangeSummaries(
+              hint['changeSummary'] as String?,
+              feeSummary,
+              preferServiceFee: true,
+            ) ?? feeSummary;
+            hint['changeKind'] = 'service_fee';
           } else {
             hint = {
               'posOrderId': id,

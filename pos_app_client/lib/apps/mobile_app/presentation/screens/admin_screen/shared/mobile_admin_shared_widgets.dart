@@ -19,6 +19,44 @@ abstract final class AdminTheme {
 final NumberFormat _adminMoney = NumberFormat('#,##0.00', 'en_US');
 String _adminGel(num v) => '₾${_adminMoney.format(v)}';
 
+String _adminPaymentLabel(String key) {
+  switch (key.trim().toLowerCase()) {
+    case 'card-tbc':
+      return 'ბარათი TBC';
+    case 'card-bog':
+      return 'ბარათი BOG';
+    case 'cash':
+      return 'ნაღდი';
+    case 'non-fiscal':
+    case 'nonfiscal':
+    case 'non_fiscal':
+      return 'არაფისკალური';
+    default:
+      return key;
+  }
+}
+
+Color _adminPaymentColor(String key) {
+  switch (key.trim().toLowerCase()) {
+    case 'cash':
+      return AdminTheme.good;
+    case 'card-tbc':
+    case 'card-bog':
+      return AdminTheme.accent;
+    case 'non-fiscal':
+    case 'nonfiscal':
+    case 'non_fiscal':
+      return AdminTheme.warn;
+    default:
+      return AdminTheme.primary;
+  }
+}
+
+String? _adminShareSubtitle(num part, num total) {
+  if (total <= 0) return null;
+  return '${(part / total * 100).toStringAsFixed(0)}%';
+}
+
 /// Clears the floating bottom nav when scrolling admin tabs.
 EdgeInsets _adminScrollPadding(BuildContext context) {
   final bottom = MediaQuery.paddingOf(context).bottom;
@@ -53,6 +91,7 @@ class _AdminOfflineBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _AdminPanel(
+      margin: const EdgeInsets.only(bottom: 4),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       accentBorder: AdminTheme.warn.withValues(alpha: 0.45),
       child: Row(

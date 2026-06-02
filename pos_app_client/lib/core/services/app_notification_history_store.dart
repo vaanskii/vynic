@@ -71,12 +71,20 @@ class AppNotificationHistoryStore {
     if (entries.value.any((e) => e.id == id)) {
       return false;
     }
-    final duplicateByContent = entries.value.any(
-      (e) =>
-          e.title == (trimmedTitle.isEmpty ? 'შეტყობინება' : trimmedTitle) &&
-          e.message == trimmedMessage &&
-          DateTime.now().difference(e.at).inSeconds <= 8,
-    );
+    final duplicateByContent = entries.value.any((e) {
+      if (DateTime.now().difference(e.at).inSeconds > 30) return false;
+      final sameTitle =
+          e.title == (trimmedTitle.isEmpty ? 'შეტყობინება' : trimmedTitle);
+      if (!sameTitle) return false;
+      if (e.message == trimmedMessage) return true;
+      // Service-fee toggles often differ only by duplicate summary lines.
+      if (trimmedMessage.contains('სერვისის საფასური') &&
+          e.message.contains('სერვისის საფასური')) {
+        return _normalizeServiceFeeForDedupe(e.message) ==
+            _normalizeServiceFeeForDedupe(trimmedMessage);
+      }
+      return false;
+    });
     if (duplicateByContent) {
       return false;
     }
@@ -113,6 +121,15 @@ class AppNotificationHistoryStore {
     next[index] = entry.copyWith(isRead: true);
     entries.value = next;
     unreadCount.value = (unreadCount.value - 1).clamp(0, maxEntries);
+  }
+
+  static String _normalizeServiceFeeForDedupe(String message) {
+    final lines = message
+        .split('\n')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toSet();
+    return lines.join(' | ');
   }
 
   void markAllRead() {

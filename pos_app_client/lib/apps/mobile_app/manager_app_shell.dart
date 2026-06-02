@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_login_screen.dart';
@@ -17,6 +16,7 @@ import 'package:vynic/apps/mobile_app/presentation/screens/notifications_screen.
 import 'package:vynic/core/widgets/manager_toast.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_order_detail_screen.dart';
 import 'package:vynic/core/services/pos_change_highlight_service.dart';
+import 'package:vynic/apps/mobile_app/widgets/manager_glass_nav_bar.dart';
 
 class ManagerAppShell extends StatefulWidget {
   final User user;
@@ -29,8 +29,17 @@ class ManagerAppShell extends StatefulWidget {
 class _ManagerAppShellState extends State<ManagerAppShell>
     with WidgetsBindingObserver {
   int _selectedIndex = 0;
+  late final PageController _pageController;
 
   late final List<Widget> _screens;
+
+  static const _navItems = <ManagerNavItem>[
+    ManagerNavItem(label: 'დაფა', icon: Icons.dashboard_rounded),
+    ManagerNavItem(label: 'მაგიდები', icon: Icons.table_bar_rounded),
+    ManagerNavItem(label: 'ფინანსები', icon: Icons.account_balance_wallet_rounded),
+    ManagerNavItem(label: 'რეზერვები', icon: Icons.book_online_rounded),
+    ManagerNavItem(label: 'მართვა', icon: Icons.settings_rounded),
+  ];
 
   /// True after we showed the socket-offline pill for the current outage (reset when socket is back).
   bool _socketOutageToastEmitted = false;
@@ -47,6 +56,7 @@ class _ManagerAppShellState extends State<ManagerAppShell>
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(initialPage: _selectedIndex);
     WidgetsBinding.instance.addObserver(this);
     MonitoringSocketService.initialize();
     MonitoringSocketService.isConnected.addListener(
@@ -168,10 +178,28 @@ class _ManagerAppShellState extends State<ManagerAppShell>
     ManagerToast.show(context, '${latest.title}\n${latest.message}');
   }
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+  void _goToTab(int index, {bool animate = true}) {
+    final target = index.clamp(0, _screens.length - 1);
+    if (_pageController.hasClients) {
+      if (animate) {
+        _pageController.animateToPage(
+          target,
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOutCubic,
+        );
+      } else {
+        _pageController.jumpToPage(target);
+      }
+    } else {
+      setState(() => _selectedIndex = target);
+    }
+  }
+
+  void _onItemTapped(int index) => _goToTab(index);
+
+  void _onPageChanged(int index) {
+    if (_selectedIndex == index) return;
+    setState(() => _selectedIndex = index);
   }
 
   Future<void> _logout() async {
@@ -270,7 +298,7 @@ class _ManagerAppShellState extends State<ManagerAppShell>
     // Reservation notification → open the reservations tab on the right date.
     final reservationId = meta['reservationId']?.toString().trim();
     if (reservationId != null && reservationId.isNotEmpty) {
-      setState(() => _selectedIndex = 3);
+      _goToTab(3);
       final resDate = meta['reservationDate']?.toString().trim();
       if (resDate != null && resDate.isNotEmpty) {
         // Reset first so the listener always re-fires, even for the same date.
@@ -297,7 +325,7 @@ class _ManagerAppShellState extends State<ManagerAppShell>
         ? tableLabel.replaceAll('Table ', '').split(',').first.trim()
         : '';
 
-    setState(() => _selectedIndex = 1);
+    _goToTab(1);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -321,117 +349,26 @@ class _ManagerAppShellState extends State<ManagerAppShell>
       backgroundColor: const Color(0xFF050508),
       extendBody: true,
       appBar: null,
-      body: IndexedStack(index: _selectedIndex, children: _screens),
-      bottomNavigationBar: _buildFloatingNav(),
-    );
-  }
-
-  static const _navItems = <_NavItem>[
-    _NavItem('დაფა', Icons.dashboard_rounded),
-    _NavItem('მაგიდები', Icons.table_bar_rounded),
-    _NavItem('ფინანსები', Icons.account_balance_wallet_rounded),
-    _NavItem('რეზერვები', Icons.book_online_rounded),
-    _NavItem('მართვა', Icons.settings_rounded),
-  ];
-
-  Widget _buildFloatingNav() {
-    const radius = 34.0;
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        // Outer layer carries the soft drop shadow (kept outside the clip so it
-        // isn't cut off by the rounded mask).
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(radius),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x66000000),
-                blurRadius: 30,
-                spreadRadius: -4,
-                offset: Offset(0, 12),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(radius),
-            child: BackdropFilter(
-              // Heavy blur = frosted "liquid glass" feel like iOS materials.
-              filter: ImageFilter.blur(sigmaX: 32, sigmaY: 32),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 10,
-                  horizontal: 10,
-                ),
-                decoration: BoxDecoration(
-                  // Top-lighter → bottom-darker translucent tint gives the
-                  // subtle sheen of frosted glass while staying dark enough
-                  // for white glyphs to read on any screen behind it.
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      const Color(0xFF3A3A48).withOpacity(0.55),
-                      const Color(0xFF0B0B11).withOpacity(0.62),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(radius),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.20),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: List.generate(_navItems.length, (index) {
-                    final item = _navItems[index];
-                    final isSelected = _selectedIndex == index;
-                    return Expanded(
-                      child: GestureDetector(
-                        onTap: () => _onItemTapped(index),
-                        behavior: HitTestBehavior.opaque,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 280),
-                          curve: Curves.easeOutCubic,
-                          margin: const EdgeInsets.symmetric(horizontal: 2),
-                          padding: const EdgeInsets.symmetric(vertical: 9),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? Colors.white.withOpacity(0.16)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isSelected
-                                  ? Colors.white.withOpacity(0.22)
-                                  : Colors.transparent,
-                            ),
-                          ),
-                          child: Tooltip(
-                            message: item.label,
-                            child: Icon(
-                              item.icon,
-                              size: isSelected ? 25 : 23,
-                              color: isSelected
-                                  ? Colors.white
-                                  : Colors.white.withOpacity(0.45),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ),
-            ),
-          ),
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: _onPageChanged,
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
         ),
+        children: _screens,
+      ),
+      bottomNavigationBar: ManagerGlassNavBar(
+        pageController: _pageController,
+        itemCount: _navItems.length,
+        items: _navItems,
+        onTap: _onItemTapped,
       ),
     );
   }
 
   @override
   void dispose() {
+    _pageController.dispose();
     _lifecycleReconnectTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     AppNotificationHistoryStore.instance.entries.removeListener(
@@ -451,8 +388,3 @@ class _ManagerAppShellState extends State<ManagerAppShell>
   }
 }
 
-class _NavItem {
-  final String label;
-  final IconData icon;
-  const _NavItem(this.label, this.icon);
-}

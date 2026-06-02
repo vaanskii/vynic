@@ -1,3 +1,4 @@
+import { normalizeChangeSummary } from './notification-summary.util';
 import type { WsEventType } from './ws-events';
 
 function asRecord(p: unknown): Record<string, unknown> | null {
@@ -80,7 +81,23 @@ export function buildManagerPushCopy(
       });
       if (!meaningful) return null;
       const orderId = asOrderId(meaningful.posOrderId);
-      const summary = asString(meaningful.changeSummary).trim();
+      const summary = normalizeChangeSummary(meaningful.changeSummary);
+      const kind = asString(meaningful.changeKind).trim().toLowerCase();
+      const tableLabel = asString(meaningful.tableLabel).trim();
+      if (kind === 'service_fee') {
+        const state =
+          summary.length > 0 ? summary : 'სერვისის საფასური განახლდა';
+        const tableSeg =
+          tableLabel.length > 0 && tableLabel !== '-'
+            ? `მაგიდა ${tableLabel}`
+            : orderId !== null
+              ? `შეკვეთა #${orderId}`
+              : 'შეკვეთა';
+        return {
+          title: 'მაგიდები',
+          body: `${tableSeg} — ${state}`,
+        };
+      }
       const bodyCore = orderId !== null ? `შეკვეთა #${orderId}` : 'შეკვეთა';
       return {
         title: 'სალარო',

@@ -11,6 +11,11 @@ import { PrismaService } from './prisma.service';
 import { PresenceService } from './presence.service';
 import { MonitoringGateway } from './monitoring.gateway';
 import { buildManagerPushCopy } from './manager-notification-push.mapper';
+import {
+  defaultServiceFeeCoalesceMs,
+  getServiceFeeCoalesceKey,
+  ServiceFeeNotificationCoalescer,
+} from './manager-notification-coalesce';
 import type { BroadcastOptions, WsEvent, WsEventType } from './ws-events';
 
 @Injectable()
@@ -18,6 +23,10 @@ export class HybridNotificationService {
   private readonly logger = new Logger(HybridNotificationService.name);
   private _fcmInitialized = false;
   private _fcmEnabled = false;
+  private readonly serviceFeeCoalescer = new ServiceFeeNotificationCoalescer(
+    defaultServiceFeeCoalesceMs,
+    (type, payload, options) => this.deliverPersisted(type, payload, options),
+  );
 
   constructor(
     private readonly prisma: PrismaService,
@@ -28,8 +37,26 @@ export class HybridNotificationService {
 
   /**
    * Persist when applicable, then always emit Socket.IO envelope.
+   * Service-fee-only bulk touches defer push/FCM until toggling settles.
    */
   async deliver(
+    type: WsEventType,
+    payload: unknown,
+    options?: BroadcastOptions,
+  ): Promise<void> {
+    const timestamp = new Date().toISOString();
+    const coalesceKey = getServiceFeeCoalesceKey(type, payload);
+
+    if (coalesceKey) {
+      this.gateway.emitEnvelope({ type, payload, timestamp }, options);
+      this.serviceFeeCoalescer.schedule(coalesceKey, type, payload, options);
+      return;
+    }
+
+    await this.deliverPersisted(type, payload, options);
+  }
+
+  private async deliverPersisted(
     type: WsEventType,
     payload: unknown,
     options?: BroadcastOptions,

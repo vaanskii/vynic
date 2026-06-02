@@ -127,6 +127,20 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       return;
     }
 
+    if (shellUser != null && !shellUser.canUseManagerMobileApp) {
+      await MobileAuthService.logout();
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ManagerToast.show(
+          context,
+          MobileAuthService.errorMessage(MobileAuthError.accessDenied),
+          isError: true,
+        );
+        _clearPin();
+      }
+      return;
+    }
+
     if (mounted) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => ManagerAppShell(user: shellUser!)),

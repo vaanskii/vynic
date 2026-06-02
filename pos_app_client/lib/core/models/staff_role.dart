@@ -54,9 +54,9 @@ class StaffRole {
     }
   }
 
+  /// მენეჯერის მობილური აპი — მხოლოდ მენეჯერი (არა ზედამხედველი).
   static bool canUseManagerMobileApp(String clientRole) {
-    final r = normalizeClient(clientRole);
-    return r == manager || r == supervisor;
+    return normalizeClient(clientRole) == manager;
   }
 
   /// მენიუს დათვლა — სრული მართვა (მართვა, სახელი, წაშლა, რეზერვაცია).
@@ -128,8 +128,6 @@ class StaffRole {
 
   static bool isMobileApiRole(String apiRole) {
     final upper = apiRole.trim().toUpperCase();
-    return upper == 'ADMIN' ||
-        upper == 'MANAGER' ||
-        upper == 'SUPERVISOR';
+    return upper == 'ADMIN' || upper == 'MANAGER';
   }
 }

@@ -16,10 +16,9 @@ export const ASSIGNABLE_STAFF_ROLES: StaffRoleValue[] = [
   StaffRole.WAITER,
 ];
 
-/** Roles allowed to sign in to the manager mobile app (permissions TBD per role). */
+/** Roles allowed to sign in to the manager mobile app (მენეჯერის აპი — manager only). */
 export const MOBILE_APP_STAFF_ROLES: string[] = [
   StaffRole.MANAGER,
-  StaffRole.SUPERVISOR,
   LEGACY_ADMIN_ROLE,
 ];
 

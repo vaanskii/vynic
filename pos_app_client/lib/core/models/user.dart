@@ -24,7 +24,7 @@ class User extends HiveObject {
 
   bool get isWaiter => normalizedRole == StaffRole.waiter;
 
-  /// Manager mobile app (მენეჯერის აპი) — permissions per role coming later.
+  /// მენეჯერის მობილური აპი — მხოლოდ მენეჯერი.
   bool get canUseManagerMobileApp => StaffRole.canUseManagerMobileApp(role);
 
   /// Windows POS elevated access (მართვის ცენტრი) — was `admin`; now manager only.

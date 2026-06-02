@@ -207,7 +207,7 @@ async function readRestaurantServiceFeeSettings(prisma: any) {
 
 @Controller('mobile')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(StaffRole.MANAGER, StaffRole.SUPERVISOR)
+@Roles(StaffRole.MANAGER)
 export class MobileController {
   constructor(
     private readonly prisma: PrismaService,

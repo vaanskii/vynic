@@ -23,7 +23,7 @@ export class AuthService {
   ) {}
 
   /**
-   * Authenticates manager mobile app users by PIN (manager / supervisor).
+   * Authenticates manager mobile app users by PIN (manager only).
    */
   async mobileLogin(pin: string): Promise<MobileLoginResult> {
     if (!pin || pin.length < 4) {

@@ -82,17 +82,22 @@ class MobileAuthService {
   /// Try to use a cached token for offline access.
   /// Returns the username from the token if valid (or stale within grace period).
   static OfflineAuthResult? tryOfflineAccess() {
+    final role = AuthTokenService.role ?? '';
+    if (!StaffRole.isMobileApiRole(role)) {
+      return null;
+    }
+
     if (AuthTokenService.hasValidToken) {
       return OfflineAuthResult(
         username: AuthTokenService.username ?? 'Manager',
-        role: AuthTokenService.role ?? 'MANAGER',
+        role: role,
         isStale: false,
       );
     }
     if (AuthTokenService.hasStaleToken) {
       return OfflineAuthResult(
         username: AuthTokenService.username ?? 'Manager',
-        role: AuthTokenService.role ?? 'MANAGER',
+        role: role,
         isStale: true,
       );
     }
@@ -113,7 +118,7 @@ class MobileAuthService {
       case MobileAuthError.serverError:
         return 'სერვერის შეცდომა. სცადეთ ახლავე.';
       case MobileAuthError.accessDenied:
-        return 'წვდომა აკრძალულია. მხოლოდ მენეჯერი ან სუპერვაიზერი.';
+        return 'წვდომა აკრძალულია.';
     }
   }
 }

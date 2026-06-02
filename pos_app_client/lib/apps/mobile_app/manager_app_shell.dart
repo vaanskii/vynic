@@ -17,6 +17,7 @@ import 'package:vynic/core/widgets/manager_toast.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_order_detail_screen.dart';
 import 'package:vynic/core/services/pos_change_highlight_service.dart';
 import 'package:vynic/apps/mobile_app/widgets/manager_glass_nav_bar.dart';
+import 'package:vynic/apps/mobile_app/widgets/manager_tab_keep_alive.dart';
 
 class ManagerAppShell extends StatefulWidget {
   final User user;
@@ -74,7 +75,11 @@ class _ManagerAppShellState extends State<ManagerAppShell>
     );
     // Initial catch-up for notifications created before socket connected.
     unawaited(ManagerNotificationInbox.syncMissedFromServer());
-    _screens = [
+    _screens = _buildScreens();
+  }
+
+  List<Widget> _buildScreens() {
+    final tabs = <Widget>[
       DashboardScreen(
         user: widget.user,
         onNavigateTab: _onItemTapped,
@@ -85,6 +90,12 @@ class _ManagerAppShellState extends State<ManagerAppShell>
       StaffPerformanceScreen(user: widget.user),
       MobileAdminScreen(user: widget.user, onLogout: _logout),
     ];
+    return List.generate(tabs.length, (index) {
+      return ManagerTabKeepAlive(
+        storageKey: PageStorageKey<String>('manager_main_tab_$index'),
+        child: tabs[index],
+      );
+    });
   }
 
   @override
@@ -352,6 +363,7 @@ class _ManagerAppShellState extends State<ManagerAppShell>
       body: PageView(
         controller: _pageController,
         onPageChanged: _onPageChanged,
+        allowImplicitScrolling: true,
         physics: const BouncingScrollPhysics(
           parent: AlwaysScrollableScrollPhysics(),
         ),

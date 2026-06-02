@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:vynic/core/services/app_notification_history_store.dart';
+import 'package:vynic/core/services/mobile_api_service.dart';
+import 'package:vynic/core/services/mobile_cache_service.dart';
 import 'package:vynic/core/services/mobile_edit_echo_guard.dart';
 
 /// Normalises Socket.IO / FCM payloads into the manager notification panel (dedupe-safe).
@@ -430,5 +433,57 @@ class ManagerNotificationInbox {
           break;
       }
     } catch (_) {}
+  }
+
+  /// Pull notifications persisted on the server while the socket was down.
+  static Future<int> syncMissedFromServer() async {
+    try {
+      final lastSyncRaw = MobileCacheService.lastNotificationsSyncAt;
+      final lastSyncDt = lastSyncRaw != null
+          ? DateTime.tryParse(lastSyncRaw)
+          : null;
+      final since = (lastSyncDt ?? DateTime.now().subtract(const Duration(hours: 24)))
+          .subtract(const Duration(minutes: 1))
+          .toUtc()
+          .toIso8601String();
+
+      final rows = await MobileApiService.getNotifications(since: since);
+      var added = 0;
+      for (final row in rows) {
+        final envelope = row['envelope'];
+        if (envelope is Map) {
+          final env = Map<String, dynamic>.from(envelope);
+          ingestWsEnvelope(env, source: 'catchup');
+          added++;
+        } else {
+          final title = (row['title'] ?? '').toString();
+          final body = (row['body'] ?? '').toString();
+          final id = row['id']?.toString();
+          if (body.isNotEmpty) {
+            final ok = AppNotificationHistoryStore.instance.add(
+              dedupeId: id,
+              title: title.isEmpty ? 'შეტყობინება' : title,
+              message: body,
+              source: 'catchup',
+              meta: row['type'] != null
+                  ? {'type': row['type'].toString()}
+                  : null,
+            );
+            if (ok) added++;
+          }
+        }
+      }
+
+      await MobileCacheService.setLastNotificationsSyncAt(
+        DateTime.now().toUtc().toIso8601String(),
+      );
+      if (added > 0) {
+        debugPrint('[Notifications] Catch-up: $added from server');
+      }
+      return added;
+    } catch (e) {
+      debugPrint('[Notifications] Catch-up failed: $e');
+      return 0;
+    }
   }
 }

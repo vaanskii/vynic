@@ -89,11 +89,11 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "vankisi" "\0"
+            VALUE "CompanyName", "vanski" "\0"
             VALUE "FileDescription", "vynic" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "vynic" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 vankisi. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2025 vanski. All rights reserved." "\0"
             VALUE "OriginalFilename", "vynic.exe" "\0"
             VALUE "ProductName", "vynic" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

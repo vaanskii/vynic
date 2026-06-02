@@ -214,6 +214,87 @@ export class MobileController {
     return readRestaurantServiceFeeSettings(this.prisma);
   }
 
+  /** Missed manager notifications while the app was backgrounded (persisted on server). */
+  @Get('notifications')
+  async getNotifications(
+    @Req() req: { user: { username: string } },
+    @Query('since') since?: string,
+  ) {
+    const username = req.user.username;
+    let sinceDate: Date;
+    if (since && since.trim().length > 0) {
+      sinceDate = new Date(since.trim());
+      if (Number.isNaN(sinceDate.getTime())) {
+        throw new BadRequestException('Invalid since timestamp');
+      }
+    } else {
+      sinceDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    }
+
+    const rows = await (this.prisma as any).managerNotificationDelivery.findMany({
+      where: {
+        staffUsername: username,
+        notification: { createdAt: { gte: sinceDate } },
+      },
+      include: { notification: true },
+      orderBy: { notification: { createdAt: 'asc' } },
+      take: 100,
+    });
+
+    return rows.map((row: any) => {
+      const n = row.notification;
+      return {
+        id: n.id as string,
+        type: n.wsType as string,
+        title: n.title as string,
+        body: n.body as string,
+        envelope: n.envelope,
+        createdAt: (n.createdAt as Date).toISOString(),
+      };
+    });
+  }
+
+  @Post('push/register')
+  async registerPushDevice(
+    @Req() req: { user: { username: string } },
+    @Body() payload: { fcmToken?: string; platform?: string },
+  ) {
+    const staffUsername = req.user.username;
+    const fcmToken = (payload.fcmToken ?? '').trim();
+    if (!fcmToken) {
+      throw new BadRequestException('fcmToken is required');
+    }
+    await (this.prisma as any).pushDevice.upsert({
+      where: { fcmToken },
+      update: {
+        staffUsername,
+        platform: (payload.platform ?? '').trim() || null,
+      },
+      create: {
+        staffUsername,
+        fcmToken,
+        platform: (payload.platform ?? '').trim() || null,
+      },
+    });
+    return { success: true };
+  }
+
+  @Post('push/unregister')
+  async unregisterPushDevice(
+    @Req() req: { user: { username: string } },
+    @Body() payload: { fcmToken?: string },
+  ) {
+    const staffUsername = req.user.username;
+    const fcmToken = (payload.fcmToken ?? '').trim();
+    if (!fcmToken) {
+      throw new BadRequestException('fcmToken is required');
+    }
+    await (this.prisma as any).pushDevice.deleteMany({
+      where: { staffUsername, fcmToken },
+    });
+    return { success: true };
+  }
+
   // GET /mobile/dashboard
   @Get('dashboard')
   async getDashboard(): Promise<DashboardResponse> {

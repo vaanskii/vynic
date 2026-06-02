@@ -1,4 +1,4 @@
-package com.vankisi.vynic
+package com.vanski.vynic
 
 import io.flutter.embedding.android.FlutterActivity
 

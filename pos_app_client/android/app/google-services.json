@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "884506335614",
+    "project_id": "push-notifications-1dca1",
+    "storage_bucket": "push-notifications-1dca1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:884506335614:android:4ed8b85f44ea322011bb2f",
+        "android_client_info": {
+          "package_name": "com.vankisi.vynic"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDTLuvUonhjPZWwhMId6v45U0JhL1BWwHM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:884506335614:android:8355185416298bac11bb2f",
+        "android_client_info": {
+          "package_name": "com.vanski.vynic"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDTLuvUonhjPZWwhMId6v45U0JhL1BWwHM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

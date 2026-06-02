@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:ui';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -8,11 +9,14 @@ import 'package:vynic/apps/mobile_app/presentation/screens/mobile_login_screen.d
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/printer_service.dart';
 import 'package:vynic/core/services/app_mode.dart';
+import 'package:vynic/core/services/firebase_messaging_service.dart';
+import 'package:vynic/core/services/local_notifications_service.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:vynic/core/services/auth_token_service.dart';
 import 'package:vynic/core/services/mobile_cache_service.dart';
 import 'package:vynic/core/services/manager_sync_service.dart';
 import 'package:vynic/core/services/pos_ingest_server.dart';
+import 'package:vynic/firebase_options.dart';
 
 /// True when the process is running on Android or iOS.
 bool get _isMobilePlatform => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
@@ -39,8 +43,19 @@ void main() async {
 
   if (_isMobilePlatform) {
     // ── Mobile (Android / iOS) ──────────────────────────────────────────────
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    final localNotifications = LocalNotificationsService.instance();
+    await localNotifications.init();
+    await FirebaseMessagingService.instance().init(
+      localNotificationsService: localNotifications,
+    );
     await Hive.initFlutter();
     await Future.wait([AuthTokenService.init(), MobileCacheService.init()]);
+    if (AuthTokenService.hasValidToken || AuthTokenService.hasStaleToken) {
+      await FirebaseMessagingService.instance().syncCurrentTokenWithBackend();
+    }
     runApp(const MyApp(isMobile: true));
     return;
   }

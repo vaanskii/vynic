@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:vynic/core/services/api_config.dart';
 import 'package:vynic/core/services/auth_token_service.dart';
+import 'package:vynic/core/services/firebase_messaging_service.dart';
 
 /// Result of a successful mobile login against the backend.
 class MobileLoginResult {
@@ -59,6 +60,7 @@ class MobileAuthService {
           username: result.username,
           expiresInSeconds: result.expiresIn,
         );
+        await FirebaseMessagingService.instance().syncCurrentTokenWithBackend();
 
         return result;
       } else if (response.statusCode == 401) {
@@ -96,7 +98,10 @@ class MobileAuthService {
     return null;
   }
 
-  static Future<void> logout() => AuthTokenService.clearToken();
+  static Future<void> logout() async {
+    await FirebaseMessagingService.instance().unregisterCurrentTokenFromBackend();
+    await AuthTokenService.clearToken();
+  }
 
   static String errorMessage(MobileAuthError error) {
     switch (error) {

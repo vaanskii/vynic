@@ -61,6 +61,10 @@ class MonitoringSocketService {
   static Timer? _initTimer;
   static bool _disposed = false;
 
+  /// True while the app is backgrounded (folded / switched away).
+  static bool _appPaused = false;
+  static bool get isAppPaused => _appPaused;
+
   // ── Event deduplication ────────────────────────────────────────────────────
   static String? _lastEventSignature;
 
@@ -127,7 +131,9 @@ class MonitoringSocketService {
       debugPrint('[WS] Disconnected');
       isConnected.value = false;
       _stopHeartbeat();
-      _scheduleReconnect();
+      if (!_appPaused) {
+        _scheduleReconnect();
+      }
     });
 
     _socket!.onError((err) {
@@ -220,8 +226,38 @@ class MonitoringSocketService {
 
   // ── Reconnection ───────────────────────────────────────────────────────────
 
-  static void _scheduleReconnect() {
+  /// Call when the app returns to the foreground (Android & iOS).
+  static void onAppResumed() {
     if (_disposed) return;
+    _appPaused = false;
+    debugPrint('[WS] App resumed — reconnecting and refreshing');
+    _reconnectAttempts = 0;
+    _cancelReconnectTimer();
+    _socket?.dispose();
+    _socket = null;
+    isConnected.value = false;
+    _connect();
+    // Screens listen to this for REST refresh (dashboard, tables, etc.).
+    updateCounter.value++;
+    // Socket was down while backgrounded — load notifications saved on server.
+    unawaited(ManagerNotificationInbox.syncMissedFromServer());
+  }
+
+  /// Call when the app goes to background. Avoids reconnect loops and false "offline" UI.
+  static void onAppPaused() {
+    if (_disposed) return;
+    _appPaused = true;
+    debugPrint('[WS] App paused — socket idle until resume');
+    _cancelReconnectTimer();
+    _stopHeartbeat();
+    if (_socket?.connected == true) {
+      _socket!.disconnect();
+    }
+    isConnected.value = false;
+  }
+
+  static void _scheduleReconnect() {
+    if (_disposed || _appPaused) return;
     _cancelReconnectTimer();
 
     // Exponential backoff: 2s → 4s → 8s → 16s → 32s → 60s cap
@@ -270,6 +306,7 @@ class MonitoringSocketService {
 
   static void dispose() {
     _disposed = true;
+    _appPaused = false;
     _cancelReconnectTimer();
     _stopHeartbeat();
     _socket?.dispose();

@@ -13,6 +13,7 @@ class _Keys {
   static const menu = 'menu';
   static const topItems = 'top_items';
   static const lastServerTime = 'last_server_time'; // ISO – for diff sync
+  static const notificationsSyncAt = 'notifications_sync_at';
   static const countedMenus = 'counted_menus';
 
   // Per-key TTL timestamps
@@ -73,6 +74,13 @@ class MobileCacheService {
 
   static Future<void> setLastServerTime(String iso) async =>
       _box?.put(_Keys.lastServerTime, iso);
+
+  /// Last time we pulled persisted notifications from the server (ISO).
+  static String? get lastNotificationsSyncAt =>
+      _box?.get(_Keys.notificationsSyncAt) as String?;
+
+  static Future<void> setLastNotificationsSyncAt(String iso) async =>
+      _box?.put(_Keys.notificationsSyncAt, iso);
 
   // ── Dashboard ──────────────────────────────────────────────────────────────
 

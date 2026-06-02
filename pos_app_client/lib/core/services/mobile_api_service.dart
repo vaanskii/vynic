@@ -108,6 +108,29 @@ class MobileApiService {
     }
   }
 
+  /// Persisted manager notifications (while app was in background).
+  static Future<List<Map<String, dynamic>>> getNotifications({
+    String? since,
+  }) async {
+    final sinceParam = (since ?? '').trim();
+    final path = sinceParam.isNotEmpty
+        ? '/mobile/notifications?since=${Uri.encodeComponent(sinceParam)}'
+        : '/mobile/notifications';
+    final response = await _get(path);
+    if (response.statusCode != 200) {
+      debugPrint(
+        '[API] notifications ${response.statusCode}: ${response.body}',
+      );
+      return const [];
+    }
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) return const [];
+    return decoded
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
+  }
+
   // ── Dashboard ──────────────────────────────────────────────────────────────
 
   static Future<ManagerDashboardMetrics> getDashboard() async {

@@ -10,6 +10,7 @@ import 'package:vynic/apps/mobile_app/presentation/screens/live_status_screen.da
 import 'package:vynic/apps/mobile_app/presentation/screens/financials_screen.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/staff_performance_screen.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_admin_screen.dart';
+import 'package:vynic/core/services/manager_notification_inbox.dart';
 import 'package:vynic/core/services/monitoring_socket_service.dart';
 import 'package:vynic/core/services/mobile_auth_service.dart';
 import 'package:vynic/core/services/app_notification_history_store.dart';
@@ -26,7 +27,8 @@ class ManagerAppShell extends StatefulWidget {
   State<ManagerAppShell> createState() => _ManagerAppShellState();
 }
 
-class _ManagerAppShellState extends State<ManagerAppShell> {
+class _ManagerAppShellState extends State<ManagerAppShell>
+    with WidgetsBindingObserver {
   int _selectedIndex = 0;
 
   late final List<Widget> _screens;
@@ -39,17 +41,30 @@ class _ManagerAppShellState extends State<ManagerAppShell> {
   bool _prevApiError = false;
   String? _lastToastNotificationId;
 
+  /// Suppresses "connection lost/restored" toasts while reconnecting after resume.
+  bool _inLifecycleReconnect = false;
+  Timer? _lifecycleReconnectTimer;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     MonitoringSocketService.initialize();
-    MonitoringSocketService.isConnected.addListener(_onConnectionSignalsChanged);
+    MonitoringSocketService.isConnected.addListener(
+      _onConnectionSignalsChanged,
+    );
     MonitoringSocketService.apiError.addListener(_onConnectionSignalsChanged);
-    MonitoringSocketService.isInitializing.addListener(_onConnectionSignalsChanged);
+    MonitoringSocketService.isInitializing.addListener(
+      _onConnectionSignalsChanged,
+    );
     AppNotificationHistoryStore.instance.entries.addListener(
       _onNotificationEntriesChanged,
     );
-    WidgetsBinding.instance.addPostFrameCallback((_) => _onConnectionSignalsChanged());
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _onConnectionSignalsChanged(),
+    );
+    // Initial catch-up for notifications created before socket connected.
+    unawaited(ManagerNotificationInbox.syncMissedFromServer());
     _screens = [
       DashboardScreen(
         user: widget.user,
@@ -64,12 +79,59 @@ class _ManagerAppShellState extends State<ManagerAppShell> {
     ];
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.resumed:
+        _suppressToastsForResumeReconnect();
+        MonitoringSocketService.onAppResumed();
+        break;
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+        _pendingHealthyToast = false;
+        MonitoringSocketService.onAppPaused();
+        break;
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+        break;
+    }
+  }
+
+  void _suppressToastsForResumeReconnect() {
+    _inLifecycleReconnect = true;
+    _pendingHealthyToast = false;
+    _socketOutageToastEmitted = true;
+    _lifecycleReconnectTimer?.cancel();
+    // If the socket is still down after a few seconds, show a real outage toast.
+    _lifecycleReconnectTimer = Timer(const Duration(seconds: 5), () {
+      if (!mounted) return;
+      _inLifecycleReconnect = false;
+      _socketOutageToastEmitted = false;
+      _onConnectionSignalsChanged();
+    });
+  }
+
+  void _clearLifecycleReconnectSuppress() {
+    _lifecycleReconnectTimer?.cancel();
+    _lifecycleReconnectTimer = null;
+    _inLifecycleReconnect = false;
+    _socketOutageToastEmitted = false;
+  }
+
   void _onConnectionSignalsChanged() {
     if (!mounted) return;
     if (MonitoringSocketService.isInitializing.value) return;
+    if (MonitoringSocketService.isAppPaused) return;
 
     final connected = MonitoringSocketService.isConnected.value;
     final apiErr = MonitoringSocketService.apiError.value;
+
+    if (_inLifecycleReconnect) {
+      if (connected && !apiErr) {
+        _clearLifecycleReconnectSuppress();
+      }
+      return;
+    }
 
     // Fully healthy again → single restored toast if we had surfaced a problem.
     if (connected && !apiErr && _pendingHealthyToast) {
@@ -103,6 +165,8 @@ class _ManagerAppShellState extends State<ManagerAppShell> {
     final latest = list.first;
     if (_lastToastNotificationId == latest.id) return;
     _lastToastNotificationId = latest.id;
+    // Catch-up from server fills the panel only (avoid toast spam after resume).
+    if (latest.source == 'catchup') return;
     ManagerToast.show(context, '${latest.title}\n${latest.message}');
   }
 
@@ -162,18 +226,18 @@ class _ManagerAppShellState extends State<ManagerAppShell> {
   void _openNotificationsSheet() {
     Navigator.of(context)
         .push(
-      NotificationsScreen.route(
-        onEntryTap: _onNotificationEntryTap,
-        onClear: () {
-          AppNotificationHistoryStore.instance.clear();
-          if (mounted) setState(() {});
-        },
-      ),
-    )
+          NotificationsScreen.route(
+            onEntryTap: _onNotificationEntryTap,
+            onClear: () {
+              AppNotificationHistoryStore.instance.clear();
+              if (mounted) setState(() {});
+            },
+          ),
+        )
         .whenComplete(() {
-      AppNotificationHistoryStore.instance.markAllRead();
-      if (mounted) setState(() {});
-    });
+          AppNotificationHistoryStore.instance.markAllRead();
+          if (mounted) setState(() {});
+        });
   }
 
   int? _orderIdFromNotificationMeta(Map<String, dynamic> meta) {
@@ -268,169 +332,175 @@ class _ManagerAppShellState extends State<ManagerAppShell> {
   @override
   Widget build(BuildContext context) {
     // Tabs that use the dark "glass" design (own header, no shell app bar).
-    final isDarkTab = _selectedIndex == 0 ||
+    final isDarkTab =
+        _selectedIndex == 0 ||
         _selectedIndex == 1 ||
         _selectedIndex == 2 ||
         _selectedIndex == 3;
     return Scaffold(
-      backgroundColor:
-          isDarkTab ? const Color(0xFF050508) : const Color(0xFFF1F5F9),
+      backgroundColor: isDarkTab
+          ? const Color(0xFF050508)
+          : const Color(0xFFF1F5F9),
       extendBody: isDarkTab,
       appBar: isDarkTab
           ? null
           : PreferredSize(
-        preferredSize: const Size.fromHeight(64),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
-          ),
-          child: SafeArea(
-            bottom: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // ── main bar ──────────────────────────────────────────────
-                SizedBox(
-                  height: 56,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        // Logo + brand name
-                        Image.asset(
-                          'assets/logo/vynic.png',
-                          height: 30,
-                          fit: BoxFit.contain,
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Vynic',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF1E3A8A),
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        const Spacer(),
-                        // Business date chip
-                        ValueListenableBuilder<String?>(
-                          valueListenable:
-                              MonitoringSocketService.currentBusinessDate,
-                          builder: (_, date, __) {
-                            final label = _formatBusinessDate(date);
-                            if (label.isEmpty) return const SizedBox.shrink();
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 5,
+              preferredSize: const Size.fromHeight(64),
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+                ),
+                child: SafeArea(
+                  bottom: false,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // ── main bar ──────────────────────────────────────────────
+                      SizedBox(
+                        height: 56,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Row(
+                            children: [
+                              // Logo + brand name
+                              Image.asset(
+                                'assets/logo/vynic.png',
+                                height: 30,
+                                fit: BoxFit.contain,
                               ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEFF6FF),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: const Color(0xFFBFDBFE),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Vynic',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF1E3A8A),
+                                  letterSpacing: -0.3,
                                 ),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.calendar_today_rounded,
-                                    size: 12,
-                                    color: Color(0xFF2563EB),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    label,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF1D4ED8),
+                              const Spacer(),
+                              // Business date chip
+                              ValueListenableBuilder<String?>(
+                                valueListenable:
+                                    MonitoringSocketService.currentBusinessDate,
+                                builder: (_, date, __) {
+                                  final label = _formatBusinessDate(date);
+                                  if (label.isEmpty)
+                                    return const SizedBox.shrink();
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
                                     ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        ValueListenableBuilder<int>(
-                          valueListenable:
-                              AppNotificationHistoryStore.instance.unreadCount,
-                          builder: (_, unread, __) {
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 2),
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                alignment: Alignment.center,
-                                children: [
-                                  IconButton(
-                                    icon: Icon(
-                                      Icons.notifications_outlined,
-                                      color: unread > 0
-                                          ? const Color(0xFF2563EB)
-                                          : const Color(0xFF94A3B8),
-                                      size: 22,
-                                    ),
-                                    tooltip: 'შეტყობინებები',
-                                    onPressed: _openNotificationsSheet,
-                                    splashRadius: 20,
-                                  ),
-                                  if (unread > 0)
-                                    Positioned(
-                                      right: 4,
-                                      top: 6,
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 5,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFEF4444),
-                                          borderRadius:
-                                              BorderRadius.circular(999),
-                                        ),
-                                        constraints:
-                                            const BoxConstraints(minWidth: 18),
-                                        child: Text(
-                                          unread > 99 ? '99+' : '$unread',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEFF6FF),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: const Color(0xFFBFDBFE),
                                       ),
                                     ),
-                                ],
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.calendar_today_rounded,
+                                          size: 12,
+                                          color: Color(0xFF2563EB),
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          label,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF1D4ED8),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
-                        // Logout
-                        IconButton(
-                          icon: const Icon(
-                            Icons.logout_rounded,
-                            color: Color(0xFF94A3B8),
-                            size: 22,
+                              const SizedBox(width: 8),
+                              ValueListenableBuilder<int>(
+                                valueListenable: AppNotificationHistoryStore
+                                    .instance
+                                    .unreadCount,
+                                builder: (_, unread, __) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 2),
+                                    child: Stack(
+                                      clipBehavior: Clip.none,
+                                      alignment: Alignment.center,
+                                      children: [
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.notifications_outlined,
+                                            color: unread > 0
+                                                ? const Color(0xFF2563EB)
+                                                : const Color(0xFF94A3B8),
+                                            size: 22,
+                                          ),
+                                          tooltip: 'შეტყობინებები',
+                                          onPressed: _openNotificationsSheet,
+                                          splashRadius: 20,
+                                        ),
+                                        if (unread > 0)
+                                          Positioned(
+                                            right: 4,
+                                            top: 6,
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 5,
+                                                    vertical: 2,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFEF4444),
+                                                borderRadius:
+                                                    BorderRadius.circular(999),
+                                              ),
+                                              constraints: const BoxConstraints(
+                                                minWidth: 18,
+                                              ),
+                                              child: Text(
+                                                unread > 99 ? '99+' : '$unread',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.w800,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                              // Logout
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.logout_rounded,
+                                  color: Color(0xFF94A3B8),
+                                  size: 22,
+                                ),
+                                tooltip: 'გამოსვლა',
+                                onPressed: _logout,
+                                splashRadius: 20,
+                              ),
+                            ],
                           ),
-                          tooltip: 'გამოსვლა',
-                          onPressed: _logout,
-                          splashRadius: 20,
                         ),
-                      ],
-                    ),
+                      ),
+                      // Connection issues use [ManagerToast] (gradient pills) instead of a slim banner.
+                    ],
                   ),
                 ),
-                // Connection issues use [ManagerToast] (gradient pills) instead of a slim banner.
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
       body: IndexedStack(index: _selectedIndex, children: _screens),
       bottomNavigationBar: _buildFloatingNav(),
     );
@@ -470,8 +540,10 @@ class _ManagerAppShellState extends State<ManagerAppShell> {
               // Heavy blur = frosted "liquid glass" feel like iOS materials.
               filter: ImageFilter.blur(sigmaX: 32, sigmaY: 32),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 10,
+                  horizontal: 10,
+                ),
                 decoration: BoxDecoration(
                   // Top-lighter → bottom-darker translucent tint gives the
                   // subtle sheen of frosted glass while staying dark enough
@@ -555,12 +627,20 @@ class _ManagerAppShellState extends State<ManagerAppShell> {
 
   @override
   void dispose() {
+    _lifecycleReconnectTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     AppNotificationHistoryStore.instance.entries.removeListener(
       _onNotificationEntriesChanged,
     );
-    MonitoringSocketService.isConnected.removeListener(_onConnectionSignalsChanged);
-    MonitoringSocketService.apiError.removeListener(_onConnectionSignalsChanged);
-    MonitoringSocketService.isInitializing.removeListener(_onConnectionSignalsChanged);
+    MonitoringSocketService.isConnected.removeListener(
+      _onConnectionSignalsChanged,
+    );
+    MonitoringSocketService.apiError.removeListener(
+      _onConnectionSignalsChanged,
+    );
+    MonitoringSocketService.isInitializing.removeListener(
+      _onConnectionSignalsChanged,
+    );
     MonitoringSocketService.dispose();
     super.dispose();
   }

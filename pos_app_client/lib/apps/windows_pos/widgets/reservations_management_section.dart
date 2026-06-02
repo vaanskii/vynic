@@ -14,7 +14,9 @@ class ReservationsManagementSection extends StatelessWidget {
   final ValueChanged<DateTime?> onFilterDateChanged;
   final ValueChanged<String> onStatusFilterChanged;
   final VoidCallback? onCreateReservation;
-  final bool isAdminUser;
+  final bool canAssignTableToReservation;
+  final bool canCancelReservation;
+  final bool canDeleteReservation;
   final ReservationAsyncAction? onEditReservation;
   final ReservationAsyncAction? onViewPreOrder;
   final ReservationAsyncAction? onManagePreOrder;
@@ -45,7 +47,9 @@ class ReservationsManagementSection extends StatelessWidget {
     required this.onFilterDateChanged,
     required this.onStatusFilterChanged,
     this.onCreateReservation,
-    this.isAdminUser = false,
+    this.canAssignTableToReservation = false,
+    this.canCancelReservation = false,
+    this.canDeleteReservation = false,
     this.onEditReservation,
     this.onViewPreOrder,
     this.onManagePreOrder,
@@ -305,7 +309,7 @@ class ReservationsManagementSection extends StatelessWidget {
       reservation.reservationDate,
       DatabaseService.getCurrentDate(),
     );
-    final canAssignTable = isAdminUser && isToday;
+    final canAssignTable = canAssignTableToReservation && isToday;
     final customerName = reservation.customerName.trim().isEmpty
         ? 'რეზერვაცია'
         : reservation.customerName.trim();
@@ -564,7 +568,7 @@ class ReservationsManagementSection extends StatelessWidget {
                     icon: const Icon(Icons.local_dining_outlined, size: 18),
                     label: const Text('სამზარეულოში გაგზავნა'),
                   ),
-                if (isAdminUser && onAssignTable != null)
+                if (canAssignTableToReservation && onAssignTable != null)
                   OutlinedButton.icon(
                     onPressed: canAssignTable
                         ? () => onAssignTable!(reservation)
@@ -583,7 +587,7 @@ class ReservationsManagementSection extends StatelessWidget {
                     icon: const Icon(Icons.table_restaurant, size: 18),
                     label: const Text('სუფრაზე გადაყვანა'),
                   ),
-                if (isAdminUser &&
+                if (canCancelReservation &&
                     onCancelReservation != null &&
                     !_isCancelledStatus(reservation.status))
                   OutlinedButton.icon(
@@ -601,7 +605,7 @@ class ReservationsManagementSection extends StatelessWidget {
                     icon: const Icon(Icons.close, size: 18),
                     label: const Text('გაუქმება'),
                   ),
-                if (isAdminUser && onDeleteReservation != null)
+                if (canDeleteReservation && onDeleteReservation != null)
                   OutlinedButton.icon(
                     onPressed: () =>
                         _showDeleteConfirmation(context, reservation),

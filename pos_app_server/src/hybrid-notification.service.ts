@@ -7,6 +7,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { getApps, initializeApp, applicationDefault } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
+import { StaffRole } from '@prisma/client';
 import { PrismaService } from './prisma.service';
 import { PresenceService } from './presence.service';
 import { MonitoringGateway } from './monitoring.gateway';
@@ -87,7 +88,9 @@ export class HybridNotificationService {
         const managers = await this.prisma.staff.findMany({
           where: {
             isActive: true,
-            role: { in: ['ADMIN', 'MANAGER'] },
+            role: {
+              in: [StaffRole.ADMIN, StaffRole.MANAGER, StaffRole.SUPERVISOR],
+            },
           },
           select: { username: true },
         });
@@ -105,14 +108,21 @@ export class HybridNotificationService {
             skipDuplicates: true,
           });
         }
-        await this.sendFcmToOfflineManagers({
-          notificationId,
-          envelope,
-          title: pushCopy.title,
-          body: pushCopy.body,
-          managerUsernames: managers.map((m) => m.username),
-          onlineUsernames: online,
-        });
+
+        try {
+          await this.sendFcmToOfflineManagers({
+            notificationId,
+            envelope,
+            title: pushCopy.title,
+            body: pushCopy.body,
+            managerUsernames: managers.map((m) => m.username),
+            onlineUsernames: online,
+          });
+        } catch (fcmError) {
+          this.logger.warn(
+            `FCM send failed: ${(fcmError as Error).message}`,
+          );
+        }
       }
     } catch (e) {
       this.logger.warn(

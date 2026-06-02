@@ -117,6 +117,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             status == 'served') &&
         canModify &&
         _canCurrentUserCloseOrder(order);
+    final bool canNonFiscalClose = _canNonFiscalCloseTable(order, status);
     return OrderDetailActionHelpers.buildActions(
       status: status,
       order: order,
@@ -126,6 +127,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       canModify: canModify,
       isTakeAwayOrder: _isTakeAwayOrder,
       canCloseTable: canCloseTable,
+      canNonFiscalClose: canNonFiscalClose,
       serviceFeeAvailable: _serviceFeeAvailable,
       serviceFeePercentageLabel: _serviceFeeLabelForOrder(order),
       onConfirmOrder: () => _updateStatus('confirmed'),
@@ -142,9 +144,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
+  bool _canNonFiscalCloseTable(Order order, String status) {
+    if (!widget.user.canCloseTablesNonFiscal) {
+      return false;
+    }
+    if (_isFinalizedStatus(status)) {
+      return false;
+    }
+    if (widget.user.isManager || widget.user.isSupervisor) {
+      return true;
+    }
+    return _canCurrentUserModifyOrder(order);
+  }
+
   bool _canCurrentUserCloseOrder(Order order) {
-    // Admin can always close tables
-    if (widget.user.isAdmin) {
+    if (widget.user.isManager) {
       return true;
     }
 
@@ -2091,11 +2105,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Future<void> _startNonFiscalClosureFlow() async {
-    if (!widget.user.isAdmin) {
+    if (!widget.user.canCloseTablesNonFiscal) {
       unawaited(
         showErrorToast(
           context,
-          'მხოლოდ ადმინისტრატორს შეუძლია არაფისკალური დახურვა',
+          'არაფისკალური დახურვა მხოლოდ მენეჯერს ან ზედამხედველს შეუძლია',
         ),
       );
       return;

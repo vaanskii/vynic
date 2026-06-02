@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/mobile_app/data/models/takeaway_models.dart';
+import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
 
 class SectionCard extends StatelessWidget {
   final String title;
@@ -12,23 +13,23 @@ class SectionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: MobileGlassTheme.surfaceCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: MobileGlassTheme.borderSubtle),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 13,
-              color: Color(0xFF64748B),
+              color: MobileGlassTheme.textSecondary,
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           child,
         ],
       ),
@@ -60,15 +61,21 @@ class QtyButton extends StatelessWidget {
               width: 28,
               height: 28,
               decoration: BoxDecoration(
-                color: const Color(0xFFEF4444).withValues(alpha: 0.1),
+                color: MobileGlassTheme.bad.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.remove, size: 16, color: Color(0xFFEF4444)),
+              child: Icon(Icons.remove, size: 16, color: MobileGlassTheme.bad),
             ),
           ),
-          const SizedBox(width: 8),
-          Text('$qty', style: const TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
+          Text(
+            '$qty',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: MobileGlassTheme.textPrimary,
+            ),
+          ),
+          SizedBox(width: 8),
         ],
         GestureDetector(
           onTap: onInc,
@@ -76,10 +83,10 @@ class QtyButton extends StatelessWidget {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              color: const Color(0xFF1E3A8A).withValues(alpha: 0.1),
+              color: MobileGlassTheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.add, size: 16, color: Color(0xFF1E3A8A)),
+            child: Icon(Icons.add, size: 16, color: MobileGlassTheme.primary),
           ),
         ),
       ],
@@ -114,7 +121,13 @@ class CartSummarySection extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(e.key, style: const TextStyle(fontSize: 13)),
+                    child: Text(
+                      e.key,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: MobileGlassTheme.textPrimary,
+                      ),
+                    ),
                   ),
                   QtyButton(
                     qty: e.value.quantity,
@@ -129,12 +142,18 @@ class CartSummarySection extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('სულ', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                'სულ',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: MobileGlassTheme.textPrimary,
+                ),
+              ),
               Text(
                 '${total.toStringAsFixed(2)} ₾',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E3A8A),
+                  color: MobileGlassTheme.primary,
                 ),
               ),
             ],
@@ -169,10 +188,19 @@ class MenuItemsSection extends StatelessWidget {
           return ListTile(
             dense: true,
             contentPadding: EdgeInsets.zero,
-            title: Text(item.name, style: const TextStyle(fontSize: 13)),
+            title: Text(
+              item.name,
+              style: TextStyle(
+                fontSize: 13,
+                color: MobileGlassTheme.textPrimary,
+              ),
+            ),
             subtitle: Text(
               '${item.price.toStringAsFixed(2)} ₾',
-              style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+              style: TextStyle(
+                color: MobileGlassTheme.textSecondary,
+                fontSize: 12,
+              ),
             ),
             trailing: QtyButton(
               qty: qty,

@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/windows_pos/widgets/pin_button.dart';
+import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/mobile_auth_service.dart';
@@ -135,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
       shellUser = User(
         username: result.username,
         pinCode: pin,
-        role: result.role == 'ADMIN' ? 'admin' : 'manager',
+        role: StaffRole.fromApi(result.role),
       );
     } on MobileAuthError catch (e) {
       if (e == MobileAuthError.networkError) {
@@ -145,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
           shellUser = User(
             username: offline.username,
             pinCode: pin,
-            role: offline.role == 'ADMIN' ? 'admin' : 'manager',
+            role: StaffRole.fromApi(offline.role),
           );
           if (offline.isStale && mounted) {
             unawaited(
@@ -168,7 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Backend Staff table may be empty (first run / DB reset).
         // Fall back to local DB — only valid when the POS runs on this device.
         final localUser = DatabaseService.authenticateByPin(pin);
-        if (localUser != null && (localUser.isAdmin || localUser.isManager)) {
+        if (localUser != null && localUser.canUseManagerMobileApp) {
           // Sync staff to backend FIRST (awaited), then retry login to get JWT.
           await ManagerSyncService.syncToManagerApp();
           try {
@@ -176,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
             shellUser = User(
               username: retryResult.username,
               pinCode: pin,
-              role: retryResult.role == 'ADMIN' ? 'admin' : 'manager',
+              role: StaffRole.fromApi(retryResult.role),
             );
           } catch (_) {
             // Sync succeeded but login still failed — enter with local user,

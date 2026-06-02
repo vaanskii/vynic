@@ -1,26 +1,54 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/mobile_app/core/theme/manager_dashboard_theme.dart';
+import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
+import 'package:vynic/core/services/manager_app_preferences.dart';
 
-/// Shared dark glass palette for manager mobile screens.
+/// Shared glass / light palette for manager mobile screens.
 abstract final class MobileGlassTheme {
-  static const bg = Color(0xFF050508);
-  static const primary = Color(0xFF6366F1);
-  static const accent = Color(0xFF3B82F6);
-  static const good = Color(0xFF10B981);
-  static const bad = Color(0xFFEF4444);
-  static const warn = Color(0xFFF59E0B);
-  static const highlightFill = Color(0x33F97316);
-  static const highlightBorder = Color(0xFFF97316);
+  static DashboardThemeData get data => DashboardThemeData.forAppearance(
+        ManagerAppPreferences.dashboardAppearance.value,
+      );
 
-  static Color muted([double opacity = 0.55]) =>
-      Colors.white.withValues(alpha: opacity);
+  static Color get bg => data.scaffoldBackground;
+  static Color get primary => data.primary;
+  static Color get accent => data.info;
+  static Color get good => data.good;
+  static Color get bad => data.bad;
+  static Color get warn => data.warn;
+  static Color get highlightFill => data.warn.withValues(alpha: 0.2);
+  static Color get highlightBorder => data.warn;
+  static Color get textPrimary => data.textPrimary;
+  static Color get textSecondary => data.textSecondary;
+  static Color get accentText => data.accentText;
+  static Color get surfaceCard => data.surfaceCard;
+  static Color get surfaceElevated => data.surfaceElevated;
+  static Color get borderSubtle => data.borderSubtle;
 
-  static Color border([double opacity = 0.1]) =>
-      Colors.white.withValues(alpha: opacity);
+  static Color muted([double opacity = 0.55]) {
+    if (data.isDark) {
+      return Colors.white.withValues(alpha: opacity);
+    }
+    return data.textSecondary.withValues(alpha: opacity.clamp(0.0, 1.0));
+  }
 
-  static Color surface([double opacity = 0.06]) =>
-      Colors.white.withValues(alpha: opacity);
+  static Color border([double opacity = 0.1]) {
+    if (data.isDark) {
+      return Colors.white.withValues(alpha: opacity);
+    }
+    return data.textPrimary.withValues(alpha: (opacity * 0.35).clamp(0.06, 0.22));
+  }
+
+  static Color surface([double opacity = 0.06]) {
+    if (data.isDark) {
+      return Colors.white.withValues(alpha: opacity);
+    }
+    if (opacity <= 0.12) return data.heroCardBackground;
+    return data.primarySoft.withValues(alpha: opacity.clamp(0.08, 1.0));
+  }
+
+  static DashboardThemeData of(BuildContext context) => managerThemeOf(context);
 }
 
 class MobileGlowOrb extends StatelessWidget {
@@ -67,19 +95,42 @@ class MobileGlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = MobileGlassTheme.of(context);
+    final content = Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: theme.useGlassCards
+            ? MobileGlassTheme.surface()
+            : theme.heroCardBackground,
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(
+          color: borderColor ?? theme.cardBorder,
+        ),
+        boxShadow: theme.isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: theme.cardShadow,
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+      ),
+      child: child,
+    );
+
+    if (!theme.useGlassCards) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: content,
+      );
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            color: MobileGlassTheme.surface(),
-            borderRadius: BorderRadius.circular(radius),
-            border: Border.all(color: borderColor ?? MobileGlassTheme.border()),
-          ),
-          child: child,
-        ),
+        child: content,
       ),
     );
   }
@@ -97,8 +148,9 @@ class MobileGlassScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = MobileGlassTheme.of(context);
     return Scaffold(
-      backgroundColor: MobileGlassTheme.bg,
+      backgroundColor: theme.scaffoldBackground,
       body: Stack(
         children: [
           ...orbs,
@@ -125,6 +177,7 @@ class MobileGlassHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = MobileGlassTheme.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 4, 12, 8),
       child: Row(
@@ -132,18 +185,18 @@ class MobileGlassHeader extends StatelessWidget {
           if (onBack != null)
             IconButton(
               onPressed: onBack,
-              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+              icon: Icon(Icons.arrow_back_rounded, color: theme.textPrimary),
             )
           else
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: theme.textPrimary,
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                   ),
@@ -152,7 +205,7 @@ class MobileGlassHeader extends StatelessWidget {
                   Text(
                     subtitle!,
                     style: TextStyle(
-                      color: MobileGlassTheme.muted(0.5),
+                      color: theme.textSecondary,
                       fontSize: 12,
                     ),
                   ),
@@ -172,20 +225,21 @@ class MobileGlassPrimaryButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
-    this.color = MobileGlassTheme.primary,
+    this.color,
     this.expand = true,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
-  final Color color;
+  final Color? color;
   final bool expand;
 
   @override
   Widget build(BuildContext context) {
+    final fill = color ?? MobileGlassTheme.of(context).primary;
     final btn = Material(
-      color: color,
+      color: fill,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onPressed,
@@ -198,7 +252,7 @@ class MobileGlassPrimaryButton extends StatelessWidget {
             children: [
               if (icon != null) ...[
                 Icon(icon, color: Colors.white, size: 20),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
               ],
               Text(
                 label,
@@ -222,17 +276,18 @@ class MobileGlassIconButton extends StatelessWidget {
     super.key,
     required this.icon,
     required this.onPressed,
-    this.color = MobileGlassTheme.bad,
+    this.color,
   });
 
   final IconData icon;
   final VoidCallback? onPressed;
-  final Color color;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
+    final c = color ?? MobileGlassTheme.bad;
     return Material(
-      color: color.withValues(alpha: 0.15),
+      color: c.withValues(alpha: 0.15),
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onPressed,
@@ -240,7 +295,7 @@ class MobileGlassIconButton extends StatelessWidget {
         child: SizedBox(
           width: 52,
           height: 52,
-          child: Icon(icon, color: color),
+          child: Icon(icon, color: c),
         ),
       ),
     );

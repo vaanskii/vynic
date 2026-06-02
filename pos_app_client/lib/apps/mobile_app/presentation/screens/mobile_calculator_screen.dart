@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/services/mobile_api_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
+import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
 
 /// Mobile-native menu calculator / Count Menu.
 class MobileCalculatorScreen extends StatefulWidget {
@@ -37,14 +38,6 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
   late TabController _tabController;
   TabController? _subTabController;
 
-  // Dark "glass" palette (matches the dashboard / tables tabs).
-  static const _bg = Color(0xFF050508);
-  static const _accent = Color(0xFF6366F1);
-  static const _accentText = Color(0xFFC7D2FE);
-  static const _surface = Color(0xFF15151C);
-  static const _textPrimary = Colors.white;
-  static const _muted = Color(0xFF9AA0AE);
-  static const _cardBorder = Color(0x14FFFFFF);
   static final _money = NumberFormat.currency(
     locale: 'ka_GE',
     symbol: '₾',
@@ -209,7 +202,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                 nameKa: '${it.nameKa} (${v.label})',
                 nameEn: '${it.nameEn} (${v.label})',
                 price: v.price,
-                variants: const [],
+                variants: [],
               ),
               qty: qty,
               key: key,
@@ -253,10 +246,10 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
           padding: MediaQuery.of(context).viewInsets,
           duration: const Duration(milliseconds: 100),
           child: Container(
-            decoration: const BoxDecoration(
-              color: _surface,
+            decoration: BoxDecoration(
+              color: MobileGlassTheme.surfaceCard,
               borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-              border: Border(top: BorderSide(color: _cardBorder)),
+              border: Border(top: BorderSide(color: MobileGlassTheme.borderSubtle)),
             ),
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -266,29 +259,29 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: MobileGlassTheme.muted(0.2),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 Text(
                   item.nameKa,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
-                    color: Colors.white,
+                    color: MobileGlassTheme.textPrimary,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   selectedVariant != null
                       ? '${_money.format(selectedVariant!.price)} (${selectedVariant!.label})'
                       : '${_money.format(item.price)} / ცალი',
-                  style: const TextStyle(color: _muted, fontSize: 14),
+                  style: TextStyle(color: MobileGlassTheme.textSecondary, fontSize: 14),
                 ),
                 if (item.variants.isNotEmpty) ...[
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   Wrap(
                     spacing: 8,
                     children: item.variants.map((v) {
@@ -301,20 +294,20 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                             setModalState(() => selectedVariant = v);
                           }
                         },
-                        backgroundColor: Colors.white.withValues(alpha: 0.06),
-                        selectedColor: _accent,
+                        backgroundColor: MobileGlassTheme.surface(0.06),
+                        selectedColor: MobileGlassTheme.primary,
                         side: BorderSide(
-                          color: isSel ? _accent : _cardBorder,
+                          color: isSel ? MobileGlassTheme.primary : MobileGlassTheme.borderSubtle,
                         ),
                         labelStyle: TextStyle(
-                          color: isSel ? Colors.white : Colors.white70,
+                          color: isSel ? MobileGlassTheme.textPrimary : MobileGlassTheme.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                       );
                     }).toList(),
                   ),
                 ],
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -326,17 +319,17 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                         });
                       }
                     }),
-                    const SizedBox(width: 20),
+                    SizedBox(width: 20),
                     SizedBox(
                       width: 100,
                       child: TextField(
                         controller: qtyController,
                         keyboardType: TextInputType.number,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 36,
                           fontWeight: FontWeight.bold,
-                          color: _textPrimary,
+                          color: MobileGlassTheme.textPrimary,
                         ),
                         decoration: const InputDecoration(border: InputBorder.none),
                         onChanged: (val) {
@@ -347,7 +340,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                         },
                       ),
                     ),
-                    const SizedBox(width: 20),
+                    SizedBox(width: 20),
                     _modalQtyBtn(Icons.add_rounded, () {
                       setModalState(() {
                         selectedQty++;
@@ -356,7 +349,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                     }),
                   ],
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -366,14 +359,14 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                         qtyController.text = selectedQty.toString();
                       });
                     }),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     _quickAddBtn('+10', () {
                       setModalState(() {
                         selectedQty += 10;
                         qtyController.text = selectedQty.toString();
                       });
                     }),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     _quickAddBtn('+20', () {
                       setModalState(() {
                         selectedQty += 20;
@@ -382,7 +375,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                     }),
                   ],
                 ),
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
                   height: 56,
@@ -409,20 +402,20 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _accent,
+                      backgroundColor: MobileGlassTheme.primary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
+                    child: Text(
                       'დამატება',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
               ],
             ),
           ),
@@ -435,11 +428,11 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
     return ActionChip(
       label: Text(
         label,
-        style: const TextStyle(fontWeight: FontWeight.bold, color: _accentText),
+        style: TextStyle(fontWeight: FontWeight.bold, color: MobileGlassTheme.accentText),
       ),
       onPressed: onTap,
-      backgroundColor: _accent.withValues(alpha: 0.15),
-      side: BorderSide(color: _accent.withValues(alpha: 0.4)),
+      backgroundColor: MobileGlassTheme.primary.withValues(alpha: 0.15),
+      side: BorderSide(color: MobileGlassTheme.primary.withValues(alpha: 0.4)),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );
   }
@@ -451,11 +444,11 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.07),
+          color: MobileGlassTheme.surface(0.07),
           shape: BoxShape.circle,
-          border: Border.all(color: _cardBorder),
+          border: Border.all(color: MobileGlassTheme.borderSubtle),
         ),
-        child: Icon(icon, color: Colors.white, size: 28),
+        child: Icon(icon, color: MobileGlassTheme.textPrimary, size: 28),
       ),
     );
   }
@@ -478,7 +471,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
     final name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('მენიუს შენახვა'),
+        title: Text('მენიუს შენახვა'),
         content: TextField(
           controller: nameController,
           decoration: const InputDecoration(
@@ -489,11 +482,11 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('გაუქმება'),
+            child: Text('გაუქმება'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, nameController.text),
-            child: const Text('შენახვა'),
+            child: Text('შენახვა'),
           ),
         ],
       ),
@@ -530,24 +523,24 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: MobileGlassTheme.bg,
       appBar: AppBar(
         title: Text(
           widget.isCountMode ? 'მენიუს დათვლა' : 'მენიუ',
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
-        backgroundColor: _bg,
-        foregroundColor: Colors.white,
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: MobileGlassTheme.bg,
+        foregroundColor: MobileGlassTheme.textPrimary,
+        iconTheme: IconThemeData(color: MobileGlassTheme.textPrimary),
         elevation: 0,
         bottom: (_loading || _categories.isEmpty)
             ? null
             : TabBar(
                 controller: _tabController,
                 isScrollable: true,
-                labelColor: Colors.white,
-                unselectedLabelColor: _muted,
-                indicatorColor: _accent,
+                labelColor: MobileGlassTheme.textPrimary,
+                unselectedLabelColor: MobileGlassTheme.textSecondary,
+                indicatorColor: MobileGlassTheme.primary,
                 indicatorWeight: 3,
                 dividerColor: Colors.transparent,
                 labelStyle:
@@ -556,8 +549,8 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
               ),
       ),
       body: _loading
-          ? const Center(
-              child: CircularProgressIndicator(color: _accent),
+          ? Center(
+              child: CircularProgressIndicator(color: MobileGlassTheme.primary),
             )
           : _error != null
           ? _buildError()
@@ -569,13 +562,13 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                     child: TabBar(
                       controller: _subTabController,
                       isScrollable: true,
-                      labelColor: Colors.white,
-                      unselectedLabelColor: _muted,
+                      labelColor: MobileGlassTheme.textPrimary,
+                      unselectedLabelColor: MobileGlassTheme.textSecondary,
                       dividerColor: Colors.transparent,
                       indicatorSize: TabBarIndicatorSize.tab,
                       indicator: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
-                        color: _accent,
+                        color: MobileGlassTheme.primary,
                       ),
                       indicatorPadding: const EdgeInsets.symmetric(
                         vertical: 9,
@@ -612,16 +605,16 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.wifi_off_rounded, size: 48, color: _muted),
-            const SizedBox(height: 12),
-            const Text(
+            Icon(Icons.wifi_off_rounded, size: 48, color: MobileGlassTheme.textSecondary),
+            SizedBox(height: 12),
+            Text(
               'მენიუ ვერ ჩაიტვირთა',
-              style: TextStyle(color: _textPrimary, fontWeight: FontWeight.bold),
+              style: TextStyle(color: MobileGlassTheme.textPrimary, fontWeight: FontWeight.bold),
             ),
             TextButton.icon(
               onPressed: _loadMenu,
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('თავიდან ცდა'),
+              icon: Icon(Icons.refresh_rounded),
+              label: Text('თავიდან ცდა'),
             ),
           ],
         ),
@@ -630,25 +623,25 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
   Widget _buildSearchBar() => Padding(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
         child: TextField(
-          style: const TextStyle(color: Colors.white, fontSize: 15),
-          cursorColor: _accent,
+          style: TextStyle(color: MobileGlassTheme.textPrimary, fontSize: 15),
+          cursorColor: MobileGlassTheme.primary,
           decoration: InputDecoration(
             hintText: 'პროდუქტის ძიება...',
-            hintStyle: const TextStyle(color: _muted),
-            prefixIcon: const Icon(Icons.search_rounded, color: _muted),
+            hintStyle: TextStyle(color: MobileGlassTheme.textSecondary),
+            prefixIcon: Icon(Icons.search_rounded, color: MobileGlassTheme.textSecondary),
             filled: true,
-            fillColor: Colors.white.withValues(alpha: 0.05),
+            fillColor: MobileGlassTheme.surface(0.05),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 12,
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: _cardBorder),
+              borderSide: BorderSide(color: MobileGlassTheme.borderSubtle),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: _accent),
+              borderSide: BorderSide(color: MobileGlassTheme.primary),
             ),
           ),
           onChanged: (v) => setState(() => _searchQuery = v),
@@ -692,15 +685,15 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
 
     if (items.isEmpty) {
       debugPrint('[CALC] Items list is EMPTY');
-      return const Center(
-        child: Text('პროდუქტი ვერ მოიძებნა', style: TextStyle(color: _muted)),
+      return Center(
+        child: Text('პროდუქტი ვერ მოიძებნა', style: TextStyle(color: MobileGlassTheme.textSecondary)),
       );
     }
 
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       itemCount: items.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, __) => SizedBox(height: 10),
       itemBuilder: (context, i) => _buildItemRow(items[i]),
     );
   }
@@ -728,11 +721,11 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: active
-              ? _accent.withValues(alpha: 0.12)
-              : Colors.white.withValues(alpha: 0.04),
+              ? MobileGlassTheme.primary.withValues(alpha: 0.12)
+              : MobileGlassTheme.surface(0.04),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: active ? _accent.withValues(alpha: 0.6) : _cardBorder,
+            color: active ? MobileGlassTheme.primary.withValues(alpha: 0.6) : MobileGlassTheme.borderSubtle,
             width: active ? 1.5 : 1,
           ),
         ),
@@ -745,19 +738,19 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                 height: 30,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: _accent,
+                  color: MobileGlassTheme.primary,
                   borderRadius: BorderRadius.circular(9),
                 ),
                 child: Text(
                   '$totalQty',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: MobileGlassTheme.textPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
             ],
             Expanded(
               child: Column(
@@ -765,24 +758,24 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                 children: [
                   Text(
                     item.nameKa,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: MobileGlassTheme.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 3),
+                  SizedBox(height: 3),
                   Row(
                     children: [
                       Text(
                         hasVariants
                             ? 'დან ${_money.format(item.variants.first.price)}'
                             : _money.format(item.price),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: _accentText,
+                          color: MobileGlassTheme.accentText,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -790,7 +783,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                         Text(
                           '  •  ',
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.25),
+                            color: MobileGlassTheme.muted(0.25),
                             fontSize: 13,
                           ),
                         ),
@@ -798,7 +791,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                           '= ${_money.format(lineTotal)}',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.white.withValues(alpha: 0.6),
+                            color: MobileGlassTheme.muted(0.6),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -808,7 +801,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                 ],
               ),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             _buildRowTrailing(item, hasVariants, totalQty),
           ],
         ),
@@ -822,23 +815,23 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: _accent.withValues(alpha: 0.15),
+          color: MobileGlassTheme.primary.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _accent.withValues(alpha: 0.4)),
+          border: Border.all(color: MobileGlassTheme.primary.withValues(alpha: 0.4)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          children: const [
+          children: [
             Text(
               'ვარიანტები',
               style: TextStyle(
-                color: _accentText,
+                color: MobileGlassTheme.accentText,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
             ),
             SizedBox(width: 4),
-            Icon(Icons.tune_rounded, size: 15, color: _accentText),
+            Icon(Icons.tune_rounded, size: 15, color: MobileGlassTheme.accentText),
           ],
         ),
       );
@@ -860,7 +853,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
           Icons.remove_rounded,
           onTap: () => _decrement(item.key),
         ),
-        const SizedBox(width: 6),
+        SizedBox(width: 6),
         _circleBtn(
           Icons.add_rounded,
           filled: true,
@@ -879,10 +872,10 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
         height: 38,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: filled ? _accent : Colors.white.withValues(alpha: 0.06),
+          color: filled ? MobileGlassTheme.primary : MobileGlassTheme.surface(0.06),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: filled ? _accent : _cardBorder,
+            color: filled ? MobileGlassTheme.primary : MobileGlassTheme.borderSubtle,
           ),
         ),
         child: Icon(
@@ -902,19 +895,19 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
           height: MediaQuery.of(context).size.height * 0.75,
-          decoration: const BoxDecoration(
-            color: _surface,
+          decoration: BoxDecoration(
+            color: MobileGlassTheme.surfaceCard,
             borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-            border: Border(top: BorderSide(color: _cardBorder)),
+            border: Border(top: BorderSide(color: MobileGlassTheme.borderSubtle)),
           ),
           child: Column(
             children: [
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Container(
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: MobileGlassTheme.muted(0.2),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -923,16 +916,16 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'დამატებული პროდუქტები',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: MobileGlassTheme.textPrimary,
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.delete_sweep_rounded,
                         color: Color(0xFFEF4444),
                       ),
@@ -949,7 +942,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   itemCount: _cartLines.length,
                   separatorBuilder: (context, i) =>
-                      Divider(color: Colors.white.withValues(alpha: 0.07)),
+                      Divider(color: MobileGlassTheme.surface(0.07)),
                   itemBuilder: (context, i) {
                     final line = _cartLines[i];
                     return Padding(
@@ -962,17 +955,17 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                               children: [
                                 Text(
                                   line.item.nameKa,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
-                                    color: Colors.white,
+                                    color: MobileGlassTheme.textPrimary,
                                   ),
                                 ),
                                 Text(
                                   _money.format(line.item.price),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13,
-                                    color: _muted,
+                                    color: MobileGlassTheme.textSecondary,
                                   ),
                                 ),
                               ],
@@ -992,10 +985,10 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                                 width: 40,
                                 child: Text(
                                   '${line.qty}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
-                                    color: Colors.white,
+                                    color: MobileGlassTheme.textPrimary,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -1008,14 +1001,14 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                               }),
                             ],
                           ),
-                          const SizedBox(width: 16),
+                          SizedBox(width: 16),
                           SizedBox(
                             width: 80,
                             child: Text(
                               _money.format(line.item.price * line.qty),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: _accent,
+                                color: MobileGlassTheme.primary,
                               ),
                               textAlign: TextAlign.end,
                             ),
@@ -1033,9 +1026,9 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                   24,
                   20 + MediaQuery.of(context).padding.bottom,
                 ),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF0C0C12),
-                  border: Border(top: BorderSide(color: _cardBorder)),
+                decoration: BoxDecoration(
+                  color: MobileGlassTheme.surfaceElevated,
+                  border: Border(top: BorderSide(color: MobileGlassTheme.borderSubtle)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -1053,19 +1046,19 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                                   'ქვეჯამი',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.white.withValues(alpha: 0.55),
+                                    color: MobileGlassTheme.muted(0.55),
                                   ),
                                 ),
                                 Text(
                                   _money.format(_subtotal),
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.white.withValues(alpha: 0.75),
+                                    color: MobileGlassTheme.muted(0.75),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 6),
+                            SizedBox(height: 6),
                             Row(
                               children: [
                                 Expanded(
@@ -1074,13 +1067,13 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                                     style: TextStyle(
                                       fontSize: 12,
                                       color:
-                                          Colors.white.withValues(alpha: 0.55),
+                                          MobileGlassTheme.muted(0.55),
                                     ),
                                   ),
                                 ),
                                 Switch.adaptive(
                                   value: _includeServiceFee,
-                                  activeColor: _accent,
+                                  activeColor: MobileGlassTheme.primary,
                                   onChanged: (v) {
                                     setState(() => _includeServiceFee = v);
                                     setModalState(() {});
@@ -1088,32 +1081,32 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                                 ),
                                 Text(
                                   _money.format(_serviceFee),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
-                                    color: _accentText,
+                                    color: MobileGlassTheme.accentText,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8),
                           ],
-                          const Text(
+                          Text(
                             'სულ გადასახდელი',
-                            style: TextStyle(fontSize: 12, color: _muted),
+                            style: TextStyle(fontSize: 12, color: MobileGlassTheme.textSecondary),
                           ),
                           Text(
                             _money.format(_total),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: MobileGlassTheme.textPrimary,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     if (widget.isCountMode)
                       ElevatedButton(
                         onPressed: () {
@@ -1121,7 +1114,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                           _saveCount();
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _accent,
+                          backgroundColor: MobileGlassTheme.primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 32,
@@ -1131,7 +1124,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'შენახვა',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
@@ -1153,7 +1146,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                           Navigator.pop(this.context, selected);
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _accent,
+                          backgroundColor: MobileGlassTheme.primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 24,
@@ -1163,7 +1156,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'დასრულება',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
@@ -1185,11 +1178,11 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
       child: Container(
         padding: const EdgeInsets.all(7),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.07),
+          color: MobileGlassTheme.surface(0.07),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: _cardBorder),
+          border: Border.all(color: MobileGlassTheme.borderSubtle),
         ),
-        child: Icon(icon, size: 18, color: Colors.white),
+        child: Icon(icon, size: 18, color: MobileGlassTheme.textPrimary),
       ),
     );
   }
@@ -1200,9 +1193,9 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
 
     return Container(
       decoration: BoxDecoration(
-        color: _surface,
+        color: MobileGlassTheme.surfaceCard,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        border: const Border(top: BorderSide(color: _cardBorder)),
+        border: Border(top: BorderSide(color: MobileGlassTheme.borderSubtle)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.4),
@@ -1228,31 +1221,31 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                 Container(
                   padding: const EdgeInsets.all(11),
                   decoration: BoxDecoration(
-                    color: _accent.withValues(alpha: 0.18),
+                    color: MobileGlassTheme.primary.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.shopping_cart_outlined,
-                      color: _accentText),
+                  child: Icon(Icons.shopping_cart_outlined,
+                      color: MobileGlassTheme.accentText),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       '$_totalItems პროდუქტი',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: _muted,
+                        color: MobileGlassTheme.textSecondary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
                       _money.format(_total),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 19,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: MobileGlassTheme.textPrimary,
                       ),
                     ),
                   ],
@@ -1263,7 +1256,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
           ElevatedButton(
             onPressed: _showCartSheet,
             style: ElevatedButton.styleFrom(
-              backgroundColor: _accent,
+              backgroundColor: MobileGlassTheme.primary,
               foregroundColor: Colors.white,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
@@ -1271,7 +1264,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                 borderRadius: BorderRadius.circular(14),
               ),
             ),
-            child: const Text(
+            child: Text(
               'შეკვეთის ნახვა',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),

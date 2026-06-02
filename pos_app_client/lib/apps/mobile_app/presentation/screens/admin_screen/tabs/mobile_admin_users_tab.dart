@@ -48,10 +48,18 @@ class _UsersTabState extends State<_UsersTab>
     if (_loading) return const _AdminLoading();
     if (_error != null) return _ErrorWidget(onRetry: _load);
 
-    final admins =
-        _users.where((u) => (u['role'] as String?) == 'ADMIN').toList();
+    bool isRole(Map<String, dynamic> u, String apiRole) {
+      final raw = (u['role'] as String?) ?? '';
+      return StaffRole.toApi(StaffRole.fromApi(raw)) == apiRole;
+    }
+
+    final managers =
+        _users.where((u) => isRole(u, StaffRole.toApi(StaffRole.manager))).toList();
+    final supervisors = _users
+        .where((u) => isRole(u, StaffRole.toApi(StaffRole.supervisor)))
+        .toList();
     final waiters =
-        _users.where((u) => (u['role'] as String?) != 'ADMIN').toList();
+        _users.where((u) => isRole(u, StaffRole.toApi(StaffRole.waiter))).toList();
     final activeCount =
         _users.where((u) => (u['isActive'] as bool? ?? true)).length;
 
@@ -81,21 +89,39 @@ class _UsersTabState extends State<_UsersTab>
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           _AdminPrimaryButton(
             label: 'მომხმარებლის დამატება',
             icon: Icons.person_add_alt_1_rounded,
             onPressed: _showCreateUserDialog,
           ),
-          if (admins.isNotEmpty) ...[
-            const SizedBox(height: 20),
+          if (managers.isNotEmpty) ...[
+            SizedBox(height: 20),
             _AdminSection(
-              title: 'ადმინისტრატორები',
-              trailing: '${admins.length}',
+              title: 'მენეჯერები',
+              trailing: '${managers.length}',
               child: Column(
-                children: admins.map(
+                children: managers.map(
               (u) => _UserCard(
                 user: u,
+                onEditName: () => _showEditNameDialog(u),
+                onChangePin: () => _showChangePinDialog(u),
+                onDelete: () => _confirmDeleteUser(u),
+              ),
+            ).toList(),
+              ),
+            ),
+          ],
+          if (supervisors.isNotEmpty) ...[
+            SizedBox(height: 20),
+            _AdminSection(
+              title: 'ზედამხედველები',
+              trailing: '${supervisors.length}',
+              child: Column(
+                children: supervisors.map(
+              (u) => _UserCard(
+                user: u,
+                onEditName: () => _showEditNameDialog(u),
                 onChangePin: () => _showChangePinDialog(u),
                 onDelete: () => _confirmDeleteUser(u),
               ),
@@ -104,7 +130,7 @@ class _UsersTabState extends State<_UsersTab>
             ),
           ],
           if (waiters.isNotEmpty) ...[
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             _AdminSection(
               title: 'ოფიციანტები',
               trailing: '${waiters.length}',
@@ -112,6 +138,7 @@ class _UsersTabState extends State<_UsersTab>
                 children: waiters.map(
               (u) => _UserCard(
                 user: u,
+                onEditName: () => _showEditNameDialog(u),
                 onChangePin: () => _showChangePinDialog(u),
                 onDelete: () => _confirmDeleteUser(u),
               ),
@@ -137,54 +164,52 @@ class _UsersTabState extends State<_UsersTab>
   Future<void> _showCreateUserDialog() async {
     final usernameCtrl = TextEditingController();
     final pinCtrl = TextEditingController();
-    String role = 'WAITER';
+    String role = StaffRole.toApi(StaffRole.waiter);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setLocal) => AlertDialog(
           backgroundColor: AdminTheme.surface,
-          title: const Text(
+          title: Text(
             'ახალი მომხმარებელი',
             style: TextStyle(color: AdminTheme.text),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
+              PosOnScreenTextField(
                 controller: usernameCtrl,
-                style: const TextStyle(color: AdminTheme.text),
-                decoration: _adminInput('სახელი'),
+                style: TextStyle(color: AdminTheme.text),
+                decoration: _adminInput(
+                  shouldUsePosOnScreenKeyboard()
+                      ? 'დააჭირეთ სახელის შესაყვანად'
+                      : 'სახელი',
+                ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               TextField(
                 controller: pinCtrl,
-                style: const TextStyle(color: AdminTheme.text),
+                style: TextStyle(color: AdminTheme.text),
                 decoration: _adminInput('PIN'),
                 keyboardType: TextInputType.number,
               ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
+              SizedBox(height: 8),
+              _adminRoleDropdown(
                 value: role,
-                dropdownColor: const Color(0xFF1E1E28),
-                style: const TextStyle(color: AdminTheme.text),
-                decoration: _adminInput('როლი'),
-                items: const [
-                  DropdownMenuItem(value: 'ADMIN', child: Text('ადმინისტრატორი')),
-                  DropdownMenuItem(value: 'WAITER', child: Text('ოფიციანტი')),
-                ],
-                onChanged: (v) => setLocal(() => role = v ?? 'WAITER'),
+                onChanged: (v) =>
+                    setLocal(() => role = v ?? StaffRole.toApi(StaffRole.waiter)),
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('გაუქმება', style: TextStyle(color: AdminTheme.textMuted)),
+              child: Text('გაუქმება', style: TextStyle(color: AdminTheme.textMuted)),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: FilledButton.styleFrom(backgroundColor: AdminTheme.primary),
-              child: const Text('დამატება'),
+              child: const Text('დამატება', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -206,6 +231,41 @@ class _UsersTabState extends State<_UsersTab>
     }
   }
 
+  Future<void> _showEditNameDialog(dynamic user) async {
+    final oldUsername = (user['username'] ?? '').toString();
+    final ctrl = TextEditingController(text: oldUsername);
+    final ok = await _adminFormDialog(
+      context,
+      title: 'სახელის შეცვლა',
+      fields: [
+        PosOnScreenTextField(
+          controller: ctrl,
+          style: TextStyle(color: AdminTheme.text),
+          decoration: _adminInput(
+            shouldUsePosOnScreenKeyboard()
+                ? 'დააჭირეთ სახელის შესაყვანად'
+                : 'სახელი',
+          ),
+        ),
+      ],
+    );
+    if (ok != true) return;
+    final newUsername = ctrl.text.trim();
+    if (newUsername.isEmpty || newUsername == oldUsername) return;
+    try {
+      await MobileApiService.renameUser(
+        oldUsername: oldUsername,
+        newUsername: newUsername,
+      );
+      if (!mounted) return;
+      _adminToast(context, 'სახელი განახლდა');
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      _adminToast(context, 'შეცდომა: $e', error: true);
+    }
+  }
+
   Future<void> _showChangePinDialog(dynamic user) async {
     final ctrl = TextEditingController(text: (user['pinCode'] ?? '').toString());
     final ok = await _adminFormDialog(
@@ -214,7 +274,7 @@ class _UsersTabState extends State<_UsersTab>
       fields: [
         TextField(
           controller: ctrl,
-          style: const TextStyle(color: AdminTheme.text),
+          style: TextStyle(color: AdminTheme.text),
           decoration: _adminInput('ახალი PIN'),
           keyboardType: TextInputType.number,
         ),
@@ -255,11 +315,13 @@ class _UsersTabState extends State<_UsersTab>
 
 class _UserCard extends StatelessWidget {
   final dynamic user;
+  final VoidCallback onEditName;
   final VoidCallback onChangePin;
   final VoidCallback onDelete;
 
   const _UserCard({
     required this.user,
+    required this.onEditName,
     required this.onChangePin,
     required this.onDelete,
   });
@@ -268,8 +330,14 @@ class _UserCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final role = user['role'] as String? ?? 'WAITER';
     final isActive = user['isActive'] as bool? ?? true;
-    final isAdmin = role == 'ADMIN';
-    final accent = isAdmin ? const Color(0xFF8B5CF6) : AdminTheme.accent;
+    final normalized = StaffRole.fromApi(role);
+    final isManager = normalized == StaffRole.manager;
+    final isSupervisor = normalized == StaffRole.supervisor;
+    final accent = isManager
+        ? const Color(0xFF8B5CF6)
+        : isSupervisor
+            ? const Color(0xFF0EA5E9)
+            : AdminTheme.accent;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -286,21 +354,23 @@ class _UserCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(
-                isAdmin
+                isManager
                     ? Icons.admin_panel_settings_rounded
-                    : Icons.person_rounded,
+                    : isSupervisor
+                        ? Icons.supervisor_account_rounded
+                        : Icons.person_rounded,
                 color: accent,
                 size: 22,
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     user['username'] as String? ?? '',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
                       color: AdminTheme.text,
@@ -310,7 +380,7 @@ class _UserCard extends StatelessWidget {
                     _roleName(role),
                     style: TextStyle(fontSize: 12, color: accent),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     'PIN: ${(user['pinCode'] ?? '').toString()}',
                     style: TextStyle(
@@ -322,6 +392,11 @@ class _UserCard extends StatelessWidget {
               ),
             ),
             IconButton(
+              tooltip: 'სახელი',
+              onPressed: onEditName,
+              icon: Icon(Icons.edit_rounded, size: 18, color: AdminTheme.textMuted),
+            ),
+            IconButton(
               tooltip: 'PIN',
               onPressed: onChangePin,
               icon: Icon(Icons.pin_rounded, size: 18, color: AdminTheme.textMuted),
@@ -329,7 +404,7 @@ class _UserCard extends StatelessWidget {
             IconButton(
               tooltip: 'Delete',
               onPressed: onDelete,
-              icon: const Icon(Icons.delete_outline_rounded,
+              icon: Icon(Icons.delete_outline_rounded,
                   size: 18, color: AdminTheme.bad),
             ),
             Container(
@@ -354,12 +429,5 @@ class _UserCard extends StatelessWidget {
     );
   }
 
-  String _roleName(String role) {
-    switch (role) {
-      case 'ADMIN':
-        return 'ადმინისტრატორი';
-      default:
-        return 'ოფიციანტი';
-    }
-  }
+  String _roleName(String role) => StaffRole.labelKaFromApi(role);
 }

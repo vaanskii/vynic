@@ -147,4 +147,15 @@ class AppNotificationHistoryStore {
     entries.value = [];
     unreadCount.value = 0;
   }
+
+  void remove(String id) {
+    final index = entries.value.indexWhere((e) => e.id == id);
+    if (index < 0) return;
+    final removed = entries.value[index];
+    final next = List<AppNotificationEntry>.from(entries.value)..removeAt(index);
+    entries.value = next;
+    if (!removed.isRead) {
+      unreadCount.value = (unreadCount.value - 1).clamp(0, maxEntries);
+    }
+  }
 }

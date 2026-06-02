@@ -1,3 +1,5 @@
+import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
+import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -5,7 +7,9 @@ import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/mobile_api_service.dart';
+import 'package:vynic/core/utils/table_group_style.dart';
 import 'package:vynic/core/services/monitoring_socket_service.dart';
+import 'package:vynic/core/widgets/manager_toast.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/create_takeaway_screen.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_order_detail_screen.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_calculator_screen.dart';
@@ -21,11 +25,6 @@ class LiveStatusScreen extends StatefulWidget {
   State<LiveStatusScreen> createState() => _LiveStatusScreenState();
 }
 
-// Dark "glass" palette (shared with the part views; matches the dashboard tab).
-const Color _kAccent = Color(0xFF6366F1);
-const Color _kFree = Color(0xFF10B981);
-const Color _kOccupied = Color(0xFF3B82F6);
-const Color _kReserved = Color(0xFFF59E0B);
 
 class _LiveStatusScreenState extends State<LiveStatusScreen> {
   Timer? _refreshTimer;
@@ -57,6 +56,12 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
     );
     MonitoringSocketService.updateCounter.addListener(_loadAll);
     MonitoringSocketService.isConnected.addListener(_onConnectionChange);
+    MonitoringSocketService.pendingTableFocus.addListener(_onPendingTableFocus);
+  }
+
+  void _onPendingTableFocus() {
+    if (MonitoringSocketService.pendingTableFocus.value == null) return;
+    unawaited(_consumePendingTableFocus());
   }
 
   void _onConnectionChange() {
@@ -72,6 +77,7 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
     _refreshTimer?.cancel();
     MonitoringSocketService.updateCounter.removeListener(_loadAll);
     MonitoringSocketService.isConnected.removeListener(_onConnectionChange);
+    MonitoringSocketService.pendingTableFocus.removeListener(_onPendingTableFocus);
     super.dispose();
   }
 
@@ -92,6 +98,9 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
           _tablesByFloor = grouped;
           _tablesLoading = false;
         });
+        if (MonitoringSocketService.pendingTableFocus.value != null) {
+          unawaited(_consumePendingTableFocus());
+        }
       }
     } catch (_) {
       MonitoringSocketService.apiError.value = true;
@@ -119,44 +128,11 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
     IconData? icon,
   }) {
     if (!mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(14),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        content: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: isError ? const Color(0xFFFEF2F2) : const Color(0xFFECFDF5),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: isError ? const Color(0xFFFECACA) : const Color(0xFFA7F3D0),
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                icon ?? (isError ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded),
-                size: 18,
-                color: isError ? const Color(0xFFB91C1C) : const Color(0xFF047857),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  message,
-                  style: TextStyle(
-                    color: isError ? const Color(0xFF7F1D1D) : const Color(0xFF065F46),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    ManagerToast.showSnackBar(
+      context,
+      message,
+      isError: isError,
+      icon: icon,
     );
   }
 
@@ -165,11 +141,18 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
     setState(() => _tableFilter = index);
   }
 
+  void _showTablesTabForExternalFocus() {
+    setState(() {
+      _viewIndex = 0;
+      _tableFilter = 0;
+    });
+  }
+
   Future<void> _openNewTakeaway() async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => CreateTakeawayScreen(user: widget.user),
+        builder: (_) => managerThemedPage(CreateTakeawayScreen(user: widget.user)),
       ),
     );
     if (result == true) _loadTakeaway();
@@ -194,12 +177,12 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          const Positioned(
+          Positioned(
             top: -60,
             right: -80,
             child: _GlowOrb(color: Color(0xFF6366F1), size: 300),
           ),
-          const Positioned(
+          Positioned(
             bottom: 120,
             left: -100,
             child: _GlowOrb(color: Color(0xFF10B981), size: 260),
@@ -219,22 +202,22 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'მაგიდები',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: MobileGlassTheme.textPrimary,
                                 fontSize: 30,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: -0.5,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
                             Text(
                               isTables
                                   ? '$activeCount აქტიური • ${allTables.length} სულ'
                                   : '$takeawayCount აქტიური გატანა',
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.6),
+                                color: MobileGlassTheme.textSecondary,
                                 fontSize: 14,
                               ),
                             ),
@@ -246,8 +229,8 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
                           onTap: _openNewTakeaway,
                           shape: BoxShape.circle,
                           padding: const EdgeInsets.all(12),
-                          child: const Icon(Icons.add_rounded,
-                              color: Colors.white),
+                          child: Icon(Icons.add_rounded,
+                              color: MobileGlassTheme.textPrimary),
                         ),
                     ],
                   ),
@@ -266,7 +249,7 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
                           onTap: () => setState(() => _viewIndex = 0),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         child: _viewPill(
                           label: 'გატანები',
@@ -279,11 +262,11 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: 6),
                 Expanded(
                   child: RefreshIndicator(
-                    color: _kAccent,
-                    backgroundColor: const Color(0xFF15151C),
+                    color: MobileGlassTheme.primary,
+                    backgroundColor: MobileGlassTheme.surfaceCard,
                     onRefresh: _loadAll,
                     child: isTables
                         ? _buildTablesView()
@@ -312,10 +295,14 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
         duration: const Duration(milliseconds: 220),
         padding: const EdgeInsets.symmetric(vertical: 13),
         decoration: BoxDecoration(
-          color: isActive ? _kAccent : Colors.white.withOpacity(0.05),
+          color: isActive
+              ? MobileGlassTheme.primary
+              : MobileGlassTheme.surface(0.06),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isActive ? _kAccent : Colors.white.withOpacity(0.10),
+            color: isActive
+                ? MobileGlassTheme.primary
+                : MobileGlassTheme.border(0.12),
           ),
         ),
         child: Row(
@@ -324,33 +311,35 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
             Icon(
               icon,
               size: 18,
-              color: isActive ? Colors.white : Colors.white.withOpacity(0.6),
+              color: isActive ? Colors.white : MobileGlassTheme.textSecondary,
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
                 color:
-                    isActive ? Colors.white : Colors.white.withOpacity(0.7),
+                    isActive ? Colors.white : MobileGlassTheme.textPrimary,
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
             ),
             if (badge > 0) ...[
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
                   color: isActive
-                      ? Colors.white.withOpacity(0.25)
-                      : Colors.white.withOpacity(0.10),
+                      ? Colors.white.withValues(alpha: 0.25)
+                      : MobileGlassTheme.surface(0.12),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
                   '$badge',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: isActive
+                        ? Colors.white
+                        : MobileGlassTheme.textPrimary,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -391,28 +380,50 @@ class _GlassPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = MobileGlassTheme.of(context);
     final radius = shape == BoxShape.circle
         ? BorderRadius.circular(999)
         : (borderRadius ?? BorderRadius.circular(20));
-    Widget panel = ClipRRect(
-      borderRadius: radius,
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            shape: shape,
-            borderRadius: shape == BoxShape.rectangle ? radius : null,
-            color: Colors.white.withOpacity(0.04),
-            border: Border.all(
-              color: borderColor ?? Colors.white.withOpacity(0.08),
-              width: borderWidth,
-            ),
-          ),
-          child: child,
+
+    final fill = theme.useGlassCards
+        ? theme.surfaceCard
+        : theme.heroCardBackground;
+
+    Widget panel = Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        shape: shape,
+        borderRadius: shape == BoxShape.rectangle ? radius : null,
+        color: fill,
+        border: Border.all(
+          color: borderColor ?? theme.cardBorder,
+          width: borderWidth,
         ),
+        boxShadow: theme.isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: theme.cardShadow,
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
+      child: child,
     );
+
+    if (theme.useGlassCards) {
+      panel = ClipRRect(
+        borderRadius: radius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: panel,
+        ),
+      );
+    } else {
+      panel = ClipRRect(borderRadius: radius, child: panel);
+    }
+
     if (onTap != null || onLongPress != null) {
       panel = GestureDetector(
         onTap: onTap,

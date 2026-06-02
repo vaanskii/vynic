@@ -24,9 +24,9 @@ class _OnScreenKeyboardState extends State<OnScreenKeyboard> {
   bool _isShiftPressed = false;
   bool _isCapsLockOn = false;
 
-  static const Color _backgroundColor = Color(0xFFF3F4F8);
-  static const Color _headerColor = Color(0xFFE8EBF5);
-  static const Color _borderColor = Color(0xFFD2D7E3);
+  static const Color _backgroundColor = Colors.white;
+  static const Color _headerColor = Color(0xFFF9FAFB);
+  static const Color _borderColor = Color(0xFFE2E8F0);
   static const Color _surfaceColor = Colors.white;
   static const Color _specialSurfaceColor = Color(0xFFEDF0F8);
   static const Color _textColor = Color(0xFF1F2430);
@@ -268,102 +268,157 @@ class _OnScreenKeyboardState extends State<OnScreenKeyboard> {
     );
   }
 
+  static const double _keyHorizontalPad = 4.0;
+
+  /// Scales a keyboard row down when [maxWidth] is tight (e.g. inside a dialog).
+  Widget _fitKeyboardRow(double maxWidth, Widget row) {
+    return SizedBox(
+      width: maxWidth,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.center,
+        child: row,
+      ),
+    );
+  }
+
   Widget _buildFullWidthRow(List<String> keys, double maxWidth) {
-    final horizontalPadding = keys.length * 4.0;
+    final horizontalPadding = keys.length * _keyHorizontalPad;
+    final minKeyWidth = maxWidth < 520 ? 28.0 : 36.0;
     final keyWidth = ((maxWidth - horizontalPadding) / keys.length).clamp(
-      36.0,
+      minKeyWidth,
       58.0,
     );
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: keys.map((key) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: _buildKey(key, width: keyWidth),
-        );
-      }).toList(),
+    return _fitKeyboardRow(
+      maxWidth,
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: keys.map((key) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: _buildKey(key, width: keyWidth),
+          );
+        }).toList(),
+      ),
     );
   }
 
   Widget _buildSecondRow(List<String> keys, double maxWidth) {
-    const specialWidth = 75.0;
-    final horizontalPadding = (keys.length + 2) * 4.0;
-    final keyWidth =
-        ((maxWidth - horizontalPadding - (specialWidth * 2)) / keys.length)
-            .clamp(32.0, 58.0);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // Caps Lock
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: _buildSpecialKey(
-            'Caps',
-            _onCapsLock,
-            width: 75,
-            isActive: _isCapsLockOn,
-          ),
-        ),
-        // Letter keys
-        ...keys.map((key) {
-          return Padding(
+    final sizes = _rowWithSideKeys(
+      maxWidth: maxWidth,
+      letterCount: keys.length,
+      preferredSideWidth: 75,
+      minSideWidth: 44,
+      minLetterWidth: 24,
+    );
+    return _fitKeyboardRow(
+      maxWidth,
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Padding(
             padding: const EdgeInsets.symmetric(horizontal: 2),
-            child: _buildKey(key, width: keyWidth),
-          );
-        }),
-        // Backspace
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: _buildSpecialKey(
-            '',
-            _onBackspace,
-            icon: Icons.backspace_outlined,
-            width: 75,
+            child: _buildSpecialKey(
+              'Caps',
+              _onCapsLock,
+              width: sizes.sideWidth,
+              isActive: _isCapsLockOn,
+            ),
           ),
-        ),
-      ],
+          ...keys.map((key) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: _buildKey(key, width: sizes.letterWidth),
+            );
+          }),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: _buildSpecialKey(
+              '',
+              _onBackspace,
+              icon: Icons.backspace_outlined,
+              width: sizes.sideWidth,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildThirdRow(List<String> keys, double maxWidth) {
-    const specialWidth = 90.0;
-    final horizontalPadding = (keys.length + 2) * 4.0;
-    final keyWidth =
-        ((maxWidth - horizontalPadding - (specialWidth * 2)) / keys.length)
-            .clamp(30.0, 58.0);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // Left Shift
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: _buildSpecialKey(
-            'Shift',
-            _onShift,
-            width: 90,
-            isActive: _isShiftPressed,
-          ),
-        ),
-        // Letter keys
-        ...keys.map((key) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2),
-            child: _buildKey(key, width: keyWidth),
-          );
-        }),
-        // Enter
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: _buildSpecialKey(
-            'Enter',
-            _onEnter,
-            width: 90,
-            backgroundColor: _accentColor,
-            foregroundColor: Colors.white,
-          ),
-        ),
-      ],
+    final sizes = _rowWithSideKeys(
+      maxWidth: maxWidth,
+      letterCount: keys.length,
+      preferredSideWidth: 90,
+      minSideWidth: 48,
+      minLetterWidth: 22,
     );
+    return _fitKeyboardRow(
+      maxWidth,
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: _buildSpecialKey(
+              'Shift',
+              _onShift,
+              width: sizes.sideWidth,
+              isActive: _isShiftPressed,
+            ),
+          ),
+          ...keys.map((key) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: _buildKey(key, width: sizes.letterWidth),
+            );
+          }),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: _buildSpecialKey(
+              'Enter',
+              _onEnter,
+              width: sizes.sideWidth,
+              backgroundColor: _accentColor,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  ({double sideWidth, double letterWidth}) _rowWithSideKeys({
+    required double maxWidth,
+    required int letterCount,
+    required double preferredSideWidth,
+    required double minSideWidth,
+    required double minLetterWidth,
+  }) {
+    final childCount = letterCount + 2;
+    final contentWidth = maxWidth - childCount * _keyHorizontalPad;
+    var sideWidth = preferredSideWidth.clamp(minSideWidth, preferredSideWidth);
+    var letterWidth =
+        (contentWidth - 2 * sideWidth) / letterCount;
+
+    if (letterWidth < minLetterWidth) {
+      letterWidth = minLetterWidth;
+      sideWidth =
+          ((contentWidth - letterCount * letterWidth) / 2).clamp(minSideWidth, preferredSideWidth);
+    }
+
+    letterWidth = letterWidth.clamp(minLetterWidth, 58.0);
+    final used = 2 * sideWidth + letterCount * letterWidth;
+    if (used > contentWidth && used > 0) {
+      final scale = contentWidth / used;
+      sideWidth = (sideWidth * scale).clamp(minSideWidth, preferredSideWidth);
+      letterWidth = (letterWidth * scale).clamp(minLetterWidth, 58.0);
+    }
+
+    return (sideWidth: sideWidth, letterWidth: letterWidth);
   }
 
   Widget _buildKey(String key, {double? width}) {
@@ -465,23 +520,18 @@ class _OnScreenKeyboardState extends State<OnScreenKeyboard> {
     const clearWidth = 66.0;
     const symbolWidth = 52.0;
     const switchWidth = 60.0;
-    const keyPadding = 4.0;
-    final fixedWidth =
-        clearWidth +
-        symbolWidth +
-        symbolWidth +
-        symbolWidth +
-        symbolWidth +
-        switchWidth;
-    final totalPadding = 7 * keyPadding;
-    final spaceWidth = (maxWidth - fixedWidth - totalPadding).clamp(
-      120.0,
-      360.0,
-    );
+    const fixedWidth =
+        clearWidth + (symbolWidth * 4) + switchWidth;
+    const totalPadding = 7 * _keyHorizontalPad;
+    final spaceWidth =
+        (maxWidth - fixedWidth - totalPadding).clamp(36.0, 360.0);
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
+    return _fitKeyboardRow(
+      maxWidth,
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
         // Clear button
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -538,6 +588,7 @@ class _OnScreenKeyboardState extends State<OnScreenKeyboard> {
           ),
         ),
       ],
+      ),
     );
   }
 }

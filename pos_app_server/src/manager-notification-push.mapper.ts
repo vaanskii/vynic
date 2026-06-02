@@ -33,6 +33,172 @@ function isDecreaseSummary(summary: string): boolean {
   return Number.isFinite(prev) && Number.isFinite(next) && next < prev;
 }
 
+function todayIsoDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function formatTableNumbers(raw: unknown): string {
+  if (!Array.isArray(raw)) return '';
+  return raw
+    .map((e) => asString(e).trim())
+    .filter((s) => s.length > 0 && s !== '0')
+    .join(', ');
+}
+
+function isWalkInCustomerName(name: string): boolean {
+  const n = name.trim().toLowerCase();
+  return n === 'walk-in' || n.includes('walk-in') || n === 'walk in';
+}
+
+/** Shared copy for reservation / table WS payloads (FCM + DB). */
+export function buildReservationsDataUpdatedCopy(
+  p: Record<string, unknown>,
+): { title: string; body: string } {
+  const action = asString(p.action).trim().toLowerCase();
+  const customerName = asString(p.customerName).trim();
+  const resDateRaw = asString(p.reservationDate).trim();
+  const resDate = resDateRaw.length >= 10 ? resDateRaw.slice(0, 10) : resDateRaw;
+  const resTime = asString(p.reservationTime).trim();
+  const tables = formatTableNumbers(p.tableNumbers);
+  const today = todayIsoDate();
+
+  const detailParts: string[] = [];
+  if (customerName.length > 0) detailParts.push(customerName);
+  if (tables.length > 0) detailParts.push(`მაგიდა ${tables}`);
+  if (resTime.length > 0) detailParts.push(`დრო: ${resTime}`);
+  if (resDate.length > 0 && resDate !== today) {
+    detailParts.push(`თარიღი: ${resDate}`);
+  }
+  const detail = detailParts.join(' • ');
+
+  if (action === 'deleted' || action === 'cancelled') {
+    return {
+      title: 'რეზერვაცია',
+      body:
+        detail.length > 0
+          ? `რეზერვაცია გაუქმდა — ${detail}`
+          : 'რეზერვაცია გაუქმდა',
+    };
+  }
+
+  if (isWalkInCustomerName(customerName)) {
+    return {
+      title: 'მაგიდა',
+      body:
+        detail.length > 0
+          ? `ახალი walk-in — ${detail}`
+          : 'ახალი walk-in',
+    };
+  }
+
+  if (action === 'created') {
+    const isFuture = resDate.length > 0 && resDate > today;
+    const headline = isFuture ? 'მომავალი რეზერვაცია' : 'ახალი რეზერვაცია';
+    return {
+      title: 'რეზერვაციები',
+      body: detail.length > 0 ? `${headline} — ${detail}` : headline,
+    };
+  }
+
+  if (action === 'updated' || action.length > 0) {
+    return {
+      title: 'რეზერვაციები',
+      body:
+        detail.length > 0
+          ? `რეზერვაცია განახლდა — ${detail}`
+          : 'რეზერვაცია განახლდა',
+    };
+  }
+
+  return {
+    title: 'რეზერვაციები',
+    body:
+      detail.length > 0
+        ? `რეზერვაცია — ${detail}`
+        : 'რეზერვაცია განახლდა',
+  };
+}
+
+function buildOrderCreatedCopy(p: Record<string, unknown>): {
+  title: string;
+  body: string;
+} {
+  const id = asOrderId(p.posOrderId);
+  const walkIn = p.walkIn === true;
+  const tableLabel = asString(p.tableLabel).trim();
+  const tableNumbers = formatTableNumbers(p.tableNumbers);
+  const tableSeg =
+    tableLabel.length > 0
+      ? tableLabel
+      : tableNumbers.length > 0
+        ? tableNumbers
+        : '';
+  const tablePart =
+    tableSeg.length > 0 ? ` — მაგიდა $tableSeg` : '';
+  const idPart = id !== null ? ' #$id' : '';
+
+  if (walkIn) {
+    return {
+      title: 'მაგიდა',
+      body: `ახალი walk-in${idPart}${tablePart}`,
+    };
+  }
+  return {
+    title: 'შეკვეთა',
+    body:
+      id !== null
+        ? `შეიქმნა ახალი შეკვეთა #${id}${tablePart}`
+        : `შეიქმნა ახალი შეკვეთა${tablePart}`,
+  };
+}
+
+function buildOrderCancelledCopy(p: Record<string, unknown>): {
+  title: string;
+  body: string;
+} {
+  const id = asOrderId(p.posOrderId);
+  const tableLabel = asString(p.tableLabel).trim();
+  if (tableLabel.length > 0) {
+    return {
+      title: 'მაგიდა',
+      body: `მაგიდა $tableLabel გაუქმდა`,
+    };
+  }
+  return {
+    title: 'შეკვეთა',
+    body: id !== null ? `შეკვეთა #$id გაუქმდა` : 'შეკვეთა გაუქმდა',
+  };
+}
+
+function buildTablesBulkTouchCopy(p: Record<string, unknown>): {
+  title: string;
+  body: string;
+} | null {
+  const touchesRaw = p.touches;
+  const touches = Array.isArray(touchesRaw)
+    ? touchesRaw.filter(
+        (t): t is Record<string, unknown> =>
+          Boolean(t) && typeof t === 'object' && !Array.isArray(t),
+      )
+    : [];
+
+  const freed = [...touches]
+    .reverse()
+    .find((t) => asString(t.changeType).toLowerCase() === 'freed');
+  if (freed) {
+    const tableNumber = asString(freed.tableNumber).trim();
+    if (tableNumber.length > 0) {
+      return {
+        title: 'მაგიდა',
+        body: `მაგიდა $tableNumber გაუქმდა`,
+      };
+    }
+  }
+
+  // Reserved tables are covered by order_created; avoid duplicate POS toasts.
+  return null;
+}
+
 /**
  * Human-readable copy for FCM / DB when mirroring manager notification panel rules.
  * Returns null when this WS event should not create a stored manager notification.
@@ -107,8 +273,7 @@ export function buildManagerPushCopy(
       };
     }
     case 'tables_bulk_touch':
-      // POS often emits this together with orders_bulk_touch; keep mobile panel/push single-source.
-      return null;
+      return p ? buildTablesBulkTouchCopy(p) : null;
     case 'order_updated': {
       const src = asString(p?.source);
       const isPos = src === 'pos_sync';
@@ -137,20 +302,10 @@ export function buildManagerPushCopy(
           : `შეკვეთა #${id} განახლდა (მენეჯერი)`,
       };
     }
-    case 'order_cancelled': {
-      const id = asOrderId(p?.posOrderId);
-      return {
-        title: 'შეკვეთა',
-        body: id !== null ? `გაუქმდა #${id}` : 'გაუქმდა შეკვეთა',
-      };
-    }
-    case 'order_created': {
-      const id = asOrderId(p?.posOrderId);
-      return {
-        title: 'შეკვეთა',
-        body: id !== null ? `შეიქმნა ახალი შეკვეთა #${id}` : 'შეიქმნა ახალი შეკვეთა',
-      };
-    }
+    case 'order_cancelled':
+      return p ? buildOrderCancelledCopy(p) : null;
+    case 'order_created':
+      return p ? buildOrderCreatedCopy(p) : null;
     case 'table_updated':
       return null;
     case 'day_closed':
@@ -162,15 +317,30 @@ export function buildManagerPushCopy(
       const inner = asString(p?.type);
       switch (inner) {
         case 'reservations':
-          return {
-            title: 'რეზერვაციები',
-            body: 'მონაცემები განახლდა',
-          };
-        case 'tables':
+          return p ? buildReservationsDataUpdatedCopy(p) : null;
+        case 'tables': {
+          const tableNumber = asString(p?.tableNumber).trim();
+          const floor = asString(p?.floor).trim();
+          const action = asString(p?.action).trim().toLowerCase();
+          if (action === 'freed' || action === 'cancelled') {
+            const label =
+              tableNumber.length > 0 ? tableNumber : 'მაგიდა';
+            return {
+              title: 'მაგიდა',
+              body: `მაგიდა $label გაუქმდა`,
+            };
+          }
+          if (tableNumber.length > 0) {
+            return {
+              title: 'მაგიდები',
+              body: `მაგიდა $tableNumber განახლდა`,
+            };
+          }
           return {
             title: 'მაგიდები',
-            body: 'მონაცემები განახლდა',
+            body: 'მაგიდის სტატუსი განახლდა',
           };
+        }
         case 'menu':
           return {
             title: 'მენიუ',

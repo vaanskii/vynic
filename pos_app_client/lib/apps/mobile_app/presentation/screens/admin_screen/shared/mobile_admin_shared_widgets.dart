@@ -1,19 +1,23 @@
 part of '../mobile_admin_screen.dart';
 
-/// Flat manager-console palette — no glass blur or decorative backgrounds.
+/// Manager admin console palette (follows [ManagerAppPreferences] theme).
 abstract final class AdminTheme {
-  static const bg = Color(0xFF0E1014);
-  static const surface = Color(0xFF161920);
-  static const surfaceElevated = Color(0xFF1C2029);
-  static const border = Color(0xFF2E3440);
-  static const primary = Color(0xFF4F46E5);
-  static const accent = Color(0xFF3B82F6);
-  static const good = Color(0xFF22C55E);
-  static const bad = Color(0xFFEF4444);
-  static const warn = Color(0xFFF59E0B);
-  static const text = Color(0xFFF3F4F6);
-  static const textMuted = Color(0xFF9CA3AF);
-  static const textDim = Color(0xFF6B7280);
+  static DashboardThemeData get _d => DashboardThemeData.forAppearance(
+        ManagerAppPreferences.dashboardAppearance.value,
+      );
+
+  static Color get bg => _d.adminBg;
+  static Color get surface => _d.adminSurface;
+  static Color get surfaceElevated => _d.adminSurfaceElevated;
+  static Color get border => _d.adminBorder;
+  static Color get primary => _d.primary;
+  static Color get accent => _d.info;
+  static Color get good => _d.good;
+  static Color get bad => _d.bad;
+  static Color get warn => _d.warn;
+  static Color get text => _d.adminText;
+  static Color get textMuted => _d.adminTextMuted;
+  static Color get textDim => _d.adminTextDim;
 }
 
 final NumberFormat _adminMoney = NumberFormat('#,##0.00', 'en_US');
@@ -65,20 +69,14 @@ EdgeInsets _adminScrollPadding(BuildContext context) {
 
 void _adminToast(BuildContext context, String msg, {bool error = false}) {
   if (!context.mounted) return;
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: error ? AdminTheme.bad : AdminTheme.good,
-      content: Text(msg),
-    ),
-  );
+  ManagerToast.showSnackBar(context, msg, isError: error);
 }
 
 class _AdminLoading extends StatelessWidget {
   const _AdminLoading();
 
   @override
-  Widget build(BuildContext context) => const Center(
+  Widget build(BuildContext context) => Center(
         child: CircularProgressIndicator(color: AdminTheme.primary, strokeWidth: 2.5),
       );
 }
@@ -97,12 +95,12 @@ class _AdminOfflineBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.cloud_off_rounded, color: AdminTheme.warn, size: 20),
-          const SizedBox(width: 10),
+          Icon(Icons.cloud_off_rounded, color: AdminTheme.warn, size: 20),
+          SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AdminTheme.textMuted,
@@ -133,7 +131,7 @@ class _SettingsTileSkeleton extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,7 +144,7 @@ class _SettingsTileSkeleton extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Container(
                   height: 14,
                   width: double.infinity,
@@ -175,9 +173,9 @@ class _ErrorWidget extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.cloud_off_rounded, size: 48, color: AdminTheme.textDim),
-              const SizedBox(height: 14),
-              const Text(
+              Icon(Icons.cloud_off_rounded, size: 48, color: AdminTheme.textDim),
+              SizedBox(height: 14),
+              Text(
                 'მონაცემები ვერ ჩაიტვირთა',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
@@ -185,7 +183,7 @@ class _ErrorWidget extends StatelessWidget {
                   color: AdminTheme.text,
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               FilledButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh_rounded, size: 18),
@@ -280,7 +278,7 @@ class _AdminSectionTitle extends StatelessWidget {
             Expanded(
               child: Text(
                 title.toUpperCase(),
-                style: const TextStyle(
+                style: TextStyle(
                   color: AdminTheme.textMuted,
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
@@ -291,7 +289,7 @@ class _AdminSectionTitle extends StatelessWidget {
             if (trailing != null)
               Text(
                 trailing!,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: AdminTheme.textDim,
@@ -307,47 +305,48 @@ class _AdminHeroMetric extends StatelessWidget {
     required this.label,
     required this.value,
     this.subtitle,
-    this.accent = AdminTheme.good,
+    this.accent,
   });
 
   final String label;
   final String value;
   final String? subtitle;
-  final Color accent;
+  final Color? accent;
 
   @override
   Widget build(BuildContext context) {
+    final accentColor = accent ?? AdminTheme.good;
     return _AdminPanel(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
-      accentBorder: accent.withValues(alpha: 0.5),
+      accentBorder: accentColor.withValues(alpha: 0.5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: AdminTheme.textMuted,
               letterSpacing: 0.6,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(
             value,
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.w800,
-              color: accent,
+              color: accentColor,
               letterSpacing: -1,
               height: 1.1,
             ),
           ),
           if (subtitle != null && subtitle!.isNotEmpty) ...[
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Text(
               subtitle!,
-              style: const TextStyle(fontSize: 13, color: AdminTheme.textMuted),
+              style: TextStyle(fontSize: 13, color: AdminTheme.textMuted),
             ),
           ],
         ],
@@ -378,23 +377,23 @@ class _AdminStatCard extends StatelessWidget {
       child: Row(
         children: [
           Icon(icon, color: accent, size: 22),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     color: AdminTheme.textMuted,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: AdminTheme.text,
@@ -403,7 +402,7 @@ class _AdminStatCard extends StatelessWidget {
                 if (subtitle != null && subtitle!.isNotEmpty)
                   Text(
                     subtitle!,
-                    style: const TextStyle(fontSize: 11, color: AdminTheme.textDim),
+                    style: TextStyle(fontSize: 11, color: AdminTheme.textDim),
                   ),
               ],
             ),
@@ -418,15 +417,16 @@ class _AdminMetricRow extends StatelessWidget {
   const _AdminMetricRow({
     required this.label,
     required this.value,
-    this.color = AdminTheme.text,
+    this.color,
   });
 
   final String label;
   final String value;
-  final Color color;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
+    final valueColor = color ?? AdminTheme.text;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
@@ -434,7 +434,7 @@ class _AdminMetricRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(fontSize: 14, color: AdminTheme.textMuted),
+              style: TextStyle(fontSize: 14, color: AdminTheme.textMuted),
             ),
           ),
           Text(
@@ -442,7 +442,7 @@ class _AdminMetricRow extends StatelessWidget {
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
-              color: color,
+              color: valueColor,
             ),
           ),
         ],
@@ -503,12 +503,12 @@ class _AdminMonthNav extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         children: [
-          const Icon(Icons.calendar_month_rounded, size: 20, color: AdminTheme.primary),
-          const SizedBox(width: 10),
+          Icon(Icons.calendar_month_rounded, size: 20, color: AdminTheme.primary),
+          SizedBox(width: 10),
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: AdminTheme.text,
@@ -516,7 +516,7 @@ class _AdminMonthNav extends StatelessWidget {
             ),
           ),
           _AdminIconNavButton(icon: Icons.chevron_left_rounded, onTap: onPrev),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           _AdminIconNavButton(icon: Icons.chevron_right_rounded, onTap: onNext),
         ],
       ),
@@ -680,20 +680,20 @@ Future<bool?> _adminConfirmDialog(
       backgroundColor: AdminTheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AdminTheme.border),
+        side: BorderSide(color: AdminTheme.border),
       ),
-      title: Text(title, style: const TextStyle(color: AdminTheme.text)),
+      title: Text(title, style: TextStyle(color: AdminTheme.text)),
       content: message == null
           ? null
-          : Text(message, style: const TextStyle(color: AdminTheme.textMuted)),
+          : Text(message, style: TextStyle(color: AdminTheme.textMuted)),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('გაუქმება', style: TextStyle(color: AdminTheme.textMuted)),
+          child: Text('გაუქმება', style: TextStyle(color: AdminTheme.textMuted)),
         ),
         TextButton(
           onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('დიახ', style: TextStyle(color: AdminTheme.bad)),
+          child: Text('დიახ', style: TextStyle(color: AdminTheme.bad)),
         ),
       ],
     ),
@@ -712,21 +712,21 @@ Future<bool?> _adminFormDialog(
       backgroundColor: AdminTheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AdminTheme.border),
+        side: BorderSide(color: AdminTheme.border),
       ),
-      title: Text(title, style: const TextStyle(color: AdminTheme.text)),
+      title: Text(title, style: TextStyle(color: AdminTheme.text)),
       content: SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, children: fields),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('გაუქმება', style: TextStyle(color: AdminTheme.textMuted)),
+          child: Text('გაუქმება', style: TextStyle(color: AdminTheme.textMuted)),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
           style: FilledButton.styleFrom(backgroundColor: AdminTheme.primary),
-          child: Text(confirm),
+          child: Text(confirm, style: const TextStyle(color: Colors.white)),
         ),
       ],
     ),
@@ -735,15 +735,59 @@ Future<bool?> _adminFormDialog(
 
 InputDecoration _adminInput(String label) => InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: AdminTheme.textMuted),
+      labelStyle: TextStyle(color: AdminTheme.textMuted),
       filled: true,
       fillColor: AdminTheme.surfaceElevated,
       enabledBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: AdminTheme.border),
+        borderSide: BorderSide(color: AdminTheme.border),
         borderRadius: BorderRadius.circular(10),
       ),
       focusedBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: AdminTheme.primary, width: 1.5),
+        borderSide: BorderSide(color: AdminTheme.primary, width: 1.5),
         borderRadius: BorderRadius.circular(10),
       ),
     );
+
+/// Role picker for admin dialogs — follows light/dark [AdminTheme].
+Widget _adminRoleDropdown({
+  required String value,
+  required ValueChanged<String?> onChanged,
+}) {
+  final roles = <String>[
+    StaffRole.toApi(StaffRole.manager),
+    StaffRole.toApi(StaffRole.supervisor),
+    StaffRole.toApi(StaffRole.waiter),
+  ];
+  return DropdownButtonFormField<String>(
+    value: value,
+    isExpanded: true,
+    dropdownColor: AdminTheme.surfaceElevated,
+    iconEnabledColor: AdminTheme.textMuted,
+    iconDisabledColor: AdminTheme.textDim,
+    style: TextStyle(color: AdminTheme.text, fontSize: 15),
+    decoration: _adminInput('როლი'),
+    selectedItemBuilder: (context) => roles
+        .map(
+          (api) => Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              StaffRole.labelKaFromApi(api),
+              style: TextStyle(color: AdminTheme.text, fontSize: 15),
+            ),
+          ),
+        )
+        .toList(),
+    items: roles
+        .map(
+          (api) => DropdownMenuItem(
+            value: api,
+            child: Text(
+              StaffRole.labelKaFromApi(api),
+              style: TextStyle(color: AdminTheme.text, fontSize: 15),
+            ),
+          ),
+        )
+        .toList(),
+    onChanged: onChanged,
+  );
+}

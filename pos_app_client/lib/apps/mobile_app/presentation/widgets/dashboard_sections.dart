@@ -32,7 +32,7 @@ class DashboardSkeletons extends StatelessWidget {
     return Column(
       children: [
         const Skeleton(height: 170, borderRadius: 24),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         Row(
           children: List.generate(
             3,
@@ -44,9 +44,9 @@ class DashboardSkeletons extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         const Skeleton(height: 140, borderRadius: 20),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         const Skeleton(height: 100, borderRadius: 20),
       ],
     );
@@ -82,7 +82,7 @@ class HeroCard extends StatelessWidget {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
+            children: [
               Text(
                 'დღევანდელი შემოსავალი',
                 style: TextStyle(color: Colors.white70, fontSize: 13),
@@ -90,7 +90,7 @@ class HeroCard extends StatelessWidget {
               _LiveBadge(),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             '${fmt.format(metrics.todayRevenue)} ₾',
             style: const TextStyle(
@@ -99,11 +99,11 @@ class HeroCard extends StatelessWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Row(
             children: [
               _ChangePill(up: up, pct: revenueChange),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Text(
                 'გუშინ: ${fmt.format(metrics.yesterdayRevenue)} ₾',
                 style: TextStyle(
@@ -113,7 +113,7 @@ class HeroCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             'დახურული მაგიდები: ${fmt.format(metrics.closedTablesRevenue)} ₾',
             style: TextStyle(
@@ -122,7 +122,7 @@ class HeroCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             'არაფისკალური დახურული: ${fmt.format(metrics.nonFiscalClosedRevenue)} ₾',
             style: TextStyle(
@@ -131,7 +131,7 @@ class HeroCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             'ღია მაგიდების გადასახდელი: ${fmt.format(metrics.openTablesPayable)} ₾',
             style: TextStyle(
@@ -156,9 +156,9 @@ class KpiRow extends StatelessWidget {
     return Row(
       children: [
         _KpiCard('შეკვეთები', metrics.todayOrderCount.toString(), Icons.receipt_long_rounded, dashboardBlue),
-        const SizedBox(width: 10),
+        SizedBox(width: 10),
         _KpiCard('საშუალო ჩეკი', '${avgOrder.toStringAsFixed(1)} ₾', Icons.payments_rounded, dashboardGreen),
-        const SizedBox(width: 10),
+        SizedBox(width: 10),
         _KpiCard('აქტიური', '${metrics.activeTablesCount} მაგ.', Icons.table_restaurant_rounded, dashboardAmber),
       ],
     );
@@ -179,9 +179,9 @@ class RevenueCompareCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _CardTitle('დღეს vs. გუშინ', Icons.bar_chart_rounded, dashboardBlue),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           _BarRow('დღეს', metrics.todayRevenue, todayFrac, dashboardBlue),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           _BarRow('გუშინ', metrics.yesterdayRevenue, yestFrac, dashboardTextSecondary),
         ],
       ),
@@ -214,7 +214,7 @@ class PaymentSplitCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _CardTitle('გადახდის მეთოდი', Icons.donut_large_rounded, dashboardPurple),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Row(
             children: [
               SizedBox(
@@ -237,7 +237,7 @@ class PaymentSplitCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 20),
+              SizedBox(width: 20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,9 +280,9 @@ class EfficiencyRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(child: _EffCard(label: 'საშ. ჩეკი', value: '${avgOrder.toStringAsFixed(2)} ₾', icon: Icons.receipt_rounded, color: dashboardGreen)),
-        const SizedBox(width: 10),
+        SizedBox(width: 10),
         Expanded(child: _EffCard(label: 'ეფექტურობა', value: '${score.toStringAsFixed(0)}%', icon: Icons.speed_rounded, color: score >= 70 ? dashboardGreen : score >= 40 ? dashboardAmber : dashboardRed)),
-        const SizedBox(width: 10),
+        SizedBox(width: 10),
         Expanded(child: _EffCard(label: 'დატვირთვა', value: '${occ.toStringAsFixed(0)}%', icon: Icons.pie_chart_rounded, color: occ >= 70 ? dashboardRed : occ >= 40 ? dashboardAmber : dashboardGreen)),
       ],
     );
@@ -306,7 +306,7 @@ class StaffChartCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _CardTitle('პერსონალის რეიტინგი', Icons.leaderboard_rounded, dashboardBlue),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           ...top.asMap().entries.map((e) {
             final i = e.key;
             final s = e.value;
@@ -333,7 +333,7 @@ class StaffChartCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 5),
+                  SizedBox(height: 5),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(99),
                     child: LinearProgressIndicator(
@@ -386,12 +386,12 @@ class TopItemsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _CardTitle('Top პოზიციები (შემოსავლით)', Icons.star_rounded, dashboardAmber),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           const Text(
             'Top 10 (შემოსავლით)',
             style: TextStyle(fontSize: 11, color: dashboardTextSecondary, fontWeight: FontWeight.w600),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: SizedBox(
@@ -518,7 +518,7 @@ class QuickActionsRow extends StatelessWidget {
             onTap: onOpenCountedMenus,
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(
           child: _QuickButton(
             title: 'ახალი დათვლა',
@@ -590,9 +590,9 @@ class _KpiCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(icon, color: color, size: 16),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: dashboardTextPrimary)),
-            const SizedBox(height: 2),
+            SizedBox(height: 2),
             Text(label, style: const TextStyle(fontSize: 10, color: dashboardTextSecondary)),
           ],
         ),
@@ -621,7 +621,7 @@ class _BarRow extends StatelessWidget {
             Text('${fmt.format(value)} ₾', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: dashboardTextPrimary)),
           ],
         ),
-        const SizedBox(height: 6),
+        SizedBox(height: 6),
         ClipRRect(
           borderRadius: BorderRadius.circular(99),
           child: LinearProgressIndicator(
@@ -648,7 +648,7 @@ class _LegendItem extends StatelessWidget {
     return Row(
       children: [
         Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -683,9 +683,9 @@ class _EffCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: color, size: 20),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: dashboardTextPrimary)),
-          const SizedBox(height: 2),
+          SizedBox(height: 2),
           Text(label, style: const TextStyle(fontSize: 10, color: dashboardTextSecondary)),
         ],
       ),
@@ -723,7 +723,7 @@ class _QuickButton extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(icon, color: color, size: 26),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color)),
             Text(subtitle, style: TextStyle(fontSize: 11, color: color.withValues(alpha: 0.7))),
           ],
@@ -763,7 +763,7 @@ class _CardTitle extends StatelessWidget {
     return Row(
       children: [
         Icon(icon, color: color, size: 16),
-        const SizedBox(width: 10),
+        SizedBox(width: 10),
         Text(
           title,
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: dashboardTextPrimary),

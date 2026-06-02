@@ -6,7 +6,7 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
+        title: Text(
           'შეკვეთის გაუქმება',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
@@ -16,12 +16,12 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('უკან'),
+            child: Text('უკან'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: const Color(0xFFEF4444)),
-            child: const Text('გაუქმება'),
+            child: Text('გაუქმება'),
           ),
         ],
       ),
@@ -44,7 +44,7 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
+        title: Text(
           'შეკვეთის წაშლა',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
@@ -54,12 +54,12 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('უკან'),
+            child: Text('უკან'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: const Color(0xFFEF4444)),
-            child: const Text('წაშლა'),
+            child: Text('წაშლა'),
           ),
         ],
       ),
@@ -86,9 +86,9 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
           margin: const EdgeInsets.only(bottom: 14),
           height: 120,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.04),
+            color: MobileGlassTheme.surfaceCard,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.06)),
+            border: Border.all(color: MobileGlassTheme.border(0.12)),
           ),
         ),
       );
@@ -102,15 +102,15 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
         padding: const EdgeInsets.only(top: 110),
         children: [
           Icon(Icons.takeout_dining_outlined,
-              size: 72, color: Colors.white.withOpacity(0.2)),
-          const SizedBox(height: 16),
+              size: 72, color: MobileGlassTheme.textSecondary.withValues(alpha: 0.35)),
+          SizedBox(height: 16),
           Text(
             'გატანის შეკვეთები არ არის',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: Colors.white.withOpacity(0.5),
+              color: MobileGlassTheme.textSecondary,
             ),
           ),
         ],
@@ -146,11 +146,13 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
       final result = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => MobileOrderDetailScreen(
-            user: widget.user,
-            orderId: order.orderId,
-            tableNumber: 'Takeaway',
-            floor: 'takeaway',
+          builder: (_) => managerThemedPage(
+            MobileOrderDetailScreen(
+              user: widget.user,
+              orderId: order.orderId,
+              tableNumber: 'Takeaway',
+              floor: 'takeaway',
+            ),
           ),
         ),
       );
@@ -174,26 +176,26 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
                     Container(
                       padding: const EdgeInsets.all(9),
                       decoration: BoxDecoration(
-                        color: _kAccent.withOpacity(0.18),
+                        color: MobileGlassTheme.primary.withOpacity(0.18),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.takeout_dining_rounded,
-                        color: _kAccent,
+                        color: MobileGlassTheme.primary,
                         size: 20,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'გატანა #${order.orderId}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
-                              color: Colors.white,
+                              color: MobileGlassTheme.textPrimary,
                             ),
                           ),
                           Text(
@@ -202,7 +204,7 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
                                 : 'პერსონალი',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.white.withOpacity(0.55),
+                              color: MobileGlassTheme.textSecondary,
                             ),
                           ),
                         ],
@@ -213,13 +215,13 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
                       children: [
                         Text(
                           '${order.totalAmount.toStringAsFixed(2)} ₾',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 17,
-                            color: Colors.white,
+                            color: MobileGlassTheme.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 3),
@@ -242,33 +244,33 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
                 ),
                 if (order.customerName.isNotEmpty ||
                     order.pickupTime.isNotEmpty) ...[
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
                   Row(
                     children: [
                       if (order.customerName.isNotEmpty) ...[
                         Icon(Icons.person_rounded,
-                            size: 13, color: Colors.white.withOpacity(0.5)),
-                        const SizedBox(width: 4),
+                            size: 13, color: MobileGlassTheme.textSecondary),
+                        SizedBox(width: 4),
                         Text(
                           order.customerName,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.white.withOpacity(0.7),
+                            color: MobileGlassTheme.textSecondary,
                           ),
                         ),
                       ],
                       if (order.customerName.isNotEmpty &&
                           order.pickupTime.isNotEmpty)
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                       if (order.pickupTime.isNotEmpty) ...[
                         Icon(Icons.access_time_rounded,
-                            size: 13, color: Colors.white.withOpacity(0.5)),
-                        const SizedBox(width: 4),
+                            size: 13, color: MobileGlassTheme.textSecondary),
+                        SizedBox(width: 4),
                         Text(
                           order.pickupTime,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.white.withOpacity(0.7),
+                            color: MobileGlassTheme.textSecondary,
                           ),
                         ),
                       ],
@@ -276,9 +278,9 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
                   ),
                 ],
                 if (order.items.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Divider(height: 1, color: Colors.white.withOpacity(0.08)),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 12),
+                  Divider(height: 1, color: MobileGlassTheme.border(0.15)),
+                  SizedBox(height: 10),
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
@@ -287,14 +289,14 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.06),
+                          color: MobileGlassTheme.border(0.12),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           '${it.quantity}× ${it.itemName}',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.white.withOpacity(0.8),
+                            color: MobileGlassTheme.textPrimary.withValues(alpha: 0.85),
                           ),
                         ),
                       );
@@ -307,13 +309,13 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
                         '+$extraItemCount სხვა',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.white.withOpacity(0.4),
+                          color: MobileGlassTheme.textSecondary,
                         ),
                       ),
                     ),
                 ],
                 if (!isFinalized) ...[
-                  const SizedBox(height: 14),
+                  SizedBox(height: 14),
                   Row(
                     children: [
                       Expanded(
@@ -324,17 +326,17 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
                           onTap: () => _cancelTakeawayOrder(order),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10),
                       Expanded(
                         child: _takeawayActionButton(
                           label: 'დეტალები',
                           icon: Icons.visibility_rounded,
-                          color: _kAccent,
+                          color: MobileGlassTheme.primary,
                           filled: true,
                           onTap: openDetails,
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10),
                       _takeawayIconButton(
                         icon: Icons.delete_outline_rounded,
                         onTap: () => _deleteTakeawayOrder(order),
@@ -342,7 +344,7 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
                     ],
                   ),
                 ] else ...[
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
                   Align(
                     alignment: Alignment.centerRight,
                     child: GestureDetector(
@@ -352,12 +354,12 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.delete_outline_rounded,
-                              size: 16, color: Colors.white.withOpacity(0.45)),
-                          const SizedBox(width: 4),
+                              size: 16, color: MobileGlassTheme.textSecondary),
+                          SizedBox(width: 4),
                           Text(
                             'წაშლა',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.45),
+                              color: MobileGlassTheme.textSecondary,
                               fontSize: 12,
                             ),
                           ),
@@ -397,7 +399,7 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 16, color: filled ? Colors.white : color),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
@@ -422,11 +424,11 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
       child: Container(
         padding: const EdgeInsets.all(11),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
+          color: MobileGlassTheme.surface(0.06),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
+          border: Border.all(color: MobileGlassTheme.border(0.12)),
         ),
-        child: Icon(icon, size: 18, color: Colors.white.withOpacity(0.55)),
+        child: Icon(icon, size: 18, color: MobileGlassTheme.textSecondary),
       ),
     );
   }

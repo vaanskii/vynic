@@ -57,7 +57,7 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
       onOpenServiceFeeConfig: _openQuickOrderServiceFeeConfig,
       onContinueDraft: _openQuickOrderDraft,
       onPrintDraft: _printQuickOrderDraft,
-      canManageDrafts: widget.user.isAdmin,
+      canManageDrafts: widget.user.canManageMenuCountDrafts,
       onOpenDraftManage: _openDraftManageModal,
       onClearAllDrafts: _clearAllQuickOrderDrafts,
       primaryColor: widget.primaryColor,
@@ -567,7 +567,7 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
   }
 
   Future<void> _clearAllQuickOrderDrafts() async {
-    if (!widget.user.isAdmin) {
+    if (!widget.user.canManageMenuCountDrafts) {
       return;
     }
 
@@ -628,7 +628,7 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
   }
 
   Future<void> _renameQuickOrderDraft(QuickOrderDraft draft) async {
-    if (!widget.user.isAdmin) {
+    if (!widget.user.canManageMenuCountDrafts) {
       return;
     }
 
@@ -654,7 +654,7 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
   }
 
   Future<void> _openDraftManageModal(QuickOrderDraft draft) async {
-    if (!widget.user.isAdmin) {
+    if (!widget.user.canManageMenuCountDrafts) {
       return;
     }
 

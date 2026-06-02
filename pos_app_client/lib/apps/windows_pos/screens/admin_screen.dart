@@ -5,7 +5,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:vynic/apps/windows_pos/widgets/on_screen_keyboard.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_menu_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_packages_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_close_day_section.dart';
@@ -15,8 +14,7 @@ import 'package:vynic/apps/windows_pos/widgets/admin/admin_audit_log_section.dar
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_error_log_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_settings_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_reservations_section.dart';
-import 'package:vynic/apps/windows_pos/widgets/admin/admin_waiters_section.dart';
-import 'package:vynic/apps/windows_pos/widgets/admin/admin_users_management_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_staff_section.dart';
 import 'package:vynic/core/utils/payment_utils.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/apps/windows_pos/screens/login_screen.dart';
@@ -36,16 +34,9 @@ class AdminScreen extends StatefulWidget {
 }
 
 class _AdminScreenState extends State<AdminScreen> {
-  String _selectedSection = 'waiters'; // Default section
+  String _selectedSection = 'staff'; // Default section
 
   static const Color _surfaceColor = Color(0xFFF4F6FF);
-
-  // Waiter creation form state (moved to AdminWaitersSection)
-
-  // Keyboard state
-  bool _isKeyboardVisible = false;
-  final TextEditingController _usernameController = TextEditingController();
-  final String _currentLanguage = 'en';
 
   final TextEditingController _kitchenPrinterController =
       TextEditingController();
@@ -213,10 +204,24 @@ class _AdminScreenState extends State<AdminScreen> {
   bool get _isMobile => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
   late bool _isSidebarExpanded;
 
+  /// Supervisor: only პერსონალი (waiters) + დღის დახურვა.
+  bool get _isLimitedAdmin => widget.user.isSupervisor;
+
+  static const _limitedAdminSections = {
+    'staff',
+    'waiters',
+    'users',
+    'closeday',
+    'reservations',
+  };
+
   @override
   void initState() {
     super.initState();
     _isSidebarExpanded = !_isMobile;
+    if (_isLimitedAdmin) {
+      _selectedSection = 'staff';
+    }
     final currentBusinessDate = DatabaseService.getCurrentDate();
     _selectedSalesYear = currentBusinessDate.year;
     _selectedSalesMonth = currentBusinessDate.month;
@@ -227,7 +232,6 @@ class _AdminScreenState extends State<AdminScreen> {
 
   @override
   void dispose() {
-    _usernameController.dispose();
     _kitchenPrinterController.dispose();
     _receiptPrinterController.dispose();
     _printerPortController.dispose();
@@ -249,21 +253,6 @@ class _AdminScreenState extends State<AdminScreen> {
     _monthlyReportStaffDailyController.dispose();
     _monthlyReportManualSalesController.dispose();
     super.dispose();
-  }
-
-  void _showUsernameKeyboard() {
-    setState(() {
-      _usernameController.selection = TextSelection.collapsed(
-        offset: _usernameController.text.length,
-      );
-      _isKeyboardVisible = true;
-    });
-  }
-
-  void _closeKeyboard() {
-    setState(() {
-      _isKeyboardVisible = false;
-    });
   }
 
   void _initializeSettingsState() {
@@ -1319,10 +1308,10 @@ class _AdminScreenState extends State<AdminScreen> {
 
   String _getSectionTitle(String section) {
     switch (section) {
+      case 'staff':
       case 'waiters':
-        return 'ოფიციანტები';
       case 'users':
-        return 'მომხმარებლები';
+        return 'პერსონალი';
       case 'menu':
         return 'მენიუ';
       case 'packages':
@@ -1375,65 +1364,7 @@ class _AdminScreenState extends State<AdminScreen> {
               Expanded(
                 child: ListView(
                   padding: EdgeInsets.only(bottom: _isMobile ? 32 : 0),
-                  children: [
-                    _buildMenuItem(
-                      icon: Icons.people,
-                      title: 'ოფიციანტები',
-                      section: 'waiters',
-                    ),
-                    _buildMenuItem(
-                      icon: Icons.admin_panel_settings,
-                      title: 'მომხმარებლები',
-                      section: 'users',
-                    ),
-                    _buildMenuItem(
-                      icon: Icons.restaurant_menu,
-                      title: 'მენიუ',
-                      section: 'menu',
-                    ),
-                    _buildMenuItem(
-                      icon: Icons.inventory_2,
-                      title: 'პაკეტები',
-                      section: 'packages',
-                    ),
-                    _buildMenuItem(
-                      icon: Icons.event_available,
-                      title: 'რეზერვაციები',
-                      section: 'reservations',
-                    ),
-                    if (!_isMobile)
-                      _buildMenuItem(
-                        icon: Icons.calendar_today,
-                        title: 'დღის დახურვა',
-                        section: 'closeday',
-                      ),
-                    _buildMenuItem(
-                      icon: Icons.history,
-                      title: 'გაყიდვები',
-                      section: 'sales',
-                    ),
-                    _buildMenuItem(
-                      icon: Icons.insights,
-                      title: 'გაყიდვების რეპორტი',
-                      section: 'salesReport',
-                    ),
-                    _buildMenuItem(
-                      icon: Icons.report_problem,
-                      title: 'აუდიტი',
-                      section: 'audit',
-                    ),
-                    if (!_isMobile)
-                      _buildMenuItem(
-                        icon: Icons.bug_report,
-                        title: 'შეცდომები',
-                        section: 'errors',
-                      ),
-                    _buildMenuItem(
-                      icon: Icons.settings,
-                      title: 'პარამეტრები',
-                      section: 'settings',
-                    ),
-                  ],
+                  children: _buildSidebarMenuItems(),
                 ),
               ),
             ],
@@ -1441,6 +1372,83 @@ class _AdminScreenState extends State<AdminScreen> {
         ),
       ),
     );
+  }
+
+  List<Widget> _buildSidebarMenuItems() {
+    if (_isLimitedAdmin) {
+      return [
+        _buildMenuItem(
+          icon: Icons.groups_rounded,
+          title: 'პერსონალი',
+          section: 'staff',
+        ),
+        _buildMenuItem(
+          icon: Icons.event_available,
+          title: 'რეზერვაციები',
+          section: 'reservations',
+        ),
+        _buildMenuItem(
+          icon: Icons.calendar_today,
+          title: 'დღის დახურვა',
+          section: 'closeday',
+        ),
+      ];
+    }
+
+    return [
+      _buildMenuItem(
+        icon: Icons.groups_rounded,
+        title: 'პერსონალი',
+        section: 'staff',
+      ),
+      _buildMenuItem(
+        icon: Icons.restaurant_menu,
+        title: 'მენიუ',
+        section: 'menu',
+      ),
+      _buildMenuItem(
+        icon: Icons.inventory_2,
+        title: 'პაკეტები',
+        section: 'packages',
+      ),
+      _buildMenuItem(
+        icon: Icons.event_available,
+        title: 'რეზერვაციები',
+        section: 'reservations',
+      ),
+      if (!_isMobile)
+        _buildMenuItem(
+          icon: Icons.calendar_today,
+          title: 'დღის დახურვა',
+          section: 'closeday',
+        ),
+      _buildMenuItem(
+        icon: Icons.history,
+        title: 'გაყიდვები',
+        section: 'sales',
+      ),
+      _buildMenuItem(
+        icon: Icons.insights,
+        title: 'გაყიდვების რეპორტი',
+        section: 'salesReport',
+      ),
+      _buildMenuItem(
+        icon: Icons.report_problem,
+        title: 'აუდიტი',
+        section: 'audit',
+      ),
+      if (!_isMobile)
+        _buildMenuItem(
+          icon: Icons.bug_report,
+          title: 'შეცდომები',
+          section: 'errors',
+        ),
+      _buildMenuItem(
+        icon: Icons.settings,
+        title: 'პარამეტრები',
+        section: 'settings',
+      ),
+    ];
   }
 
   Widget _buildSidebarHeader() {
@@ -1477,7 +1485,7 @@ class _AdminScreenState extends State<AdminScreen> {
           const SizedBox(width: 12),
           const Expanded(
             child: Text(
-              'ადმინ პანელი',
+              'მართვის ცენტრი',
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
@@ -3448,15 +3456,15 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 
   Widget _buildContent() {
+    if (_isLimitedAdmin && !_limitedAdminSections.contains(_selectedSection)) {
+      return AdminStaffSection(user: widget.user);
+    }
+
     switch (_selectedSection) {
+      case 'staff':
       case 'waiters':
-        return AdminWaitersSection(
-          user: widget.user,
-          usernameController: _usernameController,
-          onShowKeyboard: _showUsernameKeyboard,
-        );
       case 'users':
-        return AdminUsersManagementSection(user: widget.user);
+        return AdminStaffSection(user: widget.user);
       case 'menu':
         return AdminMenuSection(user: widget.user);
       case 'packages':
@@ -3567,60 +3575,6 @@ class _AdminScreenState extends State<AdminScreen> {
                     mainContent,
                   ],
                 ),
-
-          // On-screen keyboard that slides up from bottom
-          if (!_isMobile)
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 300),
-              left: 0,
-              right: 0,
-              bottom: _isKeyboardVisible ? 0 : -400,
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Color(0xFF2B2B2B),
-                  border: Border(
-                    top: BorderSide(color: Color(0xFFC0AD7B), width: 2),
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Text field to show what's being typed
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      child: TextField(
-                        controller: _usernameController,
-                        autofocus: false,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Enter username',
-                          hintStyle: const TextStyle(color: Colors.grey),
-                          filled: true,
-                          fillColor: const Color(0xFF333333),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Keyboard
-                    OnScreenKeyboard(
-                      controller: _usernameController,
-                      language: _currentLanguage,
-                      onClose: _closeKeyboard,
-                    ),
-                  ],
-                ),
-              ),
-            ),
         ],
       ),
     );

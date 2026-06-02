@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/services/app_notification_history_store.dart';
+import 'package:vynic/core/widgets/notification_entry_style.dart';
 
-/// Scrollable list of notifications + optional clear action.
+/// Scrollable list of notifications + optional clear action (Windows POS).
 class NotificationHistoryPanel extends StatelessWidget {
   const NotificationHistoryPanel({
     super.key,
@@ -19,10 +20,6 @@ class NotificationHistoryPanel extends StatelessWidget {
   final String emptyLabel;
   final bool dense;
 
-  static const Color _unreadBg = Color(0xFFEFF6FF);
-  static const Color _unreadBorder = Color(0xFF2563EB);
-  static const Color _unreadTitle = Color(0xFF1E3A8A);
-  static const Color _unreadMessage = Color(0xFF334155);
   static const Color _readBg = Colors.white;
   static const Color _readBorder = Color(0xFFE2E8F0);
   static const Color _readTitle = Color(0xFF64748B);
@@ -69,10 +66,17 @@ class NotificationHistoryPanel extends StatelessWidget {
             itemBuilder: (context, index) {
               final e = entries[index];
               final unread = !e.isRead;
+              final style = resolveNotificationEntryStyle(e);
+              final accent = style.accent;
+              final borderColor = unread ? accent : _readBorder;
+              final bg = unread
+                  ? accent.withValues(alpha: 0.08)
+                  : _readBg;
+
               return Material(
-                color: unread ? _unreadBg : _readBg,
+                color: bg,
                 elevation: unread ? 1 : 0,
-                shadowColor: unread ? _unreadBorder.withValues(alpha: 0.2) : null,
+                shadowColor: unread ? accent.withValues(alpha: 0.2) : null,
                 borderRadius: BorderRadius.circular(12),
                 child: InkWell(
                   onTap: onEntryTap != null ? () => onEntryTap!(e) : null,
@@ -81,7 +85,7 @@ class NotificationHistoryPanel extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: unread ? _unreadBorder : _readBorder,
+                        color: borderColor,
                         width: unread ? 1.5 : 1,
                       ),
                     ),
@@ -92,17 +96,13 @@ class NotificationHistoryPanel extends StatelessWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 5, right: 10),
-                          child: Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: unread
-                                  ? _unreadBorder
-                                  : Colors.transparent,
-                            ),
+                        Container(
+                          width: 3,
+                          height: dense ? 34 : 40,
+                          margin: const EdgeInsets.only(right: 10),
+                          decoration: BoxDecoration(
+                            color: accent,
+                            borderRadius: BorderRadius.circular(2),
                           ),
                         ),
                         Expanded(
@@ -120,7 +120,12 @@ class NotificationHistoryPanel extends StatelessWidget {
                                             ? FontWeight.w800
                                             : FontWeight.w600,
                                         fontSize: dense ? 13 : 14,
-                                        color: unread ? _unreadTitle : _readTitle,
+                                        color: unread
+                                            ? Color.alphaBlend(
+                                                accent.withValues(alpha: 0.85),
+                                                const Color(0xFF0F172A),
+                                              )
+                                            : _readTitle,
                                       ),
                                     ),
                                   ),
@@ -132,7 +137,7 @@ class NotificationHistoryPanel extends StatelessWidget {
                                           ? FontWeight.w600
                                           : FontWeight.normal,
                                       color: unread
-                                          ? const Color(0xFF3B82F6)
+                                          ? accent
                                           : Colors.grey.shade500,
                                     ),
                                   ),
@@ -147,8 +152,7 @@ class NotificationHistoryPanel extends StatelessWidget {
                                   fontWeight: unread
                                       ? FontWeight.w500
                                       : FontWeight.normal,
-                                  color:
-                                      unread ? _unreadMessage : _readMessage,
+                                  color: _messageColor(style, unread),
                                 ),
                               ),
                             ],
@@ -164,5 +168,19 @@ class NotificationHistoryPanel extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Color _messageColor(NotificationEntryStyle style, bool unread) {
+    if (!unread) return _readMessage;
+    switch (style.kind) {
+      case NotificationEntryKind.decrease:
+      case NotificationEntryKind.cancel:
+        return style.accent;
+      default:
+        return Color.alphaBlend(
+          style.accent.withValues(alpha: 0.75),
+          const Color(0xFF334155),
+        );
+    }
   }
 }

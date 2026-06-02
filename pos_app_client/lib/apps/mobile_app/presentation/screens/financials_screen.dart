@@ -1,17 +1,11 @@
+import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/mobile_api_service.dart';
+import 'package:vynic/core/widgets/manager_toast.dart';
 
-// Dark "glass" palette (matches the dashboard / tables / menu tabs).
-const Color _kAccent = Color(0xFF6366F1);
-const Color _kAccentText = Color(0xFFC7D2FE);
-const Color _kGreen = Color(0xFF10B981);
-const Color _kRed = Color(0xFFEF4444);
-const Color _kMuted = Color(0xFF9AA0AE);
-const Color _kCardBorder = Color(0x14FFFFFF);
-const Color _kSurface = Color(0xFF15151C);
 
 const List<Color> _kCatColors = [
   Color(0xFFF59E0B),
@@ -102,7 +96,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
           .map((e) => Map<String, dynamic>.from(e))
           .toList();
     }
-    return const [];
+    return [];
   }
 
   List<Map<String, dynamic>> get _expenseBreakdown {
@@ -120,13 +114,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
 
   void _toast(String msg, {bool error = false}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: error ? _kRed : _kGreen,
-        content: Text(msg),
-      ),
-    );
+    ManagerToast.showSnackBar(context, msg, isError: error);
   }
 
   Future<void> _addExpense() async {
@@ -211,12 +199,12 @@ class _FinancialsScreenState extends State<FinancialsScreen>
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          const Positioned(
+          Positioned(
             top: -100,
             right: -50,
             child: _GlowOrb(color: Color(0xFFEC4899), size: 300),
           ),
-          const Positioned(
+          Positioned(
             top: 300,
             left: -100,
             child: _GlowOrb(color: Color(0xFF6366F1), size: 250),
@@ -224,8 +212,8 @@ class _FinancialsScreenState extends State<FinancialsScreen>
           SafeArea(
             bottom: false,
             child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: _kAccent),
+                ? Center(
+                    child: CircularProgressIndicator(color: MobileGlassTheme.primary),
                   )
                 : _error != null
                     ? _buildError()
@@ -240,18 +228,18 @@ class _FinancialsScreenState extends State<FinancialsScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.wifi_off_rounded, size: 56, color: _kMuted),
-            const SizedBox(height: 14),
+            Icon(Icons.wifi_off_rounded, size: 56, color: MobileGlassTheme.textSecondary),
+            SizedBox(height: 14),
             Text(
               _error!,
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                  color: MobileGlassTheme.textPrimary, fontWeight: FontWeight.w600),
             ),
             TextButton.icon(
               onPressed: _loadFinancials,
-              icon: const Icon(Icons.refresh_rounded, color: _kAccentText),
-              label: const Text('თავიდან ცდა',
-                  style: TextStyle(color: _kAccentText)),
+              icon: Icon(Icons.refresh_rounded, color: MobileGlassTheme.accentText),
+              label: Text('თავიდან ცდა',
+                  style: TextStyle(color: MobileGlassTheme.accentText)),
             ),
           ],
         ),
@@ -268,8 +256,8 @@ class _FinancialsScreenState extends State<FinancialsScreen>
         .fold<double>(0, (sum, e) => sum + e.amount);
 
     return RefreshIndicator(
-      color: _kAccent,
-      backgroundColor: _kSurface,
+      color: MobileGlassTheme.primary,
+      backgroundColor: MobileGlassTheme.data.surfaceCard,
       onRefresh: _loadFinancials,
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(
@@ -290,15 +278,15 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                       child: _buildBalanceCard(revenue, expenses, profit),
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  SizedBox(height: 28),
                   _fade(0.2, _buildPaymentCard(cash, card)),
-                  const SizedBox(height: 28),
+                  SizedBox(height: 28),
                   _fade(0.3, _buildExpenseBreakdownCard()),
-                  const SizedBox(height: 28),
+                  SizedBox(height: 28),
                   _fade(0.4, _buildExpenseComposer()),
-                  const SizedBox(height: 28),
+                  SizedBox(height: 28),
                   _fade(0.5, _buildSalaryPlanner(selectedSalariesTotal)),
-                  const SizedBox(height: 28),
+                  SizedBox(height: 28),
                   _fade(0.6, _buildExpenseLog()),
                 ],
               ),
@@ -319,10 +307,10 @@ class _FinancialsScreenState extends State<FinancialsScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
+          Text(
             'ფინანსები',
             style: TextStyle(
-              color: Colors.white,
+              color: MobileGlassTheme.textPrimary,
               fontSize: 32,
               fontWeight: FontWeight.bold,
               letterSpacing: -0.5,
@@ -332,14 +320,14 @@ class _FinancialsScreenState extends State<FinancialsScreen>
             onTap: _loadFinancials,
             borderRadius: BorderRadius.circular(20),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.refresh_rounded, color: Colors.white, size: 18),
+                Icon(Icons.refresh_rounded, color: MobileGlassTheme.textPrimary, size: 18),
                 SizedBox(width: 8),
                 Text(
                   'განახლება',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: MobileGlassTheme.textPrimary,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
@@ -378,18 +366,18 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                     Text(
                       positive ? 'წმინდა მოგება (დღეს)' : 'ზარალი (დღეს)',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.6),
+                        color: MobileGlassTheme.textSecondary,
                         fontSize: 14,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
                         _gel(profit.abs()),
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: MobileGlassTheme.textPrimary,
                           fontSize: 36,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -1,
@@ -403,7 +391,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: (positive ? _kGreen : _kRed).withValues(alpha: 0.15),
+                  color: (positive ? MobileGlassTheme.good : MobileGlassTheme.bad).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -412,14 +400,14 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                       positive
                           ? Icons.trending_up_rounded
                           : Icons.trending_down_rounded,
-                      color: positive ? _kGreen : _kRed,
+                      color: positive ? MobileGlassTheme.good : MobileGlassTheme.bad,
                       size: 16,
                     ),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4),
                     Text(
                       '${margin.toStringAsFixed(1)}%',
                       style: TextStyle(
-                        color: positive ? _kGreen : _kRed,
+                        color: positive ? MobileGlassTheme.good : MobileGlassTheme.bad,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),
@@ -429,43 +417,43 @@ class _FinancialsScreenState extends State<FinancialsScreen>
               ),
             ],
           ),
-          const SizedBox(height: 22),
+          SizedBox(height: 22),
           Row(
             children: [
               Expanded(
                 child: _MiniStatBlock(
                   title: 'შემოსავალი',
                   amount: _gel(revenue),
-                  color: _kGreen,
+                  color: MobileGlassTheme.good,
                   icon: Icons.arrow_downward_rounded,
                 ),
               ),
               Container(
                 width: 1,
                 height: 40,
-                color: Colors.white.withValues(alpha: 0.1),
+                color: MobileGlassTheme.border(0.15),
               ),
               Expanded(
                 child: _MiniStatBlock(
                   title: 'ხარჯი',
                   amount: _gel(expenses),
-                  color: _kRed,
+                  color: MobileGlassTheme.bad,
                   icon: Icons.arrow_upward_rounded,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           // Composition bar: how revenue splits into expense vs profit.
           Text(
             'შემოსავლის სტრუქტურა',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.55),
+              color: MobileGlassTheme.textSecondary,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: SizedBox(
@@ -475,12 +463,12 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                   if (expFrac > 0)
                     Expanded(
                       flex: (expFrac * 1000).round().clamp(1, 1000),
-                      child: Container(color: _kRed),
+                      child: Container(color: MobileGlassTheme.bad),
                     ),
                   if (profFrac > 0)
                     Expanded(
                       flex: (profFrac * 1000).round().clamp(1, 1000),
-                      child: Container(color: _kGreen),
+                      child: Container(color: MobileGlassTheme.good),
                     ),
                   if (expFrac + profFrac < 1)
                     Expanded(
@@ -488,19 +476,19 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                           .round()
                           .clamp(1, 1000),
                       child: Container(
-                        color: Colors.white.withValues(alpha: 0.08),
+                        color: MobileGlassTheme.border(0.12),
                       ),
                     ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Row(
             children: [
-              _legendDot(_kRed, 'ხარჯი'),
-              const SizedBox(width: 16),
-              _legendDot(_kGreen, 'მოგება'),
+              _legendDot(MobileGlassTheme.bad, 'ხარჯი'),
+              SizedBox(width: 16),
+              _legendDot(MobileGlassTheme.good, 'მოგება'),
             ],
           ),
         ],
@@ -517,11 +505,11 @@ class _FinancialsScreenState extends State<FinancialsScreen>
           height: 9,
           decoration: BoxDecoration(color: c, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 6),
+        SizedBox(width: 6),
         Text(
           label,
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.6),
+            color: MobileGlassTheme.textSecondary,
             fontSize: 12,
           ),
         ),
@@ -540,7 +528,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _SectionHeader(title: 'გადახდების ტიპები'),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           _GlassCard(
             borderRadius: BorderRadius.circular(24),
             padding: const EdgeInsets.all(20),
@@ -551,7 +539,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                   child: SizedBox(
                     height: 18,
                     child: total <= 0
-                        ? Container(color: Colors.white.withValues(alpha: 0.08))
+                        ? Container(color: MobileGlassTheme.border(0.12))
                         : Row(
                             children: [
                               if (cashFrac > 0)
@@ -568,9 +556,9 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                           ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 _payRow('ნაღდი', cash, total, const Color(0xFF3B82F6)),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 _payRow('ბარათი', card, total, const Color(0xFF8B5CF6)),
               ],
             ),
@@ -589,21 +577,21 @@ class _FinancialsScreenState extends State<FinancialsScreen>
           height: 10,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 10),
+        SizedBox(width: 10),
         Text(
           label,
-          style: const TextStyle(color: Colors.white, fontSize: 14),
+          style: TextStyle(color: MobileGlassTheme.textPrimary, fontSize: 14),
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         Text(
           '${pct.toStringAsFixed(0)}%',
-          style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 12),
+          style: TextStyle(color: MobileGlassTheme.textSecondary, fontSize: 12),
         ),
         const Spacer(),
         Text(
           _gel(amount),
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: MobileGlassTheme.textPrimary,
             fontWeight: FontWeight.bold,
             fontSize: 14,
           ),
@@ -626,19 +614,19 @@ class _FinancialsScreenState extends State<FinancialsScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _SectionHeader(title: 'ხარჯების კატეგორიები'),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           _GlassCard(
             borderRadius: BorderRadius.circular(24),
             padding: const EdgeInsets.all(20),
             child: rows.isEmpty
                 ? Text(
                     'კატეგორიები ცარიელია',
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+                    style: TextStyle(color: MobileGlassTheme.textSecondary),
                   )
                 : Column(
                     children: [
                       for (var i = 0; i < rows.length; i++) ...[
-                        if (i > 0) const SizedBox(height: 16),
+                        if (i > 0) SizedBox(height: 16),
                         _CategoryBar(
                           label: (rows[i]['category'] ?? 'სხვა').toString(),
                           amount: ((rows[i]['amount'] ?? 0) as num).toDouble(),
@@ -664,22 +652,22 @@ class _FinancialsScreenState extends State<FinancialsScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _SectionHeader(title: 'ახალი ხარჯი'),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           _GlassCard(
             borderRadius: BorderRadius.circular(24),
             padding: const EdgeInsets.all(18),
             child: Column(
               children: [
                 _darkField(_categoryController, 'კატეგორია (მაგ: ბაზარი)'),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 _darkField(_expenseDescriptionController, 'აღწერა'),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 _darkField(
                   _expenseAmountController,
                   'თანხა',
                   number: true,
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 _primaryButton(
                   label: _isAddingExpense ? 'ემატება...' : 'ხარჯის დამატება',
                   onTap: _isAddingExpense ? null : _addExpense,
@@ -700,7 +688,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _SectionHeader(title: 'პერსონალის ხელფასები'),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           _GlassCard(
             borderRadius: BorderRadius.circular(24),
             padding: const EdgeInsets.all(18),
@@ -710,44 +698,44 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                 Text(
                   'დაამატეთ სახელი და ხელფასი, შემდეგ მონიშნულები ერთიანად ჩასვით ხარჯებში.',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: MobileGlassTheme.textSecondary,
                     fontSize: 12,
                   ),
                 ),
-                const SizedBox(height: 14),
+                SizedBox(height: 14),
                 _darkField(_staffNameController, 'სახელი'),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 _darkField(_staffSalaryController, 'ხელფასი', number: true),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 _outlineButton(label: 'სიაში დამატება', onTap: _addSalaryDraft),
                 if (_salaryItems.isNotEmpty) ...[
-                  const SizedBox(height: 14),
+                  SizedBox(height: 14),
                   for (var idx = 0; idx < _salaryItems.length; idx++)
                     _buildSalaryRow(idx, _salaryItems[idx]),
-                  const SizedBox(height: 8),
-                  Divider(color: Colors.white.withValues(alpha: 0.08)),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
+                  Divider(color: MobileGlassTheme.border(0.12)),
+                  SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         'მონიშნული ჯამი',
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.6),
+                          color: MobileGlassTheme.textSecondary,
                           fontSize: 13,
                         ),
                       ),
                       Text(
                         _gel(selectedSalariesTotal),
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: MobileGlassTheme.textPrimary,
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   _primaryButton(
                     label: _isApplyingSalaries
                         ? 'ინახება...'
@@ -776,33 +764,33 @@ class _FinancialsScreenState extends State<FinancialsScreen>
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: item.selected ? _kAccent : Colors.transparent,
+                color: item.selected ? MobileGlassTheme.primary : Colors.transparent,
                 borderRadius: BorderRadius.circular(7),
                 border: Border.all(
                   color: item.selected
-                      ? _kAccent
+                      ? MobileGlassTheme.primary
                       : Colors.white.withValues(alpha: 0.25),
                 ),
               ),
               child: item.selected
-                  ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
+                  ? Icon(Icons.check_rounded, size: 16, color: MobileGlassTheme.textPrimary)
                   : null,
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   item.name,
-                  style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                      color: MobileGlassTheme.textPrimary, fontWeight: FontWeight.w600),
                 ),
                 Text(
                   _gel(item.amount),
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: MobileGlassTheme.textSecondary,
                     fontSize: 12,
                   ),
                 ),
@@ -833,7 +821,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _SectionHeader(title: 'დღის ხარჯების ისტორია'),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           _GlassCard(
             borderRadius: BorderRadius.circular(24),
             padding: const EdgeInsets.all(8),
@@ -843,7 +831,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                     child: Text(
                       'დღეს ხარჯები არ არის',
                       style:
-                          TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+                          TextStyle(color: MobileGlassTheme.textSecondary),
                     ),
                   )
                 : Column(
@@ -874,13 +862,13 @@ class _FinancialsScreenState extends State<FinancialsScreen>
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: _kRed.withValues(alpha: 0.15),
+              color: MobileGlassTheme.bad.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.receipt_long_rounded,
-                color: _kRed, size: 20),
+            child: Icon(Icons.receipt_long_rounded,
+                color: MobileGlassTheme.bad, size: 20),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -889,25 +877,25 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                   '${e['category'] ?? 'სხვა'} • ${e['description'] ?? ''}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+                  style: TextStyle(
+                      color: MobileGlassTheme.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
                 ),
                 if (createdAt != null)
                   Text(
                     fmt.format(createdAt),
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.45),
+                      color: MobileGlassTheme.textSecondary,
                       fontSize: 12,
                     ),
                   ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Text(
             '-${_gel(amt)}',
-            style: const TextStyle(
-                color: _kRed, fontWeight: FontWeight.bold, fontSize: 14),
+            style: TextStyle(
+                color: MobileGlassTheme.bad, fontWeight: FontWeight.bold, fontSize: 14),
           ),
           GestureDetector(
             onTap: () => _deleteExpense((e['id'] ?? '').toString()),
@@ -936,22 +924,22 @@ class _FinancialsScreenState extends State<FinancialsScreen>
       controller: controller,
       keyboardType:
           number ? const TextInputType.numberWithOptions(decimal: true) : null,
-      style: const TextStyle(color: Colors.white, fontSize: 15),
-      cursorColor: _kAccent,
+      style: TextStyle(color: MobileGlassTheme.textPrimary, fontSize: 15),
+      cursorColor: MobileGlassTheme.primary,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: _kMuted, fontSize: 13),
+        labelStyle: TextStyle(color: MobileGlassTheme.textSecondary, fontSize: 13),
         filled: true,
         fillColor: Colors.white.withValues(alpha: 0.05),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: _kCardBorder),
+          borderSide: BorderSide(color: MobileGlassTheme.data.borderSubtle),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: _kAccent),
+          borderSide: BorderSide(color: MobileGlassTheme.primary),
         ),
       ),
     );
@@ -963,9 +951,9 @@ class _FinancialsScreenState extends State<FinancialsScreen>
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
-          backgroundColor: _kAccent,
+          backgroundColor: MobileGlassTheme.primary,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: _kAccent.withValues(alpha: 0.4),
+          disabledBackgroundColor: MobileGlassTheme.primary.withValues(alpha: 0.4),
           disabledForegroundColor: Colors.white70,
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 15),
@@ -985,9 +973,9 @@ class _FinancialsScreenState extends State<FinancialsScreen>
       child: OutlinedButton(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
-          foregroundColor: _kAccentText,
+          foregroundColor: MobileGlassTheme.accentText,
           padding: const EdgeInsets.symmetric(vertical: 14),
-          side: BorderSide(color: _kAccent.withValues(alpha: 0.5)),
+          side: BorderSide(color: MobileGlassTheme.primary.withValues(alpha: 0.5)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -1048,21 +1036,21 @@ class _MiniStatBlock extends StatelessWidget {
                   BoxDecoration(color: color.withValues(alpha: 0.2), shape: BoxShape.circle),
               child: Icon(icon, color: color, size: 12),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Text(
               title,
               style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.6), fontSize: 13),
+                  color: MobileGlassTheme.textSecondary, fontSize: 13),
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
             amount,
-            style: const TextStyle(
-                color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: MobileGlassTheme.textPrimary, fontSize: 17, fontWeight: FontWeight.bold),
           ),
         ),
       ],
@@ -1098,8 +1086,8 @@ class _CategoryBar extends StatelessWidget {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                  color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                  color: MobileGlassTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
             ),
             Text(
               formatted,
@@ -1111,7 +1099,7 @@ class _CategoryBar extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 7),
+        SizedBox(height: 7),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Stack(
@@ -1151,8 +1139,8 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: const TextStyle(
-        color: Colors.white,
+      style: TextStyle(
+        color: MobileGlassTheme.textPrimary,
         fontSize: 20,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.5,
@@ -1186,7 +1174,7 @@ class _GlassCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.04),
             borderRadius: radius,
-            border: Border.all(color: _kCardBorder, width: 1),
+            border: Border.all(color: MobileGlassTheme.data.borderSubtle, width: 1),
           ),
           child: child,
         ),

@@ -97,7 +97,7 @@ class _ReportTabState extends State<_ReportTab>
               ],
             ),
             if (_period == 'month') ...[
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               _AdminMonthNav(
                 label: _monthKey,
                 onPrev: _prevMonth,
@@ -167,7 +167,7 @@ class _ReportTabState extends State<_ReportTab>
                 '${_periodLabel()} · $orderCount შეკვეთა · საშ. ${_adminGel(avgOrder)}',
             accent: AdminTheme.good,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           _AdminKpiGrid(
             items: [
               _AdminKpiItem(
@@ -200,14 +200,14 @@ class _ReportTabState extends State<_ReportTab>
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           _AdminSection(
             title: 'გადახდის დეტალი',
             child: _AdminPanel(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
               child: breakdownEntries.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.all(14),
+                  ? Padding(
+                      padding: const EdgeInsets.all(14),
                       child: Text(
                         'გადახდის დეტალი არ არის',
                         style: TextStyle(color: AdminTheme.textMuted),
@@ -217,7 +217,7 @@ class _ReportTabState extends State<_ReportTab>
                       children: [
                         for (var i = 0; i < breakdownEntries.length; i++) ...[
                           if (i > 0)
-                            const Divider(height: 1, color: AdminTheme.border),
+                            Divider(height: 1, color: AdminTheme.border),
                           _AdminMetricRow(
                             label: _adminPaymentLabel(breakdownEntries[i].key),
                             value: _adminGel(
@@ -231,7 +231,7 @@ class _ReportTabState extends State<_ReportTab>
             ),
           ),
           if (byWaiter.isNotEmpty) ...[
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             _AdminSection(
               title: 'ოფიციანტები',
               trailing: '${byWaiter.length}',
@@ -247,9 +247,9 @@ class _ReportTabState extends State<_ReportTab>
             ),
           ],
           if (topItemsByCategory.isNotEmpty) ...[
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             const _SectionTitle('კატეგორიების მიხედვით გაყიდული პოზიციები'),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             ...topItemsByCategory.cast<Map<String, dynamic>>().map((cat) {
               final catName = cat['category'] as String? ?? 'სხვა';
               final catRevenue = (cat['totalRevenue'] as num?)?.toDouble() ?? 0;
@@ -262,10 +262,11 @@ class _ReportTabState extends State<_ReportTab>
                   border: Border.all(color: AdminTheme.border),
                 ),
                 child: ExpansionTile(
+                  key: PageStorageKey<String>('admin-report-cat-$catName'),
                   tilePadding: const EdgeInsets.fromLTRB(12, 2, 12, 2),
                   title: Text(
                     catName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
                       color: AdminTheme.text,
                     ),
@@ -287,9 +288,9 @@ class _ReportTabState extends State<_ReportTab>
               );
             }),
           ] else if (topItems.isNotEmpty) ...[
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             const _SectionTitle('ტოპ პროდუქტები'),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             ...topItems.cast<Map<String, dynamic>>().asMap().entries.map(
                   (e) => _TopItemRow(
                     rank: e.key + 1,
@@ -323,7 +324,7 @@ class _SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.bold,
           color: AdminTheme.primary,
@@ -354,11 +355,11 @@ class _WaiterRow extends StatelessWidget {
         child: Row(
           children: [
             const Icon(Icons.person_rounded, size: 18, color: Color(0xFF94A3B8)),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Expanded(
               child: Text(
                 name,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: AdminTheme.text,
@@ -369,10 +370,10 @@ class _WaiterRow extends StatelessWidget {
               '$count შეკ.',
               style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Text(
               _adminGel(total),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: AdminTheme.primary,
@@ -418,11 +419,11 @@ class _TopItemRow extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(
               child: Text(
                 name,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: AdminTheme.text,
@@ -433,10 +434,10 @@ class _TopItemRow extends StatelessWidget {
               '$qtyც.',
               style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Text(
               _adminGel(revenue),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: AdminTheme.primary,

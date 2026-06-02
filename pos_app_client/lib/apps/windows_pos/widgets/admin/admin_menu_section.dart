@@ -25,7 +25,6 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
   static const Color _surfaceColor = Color(0xFFF4F6FF);
   static const Color _cardColor = Colors.white;
   static const Color _borderColor = Color(0xFFE2E8F0);
-  static const Color _inputBorderColor = Color(0xFF94A3B8);
   static const Color _textPrimary = Color(0xFF1F2937);
   static const Color _textMuted = Color(0xFF64748B);
   static const double _priceStep = 0.5;
@@ -289,7 +288,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
           child: Text(
             isMobile
                 ? '$itemCount ერთეული'
-                : '$itemCount ერთეული • Slug: ${category.slug} • სამზარეულო: ${category.sendToKitchen ? 'ჩართული' : 'გამორთული'}',
+                : '$itemCount ერთეული • სლაგი: ${category.slug} • სამზარეულო: ${category.sendToKitchen ? 'ჩართული' : 'გამორთული'}',
             style: const TextStyle(color: _textMuted, fontSize: 13),
           ),
         ),
@@ -572,6 +571,20 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
   }
 
   // Common Helper Methods copied from AdminScreen
+  String _keyboardLanguageForField(String title) {
+    final lower = title.toLowerCase();
+    if (lower.contains('slug') ||
+        lower.contains('english') ||
+        lower.contains('ინგლისურ') ||
+        lower.contains('სლაგ')) {
+      return 'en';
+    }
+    if (lower.contains('georgian') || lower.contains('ქართულ')) {
+      return 'ka';
+    }
+    return DatabaseService.getDefaultLanguage();
+  }
+
   Widget _buildDialogTextField({
     required TextEditingController controller,
     required String label,
@@ -582,6 +595,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     bool enableTextKeyboard = false,
     bool enableNumberPad = false,
     String? keyboardTitle,
+    String? keyboardLanguage,
     int? numberPadMaxDigits,
     bool allowDecimalInput = false,
     int numberPadDecimalDigits = 2,
@@ -591,10 +605,11 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       if (isMobile) return;
 
       String? updatedValue;
+      final fieldTitle = keyboardTitle ?? label;
 
       if (enableNumberPad) {
         updatedValue = await _showFullScreenPhonePad(
-          title: keyboardTitle ?? label,
+          title: fieldTitle,
           initialValue: controller.text,
           maxDigits: numberPadMaxDigits ?? 9,
           allowDecimal: allowDecimalInput,
@@ -602,8 +617,8 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
         );
       } else if (enableTextKeyboard) {
         updatedValue = await _showFullScreenNameKeyboard(
-          title: keyboardTitle ?? label,
           initialValue: controller.text,
+          language: keyboardLanguage ?? _keyboardLanguageForField(fieldTitle),
         );
       }
 
@@ -618,47 +633,101 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     }
 
     final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
-    final bool showSuffixIcon =
+    final useVirtualInput =
         (enableTextKeyboard || enableNumberPad) && !isMobile;
-    final suffixIcon = showSuffixIcon
-        ? IconButton(
-            icon: Icon(
-              enableNumberPad ? Icons.dialpad : Icons.keyboard,
-              color: _secondaryColor,
-            ),
-            tooltip: enableNumberPad ? 'Open keypad' : 'Open keyboard',
-            onPressed: openVirtualInput,
-          )
-        : null;
 
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      inputFormatters: inputFormatters,
-      decoration: _dialogInputDecoration(
-        label,
-      ).copyWith(suffixIcon: suffixIcon),
-      onChanged: onChanged,
+    if (!useVirtualInput) {
+      return TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+        style: const TextStyle(color: _textPrimary),
+        decoration: _dialogInputDecoration(label),
+        onChanged: onChanged,
+      );
+    }
+
+    return InkWell(
+      onTap: openVirtualInput,
+      borderRadius: BorderRadius.circular(12),
+      child: IgnorePointer(
+        child: TextField(
+          controller: controller,
+          readOnly: true,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
+          style: const TextStyle(color: _textPrimary),
+          decoration: _dialogInputDecoration(label),
+          onChanged: onChanged,
+        ),
+      ),
     );
   }
 
   InputDecoration _dialogInputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: _textMuted),
+      labelStyle: const TextStyle(color: _textMuted, fontWeight: FontWeight.w500),
+      filled: true,
+      fillColor: const Color(0xFFF9FAFB),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: _inputBorderColor, width: 1.2),
+        borderSide: const BorderSide(color: _borderColor),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: _inputBorderColor, width: 1.2),
+        borderSide: const BorderSide(color: _borderColor),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: _secondaryColor),
+        borderSide: const BorderSide(color: _secondaryColor, width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    );
+  }
+
+  AlertDialog _menuFormAlertDialog({
+    required String title,
+    required Widget content,
+    required List<Widget> actions,
+  }) {
+    final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+    return AlertDialog(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.white,
+      insetPadding: isMobile
+          ? const EdgeInsets.symmetric(horizontal: 16, vertical: 24)
+          : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: _borderColor),
+      ),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: _textPrimary,
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.3,
+        ),
+      ),
+      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+      contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+      actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      actionsAlignment: MainAxisAlignment.end,
+      content: content,
+      actions: actions,
+    );
+  }
+
+  Widget _dialogCancelButton({required VoidCallback onPressed}) {
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        foregroundColor: _textMuted,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+      child: const Text('გაუქმება', style: TextStyle(fontWeight: FontWeight.w600)),
     );
   }
 
@@ -706,7 +775,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$')),
             ],
-            decoration: _dialogInputDecoration('პერსონალური ფასი'),
+            decoration: _dialogInputDecoration('ფასი (₾)'),
             onChanged: (value) => setState(() {}),
           ),
         ),
@@ -727,175 +796,51 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
   }
 
   Future<String?> _showFullScreenNameKeyboard({
-    required String title,
     required String initialValue,
+    required String language,
   }) async {
     final controller = TextEditingController(text: initialValue);
     controller.selection = TextSelection.collapsed(
       offset: controller.text.length,
     );
-    String keyboardLanguage = DatabaseService.getDefaultLanguage();
+    final screenWidth = MediaQuery.sizeOf(context).width;
 
-    return await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withOpacity(0.7),
-      constraints: const BoxConstraints(maxWidth: double.infinity),
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (context, sheetSetState) {
-            return FractionallySizedBox(
-              heightFactor: 0.78,
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF8F9FC),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                ),
-                child: SafeArea(
-                  top: false,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 8),
-                      Center(
-                        child: Container(
-                          width: 64,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFCBD2E0),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 20, 16, 8),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.keyboard_alt,
-                              color: Color(0xFFB48A57),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                title,
-                                style: const TextStyle(
-                                  color: Color(0xFF1F2430),
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                            TextButton.icon(
-                              style: TextButton.styleFrom(
-                                foregroundColor: const Color(0xFFB48A57),
-                                textStyle: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              onPressed: () {
-                                sheetSetState(() {
-                                  keyboardLanguage = keyboardLanguage == 'ka'
-                                      ? 'en'
-                                      : 'ka';
-                                });
-                              },
-                              icon: const Icon(Icons.language),
-                              label: Text(
-                                keyboardLanguage.toUpperCase(),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            TextButton.icon(
-                              style: TextButton.styleFrom(
-                                foregroundColor: const Color(0xFF2D6A4F),
-                                textStyle: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              onPressed: () => Navigator.pop(
-                                sheetContext,
-                                controller.text.trim(),
-                              ),
-                              icon: const Icon(Icons.check_circle),
-                              label: const Text('Done'),
-                            ),
-                            IconButton(
-                              onPressed: () => Navigator.pop(sheetContext),
-                              icon: const Icon(
-                                Icons.close,
-                                color: Colors.black54,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 16,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEFF1F7),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFCBD3E1)),
-                          ),
-                          child: ValueListenableBuilder<TextEditingValue>(
-                            valueListenable: controller,
-                            builder: (context, value, _) {
-                              final displayText = value.text.isEmpty
-                                  ? 'Use keyboard below to type'
-                                  : value.text;
-                              return Text(
-                                displayText,
-                                style: TextStyle(
-                                  color: value.text.isEmpty
-                                      ? const Color(0xFF9AA1B5)
-                                      : const Color(0xFF1F2430),
-                                  fontSize: 20,
-                                  fontWeight: value.text.isEmpty
-                                      ? FontWeight.w500
-                                      : FontWeight.w700,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: OnScreenKeyboard(
-                            controller: controller,
-                            language: keyboardLanguage,
-                            onClose: () => Navigator.pop(sheetContext),
-                            onEnter: () => Navigator.pop(
-                              sheetContext,
-                              controller.text.trim(),
-                            ),
-                            showHeader: false,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+    try {
+      return await showModalBottomSheet<String>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: false,
+        barrierColor: Colors.transparent,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        enableDrag: false,
+        constraints: BoxConstraints(
+          minWidth: screenWidth,
+          maxWidth: screenWidth,
+        ),
+        builder: (sheetContext) {
+          void closeWithValue() {
+            Navigator.pop(sheetContext, controller.text.trim());
+          }
+
+          final bottomInset = MediaQuery.viewPaddingOf(sheetContext).bottom;
+          return Padding(
+            padding: EdgeInsets.only(bottom: bottomInset),
+            child: SizedBox(
+              width: MediaQuery.sizeOf(sheetContext).width,
+              child: OnScreenKeyboard(
+                controller: controller,
+                language: language,
+                onClose: closeWithValue,
+                onEnter: closeWithValue,
               ),
-            );
-          },
-        );
-      },
-    );
+            ),
+          );
+        },
+      );
+    } finally {
+      controller.dispose();
+    }
   }
 
   Future<String?> _showFullScreenPhonePad({
@@ -1004,7 +949,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                                 color: Color(0xFFC0AD7B),
                               ),
                               label: const Text(
-                                'Done',
+                                'შენახვა',
                                 style: TextStyle(color: Colors.white),
                               ),
                             ),
@@ -1032,7 +977,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                           ),
                           child: Text(
                             phoneValue.isEmpty
-                                ? 'Tap digits to enter number'
+                                ? 'დააჭირეთ ციფრებს შესაყვანად'
                                 : phoneValue,
                             style: const TextStyle(
                               color: Colors.white,
@@ -1096,25 +1041,21 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     );
     bool sendToKitchenModified = false;
 
-    final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
     await showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          insetPadding: isMobile
-              ? const EdgeInsets.symmetric(horizontal: 16, vertical: 24)
-              : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-          title: const Text('Add New Category'),
+        builder: (context, setDialogState) => _menuFormAlertDialog(
+          title: 'ახალი კატეგორია',
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildDialogTextField(
                   controller: slugController,
-                  label: 'Slug (e.g., hot-drinks)',
+                  label: 'სლაგი (მაგ. hot-drinks)',
                   dialogSetState: setDialogState,
                   enableTextKeyboard: true,
-                  keyboardTitle: 'Category Slug',
+                  keyboardTitle: 'კატეგორიის სლაგი',
                   onChanged: (value) {
                     if (sendToKitchenModified) return;
                     final suggested =
@@ -1129,31 +1070,31 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 const SizedBox(height: 16),
                 _buildDialogTextField(
                   controller: nameEnController,
-                  label: 'Name (English)',
+                  label: 'სახელი (ინგლისური)',
                   dialogSetState: setDialogState,
                   enableTextKeyboard: true,
-                  keyboardTitle: 'Category Name (English)',
+                  keyboardTitle: 'კატეგორიის სახელი (ინგლისური)',
                 ),
                 const SizedBox(height: 16),
                 _buildDialogTextField(
                   controller: nameKaController,
-                  label: 'Name (Georgian)',
+                  label: 'სახელი (ქართული)',
                   dialogSetState: setDialogState,
                   enableTextKeyboard: true,
-                  keyboardTitle: 'Category Name (Georgian)',
+                  keyboardTitle: 'კატეგორიის სახელი (ქართული)',
                 ),
                 const SizedBox(height: 16),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text(
-                    'Send items to kitchen printer',
+                    'პროდუქტები იგზავნება სამზარეულოში',
                     style: TextStyle(
                       color: _textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   subtitle: const Text(
-                    'Turn off for bar-only categories',
+                    'გამორთეთ ბარის/სასმელი კატეგორიებისთვის',
                     style: TextStyle(color: _textMuted, fontSize: 12),
                   ),
                   activeThumbColor: _secondaryColor,
@@ -1167,10 +1108,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
+            _dialogCancelButton(onPressed: () => Navigator.of(context).pop()),
             ElevatedButton(
               onPressed: () async {
                 if (slugController.text.isNotEmpty &&
@@ -1187,13 +1125,20 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   if (success) {
                     setState(() {});
                     unawaited(
-                      showSuccessToast(context, 'Category added successfully'),
+                      showSuccessToast(context, 'კატეგორია დაემატა'),
                     );
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: _secondaryColor),
-              child: const Text('Add'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _secondaryColor,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('დამატება'),
             ),
           ],
         ),
@@ -1214,54 +1159,50 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     );
     bool sendToKitchen = category.sendToKitchen;
 
-    final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
     await showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          insetPadding: isMobile
-              ? const EdgeInsets.symmetric(horizontal: 16, vertical: 24)
-              : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-          title: const Text('Edit Category'),
+        builder: (context, setDialogState) => _menuFormAlertDialog(
+          title: 'კატეგორიის რედაქტირება',
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildDialogTextField(
                   controller: slugController,
-                  label: 'Slug',
+                  label: 'სლაგი',
                   dialogSetState: setDialogState,
                   enableTextKeyboard: true,
-                  keyboardTitle: 'Edit Slug',
+                  keyboardTitle: 'სლაგის რედაქტირება',
                 ),
                 const SizedBox(height: 16),
                 _buildDialogTextField(
                   controller: nameEnController,
-                  label: 'Name (English)',
+                  label: 'სახელი (ინგლისური)',
                   dialogSetState: setDialogState,
                   enableTextKeyboard: true,
-                  keyboardTitle: 'Edit English Name',
+                  keyboardTitle: 'სახელის რედაქტირება (ინგლისური)',
                 ),
                 const SizedBox(height: 16),
                 _buildDialogTextField(
                   controller: nameKaController,
-                  label: 'Name (Georgian)',
+                  label: 'სახელი (ქართული)',
                   dialogSetState: setDialogState,
                   enableTextKeyboard: true,
-                  keyboardTitle: 'Edit Georgian Name',
+                  keyboardTitle: 'სახელის რედაქტირება (ქართული)',
                 ),
                 const SizedBox(height: 16),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text(
-                    'Send items to kitchen printer',
+                    'პროდუქტები იგზავნება სამზარეულოში',
                     style: TextStyle(
                       color: _textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   subtitle: const Text(
-                    'Applies to every item in this category',
+                    'ვრცელდება ამ კატეგორიის ყველა პროდუქტზე',
                     style: TextStyle(color: _textMuted, fontSize: 12),
                   ),
                   activeThumbColor: _secondaryColor,
@@ -1274,10 +1215,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
+            _dialogCancelButton(onPressed: () => Navigator.of(context).pop()),
             ElevatedButton(
               onPressed: () async {
                 if (slugController.text.isNotEmpty &&
@@ -1297,14 +1235,21 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                     unawaited(
                       showSuccessToast(
                         context,
-                        'Category updated successfully',
+                        'კატეგორია განახლდა',
                       ),
                     );
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: _secondaryColor),
-              child: const Text('Update'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _secondaryColor,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('განახლება'),
             ),
           ],
         ),
@@ -1318,22 +1263,22 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF2B2B2B),
         title: const Text(
-          'Delete Category',
+          'კატეგორიის წაშლა',
           style: TextStyle(color: Colors.white),
         ),
         content: Text(
-          'Are you sure you want to delete "$name"?\nAll items in this category will also be deleted.',
+          'დარწმუნებული ხართ, რომ გსურთ „$name“ წაშლა?\nამ კატეგორიის ყველა პროდუქტიც წაიშლება.',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: const Text('გაუქმება'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: const Text('წაშლა'),
           ),
         ],
       ),
@@ -1344,7 +1289,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       if (!mounted) return;
       if (success) {
         setState(() {});
-        unawaited(showSuccessToast(context, 'Category deleted successfully'));
+        unawaited(showSuccessToast(context, 'კატეგორია წაიშალა'));
       }
     }
   }
@@ -1354,50 +1299,43 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     final nameEnController = TextEditingController();
     final nameKaController = TextEditingController();
 
-    final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
     await showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          insetPadding: isMobile
-              ? const EdgeInsets.symmetric(horizontal: 16, vertical: 24)
-              : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-          title: const Text('Add Subcategory'),
+        builder: (context, setDialogState) => _menuFormAlertDialog(
+          title: 'ახალი ქვეკატეგორია',
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildDialogTextField(
                   controller: slugController,
-                  label: 'Slug (e.g., espresso-based)',
+                  label: 'სლაგი (მაგ. espresso-based)',
                   dialogSetState: setDialogState,
                   enableTextKeyboard: true,
-                  keyboardTitle: 'Subcategory Slug',
+                  keyboardTitle: 'ქვეკატეგორიის სლაგი',
                 ),
                 const SizedBox(height: 16),
                 _buildDialogTextField(
                   controller: nameEnController,
-                  label: 'Name (English)',
+                  label: 'სახელი (ინგლისური)',
                   dialogSetState: setDialogState,
                   enableTextKeyboard: true,
-                  keyboardTitle: 'Subcategory Name (English)',
+                  keyboardTitle: 'ქვეკატეგორიის სახელი (ინგლისური)',
                 ),
                 const SizedBox(height: 16),
                 _buildDialogTextField(
                   controller: nameKaController,
-                  label: 'Name (Georgian)',
+                  label: 'სახელი (ქართული)',
                   dialogSetState: setDialogState,
                   enableTextKeyboard: true,
-                  keyboardTitle: 'Subcategory Name (Georgian)',
+                  keyboardTitle: 'ქვეკატეგორიის სახელი (ქართული)',
                 ),
               ],
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
+            _dialogCancelButton(onPressed: () => Navigator.of(context).pop()),
             ElevatedButton(
               onPressed: () async {
                 if (slugController.text.isNotEmpty &&
@@ -1416,14 +1354,21 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                     unawaited(
                       showSuccessToast(
                         context,
-                        'Subcategory added successfully',
+                        'ქვეკატეგორია დაემატა',
                       ),
                     );
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: _secondaryColor),
-              child: const Text('Add'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _secondaryColor,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('დამატება'),
             ),
           ],
         ),
@@ -1444,50 +1389,43 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       text: subcategory.translationsKa['name'],
     );
 
-    final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
     await showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          insetPadding: isMobile
-              ? const EdgeInsets.symmetric(horizontal: 16, vertical: 24)
-              : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-          title: const Text('Edit Subcategory'),
+        builder: (context, setDialogState) => _menuFormAlertDialog(
+          title: 'ქვეკატეგორიის რედაქტირება',
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildDialogTextField(
                   controller: slugController,
-                  label: 'Slug',
+                  label: 'სლაგი',
                   dialogSetState: setDialogState,
                   enableTextKeyboard: true,
-                  keyboardTitle: 'Edit Subcategory Slug',
+                  keyboardTitle: 'ქვეკატეგორიის სლაგის რედაქტირება',
                 ),
                 const SizedBox(height: 16),
                 _buildDialogTextField(
                   controller: nameEnController,
-                  label: 'Name (English)',
+                  label: 'სახელი (ინგლისური)',
                   dialogSetState: setDialogState,
                   enableTextKeyboard: true,
-                  keyboardTitle: 'Edit Subcategory English Name',
+                  keyboardTitle: 'ქვეკატეგორიის სახელი (ინგლისური)',
                 ),
                 const SizedBox(height: 16),
                 _buildDialogTextField(
                   controller: nameKaController,
-                  label: 'Name (Georgian)',
+                  label: 'სახელი (ქართული)',
                   dialogSetState: setDialogState,
                   enableTextKeyboard: true,
-                  keyboardTitle: 'Edit Subcategory Georgian Name',
+                  keyboardTitle: 'ქვეკატეგორიის სახელი (ქართული)',
                 ),
               ],
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
+            _dialogCancelButton(onPressed: () => Navigator.of(context).pop()),
             ElevatedButton(
               onPressed: () async {
                 if (slugController.text.isNotEmpty &&
@@ -1507,14 +1445,21 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                     unawaited(
                       showSuccessToast(
                         context,
-                        'Subcategory updated successfully',
+                        'ქვეკატეგორია განახლდა',
                       ),
                     );
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: _secondaryColor),
-              child: const Text('Update'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _secondaryColor,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('განახლება'),
             ),
           ],
         ),
@@ -1532,22 +1477,22 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF2B2B2B),
         title: const Text(
-          'Delete Subcategory',
+          'ქვეკატეგორიის წაშლა',
           style: TextStyle(color: Colors.white),
         ),
         content: Text(
-          'Are you sure you want to delete subcategory "$name"?\nAll items in this subcategory will also be deleted.',
+          'დარწმუნებული ხართ, რომ გსურთ „$name“ წაშლა?\nამ ქვეკატეგორიის ყველა პროდუქტიც წაიშლება.',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: const Text('გაუქმება'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: const Text('წაშლა'),
           ),
         ],
       ),
@@ -1562,7 +1507,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       if (success) {
         setState(() {});
         unawaited(
-          showSuccessToast(context, 'Subcategory deleted successfully'),
+          showSuccessToast(context, 'ქვეკატეგორია წაიშალა'),
         );
       }
     }
@@ -1583,22 +1528,22 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     await showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Add New Item'),
+        builder: (context, setDialogState) => _menuFormAlertDialog(
+          title: 'ახალი პროდუქტი',
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildDialogTextField(
                   controller: nameEnController,
-                  label: 'Name (English)',
+                  label: 'სახელი (ინგლისური)',
                   dialogSetState: setDialogState,
                   enableTextKeyboard: true,
                 ),
                 const SizedBox(height: 16),
                 _buildDialogTextField(
                   controller: nameKaController,
-                  label: 'Name (Georgian)',
+                  label: 'სახელი (ქართული)',
                   dialogSetState: setDialogState,
                   enableTextKeyboard: true,
                 ),
@@ -1606,7 +1551,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text(
-                    'Send this item to the kitchen printer',
+                    'პროდუქტი იგზავნება სამზარეულოში',
                     style: TextStyle(
                       color: _textPrimary,
                       fontWeight: FontWeight.w600,
@@ -1614,8 +1559,8 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   ),
                   subtitle: Text(
                     category == null
-                        ? 'Controls kitchen routing'
-                        : 'Defaults to ${category.sendToKitchen ? 'On' : 'Off'} for this category',
+                        ? 'აკონტროლებს სამზარეულოში გაგზავნას'
+                        : 'ნაგულისხმევი: ${category.sendToKitchen ? 'ჩართული' : 'გამორთული'} (ამ კატეგორიის მიხედვით)',
                     style: const TextStyle(color: _textMuted, fontSize: 12),
                   ),
                   activeThumbColor: _secondaryColor,
@@ -1630,7 +1575,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text(
-                    'Has Variants?',
+                    'აქვს ვარიანტები?',
                     style: TextStyle(
                       color: _textPrimary,
                       fontWeight: FontWeight.w600,
@@ -1685,7 +1630,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                                 });
                               }),
                           icon: const Icon(Icons.add),
-                          label: const Text('Add Variant'),
+                          label: const Text('ვარიანტის დამატება'),
                           style: TextButton.styleFrom(
                             foregroundColor: _secondaryColor,
                           ),
@@ -1697,10 +1642,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
+            _dialogCancelButton(onPressed: () => Navigator.of(context).pop()),
             ElevatedButton(
               onPressed: () async {
                 if (nameEnController.text.isNotEmpty &&
@@ -1722,13 +1664,20 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   if (success) {
                     setState(() {});
                     unawaited(
-                      showSuccessToast(context, 'Item added successfully'),
+                      showSuccessToast(context, 'პროდუქტი დაემატა'),
                     );
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: _secondaryColor),
-              child: const Text('Add'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _secondaryColor,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('დამატება'),
             ),
           ],
         ),
@@ -1754,22 +1703,22 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     await showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Add New Item'),
+        builder: (context, setDialogState) => _menuFormAlertDialog(
+          title: 'ახალი პროდუქტი',
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildDialogTextField(
                   controller: nameEnController,
-                  label: 'Name (English)',
+                  label: 'სახელი (ინგლისური)',
                   dialogSetState: setDialogState,
                   enableTextKeyboard: true,
                 ),
                 const SizedBox(height: 16),
                 _buildDialogTextField(
                   controller: nameKaController,
-                  label: 'Name (Georgian)',
+                  label: 'სახელი (ქართული)',
                   dialogSetState: setDialogState,
                   enableTextKeyboard: true,
                 ),
@@ -1777,7 +1726,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text(
-                    'Send this item to the kitchen printer',
+                    'პროდუქტი იგზავნება სამზარეულოში',
                     style: TextStyle(
                       color: _textPrimary,
                       fontWeight: FontWeight.w600,
@@ -1785,8 +1734,8 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   ),
                   subtitle: Text(
                     category == null
-                        ? 'Controls kitchen routing'
-                        : 'Defaults to ${category.sendToKitchen ? 'On' : 'Off'} for this category',
+                        ? 'აკონტროლებს სამზარეულოში გაგზავნას'
+                        : 'ნაგულისხმევი: ${category.sendToKitchen ? 'ჩართული' : 'გამორთული'} (ამ კატეგორიის მიხედვით)',
                     style: const TextStyle(color: _textMuted, fontSize: 12),
                   ),
                   activeThumbColor: _secondaryColor,
@@ -1801,7 +1750,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text(
-                    'Has Variants?',
+                    'აქვს ვარიანტები?',
                     style: TextStyle(
                       color: _textPrimary,
                       fontWeight: FontWeight.w600,
@@ -1856,7 +1805,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                                 });
                               }),
                           icon: const Icon(Icons.add),
-                          label: const Text('Add Variant'),
+                          label: const Text('ვარიანტის დამატება'),
                           style: TextButton.styleFrom(
                             foregroundColor: _secondaryColor,
                           ),
@@ -1868,10 +1817,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
+            _dialogCancelButton(onPressed: () => Navigator.of(context).pop()),
             ElevatedButton(
               onPressed: () async {
                 if (nameEnController.text.isNotEmpty &&
@@ -1894,13 +1840,20 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   if (success) {
                     setState(() {});
                     unawaited(
-                      showSuccessToast(context, 'Item added successfully'),
+                      showSuccessToast(context, 'პროდუქტი დაემატა'),
                     );
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: _secondaryColor),
-              child: const Text('Add'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _secondaryColor,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('დამატება'),
             ),
           ],
         ),
@@ -1930,22 +1883,22 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     await showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Edit Item'),
+        builder: (context, setDialogState) => _menuFormAlertDialog(
+          title: 'პროდუქტის რედაქტირება',
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildDialogTextField(
                   controller: nameEnController,
-                  label: 'Name (English)',
+                  label: 'სახელი (ინგლისური)',
                   dialogSetState: setDialogState,
                   enableTextKeyboard: true,
                 ),
                 const SizedBox(height: 16),
                 _buildDialogTextField(
                   controller: nameKaController,
-                  label: 'Name (Georgian)',
+                  label: 'სახელი (ქართული)',
                   dialogSetState: setDialogState,
                   enableTextKeyboard: true,
                 ),
@@ -1953,14 +1906,14 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text(
-                    'Send this item to the kitchen printer',
+                    'პროდუქტი იგზავნება სამზარეულოში',
                     style: TextStyle(
                       color: _textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   subtitle: const Text(
-                    'Disable for drinks or desserts handled at the bar',
+                    'გამორთეთ ბარის პროდუქტებისთვის',
                     style: TextStyle(color: _textMuted, fontSize: 12),
                   ),
                   activeThumbColor: _secondaryColor,
@@ -1975,7 +1928,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text(
-                    'Has Variants?',
+                    'აქვს ვარიანტები?',
                     style: TextStyle(
                       color: _textPrimary,
                       fontWeight: FontWeight.w600,
@@ -2030,7 +1983,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                                 });
                               }),
                           icon: const Icon(Icons.add),
-                          label: const Text('Add Variant'),
+                          label: const Text('ვარიანტის დამატება'),
                           style: TextButton.styleFrom(
                             foregroundColor: _secondaryColor,
                           ),
@@ -2042,10 +1995,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
+            _dialogCancelButton(onPressed: () => Navigator.of(context).pop()),
             ElevatedButton(
               onPressed: () async {
                 if (nameEnController.text.isNotEmpty &&
@@ -2069,13 +2019,20 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   if (success) {
                     setState(() {});
                     unawaited(
-                      showSuccessToast(context, 'Item updated successfully'),
+                      showSuccessToast(context, 'პროდუქტი განახლდა'),
                     );
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: _secondaryColor),
-              child: const Text('Update'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _secondaryColor,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('განახლება'),
             ),
           ],
         ),
@@ -2093,20 +2050,20 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF2B2B2B),
-        title: const Text('Delete Item', style: TextStyle(color: Colors.white)),
+        title: const Text('პროდუქტის წაშლა', style: TextStyle(color: Colors.white)),
         content: Text(
-          'Are you sure you want to delete "$name"?',
+          'დარწმუნებული ხართ, რომ გსურთ „$name“ წაშლა?',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: const Text('გაუქმება'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: const Text('წაშლა'),
           ),
         ],
       ),
@@ -2121,7 +2078,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       if (!mounted) return;
       if (success) {
         setState(() {});
-        unawaited(showSuccessToast(context, 'Item deleted successfully'));
+        unawaited(showSuccessToast(context, 'პროდუქტი წაიშალა'));
       }
     }
   }
@@ -2147,22 +2104,22 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     await showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Edit Item'),
+        builder: (context, setDialogState) => _menuFormAlertDialog(
+          title: 'პროდუქტის რედაქტირება',
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildDialogTextField(
                   controller: nameEnController,
-                  label: 'Name (English)',
+                  label: 'სახელი (ინგლისური)',
                   dialogSetState: setDialogState,
                   enableTextKeyboard: true,
                 ),
                 const SizedBox(height: 16),
                 _buildDialogTextField(
                   controller: nameKaController,
-                  label: 'Name (Georgian)',
+                  label: 'სახელი (ქართული)',
                   dialogSetState: setDialogState,
                   enableTextKeyboard: true,
                 ),
@@ -2170,14 +2127,14 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text(
-                    'Send this item to the kitchen printer',
+                    'პროდუქტი იგზავნება სამზარეულოში',
                     style: TextStyle(
                       color: _textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   subtitle: const Text(
-                    'Disable for drinks or desserts handled at the bar',
+                    'გამორთეთ ბარის პროდუქტებისთვის',
                     style: TextStyle(color: _textMuted, fontSize: 12),
                   ),
                   activeThumbColor: _secondaryColor,
@@ -2192,7 +2149,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text(
-                    'Has Variants?',
+                    'აქვს ვარიანტები?',
                     style: TextStyle(
                       color: _textPrimary,
                       fontWeight: FontWeight.w600,
@@ -2247,7 +2204,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                                 });
                               }),
                           icon: const Icon(Icons.add),
-                          label: const Text('Add Variant'),
+                          label: const Text('ვარიანტის დამატება'),
                           style: TextButton.styleFrom(
                             foregroundColor: _secondaryColor,
                           ),
@@ -2259,10 +2216,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
+            _dialogCancelButton(onPressed: () => Navigator.of(context).pop()),
             ElevatedButton(
               onPressed: () async {
                 if (nameEnController.text.isNotEmpty &&
@@ -2285,13 +2239,20 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   if (success) {
                     setState(() {});
                     unawaited(
-                      showSuccessToast(context, 'Item updated successfully'),
+                      showSuccessToast(context, 'პროდუქტი განახლდა'),
                     );
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: _secondaryColor),
-              child: const Text('Update'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _secondaryColor,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('განახლება'),
             ),
           ],
         ),
@@ -2308,20 +2269,20 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF2B2B2B),
-        title: const Text('Delete Item', style: TextStyle(color: Colors.white)),
+        title: const Text('პროდუქტის წაშლა', style: TextStyle(color: Colors.white)),
         content: Text(
-          'Are you sure you want to delete "$name"?',
+          'დარწმუნებული ხართ, რომ გსურთ „$name“ წაშლა?',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: const Text('გაუქმება'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: const Text('წაშლა'),
           ),
         ],
       ),
@@ -2335,7 +2296,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       if (!mounted) return;
       if (success) {
         setState(() {});
-        unawaited(showSuccessToast(context, 'Item deleted successfully'));
+        unawaited(showSuccessToast(context, 'პროდუქტი წაიშალა'));
       }
     }
   }
@@ -2349,14 +2310,14 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
 
     showDialog(
       context: parentContext,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Variant'),
+      builder: (context) => _menuFormAlertDialog(
+        title: 'ვარიანტის დამატება',
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             _buildDialogTextField(
               controller: sizeController,
-              label: 'Size (ml)',
+              label: 'ზომა (მლ)',
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
@@ -2365,14 +2326,14 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
               ],
               enableNumberPad: true,
               allowDecimalInput: true,
-              keyboardTitle: 'Set Size (ml)',
+              keyboardTitle: 'ზომის დაყენება (მლ)',
               numberPadMaxDigits: 5,
               numberPadDecimalDigits: 3,
             ),
             const SizedBox(height: 16),
             _buildDialogTextField(
               controller: priceController,
-              label: 'Price (₾)',
+              label: 'ფასი (₾)',
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
@@ -2381,16 +2342,13 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
               ],
               enableNumberPad: true,
               allowDecimalInput: true,
-              keyboardTitle: 'Set Variant Price',
+              keyboardTitle: 'ვარიანტის ფასი',
               numberPadMaxDigits: 6,
             ),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
+          _dialogCancelButton(onPressed: () => Navigator.of(context).pop()),
           ElevatedButton(
             onPressed: () {
               final size = double.tryParse(sizeController.text);
@@ -2400,8 +2358,15 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 Navigator.of(context).pop();
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: _secondaryColor),
-            child: const Text('Add'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _secondaryColor,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('დამატება', style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
       ),

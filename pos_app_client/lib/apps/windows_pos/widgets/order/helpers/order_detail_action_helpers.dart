@@ -13,6 +13,7 @@ class OrderDetailActionHelpers {
     required bool canModify,
     required bool isTakeAwayOrder,
     required bool canCloseTable,
+    required bool canNonFiscalClose,
     required bool serviceFeeAvailable,
     required String serviceFeePercentageLabel,
     required VoidCallback onConfirmOrder,
@@ -85,7 +86,7 @@ class OrderDetailActionHelpers {
       );
     }
 
-    if (user.isAdmin && canModify) {
+    if (canNonFiscalClose) {
       secondaryActions.add(
         OrderActionConfig(
           label: 'არაფისკალური დახურვა',

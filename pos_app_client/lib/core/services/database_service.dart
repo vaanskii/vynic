@@ -728,6 +728,7 @@ class DatabaseService {
     _dbVersion = await HiveMigrationService.runPendingMigrations(
       migrationContext,
     );
+    await _migrateLegacyStaffRoles();
 
     // Initialize current date if not set
     if (!_settingsBox!.containsKey('currentDate')) {
@@ -852,10 +853,25 @@ class DatabaseService {
     return _serializeReservation(reservation);
   }
 
-  // Create default admin user
+  /// Maps legacy Hive `admin` role to `manager`.
+  static Future<void> _migrateLegacyStaffRoles() async {
+    if (_userBox == null) return;
+    for (final user in _userBox!.values) {
+      if (user.role.trim().toLowerCase() == 'admin') {
+        user.role = 'manager';
+        await user.save();
+      }
+    }
+  }
+
+  // Create default manager user
   static Future<void> createDefaultAdmin() async {
-    final admin = User(username: 'vaanskii', pinCode: '000000', role: 'admin');
-    await _userBox!.add(admin);
+    final manager = User(
+      username: 'vaanskii',
+      pinCode: '000000',
+      role: 'manager',
+    );
+    await _userBox!.add(manager);
   }
 
   // Add a new user
@@ -914,7 +930,7 @@ class DatabaseService {
     }
 
     final user = getUserByUsername(trimmed);
-    if (user != null && user.isAdmin) {
+    if (user != null && user.isManager) {
       return isEnglish ? 'System' : 'სისტემა';
     }
 
@@ -922,6 +938,8 @@ class DatabaseService {
     if (normalized == 'admin' ||
         normalized == 'administrator' ||
         normalized == 'superadmin' ||
+        normalized == 'manager' ||
+        normalized == 'მენეჯერი' ||
         normalized == 'ადმინი' ||
         normalized == 'ადმინისტრატორი') {
       return isEnglish ? 'System' : 'სისტემა';
@@ -933,6 +951,26 @@ class DatabaseService {
   // Update user
   static Future<void> updateUser(User user) async {
     await user.save();
+  }
+
+  static Future<bool> renameUserByUsername({
+    required String oldUsername,
+    required String newUsername,
+  }) async {
+    final trimmed = newUsername.trim();
+    if (trimmed.isEmpty) return false;
+
+    final user = getUserByUsername(oldUsername);
+    if (user == null) return false;
+
+    if (trimmed != oldUsername && getUserByUsername(trimmed) != null) {
+      return false;
+    }
+
+    user.username = trimmed;
+    await user.save();
+    _notifyUsersChanged();
+    return true;
   }
 
   static Future<bool> updateUserPinByUsername({
@@ -960,12 +998,9 @@ class DatabaseService {
   static Future<bool> deleteUserByUsername(String username) async {
     final user = getUserByUsername(username);
     if (user == null) return false;
-    final isAdmin = user.role.toLowerCase() == 'admin';
-    if (isAdmin) {
-      final activeAdmins = _userBox!.values
-          .where((u) => u.role.toLowerCase() == 'admin')
-          .length;
-      if (activeAdmins <= 1) {
+    if (user.isManager) {
+      final activeManagers = _userBox!.values.where((u) => u.isManager).length;
+      if (activeManagers <= 1) {
         return false;
       }
     }

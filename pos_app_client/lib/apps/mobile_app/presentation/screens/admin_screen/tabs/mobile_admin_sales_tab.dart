@@ -12,7 +12,7 @@ class _SalesTabState extends State<_SalesTab>
 
   bool _loading = true;
   String? _error;
-  List<Map<String, dynamic>> _rows = const [];
+  List<Map<String, dynamic>> _rows = [];
   String _monthKey = DateFormat('yyyy-MM').format(DateTime.now());
 
   @override
@@ -25,7 +25,7 @@ class _SalesTabState extends State<_SalesTab>
     setState(() {
       _loading = true;
       _error = null;
-      _rows = const [];
+      _rows = [];
     });
     try {
       final data = await MobileApiService.getSalesDaily(month: _monthKey);
@@ -70,7 +70,7 @@ class _SalesTabState extends State<_SalesTab>
             onNext: _nextMonth,
           ),
           if (_rows.isNotEmpty) ...[
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             _AdminHeroMetric(
               label: 'თვის შემოსავალი',
               value: _adminGel(monthTotal),
@@ -78,7 +78,7 @@ class _SalesTabState extends State<_SalesTab>
               accent: AdminTheme.good,
             ),
           ],
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           if (_rows.isEmpty)
             _AdminPanel(
               padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 14),
@@ -124,7 +124,7 @@ class _SalesTabState extends State<_SalesTab>
     final breakdown = Map<String, dynamic>.from(
       (row['paymentBreakdown'] as Map?) ?? const {},
     );
-    final closedTables = ((row['closedTables'] as List?) ?? const [])
+    final closedTables = ((row['closedTables'] as List?) ?? [])
         .whereType<Map>()
         .map((e) => Map<String, dynamic>.from(e))
         .toList();
@@ -139,13 +139,14 @@ class _SalesTabState extends State<_SalesTab>
         child: Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
+        key: PageStorageKey<String>('admin-sales-$date'),
         tilePadding: const EdgeInsets.fromLTRB(14, 2, 14, 2),
         childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
         iconColor: AdminTheme.primary,
         collapsedIconColor: AdminTheme.textDim,
         title: Text(
           date,
-          style: const TextStyle(fontWeight: FontWeight.w700, color: AdminTheme.text),
+          style: TextStyle(fontWeight: FontWeight.w700, color: AdminTheme.text),
         ),
         subtitle: Text(
           'დახურული $closedOrders / გაუქმებული $cancelledOrders / სულ $totalOrders • ${_adminGel(totalRevenue)}\nხარჯი: ${_adminGel(totalExpenses)} • მოგება: ${_adminGel(profit)}\nარაფისკალური დახურული: ${_adminGel(nonFiscalAmount)}',
@@ -201,7 +202,7 @@ class _SalesTabState extends State<_SalesTab>
                 children: [
                   for (var i = 0; i < entries.length; i++) ...[
                     if (i > 0)
-                      const Divider(height: 1, color: AdminTheme.border),
+                      Divider(height: 1, color: AdminTheme.border),
                     _AdminMetricRow(
                       label: _adminPaymentLabel(entries[i].key),
                       value: _adminGel((entries[i].value as num).toDouble()),
@@ -212,8 +213,8 @@ class _SalesTabState extends State<_SalesTab>
               ),
             ),
           if (closedTables.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            const Align(
+            SizedBox(height: 8),
+            Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 'დახურული მაგიდები',
@@ -224,7 +225,7 @@ class _SalesTabState extends State<_SalesTab>
                 ),
               ),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             ...closedTables.map(
               (sale) => _buildClosedTableRow(context, sale),
             ),
@@ -245,7 +246,7 @@ class _SalesTabState extends State<_SalesTab>
     );
     final paymentLabel = _closedPaymentLabel(paymentBreakdown);
     final paymentColors = _closedPaymentColors(paymentBreakdown);
-    final items = ((sale['items'] as List?) ?? const [])
+    final items = ((sale['items'] as List?) ?? [])
         .whereType<Map>()
         .map((e) => Map<String, dynamic>.from(e))
         .toList();
@@ -276,7 +277,7 @@ class _SalesTabState extends State<_SalesTab>
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AdminTheme.text,
                   fontWeight: FontWeight.w600,
                 ),
@@ -297,15 +298,15 @@ class _SalesTabState extends State<_SalesTab>
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Text(
               _adminGel(totalAmount),
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w700,
                 color: AdminTheme.primary,
               ),
             ),
-            const SizedBox(width: 4),
+            SizedBox(width: 4),
             const Icon(
               Icons.chevron_right_rounded,
               size: 18,
@@ -384,9 +385,9 @@ class _SalesTabState extends State<_SalesTab>
       builder: (ctx) {
         return Container(
           height: MediaQuery.of(ctx).size.height * 0.72,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AdminTheme.surfaceElevated,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
           ),
           child: Column(
             children: [
@@ -406,7 +407,7 @@ class _SalesTabState extends State<_SalesTab>
                     Expanded(
                       child: Text(
                         orderId != null ? '$title • #$orderId' : title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                           color: AdminTheme.text,
@@ -415,7 +416,7 @@ class _SalesTabState extends State<_SalesTab>
                     ),
                     Text(
                       _adminGel(totalAmount),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: AdminTheme.primary,
@@ -424,7 +425,7 @@ class _SalesTabState extends State<_SalesTab>
                   ],
                 ),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               Expanded(
                 child: items.isEmpty
                     ? Center(
@@ -460,7 +461,7 @@ class _SalesTabState extends State<_SalesTab>
                                 Expanded(
                                   child: Text(
                                     name.isNotEmpty ? name : 'უცნობი პოზიცია',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: AdminTheme.text,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -473,10 +474,10 @@ class _SalesTabState extends State<_SalesTab>
                                     fontSize: 12,
                                   ),
                                 ),
-                                const SizedBox(width: 10),
+                                SizedBox(width: 10),
                                 Text(
                                   _adminGel(total),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: AdminTheme.primary,
                                     fontWeight: FontWeight.w700,
                                   ),

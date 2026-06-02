@@ -214,7 +214,7 @@ class _AuditTabState extends State<_AuditTab>
               child: Text(
                 '${_georgianMonth(_selectedMonth.month)} ${_selectedMonth.year}',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: AdminTheme.text,
@@ -242,11 +242,11 @@ class _AuditTabState extends State<_AuditTab>
         child: Row(
           children: [
             _statChip('აქტიური', _count(AuditReportStatus.open), const Color(0xFFF59E0B)),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             _statChip('დახურული', _count(AuditReportStatus.closed), const Color(0xFF10B981)),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             _statChip('გაუქმებული', _count(AuditReportStatus.cancelled), const Color(0xFFEF4444)),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             _statChip('სულ', _reports.length, AdminTheme.primary),
           ],
         ),
@@ -286,7 +286,7 @@ class _AuditTabState extends State<_AuditTab>
                   _load();
                 },
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               _AdminFilterChip(
                 label: 'აქტიური',
                 selected: _statusFilter == 'OPEN',
@@ -295,7 +295,7 @@ class _AuditTabState extends State<_AuditTab>
                   _load();
                 },
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               _AdminFilterChip(
                 label: 'დახურული',
                 selected: _statusFilter == 'CLOSED',
@@ -304,7 +304,7 @@ class _AuditTabState extends State<_AuditTab>
                   _load();
                 },
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               _AdminFilterChip(
                 label: 'გაუქმებული',
                 selected: _statusFilter == 'CANCELLED',
@@ -325,8 +325,8 @@ class _AuditTabState extends State<_AuditTab>
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.security_outlined, size: 48, color: AdminTheme.textMuted),
-              const SizedBox(height: 12),
-              const Text(
+              SizedBox(height: 12),
+              Text(
                 'ამ პერიოდში Audit ჩანაწერები არ არის',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -335,7 +335,7 @@ class _AuditTabState extends State<_AuditTab>
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: 6),
               Text(
                 'Windows POS-ის მომხმარებლების ქმედებები გამოჩნდება აქ.',
                 textAlign: TextAlign.center,
@@ -418,14 +418,15 @@ class _DayGroup extends StatelessWidget {
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
+          key: PageStorageKey<String>('admin-audit-$dayKey'),
           tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
           childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
           iconColor: AdminTheme.primary,
           collapsedIconColor: AdminTheme.textMuted,
-          leading: const Icon(Icons.calendar_month_outlined, color: AdminTheme.primary, size: 20),
+          leading: Icon(Icons.calendar_month_outlined, color: AdminTheme.primary, size: 20),
           title: Text(
             georgianDate,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
               color: AdminTheme.text,
@@ -565,11 +566,11 @@ class _AuditReportCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'სუფრა: ${report.tableNumbers.isEmpty ? 'TA-${report.orderId}' : report.tableNumbers.join(', ')}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: AdminTheme.text,
@@ -582,7 +583,7 @@ class _AuditReportCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Wrap(
             spacing: 6,
             runSpacing: 5,
@@ -596,7 +597,7 @@ class _AuditReportCard extends StatelessWidget {
                 _chip('ბოლო', '${_eventLabel(lastEvent.type)} • ${lastEvent.waiterName}'),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Align(
             alignment: Alignment.centerRight,
             child: TextButton.icon(
@@ -628,7 +629,7 @@ class _AuditReportCard extends StatelessWidget {
             children: [
               TextSpan(
                 text: '$label: ',
-                style: const TextStyle(fontWeight: FontWeight.w700, color: AdminTheme.text),
+                style: TextStyle(fontWeight: FontWeight.w700, color: AdminTheme.text),
               ),
               TextSpan(text: value),
             ],
@@ -669,7 +670,7 @@ class _AuditDetailDialog extends StatelessWidget {
       backgroundColor: AdminTheme.surfaceElevated,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AdminTheme.border),
+        side: BorderSide(color: AdminTheme.border),
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
@@ -689,7 +690,7 @@ class _AuditDetailDialog extends StatelessWidget {
                       children: [
                         Text(
                           'Audit #${report.orderId}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                             color: AdminTheme.text,
@@ -704,14 +705,14 @@ class _AuditDetailDialog extends StatelessWidget {
                   ),
                   IconButton(
                     onPressed: () => MobileAdminScreen.viewCheckPdf(context, report.orderId),
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.receipt_long_rounded,
                       color: AdminTheme.primary,
                       size: 20,
                     ),
                     tooltip: 'ქვითრის ნახვა',
                   ),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
                     icon: Icon(Icons.close, color: AdminTheme.textMuted, size: 20),
@@ -720,7 +721,7 @@ class _AuditDetailDialog extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               Wrap(
                 spacing: 6,
                 runSpacing: 5,
@@ -733,12 +734,12 @@ class _AuditDetailDialog extends StatelessWidget {
                   _chip('Status', _statusLabel(report.status)),
                 ],
               ),
-              const SizedBox(height: 12),
-              const Text(
+              SizedBox(height: 12),
+              Text(
                 'ქმედებების ქრონოლოგია (Who • What • When)',
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AdminTheme.text),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Expanded(
                 child: events.isEmpty
                     ? Center(
@@ -749,7 +750,7 @@ class _AuditDetailDialog extends StatelessWidget {
                       )
                     : ListView.separated(
                         itemCount: events.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 6),
+                        separatorBuilder: (_, __) => SizedBox(height: 6),
                         itemBuilder: (_, i) => _EventTile(
                           event: events[i],
                           seq: events.length - i,
@@ -776,7 +777,7 @@ class _AuditDetailDialog extends StatelessWidget {
             children: [
               TextSpan(
                 text: '$label: ',
-                style: const TextStyle(fontWeight: FontWeight.w700, color: AdminTheme.text),
+                style: TextStyle(fontWeight: FontWeight.w700, color: AdminTheme.text),
               ),
               TextSpan(text: value),
             ],
@@ -875,11 +876,11 @@ class _EventTile extends StatelessWidget {
                 ),
                 child: Icon(_icon(event.type), color: color, size: 15),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Expanded(
                 child: Text(
                   '$seq. ${_label(event.type)} • ${event.itemName}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: AdminTheme.text,
@@ -892,7 +893,7 @@ class _EventTile extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Wrap(
             spacing: 6,
             runSpacing: 4,
@@ -902,7 +903,7 @@ class _EventTile extends StatelessWidget {
             ],
           ),
           if (event.note != null && event.note!.isNotEmpty) ...[
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(8),
@@ -935,7 +936,7 @@ class _EventTile extends StatelessWidget {
             children: [
               TextSpan(
                 text: '$label: ',
-                style: const TextStyle(fontWeight: FontWeight.w700, color: AdminTheme.text),
+                style: TextStyle(fontWeight: FontWeight.w700, color: AdminTheme.text),
               ),
               TextSpan(text: value),
             ],

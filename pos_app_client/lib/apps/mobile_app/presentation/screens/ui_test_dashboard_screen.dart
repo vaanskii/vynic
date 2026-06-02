@@ -64,17 +64,17 @@ class _DashboardScreenState extends State<_DashboardScreen>
       body: Stack(
         children: [
           // 1. Dynamic Background Blurs
-          const Positioned(
+          Positioned(
             top: -100,
             left: -100,
             child: _GlowOrb(color: Color(0xFF3B82F6), size: 300),
           ),
-          const Positioned(
+          Positioned(
             top: 200,
             right: -150,
             child: _GlowOrb(color: Color(0xFF8B5CF6), size: 400),
           ),
-          const Positioned(
+          Positioned(
             bottom: 0,
             left: 50,
             child: _GlowOrb(color: Color(0xFF10B981), size: 250),
@@ -92,37 +92,37 @@ class _DashboardScreenState extends State<_DashboardScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         _FadeInSlide(
                           controller: _animController,
                           delay: 0.0,
                           child: const _TopHeader(),
                         ),
-                        const SizedBox(height: 32),
+                        SizedBox(height: 32),
                         _FadeInSlide(
                           controller: _animController,
                           delay: 0.2,
                           child: const _OverviewSection(),
                         ),
-                        const SizedBox(height: 32),
+                        SizedBox(height: 32),
                         _FadeInSlide(
                           controller: _animController,
                           delay: 0.4,
                           child: const _QuickActionsSection(),
                         ),
-                        const SizedBox(height: 32),
+                        SizedBox(height: 32),
                         _FadeInSlide(
                           controller: _animController,
                           delay: 0.6,
                           child: const _PopularDishesSection(),
                         ),
-                        const SizedBox(height: 32),
+                        SizedBox(height: 32),
                         _FadeInSlide(
                           controller: _animController,
                           delay: 0.7,
                           child: const _WaitersSection(),
                         ),
-                        const SizedBox(height: 32),
+                        SizedBox(height: 32),
                         _FadeInSlide(
                           controller: _animController,
                           delay: 0.8,
@@ -137,7 +137,7 @@ class _DashboardScreenState extends State<_DashboardScreen>
           ),
 
           // 3. Floating Bottom Navigation
-          const Positioned(
+          Positioned(
             bottom: 30,
             left: 20,
             right: 20,
@@ -175,7 +175,7 @@ class _TopHeader extends StatelessWidget {
                   letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               const Text(
                 'Giorgi',
                 style: TextStyle(
@@ -221,7 +221,7 @@ class _TopHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               _BouncingButton(
                 onTap: () {},
                 child: Container(
@@ -258,7 +258,7 @@ class _OverviewSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _SectionHeader(title: "Today's Overview"),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Row(
             children: [
               Expanded(
@@ -272,7 +272,7 @@ class _OverviewSection extends StatelessWidget {
                   iconColor: const Color(0xFF8B5CF6),
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               Expanded(
                 child: _StatCard(
                   title: 'Total Orders',
@@ -285,7 +285,7 @@ class _OverviewSection extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Row(
             children: [
               Expanded(
@@ -299,7 +299,7 @@ class _OverviewSection extends StatelessWidget {
                   iconColor: const Color(0xFFF59E0B),
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               Expanded(
                 child: _StatCard(
                   title: 'Reservations',
@@ -363,7 +363,7 @@ class _QuickActionsSection extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 24),
           child: _SectionHeader(title: "სწრაფი ქმედებები"),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         SizedBox(
           height: 110,
           child: ListView.builder(
@@ -386,7 +386,7 @@ class _QuickActionsSection extends StatelessWidget {
                       children: [
                         Icon(action['icon'] as IconData,
                             color: action['color'] as Color, size: 28),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         Text(
                           action['title'] as String,
                           textAlign: TextAlign.center,
@@ -446,7 +446,7 @@ class _PopularDishesSection extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 24),
           child: _SectionHeader(title: "Trending Dishes", action: "See Menu"),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         SizedBox(
           height: 220,
           child: ListView.builder(
@@ -486,7 +486,7 @@ class _PopularDishesSection extends StatelessWidget {
                           Colors.black.withOpacity(0.8),
                           Colors.black,
                         ],
-                        stops: const [0.4, 0.8, 1.0],
+                        stops: [0.4, 0.8, 1.0],
                       ),
                     ),
                     padding: const EdgeInsets.all(16),
@@ -502,7 +502,7 @@ class _PopularDishesSection extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -547,7 +547,7 @@ class _WaitersSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _SectionHeader(title: "Top Waiters Today", action: "All Staff"),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           GlassContainer(
             padding: const EdgeInsets.all(8),
             borderRadius: BorderRadius.circular(24),
@@ -632,14 +632,14 @@ class _LiveActivitySection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               _SectionHeader(title: "Live Activity"),
               SizedBox(width: 8),
               _LiveIndicator(),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           GlassContainer(
             padding: const EdgeInsets.all(20),
             borderRadius: BorderRadius.circular(24),
@@ -660,7 +660,7 @@ class _LiveActivitySection extends StatelessWidget {
                         child: Icon(act['icon'] as IconData,
                             size: 16, color: act['color'] as Color),
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -683,7 +683,7 @@ class _LiveActivitySection extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
                             Text(
                               act['desc'] as String,
                               style: TextStyle(
@@ -770,7 +770,7 @@ class _StatCard extends StatelessWidget {
               )
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           TweenAnimationBuilder<int>(
             tween: IntTween(begin: 0, end: value),
             duration: const Duration(seconds: 2),
@@ -787,7 +787,7 @@ class _StatCard extends StatelessWidget {
               );
             },
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             title,
             style: TextStyle(
@@ -848,7 +848,7 @@ class _WaiterRow extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -861,17 +861,17 @@ class _WaiterRow extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Row(
                   children: [
                     const Icon(Icons.star, color: Color(0xFFF59E0B), size: 14),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4),
                     Text(
                       rating.toString(),
                       style: TextStyle(
                           color: Colors.white.withOpacity(0.7), fontSize: 13),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Text(
                       '$orders orders',
                       style: TextStyle(
@@ -983,7 +983,7 @@ class _FloatingBottomNavState extends State<_FloatingBottomNav> {
                         : Colors.white.withOpacity(0.4),
                     size: 24,
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   if (isSelected)
                     Text(
                       items[index],

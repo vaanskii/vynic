@@ -5,6 +5,7 @@ import 'package:vynic/core/services/app_notification_history_store.dart';
 import 'package:vynic/core/services/mobile_api_service.dart';
 import 'package:vynic/core/services/mobile_cache_service.dart';
 import 'package:vynic/core/services/mobile_edit_echo_guard.dart';
+import 'package:vynic/core/services/notification_message_copy.dart';
 
 /// Normalises Socket.IO / FCM payloads into the manager notification panel (dedupe-safe).
 class ManagerNotificationInbox {
@@ -335,23 +336,37 @@ class ManagerNotificationInbox {
           break;
         case 'tables_bulk_touch':
           final tableSrc = (payloadMap?['source'] ?? 'pos_sync').toString();
-          // Avoid duplicate table alerts with orders_bulk_touch during POS sync.
-          if (tableSrc == 'pos_sync') break;
           final tableTouchesRaw = payloadMap?['touches'];
           if (tableTouchesRaw is List && tableTouchesRaw.isNotEmpty) {
             for (final t in tableTouchesRaw) {
               if (t is! Map) continue;
               final tm = _stringKeyedMap(t);
-              final changeType = (tm['changeType'] ?? '').toString();
-              if (changeType != 'reserved') continue;
               final tableNumber = (tm['tableNumber'] ?? '').toString().trim();
               if (tableNumber.isEmpty) continue;
               final floor = (tm['floor'] ?? 'first').toString().trim();
-              if (tableSrc == 'pos_sync' &&
-                  MobileEditEchoGuard.shouldSuppressTableEcho(
-                    tableNumber,
-                    floor,
-                  )) {
+              final changeType = (tm['changeType'] ?? '').toString();
+              if (changeType == 'freed') {
+                final when = _formatSyncOccurredAt(tm['occurredAt']?.toString());
+                _add(
+                  dedupeId: nid != null ? '$nid-$tableNumber-$floor-freed' : null,
+                  title: 'მაგიდა',
+                  message:
+                      'მაგიდა $tableNumber გაუქმდა — დრო: $when',
+                  source: source,
+                  meta: {
+                    'tableNumber': tableNumber,
+                    'floor': floor,
+                  },
+                );
+                continue;
+              }
+              // Reserved tables from POS sync are covered by orders_bulk_touch.
+              if (tableSrc == 'pos_sync') continue;
+              if (changeType != 'reserved') continue;
+              if (MobileEditEchoGuard.shouldSuppressTableEcho(
+                tableNumber,
+                floor,
+              )) {
                 continue;
               }
               final orderIdRaw = tm['activeOrderId'];
@@ -440,30 +455,28 @@ class ManagerNotificationInbox {
           );
           break;
         case 'order_cancelled':
-          final id = payloadMap?['posOrderId'];
-          final tableLabel = (payloadMap?['tableLabel'] ?? '').toString().trim();
-          final tableSeg = tableLabel.isNotEmpty ? ' — მაგიდა $tableLabel' : '';
-          _add(
-            dedupeId: nid,
-            title: 'შეკვეთა',
-            message: 'გაუქმდა${id != null ? ' #$id' : ''}$tableSeg',
-            source: source,
-            meta: payloadMap,
-          );
+          if (payloadMap != null) {
+            final copy = buildOrderCancelledCopy(payloadMap);
+            _add(
+              dedupeId: nid,
+              title: copy.title,
+              message: copy.message,
+              source: source,
+              meta: payloadMap,
+            );
+          }
           break;
         case 'order_created':
-          final id = payloadMap?['posOrderId'];
-          final tableLabel = (payloadMap?['tableLabel'] ?? '').toString().trim();
-          final isWalkIn = payloadMap?['walkIn'] == true;
-          final tableSeg = tableLabel.isNotEmpty ? ' — მაგიდა $tableLabel' : '';
-          _add(
-            dedupeId: nid,
-            title: 'შეკვეთა',
-            message:
-                '${isWalkIn ? 'ახალი walk-in' : 'შეიქმნა ახალი შეკვეთა'}${id != null ? ' #$id' : ''}$tableSeg',
-            source: source,
-            meta: payloadMap,
-          );
+          if (payloadMap != null) {
+            final copy = buildOrderCreatedCopy(payloadMap);
+            _add(
+              dedupeId: nid,
+              title: copy.title,
+              message: copy.message,
+              source: source,
+              meta: payloadMap,
+            );
+          }
           break;
         case 'table_updated':
           // Too noisy and often duplicated with order/touch events.
@@ -473,46 +486,43 @@ class ManagerNotificationInbox {
           final inner = payloadMap?['type']?.toString();
           switch (inner) {
             case 'reservations':
-              final customerName = payloadMap?['customerName']
-                  ?.toString()
-                  .trim();
-              final isNew =
-                  payloadMap?['action']?.toString().trim() == 'created';
-              final tablesRaw = payloadMap?['tableNumbers'];
-              final tables = tablesRaw is List
-                  ? tablesRaw
-                        .map((e) => e.toString().trim())
-                        .where((s) => s.isNotEmpty && s != '0')
-                        .toList()
-                  : const <String>[];
-              final resTime =
-                  (payloadMap?['reservationTime'] ?? '').toString().trim();
-              final detail = [
-                if (customerName != null && customerName.isNotEmpty)
-                  customerName,
-                if (tables.isNotEmpty) 'მაგიდა ${tables.join(', ')}',
-                if (resTime.isNotEmpty) 'დრო: $resTime',
-              ].join(' • ');
-              _add(
-                dedupeId: nid,
-                title: 'რეზერვაციები',
-                message: detail.isNotEmpty
-                    ? (isNew
-                          ? 'ახალი რეზერვაცია — $detail'
-                          : 'რეზერვაცია განახლდა — $detail')
-                    : 'მონაცემები განახლდა',
-                source: source,
-                meta: payloadMap,
-              );
+              if (payloadMap != null) {
+                final copy = buildReservationsCopy(payloadMap);
+                _add(
+                  dedupeId: nid,
+                  title: copy.title,
+                  message: copy.message,
+                  source: source,
+                  meta: enrichWalkInReservationNotificationMeta(payloadMap),
+                );
+              }
               break;
             case 'tables':
-              _add(
-                dedupeId: nid,
-                title: 'მაგიდები',
-                message: 'მონაცემები განახლდა',
-                source: source,
-                meta: payloadMap,
-              );
+              if (payloadMap != null) {
+                final tableNumber =
+                    (payloadMap['tableNumber'] ?? '').toString().trim();
+                final action =
+                    (payloadMap['action'] ?? '').toString().trim().toLowerCase();
+                if (action == 'freed' || action == 'cancelled') {
+                  final label =
+                      tableNumber.isNotEmpty ? tableNumber : 'მაგიდა';
+                  _add(
+                    dedupeId: nid,
+                    title: 'მაგიდა',
+                    message: 'მაგიდა $label გაუქმდა',
+                    source: source,
+                    meta: payloadMap,
+                  );
+                } else if (tableNumber.isNotEmpty) {
+                  _add(
+                    dedupeId: nid,
+                    title: 'მაგიდები',
+                    message: 'მაგიდა $tableNumber განახლდა',
+                    source: source,
+                    meta: payloadMap,
+                  );
+                }
+              }
               break;
             case 'all':
               break;

@@ -176,11 +176,15 @@ class HomeTopBarSection extends StatelessWidget {
                 vertical: 4,
               ),
               decoration: BoxDecoration(
-                color: user.isAdmin ? secondaryColor : const Color(0xFF38BDF8),
+                color: user.isManager
+                    ? secondaryColor
+                    : user.isSupervisor
+                        ? const Color(0xFF7C3AED)
+                        : const Color(0xFF38BDF8),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
-                user.role.toUpperCase(),
+                user.roleLabelKa,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 12,

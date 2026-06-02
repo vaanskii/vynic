@@ -27,6 +27,8 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
   String _reservationStatusFilter = 'confirmed';
   DateTime? _reservationDateFilter;
 
+  bool get _supervisorCreateOnly => widget.user.isSupervisor;
+
   @override
   void initState() {
     super.initState();
@@ -36,6 +38,58 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
   @override
   Widget build(BuildContext context) {
     return _buildReservationsSection();
+  }
+
+  Widget _buildSupervisorReservationsNotice() {
+    const noticeBorder = Color(0xFFFCD34D);
+    const noticeBg = Color(0xFFFFFBEB);
+    const noticeTitle = Color(0xFF92400E);
+    const noticeBody = Color(0xFFB45309);
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(28, 20, 28, 0),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: noticeBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: noticeBorder, width: 1.2),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline_rounded, color: noticeTitle, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  'ზედამხედველის შეზღუდვები',
+                  style: TextStyle(
+                    color: noticeTitle,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'ამ განყოფილებში შეგიძლიათ მხოლოდ ახალი რეზერვაციის შექმნა.\n'
+                  'რეზერვაციის წაშლა და გაუქმება მხოლოდ მენეჯერს შეუძლია.\n'
+                  'არსებული რეზერვაციის შეცვლა, მენიუ და სუფრაზე გადაყვანა — მთავარი ეკრანის „რეზერვაცია“ ჩანართიდან.',
+                  style: TextStyle(
+                    color: noticeBody,
+                    fontSize: 13,
+                    height: 1.45,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   String _normalizeStatus(String status) {
@@ -91,26 +145,37 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
 
     return Align(
       alignment: Alignment.topLeft,
-      child: SizedBox(
-        width: double.infinity,
-        child: ReservationsManagementSection(
-          reservations: filteredReservations,
-          normalizedToday: normalizedToday,
-          filterDate: _reservationDateFilter,
-          statusFilter: _reservationStatusFilter,
-          isAdminUser: widget.user.isAdmin,
-          showCancelledTab: true,
-          onFilterDateChanged: (value) {
-            setState(() => _reservationDateFilter = value);
-          },
-          onStatusFilterChanged: (value) {
-            setState(() => _reservationStatusFilter = value);
-          },
-          onCreateReservation: _showReservationDialog,
-          onCancelReservation: (reservation) =>
-              _updateReservationStatus(reservation, 'cancelled'),
-          onDeleteReservation: _deleteReservation,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_supervisorCreateOnly) _buildSupervisorReservationsNotice(),
+          ReservationsManagementSection(
+            reservations: filteredReservations,
+            normalizedToday: normalizedToday,
+            filterDate: _reservationDateFilter,
+            statusFilter: _reservationStatusFilter,
+            canAssignTableToReservation: false,
+            canCancelReservation: widget.user.canCancelReservations,
+            canDeleteReservation: widget.user.canDeleteReservations,
+            showCancelledTab: true,
+            onFilterDateChanged: (value) {
+              setState(() => _reservationDateFilter = value);
+            },
+            onStatusFilterChanged: (value) {
+              setState(() => _reservationStatusFilter = value);
+            },
+            onCreateReservation: widget.user.canCreateReservationsInAdmin
+                ? _showReservationDialog
+                : null,
+            onCancelReservation: widget.user.canCancelReservations
+                ? (reservation) =>
+                    _updateReservationStatus(reservation, 'cancelled')
+                : null,
+            onDeleteReservation: widget.user.canDeleteReservations
+                ? _deleteReservation
+                : null,
+          ),
+        ],
       ),
     );
   }
@@ -292,12 +357,12 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
 
     if (newStatus == 'confirmed' &&
         isTodayReservation &&
-        !widget.user.isAdmin) {
+        !widget.user.canManageReservationsOnHome) {
       if (mounted) {
         unawaited(
           showErrorToast(
             context,
-            'Only administrators can seat today\'s reservations.',
+            'დღევანდელი რეზერვაციის გააქტიურება მხოლოდ მენეჯერს ან ზედამხედველს შეუძლია.',
           ),
         );
       }

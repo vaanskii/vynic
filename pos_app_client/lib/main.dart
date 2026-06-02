@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:vynic/apps/windows_pos/screens/login_screen.dart';
+import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_login_screen.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/printer_service.dart';
@@ -14,6 +15,7 @@ import 'package:vynic/core/services/local_notifications_service.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:vynic/core/services/auth_token_service.dart';
 import 'package:vynic/core/services/mobile_cache_service.dart';
+import 'package:vynic/core/services/manager_app_preferences.dart';
 import 'package:vynic/core/services/manager_sync_service.dart';
 import 'package:vynic/core/services/pos_ingest_server.dart';
 import 'package:vynic/firebase_options.dart';
@@ -52,7 +54,11 @@ void main() async {
       localNotificationsService: localNotifications,
     );
     await Hive.initFlutter();
-    await Future.wait([AuthTokenService.init(), MobileCacheService.init()]);
+    await Future.wait([
+      AuthTokenService.init(),
+      MobileCacheService.init(),
+      ManagerAppPreferences.init(),
+    ]);
     if (AuthTokenService.hasValidToken || AuthTokenService.hasStaleToken) {
       await FirebaseMessagingService.instance().syncCurrentTokenWithBackend();
     }
@@ -246,7 +252,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     return MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
-      home: widget.isMobile ? const MobileLoginScreen() : const LoginScreen(),
+      home: widget.isMobile
+          ? const ManagerThemeListener(child: MobileLoginScreen())
+          : const LoginScreen(),
     );
   }
 }

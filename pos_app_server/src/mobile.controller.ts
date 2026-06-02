@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   NotFoundException,
   Headers,
@@ -19,6 +20,12 @@ import { Order } from '@prisma/client';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 import { Roles } from './auth/roles.decorator';
+import {
+  ASSIGNABLE_STAFF_ROLES,
+  normalizeStaffRole,
+  StaffRole,
+  toClientRole,
+} from './staff/staff-role';
 import { MonitoringGateway } from './monitoring.gateway';
 import { SyncController } from './sync.controller';
 import { buildAuditEventsForOrderDiff } from './audit-order-diff';
@@ -200,7 +207,7 @@ async function readRestaurantServiceFeeSettings(prisma: any) {
 
 @Controller('mobile')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('ADMIN', 'MANAGER')
+@Roles(StaffRole.MANAGER, StaffRole.SUPERVISOR)
 export class MobileController {
   constructor(
     private readonly prisma: PrismaService,
@@ -539,7 +546,12 @@ export class MobileController {
     this.registerMobileMutationEchoGuard(undefined, { tableNumber, floor });
     this.gateway.broadcastUpdate(
       'data_updated',
-      { type: 'tables' },
+      {
+        type: 'tables',
+        action: 'freed',
+        tableNumber,
+        floor,
+      },
       this.wsExcludeOpts(monitoringSocketId),
     );
     return { success: true };
@@ -953,7 +965,11 @@ export class MobileController {
     await SyncController.updatePosReservationStatus(id, status);
     this.gateway.broadcastUpdate(
       'data_updated',
-      { type: 'reservations' },
+      {
+        type: 'reservations',
+        action: status === 'cancelled' ? 'cancelled' : 'updated',
+        reservationId: id,
+      },
       this.wsExcludeOpts(monitoringSocketId),
     );
     return { success: true };
@@ -968,7 +984,11 @@ export class MobileController {
     await SyncController.deletePosReservation(id);
     this.gateway.broadcastUpdate(
       'data_updated',
-      { type: 'reservations' },
+      {
+        type: 'reservations',
+        action: 'cancelled',
+        reservationId: id,
+      },
       this.wsExcludeOpts(monitoringSocketId),
     );
     return { success: true };
@@ -983,6 +1003,18 @@ export class MobileController {
       include: { items: true },
     });
     if (!order) return { error: 'Order not found' };
+
+    const linkedTables = await (this.prisma as any).table.findMany({
+      where: { activeOrderId: Number(id) },
+      orderBy: [{ floor: 'asc' }, { tableNumber: 'asc' }],
+    });
+    const tableNumbers = linkedTables.map((t: { tableNumber: string }) =>
+      String(t.tableNumber).trim(),
+    ).filter((n: string) => n.length > 0);
+    const linkedFloor =
+      linkedTables.length > 0
+        ? String(linkedTables[0].floor ?? '').trim()
+        : '';
 
     const itemsSubtotal = order.items.reduce(
       (sum, it) => sum + Number(it.price) * it.quantity,
@@ -1002,6 +1034,9 @@ export class MobileController {
 
     return {
       ...order,
+      posOrderId: order.posOrderId,
+      tableNumbers,
+      floor: linkedFloor || order.floor || 'first',
       totalAmount,
       includeServiceFee,
       discountAmount: discount,
@@ -1719,12 +1754,14 @@ export class MobileController {
   ) {
     const username = (payload.username ?? '').trim();
     const pinCode = (payload.pinCode ?? '').trim();
-    const role = (payload.role ?? 'WAITER').trim().toUpperCase();
+    const role = normalizeStaffRole(payload.role);
     if (!username || !pinCode) {
       throw new BadRequestException('username and pinCode are required');
     }
-    if (role !== 'ADMIN' && role !== 'WAITER') {
-      throw new BadRequestException('role must be ADMIN or WAITER');
+    if (!ASSIGNABLE_STAFF_ROLES.includes(role)) {
+      throw new BadRequestException(
+        'role must be MANAGER, SUPERVISOR, or WAITER',
+      );
     }
     const existing = await (this.prisma as any).staff.findUnique({
       where: { username },
@@ -1757,7 +1794,11 @@ export class MobileController {
       create: { key: 'staff:plain_pins', value: JSON.stringify(pinsMap) },
     });
     try {
-      await SyncController.createPosUser({ username, pinCode, role: role.toLowerCase() });
+      await SyncController.createPosUser({
+        username,
+        pinCode,
+        role: toClientRole(role),
+      });
     } catch (e) {
       console.warn('[Mobile][Users] POS create user failed:', (e as Error).message);
     }
@@ -1812,6 +1853,71 @@ export class MobileController {
     return { username, role: existing.role, isActive: existing.isActive, pinCode };
   }
 
+  @Patch('users/:username')
+  async renameUser(
+    @Param('username') usernameParam: string,
+    @Body() payload: { username?: string },
+  ) {
+    const oldUsername = (usernameParam ?? '').trim();
+    const newUsername = (payload.username ?? '').trim();
+    if (!oldUsername || !newUsername) {
+      throw new BadRequestException('username is required');
+    }
+    if (oldUsername === newUsername) {
+      return { username: newUsername };
+    }
+    const existing = await (this.prisma as any).staff.findUnique({
+      where: { username: oldUsername },
+      select: { id: true, role: true, isActive: true, createdAt: true, updatedAt: true },
+    });
+    if (!existing) {
+      throw new NotFoundException('User not found');
+    }
+    const conflict = await (this.prisma as any).staff.findUnique({
+      where: { username: newUsername },
+      select: { id: true },
+    });
+    if (conflict) {
+      throw new BadRequestException('username already exists');
+    }
+    const updated = await (this.prisma as any).staff.update({
+      where: { username: oldUsername },
+      data: { username: newUsername },
+      select: { id: true, username: true, role: true, isActive: true, createdAt: true, updatedAt: true },
+    });
+    const pinsSetting = await (this.prisma as any).setting.findUnique({
+      where: { key: 'staff:plain_pins' },
+      select: { value: true },
+    });
+    let pinCode = '';
+    if (pinsSetting?.value) {
+      try {
+        const pinsMap = JSON.parse(pinsSetting.value) as Record<string, string>;
+        pinCode = pinsMap[oldUsername] ?? '';
+        if (pinCode) {
+          delete pinsMap[oldUsername];
+          pinsMap[newUsername] = pinCode;
+          await (this.prisma as any).setting.upsert({
+            where: { key: 'staff:plain_pins' },
+            update: { value: JSON.stringify(pinsMap) },
+            create: { key: 'staff:plain_pins', value: JSON.stringify(pinsMap) },
+          });
+        }
+      } catch {
+        // ignore malformed pins map
+      }
+    }
+    try {
+      await SyncController.renamePosUser({
+        oldUsername,
+        newUsername,
+      });
+    } catch (e) {
+      console.warn('[Mobile][Users] POS rename user failed:', (e as Error).message);
+    }
+    return { ...updated, pinCode };
+  }
+
   @Delete('users/:username')
   async deleteUser(@Param('username') usernameParam: string) {
     const username = (usernameParam ?? '').trim();
@@ -1822,12 +1928,12 @@ export class MobileController {
     if (!existing) {
       throw new NotFoundException('User not found');
     }
-    if (existing.role === 'ADMIN') {
-      const adminCount = await (this.prisma as any).staff.count({
-        where: { role: 'ADMIN', isActive: true },
+    if (normalizeStaffRole(existing.role) === StaffRole.MANAGER) {
+      const managerCount = await (this.prisma as any).staff.count({
+        where: { role: { in: ['ADMIN', 'MANAGER'] }, isActive: true },
       });
-      if (adminCount <= 1) {
-        throw new BadRequestException('Cannot delete the last admin');
+      if (managerCount <= 1) {
+        throw new BadRequestException('Cannot delete the last manager');
       }
     }
     await (this.prisma as any).staff.delete({ where: { username } });

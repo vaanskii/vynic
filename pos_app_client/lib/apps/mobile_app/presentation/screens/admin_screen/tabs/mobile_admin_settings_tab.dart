@@ -197,12 +197,12 @@ class _SettingsTabState extends State<_SettingsTab>
             message:
                 'სერვერთან კავშირი არ არის. ოპერაციული და რესტორანის მონაცემები განახლდება კავშირის აღდგენისას.',
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
         ],
         _SettingsSection(
           title: 'ოპერაცია',
           children: showOpsSkeleton
-              ? const [
+              ? [
                   _SettingsTileSkeleton(),
                   _SettingsTileSkeleton(),
                   _SettingsTileSkeleton(),
@@ -251,7 +251,7 @@ class _SettingsTabState extends State<_SettingsTab>
                   ),
                 ],
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         _SettingsSection(
           title: 'სესია',
           children: [
@@ -263,15 +263,15 @@ class _SettingsTabState extends State<_SettingsTab>
             _SettingsTile(
               icon: Icons.admin_panel_settings_rounded,
               label: 'როლი',
-              value: widget.user.isAdmin ? 'ადმინისტრატორი' : 'მენეჯერი',
+              value: widget.user.roleLabelKa,
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         _SettingsSection(
           title: 'რესტორანი',
           children: showRestaurantSkeleton
-              ? const [
+              ? [
                   _SettingsTileSkeleton(),
                   _SettingsTileSkeleton(),
                   _SettingsTileSkeleton(),
@@ -299,7 +299,7 @@ class _SettingsTabState extends State<_SettingsTab>
                   ),
                 ],
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         _SettingsSection(
           title: 'კავშირი',
           children: [
@@ -317,24 +317,33 @@ class _SettingsTabState extends State<_SettingsTab>
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         _SettingsSection(
           title: 'აპლიკაცია',
-          children: const [
-            _SettingsTile(
+          children: [
+            const _SettingsTile(
               icon: Icons.smartphone_outlined,
               label: 'ვერსია',
               value: '1.0.0',
             ),
+            ValueListenableBuilder<ManagerDashboardAppearance>(
+              valueListenable: ManagerAppPreferences.dashboardAppearance,
+              builder: (context, appearance, _) {
+                return _DashboardAppearanceTile(
+                  appearance: appearance,
+                  onChanged: ManagerAppPreferences.setDashboardAppearance,
+                );
+              },
+            ),
           ],
         ),
-        const SizedBox(height: 28),
+        SizedBox(height: 28),
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: widget.onLogout,
-            icon: const Icon(Icons.logout_rounded, color: AdminTheme.bad),
-            label: const Text(
+            icon: Icon(Icons.logout_rounded, color: AdminTheme.bad),
+            label: Text(
               'გასვლა',
               style: TextStyle(
                 color: AdminTheme.bad,
@@ -343,7 +352,7 @@ class _SettingsTabState extends State<_SettingsTab>
               ),
             ),
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AdminTheme.bad, width: 1.5),
+              side: BorderSide(color: AdminTheme.bad, width: 1.5),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -351,7 +360,7 @@ class _SettingsTabState extends State<_SettingsTab>
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
       ],
     );
   }
@@ -374,6 +383,72 @@ class _SettingsSection extends StatelessWidget {
           ),
         ],
       );
+}
+
+class _DashboardAppearanceTile extends StatelessWidget {
+  final ManagerDashboardAppearance appearance;
+  final Future<void> Function(ManagerDashboardAppearance) onChanged;
+
+  const _DashboardAppearanceTile({
+    required this.appearance,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(
+            Icons.palette_outlined,
+            size: 20,
+            color: AdminTheme.primary,
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'დაფის თემა',
+                  style: TextStyle(fontSize: 12, color: AdminTheme.textDim),
+                ),
+                Text(
+                  'ღია ან მუქი გარეგნობა',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AdminTheme.text,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SegmentedButton<ManagerDashboardAppearance>(
+            segments: [
+              for (final mode in ManagerDashboardAppearance.values)
+                ButtonSegment(
+                  value: mode,
+                  label: Text(mode.labelGeorgian),
+                ),
+            ],
+            selected: {appearance},
+            onSelectionChanged: (selected) {
+              final next = selected.first;
+              if (next != appearance) {
+                onChanged(next);
+              }
+            },
+            style: const ButtonStyle(
+              visualDensity: VisualDensity.compact,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _SettingsTile extends StatelessWidget {
@@ -405,14 +480,14 @@ class _SettingsTile extends StatelessWidget {
               size: 20,
               color: muted ? AdminTheme.textDim : AdminTheme.primary,
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: AdminTheme.textDim,
                     ),

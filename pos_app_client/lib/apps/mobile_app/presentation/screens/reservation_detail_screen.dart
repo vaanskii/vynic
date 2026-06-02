@@ -1,27 +1,21 @@
+import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
+import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-const Color _kBg = Color(0xFF050508);
-const Color _kAccent = Color(0xFF6366F1);
-const Color _kGreen = Color(0xFF10B981);
-const Color _kAmber = Color(0xFFF59E0B);
-const Color _kRed = Color(0xFFEF4444);
-const Color _kTeal = Color(0xFF14B8A6);
-const Color _kMuted = Color(0xFF9AA0AE);
-const Color _kCardBorder = Color(0x14FFFFFF);
 
 ({Color color, String label, IconData icon}) _statusMeta(String status) {
   final s = status.toLowerCase();
   if (s.startsWith('confirmed')) {
-    return (color: _kGreen, label: 'დადასტურებული', icon: Icons.check_circle_rounded);
+    return (color: MobileGlassTheme.good, label: 'დადასტურებული', icon: Icons.check_circle_rounded);
   }
   if (s.startsWith('completed')) {
-    return (color: _kTeal, label: 'დასრულებული', icon: Icons.done_all_rounded);
+    return (color: MobileGlassTheme.good, label: 'დასრულებული', icon: Icons.done_all_rounded);
   }
   if (s.startsWith('cancelled') || s.startsWith('canceled')) {
-    return (color: _kRed, label: 'გაუქმებული', icon: Icons.cancel_rounded);
+    return (color: MobileGlassTheme.bad, label: 'გაუქმებული', icon: Icons.cancel_rounded);
   }
-  return (color: _kAmber, label: 'მოლოდინში', icon: Icons.schedule_rounded);
+  return (color: MobileGlassTheme.warn, label: 'მოლოდინში', icon: Icons.schedule_rounded);
 }
 
 /// Full-screen, dark "glass" reservation detail. Slides in from the right.
@@ -47,11 +41,13 @@ class ReservationDetailScreen extends StatelessWidget {
     return PageRouteBuilder<bool>(
       transitionDuration: const Duration(milliseconds: 320),
       reverseTransitionDuration: const Duration(milliseconds: 260),
-      pageBuilder: (_, __, ___) => ReservationDetailScreen(
-        row: row,
-        onUpdateStatus: onUpdateStatus,
-        onDelete: onDelete,
-      ),
+      pageBuilder: (_, __, ___) => managerThemedPage(
+            ReservationDetailScreen(
+              row: row,
+              onUpdateStatus: onUpdateStatus,
+              onDelete: onDelete,
+            ),
+          ),
       transitionsBuilder: (context, animation, secondary, child) {
         final curved = CurvedAnimation(
           parent: animation,
@@ -79,7 +75,7 @@ class ReservationDetailScreen extends StatelessWidget {
             .toList();
       }
     }
-    return const [];
+    return [];
   }
 
   double get _preOrderTotal => _preOrder.fold<double>(0, (sum, e) {
@@ -108,7 +104,7 @@ class ReservationDetailScreen extends StatelessWidget {
         : '';
 
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: MobileGlassTheme.bg,
       body: Stack(
         children: [
           Positioned(
@@ -116,10 +112,10 @@ class ReservationDetailScreen extends StatelessWidget {
             right: -60,
             child: _GlowOrb(color: meta.color, size: 280),
           ),
-          const Positioned(
+          Positioned(
             bottom: 80,
             left: -90,
-            child: _GlowOrb(color: _kAccent, size: 240),
+            child: _GlowOrb(color: MobileGlassTheme.primary, size: 240),
           ),
           SafeArea(
             child: Column(
@@ -133,11 +129,11 @@ class ReservationDetailScreen extends StatelessWidget {
                         icon: Icons.arrow_back_ios_new_rounded,
                         onTap: () => Navigator.of(context).maybePop(),
                       ),
-                      const SizedBox(width: 14),
-                      const Text(
+                      SizedBox(width: 14),
+                      Text(
                         'რეზერვაცია',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: MobileGlassTheme.textPrimary,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           letterSpacing: -0.5,
@@ -160,8 +156,8 @@ class ReservationDetailScreen extends StatelessWidget {
                                 Expanded(
                                   child: Text(
                                     name.isEmpty ? 'უსახელო' : name,
-                                    style: const TextStyle(
-                                      color: Colors.white,
+                                    style: TextStyle(
+                                      color: MobileGlassTheme.textPrimary,
                                       fontSize: 24,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -170,7 +166,7 @@ class ReservationDetailScreen extends StatelessWidget {
                                 _statusPill(meta),
                               ],
                             ),
-                            const SizedBox(height: 18),
+                            SizedBox(height: 18),
                             _infoRow(Icons.schedule_rounded, 'დრო',
                                 time.isEmpty ? '—' : time),
                             _infoRow(Icons.calendar_today_rounded, 'თარიღი',
@@ -185,25 +181,25 @@ class ReservationDetailScreen extends StatelessWidget {
                         ),
                       ),
                       if (notes.isNotEmpty) ...[
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         _GlassCard(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Row(
+                              Row(
                                 children: [
                                   Icon(Icons.notes_rounded,
-                                      color: _kMuted, size: 18),
+                                      color: MobileGlassTheme.textSecondary, size: 18),
                                   SizedBox(width: 8),
                                   Text('შენიშვნა',
                                       style: TextStyle(
-                                          color: _kMuted, fontSize: 13)),
+                                          color: MobileGlassTheme.textSecondary, fontSize: 13)),
                                 ],
                               ),
-                              const SizedBox(height: 8),
+                              SizedBox(height: 8),
                               Text(notes,
-                                  style: const TextStyle(
-                                      color: Colors.white,
+                                  style: TextStyle(
+                                      color: MobileGlassTheme.textPrimary,
                                       fontSize: 14,
                                       height: 1.4)),
                             ],
@@ -211,10 +207,10 @@ class ReservationDetailScreen extends StatelessWidget {
                         ),
                       ],
                       if (_preOrder.isNotEmpty) ...[
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         _buildPreOrderCard(),
                       ],
-                      const SizedBox(height: 24),
+                      SizedBox(height: 24),
                       _buildActions(context, id, status),
                     ],
                   ),
@@ -234,21 +230,21 @@ class ReservationDetailScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.restaurant_menu_rounded,
-                  color: _kAccent, size: 18),
-              const SizedBox(width: 8),
-              const Text('წინასწარი შეკვეთა',
+              Icon(Icons.restaurant_menu_rounded,
+                  color: MobileGlassTheme.primary, size: 18),
+              SizedBox(width: 8),
+              Text('წინასწარი შეკვეთა',
                   style: TextStyle(
-                      color: Colors.white,
+                      color: MobileGlassTheme.textPrimary,
                       fontWeight: FontWeight.w600,
                       fontSize: 15)),
               const Spacer(),
               Text('₾${_preOrderTotal.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                      color: _kGreen, fontWeight: FontWeight.bold)),
+                  style: TextStyle(
+                      color: MobileGlassTheme.good, fontWeight: FontWeight.bold)),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           ..._preOrder.map((e) {
             final itemName =
                 (e['itemName'] ?? e['name'] ?? 'პოზიცია').toString();
@@ -261,18 +257,18 @@ class ReservationDetailScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.06),
+                      color: MobileGlassTheme.surface(0.06),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text('×$qty',
-                        style: const TextStyle(
-                            color: Colors.white, fontSize: 12)),
+                        style: TextStyle(
+                            color: MobileGlassTheme.textPrimary, fontSize: 12)),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(
                     child: Text(itemName,
-                        style: const TextStyle(
-                            color: Colors.white, fontSize: 14)),
+                        style: TextStyle(
+                            color: MobileGlassTheme.textPrimary, fontSize: 14)),
                   ),
                 ],
               ),
@@ -310,36 +306,36 @@ class ReservationDetailScreen extends StatelessWidget {
                 child: _actionButton(
                   label: 'დადასტურება',
                   icon: Icons.check_rounded,
-                  color: _kGreen,
+                  color: MobileGlassTheme.good,
                   onTap: () => doStatus('confirmed'),
                 ),
               ),
-            if (canConfirm && canComplete) const SizedBox(width: 12),
+            if (canConfirm && canComplete) SizedBox(width: 12),
             if (canComplete)
               Expanded(
                 child: _actionButton(
                   label: 'დასრულება',
                   icon: Icons.done_all_rounded,
-                  color: _kTeal,
+                  color: MobileGlassTheme.good,
                   onTap: () => doStatus('completed'),
                 ),
               ),
           ],
         ),
-        if (canConfirm || canComplete) const SizedBox(height: 12),
+        if (canConfirm || canComplete) SizedBox(height: 12),
         if (canCancel)
           _actionButton(
             label: 'რეზერვაციის გაუქმება',
             icon: Icons.block_rounded,
-            color: _kAmber,
+            color: MobileGlassTheme.warn,
             filled: false,
             onTap: () => doStatus('cancelled'),
           ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         _actionButton(
           label: 'წაშლა',
           icon: Icons.delete_outline_rounded,
-          color: _kRed,
+          color: MobileGlassTheme.bad,
           filled: false,
           onTap: doDelete,
         ),
@@ -354,19 +350,19 @@ class ReservationDetailScreen extends StatelessWidget {
         backgroundColor: const Color(0xFF15151C),
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('წაშლა?', style: TextStyle(color: Colors.white)),
+        title: Text('წაშლა?', style: TextStyle(color: MobileGlassTheme.textPrimary)),
         content: Text(
           'ნამდვილად გსურთ ამ რეზერვაციის წაშლა?',
-          style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+          style: TextStyle(color: MobileGlassTheme.muted(0.7)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('არა', style: TextStyle(color: _kMuted)),
+            child: Text('არა', style: TextStyle(color: MobileGlassTheme.textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('წაშლა', style: TextStyle(color: _kRed)),
+            child: Text('წაშლა', style: TextStyle(color: MobileGlassTheme.bad)),
           ),
         ],
       ),
@@ -385,7 +381,7 @@ class ReservationDetailScreen extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(meta.icon, color: meta.color, size: 14),
-          const SizedBox(width: 6),
+          SizedBox(width: 6),
           Text(meta.label,
               style: TextStyle(
                   color: meta.color,
@@ -401,17 +397,17 @@ class ReservationDetailScreen extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
         children: [
-          Icon(icon, color: Colors.white.withValues(alpha: 0.4), size: 18),
-          const SizedBox(width: 12),
+          Icon(icon, color: MobileGlassTheme.muted(0.4), size: 18),
+          SizedBox(width: 12),
           Text('$label  ',
-              style: const TextStyle(color: _kMuted, fontSize: 13)),
+              style: TextStyle(color: MobileGlassTheme.textSecondary, fontSize: 13)),
           const Spacer(),
           Flexible(
             child: Text(
               value,
               textAlign: TextAlign.right,
-              style: const TextStyle(
-                  color: Colors.white,
+              style: TextStyle(
+                  color: MobileGlassTheme.textPrimary,
                   fontSize: 15,
                   fontWeight: FontWeight.w600),
             ),
@@ -477,9 +473,9 @@ class _GlassCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.04),
+            color: MobileGlassTheme.surface(0.04),
             borderRadius: radius,
-            border: Border.all(color: _kCardBorder, width: 1),
+            border: Border.all(color: MobileGlassTheme.data.borderSubtle, width: 1),
           ),
           child: child,
         ),
@@ -507,10 +503,10 @@ class _GlassCircleButton extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.05),
-              border: Border.all(color: _kCardBorder),
+              color: MobileGlassTheme.surface(0.05),
+              border: Border.all(color: MobileGlassTheme.data.borderSubtle),
             ),
-            child: Icon(icon, color: Colors.white, size: 18),
+            child: Icon(icon, color: MobileGlassTheme.textPrimary, size: 18),
           ),
         ),
       ),

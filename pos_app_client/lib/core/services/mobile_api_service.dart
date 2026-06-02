@@ -79,6 +79,16 @@ class MobileApiService {
         .timeout(_timeout);
   }
 
+  static Future<http.Response> _patch(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    final uri = Uri.parse('$_base$path');
+    return http
+        .patch(uri, headers: _headers, body: jsonEncode(body))
+        .timeout(_timeout);
+  }
+
   static Future<http.Response> _delete(String path) async {
     final uri = Uri.parse('$_base$path');
     return http.delete(uri, headers: _headers).timeout(_timeout);
@@ -576,6 +586,20 @@ class MobileApiService {
       return jsonDecode(response.body) as Map<String, dynamic>;
     }
     throw Exception('createUser failed: ${response.statusCode} ${response.body}');
+  }
+
+  static Future<void> renameUser({
+    required String oldUsername,
+    required String newUsername,
+  }) async {
+    final response = await _patch('/mobile/users/$oldUsername', {
+      'username': newUsername,
+    });
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(
+        'renameUser failed: ${response.statusCode} ${response.body}',
+      );
+    }
   }
 
   static Future<void> updateUserPin({

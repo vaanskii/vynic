@@ -1,13 +1,19 @@
+import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/monitoring.dart';
+import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/api_config.dart';
 import 'package:vynic/core/services/mobile_api_service.dart';
 import 'package:vynic/core/services/monitoring_socket_service.dart';
+import 'package:vynic/core/services/manager_app_preferences.dart';
+import 'package:vynic/apps/mobile_app/core/theme/manager_dashboard_theme.dart';
 import 'package:vynic/core/services/printer_service.dart';
 import 'package:vynic/apps/mobile_app/widgets/mobile_receipt_preview_dialog.dart';
+import 'package:vynic/core/widgets/manager_toast.dart';
+import 'package:vynic/core/widgets/pos_on_screen_text_field.dart';
 
 part 'tabs/mobile_admin_users_tab.dart';
 part 'tabs/mobile_admin_sales_tab.dart';
@@ -30,7 +36,7 @@ class MobileAdminScreen extends StatefulWidget {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
+      builder: (context) => Center(
         child: CircularProgressIndicator(color: AdminTheme.primary),
       ),
     );
@@ -103,7 +109,7 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
   @override
   Widget build(BuildContext context) {
     final roleLabel =
-        widget.user.isAdmin ? 'ადმინისტრატორი' : 'მენეჯერი';
+        widget.user.roleLabelKa;
 
     return Scaffold(
       backgroundColor: AdminTheme.bg,
@@ -121,7 +127,7 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'მართვა',
                           style: TextStyle(
                             color: AdminTheme.text,
@@ -130,10 +136,10 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
                             letterSpacing: -0.5,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        SizedBox(height: 2),
                         Text(
                           '$roleLabel · ${widget.user.username}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AdminTheme.textDim,
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
@@ -146,9 +152,9 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(color: AdminTheme.border, width: 1),
                 ),
@@ -180,7 +186,7 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(t.icon, size: 18),
-                          const SizedBox(width: 6),
+                          SizedBox(width: 6),
                           Text(t.label),
                         ],
                       ),

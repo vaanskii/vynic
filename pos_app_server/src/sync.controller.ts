@@ -23,6 +23,7 @@ import {
   isTableEchoSuppressed,
 } from './sync-echo-guard';
 import * as bcrypt from 'bcrypt';
+import { normalizeStaffRole } from './staff/staff-role';
 
 interface TableSync {
   tableNumber: string;
@@ -67,7 +68,7 @@ interface StaffSync {
   username: string;
   /** Optional — routine POS sync must not send PINs; only explicit provisioning. */
   pin?: string;
-  role: 'ADMIN' | 'MANAGER' | 'WAITER';
+  role: 'ADMIN' | 'MANAGER' | 'SUPERVISOR' | 'WAITER';
 }
 
 interface AuditEventLogSync {
@@ -173,6 +174,11 @@ interface SyncPayload {
     action?: string;
     customerName?: string;
     reservationDate?: string;
+    reservationTime?: string;
+    tableNumbers?: number[];
+    linkedOrderId?: number;
+    notes?: string;
+    walkIn?: boolean;
     occurredAt?: string;
   }>;
 }
@@ -421,6 +427,14 @@ export class SyncController implements OnModuleInit {
 
   static async updatePosUserPin(payload: Record<string, unknown>): Promise<any> {
     const response = await SyncController.requestPos('/mobile-user-update-pin', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return response?.user ?? null;
+  }
+
+  static async renamePosUser(payload: Record<string, unknown>): Promise<any> {
+    const response = await SyncController.requestPos('/mobile-user-rename', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
@@ -963,11 +977,15 @@ export class SyncController implements OnModuleInit {
           const pinHash = await bcrypt.hash(pin, 12);
           await (this.prisma as any).staff.upsert({
             where: { username: member.username },
-            update: { pinHash, role: member.role, isActive: true },
+            update: {
+              pinHash,
+              role: normalizeStaffRole(member.role),
+              isActive: true,
+            },
             create: {
               username: member.username,
               pinHash,
-              role: member.role,
+              role: normalizeStaffRole(member.role),
               isActive: true,
             },
           });
@@ -980,7 +998,7 @@ export class SyncController implements OnModuleInit {
           if (existing) {
             await (this.prisma as any).staff.update({
               where: { username: member.username },
-              data: { role: member.role, isActive: true },
+              data: { role: normalizeStaffRole(member.role), isActive: true },
             });
           } else {
             console.warn(
@@ -1127,6 +1145,23 @@ export class SyncController implements OnModuleInit {
               typeof h?.reservationDate === 'string'
                 ? h.reservationDate.trim()
                 : undefined,
+            reservationTime:
+              typeof h?.reservationTime === 'string'
+                ? h.reservationTime.trim()
+                : undefined,
+            tableNumbers: Array.isArray(h?.tableNumbers)
+              ? h.tableNumbers
+              : undefined,
+            linkedOrderId:
+              typeof h?.linkedOrderId === 'number' &&
+              Number.isFinite(h.linkedOrderId)
+                ? h.linkedOrderId
+                : undefined,
+            notes:
+              typeof h?.notes === 'string' && h.notes.trim().length > 0
+                ? h.notes.trim()
+                : undefined,
+            walkIn: h?.walkIn === true,
             occurredAt:
               typeof h?.occurredAt === 'string' && h.occurredAt.trim().length > 0
                 ? h.occurredAt.trim()
@@ -1139,14 +1174,29 @@ export class SyncController implements OnModuleInit {
     );
     if (filteredReservationHints.length > 0) {
       const latest = filteredReservationHints[filteredReservationHints.length - 1];
+      const customer = (latest.customerName ?? '').trim().toLowerCase();
+      const walkIn =
+        latest.walkIn === true ||
+        customer === 'walk-in' ||
+        customer.includes('walk-in');
       this.gateway.broadcastUpdate('data_updated', {
         type: 'reservations',
         reservationId: latest.reservationId,
         customerName: latest.customerName,
         reservationDate: latest.reservationDate,
+        reservationTime: latest.reservationTime,
+        tableNumbers: latest.tableNumbers,
         action: latest.action,
         touches: filteredReservationHints,
         source: 'pos_sync',
+        ...(latest.linkedOrderId !== undefined
+          ? { linkedOrderId: latest.linkedOrderId }
+          : {}),
+        ...(latest.notes !== undefined ? { notes: latest.notes } : {}),
+        ...(walkIn ? { walkIn: true } : {}),
+        ...(walkIn && latest.linkedOrderId !== undefined
+          ? { posOrderId: latest.linkedOrderId }
+          : {}),
       });
     }
 

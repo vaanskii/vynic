@@ -379,12 +379,12 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     ];
 
-    if (widget.user.isAdmin) {
+    if (widget.user.canAccessManagementCenter) {
       destinations.add(
         _SidebarDestination(
           key: 'adminPanel',
           icon: Icons.settings_suggest_outlined,
-          label: 'ადმინ პანელი',
+          label: 'მართვის ცენტრი',
           builder: (context) => HomeAdminToolsSection(
             onOpenAdminPanel: () {
               Navigator.push(
@@ -649,6 +649,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final adminReservations =
         HomeReservationsHelper.getAdminPanelReservations();
 
+    final canManageReservations = widget.user.canManageReservationsOnHome;
+
     return ReservationsManagementSection(
       reservations: adminReservations,
       normalizedToday: normalizedToday,
@@ -656,7 +658,9 @@ class _HomeScreenState extends State<HomeScreen> {
       statusFilter: _reservationStatusFilter,
       showCancelledTab: false,
       highlightReservationId: _highlightedReservationId,
-      isAdminUser: widget.user.isAdmin,
+      canAssignTableToReservation: canManageReservations,
+      canCancelReservation: false,
+      canDeleteReservation: false,
       onFilterDateChanged: (value) {
         setState(() => _reservationDateFilter = value);
       },
@@ -664,7 +668,8 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() => _reservationStatusFilter = value);
       },
       onCreateReservation: null,
-      onEditReservation: _editReservationDetails,
+      onEditReservation:
+          canManageReservations ? _editReservationDetails : null,
       onViewPreOrder: (reservation) => HomeReservationMenuPreview.show(
         context: context,
         reservation: reservation,
@@ -672,24 +677,30 @@ class _HomeScreenState extends State<HomeScreen> {
         textPrimary: _textPrimary,
         mutedText: _mutedText,
       ),
-      onManagePreOrder: _editReservationMenu,
-      onSendKitchenCheck: _sendReservationKitchenCheck,
-      onAssignTable: widget.user.isAdmin ? _assignReservationToTable : null,
-      onAssignTableUnavailable: (reservation) async {
-        final isToday = HomeReservationsHelper.isSameDate(
-          reservation.reservationDate,
-          DatabaseService.getCurrentDate(),
-        );
-        unawaited(
-          showPosToast(
-            context: context,
-            message: isToday
-                ? 'სუფრაზე გადაყვანა მხოლოდ ადმინს შეუძლია.'
-                : 'სუფრაზე გადაყვანა შესაძლებელია მხოლოდ რეზერვაციის დღეს.',
-            style: PosToastStyle.info,
-          ),
-        );
-      },
+      onManagePreOrder:
+          canManageReservations ? _editReservationMenu : null,
+      onSendKitchenCheck: widget.user.canSendReservationKitchenCheckOnHome
+          ? _sendReservationKitchenCheck
+          : null,
+      onAssignTable:
+          canManageReservations ? _assignReservationToTable : null,
+      onAssignTableUnavailable: canManageReservations
+          ? (reservation) async {
+              final isToday = HomeReservationsHelper.isSameDate(
+                reservation.reservationDate,
+                DatabaseService.getCurrentDate(),
+              );
+              unawaited(
+                showPosToast(
+                  context: context,
+                  message: isToday
+                      ? 'სუფრაზე გადაყვანა ვერ მოხერხდა.'
+                      : 'სუფრაზე გადაყვანა შესაძლებელია მხოლოდ რეზერვაციის დღეს.',
+                  style: PosToastStyle.info,
+                ),
+              );
+            }
+          : null,
       primaryColor: _primaryColor,
       secondaryColor: _secondaryColor,
       textPrimary: _textPrimary,

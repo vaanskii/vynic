@@ -212,9 +212,10 @@ model QuickOrderDraftItem {
 }
 
 enum StaffRole {
-  ADMIN
   MANAGER
+  SUPERVISOR
   WAITER
+  ADMIN
 }
 
 /// Generic key-value store for server-side settings (e.g. currentBusinessDate).

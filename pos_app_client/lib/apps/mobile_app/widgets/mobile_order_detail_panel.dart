@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
+import 'package:flutter/material.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/services/pos_change_highlight_service.dart';
 
@@ -52,7 +52,7 @@ class MobileOrderDetailPanel extends StatelessWidget {
                 : ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                     itemCount: order.items.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    separatorBuilder: (_, __) => SizedBox(height: 8),
                     itemBuilder: (context, i) =>
                         _buildLine(context, order.items[i], i),
                   ),
@@ -123,7 +123,7 @@ class MobileOrderDetailPanel extends StatelessWidget {
         child: Row(
           children: [
             Icon(Icons.auto_awesome_rounded, color: MobileGlassTheme.warn, size: 18),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(
               child: Text(
                 'POS-დან განახლება (${highlightKeys.length})',
@@ -167,7 +167,7 @@ class MobileOrderDetailPanel extends StatelessWidget {
                     color: highlighted ? MobileGlassTheme.warn : Colors.white,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   '${item.unitPrice.toStringAsFixed(1)} ₾ × ${item.quantity}',
                   style: TextStyle(fontSize: 13, color: MobileGlassTheme.muted()),
@@ -206,7 +206,7 @@ class MobileOrderDetailPanel extends StatelessWidget {
               _qtyBtn(Icons.add_rounded, () => onQtyDelta(index, 1)),
             ],
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           SizedBox(
             width: 68,
             child: Text(
@@ -268,7 +268,7 @@ class MobileOrderDetailPanel extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
           ],
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

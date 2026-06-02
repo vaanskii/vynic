@@ -1,4 +1,6 @@
 import 'dart:ui';
+import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
+import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -22,12 +24,6 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
   bool _loading = true;
   List<Map<String, dynamic>> _drafts = [];
   String? _error;
-
-  static const _bg = Color(0xFF050508);
-  static const _primary = Color(0xFF6366F1);
-  static const _good = Color(0xFF10B981);
-  static const _bad = Color(0xFFEF4444);
-  static const _warn = Color(0xFFF59E0B);
 
   static final _money = NumberFormat('#,##0.00', 'en_US');
   static final _date = DateFormat('dd MMM, HH:mm');
@@ -91,7 +87,9 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
     final saved = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => const MobileCalculatorScreen(isCountMode: true),
+        builder: (_) => managerThemedPage(
+          const MobileCalculatorScreen(isCountMode: true),
+        ),
       ),
     );
     if (saved == true) _load();
@@ -102,20 +100,20 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF15151C),
-        title: const Text('წაშლა', style: TextStyle(color: Colors.white)),
+        title: Text('წაშლა', style: TextStyle(color: MobileGlassTheme.textPrimary)),
         content: Text(
           'ნამდვილად გსურთ ამ ჩანაწერის წაშლა?',
-          style: TextStyle(color: Colors.white.withOpacity(0.7)),
+          style: TextStyle(color: MobileGlassTheme.muted(0.7)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('არა'),
+            child: Text('არა'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: _bad),
-            child: const Text('წაშლა'),
+            style: TextButton.styleFrom(foregroundColor: MobileGlassTheme.bad),
+            child: Text('წაშლა'),
           ),
         ],
       ),
@@ -136,8 +134,8 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(color: _primary),
+        builder: (context) => Center(
+          child: CircularProgressIndicator(color: MobileGlassTheme.primary),
         ),
       );
 
@@ -181,15 +179,15 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: MobileGlassTheme.bg,
       body: Stack(
         children: [
-          const Positioned(
+          Positioned(
             top: -80,
             right: -60,
             child: _GlowOrb(color: Color(0xFFF59E0B), size: 220),
           ),
-          const Positioned(
+          Positioned(
             bottom: 120,
             left: -80,
             child: _GlowOrb(color: Color(0xFF6366F1), size: 260),
@@ -209,9 +207,9 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _startNewCount,
-        backgroundColor: _primary,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text(
+        backgroundColor: MobileGlassTheme.primary,
+        icon: Icon(Icons.add_rounded),
+        label: Text(
           'ახალი დათვლა',
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
@@ -226,13 +224,13 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+            icon: Icon(Icons.arrow_back_rounded, color: MobileGlassTheme.textPrimary),
           ),
-          const Expanded(
+          Expanded(
             child: Text(
               'დათვლილი მენიუ',
               style: TextStyle(
-                color: Colors.white,
+                color: MobileGlassTheme.textPrimary,
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
               ),
@@ -241,7 +239,7 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
           IconButton(
             onPressed: _load,
             icon: Icon(Icons.refresh_rounded,
-                color: Colors.white.withOpacity(0.7)),
+                color: MobileGlassTheme.muted(0.7)),
           ),
         ],
       ),
@@ -257,23 +255,23 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
             child: _StatChip(
               label: 'ჯამი',
               value: '₾${_money.format(_totalValue)}',
-              color: _good,
+              color: MobileGlassTheme.good,
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Expanded(
             child: _StatChip(
               label: 'ჩანაწერები',
               value: '${_drafts.length}',
-              color: _primary,
+              color: MobileGlassTheme.primary,
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Expanded(
             child: _StatChip(
               label: 'პოზიციები',
               value: '$_totalItems',
-              color: _warn,
+              color: MobileGlassTheme.warn,
             ),
           ),
         ],
@@ -312,7 +310,7 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
             children: [
               Icon(Icons.cloud_off_rounded,
                   size: 48, color: Colors.white.withOpacity(0.35)),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Text(
                 'ჩატვირთვა ვერ მოხერხდა',
                 style: TextStyle(
@@ -320,8 +318,8 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 8),
-              TextButton(onPressed: _load, child: const Text('თავიდან')),
+              SizedBox(height: 8),
+              TextButton(onPressed: _load, child: Text('თავიდან')),
             ],
           ),
         ),
@@ -340,22 +338,22 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: _warn.withOpacity(0.12),
+                    color: MobileGlassTheme.warn.withOpacity(0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.fact_check_outlined,
-                      color: _warn, size: 36),
+                  child: Icon(Icons.fact_check_outlined,
+                      color: MobileGlassTheme.warn, size: 36),
                 ),
-                const SizedBox(height: 20),
-                const Text(
+                SizedBox(height: 20),
+                Text(
                   'ჩანაწერები არ არის',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: MobileGlassTheme.textPrimary,
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   'დააჭირე „ახალი დათვლა“ — აირჩიე პოზიციები მენიუდან და შეინახე სახელით (მაგ. ბანკეტი #1).',
                   textAlign: TextAlign.center,
@@ -373,7 +371,7 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
     }
 
     return RefreshIndicator(
-      color: _primary,
+      color: MobileGlassTheme.primary,
       backgroundColor: const Color(0xFF15151C),
       onRefresh: _load,
       child: ListView.builder(
@@ -415,7 +413,7 @@ class _DraftCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final createdAt = DateTime.tryParse('${draft['createdAt'] ?? ''}');
-    final items = (draft['items'] as List?) ?? const [];
+    final items = (draft['items'] as List?) ?? [];
     final total = (draft['total'] as num?)?.toDouble() ??
         (draft['subtotal'] as num?)?.toDouble() ??
         0.0;
@@ -444,23 +442,23 @@ class _DraftCard extends StatelessWidget {
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.receipt_long_rounded,
-                    color: Colors.white, size: 22),
+                child: Icon(Icons.receipt_long_rounded,
+                    color: MobileGlassTheme.textPrimary, size: 22),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       draft['displayName']?.toString() ?? 'დაუსახელებელი',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: MobileGlassTheme.textPrimary,
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text(
                       createdAt != null
                           ? '${date.format(createdAt.toLocal())} · ${items.length} პოზ. · $qty ც.'
@@ -484,7 +482,7 @@ class _DraftCard extends StatelessWidget {
             ],
           ),
           if (items.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             ...items.take(3).map((raw) {
               final it = (raw as Map).cast<String, dynamic>();
               return Padding(
@@ -499,7 +497,7 @@ class _DraftCard extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         '${it['itemName'] ?? ''}',
@@ -524,22 +522,22 @@ class _DraftCard extends StatelessWidget {
                 ),
               ),
           ],
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton.icon(
                 onPressed: onPdf,
-                icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
-                label: const Text('PDF'),
+                icon: Icon(Icons.picture_as_pdf_outlined, size: 18),
+                label: Text('PDF'),
                 style: TextButton.styleFrom(
                   foregroundColor: const Color(0xFF6366F1),
                 ),
               ),
               TextButton.icon(
                 onPressed: onDelete,
-                icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                label: const Text('წაშლა'),
+                icon: Icon(Icons.delete_outline_rounded, size: 18),
+                label: Text('წაშლა'),
                 style: TextButton.styleFrom(
                   foregroundColor: const Color(0xFFEF4444),
                 ),
@@ -577,7 +575,7 @@ class _StatChip extends StatelessWidget {
               fontSize: 10,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
@@ -616,7 +614,7 @@ class _GlassCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.06),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            border: Border.all(color: MobileGlassTheme.border(0.1)),
           ),
           child: child,
         ),

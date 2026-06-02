@@ -1,10 +1,13 @@
+import 'package:vynic/apps/mobile_app/core/theme/manager_dashboard_theme.dart';
+import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
+import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/mobile_app/manager_app_shell.dart';
-import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
+import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/mobile_auth_service.dart';
 import 'package:vynic/core/widgets/manager_toast.dart';
@@ -68,7 +71,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       shellUser = User(
         username: result.username,
         pinCode: _pin,
-        role: result.role == 'ADMIN' ? 'admin' : 'manager',
+        role: StaffRole.fromApi(result.role),
       );
     } on MobileAuthError catch (e) {
       if (e == MobileAuthError.networkError) {
@@ -77,7 +80,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
           shellUser = User(
             username: offline.username,
             pinCode: _pin,
-            role: offline.role == 'ADMIN' ? 'admin' : 'manager',
+            role: StaffRole.fromApi(offline.role),
           );
           if (offline.isStale && mounted) {
             ManagerToast.show(
@@ -134,7 +137,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   @override
   Widget build(BuildContext context) {
     return MobileGlassScreen(
-      orbs: const [
+      orbs: [
         Positioned(
           top: -120,
           right: -80,
@@ -153,7 +156,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       ],
       body: Stack(
         children: [
-          const Positioned.fill(child: _LoginGridBackground()),
+          Positioned.fill(child: _LoginGridBackground()),
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
@@ -163,7 +166,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildBrandHeader(),
-                    const SizedBox(height: 28),
+                    SizedBox(height: 28),
                     MobileGlassCard(
                       padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
                       radius: 28,
@@ -181,13 +184,13 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                               letterSpacing: 0.4,
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          SizedBox(height: 24),
                           _buildPinDots(),
-                          const SizedBox(height: 28),
+                          SizedBox(height: 28),
                           _buildNumberPad(),
-                          const SizedBox(height: 24),
+                          SizedBox(height: 24),
                           if (_isLoading)
-                            const Center(
+                            Center(
                               child: SizedBox(
                                 height: 48,
                                 width: 48,
@@ -206,7 +209,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
                     Text(
                       'დაცული წვდომა • PIN ავტორიზაცია',
                       textAlign: TextAlign.center,
@@ -228,6 +231,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   }
 
   Widget _buildBrandHeader() {
+    final theme = managerThemeOf(context);
     return Column(
       children: [
         AnimatedBuilder(
@@ -260,7 +264,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
             );
           },
           child: ShaderMask(
-            shaderCallback: (bounds) => const LinearGradient(
+            shaderCallback: (bounds) => LinearGradient(
               colors: [MobileGlassTheme.primary, MobileGlassTheme.accent],
             ).createShader(bounds),
             child: const Icon(
@@ -270,24 +274,28 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
             ),
           ),
         ),
-        const SizedBox(height: 22),
+        SizedBox(height: 22),
         ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [Colors.white, MobileGlassTheme.primary, MobileGlassTheme.accent],
-            stops: [0.2, 0.65, 1],
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [
+              theme.textPrimary,
+              MobileGlassTheme.primary,
+              MobileGlassTheme.accent,
+            ],
+            stops: const [0.2, 0.65, 1],
           ).createShader(bounds),
-          child: const Text(
+          child: Text(
             'Vynic Manager',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 30,
               fontWeight: FontWeight.w900,
-              color: Colors.white,
+              color: theme.textPrimary,
               letterSpacing: -0.5,
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Text(
           'რესტორნის მართვის სისტემა',
           textAlign: TextAlign.center,
@@ -381,19 +389,27 @@ class _LoginGridBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = managerThemeOf(context);
     return CustomPaint(
-      painter: _GridPainter(),
+      painter: _GridPainter(theme),
       child: const SizedBox.expand(),
     );
   }
 }
 
 class _GridPainter extends CustomPainter {
+  _GridPainter(this.theme);
+
+  final DashboardThemeData theme;
+
   @override
   void paint(Canvas canvas, Size size) {
     const spacing = 36.0;
+    final gridColor = theme.isDark
+        ? Colors.white.withValues(alpha: 0.045)
+        : theme.textPrimary.withValues(alpha: 0.06);
     final paint = Paint()
-      ..color = MobileGlassTheme.border(0.045)
+      ..color = gridColor
       ..strokeWidth = 1;
 
     for (var x = 0.0; x <= size.width; x += spacing) {
@@ -407,13 +423,14 @@ class _GridPainter extends CustomPainter {
     final ringPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1
-      ..color = MobileGlassTheme.primary.withValues(alpha: 0.06);
+      ..color = theme.primary.withValues(alpha: 0.06);
     canvas.drawCircle(center, math.min(size.width, size.height) * 0.42, ringPaint);
     canvas.drawCircle(center, math.min(size.width, size.height) * 0.28, ringPaint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _GridPainter oldDelegate) =>
+      oldDelegate.theme != theme;
 }
 
 class _LoginPadButton extends StatefulWidget {
@@ -431,6 +448,7 @@ class _LoginPadButtonState extends State<_LoginPadButton> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = managerThemeOf(context);
     final isDelete = widget.label == '⌫';
     final isClear = widget.label == 'C';
     final isAction = isDelete || isClear;
@@ -445,53 +463,77 @@ class _LoginPadButtonState extends State<_LoginPadButton> {
         duration: const Duration(milliseconds: 100),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(18),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
-              width: 84,
-              height: 58,
-              decoration: BoxDecoration(
-                color: _pressed
-                    ? MobileGlassTheme.primary.withValues(alpha: 0.18)
-                    : MobileGlassTheme.surface(0.1),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: isDelete
-                      ? MobileGlassTheme.bad.withValues(alpha: _pressed ? 0.5 : 0.28)
-                      : isClear
-                          ? MobileGlassTheme.warn.withValues(alpha: _pressed ? 0.5 : 0.28)
-                          : MobileGlassTheme.border(_pressed ? 0.28 : 0.14),
-                ),
-                boxShadow: _pressed
-                    ? [
-                        BoxShadow(
-                          color: (isDelete
-                                  ? MobileGlassTheme.bad
-                                  : isClear
-                                      ? MobileGlassTheme.warn
-                                      : MobileGlassTheme.primary)
-                              .withValues(alpha: 0.2),
-                          blurRadius: 14,
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Center(
-                child: Text(
-                  widget.label,
-                  style: TextStyle(
-                    fontSize: isAction ? 20 : 24,
-                    fontWeight: FontWeight.w700,
-                    color: isDelete
-                        ? MobileGlassTheme.bad
-                        : isClear
-                            ? MobileGlassTheme.warn
-                            : Colors.white,
+          child: theme.useGlassCards
+              ? BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                  child: _padFace(
+                    theme: theme,
+                    pressed: _pressed,
+                    isDelete: isDelete,
+                    isClear: isClear,
+                    isAction: isAction,
                   ),
+                )
+              : _padFace(
+                  theme: theme,
+                  pressed: _pressed,
+                  isDelete: isDelete,
+                  isClear: isClear,
+                  isAction: isAction,
                 ),
-              ),
-            ),
+        ),
+      ),
+    );
+  }
+
+  Widget _padFace({
+    required DashboardThemeData theme,
+    required bool pressed,
+    required bool isDelete,
+    required bool isClear,
+    required bool isAction,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 120),
+      width: 84,
+      height: 58,
+      decoration: BoxDecoration(
+        color: pressed
+            ? theme.primary.withValues(alpha: 0.18)
+            : theme.heroCardBackground,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDelete
+              ? theme.bad.withValues(alpha: pressed ? 0.5 : 0.28)
+              : isClear
+                  ? theme.warn.withValues(alpha: pressed ? 0.5 : 0.28)
+                  : theme.cardBorder,
+        ),
+        boxShadow: pressed
+            ? [
+                BoxShadow(
+                  color: (isDelete
+                          ? theme.bad
+                          : isClear
+                              ? theme.warn
+                              : theme.primary)
+                      .withValues(alpha: 0.2),
+                  blurRadius: 14,
+                ),
+              ]
+            : null,
+      ),
+      child: Center(
+        child: Text(
+          widget.label,
+          style: TextStyle(
+            fontSize: isAction ? 20 : 24,
+            fontWeight: FontWeight.w700,
+            color: isDelete
+                ? theme.bad
+                : isClear
+                    ? theme.warn
+                    : theme.textPrimary,
           ),
         ),
       ),
@@ -524,7 +566,7 @@ class _LoginGradientButton extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               gradient: enabled
-                  ? const LinearGradient(
+                  ? LinearGradient(
                       colors: [MobileGlassTheme.primary, MobileGlassTheme.accent],
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,

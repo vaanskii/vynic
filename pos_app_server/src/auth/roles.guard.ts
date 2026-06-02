@@ -1,6 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from './roles.decorator';
+import { normalizeStaffRole } from '../staff/staff-role';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -16,6 +17,9 @@ export class RolesGuard implements CanActivate {
     const { user } = context.switchToHttp().getRequest();
     if (!user) return false;
 
-    return requiredRoles.includes(user.role);
+    const userRole = normalizeStaffRole(user.role);
+    return requiredRoles.some(
+      (required) => normalizeStaffRole(required) === userRole,
+    );
   }
 }

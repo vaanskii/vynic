@@ -13,9 +13,13 @@ import 'package:vynic/core/services/monitoring_socket_service.dart';
 import 'package:vynic/core/services/mobile_auth_service.dart';
 import 'package:vynic/core/services/app_notification_history_store.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/notifications_screen.dart';
+import 'package:vynic/core/widgets/manager_connection_status.dart';
 import 'package:vynic/core/widgets/manager_toast.dart';
-import 'package:vynic/apps/mobile_app/presentation/screens/mobile_order_detail_screen.dart';
+import 'package:vynic/core/widgets/notification_entry_style.dart';
+import 'package:vynic/core/services/notification_message_copy.dart';
 import 'package:vynic/core/services/pos_change_highlight_service.dart';
+import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
+import 'package:vynic/core/services/manager_app_preferences.dart';
 import 'package:vynic/apps/mobile_app/widgets/manager_glass_nav_bar.dart';
 import 'package:vynic/apps/mobile_app/widgets/manager_tab_keep_alive.dart';
 
@@ -30,9 +34,9 @@ class ManagerAppShell extends StatefulWidget {
 class _ManagerAppShellState extends State<ManagerAppShell>
     with WidgetsBindingObserver {
   int _selectedIndex = 0;
-  late final PageController _pageController;
+  late PageController _pageController;
 
-  late final List<Widget> _screens;
+  late List<Widget> _screens;
 
   static const _navItems = <ManagerNavItem>[
     ManagerNavItem(label: 'დაფა', icon: Icons.dashboard_rounded),
@@ -42,12 +46,6 @@ class _ManagerAppShellState extends State<ManagerAppShell>
     ManagerNavItem(label: 'მართვა', icon: Icons.settings_rounded),
   ];
 
-  /// True after we showed the socket-offline pill for the current outage (reset when socket is back).
-  bool _socketOutageToastEmitted = false;
-
-  /// Show green "restored" once when [isConnected] && !apiError again after any problem toast.
-  bool _pendingHealthyToast = false;
-  bool _prevApiError = false;
   String? _lastToastNotificationId;
 
   /// Suppresses "connection lost/restored" toasts while reconnecting after resume.
@@ -76,6 +74,25 @@ class _ManagerAppShellState extends State<ManagerAppShell>
     // Initial catch-up for notifications created before socket connected.
     unawaited(ManagerNotificationInbox.syncMissedFromServer());
     _screens = _buildScreens();
+    ManagerAppPreferences.dashboardAppearance.addListener(_onDashboardAppearanceChanged);
+  }
+
+  void _onDashboardAppearanceChanged() {
+    if (!mounted) return;
+    _refreshForThemeChange();
+  }
+
+  /// Rebuilds tabs and recreates [PageController] on the current tab so theme
+  /// applies everywhere without jumping to დაფა.
+  void _refreshForThemeChange() {
+    final index = _selectedIndex.clamp(0, _navItems.length - 1);
+    final oldController = _pageController;
+    _selectedIndex = index;
+    _pageController = PageController(initialPage: index);
+    setState(() => _screens = _buildScreens());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      oldController.dispose();
+    });
   }
 
   List<Widget> _buildScreens() {
@@ -107,7 +124,6 @@ class _ManagerAppShellState extends State<ManagerAppShell>
         break;
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
-        _pendingHealthyToast = false;
         MonitoringSocketService.onAppPaused();
         break;
       case AppLifecycleState.detached:
@@ -118,15 +134,10 @@ class _ManagerAppShellState extends State<ManagerAppShell>
 
   void _suppressToastsForResumeReconnect() {
     _inLifecycleReconnect = true;
-    _pendingHealthyToast = false;
-    _socketOutageToastEmitted = true;
     _lifecycleReconnectTimer?.cancel();
-    // If the socket is still down after a few seconds, show a real outage toast.
     _lifecycleReconnectTimer = Timer(const Duration(seconds: 5), () {
       if (!mounted) return;
       _inLifecycleReconnect = false;
-      _socketOutageToastEmitted = false;
-      _onConnectionSignalsChanged();
     });
   }
 
@@ -134,48 +145,16 @@ class _ManagerAppShellState extends State<ManagerAppShell>
     _lifecycleReconnectTimer?.cancel();
     _lifecycleReconnectTimer = null;
     _inLifecycleReconnect = false;
-    _socketOutageToastEmitted = false;
   }
 
   void _onConnectionSignalsChanged() {
     if (!mounted) return;
-    if (MonitoringSocketService.isInitializing.value) return;
-    if (MonitoringSocketService.isAppPaused) return;
-
+    if (!_inLifecycleReconnect) return;
     final connected = MonitoringSocketService.isConnected.value;
     final apiErr = MonitoringSocketService.apiError.value;
-
-    if (_inLifecycleReconnect) {
-      if (connected && !apiErr) {
-        _clearLifecycleReconnectSuppress();
-      }
-      return;
+    if (connected && !apiErr) {
+      _clearLifecycleReconnectSuppress();
     }
-
-    // Fully healthy again → single restored toast if we had surfaced a problem.
-    if (connected && !apiErr && _pendingHealthyToast) {
-      ManagerToast.showConnectionRestored(context);
-      _pendingHealthyToast = false;
-    }
-
-    // Realtime socket down (includes “never reached server” after bootstrap ends).
-    if (!connected) {
-      if (!_socketOutageToastEmitted) {
-        ManagerToast.showConnectionLost(context, socketIssue: true);
-        _socketOutageToastEmitted = true;
-        _pendingHealthyToast = true;
-      }
-    } else {
-      _socketOutageToastEmitted = false;
-    }
-
-    // HTTP / dashboard errors while the websocket is technically connected.
-    if (connected && apiErr && !_prevApiError) {
-      ManagerToast.showConnectionLost(context, socketIssue: false);
-      _pendingHealthyToast = true;
-    }
-
-    _prevApiError = apiErr;
   }
 
   void _onNotificationEntriesChanged() {
@@ -186,11 +165,17 @@ class _ManagerAppShellState extends State<ManagerAppShell>
     _lastToastNotificationId = latest.id;
     // Catch-up from server fills the panel only (avoid toast spam after resume).
     if (latest.source == 'catchup') return;
-    ManagerToast.show(context, '${latest.title}\n${latest.message}');
+    final body = latest.message.trim();
+    final line = body.isEmpty ? latest.title : '${latest.title}\n$body';
+    final accent = resolveNotificationEntryStyle(latest).accent;
+    ManagerToast.show(context, line, accentColor: accent);
   }
 
   void _goToTab(int index, {bool animate = true}) {
     final target = index.clamp(0, _screens.length - 1);
+    if (_selectedIndex != target) {
+      setState(() => _selectedIndex = target);
+    }
     if (_pageController.hasClients) {
       if (animate) {
         _pageController.animateToPage(
@@ -201,8 +186,6 @@ class _ManagerAppShellState extends State<ManagerAppShell>
       } else {
         _pageController.jumpToPage(target);
       }
-    } else {
-      setState(() => _selectedIndex = target);
     }
   }
 
@@ -299,12 +282,17 @@ class _ManagerAppShellState extends State<ManagerAppShell>
   }
 
   void _onNotificationEntryTap(AppNotificationEntry entry) {
-    final nav = Navigator.of(context);
-    nav.pop();
+    Navigator.of(context).pop();
     AppNotificationHistoryStore.instance.markEntryRead(entry.id);
 
     final meta = entry.meta;
     if (meta == null) return;
+
+    // Walk-in creates a reservation record but belongs on მაგიდები + order.
+    if (isWalkInNotificationMeta(meta)) {
+      _navigateToTablesFromNotification(meta, fallbackMessage: entry.message);
+      return;
+    }
 
     // Reservation notification → open the reservations tab on the right date.
     final reservationId = meta['reservationId']?.toString().trim();
@@ -321,59 +309,96 @@ class _ManagerAppShellState extends State<ManagerAppShell>
 
     final orderId = _orderIdFromNotificationMeta(meta);
     if (orderId == null) return;
+    _navigateToTablesFromNotification(
+      meta,
+      orderId: orderId,
+      fallbackMessage: entry.message,
+    );
+  }
 
+  void _navigateToTablesFromNotification(
+    Map<String, dynamic> meta, {
+    int? orderId,
+    String? fallbackMessage,
+  }) {
     final navMeta = _orderNavFieldsFromMeta(meta);
+    final resolvedOrderId =
+        orderId ??
+        _orderIdFromNotificationMeta(meta) ??
+        orderIdFromWalkInNotificationMeta(meta) ??
+        (fallbackMessage != null
+            ? orderIdFromNotificationMessage(fallbackMessage)
+            : null);
+
     final rawKeys = navMeta['highlightItemKeys'] ?? meta['highlightItemKeys'];
-    Set<String>? highlightKeys;
-    if (rawKeys is List && rawKeys.isNotEmpty) {
-      highlightKeys = rawKeys.map((e) => e.toString()).toSet();
-      PosChangeHighlightService.setForOrder(orderId, highlightKeys);
+    if (resolvedOrderId != null &&
+        rawKeys is List &&
+        rawKeys.isNotEmpty) {
+      PosChangeHighlightService.setForOrder(
+        resolvedOrderId,
+        rawKeys.map((e) => e.toString()).toSet(),
+      );
     }
 
-    final tableLabel = navMeta['tableLabel']?.toString() ?? '';
-    final floor = navMeta['floor']?.toString() ?? 'first';
-    final tableNumber = tableLabel.isNotEmpty
-        ? tableLabel.replaceAll('Table ', '').split(',').first.trim()
-        : '';
+    final floor = (navMeta['floor'] ?? meta['floor'] ?? 'first').toString();
+    final tableNumber = tableNumberFromNotificationMeta(navMeta) ??
+        tableNumberFromNotificationMeta(meta) ??
+        (fallbackMessage != null
+            ? tableNumberFromNotificationMessage(fallbackMessage)
+            : null);
+
+    if (resolvedOrderId != null || (tableNumber != null && tableNumber.isNotEmpty)) {
+      MonitoringSocketService.pendingTableFocus.value = null;
+      MonitoringSocketService.pendingTableFocus.value = ManagerTableFocusRequest(
+        tableNumber: tableNumber ?? '',
+        floor: floor,
+        orderId: resolvedOrderId,
+      );
+    }
 
     _goToTab(1);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      nav.push(
-        MaterialPageRoute<void>(
-          builder: (_) => MobileOrderDetailScreen(
-            user: widget.user,
-            orderId: orderId,
-            tableNumber: tableNumber.isNotEmpty ? tableNumber : null,
-            floor: floor,
-            highlightItemKeys: highlightKeys,
-          ),
-        ),
-      );
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF050508),
-      extendBody: true,
-      appBar: null,
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: _onPageChanged,
-        allowImplicitScrolling: true,
-        physics: const BouncingScrollPhysics(
-          parent: AlwaysScrollableScrollPhysics(),
-        ),
-        children: _screens,
-      ),
-      bottomNavigationBar: ManagerGlassNavBar(
-        pageController: _pageController,
-        itemCount: _navItems.length,
-        items: _navItems,
-        onTap: _onItemTapped,
+    return ManagerThemeListener(
+      child: Builder(
+        builder: (context) {
+          final theme = managerThemeOf(context);
+          return Scaffold(
+            backgroundColor: theme.scaffoldBackground,
+            extendBody: true,
+            appBar: null,
+            body: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                PageView(
+                  key: ValueKey(_pageController),
+                  controller: _pageController,
+                  onPageChanged: _onPageChanged,
+                  allowImplicitScrolling: true,
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+                  children: _screens,
+                ),
+                Positioned(
+                  top: MediaQuery.paddingOf(context).top + 10,
+                  right: 22,
+                  child: const ManagerConnectionStatusDot(),
+                ),
+              ],
+            ),
+            bottomNavigationBar: ManagerGlassNavBar(
+              key: ValueKey(_pageController),
+              pageController: _pageController,
+              selectedIndex: _selectedIndex,
+              itemCount: _navItems.length,
+              items: _navItems,
+              onTap: _onItemTapped,
+            ),
+          );
+        },
       ),
     );
   }
@@ -396,6 +421,8 @@ class _ManagerAppShellState extends State<ManagerAppShell>
       _onConnectionSignalsChanged,
     );
     MonitoringSocketService.dispose();
+    ManagerAppPreferences.dashboardAppearance
+        .removeListener(_onDashboardAppearanceChanged);
     super.dispose();
   }
 }

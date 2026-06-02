@@ -6,6 +6,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 import 'package:cross_file/cross_file.dart';
+import 'package:vynic/core/widgets/manager_toast.dart';
 
 class MobileReceiptPreviewDialog extends StatelessWidget {
   final Uint8List pngBytes;
@@ -29,7 +30,7 @@ class MobileReceiptPreviewDialog extends StatelessWidget {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
+        builder: (context) => Center(child: CircularProgressIndicator()),
       );
 
       final doc = pw.Document();
@@ -59,9 +60,7 @@ class MobileReceiptPreviewDialog extends StatelessWidget {
     } catch (e) {
       if (context.mounted) {
         Navigator.pop(context); // Close loading
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('შეცდომა: $e')),
-        );
+        ManagerToast.showSnackBar(context, 'შეცდომა: $e', isError: true);
       }
     }
   }
@@ -86,7 +85,7 @@ class MobileReceiptPreviewDialog extends StatelessWidget {
               icon: const Icon(Icons.picture_as_pdf, size: 20),
               label: const Text('გაზიარება', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
           ],
         ),
         body: Center(

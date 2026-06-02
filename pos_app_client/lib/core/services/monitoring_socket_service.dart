@@ -7,6 +7,19 @@ import 'auth_token_service.dart';
 import 'manager_notification_inbox.dart';
 import 'mobile_cache_service.dart';
 
+/// Table to open from a manager notification (მაგიდები tab).
+class ManagerTableFocusRequest {
+  const ManagerTableFocusRequest({
+    required this.tableNumber,
+    this.floor = 'first',
+    this.orderId,
+  });
+
+  final String tableNumber;
+  final String floor;
+  final int? orderId;
+}
+
 /// Manages the Socket.IO connection to the NestJS monitoring gateway.
 ///
 /// Features:
@@ -31,6 +44,9 @@ class MonitoringSocketService {
   static final ValueNotifier<bool> isConnected = ValueNotifier<bool>(false);
   static final ValueNotifier<bool> apiError = ValueNotifier<bool>(false);
 
+  /// True while disconnected and a reconnect attempt is scheduled or in flight.
+  static final ValueNotifier<bool> isReconnecting = ValueNotifier<bool>(false);
+
   /// Increments specifically on `audit_updated` socket events.
   static final ValueNotifier<int> auditCounter = ValueNotifier<int>(0);
 
@@ -39,6 +55,10 @@ class MonitoringSocketService {
   /// future-dated) reservation is visible right away.
   static final ValueNotifier<String?> lastReservationDate =
       ValueNotifier<String?>(null);
+
+  /// Open a table on [LiveStatusScreen] after notification tap (walk-in / order).
+  static final ValueNotifier<ManagerTableFocusRequest?> pendingTableFocus =
+      ValueNotifier<ManagerTableFocusRequest?>(null);
 
   /// Increments when the Windows POS closes the business day.
   /// Mobile screens listen to this to refresh sales/dashboard data.
@@ -102,6 +122,7 @@ class MonitoringSocketService {
     _socket!.onConnect((_) {
       debugPrint('[WS] Connected');
       isConnected.value = true;
+      isReconnecting.value = false;
       _reconnectAttempts = 0;
       _cancelReconnectTimer();
       _clearInitializing(); // connected — safe to clear grace period early
@@ -132,7 +153,10 @@ class MonitoringSocketService {
       isConnected.value = false;
       _stopHeartbeat();
       if (!_appPaused) {
+        isReconnecting.value = true;
         _scheduleReconnect();
+      } else {
+        isReconnecting.value = false;
       }
     });
 
@@ -250,6 +274,7 @@ class MonitoringSocketService {
     _socket?.dispose();
     _socket = null;
     isConnected.value = false;
+    isReconnecting.value = true;
     _connect();
     // Screens listen to this for REST refresh (dashboard, tables, etc.).
     updateCounter.value++;
@@ -268,6 +293,7 @@ class MonitoringSocketService {
       _socket!.disconnect();
     }
     isConnected.value = false;
+    isReconnecting.value = false;
   }
 
   static void _scheduleReconnect() {
@@ -326,5 +352,6 @@ class MonitoringSocketService {
     _socket?.dispose();
     _socket = null;
     isConnected.value = false;
+    isReconnecting.value = false;
   }
 }

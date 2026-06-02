@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/apps/windows_pos/screens/admin_screen.dart';
+import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
 
 class EmergencyControlsScreen extends StatelessWidget {
   final User user;
@@ -9,14 +10,18 @@ class EmergencyControlsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: MobileGlassTheme.bg,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'მართვა და პარამეტრები',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            color: MobileGlassTheme.textPrimary,
+          ),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
+        backgroundColor: MobileGlassTheme.surfaceCard,
+        foregroundColor: MobileGlassTheme.textPrimary,
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -25,25 +30,25 @@ class EmergencyControlsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSectionHeader('სისტემური მართვა'),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             _buildAdminPanelCard(context),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             _buildSectionHeader('სწრაფი კონტროლი'),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             _buildControlToggle(
               'რესტორნის სტატუსი (ღია)',
               true,
               Icons.storefront_rounded,
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             _buildControlToggle(
               'ონლაინ შეკვეთები',
               false,
               Icons.cloud_done_outlined,
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             _buildSectionHeader('პერსონალის შეტყობინებები'),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             _buildActionCard(
               'ახალი განცხადების გაგზავნა',
               Icons.campaign_outlined,
@@ -58,10 +63,10 @@ class EmergencyControlsScreen extends StatelessWidget {
   Widget _buildSectionHeader(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF64748B),
+        color: MobileGlassTheme.textSecondary,
         letterSpacing: 0.5,
       ),
     );
@@ -89,11 +94,11 @@ class EmergencyControlsScreen extends StatelessWidget {
             ),
           ],
         ),
-        child: const Row(
+        child: Row(
           children: [
             CircleAvatar(
               backgroundColor: Colors.white24,
-              child: Icon(Icons.settings_suggest_rounded, color: Colors.white),
+              child: Icon(Icons.settings_suggest_rounded, color: MobileGlassTheme.textPrimary),
             ),
             SizedBox(width: 16),
             Expanded(
@@ -101,16 +106,16 @@ class EmergencyControlsScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'სრული ადმინ პანელი',
+                    'სრული მართვის ცენტრი',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: MobileGlassTheme.textPrimary,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
                   Text(
                     'მენიუ, მომხმარებლები, პარამეტრები',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                    style: TextStyle(color: MobileGlassTheme.textSecondary, fontSize: 12),
                   ),
                 ],
               ),
@@ -126,14 +131,14 @@ class EmergencyControlsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: MobileGlassTheme.textPrimary,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Row(
         children: [
           Icon(icon, color: const Color(0xFF64748B), size: 22),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Text(
               title,
@@ -157,7 +162,7 @@ class EmergencyControlsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: MobileGlassTheme.textPrimary,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
@@ -171,7 +176,7 @@ class EmergencyControlsScreen extends StatelessWidget {
             ),
             child: Icon(icon, color: color, size: 22),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Text(
             title,
             style: const TextStyle(

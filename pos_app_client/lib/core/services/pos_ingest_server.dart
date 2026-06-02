@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/manager_sync_service.dart';
 import 'package:vynic/core/services/manager_notification_inbox.dart';
@@ -114,6 +115,9 @@ class PosIngestServer {
           return;
         case 'POST /mobile-user-update-pin':
           await _handleUserPinUpdate(request, body);
+          return;
+        case 'POST /mobile-user-rename':
+          await _handleUserRename(request, body);
           return;
         case 'POST /mobile-user-delete':
           await _handleUserDelete(request, body);
@@ -449,6 +453,7 @@ class PosIngestServer {
           : 'ახალი walk-in #${order.orderId}',
       meta: {
         'posOrderId': order.orderId,
+        'walkIn': true,
         if (tableSeg.isNotEmpty) 'tableLabel': tableNumbers.join(', '),
         if (order.floor.isNotEmpty) 'floor': order.floor,
         if (highlightKeys.isNotEmpty) 'highlightItemKeys': highlightKeys.toList(),
@@ -573,12 +578,12 @@ class PosIngestServer {
   ) async {
     final username = (body['username'] ?? '').toString().trim();
     final pinCode = (body['pinCode'] ?? body['pin'] ?? '').toString().trim();
-    final roleRaw = (body['role'] ?? 'waiter').toString().toLowerCase();
+    final roleRaw = (body['role'] ?? 'waiter').toString();
     if (username.isEmpty || pinCode.isEmpty) {
       await _json(request, 400, {'error': 'username_and_pin_required'});
       return;
     }
-    final role = roleRaw == 'admin' ? 'admin' : 'waiter';
+    final role = StaffRole.normalizeClient(roleRaw);
     final ok = await DatabaseService.addUser(
       username: username,
       pinCode: pinCode,
@@ -615,6 +620,33 @@ class PosIngestServer {
     }
     _scheduleCloudSync();
     await _json(request, 200, {'success': true});
+  }
+
+  static Future<void> _handleUserRename(
+    HttpRequest request,
+    Map<String, dynamic> body,
+  ) async {
+    final oldUsername = (body['oldUsername'] ?? '').toString().trim();
+    final newUsername = (body['newUsername'] ?? body['username'] ?? '')
+        .toString()
+        .trim();
+    if (oldUsername.isEmpty || newUsername.isEmpty) {
+      await _json(request, 400, {'error': 'old_and_new_username_required'});
+      return;
+    }
+    final ok = await DatabaseService.renameUserByUsername(
+      oldUsername: oldUsername,
+      newUsername: newUsername,
+    );
+    if (!ok) {
+      await _json(request, 409, {'error': 'rename_failed'});
+      return;
+    }
+    _scheduleCloudSync();
+    await _json(request, 200, {
+      'success': true,
+      'user': {'username': newUsername},
+    });
   }
 
   static Future<void> _handleUserDelete(

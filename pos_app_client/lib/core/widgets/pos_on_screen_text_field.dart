@@ -1,0 +1,103 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/on_screen_keyboard.dart';
+
+/// True on desktop POS targets (Windows/macOS/Linux) where we show the bottom sheet keyboard.
+bool shouldUsePosOnScreenKeyboard() {
+  if (kIsWeb) return false;
+  return Platform.isWindows || Platform.isLinux || Platform.isMacOS;
+}
+
+/// Full-width bottom sheet keyboard (transparent barrier), shared by Windows POS and manager app on desktop.
+Future<void> showPosOnScreenKeyboardSheet({
+  required BuildContext context,
+  required TextEditingController controller,
+  String language = 'ka',
+}) async {
+  final screenWidth = MediaQuery.sizeOf(context).width;
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: false,
+    barrierColor: Colors.transparent,
+    backgroundColor: Colors.transparent,
+    elevation: 0,
+    enableDrag: false,
+    constraints: BoxConstraints(
+      minWidth: screenWidth,
+      maxWidth: screenWidth,
+    ),
+    builder: (sheetContext) {
+      final bottomInset = MediaQuery.viewPaddingOf(sheetContext).bottom;
+      return Padding(
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: SizedBox(
+          width: MediaQuery.sizeOf(sheetContext).width,
+          child: OnScreenKeyboard(
+            controller: controller,
+            language: language,
+            onClose: () => Navigator.pop(sheetContext),
+          ),
+        ),
+      );
+    },
+  );
+}
+
+/// Text field that opens [showPosOnScreenKeyboardSheet] on desktop; normal keyboard on mobile OS.
+class PosOnScreenTextField extends StatelessWidget {
+  const PosOnScreenTextField({
+    super.key,
+    required this.controller,
+    required this.decoration,
+    this.style,
+    this.keyboardLanguage = 'ka',
+    this.onChanged,
+    this.maxLines = 1,
+  });
+
+  final TextEditingController controller;
+  final InputDecoration decoration;
+  final TextStyle? style;
+  final String keyboardLanguage;
+  final ValueChanged<String>? onChanged;
+  final int maxLines;
+
+  Future<void> _openKeyboard(BuildContext context) async {
+    await showPosOnScreenKeyboardSheet(
+      context: context,
+      controller: controller,
+      language: keyboardLanguage,
+    );
+    onChanged?.call(controller.text);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!shouldUsePosOnScreenKeyboard()) {
+      return TextField(
+        controller: controller,
+        style: style,
+        decoration: decoration,
+        onChanged: onChanged,
+        maxLines: maxLines,
+      );
+    }
+
+    return InkWell(
+      onTap: () => _openKeyboard(context),
+      borderRadius: BorderRadius.circular(12),
+      child: IgnorePointer(
+        child: TextField(
+          controller: controller,
+          readOnly: true,
+          style: style,
+          decoration: decoration,
+          maxLines: maxLines,
+        ),
+      ),
+    );
+  }
+}

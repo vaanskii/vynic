@@ -7,6 +7,7 @@ import 'package:vynic/core/services/api_config.dart';
 import 'package:vynic/core/services/pos_callback_config.dart';
 import 'package:vynic/core/services/sync_events.dart';
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/services/pos_change_highlight_service.dart';
 import 'package:vynic/core/utils/payment_utils.dart';
 
@@ -178,15 +179,30 @@ class ManagerSyncService {
 
     String customerName = '';
     String reservationDate = '';
+    String reservationTime = '';
+    List<int> tableNumbers = const [];
+    int? linkedOrderId;
+    String notes = '';
     try {
       final reservation = DatabaseService.findReservationById(reservationId);
       customerName = reservation?.customerName.trim() ?? '';
       reservationDate =
           reservation?.reservationDate.toIso8601String() ?? '';
+      reservationTime = reservation?.reservationTime.trim() ?? '';
+      tableNumbers = List<int>.from(reservation?.tableNumbers ?? const []);
+      linkedOrderId = reservation?.linkedOrderId;
+      notes = reservation?.notes?.trim() ?? '';
     } catch (_) {
       customerName = '';
       reservationDate = '';
+      reservationTime = '';
+      tableNumbers = const [];
+      linkedOrderId = null;
+      notes = '';
     }
+
+    final walkIn = customerName.toLowerCase() == 'walk-in' ||
+        customerName.toLowerCase().contains('walk-in');
 
     // Collapse repeated hints for the same reservation — latest wins.
     _pendingReservationHints.removeWhere(
@@ -197,6 +213,11 @@ class ManagerSyncService {
       'action': action,
       if (customerName.isNotEmpty) 'customerName': customerName,
       if (reservationDate.isNotEmpty) 'reservationDate': reservationDate,
+      if (reservationTime.isNotEmpty) 'reservationTime': reservationTime,
+      if (tableNumbers.isNotEmpty) 'tableNumbers': tableNumbers,
+      if (linkedOrderId != null) 'linkedOrderId': linkedOrderId,
+      if (notes.isNotEmpty) 'notes': notes,
+      if (walkIn) 'walkIn': true,
       'occurredAt': DatabaseService.getCurrentDateTime().toIso8601String(),
     });
   }
@@ -1361,13 +1382,6 @@ class ManagerSyncService {
 
   /// Maps Hive user roles to backend [StaffRole] enum values.
   static String _staffRoleForSync(String role) {
-    switch (role.toLowerCase()) {
-      case 'admin':
-        return 'ADMIN';
-      case 'manager':
-        return 'MANAGER';
-      default:
-        return 'WAITER';
-    }
+    return StaffRole.toApi(role);
   }
 }

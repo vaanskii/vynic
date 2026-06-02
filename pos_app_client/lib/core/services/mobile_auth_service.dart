@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:vynic/core/services/api_config.dart';
 import 'package:vynic/core/services/auth_token_service.dart';
 import 'package:vynic/core/services/firebase_messaging_service.dart';
+import 'package:vynic/core/models/staff_role.dart';
 
 /// Result of a successful mobile login against the backend.
 class MobileLoginResult {
@@ -49,7 +50,7 @@ class MobileAuthService {
         );
 
         // Verify role is allowed
-        if (result.role != 'ADMIN' && result.role != 'MANAGER') {
+        if (!StaffRole.isMobileApiRole(result.role)) {
           throw MobileAuthError.accessDenied;
         }
 
@@ -112,7 +113,7 @@ class MobileAuthService {
       case MobileAuthError.serverError:
         return 'სერვერის შეცდომა. სცადეთ ახლავე.';
       case MobileAuthError.accessDenied:
-        return 'წვდომა აკრძალულია. მხოლოდ მენეჯერი/ადმინი.';
+        return 'წვდომა აკრძალულია. მხოლოდ მენეჯერი ან სუპერვაიზერი.';
     }
   }
 }

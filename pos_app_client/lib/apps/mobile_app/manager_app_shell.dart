@@ -42,7 +42,7 @@ class _ManagerAppShellState extends State<ManagerAppShell>
     ManagerNavItem(label: 'დაფა', icon: Icons.dashboard_rounded),
     ManagerNavItem(label: 'მაგიდები', icon: Icons.table_bar_rounded),
     ManagerNavItem(label: 'ფინანსები', icon: Icons.account_balance_wallet_rounded),
-    ManagerNavItem(label: 'რეზერვები', icon: Icons.book_online_rounded),
+    ManagerNavItem(label: 'რეზერვაციები', icon: Icons.book_online_rounded),
     ManagerNavItem(label: 'მართვა', icon: Icons.settings_rounded),
   ];
 

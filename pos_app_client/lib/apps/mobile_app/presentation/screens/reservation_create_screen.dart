@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_calculator_screen.dart';
+import 'package:vynic/apps/mobile_app/widgets/reservation_table_picker_sheet.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/mobile_api_service.dart';
 import 'package:vynic/core/services/monitoring_socket_service.dart';
@@ -60,7 +61,6 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
   final DateFormat _dateFmt = DateFormat('yyyy-MM-dd');
   final TextEditingController _customerNameController = TextEditingController();
   final TextEditingController _customerPhoneController = TextEditingController();
-  final TextEditingController _tableNumbersController = TextEditingController();
   final TextEditingController _guestsController =
       TextEditingController(text: '2');
   final TextEditingController _notesController = TextEditingController();
@@ -79,7 +79,6 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
   void dispose() {
     _customerNameController.dispose();
     _customerPhoneController.dispose();
-    _tableNumbersController.dispose();
     _guestsController.dispose();
     _notesController.dispose();
     super.dispose();
@@ -100,16 +99,6 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
       }
     }
     return DateTime.now();
-  }
-
-  List<int> _parseTableNumbers(String raw) {
-    return raw
-        .split(',')
-        .map((e) => int.tryParse(e.trim()))
-        .whereType<int>()
-        .toSet()
-        .toList()
-      ..sort();
   }
 
   double get _preOrderTotal => _selectedMenuItems.fold<double>(
@@ -289,12 +278,21 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
   Future<void> _createReservation() async {
     final name = _customerNameController.text.trim();
     final phone = _customerPhoneController.text.trim();
-    final tables = _parseTableNumbers(_tableNumbersController.text);
     final guests = int.tryParse(_guestsController.text.trim()) ?? 0;
     if (name.isEmpty || guests <= 0) {
       _toast('შეავსეთ სახელი და სტუმრების რაოდენობა', error: true);
       return;
     }
+
+    final tables = await ReservationTablePickerSheet.show(
+      context: context,
+      reservationDate: _selectedDate,
+      reservationTime: _timeAsText(_selectedTime),
+    );
+    if (tables == null || tables.isEmpty || !mounted) {
+      return;
+    }
+
     setState(() => _isSubmitting = true);
     try {
       await MobileApiService.createReservation(
@@ -378,10 +376,6 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
                             SizedBox(height: 12),
                             _field(_customerPhoneController, 'ტელეფონი',
                                 icon: Icons.phone_outlined, phone: true),
-                            SizedBox(height: 12),
-                            _field(_tableNumbersController,
-                                'მაგიდები (არასავალდებულო: 1,2,3)',
-                                icon: Icons.table_bar_outlined),
                             SizedBox(height: 12),
                             _field(_guestsController, 'სტუმრები',
                                 icon: Icons.groups_outlined, number: true),

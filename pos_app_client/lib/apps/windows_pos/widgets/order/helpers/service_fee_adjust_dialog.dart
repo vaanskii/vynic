@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ServiceFeeAdjustResult {
   final bool includeServiceFee;
@@ -16,11 +17,15 @@ class ServiceFeeAdjustDialog extends StatefulWidget {
     required this.initialIncludeServiceFee,
     required this.initialPercentage,
     required this.defaultPercentage,
+    this.showQuickValues = true,
+    this.showSteppers = false,
   });
 
   final bool initialIncludeServiceFee;
   final double initialPercentage;
   final double defaultPercentage;
+  final bool showQuickValues;
+  final bool showSteppers;
 
   @override
   State<ServiceFeeAdjustDialog> createState() => _ServiceFeeAdjustDialogState();
@@ -105,6 +110,15 @@ class _ServiceFeeAdjustDialogState extends State<ServiceFeeAdjustDialog> {
     });
   }
 
+  void _step(int delta) {
+    final current = _normalizedPercentage;
+    final next = (current + delta).clamp(0.0, 100.0);
+    if ((next - current).abs() < 0.001) return;
+    setState(() {
+      _percentageController.text = _formatPercentage(next);
+    });
+  }
+
   String _formatPercentage(double value) {
     if (value == value.roundToDouble()) {
       return value.toStringAsFixed(0);
@@ -117,9 +131,7 @@ class _ServiceFeeAdjustDialogState extends State<ServiceFeeAdjustDialog> {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
-        if (didPop) {
-          return;
-        }
+        if (didPop) return;
         await _handleCancel();
       },
       child: Dialog(
@@ -156,6 +168,7 @@ class _ServiceFeeAdjustDialogState extends State<ServiceFeeAdjustDialog> {
                 style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
               ),
               const SizedBox(height: 18),
+              // ── Toggle ──────────────────────────────────────────────────
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -200,6 +213,7 @@ class _ServiceFeeAdjustDialogState extends State<ServiceFeeAdjustDialog> {
                 ),
               ),
               const SizedBox(height: 16),
+              // ── Percentage label ─────────────────────────────────────────
               const Text(
                 'პროცენტი (%)',
                 style: TextStyle(
@@ -209,70 +223,106 @@ class _ServiceFeeAdjustDialogState extends State<ServiceFeeAdjustDialog> {
                 ),
               ),
               const SizedBox(height: 8),
-              TextField(
-                controller: _percentageController,
-                enabled: _includeServiceFee,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'მაგ: 10, 15, 20',
-                  suffixText: '%',
-                  filled: true,
-                  fillColor: _includeServiceFee
-                      ? const Color(0xFFF8FAFC)
-                      : const Color(0xFFF1F5F9),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF2563EB)),
-                  ),
-                ),
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _quickValues
-                    .map(
-                      (value) => ChoiceChip(
-                        label: Text('${value.toStringAsFixed(0)}%'),
-                        selected:
-                            (_normalizedPercentage - value).abs() <= 0.009,
-                        onSelected: _includeServiceFee
-                            ? (_) => _applyQuickValue(value)
-                            : null,
-                        selectedColor: const Color(0xFFDBEAFE),
-                        backgroundColor: const Color(0xFFF1F5F9),
-                        labelStyle: TextStyle(
-                          color: (_normalizedPercentage - value).abs() <= 0.009
-                              ? const Color(0xFF1D4ED8)
-                              : const Color(0xFF334155),
-                          fontWeight: FontWeight.w700,
-                        ),
-                        side: BorderSide.none,
+              // ── Text field + optional stepper buttons ────────────────────
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _percentageController,
+                      enabled: _includeServiceFee,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
                       ),
-                    )
-                    .toList(),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'^\d*\.?\d*'),
+                        ),
+                      ],
+                      decoration: InputDecoration(
+                        hintText: 'მაგ: 10',
+                        suffixText: '%',
+                        filled: true,
+                        fillColor: _includeServiceFee
+                            ? const Color(0xFFF8FAFC)
+                            : const Color(0xFFF1F5F9),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              const BorderSide(color: Color(0xFF2563EB)),
+                        ),
+                      ),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                  ),
+                  if (widget.showSteppers) ...[
+                    const SizedBox(width: 10),
+                    _DialogStepButton(
+                      icon: Icons.remove,
+                      enabled: _includeServiceFee && _normalizedPercentage > 0,
+                      onPressed: () => _step(-1),
+                    ),
+                    const SizedBox(width: 6),
+                    _DialogStepButton(
+                      icon: Icons.add,
+                      enabled:
+                          _includeServiceFee && _normalizedPercentage < 100,
+                      onPressed: () => _step(1),
+                    ),
+                  ],
+                ],
               ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: _includeServiceFee
-                    ? () => _applyQuickValue(widget.defaultPercentage)
-                    : null,
-                child: Text(
-                  'გამოიყენე დეფოლტი (${_formatPercentage(widget.defaultPercentage)}%)',
+              // ── Quick-value chips (PC only) ───────────────────────────────
+              if (widget.showQuickValues) ...[
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _quickValues
+                      .map(
+                        (value) => ChoiceChip(
+                          label: Text('${value.toStringAsFixed(0)}%'),
+                          selected:
+                              (_normalizedPercentage - value).abs() <= 0.009,
+                          onSelected: _includeServiceFee
+                              ? (_) => _applyQuickValue(value)
+                              : null,
+                          selectedColor: const Color(0xFFDBEAFE),
+                          backgroundColor: const Color(0xFFF1F5F9),
+                          labelStyle: TextStyle(
+                            color:
+                                (_normalizedPercentage - value).abs() <= 0.009
+                                    ? const Color(0xFF1D4ED8)
+                                    : const Color(0xFF334155),
+                            fontWeight: FontWeight.w700,
+                          ),
+                          side: BorderSide.none,
+                        ),
+                      )
+                      .toList(),
                 ),
-              ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: _includeServiceFee
+                      ? () => _applyQuickValue(widget.defaultPercentage)
+                      : null,
+                  child: Text(
+                    'გამოიყენე დეფოლტი (${_formatPercentage(widget.defaultPercentage)}%)',
+                  ),
+                ),
+              ],
               const SizedBox(height: 14),
+              // ── Action buttons ───────────────────────────────────────────
               Row(
                 children: [
                   Expanded(
@@ -327,6 +377,51 @@ class _ServiceFeeAdjustDialogState extends State<ServiceFeeAdjustDialog> {
                 ],
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DialogStepButton extends StatelessWidget {
+  const _DialogStepButton({
+    required this.icon,
+    required this.enabled,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: enabled ? onPressed : null,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: 40,
+          height: 44,
+          decoration: BoxDecoration(
+            color: enabled
+                ? const Color(0xFFEFF6FF)
+                : const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: enabled
+                  ? const Color(0xFFBFDBFE)
+                  : const Color(0xFFE2E8F0),
+            ),
+          ),
+          child: Icon(
+            icon,
+            size: 18,
+            color: enabled
+                ? const Color(0xFF2563EB)
+                : const Color(0xFFCBD5E1),
           ),
         ),
       ),

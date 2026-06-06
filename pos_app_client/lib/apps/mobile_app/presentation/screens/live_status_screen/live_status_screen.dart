@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
 import 'dart:async';
@@ -10,10 +11,8 @@ import 'package:vynic/core/services/mobile_api_service.dart';
 import 'package:vynic/core/utils/table_group_style.dart';
 import 'package:vynic/core/services/monitoring_socket_service.dart';
 import 'package:vynic/core/widgets/manager_toast.dart';
-import 'package:vynic/apps/mobile_app/presentation/screens/create_takeaway_screen.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_order_detail_screen.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_calculator_screen.dart';
-
 part 'views/live_status_tables_part.dart';
 part 'views/live_status_takeaway_part.dart';
 
@@ -149,13 +148,61 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
   }
 
   Future<void> _openNewTakeaway() async {
-    final result = await Navigator.push(
-      context,
+    // Step 1 — small bottom sheet: phone number OR "wait in place"
+    final info = await _showTakeawayInfoSheet();
+    if (info == null || !mounted) return;
+
+    // Step 2 — open menu selector
+    final selected = await Navigator.of(context).push<List<MenuSelectionLine>>(
       MaterialPageRoute(
-        builder: (_) => managerThemedPage(CreateTakeawayScreen(user: widget.user)),
+        builder: (_) => managerThemedPage(
+          MobileCalculatorScreen(
+            selectionMode: true,
+            initialSelection: const [],
+          ),
+        ),
       ),
     );
-    if (result == true) _loadTakeaway();
+    if (selected == null || selected.isEmpty || !mounted) return;
+
+    // Step 3 — create the order
+    final items = selected
+        .map(
+          (e) => {
+            'itemName': e.itemName,
+            'unitPrice': e.unitPrice,
+            'quantity': e.qty,
+          },
+        )
+        .toList();
+
+    final now = DateTime.now().add(const Duration(minutes: 15));
+    final defaultPickup =
+        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+
+    try {
+      await MobileApiService.createTakeawayOrder(
+        customerName: info.waitInPlace ? 'აქ დაელოდება' : info.customerName,
+        pickupTime: defaultPickup,
+        waiterName: widget.user.username,
+        items: items,
+      );
+      if (!mounted) return;
+      ManagerToast.show(context, 'გატანის შეკვეთა შეიქმნა');
+      _loadTakeaway();
+    } catch (e) {
+      if (!mounted) return;
+      ManagerToast.show(context, 'შეცდომა: $e', isError: true);
+    }
+  }
+
+  Future<_TakeawayInfo?> _showTakeawayInfoSheet() {
+    return showModalBottomSheet<_TakeawayInfo>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => const _TakeawayInfoSheet(),
+    );
   }
 
   @override
@@ -455,6 +502,225 @@ class _GlowOrb extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
           child: Container(color: Colors.transparent),
         ),
+      ),
+    );
+  }
+}
+
+// ── Takeaway creation helpers ─────────────────────────────────────────────────
+
+class _TakeawayInfo {
+  final bool waitInPlace;
+  final String customerName;
+  const _TakeawayInfo({required this.waitInPlace, required this.customerName});
+}
+
+class _TakeawayInfoSheet extends StatefulWidget {
+  const _TakeawayInfoSheet();
+
+  @override
+  State<_TakeawayInfoSheet> createState() => _TakeawayInfoSheetState();
+}
+
+class _TakeawayInfoSheetState extends State<_TakeawayInfoSheet> {
+  bool _waitInPlace = false;
+  final _phoneController = TextEditingController();
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  bool get _canContinue =>
+      _waitInPlace || _phoneController.text.trim().isNotEmpty;
+
+  void _confirm() {
+    if (!_canContinue) return;
+    Navigator.of(context).pop(
+      _TakeawayInfo(
+        waitInPlace: _waitInPlace,
+        customerName: _phoneController.text.trim(),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    return Container(
+      decoration: BoxDecoration(
+        color: MobileGlassTheme.surfaceCard,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        border: Border(top: BorderSide(color: MobileGlassTheme.borderSubtle)),
+      ),
+      padding: EdgeInsets.fromLTRB(24, 20, 24, 24 + bottomInset),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: MobileGlassTheme.borderSubtle,
+                borderRadius: BorderRadius.circular(99),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'ახალი გატანა',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: MobileGlassTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'შეიყვანეთ მომხმარებლის ნომერი ან მონიშნეთ ადგილობრივი',
+            style: TextStyle(
+              fontSize: 13,
+              color: MobileGlassTheme.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 20),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _waitInPlace = !_waitInPlace;
+                if (_waitInPlace) _phoneController.clear();
+              });
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: _waitInPlace
+                    ? MobileGlassTheme.primary.withValues(alpha: 0.10)
+                    : MobileGlassTheme.surface(0.04),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: _waitInPlace
+                      ? MobileGlassTheme.primary.withValues(alpha: 0.4)
+                      : MobileGlassTheme.borderSubtle,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.chair_rounded,
+                    size: 20,
+                    color: _waitInPlace
+                        ? MobileGlassTheme.primary
+                        : MobileGlassTheme.textSecondary,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'აქ დაელოდება (ადგილზე)',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: _waitInPlace
+                            ? MobileGlassTheme.primary
+                            : MobileGlassTheme.textPrimary,
+                      ),
+                    ),
+                  ),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _waitInPlace
+                          ? MobileGlassTheme.primary
+                          : Colors.transparent,
+                      border: Border.all(
+                        color: _waitInPlace
+                            ? MobileGlassTheme.primary
+                            : MobileGlassTheme.borderSubtle,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: _waitInPlace
+                        ? const Icon(Icons.check, size: 14, color: Colors.white)
+                        : null,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (!_waitInPlace) ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: _phoneController,
+              autofocus: true,
+              keyboardType: TextInputType.phone,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(
+                  RegExp(r'[\d\s\+\-\(\)]'),
+                ),
+              ],
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                hintText: 'ტელეფონის ნომერი',
+                prefixIcon: Icon(
+                  Icons.phone_rounded,
+                  size: 18,
+                  color: MobileGlassTheme.textSecondary,
+                ),
+                filled: true,
+                fillColor: MobileGlassTheme.surface(0.04),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: MobileGlassTheme.borderSubtle),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: MobileGlassTheme.borderSubtle),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(
+                    color: MobileGlassTheme.primary,
+                    width: 1.5,
+                  ),
+                ),
+              ),
+              onSubmitted: (_) => _confirm(),
+            ),
+          ],
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _canContinue ? _confirm : null,
+              icon: const Icon(Icons.menu_book_rounded, size: 18),
+              label: const Text(
+                'გაგრძელება — მენიუს არჩევა',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: MobileGlassTheme.primary,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor:
+                    MobileGlassTheme.primary.withValues(alpha: 0.30),
+                disabledForegroundColor:
+                    Colors.white.withValues(alpha: 0.6),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 0,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

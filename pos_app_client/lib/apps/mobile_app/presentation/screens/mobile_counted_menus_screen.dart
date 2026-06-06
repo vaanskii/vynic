@@ -99,7 +99,7 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF15151C),
+        backgroundColor: MobileGlassTheme.surfaceCard,
         title: Text('წაშლა', style: TextStyle(color: MobileGlassTheme.textPrimary)),
         content: Text(
           'ნამდვილად გსურთ ამ ჩანაწერის წაშლა?',
@@ -372,7 +372,7 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
 
     return RefreshIndicator(
       color: MobileGlassTheme.primary,
-      backgroundColor: const Color(0xFF15151C),
+      backgroundColor: MobileGlassTheme.surfaceCard,
       onRefresh: _load,
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(

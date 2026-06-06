@@ -9,6 +9,7 @@ import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/printer_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_calculator_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/home/home_reservation_table_assignment_dialog.dart';
 import 'package:vynic/apps/windows_pos/widgets/on_screen_keyboard.dart';
 import 'package:vynic/apps/windows_pos/widgets/order/helpers/service_fee_adjust_dialog.dart';
 import 'package:vynic/apps/windows_pos/widgets/receipt_language_picker_dialog.dart';
@@ -501,10 +502,26 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
 
     _quickOrderGuestsController.text = guests > 0 ? '$guests' : '';
 
+    if (!mounted) {
+      return;
+    }
+
+    final tableNumbers = await HomeReservationTableAssignmentDialog.show(
+      context: context,
+      reservationDate: selectedDate,
+      reservationTime: timeString,
+      primaryColor: widget.primaryColor,
+      secondaryColor: widget.secondaryColor,
+      textPrimary: widget.textPrimary,
+    );
+    if (!mounted || tableNumbers == null || tableNumbers.isEmpty) {
+      return;
+    }
+
     await DatabaseService.createReservation(
       customerName: customerName,
       customerPhone: customerPhone,
-      tableNumbers: const [],
+      tableNumbers: tableNumbers,
       reservationDate: selectedDate,
       reservationTime: timeString,
       numberOfGuests: guests,

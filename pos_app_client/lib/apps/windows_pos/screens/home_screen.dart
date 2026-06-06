@@ -11,6 +11,7 @@ import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/reservation_context.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/sync_events.dart';
+import 'package:vynic/core/services/pos_live_refresh.dart';
 import 'package:vynic/core/services/monitoring_socket_service.dart';
 import 'package:vynic/core/services/app_notification_history_store.dart';
 import 'package:vynic/core/services/pos_change_highlight_service.dart';
@@ -106,6 +107,12 @@ class _HomeScreenState extends State<HomeScreen> {
   StreamSubscription<SyncEvent>? _syncEventsSub;
   Timer? _syncRefreshDebounce;
   Timer? _syncRefreshFollowUp;
+  Timer? _syncRefreshFinalFollowUp;
+
+  void _onLiveDataChanged() {
+    if (!mounted) return;
+    _scheduleLiveRefresh();
+  }
 
   @override
   void initState() {
@@ -136,10 +143,12 @@ class _HomeScreenState extends State<HomeScreen> {
     // reliable cross-device signal: it bumps on every server-side change, even
     // when the local ingest write races behind it. Refresh on it too.
     MonitoringSocketService.updateCounter.addListener(_onRemoteUpdateSignal);
+    PosLiveRefresh.generation.addListener(_onLiveDataChanged);
   }
 
   @override
   void dispose() {
+    PosLiveRefresh.generation.removeListener(_onLiveDataChanged);
     AppNotificationHistoryStore.instance.entries.removeListener(
       _onNotificationEntriesChanged,
     );
@@ -147,6 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _syncEventsSub?.cancel();
     _syncRefreshDebounce?.cancel();
     _syncRefreshFollowUp?.cancel();
+    _syncRefreshFinalFollowUp?.cancel();
     _reservationHighlightTimer?.cancel();
     _shortcutFocusNode.dispose();
     super.dispose();
@@ -188,10 +198,16 @@ class _HomeScreenState extends State<HomeScreen> {
         if (!mounted) return;
         unawaited(_refreshTables());
       });
+      _syncRefreshFinalFollowUp?.cancel();
+      _syncRefreshFinalFollowUp = Timer(const Duration(milliseconds: 1500), () {
+        if (!mounted) return;
+        unawaited(_refreshTables());
+      });
     });
   }
 
   void _onNotificationEntriesChanged() {
+    _scheduleLiveRefresh();
     final list = AppNotificationHistoryStore.instance.entries.value;
     if (!mounted || list.isEmpty) {
       return;
@@ -506,13 +522,20 @@ class _HomeScreenState extends State<HomeScreen> {
     final activeDestinationKey = _destinations[activeIndex].key;
     final currentDate = DatabaseService.getCurrentDate();
     final takeAwayCount = _countActiveTakeAways(currentDate);
+    final reservationCount =
+        HomeReservationsHelper.countConfirmedReservationsForDate(currentDate);
 
     final sidebarBadges = _destinations
         .map<int?>(
-          (destination) =>
-              destination.key == 'todaysTakeaways' && takeAwayCount > 0
-              ? takeAwayCount
-              : null,
+          (destination) {
+            if (destination.key == 'todaysTakeaways' && takeAwayCount > 0) {
+              return takeAwayCount;
+            }
+            if (destination.key == 'newReservation' && reservationCount > 0) {
+              return reservationCount;
+            }
+            return null;
+          },
         )
         .toList();
 
@@ -651,7 +674,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final canManageReservations = widget.user.canManageReservationsOnHome;
 
-    return ReservationsManagementSection(
+    return SizedBox.expand(
+      child: ReservationsManagementSection(
       reservations: adminReservations,
       normalizedToday: normalizedToday,
       filterDate: _reservationDateFilter,
@@ -701,10 +725,11 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             }
           : null,
-      primaryColor: _primaryColor,
-      secondaryColor: _secondaryColor,
-      textPrimary: _textPrimary,
-      mutedText: _mutedText,
+        primaryColor: _primaryColor,
+        secondaryColor: _secondaryColor,
+        textPrimary: _textPrimary,
+        mutedText: _mutedText,
+      ),
     );
   }
 
@@ -867,7 +892,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    final selected = await HomeReservationTableAssignmentDialog.show(
+    final selected = await HomeReservationTableAssignmentDialog.showForReservation(
       context: context,
       reservation: reservation,
       primaryColor: _primaryColor,

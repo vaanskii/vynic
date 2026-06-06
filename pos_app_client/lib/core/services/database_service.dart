@@ -15,6 +15,7 @@ import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/quick_order_draft.dart';
 import 'package:vynic/core/models/package.dart';
 import 'package:vynic/core/models/audit_report.dart';
+import 'package:vynic/core/utils/reservation_table_availability.dart';
 import 'hive_migration_service.dart';
 import 'sync_events.dart';
 import 'package:uuid/uuid.dart';
@@ -5948,12 +5949,28 @@ class DatabaseService {
 
   // Get reservations for a specific date
   static List<Reservation> getReservationsForDate(DateTime date) {
-    final dateString = date.toIso8601String().split('T')[0];
-    return _reservationBox!.values.where((r) {
-      final reservationDateString = r.reservationDate.toIso8601String().split(
-        'T',
-      )[0];
-      return reservationDateString == dateString;
+    return _reservationBox!.values
+        .where(
+          (r) => ReservationTableAvailability.isSameCalendarDate(
+            r.reservationDate,
+            date,
+          ),
+        )
+        .toList();
+  }
+
+  /// Real bookings on [date] that already hold table numbers (excludes walk-ins).
+  static List<Reservation> getTableBlockingReservationsForDate(DateTime date) {
+    return getReservationsForDate(date).where((reservation) {
+      if (!ReservationTableAvailability.isRealTableBooking(reservation)) {
+        return false;
+      }
+      if (!ReservationTableAvailability.isReservationBlocking(
+        reservation.status,
+      )) {
+        return false;
+      }
+      return reservation.tableNumbers.isNotEmpty;
     }).toList();
   }
 
@@ -6379,55 +6396,21 @@ class DatabaseService {
     }
   }
 
-  // Check if tables are available for a specific date and time
+  // Check if tables are available for a specific date
   static bool areTablesAvailableForReservation({
     required List<int> tableNumbers,
     required DateTime reservationDate,
     required String reservationTime,
     String? excludeReservationId,
   }) {
-    final reservationsForDate = getReservationsForDate(reservationDate);
-
-    for (var reservation in reservationsForDate) {
-      // Skip if it's the same reservation we're editing
-      if (excludeReservationId != null &&
-          reservation.id == excludeReservationId) {
-        continue;
-      }
-
-      // Skip cancelled reservations
-      if (reservation.status == 'cancelled' ||
-          reservation.status == 'completed') {
-        continue;
-      }
-
-      // Check if any requested tables are already reserved
-      for (var tableNum in tableNumbers) {
-        if (reservation.tableNumbers.contains(tableNum)) {
-          // Check if time overlaps (assuming 2-hour slots)
-          if (_timeOverlaps(reservationTime, reservation.reservationTime)) {
-            return false;
-          }
-        }
-      }
+    if (tableNumbers.isEmpty) {
+      return true;
     }
-
-    return true;
-  }
-
-  // Helper method to check if two time slots overlap
-  static bool _timeOverlaps(String time1, String time2) {
-    final parts1 = time1.split(':');
-    final parts2 = time2.split(':');
-
-    final minutes1 = int.parse(parts1[0]) * 60 + int.parse(parts1[1]);
-    final minutes2 = int.parse(parts2[0]) * 60 + int.parse(parts2[1]);
-
-    // Assuming 2-hour reservation slots
-    const slotDuration = 120; // minutes
-
-    return (minutes1 < minutes2 + slotDuration) &&
-        (minutes2 < minutes1 + slotDuration);
+    return ReservationTableAvailability.areTableCodesAvailable(
+      tableCodes: tableNumbers,
+      reservations: getTableBlockingReservationsForDate(reservationDate),
+      excludeReservationId: excludeReservationId,
+    );
   }
 
   // Activate today's confirmed reservations (called when app starts or day opens)

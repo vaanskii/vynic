@@ -106,16 +106,19 @@ class ReservationsManagementSection extends StatelessWidget {
 
     final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(
-        isMobile ? 16 : 24,
-        isMobile ? 16 : 24,
-        isMobile ? 16 : 24,
-        96,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return Scrollbar(
+      thumbVisibility: !isMobile,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(
+          isMobile ? 16 : 24,
+          isMobile ? 16 : 24,
+          isMobile ? 16 : 24,
+          96,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           _buildSectionTitle(
             icon: Icons.event_available,
             title: title,
@@ -294,6 +297,7 @@ class ReservationsManagementSection extends StatelessWidget {
             },
           ),
         ],
+      ),
       ),
     );
   }

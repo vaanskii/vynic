@@ -320,16 +320,7 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
                     children: [
                       Expanded(
                         child: _takeawayActionButton(
-                          label: 'გაუქმება',
-                          icon: Icons.cancel_outlined,
-                          color: const Color(0xFFEF4444),
-                          onTap: () => _cancelTakeawayOrder(order),
-                        ),
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: _takeawayActionButton(
-                          label: 'დეტალები',
+                          label: 'ნახვა',
                           icon: Icons.visibility_rounded,
                           color: MobileGlassTheme.primary,
                           filled: true,
@@ -337,6 +328,12 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
                         ),
                       ),
                       SizedBox(width: 10),
+                      _takeawayIconButton(
+                        icon: Icons.cancel_outlined,
+                        color: const Color(0xFFEF4444),
+                        onTap: () => _cancelTakeawayOrder(order),
+                      ),
+                      SizedBox(width: 6),
                       _takeawayIconButton(
                         icon: Icons.delete_outline_rounded,
                         onTap: () => _deleteTakeawayOrder(order),
@@ -417,18 +414,26 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
   Widget _takeawayIconButton({
     required IconData icon,
     required VoidCallback onTap,
+    Color? color,
   }) {
+    final iconColor = color ?? MobileGlassTheme.textSecondary;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.all(11),
         decoration: BoxDecoration(
-          color: MobileGlassTheme.surface(0.06),
+          color: color != null
+              ? color.withValues(alpha: 0.10)
+              : MobileGlassTheme.surface(0.06),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: MobileGlassTheme.border(0.12)),
+          border: Border.all(
+            color: color != null
+                ? color.withValues(alpha: 0.35)
+                : MobileGlassTheme.border(0.12),
+          ),
         ),
-        child: Icon(icon, size: 18, color: MobileGlassTheme.textSecondary),
+        child: Icon(icon, size: 18, color: iconColor),
       ),
     );
   }

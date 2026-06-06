@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:vynic/core/services/pos_live_refresh.dart';
+
 enum SyncEventType { menu, orders, reservations, tables, connection }
 
 class SyncEvent {
@@ -29,6 +31,7 @@ class SyncHub {
     try {
       onLocalChange?.call(event);
       _eventBus.add(event);
+      PosLiveRefresh.bump();
     } catch (_) {
       // swallow errors to avoid breaking the caller.
     }

@@ -5,6 +5,7 @@ import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation_context.dart';
 import 'package:vynic/core/services/printer_service.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_reservations_helper.dart';
+import 'package:vynic/apps/windows_pos/widgets/home/home_reservation_table_assignment_dialog.dart';
 import 'package:vynic/apps/windows_pos/widgets/reservation_creation_sheet.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/user.dart';
@@ -24,6 +25,10 @@ class AdminReservationsSection extends StatefulWidget {
 }
 
 class _AdminReservationsSectionState extends State<AdminReservationsSection> {
+  static const Color _primaryColor = Color(0xFF1E3A8A);
+  static const Color _secondaryColor = Color(0xFF2563EB);
+  static const Color _textPrimary = Color(0xFF1F2937);
+
   String _reservationStatusFilter = 'confirmed';
   DateTime? _reservationDateFilter;
 
@@ -143,13 +148,12 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
           return a.reservationTime.compareTo(b.reservationTime);
         });
 
-    return Align(
-      alignment: Alignment.topLeft,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (_supervisorCreateOnly) _buildSupervisorReservationsNotice(),
-          ReservationsManagementSection(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (_supervisorCreateOnly) _buildSupervisorReservationsNotice(),
+        Expanded(
+          child: ReservationsManagementSection(
             reservations: filteredReservations,
             normalizedToday: normalizedToday,
             filterDate: _reservationDateFilter,
@@ -175,8 +179,8 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
                 ? _deleteReservation
                 : null,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -266,10 +270,22 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
         continue;
       }
 
+      final tableNumbers = await HomeReservationTableAssignmentDialog.show(
+        context: context,
+        reservationDate: selectedDate,
+        reservationTime: timeString,
+        primaryColor: _primaryColor,
+        secondaryColor: _secondaryColor,
+        textPrimary: _textPrimary,
+      );
+      if (!mounted || tableNumbers == null || tableNumbers.isEmpty) {
+        continue;
+      }
+
       final reservationId = await DatabaseService.createReservation(
         customerName: customerName,
         customerPhone: customerPhone,
-        tableNumbers: const [],
+        tableNumbers: tableNumbers,
         reservationDate: selectedDate,
         reservationTime: timeString,
         numberOfGuests: guestCount,
@@ -287,7 +303,7 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
         id: reservationId,
         customerName: customerName,
         customerPhone: customerPhone,
-        tableNumbers: const [],
+        tableNumbers: tableNumbers,
         reservationDate: selectedDate,
         reservationTime: timeString,
         numberOfGuests: guestCount,

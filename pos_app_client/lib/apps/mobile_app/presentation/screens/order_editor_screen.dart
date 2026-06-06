@@ -1,4 +1,5 @@
 import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
+import 'package:vynic/apps/mobile_app/widgets/mobile_menu_pin_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/models/order.dart';
@@ -278,214 +279,33 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
     });
   }
 
-  void _showQuantityPicker(MenuItemDB menuItem) {
-    int selectedQty = 1;
+  void _showQuantityPicker(MenuItemDB menuItem) async {
     final itemName =
         menuItem.translationsKa['name'] ??
         menuItem.translationsEn['name'] ??
         '';
-    final TextEditingController qtyController = TextEditingController(
-      text: '1',
+    final variants = (menuItem.variants ?? [])
+        .map((v) => MenuPinVariant(label: v.getSizeLabel(), price: v.price, tag: v))
+        .toList();
+
+    final currentKey = menuItem.translationsEn['name'] ?? itemName;
+    final inCart = _order?.items
+            .where((it) => it.itemKey == currentKey)
+            .fold(0, (sum, it) => sum + it.quantity) ??
+        0;
+
+    if (!mounted) return;
+    final result = await showMobileMenuPinSheet(
+      context,
+      itemName: itemName,
+      unitPrice: menuItem.price ?? 0,
+      variants: variants,
+      inCartQty: inCart,
+      addMode: true,
     );
-
-    MenuVariantDB? selectedVariant =
-        (menuItem.variants != null && menuItem.variants!.isNotEmpty)
-        ? menuItem.variants!.first
-        : null;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => AnimatedPadding(
-          padding: MediaQuery.of(context).viewInsets,
-          duration: const Duration(milliseconds: 100),
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF15151C),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              border: Border.all(color: MobileGlassTheme.border(0.12)),
-            ),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: MobileGlassTheme.border(0.25),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                SizedBox(height: 24),
-                Text(
-                  itemName,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                    color: MobileGlassTheme.textPrimary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 8),
-                Text(
-                  selectedVariant != null
-                      ? '${selectedVariant!.price.toStringAsFixed(1)} ₾ (${selectedVariant!.getSizeLabel()})'
-                      : '${menuItem.price?.toStringAsFixed(1) ?? "0"} ₾ / ცალი',
-                  style: TextStyle(
-                    color: MobileGlassTheme.muted(0.65),
-                    fontSize: 14,
-                  ),
-                ),
-                if (menuItem.variants != null &&
-                    menuItem.variants!.isNotEmpty) ...[
-                  SizedBox(height: 20),
-                  Wrap(
-                    spacing: 8,
-                    children: menuItem.variants!.map((v) {
-                      final isSel = selectedVariant == v;
-                      return ChoiceChip(
-                        label: Text(v.getSizeLabel()),
-                        selected: isSel,
-                        onSelected: (val) {
-                          if (val) setModalState(() => selectedVariant = v);
-                        },
-                        selectedColor: MobileGlassTheme.primary,
-                        backgroundColor: MobileGlassTheme.surface(0.08),
-                        labelStyle: TextStyle(
-                          color: isSel ? MobileGlassTheme.textPrimary : MobileGlassTheme.muted(0.75),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
-                SizedBox(height: 32),
-
-                // Quantity Control Row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _modalQtyBtn(Icons.remove_rounded, () {
-                      if (selectedQty > 1) {
-                        setModalState(() {
-                          selectedQty--;
-                          qtyController.text = selectedQty.toString();
-                        });
-                      }
-                    }),
-                    SizedBox(width: 20),
-                    SizedBox(
-                      width: 100,
-                      child: TextField(
-                        controller: qtyController,
-                        keyboardType: TextInputType.number,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                          color: MobileGlassTheme.textPrimary,
-                        ),
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                        ),
-                        onChanged: (val) {
-                          final parsed = int.tryParse(val);
-                          if (parsed != null && parsed > 0) {
-                            selectedQty = parsed;
-                          }
-                        },
-                      ),
-                    ),
-                    SizedBox(width: 20),
-                    _modalQtyBtn(Icons.add_rounded, () {
-                      setModalState(() {
-                        selectedQty++;
-                        qtyController.text = selectedQty.toString();
-                      });
-                    }),
-                  ],
-                ),
-                SizedBox(height: 24),
-
-                // Quick add buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _quickAddBtn('+5', () {
-                      setModalState(() {
-                        selectedQty += 5;
-                        qtyController.text = selectedQty.toString();
-                      });
-                    }),
-                    SizedBox(width: 12),
-                    _quickAddBtn('+10', () {
-                      setModalState(() {
-                        selectedQty += 10;
-                        qtyController.text = selectedQty.toString();
-                      });
-                    }),
-                    SizedBox(width: 12),
-                    _quickAddBtn('+20', () {
-                      setModalState(() {
-                        selectedQty += 20;
-                        qtyController.text = selectedQty.toString();
-                      });
-                    }),
-                  ],
-                ),
-
-                SizedBox(height: 32),
-                MobileGlassPrimaryButton(
-                  label: 'დადასტურება (${(selectedQty * (menuItem.price ?? 0)).toStringAsFixed(1)} ₾)',
-                  icon: Icons.add_shopping_cart_rounded,
-                  onPressed: () {
-                    final finalQty =
-                        int.tryParse(qtyController.text) ?? selectedQty;
-                    Navigator.pop(context);
-                    _addItem(menuItem, finalQty, variant: selectedVariant);
-                  },
-                ),
-                SizedBox(height: MediaQuery.of(context).padding.bottom),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _quickAddBtn(String label, VoidCallback onTap) {
-    return ActionChip(
-      label: Text(
-        label,
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          color: MobileGlassTheme.primary,
-        ),
-      ),
-      onPressed: onTap,
-      backgroundColor: MobileGlassTheme.primary.withValues(alpha: 0.15),
-      side: BorderSide.none,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    );
-  }
-
-  Widget _modalQtyBtn(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: MobileGlassTheme.surface(0.1),
-          shape: BoxShape.circle,
-          border: Border.all(color: MobileGlassTheme.border(0.12)),
-        ),
-        child: Icon(icon, color: MobileGlassTheme.primary, size: 28),
-      ),
-    );
+    if (result == null) return;
+    final variant = result.variant?.tag as MenuVariantDB?;
+    _addItem(menuItem, result.qty, variant: variant);
   }
 
   Future<void> _viewCheckPdf() async {
@@ -563,13 +383,28 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
     }
   }
 
+  bool get _isTakeaway => widget.floor == 'takeaway';
+
+  String _orderTitle() {
+    if (_isTakeaway) return 'გატანა #${widget.orderId}';
+    if (_order != null && _order!.tableNumbers.length > 1) {
+      return 'მაგიდები ${_order!.tableNumbers.map((t) => t.replaceAll('Table ', '')).join(', ')}';
+    }
+    return 'მაგიდა ${widget.tableNumber}';
+  }
+
+  String? _orderSubtitle() {
+    if (_isTakeaway) return null;
+    return 'შეკვეთა #${widget.orderId}';
+  }
+
   void _toggleServiceFee() {}
 
   Future<void> _cancelOrder() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF15151C),
+        backgroundColor: MobileGlassTheme.surfaceCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(
           'მაგიდის გაუქმება?',
@@ -627,7 +462,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
           children: [
             MobileGlassHeader(
               title: 'რედაქტირება',
-              subtitle: 'მაგიდა ${widget.tableNumber}',
+              subtitle: _orderSubtitle(),
               onBack: () => Navigator.pop(context),
             ),
             Expanded(
@@ -646,8 +481,8 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
         body: Column(
           children: [
             MobileGlassHeader(
-              title: 'მაგიდა ${widget.tableNumber}',
-              subtitle: 'შეკვეთა #${widget.orderId}',
+              title: _orderTitle(),
+              subtitle: _orderSubtitle(),
               onBack: () => Navigator.pop(context),
             ),
             Expanded(
@@ -713,7 +548,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                             final confirmed = await showDialog<bool>(
                               context: context,
                               builder: (ctx) => AlertDialog(
-                                backgroundColor: const Color(0xFF15151C),
+                                backgroundColor: MobileGlassTheme.surfaceCard,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
                                 ),
@@ -818,10 +653,8 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
           children: [
             if (!_isOrderPanelOpen)
               MobileGlassHeader(
-                title: _order!.tableNumbers.length > 1
-                    ? 'მაგიდები ${_order!.tableNumbers.map((t) => t.replaceAll('Table ', '')).join(', ')}'
-                    : 'მაგიდა ${widget.tableNumber}',
-                subtitle: 'შეკვეთა #${widget.orderId}',
+                title: _orderTitle(),
+                subtitle: _orderSubtitle(),
                 onBack: () async {
                   if (_hasChanges) {
                     final shouldPop = await _showExitConfirmation();
@@ -873,10 +706,14 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
         highlightKeys: _highlightKeys,
         hasChanges: _hasChanges,
         serviceFeeAvailable: false,
-        orderIdLabel: 'შეკვეთა #${widget.orderId}',
-        tableLabel: _order!.tableNumbers.length > 1
-            ? 'მაგიდები ${_order!.tableNumbers.join(', ')}'
-            : 'მაგიდა ${widget.tableNumber}',
+        orderIdLabel: _isTakeaway
+            ? 'გატანა #${widget.orderId}'
+            : 'შეკვეთა #${widget.orderId}',
+        tableLabel: _isTakeaway
+            ? 'გატანა'
+            : (_order!.tableNumbers.length > 1
+                ? 'მაგიდები ${_order!.tableNumbers.join(', ')}'
+                : 'მაგიდა ${widget.tableNumber}'),
         onClose: () => setState(() => _isOrderPanelOpen = false),
         onQtyDelta: (index, delta) {
           _updateQuantity(index, delta);
@@ -949,7 +786,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
             ),
           ),
           MobileGlassPrimaryButton(
-            label: 'შეკვეთა',
+            label: 'ნახვა',
             icon: Icons.shopping_cart_outlined,
             expand: false,
             onPressed: () => setState(() => _isOrderPanelOpen = true),
@@ -1016,47 +853,126 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                     style: TextStyle(color: MobileGlassTheme.muted(0.65)),
                   ),
                 )
-              : GridView.builder(
-                  padding: const EdgeInsets.all(12),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 1.45,
-                  ),
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
                   itemCount: displayItems.length,
                   itemBuilder: (context, index) {
                     final item = displayItems[index];
-                    return InkWell(
-                      onTap: () => _showQuantityPicker(item),
-                      borderRadius: BorderRadius.circular(16),
-                      child: MobileGlassCard(
-                        padding: const EdgeInsets.all(12),
-                        radius: 16,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              item.getName('ka'),
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
-                                color: MobileGlassTheme.textPrimary,
-                              ),
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
+                    final itemKey = item.translationsEn['name'] ?? item.getName('ka');
+                    final inCart = _order?.items
+                            .where((it) => it.itemKey.startsWith(itemKey))
+                            .fold(0, (sum, it) => sum + it.quantity) ??
+                        0;
+                    final lineTotal = _order?.items
+                            .where((it) => it.itemKey.startsWith(itemKey))
+                            .fold(0.0, (sum, it) => sum + it.total) ??
+                        0.0;
+                    final active = inCart > 0;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: GestureDetector(
+                        onTap: () => _showQuantityPicker(item),
+                        behavior: HitTestBehavior.opaque,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: active
+                                ? MobileGlassTheme.primary.withValues(alpha: 0.12)
+                                : MobileGlassTheme.surfaceCard,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: active
+                                  ? MobileGlassTheme.primary.withValues(alpha: 0.6)
+                                  : MobileGlassTheme.border(0.08),
+                              width: active ? 1.5 : 1,
                             ),
-                            const Spacer(),
-                            Text(
-                              '${item.price?.toStringAsFixed(1) ?? "0"} ₾',
-                              style: TextStyle(
-                                color: MobileGlassTheme.good,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                          ),
+                          child: Row(
+                            children: [
+                              if (active) ...[
+                                Container(
+                                  width: 30,
+                                  height: 30,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: MobileGlassTheme.primary,
+                                    borderRadius: BorderRadius.circular(9),
+                                  ),
+                                  child: Text(
+                                    '$inCart',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                              ],
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.getName('ka'),
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: MobileGlassTheme.textPrimary,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          '${item.price?.toStringAsFixed(1) ?? "0"} ₾',
+                                          style: TextStyle(
+                                            color: MobileGlassTheme.accentText,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        if (active && lineTotal > 0) ...[
+                                          Text(
+                                            '  •  ',
+                                            style: TextStyle(
+                                              color: MobileGlassTheme.muted(0.25),
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                          Text(
+                                            '= ${lineTotal.toStringAsFixed(1)} ₾',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: MobileGlassTheme.muted(0.6),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 10),
+                              Container(
+                                width: 36,
+                                height: 36,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: MobileGlassTheme.primary,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: MobileGlassTheme.primary),
+                                ),
+                                child: const Icon(Icons.add_rounded,
+                                    size: 20, color: Colors.white),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     );
@@ -1239,7 +1155,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF15151C),
+        backgroundColor: MobileGlassTheme.surfaceCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(
           'დარწმუნებული ხართ?',

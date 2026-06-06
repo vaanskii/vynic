@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/order_editor_screen.dart';
 import 'package:vynic/apps/mobile_app/widgets/mobile_receipt_preview_dialog.dart';
+import 'package:vynic/apps/windows_pos/widgets/order/helpers/service_fee_adjust_dialog.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/user.dart';
@@ -216,6 +217,60 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
     }
   }
 
+  Future<void> _openServiceFeeConfig() async {
+    final order = _order;
+    if (order == null || !_canEdit || !_serviceFeeAvailable) return;
+
+    final defaultPercent = _serviceFeePercent.toDouble();
+    final initialPercent = order.getEffectiveServiceFeePercentage(
+      globalDefaultPercentage: defaultPercent,
+    );
+
+    final result = await showDialog<ServiceFeeAdjustResult>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => ServiceFeeAdjustDialog(
+        initialIncludeServiceFee: order.includeServiceFee,
+        initialPercentage: initialPercent,
+        defaultPercentage: defaultPercent,
+        showQuickValues: false,
+        showSteppers: true,
+      ),
+    );
+
+    if (result == null || !mounted) return;
+
+    setState(() => _isTogglingServiceFee = true);
+    try {
+      final normalizedPercent = double.parse(
+        result.percentage.clamp(0.0, 100.0).toStringAsFixed(2),
+      );
+      final useGlobalDefault =
+          (normalizedPercent - defaultPercent).abs() < 0.01;
+      order.includeServiceFee = result.includeServiceFee;
+      order.customServiceFeePercentage =
+          useGlobalDefault ? null : normalizedPercent;
+      order.recalculateTotal(serviceFeeRate: normalizedPercent / 100);
+      await MobileApiService.updateOrder(
+        order,
+        updatedBy: widget.user.username,
+      );
+      await _loadOrder();
+      if (!mounted) return;
+      ManagerToast.show(context, 'სერვისი განახლდა');
+    } catch (e) {
+      if (mounted) {
+        ManagerToast.show(
+          context,
+          'სერვისის განახლება ვერ მოხერხდა',
+          isError: true,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isTogglingServiceFee = false);
+    }
+  }
+
   String _serviceFeeLabelForOrder(Order order) {
     return order
         .getEffectiveServiceFeePercentage(
@@ -262,7 +317,7 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF15151C),
+        backgroundColor: MobileGlassTheme.surfaceCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(
           'მაგიდის გაუქმება?',
@@ -439,7 +494,7 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
           _buildHeaderCard(order, dateFmt),
           Expanded(child: _buildItemsList(order)),
           _buildTotalsFooter(order),
-          if (_canEdit && _serviceFeeAvailable) _buildServiceFeeRow(order),
+          if (_canEdit && _serviceFeeAvailable && widget.floor != 'takeaway') _buildServiceFeeRow(order),
           if (_canEdit) _buildActionBar(),
         ],
       ),
@@ -617,7 +672,7 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
         child: Column(
           children: [
             _totalRow('ქვეჯამი', subtotal),
-            if (_serviceFeeAvailable && order.includeServiceFee && serviceFee > 0)
+            if (_serviceFeeAvailable && widget.floor != 'takeaway' && order.includeServiceFee && serviceFee > 0)
               _totalRow('სერვისი ($feeLabel%)', serviceFee),
             if (order.discountAmount > 0)
               _totalRow('ფასდაკლება', -order.discountAmount),
@@ -669,21 +724,42 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
             Expanded(
               child: Text(
                 'სერვისის საფასური (${_serviceFeeLabelForOrder(order)}%)',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: MobileGlassTheme.textPrimary),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: MobileGlassTheme.textPrimary,
+                ),
               ),
             ),
             if (_isTogglingServiceFee)
               SizedBox(
                 width: 22,
                 height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2, color: MobileGlassTheme.primary),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: MobileGlassTheme.primary,
+                ),
               )
-            else
+            else ...[
+              IconButton(
+                onPressed: _canEdit ? _openServiceFeeConfig : null,
+                icon: Icon(
+                  Icons.tune_rounded,
+                  size: 20,
+                  color: _canEdit
+                      ? MobileGlassTheme.muted(0.85)
+                      : MobileGlassTheme.muted(0.35),
+                ),
+                tooltip: 'კონფიგურაცია',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              ),
               Switch.adaptive(
                 value: order.includeServiceFee,
                 activeColor: MobileGlassTheme.primary,
-                onChanged: (_) => _toggleServiceFee(),
+                onChanged: _canEdit ? (_) => _toggleServiceFee() : null,
               ),
+            ],
           ],
         ),
       ),

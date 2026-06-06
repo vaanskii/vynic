@@ -7,6 +7,8 @@ import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/pos_change_highlight_service.dart';
+import 'package:vynic/core/services/pos_live_refresh.dart';
+import 'package:vynic/core/services/sync_events.dart';
 import 'package:vynic/core/services/printer_service.dart';
 import 'package:vynic/apps/windows_pos/widgets/comment_input_dialog.dart';
 import 'package:vynic/apps/windows_pos/widgets/pin_button.dart';
@@ -45,7 +47,32 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   bool _autoConfirmTriggered = false;
   bool _isReservationDetailsExpanded = true;
   Set<String>? _mobileHighlightItemKeys;
+  StreamSubscription<SyncEvent>? _syncEventsSub;
 
+  void _onExternalOrderChange() {
+    if (!mounted) return;
+    _loadOrder();
+  }
+
+  void _onSyncEvent(SyncEvent event) {
+    if (!mounted) return;
+    if (event.type != SyncEventType.orders &&
+        event.type != SyncEventType.tables &&
+        event.type != SyncEventType.reservations) {
+      return;
+    }
+    final payload = event.payload;
+    if (payload != null) {
+      final rawOrderId = payload['orderId'];
+      final orderId = rawOrderId is int
+          ? rawOrderId
+          : int.tryParse(rawOrderId?.toString() ?? '');
+      if (orderId != null && orderId != widget.orderId) {
+        return;
+      }
+    }
+    _loadOrder();
+  }
   static const Color _surfaceColor = Color(0xFFF5F7FB);
   static const Color _panelColor = Colors.white;
   static const Color _titleColor = Color(0xFF1E293B);
@@ -368,6 +395,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         PosChangeHighlightService.takeForOrder(widget.orderId);
     _serviceFeeAvailable = DatabaseService.isServiceFeeAvailable();
     _loadOrder();
+    _syncEventsSub = SyncHub.events.listen(_onSyncEvent);
+    PosLiveRefresh.generation.addListener(_onExternalOrderChange);
+  }
+
+  @override
+  void dispose() {
+    _syncEventsSub?.cancel();
+    PosLiveRefresh.generation.removeListener(_onExternalOrderChange);
+    super.dispose();
   }
 
   void _loadOrder() {
@@ -738,6 +774,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         initialIncludeServiceFee: order.includeServiceFee,
         initialPercentage: initialPercent,
         defaultPercentage: defaultPercent,
+        showQuickValues: true,
+        showSteppers: true,
       ),
     );
 

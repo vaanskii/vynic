@@ -73,19 +73,19 @@ class MobileOrderDetailPanel extends StatelessWidget {
         children: [
           IconButton(
             onPressed: onClose,
-            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+            icon: Icon(Icons.arrow_back_rounded, color: MobileGlassTheme.textPrimary),
             tooltip: 'უკან',
           ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'შეკვეთის კალათა',
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 17,
-                    color: Colors.white,
+                    color: MobileGlassTheme.textPrimary,
                   ),
                 ),
                 if (tableLabel != null && tableLabel!.isNotEmpty)
@@ -164,7 +164,7 @@ class MobileOrderDetailPanel extends StatelessWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
-                    color: highlighted ? MobileGlassTheme.warn : Colors.white,
+                    color: highlighted ? MobileGlassTheme.warn : MobileGlassTheme.textPrimary,
                   ),
                 ),
                 SizedBox(height: 4),
@@ -196,10 +196,10 @@ class MobileOrderDetailPanel extends StatelessWidget {
                 child: Text(
                   '${item.quantity}',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: Colors.white,
+                    color: MobileGlassTheme.textPrimary,
                   ),
                 ),
               ),
@@ -276,10 +276,10 @@ class MobileOrderDetailPanel extends StatelessWidget {
               Text('სულ', style: TextStyle(fontSize: 13, color: MobileGlassTheme.muted())),
               Text(
                 '${order.totalAmount.toStringAsFixed(2)} ₾',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
-                  color: Colors.white,
+                  color: MobileGlassTheme.textPrimary,
                 ),
               ),
             ],

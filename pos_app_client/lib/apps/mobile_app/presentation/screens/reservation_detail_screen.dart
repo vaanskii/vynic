@@ -347,7 +347,7 @@ class ReservationDetailScreen extends StatelessWidget {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF15151C),
+        backgroundColor: MobileGlassTheme.surfaceCard,
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('წაშლა?', style: TextStyle(color: MobileGlassTheme.textPrimary)),

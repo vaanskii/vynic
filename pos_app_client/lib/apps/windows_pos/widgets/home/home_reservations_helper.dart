@@ -74,6 +74,43 @@ class HomeReservationsHelper {
     return filtered;
   }
 
+  /// Confirmed (non-cancelled) dine-in bookings on [businessDate] for sidebar badge.
+  static int countConfirmedReservationsForDate(DateTime businessDate) {
+    final target = normalizeDateOnly(businessDate);
+    var count = 0;
+
+    for (final reservation in DatabaseService.getAllReservations()) {
+      if (reservation.isTakeAway) {
+        continue;
+      }
+      if (reservation.linkedOrderId != null) {
+        continue;
+      }
+      if (reservation.notes != null &&
+          reservation.notes!.startsWith('Order #')) {
+        continue;
+      }
+      if (!isSameDate(reservation.reservationDate, target)) {
+        continue;
+      }
+
+      final normalizedStatus = normalizeStatus(reservation.status);
+      if (normalizedStatus.startsWith('cancelled') ||
+          normalizedStatus.startsWith('canceled') ||
+          normalizedStatus.startsWith('completed')) {
+        continue;
+      }
+      if (!normalizedStatus.startsWith('confirmed') &&
+          !normalizedStatus.startsWith('pending')) {
+        continue;
+      }
+
+      count++;
+    }
+
+    return count;
+  }
+
   static int extractGuestCount(Map<String, dynamic> data) {
     final raw = data['numberOfGuests'] ?? data['guests'];
     if (raw is int) {

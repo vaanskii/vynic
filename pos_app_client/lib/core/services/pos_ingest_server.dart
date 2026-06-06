@@ -11,6 +11,7 @@ import 'package:vynic/core/services/manager_sync_service.dart';
 import 'package:vynic/core/services/manager_notification_inbox.dart';
 import 'package:vynic/core/services/pos_callback_config.dart';
 import 'package:vynic/core/services/pos_change_highlight_service.dart';
+import 'package:vynic/core/services/pos_live_refresh.dart';
 import 'package:vynic/core/services/printer_service.dart';
 import 'package:vynic/core/services/audit_order_diff_service.dart';
 
@@ -757,6 +758,7 @@ class PosIngestServer {
     required String message,
     Map<String, dynamic>? meta,
   }) {
+    PosLiveRefresh.bump();
     ManagerNotificationInbox.ingestLocal(
       title: 'სისტემა:',
       message: message,

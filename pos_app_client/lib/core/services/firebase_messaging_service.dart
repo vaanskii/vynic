@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:vynic/core/services/auth_token_service.dart';
 import 'package:vynic/core/services/local_notifications_service.dart';
 import 'package:vynic/core/services/manager_notification_inbox.dart';
 import 'package:vynic/core/services/mobile_api_service.dart';
@@ -75,6 +76,7 @@ class FirebaseMessagingService {
   }
 
   Future<void> _registerTokenWithBackend(String token) async {
+    if (!AuthTokenService.hasValidToken) return;
     try {
       await MobileApiService.registerPushDevice(token);
     } catch (error) {

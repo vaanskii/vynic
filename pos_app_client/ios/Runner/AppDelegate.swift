@@ -10,7 +10,7 @@ import flutter_local_notifications
   ) -> Bool {
       
       FlutterLocalNotificationsPlugin.setPluginRegistrantCallback { (registry) in
-        GeneratedPluginRegistrant.register(withRegistry: registry)
+        GeneratedPluginRegistrant.register(with: registry)
       }
       
       if #available(iOS 10.0.0, *) {

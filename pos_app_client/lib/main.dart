@@ -48,17 +48,17 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    final localNotifications = LocalNotificationsService.instance();
-    await localNotifications.init();
-    await FirebaseMessagingService.instance().init(
-      localNotificationsService: localNotifications,
-    );
     await Hive.initFlutter();
     await Future.wait([
       AuthTokenService.init(),
       MobileCacheService.init(),
       ManagerAppPreferences.init(),
     ]);
+    final localNotifications = LocalNotificationsService.instance();
+    await localNotifications.init();
+    await FirebaseMessagingService.instance().init(
+      localNotificationsService: localNotifications,
+    );
     if (AuthTokenService.hasValidToken || AuthTokenService.hasStaleToken) {
       await FirebaseMessagingService.instance().syncCurrentTokenWithBackend();
     }

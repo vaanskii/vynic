@@ -1,0 +1,11 @@
+platform :osx, '11.0'
+
+# CocoaPods integration has been removed in favour of Swift Package Manager.
+# This stub Podfile lets `pod install` succeed (generating the lock files
+# the old build-phase check expects) without installing any pods.
+
+target 'Runner' do
+  target 'RunnerTests' do
+    inherit! :search_paths
+  end
+end

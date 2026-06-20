@@ -8,16 +8,16 @@ import { v4 as uuidv4 } from 'uuid';
 import { getApps, initializeApp, applicationDefault } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
 import { StaffRole } from '@prisma/client';
-import { PrismaService } from './prisma.service';
-import { PresenceService } from './presence.service';
-import { MonitoringGateway } from './monitoring.gateway';
+import { PrismaService } from '../../prisma.service';
+import { PresenceService } from '../presence.service';
+import { MonitoringGateway } from '../monitoring.gateway';
 import { buildManagerPushCopy } from './manager-notification-push.mapper';
 import {
   defaultServiceFeeCoalesceMs,
   getServiceFeeCoalesceKey,
   ServiceFeeNotificationCoalescer,
 } from './manager-notification-coalesce';
-import type { BroadcastOptions, WsEvent, WsEventType } from './ws-events';
+import type { BroadcastOptions, WsEvent, WsEventType } from '../ws-events';
 
 @Injectable()
 export class HybridNotificationService {

@@ -11,7 +11,7 @@ import { PosOutboxService } from './pos-outbox.service';
 import { PrismaModule } from './shared/prisma/prisma.module';
 import { BootstrapModule } from './shared/bootstrap/bootstrap.module';
 import { SyncController } from './sync.controller';
-import { RealtimeModule } from './shared/realtime/realtime.module';
+import { RealtimeModule } from './realtime/realtime.module';
 import { WebsiteModule } from './website/website.module';
 
 @Module({

@@ -1,5 +1,5 @@
 import { normalizeChangeSummary } from './notification-summary.util';
-import type { WsEventType } from './ws-events';
+import type { WsEventType } from '../ws-events';
 
 function asRecord(p: unknown): Record<string, unknown> | null {
   if (p && typeof p === 'object' && !Array.isArray(p)) {

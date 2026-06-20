@@ -10,7 +10,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { PresenceService } from './presence.service';
-import { HybridNotificationService } from './hybrid-notification.service';
+import { HybridNotificationService } from './notifications/hybrid-notification.service';
 import type { BroadcastOptions, WsEvent, WsEventType } from './ws-events';
 
 export type { WsEventType, WsEvent, BroadcastOptions } from './ws-events';

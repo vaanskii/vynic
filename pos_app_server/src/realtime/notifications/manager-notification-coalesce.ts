@@ -1,5 +1,5 @@
 import { mergeChangeSummaries } from './notification-summary.util';
-import type { BroadcastOptions, WsEventType } from './ws-events';
+import type { BroadcastOptions, WsEventType } from '../ws-events';
 
 const SERVICE_FEE_COALESCE_MS = 2500;
 

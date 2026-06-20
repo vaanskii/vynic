@@ -1,8 +1,8 @@
 import { Global, Module } from '@nestjs/common';
-import { AuthModule } from '../../auth/auth.module';
-import { HybridNotificationService } from '../../hybrid-notification.service';
-import { MonitoringGateway } from '../../monitoring.gateway';
-import { PresenceService } from '../../presence.service';
+import { AuthModule } from '../auth/auth.module';
+import { HybridNotificationService } from './notifications/hybrid-notification.service';
+import { MonitoringGateway } from './monitoring.gateway';
+import { PresenceService } from './presence.service';
 
 @Global()
 @Module({

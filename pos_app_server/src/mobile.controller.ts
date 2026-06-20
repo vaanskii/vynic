@@ -26,7 +26,7 @@ import {
   StaffRole,
   toClientRole,
 } from './staff/staff-role';
-import { MonitoringGateway } from './monitoring.gateway';
+import { MonitoringGateway } from './realtime/monitoring.gateway';
 import { PosCallbackClient } from './pos-callback.client';
 import { buildAuditEventsForOrderDiff } from './audit-order-diff';
 import { normalizeAuditEventType } from './audit-event-type';

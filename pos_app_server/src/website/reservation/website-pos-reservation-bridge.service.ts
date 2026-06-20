@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { PosCallbackClient } from '../../pos-callback.client';
-import { MonitoringGateway } from '../../monitoring.gateway';
+import { MonitoringGateway } from '../../realtime/monitoring.gateway';
 import { suppressPosEchoForReservation } from '../../sync-echo-guard';
 import { MenuService } from '../menu/menu.service';
 import {

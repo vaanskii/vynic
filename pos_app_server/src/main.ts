@@ -36,7 +36,17 @@ async function bootstrap() {
   const isProduction = process.env.NODE_ENV === 'production';
   const allowedOrigins = new Set(buildAllowedOrigins());
 
-  app.use(json({ limit: '50mb' }));
+  app.use(
+    json({
+      limit: '50mb',
+      // Preserve the exact raw bytes so webhook signature verification
+      // (e.g. BOG payment callbacks) can validate against what was signed,
+      // not a re-serialized object.
+      verify: (req, _res, buf: Buffer) => {
+        (req as unknown as { rawBody?: Buffer }).rawBody = buf;
+      },
+    }),
+  );
   app.use(urlencoded({ extended: true, limit: '50mb' }));
   app.use(cookieParser());
 

@@ -5,9 +5,12 @@ import {
   Headers,
   Get,
   Param,
+  Req,
   HttpException,
   HttpStatus,
+  UnauthorizedException,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { BogService } from './payment.service';
 import { ReservationService } from '../reservation/reservation.service';
 
@@ -123,6 +126,7 @@ export class BogController {
 
   @Post('payment-callback')
   async handlePaymentCallback(
+    @Req() req: Request & { rawBody?: Buffer },
     @Body()
     body: {
       event: string;
@@ -136,8 +140,19 @@ export class BogController {
     },
     @Headers('callback-signature') signature?: string,
   ) {
-    if (signature) {
-      this.bogService.verifyCallbackSignature(JSON.stringify(body), signature);
+    // Reject forged callbacks: require a valid RSA signature over the exact raw
+    // request bytes BOG signed (not a re-serialized object). Must happen before
+    // any reservation/payment state is touched.
+    const rawBody = req.rawBody?.toString('utf8');
+    if (
+      !signature ||
+      !rawBody ||
+      !this.bogService.verifyCallbackSignature(rawBody, signature)
+    ) {
+      console.warn(
+        '[BOG] Rejected payment callback — missing or invalid callback-signature',
+      );
+      throw new UnauthorizedException('Invalid callback signature');
     }
 
     if (body.event !== 'order_payment') {

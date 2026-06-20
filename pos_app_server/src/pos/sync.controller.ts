@@ -15,6 +15,9 @@ import { PosCallbackClient } from './pos-callback.client';
 import { MonitoringGateway } from '../realtime/monitoring.gateway';
 import { AuthService } from '../auth/auth.service';
 import { PosSyncGuard } from '../auth/pos-sync.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 import { normalizeAuditEventType } from './audit/audit-event-type';
 import {
   filterSuppressedOrderIds,
@@ -24,7 +27,7 @@ import {
   isTableEchoSuppressed,
 } from './sync-echo-guard';
 import * as bcrypt from 'bcrypt';
-import { normalizeStaffRole } from '../staff/staff-role';
+import { normalizeStaffRole, StaffRole } from '../staff/staff-role';
 
 interface TableSync {
   tableNumber: string;
@@ -267,8 +270,12 @@ export class SyncController implements OnModuleInit {
    * GET /sync/diff?since=2024-01-01T00:00:00.000Z
    * Returns only records updated after `since`.
    * Mobile clients call this after reconnection instead of full reload.
+   * Manager-only (mobile JWT) — exposes live table/order deltas, so it must
+   * not be reachable unauthenticated.
    */
   @Get('diff')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(StaffRole.MANAGER)
   async getDiff(@Query('since') since?: string) {
     const sinceDate = since ? new Date(since) : new Date(0);
 

@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { PosSyncGuard } from './auth/pos-sync.guard';
 import { MobileController } from './mobile.controller';
 import { MobileUsersService } from './mobile-users.service';
+import { MobileReportsService } from './mobile-reports.service';
 import { PosCallbackModule } from './pos/pos-callback.module';
 import { PosOutboxService } from './pos/pos-outbox.service';
 import { PrismaModule } from './shared/prisma/prisma.module';
@@ -32,6 +33,7 @@ import { WebsiteModule } from './website/website.module';
     PosSyncGuard,
     PosOutboxService,
     MobileUsersService,
+    MobileReportsService,
   ],
 })
 export class AppModule {}

@@ -15,16 +15,16 @@ import {
   DefaultValuePipe,
   Req,
 } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
+import { PrismaService } from '../prisma.service';
 import { Order } from '@prisma/client';
-import { JwtAuthGuard } from './auth/jwt-auth.guard';
-import { RolesGuard } from './auth/roles.guard';
-import { Roles } from './auth/roles.decorator';
-import { StaffRole } from './staff/staff-role';
-import { MonitoringGateway } from './realtime/monitoring.gateway';
-import { PosCallbackClient } from './pos/pos-callback.client';
-import { MobileUsersService } from './mobile-users.service';
-import { MobileReportsService } from './mobile-reports.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { StaffRole } from '../staff/staff-role';
+import { MonitoringGateway } from '../realtime/monitoring.gateway';
+import { PosCallbackClient } from '../pos/pos-callback.client';
+import { MobileUsersService } from './services/mobile-users.service';
+import { MobileReportsService } from './services/mobile-reports.service';
 import {
   businessDateWhere,
   nextDay,
@@ -34,16 +34,16 @@ import {
   previousDay,
   readRestaurantServiceFeeSettings,
   todayStart,
-} from './mobile-date.util';
-import { buildAuditEventsForOrderDiff } from './pos/audit/audit-order-diff';
-import { normalizeAuditEventType } from './pos/audit/audit-event-type';
+} from './util/mobile-date.util';
+import { buildAuditEventsForOrderDiff } from '../pos/audit/audit-order-diff';
+import { normalizeAuditEventType } from '../pos/audit/audit-event-type';
 import {
   suppressPosAuditBroadcast,
   suppressPosEchoForOrder,
   suppressPosEchoForReservation,
   suppressPosEchoForTable,
-} from './pos/sync-echo-guard';
-import { PosOutboxService } from './pos/pos-outbox.service';
+} from '../pos/sync-echo-guard';
+import { PosOutboxService } from '../pos/pos-outbox.service';
 import { v4 as uuidv4 } from 'uuid';
 
 // ─── Lightweight response types ───────────────────────────────────────────────
@@ -1170,7 +1170,7 @@ export class MobileController {
     tableNumbers: string[];
     floor: string;
     openedByName: string;
-    events: import('./pos/audit/audit-order-diff').AuditEventInput[];
+    events: import('../pos/audit/audit-order-diff').AuditEventInput[];
   }) {
     const { posOrderId, tableNumbers, floor, openedByName, events } = params;
     if (events.length === 0) return;

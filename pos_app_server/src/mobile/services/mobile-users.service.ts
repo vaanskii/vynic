@@ -4,14 +4,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { PrismaService } from './prisma.service';
-import { PosCallbackClient } from './pos/pos-callback.client';
+import { PrismaService } from '../../prisma.service';
+import { PosCallbackClient } from '../../pos/pos-callback.client';
 import {
   ASSIGNABLE_STAFF_ROLES,
   normalizeStaffRole,
   StaffRole,
   toClientRole,
-} from './staff/staff-role';
+} from '../../staff/staff-role';
 
 /**
  * Staff/user management for the mobile manager app (`/mobile/users*`).

@@ -27,6 +27,7 @@ import { MobileUsersService } from './services/mobile-users.service';
 import { MobileReportsService } from './services/mobile-reports.service';
 import { MobileDevicesService } from './services/mobile-devices.service';
 import { MobileMenuService } from './services/mobile-menu.service';
+import { MobileMutationSupport } from './services/mobile-mutation-support.service';
 import {
   businessDateWhere,
   nextDay,
@@ -39,12 +40,7 @@ import {
 } from './util/mobile-date.util';
 import { buildAuditEventsForOrderDiff } from '../pos/audit/audit-order-diff';
 import { normalizeAuditEventType } from '../pos/audit/audit-event-type';
-import {
-  suppressPosAuditBroadcast,
-  suppressPosEchoForOrder,
-  suppressPosEchoForReservation,
-  suppressPosEchoForTable,
-} from '../pos/sync-echo-guard';
+import { suppressPosEchoForReservation } from '../pos/sync-echo-guard';
 import { PosOutboxService } from '../pos/pos-outbox.service';
 
 // ─── Lightweight response types ───────────────────────────────────────────────
@@ -149,6 +145,7 @@ export class MobileController {
     private readonly reports: MobileReportsService,
     private readonly devices: MobileDevicesService,
     private readonly menu: MobileMenuService,
+    private readonly mutationSupport: MobileMutationSupport,
   ) {}
 
   // GET /mobile/restaurant-settings
@@ -423,7 +420,7 @@ export class MobileController {
       data: { isReserved: false, activeOrderId: null, currentBill: 0 },
     });
     if (updated.count === 0) return { success: false, error: 'table_not_found' };
-    this.registerMobileMutationEchoGuard(undefined, { tableNumber, floor });
+    this.mutationSupport.registerMobileMutationEchoGuard(undefined, { tableNumber, floor });
     this.gateway.broadcastUpdate(
       'data_updated',
       {
@@ -432,7 +429,7 @@ export class MobileController {
         tableNumber,
         floor,
       },
-      this.wsExcludeOpts(monitoringSocketId),
+      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
     return { success: true };
   }
@@ -810,7 +807,7 @@ export class MobileController {
         reservationTime,
         reservationDate,
       },
-      this.wsExcludeOpts(monitoringSocketId),
+      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
     return {
       id: String(reservation?.id ?? ''),
@@ -850,7 +847,7 @@ export class MobileController {
         action: status === 'cancelled' ? 'cancelled' : 'updated',
         reservationId: id,
       },
-      this.wsExcludeOpts(monitoringSocketId),
+      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
     return { success: true };
   }
@@ -869,7 +866,7 @@ export class MobileController {
         action: 'cancelled',
         reservationId: id,
       },
-      this.wsExcludeOpts(monitoringSocketId),
+      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
     return { success: true };
   }
@@ -1011,7 +1008,7 @@ export class MobileController {
     ).trim();
     const performerName = performer.length > 0 ? performer : 'მობილური მენეჯერი';
     const posOrderId = Number(id);
-    this.registerMobileMutationEchoGuard(posOrderId);
+    this.mutationSupport.registerMobileMutationEchoGuard(posOrderId);
 
     const auditEvents = buildAuditEventsForOrderDiff({
       previousItems: previousItems.map((it) => ({
@@ -1036,14 +1033,14 @@ export class MobileController {
       this.gateway.broadcastUpdate(
         'audit_updated',
         { count: auditEvents.length, source: 'mobile', posOrderId },
-        this.wsExcludeOpts(monitoringSocketId),
+        this.mutationSupport.wsExcludeOpts(monitoringSocketId),
       );
     }
 
     this.gateway.broadcastUpdate(
       'order_updated',
       { posOrderId, source: 'mobile_manager' },
-      this.wsExcludeOpts(monitoringSocketId),
+      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
 
     const feeChanged = prevIncludeServiceFee !== includeServiceFee;
@@ -1078,12 +1075,12 @@ export class MobileController {
           posOrderIds: [posOrderId],
           source: 'mobile_manager',
         },
-        this.wsExcludeOpts(monitoringSocketId),
+        this.mutationSupport.wsExcludeOpts(monitoringSocketId),
       );
       this.gateway.broadcastUpdate(
         'table_updated',
         { source: 'mobile_manager' },
-        this.wsExcludeOpts(monitoringSocketId),
+        this.mutationSupport.wsExcludeOpts(monitoringSocketId),
       );
     }
 
@@ -1182,7 +1179,7 @@ export class MobileController {
     });
     if (!order) return { success: false, error: 'order_not_found' };
 
-    this.registerMobileMutationEchoGuard(posOrderId);
+    this.mutationSupport.registerMobileMutationEchoGuard(posOrderId);
 
     // Capture which tables this order held before we release them, so the
     // cancellation notification can say which table was freed.
@@ -1213,7 +1210,7 @@ export class MobileController {
         floor: order.floor,
         ...(tableLabel.length > 0 ? { tableLabel } : {}),
       },
-      this.wsExcludeOpts(monitoringSocketId),
+      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
 
     // Tell the Windows POS to mark this order as cancelled in Hive (NOT delete — cancel shows on both sides)
@@ -1248,7 +1245,7 @@ export class MobileController {
     let order: any;
     for (let attempt = 0; ; attempt++) {
       const candidateId = await this.allocateMobileOrderId();
-      this.registerMobileMutationEchoGuard(candidateId);
+      this.mutationSupport.registerMobileMutationEchoGuard(candidateId);
       try {
         order = await this.prisma.order.create({
           data: {
@@ -1287,7 +1284,7 @@ export class MobileController {
         customerName: body.customerName,
         pickupTime: body.pickupTime,
       },
-      this.wsExcludeOpts(monitoringSocketId),
+      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
 
     // Push to Windows POS in real-time so it appears immediately (durable outbox)
@@ -1364,9 +1361,9 @@ export class MobileController {
     for (let attempt = 0; ; attempt++) {
       const candidateId = await this.allocateMobileOrderId();
       // Suppress echo for the order and every reserved table.
-      this.registerMobileMutationEchoGuard(candidateId);
+      this.mutationSupport.registerMobileMutationEchoGuard(candidateId);
       for (const tableNumber of tableNumbers) {
-        this.registerMobileMutationEchoGuard(candidateId, { tableNumber, floor });
+        this.mutationSupport.registerMobileMutationEchoGuard(candidateId, { tableNumber, floor });
       }
       try {
         order = await this.prisma.order.create({
@@ -1422,12 +1419,12 @@ export class MobileController {
         tableLabel: tableNumbers.join(', '),
         walkIn: true,
       },
-      this.wsExcludeOpts(monitoringSocketId),
+      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
     this.gateway.broadcastUpdate(
       'table_updated',
       { source: 'mobile' },
-      this.wsExcludeOpts(monitoringSocketId),
+      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
 
     // Deliver to the Windows POS (durable outbox) so it appears on a table.
@@ -1474,14 +1471,14 @@ export class MobileController {
     });
     if (!order) return { success: false, error: 'order_not_found' };
 
-    this.registerMobileMutationEchoGuard(posOrderId);
+    this.mutationSupport.registerMobileMutationEchoGuard(posOrderId);
 
     await this.prisma.order.delete({ where: { id: order.id } });
 
     this.gateway.broadcastUpdate(
       'takeaway_deleted',
       { posOrderId },
-      this.wsExcludeOpts(monitoringSocketId),
+      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
 
     // Tell POS to fully delete this order from Hive (durable outbox)
@@ -1632,7 +1629,7 @@ export class MobileController {
   ) {
     return this.menu.saveCountedMenu(
       data,
-      this.wsExcludeOpts(monitoringSocketId),
+      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
   }
 
@@ -1644,32 +1641,8 @@ export class MobileController {
   ) {
     return this.menu.deleteCountedMenu(
       id,
-      this.wsExcludeOpts(monitoringSocketId),
+      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
-  }
-
-  /** Do not push WS notifications back to the REST client that initiated the action. */
-  private wsExcludeOpts(monitoringSocketId?: string):
-    | { excludeSocketIds: string[] }
-    | undefined {
-    const id = monitoringSocketId?.trim();
-    return id ? { excludeSocketIds: [id] } : undefined;
-  }
-
-  /** Block POS round-trip WS notifications after this mobile mutation. */
-  private registerMobileMutationEchoGuard(
-    posOrderId?: number,
-    options?: { tableNumber?: string; floor?: string },
-  ): void {
-    if (posOrderId !== undefined && Number.isFinite(posOrderId)) {
-      suppressPosEchoForOrder(posOrderId);
-    }
-    suppressPosAuditBroadcast();
-    const tableNumber = options?.tableNumber?.trim();
-    const floor = options?.floor?.trim() ?? 'first';
-    if (tableNumber && tableNumber.length > 0) {
-      suppressPosEchoForTable(tableNumber, floor);
-    }
   }
 
   /// Allocate a collision-safe posOrderId for a mobile-originated order.

@@ -14,12 +14,10 @@ const CHECKS = [
   { key: 'BOG_CLIENT_SECRET', required: false },
   { key: 'FRONTEND_URL', required: false },
   { key: 'API_URL', required: false },
-  // Website SUPER_ADMIN seed (optional). Each accepts either name —
-  // bootstrap.service.ts reads WEBSITE_ADMIN_* first, then falls back to SUPER_ADMIN_*.
-  // Phone + password must both be set for an admin to be seeded; email defaults if omitted.
-  { keys: ['WEBSITE_ADMIN_PHONE', 'SUPER_ADMIN_PHONE'], required: false },
-  { keys: ['WEBSITE_ADMIN_PASSWORD', 'SUPER_ADMIN_PASSWORD'], required: false },
-  { keys: ['WEBSITE_ADMIN_EMAIL', 'SUPER_ADMIN_EMAIL'], required: false },
+  // Website SUPER_ADMIN seed (optional).
+  { key: 'SUPER_ADMIN_PHONE', required: false },
+  { key: 'SUPER_ADMIN_PASSWORD', required: false },
+  { key: 'SUPER_ADMIN_EMAIL', required: false },
 ];
 
 let failed = false;

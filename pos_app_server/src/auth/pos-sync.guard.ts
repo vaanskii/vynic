@@ -8,7 +8,9 @@ import {
 /**
  * Protects POS → cloud push endpoints (`POST /sync/manager-data`, etc.).
  * Set POS_SYNC_API_KEY in the server environment; Windows POS sends X-POS-Sync-Key.
- * When the env var is unset, requests are allowed (dev only) with a one-time warning.
+ *
+ * Fails closed in production: if POS_SYNC_API_KEY is unset, requests are denied.
+ * In non-production, an unset key is allowed (dev only) with a one-time warning.
  */
 @Injectable()
 export class PosSyncGuard implements CanActivate {
@@ -24,9 +26,15 @@ export class PosSyncGuard implements CanActivate {
     const provided = (Array.isArray(raw) ? raw[0] : raw)?.trim();
 
     if (!expected) {
+      // Fail closed in production — never leave POS push endpoints open.
+      if (process.env.NODE_ENV === 'production') {
+        throw new UnauthorizedException(
+          'POS sync API key is not configured on the server',
+        );
+      }
       if (!PosSyncGuard.warnedMissingKey) {
         console.warn(
-          '[Sync] POS_SYNC_API_KEY is not set — POS push endpoints are unauthenticated.',
+          '[Sync] POS_SYNC_API_KEY is not set — POS push endpoints are unauthenticated (dev only).',
         );
         PosSyncGuard.warnedMissingKey = true;
       }

@@ -40,10 +40,8 @@ export class BootstrapService implements OnModuleInit {
     | { phone: string; email: string; password: string }
     | null {
     const phone =
-      this.config.get<string>('WEBSITE_ADMIN_PHONE') ||
       this.config.get<string>('SUPER_ADMIN_PHONE');
     const password =
-      this.config.get<string>('WEBSITE_ADMIN_PASSWORD') ||
       this.config.get<string>('SUPER_ADMIN_PASSWORD');
 
     if (!phone?.trim() || !password?.trim()) {
@@ -53,7 +51,6 @@ export class BootstrapService implements OnModuleInit {
     return {
       phone: phone.trim(),
       email: (
-        this.config.get<string>('WEBSITE_ADMIN_EMAIL') ||
         this.config.get<string>('SUPER_ADMIN_EMAIL') ||
         'admin@example.com'
       ).trim(),
@@ -69,7 +66,7 @@ export class BootstrapService implements OnModuleInit {
       });
       if (adminCount === 0) {
         this.logger.warn(
-          'No website SUPER_ADMIN — set WEBSITE_ADMIN_PHONE + WEBSITE_ADMIN_PASSWORD in .env',
+          'No website SUPER_ADMIN — set SUPER_ADMIN_PHONE + SUPER_ADMIN_PASSWORD in .env',
         );
       }
       return;

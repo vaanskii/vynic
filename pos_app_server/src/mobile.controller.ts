@@ -20,14 +20,10 @@ import { Order } from '@prisma/client';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 import { Roles } from './auth/roles.decorator';
-import {
-  ASSIGNABLE_STAFF_ROLES,
-  normalizeStaffRole,
-  StaffRole,
-  toClientRole,
-} from './staff/staff-role';
+import { StaffRole } from './staff/staff-role';
 import { MonitoringGateway } from './realtime/monitoring.gateway';
 import { PosCallbackClient } from './pos/pos-callback.client';
+import { MobileUsersService } from './mobile-users.service';
 import { buildAuditEventsForOrderDiff } from './pos/audit/audit-order-diff';
 import { normalizeAuditEventType } from './pos/audit/audit-event-type';
 import {
@@ -38,7 +34,6 @@ import {
 } from './pos/sync-echo-guard';
 import { PosOutboxService } from './pos/pos-outbox.service';
 import { v4 as uuidv4 } from 'uuid';
-import * as bcrypt from 'bcrypt';
 
 // ─── Lightweight response types ───────────────────────────────────────────────
 
@@ -214,6 +209,7 @@ export class MobileController {
     private readonly gateway: MonitoringGateway,
     private readonly posOutbox: PosOutboxService,
     private readonly posCallback: PosCallbackClient,
+    private readonly users: MobileUsersService,
   ) {}
 
   // GET /mobile/restaurant-settings
@@ -1720,90 +1716,14 @@ export class MobileController {
   // GET /mobile/users
   @Get('users')
   async getUsers() {
-    const pinsSetting = await (this.prisma as any).setting.findUnique({
-      where: { key: 'staff:plain_pins' },
-      select: { value: true },
-    });
-    let pinsMap: Record<string, string> = {};
-    if (pinsSetting?.value) {
-      try {
-        pinsMap = JSON.parse(pinsSetting.value) as Record<string, string>;
-      } catch {
-        pinsMap = {};
-      }
-    }
-    const staff = await this.prisma.staff.findMany({
-      orderBy: [{ role: 'asc' }, { username: 'asc' }],
-      select: {
-        id: true,
-        username: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-    return staff.map((u: any) => ({
-      ...u,
-      pinCode: pinsMap[u.username] ?? '',
-    }));
+    return this.users.getUsers();
   }
 
   @Post('users')
   async createUser(
     @Body() payload: { username?: string; pinCode?: string; role?: string },
   ) {
-    const username = (payload.username ?? '').trim();
-    const pinCode = (payload.pinCode ?? '').trim();
-    const role = normalizeStaffRole(payload.role);
-    if (!username || !pinCode) {
-      throw new BadRequestException('username and pinCode are required');
-    }
-    if (!ASSIGNABLE_STAFF_ROLES.includes(role)) {
-      throw new BadRequestException(
-        'role must be MANAGER, SUPERVISOR, or WAITER',
-      );
-    }
-    const existing = await (this.prisma as any).staff.findUnique({
-      where: { username },
-      select: { id: true },
-    });
-    if (existing) {
-      throw new BadRequestException('username already exists');
-    }
-    const pinHash = await bcrypt.hash(pinCode, 12);
-    const created = await (this.prisma as any).staff.create({
-      data: { username, pinHash, role, isActive: true },
-      select: { id: true, username: true, role: true, isActive: true, createdAt: true, updatedAt: true },
-    });
-    const pinsSetting = await (this.prisma as any).setting.findUnique({
-      where: { key: 'staff:plain_pins' },
-      select: { value: true },
-    });
-    let pinsMap: Record<string, string> = {};
-    if (pinsSetting?.value) {
-      try {
-        pinsMap = JSON.parse(pinsSetting.value) as Record<string, string>;
-      } catch {
-        pinsMap = {};
-      }
-    }
-    pinsMap[username] = pinCode;
-    await (this.prisma as any).setting.upsert({
-      where: { key: 'staff:plain_pins' },
-      update: { value: JSON.stringify(pinsMap) },
-      create: { key: 'staff:plain_pins', value: JSON.stringify(pinsMap) },
-    });
-    try {
-      await this.posCallback.createPosUser({
-        username,
-        pinCode,
-        role: toClientRole(role),
-      });
-    } catch (e) {
-      console.warn('[Mobile][Users] POS create user failed:', (e as Error).message);
-    }
-    return { ...created, pinCode };
+    return this.users.createUser(payload);
   }
 
   @Post('users/:username/pin')
@@ -1811,47 +1731,7 @@ export class MobileController {
     @Param('username') usernameParam: string,
     @Body() payload: { pinCode?: string },
   ) {
-    const username = (usernameParam ?? '').trim();
-    const pinCode = (payload.pinCode ?? '').trim();
-    if (!username || !pinCode) {
-      throw new BadRequestException('username and pinCode are required');
-    }
-    const existing = await (this.prisma as any).staff.findUnique({
-      where: { username },
-      select: { id: true, role: true, isActive: true, createdAt: true, updatedAt: true },
-    });
-    if (!existing) {
-      throw new NotFoundException('User not found');
-    }
-    const pinHash = await bcrypt.hash(pinCode, 12);
-    await (this.prisma as any).staff.update({
-      where: { username },
-      data: { pinHash },
-    });
-    const pinsSetting = await (this.prisma as any).setting.findUnique({
-      where: { key: 'staff:plain_pins' },
-      select: { value: true },
-    });
-    let pinsMap: Record<string, string> = {};
-    if (pinsSetting?.value) {
-      try {
-        pinsMap = JSON.parse(pinsSetting.value) as Record<string, string>;
-      } catch {
-        pinsMap = {};
-      }
-    }
-    pinsMap[username] = pinCode;
-    await (this.prisma as any).setting.upsert({
-      where: { key: 'staff:plain_pins' },
-      update: { value: JSON.stringify(pinsMap) },
-      create: { key: 'staff:plain_pins', value: JSON.stringify(pinsMap) },
-    });
-    try {
-      await this.posCallback.updatePosUserPin({ username, pinCode });
-    } catch (e) {
-      console.warn('[Mobile][Users] POS update pin failed:', (e as Error).message);
-    }
-    return { username, role: existing.role, isActive: existing.isActive, pinCode };
+    return this.users.updateUserPin(usernameParam, payload);
   }
 
   @Patch('users/:username')
@@ -1859,108 +1739,12 @@ export class MobileController {
     @Param('username') usernameParam: string,
     @Body() payload: { username?: string },
   ) {
-    const oldUsername = (usernameParam ?? '').trim();
-    const newUsername = (payload.username ?? '').trim();
-    if (!oldUsername || !newUsername) {
-      throw new BadRequestException('username is required');
-    }
-    if (oldUsername === newUsername) {
-      return { username: newUsername };
-    }
-    const existing = await (this.prisma as any).staff.findUnique({
-      where: { username: oldUsername },
-      select: { id: true, role: true, isActive: true, createdAt: true, updatedAt: true },
-    });
-    if (!existing) {
-      throw new NotFoundException('User not found');
-    }
-    const conflict = await (this.prisma as any).staff.findUnique({
-      where: { username: newUsername },
-      select: { id: true },
-    });
-    if (conflict) {
-      throw new BadRequestException('username already exists');
-    }
-    const updated = await (this.prisma as any).staff.update({
-      where: { username: oldUsername },
-      data: { username: newUsername },
-      select: { id: true, username: true, role: true, isActive: true, createdAt: true, updatedAt: true },
-    });
-    const pinsSetting = await (this.prisma as any).setting.findUnique({
-      where: { key: 'staff:plain_pins' },
-      select: { value: true },
-    });
-    let pinCode = '';
-    if (pinsSetting?.value) {
-      try {
-        const pinsMap = JSON.parse(pinsSetting.value) as Record<string, string>;
-        pinCode = pinsMap[oldUsername] ?? '';
-        if (pinCode) {
-          delete pinsMap[oldUsername];
-          pinsMap[newUsername] = pinCode;
-          await (this.prisma as any).setting.upsert({
-            where: { key: 'staff:plain_pins' },
-            update: { value: JSON.stringify(pinsMap) },
-            create: { key: 'staff:plain_pins', value: JSON.stringify(pinsMap) },
-          });
-        }
-      } catch {
-        // ignore malformed pins map
-      }
-    }
-    try {
-      await this.posCallback.renamePosUser({
-        oldUsername,
-        newUsername,
-      });
-    } catch (e) {
-      console.warn('[Mobile][Users] POS rename user failed:', (e as Error).message);
-    }
-    return { ...updated, pinCode };
+    return this.users.renameUser(usernameParam, payload);
   }
 
   @Delete('users/:username')
   async deleteUser(@Param('username') usernameParam: string) {
-    const username = (usernameParam ?? '').trim();
-    const existing = await (this.prisma as any).staff.findUnique({
-      where: { username },
-      select: { id: true, role: true },
-    });
-    if (!existing) {
-      throw new NotFoundException('User not found');
-    }
-    if (normalizeStaffRole(existing.role) === StaffRole.MANAGER) {
-      const managerCount = await (this.prisma as any).staff.count({
-        where: { role: { in: ['ADMIN', 'MANAGER'] }, isActive: true },
-      });
-      if (managerCount <= 1) {
-        throw new BadRequestException('Cannot delete the last manager');
-      }
-    }
-    await (this.prisma as any).staff.delete({ where: { username } });
-    const pinsSetting = await (this.prisma as any).setting.findUnique({
-      where: { key: 'staff:plain_pins' },
-      select: { value: true },
-    });
-    if (pinsSetting?.value) {
-      try {
-        const pinsMap = JSON.parse(pinsSetting.value) as Record<string, string>;
-        delete pinsMap[username];
-        await (this.prisma as any).setting.upsert({
-          where: { key: 'staff:plain_pins' },
-          update: { value: JSON.stringify(pinsMap) },
-          create: { key: 'staff:plain_pins', value: JSON.stringify(pinsMap) },
-        });
-      } catch {
-        // ignore malformed pins map
-      }
-    }
-    try {
-      await this.posCallback.deletePosUser({ username });
-    } catch (e) {
-      console.warn('[Mobile][Users] POS delete user failed:', (e as Error).message);
-    }
-    return { success: true };
+    return this.users.deleteUser(usernameParam);
   }
 
   // GET /mobile/audit?year=2026&month=4&status=OPEN

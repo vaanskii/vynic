@@ -18,7 +18,7 @@ Legend: `[ ]` todo · `[x]` done · 🔴 critical · 🟠 high · 🟡 medium
 - [ ] **C3. Plaintext PIN storage & return** — `mobile/services/mobile-users.service.ts`: stop persisting/returning `staff:plain_pins` (L31 read, L56 return, L100-104 persist). Migrate plaintext PINs out of DB; never sync or display PINs. *(Needs POS-side coordination — POS may currently expect plain PINs in sync.)*
 - [ ] **C4. Mobile login brute-force** — `auth/auth.controller.ts` (PIN-only login) + `auth/auth.service.ts` (checks every manager hash, issues 24h JWT, L33/L49): add rate-limiting + lockout + audit trail; consider device binding, shorter/revocable JWT.
 - [ ] **C5. POS callback URL SSRF / rogue-POS** — `pos/sync.controller.ts` persists attacker-suppliable `posCallbackUrl`/`posConnectionKey` (L321); `pos/pos-callback.client.ts` later `fetch()`es it (L53). Allowlist URL to LAN/private IP ranges; add device identity + signed callbacks + nonce/timestamp/idempotency.
-- [x] **C6. `/sync/diff` unauthenticated** — added `@UseGuards(JwtAuthGuard, RolesGuard)` + `@Roles(MANAGER)` (commit `386a572`). Used **JWT, not PosSyncGuard**: the route is mobile-facing (client `_get` sends JWT Bearer; the endpoint is currently unused, so no caller broke).
+- [x] **C6. `/sync/diff` unauthenticated** — added `@UseGuards(JwtAuthGuard, RolesGuard)` + `@Roles(MANAGER)` (commit `a6fa575`). Used **JWT, not PosSyncGuard**: the route is mobile-facing (client `_get` sends JWT Bearer; the endpoint is currently unused, so no caller broke).
 
 ---
 

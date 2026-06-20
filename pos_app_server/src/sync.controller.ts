@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 import { PosOutboxService } from './pos-outbox.service';
+import { PosCallbackClient } from './pos-callback.client';
 import { MonitoringGateway } from './monitoring.gateway';
 import { AuthService } from './auth/auth.service';
 import { PosSyncGuard } from './auth/pos-sync.guard';
@@ -200,15 +201,12 @@ export class SyncController implements OnModuleInit {
   private static readonly POS_CALLBACK_URL_KEY = 'pos:callback_url';
   private static readonly POS_CONNECTION_KEY_KEY = 'pos:connection_key';
 
-  // Cached in memory; persisted in DB so server restarts do not lose the URL.
-  private static posCallbackUrl: string | null = null;
-  private static posConnectionKey: string | null = null;
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly gateway: MonitoringGateway,
     @Inject(forwardRef(() => PosOutboxService))
     private readonly posOutbox: PosOutboxService,
+    private readonly posCallback: PosCallbackClient,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -225,13 +223,12 @@ export class SyncController implements OnModuleInit {
       }),
     ]);
     if (urlSetting?.value) {
-      SyncController.posCallbackUrl = String(urlSetting.value);
-      console.log(
-        `[Sync] Restored POS callback URL: ${SyncController.posCallbackUrl}`,
-      );
+      const url = String(urlSetting.value);
+      this.posCallback.setCallbackUrl(url);
+      console.log(`[Sync] Restored POS callback URL: ${url}`);
     }
     if (keySetting?.value) {
-      SyncController.posConnectionKey = String(keySetting.value);
+      this.posCallback.setConnectionKey(String(keySetting.value));
     }
   }
 
@@ -240,212 +237,30 @@ export class SyncController implements OnModuleInit {
     key?: string,
   ): Promise<void> {
     if (url && url.trim().length > 0) {
-      SyncController.posCallbackUrl = url.trim();
+      const trimmedUrl = url.trim();
+      this.posCallback.setCallbackUrl(trimmedUrl);
       await (this.prisma as any).setting.upsert({
         where: { key: SyncController.POS_CALLBACK_URL_KEY },
-        update: { value: SyncController.posCallbackUrl },
+        update: { value: trimmedUrl },
         create: {
           key: SyncController.POS_CALLBACK_URL_KEY,
-          value: SyncController.posCallbackUrl,
+          value: trimmedUrl,
         },
       });
-      console.log(
-        `[Sync] POS callback URL registered: ${SyncController.posCallbackUrl}`,
-      );
+      console.log(`[Sync] POS callback URL registered: ${trimmedUrl}`);
     }
     if (key && key.trim().length > 0) {
-      SyncController.posConnectionKey = key.trim();
+      const trimmedKey = key.trim();
+      this.posCallback.setConnectionKey(trimmedKey);
       await (this.prisma as any).setting.upsert({
         where: { key: SyncController.POS_CONNECTION_KEY_KEY },
-        update: { value: SyncController.posConnectionKey },
+        update: { value: trimmedKey },
         create: {
           key: SyncController.POS_CONNECTION_KEY_KEY,
-          value: SyncController.posConnectionKey,
+          value: trimmedKey,
         },
       });
     }
-  }
-
-  private static posCallbackHeaders(): Record<string, string> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (SyncController.posConnectionKey) {
-      headers['x-connection-key'] = SyncController.posConnectionKey;
-    }
-    return headers;
-  }
-
-  static hasPosCallbackUrl(): boolean {
-    return !!SyncController.posCallbackUrl;
-  }
-
-  /**
-   * Single low-level sender for cloud → POS callbacks. Used by the immediate
-   * path and by the durable outbox worker (sync-7). Never throws.
-   */
-  static async deliverToPos(
-    endpoint: string,
-    payload: unknown,
-    timeoutMs = 5000,
-  ): Promise<{ ok: boolean; noUrl?: boolean; status?: number; error?: string }> {
-    const url = SyncController.posCallbackUrl;
-    if (!url) return { ok: false, noUrl: true, error: 'no_pos_callback_url' };
-    try {
-      const res = await fetch(`${url}${endpoint}`, {
-        method: 'POST',
-        headers: SyncController.posCallbackHeaders(),
-        body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(timeoutMs),
-      });
-      if (!res.ok) {
-        const body = await res.text().catch(() => '');
-        return { ok: false, status: res.status, error: `pos_${res.status}: ${body}`.trim() };
-      }
-      return { ok: true, status: res.status };
-    } catch (e) {
-      return { ok: false, error: (e as Error).message };
-    }
-  }
-
-  /** Push a changed order back to the Windows POS via HTTP */
-  static async notifyPos(posOrderId: number, orderData: any): Promise<void> {
-    const result = await SyncController.deliverToPos('/mobile-order-update', {
-      posOrderId,
-      ...orderData,
-    });
-    if (!result.ok) {
-      console.warn(
-        `[Sync] POS callback failed for order ${posOrderId}:`,
-        result.error,
-      );
-    }
-  }
-
-  /** Tell the Windows POS to cancel (delete) an order from Hive */
-  static async notifyPosCancel(posOrderId: number): Promise<void> {
-    const result = await SyncController.deliverToPos('/mobile-order-cancel', {
-      posOrderId,
-    });
-    if (!result.ok) {
-      console.warn('[Sync] POS cancel callback failed:', result.error);
-    }
-  }
-
-  /** Tell the Windows POS to update the status of an order in Hive (without deleting) */
-  static async notifyPosStatusUpdate(posOrderId: number, status: string): Promise<void> {
-    const result = await SyncController.deliverToPos('/mobile-order-status', {
-      posOrderId,
-      status,
-    });
-    if (!result.ok) {
-      console.warn('[Sync] POS status update callback failed:', result.error);
-    }
-  }
-
-  /** Tell the Windows POS to create a new mobile-originated takeaway order in Hive */
-  static async notifyPosCreate(orderData: any): Promise<void> {
-    const result = await SyncController.deliverToPos('/mobile-order-create', orderData);
-    if (!result.ok) {
-      console.warn('[Sync] POS create callback failed:', result.error);
-    }
-  }
-
-  private static async requestPos(
-    path: string,
-    init: RequestInit = {},
-  ): Promise<any> {
-    const url = SyncController.posCallbackUrl;
-    if (!url) {
-      throw new Error(
-        'POS callback URL is not available — open Windows POS and wait for ManagerSync OK (posCallbackUrl).',
-      );
-    }
-    const res = await fetch(`${url}${path}`, {
-      ...init,
-      headers: {
-        ...SyncController.posCallbackHeaders(),
-        ...(init.headers ?? {}),
-      },
-      signal: AbortSignal.timeout(7000),
-    });
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`POS request failed ${res.status}: ${body}`);
-    }
-    const text = await res.text();
-    return text ? JSON.parse(text) : null;
-  }
-
-  static async fetchPosReservations(): Promise<any[]> {
-    const response = await SyncController.requestPos('/mobile-reservations', {
-      method: 'GET',
-    });
-    return Array.isArray(response?.data) ? response.data : [];
-  }
-
-  static async createPosReservation(payload: Record<string, unknown>): Promise<any> {
-    const response = await SyncController.requestPos('/mobile-reservation-create', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    return response?.reservation ?? null;
-  }
-
-  static async updatePosReservationStatus(
-    reservationId: string,
-    status: string,
-  ): Promise<void> {
-    await SyncController.requestPos('/mobile-reservation-status', {
-      method: 'POST',
-      body: JSON.stringify({ reservationId, status }),
-    });
-  }
-
-  static async deletePosReservation(reservationId: string): Promise<void> {
-    await SyncController.requestPos('/mobile-reservation-delete', {
-      method: 'POST',
-      body: JSON.stringify({ reservationId }),
-    });
-  }
-
-  static async createPosExpense(payload: Record<string, unknown>): Promise<any> {
-    const response = await SyncController.requestPos('/mobile-expense-create', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    return response?.expense ?? null;
-  }
-
-  static async createPosUser(payload: Record<string, unknown>): Promise<any> {
-    const response = await SyncController.requestPos('/mobile-user-create', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    return response?.user ?? null;
-  }
-
-  static async updatePosUserPin(payload: Record<string, unknown>): Promise<any> {
-    const response = await SyncController.requestPos('/mobile-user-update-pin', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    return response?.user ?? null;
-  }
-
-  static async renamePosUser(payload: Record<string, unknown>): Promise<any> {
-    const response = await SyncController.requestPos('/mobile-user-rename', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    return response?.user ?? null;
-  }
-
-  static async deletePosUser(payload: Record<string, unknown>): Promise<void> {
-    await SyncController.requestPos('/mobile-user-delete', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
   }
 
   /**
@@ -504,7 +319,7 @@ export class SyncController implements OnModuleInit {
 
     // Store POS callback URL for reverse-push (mobile → POS)
     await this.persistPosCallback(data.posCallbackUrl, data.posConnectionKey);
-    if (!SyncController.posCallbackUrl) {
+    if (!this.posCallback.hasCallbackUrl()) {
       console.warn(
         '[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.',
       );

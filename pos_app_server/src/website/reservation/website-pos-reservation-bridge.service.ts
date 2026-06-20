@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
-import { SyncController } from '../../sync.controller';
+import { PosCallbackClient } from '../../pos-callback.client';
 import { MonitoringGateway } from '../../monitoring.gateway';
 import { suppressPosEchoForReservation } from '../../sync-echo-guard';
 import { MenuService } from '../menu/menu.service';
@@ -45,6 +45,7 @@ export class WebsitePosReservationBridgeService {
     private readonly prisma: PrismaService,
     private readonly gateway: MonitoringGateway,
     private readonly menuService: MenuService,
+    private readonly posCallback: PosCallbackClient,
   ) {}
 
   encodeWebsiteTables(tables: WebsiteTableRow[]): number[] {
@@ -84,7 +85,7 @@ export class WebsitePosReservationBridgeService {
     }
 
     try {
-      const posRows = await SyncController.fetchPosReservations();
+      const posRows = await this.posCallback.fetchPosReservations();
       const posUnavailable = unavailableCodesFromPosReservations(
         posRows as Array<Record<string, unknown>>,
         dateKey,
@@ -106,7 +107,7 @@ export class WebsitePosReservationBridgeService {
     linkedPosIds: Set<string>,
   ): Promise<Array<Record<string, unknown>>> {
     try {
-      const posRows = await SyncController.fetchPosReservations();
+      const posRows = await this.posCallback.fetchPosReservations();
       return (posRows as Array<Record<string, unknown>>).filter((row) => {
         const id = String(row.id ?? '').trim();
         if (!id || linkedPosIds.has(id)) return false;
@@ -196,7 +197,7 @@ export class WebsitePosReservationBridgeService {
     const preOrderItems = await this.buildPreOrderItems(reservation.menuItems);
     const notes = this.buildPosNotes(reservation);
 
-    const posReservation = await SyncController.createPosReservation({
+    const posReservation = await this.posCallback.createPosReservation({
       customerName: reservation.customerName ?? 'Website Guest',
       customerPhone: reservation.customerPhone ?? '-',
       tableNumbers,
@@ -245,7 +246,7 @@ export class WebsitePosReservationBridgeService {
     const id = posReservationId.trim();
     if (!id) return;
     try {
-      await SyncController.updatePosReservationStatus(id, 'cancelled');
+      await this.posCallback.updatePosReservationStatus(id, 'cancelled');
       this.gateway.broadcastUpdate('data_updated', {
         type: 'reservations',
         action: 'cancelled',

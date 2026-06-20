@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { PosSyncGuard } from './auth/pos-sync.guard';
 import { MobileController } from './mobile.controller';
+import { PosCallbackModule } from './pos-callback.module';
 import { PosOutboxService } from './pos-outbox.service';
 import { PrismaModule } from './shared/prisma/prisma.module';
 import { BootstrapModule } from './shared/bootstrap/bootstrap.module';
@@ -21,6 +22,7 @@ import { WebsiteModule } from './website/website.module';
     BootstrapModule,
     AuthModule,
     RealtimeModule,
+    PosCallbackModule,
     WebsiteModule,
   ],
   controllers: [AppController, MobileController, SyncController],

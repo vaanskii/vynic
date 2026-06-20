@@ -5,7 +5,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
-import { SyncController } from './sync.controller';
+import { PosCallbackClient } from './pos-callback.client';
 import { suppressPosEchoForOrder } from './sync-echo-guard';
 
 export interface EnqueuePosCallback {
@@ -46,7 +46,10 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
   private timer: NodeJS.Timeout | null = null;
   private running = false;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly posCallback: PosCallbackClient,
+  ) {}
 
   onModuleInit(): void {
     this.timer = setInterval(() => {
@@ -138,7 +141,7 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
       }
 
       // If the POS URL isn't registered yet, don't burn attempts — just wait.
-      if (!SyncController.hasPosCallbackUrl()) {
+      if (!this.posCallback.hasCallbackUrl()) {
         return;
       }
 
@@ -161,7 +164,7 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
     attempts: number;
     maxAttempts: number;
   }): Promise<void> {
-    const result = await SyncController.deliverToPos(row.endpoint, row.payload);
+    const result = await this.posCallback.deliverToPos(row.endpoint, row.payload);
 
     if (result.ok) {
       await (this.prisma as any).posCallbackOutbox.update({
@@ -248,7 +251,7 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
       failed,
       oldestPendingAt: oldest?.createdAt?.toISOString() ?? null,
       lastError: lastErrored?.lastError ?? null,
-      posReachable: SyncController.hasPosCallbackUrl(),
+      posReachable: this.posCallback.hasCallbackUrl(),
     };
   }
 

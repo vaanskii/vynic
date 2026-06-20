@@ -27,7 +27,7 @@ import {
   toClientRole,
 } from './staff/staff-role';
 import { MonitoringGateway } from './monitoring.gateway';
-import { SyncController } from './sync.controller';
+import { PosCallbackClient } from './pos-callback.client';
 import { buildAuditEventsForOrderDiff } from './audit-order-diff';
 import { normalizeAuditEventType } from './audit-event-type';
 import {
@@ -213,6 +213,7 @@ export class MobileController {
     private readonly prisma: PrismaService,
     private readonly gateway: MonitoringGateway,
     private readonly posOutbox: PosOutboxService,
+    private readonly posCallback: PosCallbackClient,
   ) {}
 
   // GET /mobile/restaurant-settings
@@ -727,7 +728,7 @@ export class MobileController {
       },
     });
     try {
-      await SyncController.createPosExpense({
+      await this.posCallback.createPosExpense({
         id: created.id,
         description: created.description,
         category: created.category,
@@ -822,7 +823,7 @@ export class MobileController {
   ): Promise<ReservationResponseItem[]> {
     let rows: any[] = [];
     try {
-      rows = await SyncController.fetchPosReservations();
+      rows = await this.posCallback.fetchPosReservations();
     } catch (e) {
       console.warn('[Mobile][Reservations] fetch failed:', (e as Error).message);
       // Keep mobile UI functional even before POS callback URL is synced.
@@ -901,7 +902,7 @@ export class MobileController {
       ? payload.preOrderItems
       : [];
 
-    const reservation = await SyncController.createPosReservation({
+    const reservation = await this.posCallback.createPosReservation({
       customerName,
       customerPhone,
       tableNumbers,
@@ -962,7 +963,7 @@ export class MobileController {
     if (status === 'completed' || status === 'in-progress' || status === 'inprogress') {
       throw new BadRequestException('Moving reservation to table is not allowed from mobile');
     }
-    await SyncController.updatePosReservationStatus(id, status);
+    await this.posCallback.updatePosReservationStatus(id, status);
     this.gateway.broadcastUpdate(
       'data_updated',
       {
@@ -981,7 +982,7 @@ export class MobileController {
     @Param('id') id: string,
     @Headers('x-monitoring-socket-id') monitoringSocketId?: string,
   ): Promise<{ success: true }> {
-    await SyncController.deletePosReservation(id);
+    await this.posCallback.deletePosReservation(id);
     this.gateway.broadcastUpdate(
       'data_updated',
       {
@@ -1794,7 +1795,7 @@ export class MobileController {
       create: { key: 'staff:plain_pins', value: JSON.stringify(pinsMap) },
     });
     try {
-      await SyncController.createPosUser({
+      await this.posCallback.createPosUser({
         username,
         pinCode,
         role: toClientRole(role),
@@ -1846,7 +1847,7 @@ export class MobileController {
       create: { key: 'staff:plain_pins', value: JSON.stringify(pinsMap) },
     });
     try {
-      await SyncController.updatePosUserPin({ username, pinCode });
+      await this.posCallback.updatePosUserPin({ username, pinCode });
     } catch (e) {
       console.warn('[Mobile][Users] POS update pin failed:', (e as Error).message);
     }
@@ -1908,7 +1909,7 @@ export class MobileController {
       }
     }
     try {
-      await SyncController.renamePosUser({
+      await this.posCallback.renamePosUser({
         oldUsername,
         newUsername,
       });
@@ -1955,7 +1956,7 @@ export class MobileController {
       }
     }
     try {
-      await SyncController.deletePosUser({ username });
+      await this.posCallback.deletePosUser({ username });
     } catch (e) {
       console.warn('[Mobile][Users] POS delete user failed:', (e as Error).message);
     }

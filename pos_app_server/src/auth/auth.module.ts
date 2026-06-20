@@ -4,12 +4,13 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
+import { requireEnv } from '../shared/require-env';
 
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET ?? 'vynic-change-this-in-production',
+      secret: requireEnv('JWT_SECRET'),
       signOptions: { expiresIn: '24h' },
     }),
   ],

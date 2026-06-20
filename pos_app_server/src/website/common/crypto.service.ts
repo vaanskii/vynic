@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
+import { requireEnv } from '../../shared/require-env';
 
 @Injectable()
 export class CryptoService {
   private readonly algorithm = 'aes-256-gcm';
   private readonly secretKey: Buffer;
 
-  constructor(private config: ConfigService) {
-    // Use a key from environment variables - must be 32 bytes for aes-256
-    const key = this.config.get('COOKIE_ENCRYPTION_KEY') || 'your-32-char-secret-key-here!!!';
+  constructor() {
+    // Derive a 32-byte AES-256 key from the required cookie encryption secret.
+    const key = requireEnv('COOKIE_ENCRYPTION_KEY');
     this.secretKey = crypto.scryptSync(key, 'salt', 32);
   }
 

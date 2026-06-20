@@ -9,7 +9,7 @@ const CHECKS = [
   { key: 'JWT_SECRET', required: true },
   { key: 'POS_SYNC_API_KEY', required: true },
   { key: 'JWT_REFRESH_SECRET', required: false },
-  { key: 'COOKIE_ENCRYPTION_KEY', required: false },
+  { key: 'COOKIE_ENCRYPTION_KEY', required: true },
   { key: 'BOG_CLIENT_ID', required: false },
   { key: 'BOG_CLIENT_SECRET', required: false },
   { key: 'FRONTEND_URL', required: false },

@@ -13,6 +13,7 @@ import { MobileMenuService } from './mobile/services/mobile-menu.service';
 import { MobileMutationSupport } from './mobile/services/mobile-mutation-support.service';
 import { MobileReservationsService } from './mobile/services/mobile-reservations.service';
 import { MobileDashboardService } from './mobile/services/mobile-dashboard.service';
+import { MobileOrdersService } from './mobile/services/mobile-orders.service';
 import { PosCallbackModule } from './pos/pos-callback.module';
 import { PosOutboxService } from './pos/pos-outbox.service';
 import { PrismaModule } from './shared/prisma/prisma.module';
@@ -44,6 +45,7 @@ import { WebsiteModule } from './website/website.module';
     MobileMutationSupport,
     MobileReservationsService,
     MobileDashboardService,
+    MobileOrdersService,
   ],
 })
 export class AppModule {}

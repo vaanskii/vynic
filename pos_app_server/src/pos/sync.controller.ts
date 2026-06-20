@@ -15,6 +15,7 @@ import { PosCallbackClient } from './pos-callback.client';
 import { MonitoringGateway } from '../realtime/monitoring.gateway';
 import { AuthService } from '../auth/auth.service';
 import { PosSyncGuard } from '../auth/pos-sync.guard';
+import { StaffPinVault } from '../auth/staff-pin-vault.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -210,6 +211,7 @@ export class SyncController implements OnModuleInit {
     @Inject(forwardRef(() => PosOutboxService))
     private readonly posOutbox: PosOutboxService,
     private readonly posCallback: PosCallbackClient,
+    private readonly pinVault: StaffPinVault,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -789,20 +791,7 @@ export class SyncController implements OnModuleInit {
 
     // Sync Staff — username/role only unless pin explicitly provided (legacy).
     if (staff && staff.length > 0 && !realtimeOnly) {
-      const pinsSetting = await (this.prisma as any).setting.findUnique({
-        where: { key: 'staff:plain_pins' },
-      });
-      let plainPinsByUsername: Record<string, string> = {};
-      if (pinsSetting?.value) {
-        try {
-          plainPinsByUsername = JSON.parse(pinsSetting.value) as Record<
-            string,
-            string
-          >;
-        } catch {
-          plainPinsByUsername = {};
-        }
-      }
+      const plainPinsByUsername = await this.pinVault.read();
       let pinsMapChanged = false;
       const incomingUsernames = new Set<string>();
       for (const member of staff) {
@@ -846,14 +835,7 @@ export class SyncController implements OnModuleInit {
         }
       }
       if (pinsMapChanged) {
-        await (this.prisma as any).setting.upsert({
-          where: { key: 'staff:plain_pins' },
-          update: { value: JSON.stringify(plainPinsByUsername) },
-          create: {
-            key: 'staff:plain_pins',
-            value: JSON.stringify(plainPinsByUsername),
-          },
-        });
+        await this.pinVault.write(plainPinsByUsername);
       }
 
       // Reconcile deletions: if user disappeared from Windows POS list,

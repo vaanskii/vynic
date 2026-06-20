@@ -6,6 +6,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma.service';
 import { PosCallbackClient } from '../../pos/pos-callback.client';
+import { StaffPinVault } from '../../auth/staff-pin-vault.service';
 import {
   ASSIGNABLE_STAFF_ROLES,
   normalizeStaffRole,
@@ -25,21 +26,11 @@ export class MobileUsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly posCallback: PosCallbackClient,
+    private readonly pinVault: StaffPinVault,
   ) {}
 
   async getUsers() {
-    const pinsSetting = await (this.prisma as any).setting.findUnique({
-      where: { key: 'staff:plain_pins' },
-      select: { value: true },
-    });
-    let pinsMap: Record<string, string> = {};
-    if (pinsSetting?.value) {
-      try {
-        pinsMap = JSON.parse(pinsSetting.value) as Record<string, string>;
-      } catch {
-        pinsMap = {};
-      }
-    }
+    const pinsMap = await this.pinVault.read();
     const staff = await this.prisma.staff.findMany({
       orderBy: [{ role: 'asc' }, { username: 'asc' }],
       select: {
@@ -85,24 +76,9 @@ export class MobileUsersService {
       data: { username, pinHash, role, isActive: true },
       select: { id: true, username: true, role: true, isActive: true, createdAt: true, updatedAt: true },
     });
-    const pinsSetting = await (this.prisma as any).setting.findUnique({
-      where: { key: 'staff:plain_pins' },
-      select: { value: true },
-    });
-    let pinsMap: Record<string, string> = {};
-    if (pinsSetting?.value) {
-      try {
-        pinsMap = JSON.parse(pinsSetting.value) as Record<string, string>;
-      } catch {
-        pinsMap = {};
-      }
-    }
+    const pinsMap = await this.pinVault.read();
     pinsMap[username] = pinCode;
-    await (this.prisma as any).setting.upsert({
-      where: { key: 'staff:plain_pins' },
-      update: { value: JSON.stringify(pinsMap) },
-      create: { key: 'staff:plain_pins', value: JSON.stringify(pinsMap) },
-    });
+    await this.pinVault.write(pinsMap);
     try {
       await this.posCallback.createPosUser({
         username,
@@ -133,24 +109,9 @@ export class MobileUsersService {
       where: { username },
       data: { pinHash },
     });
-    const pinsSetting = await (this.prisma as any).setting.findUnique({
-      where: { key: 'staff:plain_pins' },
-      select: { value: true },
-    });
-    let pinsMap: Record<string, string> = {};
-    if (pinsSetting?.value) {
-      try {
-        pinsMap = JSON.parse(pinsSetting.value) as Record<string, string>;
-      } catch {
-        pinsMap = {};
-      }
-    }
+    const pinsMap = await this.pinVault.read();
     pinsMap[username] = pinCode;
-    await (this.prisma as any).setting.upsert({
-      where: { key: 'staff:plain_pins' },
-      update: { value: JSON.stringify(pinsMap) },
-      create: { key: 'staff:plain_pins', value: JSON.stringify(pinsMap) },
-    });
+    await this.pinVault.write(pinsMap);
     try {
       await this.posCallback.updatePosUserPin({ username, pinCode });
     } catch (e) {
@@ -187,27 +148,12 @@ export class MobileUsersService {
       data: { username: newUsername },
       select: { id: true, username: true, role: true, isActive: true, createdAt: true, updatedAt: true },
     });
-    const pinsSetting = await (this.prisma as any).setting.findUnique({
-      where: { key: 'staff:plain_pins' },
-      select: { value: true },
-    });
-    let pinCode = '';
-    if (pinsSetting?.value) {
-      try {
-        const pinsMap = JSON.parse(pinsSetting.value) as Record<string, string>;
-        pinCode = pinsMap[oldUsername] ?? '';
-        if (pinCode) {
-          delete pinsMap[oldUsername];
-          pinsMap[newUsername] = pinCode;
-          await (this.prisma as any).setting.upsert({
-            where: { key: 'staff:plain_pins' },
-            update: { value: JSON.stringify(pinsMap) },
-            create: { key: 'staff:plain_pins', value: JSON.stringify(pinsMap) },
-          });
-        }
-      } catch {
-        // ignore malformed pins map
-      }
+    const pinsMap = await this.pinVault.read();
+    let pinCode = pinsMap[oldUsername] ?? '';
+    if (pinCode) {
+      delete pinsMap[oldUsername];
+      pinsMap[newUsername] = pinCode;
+      await this.pinVault.write(pinsMap);
     }
     try {
       await this.posCallback.renamePosUser({
@@ -238,23 +184,9 @@ export class MobileUsersService {
       }
     }
     await (this.prisma as any).staff.delete({ where: { username } });
-    const pinsSetting = await (this.prisma as any).setting.findUnique({
-      where: { key: 'staff:plain_pins' },
-      select: { value: true },
-    });
-    if (pinsSetting?.value) {
-      try {
-        const pinsMap = JSON.parse(pinsSetting.value) as Record<string, string>;
-        delete pinsMap[username];
-        await (this.prisma as any).setting.upsert({
-          where: { key: 'staff:plain_pins' },
-          update: { value: JSON.stringify(pinsMap) },
-          create: { key: 'staff:plain_pins', value: JSON.stringify(pinsMap) },
-        });
-      } catch {
-        // ignore malformed pins map
-      }
-    }
+    const pinsMap = await this.pinVault.read();
+    delete pinsMap[username];
+    await this.pinVault.write(pinsMap);
     try {
       await this.posCallback.deletePosUser({ username });
     } catch (e) {

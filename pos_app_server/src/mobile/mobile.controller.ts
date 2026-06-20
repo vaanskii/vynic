@@ -26,6 +26,7 @@ import { PosCallbackClient } from '../pos/pos-callback.client';
 import { MobileUsersService } from './services/mobile-users.service';
 import { MobileReportsService } from './services/mobile-reports.service';
 import { MobileDevicesService } from './services/mobile-devices.service';
+import { MobileMenuService } from './services/mobile-menu.service';
 import {
   businessDateWhere,
   nextDay,
@@ -45,7 +46,6 @@ import {
   suppressPosEchoForTable,
 } from '../pos/sync-echo-guard';
 import { PosOutboxService } from '../pos/pos-outbox.service';
-import { v4 as uuidv4 } from 'uuid';
 
 // ─── Lightweight response types ───────────────────────────────────────────────
 
@@ -148,6 +148,7 @@ export class MobileController {
     private readonly users: MobileUsersService,
     private readonly reports: MobileReportsService,
     private readonly devices: MobileDevicesService,
+    private readonly menu: MobileMenuService,
   ) {}
 
   // GET /mobile/restaurant-settings
@@ -1544,55 +1545,7 @@ export class MobileController {
   // GET /mobile/menu
   @Get('menu')
   async getMenu() {
-    const cats = await (this.prisma as any).menuCategory.findMany({
-      include: {
-        items: {
-          include: { variants: true },
-          orderBy: { sortOrder: 'asc' },
-        },
-        subcategories: {
-          include: {
-            items: {
-              include: { variants: true },
-              orderBy: { sortOrder: 'asc' },
-            },
-          },
-          orderBy: { sortOrder: 'asc' },
-        },
-      },
-      orderBy: { sortOrder: 'asc' },
-    });
-    return cats.map((cat: any) => ({
-      slug: cat.slug,
-      nameEn: cat.nameEn,
-      nameKa: cat.nameKa,
-      sendToKitchen: cat.sendToKitchen,
-      items: (cat.items ?? []).map((it: any) => ({
-        nameEn: it.nameEn,
-        nameKa: it.nameKa,
-        price: Math.round(it.price * 100) / 100,
-        sendToKitchen: it.sendToKitchen,
-        variants: (it.variants ?? []).map((v: any) => ({
-          size: v.size,
-          price: v.price,
-        })),
-      })),
-      subcategories: (cat.subcategories ?? []).map((sub: any) => ({
-        slug: sub.slug,
-        nameEn: sub.nameEn,
-        nameKa: sub.nameKa,
-        items: (sub.items ?? []).map((it: any) => ({
-          nameEn: it.nameEn,
-          nameKa: it.nameKa,
-          price: Math.round(it.price * 100) / 100,
-          sendToKitchen: it.sendToKitchen,
-          variants: (it.variants ?? []).map((v: any) => ({
-            size: v.size,
-            price: v.price,
-          })),
-        })),
-      })),
-    }));
+    return this.menu.getMenu();
   }
 
   // GET /mobile/users
@@ -1668,43 +1621,7 @@ export class MobileController {
   // GET /mobile/counted-menus
   @Get('counted-menus')
   async getCountedMenus() {
-    const feeSettings = await readRestaurantServiceFeeSettings(this.prisma);
-    const drafts = await (this.prisma as any).quickOrderDraft.findMany({
-      include: { items: true },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    return drafts.map((d: any) => {
-      const subtotal = Number(d.subtotal);
-      const includeServiceFee =
-        feeSettings.serviceFeeAvailable && d.includeServiceFee === true;
-      const serviceFeeRate = includeServiceFee
-        ? Number(d.serviceFeeRate ?? feeSettings.serviceFeePercent / 100)
-        : 0;
-      const serviceFeeAmount = includeServiceFee
-        ? Math.round(subtotal * serviceFeeRate * 100) / 100
-        : 0;
-      const total = Math.round((subtotal + serviceFeeAmount) * 100) / 100;
-
-      return {
-        id: d.draftId,
-        displayName: d.displayName,
-        subtotal,
-        serviceFeeAmount,
-        total,
-        includeServiceFee,
-        serviceFeeRate,
-        createdAt: d.createdAt.toISOString(),
-        createdBy: d.createdBy,
-        items: d.items.map((it: any) => ({
-          itemName: it.name,
-          quantity: it.quantity,
-          unitPrice: it.price,
-          total: it.quantity * it.price,
-          comment: it.comment,
-        })),
-      };
-    });
+    return this.menu.getCountedMenus();
   }
 
   // POST /mobile/counted-menu/save
@@ -1713,48 +1630,10 @@ export class MobileController {
     @Headers('x-monitoring-socket-id') monitoringSocketId: string | undefined,
     @Body() data: any,
   ) {
-    const { displayName, items, subtotal, includeServiceFee, createdBy } = data;
-    const feeSettings = await readRestaurantServiceFeeSettings(this.prisma);
-    const shouldInclude =
-      feeSettings.serviceFeeAvailable && includeServiceFee === true;
-    const serviceFeeRate = feeSettings.serviceFeeAvailable
-      ? feeSettings.serviceFeePercent / 100
-      : 0;
-    const serviceFeeAmount = shouldInclude ? subtotal * serviceFeeRate : 0;
-    const total = subtotal + serviceFeeAmount;
-
-    const dbDraft = await (this.prisma as any).quickOrderDraft.create({
-      data: {
-        draftId: uuidv4(),
-        displayName,
-        subtotal,
-        serviceFeeAmount,
-        total,
-        includeServiceFee: shouldInclude,
-        serviceFeeRate,
-        createdBy,
-        createdAt: new Date(),
-      },
-    });
-
-    for (const item of items) {
-      await (this.prisma as any).quickOrderDraftItem.create({
-        data: {
-          draftId: dbDraft.id,
-          name: item.itemName,
-          quantity: item.quantity,
-          price: item.unitPrice,
-          comment: item.comment,
-        },
-      });
-    }
-
-    this.gateway.broadcastUpdate(
-      'data_updated',
-      { type: 'all' },
+    return this.menu.saveCountedMenu(
+      data,
       this.wsExcludeOpts(monitoringSocketId),
     );
-    return { success: true, id: dbDraft.draftId };
   }
 
   // POST /mobile/counted-menu/:id/delete
@@ -1763,15 +1642,10 @@ export class MobileController {
     @Param('id') id: string,
     @Headers('x-monitoring-socket-id') monitoringSocketId?: string,
   ) {
-    await (this.prisma as any).quickOrderDraft.delete({
-      where: { draftId: id },
-    });
-    this.gateway.broadcastUpdate(
-      'data_updated',
-      { type: 'all' },
+    return this.menu.deleteCountedMenu(
+      id,
       this.wsExcludeOpts(monitoringSocketId),
     );
-    return { success: true };
   }
 
   /** Do not push WS notifications back to the REST client that initiated the action. */

@@ -9,13 +9,13 @@ import {
   Inject,
   forwardRef,
 } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
+import { PrismaService } from '../prisma.service';
 import { PosOutboxService } from './pos-outbox.service';
 import { PosCallbackClient } from './pos-callback.client';
-import { MonitoringGateway } from './realtime/monitoring.gateway';
-import { AuthService } from './auth/auth.service';
-import { PosSyncGuard } from './auth/pos-sync.guard';
-import { normalizeAuditEventType } from './audit-event-type';
+import { MonitoringGateway } from '../realtime/monitoring.gateway';
+import { AuthService } from '../auth/auth.service';
+import { PosSyncGuard } from '../auth/pos-sync.guard';
+import { normalizeAuditEventType } from './audit/audit-event-type';
 import {
   filterSuppressedOrderIds,
   isPosAuditBroadcastSuppressed,
@@ -24,7 +24,7 @@ import {
   isTableEchoSuppressed,
 } from './sync-echo-guard';
 import * as bcrypt from 'bcrypt';
-import { normalizeStaffRole } from './staff/staff-role';
+import { normalizeStaffRole } from '../staff/staff-role';
 
 interface TableSync {
   tableNumber: string;

@@ -27,16 +27,16 @@ import {
   toClientRole,
 } from './staff/staff-role';
 import { MonitoringGateway } from './realtime/monitoring.gateway';
-import { PosCallbackClient } from './pos-callback.client';
-import { buildAuditEventsForOrderDiff } from './audit-order-diff';
-import { normalizeAuditEventType } from './audit-event-type';
+import { PosCallbackClient } from './pos/pos-callback.client';
+import { buildAuditEventsForOrderDiff } from './pos/audit/audit-order-diff';
+import { normalizeAuditEventType } from './pos/audit/audit-event-type';
 import {
   suppressPosAuditBroadcast,
   suppressPosEchoForOrder,
   suppressPosEchoForReservation,
   suppressPosEchoForTable,
-} from './sync-echo-guard';
-import { PosOutboxService } from './pos-outbox.service';
+} from './pos/sync-echo-guard';
+import { PosOutboxService } from './pos/pos-outbox.service';
 import { v4 as uuidv4 } from 'uuid';
 import * as bcrypt from 'bcrypt';
 
@@ -1238,7 +1238,7 @@ export class MobileController {
     tableNumbers: string[];
     floor: string;
     openedByName: string;
-    events: import('./audit-order-diff').AuditEventInput[];
+    events: import('./pos/audit/audit-order-diff').AuditEventInput[];
   }) {
     const { posOrderId, tableNumbers, floor, openedByName, events } = params;
     if (events.length === 0) return;

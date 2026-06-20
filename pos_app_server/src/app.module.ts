@@ -6,11 +6,11 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { PosSyncGuard } from './auth/pos-sync.guard';
 import { MobileController } from './mobile.controller';
-import { PosCallbackModule } from './pos-callback.module';
-import { PosOutboxService } from './pos-outbox.service';
+import { PosCallbackModule } from './pos/pos-callback.module';
+import { PosOutboxService } from './pos/pos-outbox.service';
 import { PrismaModule } from './shared/prisma/prisma.module';
 import { BootstrapModule } from './shared/bootstrap/bootstrap.module';
-import { SyncController } from './sync.controller';
+import { SyncController } from './pos/sync.controller';
 import { RealtimeModule } from './realtime/realtime.module';
 import { WebsiteModule } from './website/website.module';
 

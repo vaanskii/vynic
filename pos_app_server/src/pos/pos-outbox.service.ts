@@ -4,7 +4,7 @@ import {
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
+import { PrismaService } from '../prisma.service';
 import { PosCallbackClient } from './pos-callback.client';
 import { suppressPosEchoForOrder } from './sync-echo-guard';
 

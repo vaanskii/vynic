@@ -48,3 +48,8 @@ Outbox pattern · Prisma-first data access · global `ValidationPipe` (whitelist
 ## Recommended execution order
 `C6` (quick win) → `C1` → `C2` → `C4` → `C3` → `C5` → `A2` + `A3` → `A4` → `A1` → `M1` → `M3` → `M5` → `M2` → `M4` → `A5`.
 Each step: read+verify code → minimal change → build → commit → stop for review.
+
+---
+
+## Added during review
+- [ ] **A6. Website reservation availability depends on a live POS fetch** — `WebsitePosReservationBridgeService` HTTP-fetches `posCallbackUrl` (`GET /mobile-reservations`) on every availability check. When the POS app is **offline**, the fetch fails (logs `POS reservations fetch/unavailable ... fetch failed`) and the website can't see POS-side bookings → risk of double-booking a POS-reserved table. Fix: **mirror POS reservations into PostgreSQL** (like orders) so the website reads reservation state from the DB, resilient to the POS being offline; treat the live fetch as a best-effort refresh, not the source of truth. Relates to A3/A4.

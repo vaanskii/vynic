@@ -25,6 +25,7 @@ import { MonitoringGateway } from '../realtime/monitoring.gateway';
 import { PosCallbackClient } from '../pos/pos-callback.client';
 import { MobileUsersService } from './services/mobile-users.service';
 import { MobileReportsService } from './services/mobile-reports.service';
+import { MobileDevicesService } from './services/mobile-devices.service';
 import {
   businessDateWhere,
   nextDay,
@@ -146,12 +147,13 @@ export class MobileController {
     private readonly posCallback: PosCallbackClient,
     private readonly users: MobileUsersService,
     private readonly reports: MobileReportsService,
+    private readonly devices: MobileDevicesService,
   ) {}
 
   // GET /mobile/restaurant-settings
   @Get('restaurant-settings')
   async getRestaurantSettings() {
-    return readRestaurantServiceFeeSettings(this.prisma);
+    return this.devices.getRestaurantSettings();
   }
 
   /** Missed manager notifications while the app was backgrounded (persisted on server). */
@@ -160,38 +162,7 @@ export class MobileController {
     @Req() req: { user: { username: string } },
     @Query('since') since?: string,
   ) {
-    const username = req.user.username;
-    let sinceDate: Date;
-    if (since && since.trim().length > 0) {
-      sinceDate = new Date(since.trim());
-      if (Number.isNaN(sinceDate.getTime())) {
-        throw new BadRequestException('Invalid since timestamp');
-      }
-    } else {
-      sinceDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    }
-
-    const rows = await (this.prisma as any).managerNotificationDelivery.findMany({
-      where: {
-        staffUsername: username,
-        notification: { createdAt: { gte: sinceDate } },
-      },
-      include: { notification: true },
-      orderBy: { notification: { createdAt: 'asc' } },
-      take: 100,
-    });
-
-    return rows.map((row: any) => {
-      const n = row.notification;
-      return {
-        id: n.id as string,
-        type: n.wsType as string,
-        title: n.title as string,
-        body: n.body as string,
-        envelope: n.envelope,
-        createdAt: (n.createdAt as Date).toISOString(),
-      };
-    });
+    return this.devices.getNotifications(req.user.username, since);
   }
 
   @Post('push/register')
@@ -199,24 +170,7 @@ export class MobileController {
     @Req() req: { user: { username: string } },
     @Body() payload: { fcmToken?: string; platform?: string },
   ) {
-    const staffUsername = req.user.username;
-    const fcmToken = (payload.fcmToken ?? '').trim();
-    if (!fcmToken) {
-      throw new BadRequestException('fcmToken is required');
-    }
-    await (this.prisma as any).pushDevice.upsert({
-      where: { fcmToken },
-      update: {
-        staffUsername,
-        platform: (payload.platform ?? '').trim() || null,
-      },
-      create: {
-        staffUsername,
-        fcmToken,
-        platform: (payload.platform ?? '').trim() || null,
-      },
-    });
-    return { success: true };
+    return this.devices.registerPushDevice(req.user.username, payload);
   }
 
   @Post('push/unregister')
@@ -224,15 +178,7 @@ export class MobileController {
     @Req() req: { user: { username: string } },
     @Body() payload: { fcmToken?: string },
   ) {
-    const staffUsername = req.user.username;
-    const fcmToken = (payload.fcmToken ?? '').trim();
-    if (!fcmToken) {
-      throw new BadRequestException('fcmToken is required');
-    }
-    await (this.prisma as any).pushDevice.deleteMany({
-      where: { staffUsername, fcmToken },
-    });
-    return { success: true };
+    return this.devices.unregisterPushDevice(req.user.username, payload);
   }
 
   // GET /mobile/dashboard

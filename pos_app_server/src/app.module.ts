@@ -1,28 +1,33 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PrismaService } from './prisma.service';
-import { MobileController } from './mobile.controller';
-import { SyncController } from './sync.controller';
-import { MonitoringGateway } from './monitoring.gateway';
 import { AuthModule } from './auth/auth.module';
-import { PresenceService } from './presence.service';
-import { HybridNotificationService } from './hybrid-notification.service';
 import { PosSyncGuard } from './auth/pos-sync.guard';
+import { MobileController } from './mobile.controller';
 import { PosOutboxService } from './pos-outbox.service';
+import { PrismaModule } from './shared/prisma/prisma.module';
+import { BootstrapModule } from './shared/bootstrap/bootstrap.module';
+import { SyncController } from './sync.controller';
+import { RealtimeModule } from './shared/realtime/realtime.module';
+import { WebsiteModule } from './website/website.module';
 
 @Module({
-  imports: [AuthModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
+    PrismaModule,
+    BootstrapModule,
+    AuthModule,
+    RealtimeModule,
+    WebsiteModule,
+  ],
   controllers: [AppController, MobileController, SyncController],
   providers: [
     AppService,
-    PrismaService,
-    PresenceService,
-    HybridNotificationService,
-    MonitoringGateway,
     PosSyncGuard,
     PosOutboxService,
   ],
 })
 export class AppModule {}
-

@@ -1,0 +1,768 @@
+[
+  {
+    "slug": "cold-dishes",
+    "translations": {
+      "en": {"name": "Cold Dishes"},
+      "ka": {"name": "ცივი კერძები"}
+    },
+    "items": [
+      {
+        "price": 1,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Salad"},
+          "ka": {"name": " სალათი"}
+        }
+      },
+      {
+        "price": 10,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Salad with Mayonnaise"},
+          "ka": {"name": "სალათი მაიონეზით"}
+        }
+      },
+      {
+        "price": 12,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Salad with walnuts"},
+          "ka": {"name": "სალათი ნიგვზით"}
+        }
+      },
+      {
+        "price": 12,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Chicken Salad"},
+          "ka": {"name": "ქათმის სალათი"}
+        }
+      },
+      {
+        "price": 14,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Greek salad"},
+          "ka": {"name": "ბერძნული სალათი"}
+        }
+      },
+      {
+        "price": 12,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Green salad"},
+          "ka": {"name": "მწვანე სალათი"}
+        }
+      },
+      {
+        "price": 18,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Caesar Salad with Chicken"},
+          "ka": {"name": "ცეზარის სალათი ქათმით"}
+        }
+      },
+      {
+        "price": 25,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Ceasar Salad with Crevettes"},
+          "ka": {"name": "ცეზარის სალათი კრევეტებით"}
+        }
+      },
+      {
+        "price": 10,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Eggplant Walnut Rolls"},
+          "ka": {"name": "ბადრიჯანი ნიგვზით"}
+        }
+      },
+      {
+        "price": 18,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Phkali Board"},
+          "ka": {"name": "ფხალეულის დაფა"}
+        }
+      },
+      {
+        "price": 12,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Mushroom Salad"},
+          "ka": {"name": "სოკოს სალათი"}
+        }
+      },
+      {
+        "price": 24,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Chef’s Special Fruit Salad"},
+          "ka": {"name": "შეფის საფირმო ხილის სალათი"}
+        }
+      },
+      {
+        "price": 15,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Assorted Vegetables"},
+          "ka": {"name": "ბოსტნეულის ასორტი"}
+        }
+      },
+      {
+        "price": 12,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Pickle board"},
+          "ka": {"name": "მწნილის დაფა"}
+        }
+      },
+      {
+        "price": 15,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Cheese board"},
+          "ka": {"name": "ყველის დაფა"}
+        }
+      },
+      {
+        "price": 12,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Cheese Sulguni"},
+          "ka": {"name": "ყველი სულგუნი"}
+        }
+      },
+      {
+        "price": 10,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Cheese Imeretian"},
+          "ka": {"name": "ყველი იმერული"}
+        }
+      },
+      {
+        "price": 15,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Satsivi"},
+          "ka": {"name": "საცივი"}
+        }
+      }
+    ]
+  },
+  {
+    "slug": "hot-dishes",
+    "translations": {
+      "en": {"name": "Hot Dishes"},
+      "ka": {"name": "ცხელი კერძები"}
+    },
+    "items": [
+      {
+        "price": 15,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Ostri"},
+          "ka": {"name": "ოსტრი"}
+        }
+      },
+      {
+        "price": 20,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Chakondrili"},
+          "ka": {"name": "ჩაქონდრილი"}
+        }
+      },
+      {
+        "price": 22,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Megrelian Kharcho"},
+          "ka": {"name": "მეგრული ხარშო"}
+        }
+      },
+      {
+        "price": 18,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Chanakhi"},
+          "ka": {"name": "ჩანახი"}
+        }
+      },
+      {
+        "price": 25,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Shkmeruli"},
+          "ka": {"name": "შქმერული"}
+        }
+      },
+      {
+        "price": 14,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Stewed Mushrooms"},
+          "ka": {"name": "სოკოს ჩაშუშული"}
+        }
+      },
+      {
+        "price": 12,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Mushroom Ojakhuri"},
+          "ka": {"name": "ოჯახური სოკოთი"}
+        }
+      },
+      {
+        "price": 14,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Chicken Ojakhuri"},
+          "ka": {"name": "ოჯახური ქათმით"}
+        }
+      },
+      {
+        "price": 16,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Pork Ojakhuri"},
+          "ka": {"name": "ოჯახური ღორის ხორცით"}
+        }
+      },
+      {
+        "price": 10,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Potatoes \"Glekhurad\" (Georgian Style)"},
+          "ka": {"name": "კარტოფილი გლეხურად"}
+        }
+      },
+      {
+        "price": 8,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "French Fries"},
+          "ka": {"name": "კარტოფილი ფრი"}
+        }
+      },
+      {
+        "price": 10,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Mexican-style Potatoes"},
+          "ka": {"name": "კარტოფილი მექსიკურად"}
+        }
+      },
+      {
+        "price": 14,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Chakhohbili"},
+          "ka": {"name": "ჩახოხბილი"}
+        }
+      },
+      {
+        "price": 22,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Veal Ribs with Adjika"},
+          "ka": {"name": "ხბოს ნეკნი აჯიკით"}
+        }
+      },
+      {
+        "price": 22,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Madambovari (Potato and Meat Casserole)"},
+          "ka": {"name": "მადამბოვარი"}
+        }
+      },
+      {
+        "price": 25,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Khashlama Kakhetian-Style"},
+          "ka": {"name": "ხაშლამა კახურად"}
+        }
+      },
+      {
+        "price": 14,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Beans with Leeks and Walnuts"},
+          "ka": {"name": "ლობიო პრასით და ნიგვზით"}
+        }
+      },
+      {
+        "price": 12,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Sinori with Nadughi (ricotta-style Georgian cheese curds)"},
+          "ka": {"name": "სინორი ნადუღით"}
+        }
+      },
+      {
+        "price": 14,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Sinori with with Walnuts and Honey"},
+          "ka": {"name": "სინორი ნიგვზით და თაფლით"}
+        }
+      },
+      {
+        "price": 5,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Ghomi"},
+          "ka": {"name": "ღომი"}
+        }
+      },
+      {
+        "price": 14,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Spaghetti Carbonara with Mushrooms"},
+          "ka": {"name": "კარბონარა სოკოთი"}
+        }
+      },
+      {
+        "price": 18,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Spaghetti Carbonara with Chicken"},
+          "ka": {"name": "კარბონარა ქათმის ხორცით"}
+        }
+      },
+      {
+        "price": 20,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Spaghetti Carbonara with "},
+          "ka": {"name": "კარბონარა საქონლის ფარშით"}
+        }
+      },
+      {
+        "price": 14,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Mushrooms with Sulguni on a Griddle"},
+          "ka": {"name": "სოკო სულგუნით კეცზე"}
+        }
+      },
+      {
+        "price": 10,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Mushrooms on a Griddle"},
+          "ka": {"name": "სოკო კეცზე"}
+        }
+      },
+      {
+        "price": 18,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Spaghetti Carbonara with Chicken"},
+          "ka": {"name": "კარბონარა ქათმის ხორცით"}
+        }
+      }
+    ]
+  },
+  {
+    "slug": "sauces",
+    "translations": {
+      "en": {"name": "Sauces"},
+      "ka": {"name": "სოუსები"}
+    },
+    "items": [
+      {
+        "price": 10,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Bazhe"},
+          "ka": {"name": "ბაჟე"}
+        }
+      },
+      {
+        "price": 2,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Sauce"},
+          "ka": {"name": "საწებელი"}
+        }
+      },
+      {
+        "price": 2,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Tkemali"},
+          "ka": {"name": "ტკემალი"}
+        }
+      },
+      {
+        "price": 4,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Spicy Sweet Sauce"},
+          "ka": {"name": "ტკბილ მწარე საწებელი"}
+        }
+      },
+      {
+        "price": 3,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Sour Cream"},
+          "ka": {"name": "არაჟანი"}
+        }
+      },
+      {
+        "price": 3,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Mayonnaise"},
+          "ka": {"name": "მაიონეზი"}
+        }
+      },
+      {
+        "price": 2,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Ketchup"},
+          "ka": {"name": "კეტჩუპი"}
+        }
+      }
+    ]
+  },
+  {
+    "slug": "soups",
+    "translations": {
+      "en": {"name": "Soups"},
+      "ka": {"name": "წვნიანები"}
+    },
+    "items": [
+      {
+        "price": 15,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Khashlama"},
+          "ka": {"name": "ხაშლამა"}
+        }
+      },
+      {
+        "price": 15,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Supkharcho"},
+          "ka": {"name": "სუპხარჩო"}
+        }
+      },
+      {
+        "price": 15,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Chikhirtma"},
+          "ka": {"name": "ჩიხირთმა"}
+        }
+      },
+       {
+        "price": 12,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Chicken Soup"},
+          "ka": {"name": "ქათმის სუპი"}
+        }
+      },
+      {
+        "price": 12,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Mushroom Soup"},
+          "ka": {"name": "სოკოს სუპი"}
+        }
+      },
+      {
+        "price": 12,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Mushroom Cream Soup"},
+          "ka": {"name": "სოკოს კრემსუპი"}
+        }
+      },
+      {
+        "price": 12,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Courgette Cream Soup"},
+          "ka": {"name": "ყაბაყის კრემსუპი"}
+        }
+      },
+      {
+        "price": 12,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Pumpkin Cream Soup"},
+          "ka": {"name": "გოგრის კრემსუპი"}
+        }
+      }
+    ]
+  },
+  {
+    "slug": "bakery",
+    "translations": {
+      "en": {"name": "Bakery"},
+      "ka": {"name": "ცომეული"}
+    },
+    "items": [
+      {
+        "price": 16,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Imeretian Khachapuri"},
+          "ka": {"name": "იმერული ხაჭაპური"}
+        }
+      },
+      {
+        "price": 20,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Megrelian Khachapuri"},
+          "ka": {"name": "მეგრული ხაჭაპური"}
+        }
+      },
+      {
+        "price": 22,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Royal Khachapuri"},
+          "ka": {"name": "სამეფო ხაჭაპური"}
+        }
+      },
+      {
+        "price": 15,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Acharian Khachapuri"},
+          "ka": {"name": "აჭარული ხაჭაპური"}
+        }
+      },
+      {
+        "price": 16,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Vegetable pizza"},
+          "ka": {"name": "ბოსტნეულის პიცა"}
+        }
+      },
+      {
+        "price": 16,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Pizza Margharita"},
+          "ka": {"name": "პიცა მარგარიტა"}
+        }
+      },
+      {
+        "price": 20,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Combined Pizza"},
+          "ka": {"name": "კომბინირებული პიცა"}
+        }
+      },
+      {
+        "price": 20,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Pizza Pepperoni"},
+          "ka": {"name": "პიცა პეპერონი"}
+        }
+      },
+      {
+        "price": 14,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Lobiani"},
+          "ka": {"name": "ლობიანი"}
+        }
+      },
+      {
+        "price": 2,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Mchadi"},
+          "ka": {"name": "მჭადი"}
+        }
+      },
+      {
+        "price": 3,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Bread"},
+          "ka": {"name": "პური"}
+        }
+      },
+      {
+        "price": 8,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Chvishtari"},
+          "ka": {"name": "ჭვიშტარი"}
+        }
+      }
+    ]
+  },
+  {
+    "slug": "khinkali",
+    "translations": {
+      "en": {"name": "Khinkali"},
+      "ka": {"name": "ხინკალი"}
+    },
+    "items": [
+      {
+        "price": 2,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Khinkali with Beef"},
+          "ka": {"name": "ხინკალი საქონლის ხორცით"}
+        }
+      },
+      {
+        "price": 2,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Khinkali Mtiuluri"},
+          "ka": {"name": "მთიულური ხინკალი"}
+        }
+      },
+      {
+        "price": 2,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Khinkali Kalakuri"},
+          "ka": {"name": "ქალაქური ხინკალი"}
+        }
+      },
+      {
+        "price": 1.8,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Khinkali with Mushrooms"},
+          "ka": {"name": "ხინკალი სოკოთი"}
+        }
+      },
+      {
+        "price": 1.8,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Khinkali with Cheese"},
+          "ka": {"name": "ხინკალი ყველით"}
+        }
+      }
+    ]
+  },
+  {
+    "slug": "main-dishes", 
+    "translations": {
+      "en": {"name": "Main Dishes | Traditional Barbeque"},
+      "ka": {"name": "ძირითადი კერძები"}
+    },
+    "items": [
+      {
+        "price": 15,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Kebab"},
+          "ka": {"name": "ქაბაბი"}
+        }
+      },
+      {
+        "price": 20,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Pork Barbeque"},
+          "ka": {"name": "ღორის მწვადი"}
+        }
+      },
+      {
+        "price": 15,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Chicken Barbeque"},
+          "ka": {"name": "ქათმის მწვადი"}
+        }
+      },
+      {
+        "price": 15,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Chicken Wings"},
+          "ka": {"name": "ქათმის ფრთები"}
+        }
+      },
+      {
+        "price": 25,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Veal Barbeque"},
+          "ka": {"name": "ხბოს მწვადი"}
+        }
+      }
+    ]
+  }, 
+
+
+
+
+
+
+  {
+    "slug": "drinks",
+    "translations": {
+      "en": {"name": "Drinks"},
+      "ka": {"name": "სასმელები"}
+    },
+    "items": [
+      {
+        "price": 3,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Coca-Cola 0.5L"},
+          "ka": {"name": "კოკა-კოლა 0.5ლ"}
+        }
+      },
+      {
+        "price": 3,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Fanta 0.5L"},
+          "ka": {"name": "ფანტა 0.5ლ"}
+        }
+      },
+      {
+        "price": 3,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Sprite 0.5L"},
+          "ka": {"name": "სპრაიტი 0.5ლ"}
+        }
+      },
+      {
+        "price": 2,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Borjomi 0.5L"},
+          "ka": {"name": "ბორჯომი 0.5ლ"}
+        }
+      },
+      {
+        "price": 1.5,
+        "imageUrl": "https://st2.depositphotos.com/2586633/46477/v/450/depositphotos_464771766-stock-illustration-no-photo-or-blank-image.jpg",
+        "translations": {
+          "en": {"name": "Mineral Water 0.5L"},
+          "ka": {"name": "მინერალური წყალი 0.5ლ"}
+        }
+      }
+    ]
+  }
+]

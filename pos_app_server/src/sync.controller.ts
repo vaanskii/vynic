@@ -515,48 +515,60 @@ export class SyncController implements OnModuleInit {
     // Sync Menu
     if (menu && !realtimeOnly) {
       console.log(`[SYNC] Syncing ${menu.length} categories...`);
-      for (const cat of menu) {
+      for (let catIndex = 0; catIndex < menu.length; catIndex++) {
+        const cat = menu[catIndex];
         const category = await (this.prisma as any).menuCategory.upsert({
           where: { slug: cat.slug },
           update: {
             nameKa: cat.nameKa,
             nameEn: cat.nameEn,
             sendToKitchen: cat.sendToKitchen,
+            sortOrder: catIndex,
           },
           create: {
             slug: cat.slug,
             nameKa: cat.nameKa,
             nameEn: cat.nameEn,
             sendToKitchen: cat.sendToKitchen,
+            sortOrder: catIndex,
           },
         });
 
         // Sync Subcategories
         if (cat.subcategories) {
-          for (const sub of cat.subcategories) {
+          for (let subIndex = 0; subIndex < cat.subcategories.length; subIndex++) {
+            const sub = cat.subcategories[subIndex];
             const subcategory = await (this.prisma as any).menuSubcategory.upsert({
               where: { slug_categoryId: { slug: sub.slug, categoryId: category.id } },
               update: {
                 nameKa: sub.nameKa,
                 nameEn: sub.nameEn,
+                sortOrder: subIndex,
               },
               create: {
                 slug: sub.slug,
                 nameKa: sub.nameKa,
                 nameEn: sub.nameEn,
                 categoryId: category.id,
+                sortOrder: subIndex,
               },
             });
 
             if (sub.items) {
-              for (const it of sub.items) {
+              for (let itemIndex = 0; itemIndex < sub.items.length; itemIndex++) {
+                const it = sub.items[itemIndex];
                 let existingItem = await (this.prisma as any).menuItem.findFirst({
                   where: { nameEn: it.nameEn, subcategoryId: subcategory.id },
                 });
                 if (existingItem) {
                   existingItem = await (this.prisma as any).menuItem.update({
                     where: { id: existingItem.id },
-                    data: { nameKa: it.nameKa, price: it.price, sendToKitchen: it.sendToKitchen },
+                    data: {
+                      nameKa: it.nameKa,
+                      price: it.price,
+                      sendToKitchen: it.sendToKitchen,
+                      sortOrder: itemIndex,
+                    },
                   });
                 } else {
                   existingItem = await (this.prisma as any).menuItem.create({
@@ -566,6 +578,7 @@ export class SyncController implements OnModuleInit {
                       nameEn: it.nameEn,
                       price: it.price,
                       sendToKitchen: it.sendToKitchen,
+                      sortOrder: itemIndex,
                     },
                   });
                 }
@@ -591,9 +604,10 @@ export class SyncController implements OnModuleInit {
         }
 
         if (cat.items) {
-          for (const it of cat.items) {
+          for (let itemIndex = 0; itemIndex < cat.items.length; itemIndex++) {
+            const it = cat.items[itemIndex];
             let existingItem = await (this.prisma as any).menuItem.findFirst({
-              where: { nameEn: it.nameEn, categoryId: category.id },
+              where: { nameEn: it.nameEn, categoryId: category.id, subcategoryId: null },
             });
 
             if (existingItem) {
@@ -603,6 +617,7 @@ export class SyncController implements OnModuleInit {
                   nameKa: it.nameKa,
                   price: it.price,
                   sendToKitchen: it.sendToKitchen,
+                  sortOrder: itemIndex,
                 },
               });
             } else {
@@ -613,6 +628,7 @@ export class SyncController implements OnModuleInit {
                   nameEn: it.nameEn,
                   price: it.price,
                   sendToKitchen: it.sendToKitchen,
+                  sortOrder: itemIndex,
                 },
               });
             }

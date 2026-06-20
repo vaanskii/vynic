@@ -1669,19 +1669,19 @@ export class MobileController {
       include: {
         items: {
           include: { variants: true },
-          orderBy: { nameEn: 'asc' },
+          orderBy: { sortOrder: 'asc' },
         },
         subcategories: {
           include: {
             items: {
               include: { variants: true },
-              orderBy: { nameEn: 'asc' },
+              orderBy: { sortOrder: 'asc' },
             },
           },
-          orderBy: { nameEn: 'asc' },
+          orderBy: { sortOrder: 'asc' },
         },
       },
-      orderBy: { nameEn: 'asc' },
+      orderBy: { sortOrder: 'asc' },
     });
     return cats.map((cat: any) => ({
       slug: cat.slug,

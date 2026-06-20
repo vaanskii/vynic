@@ -5,7 +5,10 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["pos", "website"]
 }
+
+// ─── POS schema (synced from Windows POS + manager mobile) ───────────────────
 
 model Table {
   id            String   @id @default(uuid())
@@ -17,6 +20,7 @@ model Table {
   updatedAt     DateTime @updatedAt
 
   @@unique([tableNumber, floor], name: "tableIdentifier")
+  @@schema("pos")
 }
 
 model Order {
@@ -38,6 +42,8 @@ model Order {
   includeServiceFee Boolean     @default(false)
   serviceFeePercent Float       @default(10)
   items             OrderItem[]
+
+  @@schema("pos")
 }
 
 model OrderItem {
@@ -49,6 +55,7 @@ model OrderItem {
   order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
+  @@schema("pos")
 }
 
 model MenuCategory {
@@ -57,9 +64,12 @@ model MenuCategory {
   nameKa        String
   nameEn        String
   sendToKitchen Boolean           @default(true)
+  sortOrder     Int               @default(0)
   updatedAt     DateTime          @updatedAt
   items         MenuItem[]
   subcategories MenuSubcategory[]
+
+  @@schema("pos")
 }
 
 model MenuSubcategory {
@@ -68,11 +78,13 @@ model MenuSubcategory {
   nameKa     String
   nameEn     String
   categoryId String
+  sortOrder  Int          @default(0)
   updatedAt  DateTime     @updatedAt
   items      MenuItem[]
   category   MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@unique([slug, categoryId])
+  @@schema("pos")
 }
 
 model MenuItem {
@@ -82,6 +94,7 @@ model MenuItem {
   nameEn        String
   price         Float
   sendToKitchen Boolean           @default(true)
+  sortOrder     Int               @default(0)
   updatedAt     DateTime          @updatedAt
   subcategoryId String?
   category      MenuCategory?     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
@@ -90,6 +103,7 @@ model MenuItem {
 
   @@index([categoryId])
   @@index([subcategoryId])
+  @@schema("pos")
 }
 
 model MenuItemVariant {
@@ -100,6 +114,7 @@ model MenuItemVariant {
   menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
 
   @@index([menuItemId])
+  @@schema("pos")
 }
 
 model Expense {
@@ -109,6 +124,8 @@ model Expense {
   category    String
   createdAt   DateTime @default(now())
   paymentType String   @default("cash")
+
+  @@schema("pos")
 }
 
 model Staff {
@@ -119,6 +136,8 @@ model Staff {
   isActive  Boolean   @default(true)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+
+  @@schema("pos")
 }
 
 model AuditReport {
@@ -140,6 +159,7 @@ model AuditReport {
 
   @@index([posOrderId])
   @@index([status])
+  @@schema("pos")
 }
 
 model AuditEvent {
@@ -157,6 +177,7 @@ model AuditEvent {
   report      AuditReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
   @@index([reportId])
+  @@schema("pos")
 }
 
 model AuditEventLog {
@@ -164,11 +185,12 @@ model AuditEventLog {
   action     String
   userId     String
   data       Json
-  deviceType String   // 'mobile' or 'windows'
+  deviceType String
   createdAt  DateTime @default(now())
 
   @@index([createdAt])
   @@index([action])
+  @@schema("pos")
 }
 
 model DailySnapshot {
@@ -182,6 +204,8 @@ model DailySnapshot {
   totalExpenses Float    @default(0)
   topItemsJson  String   @default("[]")
   updatedAt     DateTime @updatedAt
+
+  @@schema("pos")
 }
 
 model QuickOrderDraft {
@@ -197,6 +221,8 @@ model QuickOrderDraft {
   createdBy         String
   updatedAt         DateTime              @updatedAt
   items             QuickOrderDraftItem[]
+
+  @@schema("pos")
 }
 
 model QuickOrderDraftItem {
@@ -209,6 +235,7 @@ model QuickOrderDraftItem {
   draft    QuickOrderDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
 
   @@index([draftId])
+  @@schema("pos")
 }
 
 enum StaffRole {
@@ -216,16 +243,18 @@ enum StaffRole {
   SUPERVISOR
   WAITER
   ADMIN
+
+  @@schema("pos")
 }
 
-/// Generic key-value store for server-side settings (e.g. currentBusinessDate).
 model Setting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+
+  @@schema("pos")
 }
 
-/// Manager-facing notification persisted for audit + hybrid routing metadata.
 model ManagerNotification {
   id        String   @id @default(uuid())
   wsType    String
@@ -235,19 +264,22 @@ model ManagerNotification {
   createdAt DateTime @default(now())
 
   deliveries ManagerNotificationDelivery[]
+
+  @@schema("pos")
 }
 
 model ManagerNotificationDelivery {
   id             String   @id @default(uuid())
   notificationId String
   staffUsername  String
-  channel        String // SOCKET | FCM
+  channel        String
   createdAt      DateTime @default(now())
 
   notification ManagerNotification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
 
   @@unique([notificationId, staffUsername])
   @@index([staffUsername])
+  @@schema("pos")
 }
 
 model PushDevice {
@@ -259,19 +291,16 @@ model PushDevice {
   updatedAt     DateTime @updatedAt
 
   @@index([staffUsername])
+  @@schema("pos")
 }
 
-/// Durable queue for cloud → Windows POS callbacks (mobile mutations that must
-/// reach Hive). Survives server restarts; a worker retries with backoff until
-/// the POS confirms delivery. See sync-7 in SYNC_CONTRACT.md.
 model PosCallbackOutbox {
   id            String   @id @default(uuid())
-  endpoint      String // e.g. /mobile-order-update
+  endpoint      String
   payload       Json
   posOrderId    Int?
-  /// endpoint + target id; pending rows with the same key collapse (latest wins).
   dedupeKey     String?
-  status        String   @default("pending") // pending | delivered | failed
+  status        String   @default("pending")
   attempts      Int      @default(0)
   maxAttempts   Int      @default(20)
   lastError     String?
@@ -282,4 +311,98 @@ model PosCallbackOutbox {
   @@index([status, nextAttemptAt])
   @@index([posOrderId])
   @@index([dedupeKey])
+  @@schema("pos")
+}
+
+// ─── Website schema (public bookings + customer accounts) ────────────────────
+
+enum WebsiteUserRole {
+  USER
+  SUPER_ADMIN
+
+  @@schema("website")
+}
+
+enum WebsiteReservationStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  COMPLETED
+
+  @@schema("website")
+}
+
+model WebsiteUser {
+  id        String          @id @default(uuid())
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  email     String?         @unique
+  password  String
+  firstName String?
+  lastName  String?
+  phone     String          @unique
+  role      WebsiteUserRole @default(USER)
+
+  hashedRefreshToken String?
+  reservations       WebsiteReservation[]
+
+  @@schema("website")
+  @@map("users")
+}
+
+/// Bookable tables shown on the public website. Each row maps to a POS table.
+model WebsiteTable {
+  id                 Int      @id @default(autoincrement())
+  websiteTableNumber String   @unique
+  posTableNumber     String
+  posFloor           String
+  capacity           Int      @default(4)
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  reservations WebsiteReservationTable[]
+
+  @@schema("website")
+  @@map("tables")
+}
+
+model WebsiteReservation {
+  id            String                   @id @default(uuid())
+  userId        String?
+  customerName  String?
+  customerEmail String?
+  customerPhone String?
+  date          DateTime
+  timeSlot      String
+  status        WebsiteReservationStatus @default(PENDING)
+  totalAmount   Float?
+  menuItems     String?
+  paymentId     String?
+  paymentStatus String?
+  notes         String?
+  posReservationId String? @unique
+  numberOfGuests   Int?
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+
+  user   WebsiteUser?              @relation(fields: [userId], references: [id])
+  tables WebsiteReservationTable[]
+
+  @@schema("website")
+  @@map("reservations")
+}
+
+model WebsiteReservationTable {
+  id            Int      @id @default(autoincrement())
+  reservationId String
+  tableId       Int
+  createdAt     DateTime @default(now())
+
+  reservation WebsiteReservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  table       WebsiteTable       @relation(fields: [tableId], references: [id])
+
+  @@unique([reservationId, tableId])
+  @@schema("website")
+  @@map("reservation_tables")
 }

@@ -52,4 +52,10 @@ Each step: read+verify code → minimal change → build → commit → stop for
 ---
 
 ## Added during review
-- [ ] **A6. Website reservation availability depends on a live POS fetch** — `WebsitePosReservationBridgeService` HTTP-fetches `posCallbackUrl` (`GET /mobile-reservations`) on every availability check. When the POS app is **offline**, the fetch fails (logs `POS reservations fetch/unavailable ... fetch failed`) and the website can't see POS-side bookings → risk of double-booking a POS-reserved table. Fix: **mirror POS reservations into PostgreSQL** (like orders) so the website reads reservation state from the DB, resilient to the POS being offline; treat the live fetch as a best-effort refresh, not the source of truth. Relates to A3/A4.
+- [ ] **A6. POS-offline resilience — mirror POS reservation/table state into PostgreSQL** *(do LAST — larger change, depends on A2/A3 sync work).* Today reservation reads do a **live HTTP fetch to the POS** (`posCallbackUrl` → `GET /mobile-reservations`). When the POS app is **closed**, that fetch fails (logs `POS reservations fetch/unavailable … fetch failed`), so **both**:
+  - the **website** can't compute table availability → risk of double-booking a POS-reserved table, and
+  - the **manager app's** reservation list (`/mobile/reservations` → `fetchPosReservations`) returns empty.
+
+  Necessary data must stay available while the POS is offline. **Fix:** have the POS push reservation + table state on sync (like it already does for orders) and persist it in PostgreSQL; the **website availability check** and the **manager app** both read reservation state **from the DB**. The live POS fetch becomes a best-effort freshness refresh, never the sole source of truth.
+
+- [ ] **C7. Website login has no rate-limiting** — `/api/auth/signin` + `/signup` (`website/auth/auth.controller.ts`) have no throttle. Lower urgency than C4 (email + argon2, not a 4-digit PIN), but reuse the `LoginThrottleService` (key by IP, or IP+identifier) to cap credential-stuffing.

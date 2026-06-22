@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:vynic/core/services/backup_file_picker.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_menu_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_packages_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_close_day_section.dart';
@@ -193,7 +194,8 @@ class _AdminScreenState extends State<AdminScreen> {
   DateTime _fullReportStartMonth = DateTime.now();
   DateTime _fullReportEndMonth = DateTime.now();
   List<DateTime> _fullReportMonthOptions = <DateTime>[];
-  List<MonthlyReportSummary> _fullReportPreviewMonths = <MonthlyReportSummary>[];
+  List<MonthlyReportSummary> _fullReportPreviewMonths =
+      <MonthlyReportSummary>[];
   double _fullReportTotalSalesAllTime = 0.0;
   final NumberFormat _currencyFormatter = NumberFormat.currency(
     locale: 'ka_GE',
@@ -347,11 +349,17 @@ class _AdminScreenState extends State<AdminScreen> {
     // Also include months with manual sales even if there are no sales.
     for (var y = DateTime.now().year - 3; y <= DateTime.now().year + 1; y++) {
       for (var m = 1; m <= 12; m++) {
-        final manual = DatabaseService.getMonthlyReportManualSalesForMonth(y, m);
+        final manual = DatabaseService.getMonthlyReportManualSalesForMonth(
+          y,
+          m,
+        );
         final leaseOverride =
             DatabaseService.getMonthlyReportLeaseCostOverrideForMonth(y, m);
         final staffOverride =
-            DatabaseService.getMonthlyReportStaffDailyCostOverrideForMonth(y, m);
+            DatabaseService.getMonthlyReportStaffDailyCostOverrideForMonth(
+              y,
+              m,
+            );
         if (manual > 0 || leaseOverride != null || staffOverride != null) {
           months.add(DateTime(y, m));
         }
@@ -359,7 +367,9 @@ class _AdminScreenState extends State<AdminScreen> {
     }
     final list = months.toList()..sort((a, b) => a.compareTo(b));
     final nowMonth = DateTime(DateTime.now().year, DateTime.now().month);
-    if (!list.any((m) => m.year == nowMonth.year && m.month == nowMonth.month)) {
+    if (!list.any(
+      (m) => m.year == nowMonth.year && m.month == nowMonth.month,
+    )) {
       list.add(nowMonth);
       list.sort((a, b) => a.compareTo(b));
     }
@@ -382,7 +392,8 @@ class _AdminScreenState extends State<AdminScreen> {
     return months;
   }
 
-  DateTime _monthPeriodStart(DateTime month) => DateTime(month.year, month.month, 1);
+  DateTime _monthPeriodStart(DateTime month) =>
+      DateTime(month.year, month.month, 1);
 
   DateTime _monthPeriodEnd(DateTime month) {
     final monthEnd = DateTime(month.year, month.month + 1, 0);
@@ -401,15 +412,27 @@ class _AdminScreenState extends State<AdminScreen> {
       _fullReportTotalSalesAllTime = 0.0;
       return;
     }
-    final rangeMonths = _monthsBetween(_fullReportStartMonth, _fullReportEndMonth);
+    final rangeMonths = _monthsBetween(
+      _fullReportStartMonth,
+      _fullReportEndMonth,
+    );
     final previews = <MonthlyReportSummary>[];
     double totalAll = 0;
     for (final m in rangeMonths) {
-      final manual = DatabaseService.getMonthlyReportManualSalesForMonth(m.year, m.month);
+      final manual = DatabaseService.getMonthlyReportManualSalesForMonth(
+        m.year,
+        m.month,
+      );
       final leaseOverride =
-          DatabaseService.getMonthlyReportLeaseCostOverrideForMonth(m.year, m.month);
+          DatabaseService.getMonthlyReportLeaseCostOverrideForMonth(
+            m.year,
+            m.month,
+          );
       final staffOverride =
-          DatabaseService.getMonthlyReportStaffDailyCostOverrideForMonth(m.year, m.month);
+          DatabaseService.getMonthlyReportStaffDailyCostOverrideForMonth(
+            m.year,
+            m.month,
+          );
       final monthConfig = config.copyWith(
         leaseCost: leaseOverride ?? config.leaseCost,
         staffDailyCost: staffOverride ?? config.staffDailyCost,
@@ -440,11 +463,20 @@ class _AdminScreenState extends State<AdminScreen> {
     final staffControllers = <String, TextEditingController>{};
     for (final m in months) {
       final key = '${m.year}-${m.month.toString().padLeft(2, '0')}';
-      final existing = DatabaseService.getMonthlyReportManualSalesForMonth(m.year, m.month);
+      final existing = DatabaseService.getMonthlyReportManualSalesForMonth(
+        m.year,
+        m.month,
+      );
       final leaseOverride =
-          DatabaseService.getMonthlyReportLeaseCostOverrideForMonth(m.year, m.month);
+          DatabaseService.getMonthlyReportLeaseCostOverrideForMonth(
+            m.year,
+            m.month,
+          );
       final staffOverride =
-          DatabaseService.getMonthlyReportStaffDailyCostOverrideForMonth(m.year, m.month);
+          DatabaseService.getMonthlyReportStaffDailyCostOverrideForMonth(
+            m.year,
+            m.month,
+          );
       manualControllers[key] = TextEditingController(
         text: _formatMoneyField(existing),
       );
@@ -473,13 +505,16 @@ class _AdminScreenState extends State<AdminScreen> {
                         final key =
                             '${m.year}-${m.month.toString().padLeft(2, '0')}';
                         final manual =
-                            _tryParseMoney(manualControllers[key]?.text ?? '') ?? 0.0;
+                            _tryParseMoney(
+                              manualControllers[key]?.text ?? '',
+                            ) ??
+                            0.0;
                         final lease =
                             _tryParseMoney(leaseControllers[key]?.text ?? '') ??
-                                config.leaseCost;
+                            config.leaseCost;
                         final staffDaily =
                             _tryParseMoney(staffControllers[key]?.text ?? '') ??
-                                config.staffDailyCost;
+                            config.staffDailyCost;
                         final monthConfig = config.copyWith(
                           leaseCost: lease,
                           staffDailyCost: staffDaily,
@@ -502,8 +537,8 @@ class _AdminScreenState extends State<AdminScreen> {
                                 controller: manualControllers[key],
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
-                                  decimal: true,
-                                ),
+                                      decimal: true,
+                                    ),
                                 onChanged: (_) => setLocalState(() {}),
                                 decoration: InputDecoration(
                                   labelText:
@@ -519,8 +554,8 @@ class _AdminScreenState extends State<AdminScreen> {
                                       controller: leaseControllers[key],
                                       keyboardType:
                                           const TextInputType.numberWithOptions(
-                                        decimal: true,
-                                      ),
+                                            decimal: true,
+                                          ),
                                       onChanged: (_) => setLocalState(() {}),
                                       decoration: const InputDecoration(
                                         labelText: 'ქირის ხარჯი',
@@ -534,8 +569,8 @@ class _AdminScreenState extends State<AdminScreen> {
                                       controller: staffControllers[key],
                                       keyboardType:
                                           const TextInputType.numberWithOptions(
-                                        decimal: true,
-                                      ),
+                                            decimal: true,
+                                          ),
                                       onChanged: (_) => setLocalState(() {}),
                                       decoration: const InputDecoration(
                                         labelText: 'თანამშრომლების ხარჯი',
@@ -578,13 +613,14 @@ class _AdminScreenState extends State<AdminScreen> {
                       final key =
                           '${m.year}-${m.month.toString().padLeft(2, '0')}';
                       manualMap[key] =
-                          _tryParseMoney(manualControllers[key]?.text ?? '') ?? 0.0;
+                          _tryParseMoney(manualControllers[key]?.text ?? '') ??
+                          0.0;
                       leaseMap[key] =
                           _tryParseMoney(leaseControllers[key]?.text ?? '') ??
-                              config.leaseCost;
+                          config.leaseCost;
                       staffMap[key] =
                           _tryParseMoney(staffControllers[key]?.text ?? '') ??
-                              config.staffDailyCost;
+                          config.staffDailyCost;
                     }
                     Navigator.pop(ctx, {
                       'manual': manualMap,
@@ -616,14 +652,19 @@ class _AdminScreenState extends State<AdminScreen> {
     if (_isGeneratingFullReport) return;
     final config = _tryBuildMonthlyReportConfig();
     if (config == null) {
-      unawaited(showPosToast(
-        context: context,
-        message: 'ჯერ შეავსეთ თვიური ანგარიშის კონფიგურაცია სწორად.',
-        style: PosToastStyle.error,
-      ));
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'ჯერ შეავსეთ თვიური ანგარიშის კონფიგურაცია სწორად.',
+          style: PosToastStyle.error,
+        ),
+      );
       return;
     }
-    final rangeMonths = _monthsBetween(_fullReportStartMonth, _fullReportEndMonth);
+    final rangeMonths = _monthsBetween(
+      _fullReportStartMonth,
+      _fullReportEndMonth,
+    );
     if (mounted) {
       setState(() => _isGeneratingFullReport = true);
     }
@@ -656,7 +697,8 @@ class _AdminScreenState extends State<AdminScreen> {
 
       final String? outputPath = await FilePicker.platform.saveFile(
         dialogTitle: 'შეინახეთ სრული ანგარიში (XLSX)',
-        fileName: 'full_report_${_fullReportStartMonth.year}_${_fullReportStartMonth.month.toString().padLeft(2, '0')}_to_${_fullReportEndMonth.year}_${_fullReportEndMonth.month.toString().padLeft(2, '0')}.xlsx',
+        fileName:
+            'full_report_${_fullReportStartMonth.year}_${_fullReportStartMonth.month.toString().padLeft(2, '0')}_to_${_fullReportEndMonth.year}_${_fullReportEndMonth.month.toString().padLeft(2, '0')}.xlsx',
         type: FileType.custom,
         allowedExtensions: ['xlsx'],
       );
@@ -668,10 +710,11 @@ class _AdminScreenState extends State<AdminScreen> {
       final periodEndByMonth = <String, DateTime>{};
       for (final m in rangeMonths) {
         final key = '${m.year}-${m.month.toString().padLeft(2, '0')}';
-        manualByMonth[key] = DatabaseService.getMonthlyReportManualSalesForMonth(
-          m.year,
-          m.month,
-        );
+        manualByMonth[key] =
+            DatabaseService.getMonthlyReportManualSalesForMonth(
+              m.year,
+              m.month,
+            );
         leaseByMonth[key] =
             DatabaseService.getMonthlyReportLeaseCostOverrideForMonth(
               m.year,
@@ -697,11 +740,13 @@ class _AdminScreenState extends State<AdminScreen> {
       await File(outputPath).writeAsBytes(bytes, flush: true);
       _refreshFullReportPreview();
       if (!mounted) return;
-      unawaited(showPosToast(
-        context: context,
-        message: 'ფაილი წარმატებით შეინახა: $outputPath',
-        style: PosToastStyle.success,
-      ));
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'ფაილი წარმატებით შეინახა: $outputPath',
+          style: PosToastStyle.success,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isGeneratingFullReport = false);
@@ -713,14 +758,19 @@ class _AdminScreenState extends State<AdminScreen> {
     if (_isGeneratingFullReport) return;
     final config = _tryBuildMonthlyReportConfig();
     if (config == null) {
-      unawaited(showPosToast(
-        context: context,
-        message: 'ჯერ შეავსეთ თვიური ანგარიშის კონფიგურაცია სწორად.',
-        style: PosToastStyle.error,
-      ));
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'ჯერ შეავსეთ თვიური ანგარიშის კონფიგურაცია სწორად.',
+          style: PosToastStyle.error,
+        ),
+      );
       return;
     }
-    final rangeMonths = _monthsBetween(_fullReportStartMonth, _fullReportEndMonth);
+    final rangeMonths = _monthsBetween(
+      _fullReportStartMonth,
+      _fullReportEndMonth,
+    );
     if (mounted) {
       setState(() => _isGeneratingFullReport = true);
     }
@@ -765,10 +815,11 @@ class _AdminScreenState extends State<AdminScreen> {
       final periodEndByMonth = <String, DateTime>{};
       for (final m in rangeMonths) {
         final key = '${m.year}-${m.month.toString().padLeft(2, '0')}';
-        manualByMonth[key] = DatabaseService.getMonthlyReportManualSalesForMonth(
-          m.year,
-          m.month,
-        );
+        manualByMonth[key] =
+            DatabaseService.getMonthlyReportManualSalesForMonth(
+              m.year,
+              m.month,
+            );
         leaseByMonth[key] =
             DatabaseService.getMonthlyReportLeaseCostOverrideForMonth(
               m.year,
@@ -795,11 +846,13 @@ class _AdminScreenState extends State<AdminScreen> {
       await File(outputPath).writeAsBytes(bytes, flush: true);
       _refreshFullReportPreview();
       if (!mounted) return;
-      unawaited(showPosToast(
-        context: context,
-        message: 'PDF ფაილი წარმატებით შეინახა: $outputPath',
-        style: PosToastStyle.success,
-      ));
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'PDF ფაილი წარმატებით შეინახა: $outputPath',
+          style: PosToastStyle.success,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isGeneratingFullReport = false);
@@ -895,13 +948,13 @@ class _AdminScreenState extends State<AdminScreen> {
     MonthlyReportSummary? summary;
     String? error;
     final selectedMonth = _selectedMonthlyReportMonth;
-    final manualSales = _tryParseMoney(_monthlyReportManualSalesController.text);
+    final manualSales = _tryParseMoney(
+      _monthlyReportManualSalesController.text,
+    );
     final daysInMonth = _getDaysInMonth(selectedMonth);
     final maxEndDay = _maxReportEndDayForMonth(selectedMonth, daysInMonth);
     final int startDay = _monthlyReportStartDay.clamp(1, daysInMonth).toInt();
-    final int endDay = _monthlyReportEndDay
-        .clamp(startDay, maxEndDay)
-        .toInt();
+    final int endDay = _monthlyReportEndDay.clamp(startDay, maxEndDay).toInt();
     final periodStart = DateTime(
       selectedMonth.year,
       selectedMonth.month,
@@ -971,7 +1024,8 @@ class _AdminScreenState extends State<AdminScreen> {
         foodProfitRatio: config.foodProfitRatio,
       );
       final selectedMonth = _selectedMonthlyReportMonth;
-      final manualSales = _tryParseMoney(_monthlyReportManualSalesController.text) ?? 0.0;
+      final manualSales =
+          _tryParseMoney(_monthlyReportManualSalesController.text) ?? 0.0;
       await DatabaseService.setMonthlyReportManualSalesForMonth(
         selectedMonth.year,
         selectedMonth.month,
@@ -1031,7 +1085,9 @@ class _AdminScreenState extends State<AdminScreen> {
     }
 
     final selectedMonth = _selectedMonthlyReportMonth;
-    final manualSales = _tryParseMoney(_monthlyReportManualSalesController.text);
+    final manualSales = _tryParseMoney(
+      _monthlyReportManualSalesController.text,
+    );
     if (manualSales == null) {
       unawaited(
         showPosToast(
@@ -1045,9 +1101,7 @@ class _AdminScreenState extends State<AdminScreen> {
     final daysInMonth = _getDaysInMonth(selectedMonth);
     final maxEndDay = _maxReportEndDayForMonth(selectedMonth, daysInMonth);
     final int startDay = _monthlyReportStartDay.clamp(1, daysInMonth).toInt();
-    final int endDay = _monthlyReportEndDay
-        .clamp(startDay, maxEndDay)
-        .toInt();
+    final int endDay = _monthlyReportEndDay.clamp(startDay, maxEndDay).toInt();
     final periodStart = DateTime(
       selectedMonth.year,
       selectedMonth.month,
@@ -1134,7 +1188,9 @@ class _AdminScreenState extends State<AdminScreen> {
     }
 
     final selectedMonth = _selectedMonthlyReportMonth;
-    final manualSales = _tryParseMoney(_monthlyReportManualSalesController.text);
+    final manualSales = _tryParseMoney(
+      _monthlyReportManualSalesController.text,
+    );
     if (manualSales == null) {
       unawaited(
         showPosToast(
@@ -1149,7 +1205,11 @@ class _AdminScreenState extends State<AdminScreen> {
     final maxEndDay = _maxReportEndDayForMonth(selectedMonth, daysInMonth);
     final int startDay = _monthlyReportStartDay.clamp(1, daysInMonth).toInt();
     final int endDay = _monthlyReportEndDay.clamp(startDay, maxEndDay).toInt();
-    final periodStart = DateTime(selectedMonth.year, selectedMonth.month, startDay);
+    final periodStart = DateTime(
+      selectedMonth.year,
+      selectedMonth.month,
+      startDay,
+    );
     final periodEnd = DateTime(selectedMonth.year, selectedMonth.month, endDay);
 
     if (mounted) {
@@ -1422,11 +1482,7 @@ class _AdminScreenState extends State<AdminScreen> {
           title: 'დღის დახურვა',
           section: 'closeday',
         ),
-      _buildMenuItem(
-        icon: Icons.history,
-        title: 'გაყიდვები',
-        section: 'sales',
-      ),
+      _buildMenuItem(icon: Icons.history, title: 'გაყიდვები', section: 'sales'),
       _buildMenuItem(
         icon: Icons.insights,
         title: 'გაყიდვების რეპორტი',
@@ -1648,7 +1704,10 @@ class _AdminScreenState extends State<AdminScreen> {
         setState(() {
           final normalized = DateTime(value.year, value.month);
           final newDaysInMonth = _getDaysInMonth(normalized);
-          final maxEndDay = _maxReportEndDayForMonth(normalized, newDaysInMonth);
+          final maxEndDay = _maxReportEndDayForMonth(
+            normalized,
+            newDaysInMonth,
+          );
           final int newStart = _monthlyReportStartDay
               .clamp(1, newDaysInMonth)
               .toInt();
@@ -2157,7 +2216,9 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 
   Future<void> _restoreBackupFromFile() async {
+    debugPrint('[BackupFlow] _restoreBackupFromFile called');
     if (kIsWeb) {
+      debugPrint('[BackupFlow] Restore blocked on web');
       unawaited(
         showPosToast(
           context: context,
@@ -2169,54 +2230,22 @@ class _AdminScreenState extends State<AdminScreen> {
     }
 
     if (_isRestoringBackup) {
+      debugPrint('[BackupFlow] Restore ignored: already restoring');
       return;
     }
 
-    FilePickerResult? pickerResult;
-    try {
-      pickerResult = await FilePicker.platform.pickFiles(
-        dialogTitle: 'Select VPOS backup JSON file',
-        type: FileType.custom,
-        allowedExtensions: const ['json'],
-        withData: true,
-      );
-    } catch (e) {
-      unawaited(showErrorToast(context, 'Could not open file picker: $e'));
+    final resolvedPath = await BackupFilePicker.pickRestoreFile();
+    debugPrint('[BackupFlow] Restore selected path: $resolvedPath');
+    if (resolvedPath == null || resolvedPath.isEmpty) {
+      debugPrint('[BackupFlow] Restore cancelled or empty path');
       return;
     }
-
-    if (pickerResult == null || pickerResult.files.isEmpty) {
-      return;
-    }
-
-    final selected = pickerResult.files.single;
-    String? resolvedPath = selected.path;
-    File? tempFile;
 
     try {
-      if ((resolvedPath == null || resolvedPath.isEmpty) &&
-          selected.bytes == null) {
-        unawaited(
-          showErrorToast(
-            context,
-            'Backup file path missing. Please try again.',
-          ),
-        );
-        return;
-      }
-
-      if (resolvedPath == null || resolvedPath.isEmpty) {
-        final tempDir = await Directory.systemTemp.createTemp('vpos_restore_');
-        final safeName = selected.name.isNotEmpty
-            ? selected.name
-            : 'pos_backup_${DateTime.now().millisecondsSinceEpoch}.json';
-        tempFile = File('${tempDir.path}/$safeName');
-        await tempFile.writeAsBytes(selected.bytes!);
-        resolvedPath = tempFile.path;
-      }
-
       final backupFile = File(resolvedPath);
+      debugPrint('[BackupFlow] Checking backup file exists: $resolvedPath');
       if (!await backupFile.exists()) {
+        debugPrint('[BackupFlow] Backup file missing at: $resolvedPath');
         unawaited(
           showErrorToast(context, 'Backup file not found at $resolvedPath'),
         );
@@ -2226,15 +2255,18 @@ class _AdminScreenState extends State<AdminScreen> {
       setState(() {
         _isRestoringBackup = true;
       });
+      debugPrint('[BackupFlow] Restore started');
 
       await DatabaseService.restoreDataBackupFromFile(backupFile);
+      debugPrint('[BackupFlow] Restore completed in DatabaseService');
 
       if (!mounted) {
+        debugPrint('[BackupFlow] Widget unmounted after restore');
         return;
       }
 
       setState(() {
-        _lastRestorePath = resolvedPath!;
+        _lastRestorePath = resolvedPath;
         _initializeSettingsState();
         final currentDate = DatabaseService.getCurrentDate();
         _selectedSalesYear = currentDate.year;
@@ -2245,6 +2277,9 @@ class _AdminScreenState extends State<AdminScreen> {
 
       // Push restored business date + state immediately so mobile reflects
       // close-day/current-date correctly right after backup import.
+      debugPrint(
+        '[BackupFlow] Triggering ManagerSyncService.syncToManagerApp()',
+      );
       unawaited(ManagerSyncService.syncToManagerApp());
 
       final acknowledged = await showDialog<bool>(
@@ -2342,12 +2377,16 @@ class _AdminScreenState extends State<AdminScreen> {
       );
 
       if (acknowledged == true && mounted) {
+        debugPrint(
+          '[BackupFlow] User acknowledged restore dialog, navigating to login',
+        );
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const LoginScreen()),
           (route) => false,
         );
       }
     } catch (e) {
+      debugPrint('[BackupFlow] Restore failed: $e');
       if (mounted) {
         unawaited(showErrorToast(context, 'Restore failed: $e'));
       }
@@ -2357,32 +2396,16 @@ class _AdminScreenState extends State<AdminScreen> {
           _isRestoringBackup = false;
         });
       }
-      if (tempFile != null) {
-        try {
-          if (await tempFile.exists()) {
-            await tempFile.delete();
-          }
-          final tempDir = tempFile.parent;
-          if (await tempDir.exists()) {
-            await tempDir.delete(recursive: true);
-          }
-        } catch (_) {}
-      }
     }
   }
 
   Future<void> _createBackupFile() async {
-    // Show file picker to choose where to save the backup
-    final String? selectedPath = await FilePicker.platform.saveFile(
-      dialogTitle: 'Save Backup File',
-      fileName:
-          'pos_backup_${DateTime.now().toIso8601String().replaceAll(':', '-').replaceAll('.', '-')}.json',
-      type: FileType.custom,
-      allowedExtensions: ['json'],
-    );
+    debugPrint('[BackupFlow] _createBackupFile called');
+    final selectedPath = await BackupFilePicker.pickSaveFile();
+    debugPrint('[BackupFlow] Save selected path: $selectedPath');
 
-    if (selectedPath == null) {
-      // User cancelled the file picker
+    if (selectedPath == null || selectedPath.isEmpty) {
+      debugPrint('[BackupFlow] Save cancelled by user');
       return;
     }
 
@@ -2393,9 +2416,11 @@ class _AdminScreenState extends State<AdminScreen> {
     });
 
     try {
+      debugPrint('[BackupFlow] Creating backup at: $selectedPath');
       final backupFile = await DatabaseService.createDataBackup(
         targetFilePath: selectedPath,
       );
+      debugPrint('[BackupFlow] Backup file created: ${backupFile.path}');
       if (!mounted) return;
       setState(() {
         _lastBackupPath = backupFile.path;
@@ -2404,6 +2429,7 @@ class _AdminScreenState extends State<AdminScreen> {
         showSuccessToast(context, 'Backup saved to ${backupFile.path}'),
       );
     } catch (e) {
+      debugPrint('[BackupFlow] Backup failed: $e');
       if (!mounted) return;
       unawaited(showErrorToast(context, 'Backup failed: $e'));
     } finally {

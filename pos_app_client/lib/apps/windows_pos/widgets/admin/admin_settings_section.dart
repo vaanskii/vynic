@@ -440,9 +440,7 @@ class AdminSettingsSection extends StatelessWidget {
                         )
                       : const Icon(Icons.wifi_tethering),
                   label: Text(
-                    isTestingPrinters
-                        ? 'შემოწმება...'
-                        : 'კავშირის შემოწმება',
+                    isTestingPrinters ? 'შემოწმება...' : 'კავშირის შემოწმება',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -641,8 +639,7 @@ class AdminSettingsSection extends StatelessWidget {
               ),
               style: const TextStyle(color: _textPrimary),
               decoration: InputDecoration(
-                labelText:
-                    'საკომისიოს პროცენტი',
+                labelText: 'საკომისიოს პროცენტი',
                 hintText: 'მაგ. 10',
                 suffixText: '%',
                 suffixStyle: const TextStyle(color: _textMuted),
@@ -680,9 +677,7 @@ class AdminSettingsSection extends StatelessWidget {
                   style: _primaryButtonStyle(),
                   icon: const Icon(Icons.check_circle_outline, size: 20),
                   label: Text(
-                    isSavingServiceFee
-                        ? 'შენახვა...'
-                        : 'საკომისიოს განახლება',
+                    isSavingServiceFee ? 'შენახვა...' : 'საკომისიოს განახლება',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -884,8 +879,7 @@ class AdminSettingsSection extends StatelessWidget {
                 Expanded(
                   child: _buildSettingsTextField(
                     controller: monthlyReportLeaseController,
-                    label:
-                        'ქირის თვიური ხარჯი (₾)',
+                    label: 'ქირის თვიური ხარჯი (₾)',
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
@@ -897,8 +891,7 @@ class AdminSettingsSection extends StatelessWidget {
                 Expanded(
                   child: _buildSettingsTextField(
                     controller: monthlyReportStaffDailyController,
-                    label:
-                        'თანამშრომლის დღიური ხარჯი (₾)',
+                    label: 'თანამშრომლის დღიური ხარჯი (₾)',
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
@@ -980,8 +973,7 @@ class AdminSettingsSection extends StatelessWidget {
                 value: currencyFormatter.format(summary.cardBogRevenue),
               ),
               _buildMonthlySummaryRow(
-                label:
-                    'ოპერაციების რაოდენობა',
+                label: 'ოპერაციების რაოდენობა',
                 value: summary.transactionCount.toString(),
               ),
               _buildMonthlySummaryRow(
@@ -989,18 +981,15 @@ class AdminSettingsSection extends StatelessWidget {
                 value: currencyFormatter.format(summary.averageTicket),
               ),
               _buildMonthlySummaryRow(
-                label:
-                    'დღიური საშუალო გაყიდვა',
+                label: 'დღიური საშუალო გაყიდვა',
                 value: currencyFormatter.format(summary.dailyAverageSales),
               ),
               _buildMonthlySummaryRow(
-                label:
-                    'საკვების თვითღირებულება',
+                label: 'საკვების თვითღირებულება',
                 value: currencyFormatter.format(summary.foodCost),
               ),
               _buildMonthlySummaryRow(
-                label:
-                    'თანამშრომლების ხარჯი',
+                label: 'თანამშრომლების ხარჯი',
                 value: currencyFormatter.format(summary.staffCost),
               ),
               _buildMonthlySummaryRow(
@@ -1008,8 +997,7 @@ class AdminSettingsSection extends StatelessWidget {
                 value: currencyFormatter.format(summary.leaseCost),
               ),
               _buildMonthlySummaryRow(
-                label:
-                    'საერთო ოპერაციული ხარჯი',
+                label: 'საერთო ოპერაციული ხარჯი',
                 value: currencyFormatter.format(summary.operatingCost),
               ),
               _buildMonthlySummaryRow(
@@ -1102,7 +1090,8 @@ class AdminSettingsSection extends StatelessWidget {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<DateTime>(
-                    initialValue: fullReportMonthOptions.contains(fullReportStartMonth)
+                    initialValue:
+                        fullReportMonthOptions.contains(fullReportStartMonth)
                         ? fullReportStartMonth
                         : null,
                     items: fullReportMonthOptions
@@ -1119,7 +1108,8 @@ class AdminSettingsSection extends StatelessWidget {
                     onChanged: isBusy
                         ? null
                         : (value) {
-                            if (value != null) onFullReportStartMonthChanged(value);
+                            if (value != null)
+                              onFullReportStartMonthChanged(value);
                           },
                     decoration: InputDecoration(
                       labelText: 'საწყისი თვე',
@@ -1134,7 +1124,8 @@ class AdminSettingsSection extends StatelessWidget {
                 const SizedBox(width: 16),
                 Expanded(
                   child: DropdownButtonFormField<DateTime>(
-                    initialValue: fullReportMonthOptions.contains(fullReportEndMonth)
+                    initialValue:
+                        fullReportMonthOptions.contains(fullReportEndMonth)
                         ? fullReportEndMonth
                         : null,
                     items: fullReportMonthOptions
@@ -1151,7 +1142,8 @@ class AdminSettingsSection extends StatelessWidget {
                     onChanged: isBusy
                         ? null
                         : (value) {
-                            if (value != null) onFullReportEndMonthChanged(value);
+                            if (value != null)
+                              onFullReportEndMonthChanged(value);
                           },
                     decoration: InputDecoration(
                       labelText: 'ბოლო თვე',
@@ -1359,8 +1351,7 @@ class AdminSettingsSection extends StatelessWidget {
             const SizedBox(height: 12),
             _buildSettingsTextField(
               controller: confirmCancellationPasswordController,
-              label:
-                  'გაიმეორეთ ახალი პაროლი',
+              label: 'გაიმეორეთ ახალი პაროლი',
               enabled: !isSavingCancellationPassword,
               keyboardType: TextInputType.number,
             ),
@@ -1368,8 +1359,7 @@ class AdminSettingsSection extends StatelessWidget {
             _buildSettingsTextField(
               controller: cancellationPasswordHintController,
               label: 'პაროლის მინიშნება',
-              hint:
-                  'მოკლე შეხსენება ადმინებისთვის',
+              hint: 'მოკლე შეხსენება ადმინებისთვის',
               enabled: !isSavingCancellationPassword,
             ),
             const SizedBox(height: 20),
@@ -1629,13 +1619,26 @@ class AdminSettingsSection extends StatelessWidget {
               child: SizedBox(
                 width: 360,
                 child: ElevatedButton.icon(
-                  onPressed: isCreatingBackup ? null : onCreateBackupFile,
+                  onPressed: isCreatingBackup
+                      ? null
+                      : () async {
+                          debugPrint('[BackupUI] Save backup button clicked');
+                          try {
+                            await onCreateBackupFile();
+                            debugPrint(
+                              '[BackupUI] Save backup callback finished',
+                            );
+                          } catch (e, st) {
+                            debugPrint(
+                              '[BackupUI] Save backup callback error: $e',
+                            );
+                            debugPrint('$st');
+                          }
+                        },
                   style: _primaryButtonStyle(),
                   icon: const Icon(Icons.cloud_download, size: 20),
                   label: Text(
-                    isCreatingBackup
-                        ? 'შექმნა...'
-                        : 'სარეზერვო ფაილის შექმნა',
+                    isCreatingBackup ? 'შექმნა...' : 'სარეზერვო ფაილის შექმნა',
                   ),
                 ),
               ),
@@ -1646,7 +1649,24 @@ class AdminSettingsSection extends StatelessWidget {
               child: SizedBox(
                 width: 360,
                 child: OutlinedButton.icon(
-                  onPressed: isRestoringBackup ? null : onRestoreBackupFromFile,
+                  onPressed: isRestoringBackup
+                      ? null
+                      : () async {
+                          debugPrint(
+                            '[BackupUI] Restore backup button clicked',
+                          );
+                          try {
+                            await onRestoreBackupFromFile();
+                            debugPrint(
+                              '[BackupUI] Restore backup callback finished',
+                            );
+                          } catch (e, st) {
+                            debugPrint(
+                              '[BackupUI] Restore backup callback error: $e',
+                            );
+                            debugPrint('$st');
+                          }
+                        },
                   style: _outlineButtonStyle(),
                   icon: const Icon(Icons.restore, size: 20),
                   label: Text(

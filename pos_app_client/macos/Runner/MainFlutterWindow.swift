@@ -9,6 +9,9 @@ class MainFlutterWindow: NSWindow {
     self.setFrame(windowFrame, display: true)
 
     RegisterGeneratedPlugins(registry: flutterViewController)
+    BackupFilePickerPlugin.register(
+      with: flutterViewController.registrar(forPlugin: "BackupFilePickerPlugin")
+    )
 
     super.awakeFromNib()
   }

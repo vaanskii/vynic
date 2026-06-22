@@ -15,8 +15,27 @@ import type { BroadcastOptions, WsEvent, WsEventType } from './ws-events';
 
 export type { WsEventType, WsEvent, BroadcastOptions } from './ws-events';
 
+/**
+ * Socket.IO CORS check. Native clients (mobile app) send no Origin header and
+ * are always allowed; browser origins must be in FRONTEND_URL / ALLOWED_ORIGINS.
+ * (CORS is defense-in-depth here — the JWT handshake is the real gate.)
+ */
+function isAllowedSocketOrigin(
+  origin: string | undefined,
+  cb: (err: Error | null, allow?: boolean) => void,
+): void {
+  if (!origin) return cb(null, true);
+  const allowed = [
+    process.env.FRONTEND_URL,
+    ...(process.env.ALLOWED_ORIGINS?.split(',') ?? []),
+  ]
+    .map((o) => o?.trim())
+    .filter((o): o is string => Boolean(o));
+  cb(null, allowed.includes(origin));
+}
+
 @WebSocketGateway({
-  cors: { origin: '*' },
+  cors: { origin: isAllowedSocketOrigin },
   pingTimeout: 20000,
   pingInterval: 25000,
 })
@@ -48,7 +67,8 @@ export class MonitoringGateway
           }
         }
         if (!token || token.length < 10) {
-          return next();
+          // Reject: only authenticated managers may subscribe to live data.
+          return next(new Error('unauthorized'));
         }
         const decoded = await this.jwtService.verifyAsync<{
           username: string;
@@ -60,7 +80,7 @@ export class MonitoringGateway
         this.presence.addSocket(decoded.username, socket.id);
         next();
       } catch {
-        next();
+        next(new Error('unauthorized'));
       }
     });
   }
@@ -87,31 +107,21 @@ export class MonitoringGateway
    * Low-level emit used after hybrid persistence / FCM routing.
    */
   emitEnvelope<T>(event: WsEvent<T>, options?: BroadcastOptions): void {
-    const exclude = new Set(
-      (options?.excludeSocketIds ?? [])
-        .map((s) => String(s).trim())
-        .filter((s) => s.length > 0),
-    );
+    const exclude = (options?.excludeSocketIds ?? [])
+      .map((s) => String(s).trim())
+      .filter((s) => s.length > 0);
 
-    const emitPairToSocket = (socket: Socket) => {
-      socket.emit(event.type, event);
-      if (event.type !== 'data_updated') {
-        socket.emit('data_updated', event);
-      }
-    };
+    // Emit only to authenticated managers (room joined on valid JWT), never to
+    // every connected socket. `except` drops the socket(s) that originated the
+    // change so the acting device isn't echoed.
+    const target = exclude.length
+      ? this.server.to('managers').except(exclude)
+      : this.server.to('managers');
 
-    if (exclude.size === 0) {
-      this.server.emit(event.type, event);
-      if (event.type !== 'data_updated') {
-        this.server.emit('data_updated', event);
-      }
-      return;
+    target.emit(event.type, event);
+    if (event.type !== 'data_updated') {
+      target.emit('data_updated', event);
     }
-
-    this.server.sockets.sockets.forEach((socket) => {
-      if (exclude.has(socket.id)) return;
-      emitPairToSocket(socket);
-    });
   }
 
   @SubscribeMessage('ping')

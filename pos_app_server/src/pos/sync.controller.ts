@@ -12,6 +12,7 @@ import {
 import { PrismaService } from '../prisma.service';
 import { PosOutboxService } from './pos-outbox.service';
 import { PosCallbackClient } from './pos-callback.client';
+import { isAllowedPosCallbackUrl } from './pos-callback-url';
 import { MonitoringGateway } from '../realtime/monitoring.gateway';
 import { AuthService } from '../auth/auth.service';
 import { PosSyncGuard } from '../auth/pos-sync.guard';
@@ -243,16 +244,23 @@ export class SyncController implements OnModuleInit {
   ): Promise<void> {
     if (url && url.trim().length > 0) {
       const trimmedUrl = url.trim();
-      this.posCallback.setCallbackUrl(trimmedUrl);
-      await (this.prisma as any).setting.upsert({
-        where: { key: SyncController.POS_CALLBACK_URL_KEY },
-        update: { value: trimmedUrl },
-        create: {
-          key: SyncController.POS_CALLBACK_URL_KEY,
-          value: trimmedUrl,
-        },
-      });
-      console.log(`[Sync] POS callback URL registered: ${trimmedUrl}`);
+      // SSRF guard: only accept a private/LAN POS address; never persist others.
+      if (!isAllowedPosCallbackUrl(trimmedUrl)) {
+        console.warn(
+          `[Sync] Ignoring POS callback URL (not a private/LAN address): ${trimmedUrl}`,
+        );
+      } else {
+        this.posCallback.setCallbackUrl(trimmedUrl);
+        await (this.prisma as any).setting.upsert({
+          where: { key: SyncController.POS_CALLBACK_URL_KEY },
+          update: { value: trimmedUrl },
+          create: {
+            key: SyncController.POS_CALLBACK_URL_KEY,
+            value: trimmedUrl,
+          },
+        });
+        console.log(`[Sync] POS callback URL registered: ${trimmedUrl}`);
+      }
     }
     if (key && key.trim().length > 0) {
       const trimmedKey = key.trim();

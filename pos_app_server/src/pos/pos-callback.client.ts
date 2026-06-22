@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { isAllowedPosCallbackUrl } from './pos-callback-url';
 
 /**
  * Transport client for cloud → POS callbacks (Option A in SYNC_CONTRACT.md).
@@ -20,6 +21,14 @@ export class PosCallbackClient {
   private connectionKey: string | null = null;
 
   setCallbackUrl(url: string | null): void {
+    // SSRF guard: never hold a non-LAN URL that we'd later fetch().
+    if (url !== null && !isAllowedPosCallbackUrl(url)) {
+      console.warn(
+        `[Sync] Rejected POS callback URL (not a private/LAN address): ${url}`,
+      );
+      this.callbackUrl = null;
+      return;
+    }
     this.callbackUrl = url;
   }
 

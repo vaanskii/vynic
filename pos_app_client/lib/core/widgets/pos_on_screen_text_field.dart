@@ -2,7 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:vynic/apps/windows_pos/widgets/on_screen_keyboard.dart';
+import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_language.dart';
+import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 
 /// True on desktop POS targets (Windows/macOS/Linux) where we show the bottom sheet keyboard.
 bool shouldUsePosOnScreenKeyboard() {
@@ -16,33 +17,10 @@ Future<void> showPosOnScreenKeyboardSheet({
   required TextEditingController controller,
   String language = 'ka',
 }) async {
-  final screenWidth = MediaQuery.sizeOf(context).width;
-  await showModalBottomSheet<void>(
+  await showPosKeyboardSheet(
     context: context,
-    isScrollControlled: true,
-    useSafeArea: false,
-    barrierColor: Colors.transparent,
-    backgroundColor: Colors.transparent,
-    elevation: 0,
-    enableDrag: false,
-    constraints: BoxConstraints(
-      minWidth: screenWidth,
-      maxWidth: screenWidth,
-    ),
-    builder: (sheetContext) {
-      final bottomInset = MediaQuery.viewPaddingOf(sheetContext).bottom;
-      return Padding(
-        padding: EdgeInsets.only(bottom: bottomInset),
-        child: SizedBox(
-          width: MediaQuery.sizeOf(sheetContext).width,
-          child: OnScreenKeyboard(
-            controller: controller,
-            language: language,
-            onClose: () => Navigator.pop(sheetContext),
-          ),
-        ),
-      );
-    },
+    controller: controller,
+    initialLanguage: PosKeyboardLanguage.fromCode(language),
   );
 }
 

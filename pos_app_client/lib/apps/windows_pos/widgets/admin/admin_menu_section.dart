@@ -7,8 +7,8 @@ import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
-import 'package:vynic/apps/windows_pos/widgets/pin_button.dart';
-import 'package:vynic/apps/windows_pos/widgets/on_screen_keyboard.dart';
+import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_language.dart';
+import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 
 class AdminMenuSection extends StatefulWidget {
   final User user;
@@ -667,7 +667,10 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
   InputDecoration _dialogInputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: _textMuted, fontWeight: FontWeight.w500),
+      labelStyle: const TextStyle(
+        color: _textMuted,
+        fontWeight: FontWeight.w500,
+      ),
       filled: true,
       fillColor: const Color(0xFFF9FAFB),
       border: OutlineInputBorder(
@@ -727,7 +730,10 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
         foregroundColor: _textMuted,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
-      child: const Text('გაუქმება', style: TextStyle(fontWeight: FontWeight.w600)),
+      child: const Text(
+        'გაუქმება',
+        style: TextStyle(fontWeight: FontWeight.w600),
+      ),
     );
   }
 
@@ -803,40 +809,12 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     controller.selection = TextSelection.collapsed(
       offset: controller.text.length,
     );
-    final screenWidth = MediaQuery.sizeOf(context).width;
 
     try {
-      return await showModalBottomSheet<String>(
+      return await showPosKeyboardInputSheet(
         context: context,
-        isScrollControlled: true,
-        useSafeArea: false,
-        barrierColor: Colors.transparent,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        enableDrag: false,
-        constraints: BoxConstraints(
-          minWidth: screenWidth,
-          maxWidth: screenWidth,
-        ),
-        builder: (sheetContext) {
-          void closeWithValue() {
-            Navigator.pop(sheetContext, controller.text.trim());
-          }
-
-          final bottomInset = MediaQuery.viewPaddingOf(sheetContext).bottom;
-          return Padding(
-            padding: EdgeInsets.only(bottom: bottomInset),
-            child: SizedBox(
-              width: MediaQuery.sizeOf(sheetContext).width,
-              child: OnScreenKeyboard(
-                controller: controller,
-                language: language,
-                onClose: closeWithValue,
-                onEnter: closeWithValue,
-              ),
-            ),
-          );
-        },
+        controller: controller,
+        initialLanguage: PosKeyboardLanguage.fromCode(language),
       );
     } finally {
       controller.dispose();
@@ -850,184 +828,13 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     bool allowDecimal = false,
     int maxDecimalPlaces = 2,
   }) async {
-    String phoneValue = initialValue.trim();
-
-    String? nextValueAfterDigit(String currentValue, String digit) {
-      String sanitized = currentValue;
-
-      if (digit == '.') {
-        if (!allowDecimal ||
-            maxDecimalPlaces == 0 ||
-            currentValue.contains('.')) {
-          return null;
-        }
-        if (currentValue.isEmpty) {
-          sanitized = '0.';
-        } else {
-          sanitized = '$currentValue.';
-        }
-        return sanitized;
-      }
-
-      final proposed = currentValue.isEmpty || currentValue == '0'
-          ? digit
-          : '$currentValue$digit';
-
-      final digitsOnly = proposed.replaceAll('.', '');
-      if (digitsOnly.length > maxDigits) {
-        return null;
-      }
-
-      if (allowDecimal && proposed.contains('.')) {
-        final parts = proposed.split('.');
-        if (parts.length > 1 &&
-            parts[parts.length - 1].length > maxDecimalPlaces) {
-          return null;
-        }
-      }
-
-      return proposed;
-    }
-
-    return await showModalBottomSheet<String>(
+    return showPosNumberKeyboardInputSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withOpacity(0.7),
-      constraints: const BoxConstraints(maxWidth: double.infinity),
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (context, sheetSetState) {
-            return FractionallySizedBox(
-              heightFactor: 0.8,
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF1a1a1a),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                ),
-                child: SafeArea(
-                  top: false,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 8),
-                      Center(
-                        child: Container(
-                          width: 64,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            color: Colors.white24,
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 20, 16, 12),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.dialpad, color: Color(0xFFC0AD7B)),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                title,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            TextButton.icon(
-                              onPressed: () => Navigator.pop(
-                                sheetContext,
-                                phoneValue.trim(),
-                              ),
-                              icon: const Icon(
-                                Icons.check_circle,
-                                color: Color(0xFFC0AD7B),
-                              ),
-                              label: const Text(
-                                'შენახვა',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () => Navigator.pop(sheetContext),
-                              icon: const Icon(
-                                Icons.close,
-                                color: Colors.white70,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 16,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2B2B2B),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white24),
-                          ),
-                          child: Text(
-                            phoneValue.isEmpty
-                                ? 'დააჭირეთ ციფრებს შესაყვანად'
-                                : phoneValue,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 26,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Center(
-                        child: PinPad(
-                          onDigitPressed: (digit) {
-                            sheetSetState(() {
-                              final next = nextValueAfterDigit(
-                                phoneValue,
-                                digit,
-                              );
-                              if (next != null) {
-                                phoneValue = next;
-                              }
-                            });
-                          },
-                          onClearPressed: () {
-                            sheetSetState(() {
-                              phoneValue = '';
-                            });
-                          },
-                          onDeletePressed: () {
-                            sheetSetState(() {
-                              if (phoneValue.isNotEmpty) {
-                                phoneValue = phoneValue.substring(
-                                  0,
-                                  phoneValue.length - 1,
-                                );
-                              }
-                            });
-                          },
-                          showDecimalButton: allowDecimal,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
+      title: title,
+      initialValue: initialValue,
+      maxDigits: maxDigits,
+      allowDecimal: allowDecimal,
+      maxDecimalPlaces: maxDecimalPlaces,
     );
   }
 
@@ -1124,9 +931,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   Navigator.of(context).pop();
                   if (success) {
                     setState(() {});
-                    unawaited(
-                      showSuccessToast(context, 'კატეგორია დაემატა'),
-                    );
+                    unawaited(showSuccessToast(context, 'კატეგორია დაემატა'));
                   }
                 }
               },
@@ -1232,12 +1037,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   Navigator.of(context).pop();
                   if (success) {
                     setState(() {});
-                    unawaited(
-                      showSuccessToast(
-                        context,
-                        'კატეგორია განახლდა',
-                      ),
-                    );
+                    unawaited(showSuccessToast(context, 'კატეგორია განახლდა'));
                   }
                 }
               },
@@ -1352,10 +1152,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   if (success) {
                     setState(() {});
                     unawaited(
-                      showSuccessToast(
-                        context,
-                        'ქვეკატეგორია დაემატა',
-                      ),
+                      showSuccessToast(context, 'ქვეკატეგორია დაემატა'),
                     );
                   }
                 }
@@ -1443,10 +1240,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   if (success) {
                     setState(() {});
                     unawaited(
-                      showSuccessToast(
-                        context,
-                        'ქვეკატეგორია განახლდა',
-                      ),
+                      showSuccessToast(context, 'ქვეკატეგორია განახლდა'),
                     );
                   }
                 }
@@ -1506,9 +1300,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       if (!mounted) return;
       if (success) {
         setState(() {});
-        unawaited(
-          showSuccessToast(context, 'ქვეკატეგორია წაიშალა'),
-        );
+        unawaited(showSuccessToast(context, 'ქვეკატეგორია წაიშალა'));
       }
     }
   }
@@ -1663,9 +1455,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   Navigator.of(context).pop();
                   if (success) {
                     setState(() {});
-                    unawaited(
-                      showSuccessToast(context, 'პროდუქტი დაემატა'),
-                    );
+                    unawaited(showSuccessToast(context, 'პროდუქტი დაემატა'));
                   }
                 }
               },
@@ -1839,9 +1629,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   Navigator.of(context).pop();
                   if (success) {
                     setState(() {});
-                    unawaited(
-                      showSuccessToast(context, 'პროდუქტი დაემატა'),
-                    );
+                    unawaited(showSuccessToast(context, 'პროდუქტი დაემატა'));
                   }
                 }
               },
@@ -2018,9 +1806,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   Navigator.of(context).pop();
                   if (success) {
                     setState(() {});
-                    unawaited(
-                      showSuccessToast(context, 'პროდუქტი განახლდა'),
-                    );
+                    unawaited(showSuccessToast(context, 'პროდუქტი განახლდა'));
                   }
                 }
               },
@@ -2050,7 +1836,10 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF2B2B2B),
-        title: const Text('პროდუქტის წაშლა', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'პროდუქტის წაშლა',
+          style: TextStyle(color: Colors.white),
+        ),
         content: Text(
           'დარწმუნებული ხართ, რომ გსურთ „$name“ წაშლა?',
           style: const TextStyle(color: Colors.white70),
@@ -2238,9 +2027,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   Navigator.of(context).pop();
                   if (success) {
                     setState(() {});
-                    unawaited(
-                      showSuccessToast(context, 'პროდუქტი განახლდა'),
-                    );
+                    unawaited(showSuccessToast(context, 'პროდუქტი განახლდა'));
                   }
                 }
               },
@@ -2269,7 +2056,10 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF2B2B2B),
-        title: const Text('პროდუქტის წაშლა', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'პროდუქტის წაშლა',
+          style: TextStyle(color: Colors.white),
+        ),
         content: Text(
           'დარწმუნებული ხართ, რომ გსურთ „$name“ წაშლა?',
           style: const TextStyle(color: Colors.white70),
@@ -2366,7 +2156,10 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('დამატება', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: const Text(
+              'დამატება',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),

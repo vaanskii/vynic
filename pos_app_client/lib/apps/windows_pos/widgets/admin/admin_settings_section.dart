@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/services/monthly_report_service.dart';
+import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_language.dart';
+import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 
 typedef AsyncVoidCallback = Future<void> Function();
 
@@ -143,119 +145,243 @@ class AdminSettingsSection extends StatelessWidget {
   final AsyncVoidCallback onSaveLocalizationSettings;
   final AsyncVoidCallback onCreateBackupFile;
   final AsyncVoidCallback onRestoreBackupFromFile;
-  static const Color _secondaryColor = Color(0xFF2563EB);
-  static const Color _surfaceColor = Color(0xFFF4F6FF);
+  static const Color _accent = Color(0xFF14B8A6);
+  static const Color _accentDark = Color(0xFF0F766E);
+  static const Color _surfaceColor = Color(0xFFF6F7F9);
+  static const Color _panelSoft = Color(0xFFF9FAFB);
   static const Color _cardColor = Colors.white;
-  static const Color _borderColor = Color(0xFFE2E8F0);
-  static const Color _textPrimary = Color(0xFF1F2937);
-  static const Color _textMuted = Color(0xFF64748B);
+  static const Color _borderColor = Color(0xFFE5E7EB);
+  static const Color _textPrimary = Color(0xFF111827);
+  static const Color _textMuted = Color(0xFF6B7280);
 
   bool get isMobile => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
   ButtonStyle _primaryButtonStyle() {
     return ElevatedButton.styleFrom(
-      backgroundColor: const Color(0xFFBFDBFE),
-      foregroundColor: _textPrimary,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      backgroundColor: _accentDark,
+      foregroundColor: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       elevation: 0,
     );
   }
 
   ButtonStyle _outlineButtonStyle() {
     return OutlinedButton.styleFrom(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      side: const BorderSide(color: _secondaryColor, width: 1.5),
-      foregroundColor: _secondaryColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
+      side: const BorderSide(color: _borderColor, width: 1.4),
+      foregroundColor: _textPrimary,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    );
+  }
+
+  BoxDecoration _panelDecoration() {
+    return BoxDecoration(
+      color: _cardColor,
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: _borderColor),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x0F000000),
+          blurRadius: 18,
+          offset: Offset(0, 8),
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return SizedBox.expand(
-      child: Align(
-        alignment: Alignment.topLeft,
-        child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(
-            isMobile ? 16 : 24,
-            0,
-            isMobile ? 16 : 24,
-            24,
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                isMobile ? 16 : 28,
+                isMobile ? 16 : 20,
+                isMobile ? 16 : 28,
+                18,
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1100),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildModernHeader(),
+                    const SizedBox(height: 14),
+                    _buildStatusStrip(),
+                    const SizedBox(height: 16),
+                    _buildSettingsHeader(
+                      icon: Icons.percent,
+                      title: 'მომსახურების საკომისიო',
+                      subtitle:
+                          'განაახლეთ მომსახურების საკომისიოს პროცენტი და განსაზღვრეთ ავტომატური გამოყენება.',
+                    ),
+                    const SizedBox(height: 12),
+                    _buildServiceFeeCard(),
+                    const SizedBox(height: 18),
+                    _buildSettingsHeader(
+                      icon: Icons.lock_outline,
+                      title: 'გაუქმების პაროლი',
+                      subtitle:
+                          'მართეთ დადასტურების პაროლი, რომელიც საჭიროა შეკვეთის გაუქმებამდე.',
+                    ),
+                    const SizedBox(height: 12),
+                    _buildCancellationPasswordCard(),
+                    const SizedBox(height: 18),
+                    _buildSettingsHeader(
+                      icon: Icons.table_restaurant,
+                      title: 'მაგიდის დახურვის უფლებები',
+                      subtitle:
+                          'განსაზღვრეთ, შეუძლია თუ არა ყველა ოფიციანტს მაგიდის დახურვა, თუ მხოლოდ მის შემქმნელს.',
+                    ),
+                    const SizedBox(height: 12),
+                    _buildTableOwnershipCard(),
+                    const SizedBox(height: 18),
+                    _buildSettingsHeader(
+                      icon: Icons.language,
+                      title: 'ენის პარამეტრები',
+                      subtitle:
+                          'აირჩიეთ ნაგულისხმევი ენა მენიუს, კლავიატურისა და ბეჭდური ჩეკებისთვის.',
+                    ),
+                    const SizedBox(height: 12),
+                    _buildLocalizationCard(),
+                    const SizedBox(height: 18),
+                    _buildSettingsHeader(
+                      icon: Icons.assessment,
+                      title: 'თვიური ანგარიში',
+                      subtitle:
+                          'დაარეგულირეთ შიდა ხარჯები და შექმენით თვიური ფინანსური ანგარიში.',
+                    ),
+                    const SizedBox(height: 12),
+                    _buildMonthlyReportSettingsCard(),
+                    const SizedBox(height: 18),
+                    _buildSettingsHeader(
+                      icon: Icons.summarize,
+                      title: 'სრული ანგარიში',
+                      subtitle:
+                          'აირჩიეთ თვეების დიაპაზონი, დაამატეთ საჭირო კორექციები და მიიღეთ ერთიანი XLSX ანგარიში.',
+                    ),
+                    const SizedBox(height: 12),
+                    _buildFullReportCard(),
+                    const SizedBox(height: 18),
+                    _buildSettingsHeader(
+                      icon: Icons.save_alt,
+                      title: 'მონაცემები და სარეზერვო ასლები',
+                      subtitle:
+                          'შექმენით ოფლაინ სარეზერვო ასლი მომხმარებლების, მენიუს, ჯავშნებისა და გაყიდვების მონაცემებისთვის.',
+                    ),
+                    const SizedBox(height: 12),
+                    _buildBackupCard(),
+                  ],
+                ),
+              ),
+            ),
           ),
-          child: SizedBox(
-            width: double.infinity,
+          _buildBottomDock(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+      decoration: _panelDecoration(),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: _accent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.settings_outlined, color: _accentDark),
+          ),
+          const SizedBox(width: 14),
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSettingsHeader(
-                  icon: Icons.percent,
-                  title: 'მომსახურების საკომისიო',
-                  subtitle:
-                      'განაახლეთ მომსახურების საკომისიოს პროცენტი და განსაზღვრეთ ავტომატური გამოყენება.',
+                Text(
+                  'პარამეტრები',
+                  style: TextStyle(
+                    color: _textPrimary,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-                const SizedBox(height: 16),
-                _buildServiceFeeCard(),
-                const SizedBox(height: 32),
-                _buildSettingsHeader(
-                  icon: Icons.lock_outline,
-                  title: 'გაუქმების პაროლი',
-                  subtitle:
-                      'მართეთ დადასტურების პაროლი, რომელიც საჭიროა შეკვეთის გაუქმებამდე.',
+                SizedBox(height: 3),
+                Text(
+                  'სისტემის, უსაფრთხოების, ანგარიშებისა და მონაცემების მართვა.',
+                  style: TextStyle(color: _textMuted, fontSize: 13),
                 ),
-                const SizedBox(height: 16),
-                _buildCancellationPasswordCard(),
-                const SizedBox(height: 32),
-                _buildSettingsHeader(
-                  icon: Icons.table_restaurant,
-                  title: 'მაგიდის დახურვის უფლებები',
-                  subtitle:
-                      'განსაზღვრეთ, შეუძლია თუ არა ყველა ოფიციანტს მაგიდის დახურვა, თუ მხოლოდ მის შემქმნელს.',
-                ),
-                const SizedBox(height: 16),
-                _buildTableOwnershipCard(),
-                const SizedBox(height: 32),
-                _buildSettingsHeader(
-                  icon: Icons.language,
-                  title: 'ენის პარამეტრები',
-                  subtitle:
-                      'აირჩიეთ ნაგულისხმევი ენა მენიუს, კლავიატურისა და ბეჭდური ჩეკებისთვის.',
-                ),
-                const SizedBox(height: 16),
-                _buildLocalizationCard(),
-                const SizedBox(height: 32),
-                _buildSettingsHeader(
-                  icon: Icons.assessment,
-                  title: 'თვიური ანგარიში',
-                  subtitle:
-                      'დაარეგულირეთ შიდა ხარჯები და შექმენით თვიური ფინანსური ანგარიში.',
-                ),
-                const SizedBox(height: 16),
-                _buildMonthlyReportSettingsCard(),
-                const SizedBox(height: 32),
-                _buildSettingsHeader(
-                  icon: Icons.summarize,
-                  title: 'სრული ანგარიში',
-                  subtitle:
-                      'აირჩიეთ თვეების დიაპაზონი, დაამატეთ საჭირო კორექციები და მიიღეთ ერთიანი XLSX ანგარიში.',
-                ),
-                const SizedBox(height: 16),
-                _buildFullReportCard(),
-                const SizedBox(height: 32),
-                _buildSettingsHeader(
-                  icon: Icons.save_alt,
-                  title: 'მონაცემები და სარეზერვო ასლები',
-                  subtitle:
-                      'შექმენით ოფლაინ სარეზერვო ასლი მომხმარებლების, მენიუს, ჯავშნებისა და გაყიდვების მონაცემებისთვის.',
-                ),
-                const SizedBox(height: 16),
-                _buildBackupCard(),
-                const SizedBox(height: 48),
               ],
             ),
           ),
-        ),
+          const SizedBox(width: 12),
+          _buildStatusBadge(
+            icon: Icons.keyboard_alt_outlined,
+            label: 'POS კლავიატურა',
+            color: _accentDark,
+            background: const Color(0xFFECFDF5),
+            border: const Color(0xFFA7F3D0),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildStatusStrip() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final narrow = constraints.maxWidth < 780;
+        final cards = [
+          _buildInfoTile(
+            icon: Icons.percent_outlined,
+            label: 'საკომისიო',
+            value: '$serviceFeePercentDisplay%',
+            helper: serviceFeeEnabledByDefault ? 'ავტომატურად' : 'ხელით',
+          ),
+          _buildInfoTile(
+            icon: Icons.verified_user_outlined,
+            label: 'გაუქმების დაცვა',
+            value: isCancellationPasswordSet ? 'აქტიური' : 'არააქტიური',
+            helper: isCancellationPasswordSet
+                ? 'PIN დაყენებულია'
+                : 'საჭიროა PIN',
+          ),
+          _buildInfoTile(
+            icon: Icons.language_outlined,
+            label: 'ენა',
+            value: defaultLanguageSetting.toUpperCase(),
+            helper: 'მენიუ / ჩეკი / კლავიატურა',
+          ),
+        ];
+
+        if (narrow) {
+          return Column(
+            children: [
+              for (var i = 0; i < cards.length; i++) ...[
+                cards[i],
+                if (i != cards.length - 1) const SizedBox(height: 10),
+              ],
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            for (var i = 0; i < cards.length; i++) ...[
+              Expanded(child: cards[i]),
+              if (i != cards.length - 1) const SizedBox(width: 12),
+            ],
+          ],
+        );
+      },
     );
   }
 
@@ -264,42 +390,216 @@ class AdminSettingsSection extends StatelessWidget {
     required String title,
     String? subtitle,
   }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: _surfaceColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _borderColor),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: _panelDecoration(),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: _accent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: _accentDark, size: 21),
           ),
-          child: Icon(icon, color: _secondaryColor),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: _textPrimary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              if (subtitle != null) ...[
-                const SizedBox(height: 4),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  subtitle,
-                  style: const TextStyle(color: _textMuted, fontSize: 14),
+                  title,
+                  style: const TextStyle(
+                    color: _textPrimary,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(color: _textMuted, fontSize: 13),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoTile({
+    required IconData icon,
+    required String label,
+    required String value,
+    required String helper,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _panelDecoration(),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: _accent.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: _accentDark, size: 24),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: _textMuted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: _textPrimary,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  helper,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: _textMuted, fontSize: 12),
                 ),
               ],
-            ],
+            ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required Color background,
+    required Color border,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 16),
+          const SizedBox(width: 7),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomDock() {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        isMobile ? 16 : 28,
+        12,
+        isMobile ? 16 : 28,
+        12,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: _borderColor)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 20,
+            offset: Offset(0, -8),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: _accent.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.info_outline,
+                size: 19,
+                color: _accentDark,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'ცვლილებები ინახება შესაბამის ბლოკში. ტექსტისა და ციფრების ველები იყენებს ახალ POS კლავიატურას.',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: _textMuted,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            if (!isMobile) ...[
+              SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: isRestoringBackup ? null : onRestoreBackupFromFile,
+                  style: _outlineButtonStyle(),
+                  icon: const Icon(Icons.restore_outlined, size: 20),
+                  label: Text(isRestoringBackup ? 'აღდგენა...' : 'აღდგენა'),
+                ),
+              ),
+              const SizedBox(width: 10),
+            ],
+            SizedBox(
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: isCreatingBackup ? null : onCreateBackupFile,
+                style: _primaryButtonStyle(),
+                icon: const Icon(Icons.cloud_download_outlined, size: 20),
+                label: Text(isCreatingBackup ? 'შექმნა...' : 'Backup'),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -311,31 +611,103 @@ class AdminSettingsSection extends StatelessWidget {
     bool enabled = true,
     ValueChanged<String>? onChanged,
   }) {
-    return TextField(
-      controller: controller,
-      enabled: enabled,
-      keyboardType: keyboardType,
-      style: const TextStyle(color: _textPrimary),
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        labelStyle: const TextStyle(color: _textMuted),
-        hintStyle: TextStyle(color: _textMuted.withValues(alpha: 0.6)),
-        filled: true,
-        fillColor: _surfaceColor,
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: _borderColor),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _secondaryColor, width: 2),
-        ),
-        disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: _borderColor.withValues(alpha: 0.5)),
-        ),
+    return Builder(
+      builder: (context) {
+        final usesNumberKeyboard =
+            keyboardType.index == TextInputType.number.index ||
+            keyboardType == TextInputType.phone;
+        final allowsDecimal =
+            keyboardType.index == TextInputType.number.index &&
+            keyboardType.decimal == true;
+
+        return TextField(
+          controller: controller,
+          enabled: enabled,
+          readOnly: enabled,
+          keyboardType: keyboardType,
+          style: const TextStyle(color: _textPrimary),
+          onChanged: onChanged,
+          onTap: !enabled
+              ? null
+              : () async {
+                  String? updated;
+                  if (usesNumberKeyboard) {
+                    updated = await showPosNumberKeyboardInputSheet(
+                      context: context,
+                      initialValue: controller.text,
+                      title: label,
+                      allowDecimal: allowsDecimal,
+                    );
+                  } else {
+                    updated = await showPosKeyboardInputSheet(
+                      context: context,
+                      controller: controller,
+                      initialLanguage: PosKeyboardLanguage.georgian,
+                      title: label,
+                    );
+                  }
+
+                  if (updated == null) return;
+                  if (controller.text != updated) {
+                    controller.value = TextEditingValue(
+                      text: updated,
+                      selection: TextSelection.collapsed(
+                        offset: updated.length,
+                      ),
+                    );
+                  }
+                  onChanged?.call(controller.text);
+                },
+          decoration: InputDecoration(
+            labelText: label,
+            hintText: hint,
+            labelStyle: const TextStyle(color: _textMuted),
+            hintStyle: TextStyle(color: _textMuted.withValues(alpha: 0.6)),
+            suffixIcon: enabled
+                ? Icon(
+                    usesNumberKeyboard
+                        ? Icons.dialpad_outlined
+                        : Icons.keyboard_alt_outlined,
+                    color: _accentDark,
+                    size: 20,
+                  )
+                : null,
+            filled: true,
+            fillColor: enabled ? _panelSoft : _surfaceColor,
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: _borderColor),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: _accentDark, width: 2),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                color: _borderColor.withValues(alpha: 0.5),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildActionRow({required List<Widget> children}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _panelSoft,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: _borderColor),
+      ),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 12,
+        runSpacing: 12,
+        children: children,
       ),
     );
   }
@@ -344,10 +716,10 @@ class AdminSettingsSection extends StatelessWidget {
     return Card(
       color: _cardColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         side: BorderSide(color: _borderColor, width: 1),
       ),
-      elevation: 2,
+      elevation: 0,
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 16 : 24),
         child: Column(
@@ -366,7 +738,7 @@ class AdminSettingsSection extends StatelessWidget {
               children: [
                 Switch(
                   value: serviceFeeEnabledByDefault,
-                  activeThumbColor: _secondaryColor,
+                  activeThumbColor: _accentDark,
                   onChanged: onServiceFeeEnabledByDefaultChanged,
                 ),
                 const SizedBox(width: 12),
@@ -381,34 +753,14 @@ class AdminSettingsSection extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            TextField(
+            _buildSettingsTextField(
               controller: serviceFeeController,
+              label: 'საკომისიოს პროცენტი',
+              hint: 'მაგ. 10',
               enabled: !isSavingServiceFee,
               keyboardType: const TextInputType.numberWithOptions(
                 signed: false,
                 decimal: true,
-              ),
-              style: const TextStyle(color: _textPrimary),
-              decoration: InputDecoration(
-                labelText: 'საკომისიოს პროცენტი',
-                hintText: 'მაგ. 10',
-                suffixText: '%',
-                suffixStyle: const TextStyle(color: _textMuted),
-                labelStyle: const TextStyle(color: _textMuted),
-                hintStyle: TextStyle(color: _textMuted),
-                filled: true,
-                fillColor: _surfaceColor,
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: _borderColor),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: _secondaryColor,
-                    width: 2,
-                  ),
-                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -417,22 +769,25 @@ class AdminSettingsSection extends StatelessWidget {
               style: const TextStyle(color: _textMuted, fontSize: 12),
             ),
             const SizedBox(height: 24),
-            Align(
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: 280,
-                child: ElevatedButton.icon(
-                  onPressed: isSavingServiceFee
-                      ? null
-                      : onSaveServiceFeeSettings,
-                  style: _primaryButtonStyle(),
-                  icon: const Icon(Icons.check_circle_outline, size: 20),
-                  label: Text(
-                    isSavingServiceFee ? 'შენახვა...' : 'საკომისიოს განახლება',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+            _buildActionRow(
+              children: [
+                SizedBox(
+                  width: 280,
+                  child: ElevatedButton.icon(
+                    onPressed: isSavingServiceFee
+                        ? null
+                        : onSaveServiceFeeSettings,
+                    style: _primaryButtonStyle(),
+                    icon: const Icon(Icons.check_circle_outline, size: 20),
+                    label: Text(
+                      isSavingServiceFee
+                          ? 'შენახვა...'
+                          : 'საკომისიოს განახლება',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
@@ -504,10 +859,10 @@ class AdminSettingsSection extends StatelessWidget {
     return Card(
       color: _cardColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         side: const BorderSide(color: _borderColor),
       ),
-      elevation: 2,
+      elevation: 0,
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 16 : 24),
         child: Column(
@@ -549,9 +904,9 @@ class AdminSettingsSection extends StatelessWidget {
               iconEnabledColor: _textMuted,
               decoration: InputDecoration(
                 filled: true,
-                fillColor: _surfaceColor,
+                fillColor: _panelSoft,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                   borderSide: const BorderSide(color: _borderColor),
                 ),
               ),
@@ -582,9 +937,9 @@ class AdminSettingsSection extends StatelessWidget {
                     style: const TextStyle(color: _textPrimary),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: _surfaceColor,
+                      fillColor: _panelSoft,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                         borderSide: const BorderSide(color: _borderColor),
                       ),
                     ),
@@ -614,9 +969,9 @@ class AdminSettingsSection extends StatelessWidget {
                     style: const TextStyle(color: _textPrimary),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: _surfaceColor,
+                      fillColor: _panelSoft,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                         borderSide: const BorderSide(color: _borderColor),
                       ),
                     ),
@@ -774,9 +1129,7 @@ class AdminSettingsSection extends StatelessWidget {
               style: const TextStyle(color: _textMuted, fontSize: 12),
             ),
             const SizedBox(height: 20),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
+            _buildActionRow(
               children: [
                 ElevatedButton.icon(
                   onPressed: isSavingMonthlyReportConfig
@@ -828,10 +1181,10 @@ class AdminSettingsSection extends StatelessWidget {
     return Card(
       color: _cardColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         side: const BorderSide(color: _borderColor),
       ),
-      elevation: 2,
+      elevation: 0,
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 16 : 24),
         child: Column(
@@ -859,15 +1212,16 @@ class AdminSettingsSection extends StatelessWidget {
                     onChanged: isBusy
                         ? null
                         : (value) {
-                            if (value != null)
+                            if (value != null) {
                               onFullReportStartMonthChanged(value);
+                            }
                           },
                     decoration: InputDecoration(
                       labelText: 'საწყისი თვე',
                       filled: true,
-                      fillColor: _surfaceColor,
+                      fillColor: _panelSoft,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                   ),
@@ -893,15 +1247,16 @@ class AdminSettingsSection extends StatelessWidget {
                     onChanged: isBusy
                         ? null
                         : (value) {
-                            if (value != null)
+                            if (value != null) {
                               onFullReportEndMonthChanged(value);
+                            }
                           },
                     decoration: InputDecoration(
                       labelText: 'ბოლო თვე',
                       filled: true,
-                      fillColor: _surfaceColor,
+                      fillColor: _panelSoft,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                   ),
@@ -1003,9 +1358,7 @@ class AdminSettingsSection extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
+            _buildActionRow(
               children: [
                 OutlinedButton.icon(
                   onPressed: isBusy ? null : onGenerateFullReportXlsx,
@@ -1042,10 +1395,10 @@ class AdminSettingsSection extends StatelessWidget {
     return Card(
       color: _cardColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         side: const BorderSide(color: _borderColor),
       ),
-      elevation: 2,
+      elevation: 0,
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 16 : 24),
         child: Column(
@@ -1114,25 +1467,26 @@ class AdminSettingsSection extends StatelessWidget {
               enabled: !isSavingCancellationPassword,
             ),
             const SizedBox(height: 20),
-            Align(
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: 280,
-                child: ElevatedButton.icon(
-                  onPressed: isSavingCancellationPassword
-                      ? null
-                      : onSaveCancellationPassword,
-                  style: _primaryButtonStyle(),
-                  icon: const Icon(Icons.save),
-                  label: Text(
-                    isSavingCancellationPassword
-                        ? 'შენახვა...'
-                        : isCancellationPasswordSet
-                        ? 'პაროლის განახლება'
-                        : 'პაროლის დაყენება',
+            _buildActionRow(
+              children: [
+                SizedBox(
+                  width: 280,
+                  child: ElevatedButton.icon(
+                    onPressed: isSavingCancellationPassword
+                        ? null
+                        : onSaveCancellationPassword,
+                    style: _primaryButtonStyle(),
+                    icon: const Icon(Icons.save),
+                    label: Text(
+                      isSavingCancellationPassword
+                          ? 'შენახვა...'
+                          : isCancellationPasswordSet
+                          ? 'პაროლის განახლება'
+                          : 'პაროლის დაყენება',
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
@@ -1152,10 +1506,10 @@ class AdminSettingsSection extends StatelessWidget {
     return Card(
       color: _cardColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         side: BorderSide(color: _borderColor, width: 1),
       ),
-      elevation: 2,
+      elevation: 0,
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 16 : 24),
         child: Column(
@@ -1206,8 +1560,8 @@ class AdminSettingsSection extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: _surfaceColor,
-                borderRadius: BorderRadius.circular(12),
+                color: _panelSoft,
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: _borderColor),
               ),
               child: const Text(
@@ -1222,29 +1576,30 @@ class AdminSettingsSection extends StatelessWidget {
             const SizedBox(height: 16),
             Switch(
               value: restrictTableCloseToOwner,
-              activeThumbColor: _secondaryColor,
+              activeThumbColor: _accentDark,
               onChanged: isSavingTableOwnershipSettings
                   ? null
                   : onRestrictTableCloseToOwnerChanged,
             ),
             const SizedBox(height: 24),
-            Align(
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: 280,
-                child: ElevatedButton.icon(
-                  onPressed: isSavingTableOwnershipSettings
-                      ? null
-                      : onSaveTableOwnershipSettings,
-                  style: _primaryButtonStyle(),
-                  icon: const Icon(Icons.check_circle_outline, size: 20),
-                  label: Text(
-                    isSavingTableOwnershipSettings
-                        ? 'შენახვა...'
-                        : 'პარამეტრის შენახვა',
+            _buildActionRow(
+              children: [
+                SizedBox(
+                  width: 280,
+                  child: ElevatedButton.icon(
+                    onPressed: isSavingTableOwnershipSettings
+                        ? null
+                        : onSaveTableOwnershipSettings,
+                    style: _primaryButtonStyle(),
+                    icon: const Icon(Icons.check_circle_outline, size: 20),
+                    label: Text(
+                      isSavingTableOwnershipSettings
+                          ? 'შენახვა...'
+                          : 'პარამეტრის შენახვა',
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
@@ -1256,10 +1611,10 @@ class AdminSettingsSection extends StatelessWidget {
     return Card(
       color: _cardColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         side: BorderSide(color: _borderColor, width: 1),
       ),
-      elevation: 2,
+      elevation: 0,
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 16 : 24),
         child: Column(
@@ -1269,9 +1624,9 @@ class AdminSettingsSection extends StatelessWidget {
               initialValue: defaultLanguageSetting,
               decoration: InputDecoration(
                 filled: true,
-                fillColor: _surfaceColor,
+                fillColor: _panelSoft,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                   borderSide: const BorderSide(color: _borderColor),
                 ),
               ),
@@ -1286,23 +1641,24 @@ class AdminSettingsSection extends StatelessWidget {
               },
             ),
             const SizedBox(height: 24),
-            Align(
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: 280,
-                child: ElevatedButton.icon(
-                  onPressed: isSavingLocalization
-                      ? null
-                      : onSaveLocalizationSettings,
-                  style: _primaryButtonStyle(),
-                  icon: const Icon(Icons.check_circle_outline, size: 20),
-                  label: Text(
-                    isSavingLocalization
-                        ? 'შენახვა...'
-                        : 'ენის პარამეტრის შენახვა',
+            _buildActionRow(
+              children: [
+                SizedBox(
+                  width: 280,
+                  child: ElevatedButton.icon(
+                    onPressed: isSavingLocalization
+                        ? null
+                        : onSaveLocalizationSettings,
+                    style: _primaryButtonStyle(),
+                    icon: const Icon(Icons.check_circle_outline, size: 20),
+                    label: Text(
+                      isSavingLocalization
+                          ? 'შენახვა...'
+                          : 'ენის პარამეტრის შენახვა',
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
@@ -1321,7 +1677,7 @@ class AdminSettingsSection extends StatelessWidget {
         ),
       ),
       selected: isSelected,
-      selectedColor: const Color(0xFFBFDBFE),
+      selectedColor: const Color(0xFFCCFBF1),
       backgroundColor: _surfaceColor,
       onSelected: (_) => onMonthlyReportProfitRatioChanged(value),
     );
@@ -1331,10 +1687,10 @@ class AdminSettingsSection extends StatelessWidget {
     return Card(
       color: _cardColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         side: BorderSide(color: _borderColor, width: 1),
       ),
-      elevation: 2,
+      elevation: 0,
       child: Padding(
         padding: EdgeInsets.all(isMobile ? 16 : 24),
         child: Column(
@@ -1357,7 +1713,7 @@ class AdminSettingsSection extends StatelessWidget {
             if (lastBackupPath != null)
               SelectableText(
                 'ბოლო ასლი: $lastBackupPath',
-                style: const TextStyle(color: _secondaryColor, fontSize: 12),
+                style: const TextStyle(color: _accentDark, fontSize: 12),
               ),
             if (lastRestorePath != null)
               SelectableText(
@@ -1365,68 +1721,67 @@ class AdminSettingsSection extends StatelessWidget {
                 style: const TextStyle(color: Color(0xFF10B981), fontSize: 12),
               ),
             const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: 360,
-                child: ElevatedButton.icon(
-                  onPressed: isCreatingBackup
-                      ? null
-                      : () async {
-                          debugPrint('[BackupUI] Save backup button clicked');
-                          try {
-                            await onCreateBackupFile();
-                            debugPrint(
-                              '[BackupUI] Save backup callback finished',
-                            );
-                          } catch (e, st) {
-                            debugPrint(
-                              '[BackupUI] Save backup callback error: $e',
-                            );
-                            debugPrint('$st');
-                          }
-                        },
-                  style: _primaryButtonStyle(),
-                  icon: const Icon(Icons.cloud_download, size: 20),
-                  label: Text(
-                    isCreatingBackup ? 'შექმნა...' : 'სარეზერვო ფაილის შექმნა',
+            _buildActionRow(
+              children: [
+                SizedBox(
+                  width: 330,
+                  child: ElevatedButton.icon(
+                    onPressed: isCreatingBackup
+                        ? null
+                        : () async {
+                            debugPrint('[BackupUI] Save backup button clicked');
+                            try {
+                              await onCreateBackupFile();
+                              debugPrint(
+                                '[BackupUI] Save backup callback finished',
+                              );
+                            } catch (e, st) {
+                              debugPrint(
+                                '[BackupUI] Save backup callback error: $e',
+                              );
+                              debugPrint('$st');
+                            }
+                          },
+                    style: _primaryButtonStyle(),
+                    icon: const Icon(Icons.cloud_download, size: 20),
+                    label: Text(
+                      isCreatingBackup
+                          ? 'შექმნა...'
+                          : 'სარეზერვო ფაილის შექმნა',
+                    ),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: 360,
-                child: OutlinedButton.icon(
-                  onPressed: isRestoringBackup
-                      ? null
-                      : () async {
-                          debugPrint(
-                            '[BackupUI] Restore backup button clicked',
-                          );
-                          try {
-                            await onRestoreBackupFromFile();
+                SizedBox(
+                  width: 330,
+                  child: OutlinedButton.icon(
+                    onPressed: isRestoringBackup
+                        ? null
+                        : () async {
                             debugPrint(
-                              '[BackupUI] Restore backup callback finished',
+                              '[BackupUI] Restore backup button clicked',
                             );
-                          } catch (e, st) {
-                            debugPrint(
-                              '[BackupUI] Restore backup callback error: $e',
-                            );
-                            debugPrint('$st');
-                          }
-                        },
-                  style: _outlineButtonStyle(),
-                  icon: const Icon(Icons.restore, size: 20),
-                  label: Text(
-                    isRestoringBackup
-                        ? 'აღდგენა...'
-                        : 'სარეზერვო ასლიდან აღდგენა',
+                            try {
+                              await onRestoreBackupFromFile();
+                              debugPrint(
+                                '[BackupUI] Restore backup callback finished',
+                              );
+                            } catch (e, st) {
+                              debugPrint(
+                                '[BackupUI] Restore backup callback error: $e',
+                              );
+                              debugPrint('$st');
+                            }
+                          },
+                    style: _outlineButtonStyle(),
+                    icon: const Icon(Icons.restore, size: 20),
+                    label: Text(
+                      isRestoringBackup
+                          ? 'აღდგენა...'
+                          : 'სარეზერვო ასლიდან აღდგენა',
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
           ],
         ),

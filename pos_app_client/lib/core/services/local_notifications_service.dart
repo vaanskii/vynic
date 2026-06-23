@@ -49,6 +49,9 @@ class LocalNotificationsService {
     final initializationSettings = InitializationSettings(
       android: _androidInitializationSettings,
       iOS: _iosInitializationSettings,
+      // macOS uses the same Darwin settings as iOS. Required, otherwise the
+      // plugin throws "macOS settings must be set" on the macOS manager client.
+      macOS: _iosInitializationSettings,
     );
 
     await _flutterLocalNotificationsPlugin.initialize(

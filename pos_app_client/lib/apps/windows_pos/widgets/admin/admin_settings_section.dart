@@ -1,9 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/services/monthly_report_service.dart';
 
@@ -13,20 +11,9 @@ class AdminSettingsSection extends StatelessWidget {
   const AdminSettingsSection({
     super.key,
     required this.formatDateTimeDisplay,
-    required this.getPrintersList,
-    required this.printerNameControllers,
-    required this.printerIpControllers,
-    required this.printerPortControllers,
-    required this.onAddPrinter,
-    required this.onRemovePrinter,
-    required this.getPrinterRole,
-    required this.onPrinterRoleChanged,
     required this.formatRelativeTime,
     required this.getGeorgianMonthName,
     required this.getDaysInMonth,
-    required this.kitchenPrinterController,
-    required this.receiptPrinterController,
-    required this.printerPortController,
     required this.serviceFeeController,
     required this.currentCancellationPasswordController,
     required this.newCancellationPasswordController,
@@ -38,8 +25,6 @@ class AdminSettingsSection extends StatelessWidget {
     required this.serviceFeeEnabledByDefault,
     required this.onServiceFeeEnabledByDefaultChanged,
     required this.serviceFeePercentDisplay,
-    required this.isSavingPrinterSettings,
-    required this.isTestingPrinters,
     required this.isSavingServiceFee,
     required this.defaultLanguageSetting,
     required this.onDefaultLanguageSettingChanged,
@@ -83,9 +68,6 @@ class AdminSettingsSection extends StatelessWidget {
     required this.onSaveMonthlyReportConfig,
     required this.onGenerateMonthlyReportExcel,
     required this.onGenerateMonthlyReportPdf,
-    required this.onSavePrinterSettings,
-    required this.onTestPrinterConnections,
-    required this.onScanPrinters,
     required this.onSaveServiceFeeSettings,
     required this.onSaveCancellationPassword,
     required this.onSaveTableOwnershipSettings,
@@ -93,24 +75,11 @@ class AdminSettingsSection extends StatelessWidget {
     required this.onCreateBackupFile,
     required this.onRestoreBackupFromFile,
   });
-  // Multiple printers support
-  final List<Map<String, dynamic>> Function() getPrintersList;
-  final List<TextEditingController> printerNameControllers;
-  final List<TextEditingController> printerIpControllers;
-  final List<TextEditingController> printerPortControllers;
-  final VoidCallback onAddPrinter;
-  final ValueChanged<int> onRemovePrinter;
-  final String Function(int index) getPrinterRole;
-  final void Function(int index, String role) onPrinterRoleChanged;
-
   final String Function(DateTime) formatDateTimeDisplay;
   final String Function(DateTime) formatRelativeTime;
   final String Function(int) getGeorgianMonthName;
   final int Function(DateTime) getDaysInMonth;
 
-  final TextEditingController kitchenPrinterController;
-  final TextEditingController receiptPrinterController;
-  final TextEditingController printerPortController;
   final TextEditingController serviceFeeController;
   final TextEditingController currentCancellationPasswordController;
   final TextEditingController newCancellationPasswordController;
@@ -123,8 +92,6 @@ class AdminSettingsSection extends StatelessWidget {
   final bool serviceFeeEnabledByDefault;
   final ValueChanged<bool> onServiceFeeEnabledByDefaultChanged;
   final String serviceFeePercentDisplay;
-  final bool isSavingPrinterSettings;
-  final bool isTestingPrinters;
   final bool isSavingServiceFee;
   final String defaultLanguageSetting;
   final ValueChanged<String> onDefaultLanguageSettingChanged;
@@ -170,9 +137,6 @@ class AdminSettingsSection extends StatelessWidget {
   final AsyncVoidCallback onGenerateFullReportXlsx;
   final AsyncVoidCallback onGenerateFullReportPdf;
   final VoidCallback onRefreshFullReportPreview;
-  final AsyncVoidCallback onSavePrinterSettings;
-  final AsyncVoidCallback onTestPrinterConnections;
-  final AsyncVoidCallback onScanPrinters;
   final AsyncVoidCallback onSaveServiceFeeSettings;
   final AsyncVoidCallback onSaveCancellationPassword;
   final AsyncVoidCallback onSaveTableOwnershipSettings;
@@ -224,15 +188,6 @@ class AdminSettingsSection extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSettingsHeader(
-                  icon: Icons.print,
-                  title: 'პრინტერის კონფიგურაცია',
-                  subtitle:
-                      'დააყენეთ პრინტერების IP მისამართები, პორტი და შეამოწმეთ კავშირი ბარისა და სამზარეულოს ჩეკების ბეჭდვისთვის.',
-                ),
-                const SizedBox(height: 16),
-                _buildPrinterSettingsCard(context),
-                const SizedBox(height: 32),
                 _buildSettingsHeader(
                   icon: Icons.percent,
                   title: 'მომსახურების საკომისიო',
@@ -344,210 +299,6 @@ class AdminSettingsSection extends StatelessWidget {
             ],
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildPrinterSettingsCard(BuildContext context) {
-    final isBusy = isSavingPrinterSettings || isTestingPrinters;
-    return Card(
-      color: _cardColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: _borderColor, width: 1),
-      ),
-      elevation: 2,
-      child: Padding(
-        padding: EdgeInsets.all(isMobile ? 16 : 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'ქსელური პრინტერები',
-              style: TextStyle(
-                color: _textPrimary,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildIpTextField(
-              controller: kitchenPrinterController,
-              label: 'სამზარეულოს ჩეკი IP',
-              hint: 'მაგ. 192.168.100.33',
-              enabled: !isBusy,
-            ),
-            const SizedBox(height: 8),
-            _buildIpPinPad(
-              controller: kitchenPrinterController,
-              enabled: !isBusy,
-            ),
-            const SizedBox(height: 12),
-            _buildIpTextField(
-              controller: receiptPrinterController,
-              label: 'ბარის ჩეკი IP',
-              hint: 'მაგ. 192.168.100.34',
-              enabled: !isBusy,
-            ),
-            const SizedBox(height: 8),
-            _buildIpPinPad(
-              controller: receiptPrinterController,
-              enabled: !isBusy,
-            ),
-            const SizedBox(height: 12),
-            _buildSettingsTextField(
-              controller: printerPortController,
-              label: 'პორტი',
-              hint: '9100',
-              keyboardType: TextInputType.number,
-              enabled: false,
-            ),
-            const SizedBox(height: 24),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: isSavingPrinterSettings
-                      ? null
-                      : onSavePrinterSettings,
-                  style: _primaryButtonStyle(),
-                  icon: isSavingPrinterSettings
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.save),
-                  label: Text(
-                    isSavingPrinterSettings
-                        ? 'შენახვა...'
-                        : 'პარამეტრების შენახვა',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                OutlinedButton.icon(
-                  onPressed: isTestingPrinters
-                      ? null
-                      : onTestPrinterConnections,
-                  style: _outlineButtonStyle(),
-                  icon: isTestingPrinters
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.wifi_tethering),
-                  label: Text(
-                    isTestingPrinters ? 'შემოწმება...' : 'კავშირის შემოწმება',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                if (!isBusy)
-                  const Text(
-                    'გამოიყენება კლასიკური კონფიგურაცია: 2 IP + ფიქსირებული პორტი 9100.',
-                    style: TextStyle(color: _textMuted, fontSize: 12),
-                  ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIpTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required bool enabled,
-  }) {
-    return TextField(
-      controller: controller,
-      enabled: enabled,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-      style: const TextStyle(color: _textPrimary),
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        labelStyle: const TextStyle(color: _textMuted),
-        hintStyle: TextStyle(color: _textMuted.withValues(alpha: 0.6)),
-        filled: true,
-        fillColor: _surfaceColor,
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: _borderColor),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _secondaryColor, width: 2),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIpPinPad({
-    required TextEditingController controller,
-    required bool enabled,
-  }) {
-    Widget key(String label, VoidCallback onTap) {
-      return SizedBox(
-        width: 38,
-        height: 34,
-        child: OutlinedButton(
-          onPressed: enabled ? onTap : null,
-          style: OutlinedButton.styleFrom(
-            padding: EdgeInsets.zero,
-            side: BorderSide(color: _borderColor),
-            foregroundColor: _textPrimary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          child: Text(
-            label,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-          ),
-        ),
-      );
-    }
-
-    void append(String value) {
-      controller.text = '${controller.text}$value';
-      controller.selection = TextSelection.collapsed(
-        offset: controller.text.length,
-      );
-    }
-
-    void backspace() {
-      final text = controller.text;
-      if (text.isEmpty) {
-        return;
-      }
-      controller.text = text.substring(0, text.length - 1);
-      controller.selection = TextSelection.collapsed(
-        offset: controller.text.length,
-      );
-    }
-
-    return Wrap(
-      spacing: 6,
-      runSpacing: 6,
-      children: [
-        key('1', () => append('1')),
-        key('2', () => append('2')),
-        key('3', () => append('3')),
-        key('4', () => append('4')),
-        key('5', () => append('5')),
-        key('6', () => append('6')),
-        key('7', () => append('7')),
-        key('8', () => append('8')),
-        key('9', () => append('9')),
-        key('.', () => append('.')),
-        key('0', () => append('0')),
-        key('<', backspace),
       ],
     );
   }

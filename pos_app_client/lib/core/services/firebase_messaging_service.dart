@@ -1,6 +1,10 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:vynic/firebase_options.dart';
 import 'package:vynic/core/services/auth_token_service.dart';
 import 'package:vynic/core/services/local_notifications_service.dart';
 import 'package:vynic/core/services/manager_notification_inbox.dart';
@@ -17,9 +21,16 @@ class FirebaseMessagingService {
   LocalNotificationsService? _localNotificationsService;
   bool _initialized = false;
 
+  /// FCM only runs on Android/iOS. On desktop (Windows POS, or the macOS
+  /// manager/tester client) Firebase is never initialized, so every messaging
+  /// call must no-op instead of throwing "No Firebase App has been created".
+  static bool get _fcmSupported =>
+      !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+
   Future<void> init({
     required LocalNotificationsService localNotificationsService,
   }) async {
+    if (!_fcmSupported) return;
     if (_initialized) return;
     _localNotificationsService = localNotificationsService;
 
@@ -60,12 +71,14 @@ class FirebaseMessagingService {
   }
 
   Future<void> syncCurrentTokenWithBackend() async {
+    if (!_fcmSupported) return;
     final token = await FirebaseMessaging.instance.getToken();
     if (token == null || token.isEmpty) return;
     await _registerTokenWithBackend(token);
   }
 
   Future<void> unregisterCurrentTokenFromBackend() async {
+    if (!_fcmSupported) return;
     final token = await FirebaseMessaging.instance.getToken();
     if (token == null || token.isEmpty) return;
     try {
@@ -115,6 +128,11 @@ class FirebaseMessagingService {
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Background handlers run in a separate isolate with no Firebase context,
+  // so Firebase must be initialized here before any Firebase API is used.
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   print("background message received: ${message.data.toString()}");
   final localNotifications = LocalNotificationsService.instance();
   await localNotifications.init();

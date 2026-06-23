@@ -66,6 +66,46 @@ void main() async {
     return;
   }
 
+  // ── Desktop manager / tester client (APP_ROLE=client) ───────────────────────
+  // Thin client of a remote Windows POS backend (e.g. Mac on the LAN). Runs the
+  // manager UI only and deliberately does NOT init the POS database, start the
+  // ingest server, push manager-data sync, or initialize printing. The Windows
+  // POS remains the sole source of truth and print host.
+  // Role resolves from --dart-define=APP_ROLE first (lets you flip POS vs manager
+  // on the same machine without editing .env), then falls back to the bundled
+  // .env. e.g. `flutter run -d macos --dart-define=APP_ROLE=pos` forces the POS UI.
+  const roleFromDefine = String.fromEnvironment('APP_ROLE');
+  final appRole = (roleFromDefine.isNotEmpty
+          ? roleFromDefine
+          : (dotenv.env['APP_ROLE'] ?? ''))
+      .toLowerCase()
+      .trim();
+  final isDesktopClient = appRole == 'client';
+  if (isDesktopClient) {
+    await Hive.initFlutter();
+    await Future.wait([
+      AuthTokenService.init(),
+      MobileCacheService.init(),
+      ManagerAppPreferences.init(),
+    ]);
+    // Non-essential for a tester — never let a notification hiccup block the UI.
+    try {
+      await LocalNotificationsService.instance().init();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[main] LocalNotifications init skipped: $e');
+      }
+    }
+    if (kDebugMode) {
+      debugPrint(
+        '[main] APP_ROLE=client → manager client '
+        '(no POS DB / ingest / sync / printing)',
+      );
+    }
+    runApp(const MyApp(isMobile: true));
+    return;
+  }
+
   // ── Windows / macOS / Linux POS ────────────────────────────────────────────
 
   // Initialize database, run migrations, and prepare app data.

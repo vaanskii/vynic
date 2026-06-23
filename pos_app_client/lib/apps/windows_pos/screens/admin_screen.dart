@@ -14,6 +14,7 @@ import 'package:vynic/apps/windows_pos/widgets/admin/admin_sales_report_section.
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_audit_log_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_error_log_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_settings_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/printers/admin_printers_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_reservations_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_staff_section.dart';
 import 'package:vynic/core/utils/payment_utils.dart';
@@ -37,110 +38,17 @@ class AdminScreen extends StatefulWidget {
 class _AdminScreenState extends State<AdminScreen> {
   String _selectedSection = 'staff'; // Default section
 
-  static const Color _surfaceColor = Color(0xFFF4F6FF);
+  static const Color _surfaceColor = Color(0xFFF6F7F9);
+  static const Color _sidebarColor = Color(0xFF111827);
+  static const Color _sidebarMuted = Color(0xFF9CA3AF);
+  static const Color _sidebarSelected = Color(0xFF1F2937);
+  static const Color _adminAccent = Color(0xFF14B8A6);
 
   final TextEditingController _kitchenPrinterController =
       TextEditingController();
   final TextEditingController _receiptPrinterController =
       TextEditingController();
   final TextEditingController _printerPortController = TextEditingController();
-
-  // Multiple printers support
-  late List<Map<String, dynamic>> _printersList = [];
-  final List<TextEditingController> _printerNameControllers = [];
-  final List<TextEditingController> _printerIpControllers = [];
-  final List<TextEditingController> _printerPortControllers = [];
-
-  String _normalizePrinterRole(dynamic rawRole, int index) {
-    final role = (rawRole as String? ?? '').trim().toLowerCase();
-    if (role == 'kitchen' ||
-        role == 'receipt' ||
-        role == 'both' ||
-        role == 'none') {
-      return role;
-    }
-    if (index == 0) {
-      return 'kitchen';
-    }
-    if (index == 1) {
-      return 'receipt';
-    }
-    return 'none';
-  }
-
-  String _getPrinterRoleAt(int index) {
-    if (index < 0 || index >= _printersList.length) {
-      return 'none';
-    }
-    return _normalizePrinterRole(_printersList[index]['role'], index);
-  }
-
-  void _setPrinterRoleAt(int index, String role) {
-    if (index < 0 || index >= _printersList.length) {
-      return;
-    }
-    setState(() {
-      _printersList[index]['role'] = _normalizePrinterRole(role, index);
-    });
-  }
-
-  void _rebuildPrinterControllers() {
-    // Clear existing controllers
-    for (final controller in _printerNameControllers) {
-      controller.dispose();
-    }
-    _printerNameControllers.clear();
-    for (final controller in _printerIpControllers) {
-      controller.dispose();
-    }
-    _printerIpControllers.clear();
-    for (final controller in _printerPortControllers) {
-      controller.dispose();
-    }
-    _printerPortControllers.clear();
-
-    // Create new controllers for each printer
-    for (int i = 0; i < _printersList.length; i++) {
-      final printer = _printersList[i];
-      printer['role'] = _normalizePrinterRole(printer['role'], i);
-      final nameController = TextEditingController(
-        text: (printer['name'] as String?)?.trim().isNotEmpty == true
-            ? (printer['name'] as String).trim()
-            : 'პრინტერი ${i + 1}',
-      );
-      final ipController = TextEditingController(
-        text: printer['ip'] as String? ?? '',
-      );
-      final portController = TextEditingController(
-        text: (printer['port'] as int? ?? 9100).toString(),
-      );
-      _printerNameControllers.add(nameController);
-      _printerIpControllers.add(ipController);
-      _printerPortControllers.add(portController);
-    }
-  }
-
-  void _addPrinter() {
-    setState(() {
-      _printersList.add({
-        'name': 'პრინტერი ${_printersList.length + 1}',
-        'ip': '',
-        'port': 9100,
-        'role': _printersList.isEmpty
-            ? 'kitchen'
-            : (_printersList.length == 1 ? 'receipt' : 'none'),
-      });
-      _rebuildPrinterControllers();
-    });
-  }
-
-  void _removePrinter(int index) {
-    if (index < 0 || index >= _printersList.length) return;
-    setState(() {
-      _printersList.removeAt(index);
-      _rebuildPrinterControllers();
-    });
-  }
 
   final TextEditingController _serviceFeeController = TextEditingController();
   final TextEditingController _currentCancellationPasswordController =
@@ -238,15 +146,6 @@ class _AdminScreenState extends State<AdminScreen> {
     _receiptPrinterController.dispose();
     _printerPortController.dispose();
     _serviceFeeController.dispose();
-    for (final controller in _printerNameControllers) {
-      controller.dispose();
-    }
-    for (final controller in _printerIpControllers) {
-      controller.dispose();
-    }
-    for (final controller in _printerPortControllers) {
-      controller.dispose();
-    }
     _currentCancellationPasswordController.dispose();
     _newCancellationPasswordController.dispose();
     _confirmCancellationPasswordController.dispose();
@@ -262,33 +161,6 @@ class _AdminScreenState extends State<AdminScreen> {
     _kitchenPrinterController.text = DatabaseService.getKitchenPrinterIp();
     _receiptPrinterController.text = DatabaseService.getReceiptPrinterIp();
     _printerPortController.text = DatabaseService.getPrinterPort().toString();
-
-    // Initialize multiple printers list
-    _printersList = DatabaseService.getPrintersList();
-    if (_printersList.isEmpty) {
-      // If no printers in new format, create from old format
-      final kitchenIp = DatabaseService.getKitchenPrinterIp();
-      final receiptIp = DatabaseService.getReceiptPrinterIp();
-      final port = DatabaseService.getPrinterPort();
-
-      if (kitchenIp.isNotEmpty) {
-        _printersList.add({
-          'name': 'სამზარეულოს პრინტერი',
-          'ip': kitchenIp,
-          'port': port,
-          'role': 'kitchen',
-        });
-      }
-      if (receiptIp.isNotEmpty) {
-        _printersList.add({
-          'name': 'ჩეკის პრინტერი',
-          'ip': receiptIp,
-          'port': port,
-          'role': 'receipt',
-        });
-      }
-    }
-    _rebuildPrinterControllers();
 
     _serviceFeePercent = DatabaseService.getServiceFeePercentage();
     _serviceFeeEnabledByDefault =
@@ -1388,6 +1260,8 @@ class _AdminScreenState extends State<AdminScreen> {
         return 'აუდიტი';
       case 'errors':
         return 'შეცდომები';
+      case 'printers':
+        return 'პრინტერები';
       case 'settings':
         return 'პარამეტრები';
       default:
@@ -1399,7 +1273,7 @@ class _AdminScreenState extends State<AdminScreen> {
     final mobileWidth = MediaQuery.of(context).size.width * 0.85;
     final width = _isMobile
         ? (_isSidebarExpanded ? mobileWidth : 0.0)
-        : (_isSidebarExpanded ? 220.0 : 220.0);
+        : (_isSidebarExpanded ? 236.0 : 236.0);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
@@ -1407,23 +1281,20 @@ class _AdminScreenState extends State<AdminScreen> {
       width: width,
       height: double.infinity,
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF1E3A8A), Color(0xFF2563EB)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
+        color: _sidebarColor,
+        border: Border(right: BorderSide(color: Color(0xFF243244))),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         physics: const NeverScrollableScrollPhysics(),
         child: SizedBox(
-          width: _isMobile ? mobileWidth : 220.0,
+          width: _isMobile ? mobileWidth : 236.0,
           child: Column(
             children: [
               _buildSidebarHeader(),
               Expanded(
                 child: ListView(
-                  padding: EdgeInsets.only(bottom: _isMobile ? 32 : 0),
+                  padding: EdgeInsets.fromLTRB(10, 8, 10, _isMobile ? 32 : 12),
                   children: _buildSidebarMenuItems(),
                 ),
               ),
@@ -1500,6 +1371,11 @@ class _AdminScreenState extends State<AdminScreen> {
           section: 'errors',
         ),
       _buildMenuItem(
+        icon: Icons.print,
+        title: 'პრინტერები',
+        section: 'printers',
+      ),
+      _buildMenuItem(
         icon: Icons.settings,
         title: 'პარამეტრები',
         section: 'settings',
@@ -1509,12 +1385,12 @@ class _AdminScreenState extends State<AdminScreen> {
 
   Widget _buildSidebarHeader() {
     return Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: 76,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: Colors.white.withValues(alpha: 0.15),
+            color: Colors.white.withValues(alpha: 0.08),
             width: 1,
           ),
         ),
@@ -1525,28 +1401,44 @@ class _AdminScreenState extends State<AdminScreen> {
             borderRadius: BorderRadius.circular(10),
             onTap: () => Navigator.of(context).pop(),
             child: Container(
-              width: 32,
-              height: 32,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(10),
+                color: Colors.white.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
               ),
               child: const Icon(
                 Icons.arrow_back,
-                color: Colors.white,
+                color: Color(0xFFE5E7EB),
                 size: 18,
               ),
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
-            child: Text(
-              'მართვის ცენტრი',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              ),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  'Vynic',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'მართვის ცენტრი',
+                  style: TextStyle(
+                    color: _sidebarMuted,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -1560,44 +1452,52 @@ class _AdminScreenState extends State<AdminScreen> {
     required String section,
   }) {
     final isSelected = _selectedSection == section;
-    final iconColor = isSelected ? Colors.white : const Color(0xFFE2E8F0);
+    final iconColor = isSelected ? _adminAccent : _sidebarMuted;
     final textStyle = TextStyle(
-      color: iconColor,
-      fontSize: 12,
-      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+      color: isSelected ? Colors.white : const Color(0xFFD1D5DB),
+      fontSize: 13,
+      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
     );
 
     Widget content = AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      margin: const EdgeInsets.symmetric(vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: isSelected
-            ? Colors.white.withValues(alpha: 0.18)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
+        color: isSelected ? _sidebarSelected : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isSelected
-              ? Colors.white.withValues(alpha: 0.35)
+              ? Colors.white.withValues(alpha: 0.08)
               : Colors.transparent,
         ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: 3,
+            height: 28,
+            decoration: BoxDecoration(
+              color: isSelected ? _adminAccent : Colors.transparent,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(width: 8),
           Container(
-            width: 32,
-            height: 32,
+            width: 30,
+            height: 30,
             decoration: BoxDecoration(
               color: isSelected
-                  ? Colors.white.withValues(alpha: 0.18)
-                  : Colors.white.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
+                  ? _adminAccent.withValues(alpha: 0.12)
+                  : Colors.white.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: iconColor, size: 18),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(child: Text(title, style: textStyle)),
         ],
       ),
@@ -1614,7 +1514,7 @@ class _AdminScreenState extends State<AdminScreen> {
       label: title,
       selected: isSelected,
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         onTap: () {
           setState(() {
             _selectedSection = section;
@@ -1634,17 +1534,6 @@ class _AdminScreenState extends State<AdminScreen> {
       formatRelativeTime: _formatRelativeTime,
       getGeorgianMonthName: _getGeorgianMonthName,
       getDaysInMonth: _getDaysInMonth,
-      getPrintersList: () => _printersList,
-      printerNameControllers: _printerNameControllers,
-      printerIpControllers: _printerIpControllers,
-      printerPortControllers: _printerPortControllers,
-      onAddPrinter: _addPrinter,
-      onRemovePrinter: _removePrinter,
-      getPrinterRole: _getPrinterRoleAt,
-      onPrinterRoleChanged: _setPrinterRoleAt,
-      kitchenPrinterController: _kitchenPrinterController,
-      receiptPrinterController: _receiptPrinterController,
-      printerPortController: _printerPortController,
       serviceFeeController: _serviceFeeController,
       currentCancellationPasswordController:
           _currentCancellationPasswordController,
@@ -1663,8 +1552,6 @@ class _AdminScreenState extends State<AdminScreen> {
       },
       serviceFeePercentDisplay:
           DatabaseService.getFormattedServiceFeePercentage(),
-      isSavingPrinterSettings: _isSavingPrinterSettings,
-      isTestingPrinters: _isTestingPrinters,
       isSavingServiceFee: _isSavingServiceFee,
       defaultLanguageSetting: _defaultLanguageSetting,
       onDefaultLanguageSettingChanged: (value) {
@@ -1776,15 +1663,24 @@ class _AdminScreenState extends State<AdminScreen> {
       onSaveMonthlyReportConfig: _saveMonthlyReportConfig,
       onGenerateMonthlyReportExcel: _generateMonthlyReportExcel,
       onGenerateMonthlyReportPdf: _generateMonthlyReportPdf,
-      onSavePrinterSettings: _savePrinterSettings,
-      onTestPrinterConnections: _testPrinterConnections,
-      onScanPrinters: _scanPrintersOnLan,
       onSaveServiceFeeSettings: _saveServiceFeeSettings,
       onSaveCancellationPassword: _saveCancellationPassword,
       onSaveTableOwnershipSettings: _saveTableOwnershipSettings,
       onSaveLocalizationSettings: _saveLocalizationSettings,
       onCreateBackupFile: _createBackupFile,
       onRestoreBackupFromFile: _restoreBackupFromFile,
+    );
+  }
+
+  Widget _buildPrintersSection() {
+    return AdminPrintersSection(
+      kitchenPrinterController: _kitchenPrinterController,
+      receiptPrinterController: _receiptPrinterController,
+      printerPortController: _printerPortController,
+      isSavingPrinterSettings: _isSavingPrinterSettings,
+      isTestingPrinters: _isTestingPrinters,
+      onSavePrinterSettings: _savePrinterSettings,
+      onTestPrinterConnections: _testPrinterConnections,
     );
   }
 
@@ -1935,19 +1831,6 @@ class _AdminScreenState extends State<AdminScreen> {
         });
       }
     }
-  }
-
-  Future<void> _scanPrintersOnLan() async {
-    if (!mounted) {
-      return;
-    }
-    unawaited(
-      showPosToast(
-        context: context,
-        message: 'პრინტერების სკანირება გამორთულია. შეიყვანეთ IP ხელით.',
-        style: PosToastStyle.info,
-      ),
-    );
   }
 
   bool _isValidIpv4(String ip) {
@@ -3527,6 +3410,8 @@ class _AdminScreenState extends State<AdminScreen> {
         );
       case 'errors':
         return const AdminErrorLogSection();
+      case 'printers':
+        return _buildPrintersSection();
       case 'settings':
         return _buildSettingsSection();
       default:
@@ -3542,7 +3427,7 @@ class _AdminScreenState extends State<AdminScreen> {
       backgroundColor: _surfaceColor,
       appBar: _isMobile
           ? AppBar(
-              backgroundColor: const Color(0xFF1E3A8A),
+              backgroundColor: _sidebarColor,
               elevation: 0,
               iconTheme: const IconThemeData(color: Colors.white),
               leading: IconButton(
@@ -3585,7 +3470,7 @@ class _AdminScreenState extends State<AdminScreen> {
                             });
                           },
                           child: Container(
-                            color: Colors.black.withOpacity(0.4),
+                            color: Colors.black.withValues(alpha: 0.42),
                           ),
                         ),
                       ),

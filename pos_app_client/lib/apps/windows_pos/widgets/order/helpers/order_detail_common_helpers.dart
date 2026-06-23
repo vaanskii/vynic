@@ -14,6 +14,15 @@ class OrderDetailCommonHelpers {
     return 'მაგიდა $tableNumber';
   }
 
+  /// Compact table label for headers, e.g. `T 7` or `T 6/7` for multi-table
+  /// orders, instead of repeating "მაგიდა" for each number.
+  static String compactTableLabel(Order order) {
+    if (order.tableNumbers.isEmpty) {
+      return '—';
+    }
+    return 'T ${order.tableNumbers.join('/')}';
+  }
+
   static String orderTableDisplayLabel(Order order) {
     return order.tableNumbers
         .map(
@@ -119,6 +128,52 @@ class OrderDetailCommonHelpers {
       return null;
     }
     return notes;
+  }
+
+  /// Georgian label for an order-level status, used by the redesigned
+  /// order detail header and per-row status badges.
+  static String statusLabel(String status) {
+    switch (status) {
+      case 'pending':
+        return 'მოლოდინში';
+      case 'confirmed':
+        return 'დადასტურდა';
+      case 'preparing':
+        return 'მზადდება';
+      case 'served':
+        return 'მზად არის';
+      case 'paid':
+        return 'გადახდილია';
+      case 'closed':
+        return 'დახურულია';
+      case 'cancelled':
+        return 'გაუქმდა';
+      default:
+        return status;
+    }
+  }
+
+  /// Human readable hall/zone label for an order's floor.
+  static String zoneLabel(String floor) {
+    switch (floor.toLowerCase()) {
+      case 'second':
+        return 'მეორე სართული';
+      case 'takeaway':
+        return 'გასატანი';
+      case 'first':
+      default:
+        return 'მთავარი დარბაზი';
+    }
+  }
+
+  /// Order number formatted like `YYMMDD-NNNN` (falls back to the raw id).
+  static String formattedOrderNumber(Order order) {
+    final created = order.createdAt;
+    final yy = (created.year % 100).toString().padLeft(2, '0');
+    final mm = created.month.toString().padLeft(2, '0');
+    final dd = created.day.toString().padLeft(2, '0');
+    final seq = order.orderId.toString().padLeft(4, '0');
+    return '$yy$mm$dd-$seq';
   }
 
   static Color statusColor(String status) {

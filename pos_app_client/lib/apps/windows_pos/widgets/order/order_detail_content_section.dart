@@ -9,6 +9,7 @@ import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/pos_change_highlight_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/apps/windows_pos/widgets/on_screen_keyboard.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 
 class OrderDetailContentSection extends StatefulWidget {
   const OrderDetailContentSection({
@@ -32,12 +33,12 @@ class OrderDetailContentSection extends StatefulWidget {
 }
 
 class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
-  static const Color _surfaceColor = Color(0xFFF5F7FB);
+  static const Color _surfaceColor = Color(0xFFF6F7F9);
   static const Color _panelColor = Colors.white;
-  static const Color _borderColor = Color(0xFFE2E8F0);
-  static const Color _titleColor = Color(0xFF1E293B);
-  static const Color _mutedTextColor = Color(0xFF64748B);
-  static const Color _accentColor = Color(0xFF2563EB);
+  static const Color _borderColor = Color(0xFFE5E7EB);
+  static const Color _titleColor = Color(0xFF111827);
+  static const Color _mutedTextColor = Color(0xFF6B7280);
+  static const Color _accentColor = Color(0xFF0F766E);
 
   @override
   Widget build(BuildContext context) {
@@ -49,98 +50,297 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
         order.packageItems.isNotEmpty ||
         order.packageGuestCount > 0;
 
-    if (!hasPackage && order.items.isEmpty) {
-      return const Center(
+    final activeItems = order.items
+        .where((item) => item.quantity > 0)
+        .toList();
+    final packageCount = order.packageItems
+        .where((item) => item.quantity > 0)
+        .length;
+    final totalCount = packageCount + activeItems.length;
+
+    final sectionLabel = hasPackage
+        ? 'დამატებითი პოზიციები'
+        : 'მიმდინარე შეკვეთა';
+
+    return Container(
+      decoration: AdminDesign.panelDecoration(),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.receipt_long_outlined,
+                  size: 18,
+                  color: _accentColor,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'მიმდინარე შეკვეთა',
+                  style: TextStyle(
+                    color: _titleColor,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _accentColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '$totalCount პოზიცია',
+                    style: const TextStyle(
+                      color: _accentColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: _borderColor),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                if (hasPackage) ...[
+                  _buildPackageSummary(order, canModify),
+                  if (packageCount > 0) ...[
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: () => _showOrderItemsDialog([
+                          for (final item in order.packageItems)
+                            _buildOrderItemTile(item, isPackageItem: true),
+                        ]),
+                        style: TextButton.styleFrom(
+                          foregroundColor: _accentColor,
+                        ),
+                        icon: const Icon(Icons.list_alt, size: 18),
+                        label: Text('პაკეტის შემადგენლობა ($packageCount)'),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                ],
+                if (activeItems.isEmpty && hasPackage)
+                  _buildNoAdditionalItemsNotice()
+                else if (activeItems.isEmpty)
+                  _buildEmptyOrderNotice()
+                else ...[
+                  if (hasPackage) ...[
+                    _buildSectionLabel(sectionLabel),
+                    const SizedBox(height: 10),
+                  ],
+                  _buildItemsTable(activeItems),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemsTable(List<OrderItem> items) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AdminDesign.radius),
+        border: Border.all(color: _borderColor),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          _buildTableHeader(),
+          for (int i = 0; i < items.length; i++)
+            _buildTableRow(items[i], i + 1, shaded: i.isOdd),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTableHeader() {
+    Widget cell(String text, int flex, {TextAlign align = TextAlign.left}) {
+      return Expanded(
+        flex: flex,
         child: Text(
-          'შეკვეთაში პოზიციები არ არის',
-          style: TextStyle(color: _mutedTextColor, fontSize: 16),
+          text,
+          textAlign: align,
+          style: const TextStyle(
+            color: _mutedTextColor,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.3,
+          ),
         ),
       );
     }
 
-    final children = _buildOrderItemsChildren(
-      order,
-      canModify,
-      hasPackage,
-      includePackageItems: false,
-    );
-    final fullMenuChildren = _buildOrderItemsChildren(
-      order,
-      canModify,
-      hasPackage,
-      includePackageItems: true,
-    );
-    final packageCount = order.packageItems
-        .where((item) => item.quantity > 0)
-        .length;
-    final itemsCount = order.items.where((item) => item.quantity > 0).length;
-    final totalCount = packageCount + itemsCount;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Align(
-          alignment: Alignment.centerRight,
-          child: OutlinedButton.icon(
-            onPressed: () => _showOrderItemsDialog(fullMenuChildren),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _accentColor,
-              side: BorderSide(color: _accentColor.withValues(alpha: 0.35)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+    return Container(
+      color: _surfaceColor,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 28,
+            child: Text(
+              '#',
+              style: const TextStyle(
+                color: _mutedTextColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
-            icon: const Icon(Icons.menu_book, size: 18),
-            label: Text('მენიუს სრულად ნახვა ($totalCount)'),
           ),
-        ),
-        const SizedBox(height: 12),
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: children,
-          ),
-        ),
-      ],
+          cell('კერძი', 5),
+          cell('რაოდ.', 2, align: TextAlign.center),
+          cell('ერთ. ფასი', 3, align: TextAlign.right),
+          cell('ჯამი', 3, align: TextAlign.right),
+        ],
+      ),
     );
   }
 
-  List<Widget> _buildOrderItemsChildren(
-    Order order,
-    bool canModify,
-    bool hasPackage, {
-    required bool includePackageItems,
+  Widget _buildTableRow(
+    OrderItem item,
+    int index, {
+    required bool shaded,
   }) {
-    final children = <Widget>[];
+    final comment = item.comment?.trim();
+    final highlighted = PosChangeHighlightService.shouldHighlightItem(
+      widget.highlightItemKeys,
+      item.itemKey,
+      item.itemName,
+    );
+    final Color rowColor = highlighted
+        ? const Color(0xFFFFF7ED)
+        : (shaded ? _surfaceColor : _panelColor);
 
-    if (hasPackage) {
-      children.add(_buildPackageSummary(order, canModify));
-      if (includePackageItems && order.packageItems.isNotEmpty) {
-        children.add(const SizedBox(height: 16));
-        children.add(_buildSectionLabel('პაკეტში შემავალი'));
-        children.add(const SizedBox(height: 8));
-        children.addAll(
-          order.packageItems.map(
-            (item) => _buildOrderItemTile(item, isPackageItem: true),
+    return Container(
+      decoration: BoxDecoration(
+        color: rowColor,
+        border: const Border(top: BorderSide(color: _borderColor)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 28,
+            child: Text(
+              '$index',
+              style: const TextStyle(
+                color: _mutedTextColor,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
-        );
-      }
-      children.add(const SizedBox(height: 24));
-    }
+          Expanded(
+            flex: 5,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.itemName,
+                  style: const TextStyle(
+                    color: _titleColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (comment != null && comment.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.chat_bubble_outline,
+                        size: 12,
+                        color: _mutedTextColor,
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          comment,
+                          style: const TextStyle(
+                            color: _mutedTextColor,
+                            fontSize: 12,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              '${item.quantity}',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: _titleColor,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              '${item.unitPrice.toStringAsFixed(2)} ₾',
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                color: _mutedTextColor,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              '${item.total.toStringAsFixed(2)} ₾',
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                color: _titleColor,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-    if (order.items.isEmpty) {
-      children.add(_buildNoAdditionalItemsNotice());
-    } else {
-      final sectionLabel = hasPackage
-          ? 'დამატებითი პოზიციები'
-          : 'შეკვეთის პოზიციები';
-      children.add(_buildSectionLabel(sectionLabel));
-      children.add(const SizedBox(height: 8));
-      children.addAll(order.items.map((item) => _buildOrderItemTile(item)));
-    }
-
-    return children;
+  Widget _buildEmptyOrderNotice() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 36),
+      alignment: Alignment.center,
+      child: const Column(
+        children: [
+          Icon(Icons.no_meals_outlined, size: 40, color: _mutedTextColor),
+          SizedBox(height: 10),
+          Text(
+            'შეკვეთაში პოზიციები არ არის',
+            style: TextStyle(color: _mutedTextColor, fontSize: 14),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _showOrderItemsDialog(List<Widget> children) async {

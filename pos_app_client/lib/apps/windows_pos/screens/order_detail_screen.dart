@@ -17,6 +17,7 @@ import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/apps/windows_pos/widgets/order/order_detail_content_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/order/order_detail_actions_panel.dart';
 import 'package:vynic/apps/windows_pos/widgets/order/order_detail_header_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/order/order_detail_side_panels.dart';
 import 'package:vynic/apps/windows_pos/widgets/order/helpers/order_detail_action_helpers.dart';
 import 'package:vynic/apps/windows_pos/widgets/order/helpers/order_detail_common_helpers.dart';
 import 'package:vynic/apps/windows_pos/widgets/reservation_creation_sheet.dart';
@@ -45,7 +46,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   Reservation? _linkedReservation;
   late bool _serviceFeeAvailable;
   bool _autoConfirmTriggered = false;
-  bool _isReservationDetailsExpanded = true;
   Set<String>? _mobileHighlightItemKeys;
   StreamSubscription<SyncEvent>? _syncEventsSub;
 
@@ -73,11 +73,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
     _loadOrder();
   }
-  static const Color _surfaceColor = Color(0xFFF5F7FB);
+  static const Color _surfaceColor = Color(0xFFF6F7F9);
   static const Color _panelColor = Colors.white;
-  static const Color _titleColor = Color(0xFF1E293B);
-  static const Color _mutedTextColor = Color(0xFF64748B);
-  static const Color _accentColor = Color(0xFF2563EB);
+  static const Color _titleColor = Color(0xFF111827);
 
   void _popWithResult(Map<String, dynamic> resultPayload) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -100,34 +98,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       }
       navigator.popUntil((route) => route.isFirst);
     });
-  }
-
-  Widget _buildActionButton({
-    required String label,
-    required IconData icon,
-    required VoidCallback? onPressed,
-    Color? backgroundColor,
-    Color? foregroundColor,
-    BorderSide? borderSide,
-    EdgeInsetsGeometry? padding,
-  }) {
-    return ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 22),
-      label: Text(
-        label,
-        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-      ),
-      style: ElevatedButton.styleFrom(
-        elevation: 0,
-        backgroundColor: backgroundColor ?? _accentColor,
-        foregroundColor: foregroundColor ?? Colors.white,
-        padding:
-            padding ?? const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        side: borderSide,
-      ),
-    );
   }
 
   OrderActionsBundle _resolveOrderActions({
@@ -228,28 +198,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     return OrderDetailCommonHelpers.isTakeAway(order);
   }
 
-  bool get _showReservationDetails {
-    return OrderDetailCommonHelpers.showReservationDetails(_linkedReservation);
-  }
-
   String? get _reservationCustomerName {
     return OrderDetailCommonHelpers.reservationCustomerName(_linkedReservation);
   }
 
   String? get _reservationCustomerPhone {
     return OrderDetailCommonHelpers.reservationCustomerPhone(
-      _linkedReservation,
-    );
-  }
-
-  String? get _reservationScheduleDescription {
-    return OrderDetailCommonHelpers.reservationScheduleDescription(
-      _linkedReservation,
-    );
-  }
-
-  String? get _reservationGuestCountLabel {
-    return OrderDetailCommonHelpers.reservationGuestCountLabel(
       _linkedReservation,
     );
   }
@@ -2777,9 +2731,59 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
-  Color _getStatusColor(String status) {
-    return OrderDetailCommonHelpers.statusColor(status);
+  static const List<String> _kaMonths = [
+    'იანვარი',
+    'თებერვალი',
+    'მარტი',
+    'აპრილი',
+    'მაისი',
+    'ივნისი',
+    'ივლისი',
+    'აგვისტო',
+    'სექტემბერი',
+    'ოქტომბერი',
+    'ნოემბერი',
+    'დეკემბერი',
+  ];
+
+  int? get _guestCount {
+    final reservationGuests = _linkedReservation?.numberOfGuests ?? 0;
+    if (reservationGuests > 0) {
+      return reservationGuests;
+    }
+    if (_order != null && _order!.packageGuestCount > 0) {
+      return _order!.packageGuestCount;
+    }
+    return null;
   }
+
+  String? get _reservationScheduleLabelKa {
+    final reservation = _linkedReservation;
+    if (reservation == null) {
+      return null;
+    }
+    final time = reservation.reservationTime.trim();
+    if (_isTakeAwayOrder) {
+      return time.isEmpty ? null : time;
+    }
+    final date = reservation.reservationDate;
+    final base = '${date.day} ${_kaMonths[date.month - 1]}, ${date.year}';
+    return time.isEmpty ? base : '$base, $time';
+  }
+
+  Future<void> _updateReservationGuests(int guests) async {
+    final reservation = _linkedReservation;
+    if (reservation == null || guests < 1) {
+      return;
+    }
+    reservation.numberOfGuests = guests;
+    await reservation.save();
+    if (!mounted) {
+      return;
+    }
+    _loadOrder();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -2815,112 +2819,88 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       canPrintReceipt: canPrintReceipt,
     );
 
+    final bool canModify =
+        !_isFinalizedStatus(status) && _canCurrentUserModifyOrder(_order!);
+    final bool canEditReservation =
+        !_isTakeAwayOrder && _linkedReservation != null;
+
     return Scaffold(
       backgroundColor: _surfaceColor,
-      appBar: AppBar(
-        backgroundColor: _panelColor,
-        foregroundColor: _titleColor,
-        elevation: 0,
-        shadowColor: Colors.black.withValues(alpha: 0.04),
-        toolbarHeight: 70,
-        titleSpacing: 16,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Order #${_order!.orderId}',
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: _titleColor,
-              ),
-            ),
-            Text(
-              _order!.tableNumbers.join(', '),
-              style: const TextStyle(fontSize: 14, color: _mutedTextColor),
-            ),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: _buildActionButton(
-              label: 'შეკვეთის რედაქტირება',
-              icon: Icons.edit,
-              onPressed: canEditOrder ? _editOrder : null,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            ),
-          ),
-        ],
-      ),
       body: Column(
         children: [
           OrderDetailHeaderSection(
             order: _order!,
-            statusColor: _getStatusColor(_order!.status),
-            showReservationDetails: _showReservationDetails,
-            isReservationDetailsExpanded: _isReservationDetailsExpanded,
             isTakeAwayOrder: _isTakeAwayOrder,
-            reservationCustomerName: _reservationCustomerName,
-            reservationCustomerPhone: _reservationCustomerPhone,
-            reservationScheduleDescription: _reservationScheduleDescription,
-            reservationGuestCountLabel: _reservationGuestCountLabel,
-            reservationNotesLabel: _reservationNotesLabel,
-            onEditReservationDetails:
-                _isTakeAwayOrder || _linkedReservation == null
-                ? null
-                : _editLinkedReservationDetails,
-            onToggleReservationDetails: () {
-              setState(() {
-                _isReservationDetailsExpanded = !_isReservationDetailsExpanded;
-              });
-            },
+            guestCount: _guestCount,
+            onBack: () => Navigator.of(context).maybePop(),
           ),
-          const SizedBox(height: 16),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: OrderDetailContentSection(
-                order: _order!,
-                canModify:
-                    !_isFinalizedStatus(status) &&
-                    _canCurrentUserModifyOrder(_order!),
-                isAdmin: widget.user.isAdmin,
-                highlightItemKeys: _mobileHighlightItemKeys,
-                onOrderUpdated: () async {
-                  _loadOrder();
-                },
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(
+                    width: 360,
+                    child: SingleChildScrollView(
+                      child: OrderDetailDetailsPanel(
+                        order: _order!,
+                        isTakeAwayOrder: _isTakeAwayOrder,
+                        hasReservation: _linkedReservation != null,
+                        customerName: _reservationCustomerName,
+                        customerPhone: _reservationCustomerPhone,
+                        scheduleLabel: _reservationScheduleLabelKa,
+                        guestCount: _guestCount,
+                        notes: _reservationNotesLabel,
+                        onEditReservation: canEditReservation
+                            ? _editLinkedReservationDetails
+                            : null,
+                        onGuestsChanged: canModify && canEditReservation
+                            ? _updateReservationGuests
+                            : null,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: OrderDetailContentSection(
+                      order: _order!,
+                      canModify: canModify,
+                      isAdmin: widget.user.isAdmin,
+                      highlightItemKeys: _mobileHighlightItemKeys,
+                      onOrderUpdated: () async {
+                        _loadOrder();
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: SafeArea(
-              top: false,
-              child: OrderDetailActionsPanel(
-                order: _order!,
-                actionsBundle: actionsBundle,
-                serviceFeePercentageLabel: _serviceFeeLabelForOrder(_order!),
-                otherActionsProvider: () {
-                  final refreshedBundle = _resolveOrderActions(
-                    status: _order?.status ?? status,
-                    canPrintKitchenCheck: canPrintKitchenCheck,
-                    canPrintReceipt: canPrintReceipt,
-                  );
-                  final merged = <OrderActionConfig>[
-                    ...refreshedBundle.primary,
-                    ...refreshedBundle.secondary,
-                  ];
-                  merged.removeWhere(
-                    (action) =>
-                        action.label == 'მაგიდის დახურვა' ||
-                        action.label == 'ქვითრის ბეჭდვა' ||
-                        action.label == 'სხვა',
-                  );
-                  return merged;
-                },
-              ),
-            ),
+          OrderDetailActionsPanel(
+            order: _order!,
+            actionsBundle: actionsBundle,
+            serviceFeePercentageLabel: _serviceFeeLabelForOrder(_order!),
+            onEditOrder: _editOrder,
+            canEditOrder: canEditOrder,
+            otherActionsProvider: () {
+              final refreshedBundle = _resolveOrderActions(
+                status: _order?.status ?? status,
+                canPrintKitchenCheck: canPrintKitchenCheck,
+                canPrintReceipt: canPrintReceipt,
+              );
+              final merged = <OrderActionConfig>[
+                ...refreshedBundle.primary,
+                ...refreshedBundle.secondary,
+              ];
+              merged.removeWhere(
+                (action) =>
+                    action.label == 'მაგიდის დახურვა' ||
+                    action.label == 'ქვითრის ბეჭდვა' ||
+                    action.label == 'სხვა',
+              );
+              return merged;
+            },
           ),
         ],
       ),

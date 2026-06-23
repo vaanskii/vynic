@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/services/database_service.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 
 class OrderActionConfig {
   final String label;
@@ -31,6 +32,9 @@ class OrderActionsBundle {
   bool get isEmpty => primary.isEmpty && secondary.isEmpty;
 }
 
+/// Bottom footer of the order detail screen: the row of primary order actions
+/// (close table, print receipt, service, edit order and an overflow "other"
+/// menu).
 class OrderDetailActionsPanel extends StatelessWidget {
   const OrderDetailActionsPanel({
     super.key,
@@ -38,21 +42,16 @@ class OrderDetailActionsPanel extends StatelessWidget {
     required this.actionsBundle,
     required this.serviceFeePercentageLabel,
     required this.otherActionsProvider,
+    required this.onEditOrder,
+    required this.canEditOrder,
   });
 
   final Order order;
   final OrderActionsBundle actionsBundle;
   final String serviceFeePercentageLabel;
   final List<OrderActionConfig> Function() otherActionsProvider;
-
-  static const Color _panelColor = Colors.white;
-  static const Color _borderColor = Color(0xFFE2E8F0);
-  static const Color _titleColor = Color(0xFF1E293B);
-  static const Color _mutedTextColor = Color(0xFF64748B);
-  static const Color _accentColor = Color(0xFF2563EB);
-  static const Color _successColor = Color(0xFF16A34A);
-  static const Color _highlightColor = Color(0xFFC0AD7B);
-  static const double _actionCardHeight = 122;
+  final VoidCallback onEditOrder;
+  final bool canEditOrder;
 
   @override
   Widget build(BuildContext context) {
@@ -60,209 +59,225 @@ class OrderDetailActionsPanel extends StatelessWidget {
       ...actionsBundle.primary,
       ...actionsBundle.secondary,
     ];
-    final closeTableAction = _findActionByLabel(
-      combinedActions,
-      'მაგიდის დახურვა',
-    );
-    final receiptAction = _findActionByLabel(combinedActions, 'ქვითრის ბეჭდვა');
+    final closeAction = _findByLabel(combinedActions, 'მაგიდის დახურვა');
+    final receiptAction = _findByLabel(combinedActions, 'ქვითრის ბეჭდვა');
 
-    final rawOtherActions = otherActionsProvider();
-    final serviceAction = _findServiceAction(rawOtherActions);
-    final otherActions = rawOtherActions
+    final rawOther = otherActionsProvider();
+    final serviceAction = _findServiceAction(rawOther);
+    final otherActions = rawOther
         .where((action) => !_isSameAction(action, serviceAction))
         .toList();
-    final bool otherEnabled = otherActions.isNotEmpty;
-
-    final quickActions = <OrderActionConfig>[
-      closeTableAction ??
-          const OrderActionConfig(
-            label: 'მაგიდის დახურვა',
-            icon: Icons.check_circle,
-            onTap: null,
-            accent: _mutedTextColor,
-            subtitle: 'გადახდის დასრულება და მაგიდის დახურვა.',
-          ),
-      receiptAction ??
-          const OrderActionConfig(
-            label: 'ქვითრის ბეჭდვა',
-            icon: Icons.receipt_long,
-            onTap: null,
-            accent: _mutedTextColor,
-            subtitle: 'კლიენტისთვის დასაბეჭდი ქვითარი.',
-          ),
-      if (serviceAction != null) serviceAction,
-      OrderActionConfig(
-        label: 'სხვა',
-        icon: Icons.apps,
-        onTap: otherEnabled
-            ? () => _showOtherActionsDialog(context, () => otherActions)
-            : null,
-        accent: otherEnabled ? _accentColor : _mutedTextColor,
-        subtitle: otherEnabled
-            ? 'ნახე დამატებითი პარამეტრები.'
-            : 'დამატებითი მოქმედებები ხელმისაწვდომი არაა.',
-      ),
-    ];
-
-    final actionsColumn = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'შეკვეთის მოქმედებები',
-          style: TextStyle(
-            color: _titleColor,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 12),
-        _buildActionCardGrid(quickActions),
-        if (combinedActions.isEmpty)
-          const Padding(
-            padding: EdgeInsets.only(top: 12),
-            child: Text(
-              'ამ შეკვეთაზე ხელმისაწვდომი მოქმედებები არ არის.',
-              style: TextStyle(color: _mutedTextColor, fontSize: 12),
-            ),
-          ),
-      ],
-    );
-
-    final totalsCard = _buildTotalsCard();
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _panelColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _borderColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
+      decoration: const BoxDecoration(
+        color: AdminDesign.panel,
+        border: Border(top: BorderSide(color: AdminDesign.border)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            _buildTotalsStrip(),
+            const Divider(height: 1, color: AdminDesign.border),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+              child: _buildActionRow(
+                context,
+                closeAction: closeAction,
+                receiptAction: receiptAction,
+                serviceAction: serviceAction,
+                otherActions: otherActions,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTotalsStrip() {
+    const Color successColor = Color(0xFF16A34A);
+    const Color highlightColor = Color(0xFFC0AD7B);
+
+    final double subtotal = order.getItemsSubtotal();
+    final double packageSubtotal = order.getPackageSubtotal();
+    final double serviceFee = order.includeServiceFee
+        ? order.getServiceFee()
+        : 0.0;
+    final bool serviceFeeEnabled = DatabaseService.isServiceFeeAvailable();
+    final bool hasService =
+        serviceFeeEnabled && order.includeServiceFee && serviceFee > 0;
+    final double discount = order.discountAmount;
+    final double adjustment = order.manualAdjustmentAmount;
+    final bool hasAdjustment = adjustment.abs() >= 0.01;
+
+    final lines = <Widget>[
+      if (packageSubtotal > 0)
+        _TotalsItem(
+          label: 'პაკეტი',
+          value: '${packageSubtotal.toStringAsFixed(2)} ₾',
+        ),
+      _TotalsItem(
+        label: packageSubtotal > 0 ? 'დამატებითი' : 'ქვეჯამი',
+        value: '${subtotal.toStringAsFixed(2)} ₾',
+      ),
+      if (serviceFeeEnabled)
+        _TotalsItem(
+          label: 'სერვისი ($serviceFeePercentageLabel%)',
+          value: '${(hasService ? serviceFee : 0.0).toStringAsFixed(2)} ₾',
+          valueColor: hasService
+              ? AdminDesign.text
+              : AdminDesign.muted.withValues(alpha: 0.7),
+        ),
+      if (discount > 0)
+        _TotalsItem(
+          label: 'ფასდაკლება',
+          value: '−${discount.toStringAsFixed(2)} ₾',
+          valueColor: successColor,
+        ),
+      if (hasAdjustment)
+        _TotalsItem(
+          label: 'კორექცია',
+          value:
+              '${adjustment > 0 ? '+' : '−'}${adjustment.abs().toStringAsFixed(2)} ₾',
+          valueColor: adjustment > 0 ? highlightColor : successColor,
+        ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.receipt_outlined,
+            size: 18,
+            color: AdminDesign.accentDark,
+          ),
+          const SizedBox(width: 8),
+          const Text(
+            'ანგარიშის შეჯამება',
+            style: TextStyle(
+              color: AdminDesign.text,
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                for (int i = 0; i < lines.length; i++) ...[
+                  if (i > 0)
+                    Container(
+                      width: 1,
+                      height: 16,
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                      color: AdminDesign.border,
+                    ),
+                  lines[i],
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          const Text(
+            'სულ გადასახდელი',
+            style: TextStyle(
+              color: AdminDesign.muted,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            '${order.totalAmount.toStringAsFixed(2)} ₾',
+            style: const TextStyle(
+              color: AdminDesign.accentDark,
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ],
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          const double breakpoint = 560;
+    );
+  }
 
-          if (constraints.maxWidth < breakpoint) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                actionsColumn,
-                const SizedBox(height: 16),
-                Align(alignment: Alignment.centerRight, child: totalsCard),
-              ],
-            );
-          }
-
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: actionsColumn),
-              const SizedBox(width: 16),
-              totalsCard,
-            ],
-          );
-        },
+  Widget _buildActionRow(
+    BuildContext context, {
+    required OrderActionConfig? closeAction,
+    required OrderActionConfig? receiptAction,
+    required OrderActionConfig? serviceAction,
+    required List<OrderActionConfig> otherActions,
+  }) {
+    final buttons = <Widget>[
+      if (closeAction != null)
+        _ActionButton(
+          label: closeAction.label,
+          icon: closeAction.icon,
+          onTap: closeAction.onTap,
+          onLongPress: closeAction.onLongPress,
+          variant: _ActionVariant.danger,
+        ),
+      if (receiptAction != null)
+        _ActionButton(
+          label: receiptAction.label,
+          icon: receiptAction.icon,
+          onTap: receiptAction.onTap,
+          variant: _ActionVariant.outline,
+        ),
+      if (serviceAction != null)
+        _ActionButton(
+          label: serviceAction.label,
+          icon: serviceAction.icon,
+          onTap: serviceAction.onTap,
+          onLongPress: serviceAction.onLongPress,
+          variant: _ActionVariant.outline,
+        ),
+      _ActionButton(
+        label: 'შეკვეთის რედაქტირება',
+        icon: Icons.edit_outlined,
+        onTap: canEditOrder ? onEditOrder : null,
+        variant: _ActionVariant.primary,
       ),
-    );
-  }
-
-  Widget _buildActionCard(OrderActionConfig action) {
-    final Color accent = action.accent ?? _accentColor;
-    final bool isDisabled = action.onTap == null;
-    final Color borderColor = isDisabled
-        ? _borderColor
-        : accent.withValues(alpha: action.emphasize ? 0.5 : 0.35);
-    final Color iconBackground = isDisabled
-        ? _borderColor.withValues(alpha: 0.4)
-        : accent.withValues(alpha: action.emphasize ? 0.22 : 0.12);
-    final bool tonedDown = isDisabled || accent == _mutedTextColor;
-    final Color labelColor = tonedDown ? _mutedTextColor : _titleColor;
-    final Color subtitleColor = tonedDown
-        ? _mutedTextColor.withValues(alpha: 0.85)
-        : _mutedTextColor;
-
-    return SizedBox(
-      height: _actionCardHeight,
-      child: _AnimatedOrderActionCard(
-        action: action,
-        accent: accent,
-        isDisabled: isDisabled,
-        borderColor: borderColor,
-        iconBackground: iconBackground,
-        labelColor: labelColor,
-        subtitleColor: subtitleColor,
+      _ActionButton(
+        label: 'სხვა',
+        icon: Icons.more_horiz,
+        trailingIcon: Icons.keyboard_arrow_down,
+        onTap: otherActions.isEmpty
+            ? null
+            : () => _showOtherActionsDialog(context, () => otherActions),
+        variant: _ActionVariant.outline,
       ),
+    ];
+
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: buttons,
     );
   }
 
-  Widget _buildActionCardGrid(List<OrderActionConfig> actions) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxWidth = constraints.maxWidth.isFinite
-            ? constraints.maxWidth
-            : 640.0;
-        const double spacing = 12;
-        const double runSpacing = 12;
-        const double targetWidth = 170;
-
-        int columns = (maxWidth / targetWidth).floor();
-        if (columns < 1) {
-          columns = 1;
-        } else if (columns > 4) {
-          columns = 4;
-        }
-
-        double cardWidth = columns == 1
-            ? maxWidth
-            : (maxWidth - spacing * (columns - 1)) / columns;
-        cardWidth = cardWidth.clamp(145.0, 210.0);
-
-        return Wrap(
-          spacing: spacing,
-          runSpacing: runSpacing,
-          children: actions
-              .map(
-                (action) =>
-                    SizedBox(width: cardWidth, child: _buildActionCard(action)),
-              )
-              .toList(),
-        );
-      },
-    );
-  }
-
-  OrderActionConfig? _findActionByLabel(
+  OrderActionConfig? _findByLabel(
     List<OrderActionConfig> actions,
     String label,
   ) {
     for (final action in actions) {
-      if (action.label == label) {
-        return action;
-      }
+      if (action.label == label) return action;
     }
     return null;
   }
 
   OrderActionConfig? _findServiceAction(List<OrderActionConfig> actions) {
     for (final action in actions) {
-      if (action.label.startsWith('სერვისი')) {
-        return action;
-      }
+      if (action.label.startsWith('სერვისი')) return action;
     }
     return null;
   }
 
   bool _isSameAction(OrderActionConfig a, OrderActionConfig? b) {
-    if (b == null) {
-      return false;
-    }
+    if (b == null) return false;
     return a.label == b.label && a.icon == b.icon;
   }
 
@@ -270,35 +285,14 @@ class OrderDetailActionsPanel extends StatelessWidget {
     BuildContext context,
     List<OrderActionConfig> Function() actionsProvider,
   ) async {
-    final initialActions = actionsProvider();
-    if (initialActions.isEmpty) {
-      return;
-    }
+    if (actionsProvider().isEmpty) return;
 
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            final mappedActions = actionsProvider()
-                .map(
-                  (action) => OrderActionConfig(
-                    label: action.label,
-                    icon: action.icon,
-                    onTap: action.onTap == null
-                        ? null
-                        : () {
-                            action.onTap!();
-                            setDialogState(() {});
-                          },
-                    onLongPress: action.onLongPress,
-                    subtitle: action.subtitle,
-                    accent: action.accent,
-                    emphasize: action.emphasize,
-                  ),
-                )
-                .toList();
-
+            final actions = actionsProvider();
             return Dialog(
               insetPadding: const EdgeInsets.symmetric(
                 horizontal: 24,
@@ -306,36 +300,28 @@ class OrderDetailActionsPanel extends StatelessWidget {
               ),
               backgroundColor: Colors.transparent,
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 560),
+                constraints: const BoxConstraints(maxWidth: 460),
                 child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: _panelColor,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: _borderColor),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 18,
-                        offset: const Offset(0, 12),
-                      ),
-                    ],
-                  ),
+                  padding: const EdgeInsets.all(20),
+                  decoration: AdminDesign.panelDecoration(),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.apps, color: _accentColor),
-                          const SizedBox(width: 12),
+                          const Icon(
+                            Icons.more_horiz,
+                            color: AdminDesign.accentDark,
+                          ),
+                          const SizedBox(width: 10),
                           const Expanded(
                             child: Text(
                               'სხვა მოქმედებები',
                               style: TextStyle(
-                                color: _titleColor,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
+                                color: AdminDesign.text,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
                           ),
@@ -344,30 +330,21 @@ class OrderDetailActionsPanel extends StatelessWidget {
                             splashRadius: 20,
                             icon: const Icon(
                               Icons.close,
-                              color: _mutedTextColor,
+                              color: AdminDesign.muted,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      if (mappedActions.isEmpty)
-                        const Center(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 24),
-                            child: Text(
-                              'დამატებითი მოქმედებები არ არის.',
-                              style: TextStyle(
-                                color: _mutedTextColor,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                        )
-                      else
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxHeight: 400),
-                          child: SingleChildScrollView(
-                            child: _buildActionCardGrid(mappedActions),
+                      const SizedBox(height: 12),
+                      for (final action in actions)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: _OtherActionTile(
+                            action: action,
+                            onInvoke: () {
+                              action.onTap?.call();
+                              setDialogState(() {});
+                            },
                           ),
                         ),
                     ],
@@ -380,316 +357,201 @@ class OrderDetailActionsPanel extends StatelessWidget {
       },
     );
   }
-
-  Widget _buildTotalsCard() {
-    final double subtotal = order.getItemsSubtotal();
-    final double serviceFee = order.includeServiceFee
-        ? order.getServiceFee()
-        : 0.0;
-    final bool serviceFeeGloballyEnabled =
-        DatabaseService.isServiceFeeAvailable();
-    final bool hasService =
-        serviceFeeGloballyEnabled && order.includeServiceFee && serviceFee > 0;
-    final double discount = order.discountAmount;
-    final double adjustment = order.manualAdjustmentAmount;
-    final bool hasAdjustment = adjustment.abs() >= 0.01;
-
-    Widget buildRow(
-      String label,
-      String value, {
-      Color labelColor = _mutedTextColor,
-      Color valueColor = _titleColor,
-    }) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: labelColor,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              value,
-              style: TextStyle(
-                color: valueColor,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      width: 220,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F7FB),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _borderColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'შეკვეთის ჯამი',
-            style: TextStyle(
-              color: _titleColor,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 10),
-          buildRow('ქვეჯამი', '${subtotal.toStringAsFixed(2)} GEL'),
-          if (serviceFeeGloballyEnabled)
-            buildRow(
-              'სერვისი ($serviceFeePercentageLabel%)',
-              '${(hasService ? serviceFee : 0.0).toStringAsFixed(2)} GEL',
-              labelColor: hasService
-                  ? _mutedTextColor
-                  : _mutedTextColor.withValues(alpha: 0.65),
-              valueColor: hasService
-                  ? _titleColor
-                  : _mutedTextColor.withValues(alpha: 0.75),
-            ),
-          if (discount > 0)
-            buildRow(
-              'ფასდაკლება',
-              '-${discount.toStringAsFixed(2)} GEL',
-              labelColor: _successColor,
-              valueColor: _successColor,
-            ),
-          if (hasAdjustment)
-            buildRow(
-              'კორექცია',
-              '${adjustment > 0 ? '+' : ''}${adjustment.toStringAsFixed(2)} GEL',
-              labelColor: adjustment > 0 ? _highlightColor : _successColor,
-              valueColor: adjustment > 0 ? _highlightColor : _successColor,
-            ),
-          const Divider(height: 20, color: _borderColor),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'ჯამი',
-                style: TextStyle(
-                  color: _titleColor,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Text(
-                '${order.totalAmount.toStringAsFixed(2)} GEL',
-                style: const TextStyle(
-                  color: _accentColor,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 }
 
-class _AnimatedOrderActionCard extends StatefulWidget {
-  const _AnimatedOrderActionCard({
-    required this.action,
-    required this.accent,
-    required this.isDisabled,
-    required this.borderColor,
-    required this.iconBackground,
-    required this.labelColor,
-    required this.subtitleColor,
+enum _ActionVariant { primary, outline, danger }
+
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    required this.variant,
+    this.onLongPress,
+    this.trailingIcon,
   });
 
-  final OrderActionConfig action;
-  final Color accent;
-  final bool isDisabled;
-  final Color borderColor;
-  final Color iconBackground;
-  final Color labelColor;
-  final Color subtitleColor;
-
-  @override
-  State<_AnimatedOrderActionCard> createState() =>
-      _AnimatedOrderActionCardState();
-}
-
-class _AnimatedOrderActionCardState extends State<_AnimatedOrderActionCard>
-    with SingleTickerProviderStateMixin {
-  bool _isPressed = false;
-  bool _isHolding = false;
-  late final AnimationController _holdController;
-
-  @override
-  void initState() {
-    super.initState();
-    _holdController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 780),
-      lowerBound: 0.0,
-      upperBound: 1.0,
-    );
-  }
-
-  @override
-  void dispose() {
-    _holdController.dispose();
-    super.dispose();
-  }
-
-  void _setPressed(bool value) {
-    if (_isPressed == value || widget.isDisabled) {
-      return;
-    }
-    setState(() {
-      _isPressed = value;
-    });
-  }
-
-  void _setHolding(bool value) {
-    if (_isHolding == value || widget.isDisabled) {
-      return;
-    }
-    setState(() {
-      _isHolding = value;
-    });
-    if (value) {
-      _holdController.repeat(reverse: true);
-    } else {
-      _holdController.stop();
-      _holdController.value = 0;
-    }
-  }
+  final String label;
+  final IconData icon;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  final IconData? trailingIcon;
+  final _ActionVariant variant;
 
   @override
   Widget build(BuildContext context) {
-    final double scale = _isPressed ? 0.97 : 1.0;
-    final double holdStrength = _isHolding
-        ? (0.08 + (_holdController.value * 0.10))
-        : 0.0;
+    final bool disabled = onTap == null;
 
-    return AnimatedBuilder(
-      animation: _holdController,
-      builder: (context, child) {
-        return AnimatedScale(
-          scale: scale,
-          duration: const Duration(milliseconds: 110),
-          curve: Curves.easeOutCubic,
-          child: child,
-        );
-      },
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: widget.action.onTap,
-          onLongPress: widget.action.onLongPress == null
-              ? null
-              : () {
-                  _setHolding(true);
-                  widget.action.onLongPress!();
-                },
-          onTapDown: (_) => _setPressed(true),
-          onTapCancel: () {
-            _setPressed(false);
-            _setHolding(false);
-          },
-          onTapUp: (_) => _setPressed(false),
-          onHighlightChanged: (isHighlighted) {
-            _setPressed(isHighlighted);
-            if (!isHighlighted) {
-              _setHolding(false);
-            }
-          },
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: widget.borderColor,
-                width: 1 + (_isHolding ? 0.2 : 0),
+    late final Color background;
+    late final Color foreground;
+    late final Color borderColor;
+    switch (variant) {
+      case _ActionVariant.primary:
+        background = disabled ? AdminDesign.border : AdminDesign.accentDark;
+        foreground = disabled ? AdminDesign.muted : Colors.white;
+        borderColor = background;
+        break;
+      case _ActionVariant.danger:
+        background = Colors.white;
+        foreground = disabled ? AdminDesign.muted : const Color(0xFFDC2626);
+        borderColor = disabled
+            ? AdminDesign.border
+            : const Color(0xFFFECACA);
+        break;
+      case _ActionVariant.outline:
+        background = Colors.white;
+        foreground = disabled ? AdminDesign.muted : AdminDesign.text;
+        borderColor = AdminDesign.border;
+        break;
+    }
+
+    return Material(
+      color: background,
+      borderRadius: BorderRadius.circular(AdminDesign.radius),
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: disabled ? null : onLongPress,
+        borderRadius: BorderRadius.circular(AdminDesign.radius),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AdminDesign.radius),
+            border: Border.all(color: borderColor),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: foreground),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: foreground,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-              boxShadow: widget.isDisabled
-                  ? []
-                  : [
-                      BoxShadow(
-                        color: widget.accent.withValues(
-                          alpha: 0.08 + holdStrength,
-                        ),
-                        blurRadius: 8 + (_isHolding ? 6 : 0),
-                        offset: Offset(0, _isHolding ? 3 : 4),
-                      ),
-                    ],
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  width: 30,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: widget.iconBackground,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    widget.action.icon,
-                    color: widget.accent,
-                    size: 15,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.action.label,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: widget.labelColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      if (widget.action.subtitle != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.action.subtitle!,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: widget.subtitleColor,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                if (!widget.isDisabled)
-                  Icon(Icons.chevron_right, color: widget.accent, size: 18),
+              if (trailingIcon != null) ...[
+                const SizedBox(width: 4),
+                Icon(trailingIcon, size: 18, color: foreground),
               ],
-            ),
+            ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _OtherActionTile extends StatelessWidget {
+  const _OtherActionTile({required this.action, required this.onInvoke});
+
+  final OrderActionConfig action;
+  final VoidCallback onInvoke;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool disabled = action.onTap == null;
+    final Color accent = action.accent ?? AdminDesign.accentDark;
+    return Material(
+      color: AdminDesign.panelSoft,
+      borderRadius: BorderRadius.circular(AdminDesign.radius),
+      child: InkWell(
+        onTap: disabled ? null : onInvoke,
+        onLongPress: action.onLongPress,
+        borderRadius: BorderRadius.circular(AdminDesign.radius),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AdminDesign.radius),
+            border: Border.all(color: AdminDesign.border),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: (disabled ? AdminDesign.muted : accent).withValues(
+                    alpha: 0.12,
+                  ),
+                  borderRadius: BorderRadius.circular(AdminDesign.radius),
+                ),
+                child: Icon(
+                  action.icon,
+                  size: 18,
+                  color: disabled ? AdminDesign.muted : accent,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      action.label,
+                      style: TextStyle(
+                        color: disabled ? AdminDesign.muted : AdminDesign.text,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (action.subtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        action.subtitle!,
+                        style: const TextStyle(
+                          color: AdminDesign.muted,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (!disabled)
+                const Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: AdminDesign.muted,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TotalsItem extends StatelessWidget {
+  const _TotalsItem({
+    required this.label,
+    required this.value,
+    this.valueColor = AdminDesign.text,
+  });
+
+  final String label;
+  final String value;
+  final Color valueColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '$label: ',
+          style: const TextStyle(color: AdminDesign.muted, fontSize: 13),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: valueColor,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
     );
   }
 }

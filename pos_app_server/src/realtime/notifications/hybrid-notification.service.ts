@@ -197,9 +197,19 @@ export class HybridNotificationService {
         priority: 'high',
       },
       apns: {
+        // apns-priority 5 is required when content-available is set so iOS
+        // wakes the app for background/terminated delivery without APNs
+        // rejecting the push for BadPriority.
+        headers: {
+          'apns-priority': '5',
+        },
         payload: {
           aps: {
             sound: 'default',
+            // Data-only payload: without content-available iOS never delivers
+            // to a backgrounded/terminated app, so the background handler that
+            // builds the local notification would silently never run.
+            contentAvailable: true,
           },
         },
       },

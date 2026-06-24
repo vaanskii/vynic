@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io' show Platform;
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:vynic/firebase_options.dart';
@@ -56,17 +56,17 @@ class FirebaseMessagingService {
   Future<void> _handlePushNotificationsToken() async {
     final token = await FirebaseMessaging.instance.getToken();
     if (token != null && token.isNotEmpty) {
-      print('FCM Token: $token');
+      debugPrint('FCM Token: $token');
       await _registerTokenWithBackend(token);
     }
 
     FirebaseMessaging.instance.onTokenRefresh
         .listen((fcmToken) async {
-          print('FCM Token refreshed: $fcmToken');
+          debugPrint('FCM Token refreshed: $fcmToken');
           await _registerTokenWithBackend(fcmToken);
         })
         .onError((error) {
-          print('Error refreshing FCM Token: $error');
+          debugPrint('Error refreshing FCM Token: $error');
         });
   }
 
@@ -84,7 +84,7 @@ class FirebaseMessagingService {
     try {
       await MobileApiService.unregisterPushDevice(token);
     } catch (error) {
-      print('Failed to unregister FCM token: $error');
+      debugPrint('Failed to unregister FCM token: $error');
     }
   }
 
@@ -93,7 +93,7 @@ class FirebaseMessagingService {
     try {
       await MobileApiService.registerPushDevice(token);
     } catch (error) {
-      print('Failed to register FCM token: $error');
+      debugPrint('Failed to register FCM token: $error');
     }
   }
 
@@ -104,11 +104,11 @@ class FirebaseMessagingService {
       sound: true,
     );
 
-    print('User granted permission: ${result.authorizationStatus}');
+    debugPrint('User granted permission: ${result.authorizationStatus}');
   }
 
   void _onForegroundMessage(RemoteMessage message) {
-    print("foreground message received: ${message.data.toString()}");
+    debugPrint("foreground message received: ${message.data.toString()}");
 
     _showNotificationFromMessage(
       message,
@@ -122,7 +122,7 @@ class FirebaseMessagingService {
 
   //Handle notification taps when the app is opened from background or terminated state
   void _onMessageOpenedApp(RemoteMessage message) {
-    print("Notification caused to open the app: ${message.data.toString()}");
+    debugPrint("Notification caused to open the app: ${message.data.toString()}");
   }
 }
 
@@ -133,7 +133,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  print("background message received: ${message.data.toString()}");
+  debugPrint("background message received: ${message.data.toString()}");
   final localNotifications = LocalNotificationsService.instance();
   await localNotifications.init();
   await _showNotificationFromMessage(

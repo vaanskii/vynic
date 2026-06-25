@@ -11,18 +11,20 @@ import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/printer_service.dart';
 import 'package:vynic/apps/windows_pos/widgets/pin_button.dart';
 import 'package:vynic/apps/windows_pos/widgets/on_screen_keyboard.dart';
+import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
+import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_language.dart';
 import 'package:vynic/core/models/reservation_context.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'order_detail_screen.dart';
 
-const Color _menuPrimaryColor = Color(0xFF1D4ED8);
-const Color _menuSecondaryColor = Color(0xFF2563EB);
-const Color _menuSurfaceColor = Color(0xFFF8FAFC);
+const Color _menuPrimaryColor = Color(0xFF0F766E);
+const Color _menuSecondaryColor = Color(0xFF14B8A6);
+const Color _menuSurfaceColor = Color(0xFFF6F7F9);
 const Color _menuCardColor = Color(0xFFFFFFFF);
-const Color _menuBorderColor = Color(0xFFE2E8F0);
-const Color _menuTextPrimary = Color(0xFF0F172A);
-const Color _menuTextMuted = Color(0xFF64748B);
-const Color _menuTextSoft = Color(0xFF94A3B8);
+const Color _menuBorderColor = Color(0xFFE5E7EB);
+const Color _menuTextPrimary = Color(0xFF111827);
+const Color _menuTextMuted = Color(0xFF6B7280);
+const Color _menuTextSoft = Color(0xFF9CA3AF);
 
 class _CartEntry {
   final String key;
@@ -130,12 +132,15 @@ class _MenuScreenState extends State<MenuScreen> {
   late String _currentLanguage;
   late double _serviceFeeRate;
   late bool _serviceFeeDefaultEnabled;
+  // Discount carried over from an existing order being edited (0 for new).
+  double _existingDiscount = 0.0;
+  // Per-order service-fee override from an existing order (null = use global).
+  double? _orderCustomServicePercent;
   // Cart mapping: key -> CartEntry
   final Map<String, _CartEntry> _cart = {};
   final Map<String, _CartStateSnapshot> _initialCartSnapshot = {};
   bool _initialSnapshotCaptured = false;
   bool _initialSnapshotFrozen = false;
-  bool _isOrderOpen = false;
   List<QuickOrderDraft> _quickOrderDrafts = [];
   String? _selectedQuickOrderDraftId;
 
@@ -147,8 +152,6 @@ class _MenuScreenState extends State<MenuScreen> {
   // Search functionality
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  bool _isKeyboardVisible = false;
-  static const double _searchKeyboardListInset = 340;
 
   String _buildKitchenDiffKey(OrderItem item) {
     final comment = item.comment?.trim() ?? '';
@@ -423,12 +426,7 @@ class _MenuScreenState extends State<MenuScreen> {
             (d) => d.id == widget.initialQuickOrderDraftId,
           );
           _applyDraftToCart(draft);
-          _isOrderOpen = true;
         } catch (_) {}
-      }
-      if ((widget.initialPreOrderItems?.isNotEmpty ?? false) &&
-          widget.initialQuickOrderDraftId != null) {
-        _isOrderOpen = true;
       }
     }
     _loadInitialPreOrderItems();
@@ -470,6 +468,12 @@ class _MenuScreenState extends State<MenuScreen> {
       final order = DatabaseService.getOrder(widget.existingOrderId!);
       if (order != null) {
         setState(() {
+          // Reflect the existing order's service-fee state in the toggle.
+          if (DatabaseService.isServiceFeeAvailable()) {
+            _serviceFeeDefaultEnabled = order.includeServiceFee;
+          }
+          _existingDiscount = order.discountAmount;
+          _orderCustomServicePercent = order.customServiceFeePercentage;
           // Load existing order items into cart
           for (final item in order.items) {
             _cart[item.itemKey] = _CartEntry(
@@ -567,15 +571,6 @@ class _MenuScreenState extends State<MenuScreen> {
 
   // _incrementCart removed (not used). Use _addToCartEntry or _decrementCart/_add flows.
 
-  void _decrementCart(String key) {
-    setState(() {
-      if (_cart.containsKey(key)) {
-        _cart[key]!.quantity -= 1;
-        if (_cart[key]!.quantity <= 0) _cart.remove(key);
-      }
-    });
-  }
-
   int _getTotalItems() {
     return _cart.values.fold(0, (sum, entry) => sum + entry.quantity);
   }
@@ -611,25 +606,12 @@ class _MenuScreenState extends State<MenuScreen> {
           comment: item.comment,
         );
       }
-      _isOrderOpen = true;
       _selectedQuickOrderDraftId = draft.id;
       _serviceFeeDefaultEnabled =
           DatabaseService.isServiceFeeAvailable() && draft.includeServiceFee;
       _serviceFeeRate = draft.serviceFeeRate > 0
           ? draft.serviceFeeRate
           : DatabaseService.getServiceFeeRate();
-    });
-  }
-
-  void _openOrderPanel() {
-    setState(() {
-      _isOrderOpen = true;
-    });
-  }
-
-  void _closeOrderPanel() {
-    setState(() {
-      _isOrderOpen = false;
     });
   }
 
@@ -683,7 +665,6 @@ class _MenuScreenState extends State<MenuScreen> {
 
         setState(() {
           _cart.clear();
-          _isOrderOpen = false;
         });
 
         if (!mounted) return;
@@ -756,7 +737,6 @@ class _MenuScreenState extends State<MenuScreen> {
       if (mounted) {
         setState(() {
           _cart.clear();
-          _isOrderOpen = false;
           _selectedQuickOrderDraftId = null;
         });
         Navigator.pop(context);
@@ -1076,6 +1056,10 @@ class _MenuScreenState extends State<MenuScreen> {
           // Clear existing items and add new ones
           existingOrder.items.clear();
           existingOrder.items.addAll(orderItems);
+          existingOrder.includeServiceFee =
+              DatabaseService.isServiceFeeAvailable() &&
+              _serviceFeeDefaultEnabled;
+          existingOrder.recalculateTotal();
           existingOrder.updatedAt = DatabaseService.getCurrentDateTime();
 
           orderId = existingOrder.orderId;
@@ -1142,7 +1126,9 @@ class _MenuScreenState extends State<MenuScreen> {
           floor: floor,
           createdBy: widget.user.username,
           items: orderItems,
-          includeServiceFee: DatabaseService.defaultIncludeServiceFee(),
+          includeServiceFee:
+              DatabaseService.isServiceFeeAvailable() &&
+              _serviceFeeDefaultEnabled,
         );
         orderId = order.orderId;
       }
@@ -1150,7 +1136,6 @@ class _MenuScreenState extends State<MenuScreen> {
       // Clear cart
       setState(() {
         _cart.clear();
-        _isOrderOpen = false;
       });
 
       if (!mounted) return;
@@ -1201,45 +1186,20 @@ class _MenuScreenState extends State<MenuScreen> {
     }
   }
 
-  void _scrollCategoryLeft() {
-    _categoryScrollController.animateTo(
-      _categoryScrollController.offset - 200,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-  }
-
-  void _scrollCategoryRight() {
-    _categoryScrollController.animateTo(
-      _categoryScrollController.offset + 200,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-  }
-
-  void _scrollSubcategoryLeft() {
-    _subcategoryScrollController.animateTo(
-      _subcategoryScrollController.offset - 200,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-  }
-
-  void _scrollSubcategoryRight() {
-    _subcategoryScrollController.animateTo(
-      _subcategoryScrollController.offset + 200,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-  }
-
   void _clearSearch() {
     if (!mounted) return;
     setState(() {
       _searchQuery = '';
       _searchController.clear();
-      _isKeyboardVisible = false;
     });
+  }
+
+  Future<void> _openSearchKeyboard() async {
+    await showPosKeyboardInputSheet(
+      context: context,
+      controller: _searchController,
+      initialLanguage: PosKeyboardLanguage.fromCode(_currentLanguage),
+    );
   }
 
   @override
@@ -1248,151 +1208,117 @@ class _MenuScreenState extends State<MenuScreen> {
       onWillPop: _confirmExitIfCartNotEmpty,
       child: Scaffold(
         backgroundColor: _menuSurfaceColor,
-        appBar: AppBar(
-          backgroundColor: _menuCardColor,
-          elevation: 0,
-          iconTheme: const IconThemeData(color: _menuTextPrimary),
-          titleTextStyle: const TextStyle(color: _menuTextPrimary),
-          toolbarHeight: 60,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, size: 28),
-            onPressed: _handleBackNavigation,
-            tooltip: 'Back',
-          ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+        body: SafeArea(
+          child: Column(
             children: [
-              const Text(
-                'Menu',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+              _buildTopBar(),
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildCategorySidebar(),
+                    Expanded(
+                      child: _isLoading
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                color: _menuPrimaryColor,
+                              ),
+                            )
+                          : Column(
+                              children: [
+                                if (_searchQuery.isEmpty &&
+                                    _selectedCategory?.subcategories != null &&
+                                    _selectedCategory!
+                                        .subcategories!
+                                        .isNotEmpty)
+                                  _buildSubcategoryBar(),
+                                Expanded(
+                                  child: _buildItemsGrid(_getItemsToDisplay()),
+                                ),
+                              ],
+                            ),
+                    ),
+                    SizedBox(width: 380, child: _buildOrderPanel()),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String get _screenTitle {
+    if (widget.isPreOrderMode) {
+      return 'რეზერვაციის მენიუ';
+    }
+    if (widget.existingOrderId != null) {
+      return 'შეკვეთის რედაქტირება';
+    }
+    return 'ახალი შეკვეთა';
+  }
+
+  Widget _buildTopBar() {
+    final subtitleLines = _buildMenuSubtitleLines();
+    return Container(
+      decoration: const BoxDecoration(
+        color: _menuCardColor,
+        border: Border(bottom: BorderSide(color: _menuBorderColor)),
+      ),
+      padding: const EdgeInsets.fromLTRB(12, 10, 16, 10),
+      child: Row(
+        children: [
+          Material(
+            color: _menuSurfaceColor,
+            borderRadius: BorderRadius.circular(8),
+            child: InkWell(
+              onTap: _handleBackNavigation,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: _menuBorderColor),
+                ),
+                child: const Icon(
+                  Icons.arrow_back,
+                  size: 20,
                   color: _menuTextPrimary,
                 ),
               ),
-              ..._buildMenuSubtitleLines(),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _screenTitle,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: _menuTextPrimary,
+                ),
+              ),
+              ...subtitleLines,
             ],
           ),
-          actions: [
-            if (_getTotalItems() > 0)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _menuCardColor,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: _menuBorderColor),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '${_getTotalItems()} items',
-                          style: const TextStyle(
-                            color: _menuTextPrimary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          '₾${_getCartTotal().toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            color: _menuPrimaryColor,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            if (_getTotalItems() > 0)
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: Center(
-                  child: ElevatedButton.icon(
-                    onPressed: _openOrderPanel,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _menuPrimaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    icon: const Icon(Icons.shopping_cart, size: 20),
-                    label: const Text(
-                      'შეკვეთის ნახვა',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            IconButton(
-              icon: Icon(
-                _currentLanguage == 'en' ? Icons.language : Icons.translate,
-                size: 28,
-                color: _menuTextPrimary,
-              ),
-              onPressed: _toggleLanguage,
-              tooltip: _currentLanguage == 'en' ? 'ქართული' : 'English',
+          const SizedBox(width: 28),
+          Expanded(child: _buildSearchField()),
+          const SizedBox(width: 14),
+          IconButton(
+            icon: Icon(
+              _currentLanguage == 'en' ? Icons.language : Icons.translate,
+              size: 26,
+              color: _menuTextPrimary,
             ),
-          ],
-        ),
-        body: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: _menuPrimaryColor),
-              )
-            : Stack(
-                children: [
-                  Column(
-                    children: [
-                      _buildCategoryBar(),
-                      if (_selectedCategory?.subcategories != null &&
-                          _selectedCategory!.subcategories!.isNotEmpty)
-                        _buildSubcategoryBar(),
-                      _buildSearchBar(),
-                      Expanded(child: _buildItemsList(_getItemsToDisplay())),
-                    ],
-                  ),
-                  AnimatedPositioned(
-                    duration: const Duration(milliseconds: 300),
-                    right: _isOrderOpen ? 0 : -400,
-                    top: 0,
-                    bottom: 0,
-                    width: 400,
-                    child: _buildOrderPanel(),
-                  ),
-                  AnimatedPositioned(
-                    duration: const Duration(milliseconds: 300),
-                    left: 0,
-                    right: _isOrderOpen ? 400 : 0,
-                    bottom: _isKeyboardVisible ? 0 : -400,
-                    child: OnScreenKeyboard(
-                      controller: _searchController,
-                      language: _currentLanguage,
-                      onClose: () {
-                        setState(() {
-                          _isKeyboardVisible = false;
-                        });
-                      },
-                    ),
-                  ),
-                ],
-              ),
+            onPressed: _toggleLanguage,
+            tooltip: _currentLanguage == 'en' ? 'ქართული' : 'English',
+          ),
+        ],
       ),
     );
   }
@@ -1453,70 +1379,58 @@ class _MenuScreenState extends State<MenuScreen> {
     return lines;
   }
 
-  Widget _buildCategoryBar() {
+  Widget _buildCategorySidebar() {
     return Container(
-      height: 50,
+      width: 210,
       decoration: const BoxDecoration(
         color: _menuCardColor,
-        border: Border(bottom: BorderSide(color: _menuBorderColor, width: 1)),
+        border: Border(right: BorderSide(color: _menuBorderColor, width: 1)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Left arrow button
-          IconButton(
-            icon: const Icon(
-              Icons.chevron_left,
-              color: _menuPrimaryColor,
-              size: 32,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+            child: Text(
+              _currentLanguage == 'en' ? 'Categories' : 'კატეგორიები',
+              style: const TextStyle(
+                color: _menuTextMuted,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.3,
+              ),
             ),
-            onPressed: _scrollCategoryLeft,
-            tooltip: 'Scroll left',
           ),
-          // Category list
           Expanded(
             child: ListView.builder(
               controller: _categoryScrollController,
-              scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
               itemCount: _categories.length,
               itemBuilder: (context, index) {
                 final category = _categories[index];
                 final isSelected = _selectedCategory?.slug == category.slug;
 
                 return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 4,
-                  ),
-                  child: InkWell(
-                    onTap: () => _selectCategory(category),
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Material(
+                    color: isSelected ? _menuTextPrimary : Colors.transparent,
                     borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? _menuPrimaryColor
-                            : _menuSurfaceColor,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: isSelected
-                              ? _menuPrimaryColor
-                              : _menuBorderColor,
-                          width: 2,
+                    child: InkWell(
+                      onTap: () => _selectCategory(category),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
                         ),
-                      ),
-                      child: Center(
                         child: Text(
                           category.getName(_currentLanguage),
                           style: TextStyle(
                             color: isSelected ? Colors.white : _menuTextPrimary,
-                            fontSize: 15,
+                            fontSize: 14,
                             fontWeight: isSelected
-                                ? FontWeight.bold
+                                ? FontWeight.w700
                                 : FontWeight.w500,
                           ),
                         ),
@@ -1526,16 +1440,6 @@ class _MenuScreenState extends State<MenuScreen> {
                 );
               },
             ),
-          ),
-          // Right arrow button
-          IconButton(
-            icon: const Icon(
-              Icons.chevron_right,
-              color: _menuPrimaryColor,
-              size: 32,
-            ),
-            onPressed: _scrollCategoryRight,
-            tooltip: 'Scroll right',
           ),
         ],
       ),
@@ -1545,167 +1449,87 @@ class _MenuScreenState extends State<MenuScreen> {
   Widget _buildSubcategoryBar() {
     final subcategories = _selectedCategory?.subcategories ?? [];
 
+    Widget chip({
+      required String label,
+      required bool selected,
+      required VoidCallback onTap,
+    }) {
+      return Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(999),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+            decoration: BoxDecoration(
+              color: selected ? _menuPrimaryColor : _menuSurfaceColor,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: selected ? _menuPrimaryColor : _menuBorderColor,
+              ),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.white : _menuTextPrimary,
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Container(
-      height: 45,
+      height: 52,
       decoration: const BoxDecoration(
         color: _menuCardColor,
         border: Border(bottom: BorderSide(color: _menuBorderColor, width: 1)),
       ),
-      child: Row(
+      child: ListView(
+        controller: _subcategoryScrollController,
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         children: [
-          // Left arrow button
-          IconButton(
-            icon: const Icon(
-              Icons.chevron_left,
-              color: _menuPrimaryColor,
-              size: 28,
-            ),
-            onPressed: _scrollSubcategoryLeft,
-            tooltip: 'Scroll left',
-            padding: const EdgeInsets.all(4),
+          chip(
+            label: _currentLanguage == 'en' ? 'All' : 'ყველა',
+            selected: _selectedSubcategory == null,
+            onTap: () => _selectSubcategory(null),
           ),
-          // Subcategory list
-          Expanded(
-            child: ListView.builder(
-              controller: _subcategoryScrollController,
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              itemCount: subcategories.length + 1, // +1 for "All" option
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  // "All" button
-                  final isSelected = _selectedSubcategory == null;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 6,
-                    ),
-                    child: InkWell(
-                      onTap: () => _selectSubcategory(null),
-                      borderRadius: BorderRadius.circular(6),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? _menuPrimaryColor
-                              : _menuSurfaceColor,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: isSelected
-                                ? _menuPrimaryColor
-                                : _menuBorderColor,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            _currentLanguage == 'en' ? 'All' : 'ყველა',
-                            style: TextStyle(
-                              color: isSelected
-                                  ? Colors.white
-                                  : _menuTextPrimary,
-                              fontSize: 14,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }
-
-                final subcategory = subcategories[index - 1];
-                final isSelected =
-                    _selectedSubcategory?.slug == subcategory.slug;
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 6,
-                  ),
-                  child: InkWell(
-                    onTap: () => _selectSubcategory(subcategory),
-                    borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? _menuPrimaryColor
-                            : _menuSurfaceColor,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: isSelected
-                              ? _menuPrimaryColor
-                              : _menuBorderColor,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          subcategory.getName(_currentLanguage),
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : _menuTextPrimary,
-                            fontSize: 14,
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
+          for (final subcategory in subcategories)
+            chip(
+              label: subcategory.getName(_currentLanguage),
+              selected: _selectedSubcategory?.slug == subcategory.slug,
+              onTap: () => _selectSubcategory(subcategory),
             ),
-          ),
-          // Right arrow button
-          IconButton(
-            icon: const Icon(
-              Icons.chevron_right,
-              color: _menuPrimaryColor,
-              size: 28,
-            ),
-            onPressed: _scrollSubcategoryRight,
-            tooltip: 'Scroll right',
-            padding: const EdgeInsets.all(4),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildSearchBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: const BoxDecoration(
-        color: _menuCardColor,
-        border: Border(bottom: BorderSide(color: _menuBorderColor, width: 1)),
-      ),
+  Widget _buildSearchField() {
+    return SizedBox(
+      height: 42,
       child: TextField(
         controller: _searchController,
         readOnly: true, // Make read-only to prevent system keyboard
-        onTap: () {
-          setState(() {
-            _isKeyboardVisible = true;
-          });
-        },
-        style: const TextStyle(color: _menuTextPrimary, fontSize: 16),
+        onTap: _openSearchKeyboard,
+        style: const TextStyle(color: _menuTextPrimary, fontSize: 15),
         decoration: InputDecoration(
           hintText: _currentLanguage == 'en'
-              ? 'Search items...'
-              : 'მოძებნე პროდუქტი...',
+              ? 'Search products...'
+              : 'პროდუქტის ძიება...',
           hintStyle: const TextStyle(color: _menuTextSoft),
-          prefixIcon: const Icon(Icons.search, color: _menuTextMuted),
+          prefixIcon: const Icon(Icons.search, color: _menuTextMuted, size: 20),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.clear, color: _menuTextMuted),
+                  icon: const Icon(
+                    Icons.clear,
+                    color: _menuTextMuted,
+                    size: 20,
+                  ),
                   onPressed: () {
                     _searchController.clear();
                   },
@@ -1713,13 +1537,22 @@ class _MenuScreenState extends State<MenuScreen> {
               : null,
           filled: true,
           fillColor: _menuSurfaceColor,
+          isDense: true,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide.none,
+            borderSide: const BorderSide(color: _menuBorderColor),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: _menuBorderColor),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: _menuSecondaryColor),
           ),
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
+            horizontal: 14,
+            vertical: 10,
           ),
         ),
       ),
@@ -1778,176 +1611,121 @@ class _MenuScreenState extends State<MenuScreen> {
     return [];
   }
 
-  Widget _buildItemsList(List<MenuItem> items) {
+  Widget _buildItemsGrid(List<MenuItem> items) {
     if (items.isEmpty) {
-      return const Center(
-        child: Text(
-          'No items available',
-          style: TextStyle(color: _menuTextMuted, fontSize: 16),
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.search_off, size: 44, color: _menuTextSoft),
+            const SizedBox(height: 10),
+            Text(
+              _currentLanguage == 'en'
+                  ? 'No items available'
+                  : 'პროდუქტები ვერ მოიძებნა',
+              style: const TextStyle(color: _menuTextMuted, fontSize: 15),
+            ),
+          ],
         ),
       );
     }
 
-    return ListView.builder(
-      controller: _itemsScrollController,
-      physics: const BouncingScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(
-        16,
-        16,
-        16,
-        16 + (_isKeyboardVisible ? _searchKeyboardListInset : 0),
-      ),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return _buildItemCard(item);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const double targetWidth = 200;
+        const double spacing = 12;
+        int columns = (constraints.maxWidth / targetWidth).floor();
+        if (columns < 2) columns = 2;
+        if (columns > 5) columns = 5;
+
+        return GridView.builder(
+          controller: _itemsScrollController,
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisSpacing: spacing,
+            crossAxisSpacing: spacing,
+            childAspectRatio: 2.1,
+          ),
+          itemCount: items.length,
+          itemBuilder: (context, index) {
+            return _buildItemCard(items[index]);
+          },
+        );
       },
     );
   }
 
   Widget _buildItemCard(MenuItem item) {
     final itemName = item.getName(_currentLanguage);
+    final hasVariants = item.hasVariants();
+    final priceLabel = hasVariants
+        ? (_currentLanguage == 'en'
+              ? '${item.variants!.length} variants'
+              : '${item.variants!.length} ვარიანტი')
+        : '₾${(item.price ?? 0).toStringAsFixed(2)}';
 
-    if (item.hasVariants()) {
-      return Card(
-        color: _menuCardColor,
-        margin: const EdgeInsets.only(bottom: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: _menuBorderColor),
-        ),
-        child: IntrinsicHeight(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                // Item info - takes half width
-                Expanded(
-                  flex: 1,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        itemName,
-                        style: const TextStyle(
-                          color: _menuTextPrimary,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${item.variants!.length} variants available',
-                        style: const TextStyle(
-                          color: _menuTextMuted,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
+    return Material(
+      color: _menuCardColor,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: () => _onAddPressed(item),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _menuBorderColor),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                itemName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: _menuTextPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
                 ),
-                // Empty space - takes half width
-                const Expanded(flex: 1, child: SizedBox()),
-                // Add button - fixed width on the right
-                SizedBox(
-                  height: 44,
-                  child: ElevatedButton(
-                    onPressed: () => _onAddPressed(item),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _menuSecondaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'დამატება',
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      priceLabel,
                       style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
+                        color: hasVariants ? _menuTextMuted : _menuPrimaryColor,
+                        fontSize: hasVariants ? 13 : 17,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: _menuSecondaryColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.add,
+                      size: 20,
+                      color: _menuPrimaryColor,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-      );
-    } else {
-      return Card(
-        color: _menuCardColor,
-        margin: const EdgeInsets.only(bottom: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: _menuBorderColor),
-        ),
-        child: IntrinsicHeight(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                // Item info - takes half width
-                Expanded(
-                  flex: 1,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        itemName,
-                        style: const TextStyle(
-                          color: _menuTextPrimary,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '₾${item.price!.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          color: _menuPrimaryColor,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Empty space - takes half width
-                const Expanded(flex: 1, child: SizedBox()),
-                // Add button - fixed width on the right
-                SizedBox(
-                  height: 44,
-                  child: ElevatedButton(
-                    onPressed: () => _onAddPressed(item),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _menuSecondaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'დამატება',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
+      ),
+    );
   }
 
   Future<void> _onAddPressed(MenuItem item) async {
@@ -2003,14 +1781,16 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   Widget _buildOrderPanel() {
-    return Material(
-      elevation: 8,
-      color: _menuCardColor,
+    return Container(
+      decoration: const BoxDecoration(
+        color: _menuCardColor,
+        border: Border(left: BorderSide(color: _menuBorderColor, width: 1)),
+      ),
       child: Column(
         children: [
-          // Compact header
+          // Header
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: const BoxDecoration(
               color: _menuCardColor,
               border: Border(
@@ -2019,387 +1799,478 @@ class _MenuScreenState extends State<MenuScreen> {
             ),
             child: Row(
               children: [
+                const Icon(
+                  Icons.shopping_cart_outlined,
+                  size: 18,
+                  color: _menuPrimaryColor,
+                ),
+                const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
-                    'Order Summary',
+                    'შეკვეთა',
                     style: TextStyle(
                       color: _menuTextPrimary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
-                IconButton(
-                  onPressed: _closeOrderPanel,
-                  icon: const Icon(
-                    Icons.close,
-                    color: _menuTextPrimary,
-                    size: 24,
+                if (DatabaseService.isServiceFeeAvailable()) ...[
+                  const Text(
+                    'სერვისი',
+                    style: TextStyle(
+                      color: _menuTextMuted,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
+                  const SizedBox(width: 6),
+                  Switch(
+                    value: _serviceFeeDefaultEnabled,
+                    onChanged: (value) {
+                      setState(() {
+                        _serviceFeeDefaultEnabled = value;
+                      });
+                    },
+                    activeThumbColor: Colors.white,
+                    activeTrackColor: const Color(0xFF16A34A),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ],
               ],
             ),
           ),
           Expanded(
             child: _cart.isEmpty
-                ? const Center(
-                    child: Text(
-                      'Cart is empty',
-                      style: TextStyle(color: _menuTextMuted),
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.shopping_cart_outlined,
+                          size: 40,
+                          color: _menuTextSoft,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          _currentLanguage == 'en'
+                              ? 'Cart is empty'
+                              : 'პროდუქტები არ არის დამატებული',
+                          style: const TextStyle(
+                            color: _menuTextMuted,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
                   )
-                : Builder(
-                    builder: (context) {
-                      final cartEntries = _cartEntriesNewestFirst;
-                      return ListView.builder(
-                        padding: const EdgeInsets.all(8),
-                        itemCount: cartEntries.length,
-                        itemBuilder: (context, idx) {
-                          final entry = cartEntries[idx];
-                          return Card(
-                            color: _menuSurfaceColor,
-                            margin: const EdgeInsets.only(bottom: 8),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: const BorderSide(color: _menuBorderColor),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    entry.name,
-                                    style: const TextStyle(
-                                      color: _menuTextPrimary,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  if (entry.comment != null &&
-                                      entry.comment!.isNotEmpty) ...[
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.comment,
-                                          color: _menuPrimaryColor,
-                                          size: 14,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Expanded(
-                                          child: Text(
-                                            entry.comment!,
-                                            style: const TextStyle(
-                                              color: _menuPrimaryColor,
-                                              fontSize: 13,
-                                              fontStyle: FontStyle.italic,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 4),
-                                  ],
-                                  Text(
-                                    '₾${entry.unitPrice.toStringAsFixed(2)} each',
-                                    style: const TextStyle(
-                                      color: _menuTextMuted,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      SizedBox(
-                                        width: 40,
-                                        height: 40,
-                                        child: ElevatedButton(
-                                          onPressed: () =>
-                                              _decrementCart(entry.key),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: _menuSurfaceColor,
-                                            foregroundColor: _menuTextPrimary,
-                                            side: const BorderSide(
-                                              color: _menuBorderColor,
-                                            ),
-                                            padding: EdgeInsets.zero,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                          ),
-                                          child: const Icon(
-                                            Icons.remove,
-                                            color: _menuTextPrimary,
-                                            size: 20,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 8,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: _menuCardColor,
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                          border: Border.all(
-                                            color: _menuBorderColor,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          '${entry.quantity}',
-                                          style: const TextStyle(
-                                            color: _menuTextPrimary,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      SizedBox(
-                                        width: 40,
-                                        height: 40,
-                                        child: ElevatedButton(
-                                          onPressed: () {
-                                            setState(() {
-                                              _cart[entry.key]!.quantity += 1;
-                                            });
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor:
-                                                _menuSecondaryColor,
-                                            foregroundColor: Colors.white,
-                                            padding: EdgeInsets.zero,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                          ),
-                                          child: const Icon(
-                                            Icons.add,
-                                            color: Colors.white,
-                                            size: 20,
-                                          ),
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      Text(
-                                        '₾${entry.total.toStringAsFixed(2)}',
-                                        style: const TextStyle(
-                                          color: _menuPrimaryColor,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      SizedBox(
-                                        width: 40,
-                                        height: 40,
-                                        child: IconButton(
-                                          onPressed: () async {
-                                            final comment =
-                                                await showDialog<String>(
-                                                  context: context,
-                                                  builder: (context) =>
-                                                      _CommentDialog(
-                                                        itemName: entry.name,
-                                                        existingComment:
-                                                            entry.comment,
-                                                      ),
-                                                );
-                                            if (comment != null) {
-                                              setState(() {
-                                                _cart[entry.key]!.comment =
-                                                    comment.isEmpty
-                                                    ? null
-                                                    : comment;
-                                              });
-                                            }
-                                          },
-                                          icon: Icon(
-                                            Icons.comment,
-                                            color:
-                                                (entry.comment != null &&
-                                                    entry.comment!.isNotEmpty)
-                                                ? _menuPrimaryColor
-                                                : _menuTextMuted,
-                                            size: 22,
-                                          ),
-                                          style: IconButton.styleFrom(
-                                            backgroundColor: _menuCardColor,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      SizedBox(
-                                        width: 40,
-                                        height: 40,
-                                        child: IconButton(
-                                          onPressed: () {
-                                            setState(() {
-                                              _cart.remove(entry.key);
-                                            });
-                                          },
-                                          icon: const Icon(
-                                            Icons.delete,
-                                            color: Colors.red,
-                                            size: 22,
-                                          ),
-                                          style: IconButton.styleFrom(
-                                            backgroundColor: _menuCardColor,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      );
+                : ListView.separated(
+                    padding: EdgeInsets.zero,
+                    itemCount: _cartEntriesNewestFirst.length,
+                    separatorBuilder: (_, __) => const Divider(
+                      height: 1,
+                      color: _menuBorderColor,
+                      indent: 14,
+                      endIndent: 14,
+                    ),
+                    itemBuilder: (context, idx) {
+                      final entries = _cartEntriesNewestFirst;
+                      return _buildCartItemRow(entries[idx], idx + 1);
                     },
                   ),
           ),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-              border: Border(
-                top: BorderSide(color: _menuBorderColor, width: 1),
+          _buildOrderTotals(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCartItemRow(_CartEntry entry, int displayIndex) {
+    final hasComment =
+        entry.comment != null && entry.comment!.trim().isNotEmpty;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 22,
+            child: Text(
+              '$displayIndex',
+              style: const TextStyle(
+                color: _menuTextMuted,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
               ),
             ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Total and Clear All button
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Total: ₾${_getCartTotal().toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          color: _menuPrimaryColor,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      onPressed: _cart.isNotEmpty
-                          ? () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  backgroundColor: _menuCardColor,
-                                  title: const Text(
-                                    'Clear Cart?',
-                                    style: TextStyle(color: _menuTextPrimary),
-                                  ),
-                                  content: const Text(
-                                    'Are you sure you want to remove all items from the cart?',
-                                    style: TextStyle(color: _menuTextMuted),
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text(
-                                        'Cancel',
-                                        style: TextStyle(
-                                          color: _menuTextPrimary,
-                                        ),
-                                      ),
-                                    ),
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          _cart.clear();
-                                        });
-                                        Navigator.pop(context);
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red,
-                                        foregroundColor: Colors.white,
-                                      ),
-                                      child: const Text('Clear All'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }
-                          : null,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                      icon: const Icon(Icons.delete_sweep, size: 20),
-                      label: const Text('Clear All'),
-                    ),
-                  ],
+                Text(
+                  entry.name,
+                  style: const TextStyle(
+                    color: _menuTextPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-                const SizedBox(height: 12),
-                // Place/Update Order button
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton.icon(
-                    onPressed: widget.isPreOrderMode || _cart.isNotEmpty
-                        ? _placeOrder
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _menuSecondaryColor,
-                      disabledBackgroundColor: _menuBorderColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 16,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    icon: Icon(
-                      widget.isPreOrderMode
-                          ? Icons.restaurant_menu
-                          : (widget.existingOrderId != null
-                                ? Icons.edit
-                                : Icons.check_circle),
-                      size: 24,
-                    ),
-                    label: Text(
-                      widget.isPreOrderMode
-                          ? 'რეზერვაციის დადასტურება'
-                          : (widget.existingOrderId != null
-                                ? 'შეკვეთის განახლება'
-                                : 'შეკვეთის გაფორმება'),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                if (hasComment) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    entry.comment!,
+                    style: const TextStyle(
+                      color: _menuTextMuted,
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
                     ),
                   ),
+                ],
+                const SizedBox(height: 4),
+                _cartLink(
+                  label: hasComment ? 'კომენტარი' : '+ კომენტარი',
+                  onTap: () => _editCartComment(entry),
                 ),
               ],
             ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${entry.total.toStringAsFixed(2)} ₾',
+                style: const TextStyle(
+                  color: _menuTextPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _qtyStepper(entry),
+                  const SizedBox(width: 6),
+                  _cartIconButton(
+                    icon: Icons.close,
+                    color: const Color(0xFFDC2626),
+                    onTap: () => setState(() => _cart.remove(entry.key)),
+                    tooltip: _currentLanguage == 'en' ? 'Remove' : 'წაშლა',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _qtyStepper(_CartEntry entry) {
+    return Container(
+      height: 30,
+      decoration: BoxDecoration(
+        color: _menuSurfaceColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: _menuBorderColor),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _stepButton(
+            icon: Icons.remove,
+            onTap: entry.quantity > 1
+                ? () => setState(() => _cart[entry.key]?.quantity -= 1)
+                : null,
+          ),
+          SizedBox(
+            width: 26,
+            child: Text(
+              '${entry.quantity}',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: _menuTextPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          _stepButton(
+            icon: Icons.add,
+            onTap: () => setState(() => _cart[entry.key]?.quantity += 1),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _stepButton({required IconData icon, required VoidCallback? onTap}) {
+    final enabled = onTap != null;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: SizedBox(
+        width: 28,
+        height: 30,
+        child: Icon(
+          icon,
+          size: 16,
+          color: enabled ? _menuPrimaryColor : _menuTextSoft,
+        ),
+      ),
+    );
+  }
+
+  Widget _cartIconButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+    String? tooltip,
+  }) {
+    final button = InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: 30,
+        height: 30,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, size: 16, color: color),
+      ),
+    );
+    if (tooltip == null) return button;
+    return Tooltip(message: tooltip, child: button);
+  }
+
+  Widget _cartLink({required String label, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: _menuPrimaryColor,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  /// Effective service-fee percentage for this order: the per-order override
+  /// when set, otherwise the live global setting — so the menu always mirrors
+  /// the real service-fee configuration (and the order detail screen).
+  double get _effectiveServicePercent =>
+      _orderCustomServicePercent ?? DatabaseService.getServiceFeePercentage();
+
+  String _formatPercent(double value) {
+    return value == value.roundToDouble()
+        ? value.toStringAsFixed(0)
+        : value.toStringAsFixed(1);
+  }
+
+  Widget _buildOrderTotals() {
+    final subtotal = _getCartTotal();
+    final serviceFeeOn =
+        DatabaseService.isServiceFeeAvailable() && _serviceFeeDefaultEnabled;
+    final servicePercent = _effectiveServicePercent;
+    final serviceFee = serviceFeeOn
+        ? double.parse((subtotal * (servicePercent / 100)).toStringAsFixed(2))
+        : 0.0;
+    final total = subtotal + serviceFee - _existingDiscount;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: _menuBorderColor, width: 1)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _cart.isNotEmpty ? _confirmClearCart : null,
+              icon: const Icon(Icons.delete_outline, size: 18),
+              label: Text(
+                _currentLanguage == 'en'
+                    ? 'Clear order'
+                    : 'შეკვეთის გასუფთავება',
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _menuTextMuted,
+                side: const BorderSide(color: _menuBorderColor),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          _totalLine(
+            label:
+                '${_currentLanguage == 'en' ? 'Items' : 'ჯამი პროდუქტები'} (${_getTotalItems()})',
+            value: '${subtotal.toStringAsFixed(2)} ₾',
+          ),
+          if (serviceFeeOn) ...[
+            const SizedBox(height: 6),
+            _totalLine(
+              label:
+                  '${_currentLanguage == 'en' ? 'Service' : 'სერვისი'} (${_formatPercent(servicePercent)}%)',
+              value: '${serviceFee.toStringAsFixed(2)} ₾',
+            ),
+          ],
+          if (_existingDiscount > 0) ...[
+            const SizedBox(height: 6),
+            _totalLine(
+              label: _currentLanguage == 'en' ? 'Discount' : 'ფასდაკლება',
+              value: '−${_existingDiscount.toStringAsFixed(2)} ₾',
+              muted: true,
+            ),
+          ],
+          const Divider(height: 20, color: _menuBorderColor),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _currentLanguage == 'en' ? 'Total' : 'სულ ჯამი',
+                style: const TextStyle(
+                  color: _menuTextPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Text(
+                '${total.toStringAsFixed(2)} ₾',
+                style: const TextStyle(
+                  color: _menuPrimaryColor,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton.icon(
+              onPressed: widget.isPreOrderMode || _cart.isNotEmpty
+                  ? _placeOrder
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _menuTextPrimary,
+                disabledBackgroundColor: _menuBorderColor,
+                foregroundColor: Colors.white,
+                disabledForegroundColor: _menuTextMuted,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              icon: Icon(
+                widget.isPreOrderMode
+                    ? Icons.restaurant_menu
+                    : (widget.existingOrderId != null
+                          ? Icons.check
+                          : Icons.check_circle),
+                size: 22,
+              ),
+              label: Text(
+                widget.isPreOrderMode
+                    ? 'რეზერვაციის დადასტურება'
+                    : (widget.existingOrderId != null
+                          ? 'შეკვეთის განახლება'
+                          : 'შეკვეთის დამატება'),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _totalLine({
+    required String label,
+    required String value,
+    bool muted = false,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: _menuTextMuted,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: muted ? _menuTextMuted : _menuTextPrimary,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _editCartComment(_CartEntry entry) async {
+    final comment = await showDialog<String>(
+      context: context,
+      builder: (context) =>
+          _CommentDialog(itemName: entry.name, existingComment: entry.comment),
+    );
+    if (comment != null) {
+      setState(() {
+        _cart[entry.key]?.comment = comment.isEmpty ? null : comment;
+      });
+    }
+  }
+
+  void _confirmClearCart() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        title: Text(
+          _currentLanguage == 'en' ? 'Clear order?' : 'შეკვეთის გასუფთავება?',
+          style: const TextStyle(color: _menuTextPrimary),
+        ),
+        content: Text(
+          _currentLanguage == 'en'
+              ? 'Remove all items from the order?'
+              : 'ნამდვილად გსურთ ყველა პოზიციის წაშლა?',
+          style: const TextStyle(color: _menuTextMuted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(_currentLanguage == 'en' ? 'Cancel' : 'გაუქმება'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() => _cart.clear());
+              Navigator.pop(dialogContext);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+            ),
+            child: Text(_currentLanguage == 'en' ? 'Clear' : 'გასუფთავება'),
           ),
         ],
       ),

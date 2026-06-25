@@ -53,15 +53,18 @@ class _UsersTabState extends State<_UsersTab>
       return StaffRole.toApi(StaffRole.fromApi(raw)) == apiRole;
     }
 
-    final managers =
-        _users.where((u) => isRole(u, StaffRole.toApi(StaffRole.manager))).toList();
+    final managers = _users
+        .where((u) => isRole(u, StaffRole.toApi(StaffRole.manager)))
+        .toList();
     final supervisors = _users
         .where((u) => isRole(u, StaffRole.toApi(StaffRole.supervisor)))
         .toList();
-    final waiters =
-        _users.where((u) => isRole(u, StaffRole.toApi(StaffRole.waiter))).toList();
-    final activeCount =
-        _users.where((u) => (u['isActive'] as bool? ?? true)).length;
+    final waiters = _users
+        .where((u) => isRole(u, StaffRole.toApi(StaffRole.waiter)))
+        .toList();
+    final activeCount = _users
+        .where((u) => (u['isActive'] as bool? ?? true))
+        .length;
 
     return RefreshIndicator(
       color: AdminTheme.primary,
@@ -101,14 +104,17 @@ class _UsersTabState extends State<_UsersTab>
               title: 'მენეჯერები',
               trailing: '${managers.length}',
               child: Column(
-                children: managers.map(
-              (u) => _UserCard(
-                user: u,
-                onEditName: () => _showEditNameDialog(u),
-                onChangePin: () => _showChangePinDialog(u),
-                onDelete: () => _confirmDeleteUser(u),
-              ),
-            ).toList(),
+                children: managers
+                    .map(
+                      (u) => _UserCard(
+                        user: u,
+                        onEditName: () => _showEditNameDialog(u),
+                        onChangePin: () => _showChangePinDialog(u),
+                        onChangeRole: () => _showChangeRoleDialog(u),
+                        onDelete: () => _confirmDeleteUser(u),
+                      ),
+                    )
+                    .toList(),
               ),
             ),
           ],
@@ -118,14 +124,17 @@ class _UsersTabState extends State<_UsersTab>
               title: 'ზედამხედველები',
               trailing: '${supervisors.length}',
               child: Column(
-                children: supervisors.map(
-              (u) => _UserCard(
-                user: u,
-                onEditName: () => _showEditNameDialog(u),
-                onChangePin: () => _showChangePinDialog(u),
-                onDelete: () => _confirmDeleteUser(u),
-              ),
-            ).toList(),
+                children: supervisors
+                    .map(
+                      (u) => _UserCard(
+                        user: u,
+                        onEditName: () => _showEditNameDialog(u),
+                        onChangePin: () => _showChangePinDialog(u),
+                        onChangeRole: () => _showChangeRoleDialog(u),
+                        onDelete: () => _confirmDeleteUser(u),
+                      ),
+                    )
+                    .toList(),
               ),
             ),
           ],
@@ -135,14 +144,17 @@ class _UsersTabState extends State<_UsersTab>
               title: 'ოფიციანტები',
               trailing: '${waiters.length}',
               child: Column(
-                children: waiters.map(
-              (u) => _UserCard(
-                user: u,
-                onEditName: () => _showEditNameDialog(u),
-                onChangePin: () => _showChangePinDialog(u),
-                onDelete: () => _confirmDeleteUser(u),
-              ),
-            ).toList(),
+                children: waiters
+                    .map(
+                      (u) => _UserCard(
+                        user: u,
+                        onEditName: () => _showEditNameDialog(u),
+                        onChangePin: () => _showChangePinDialog(u),
+                        onChangeRole: () => _showChangeRoleDialog(u),
+                        onDelete: () => _confirmDeleteUser(u),
+                      ),
+                    )
+                    .toList(),
               ),
             ),
           ],
@@ -196,20 +208,29 @@ class _UsersTabState extends State<_UsersTab>
               SizedBox(height: 8),
               _adminRoleDropdown(
                 value: role,
-                onChanged: (v) =>
-                    setLocal(() => role = v ?? StaffRole.toApi(StaffRole.waiter)),
+                onChanged: (v) => setLocal(
+                  () => role = v ?? StaffRole.toApi(StaffRole.waiter),
+                ),
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('გაუქმება', style: TextStyle(color: AdminTheme.textMuted)),
+              child: Text(
+                'გაუქმება',
+                style: TextStyle(color: AdminTheme.textMuted),
+              ),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              style: FilledButton.styleFrom(backgroundColor: AdminTheme.primary),
-              child: const Text('დამატება', style: TextStyle(color: Colors.white)),
+              style: FilledButton.styleFrom(
+                backgroundColor: AdminTheme.primary,
+              ),
+              child: const Text(
+                'დამატება',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         ),
@@ -267,7 +288,9 @@ class _UsersTabState extends State<_UsersTab>
   }
 
   Future<void> _showChangePinDialog(dynamic user) async {
-    final ctrl = TextEditingController(text: (user['pinCode'] ?? '').toString());
+    final ctrl = TextEditingController(
+      text: (user['pinCode'] ?? '').toString(),
+    );
     final ok = await _adminFormDialog(
       context,
       title: 'PIN შეცვლა • ${user['username']}',
@@ -288,6 +311,77 @@ class _UsersTabState extends State<_UsersTab>
       );
       if (!mounted) return;
       _adminToast(context, 'PIN განახლდა');
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      _adminToast(context, 'შეცდომა: $e', error: true);
+    }
+  }
+
+  Future<void> _showChangeRoleDialog(dynamic user) async {
+    final username = (user['username'] ?? '').toString();
+    final currentRole = StaffRole.fromApi((user['role'] ?? '').toString());
+    final managerCount = _users.where((entry) {
+      return StaffRole.fromApi((entry['role'] ?? '').toString()) ==
+          StaffRole.manager;
+    }).length;
+    final preventManagerDemotion =
+        currentRole == StaffRole.manager && managerCount <= 1;
+    String role = StaffRole.toApi(currentRole);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          backgroundColor: AdminTheme.surface,
+          title: Text(
+            'როლის შეცვლა • $username',
+            style: TextStyle(color: AdminTheme.text),
+          ),
+          content: _adminRoleDropdown(
+            value: role,
+            onChanged: (value) {
+              final selectedRole = value ?? StaffRole.toApi(StaffRole.waiter);
+              if (preventManagerDemotion &&
+                  StaffRole.fromApi(selectedRole) != StaffRole.manager) {
+                _adminToast(
+                  ctx,
+                  'როლის შესაცვლელად საჭიროა მეორე მენეჯერის ანგარიში',
+                  error: true,
+                );
+                return;
+              }
+              setLocal(() {
+                role = selectedRole;
+              });
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(
+                'გაუქმება',
+                style: TextStyle(color: AdminTheme.textMuted),
+              ),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: FilledButton.styleFrom(
+                backgroundColor: AdminTheme.primary,
+              ),
+              child: const Text(
+                'შენახვა',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await MobileApiService.updateUserRole(username: username, role: role);
+      if (!mounted) return;
+      _adminToast(context, 'როლი განახლდა');
       await _load();
     } catch (e) {
       if (!mounted) return;
@@ -317,27 +411,28 @@ class _UserCard extends StatelessWidget {
   final dynamic user;
   final VoidCallback onEditName;
   final VoidCallback onChangePin;
+  final VoidCallback onChangeRole;
   final VoidCallback onDelete;
 
   const _UserCard({
     required this.user,
     required this.onEditName,
     required this.onChangePin,
+    required this.onChangeRole,
     required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
     final role = user['role'] as String? ?? 'WAITER';
-    final isActive = user['isActive'] as bool? ?? true;
     final normalized = StaffRole.fromApi(role);
     final isManager = normalized == StaffRole.manager;
     final isSupervisor = normalized == StaffRole.supervisor;
     final accent = isManager
         ? const Color(0xFF8B5CF6)
         : isSupervisor
-            ? const Color(0xFF0EA5E9)
-            : AdminTheme.accent;
+        ? const Color(0xFF0EA5E9)
+        : AdminTheme.accent;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -357,8 +452,8 @@ class _UserCard extends StatelessWidget {
                 isManager
                     ? Icons.admin_panel_settings_rounded
                     : isSupervisor
-                        ? Icons.supervisor_account_rounded
-                        : Icons.person_rounded,
+                    ? Icons.supervisor_account_rounded
+                    : Icons.person_rounded,
                 color: accent,
                 size: 22,
               ),
@@ -383,45 +478,39 @@ class _UserCard extends StatelessWidget {
                   SizedBox(height: 4),
                   Text(
                     'PIN: ${(user['pinCode'] ?? '').toString()}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AdminTheme.textDim,
-                    ),
+                    style: TextStyle(fontSize: 12, color: AdminTheme.textDim),
                   ),
                 ],
               ),
             ),
-            IconButton(
-              tooltip: 'სახელი',
-              onPressed: onEditName,
-              icon: Icon(Icons.edit_rounded, size: 18, color: AdminTheme.textMuted),
-            ),
-            IconButton(
-              tooltip: 'PIN',
-              onPressed: onChangePin,
-              icon: Icon(Icons.pin_rounded, size: 18, color: AdminTheme.textMuted),
-            ),
-            IconButton(
-              tooltip: 'Delete',
-              onPressed: onDelete,
-              icon: Icon(Icons.delete_outline_rounded,
-                  size: 18, color: AdminTheme.bad),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: (isActive ? AdminTheme.good : AdminTheme.bad)
-                    .withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                isActive ? 'აქტიური' : 'გათიშული',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: isActive ? AdminTheme.good : AdminTheme.bad,
+            PopupMenuButton<String>(
+              tooltip: 'მოქმედებები',
+              icon: Icon(Icons.more_vert, color: AdminTheme.textMuted),
+              onSelected: (value) {
+                switch (value) {
+                  case 'name':
+                    onEditName();
+                    return;
+                  case 'pin':
+                    onChangePin();
+                    return;
+                  case 'role':
+                    onChangeRole();
+                    return;
+                  case 'delete':
+                    onDelete();
+                    return;
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'name',
+                  child: Text('სახელის შეცვლა'),
                 ),
-              ),
+                const PopupMenuItem(value: 'pin', child: Text('PIN-ის შეცვლა')),
+                const PopupMenuItem(value: 'role', child: Text('როლის შეცვლა')),
+                const PopupMenuItem(value: 'delete', child: Text('წაშლა')),
+              ],
             ),
           ],
         ),

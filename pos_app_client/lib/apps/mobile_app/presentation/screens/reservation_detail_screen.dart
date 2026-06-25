@@ -2,6 +2,8 @@ import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:vynic/core/services/mobile_api_service.dart';
+import 'package:vynic/core/utils/pos_feedback.dart';
 
 
 ({Color color, String label, IconData icon}) _statusMeta(String status) {
@@ -299,6 +301,11 @@ class ReservationDetailScreen extends StatelessWidget {
 
     return Column(
       children: [
+        // Print the reservation kitchen check on the Windows POS (the only
+        // print host). Always available: the POS resolves what to print from
+        // its own Hive (the mobile list endpoint doesn't carry pre-order items).
+        _PrintCheckButton(reservationId: id),
+        SizedBox(height: 12),
         Row(
           children: [
             if (canConfirm)
@@ -454,6 +461,78 @@ class ReservationDetailScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(15)),
               ),
             ),
+    );
+  }
+}
+
+/// "Print Reservation Check" action. Sends the request through the backend
+/// (`MobileApiService.printReservationCheck`) so the Windows POS prints on its
+/// kitchen printer. The manager client never prints directly. Owns its own
+/// loading state so the user cannot trigger repeated prints with rapid taps.
+class _PrintCheckButton extends StatefulWidget {
+  const _PrintCheckButton({required this.reservationId});
+
+  final String reservationId;
+
+  @override
+  State<_PrintCheckButton> createState() => _PrintCheckButtonState();
+}
+
+class _PrintCheckButtonState extends State<_PrintCheckButton> {
+  bool _loading = false;
+
+  Future<void> _print() async {
+    if (_loading) return;
+    setState(() => _loading = true);
+    try {
+      await MobileApiService.printReservationCheck(widget.reservationId);
+      if (!mounted) return;
+      await showSuccessToast(context, 'ჩეკი გაიგზავნა სამზარეულოში');
+    } catch (e) {
+      if (!mounted) return;
+      final message = e.toString();
+      if (message.contains('404')) {
+        await showErrorToast(context, 'რეზერვაცია ვერ მოიძებნა POS-ზე');
+      } else {
+        await showErrorToast(context, 'ბეჭდვა ვერ მოხერხდა — POS მიუწვდომელია');
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = MobileGlassTheme.primary;
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: _loading ? null : _print,
+        icon: _loading
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : const Icon(Icons.print_rounded, size: 18),
+        label: Text(
+          _loading ? 'იბეჭდება…' : 'ჩეკის ბეჭდვა',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: color.withValues(alpha: 0.5),
+          disabledForegroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        ),
+      ),
     );
   }
 }

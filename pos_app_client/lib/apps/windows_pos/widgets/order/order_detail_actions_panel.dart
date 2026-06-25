@@ -230,10 +230,15 @@ class OrderDetailActionsPanel extends StatelessWidget {
       if (serviceAction != null)
         _ActionButton(
           label: serviceAction.label,
-          icon: serviceAction.icon,
+          icon: serviceAction.emphasize
+              ? Icons.room_service
+              : Icons.room_service_outlined,
           onTap: serviceAction.onTap,
           onLongPress: serviceAction.onLongPress,
-          variant: _ActionVariant.outline,
+          variant: serviceAction.emphasize
+              ? _ActionVariant.success
+              : _ActionVariant.outline,
+          statusDot: serviceAction.emphasize,
         ),
       _ActionButton(
         label: 'შეკვეთის რედაქტირება',
@@ -252,11 +257,7 @@ class OrderDetailActionsPanel extends StatelessWidget {
       ),
     ];
 
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: buttons,
-    );
+    return Wrap(spacing: 12, runSpacing: 12, children: buttons);
   }
 
   OrderActionConfig? _findByLabel(
@@ -359,7 +360,7 @@ class OrderDetailActionsPanel extends StatelessWidget {
   }
 }
 
-enum _ActionVariant { primary, outline, danger }
+enum _ActionVariant { primary, outline, danger, success }
 
 class _ActionButton extends StatelessWidget {
   const _ActionButton({
@@ -369,6 +370,7 @@ class _ActionButton extends StatelessWidget {
     required this.variant,
     this.onLongPress,
     this.trailingIcon,
+    this.statusDot,
   });
 
   final String label;
@@ -377,6 +379,13 @@ class _ActionButton extends StatelessWidget {
   final VoidCallback? onLongPress;
   final IconData? trailingIcon;
   final _ActionVariant variant;
+
+  /// When non-null, renders a small status dot: green when true, grey when
+  /// false. Used to show the service-fee on/off state at a glance.
+  final bool? statusDot;
+
+  static const Color _green = Color(0xFF16A34A);
+  static const Color _greenDark = Color(0xFF15803D);
 
   @override
   Widget build(BuildContext context) {
@@ -394,9 +403,14 @@ class _ActionButton extends StatelessWidget {
       case _ActionVariant.danger:
         background = Colors.white;
         foreground = disabled ? AdminDesign.muted : const Color(0xFFDC2626);
+        borderColor = disabled ? AdminDesign.border : const Color(0xFFFECACA);
+        break;
+      case _ActionVariant.success:
+        background = const Color(0xFFECFDF5);
+        foreground = disabled ? AdminDesign.muted : _greenDark;
         borderColor = disabled
             ? AdminDesign.border
-            : const Color(0xFFFECACA);
+            : _green.withValues(alpha: 0.45);
         break;
       case _ActionVariant.outline:
         background = Colors.white;
@@ -431,6 +445,17 @@ class _ActionButton extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
+              if (statusDot != null) ...[
+                const SizedBox(width: 8),
+                Container(
+                  width: 9,
+                  height: 9,
+                  decoration: BoxDecoration(
+                    color: statusDot! ? _green : AdminDesign.muted,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ],
               if (trailingIcon != null) ...[
                 const SizedBox(width: 4),
                 Icon(trailingIcon, size: 18, color: foreground),

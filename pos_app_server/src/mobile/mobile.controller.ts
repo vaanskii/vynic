@@ -189,6 +189,14 @@ export class MobileController {
     return this.reservations.deleteReservation(id, monitoringSocketId);
   }
 
+  // POST /mobile/reservations/:id/print-check
+  // Manager-triggered: relays a print request to the Windows POS, which is the
+  // only print host. No realtime broadcast — printing is not a data mutation.
+  @Post('reservations/:id/print-check')
+  async printReservationCheck(@Param('id') id: string) {
+    return this.reservations.printReservationCheck(id);
+  }
+
   // GET /mobile/order/:id
   @Get('order/:id')
   async getOrder(@Param('id') id: string) {
@@ -214,15 +222,24 @@ export class MobileController {
     return this.orders.cancelOrder(id, monitoringSocketId);
   }
 
+  // POST /mobile/order/:id/print-check
+  // Manager-triggered: relays a table/order pre-bill print to the Windows POS,
+  // the only print host. No realtime broadcast — printing is not a data mutation.
+  @Post('order/:id/print-check')
+  async printOrderCheck(@Param('id') id: string) {
+    return this.orders.printOrderCheck(id);
+  }
+
   // POST /mobile/takeaway-orders — create a new takeaway order from the mobile app
   @Post('takeaway-orders')
   async createTakeawayOrder(
     @Headers('x-monitoring-socket-id') monitoringSocketId: string | undefined,
-    @Body() body: {
-    customerName: string;
-    pickupTime: string;
-    waiterName: string;
-    items: { itemName: string; unitPrice: number; quantity: number }[];
+    @Body()
+    body: {
+      customerName: string;
+      pickupTime: string;
+      waiterName: string;
+      items: { itemName: string; unitPrice: number; quantity: number }[];
     },
   ) {
     return this.orders.createTakeawayOrder(monitoringSocketId, body);
@@ -232,7 +249,8 @@ export class MobileController {
   @Post('walk-in-orders')
   async createWalkInOrder(
     @Headers('x-monitoring-socket-id') monitoringSocketId: string | undefined,
-    @Body() body: {
+    @Body()
+    body: {
       tableNumbers: (string | number)[];
       floor: string;
       waiterName: string;
@@ -284,6 +302,14 @@ export class MobileController {
     @Body() payload: { pinCode?: string },
   ) {
     return this.users.updateUserPin(usernameParam, payload);
+  }
+
+  @Post('users/:username/role')
+  async updateUserRole(
+    @Param('username') usernameParam: string,
+    @Body() payload: { role?: string },
+  ) {
+    return this.users.updateUserRole(usernameParam, payload);
   }
 
   @Patch('users/:username')
@@ -364,5 +390,12 @@ export class MobileController {
       this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
   }
-}
 
+  // POST /mobile/counted-menu/:id/print
+  // Manager-triggered: relays a counted-menu receipt print to the Windows POS,
+  // the only print host. No realtime broadcast — printing is not a data mutation.
+  @Post('counted-menu/:id/print')
+  async printCountedMenu(@Param('id') id: string) {
+    return this.menu.printCountedMenu(id);
+  }
+}

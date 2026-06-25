@@ -24,6 +24,7 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
   bool _loading = true;
   List<Map<String, dynamic>> _drafts = [];
   String? _error;
+  final Set<String> _printing = <String>{};
 
   static final _money = NumberFormat('#,##0.00', 'en_US');
   static final _date = DateFormat('dd MMM, HH:mm');
@@ -126,6 +127,28 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
       _load();
     } catch (e) {
       if (mounted) showErrorToast(context, 'წაშლა ვერ მოხერხდა: $e');
+    }
+  }
+
+  /// Print a counted menu on the Windows POS (the only print host) via the
+  /// backend. The manager client never prints directly. Per-draft loading flag
+  /// (`_printing`) disables the button so rapid taps can't fire repeats.
+  Future<void> _printCountedMenu(String id) async {
+    if (id.isEmpty || _printing.contains(id)) return;
+    setState(() => _printing.add(id));
+    try {
+      await MobileApiService.printCountedMenu(id);
+      if (mounted) showSuccessToast(context, 'ჩეკი გაიგზავნა POS-ზე');
+    } catch (e) {
+      if (!mounted) return;
+      final message = e.toString();
+      if (message.contains('404')) {
+        showErrorToast(context, 'ჩანაწერი ვერ მოიძებნა');
+      } else {
+        showErrorToast(context, 'ბეჭდვა ვერ მოხერხდა — POS მიუწვდომელია');
+      }
+    } finally {
+      if (mounted) setState(() => _printing.remove(id));
     }
   }
 
@@ -385,6 +408,8 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
           child: _DraftCard(
             draft: _drafts[i],
             onPdf: () => _printPdf(_drafts[i]),
+            onPrint: () => _printCountedMenu('${_drafts[i]['id']}'),
+            isPrinting: _printing.contains('${_drafts[i]['id']}'),
             onDelete: () => _delete('${_drafts[i]['id']}'),
             money: _money,
             date: _date,
@@ -398,6 +423,8 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
 class _DraftCard extends StatelessWidget {
   final Map<String, dynamic> draft;
   final VoidCallback onPdf;
+  final VoidCallback onPrint;
+  final bool isPrinting;
   final VoidCallback onDelete;
   final NumberFormat money;
   final DateFormat date;
@@ -405,6 +432,8 @@ class _DraftCard extends StatelessWidget {
   const _DraftCard({
     required this.draft,
     required this.onPdf,
+    required this.onPrint,
+    required this.isPrinting,
     required this.onDelete,
     required this.money,
     required this.date,
@@ -526,6 +555,24 @@ class _DraftCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
+              TextButton.icon(
+                onPressed: isPrinting ? null : onPrint,
+                icon: isPrinting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
+                        ),
+                      )
+                    : Icon(Icons.print_rounded, size: 18),
+                label: Text(isPrinting ? 'იბეჭდება…' : 'ჩეკის ბეჭდვა'),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF10B981),
+                ),
+              ),
               TextButton.icon(
                 onPressed: onPdf,
                 icon: Icon(Icons.picture_as_pdf_outlined, size: 18),

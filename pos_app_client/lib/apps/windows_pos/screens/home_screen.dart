@@ -1,8 +1,6 @@
 import 'dart:async';
-import 'dart:io' show Platform;
 import 'dart:math' show min;
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/models/table.dart';
@@ -20,8 +18,9 @@ import 'package:vynic/core/widgets/notification_history_panel.dart';
 import 'package:vynic/apps/windows_pos/widgets/table_selection_widget.dart';
 import 'package:vynic/apps/windows_pos/widgets/reservation_creation_sheet.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
-import 'package:vynic/apps/windows_pos/widgets/home/home_top_bar_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_tables_dashboard_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/home/home_landing_dashboard.dart';
+import 'package:vynic/apps/windows_pos/widgets/home/home_feature_header.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_calculator_page.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_logout_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_admin_tools_section.dart';
@@ -60,27 +59,6 @@ class _SidebarDestination {
   final WidgetBuilder builder;
 }
 
-// ignore: unused_element
-class _SidebarActionEntry {
-  const _SidebarActionEntry(
-    this.badgeLabel,
-    this.badgeColor, {
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    required this.background,
-    required this.iconColor,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final Color background;
-  final Color iconColor;
-  final String? badgeLabel;
-  final Color? badgeColor;
-}
-
 class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey<TableSelectionWidgetState> _tableSelectionKey = GlobalKey();
   int _currentFloor = 1;
@@ -92,12 +70,10 @@ class _HomeScreenState extends State<HomeScreen> {
   static const Color _textPrimary = Color(0xFF1F2937);
   static const Color _mutedText = Color(0xFF475569);
 
-  bool get _isMobile => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
-  late bool _isSidebarExpanded;
-  final bool _showSidebarLabels = true;
   String _reservationStatusFilter = 'confirmed';
   DateTime? _reservationDateFilter;
   int _activeDestinationIndex = 0;
+  late final DateTime _sessionStartedAt;
   late final List<_SidebarDestination> _destinations;
   final FocusNode _shortcutFocusNode = FocusNode(debugLabel: 'home-shortcuts');
   String? _lastToastNotificationId;
@@ -117,17 +93,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _isSidebarExpanded = !_isMobile;
+    _sessionStartedAt = DateTime.now();
     // Activate today's confirmed reservations only if we haven't done it today
     _activateReservationsIfNeeded();
     _reservationDateFilter = null;
     _destinations = _createDestinations();
-    final initialMenuIndex = _destinations.indexWhere(
-      (destination) => destination.key == 'menu',
-    );
-    if (initialMenuIndex != -1) {
-      _activeDestinationIndex = initialMenuIndex;
-    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _shortcutFocusNode.requestFocus();
@@ -310,7 +280,10 @@ class _HomeScreenState extends State<HomeScreen> {
               Material(
                 color: Colors.white,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 4,
+                  ),
                   child: Row(
                     children: [
                       const SizedBox(width: 8),
@@ -359,6 +332,12 @@ class _HomeScreenState extends State<HomeScreen> {
   List<_SidebarDestination> _createDestinations() {
     final destinations = <_SidebarDestination>[
       _SidebarDestination(
+        key: 'home',
+        icon: Icons.home_outlined,
+        label: 'მთავარი',
+        builder: (context) => const SizedBox.shrink(),
+      ),
+      _SidebarDestination(
         key: 'menu',
         icon: Icons.restaurant_outlined,
         label: 'მაგიდები',
@@ -367,12 +346,14 @@ class _HomeScreenState extends State<HomeScreen> {
           tableSelectionKey: _tableSelectionKey,
           onSelectionChanged: _updateButtonState,
           onTableTap: _handleReservedTableTap,
+          currentFloor: _currentFloor,
+          onSwitchFloor: _switchFloor,
         ),
       ),
       _SidebarDestination(
         key: 'calculate',
         icon: Icons.functions_outlined,
-        label: 'მენიუს დათვლა',
+        label: 'დათვლა',
         builder: (context) => _buildCalculatorPage(),
       ),
       _SidebarDestination(
@@ -402,14 +383,7 @@ class _HomeScreenState extends State<HomeScreen> {
           icon: Icons.settings_suggest_outlined,
           label: 'მართვის ცენტრი',
           builder: (context) => HomeAdminToolsSection(
-            onOpenAdminPanel: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => AdminScreen(user: widget.user),
-                ),
-              ).then((_) => setState(() {}));
-            },
+            onOpenAdminPanel: _openAdminPanel,
             primaryColor: _primaryColor,
             secondaryColor: _secondaryColor,
             textPrimary: _textPrimary,
@@ -525,20 +499,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final reservationCount =
         HomeReservationsHelper.countConfirmedReservationsForDate(currentDate);
 
-    final sidebarBadges = _destinations
-        .map<int?>(
-          (destination) {
-            if (destination.key == 'todaysTakeaways' && takeAwayCount > 0) {
-              return takeAwayCount;
-            }
-            if (destination.key == 'newReservation' && reservationCount > 0) {
-              return reservationCount;
-            }
-            return null;
-          },
-        )
-        .toList();
-
     final pages = _destinations
         .map(
           (destination) => KeyedSubtree(
@@ -554,28 +514,23 @@ class _HomeScreenState extends State<HomeScreen> {
         Column(
           children: [
             ValueListenableBuilder<int>(
-              valueListenable:
-                  AppNotificationHistoryStore.instance.unreadCount,
+              valueListenable: AppNotificationHistoryStore.instance.unreadCount,
               builder: (context, unread, _) {
-                return HomeTopBarSection(
-                  user: widget.user,
-                  currentFloor: _currentFloor,
-                  onSwitchFloor: _switchFloor,
-                  primaryColor: _primaryColor,
-                  secondaryColor: _secondaryColor,
-                  surfaceColor: _surfaceColor,
-                  textPrimary: _textPrimary,
-                  mutedText: _mutedText,
-                  showFloorSwitcher: activeDestinationKey == 'menu',
-                  onToggleSidebar: _isMobile
-                      ? () {
-                          setState(() {
-                            _isSidebarExpanded = !_isSidebarExpanded;
-                          });
-                        }
-                      : null,
+                final activeDestination = _destinations[activeIndex];
+                return HomeFeatureHeader(
+                  title: activeDestination.label,
+                  icon: activeDestination.icon,
+                  username: widget.user.username,
+                  roleLabel: widget.user.roleLabelKa,
+                  activeKey: activeDestinationKey,
+                  destinations: _featureSwitchItems(
+                    takeAwayCount: takeAwayCount,
+                  ),
+                  onHomeTap: () => _selectDestination('home'),
+                  onDestinationSelected: _handleQuickSwitch,
                   notificationUnreadCount: unread,
                   onNotificationTap: _toggleNotificationsPanel,
+                  onLogoutTap: _logout,
                 );
               },
             ),
@@ -601,41 +556,59 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     );
 
+    if (activeDestinationKey == 'home') {
+      final openTablesCount = DatabaseService.getAllTables()
+          .where((table) => table.activeOrderId != null)
+          .length;
+      final printerConfigured =
+          DatabaseService.getKitchenPrinterIp().trim().isNotEmpty ||
+          DatabaseService.getReceiptPrinterIp().trim().isNotEmpty;
+
+      return Focus(
+        focusNode: _shortcutFocusNode,
+        autofocus: true,
+        child: Scaffold(
+          body: Stack(
+            children: [
+              ValueListenableBuilder<int>(
+                valueListenable:
+                    AppNotificationHistoryStore.instance.unreadCount,
+                builder: (context, unread, _) {
+                  return HomeLandingDashboard(
+                    username: widget.user.username,
+                    roleLabel: widget.user.roleLabelKa,
+                    workDate: currentDate,
+                    sessionStartedAt: _sessionStartedAt,
+                    openTablesCount: openTablesCount,
+                    takeAwayCount: takeAwayCount,
+                    reservationCount: reservationCount,
+                    printerConfigured: printerConfigured,
+                    notificationUnreadCount: unread,
+                    onNotificationTap: _toggleNotificationsPanel,
+                    onTablesTap: () => _selectDestination('menu'),
+                    onCalculatorTap: () => _selectDestination('calculate'),
+                    onTakeAwayTap: () => _selectDestination('todaysTakeaways'),
+                    onReservationsTap: () =>
+                        _selectDestination('newReservation'),
+                    onXReportTap: () => _selectDestination('xReport'),
+                    onAdminTap: widget.user.canAccessManagementCenter
+                        ? _openAdminPanel
+                        : null,
+                    onLogoutTap: _logout,
+                  );
+                },
+              ),
+              ..._notificationOverlayWidgets(context),
+            ],
+          ),
+        ),
+      );
+    }
+
     final scaffold = Scaffold(
       backgroundColor: _surfaceColor,
       appBar: null,
-      body: _isMobile
-          ? Stack(
-              children: [
-                mainContentStack,
-                if (_isSidebarExpanded)
-                  Positioned.fill(
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _isSidebarExpanded = false;
-                        });
-                      },
-                      child: Container(
-                        color: Colors.black.withValues(alpha: 0.4),
-                      ),
-                    ),
-                  ),
-                _buildSidebar(
-                  activeIndex: activeIndex,
-                  badgeCounts: sidebarBadges,
-                ),
-              ],
-            )
-          : Row(
-              children: [
-                _buildSidebar(
-                  activeIndex: activeIndex,
-                  badgeCounts: sidebarBadges,
-                ),
-                Expanded(child: mainContentStack),
-              ],
-            ),
+      body: mainContentStack,
       bottomNavigationBar: activeDestinationKey == 'menu'
           ? _buildMenuButtonBar()
           : null,
@@ -646,6 +619,63 @@ class _HomeScreenState extends State<HomeScreen> {
       autofocus: true,
       child: scaffold,
     );
+  }
+
+  void _selectDestination(String key) {
+    final index = _destinations.indexWhere(
+      (destination) => destination.key == key,
+    );
+    if (index < 0 || index == _activeDestinationIndex) return;
+    setState(() {
+      _activeDestinationIndex = index;
+    });
+  }
+
+  List<HomeFeatureSwitchItem> _featureSwitchItems({
+    required int takeAwayCount,
+  }) {
+    return [
+      const HomeFeatureSwitchItem(
+        key: 'menu',
+        label: 'მაგიდები',
+        icon: Icons.table_restaurant_outlined,
+      ),
+      const HomeFeatureSwitchItem(
+        key: 'calculate',
+        label: 'დათვლა',
+        icon: Icons.functions_outlined,
+      ),
+      HomeFeatureSwitchItem(
+        key: 'todaysTakeaways',
+        label: 'გატანები',
+        icon: Icons.shopping_bag_outlined,
+        badgeCount: takeAwayCount > 0 ? takeAwayCount : null,
+      ),
+    ];
+  }
+
+  void _handleQuickSwitch(String key) {
+    if (key == 'adminPanel') {
+      _openAdminPanel();
+      return;
+    }
+    _selectDestination(key);
+  }
+
+  void _logout() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
+  void _openAdminPanel() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AdminScreen(user: widget.user)),
+    ).then((_) {
+      if (mounted) setState(() {});
+    });
   }
 
   Widget _buildTodayTakeAwayPage() {
@@ -676,55 +706,54 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return SizedBox.expand(
       child: ReservationsManagementSection(
-      reservations: adminReservations,
-      normalizedToday: normalizedToday,
-      filterDate: _reservationDateFilter,
-      statusFilter: _reservationStatusFilter,
-      showCancelledTab: false,
-      highlightReservationId: _highlightedReservationId,
-      canAssignTableToReservation: canManageReservations,
-      canCancelReservation: false,
-      canDeleteReservation: false,
-      onFilterDateChanged: (value) {
-        setState(() => _reservationDateFilter = value);
-      },
-      onStatusFilterChanged: (value) {
-        setState(() => _reservationStatusFilter = value);
-      },
-      onCreateReservation: null,
-      onEditReservation:
-          canManageReservations ? _editReservationDetails : null,
-      onViewPreOrder: (reservation) => HomeReservationMenuPreview.show(
-        context: context,
-        reservation: reservation,
-        primaryColor: _primaryColor,
-        textPrimary: _textPrimary,
-        mutedText: _mutedText,
-      ),
-      onManagePreOrder:
-          canManageReservations ? _editReservationMenu : null,
-      onSendKitchenCheck: widget.user.canSendReservationKitchenCheckOnHome
-          ? _sendReservationKitchenCheck
-          : null,
-      onAssignTable:
-          canManageReservations ? _assignReservationToTable : null,
-      onAssignTableUnavailable: canManageReservations
-          ? (reservation) async {
-              final isToday = HomeReservationsHelper.isSameDate(
-                reservation.reservationDate,
-                DatabaseService.getCurrentDate(),
-              );
-              unawaited(
-                showPosToast(
-                  context: context,
-                  message: isToday
-                      ? 'სუფრაზე გადაყვანა ვერ მოხერხდა.'
-                      : 'სუფრაზე გადაყვანა შესაძლებელია მხოლოდ რეზერვაციის დღეს.',
-                  style: PosToastStyle.info,
-                ),
-              );
-            }
-          : null,
+        reservations: adminReservations,
+        normalizedToday: normalizedToday,
+        filterDate: _reservationDateFilter,
+        statusFilter: _reservationStatusFilter,
+        showCancelledTab: false,
+        highlightReservationId: _highlightedReservationId,
+        canAssignTableToReservation: canManageReservations,
+        canCancelReservation: false,
+        canDeleteReservation: false,
+        onFilterDateChanged: (value) {
+          setState(() => _reservationDateFilter = value);
+        },
+        onStatusFilterChanged: (value) {
+          setState(() => _reservationStatusFilter = value);
+        },
+        onCreateReservation: null,
+        onEditReservation: canManageReservations
+            ? _editReservationDetails
+            : null,
+        onViewPreOrder: (reservation) => HomeReservationMenuPreview.show(
+          context: context,
+          reservation: reservation,
+          primaryColor: _primaryColor,
+          textPrimary: _textPrimary,
+          mutedText: _mutedText,
+        ),
+        onManagePreOrder: canManageReservations ? _editReservationMenu : null,
+        onSendKitchenCheck: widget.user.canSendReservationKitchenCheckOnHome
+            ? _sendReservationKitchenCheck
+            : null,
+        onAssignTable: canManageReservations ? _assignReservationToTable : null,
+        onAssignTableUnavailable: canManageReservations
+            ? (reservation) async {
+                final isToday = HomeReservationsHelper.isSameDate(
+                  reservation.reservationDate,
+                  DatabaseService.getCurrentDate(),
+                );
+                unawaited(
+                  showPosToast(
+                    context: context,
+                    message: isToday
+                        ? 'სუფრაზე გადაყვანა ვერ მოხერხდა.'
+                        : 'სუფრაზე გადაყვანა შესაძლებელია მხოლოდ რეზერვაციის დღეს.',
+                    style: PosToastStyle.info,
+                  ),
+                );
+              }
+            : null,
         primaryColor: _primaryColor,
         secondaryColor: _secondaryColor,
         textPrimary: _textPrimary,
@@ -869,8 +898,7 @@ class _HomeScreenState extends State<HomeScreen> {
       unawaited(
         showPosToast(
           context: context,
-          message:
-              'სუფრაზე გადაყვანა მხოლოდ მენეჯერს ან ზედამხედველს შეუძლია.',
+          message: 'სუფრაზე გადაყვანა მხოლოდ მენეჯერს ან ზედამხედველს შეუძლია.',
           style: PosToastStyle.info,
         ),
       );
@@ -892,13 +920,14 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    final selected = await HomeReservationTableAssignmentDialog.showForReservation(
-      context: context,
-      reservation: reservation,
-      primaryColor: _primaryColor,
-      secondaryColor: _secondaryColor,
-      textPrimary: _textPrimary,
-    );
+    final selected =
+        await HomeReservationTableAssignmentDialog.showForReservation(
+          context: context,
+          reservation: reservation,
+          primaryColor: _primaryColor,
+          secondaryColor: _secondaryColor,
+          textPrimary: _textPrimary,
+        );
     if (selected == null || selected.isEmpty) {
       return;
     }
@@ -1011,229 +1040,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildSidebar({
-    required int activeIndex,
-    required List<int?> badgeCounts,
-  }) {
-    final mobileWidth =
-        MediaQuery.of(context).size.width * 0.85; // Standard drawer width
-    final width = _isMobile
-        ? (_isSidebarExpanded ? mobileWidth : 0.0)
-        : (_isSidebarExpanded ? 248.0 : 88.0);
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeInOut,
-      width: width,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF1E3A8A), Color(0xFF1D4ED8)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        physics: const NeverScrollableScrollPhysics(),
-        child: SizedBox(
-          width: _isMobile ? mobileWidth : (_isSidebarExpanded ? 248.0 : 88.0),
-          child: SafeArea(
-            child: Column(
-              children: [
-                const SizedBox(height: 8),
-                if (_showSidebarLabels) _buildSidebarHeader(),
-                if (_showSidebarLabels) const SizedBox(height: 8),
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: _destinations.length,
-                    itemBuilder: (context, index) {
-                      final destination = _destinations[index];
-                      return _buildSidebarItem(
-                        destination: destination,
-                        index: index,
-                        isActive: activeIndex == index,
-                        badgeValue: badgeCounts[index],
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSidebarBadge(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEF4444),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSidebarHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.dashboard_rounded,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Text(
-            'VYNIC POS',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSidebarItem({
-    required _SidebarDestination destination,
-    required int index,
-    required bool isActive,
-    int? badgeValue,
-  }) {
-    final iconColor = isActive ? Colors.white : const Color(0xFFE2E8F0);
-    final textStyle = TextStyle(
-      color: iconColor,
-      fontSize: 12,
-      fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-    );
-
-    Widget content = AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      padding: EdgeInsets.symmetric(
-        horizontal: _isSidebarExpanded ? 14 : 0,
-        vertical: 10,
-      ),
-      decoration: BoxDecoration(
-        color: isActive
-            ? Colors.white.withValues(alpha: 0.18)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isActive
-              ? Colors.white.withValues(alpha: 0.35)
-              : Colors.transparent,
-        ),
-      ),
-      child: _showSidebarLabels
-          ? Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? Colors.white.withValues(alpha: 0.18)
-                        : Colors.white.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(destination.icon, color: iconColor, size: 18),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    destination.label,
-                    style: textStyle,
-                    overflow: TextOverflow.fade,
-                    softWrap: false,
-                  ),
-                ),
-                if (badgeValue != null)
-                  _buildSidebarBadge(badgeValue > 9 ? '9+' : '$badgeValue'),
-              ],
-            )
-          : Center(
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: isActive
-                      ? Colors.white.withValues(alpha: 0.18)
-                      : Colors.white.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(destination.icon, color: iconColor, size: 18),
-              ),
-            ),
-    );
-
-    content = Tooltip(
-      message: destination.label,
-      waitDuration: const Duration(milliseconds: 350),
-      child: content,
-    );
-
-    return Semantics(
-      button: true,
-      label: destination.label,
-      selected: isActive,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () {
-          if (destination.key == 'adminPanel') {
-            if (_isMobile) setState(() => _isSidebarExpanded = false);
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => AdminScreen(user: widget.user),
-              ),
-            ).then((_) => setState(() {}));
-            return;
-          }
-          if (destination.key == 'logout') {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => const LoginScreen()),
-              (route) => false,
-            );
-            return;
-          }
-          setState(() {
-            if (_activeDestinationIndex != index) {
-              _activeDestinationIndex = index;
-            }
-            if (_isMobile) {
-              _isSidebarExpanded = false;
-            }
-          });
-        },
-        child: content,
       ),
     );
   }

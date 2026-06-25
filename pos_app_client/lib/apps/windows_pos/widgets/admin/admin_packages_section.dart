@@ -10,6 +10,7 @@ import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_language.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 import 'package:vynic/apps/windows_pos/screens/order_detail_screen.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 
 class AdminPackagesSection extends StatefulWidget {
   const AdminPackagesSection({super.key, required this.user});
@@ -28,13 +29,13 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
   bool _isProcessing = false;
   final ScrollController _packagesScrollController = ScrollController();
 
-  static const Color _primaryColor = Color(0xFF1D4ED8);
-  static const Color _secondaryColor = Color(0xFF2563EB);
-  static const Color _surfaceColor = Color(0xFFF8FAFC);
-  static const Color _cardColor = Color(0xFFFFFFFF);
-  static const Color _borderColor = Color(0xFFE2E8F0);
-  static const Color _textPrimary = Color(0xFF0F172A);
-  static const Color _textMuted = Color(0xFF64748B);
+  static const Color _primaryColor = AdminDesign.accentDark;
+  static const Color _secondaryColor = AdminDesign.accentDark;
+  static const Color _surfaceColor = AdminDesign.panelSoft;
+  static const Color _cardColor = AdminDesign.panel;
+  static const Color _borderColor = AdminDesign.border;
+  static const Color _textPrimary = AdminDesign.text;
+  static const Color _textMuted = AdminDesign.muted;
   static const Color _textSoft = Color(0xFF94A3B8);
 
   static const Map<String, Color> _tableColorOverrides = {
@@ -173,64 +174,47 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.topLeft,
-      child: SingleChildScrollView(
-        controller: _packagesScrollController,
-        padding: const EdgeInsets.all(24),
-        child: SizedBox(
-          width: double.infinity,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'პაკეტები',
-                      style: TextStyle(
-                        color: _textPrimary,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+    return SizedBox.expand(
+      child: Align(
+        alignment: Alignment.topLeft,
+        child: SingleChildScrollView(
+          controller: _packagesScrollController,
+          padding: const EdgeInsets.fromLTRB(28, 20, 28, 24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1100),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AdminSectionHeader(
+                  icon: Icons.inventory_2_outlined,
+                  title: 'პაკეტები',
+                  subtitle:
+                      'შექმენით ფიქსირებული შეთავაზებები, მართეთ შემადგენლობა და დასაშვები მაგიდები.',
+                  badge: AdminStatusBadge(
+                    icon: Icons.widgets_outlined,
+                    label: '${_packages.length} პაკეტი',
                   ),
-                  ElevatedButton.icon(
+                  action: ElevatedButton.icon(
                     onPressed: _isProcessing
                         ? null
                         : () => _openPackageEditor(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _secondaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 16,
-                      ),
-                    ),
+                    style: AdminDesign.primaryButtonStyle(),
                     icon: const Icon(Icons.add_box_outlined),
                     label: const Text('პაკეტის შექმნა'),
                   ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              if (_packages.isEmpty)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    color: _cardColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _borderColor),
-                  ),
-                  child: const Text(
-                    'ჯერ არ არის პაკეტები. შექმენით პაკეტი პოპულარული პროდუქტებისთვის.',
-                    style: TextStyle(color: _textMuted, fontSize: 16),
-                    textAlign: TextAlign.center,
-                  ),
-                )
-              else
-                Column(children: _packages.map(_buildPackageCard).toList()),
-            ],
+                ),
+                const SizedBox(height: 16),
+                if (_packages.isEmpty)
+                  const AdminEmptyState(
+                    icon: Icons.inventory_2_outlined,
+                    title: 'პაკეტები ჯერ არ არის',
+                    message:
+                        'შექმენით პირველი პაკეტი პოპულარული პროდუქტებისა და ჯგუფური შეკვეთებისთვის.',
+                  )
+                else
+                  Column(children: _packages.map(_buildPackageCard).toList()),
+              ],
+            ),
           ),
         ),
       ),
@@ -238,15 +222,9 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
   }
 
   Widget _buildPackageCard(Package pkg) {
-    return Card(
-      color: _cardColor,
-      elevation: 2,
-      shadowColor: const Color(0x1F0F172A),
+    return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: BorderSide(color: _borderColor),
-      ),
+      decoration: AdminDesign.panelDecoration(),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
         child: Column(
@@ -256,9 +234,9 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFF),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFDCE7FF)),
+                color: const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(AdminDesign.radius),
+                border: Border.all(color: const Color(0xFFA7F3D0)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -305,19 +283,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                   onPressed: _isProcessing
                       ? null
                       : () => _applyPackageToTables(pkg),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _secondaryColor,
-                    foregroundColor: Colors.white,
-                    elevation: 1.5,
-                    shadowColor: const Color(0x40000000),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
+                  style: AdminDesign.primaryButtonStyle(),
                   icon: const Icon(Icons.table_bar),
                   label: const Text('მაგიდებზე დამატება'),
                 ),
@@ -325,17 +291,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                   onPressed: _isProcessing
                       ? null
                       : () => _showPackageDetails(pkg),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _primaryColor,
-                    side: const BorderSide(color: Color(0xFFBFD2FF)),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 11,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
+                  style: AdminDesign.outlineButtonStyle(),
                   icon: const Icon(Icons.receipt_long_outlined),
                   label: const Text('დეტალები'),
                 ),
@@ -343,32 +299,14 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                   onPressed: _isProcessing
                       ? null
                       : () => _openPackageEditor(existing: pkg),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _primaryColor,
-                    side: const BorderSide(color: Color(0xFFBFD2FF)),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 11,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
+                  style: AdminDesign.outlineButtonStyle(),
                   icon: const Icon(Icons.edit),
                   label: const Text('რედაქტირება'),
                 ),
                 OutlinedButton.icon(
                   onPressed: _isProcessing ? null : () => _confirmDelete(pkg),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFDC2626),
-                    side: const BorderSide(color: Color(0xFFFECACA)),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 11,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                  style: AdminDesign.outlineButtonStyle(
+                    foreground: AdminDesign.danger,
                   ),
                   icon: const Icon(Icons.delete_forever),
                   label: const Text('წაშლა'),
@@ -1397,13 +1335,13 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                 prefixIcon: Icon(icon, color: _textMuted, size: 20),
                 labelStyle: const TextStyle(color: _textMuted),
                 filled: true,
-                fillColor: const Color(0xFFF8FAFF),
+                fillColor: AdminDesign.panelSoft,
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AdminDesign.radius),
                   borderSide: const BorderSide(color: _borderColor),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AdminDesign.radius),
                   borderSide: const BorderSide(
                     color: _primaryColor,
                     width: 1.5,

@@ -192,7 +192,7 @@ class _MetaChipRow extends StatelessWidget {
       ),
       _MetaChip(
         icon: Icons.person_outline,
-        label: 'უფროსი',
+        label: 'შექმნა',
         value: DatabaseService.getDisplayOperatorName(order.createdBy),
       ),
       if (!isTakeAwayOrder && guestCount != null && guestCount! > 0)
@@ -253,10 +253,7 @@ class _MetaChip extends StatelessWidget {
         const SizedBox(width: 7),
         Text(
           '$label: ',
-          style: const TextStyle(
-            color: AdminDesign.muted,
-            fontSize: 13,
-          ),
+          style: const TextStyle(color: AdminDesign.muted, fontSize: 13),
         ),
         Text(
           value,

@@ -14,6 +14,7 @@ import 'package:vynic/core/services/pos_change_highlight_service.dart';
 import 'package:vynic/core/services/pos_live_refresh.dart';
 import 'package:vynic/core/services/printer_service.dart';
 import 'package:vynic/core/services/audit_order_diff_service.dart';
+import 'package:vynic/apps/windows_pos/widgets/home/home_reservations_helper.dart';
 
 /// Minimal HTTP server on Windows POS for cloud → Hive callbacks (Option A).
 class PosIngestServer {
@@ -96,6 +97,9 @@ class PosIngestServer {
         case 'POST /mobile-walk-in-order-create':
           await _handleWalkInOrderCreate(request, body);
           return;
+        case 'POST /mobile-order-print-check':
+          await _handleOrderPrintCheck(request, body);
+          return;
         case 'GET /mobile-reservations':
           await _handleReservationsList(request);
           return;
@@ -108,6 +112,12 @@ class PosIngestServer {
         case 'POST /mobile-reservation-delete':
           await _handleReservationDelete(request, body);
           return;
+        case 'POST /mobile-reservation-print-check':
+          await _handleReservationPrintCheck(request, body);
+          return;
+        case 'POST /mobile-counted-menu-print':
+          await _handleCountedMenuPrint(request, body);
+          return;
         case 'POST /mobile-expense-create':
           await _handleExpenseCreate(request, body);
           return;
@@ -116,6 +126,9 @@ class PosIngestServer {
           return;
         case 'POST /mobile-user-update-pin':
           await _handleUserPinUpdate(request, body);
+          return;
+        case 'POST /mobile-user-update-role':
+          await _handleUserRoleUpdate(request, body);
           return;
         case 'POST /mobile-user-rename':
           await _handleUserRename(request, body);
@@ -178,8 +191,9 @@ class PosIngestServer {
         (body['updatedBy'] ?? body['waiterName'] ?? 'მობილური მენეჯერი')
             .toString()
             .trim();
-    final performerName =
-        performer.isNotEmpty ? performer : 'მობილური მენეჯერი';
+    final performerName = performer.isNotEmpty
+        ? performer
+        : 'მობილური მენეჯერი';
     final ts = DatabaseService.getCurrentDateTime();
     final auditEvents = AuditOrderDiffService.buildEvents(
       previousItems: beforeItems,
@@ -210,7 +224,8 @@ class PosIngestServer {
       posOrderId: posOrderId,
       diff: diff,
       totalChanged: (order.totalAmount - prevTotal).abs() > 0.009,
-      serviceFeeToggled: body['includeServiceFee'] is bool &&
+      serviceFeeToggled:
+          body['includeServiceFee'] is bool &&
           order.includeServiceFee != prevServiceFee,
       tableNumbers: order.tableNumbers,
       floor: order.floor,
@@ -260,7 +275,8 @@ class PosIngestServer {
           : 'შეკვეთა #$posOrderId წაიშალა',
       meta: {
         'posOrderId': posOrderId,
-        if (tableSeg.isNotEmpty) 'tableLabel': existing!.tableNumbers.join(', '),
+        if (tableSeg.isNotEmpty)
+          'tableLabel': existing!.tableNumbers.join(', '),
       },
     );
     _scheduleCloudSync();
@@ -302,7 +318,8 @@ class PosIngestServer {
       meta: {
         'posOrderId': posOrderId,
         'status': status,
-        if (tableSeg.isNotEmpty) 'tableLabel': existing!.tableNumbers.join(', '),
+        if (tableSeg.isNotEmpty)
+          'tableLabel': existing!.tableNumbers.join(', '),
       },
     );
     _scheduleCloudSync();
@@ -360,7 +377,8 @@ class PosIngestServer {
           : 'ახალი გატანა #${order.orderId}',
       meta: {
         'posOrderId': order.orderId,
-        if (highlightKeys.isNotEmpty) 'highlightItemKeys': highlightKeys.toList(),
+        if (highlightKeys.isNotEmpty)
+          'highlightItemKeys': highlightKeys.toList(),
       },
     );
     _scheduleCloudSync();
@@ -457,11 +475,116 @@ class PosIngestServer {
         'walkIn': true,
         if (tableSeg.isNotEmpty) 'tableLabel': tableNumbers.join(', '),
         if (order.floor.isNotEmpty) 'floor': order.floor,
-        if (highlightKeys.isNotEmpty) 'highlightItemKeys': highlightKeys.toList(),
+        if (highlightKeys.isNotEmpty)
+          'highlightItemKeys': highlightKeys.toList(),
       },
     );
     _scheduleCloudSync();
     await _json(request, 200, {'success': true, 'posOrderId': order.orderId});
+  }
+
+  /// Manager-triggered table/order check print (Mac / iOS / Android → backend →
+  /// POS callback). The Windows POS remains the only print host: the manager
+  /// client never prints directly. We look the order up in local Hive (the
+  /// source of truth) and print a customer pre-bill receipt on the receipt
+  /// printer, mirroring the POS order-detail "print receipt" (receiptType
+  /// 'client'). Georgian only; raw item names (menu localization lives in the
+  /// POS UI layer and is not reused here).
+  static Future<void> _handleOrderPrintCheck(
+    HttpRequest request,
+    Map<String, dynamic> body,
+  ) async {
+    final posOrderId = (body['posOrderId'] as num?)?.toInt();
+    if (posOrderId == null) {
+      await _json(request, 400, {'error': 'posOrderId_required'});
+      return;
+    }
+
+    final order = DatabaseService.getOrder(posOrderId);
+    if (order == null) {
+      await _json(request, 404, {'error': 'order_not_found'});
+      return;
+    }
+
+    final isTakeAway = order.floor.toLowerCase().contains('takeaway');
+    final receiptLines = <String>[];
+
+    if (order.packageItems.isNotEmpty) {
+      final packageLabel =
+          (order.packageName != null && order.packageName!.trim().isNotEmpty)
+          ? order.packageName!.trim()
+          : 'პაკეტი';
+      final packageTotalRaw = order.getPackageSubtotal();
+      final packageTotal = packageTotalRaw > 0
+          ? packageTotalRaw
+          : order.packagePrice;
+
+      receiptLines.add('[$packageLabel]');
+      final summary = StringBuffer();
+      if (order.packageGuestCount > 0) {
+        summary.write('${order.packageGuestCount}x ');
+      }
+      summary.write(packageLabel);
+      if (packageTotal > 0) {
+        summary.write(' - ${packageTotal.toStringAsFixed(2)} GEL');
+      }
+      receiptLines.add(summary.toString());
+
+      for (final packageItem in order.packageItems) {
+        receiptLines.add(
+          '  ⮑ ${packageItem.quantity}x ${packageItem.itemName}',
+        );
+      }
+      if (order.items.isNotEmpty) {
+        receiptLines.add('---');
+      }
+    }
+
+    if (order.items.isNotEmpty) {
+      if (order.packageItems.isNotEmpty) {
+        receiptLines.add('[დამატებითი]');
+      }
+      receiptLines.addAll(
+        order.items.map(
+          (item) =>
+              '${item.quantity}x ${item.itemName} - '
+              '${item.total.toStringAsFixed(2)} GEL',
+        ),
+      );
+    }
+
+    final itemsWithWaiter = <String>[
+      'ოფიციანტი: ${order.createdBy}',
+      '---',
+      ...receiptLines,
+    ];
+
+    final packageSubtotal = order.getPackageSubtotal();
+    final additionalSubtotal = order.getAdditionalItemsSubtotal();
+    final discountAmount = order.discountAmount > 0
+        ? order.discountAmount
+        : null;
+    final manualAdjustment = order.manualAdjustmentAmount.abs() >= 0.01
+        ? order.manualAdjustmentAmount
+        : null;
+
+    PrinterService.printReceiptInBackground(
+      items: itemsWithWaiter,
+      total: order.totalAmount,
+      subtotal: order.getItemsSubtotal(),
+      serviceFee: order.getServiceFee(),
+      includeServiceFee: order.includeServiceFee,
+      tableNumber: isTakeAway ? null : order.tableNumbers.join(', '),
+      orderNumber: order.orderId.toString(),
+      language: 'ka',
+      packageSubtotal: packageSubtotal > 0 ? packageSubtotal : null,
+      additionalSubtotal: additionalSubtotal > 0 ? additionalSubtotal : null,
+      discountAmount: discountAmount,
+      manualAdjustment: manualAdjustment,
+      receiptType: isTakeAway ? 'take_away' : 'client',
+    );
+
+    await _json(request, 200, {'success': true});
   }
 
   static Future<void> _handleReservationsList(HttpRequest request) async {
@@ -548,6 +671,108 @@ class PosIngestServer {
     await _json(request, 200, {'success': true});
   }
 
+  /// Manager-triggered reservation check print (Mac / iOS / Android → backend →
+  /// POS callback). The Windows POS remains the only print host: the manager
+  /// client never touches a printer. We look the reservation up in local Hive
+  /// (the source of truth) and reuse the exact kitchen-check formatting the POS
+  /// uses when a reservation is created locally.
+  static Future<void> _handleReservationPrintCheck(
+    HttpRequest request,
+    Map<String, dynamic> body,
+  ) async {
+    final reservationId = (body['reservationId'] ?? '').toString().trim();
+    if (reservationId.isEmpty) {
+      await _json(request, 400, {'error': 'reservationId_required'});
+      return;
+    }
+
+    final reservation = DatabaseService.findReservationById(reservationId);
+    if (reservation == null) {
+      await _json(request, 404, {'error': 'reservation_not_found'});
+      return;
+    }
+
+    final kitchenItems = HomeReservationsHelper.buildKitchenCheckLines(
+      reservation,
+    );
+    if (kitchenItems.isEmpty) {
+      // No kitchen-bound items (e.g. no pre-order) — nothing to print.
+      await _json(request, 200, {'success': true, 'printed': false});
+      return;
+    }
+
+    final requestedBy = (body['requestedBy'] ?? reservation.createdBy)
+        .toString()
+        .trim();
+    PrinterService.printKitchenCheckInBackground(
+      items: kitchenItems,
+      tableNumber: reservation.tableNumbers.isNotEmpty
+          ? reservation.tableNumbers.join(', ')
+          : null,
+      orderNumber: HomeReservationsHelper.buildKitchenOrderLabel(reservation),
+      waiterName: requestedBy.isNotEmpty ? requestedBy : 'mobile_manager',
+      createdAt: HomeReservationsHelper.buildKitchenTime(reservation),
+    );
+
+    await _json(request, 200, {'success': true, 'printed': true});
+  }
+
+  /// Manager-triggered counted-menu (quick-order draft) print. Mac / iOS /
+  /// Android → backend → POS callback. The Windows POS is the only print host.
+  /// Counted menus don't reliably exist in POS Hive (mobile-created ones live
+  /// only in the backend), so this prints from the request payload directly,
+  /// mirroring the POS counted-menu receipt (receiptType 'menu_count') on the
+  /// receipt printer.
+  static Future<void> _handleCountedMenuPrint(
+    HttpRequest request,
+    Map<String, dynamic> body,
+  ) async {
+    final rawItems = (body['items'] as List?) ?? const [];
+    if (rawItems.isEmpty) {
+      await _json(request, 400, {'error': 'items_required'});
+      return;
+    }
+
+    final lines = <String>['---'];
+    for (final raw in rawItems) {
+      if (raw is! Map) continue;
+      final map = Map<String, dynamic>.from(raw);
+      final name = (map['itemName'] ?? map['name'] ?? '').toString().trim();
+      final qty = (map['quantity'] as num?)?.toInt() ?? 1;
+      final unitPrice =
+          ((map['unitPrice'] ?? map['price']) as num?)?.toDouble() ?? 0.0;
+      final total = (map['total'] as num?)?.toDouble() ?? unitPrice * qty;
+      lines.add('${qty}x $name - ${total.toStringAsFixed(2)} GEL');
+      final comment = (map['comment'] as String?)?.trim();
+      if (comment != null && comment.isNotEmpty) {
+        lines.add('  ⮑ $comment');
+      }
+    }
+
+    final subtotal = (body['subtotal'] as num?)?.toDouble() ?? 0.0;
+    final serviceFeeAmount =
+        (body['serviceFeeAmount'] as num?)?.toDouble() ?? 0.0;
+    final total = (body['total'] as num?)?.toDouble() ?? subtotal;
+    final includeServiceFee =
+        body['includeServiceFee'] == true && serviceFeeAmount > 0;
+    final receiptTotal = includeServiceFee ? total : subtotal;
+    final language = (body['language'] ?? 'ka').toString() == 'en'
+        ? 'en'
+        : 'ka';
+
+    PrinterService.printReceiptInBackground(
+      items: lines,
+      total: receiptTotal,
+      subtotal: subtotal,
+      serviceFee: includeServiceFee ? serviceFeeAmount : null,
+      includeServiceFee: includeServiceFee,
+      language: language,
+      receiptType: 'menu_count',
+    );
+
+    await _json(request, 200, {'success': true});
+  }
+
   static Future<void> _handleExpenseCreate(
     HttpRequest request,
     Map<String, dynamic> body,
@@ -621,6 +846,32 @@ class PosIngestServer {
     }
     _scheduleCloudSync();
     await _json(request, 200, {'success': true});
+  }
+
+  static Future<void> _handleUserRoleUpdate(
+    HttpRequest request,
+    Map<String, dynamic> body,
+  ) async {
+    final username = (body['username'] ?? '').toString().trim();
+    final roleRaw = (body['role'] ?? '').toString().trim();
+    if (username.isEmpty || roleRaw.isEmpty) {
+      await _json(request, 400, {'error': 'username_and_role_required'});
+      return;
+    }
+    final role = StaffRole.normalizeClient(roleRaw);
+    final ok = await DatabaseService.updateUserRoleByUsername(
+      username: username,
+      role: role,
+    );
+    if (!ok) {
+      await _json(request, 409, {'error': 'role_update_failed'});
+      return;
+    }
+    _scheduleCloudSync();
+    await _json(request, 200, {
+      'success': true,
+      'user': {'username': username, 'role': role},
+    });
   }
 
   static Future<void> _handleUserRename(
@@ -742,12 +993,14 @@ class PosIngestServer {
   /// when there are no usable tables.
   static String _formatTablesSegment(List<String> tables, String floor) {
     final clean = tables
-        .map((e) => e
-            .toString()
-            .trim()
-            .replaceAll('Table ', '')
-            .replaceAll('VIP Zone ', '')
-            .trim())
+        .map(
+          (e) => e
+              .toString()
+              .trim()
+              .replaceAll('Table ', '')
+              .replaceAll('VIP Zone ', '')
+              .trim(),
+        )
         .where((e) => e.isNotEmpty && e != '0' && !e.startsWith('TA-'))
         .toList();
     if (clean.isEmpty) return '';

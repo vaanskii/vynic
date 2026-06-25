@@ -74,7 +74,14 @@ export class MobileUsersService {
     const pinHash = await bcrypt.hash(pinCode, 12);
     const created = await (this.prisma as any).staff.create({
       data: { username, pinHash, role, isActive: true },
-      select: { id: true, username: true, role: true, isActive: true, createdAt: true, updatedAt: true },
+      select: {
+        id: true,
+        username: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
     const pinsMap = await this.pinVault.read();
     pinsMap[username] = pinCode;
@@ -86,7 +93,10 @@ export class MobileUsersService {
         role: toClientRole(role),
       });
     } catch (e) {
-      console.warn('[Mobile][Users] POS create user failed:', (e as Error).message);
+      console.warn(
+        '[Mobile][Users] POS create user failed:',
+        (e as Error).message,
+      );
     }
     return { ...created, pinCode };
   }
@@ -99,7 +109,13 @@ export class MobileUsersService {
     }
     const existing = await (this.prisma as any).staff.findUnique({
       where: { username },
-      select: { id: true, role: true, isActive: true, createdAt: true, updatedAt: true },
+      select: {
+        id: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
     if (!existing) {
       throw new NotFoundException('User not found');
@@ -115,9 +131,75 @@ export class MobileUsersService {
     try {
       await this.posCallback.updatePosUserPin({ username, pinCode });
     } catch (e) {
-      console.warn('[Mobile][Users] POS update pin failed:', (e as Error).message);
+      console.warn(
+        '[Mobile][Users] POS update pin failed:',
+        (e as Error).message,
+      );
     }
-    return { username, role: existing.role, isActive: existing.isActive, pinCode };
+    return {
+      username,
+      role: existing.role,
+      isActive: existing.isActive,
+      pinCode,
+    };
+  }
+
+  async updateUserRole(usernameParam: string, payload: { role?: string }) {
+    const username = (usernameParam ?? '').trim();
+    const role = normalizeStaffRole(payload.role);
+    if (!username || !payload.role) {
+      throw new BadRequestException('username and role are required');
+    }
+    if (!ASSIGNABLE_STAFF_ROLES.includes(role)) {
+      throw new BadRequestException(
+        'role must be MANAGER, SUPERVISOR, or WAITER',
+      );
+    }
+
+    const existing = await (this.prisma as any).staff.findUnique({
+      where: { username },
+      select: { id: true, role: true, isActive: true },
+    });
+    if (!existing) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (
+      normalizeStaffRole(existing.role) === StaffRole.MANAGER &&
+      role !== StaffRole.MANAGER
+    ) {
+      const managerCount = await (this.prisma as any).staff.count({
+        where: { role: { in: ['ADMIN', 'MANAGER'] }, isActive: true },
+      });
+      if (managerCount <= 1) {
+        throw new BadRequestException('Cannot change the last manager role');
+      }
+    }
+
+    const updated = await (this.prisma as any).staff.update({
+      where: { username },
+      data: { role },
+      select: {
+        id: true,
+        username: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+    try {
+      await this.posCallback.updatePosUserRole({
+        username,
+        role: toClientRole(role),
+      });
+    } catch (e) {
+      console.warn(
+        '[Mobile][Users] POS update role failed:',
+        (e as Error).message,
+      );
+    }
+    return updated;
   }
 
   async renameUser(usernameParam: string, payload: { username?: string }) {
@@ -131,7 +213,13 @@ export class MobileUsersService {
     }
     const existing = await (this.prisma as any).staff.findUnique({
       where: { username: oldUsername },
-      select: { id: true, role: true, isActive: true, createdAt: true, updatedAt: true },
+      select: {
+        id: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
     if (!existing) {
       throw new NotFoundException('User not found');
@@ -146,7 +234,14 @@ export class MobileUsersService {
     const updated = await (this.prisma as any).staff.update({
       where: { username: oldUsername },
       data: { username: newUsername },
-      select: { id: true, username: true, role: true, isActive: true, createdAt: true, updatedAt: true },
+      select: {
+        id: true,
+        username: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
     const pinsMap = await this.pinVault.read();
     let pinCode = pinsMap[oldUsername] ?? '';
@@ -161,7 +256,10 @@ export class MobileUsersService {
         newUsername,
       });
     } catch (e) {
-      console.warn('[Mobile][Users] POS rename user failed:', (e as Error).message);
+      console.warn(
+        '[Mobile][Users] POS rename user failed:',
+        (e as Error).message,
+      );
     }
     return { ...updated, pinCode };
   }
@@ -190,7 +288,10 @@ export class MobileUsersService {
     try {
       await this.posCallback.deletePosUser({ username });
     } catch (e) {
-      console.warn('[Mobile][Users] POS delete user failed:', (e as Error).message);
+      console.warn(
+        '[Mobile][Users] POS delete user failed:',
+        (e as Error).message,
+      );
     }
     return { success: true };
   }

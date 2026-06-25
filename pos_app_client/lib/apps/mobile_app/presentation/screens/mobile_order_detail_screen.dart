@@ -42,6 +42,7 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
   bool _isLoading = true;
   bool _isTogglingServiceFee = false;
   bool _serviceFeeAvailable = false;
+  bool _printingCheck = false;
   int _serviceFeePercent = 10;
   late Set<String> _highlightKeys;
 
@@ -407,6 +408,35 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
     }
   }
 
+  /// Print the order/table check (customer pre-bill) on the Windows POS — the
+  /// only print host. The manager client never prints directly: the backend
+  /// relays this to the POS callback path. Owns its own loading flag so the
+  /// user cannot trigger repeated prints with rapid taps.
+  Future<void> _printOrderCheck() async {
+    final order = _order;
+    if (order == null || _printingCheck) return;
+    setState(() => _printingCheck = true);
+    try {
+      await MobileApiService.printOrderCheck(order.orderId);
+      if (!mounted) return;
+      ManagerToast.show(context, 'ჩეკი დაიბეჭდა');
+    } catch (e) {
+      if (!mounted) return;
+      final message = e.toString();
+      if (message.contains('404')) {
+        ManagerToast.show(context, 'შეკვეთა ვერ მოიძებნა POS-ზე', isError: true);
+      } else {
+        ManagerToast.show(
+          context,
+          'ბეჭდვა ვერ მოხერხდა — POS მიუწვდომელია',
+          isError: true,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _printingCheck = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -495,6 +525,7 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
           Expanded(child: _buildItemsList(order)),
           _buildTotalsFooter(order),
           if (_canEdit && _serviceFeeAvailable && widget.floor != 'takeaway') _buildServiceFeeRow(order),
+          _buildPrintCheckBar(),
           if (_canEdit) _buildActionBar(),
         ],
       ),
@@ -761,6 +792,26 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Full-width "ჩეკის ბეჭდვა" button. Always visible (even when the order is
+  /// not editable) so a manager can print a pre-bill on any open order. Disabled
+  /// while a print is in flight so rapid taps can't fire repeated prints.
+  Widget _buildPrintCheckBar() {
+    final isLast = !_canEdit;
+    return SafeArea(
+      top: false,
+      bottom: isLast,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, 0, 16, isLast ? 16 : 8),
+        child: MobileGlassPrimaryButton(
+          label: _printingCheck ? 'იბეჭდება…' : 'ჩეკის ბეჭდვა',
+          icon: _printingCheck ? null : Icons.print_rounded,
+          color: MobileGlassTheme.primary,
+          onPressed: _printingCheck ? null : _printOrderCheck,
         ),
       ),
     );

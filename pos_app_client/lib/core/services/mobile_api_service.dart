@@ -232,8 +232,9 @@ class MobileApiService {
       'items': items,
     });
     if (response.statusCode == 200 || response.statusCode == 201) {
-      final order =
-          Order.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+      final order = Order.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
       MobileEditEchoGuard.markOrderEdited(order.orderId);
       return order;
     }
@@ -371,6 +372,19 @@ class MobileApiService {
     }
   }
 
+  /// Ask the backend to print the reservation check on the Windows POS.
+  /// The manager client never prints directly: the backend relays this to the
+  /// POS callback path, and the Windows POS (the only print host) prints it.
+  static Future<void> printReservationCheck(String reservationId) async {
+    final response = await _post(
+      '/mobile/reservations/$reservationId/print-check',
+      const {},
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('printReservationCheck failed: ${response.statusCode}');
+    }
+  }
+
   // ── Financials ─────────────────────────────────────────────────────────────
 
   static Future<Map<String, dynamic>> getFinancials() async {
@@ -443,10 +457,7 @@ class MobileApiService {
 
   // ── Update order ───────────────────────────────────────────────────────────
 
-  static Future<void> updateOrder(
-    Order order, {
-    String? updatedBy,
-  }) async {
+  static Future<void> updateOrder(Order order, {String? updatedBy}) async {
     final payload = order.toJson();
     if (updatedBy != null && updatedBy.trim().isNotEmpty) {
       payload['updatedBy'] = updatedBy.trim();
@@ -471,6 +482,19 @@ class MobileApiService {
       throw Exception('Cancel failed: ${response.statusCode} ${response.body}');
     }
     MobileEditEchoGuard.markOrderEdited(posOrderId);
+  }
+
+  // ── Print order/table check (manager-only) ─────────────────────────────────
+
+  /// Ask the backend to print the order/table check (customer pre-bill) on the
+  /// Windows POS. The manager client never prints directly: the backend relays
+  /// this to the POS callback path, and the Windows POS (the only print host)
+  /// prints it on the receipt printer. Not a mutation — no echo-guard marking.
+  static Future<void> printOrderCheck(int orderId) async {
+    final response = await _post('/mobile/order/$orderId/print-check', const {});
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('printOrderCheck failed: ${response.statusCode}');
+    }
   }
 
   // ── Menu ───────────────────────────────────────────────────────────────────
@@ -540,6 +564,20 @@ class MobileApiService {
     }
   }
 
+  /// Ask the backend to print a counted menu on the Windows POS. The manager
+  /// client never prints directly: the backend loads the draft and relays it to
+  /// the POS callback path, and the Windows POS (the only print host) prints it
+  /// on the receipt printer.
+  static Future<void> printCountedMenu(String draftId) async {
+    final response = await _post(
+      '/mobile/counted-menu/$draftId/print',
+      const {},
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('printCountedMenu failed: ${response.statusCode}');
+    }
+  }
+
   static Future<void> saveCountedMenu({
     required String name,
     required List<Map<String, dynamic>> items,
@@ -585,7 +623,9 @@ class MobileApiService {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return jsonDecode(response.body) as Map<String, dynamic>;
     }
-    throw Exception('createUser failed: ${response.statusCode} ${response.body}');
+    throw Exception(
+      'createUser failed: ${response.statusCode} ${response.body}',
+    );
   }
 
   static Future<void> renameUser({
@@ -616,10 +656,26 @@ class MobileApiService {
     }
   }
 
+  static Future<void> updateUserRole({
+    required String username,
+    required String role,
+  }) async {
+    final response = await _post('/mobile/users/$username/role', {
+      'role': role,
+    });
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(
+        'updateUserRole failed: ${response.statusCode} ${response.body}',
+      );
+    }
+  }
+
   static Future<void> deleteUser(String username) async {
     final response = await _delete('/mobile/users/$username');
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('deleteUser failed: ${response.statusCode} ${response.body}');
+      throw Exception(
+        'deleteUser failed: ${response.statusCode} ${response.body}',
+      );
     }
   }
 

@@ -1,7 +1,13 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { MonitoringGateway } from '../../realtime/monitoring.gateway';
 import { PosOutboxService } from '../../pos/pos-outbox.service';
+import { PosCallbackClient } from '../../pos/pos-callback.client';
 import {
   buildAuditEventsForOrderDiff,
   AuditEventInput,
@@ -47,6 +53,7 @@ export class MobileOrdersService {
     private readonly gateway: MonitoringGateway,
     private readonly posOutbox: PosOutboxService,
     private readonly mutationSupport: MobileMutationSupport,
+    private readonly posCallback: PosCallbackClient,
   ) {}
 
   async getOrders(
@@ -442,6 +449,31 @@ export class MobileOrdersService {
       payload: { posOrderId, status: 'cancelled' },
     });
 
+    return { success: true };
+  }
+
+  /**
+   * Relay an order/table check (customer pre-bill) print request to the Windows
+   * POS — the only print host — via the direct POS callback path. No realtime
+   * broadcast: printing is not a data mutation. POS-side failures (unreachable
+   * POS, order missing in Hive) surface as clean HTTP errors instead of a 500.
+   */
+  async printOrderCheck(id: string): Promise<{ success: true }> {
+    const posOrderId = Number(id);
+    if (!Number.isFinite(posOrderId)) {
+      throw new BadRequestException('order id must be a number');
+    }
+    try {
+      await this.posCallback.printPosOrderCheck(posOrderId);
+    } catch (e) {
+      const message = (e as Error).message ?? '';
+      if (message.includes('order_not_found') || message.includes('404')) {
+        throw new NotFoundException('Order not found on POS');
+      }
+      throw new ServiceUnavailableException(
+        `Could not print order check — is the Windows POS running? (${message})`,
+      );
+    }
     return { success: true };
   }
 

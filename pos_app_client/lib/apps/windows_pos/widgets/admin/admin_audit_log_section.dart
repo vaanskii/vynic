@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/services/database_service.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 
 class AdminAuditLogSection extends StatelessWidget {
   const AdminAuditLogSection({
@@ -17,16 +18,18 @@ class AdminAuditLogSection extends StatelessWidget {
   final ValueChanged<int> onChangeAuditMonth;
   final ValueChanged<DateTime> onSetSelectedAuditMonth;
 
-  static const Color _primaryColor = Color(0xFF2563EB);
-  static const Color _surface = Color(0xFFF8FAFF);
-  static const Color _card = Colors.white;
-  static const Color _border = Color(0xFFE2E8F0);
-  static const Color _text = Color(0xFF0F172A);
-  static const Color _muted = Color(0xFF64748B);
+  static const Color _primaryColor = AdminDesign.accentDark;
+  static const Color _surface = AdminDesign.panelSoft;
+  static const Color _card = AdminDesign.panel;
+  static const Color _border = AdminDesign.border;
+  static const Color _text = AdminDesign.text;
+  static const Color _muted = AdminDesign.muted;
 
   DateTime _lastActivity(AuditReport report) {
     final events = report.sortedEvents;
-    final eventTs = events.isNotEmpty ? events.first.timestamp : report.openedAt;
+    final eventTs = events.isNotEmpty
+        ? events.first.timestamp
+        : report.openedAt;
     return report.updatedAt.isAfter(eventTs) ? report.updatedAt : eventTs;
   }
 
@@ -54,152 +57,211 @@ class AdminAuditLogSection extends StatelessWidget {
       builder: (context, _, __) {
         final isMobile = MediaQuery.of(context).size.width < 600;
 
-        final reports = _normalizeAuditReports(DatabaseService.getAuditReports());
-        final selectedMonthDate = DateTime(selectedAuditYear, selectedAuditMonth);
+        final reports = _normalizeAuditReports(
+          DatabaseService.getAuditReports(),
+        );
+        final selectedMonthDate = DateTime(
+          selectedAuditYear,
+          selectedAuditMonth,
+        );
         final currentBusinessDate = DatabaseService.getCurrentDate();
         final currentBusinessMonth = DateTime(
           currentBusinessDate.year,
           currentBusinessDate.month,
         );
 
-    final monthOptionsSet = <DateTime>{};
-    for (final report in reports) {
-      final businessDate = _businessDateForReport(report);
-      monthOptionsSet.add(DateTime(businessDate.year, businessDate.month));
-    }
-    monthOptionsSet.add(currentBusinessMonth);
-    monthOptionsSet.add(
-      DateTime(selectedMonthDate.year, selectedMonthDate.month),
-    );
-
-    final monthOptions = monthOptionsSet.toList()
-      ..sort((a, b) => b.compareTo(a));
-    final normalizedSelectedMonth = DateTime(
-      selectedMonthDate.year,
-      selectedMonthDate.month,
-    );
-    final isNextDisabled = !normalizedSelectedMonth.isBefore(
-      currentBusinessMonth,
-    );
-
-    final selectedMonthHasData = reports.any((report) {
-      final businessDate = _businessDateForReport(report);
-      return businessDate.year == selectedMonthDate.year &&
-          businessDate.month == selectedMonthDate.month;
-    });
-
-    if (!selectedMonthHasData && reports.isNotEmpty) {
-      final latestReport = reports.reduce((current, next) {
-        final currentDate = _businessDateForReport(current);
-        final nextDate = _businessDateForReport(next);
-        if (nextDate.isAfter(currentDate)) {
-          return next;
+        final monthOptionsSet = <DateTime>{};
+        for (final report in reports) {
+          final businessDate = _businessDateForReport(report);
+          monthOptionsSet.add(DateTime(businessDate.year, businessDate.month));
         }
-        if (nextDate.isBefore(currentDate)) {
-          return current;
-        }
-        return next.updatedAt.isAfter(current.updatedAt) ? next : current;
-      });
-      final latestMonthDate = _businessDateForReport(latestReport);
-      final targetMonth = DateTime(latestMonthDate.year, latestMonthDate.month);
-      if (targetMonth != normalizedSelectedMonth) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!context.mounted) {
-            return;
-          }
-          onSetSelectedAuditMonth(targetMonth);
+        monthOptionsSet.add(currentBusinessMonth);
+        monthOptionsSet.add(
+          DateTime(selectedMonthDate.year, selectedMonthDate.month),
+        );
+
+        final monthOptions = monthOptionsSet.toList()
+          ..sort((a, b) => b.compareTo(a));
+        final normalizedSelectedMonth = DateTime(
+          selectedMonthDate.year,
+          selectedMonthDate.month,
+        );
+        final isNextDisabled = !normalizedSelectedMonth.isBefore(
+          currentBusinessMonth,
+        );
+
+        final selectedMonthHasData = reports.any((report) {
+          final businessDate = _businessDateForReport(report);
+          return businessDate.year == selectedMonthDate.year &&
+              businessDate.month == selectedMonthDate.month;
         });
-      }
-    }
 
-    final monthReports = reports.where((report) {
-      final businessDate = _businessDateForReport(report);
-      return businessDate.year == selectedMonthDate.year &&
-          businessDate.month == selectedMonthDate.month;
-    }).toList()..sort((a, b) => _lastActivity(b).compareTo(_lastActivity(a)));
+        if (!selectedMonthHasData && reports.isNotEmpty) {
+          final latestReport = reports.reduce((current, next) {
+            final currentDate = _businessDateForReport(current);
+            final nextDate = _businessDateForReport(next);
+            if (nextDate.isAfter(currentDate)) {
+              return next;
+            }
+            if (nextDate.isBefore(currentDate)) {
+              return current;
+            }
+            return next.updatedAt.isAfter(current.updatedAt) ? next : current;
+          });
+          final latestMonthDate = _businessDateForReport(latestReport);
+          final targetMonth = DateTime(
+            latestMonthDate.year,
+            latestMonthDate.month,
+          );
+          if (targetMonth != normalizedSelectedMonth) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!context.mounted) {
+                return;
+              }
+              onSetSelectedAuditMonth(targetMonth);
+            });
+          }
+        }
 
-    final dayGroups = <String, _AuditDayData>{};
-    for (final report in monthReports) {
-      final dayDate = _businessDateForReport(report);
-      final dayKey = _formatDateIso(dayDate);
-      final group = dayGroups.putIfAbsent(
-        dayKey,
-        () => _AuditDayData(date: dayDate),
-      );
-      group.reports.add(report);
-    }
+        final monthReports =
+            reports.where((report) {
+                final businessDate = _businessDateForReport(report);
+                return businessDate.year == selectedMonthDate.year &&
+                    businessDate.month == selectedMonthDate.month;
+              }).toList()
+              ..sort((a, b) => _lastActivity(b).compareTo(_lastActivity(a)));
 
-    final dayEntries = dayGroups.entries.toList()
-      ..sort((a, b) => b.value.date.compareTo(a.value.date));
+        final dayGroups = <String, _AuditDayData>{};
+        for (final report in monthReports) {
+          final dayDate = _businessDateForReport(report);
+          final dayKey = _formatDateIso(dayDate);
+          final group = dayGroups.putIfAbsent(
+            dayKey,
+            () => _AuditDayData(date: dayDate),
+          );
+          group.reports.add(report);
+        }
 
-    int countByStatus(List<AuditReport> source, AuditReportStatus status) {
-      return source.where((report) => report.status == status).length;
-    }
+        final dayEntries = dayGroups.entries.toList()
+          ..sort((a, b) => b.value.date.compareTo(a.value.date));
 
-    final monthOpenCount = countByStatus(monthReports, AuditReportStatus.open);
-    final monthClosedCount = countByStatus(
-      monthReports,
-      AuditReportStatus.closed,
-    );
-    final monthCancelledCount = countByStatus(
-      monthReports,
-      AuditReportStatus.cancelled,
-    );
+        int countByStatus(List<AuditReport> source, AuditReportStatus status) {
+          return source.where((report) => report.status == status).length;
+        }
 
-    final todayKey = _formatDateIso(currentBusinessDate);
-    final isCurrentMonthSelected =
-        normalizedSelectedMonth.year == currentBusinessMonth.year &&
-        normalizedSelectedMonth.month == currentBusinessMonth.month;
+        final monthOpenCount = countByStatus(
+          monthReports,
+          AuditReportStatus.open,
+        );
+        final monthClosedCount = countByStatus(
+          monthReports,
+          AuditReportStatus.closed,
+        );
+        final monthCancelledCount = countByStatus(
+          monthReports,
+          AuditReportStatus.cancelled,
+        );
 
-    final todayGroup = isCurrentMonthSelected ? dayGroups[todayKey] : null;
-    final todayReports = todayGroup?.reports ?? const <AuditReport>[];
+        final todayKey = _formatDateIso(currentBusinessDate);
+        final isCurrentMonthSelected =
+            normalizedSelectedMonth.year == currentBusinessMonth.year &&
+            normalizedSelectedMonth.month == currentBusinessMonth.month;
 
-    final filterSubtitle = isCurrentMonthSelected
-        ? '${_getGeorgianMonthName(selectedMonthDate.month)} ${selectedMonthDate.year} • პროგრამის თარიღი ${DatabaseService.getGeorgianFormattedDate(currentBusinessDate)}'
-        : '${_getGeorgianMonthName(selectedMonthDate.month)} ${selectedMonthDate.year}';
+        final todayGroup = isCurrentMonthSelected ? dayGroups[todayKey] : null;
+        final todayReports = todayGroup?.reports ?? const <AuditReport>[];
+
+        final filterSubtitle = isCurrentMonthSelected
+            ? '${_getGeorgianMonthName(selectedMonthDate.month)} ${selectedMonthDate.year} • პროგრამის თარიღი ${DatabaseService.getGeorgianFormattedDate(currentBusinessDate)}'
+            : '${_getGeorgianMonthName(selectedMonthDate.month)} ${selectedMonthDate.year}';
 
         return SizedBox.expand(
-      child: Align(
-        alignment: Alignment.topLeft,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: SizedBox(
-            width: double.infinity,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Audit კონტროლი',
-                  style: TextStyle(
-                    color: _text,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'ვინ რა შეცვალა და როდის — ოფიციანტების სრული მოქმედებების ისტორია.',
-                  style: TextStyle(color: _muted, fontSize: 13),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _card,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _border),
-                  ),
-                  child: isMobile
-                      ? Column(
-                          children: [
-                            Row(
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+              child: SizedBox(
+                width: double.infinity,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AdminSectionHeader(
+                      icon: Icons.fact_check_outlined,
+                      title: 'აუდიტის კონტროლი',
+                      subtitle:
+                          'მომხმარებლების მოქმედებები, ცვლილებების დრო და ოპერაციული ისტორია.',
+                      badge: AdminStatusBadge(
+                        icon: Icons.event_note_outlined,
+                        label: '${monthReports.length} ჩანაწერი',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _card,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _border),
+                      ),
+                      child: isMobile
+                          ? Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'ფილტრი',
+                                            style: TextStyle(
+                                              color: _text,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            filterSubtitle,
+                                            style: const TextStyle(
+                                              color: _muted,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    PopupMenuButton<DateTime>(
+                                      icon: const Icon(
+                                        Icons.calendar_month,
+                                        color: _primaryColor,
+                                      ),
+                                      onSelected: (value) =>
+                                          onSetSelectedAuditMonth(value),
+                                      itemBuilder: (context) => monthOptions.map((
+                                        m,
+                                      ) {
+                                        return PopupMenuItem(
+                                          value: m,
+                                          child: Text(
+                                            '${_getGeorgianMonthName(m.month)} ${m.year}',
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            )
+                          : Row(
                               children: [
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const Text(
                                         'ფილტრი',
@@ -220,270 +282,259 @@ class AdminAuditLogSection extends StatelessWidget {
                                     ],
                                   ),
                                 ),
-                                PopupMenuButton<DateTime>(
-                                  icon: const Icon(Icons.calendar_month, color: _primaryColor),
-                                  onSelected: (value) => onSetSelectedAuditMonth(value),
-                                  itemBuilder: (context) => monthOptions.map((m) {
-                                    return PopupMenuItem(
-                                      value: m,
-                                      child: Text('${_getGeorgianMonthName(m.month)} ${m.year}'),
-                                    );
-                                  }).toList(),
+                                IconButton(
+                                  onPressed: () => onChangeAuditMonth(-1),
+                                  icon: const Icon(
+                                    Icons.chevron_left,
+                                    size: 18,
+                                  ),
+                                  color: _text,
+                                  splashRadius: 18,
+                                ),
+                                SizedBox(
+                                  width: 210,
+                                  child: DropdownButtonFormField<DateTime>(
+                                    value: monthOptions.firstWhere(
+                                      (month) =>
+                                          month.year ==
+                                              normalizedSelectedMonth.year &&
+                                          month.month ==
+                                              normalizedSelectedMonth.month,
+                                      orElse: () => normalizedSelectedMonth,
+                                    ),
+                                    decoration: InputDecoration(
+                                      isDense: true,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 8,
+                                          ),
+                                      filled: true,
+                                      fillColor: _surface,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: const BorderSide(
+                                          color: _border,
+                                        ),
+                                      ),
+                                    ),
+                                    style: const TextStyle(
+                                      color: _text,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                    ),
+                                    iconEnabledColor: _primaryColor,
+                                    items: monthOptions.map((monthDate) {
+                                      final label =
+                                          '${_getGeorgianMonthName(monthDate.month)} ${monthDate.year}';
+                                      return DropdownMenuItem<DateTime>(
+                                        value: monthDate,
+                                        child: Text(label),
+                                      );
+                                    }).toList(),
+                                    onChanged: (value) {
+                                      if (value != null) {
+                                        onSetSelectedAuditMonth(value);
+                                      }
+                                    },
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: isNextDisabled
+                                      ? null
+                                      : () => onChangeAuditMonth(1),
+                                  icon: const Icon(
+                                    Icons.chevron_right,
+                                    size: 18,
+                                  ),
+                                  color: _text,
+                                  splashRadius: 18,
                                 ),
                               ],
                             ),
-                          ],
-                        )
-                      : Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        SizedBox(
+                          width: isMobile
+                              ? (MediaQuery.of(context).size.width - 42) / 2
+                              : 120,
+                          child: _buildStatTile(
+                            'აქტიური',
+                            monthOpenCount,
+                            const Color(0xFFF59E0B),
+                          ),
+                        ),
+                        SizedBox(
+                          width: isMobile
+                              ? (MediaQuery.of(context).size.width - 42) / 2
+                              : 120,
+                          child: _buildStatTile(
+                            'დახურული',
+                            monthClosedCount,
+                            const Color(0xFF10B981),
+                          ),
+                        ),
+                        SizedBox(
+                          width: isMobile
+                              ? (MediaQuery.of(context).size.width - 42) / 2
+                              : 120,
+                          child: _buildStatTile(
+                            'გაუქმებული',
+                            monthCancelledCount,
+                            const Color(0xFFEF4444),
+                          ),
+                        ),
+                        SizedBox(
+                          width: isMobile
+                              ? (MediaQuery.of(context).size.width - 42) / 2
+                              : 120,
+                          child: _buildStatTile(
+                            'სულ',
+                            monthReports.length,
+                            _primaryColor,
+                          ),
+                        ),
+                        if (isCurrentMonthSelected)
+                          SizedBox(
+                            width: isMobile ? double.infinity : 120,
+                            child: _buildStatTile(
+                              'დღევანდელი',
+                              todayReports.length,
+                              const Color(0xFF7C3AED),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (dayEntries.isEmpty)
+                      _buildAuditEmptyState()
+                    else
+                      Column(
+                        children: dayEntries.map((entry) {
+                          final dayDate = entry.value.date;
+                          final dayReports =
+                              List<AuditReport>.from(entry.value.reports)
+                                ..sort((a, b) {
+                                  final rank = _statusRank(
+                                    a.status,
+                                  ).compareTo(_statusRank(b.status));
+                                  if (rank != 0) {
+                                    return rank;
+                                  }
+                                  return _lastActivity(
+                                    b,
+                                  ).compareTo(_lastActivity(a));
+                                });
+                          final georgianDate =
+                              DatabaseService.getGeorgianFormattedDate(dayDate);
+                          final dayIso = _formatDateIso(dayDate);
+                          final dayOpenCount = countByStatus(
+                            dayReports,
+                            AuditReportStatus.open,
+                          );
+                          final dayClosedCount = countByStatus(
+                            dayReports,
+                            AuditReportStatus.closed,
+                          );
+                          final dayCancelledCount = countByStatus(
+                            dayReports,
+                            AuditReportStatus.cancelled,
+                          );
+
+                          return Card(
+                            color: _card,
+                            margin: const EdgeInsets.only(bottom: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: const BorderSide(color: _border),
+                            ),
+                            child: Theme(
+                              data: Theme.of(
+                                context,
+                              ).copyWith(dividerColor: Colors.transparent),
+                              child: ExpansionTile(
+                                tilePadding: EdgeInsets.symmetric(
+                                  horizontal: isMobile ? 8 : 12,
+                                  vertical: 2,
+                                ),
+                                childrenPadding: EdgeInsets.fromLTRB(
+                                  isMobile ? 8 : 12,
+                                  0,
+                                  isMobile ? 8 : 12,
+                                  12,
+                                ),
+                                iconColor: _primaryColor,
+                                collapsedIconColor: _muted,
+                                leading: const Icon(
+                                  Icons.calendar_month_outlined,
+                                  color: _primaryColor,
+                                  size: 20,
+                                ),
+                                title: Text(
+                                  georgianDate,
+                                  style: const TextStyle(
+                                    color: _text,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  isMobile
+                                      ? 'სულ ${dayReports.length} ქმედება'
+                                      : '$dayIso • ${_getGeorgianWeekdayName(dayDate.weekday)} • სულ ${dayReports.length}',
+                                  style: const TextStyle(
+                                    color: _muted,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                trailing: Wrap(
+                                  spacing: 6,
+                                  children: [
+                                    _miniBadge(
+                                      'A',
+                                      dayOpenCount,
+                                      const Color(0xFFF59E0B),
+                                    ),
+                                    _miniBadge(
+                                      'D',
+                                      dayClosedCount,
+                                      const Color(0xFF10B981),
+                                    ),
+                                    _miniBadge(
+                                      'G',
+                                      dayCancelledCount,
+                                      const Color(0xFFEF4444),
+                                    ),
+                                  ],
+                                ),
                                 children: [
-                                  const Text(
-                                    'ფილტრი',
-                                    style: TextStyle(
-                                      color: _text,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
+                                  for (var i = 0; i < dayReports.length; i++)
+                                    Padding(
+                                      padding: EdgeInsets.only(
+                                        bottom: i == dayReports.length - 1
+                                            ? 0
+                                            : 8,
+                                      ),
+                                      child: _buildAuditReportCard(
+                                        context,
+                                        dayReports[i],
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    filterSubtitle,
-                                    style: const TextStyle(
-                                      color: _muted,
-                                      fontSize: 12,
-                                    ),
-                                  ),
                                 ],
                               ),
                             ),
-                            IconButton(
-                              onPressed: () => onChangeAuditMonth(-1),
-                              icon: const Icon(Icons.chevron_left, size: 18),
-                              color: _text,
-                              splashRadius: 18,
-                            ),
-                            SizedBox(
-                              width: 210,
-                              child: DropdownButtonFormField<DateTime>(
-                                value: monthOptions.firstWhere(
-                                  (month) =>
-                                      month.year == normalizedSelectedMonth.year &&
-                                      month.month == normalizedSelectedMonth.month,
-                                  orElse: () => normalizedSelectedMonth,
-                                ),
-                                decoration: InputDecoration(
-                                  isDense: true,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 8,
-                                  ),
-                                  filled: true,
-                                  fillColor: _surface,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: _border),
-                                  ),
-                                ),
-                                style: const TextStyle(
-                                  color: _text,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                ),
-                                iconEnabledColor: _primaryColor,
-                                items: monthOptions.map((monthDate) {
-                                  final label =
-                                      '${_getGeorgianMonthName(monthDate.month)} ${monthDate.year}';
-                                  return DropdownMenuItem<DateTime>(
-                                    value: monthDate,
-                                    child: Text(label),
-                                  );
-                                }).toList(),
-                                onChanged: (value) {
-                                  if (value != null) {
-                                    onSetSelectedAuditMonth(value);
-                                  }
-                                },
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: isNextDisabled
-                                  ? null
-                                  : () => onChangeAuditMonth(1),
-                              icon: const Icon(Icons.chevron_right, size: 18),
-                              color: _text,
-                              splashRadius: 18,
-                            ),
-                          ],
-                        ),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    SizedBox(
-                      width: isMobile ? (MediaQuery.of(context).size.width - 42) / 2 : 120,
-                      child: _buildStatTile(
-                        'აქტიური',
-                        monthOpenCount,
-                        const Color(0xFFF59E0B),
-                      ),
-                    ),
-                    SizedBox(
-                      width: isMobile ? (MediaQuery.of(context).size.width - 42) / 2 : 120,
-                      child: _buildStatTile(
-                        'დახურული',
-                        monthClosedCount,
-                        const Color(0xFF10B981),
-                      ),
-                    ),
-                    SizedBox(
-                      width: isMobile ? (MediaQuery.of(context).size.width - 42) / 2 : 120,
-                      child: _buildStatTile(
-                        'გაუქმებული',
-                        monthCancelledCount,
-                        const Color(0xFFEF4444),
-                      ),
-                    ),
-                    SizedBox(
-                      width: isMobile ? (MediaQuery.of(context).size.width - 42) / 2 : 120,
-                      child: _buildStatTile('სულ', monthReports.length, _primaryColor),
-                    ),
-                    if (isCurrentMonthSelected)
-                      SizedBox(
-                        width: isMobile ? double.infinity : 120,
-                        child: _buildStatTile(
-                          'დღევანდელი',
-                          todayReports.length,
-                          const Color(0xFF7C3AED),
-                        ),
+                          );
+                        }).toList(),
                       ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                if (dayEntries.isEmpty)
-                  _buildAuditEmptyState()
-                else
-                  Column(
-                    children: dayEntries.map((entry) {
-                      final dayDate = entry.value.date;
-                      final dayReports = List<AuditReport>.from(entry.value.reports)
-                        ..sort((a, b) {
-                          final rank = _statusRank(a.status).compareTo(
-                            _statusRank(b.status),
-                          );
-                          if (rank != 0) {
-                            return rank;
-                          }
-                          return _lastActivity(b).compareTo(_lastActivity(a));
-                        });
-                      final georgianDate =
-                          DatabaseService.getGeorgianFormattedDate(dayDate);
-                      final dayIso = _formatDateIso(dayDate);
-                      final dayOpenCount = countByStatus(
-                        dayReports,
-                        AuditReportStatus.open,
-                      );
-                      final dayClosedCount = countByStatus(
-                        dayReports,
-                        AuditReportStatus.closed,
-                      );
-                      final dayCancelledCount = countByStatus(
-                        dayReports,
-                        AuditReportStatus.cancelled,
-                      );
-
-                      return Card(
-                        color: _card,
-                        margin: const EdgeInsets.only(bottom: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: const BorderSide(color: _border),
-                        ),
-                        child: Theme(
-                          data: Theme.of(
-                            context,
-                          ).copyWith(dividerColor: Colors.transparent),
-                          child: ExpansionTile(
-                            tilePadding: EdgeInsets.symmetric(
-                              horizontal: isMobile ? 8 : 12,
-                              vertical: 2,
-                            ),
-                            childrenPadding: EdgeInsets.fromLTRB(
-                              isMobile ? 8 : 12,
-                              0,
-                              isMobile ? 8 : 12,
-                              12,
-                            ),
-                            iconColor: _primaryColor,
-                            collapsedIconColor: _muted,
-                            leading: const Icon(
-                              Icons.calendar_month_outlined,
-                              color: _primaryColor,
-                              size: 20,
-                            ),
-                            title: Text(
-                              georgianDate,
-                              style: const TextStyle(
-                                color: _text,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            subtitle: Text(
-                              isMobile
-                                  ? 'სულ ${dayReports.length} ქმედება'
-                                  : '$dayIso • ${_getGeorgianWeekdayName(dayDate.weekday)} • სულ ${dayReports.length}',
-                              style: const TextStyle(
-                                color: _muted,
-                                fontSize: 12,
-                              ),
-                            ),
-                            trailing: Wrap(
-                              spacing: 6,
-                              children: [
-                                _miniBadge(
-                                  'A',
-                                  dayOpenCount,
-                                  const Color(0xFFF59E0B),
-                                ),
-                                _miniBadge(
-                                  'D',
-                                  dayClosedCount,
-                                  const Color(0xFF10B981),
-                                ),
-                                _miniBadge(
-                                  'G',
-                                  dayCancelledCount,
-                                  const Color(0xFFEF4444),
-                                ),
-                              ],
-                            ),
-                            children: [
-                              for (var i = 0; i < dayReports.length; i++)
-                                Padding(
-                                  padding: EdgeInsets.only(
-                                    bottom: i == dayReports.length - 1 ? 0 : 8,
-                                  ),
-                                  child: _buildAuditReportCard(
-                                    context,
-                                    dayReports[i],
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
         );
       },
     );
@@ -717,7 +768,9 @@ class AdminAuditLogSection extends StatelessWidget {
         final isMobile = MediaQuery.of(context).size.width < 600;
         final events = report.sortedEvents;
         return Dialog(
-          insetPadding: isMobile ? const EdgeInsets.symmetric(horizontal: 10, vertical: 20) : const EdgeInsets.symmetric(horizontal: 40.0, vertical: 24.0),
+          insetPadding: isMobile
+              ? const EdgeInsets.symmetric(horizontal: 10, vertical: 20)
+              : const EdgeInsets.symmetric(horizontal: 40.0, vertical: 24.0),
           backgroundColor: _card,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -739,7 +792,9 @@ class AdminAuditLogSection extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              isMobile ? 'Audit #${report.orderId}' : 'Audit Report • Order #${report.orderId}',
+                              isMobile
+                                  ? 'Audit #${report.orderId}'
+                                  : 'Audit Report • Order #${report.orderId}',
                               style: TextStyle(
                                 color: _text,
                                 fontSize: isMobile ? 16 : 18,

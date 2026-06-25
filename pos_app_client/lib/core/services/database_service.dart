@@ -7,6 +7,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/order.dart';
@@ -751,13 +752,24 @@ class DatabaseService {
       await _settingsBox!.put(_monthlyReportFoodProfitRatioSetting, 0.5);
     }
     if (!_settingsBox!.containsKey(_monthlyReportManualSalesByMonthSetting)) {
-      await _settingsBox!.put(_monthlyReportManualSalesByMonthSetting, <String, double>{});
+      await _settingsBox!.put(
+        _monthlyReportManualSalesByMonthSetting,
+        <String, double>{},
+      );
     }
     if (!_settingsBox!.containsKey(_monthlyReportLeaseCostByMonthSetting)) {
-      await _settingsBox!.put(_monthlyReportLeaseCostByMonthSetting, <String, double>{});
+      await _settingsBox!.put(
+        _monthlyReportLeaseCostByMonthSetting,
+        <String, double>{},
+      );
     }
-    if (!_settingsBox!.containsKey(_monthlyReportStaffDailyCostByMonthSetting)) {
-      await _settingsBox!.put(_monthlyReportStaffDailyCostByMonthSetting, <String, double>{});
+    if (!_settingsBox!.containsKey(
+      _monthlyReportStaffDailyCostByMonthSetting,
+    )) {
+      await _settingsBox!.put(
+        _monthlyReportStaffDailyCostByMonthSetting,
+        <String, double>{},
+      );
     }
 
     // Initialize printer configuration defaults
@@ -850,7 +862,9 @@ class DatabaseService {
     return _settingsBox?.get(_posIngestConnectionKeySetting) as String?;
   }
 
-  static Map<String, dynamic> serializeReservationForSync(Reservation reservation) {
+  static Map<String, dynamic> serializeReservationForSync(
+    Reservation reservation,
+  ) {
     return _serializeReservation(reservation);
   }
 
@@ -985,6 +999,25 @@ class DatabaseService {
     );
     if (pinUsedByAnother) return false;
     user.pinCode = pinCode;
+    await user.save();
+    _notifyUsersChanged();
+    return true;
+  }
+
+  static Future<bool> updateUserRoleByUsername({
+    required String username,
+    required String role,
+  }) async {
+    final user = getUserByUsername(username);
+    if (user == null) return false;
+
+    final normalizedRole = StaffRole.normalizeClient(role);
+    if (user.isManager && normalizedRole != StaffRole.manager) {
+      final managerCount = _userBox!.values.where((u) => u.isManager).length;
+      if (managerCount <= 1) return false;
+    }
+
+    user.role = normalizedRole;
     await user.save();
     _notifyUsersChanged();
     return true;
@@ -2913,7 +2946,10 @@ class DatabaseService {
     await _settingsBox!.put(_monthlyReportManualSalesByMonthSetting, map);
   }
 
-  static double? getMonthlyReportLeaseCostOverrideForMonth(int year, int month) {
+  static double? getMonthlyReportLeaseCostOverrideForMonth(
+    int year,
+    int month,
+  ) {
     final key = '$year-${month.toString().padLeft(2, '0')}';
     final raw = _settingsBox!.get(_monthlyReportLeaseCostByMonthSetting);
     if (raw is Map) {
@@ -4788,7 +4824,8 @@ class DatabaseService {
     String? sourceId,
   }) async {
     final now = createdAt ?? getCurrentDateTime();
-    final date = businessDate ?? getCurrentDate().toIso8601String().split('T')[0];
+    final date =
+        businessDate ?? getCurrentDate().toIso8601String().split('T')[0];
     final record = <String, dynamic>{
       'id': sourceId ?? _uuid.v4(),
       'description': description.trim(),
@@ -5200,16 +5237,15 @@ class DatabaseService {
       combined.removeWhere((report) => report.status != status);
     }
 
-    combined.sort((a, b) => _reportLastActivity(b).compareTo(_reportLastActivity(a)));
+    combined.sort(
+      (a, b) => _reportLastActivity(b).compareTo(_reportLastActivity(a)),
+    );
     return combined;
   }
 
   static String _auditTableSetKey(List<String> tables) {
-    final normalized = tables
-        .map((t) => t.trim())
-        .where((t) => t.isNotEmpty)
-        .toList()
-      ..sort();
+    final normalized =
+        tables.map((t) => t.trim()).where((t) => t.isNotEmpty).toList()..sort();
     return normalized.join('|');
   }
 
@@ -5274,9 +5310,9 @@ class DatabaseService {
       return;
     }
 
-    final openReports = getAuditReports(status: AuditReportStatus.open)
-        .where((r) => !r.reportId.startsWith('legacy_report_order_'))
-        .toList();
+    final openReports = getAuditReports(
+      status: AuditReportStatus.open,
+    ).where((r) => !r.reportId.startsWith('legacy_report_order_')).toList();
 
     if (openReports.isEmpty) {
       await _settingsBox!.put(cleanupKey, true);
@@ -5302,7 +5338,9 @@ class DatabaseService {
         continue;
       }
 
-      reports.sort((a, b) => _reportLastActivity(b).compareTo(_reportLastActivity(a)));
+      reports.sort(
+        (a, b) => _reportLastActivity(b).compareTo(_reportLastActivity(a)),
+      );
       final keeper = reports.first;
       final stale = reports.skip(1);
 
@@ -5339,7 +5377,9 @@ class DatabaseService {
         latestEventTs = event.timestamp;
       }
     }
-    return report.updatedAt.isAfter(latestEventTs) ? report.updatedAt : latestEventTs;
+    return report.updatedAt.isAfter(latestEventTs)
+        ? report.updatedAt
+        : latestEventTs;
   }
 
   static List<AuditReport> _buildLegacyAuditReports(Set<int> existingOrderIds) {

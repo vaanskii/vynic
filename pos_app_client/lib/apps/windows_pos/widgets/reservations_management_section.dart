@@ -26,6 +26,7 @@ class ReservationsManagementSection extends StatelessWidget {
   final ReservationAsyncAction? onCancelReservation;
   final ReservationAsyncAction? onDeleteReservation;
   final bool showCancelledTab;
+
   /// Reservation id to visually highlight (e.g. just arrived from mobile).
   final String? highlightReservationId;
   final String title;
@@ -37,6 +38,7 @@ class ReservationsManagementSection extends StatelessWidget {
   final Color secondaryColor;
   final Color textPrimary;
   final Color mutedText;
+  final bool showHeader;
 
   const ReservationsManagementSection({
     super.key,
@@ -71,6 +73,7 @@ class ReservationsManagementSection extends StatelessWidget {
     this.secondaryColor = const Color(0xFF2563EB),
     this.textPrimary = const Color(0xFF1F2937),
     this.mutedText = const Color(0xFF475569),
+    this.showHeader = true,
   });
 
   @override
@@ -119,185 +122,189 @@ class ReservationsManagementSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          _buildSectionTitle(
-            icon: Icons.event_available,
-            title: title,
-            subtitle: subtitle,
-            isMobile: isMobile,
-          ),
-          SizedBox(height: isMobile ? 16 : 20),
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: [
-              _buildMetricTile(
-                icon: Icons.check_circle_outline,
-                label: 'დადასტურებული',
-                value: confirmed.toString(),
-                backgroundColor: const Color(0xFFE0F2FE),
-                iconColor: primaryColor,
+            if (showHeader) ...[
+              _buildSectionTitle(
+                icon: Icons.event_available,
+                title: title,
+                subtitle: subtitle,
                 isMobile: isMobile,
               ),
-              _buildMetricTile(
-                icon: Icons.cancel_outlined,
-                label: 'გაუქმებული',
-                value: cancelled.toString(),
-                backgroundColor: const Color(0xFFFFEBEE),
-                iconColor: const Color(0xFFB91C1C),
-                isMobile: isMobile,
-              ),
-              _buildMetricTile(
-                icon: Icons.people_outline,
-                label: 'სტუმრები',
-                value: reservationsForDate
-                    .fold<int>(
-                      0,
-                      (total, reservation) =>
-                          total + reservation.numberOfGuests,
-                    )
-                    .toString(),
-                backgroundColor: const Color(0xFFF5F3FF),
-                iconColor: secondaryColor,
-                isMobile: isMobile,
-              ),
+              SizedBox(height: isMobile ? 16 : 20),
             ],
-          ),
-          if (onCreateReservation != null) ...[
-            SizedBox(height: isMobile ? 16 : 24),
-            _buildActionCard(
-              icon: Icons.event_note_outlined,
-              title: createTitle,
-              description: createDescription,
-              isMobile: isMobile,
-              actions: [
-                _buildPrimaryActionButton(
-                  label: createButtonLabel,
-                  icon: Icons.add_circle_outline,
-                  onPressed: onCreateReservation!,
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                _buildMetricTile(
+                  icon: Icons.check_circle_outline,
+                  label: 'დადასტურებული',
+                  value: confirmed.toString(),
+                  backgroundColor: const Color(0xFFE0F2FE),
+                  iconColor: primaryColor,
+                  isMobile: isMobile,
+                ),
+                _buildMetricTile(
+                  icon: Icons.cancel_outlined,
+                  label: 'გაუქმებული',
+                  value: cancelled.toString(),
+                  backgroundColor: const Color(0xFFFFEBEE),
+                  iconColor: const Color(0xFFB91C1C),
+                  isMobile: isMobile,
+                ),
+                _buildMetricTile(
+                  icon: Icons.people_outline,
+                  label: 'სტუმრები',
+                  value: reservationsForDate
+                      .fold<int>(
+                        0,
+                        (total, reservation) =>
+                            total + reservation.numberOfGuests,
+                      )
+                      .toString(),
+                  backgroundColor: const Color(0xFFF5F3FF),
+                  iconColor: secondaryColor,
+                  isMobile: isMobile,
                 ),
               ],
             ),
-          ],
-          SizedBox(height: isMobile ? 16 : 24),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              OutlinedButton.icon(
-                onPressed: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: filterDate ?? normalizedToday,
-                    firstDate: normalizedToday.subtract(
-                      const Duration(days: 365),
-                    ),
-                    lastDate: normalizedToday.add(const Duration(days: 365)),
-                    builder: (context, child) {
-                      return Theme(
-                        data: ThemeData.light().copyWith(
-                          colorScheme: ColorScheme.light(
-                            primary: secondaryColor,
-                            onPrimary: Colors.white,
-                            surface: Colors.white,
-                            onSurface: textPrimary,
-                          ),
-                          dialogTheme: DialogThemeData(
-                            backgroundColor: Colors.white,
-                          ),
-                        ),
-                        child: child!,
-                      );
-                    },
-                  );
-                  if (picked == null) {
-                    return;
-                  }
-                  onFilterDateChanged(_normalizeDateOnly(picked));
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: textPrimary,
-                  side: BorderSide(color: primaryColor.withValues(alpha: 0.2)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            if (onCreateReservation != null) ...[
+              SizedBox(height: isMobile ? 16 : 24),
+              _buildActionCard(
+                icon: Icons.event_note_outlined,
+                title: createTitle,
+                description: createDescription,
+                isMobile: isMobile,
+                actions: [
+                  _buildPrimaryActionButton(
+                    label: createButtonLabel,
+                    icon: Icons.add_circle_outline,
+                    onPressed: onCreateReservation!,
                   ),
-                ),
-                icon: const Icon(Icons.calendar_today_outlined, size: 18),
-                label: Text(
-                  filterDate == null
-                      ? 'ყველა თარიღი'
-                      : DatabaseService.getGeorgianFormattedDate(filterDate!),
-                ),
-              ),
-              OutlinedButton(
-                onPressed: () => onFilterDateChanged(null),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: filterDate == null
-                      ? primaryColor
-                      : mutedText,
-                  side: BorderSide(
-                    color: (filterDate == null ? primaryColor : mutedText)
-                        .withValues(alpha: 0.25),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('ყველა'),
+                ],
               ),
             ],
-          ),
-          const SizedBox(height: 16),
-          if (showCancelledTab) ...[
-            Row(
+            SizedBox(height: isMobile ? 16 : 24),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                _buildReservationFilterButton(
-                  label: 'დადასტურებული',
-                  isActive: statusFilter == 'confirmed',
-                  onTap: () => onStatusFilterChanged('confirmed'),
-                  primaryColor: primaryColor,
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: filterDate ?? normalizedToday,
+                      firstDate: normalizedToday.subtract(
+                        const Duration(days: 365),
+                      ),
+                      lastDate: normalizedToday.add(const Duration(days: 365)),
+                      builder: (context, child) {
+                        return Theme(
+                          data: ThemeData.light().copyWith(
+                            colorScheme: ColorScheme.light(
+                              primary: secondaryColor,
+                              onPrimary: Colors.white,
+                              surface: Colors.white,
+                              onSurface: textPrimary,
+                            ),
+                            dialogTheme: DialogThemeData(
+                              backgroundColor: Colors.white,
+                            ),
+                          ),
+                          child: child!,
+                        );
+                      },
+                    );
+                    if (picked == null) {
+                      return;
+                    }
+                    onFilterDateChanged(_normalizeDateOnly(picked));
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: textPrimary,
+                    side: BorderSide(
+                      color: primaryColor.withValues(alpha: 0.2),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.calendar_today_outlined, size: 18),
+                  label: Text(
+                    filterDate == null
+                        ? 'ყველა თარიღი'
+                        : DatabaseService.getGeorgianFormattedDate(filterDate!),
+                  ),
                 ),
-                const SizedBox(width: 10),
-                _buildReservationFilterButton(
-                  label: 'გაუქმებული',
-                  isActive: statusFilter == 'cancelled',
-                  onTap: () => onStatusFilterChanged('cancelled'),
-                  primaryColor: primaryColor,
+                OutlinedButton(
+                  onPressed: () => onFilterDateChanged(null),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: filterDate == null
+                        ? primaryColor
+                        : mutedText,
+                    side: BorderSide(
+                      color: (filterDate == null ? primaryColor : mutedText)
+                          .withValues(alpha: 0.25),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('ყველა'),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-          ],
-          Builder(
-            builder: (context) {
-              final filtered = !showCancelledTab
-                  ? confirmedReservations
-                  : statusFilter == 'cancelled'
-                  ? cancelledReservations
-                  : confirmedReservations;
+            if (showCancelledTab) ...[
+              Row(
+                children: [
+                  _buildReservationFilterButton(
+                    label: 'დადასტურებული',
+                    isActive: statusFilter == 'confirmed',
+                    onTap: () => onStatusFilterChanged('confirmed'),
+                    primaryColor: primaryColor,
+                  ),
+                  const SizedBox(width: 10),
+                  _buildReservationFilterButton(
+                    label: 'გაუქმებული',
+                    isActive: statusFilter == 'cancelled',
+                    onTap: () => onStatusFilterChanged('cancelled'),
+                    primaryColor: primaryColor,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+            Builder(
+              builder: (context) {
+                final filtered = !showCancelledTab
+                    ? confirmedReservations
+                    : statusFilter == 'cancelled'
+                    ? cancelledReservations
+                    : confirmedReservations;
 
-              if (filtered.isEmpty) {
-                return _buildReservationEmptyState();
-              }
+                if (filtered.isEmpty) {
+                  return _buildReservationEmptyState();
+                }
 
-              return Column(
-                children: filtered
-                    .map(
-                      (reservation) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: _buildReservationListCard(
-                          context,
-                          reservation,
-                          isMobile,
+                return Column(
+                  children: filtered
+                      .map(
+                        (reservation) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: _buildReservationListCard(
+                            context,
+                            reservation,
+                            isMobile,
+                          ),
                         ),
-                      ),
-                    )
-                    .toList(),
-              );
-            },
-          ),
-        ],
-      ),
+                      )
+                      .toList(),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

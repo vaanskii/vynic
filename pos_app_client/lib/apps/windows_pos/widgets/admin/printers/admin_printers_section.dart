@@ -84,7 +84,8 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
                     const SizedBox(height: 16),
                     LayoutBuilder(
                       builder: (context, constraints) {
-                        final showSidePanel = constraints.maxWidth >= 900;
+                        final showSidePanel =
+                            !_isMobile && constraints.maxWidth >= 660;
                         if (!showSidePanel) {
                           return Column(
                             children: [
@@ -95,12 +96,18 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
                           );
                         }
 
+                        final keyboardWidth = constraints.maxWidth >= 920
+                            ? 300.0
+                            : 240.0;
                         return Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(child: _buildPrinterPanel()),
                             const SizedBox(width: 14),
-                            SizedBox(width: 300, child: _buildKeyboardPanel()),
+                            SizedBox(
+                              width: keyboardWidth,
+                              child: _buildKeyboardPanel(),
+                            ),
                           ],
                         );
                       },
@@ -194,9 +201,9 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
             target: _PrinterInputTarget.kitchen,
             icon: Icons.soup_kitchen_outlined,
             title: 'სამზარეულო',
-            subtitle: 'სამზარეულოს ჩეკები',
+            subtitle: 'სამზარეულოს ჩეკები - შეიყვანეთ IP',
             controller: widget.kitchenPrinterController,
-            label: 'სამზარეულოს ჩეკი IP',
+            label: '',
             hint: 'მაგ. 192.168.100.33',
           ),
           const SizedBox(height: 10),
@@ -204,9 +211,9 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
             target: _PrinterInputTarget.receipt,
             icon: Icons.receipt_long_outlined,
             title: 'ჩეკი',
-            subtitle: 'ბარისა და კლიენტის ქვითრები',
+            subtitle: 'ბარისა და კლიენტის ქვითრები - შეიყვანეთ IP',
             controller: widget.receiptPrinterController,
-            label: 'ბარის ჩეკი IP',
+            label: '',
             hint: 'მაგ. 192.168.100.34',
           ),
           const SizedBox(height: 12),

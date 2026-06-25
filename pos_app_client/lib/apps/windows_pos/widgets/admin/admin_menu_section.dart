@@ -9,6 +9,8 @@ import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_language.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
+import 'package:vynic/core/widgets/pos_on_screen_text_field.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 
 class AdminMenuSection extends StatefulWidget {
   final User user;
@@ -19,115 +21,1166 @@ class AdminMenuSection extends StatefulWidget {
 }
 
 class _AdminMenuSectionState extends State<AdminMenuSection> {
-  // Theme constants copied from AdminScreen
-  static const Color _primaryColor = Color(0xFF1E3A8A);
-  static const Color _secondaryColor = Color(0xFF2563EB);
-  static const Color _surfaceColor = Color(0xFFF4F6FF);
-  static const Color _cardColor = Colors.white;
-  static const Color _borderColor = Color(0xFFE2E8F0);
-  static const Color _textPrimary = Color(0xFF1F2937);
-  static const Color _textMuted = Color(0xFF64748B);
+  static const Color _primaryColor = AdminDesign.accentDark;
+  static const Color _secondaryColor = AdminDesign.accentDark;
+  static const Color _surfaceColor = AdminDesign.panelSoft;
+  static const Color _cardColor = AdminDesign.panel;
+  static const Color _borderColor = AdminDesign.border;
+  static const Color _textPrimary = AdminDesign.text;
+  static const Color _textMuted = AdminDesign.muted;
   static const double _priceStep = 0.5;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  int? _selectedCategoryIndex;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
     final categories = DatabaseService.getAllMenuCategories();
+    final allRows = _buildMenuRows(categories);
+    final effectiveCategoryIndex = categories.isEmpty
+        ? null
+        : (_selectedCategoryIndex != null &&
+              _selectedCategoryIndex! >= 0 &&
+              _selectedCategoryIndex! < categories.length)
+        ? _selectedCategoryIndex
+        : 0;
+    final filteredRows = allRows.where((row) {
+      if (effectiveCategoryIndex != null &&
+          row.categoryIndex != effectiveCategoryIndex) {
+        return false;
+      }
+      final query = _searchQuery.trim().toLowerCase();
+      if (query.isEmpty) return true;
+      return row.name.toLowerCase().contains(query) ||
+          row.categoryName.toLowerCase().contains(query) ||
+          (row.subcategoryName?.toLowerCase().contains(query) ?? false);
+    }).toList();
+    final kitchenEnabled = allRows
+        .where((row) => row.item.sendToKitchen)
+        .length;
+    final kitchenDisabled = allRows.length - kitchenEnabled;
 
-    return Align(
-      alignment: Alignment.topLeft,
-      child: SingleChildScrollView(
-        padding: EdgeInsets.all(isMobile ? 16 : 24),
-        child: SizedBox(
-          width: double.infinity,
+    return SizedBox.expand(
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                isMobile ? 16 : 22,
+                isMobile ? 16 : 18,
+                isMobile ? 16 : 22,
+                18,
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1180),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildPageHeader(isMobile, categories.length),
+                    const SizedBox(height: 16),
+                    _buildKpiRow(
+                      totalItems: allRows.length,
+                      categories: categories.length,
+                      kitchenEnabled: kitchenEnabled,
+                      kitchenDisabled: kitchenDisabled,
+                    ),
+                    const SizedBox(height: 16),
+                    if (categories.isEmpty)
+                      const AdminEmptyState(
+                        icon: Icons.menu_book_outlined,
+                        title: 'მენიუ ცარიელია',
+                        message:
+                            'დაამატეთ პირველი კატეგორია და შემდეგ მასში პროდუქტები.',
+                      )
+                    else
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final showSidePanel = constraints.maxWidth >= 850;
+                          if (!showSidePanel) {
+                            return Column(
+                              children: [
+                                _buildMenuTable(
+                                  rows: filteredRows,
+                                  compact: true,
+                                ),
+                                const SizedBox(height: 14),
+                                _buildCategoryPanel(categories, allRows),
+                              ],
+                            );
+                          }
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 7,
+                                child: _buildMenuTable(rows: filteredRows),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                flex: 3,
+                                child: _buildCategoryPanel(categories, allRows),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          _buildBottomDock(categories),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPageHeader(bool isMobile, int categoryCount) {
+    return Row(
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: AdminDesign.accent.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(AdminDesign.radius),
+          ),
+          child: const Icon(
+            Icons.restaurant_menu_outlined,
+            color: AdminDesign.accentDark,
+          ),
+        ),
+        const SizedBox(width: 13),
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (isMobile)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              Text(
+                'მენიუ',
+                style: TextStyle(
+                  color: _textPrimary,
+                  fontSize: isMobile ? 23 : 27,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'მართეთ კატეგორიები, პროდუქტები, ფასები და სამზარეულოს მარშრუტები.',
+                style: TextStyle(color: _textMuted, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+        if (!isMobile)
+          AdminStatusBadge(
+            icon: Icons.folder_outlined,
+            label: '$categoryCount კატეგორია',
+          ),
+      ],
+    );
+  }
+
+  Widget _buildKpiRow({
+    required int totalItems,
+    required int categories,
+    required int kitchenEnabled,
+    required int kitchenDisabled,
+  }) {
+    final items = [
+      _MenuKpiData(
+        label: 'სულ პროდუქტები',
+        value: totalItems,
+        icon: Icons.room_service_outlined,
+        color: const Color(0xFF0F9D58),
+      ),
+      _MenuKpiData(
+        label: 'კატეგორიები',
+        value: categories,
+        icon: Icons.folder_outlined,
+        color: const Color(0xFF0369A1),
+      ),
+      _MenuKpiData(
+        label: 'სამზარეულო ჩართული',
+        value: kitchenEnabled,
+        icon: Icons.check_circle_outline,
+        color: const Color(0xFF047857),
+      ),
+      _MenuKpiData(
+        label: 'სამზარეულო გამორთული',
+        value: kitchenDisabled,
+        icon: Icons.warning_amber_outlined,
+        color: const Color(0xFFEA580C),
+      ),
+    ];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 700
+            ? 4
+            : constraints.maxWidth >= 460
+            ? 2
+            : 1;
+        const spacing = 12.0;
+        final width =
+            (constraints.maxWidth - spacing * (columns - 1)) / columns;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: items
+              .map(
+                (item) => SizedBox(
+                  width: width,
+                  child: _MenuKpiCard(data: item, compact: width < 230),
+                ),
+              )
+              .toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildMenuTable({
+    required List<_AdminMenuRow> rows,
+    bool compact = false,
+  }) {
+    return Container(
+      decoration: AdminDesign.panelDecoration(),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final stackControls = constraints.maxWidth < 640;
+                final title = const Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    Icon(
+                      Icons.list_alt_outlined,
+                      color: _textPrimary,
+                      size: 21,
+                    ),
+                    SizedBox(width: 9),
                     Text(
-                      'მენიუს მართვა',
+                      'მენიუს პროდუქტები',
                       style: TextStyle(
                         color: _textPrimary,
-                        fontSize: isMobile ? 22 : 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () => _showAddCategoryDialog(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _secondaryColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 16,
-                          ),
-                        ),
-                        icon: const Icon(Icons.add),
-                        label: const Text('კატეგორიის დამატება'),
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ],
-                )
-              else
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'მენიუს მართვა',
-                      style: TextStyle(
-                        color: _textPrimary,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
+                );
+                final search = SizedBox(
+                  width: stackControls ? null : 270,
+                  height: 42,
+                  child: PosOnScreenTextField(
+                    controller: _searchController,
+                    onChanged: (value) => setState(() => _searchQuery = value),
+                    style: const TextStyle(color: _textPrimary, fontSize: 13),
+                    decoration: InputDecoration(
+                      hintText: 'ძებნა პროდუქტით ან კატეგორიით...',
+                      hintStyle: const TextStyle(
+                        color: _textMuted,
+                        fontSize: 12,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: _textMuted,
+                        size: 19,
+                      ),
+                      filled: true,
+                      fillColor: _surfaceColor,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AdminDesign.radius),
+                        borderSide: const BorderSide(color: _borderColor),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AdminDesign.radius),
+                        borderSide: const BorderSide(color: _borderColor),
                       ),
                     ),
-                    ElevatedButton.icon(
-                      onPressed: () => _showAddCategoryDialog(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _secondaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 16,
-                        ),
+                  ),
+                );
+                if (stackControls) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [title, const SizedBox(height: 12), search],
+                  );
+                }
+                return Row(
+                  children: [
+                    title,
+                    const Spacer(),
+                    Flexible(child: search),
+                  ],
+                );
+              },
+            ),
+          ),
+          const Divider(height: 1, color: _borderColor),
+          if (!compact) _buildMenuTableHeader(),
+          if (rows.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 48),
+              child: Column(
+                children: [
+                  Icon(Icons.search_off, size: 36, color: _textMuted),
+                  SizedBox(height: 10),
+                  Text(
+                    'პროდუქტი ვერ მოიძებნა',
+                    style: TextStyle(color: _textMuted, fontSize: 14),
+                  ),
+                ],
+              ),
+            )
+          else
+            ...rows.asMap().entries.map(
+              (entry) => _buildMenuRow(
+                entry.value,
+                compact: compact,
+                showDivider: entry.key < rows.length - 1,
+              ),
+            ),
+          if (rows.isNotEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: const BoxDecoration(
+                color: _surfaceColor,
+                border: Border(top: BorderSide(color: _borderColor)),
+              ),
+              child: Text(
+                '${rows.length} პროდუქტი',
+                style: const TextStyle(
+                  color: _textMuted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuTableHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      color: _surfaceColor,
+      child: const Row(
+        children: [
+          Expanded(
+            flex: 5,
+            child: Text('დასახელება', style: _MenuTableHeader.style),
+          ),
+          Expanded(
+            flex: 4,
+            child: Text('კატეგორია', style: _MenuTableHeader.style),
+          ),
+          Expanded(flex: 3, child: Text('ფასი', style: _MenuTableHeader.style)),
+          Expanded(
+            flex: 3,
+            child: Text('სამზარეულო', style: _MenuTableHeader.style),
+          ),
+          SizedBox(width: 42),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuRow(
+    _AdminMenuRow row, {
+    required bool compact,
+    required bool showDivider,
+  }) {
+    final price = _priceLabel(row.item);
+    final kitchenColor = row.item.sendToKitchen
+        ? const Color(0xFF047857)
+        : const Color(0xFFB45309);
+    final actions = PopupMenuButton<String>(
+      tooltip: 'მოქმედებები',
+      icon: const Icon(Icons.more_vert, color: _textPrimary, size: 20),
+      onSelected: (value) {
+        if (value == 'edit') {
+          if (row.subcategoryIndex == null) {
+            _showEditItemDialog(row.categoryIndex, row.itemIndex, row.item);
+          } else {
+            _showEditSubcategoryItemDialog(
+              row.categoryIndex,
+              row.subcategoryIndex!,
+              row.itemIndex,
+              row.item,
+            );
+          }
+          return;
+        }
+        if (row.subcategoryIndex == null) {
+          _confirmDeleteItem(
+            row.categoryIndex,
+            row.itemIndex,
+            row.item.translationsEn['name'] ?? row.name,
+          );
+        } else {
+          _confirmDeleteSubcategoryItem(
+            row.categoryIndex,
+            row.subcategoryIndex!,
+            row.itemIndex,
+            row.item.translationsEn['name'] ?? row.name,
+          );
+        }
+      },
+      itemBuilder: (context) => const [
+        PopupMenuItem(
+          value: 'edit',
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.edit_outlined),
+            title: Text('რედაქტირება'),
+          ),
+        ),
+        PopupMenuItem(
+          value: 'delete',
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.delete_outline, color: AdminDesign.danger),
+            title: Text('წაშლა', style: TextStyle(color: AdminDesign.danger)),
+          ),
+        ),
+      ],
+    );
+    final decoration = BoxDecoration(
+      border: showDivider
+          ? const Border(bottom: BorderSide(color: _borderColor))
+          : null,
+    );
+
+    if (compact) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        decoration: decoration,
+        child: Row(
+          children: [
+            _buildMenuItemIcon(row.item),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    row.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: _textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '${row.categoryName} • $price',
+                    style: const TextStyle(color: _textMuted, fontSize: 11),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    row.item.sendToKitchen
+                        ? 'სამზარეულო ჩართული'
+                        : 'სამზარეულო გამორთული',
+                    style: TextStyle(
+                      color: kitchenColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions,
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: decoration,
+      child: Row(
+        children: [
+          Expanded(
+            flex: 5,
+            child: Row(
+              children: [
+                _buildMenuItemIcon(row.item),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    row.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: _textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            flex: 4,
+            child: Text(
+              row.subcategoryName == null
+                  ? row.categoryName
+                  : '${row.categoryName} / ${row.subcategoryName}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: _textMuted, fontSize: 12),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              price,
+              style: const TextStyle(
+                color: _textPrimary,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              row.item.sendToKitchen ? 'ჩართული' : 'გამორთული',
+              style: TextStyle(
+                color: kitchenColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          SizedBox(width: 42, child: actions),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuItemIcon(MenuItemDB item) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: item.sendToKitchen
+            ? const Color(0xFFECFDF5)
+            : const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(AdminDesign.radius),
+        border: Border.all(color: _borderColor),
+      ),
+      child: Icon(
+        item.hasVariants() ? Icons.layers_outlined : Icons.restaurant_outlined,
+        color: item.sendToKitchen
+            ? AdminDesign.accentDark
+            : AdminDesign.warning,
+        size: 19,
+      ),
+    );
+  }
+
+  Widget _buildCategoryPanel(
+    List<MenuCategoryDB> categories,
+    List<_AdminMenuRow> allRows,
+  ) {
+    final selectedCategoryIndex =
+        _selectedCategoryIndex != null &&
+            _selectedCategoryIndex! >= 0 &&
+            _selectedCategoryIndex! < categories.length
+        ? _selectedCategoryIndex!
+        : 0;
+    return Column(
+      children: [
+        Container(
+          decoration: AdminDesign.panelDecoration(),
+          child: Column(
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    Icon(Icons.folder_outlined, color: _textPrimary, size: 21),
+                    SizedBox(width: 9),
+                    Text(
+                      'კატეგორიები',
+                      style: TextStyle(
+                        color: _textPrimary,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
                       ),
-                      icon: const Icon(Icons.add),
-                      label: const Text('კატეგორიის დამატება'),
                     ),
                   ],
                 ),
-              SizedBox(height: isMobile ? 24 : 32),
-
-              // Categories list
-              if (categories.isEmpty)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(48.0),
-                    child: Text(
-                      'ჯერ არ არის კატეგორიები. დაამატეთ ახალი კატეგორია დასაწყებად.',
-                      style: TextStyle(color: _textMuted, fontSize: 16),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                )
-              else
-                ...categories.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final category = entry.value;
-                  return _buildCategoryCard(category, index, isMobile);
-                }),
+              ),
+              const Divider(height: 1, color: _borderColor),
+              ...categories.asMap().entries.map((entry) {
+                final categoryName = entry.value.getName('ka');
+                final count = allRows
+                    .where((row) => row.categoryIndex == entry.key)
+                    .length;
+                return _buildCategoryNavigatorRow(
+                  icon: entry.value.sendToKitchen
+                      ? Icons.restaurant_outlined
+                      : Icons.local_cafe_outlined,
+                  label: categoryName,
+                  count: count,
+                  selected: selectedCategoryIndex == entry.key,
+                  onTap: () =>
+                      setState(() => _selectedCategoryIndex = entry.key),
+                  onEdit: () => _showEditCategoryDialog(entry.value, entry.key),
+                );
+              }),
             ],
           ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: AdminDesign.panelDecoration(),
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.star_outline, color: _textPrimary, size: 21),
+                  SizedBox(width: 9),
+                  Text(
+                    'მიმოხილვა',
+                    style: TextStyle(
+                      color: _textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...allRows
+                  .take(4)
+                  .map(
+                    (row) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: _surfaceColor,
+                          borderRadius: BorderRadius.circular(
+                            AdminDesign.radius,
+                          ),
+                          border: Border.all(color: _borderColor),
+                        ),
+                        child: Row(
+                          children: [
+                            _buildMenuItemIcon(row.item),
+                            const SizedBox(width: 9),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    row.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: _textPrimary,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _priceLabel(row.item),
+                                    style: const TextStyle(
+                                      color: _textMuted,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryNavigatorRow({
+    required IconData icon,
+    required String label,
+    required int count,
+    required bool selected,
+    required VoidCallback onTap,
+    VoidCallback? onEdit,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFECFDF5) : Colors.white,
+          border: const Border(bottom: BorderSide(color: _borderColor)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: selected
+                    ? AdminDesign.accent.withValues(alpha: 0.14)
+                    : _surfaceColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: selected ? AdminDesign.accentDark : _textMuted,
+                size: 17,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: _textPrimary,
+                  fontSize: 12,
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                ),
+              ),
+            ),
+            Text(
+              '$count',
+              style: const TextStyle(
+                color: _textMuted,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (onEdit != null)
+              IconButton(
+                tooltip: 'კატეგორიის რედაქტირება',
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_outlined, size: 17),
+                color: _textMuted,
+                constraints: const BoxConstraints.tightFor(
+                  width: 32,
+                  height: 32,
+                ),
+                padding: EdgeInsets.zero,
+              ),
+          ],
         ),
       ),
     );
   }
 
+  Widget _buildBottomDock(List<MenuCategoryDB> categories) {
+    final selectedIndex =
+        _selectedCategoryIndex ?? (categories.isNotEmpty ? 0 : null);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(22, 11, 22, 12),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: _borderColor)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 14,
+            offset: Offset(0, -4),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 690;
+          final addItem = ElevatedButton.icon(
+            onPressed: selectedIndex == null
+                ? null
+                : () => _showAddItemDialog(selectedIndex),
+            style: AdminDesign.primaryButtonStyle(),
+            icon: const Icon(Icons.add_circle_outline, size: 19),
+            label: const Text(
+              'ახალი პროდუქტი',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+          );
+          final addCategory = OutlinedButton.icon(
+            onPressed: () => _showCategoryManagementDialog(categories),
+            style: AdminDesign.outlineButtonStyle(),
+            icon: const Icon(Icons.folder_copy_outlined, size: 19),
+            label: const Text('კატეგორიების მართვა'),
+          );
+          if (compact) {
+            if (constraints.maxWidth < 520) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [addCategory, const SizedBox(height: 8), addItem],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: addCategory),
+                const SizedBox(width: 10),
+                Expanded(child: addItem),
+              ],
+            );
+          }
+          return Row(
+            children: [
+              const Icon(Icons.info_outline, color: _primaryColor, size: 20),
+              const SizedBox(width: 9),
+              const Expanded(
+                child: Text(
+                  'ცვლილებები ინახება მენიუს რედაქტირების დასრულებისთანავე.',
+                  style: TextStyle(color: _textMuted, fontSize: 12),
+                ),
+              ),
+              addCategory,
+              const SizedBox(width: 10),
+              addItem,
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _showCategoryManagementDialog(
+    List<MenuCategoryDB> categories,
+  ) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        final compact = MediaQuery.sizeOf(dialogContext).width < 620;
+        return Dialog(
+          backgroundColor: Colors.white,
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: compact ? 14 : 40,
+            vertical: 24,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AdminDesign.radius),
+            side: const BorderSide(color: _borderColor),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720, maxHeight: 620),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 14, 10, 12),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.folder_copy_outlined,
+                        color: _primaryColor,
+                      ),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          'კატეგორიების მართვა',
+                          style: TextStyle(
+                            color: _textPrimary,
+                            fontSize: 19,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        icon: const Icon(Icons.close),
+                        color: _textMuted,
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1, color: _borderColor),
+                Expanded(
+                  child: categories.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'კატეგორიები ჯერ არ არის',
+                            style: TextStyle(color: _textMuted),
+                          ),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(14),
+                          itemCount: categories.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 10),
+                          itemBuilder: (context, categoryIndex) {
+                            final category = categories[categoryIndex];
+                            final subcategories =
+                                category.subcategories ?? <MenuSubcategoryDB>[];
+                            return Container(
+                              decoration: BoxDecoration(
+                                color: _surfaceColor,
+                                borderRadius: BorderRadius.circular(
+                                  AdminDesign.radius,
+                                ),
+                                border: Border.all(color: _borderColor),
+                              ),
+                              child: ExpansionTile(
+                                initiallyExpanded: categoryIndex == 0,
+                                title: Text(
+                                  category.getName('ka'),
+                                  style: const TextStyle(
+                                    color: _textPrimary,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  '${subcategories.length} ქვეკატეგორია',
+                                  style: const TextStyle(
+                                    color: _textMuted,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                childrenPadding: const EdgeInsets.fromLTRB(
+                                  12,
+                                  0,
+                                  12,
+                                  12,
+                                ),
+                                trailing: PopupMenuButton<String>(
+                                  onSelected: (value) {
+                                    Navigator.pop(dialogContext);
+                                    if (value == 'edit') {
+                                      _showEditCategoryDialog(
+                                        category,
+                                        categoryIndex,
+                                      );
+                                    } else if (value == 'subcategory') {
+                                      _showAddSubcategoryDialog(categoryIndex);
+                                    } else {
+                                      _confirmDeleteCategory(
+                                        categoryIndex,
+                                        category.getName('en'),
+                                      );
+                                    }
+                                  },
+                                  itemBuilder: (context) => const [
+                                    PopupMenuItem(
+                                      value: 'edit',
+                                      child: Text('რედაქტირება'),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'subcategory',
+                                      child: Text('ქვეკატეგორიის დამატება'),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'delete',
+                                      child: Text(
+                                        'წაშლა',
+                                        style: TextStyle(
+                                          color: AdminDesign.danger,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                children: [
+                                  if (subcategories.isEmpty)
+                                    const Padding(
+                                      padding: EdgeInsets.all(12),
+                                      child: Text(
+                                        'ქვეკატეგორიები არ არის',
+                                        style: TextStyle(
+                                          color: _textMuted,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    ...subcategories.asMap().entries.map((
+                                      entry,
+                                    ) {
+                                      final subcategory = entry.value;
+                                      return Container(
+                                        margin: const EdgeInsets.only(top: 8),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 11,
+                                          vertical: 7,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            AdminDesign.radius,
+                                          ),
+                                          border: Border.all(
+                                            color: _borderColor,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.subdirectory_arrow_right,
+                                              size: 18,
+                                              color: _textMuted,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                subcategory.getName('ka'),
+                                                style: const TextStyle(
+                                                  color: _textPrimary,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                            PopupMenuButton<String>(
+                                              onSelected: (value) {
+                                                Navigator.pop(dialogContext);
+                                                if (value == 'item') {
+                                                  _showAddItemToSubcategoryDialog(
+                                                    categoryIndex,
+                                                    entry.key,
+                                                  );
+                                                } else if (value == 'edit') {
+                                                  _showEditSubcategoryDialog(
+                                                    categoryIndex,
+                                                    entry.key,
+                                                    subcategory,
+                                                  );
+                                                } else {
+                                                  _confirmDeleteSubcategory(
+                                                    categoryIndex,
+                                                    entry.key,
+                                                    subcategory.getName('en'),
+                                                  );
+                                                }
+                                              },
+                                              itemBuilder: (context) => const [
+                                                PopupMenuItem(
+                                                  value: 'item',
+                                                  child: Text(
+                                                    'პროდუქტის დამატება',
+                                                  ),
+                                                ),
+                                                PopupMenuItem(
+                                                  value: 'edit',
+                                                  child: Text('რედაქტირება'),
+                                                ),
+                                                PopupMenuItem(
+                                                  value: 'delete',
+                                                  child: Text(
+                                                    'წაშლა',
+                                                    style: TextStyle(
+                                                      color: AdminDesign.danger,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                ),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: const BoxDecoration(
+                    border: Border(top: BorderSide(color: _borderColor)),
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(dialogContext);
+                      _showAddCategoryDialog();
+                    },
+                    style: AdminDesign.primaryButtonStyle(),
+                    icon: const Icon(Icons.create_new_folder_outlined),
+                    label: const Text('ახალი კატეგორია'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  List<_AdminMenuRow> _buildMenuRows(List<MenuCategoryDB> categories) {
+    final rows = <_AdminMenuRow>[];
+    for (final categoryEntry in categories.asMap().entries) {
+      final category = categoryEntry.value;
+      final categoryName = category.getName('ka');
+      for (final itemEntry
+          in (category.items ?? <MenuItemDB>[]).asMap().entries) {
+        rows.add(
+          _AdminMenuRow(
+            categoryIndex: categoryEntry.key,
+            itemIndex: itemEntry.key,
+            categoryName: categoryName,
+            item: itemEntry.value,
+          ),
+        );
+      }
+      for (final subEntry
+          in (category.subcategories ?? <MenuSubcategoryDB>[])
+              .asMap()
+              .entries) {
+        final subcategory = subEntry.value;
+        for (final itemEntry in subcategory.items.asMap().entries) {
+          rows.add(
+            _AdminMenuRow(
+              categoryIndex: categoryEntry.key,
+              subcategoryIndex: subEntry.key,
+              itemIndex: itemEntry.key,
+              categoryName: categoryName,
+              subcategoryName: subcategory.getName('ka'),
+              item: itemEntry.value,
+            ),
+          );
+        }
+      }
+    }
+    return rows;
+  }
+
+  String _priceLabel(MenuItemDB item) {
+    if (item.hasVariants()) {
+      final prices = item.variants!.map((variant) => variant.price).toList()
+        ..sort();
+      return '₾${prices.first.toStringAsFixed(2)}+';
+    }
+    return '₾${(item.price ?? 0).toStringAsFixed(2)}';
+  }
+
+  // Kept temporarily while the existing category editor flow is migrated.
+  // ignore: unused_element
   Widget _buildCategoryCard(
     MenuCategoryDB category,
     int categoryIndex,
@@ -157,12 +1210,12 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       final itemNameKa = item.translationsKa['name'] ?? '';
       final hasVariants = item.variants != null && item.variants!.isNotEmpty;
 
-      return Card(
-        color: _cardColor,
+      return Container(
         margin: const EdgeInsets.only(bottom: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: _borderColor),
+        decoration: BoxDecoration(
+          color: _cardColor,
+          borderRadius: BorderRadius.circular(AdminDesign.radius),
+          border: Border.all(color: _borderColor),
         ),
         child: ListTile(
           leading: Icon(
@@ -244,13 +1297,9 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       );
     }
 
-    return Card(
-      color: _cardColor,
+    return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: _borderColor),
-      ),
+      decoration: AdminDesign.panelDecoration(),
       child: ExpansionTile(
         tilePadding: EdgeInsets.symmetric(
           horizontal: isMobile ? 12 : 24,
@@ -702,7 +1751,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
           ? const EdgeInsets.symmetric(horizontal: 16, vertical: 24)
           : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AdminDesign.radius),
         side: const BorderSide(color: _borderColor),
       ),
       title: Text(
@@ -2165,4 +3214,104 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       ),
     );
   }
+}
+
+class _AdminMenuRow {
+  const _AdminMenuRow({
+    required this.categoryIndex,
+    required this.itemIndex,
+    required this.categoryName,
+    required this.item,
+    this.subcategoryIndex,
+    this.subcategoryName,
+  });
+
+  final int categoryIndex;
+  final int? subcategoryIndex;
+  final int itemIndex;
+  final String categoryName;
+  final String? subcategoryName;
+  final MenuItemDB item;
+
+  String get name => item.getName('ka');
+}
+
+class _MenuKpiData {
+  const _MenuKpiData({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  final String label;
+  final int value;
+  final IconData icon;
+  final Color color;
+}
+
+class _MenuKpiCard extends StatelessWidget {
+  const _MenuKpiCard({required this.data, required this.compact});
+
+  final _MenuKpiData data;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 78,
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 10 : 16,
+        vertical: 12,
+      ),
+      decoration: AdminDesign.panelDecoration(),
+      child: Row(
+        children: [
+          Container(
+            width: compact ? 40 : 48,
+            height: compact ? 40 : 48,
+            decoration: BoxDecoration(
+              color: data.color.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(data.icon, color: data.color, size: compact ? 21 : 25),
+          ),
+          SizedBox(width: compact ? 8 : 12),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  data.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AdminDesign.muted,
+                    fontSize: compact ? 10 : 11,
+                  ),
+                ),
+                Text(
+                  '${data.value}',
+                  style: const TextStyle(
+                    color: AdminDesign.text,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+abstract final class _MenuTableHeader {
+  static const TextStyle style = TextStyle(
+    color: AdminDesign.muted,
+    fontSize: 11,
+    fontWeight: FontWeight.w700,
+  );
 }

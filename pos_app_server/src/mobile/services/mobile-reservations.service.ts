@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { PosCallbackClient } from '../../pos/pos-callback.client';
 import { MonitoringGateway } from '../../realtime/monitoring.gateway';
 import { suppressPosEchoForReservation } from '../../pos/sync-echo-guard';
@@ -198,6 +203,32 @@ export class MobileReservationsService {
       },
       this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
+    return { success: true };
+  }
+
+  /**
+   * Relay a reservation-check print request to the Windows POS (the only print
+   * host) via the direct POS callback path. No realtime broadcast: printing is
+   * not a data mutation, so nothing changes for other clients. POS-side
+   * failures (unreachable POS, reservation missing in Hive) are surfaced as
+   * clean HTTP errors instead of a raw 500.
+   */
+  async printReservationCheck(id: string): Promise<{ success: true }> {
+    const reservationId = (id ?? '').trim();
+    if (reservationId.length === 0) {
+      throw new BadRequestException('reservation id is required');
+    }
+    try {
+      await this.posCallback.printPosReservationCheck(reservationId);
+    } catch (e) {
+      const message = (e as Error).message ?? '';
+      if (message.includes('reservation_not_found') || message.includes('404')) {
+        throw new NotFoundException('Reservation not found on POS');
+      }
+      throw new ServiceUnavailableException(
+        `Could not print reservation check — is the Windows POS running? (${message})`,
+      );
+    }
     return { success: true };
   }
 }

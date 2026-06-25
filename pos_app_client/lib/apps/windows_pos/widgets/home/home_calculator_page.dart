@@ -1,16 +1,17 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/quick_order_draft.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/apps/windows_pos/screens/menu_screen.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/printer_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
+import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_language.dart';
+import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_calculator_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_reservation_table_assignment_dialog.dart';
-import 'package:vynic/apps/windows_pos/widgets/on_screen_keyboard.dart';
 import 'package:vynic/apps/windows_pos/widgets/order/helpers/service_fee_adjust_dialog.dart';
 import 'package:vynic/apps/windows_pos/widgets/receipt_language_picker_dialog.dart';
 import 'package:vynic/apps/windows_pos/widgets/receipt_preview_dialog.dart';
@@ -58,6 +59,8 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
       onOpenServiceFeeConfig: _openQuickOrderServiceFeeConfig,
       onContinueDraft: _openQuickOrderDraft,
       onPrintDraft: _printQuickOrderDraft,
+      onItemQuantityChanged: _changeQuickOrderItemQuantity,
+      serviceFeeAvailable: DatabaseService.isServiceFeeAvailable(),
       canManageDrafts: widget.user.canManageMenuCountDrafts,
       onOpenDraftManage: _openDraftManageModal,
       onClearAllDrafts: _clearAllQuickOrderDrafts,
@@ -67,6 +70,52 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
       mutedText: widget.mutedText,
       hideTitle: widget.hideTitle,
     );
+  }
+
+  Future<void> _changeQuickOrderItemQuantity(
+    QuickOrderDraft draft,
+    OrderItem item,
+    int quantity,
+  ) async {
+    try {
+      final nextItems = draft.items
+          .where((entry) => entry.itemKey != item.itemKey || quantity > 0)
+          .map((entry) {
+            if (entry.itemKey != item.itemKey) return entry.clone();
+            return OrderItem(
+              itemKey: entry.itemKey,
+              itemName: entry.itemName,
+              unitPrice: entry.unitPrice,
+              quantity: quantity,
+              total: double.parse(
+                (entry.unitPrice * quantity).toStringAsFixed(2),
+              ),
+              comment: entry.comment,
+            );
+          })
+          .toList();
+
+      final subtotal = nextItems.fold<double>(
+        0,
+        (sum, entry) => sum + entry.total,
+      );
+
+      await DatabaseService.updateQuickOrderDraft(
+        id: draft.id,
+        createdBy: draft.createdBy,
+        items: nextItems,
+        subtotal: subtotal,
+        includeServiceFee: draft.includeServiceFee,
+        serviceFeeRate: draft.serviceFeeRate,
+      );
+
+      if (mounted) setState(() {});
+    } catch (error) {
+      if (!mounted) return;
+      unawaited(
+        showErrorToast(context, 'რაოდენობის განახლება ვერ მოხერხდა: $error'),
+      );
+    }
   }
 
   Future<void> _printQuickOrderDraft(QuickOrderDraft draft) async {
@@ -98,11 +147,11 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
       }
     }
 
-    final includeService = DatabaseService.isServiceFeeAvailable() &&
+    final includeService =
+        DatabaseService.isServiceFeeAvailable() &&
         draft.includeServiceFee &&
         draft.serviceFeeAmount > 0.0;
-    final receiptTotal =
-        includeService ? draft.total : draft.subtotal;
+    final receiptTotal = includeService ? draft.total : draft.subtotal;
 
     PrinterService.printReceiptInBackground(
       items: lines,
@@ -162,11 +211,11 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
       }
     }
 
-    final includeService = DatabaseService.isServiceFeeAvailable() &&
+    final includeService =
+        DatabaseService.isServiceFeeAvailable() &&
         draft.includeServiceFee &&
         draft.serviceFeeAmount > 0.0;
-    final receiptTotal =
-        includeService ? draft.total : draft.subtotal;
+    final receiptTotal = includeService ? draft.total : draft.subtotal;
 
     if (!mounted) return;
 
@@ -208,6 +257,9 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
   Future<void> _toggleQuickOrderServiceFee(QuickOrderDraft draft) async {
     if (!DatabaseService.isServiceFeeAvailable()) return;
     final newInclude = !draft.includeServiceFee;
+    final serviceFeeRate = draft.serviceFeeRate > 0
+        ? draft.serviceFeeRate
+        : DatabaseService.getServiceFeeRate();
     try {
       await DatabaseService.updateQuickOrderDraft(
         id: draft.id,
@@ -215,7 +267,7 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
         items: draft.items,
         subtotal: draft.subtotal,
         includeServiceFee: newInclude,
-        serviceFeeRate: draft.serviceFeeRate,
+        serviceFeeRate: serviceFeeRate,
       );
       if (!mounted) {
         return;
@@ -644,9 +696,9 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
     );
   }
 
-  Future<void> _renameQuickOrderDraft(QuickOrderDraft draft) async {
+  Future<String?> _renameQuickOrderDraft(QuickOrderDraft draft) async {
     if (!widget.user.canManageMenuCountDrafts) {
-      return;
+      return null;
     }
 
     final controller = TextEditingController(text: draft.displayName ?? '');
@@ -657,7 +709,7 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
     controller.dispose();
 
     if (value == null) {
-      return;
+      return null;
     }
 
     await DatabaseService.setQuickOrderDraftDisplayName(
@@ -665,9 +717,11 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
       displayName: value,
     );
     if (!mounted) {
-      return;
+      return value;
     }
+    draft.displayName = value.trim().isEmpty ? null : value.trim();
     setState(() {});
+    return value;
   }
 
   Future<void> _openDraftManageModal(QuickOrderDraft draft) async {
@@ -675,112 +729,27 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
       return;
     }
 
-    await showModalBottomSheet<void>(
+    await showDialog<void>(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  draft.displayName?.isNotEmpty == true
-                      ? 'მენიუ: ${draft.displayName}'
-                      : 'მენიუს მართვა',
-                  style: const TextStyle(
-                    color: Color(0xFF1F2937),
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '₾${draft.total.toStringAsFixed(2)} • ${draft.items.fold<int>(0, (sum, item) => sum + item.quantity)} ცალი',
-                  style: const TextStyle(
-                    color: Color(0xFF64748B),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(sheetContext);
-                      unawaited(_confirmQuickOrderDraft(draft));
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size.fromHeight(46),
-                    ),
-                    icon: const Icon(Icons.check_circle_outline),
-                    label: const Text('დადასტურება'),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(sheetContext);
-                      unawaited(_renameQuickOrderDraft(draft));
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF1E3A8A),
-                      side: const BorderSide(color: Color(0xFFBFDBFE)),
-                      minimumSize: const Size.fromHeight(46),
-                    ),
-                    icon: const Icon(Icons.drive_file_rename_outline),
-                    label: const Text('სახელის მართვა'),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(sheetContext);
-                      unawaited(_viewQuickOrderDraftReceipt(draft));
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF0F766E),
-                      side: const BorderSide(color: Color(0xFF99F6E4)),
-                      backgroundColor: const Color(0xFFF0FDFA),
-                      minimumSize: const Size.fromHeight(46),
-                    ),
-                    icon: const Icon(Icons.visibility_outlined),
-                    label: const Text('ნახვა / PDF'),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(sheetContext);
-                      unawaited(_deleteQuickOrderDraft(draft.id));
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.redAccent,
-                      side: const BorderSide(color: Color(0xFFFECACA)),
-                      backgroundColor: const Color(0xFFFFF1F2),
-                      minimumSize: const Size.fromHeight(46),
-                    ),
-                    icon: const Icon(Icons.delete_outline),
-                    label: const Text('წაშლა'),
-                  ),
-                ),
-              ],
-            ),
-          ),
+      barrierColor: Colors.black.withValues(alpha: 0.45),
+      builder: (dialogContext) {
+        return _DraftManagementDialog(
+          draft: draft,
+          onConfirm: () {
+            Navigator.pop(dialogContext);
+            unawaited(_confirmQuickOrderDraft(draft));
+          },
+          onRename: () {
+            return _renameQuickOrderDraft(draft);
+          },
+          onPreview: () {
+            Navigator.pop(dialogContext);
+            unawaited(_viewQuickOrderDraftReceipt(draft));
+          },
+          onDelete: () {
+            Navigator.pop(dialogContext);
+            unawaited(_deleteQuickOrderDraft(draft.id));
+          },
         );
       },
     );
@@ -789,206 +758,14 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
   Future<String?> _openQuickOrderNameKeyboardSheet(
     TextEditingController controller,
   ) async {
-    String keyboardLanguage = DatabaseService.getDefaultLanguage();
-    String? result;
-
-    await showModalBottomSheet<void>(
+    return showPosKeyboardInputSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.7),
-      constraints: const BoxConstraints(maxWidth: double.infinity),
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
-              ),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                child: FractionallySizedBox(
-                  heightFactor: 0.78,
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xCCF5F6FB),
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(24),
-                      ),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.4),
-                        width: 1.2,
-                      ),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x22000000),
-                          blurRadius: 24,
-                          offset: Offset(0, -6),
-                        ),
-                      ],
-                    ),
-                    child: SafeArea(
-                      top: false,
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 1),
-                          Container(
-                            width: 44,
-                            height: 3,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.5),
-                              borderRadius: BorderRadius.circular(3),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 2),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.drive_file_rename_outline,
-                                  color: Color(0xFF9B7C4A),
-                                ),
-                                const SizedBox(width: 12),
-                                const Expanded(
-                                  child: Text(
-                                    'მენიუს სახელის დამატება',
-                                    style: TextStyle(
-                                      color: Color(0xFF1F2330),
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                TextButton.icon(
-                                  onPressed: () {
-                                    setSheetState(() {
-                                      keyboardLanguage =
-                                          keyboardLanguage == 'ka'
-                                          ? 'en'
-                                          : 'ka';
-                                    });
-                                  },
-                                  icon: const Icon(
-                                    Icons.language,
-                                    color: Color(0xFF9B7C4A),
-                                  ),
-                                  label: Text(
-                                    keyboardLanguage.toUpperCase(),
-                                    style: const TextStyle(
-                                      color: Color(0xFF1F2330),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                TextButton.icon(
-                                  onPressed: () {
-                                    result = controller.text;
-                                    Navigator.pop(sheetContext);
-                                  },
-                                  icon: const Icon(
-                                    Icons.check_circle,
-                                    color: Color(0xFF9B7C4A),
-                                  ),
-                                  label: const Text(
-                                    'შენახვა',
-                                    style: TextStyle(color: Color(0xFF1F2330)),
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () => Navigator.pop(sheetContext),
-                                  icon: const Icon(
-                                    Icons.close,
-                                    color: Color(0x991F2330),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.8),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: const Color(0xFFE1E5EE),
-                                ),
-                              ),
-                              child: ValueListenableBuilder<TextEditingValue>(
-                                valueListenable: controller,
-                                builder: (context, value, _) {
-                                  final displayText = value.text.isEmpty
-                                      ? 'მაგ: ლევანის მენიუ'
-                                      : value.text;
-                                  return Text(
-                                    displayText,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Color(0xFF1F2330),
-                                      fontSize: 18,
-                                      letterSpacing: 0.3,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              left: 16,
-                              right: 16,
-                              top: 8,
-                            ),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: TextButton.icon(
-                                onPressed: () => controller.clear(),
-                                icon: const Icon(
-                                  Icons.clear,
-                                  color: Colors.redAccent,
-                                ),
-                                label: const Text(
-                                  'სახელის გასუფთავება',
-                                  style: TextStyle(color: Colors.redAccent),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Align(
-                              alignment: Alignment.bottomCenter,
-                              child: OnScreenKeyboard(
-                                controller: controller,
-                                language: keyboardLanguage,
-                                onClose: () => Navigator.pop(sheetContext),
-                                onEnter: () {
-                                  result = controller.text;
-                                  Navigator.pop(sheetContext);
-                                },
-                                showHeader: false,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
+      controller: controller,
+      initialLanguage: PosKeyboardLanguage.fromCode(
+        DatabaseService.getDefaultLanguage(),
+      ),
+      title: 'მენიუს სახელის შეცვლა',
     );
-
-    return result;
   }
 
   void _openQuickOrderDraft(QuickOrderDraft draft) {
@@ -1026,5 +803,262 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
       }
       setState(() {});
     });
+  }
+}
+
+class _DraftManagementDialog extends StatefulWidget {
+  const _DraftManagementDialog({
+    required this.draft,
+    required this.onConfirm,
+    required this.onRename,
+    required this.onPreview,
+    required this.onDelete,
+  });
+
+  final QuickOrderDraft draft;
+  final VoidCallback onConfirm;
+  final Future<String?> Function() onRename;
+  final VoidCallback onPreview;
+  final VoidCallback onDelete;
+
+  @override
+  State<_DraftManagementDialog> createState() => _DraftManagementDialogState();
+}
+
+class _DraftManagementDialogState extends State<_DraftManagementDialog> {
+  late String _title;
+
+  @override
+  void initState() {
+    super.initState();
+    _title = _resolveTitle(widget.draft.displayName);
+  }
+
+  String _resolveTitle(String? value) {
+    final normalized = value?.trim();
+    return normalized?.isNotEmpty == true ? normalized! : 'დათვლილი მენიუ';
+  }
+
+  Future<void> _rename() async {
+    final value = await widget.onRename();
+    if (value == null || !mounted) return;
+    setState(() => _title = _resolveTitle(value));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final itemCount = widget.draft.items.fold<int>(
+      0,
+      (sum, item) => sum + item.quantity,
+    );
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 620),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFDDE4ED)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x260F172A),
+                blurRadius: 32,
+                offset: Offset(0, 16),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(22, 18, 14, 16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEAF4FB),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.receipt_long_outlined,
+                        color: Color(0xFF075E6B),
+                      ),
+                    ),
+                    const SizedBox(width: 13),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Color(0xFF102033),
+                              fontSize: 19,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            '$itemCount პროდუქტი  •  ${widget.draft.total.toStringAsFixed(2)} ₾',
+                            style: const TextStyle(
+                              color: Color(0xFF64748B),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'დახურვა',
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(22, 16, 22, 10),
+                child: Text(
+                  'მენიუს მართვა',
+                  style: TextStyle(
+                    color: Color(0xFF102033),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(22, 0, 22, 22),
+                child: GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: 2.7,
+                  children: [
+                    _DraftManagementAction(
+                      icon: Icons.check_circle_outline_rounded,
+                      title: 'დადასტურება',
+                      subtitle: 'რეზერვაციაში გადატანა',
+                      color: const Color(0xFF16A34A),
+                      onTap: widget.onConfirm,
+                    ),
+                    _DraftManagementAction(
+                      icon: Icons.drive_file_rename_outline_rounded,
+                      title: 'სახელის შეცვლა',
+                      subtitle: 'მენიუს დასახელება',
+                      color: const Color(0xFF1E3A8A),
+                      onTap: () => unawaited(_rename()),
+                    ),
+                    _DraftManagementAction(
+                      icon: Icons.visibility_outlined,
+                      title: 'ნახვა / PDF',
+                      subtitle: 'ქვითრის წინასწარი ნახვა',
+                      color: const Color(0xFF0F766E),
+                      onTap: widget.onPreview,
+                    ),
+                    _DraftManagementAction(
+                      icon: Icons.delete_outline_rounded,
+                      title: 'წაშლა',
+                      subtitle: 'მენიუს სამუდამოდ წაშლა',
+                      color: const Color(0xFFDC2626),
+                      onTap: widget.onDelete,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DraftManagementAction extends StatelessWidget {
+  const _DraftManagementAction({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color.withValues(alpha: 0.055),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(9),
+        side: BorderSide(color: color.withValues(alpha: 0.2)),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(9),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF102033),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 9,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: color, size: 19),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

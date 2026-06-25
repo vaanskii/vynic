@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/utils/payment_utils.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 
 typedef SalesActionCallback = Future<void> Function(Map<String, dynamic> sale);
 
@@ -27,12 +28,12 @@ class AdminSalesSection extends StatefulWidget {
 }
 
 class _AdminSalesSectionState extends State<AdminSalesSection> {
-  static const Color _primaryColor = Color(0xFF1E3A8A);
-  static const Color _surfaceColor = Color(0xFFF4F6FF);
-  static const Color _cardColor = Colors.white;
-  static const Color _borderColor = Color(0xFFE2E8F0);
-  static const Color _textPrimary = Color(0xFF1F2937);
-  static const Color _textMuted = Color(0xFF64748B);
+  static const Color _primaryColor = AdminDesign.accentDark;
+  static const Color _surfaceColor = AdminDesign.panelSoft;
+  static const Color _cardColor = AdminDesign.panel;
+  static const Color _borderColor = AdminDesign.border;
+  static const Color _textPrimary = AdminDesign.text;
+  static const Color _textMuted = AdminDesign.muted;
 
   late int _selectedSalesYear;
   late int _selectedSalesMonth;
@@ -711,7 +712,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(
             isMobile ? 16 : 24,
-            0,
+            isMobile ? 16 : 20,
             isMobile ? 16 : 24,
             24,
           ),
@@ -720,19 +721,21 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'გაყიდვების ისტორია',
-                  style: TextStyle(
-                    color: _textPrimary,
-                    fontSize: isMobile ? 22 : 28,
-                    fontWeight: FontWeight.bold,
+                AdminSectionHeader(
+                  icon: Icons.history_outlined,
+                  title: 'გაყიდვების ისტორია',
+                  subtitle:
+                      'დღიური და თვიური ოპერაციები, გადახდები, გაუქმებები და ჩეკის ხელახალი ბეჭდვა.',
+                  badge: AdminStatusBadge(
+                    icon: Icons.receipt_long_outlined,
+                    label: '$monthlyActiveCount აქტიური',
                   ),
                 ),
-                SizedBox(height: isMobile ? 24 : 32),
+                const SizedBox(height: 16),
                 Card(
                   color: _cardColor,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AdminDesign.radius),
                     side: const BorderSide(color: _borderColor),
                   ),
                   child: Padding(
@@ -888,7 +891,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                 Card(
                   color: _cardColor,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AdminDesign.radius),
                     side: const BorderSide(color: _borderColor),
                   ),
                   child: Padding(

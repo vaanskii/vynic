@@ -25,8 +25,7 @@ class StaffRole {
   }
 
   /// API / Prisma enum (uppercase).
-  static String labelKaFromApi(String apiRole) =>
-      labelKa(fromApi(apiRole));
+  static String labelKaFromApi(String apiRole) => labelKa(fromApi(apiRole));
 
   static String normalizeClient(String raw) {
     final r = raw.trim().toLowerCase();
@@ -71,7 +70,7 @@ class StaffRole {
     return r == manager || r == supervisor;
   }
 
-  /// ადმინ პანელი — რეზერვაციის შექმნა (წაშლა/გაუქმება — მენეჯერი).
+  /// მართვის ცენტრი — რეზერვაციის შექმნა (წაშლა/გაუქმება — მენეჯერი).
   static bool canCreateReservationsInAdmin(String clientRole) {
     final r = normalizeClient(clientRole);
     return r == manager || r == supervisor;

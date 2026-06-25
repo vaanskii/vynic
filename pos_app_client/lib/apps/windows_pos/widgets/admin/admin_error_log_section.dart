@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 
 class AdminErrorLogSection extends StatefulWidget {
   const AdminErrorLogSection({super.key});
@@ -13,12 +14,12 @@ class AdminErrorLogSection extends StatefulWidget {
 }
 
 class _AdminErrorLogSectionState extends State<AdminErrorLogSection> {
-  static const Color _secondaryColor = Color(0xFF2563EB);
-  static const Color _surfaceColor = Color(0xFFF4F6FF);
-  static const Color _cardColor = Colors.white;
-  static const Color _borderColor = Color(0xFFE2E8F0);
-  static const Color _textPrimary = Color(0xFF1F2937);
-  static const Color _textMuted = Color(0xFF64748B);
+  static const Color _secondaryColor = AdminDesign.accentDark;
+  static const Color _surfaceColor = AdminDesign.panelSoft;
+  static const Color _cardColor = AdminDesign.panel;
+  static const Color _borderColor = AdminDesign.border;
+  static const Color _textPrimary = AdminDesign.text;
+  static const Color _textMuted = AdminDesign.muted;
 
   @override
   Widget build(BuildContext context) {
@@ -28,50 +29,51 @@ class _AdminErrorLogSectionState extends State<AdminErrorLogSection> {
       child: Align(
         alignment: Alignment.topLeft,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-          child: SizedBox(
-            width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(28, 20, 28, 24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1100),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'შეცდომები',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    if (logs.isNotEmpty)
-                      ElevatedButton.icon(
-                        onPressed: _confirmClearErrorLogs,
-                        icon: const Icon(Icons.delete_outline, size: 18),
-                        label: const Text('გასუფთავება'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent,
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                  ],
+                AdminSectionHeader(
+                  icon: Icons.bug_report_outlined,
+                  title: 'შეცდომების ჟურნალი',
+                  subtitle:
+                      'ტექნიკური შეცდომები, კონტექსტი და დიაგნოსტიკური ინფორმაცია.',
+                  badge: AdminStatusBadge(
+                    icon: logs.isEmpty
+                        ? Icons.check_circle_outline
+                        : Icons.warning_amber_outlined,
+                    label: logs.isEmpty
+                        ? 'შეცდომა არ არის'
+                        : '${logs.length} შეცდომა',
+                    color: logs.isEmpty
+                        ? AdminDesign.accentDark
+                        : AdminDesign.warning,
+                    background: logs.isEmpty
+                        ? const Color(0xFFECFDF5)
+                        : const Color(0xFFFFFBEB),
+                    border: logs.isEmpty
+                        ? const Color(0xFFA7F3D0)
+                        : const Color(0xFFFDE68A),
+                  ),
+                  action: logs.isNotEmpty
+                      ? OutlinedButton.icon(
+                          onPressed: _confirmClearErrorLogs,
+                          icon: const Icon(Icons.delete_outline, size: 18),
+                          label: const Text('გასუფთავება'),
+                          style: AdminDesign.outlineButtonStyle(
+                            foreground: AdminDesign.danger,
+                          ),
+                        )
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 if (logs.isEmpty)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: _cardColor,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: _borderColor),
-                    ),
-                    child: const Text(
-                      'შეცდომები ჯერ არ დაფიქსირებულა.',
-                      style: TextStyle(color: _textMuted, fontSize: 14),
-                    ),
+                  const AdminEmptyState(
+                    icon: Icons.verified_outlined,
+                    title: 'ყველაფერი გამართულად მუშაობს',
+                    message: 'შეცდომები ჯერ არ დაფიქსირებულა.',
                   )
                 else
                   ...logs.map(_buildErrorLogCard),
@@ -100,7 +102,7 @@ class _AdminErrorLogSectionState extends State<AdminErrorLogSection> {
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: _cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AdminDesign.radius),
         border: Border.all(color: _borderColor),
       ),
       child: ExpansionTile(
@@ -136,7 +138,7 @@ class _AdminErrorLogSectionState extends State<AdminErrorLogSection> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: _surfaceColor,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AdminDesign.radius),
               border: Border.all(color: _borderColor),
             ),
             child: SelectableText(

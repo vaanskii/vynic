@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:vynic/apps/windows_pos/widgets/pin_button.dart';
+import 'package:vynic/apps/windows_pos/widgets/login/login_desktop_view.dart';
 import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
@@ -20,11 +20,25 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  static const Color _backgroundColor = Color(0xFFF4F6FA);
-  static const Color _primaryColor = Color(0xFF1E3A8A);
-
   String pin = '';
   bool _isLoading = false;
+  late DateTime _now;
+  Timer? _clock;
+
+  @override
+  void initState() {
+    super.initState();
+    _now = DateTime.now();
+    _clock = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() => _now = DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() {
+    _clock?.cancel();
+    super.dispose();
+  }
 
   void addDigit(String digit) {
     setState(() {
@@ -208,7 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    if (shellUser != null && !shellUser.canUseManagerMobileApp) {
+    if (!shellUser.canUseManagerMobileApp) {
       await MobileAuthService.logout();
       if (mounted) {
         setState(() => _isLoading = false);
@@ -230,210 +244,22 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Widget _buildPinDisplay(bool isSmallScreen) {
-    final double slotSize = isSmallScreen ? 38 : 44;
-    final double radius = isSmallScreen ? 12 : 14;
-    final double elevationAlpha = isSmallScreen ? 0.18 : 0.22;
-
-    return Wrap(
-      spacing: isSmallScreen ? 12 : 14,
-      runSpacing: 12,
-      alignment: WrapAlignment.center,
-      runAlignment: WrapAlignment.center,
-      children: List.generate(6, (index) {
-        final bool isFilled = index < pin.length;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-          width: slotSize,
-          height: slotSize,
-          decoration: BoxDecoration(
-            color: isFilled ? _primaryColor : Colors.white,
-            borderRadius: BorderRadius.circular(radius),
-            border: Border.all(
-              color: isFilled ? _primaryColor : const Color(0xFFCBD5E1),
-              width: 2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isFilled
-                    ? _primaryColor.withValues(alpha: elevationAlpha)
-                    : Colors.black.withValues(alpha: 0.05),
-                blurRadius: isFilled ? 18 : 10,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-        );
-      }),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenHeight <= 768 || screenWidth <= 1024;
-
+    final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
     return Scaffold(
-      backgroundColor: _backgroundColor,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(
-              horizontal: isSmallScreen ? 16 : 32,
-              vertical: isSmallScreen ? 24 : 40,
-            ),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: isSmallScreen ? screenWidth * 0.92 : 520,
-              ),
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isSmallScreen ? 24 : 40,
-                  vertical: isSmallScreen ? 28 : 36,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(isSmallScreen ? 20 : 24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 32,
-                      offset: const Offset(0, 18),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          height: isSmallScreen ? 52 : 60,
-                          width: isSmallScreen ? 52 : 60,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: _primaryColor.withValues(alpha: 0.12),
-                          ),
-                          child: Icon(
-                            Icons.lock_outline,
-                            size: isSmallScreen ? 26 : 28,
-                            color: _primaryColor,
-                          ),
-                        ),
-                        SizedBox(width: isSmallScreen ? 14 : 18),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'POS Access',
-                                style: TextStyle(
-                                  fontSize: isSmallScreen ? 22 : 26,
-                                  fontWeight: FontWeight.w700,
-                                  color: _primaryColor,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Enter your secure PIN to continue working.',
-                                style: TextStyle(
-                                  fontSize: isSmallScreen ? 14 : 15,
-                                  color: const Color(0xFF64748B),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: isSmallScreen ? 26 : 32),
-                    Center(child: _buildPinDisplay(isSmallScreen)),
-                    SizedBox(height: isSmallScreen ? 24 : 32),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isSmallScreen ? 14 : 20,
-                        vertical: isSmallScreen ? 18 : 22,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(
-                          isSmallScreen ? 18 : 20,
-                        ),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                      ),
-                      child: Column(
-                        children: [
-                          PinPad(
-                            onDigitPressed: addDigit,
-                            onClearPressed: clearPin,
-                            onDeletePressed: deleteDigit,
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: isSmallScreen ? 24 : 32),
-                    if (_isLoading)
-                      Center(
-                        child: SizedBox(
-                          height: 42,
-                          width: 42,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 3.5,
-                            color: _primaryColor,
-                          ),
-                        ),
-                      )
-                    else
-                      SizedBox(
-                        height: isSmallScreen ? 48 : 52,
-                        child: ElevatedButton(
-                          onPressed: pin.length >= 4 ? _authenticateUser : null,
-                          style: ElevatedButton.styleFrom(
-                            elevation: 0,
-                            backgroundColor: _primaryColor,
-                            disabledBackgroundColor: const Color(0xFFCBD5E1),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: Text(
-                            'ავტორიზაცია',
-                            style: TextStyle(
-                              fontSize: isSmallScreen ? 16 : 18,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) ...[
-                      SizedBox(height: isSmallScreen ? 16 : 20),
-                      TextButton.icon(
-                        onPressed: _isLoading ? null : _launchCompanionApp,
-                        style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFF64748B),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 16,
-                          ),
-                        ),
-                        icon: const Icon(
-                          Icons.admin_panel_settings_outlined,
-                          size: 20,
-                        ),
-                        label: const Text('Companion App (Managers)'),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
+      body: LoginDesktopView(
+        pin: pin,
+        isLoading: _isLoading,
+        workDate: DatabaseService.getCurrentDate(),
+        now: _now,
+        onDigitPressed: addDigit,
+        onClearPressed: clearPin,
+        onDeletePressed: deleteDigit,
+        onLoginPressed: pin.length >= 4 ? _authenticateUser : null,
+        onOtherUserPressed: clearPin,
+        showCompanionApp: isMobile,
+        onCompanionAppPressed: isMobile ? _launchCompanionApp : null,
       ),
     );
   }

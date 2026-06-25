@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/services/database_service.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 
 enum _SalesPeriod { today, week, month }
 
@@ -25,13 +26,13 @@ class AdminSalesReportSection extends StatefulWidget {
 }
 
 class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
-  static const Color _primary = Color(0xFF2563EB);
-  static const Color _accent = Color(0xFF7C3AED);
-  static const Color _surface = Color(0xFFF5F7FF);
-  static const Color _card = Colors.white;
-  static const Color _border = Color(0xFFE2E8F0);
-  static const Color _text = Color(0xFF0F172A);
-  static const Color _muted = Color(0xFF64748B);
+  static const Color _primary = AdminDesign.accentDark;
+  static const Color _accent = AdminDesign.accent;
+  static const Color _surface = AdminDesign.panelSoft;
+  static const Color _card = AdminDesign.panel;
+  static const Color _border = AdminDesign.border;
+  static const Color _text = AdminDesign.text;
+  static const Color _muted = AdminDesign.muted;
 
   static final NumberFormat _money = NumberFormat.currency(
     locale: 'ka_GE',
@@ -109,25 +110,21 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
       child: Align(
         alignment: Alignment.topLeft,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
           child: SizedBox(
             width: double.infinity,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'გაყიდვების ანალიტიკა',
-                  style: TextStyle(
-                    color: _text,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.2,
+                AdminSectionHeader(
+                  icon: Icons.insights_outlined,
+                  title: 'გაყიდვების ანალიტიკა',
+                  subtitle:
+                      'ძირითადი მაჩვენებლები, პერიოდული დინამიკა და მენიუს შედეგები.',
+                  badge: AdminStatusBadge(
+                    icon: Icons.calendar_month_outlined,
+                    label: filtered.label,
                   ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'ადმინისტრატორის პანელი — სწრაფი KPI, პერიოდული დინამიკა და მენიუს კატეგორიების შედეგები.',
-                  style: TextStyle(color: _muted, fontSize: 13),
                 ),
                 const SizedBox(height: 12),
                 _buildPeriodToggleCard(),
@@ -207,11 +204,11 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
         spacing: 8,
         runSpacing: 8,
         children: [
-          periodChip(_SalesPeriod.today, 'Today', Icons.today_outlined),
-          periodChip(_SalesPeriod.week, 'This Week', Icons.date_range_outlined),
+          periodChip(_SalesPeriod.today, 'დღეს', Icons.today_outlined),
+          periodChip(_SalesPeriod.week, 'ეს კვირა', Icons.date_range_outlined),
           periodChip(
             _SalesPeriod.month,
-            'This Month',
+            'ეს თვე',
             Icons.calendar_month_outlined,
           ),
         ],
@@ -230,12 +227,8 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFEAF1FF), Color(0xFFF8FAFF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(color: const Color(0xFFD9E5FF)),
+        color: const Color(0xFFECFDF5),
+        border: Border.all(color: const Color(0xFFA7F3D0)),
       ),
       child: Row(
         children: [
@@ -244,7 +237,7 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Report Month',
+                  'საანგარიშო თვე',
                   style: TextStyle(
                     color: _primary,
                     fontSize: 12,
@@ -345,8 +338,8 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFF),
-        borderRadius: BorderRadius.circular(12),
+        color: AdminDesign.panelSoft,
+        borderRadius: BorderRadius.circular(AdminDesign.radius),
         border: Border.all(color: _border),
       ),
       child: Text(
@@ -363,25 +356,25 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
   Widget _buildKpiGrid(_SalesKpis kpis) {
     final cards = <Widget>[
       _kpiCard(
-        title: 'Net Revenue',
+        title: 'წმინდა შემოსავალი',
         value: _money.format(kpis.revenue),
         subtitle: 'აქტიური გაყიდვები',
-        color: const Color(0xFF2563EB),
+        color: AdminDesign.accentDark,
       ),
       _kpiCard(
-        title: 'Transactions',
+        title: 'ტრანზაქციები',
         value: kpis.transactions.toString(),
         subtitle: 'გაუქმების გარეშე',
         color: const Color(0xFF7C3AED),
       ),
       _kpiCard(
-        title: 'Average Check',
+        title: 'საშუალო ჩეკი',
         value: _money.format(kpis.avgCheck),
         subtitle: 'საშუალო ჩეკი',
         color: const Color(0xFF0EA5E9),
       ),
       _kpiCard(
-        title: 'Cancelled',
+        title: 'გაუქმებული',
         value: kpis.cancelledCount.toString(),
         subtitle: 'გაუქმებული გაყიდვები',
         color: const Color(0xFFEF4444),
@@ -965,7 +958,7 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
       shadowColor: _primary.withValues(alpha: 0.08),
       color: _card,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AdminDesign.radius),
         side: const BorderSide(color: _border),
       ),
       child: Padding(

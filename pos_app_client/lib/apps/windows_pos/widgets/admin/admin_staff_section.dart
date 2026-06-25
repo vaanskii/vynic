@@ -9,14 +9,15 @@ import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/core/widgets/pos_on_screen_text_field.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 
-const Color _staffPrimary = Color(0xFF1E3A8A);
-const Color _staffAccent = Color(0xFF2563EB);
-const Color _staffSurface = Color(0xFFF4F6FF);
-const Color _staffCard = Colors.white;
-const Color _staffBorder = Color(0xFFE2E8F0);
-const Color _staffText = Color(0xFF1F2937);
-const Color _staffMuted = Color(0xFF64748B);
+const Color _staffPrimary = AdminDesign.accentDark;
+const Color _staffAccent = AdminDesign.accent;
+const Color _staffSurface = AdminDesign.panelSoft;
+const Color _staffCard = AdminDesign.panel;
+const Color _staffBorder = AdminDesign.border;
+const Color _staffText = AdminDesign.text;
+const Color _staffMuted = AdminDesign.muted;
 
 const TextStyle _staffFieldLabel = TextStyle(
   color: _staffMuted,
@@ -24,21 +25,27 @@ const TextStyle _staffFieldLabel = TextStyle(
   fontWeight: FontWeight.w600,
 );
 
+const TextStyle _staffTableHeaderStyle = TextStyle(
+  color: _staffMuted,
+  fontSize: 11,
+  fontWeight: FontWeight.w700,
+);
+
 InputDecoration _staffInputDecoration(String hint) => InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(color: _staffMuted.withValues(alpha: 0.7)),
-      filled: true,
-      fillColor: _staffSurface,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: _staffBorder),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: _staffAccent, width: 1.4),
-      ),
-    );
+  hintText: hint,
+  hintStyle: TextStyle(color: _staffMuted.withValues(alpha: 0.7)),
+  filled: true,
+  fillColor: _staffSurface,
+  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+  enabledBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(AdminDesign.radius),
+    borderSide: const BorderSide(color: _staffBorder),
+  ),
+  focusedBorder: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(AdminDesign.radius),
+    borderSide: const BorderSide(color: _staffAccent, width: 1.4),
+  ),
+);
 
 /// Combined staff create + directory (replaces separate waiters / users tabs).
 class AdminStaffSection extends StatefulWidget {
@@ -55,18 +62,33 @@ enum _StaffListFilter { all, manager, supervisor, waiter }
 class _AdminStaffSectionState extends State<AdminStaffSection> {
   _StaffListFilter _listFilter = _StaffListFilter.all;
   int _listVersion = 0;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   bool get _waitersOnlyAdmin => widget.user.isSupervisor;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _refreshList() => setState(() => _listVersion++);
 
   List<User> get _allUsers => DatabaseService.getAllUsers();
 
   List<User> get _directoryUsers {
-    if (_waitersOnlyAdmin) {
-      return _allUsers.where((u) => u.isWaiter).toList();
+    final users = _waitersOnlyAdmin
+        ? _allUsers.where((u) => u.isWaiter)
+        : _filteredUsers;
+    final query = _searchQuery.trim().toLowerCase();
+    if (query.isEmpty) {
+      return users.toList();
     }
-    return _filteredUsers;
+    return users.where((user) {
+      return user.username.toLowerCase().contains(query) ||
+          user.roleLabelKa.toLowerCase().contains(query);
+    }).toList();
   }
 
   List<User> get _filteredUsers {
@@ -99,45 +121,74 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
     final waiters = _allUsers.where((u) => u.isWaiter).length;
 
     return SizedBox.expand(
-      child: Align(
-        alignment: Alignment.topLeft,
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(isMobile ? 16 : 28),
-          child: SizedBox(
-            width: double.infinity,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildPageHeader(isMobile),
-                if (_waitersOnlyAdmin) ...[
-                  const SizedBox(height: 16),
-                  _buildSupervisorAccessNotice(isMobile),
-                ],
-                const SizedBox(height: 20),
-                if (_waitersOnlyAdmin)
-                  _buildKpiRow(
-                    total: waiters,
-                    managers: 0,
-                    supervisors: 0,
-                    waiters: waiters,
-                    isMobile: isMobile,
-                    waitersOnly: true,
-                  )
-                else
-                  _buildKpiRow(
-                    total: _allUsers.length,
-                    managers: managers,
-                    supervisors: supervisors,
-                    waiters: waiters,
-                    isMobile: isMobile,
-                  ),
-                const SizedBox(height: 24),
-                _buildDirectory(isMobile),
-              ],
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                isMobile ? 16 : 22,
+                isMobile ? 16 : 18,
+                isMobile ? 16 : 22,
+                18,
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1180),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildPageHeader(isMobile),
+                    if (_waitersOnlyAdmin) ...[
+                      const SizedBox(height: 14),
+                      _buildSupervisorAccessNotice(isMobile),
+                    ],
+                    const SizedBox(height: 16),
+                    if (_waitersOnlyAdmin)
+                      _buildKpiRow(
+                        total: waiters,
+                        managers: 0,
+                        supervisors: 0,
+                        waiters: waiters,
+                        isMobile: isMobile,
+                        waitersOnly: true,
+                      )
+                    else
+                      _buildKpiRow(
+                        total: _allUsers.length,
+                        managers: managers,
+                        supervisors: supervisors,
+                        waiters: waiters,
+                        isMobile: isMobile,
+                      ),
+                    const SizedBox(height: 16),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final showSidePanel = constraints.maxWidth >= 860;
+                        if (!showSidePanel) {
+                          return Column(
+                            children: [
+                              _buildDirectory(isMobile),
+                              const SizedBox(height: 14),
+                              _buildRolesPanel(),
+                            ],
+                          );
+                        }
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(flex: 7, child: _buildDirectory(isMobile)),
+                            const SizedBox(width: 14),
+                            Expanded(flex: 3, child: _buildRolesPanel()),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
+          _buildBottomDock(),
+        ],
       ),
     );
   }
@@ -153,7 +204,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
       padding: EdgeInsets.all(isMobile ? 14 : 16),
       decoration: BoxDecoration(
         color: noticeBg,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AdminDesign.radius),
         border: Border.all(color: noticeBorder, width: 1.2),
       ),
       child: Row(
@@ -196,62 +247,48 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
   }
 
   Widget _buildPageHeader(bool isMobile) {
-    final titleBlock = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        Text(
-          'პერსონალი',
-          style: TextStyle(
-            color: _staffText,
-            fontSize: isMobile ? 24 : 30,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.5,
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: AdminDesign.accent.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(AdminDesign.radius),
+          ),
+          child: const Icon(
+            Icons.groups_2_outlined,
+            color: AdminDesign.accentDark,
           ),
         ),
-        const SizedBox(height: 6),
-        Text(
-          _waitersOnlyAdmin
-              ? 'ოფიციანტების დამატება და PIN-ების მართვა'
-              : 'თანამშრომლების რეესტრი და მართვა',
-          style: TextStyle(color: _staffMuted, fontSize: isMobile ? 14 : 15),
+        const SizedBox(width: 13),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'პერსონალი',
+                style: TextStyle(
+                  color: _staffText,
+                  fontSize: isMobile ? 23 : 27,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                _waitersOnlyAdmin
+                    ? 'ოფიციანტების დამატება და PIN-ების მართვა.'
+                    : 'მართეთ თანამშრომლები, როლები და PIN-ები.',
+                style: const TextStyle(color: _staffMuted, fontSize: 13),
+              ),
+            ],
+          ),
         ),
-      ],
-    );
-
-    final addButton = SizedBox(
-      height: 48,
-      child: ElevatedButton.icon(
-        onPressed: _openAddStaffDialog,
-        icon: const Icon(Icons.person_add_alt_1),
-        label: Text(
-          _waitersOnlyAdmin ? 'ახალი ოფიციანტი' : 'ახალი თანამშრომელი',
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: _staffAccent,
-          foregroundColor: Colors.white,
-          padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 20),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      ),
-    );
-
-    if (isMobile) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          titleBlock,
-          const SizedBox(height: 16),
-          addButton,
-        ],
-      );
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: titleBlock),
-        addButton,
+        if (!isMobile)
+          AdminStatusBadge(
+            icon: Icons.badge_outlined,
+            label: '${_allUsers.length} თანამშრომელი',
+          ),
       ],
     );
   }
@@ -267,35 +304,67 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
     final items = waitersOnly
         ? [
             _KpiChip(
-              label: 'ოფიციანტი',
+              label: 'ყველა ოფიციანტი',
               value: waiters,
-              color: const Color(0xFF0EA5E9),
+              color: const Color(0xFF0F9D58),
+              icon: Icons.groups_2_outlined,
             ),
           ]
         : [
-            _KpiChip(label: 'სულ', value: total, color: _staffPrimary),
-            _KpiChip(label: 'მენეჯერი', value: managers, color: _staffAccent),
             _KpiChip(
-              label: 'ზედამხედველი',
+              label: 'სულ თანამშრომლები',
+              value: total,
+              color: const Color(0xFF0F9D58),
+              icon: Icons.groups_2_outlined,
+            ),
+            _KpiChip(
+              label: 'მენეჯერი',
+              value: managers,
+              color: const Color(0xFF0F766E),
+              icon: Icons.admin_panel_settings_outlined,
+            ),
+            _KpiChip(
+              label: 'სუპერვაიზერი',
               value: supervisors,
               color: const Color(0xFF7C3AED),
+              icon: Icons.supervisor_account_outlined,
             ),
             _KpiChip(
               label: 'ოფიციანტი',
               value: waiters,
-              color: const Color(0xFF0EA5E9),
+              color: const Color(0xFFEA580C),
+              icon: Icons.room_service_outlined,
             ),
           ];
-    if (isMobile) {
-      return Wrap(spacing: 10, runSpacing: 10, children: items);
-    }
-    return Row(
-      children: items
-          .map((c) => Expanded(child: Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: c,
-              )))
-          .toList(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = isMobile || constraints.maxWidth < 520
+            ? 1
+            : constraints.maxWidth >= 700
+            ? items.length
+            : 2;
+        final spacing = 12.0;
+        final width =
+            (constraints.maxWidth - (spacing * (columns - 1))) / columns;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: items
+              .map(
+                (item) => SizedBox(
+                  width: width,
+                  child: _KpiChip(
+                    label: item.label,
+                    value: item.value,
+                    color: item.color,
+                    icon: item.icon,
+                    compact: width < 230,
+                  ),
+                ),
+              )
+              .toList(),
+        );
+      },
     );
   }
 
@@ -304,64 +373,146 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
     final _ = _listVersion;
     final users = _directoryUsers;
 
-    return _StaffCard(
+    return Container(
+      decoration: AdminDesign.panelDecoration(),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.groups_rounded, color: _staffPrimary, size: 22),
-              const SizedBox(width: 10),
-              Text(
-                'რეესტრი',
-                style: TextStyle(
-                  color: _staffText,
-                  fontSize: isMobile ? 17 : 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '${users.length} ჩანაწერი',
-                style: TextStyle(color: _staffMuted, fontSize: 13),
-              ),
-            ],
-          ),
-          if (!_waitersOnlyAdmin) ...[
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _filterChip('ყველა', _StaffListFilter.all),
-                _filterChip('მენეჯერი', _StaffListFilter.manager),
-                _filterChip('ზედამხედველი', _StaffListFilter.supervisor),
-                _filterChip('ოფიციანტი', _StaffListFilter.waiter),
-              ],
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 760;
+                final title = const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.manage_accounts_outlined,
+                      color: _staffText,
+                      size: 21,
+                    ),
+                    SizedBox(width: 9),
+                    Text(
+                      'თანამშრომლების სია',
+                      style: TextStyle(
+                        color: _staffText,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                );
+                final searchField = SizedBox(
+                  width: compact ? null : 270,
+                  height: 42,
+                  child: PosOnScreenTextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      setState(() => _searchQuery = value);
+                    },
+                    style: const TextStyle(color: _staffText, fontSize: 13),
+                    decoration: InputDecoration(
+                      hintText: 'ძებნა სახელით ან როლით...',
+                      hintStyle: const TextStyle(
+                        color: _staffMuted,
+                        fontSize: 12,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        size: 19,
+                        color: _staffMuted,
+                      ),
+                      filled: true,
+                      fillColor: _staffSurface,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AdminDesign.radius),
+                        borderSide: const BorderSide(color: _staffBorder),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AdminDesign.radius),
+                        borderSide: const BorderSide(color: _staffBorder),
+                      ),
+                    ),
+                  ),
+                );
+                final controls = Row(
+                  mainAxisSize: compact ? MainAxisSize.max : MainAxisSize.min,
+                  children: [
+                    if (compact) Expanded(child: searchField) else searchField,
+                    if (!_waitersOnlyAdmin) ...[
+                      const SizedBox(width: 8),
+                      _buildFilterMenu(iconOnly: compact),
+                    ],
+                  ],
+                );
+
+                if (compact) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [title, const SizedBox(height: 12), controls],
+                  );
+                }
+                return Row(
+                  children: [
+                    title,
+                    const Spacer(),
+                    Flexible(child: controls),
+                  ],
+                );
+              },
             ),
-          ],
-          const SizedBox(height: 18),
+          ),
+          const Divider(height: 1, color: _staffBorder),
+          if (!isMobile) _buildTableHeader(),
           if (users.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 32),
-              child: Center(
-                child: Text(
-                  'ამ ფილტრში ჩანაწერი არ არის',
-                  style: TextStyle(color: _staffMuted, fontSize: 14),
-                ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 48),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.person_search_outlined,
+                    size: 36,
+                    color: _staffMuted,
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    'თანამშრომელი ვერ მოიძებნა',
+                    style: TextStyle(color: _staffMuted, fontSize: 14),
+                  ),
+                ],
               ),
             )
           else
-            ...users.map(
-              (u) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _StaffUserTile(
-                  user: u,
-                  showPin: widget.user.canViewStaffPinOf(u),
-                  canManage: widget.user.canManageStaffUser(u),
-                  onEditName: () => _showEditNameDialog(u),
-                  onChangePin: () => _showChangePinDialog(u),
-                  onDelete: () => _confirmDeleteUser(u),
+            ...users.asMap().entries.map(
+              (entry) => _StaffUserTile(
+                user: entry.value,
+                showDivider: entry.key < users.length - 1,
+                showPin: widget.user.canViewStaffPinOf(entry.value),
+                canManage: widget.user.canManageStaffUser(entry.value),
+                canChangeRole: widget.user.canManageAllStaffInAdmin,
+                useCompactLayout: isMobile,
+                onEditName: () => _showEditNameDialog(entry.value),
+                onChangePin: () => _showChangePinDialog(entry.value),
+                onChangeRole: () => _showChangeRoleDialog(entry.value),
+                onDelete: () => _confirmDeleteUser(entry.value),
+              ),
+            ),
+          if (users.isNotEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: const BoxDecoration(
+                color: _staffSurface,
+                border: Border(top: BorderSide(color: _staffBorder)),
+              ),
+              child: Text(
+                '${users.length} ჩანაწერი',
+                style: const TextStyle(
+                  color: _staffMuted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -370,19 +521,188 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
     );
   }
 
-  Widget _filterChip(String label, _StaffListFilter filter) {
-    final selected = _listFilter == filter;
-    return FilterChip(
-      label: Text(label),
-      selected: selected,
-      onSelected: (_) => setState(() => _listFilter = filter),
-      selectedColor: _staffAccent.withValues(alpha: 0.15),
-      checkmarkColor: _staffAccent,
-      labelStyle: TextStyle(
-        color: selected ? _staffAccent : _staffMuted,
-        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+  Widget _buildTableHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      color: _staffSurface,
+      child: const Row(
+        children: [
+          Expanded(
+            flex: 5,
+            child: Padding(
+              padding: EdgeInsets.only(left: 44),
+              child: Text('სახელი', style: _staffTableHeaderStyle),
+            ),
+          ),
+          Expanded(flex: 4, child: Text('როლი', style: _staffTableHeaderStyle)),
+          Expanded(flex: 4, child: Text('PIN', style: _staffTableHeaderStyle)),
+          SizedBox(width: 42),
+        ],
       ),
-      side: BorderSide(color: selected ? _staffAccent : _staffBorder),
+    );
+  }
+
+  Widget _buildFilterMenu({required bool iconOnly}) {
+    return PopupMenuButton<_StaffListFilter>(
+      tooltip: 'ფილტრი',
+      initialValue: _listFilter,
+      onSelected: (value) => setState(() => _listFilter = value),
+      itemBuilder: (context) => const [
+        PopupMenuItem(value: _StaffListFilter.all, child: Text('ყველა')),
+        PopupMenuItem(value: _StaffListFilter.manager, child: Text('მენეჯერი')),
+        PopupMenuItem(
+          value: _StaffListFilter.supervisor,
+          child: Text('სუპერვაიზერი'),
+        ),
+        PopupMenuItem(value: _StaffListFilter.waiter, child: Text('ოფიციანტი')),
+      ],
+      child: Container(
+        height: 42,
+        width: iconOnly ? 42 : null,
+        padding: EdgeInsets.symmetric(horizontal: iconOnly ? 0 : 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AdminDesign.radius),
+          border: Border.all(color: _staffBorder),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.filter_alt_outlined, size: 18, color: _staffText),
+            if (!iconOnly) ...[
+              const SizedBox(width: 7),
+              const Text(
+                'ფილტრი',
+                style: TextStyle(
+                  color: _staffText,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRolesPanel() {
+    return Column(
+      children: [
+        _StaffCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.security_outlined, color: _staffText, size: 21),
+                  SizedBox(width: 9),
+                  Text(
+                    'როლები და წვდომა',
+                    style: TextStyle(
+                      color: _staffText,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              _RoleAccessTile(
+                icon: Icons.admin_panel_settings_outlined,
+                title: 'მენეჯერი',
+                description:
+                    'სრული ადმინისტრაციული წვდომა, პერსონალი და ანგარიშები.',
+                color: const Color(0xFF0F766E),
+              ),
+              const SizedBox(height: 9),
+              _RoleAccessTile(
+                icon: Icons.supervisor_account_outlined,
+                title: 'სუპერვაიზერი',
+                description:
+                    'ოპერაციული მართვა და ოფიციანტების შეზღუდული კონტროლი.',
+                color: const Color(0xFF7C3AED),
+              ),
+              const SizedBox(height: 9),
+              _RoleAccessTile(
+                icon: Icons.room_service_outlined,
+                title: 'ოფიციანტი',
+                description:
+                    'შეკვეთები, მაგიდები და რეზერვაციის სამზარეულოს ჩეკი.',
+                color: const Color(0xFFEA580C),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        const _StaffCard(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.info_outline, color: _staffPrimary, size: 20),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'PIN კოდი უნიკალური უნდა იყოს. მენეჯერი მართავს ყველა როლს, სუპერვაიზერი კი მხოლოდ ოფიციანტებს.',
+                  style: TextStyle(
+                    color: _staffMuted,
+                    fontSize: 12,
+                    height: 1.45,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBottomDock() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(22, 11, 22, 12),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: _staffBorder)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 14,
+            offset: Offset(0, -4),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 560;
+          final action = ElevatedButton.icon(
+            onPressed: _openAddStaffDialog,
+            style: AdminDesign.primaryButtonStyle(),
+            icon: const Icon(Icons.person_add_alt_1, size: 19),
+            label: Text(
+              _waitersOnlyAdmin ? 'ახალი ოფიციანტი' : 'ახალი თანამშრომელი',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          );
+          if (compact) {
+            return SizedBox(width: double.infinity, child: action);
+          }
+          return Row(
+            children: [
+              const Icon(Icons.info_outline, color: _staffPrimary, size: 20),
+              const SizedBox(width: 9),
+              const Expanded(
+                child: Text(
+                  'ყველა ცვლილება ინახება მოქმედების დასრულებისთანავე.',
+                  style: TextStyle(color: _staffMuted, fontSize: 12),
+                ),
+              ),
+              action,
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -429,6 +749,40 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
     }
     _refreshList();
     unawaited(showSuccessToast(context, 'PIN განახლდა — ${user.username}'));
+  }
+
+  Future<void> _showChangeRoleDialog(User user) async {
+    if (!widget.user.canManageAllStaffInAdmin) return;
+    final isOnlyManager =
+        user.isManager &&
+        _allUsers.where((entry) => entry.isManager).length <= 1;
+
+    final role = await showDialog<String>(
+      context: context,
+      builder: (context) =>
+          _ChangeRoleDialog(user: user, preventManagerDemotion: isOnlyManager),
+    );
+    if (role == null || !mounted) return;
+    if (StaffRole.normalizeClient(role) == user.normalizedRole) return;
+
+    final ok = await DatabaseService.updateUserRoleByUsername(
+      username: user.username,
+      role: role,
+    );
+    if (!mounted) return;
+    if (!ok) {
+      unawaited(
+        showErrorToast(context, 'ბოლო მენეჯერის როლის შეცვლა არ შეიძლება'),
+      );
+      return;
+    }
+    _refreshList();
+    unawaited(
+      showSuccessToast(
+        context,
+        '${user.username} — ${StaffRole.labelKa(role)}',
+      ),
+    );
   }
 
   Future<void> _confirmDeleteUser(User user) async {
@@ -509,7 +863,7 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
               vertical: 24,
             ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AdminDesign.radius),
               side: const BorderSide(color: _staffBorder),
             ),
             child: SizedBox(
@@ -557,8 +911,10 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
                       onBackspace: () {
                         if (tempPin.isNotEmpty) {
                           setDialogState(
-                            () => tempPin =
-                                tempPin.substring(0, tempPin.length - 1),
+                            () => tempPin = tempPin.substring(
+                              0,
+                              tempPin.length - 1,
+                            ),
                           );
                         }
                       },
@@ -704,7 +1060,9 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      widget.waiterOnly ? 'ახალი ოფიციანტი' : 'ახალი თანამშრომელი',
+                      widget.waiterOnly
+                          ? 'ახალი ოფიციანტი'
+                          : 'ახალი თანამშრომელი',
                       style: const TextStyle(
                         color: _staffText,
                         fontSize: 20,
@@ -743,29 +1101,42 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
                         const SizedBox(height: 16),
                         const Text('როლი', style: _staffFieldLabel),
                         const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _roleChip(
-                                StaffRole.waiter,
-                                StaffRole.labelKa(StaffRole.waiter),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _roleChip(
-                                StaffRole.supervisor,
-                                StaffRole.labelKa(StaffRole.supervisor),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _roleChip(
-                                StaffRole.manager,
-                                StaffRole.labelKa(StaffRole.manager),
-                              ),
-                            ),
-                          ],
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            const spacing = 8.0;
+                            final columns = constraints.maxWidth >= 390 ? 3 : 1;
+                            final width =
+                                (constraints.maxWidth -
+                                    (spacing * (columns - 1))) /
+                                columns;
+                            return Wrap(
+                              spacing: spacing,
+                              runSpacing: spacing,
+                              children: [
+                                SizedBox(
+                                  width: width,
+                                  child: _roleChip(
+                                    StaffRole.waiter,
+                                    StaffRole.labelKa(StaffRole.waiter),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: width,
+                                  child: _roleChip(
+                                    StaffRole.supervisor,
+                                    StaffRole.labelKa(StaffRole.supervisor),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: width,
+                                  child: _roleChip(
+                                    StaffRole.manager,
+                                    StaffRole.labelKa(StaffRole.manager),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ],
                       const SizedBox(height: 16),
@@ -856,10 +1227,10 @@ class _StaffCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _staffCard,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AdminDesign.radius),
         border: Border.all(color: _staffBorder),
         boxShadow: [
           BoxShadow(
@@ -879,45 +1250,73 @@ class _KpiChip extends StatelessWidget {
     required this.label,
     required this.value,
     required this.color,
+    required this.icon,
+    this.compact = false,
   });
 
   final String label;
   final int value;
   final Color color;
+  final IconData icon;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      height: 78,
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 10 : 16,
+        vertical: 12,
+      ),
       decoration: BoxDecoration(
         color: _staffCard,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AdminDesign.radius),
         border: Border.all(color: _staffBorder),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            width: 4,
-            height: 36,
+            width: compact ? 40 : 48,
+            height: compact ? 40 : 48,
             decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(4),
+              color: color.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
             ),
+            child: Icon(icon, color: color, size: compact ? 21 : 25),
           ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: const TextStyle(color: _staffMuted, fontSize: 12)),
-              Text(
-                '$value',
-                style: TextStyle(
-                  color: _staffText,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
+          SizedBox(width: compact ? 8 : 12),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: _staffMuted,
+                    fontSize: compact ? 10 : 11,
+                    height: 1.15,
+                  ),
                 ),
-              ),
-            ],
+                Text(
+                  '$value',
+                  style: const TextStyle(
+                    color: _staffText,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -961,7 +1360,7 @@ class _EditStaffNameDialogState extends State<_EditStaffNameDialog> {
     return Dialog(
       backgroundColor: _staffCard,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AdminDesign.radius),
         side: const BorderSide(color: _staffBorder),
       ),
       child: ConstrainedBox(
@@ -1022,21 +1421,177 @@ class _EditStaffNameDialogState extends State<_EditStaffNameDialog> {
   }
 }
 
+class _ChangeRoleDialog extends StatefulWidget {
+  const _ChangeRoleDialog({
+    required this.user,
+    required this.preventManagerDemotion,
+  });
+
+  final User user;
+  final bool preventManagerDemotion;
+
+  @override
+  State<_ChangeRoleDialog> createState() => _ChangeRoleDialogState();
+}
+
+class _ChangeRoleDialogState extends State<_ChangeRoleDialog> {
+  late String _selectedRole;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedRole = widget.user.normalizedRole;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isCompact = MediaQuery.sizeOf(context).width < 520;
+    final roles = StaffRole.assignableClientRoles;
+
+    return Dialog(
+      backgroundColor: _staffCard,
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 16 : 40,
+        vertical: 24,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AdminDesign.radius),
+        side: const BorderSide(color: _staffBorder),
+      ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'როლის შეცვლა • ${widget.user.username}',
+                style: const TextStyle(
+                  color: _staffText,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'აირჩიეთ თანამშრომლის ახალი წვდომის დონე.',
+                style: TextStyle(color: _staffMuted, fontSize: 12),
+              ),
+              const SizedBox(height: 16),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  const spacing = 8.0;
+                  final columns = constraints.maxWidth >= 390 ? 3 : 1;
+                  final width =
+                      (constraints.maxWidth - (spacing * (columns - 1))) /
+                      columns;
+                  return Wrap(
+                    spacing: spacing,
+                    runSpacing: spacing,
+                    children: roles.map((role) {
+                      final selected = _selectedRole == role;
+                      return SizedBox(
+                        width: width,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(
+                            AdminDesign.radius,
+                          ),
+                          onTap: () {
+                            if (widget.preventManagerDemotion &&
+                                role != StaffRole.manager) {
+                              unawaited(
+                                showErrorToast(
+                                  context,
+                                  'როლის შესაცვლელად საჭიროა მეორე მენეჯერის ანგარიში',
+                                ),
+                              );
+                              return;
+                            }
+                            setState(() => _selectedRole = role);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? AdminDesign.accentDark
+                                  : _staffSurface,
+                              borderRadius: BorderRadius.circular(
+                                AdminDesign.radius,
+                              ),
+                              border: Border.all(
+                                color: selected
+                                    ? AdminDesign.accentDark
+                                    : _staffBorder,
+                              ),
+                            ),
+                            child: Text(
+                              StaffRole.labelKa(role),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: selected ? Colors.white : _staffText,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('გაუქმება'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context, _selectedRole),
+                      style: AdminDesign.primaryButtonStyle(),
+                      child: const Text('შენახვა'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _StaffUserTile extends StatelessWidget {
   const _StaffUserTile({
     required this.user,
+    required this.showDivider,
     required this.showPin,
     required this.canManage,
+    required this.canChangeRole,
+    required this.useCompactLayout,
     required this.onEditName,
     required this.onChangePin,
+    required this.onChangeRole,
     required this.onDelete,
   });
 
   final User user;
+  final bool showDivider;
   final bool showPin;
   final bool canManage;
+  final bool canChangeRole;
+  final bool useCompactLayout;
   final VoidCallback onEditName;
   final VoidCallback onChangePin;
+  final VoidCallback onChangeRole;
   final VoidCallback onDelete;
 
   @override
@@ -1046,81 +1601,282 @@ class _StaffUserTile extends StatelessWidget {
     final accent = isManager
         ? _staffAccent
         : isSupervisor
-            ? const Color(0xFF7C3AED)
-            : _staffPrimary;
+        ? const Color(0xFF7C3AED)
+        : _staffPrimary;
     final allUsers = DatabaseService.getAllUsers();
-    final canDelete = !isManager || allUsers.where((u) => u.isManager).length > 1;
+    final canDelete =
+        !isManager || allUsers.where((u) => u.isManager).length > 1;
 
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = useCompactLayout;
+        final avatar = CircleAvatar(
+          radius: 17,
+          backgroundColor: accent.withValues(alpha: 0.13),
+          child: Icon(
+            isManager
+                ? Icons.shield_outlined
+                : isSupervisor
+                ? Icons.supervisor_account_outlined
+                : Icons.person_outline,
+            color: accent,
+            size: 19,
+          ),
+        );
+        final actions = canManage
+            ? PopupMenuButton<String>(
+                tooltip: 'მოქმედებები',
+                icon: const Icon(Icons.more_vert, color: _staffText, size: 20),
+                onSelected: (value) {
+                  switch (value) {
+                    case 'name':
+                      onEditName();
+                      return;
+                    case 'pin':
+                      onChangePin();
+                      return;
+                    case 'role':
+                      onChangeRole();
+                      return;
+                    case 'delete':
+                      onDelete();
+                      return;
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'name',
+                    child: ListTile(
+                      dense: true,
+                      leading: Icon(Icons.edit_outlined),
+                      title: Text('სახელის შეცვლა'),
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'pin',
+                    child: ListTile(
+                      dense: true,
+                      leading: Icon(Icons.pin_outlined),
+                      title: Text('PIN-ის შეცვლა'),
+                    ),
+                  ),
+                  if (canChangeRole)
+                    const PopupMenuItem(
+                      value: 'role',
+                      child: ListTile(
+                        dense: true,
+                        leading: Icon(Icons.manage_accounts_outlined),
+                        title: Text('როლის შეცვლა'),
+                      ),
+                    ),
+                  if (canDelete)
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: ListTile(
+                        dense: true,
+                        leading: Icon(
+                          Icons.delete_outline,
+                          color: AdminDesign.danger,
+                        ),
+                        title: Text(
+                          'წაშლა',
+                          style: TextStyle(color: AdminDesign.danger),
+                        ),
+                      ),
+                    ),
+                ],
+              )
+            : const SizedBox(width: 42);
+
+        if (compact) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              border: showDivider
+                  ? const Border(bottom: BorderSide(color: _staffBorder))
+                  : null,
+            ),
+            child: Row(
+              children: [
+                avatar,
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user.username,
+                        style: const TextStyle(
+                          color: _staffText,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        user.roleLabelKa,
+                        style: const TextStyle(
+                          color: _staffMuted,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        showPin ? 'PIN: ${user.pinCode}' : 'PIN დაცულია',
+                        style: const TextStyle(
+                          color: _staffText,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                actions,
+              ],
+            ),
+          );
+        }
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            border: showDivider
+                ? const Border(bottom: BorderSide(color: _staffBorder))
+                : null,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 5,
+                child: Row(
+                  children: [
+                    avatar,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        user.username,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: _staffText,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 4,
+                child: InkWell(
+                  onTap: canChangeRole ? onChangeRole : null,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            user.roleLabelKa,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: accent,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        if (canChangeRole) ...[
+                          const SizedBox(width: 4),
+                          Icon(Icons.arrow_drop_down, color: accent, size: 17),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 4,
+                child: Text(
+                  showPin ? user.pinCode : '••••••',
+                  style: const TextStyle(
+                    color: _staffText,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+              SizedBox(width: 42, child: actions),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _RoleAccessTile extends StatelessWidget {
+  const _RoleAccessTile({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: _staffSurface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withValues(alpha: 0.25)),
+        borderRadius: BorderRadius.circular(AdminDesign.radius),
+        border: Border.all(color: _staffBorder),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            backgroundColor: accent.withValues(alpha: 0.15),
-            child: Icon(
-              isManager
-                  ? Icons.shield_rounded
-                  : isSupervisor
-                      ? Icons.supervisor_account_rounded
-                      : Icons.person_rounded,
-              color: accent,
-              size: 22,
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
             ),
+            child: Icon(icon, color: color, size: 19),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  user.username,
+                  title,
                   style: const TextStyle(
                     color: _staffText,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Text(
-                  user.roleLabelKa,
-                  style: TextStyle(color: accent, fontSize: 12, fontWeight: FontWeight.w600),
-                ),
-                if (showPin) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    'PIN: ${user.pinCode}',
-                    style: const TextStyle(color: _staffMuted, fontSize: 12),
+                  description,
+                  style: const TextStyle(
+                    color: _staffMuted,
+                    fontSize: 11,
+                    height: 1.35,
                   ),
-                ],
+                ),
               ],
             ),
           ),
-          if (canManage) ...[
-            TextButton.icon(
-              onPressed: onEditName,
-              icon: const Icon(Icons.edit_rounded, size: 18),
-              label: const Text('სახელი'),
-              style: TextButton.styleFrom(foregroundColor: _staffAccent),
-            ),
-            TextButton.icon(
-              onPressed: onChangePin,
-              icon: const Icon(Icons.pin_rounded, size: 18),
-              label: const Text('PIN'),
-              style: TextButton.styleFrom(foregroundColor: _staffAccent),
-            ),
-            if (canDelete)
-              IconButton(
-                onPressed: onDelete,
-                icon: const Icon(Icons.delete_outline_rounded),
-                color: Colors.red.shade400,
-                tooltip: 'წაშლა',
-              ),
-          ],
         ],
       ),
     );
@@ -1136,18 +1892,18 @@ class _PinPad extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget row(List<String> keys) => Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            for (var i = 0; i < keys.length; i++) ...[
-              if (i > 0) const SizedBox(width: 10),
-              PinButton(
-                number: keys[i],
-                onPressed: keys[i] == '⌫' ? onBackspace : () => onDigit(keys[i]),
-                isSpecial: keys[i] == '⌫',
-              ),
-            ],
-          ],
-        );
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (var i = 0; i < keys.length; i++) ...[
+          if (i > 0) const SizedBox(width: 10),
+          PinButton(
+            number: keys[i],
+            onPressed: keys[i] == '⌫' ? onBackspace : () => onDigit(keys[i]),
+            isSpecial: keys[i] == '⌫',
+          ),
+        ],
+      ],
+    );
 
     return Column(
       children: [
@@ -1217,8 +1973,8 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
     return Dialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderRadius: BorderRadius.circular(AdminDesign.radius),
+        side: const BorderSide(color: AdminDesign.border),
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: isMobile ? double.infinity : 420),
@@ -1227,14 +1983,18 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.lock_reset, color: Color(0xFF2563EB), size: 40),
+              const Icon(
+                Icons.lock_reset,
+                color: AdminDesign.accentDark,
+                size: 40,
+              ),
               const SizedBox(height: 12),
               Text(
                 'PIN — ${widget.user.username}',
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF1F2937),
+                  color: AdminDesign.text,
                 ),
               ),
               const SizedBox(height: 20),
@@ -1268,10 +2028,7 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: _onConfirm,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
-                        foregroundColor: Colors.white,
-                      ),
+                      style: AdminDesign.primaryButtonStyle(),
                       child: const Text('შენახვა'),
                     ),
                   ),

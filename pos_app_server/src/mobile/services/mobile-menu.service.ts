@@ -1,7 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaService } from '../../prisma.service';
 import { MonitoringGateway } from '../../realtime/monitoring.gateway';
+import { PosCallbackClient } from '../../pos/pos-callback.client';
 import { readRestaurantServiceFeeSettings } from '../util/mobile-date.util';
 
 /** WS exclude options for the REST client that initiated a mutation. */
@@ -22,6 +27,7 @@ export class MobileMenuService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly gateway: MonitoringGateway,
+    private readonly posCallback: PosCallbackClient,
   ) {}
 
   async getMenu() {
@@ -170,6 +176,62 @@ export class MobileMenuService {
       { type: 'all' },
       excludeOpts,
     );
+    return { success: true };
+  }
+
+  /**
+   * Relay a counted-menu receipt print to the Windows POS — the only print
+   * host — via the direct POS callback path. Loads the draft from Postgres and
+   * sends its full payload (the POS doesn't reliably have the draft in Hive).
+   * No realtime broadcast: printing is not a data mutation. Missing draft → 404;
+   * unreachable POS → 503.
+   */
+  async printCountedMenu(id: string): Promise<{ success: true }> {
+    const feeSettings = await readRestaurantServiceFeeSettings(this.prisma);
+    const draft = await (this.prisma as any).quickOrderDraft.findUnique({
+      where: { draftId: id },
+      include: { items: true },
+    });
+    if (!draft) {
+      throw new NotFoundException('Counted menu not found');
+    }
+
+    // Recompute totals exactly like getCountedMenus so the printed receipt
+    // matches what the manager app shows.
+    const subtotal = Number(draft.subtotal);
+    const includeServiceFee =
+      feeSettings.serviceFeeAvailable && draft.includeServiceFee === true;
+    const serviceFeeRate = includeServiceFee
+      ? Number(draft.serviceFeeRate ?? feeSettings.serviceFeePercent / 100)
+      : 0;
+    const serviceFeeAmount = includeServiceFee
+      ? Math.round(subtotal * serviceFeeRate * 100) / 100
+      : 0;
+    const total = Math.round((subtotal + serviceFeeAmount) * 100) / 100;
+
+    const payload = {
+      displayName: draft.displayName,
+      subtotal,
+      serviceFeeAmount,
+      total,
+      includeServiceFee,
+      serviceFeeRate,
+      items: (draft.items ?? []).map((it: any) => ({
+        itemName: it.name,
+        quantity: it.quantity,
+        unitPrice: it.price,
+        total: it.quantity * it.price,
+        comment: it.comment,
+      })),
+    };
+
+    try {
+      await this.posCallback.printPosCountedMenu(payload);
+    } catch (e) {
+      throw new ServiceUnavailableException(
+        `Could not print counted menu — is the Windows POS running? (${(e as Error).message})`,
+      );
+    }
     return { success: true };
   }
 }

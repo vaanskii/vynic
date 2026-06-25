@@ -58,7 +58,12 @@ export class PosCallbackClient {
     endpoint: string,
     payload: unknown,
     timeoutMs = 5000,
-  ): Promise<{ ok: boolean; noUrl?: boolean; status?: number; error?: string }> {
+  ): Promise<{
+    ok: boolean;
+    noUrl?: boolean;
+    status?: number;
+    error?: string;
+  }> {
     const url = this.callbackUrl;
     if (!url) return { ok: false, noUrl: true, error: 'no_pos_callback_url' };
     try {
@@ -70,7 +75,11 @@ export class PosCallbackClient {
       });
       if (!res.ok) {
         const body = await res.text().catch(() => '');
-        return { ok: false, status: res.status, error: `pos_${res.status}: ${body}`.trim() };
+        return {
+          ok: false,
+          status: res.status,
+          error: `pos_${res.status}: ${body}`.trim(),
+        };
       }
       return { ok: true, status: res.status };
     } catch (e) {
@@ -103,7 +112,10 @@ export class PosCallbackClient {
   }
 
   /** Tell the Windows POS to update the status of an order in Hive (without deleting) */
-  async notifyPosStatusUpdate(posOrderId: number, status: string): Promise<void> {
+  async notifyPosStatusUpdate(
+    posOrderId: number,
+    status: string,
+  ): Promise<void> {
     const result = await this.deliverToPos('/mobile-order-status', {
       posOrderId,
       status,
@@ -121,10 +133,7 @@ export class PosCallbackClient {
     }
   }
 
-  private async requestPos(
-    path: string,
-    init: RequestInit = {},
-  ): Promise<any> {
+  private async requestPos(path: string, init: RequestInit = {}): Promise<any> {
     const url = this.callbackUrl;
     if (!url) {
       throw new Error(
@@ -179,6 +188,44 @@ export class PosCallbackClient {
     });
   }
 
+  /**
+   * Ask the Windows POS to print the reservation check on its kitchen printer.
+   * Uses the direct (non-outbox) request path: a print is time-sensitive and
+   * non-idempotent, so it must "print now or report failure" rather than be
+   * queued for delivery when the POS later reconnects.
+   */
+  async printPosReservationCheck(reservationId: string): Promise<void> {
+    await this.requestPos('/mobile-reservation-print-check', {
+      method: 'POST',
+      body: JSON.stringify({ reservationId }),
+    });
+  }
+
+  /**
+   * Ask the Windows POS to print the order/table check (customer pre-bill) on
+   * its receipt printer. Direct (non-outbox) path for the same reason as the
+   * reservation print: "print now or report failure", never queue a stale print.
+   */
+  async printPosOrderCheck(posOrderId: number): Promise<void> {
+    await this.requestPos('/mobile-order-print-check', {
+      method: 'POST',
+      body: JSON.stringify({ posOrderId }),
+    });
+  }
+
+  /**
+   * Ask the Windows POS to print a counted menu (quick-order draft) on its
+   * receipt printer. Counted menus aren't reliably present in POS Hive, so the
+   * full draft payload (items/totals/service fee) is sent and the POS prints it
+   * directly. Direct (non-outbox) path — print now or report failure.
+   */
+  async printPosCountedMenu(payload: Record<string, unknown>): Promise<void> {
+    await this.requestPos('/mobile-counted-menu-print', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
   async createPosExpense(payload: Record<string, unknown>): Promise<any> {
     const response = await this.requestPos('/mobile-expense-create', {
       method: 'POST',
@@ -197,6 +244,14 @@ export class PosCallbackClient {
 
   async updatePosUserPin(payload: Record<string, unknown>): Promise<any> {
     const response = await this.requestPos('/mobile-user-update-pin', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return response?.user ?? null;
+  }
+
+  async updatePosUserRole(payload: Record<string, unknown>): Promise<any> {
+    const response = await this.requestPos('/mobile-user-update-role', {
       method: 'POST',
       body: JSON.stringify(payload),
     });

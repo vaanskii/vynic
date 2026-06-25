@@ -1265,7 +1265,7 @@ class _AdminScreenState extends State<AdminScreen> {
       case 'settings':
         return 'პარამეტრები';
       default:
-        return 'ადმინ პანელი';
+        return 'მართვის ცენტრი';
     }
   }
 

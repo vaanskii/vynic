@@ -398,4 +398,18 @@ export class MobileController {
   async printCountedMenu(@Param('id') id: string) {
     return this.menu.printCountedMenu(id);
   }
+
+  // POST /mobile/counted-menu/:id/update — edit an existing counted menu in place
+  @Post('counted-menu/:id/update')
+  async updateCountedMenu(
+    @Param('id') id: string,
+    @Headers('x-monitoring-socket-id') monitoringSocketId: string | undefined,
+    @Body() data: any,
+  ) {
+    return this.menu.updateCountedMenu(
+      id,
+      data,
+      this.mutationSupport.wsExcludeOpts(monitoringSocketId),
+    );
+  }
 }

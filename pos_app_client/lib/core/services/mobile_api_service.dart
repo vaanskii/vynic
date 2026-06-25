@@ -600,6 +600,32 @@ class MobileApiService {
     await getCountedMenus();
   }
 
+  /// Edit an existing counted menu in place (backend/Postgres only — not synced
+  /// to the Windows POS). Mirrors [saveCountedMenu] but targets the update route.
+  static Future<void> updateCountedMenu({
+    required String draftId,
+    required String name,
+    required List<Map<String, dynamic>> items,
+    required double subtotal,
+    required bool includeServiceFee,
+  }) async {
+    final payload = {
+      'displayName': name,
+      'items': items,
+      'subtotal': subtotal,
+      'includeServiceFee': includeServiceFee,
+    };
+    final response = await _post(
+      '/mobile/counted-menu/$draftId/update',
+      payload,
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('updateCountedMenu failed: ${response.statusCode}');
+    }
+    // Refresh local cache after successful update
+    await getCountedMenus();
+  }
+
   // ── Users (admin panel) ───────────────────────────────────────────────────
 
   static Future<List<dynamic>> getUsers() async {

@@ -96,6 +96,32 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
     if (saved == true) _load();
   }
 
+  /// Reopen the existing calculator in edit mode, pre-filled from the selected
+  /// counted menu (Plan A-name: items resolved by name + price). Confirm updates
+  /// the draft in place (backend/Postgres only). On success, refresh the list.
+  Future<void> _editCountedMenu(Map<String, dynamic> draft) async {
+    final id = '${draft['id'] ?? ''}';
+    if (id.isEmpty) return;
+    final items = ((draft['items'] as List?) ?? const [])
+        .whereType<Map>()
+        .map((e) => e.cast<String, dynamic>())
+        .toList();
+    final saved = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => managerThemedPage(
+          MobileCalculatorScreen(
+            isCountMode: true,
+            editDraftId: id,
+            initialName: draft['displayName']?.toString(),
+            initialCountItems: items,
+          ),
+        ),
+      ),
+    );
+    if (saved == true) _load();
+  }
+
   Future<void> _delete(String id) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -314,7 +340,7 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
               height: 96,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.04),
+                  color: MobileGlassTheme.surface(0.04),
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
@@ -332,12 +358,12 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.cloud_off_rounded,
-                  size: 48, color: Colors.white.withOpacity(0.35)),
+                  size: 48, color: MobileGlassTheme.muted(0.35)),
               SizedBox(height: 12),
               Text(
                 'ჩატვირთვა ვერ მოხერხდა',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
+                  color: MobileGlassTheme.muted(0.8),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -361,7 +387,7 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: MobileGlassTheme.warn.withOpacity(0.12),
+                    color: MobileGlassTheme.warn.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(Icons.fact_check_outlined,
@@ -381,7 +407,7 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
                   'დააჭირე „ახალი დათვლა“ — აირჩიე პოზიციები მენიუდან და შეინახე სახელით (მაგ. ბანკეტი #1).',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.55),
+                    color: MobileGlassTheme.muted(0.55),
                     fontSize: 14,
                     height: 1.4,
                   ),
@@ -407,6 +433,7 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
           padding: const EdgeInsets.only(bottom: 12),
           child: _DraftCard(
             draft: _drafts[i],
+            onEdit: () => _editCountedMenu(_drafts[i]),
             onPdf: () => _printPdf(_drafts[i]),
             onPrint: () => _printCountedMenu('${_drafts[i]['id']}'),
             isPrinting: _printing.contains('${_drafts[i]['id']}'),
@@ -422,6 +449,7 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
 
 class _DraftCard extends StatelessWidget {
   final Map<String, dynamic> draft;
+  final VoidCallback onEdit;
   final VoidCallback onPdf;
   final VoidCallback onPrint;
   final bool isPrinting;
@@ -431,6 +459,7 @@ class _DraftCard extends StatelessWidget {
 
   const _DraftCard({
     required this.draft,
+    required this.onEdit,
     required this.onPdf,
     required this.onPrint,
     required this.isPrinting,
@@ -465,8 +494,8 @@ class _DraftCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      const Color(0xFF6366F1).withOpacity(0.35),
-                      const Color(0xFFF59E0B).withOpacity(0.25),
+                      const Color(0xFF6366F1).withValues(alpha: 0.35),
+                      const Color(0xFFF59E0B).withValues(alpha: 0.25),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(12),
@@ -493,7 +522,7 @@ class _DraftCard extends StatelessWidget {
                           ? '${date.format(createdAt.toLocal())} · ${items.length} პოზ. · $qty ც.'
                           : '${items.length} პოზიცია',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: MobileGlassTheme.muted(0.5),
                         fontSize: 12,
                       ),
                     ),
@@ -521,7 +550,7 @@ class _DraftCard extends StatelessWidget {
                     Text(
                       '${it['quantity']}×',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.45),
+                        color: MobileGlassTheme.muted(0.45),
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -533,7 +562,7 @@ class _DraftCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.75),
+                          color: MobileGlassTheme.muted(0.75),
                           fontSize: 12,
                         ),
                       ),
@@ -546,15 +575,25 @@ class _DraftCard extends StatelessWidget {
               Text(
                 '+${items.length - 3} სხვა',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.4),
+                  color: MobileGlassTheme.muted(0.4),
                   fontSize: 11,
                 ),
               ),
           ],
           SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+          Wrap(
+            alignment: WrapAlignment.end,
+            spacing: 4,
+            runSpacing: 4,
             children: [
+              TextButton.icon(
+                onPressed: onEdit,
+                icon: Icon(Icons.edit_rounded, size: 18),
+                label: Text('რედაქტირება'),
+                style: TextButton.styleFrom(
+                  foregroundColor: MobileGlassTheme.primary,
+                ),
+              ),
               TextButton.icon(
                 onPressed: isPrinting ? null : onPrint,
                 icon: isPrinting
@@ -618,7 +657,7 @@ class _StatChip extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.5),
+              color: MobileGlassTheme.muted(0.5),
               fontSize: 10,
             ),
           ),
@@ -659,7 +698,7 @@ class _GlassCard extends StatelessWidget {
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.06),
+            color: MobileGlassTheme.surface(0.06),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: MobileGlassTheme.border(0.1)),
           ),
@@ -684,7 +723,7 @@ class _GlowOrb extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: RadialGradient(
-          colors: [color.withOpacity(0.18), color.withOpacity(0)],
+          colors: [color.withValues(alpha: 0.18), color.withValues(alpha: 0)],
         ),
       ),
     );

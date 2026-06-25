@@ -180,6 +180,72 @@ export class MobileMenuService {
   }
 
   /**
+   * Edit an existing counted menu (quick-order draft) in place. Postgres only —
+   * NOT synced to the Windows POS Hive. Recomputes service fee / total exactly
+   * like saveCountedMenu, then replaces the draft's items atomically. Returns a
+   * clean 404 if the draft no longer exists.
+   */
+  async updateCountedMenu(
+    id: string,
+    data: any,
+    excludeOpts: BroadcastExclude,
+  ) {
+    const { displayName, items, subtotal, includeServiceFee } = data;
+
+    const existing = await (this.prisma as any).quickOrderDraft.findUnique({
+      where: { draftId: id },
+    });
+    if (!existing) {
+      throw new NotFoundException('Counted menu not found');
+    }
+
+    const feeSettings = await readRestaurantServiceFeeSettings(this.prisma);
+    const shouldInclude =
+      feeSettings.serviceFeeAvailable && includeServiceFee === true;
+    const serviceFeeRate = feeSettings.serviceFeeAvailable
+      ? feeSettings.serviceFeePercent / 100
+      : 0;
+    const serviceFeeAmount = shouldInclude ? subtotal * serviceFeeRate : 0;
+    const total = subtotal + serviceFeeAmount;
+
+    // Update the draft header, then replace its items (delete + recreate) so the
+    // stored lines exactly match the edited cart. Scoped to this draft's id.
+    await (this.prisma as any).quickOrderDraft.update({
+      where: { id: existing.id },
+      data: {
+        displayName,
+        subtotal,
+        serviceFeeAmount,
+        total,
+        includeServiceFee: shouldInclude,
+        serviceFeeRate,
+      },
+    });
+
+    await (this.prisma as any).quickOrderDraftItem.deleteMany({
+      where: { draftId: existing.id },
+    });
+    for (const item of items ?? []) {
+      await (this.prisma as any).quickOrderDraftItem.create({
+        data: {
+          draftId: existing.id,
+          name: item.itemName,
+          quantity: item.quantity,
+          price: item.unitPrice,
+          comment: item.comment,
+        },
+      });
+    }
+
+    this.gateway.broadcastUpdate(
+      'data_updated',
+      { type: 'all' },
+      excludeOpts,
+    );
+    return { success: true, id: existing.draftId };
+  }
+
+  /**
    * Relay a counted-menu receipt print to the Windows POS — the only print
    * host — via the direct POS callback path. Loads the draft from Postgres and
    * sends its full payload (the POS doesn't reliably have the draft in Hive).

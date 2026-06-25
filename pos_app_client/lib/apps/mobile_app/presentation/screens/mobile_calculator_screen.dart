@@ -10,11 +10,23 @@ class MobileCalculatorScreen extends StatefulWidget {
   final bool isCountMode;
   final bool selectionMode;
   final List<MenuSelectionLine> initialSelection;
+
+  /// When non-null, the screen edits an existing counted menu (quick-order
+  /// draft) instead of creating a new one: it pre-fills the cart from
+  /// [initialCountItems] (resolved against the live menu by name + price),
+  /// pre-fills the name with [initialName], and Confirm calls the update route.
+  final String? editDraftId;
+  final String? initialName;
+  final List<Map<String, dynamic>> initialCountItems;
+
   const MobileCalculatorScreen({
     super.key,
     this.isCountMode = false,
     this.selectionMode = false,
     this.initialSelection = const [],
+    this.editDraftId,
+    this.initialName,
+    this.initialCountItems = const [],
   });
 
   @override
@@ -38,6 +50,10 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
   String _searchQuery = '';
   late TabController _tabController;
   TabController? _subTabController;
+
+  /// Edit-mode pre-fill state (Plan A-name resolver).
+  bool _editPrefillDone = false;
+  final List<String> _unresolvedDraftItems = <String>[];
 
   static final _money = NumberFormat.currency(
     locale: 'ka_GE',
@@ -90,7 +106,9 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
           _tabController = TabController(length: _categories.length, vsync: this);
           _loading = false;
           _updateSubTabController();
+          _applyEditPrefill();
         });
+        _warnIfUnresolvedDraftItems();
         _tabController.addListener(() {
           if (!_tabController.indexIsChanging) {
             setState(() {
@@ -110,6 +128,76 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
         });
       }
     }
+  }
+
+  /// Edit mode: seed the cart from the draft's stored items by reconstructing
+  /// each calculator key from the live menu (Plan A-name: match by Georgian name
+  /// + unit price). Items that can't be matched are collected for a warning and
+  /// skipped — never dropped silently.
+  void _applyEditPrefill() {
+    if (_editPrefillDone || widget.editDraftId == null) return;
+    _editPrefillDone = true;
+    for (final raw in widget.initialCountItems) {
+      final name = (raw['itemName'] ?? raw['name'] ?? '').toString().trim();
+      final qty = (raw['quantity'] as num?)?.toInt() ?? 0;
+      final priceRaw = raw['unitPrice'] ?? raw['price'];
+      final unitPrice = (priceRaw as num?)?.toDouble() ?? 0.0;
+      if (name.isEmpty || qty <= 0) continue;
+      final key = _resolveCartKeyForDraftItem(name, unitPrice);
+      if (key == null) {
+        _unresolvedDraftItems.add(name);
+        continue;
+      }
+      _cart[key] = (_cart[key] ?? 0) + qty;
+    }
+  }
+
+  /// Find the calculator cart key for a stored draft item by matching its
+  /// Georgian name and unit price against the loaded menu. Returns null when no
+  /// menu item matches (renamed / removed / price changed).
+  String? _resolveCartKeyForDraftItem(String itemName, double unitPrice) {
+    const eps = 0.001;
+    final target = itemName.trim();
+    for (final cat in _categories) {
+      final pools = <List<_MenuItem>>[
+        cat.items,
+        for (final sub in cat.subcategories) sub.items,
+      ];
+      for (final pool in pools) {
+        for (final item in pool) {
+          if (item.variants.isEmpty) {
+            // Base item: saved as {itemName: nameKa, unitPrice: price}.
+            if (item.nameKa.trim() == target &&
+                (item.price - unitPrice).abs() < eps) {
+              return item.key;
+            }
+          } else {
+            // Variant item: saved as {itemName: 'nameKa (label)',
+            // unitPrice: variant.price} (see _getItemCartLines).
+            for (final v in item.variants) {
+              final variantName = '${item.nameKa} (${v.label})'.trim();
+              if (variantName == target &&
+                  (v.price - unitPrice).abs() < eps) {
+                return '${item.key}_${v.size}';
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  void _warnIfUnresolvedDraftItems() {
+    if (_unresolvedDraftItems.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final names = _unresolvedDraftItems.join(', ');
+      showErrorToast(
+        context,
+        'ვერ მოიძებნა მენიუში და გამოტოვებულია: $names',
+      );
+    });
   }
 
   void _updateSubTabController() {
@@ -311,11 +399,12 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
   Future<void> _saveCount() async {
     if (_cart.isEmpty) return;
 
-    final nameController = TextEditingController();
+    final isEdit = widget.editDraftId != null;
+    final nameController = TextEditingController(text: widget.initialName ?? '');
     final name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('მენიუს შენახვა'),
+        title: Text(isEdit ? 'მენიუს განახლება' : 'მენიუს შენახვა'),
         content: TextField(
           controller: nameController,
           decoration: const InputDecoration(
@@ -330,7 +419,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, nameController.text),
-            child: Text('შენახვა'),
+            child: Text(isEdit ? 'დადასტურება' : 'შენახვა'),
           ),
         ],
       ),
@@ -342,19 +431,34 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
       final items = _cartLines
           .map((l) => {'itemName': l.item.nameKa, 'quantity': l.qty, 'unitPrice': l.item.price})
           .toList();
+      final resolvedName = name.isEmpty
+          ? 'დათვლილი ${DateFormat('HH:mm').format(DateTime.now())}'
+          : name;
 
-      await MobileApiService.saveCountedMenu(
-        name: name.isEmpty
-            ? 'დათვლილი ${DateFormat('HH:mm').format(DateTime.now())}'
-            : name,
-        items: items,
-        subtotal: _subtotal,
-        includeServiceFee: _serviceFeeAvailable && _includeServiceFee,
-        createdBy: 'Manager',
-      );
+      if (isEdit) {
+        // Edit mode: update the existing draft instead of creating a new one.
+        await MobileApiService.updateCountedMenu(
+          draftId: widget.editDraftId!,
+          name: resolvedName,
+          items: items,
+          subtotal: _subtotal,
+          includeServiceFee: _serviceFeeAvailable && _includeServiceFee,
+        );
+      } else {
+        await MobileApiService.saveCountedMenu(
+          name: resolvedName,
+          items: items,
+          subtotal: _subtotal,
+          includeServiceFee: _serviceFeeAvailable && _includeServiceFee,
+          createdBy: 'Manager',
+        );
+      }
 
       if (mounted) {
-        showSuccessToast(context, 'წარმატებით შეინახა');
+        showSuccessToast(
+          context,
+          isEdit ? 'წარმატებით განახლდა' : 'წარმატებით შეინახა',
+        );
         Navigator.pop(context, true);
       }
     } catch (e) {
@@ -370,7 +474,9 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
       backgroundColor: MobileGlassTheme.bg,
       appBar: AppBar(
         title: Text(
-          widget.isCountMode ? 'მენიუს დათვლა' : 'მენიუ',
+          widget.editDraftId != null
+              ? 'მენიუს რედაქტირება'
+              : (widget.isCountMode ? 'მენიუს დათვლა' : 'მენიუ'),
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: MobileGlassTheme.bg,

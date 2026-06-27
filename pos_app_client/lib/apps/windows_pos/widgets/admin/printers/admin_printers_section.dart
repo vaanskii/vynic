@@ -56,12 +56,6 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
         : widget.receiptPrinterController;
   }
 
-  String get _activeTargetLabel {
-    return _activeTarget == _PrinterInputTarget.kitchen
-        ? 'სამზარეულოს IP'
-        : 'ჩეკის IP';
-  }
-
   @override
   Widget build(BuildContext context) {
     return SizedBox.expand(
@@ -96,9 +90,9 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
                           );
                         }
 
-                        final keyboardWidth = constraints.maxWidth >= 920
+                        final keyboardWidth = constraints.maxWidth >= 1060
                             ? 300.0
-                            : 240.0;
+                            : 260.0;
                         return Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -129,47 +123,66 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
       decoration: _panelDecoration(),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: _accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.print_outlined, color: _accentDark),
-          ),
-          const SizedBox(width: 14),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'პრინტერები',
-                  style: TextStyle(
-                    color: _text,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                  ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 700;
+          final title = Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: _accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                SizedBox(height: 3),
-                Text(
-                  'სამზარეულოსა და ჩეკის პრინტერების ქსელური პარამეტრები.',
-                  style: TextStyle(color: _muted, fontSize: 13),
+                child: const Icon(Icons.print_outlined, color: _accentDark),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'პრინტერები',
+                      style: TextStyle(
+                        color: _text,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'სამზარეულოსა და ჩეკის პრინტერების ქსელური პარამეტრები.',
+                      style: TextStyle(color: _muted, fontSize: 13),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          _buildStatusBadge(
+              ),
+            ],
+          );
+          final badge = _buildStatusBadge(
             icon: Icons.lan_outlined,
             label: 'TCP 9100',
             color: _warning,
             background: const Color(0xFFFFFBEB),
             border: const Color(0xFFFDE68A),
-          ),
-        ],
+          );
+
+          if (compact) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [title, const SizedBox(height: 12), badge],
+            );
+          }
+
+          return Row(
+            children: [
+              Expanded(child: title),
+              const SizedBox(width: 12),
+              badge,
+            ],
+          );
+        },
       ),
     );
   }
@@ -343,28 +356,6 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'კლავიატურა',
-                  style: TextStyle(
-                    color: _text,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              _buildStatusBadge(
-                icon: Icons.touch_app_outlined,
-                label: _activeTargetLabel,
-                color: _accentDark,
-                background: const Color(0xFFECFDF5),
-                border: const Color(0xFFA7F3D0),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
             decoration: BoxDecoration(
@@ -614,9 +605,12 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
           const SizedBox(width: 6),
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            softWrap: false,
             style: TextStyle(
               color: color,
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w800,
             ),
           ),

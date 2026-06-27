@@ -1231,33 +1231,47 @@ class _MenuScreenState extends State<MenuScreen> {
             children: [
               _buildTopBar(),
               Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildCategorySidebar(),
-                    Expanded(
-                      child: _isLoading
-                          ? const Center(
-                              child: CircularProgressIndicator(
-                                color: _menuPrimaryColor,
-                              ),
-                            )
-                          : Column(
-                              children: [
-                                if (_searchQuery.isEmpty &&
-                                    _selectedCategory?.subcategories != null &&
-                                    _selectedCategory!
-                                        .subcategories!
-                                        .isNotEmpty)
-                                  _buildSubcategoryBar(),
-                                Expanded(
-                                  child: _buildItemsGrid(_getItemsToDisplay()),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compactDesktop = constraints.maxWidth < 1100;
+                    final categoryWidth = compactDesktop ? 172.0 : 210.0;
+                    final orderPanelWidth = compactDesktop ? 340.0 : 380.0;
+
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildCategorySidebar(width: categoryWidth),
+                        Expanded(
+                          child: _isLoading
+                              ? const Center(
+                                  child: CircularProgressIndicator(
+                                    color: _menuPrimaryColor,
+                                  ),
+                                )
+                              : Column(
+                                  children: [
+                                    if (_searchQuery.isEmpty &&
+                                        _selectedCategory?.subcategories !=
+                                            null &&
+                                        _selectedCategory!
+                                            .subcategories!
+                                            .isNotEmpty)
+                                      _buildSubcategoryBar(),
+                                    Expanded(
+                                      child: _buildItemsGrid(
+                                        _getItemsToDisplay(),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                    ),
-                    SizedBox(width: 380, child: _buildOrderPanel()),
-                  ],
+                        ),
+                        SizedBox(
+                          width: orderPanelWidth,
+                          child: _buildOrderPanel(),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
             ],
@@ -1397,9 +1411,9 @@ class _MenuScreenState extends State<MenuScreen> {
     return lines;
   }
 
-  Widget _buildCategorySidebar() {
+  Widget _buildCategorySidebar({required double width}) {
     return Container(
-      width: 210,
+      width: width,
       decoration: const BoxDecoration(
         color: _menuCardColor,
         border: Border(right: BorderSide(color: _menuBorderColor, width: 1)),

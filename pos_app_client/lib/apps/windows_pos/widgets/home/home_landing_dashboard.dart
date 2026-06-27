@@ -177,7 +177,7 @@ class _HomeLandingDashboardState extends State<HomeLandingDashboard> {
                       final shouldScroll =
                           compact || constraints.maxHeight < 570;
                       final horizontalPadding = compact ? 20.0 : 48.0;
-                      final topPadding = dense ? 22.0 : 34.0;
+                      final topPadding = dense ? 54.0 : 34.0;
                       final bottomPadding = dense ? 8.0 : 18.0;
                       final content = Center(
                         child: ConstrainedBox(
@@ -194,8 +194,16 @@ class _HomeLandingDashboardState extends State<HomeLandingDashboard> {
                                 _buildGreeting(compact, dense),
                                 SizedBox(height: dense ? 12 : 28),
                                 _buildSessionStrip(compact, dense),
-                                SizedBox(height: dense ? 12 : 24),
-                                _buildActionGrid(actions, dense: dense),
+                                SizedBox(height: dense ? 16 : 24),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: dense && !compact ? 16 : 0,
+                                  ),
+                                  child: _buildActionGrid(
+                                    actions,
+                                    dense: dense,
+                                  ),
+                                ),
                                 if (shouldScroll)
                                   SizedBox(height: dense ? 10 : 18)
                                 else
@@ -317,8 +325,10 @@ class _HomeLandingDashboardState extends State<HomeLandingDashboard> {
   }
 
   Widget _buildGreeting(bool compact, bool dense) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: compact ? 12 : 16,
+      runSpacing: 8,
       children: [
         Text(
           'გამარჯობა, ${widget.username}',
@@ -329,7 +339,6 @@ class _HomeLandingDashboardState extends State<HomeLandingDashboard> {
             height: 1.15,
           ),
         ),
-        SizedBox(height: dense ? 4 : 8),
         _buildRoleBadge(compact, dense),
       ],
     );
@@ -468,9 +477,9 @@ class _HomeLandingDashboardState extends State<HomeLandingDashboard> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final columns = width >= 1050 ? 3 : (width >= 620 ? 2 : 1);
-        final spacing = dense ? 14.0 : 18.0;
-        final cardHeight = dense ? 144.0 : 180.0;
+        final columns = width >= 880 ? 3 : (width >= 620 ? 2 : 1);
+        final spacing = dense ? 12.0 : 18.0;
+        final cardHeight = dense ? 132.0 : 180.0;
 
         if (actions.length == 5 && columns == 3) {
           return Column(
@@ -552,7 +561,7 @@ class _HomeLandingDashboardState extends State<HomeLandingDashboard> {
           ),
         ),
         icon: Icon(Icons.logout_rounded, size: dense ? 21 : 26),
-        label: const Text('გასვლა'),
+        label: const Text('გამოსვლა'),
       ),
     );
   }

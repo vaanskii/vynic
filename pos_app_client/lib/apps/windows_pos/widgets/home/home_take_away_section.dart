@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
-
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -12,7 +10,7 @@ import 'package:vynic/apps/windows_pos/screens/menu_screen.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/table_payment_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
-import 'package:vynic/apps/windows_pos/widgets/on_screen_keyboard.dart';
+import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 
 class HomeTakeAwaySection extends StatefulWidget {
   const HomeTakeAwaySection({
@@ -201,7 +199,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                 ),
                 child: _TakeAwayDetailsSheet(
                   initialTime: TimeOfDay.now(),
-                  onEditNumber: (controller) => _openNameKeyboardSheet(
+                  onEditNumber: (controller) => _openNumberKeyboardSheet(
                     controller: controller,
                     title: 'ნომრის შეყვანა',
                   ),
@@ -448,187 +446,25 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
     );
   }
 
-  Future<void> _openNameKeyboardSheet({
+  Future<void> _openNumberKeyboardSheet({
     required TextEditingController controller,
-    String title = 'ტექსტის შეყვანა',
+    required String title,
   }) async {
-    final textLength = controller.text.length;
-    final currentSelection = controller.selection;
-    if (currentSelection.start < 0 ||
-        currentSelection.end < 0 ||
-        currentSelection.start > textLength ||
-        currentSelection.end > textLength) {
-      controller.selection = TextSelection.collapsed(offset: textLength);
+    final updated = await showPosNumberKeyboardInputSheet(
+      context: context,
+      initialValue: controller.text.replaceAll(RegExp(r'\D+'), ''),
+      title: title,
+      maxDigits: 15,
+    );
+
+    if (!mounted || updated == null) {
+      return;
     }
 
-    String keyboardLanguage = DatabaseService.getDefaultLanguage();
-
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.7),
-      constraints: const BoxConstraints(maxWidth: double.infinity),
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (context, sheetSetState) {
-            return ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
-              ),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                child: FractionallySizedBox(
-                  heightFactor: 0.78,
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xCCF5F6FB),
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(24),
-                      ),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.4),
-                        width: 1.2,
-                      ),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x22000000),
-                          blurRadius: 24,
-                          offset: Offset(0, -6),
-                        ),
-                      ],
-                    ),
-                    child: SafeArea(
-                      top: false,
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 1),
-                          Container(
-                            width: 44,
-                            height: 3,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.5),
-                              borderRadius: BorderRadius.circular(3),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 2),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.keyboard_alt,
-                                  color: Color(0xFF9B7C4A),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    title,
-                                    style: const TextStyle(
-                                      color: Color(0xFF1F2330),
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                TextButton.icon(
-                                  onPressed: () {
-                                    sheetSetState(() {
-                                      keyboardLanguage =
-                                          keyboardLanguage == 'ka'
-                                          ? 'en'
-                                          : 'ka';
-                                    });
-                                  },
-                                  icon: const Icon(
-                                    Icons.language,
-                                    color: Color(0xFF9B7C4A),
-                                  ),
-                                  label: Text(
-                                    keyboardLanguage.toUpperCase(),
-                                    style: const TextStyle(
-                                      color: Color(0xFF1F2330),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                TextButton.icon(
-                                  onPressed: () => Navigator.pop(sheetContext),
-                                  icon: const Icon(
-                                    Icons.check_circle,
-                                    color: Color(0xFF9B7C4A),
-                                  ),
-                                  label: const Text(
-                                    'დასრულება',
-                                    style: TextStyle(color: Color(0xFF1F2330)),
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () => Navigator.pop(sheetContext),
-                                  icon: const Icon(
-                                    Icons.close,
-                                    color: Color(0x991F2330),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.8),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: const Color(0xFFE1E5EE),
-                                ),
-                              ),
-                              child: ValueListenableBuilder<TextEditingValue>(
-                                valueListenable: controller,
-                                builder: (context, value, _) {
-                                  final displayText = value.text.isEmpty
-                                      ? 'დასაწყებად შეეხეთ ქვემოთ არსებულ კლავიატურას'
-                                      : value.text;
-                                  return Text(
-                                    displayText,
-                                    style: const TextStyle(
-                                      color: Color(0xFF1F2330),
-                                      fontSize: 18,
-                                      letterSpacing: 0.3,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Expanded(
-                            child: Align(
-                              alignment: Alignment.bottomCenter,
-                              child: OnScreenKeyboard(
-                                controller: controller,
-                                language: keyboardLanguage,
-                                onClose: () => Navigator.pop(sheetContext),
-                                onEnter: () => Navigator.pop(sheetContext),
-                                showHeader: false,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
+    final sanitized = updated.replaceAll(RegExp(r'\D+'), '');
+    controller.value = TextEditingValue(
+      text: sanitized,
+      selection: TextSelection.collapsed(offset: sanitized.length),
     );
   }
 

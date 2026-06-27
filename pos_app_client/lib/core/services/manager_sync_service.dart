@@ -15,11 +15,7 @@ import 'package:vynic/core/utils/payment_utils.dart';
 class ManagerSyncService {
   static String get serverUrl => ApiConfig.baseUrl;
 
-  static Timer? _syncTimer;
-  static Timer? _debounceTimer;
-  static Timer? _reachabilityTimer;
-  static bool? _lastBackendReachable;
-  static bool _isReachabilityProbeRunning = false;
+  static bool _startupSyncScheduled = false;
 
   /// Last synced line snapshot per order — diff drives manager notifications + highlights.
   static final Map<int, List<OrderItem>> _lastOrderItemsByOrderId =
@@ -47,32 +43,30 @@ class ManagerSyncService {
   static void Function(SyncEvent event)? _previousOnLocalChange;
   static bool _hooksRegistered = false;
   static bool _realtimeOnly = false;
-  static Timer? _realtimeDebounceTimer;
-  static Timer? _serviceFeeSyncTimer;
 
   static void initialize() {
     ConnectionStatusService.initialize();
 
-    // Always wire Hive → cloud (hot restart used to skip this when timer existed).
+    // Always wire Hive changes to pending sync status.
     if (!_hooksRegistered) {
       _previousOnLocalChange = SyncHub.onLocalChange;
       SyncHub.onLocalChange = (SyncEvent event) {
         _previousOnLocalChange?.call(event);
         _onLocalHiveChange(event);
       };
-      DatabaseService.registerAuditChangedCallback(_syncAuditReportsDebounced);
+      DatabaseService.registerAuditChangedCallback(
+        ConnectionStatusService.markPendingLocalChange,
+      );
       DatabaseService.registerUsersChangedCallback(() {
         ConnectionStatusService.markPendingLocalChange();
-        syncToManagerAppDebounced();
       });
       _hooksRegistered = true;
     }
 
     _bootstrapTableFingerprintsFromLocal();
 
-    if (_syncTimer != null) return;
-
-    _startReachabilityMonitor();
+    if (_startupSyncScheduled) return;
+    _startupSyncScheduled = true;
 
     // Delay the initial sync by 3 seconds to ensure the local Hive DB
     // is fully loaded before we push data. This prevents an empty push
@@ -82,11 +76,6 @@ class ManagerSyncService {
         '[ManagerSync] Backend=${ApiConfig.baseUrl} '
         'ingest=${PosCallbackConfig.baseUrl ?? "not running"}',
       );
-      syncToManagerApp();
-    });
-
-    // Periodic failsafe (realtime path is SyncHub → debounced push above).
-    _syncTimer = Timer.periodic(const Duration(minutes: 5), (timer) {
       syncToManagerApp();
     });
   }
@@ -242,67 +231,13 @@ class ManagerSyncService {
     return drained;
   }
 
-  static Timer? _auditDebounceTimer;
-
   static void dispose() {
-    _syncTimer?.cancel();
-    _syncTimer = null;
-    _reachabilityTimer?.cancel();
-    _reachabilityTimer = null;
-    _debounceTimer?.cancel();
-    _debounceTimer = null;
-    _auditDebounceTimer?.cancel();
-    _auditDebounceTimer = null;
-    _realtimeDebounceTimer?.cancel();
-    _realtimeDebounceTimer = null;
+    _startupSyncScheduled = false;
   }
 
-  static void _startReachabilityMonitor() {
-    if (_reachabilityTimer != null) return;
-    _reachabilityTimer = Timer.periodic(const Duration(seconds: 15), (_) {
-      unawaited(_probeBackendReachability());
-    });
-  }
-
-  static Future<void> _probeBackendReachability() async {
-    if (_isReachabilityProbeRunning) return;
-    _isReachabilityProbeRunning = true;
-    try {
-      final wasOffline =
-          _lastBackendReachable == false ||
-          ConnectionStatusService.backendState.value ==
-              BackendConnectionState.offline;
-      final response = await http
-          .get(Uri.parse('$serverUrl/sync/ping'))
-          .timeout(const Duration(seconds: 4));
-      final reachable = response.statusCode >= 200 && response.statusCode < 300;
-      if (!reachable) {
-        _lastBackendReachable = false;
-        ConnectionStatusService.markBackendUnreachable(
-          'Backend ping failed (${response.statusCode}): ${response.body}',
-        );
-        return;
-      }
-
-      _lastBackendReachable = true;
-      ConnectionStatusService.markBackendReachable();
-      if (wasOffline) {
-        unawaited(syncToManagerApp());
-      }
-    } catch (e) {
-      _lastBackendReachable = false;
-      ConnectionStatusService.markBackendUnreachable(e);
-    } finally {
-      _isReachabilityProbeRunning = false;
-    }
-  }
-
-  /// Pushes data to the cloud immediately, but debounced to avoid spamming.
+  /// Marks that local POS data should be pushed on the next manual sync.
   static void syncToManagerAppDebounced() {
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-      syncToManagerApp();
-    });
+    ConnectionStatusService.markPendingLocalChange();
   }
 
   static Future<bool> testBackendConnection({
@@ -337,20 +272,14 @@ class ManagerSyncService {
     }
   }
 
-  /// Lightweight push (tables + orders only) — fast path for mobile realtime.
+  /// Manual-first mode: local changes mark pending instead of auto-pushing.
   static void syncRealtimeToManagerAppDebounced() {
-    _realtimeDebounceTimer?.cancel();
-    _realtimeDebounceTimer = Timer(const Duration(milliseconds: 350), () {
-      unawaited(syncRealtimeToManagerApp());
-    });
+    ConnectionStatusService.markPendingLocalChange();
   }
 
-  /// Service-fee toggles can fire many Hive updates; wait until settling before notify.
+  /// Manual-first mode: service-fee changes mark pending instead of auto-pushing.
   static void _syncServiceFeeToManagerDebounced() {
-    _serviceFeeSyncTimer?.cancel();
-    _serviceFeeSyncTimer = Timer(const Duration(milliseconds: 1500), () {
-      unawaited(syncRealtimeToManagerApp());
-    });
+    ConnectionStatusService.markPendingLocalChange();
   }
 
   static Future<void> syncRealtimeToManagerApp() async {
@@ -360,14 +289,6 @@ class ManagerSyncService {
     } finally {
       _realtimeOnly = false;
     }
-  }
-
-  /// Push only audit reports, debounced so rapid successive events become one call.
-  static void _syncAuditReportsDebounced() {
-    _auditDebounceTimer?.cancel();
-    _auditDebounceTimer = Timer(const Duration(milliseconds: 800), () {
-      unawaited(_syncAuditReports());
-    });
   }
 
   static Future<void> syncToManagerApp() async {

@@ -102,7 +102,11 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                     else
                       LayoutBuilder(
                         builder: (context, constraints) {
-                          final showSidePanel = constraints.maxWidth >= 850;
+                          final showSidePanel = constraints.maxWidth >= 700;
+                          final compactTable = constraints.maxWidth < 1040;
+                          final categoryPanelWidth = constraints.maxWidth < 1120
+                              ? 240.0
+                              : 330.0;
                           if (!showSidePanel) {
                             return Column(
                               children: [
@@ -119,12 +123,14 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Expanded(
-                                flex: 7,
-                                child: _buildMenuTable(rows: filteredRows),
+                                child: _buildMenuTable(
+                                  rows: filteredRows,
+                                  compact: compactTable,
+                                ),
                               ),
                               const SizedBox(width: 14),
-                              Expanded(
-                                flex: 3,
+                              SizedBox(
+                                width: categoryPanelWidth,
                                 child: _buildCategoryPanel(categories, allRows),
                               ),
                             ],

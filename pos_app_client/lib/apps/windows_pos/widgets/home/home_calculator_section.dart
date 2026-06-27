@@ -84,7 +84,6 @@ class _HomeCalculatorSectionState extends State<HomeCalculatorSection> {
   Widget build(BuildContext context) {
     final filteredDrafts = _filteredDrafts;
     final selectedDraft = _selectedDraft(filteredDrafts);
-    final isCompact = MediaQuery.sizeOf(context).width < 1060;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 16, 8, 16),
@@ -96,11 +95,18 @@ class _HomeCalculatorSectionState extends State<HomeCalculatorSection> {
           _buildStats(),
           const SizedBox(height: 14),
           Expanded(
-            child: isCompact
-                ? ListView(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isCompact = constraints.maxWidth < 860;
+                final draftListWidth = constraints.maxWidth < 1120
+                    ? 320.0
+                    : 360.0;
+
+                if (isCompact) {
+                  return ListView(
                     children: [
                       SizedBox(
-                        height: 520,
+                        height: 420,
                         child: _buildDraftBrowser(filteredDrafts),
                       ),
                       const SizedBox(height: 14),
@@ -109,21 +115,22 @@ class _HomeCalculatorSectionState extends State<HomeCalculatorSection> {
                         child: _buildSelectedDraftPanel(selectedDraft),
                       ),
                     ],
-                  )
-                : Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        flex: 9,
-                        child: _buildDraftBrowser(filteredDrafts),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        flex: 11,
-                        child: _buildSelectedDraftPanel(selectedDraft),
-                      ),
-                    ],
-                  ),
+                  );
+                }
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(
+                      width: draftListWidth,
+                      child: _buildDraftBrowser(filteredDrafts),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(child: _buildSelectedDraftPanel(selectedDraft)),
+                  ],
+                );
+              },
+            ),
           ),
         ],
       ),

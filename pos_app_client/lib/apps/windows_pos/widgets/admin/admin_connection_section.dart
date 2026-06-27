@@ -67,7 +67,7 @@ class _AdminConnectionSectionState extends State<AdminConnectionSection> {
                   const SizedBox(height: 14),
                   LayoutBuilder(
                     builder: (context, constraints) {
-                      final twoColumns = constraints.maxWidth >= 820;
+                      final twoColumns = constraints.maxWidth >= 980;
                       final statusPanel = _buildStatusPanel(state);
                       final endpointPanel = _buildEndpointPanel();
                       if (!twoColumns) {

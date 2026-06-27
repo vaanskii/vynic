@@ -162,7 +162,11 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
                     const SizedBox(height: 16),
                     LayoutBuilder(
                       builder: (context, constraints) {
-                        final showSidePanel = constraints.maxWidth >= 860;
+                        final showSidePanel = constraints.maxWidth >= 700;
+                        final compactDirectory = constraints.maxWidth < 1040;
+                        final rolesPanelWidth = constraints.maxWidth < 1120
+                            ? 260.0
+                            : 330.0;
                         if (!showSidePanel) {
                           return Column(
                             children: [
@@ -175,9 +179,16 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
                         return Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(flex: 7, child: _buildDirectory(isMobile)),
+                            Expanded(
+                              child: _buildDirectory(
+                                isMobile || compactDirectory,
+                              ),
+                            ),
                             const SizedBox(width: 14),
-                            Expanded(flex: 3, child: _buildRolesPanel()),
+                            SizedBox(
+                              width: rolesPanelWidth,
+                              child: _buildRolesPanel(),
+                            ),
                           ],
                         );
                       },
@@ -595,15 +606,20 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(Icons.security_outlined, color: _staffText, size: 21),
                   SizedBox(width: 9),
-                  Text(
-                    'როლები და წვდომა',
-                    style: TextStyle(
-                      color: _staffText,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
+                  Expanded(
+                    child: Text(
+                      'როლები და წვდომა',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: _staffText,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                 ],

@@ -75,13 +75,14 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
 
   @override
   Widget build(BuildContext context) {
-    final ordered = [...widget.reservations]..sort((a, b) {
-      final dateCmp = a.reservationDate.compareTo(b.reservationDate);
-      if (dateCmp != 0) return dateCmp;
-      final timeCmp = a.reservationTime.compareTo(b.reservationTime);
-      if (timeCmp != 0) return timeCmp;
-      return a.createdAt.compareTo(b.createdAt);
-    });
+    final ordered = [...widget.reservations]
+      ..sort((a, b) {
+        final dateCmp = a.reservationDate.compareTo(b.reservationDate);
+        if (dateCmp != 0) return dateCmp;
+        final timeCmp = a.reservationTime.compareTo(b.reservationTime);
+        if (timeCmp != 0) return timeCmp;
+        return a.createdAt.compareTo(b.createdAt);
+      });
 
     final today = DatabaseService.getCurrentDate();
     final todayCount = ordered.where((r) => _isSameDate(r, today)).length;
@@ -103,7 +104,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
       builder: (context, constraints) {
         final platformMobile =
             !kIsWeb && (Platform.isAndroid || Platform.isIOS);
-        final isCompact = platformMobile || constraints.maxWidth < 980;
+        final isCompact = platformMobile || constraints.maxWidth < 860;
 
         if (isCompact) {
           return SingleChildScrollView(
@@ -158,8 +159,8 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
                     : Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Expanded(
-                            flex: 2,
+                          SizedBox(
+                            width: constraints.maxWidth < 1120 ? 330 : 380,
                             child: _buildQueuePanel(
                               reservations: ordered,
                               selected: selected,
@@ -168,7 +169,6 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
                           ),
                           const SizedBox(width: 14),
                           Expanded(
-                            flex: 3,
                             child: _buildDetailPanel(
                               reservation: selected,
                               compact: false,
@@ -653,7 +653,9 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
                           child: _buildInfoBlock(
                             icon: Icons.person_outline,
                             title: _customerName(reservation),
-                            subtitle: phone.isEmpty ? 'ტელეფონი არ არის' : phone,
+                            subtitle: phone.isEmpty
+                                ? 'ტელეფონი არ არის'
+                                : phone,
                           ),
                         ),
                         const SizedBox(width: 14),
@@ -765,9 +767,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
         icon: Icons.receipt_long_outlined,
         label: 'ჩეკის ბეჭდვა',
         primary: true,
-        onTap: hasPreOrder
-            ? () => _printReservationReceipt(reservation)
-            : null,
+        onTap: hasPreOrder ? () => _printReservationReceipt(reservation) : null,
       ),
     ];
 

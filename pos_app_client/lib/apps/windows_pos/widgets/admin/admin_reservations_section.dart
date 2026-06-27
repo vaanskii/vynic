@@ -232,6 +232,9 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
                     LayoutBuilder(
                       builder: (context, constraints) {
                         final showSidePanel = constraints.maxWidth >= 850;
+                        final sidePanelWidth = constraints.maxWidth < 1120
+                            ? 280.0
+                            : 330.0;
                         if (!showSidePanel) {
                           return Column(
                             children: [
@@ -252,14 +255,13 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
-                              flex: 7,
                               child: _buildReservationsTable(
                                 visibleReservations,
                               ),
                             ),
                             const SizedBox(width: 14),
-                            Expanded(
-                              flex: 3,
+                            SizedBox(
+                              width: sidePanelWidth,
                               child: _buildReservationSidePanel(
                                 todayReservations,
                                 todayGuests,

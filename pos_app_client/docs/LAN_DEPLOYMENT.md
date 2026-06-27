@@ -57,7 +57,17 @@ cmd.exe /c mklink /J C:\Vynic\App\current C:\Vynic\App\releases\bootstrap
 
 ## One-time POS setup
 
-Create an SMB share that the Parallels Windows builder can write to. Point it at:
+Run the POS setup script from an elevated PowerShell window on the real POS:
+
+```powershell
+.\scripts\windows\setup-pos-deployment.ps1
+```
+
+This creates the deployment folders, installs `apply-staged-update.ps1` under
+`C:\ProgramData\Vynic\Deployment`, creates the SMB drop, and registers an
+on-demand scheduled task.
+
+The SMB share points at:
 
 ```text
 C:\Vynic\App\staging\incoming
@@ -69,14 +79,29 @@ Example share name:
 \\10.10.10.4\VynicDeployDrop
 ```
 
-Create a scheduled task that runs the apply script manually/on demand:
+By default, the share grants modify access to the Windows user running the setup
+script. If the Parallels builder should authenticate as a dedicated POS user,
+pass it explicitly:
 
 ```powershell
-powershell.exe -ExecutionPolicy Bypass -File C:\Path\To\apply-staged-update.ps1
+.\scripts\windows\setup-pos-deployment.ps1 -ShareChangeAccess "POS-PC\vynic_deploy"
+```
+
+The scheduled task runs manually/on demand:
+
+```powershell
+Start-ScheduledTask -TaskName VynicApplyStagedUpdate
 ```
 
 For production safety, do not add a trigger that runs automatically during
 restaurant operation.
+
+If there is already a known-good POS release folder, bootstrap `current` during
+setup:
+
+```powershell
+.\scripts\windows\setup-pos-deployment.ps1 -BootstrapReleaseDir "C:\Existing\VynicRelease"
+```
 
 ## Build and package on Parallels Windows
 

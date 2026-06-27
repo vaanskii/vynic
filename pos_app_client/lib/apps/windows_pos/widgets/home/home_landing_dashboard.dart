@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
+import 'package:vynic/apps/windows_pos/widgets/home/pos_connection_status_indicator.dart';
 
 class HomeLandingDashboard extends StatefulWidget {
   const HomeLandingDashboard({
@@ -254,6 +255,7 @@ class _HomeLandingDashboardState extends State<HomeLandingDashboard> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final showWorkDate = constraints.maxWidth >= 760;
+          final showConnectionLabel = constraints.maxWidth >= 560;
           return Row(
             children: [
               Container(
@@ -263,9 +265,9 @@ class _HomeLandingDashboardState extends State<HomeLandingDashboard> {
                   color: Colors.white,
                   shape: BoxShape.circle,
                 ),
-                padding: const EdgeInsets.all(5),
+                padding: const EdgeInsets.all(2),
                 child: Image.asset(
-                  'assets/logo/vynic.png',
+                  'assets/logo/vynicnew.png',
                   fit: BoxFit.contain,
                 ),
               ),
@@ -302,6 +304,8 @@ class _HomeLandingDashboardState extends State<HomeLandingDashboard> {
                 style: const TextStyle(color: Colors.white, fontSize: 16),
               ),
               const SizedBox(width: 14),
+              PosConnectionStatusIndicator(compact: !showConnectionLabel),
+              const SizedBox(width: 6),
               _NotificationButton(
                 unreadCount: widget.notificationUnreadCount,
                 onTap: widget.onNotificationTap,

@@ -608,12 +608,14 @@ class MobileApiService {
     required List<Map<String, dynamic>> items,
     required double subtotal,
     required bool includeServiceFee,
+    double? serviceFeeRate,
   }) async {
     final payload = {
       'displayName': name,
       'items': items,
       'subtotal': subtotal,
       'includeServiceFee': includeServiceFee,
+      if (serviceFeeRate != null) 'serviceFeeRate': serviceFeeRate,
     };
     final response = await _post(
       '/mobile/counted-menu/$draftId/update',

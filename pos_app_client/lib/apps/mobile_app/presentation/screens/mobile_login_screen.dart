@@ -277,14 +277,13 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
               child: child,
             );
           },
-          child: ShaderMask(
-            shaderCallback: (bounds) => LinearGradient(
-              colors: [MobileGlassTheme.primary, MobileGlassTheme.accent],
-            ).createShader(bounds),
-            child: const Icon(
-              Icons.verified_user_rounded,
-              color: Colors.white,
-              size: 42,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: Image.asset(
+              'assets/logo/vynicnew.png',
+              width: 64,
+              height: 64,
+              fit: BoxFit.cover,
             ),
           ),
         ),

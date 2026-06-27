@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:vynic/core/services/connection_status_service.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/api_config.dart';
 import 'package:vynic/core/services/pos_callback_config.dart';
@@ -16,12 +17,15 @@ class ManagerSyncService {
 
   static Timer? _syncTimer;
   static Timer? _debounceTimer;
+  static Timer? _reachabilityTimer;
+  static bool? _lastBackendReachable;
+  static bool _isReachabilityProbeRunning = false;
 
   /// Last synced line snapshot per order — diff drives manager notifications + highlights.
   static final Map<int, List<OrderItem>> _lastOrderItemsByOrderId =
       <int, List<OrderItem>>{};
   static final Map<int, ({bool includeServiceFee, double totalAmount})>
-      _lastOrderBillingByOrderId = {};
+  _lastOrderBillingByOrderId = {};
   static bool _orderFingerprintsBootstrapped = false;
 
   /// Occupancy snapshot per table — drives `touchedTableHints` (walk-in / close).
@@ -47,6 +51,8 @@ class ManagerSyncService {
   static Timer? _serviceFeeSyncTimer;
 
   static void initialize() {
+    ConnectionStatusService.initialize();
+
     // Always wire Hive → cloud (hot restart used to skip this when timer existed).
     if (!_hooksRegistered) {
       _previousOnLocalChange = SyncHub.onLocalChange;
@@ -55,13 +61,18 @@ class ManagerSyncService {
         _onLocalHiveChange(event);
       };
       DatabaseService.registerAuditChangedCallback(_syncAuditReportsDebounced);
-      DatabaseService.registerUsersChangedCallback(syncToManagerAppDebounced);
+      DatabaseService.registerUsersChangedCallback(() {
+        ConnectionStatusService.markPendingLocalChange();
+        syncToManagerAppDebounced();
+      });
       _hooksRegistered = true;
     }
 
     _bootstrapTableFingerprintsFromLocal();
 
     if (_syncTimer != null) return;
+
+    _startReachabilityMonitor();
 
     // Delay the initial sync by 3 seconds to ensure the local Hive DB
     // is fully loaded before we push data. This prevents an empty push
@@ -81,11 +92,12 @@ class ManagerSyncService {
   }
 
   static void _onLocalHiveChange(SyncEvent event) {
+    ConnectionStatusService.markPendingLocalChange();
+
     if (event.type == SyncEventType.tables) {
       final payload = event.payload;
       final action = event.action;
-      if (payload != null &&
-          (action == 'reserved' || action == 'freed')) {
+      if (payload != null && (action == 'reserved' || action == 'freed')) {
         final tableNumber = payload['tableNumber']?.toString().trim() ?? '';
         final floor = payload['floor']?.toString().trim() ?? 'first';
         if (tableNumber.isNotEmpty) {
@@ -111,8 +123,7 @@ class ManagerSyncService {
           : int.tryParse(orderRaw?.toString() ?? '');
       if (orderId != null) {
         final order = DatabaseService.getOrder(orderId);
-        if (order != null &&
-            !order.floor.toLowerCase().contains('takeaway')) {
+        if (order != null && !order.floor.toLowerCase().contains('takeaway')) {
           for (final rawNum in order.tableNumbers) {
             final tableNumber = _normalizeTableNumberForSync(
               rawNum.toString(),
@@ -186,8 +197,7 @@ class ManagerSyncService {
     try {
       final reservation = DatabaseService.findReservationById(reservationId);
       customerName = reservation?.customerName.trim() ?? '';
-      reservationDate =
-          reservation?.reservationDate.toIso8601String() ?? '';
+      reservationDate = reservation?.reservationDate.toIso8601String() ?? '';
       reservationTime = reservation?.reservationTime.trim() ?? '';
       tableNumbers = List<int>.from(reservation?.tableNumbers ?? const []);
       linkedOrderId = reservation?.linkedOrderId;
@@ -201,7 +211,8 @@ class ManagerSyncService {
       notes = '';
     }
 
-    final walkIn = customerName.toLowerCase() == 'walk-in' ||
+    final walkIn =
+        customerName.toLowerCase() == 'walk-in' ||
         customerName.toLowerCase().contains('walk-in');
 
     // Collapse repeated hints for the same reservation — latest wins.
@@ -236,6 +247,8 @@ class ManagerSyncService {
   static void dispose() {
     _syncTimer?.cancel();
     _syncTimer = null;
+    _reachabilityTimer?.cancel();
+    _reachabilityTimer = null;
     _debounceTimer?.cancel();
     _debounceTimer = null;
     _auditDebounceTimer?.cancel();
@@ -244,12 +257,84 @@ class ManagerSyncService {
     _realtimeDebounceTimer = null;
   }
 
+  static void _startReachabilityMonitor() {
+    if (_reachabilityTimer != null) return;
+    _reachabilityTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      unawaited(_probeBackendReachability());
+    });
+  }
+
+  static Future<void> _probeBackendReachability() async {
+    if (_isReachabilityProbeRunning) return;
+    _isReachabilityProbeRunning = true;
+    try {
+      final wasOffline =
+          _lastBackendReachable == false ||
+          ConnectionStatusService.backendState.value ==
+              BackendConnectionState.offline;
+      final response = await http
+          .get(Uri.parse('$serverUrl/sync/ping'))
+          .timeout(const Duration(seconds: 4));
+      final reachable = response.statusCode >= 200 && response.statusCode < 300;
+      if (!reachable) {
+        _lastBackendReachable = false;
+        ConnectionStatusService.markBackendUnreachable(
+          'Backend ping failed (${response.statusCode}): ${response.body}',
+        );
+        return;
+      }
+
+      _lastBackendReachable = true;
+      ConnectionStatusService.markBackendReachable();
+      if (wasOffline) {
+        unawaited(syncToManagerApp());
+      }
+    } catch (e) {
+      _lastBackendReachable = false;
+      ConnectionStatusService.markBackendUnreachable(e);
+    } finally {
+      _isReachabilityProbeRunning = false;
+    }
+  }
+
   /// Pushes data to the cloud immediately, but debounced to avoid spamming.
   static void syncToManagerAppDebounced() {
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 500), () {
       syncToManagerApp();
     });
+  }
+
+  static Future<bool> testBackendConnection({
+    String? backendUrl,
+    bool updateStatus = true,
+  }) async {
+    if (updateStatus) {
+      ConnectionStatusService.markAttempt();
+    }
+    final targetUrl = backendUrl ?? serverUrl;
+    try {
+      final response = await http
+          .get(Uri.parse('$targetUrl/sync/ping'))
+          .timeout(const Duration(seconds: 4));
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        if (updateStatus) {
+          ConnectionStatusService.markConnectionTestSuccess();
+        }
+        return true;
+      }
+      if (updateStatus) {
+        ConnectionStatusService.markFailure(
+          'Backend test failed (${response.statusCode}): ${response.body}',
+        );
+      }
+      return false;
+    } catch (e) {
+      if (updateStatus) {
+        ConnectionStatusService.markFailure(e);
+      }
+      return false;
+    }
   }
 
   /// Lightweight push (tables + orders only) — fast path for mobile realtime.
@@ -328,7 +413,9 @@ class ManagerSyncService {
               'posOrderId': o.orderId,
               'status': o.status,
               'totalAmount': o.totalAmount,
-              'paymentType': (o.paymentMethod ?? 'cash').toString().toLowerCase(),
+              'paymentType': (o.paymentMethod ?? 'cash')
+                  .toString()
+                  .toLowerCase(),
               'waiterName': o.createdBy,
               'tableNumbers': o.tableNumbers.map((e) => e.toString()).toList(),
               'floor': o.floor,
@@ -352,8 +439,9 @@ class ManagerSyncService {
           .toList();
 
       final tables = _buildTablesSyncPayload(allOrders, businessDate);
-      final orderMaps =
-          todayOrders.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      final orderMaps = todayOrders
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
       final touchedOrderHints = _mergeTouchedOrderHints(
         _computeTouchedOrderHints(orderMaps),
         _drainPendingOrderHints(),
@@ -388,8 +476,9 @@ class ManagerSyncService {
           'dailySalesTotal': double.parse(
             DatabaseService.getDailySalesTotal().toStringAsFixed(2),
           ),
-          'openTablesPayable':
-              double.parse(openTablesPayable.toStringAsFixed(2)),
+          'openTablesPayable': double.parse(
+            openTablesPayable.toStringAsFixed(2),
+          ),
           'settings': {
             'serviceFeePercent': DatabaseService.getServiceFeePercentage(),
             'serviceFeeEnabled': DatabaseService.isServiceFeeEnabledByDefault(),
@@ -405,6 +494,7 @@ class ManagerSyncService {
           '($reservedInPayload reserved), ${todayOrders.length} orders, '
           'tableHints=${touchedTableHints.length}.',
         );
+        ConnectionStatusService.markAttempt();
         final response = await http.post(
           Uri.parse('$serverUrl/sync/manager-data'),
           headers: ApiConfig.posSyncHeaders,
@@ -412,9 +502,13 @@ class ManagerSyncService {
         );
         if (response.statusCode == 200 || response.statusCode == 201) {
           debugPrint('[ManagerSync] Realtime OK (${response.statusCode})');
+          await ConnectionStatusService.markSuccess();
         } else {
           debugPrint(
             '[ManagerSync] Realtime failed (${response.statusCode}): ${response.body}',
+          );
+          ConnectionStatusService.markFailure(
+            'Realtime sync failed (${response.statusCode}): ${response.body}',
           );
         }
         unawaited(_syncAuditReports());
@@ -433,7 +527,8 @@ class ManagerSyncService {
         if (isCancelled || restoredToOrder) {
           continue;
         }
-        final totalAmount = (sale['totalAmount'] as num?)?.toDouble() ??
+        final totalAmount =
+            (sale['totalAmount'] as num?)?.toDouble() ??
             (sale['total'] as num?)?.toDouble() ??
             0.0;
         final isFiscal = sale['isFiscal'] != false;
@@ -487,7 +582,8 @@ class ManagerSyncService {
         if (isCancelled || restoredToOrder) {
           continue;
         }
-        final totalAmount = (sale['totalAmount'] as num?)?.toDouble() ??
+        final totalAmount =
+            (sale['totalAmount'] as num?)?.toDouble() ??
             (sale['total'] as num?)?.toDouble() ??
             0.0;
         allTimeTotalRevenue += totalAmount;
@@ -519,7 +615,8 @@ class ManagerSyncService {
           final name = (item['itemName'] as String?)?.trim();
           if (name == null || name.isEmpty) continue;
           final qty = (item['quantity'] as num?)?.toDouble() ?? 0.0;
-          final unitPrice = (item['unitPrice'] as num?)?.toDouble() ??
+          final unitPrice =
+              (item['unitPrice'] as num?)?.toDouble() ??
               (item['price'] as num?)?.toDouble() ??
               0.0;
           final revenue = qty * unitPrice;
@@ -529,26 +626,27 @@ class ManagerSyncService {
           allTimeItems[name] = current;
         }
       }
-      final topItems = allTimeItems.entries
-          .map(
-            (entry) => {
-              'name': entry.key,
-              'qty': (entry.value['qty'] ?? 0).round(),
-              'revenue': double.parse(
-                (entry.value['revenue'] ?? 0).toStringAsFixed(2),
-              ),
-            },
-          )
-          .toList()
-        ..sort(
-          (a, b) {
-            final revenueCmp = ((b['revenue'] as num?) ?? 0).compareTo(
-              (a['revenue'] as num?) ?? 0,
-            );
-            if (revenueCmp != 0) return revenueCmp;
-            return ((b['qty'] as num?) ?? 0).compareTo((a['qty'] as num?) ?? 0);
-          },
-        );
+      final topItems =
+          allTimeItems.entries
+              .map(
+                (entry) => {
+                  'name': entry.key,
+                  'qty': (entry.value['qty'] ?? 0).round(),
+                  'revenue': double.parse(
+                    (entry.value['revenue'] ?? 0).toStringAsFixed(2),
+                  ),
+                },
+              )
+              .toList()
+            ..sort((a, b) {
+              final revenueCmp = ((b['revenue'] as num?) ?? 0).compareTo(
+                (a['revenue'] as num?) ?? 0,
+              );
+              if (revenueCmp != 0) return revenueCmp;
+              return ((b['qty'] as num?) ?? 0).compareTo(
+                (a['qty'] as num?) ?? 0,
+              );
+            });
       final allTimeCashRevenue = roundedAllTimeBreakdown['cash'] ?? 0.0;
       final allTimeCardRevenue = roundedAllTimeBreakdown.entries.fold<double>(
         0,
@@ -568,19 +666,21 @@ class ManagerSyncService {
       for (final sale in allSales) {
         final date = (sale['date'] as String?)?.trim();
         if (date == null || date.isEmpty) continue;
-        final bucket =
-            salesHistoryByDate.putIfAbsent(date, () => {
-                  'date': date,
-                  'totalRevenue': 0.0,
-                  'orderCount': 0,
-                  'totalOrders': 0,
-                  'cancelledOrders': 0,
-                  'cashRevenue': 0.0,
-                  'cardRevenue': 0.0,
-                  'paymentBreakdown': <String, double>{},
-                  'topItems': <Map<String, dynamic>>[],
-                  'closedTables': <Map<String, dynamic>>[],
-                });
+        final bucket = salesHistoryByDate.putIfAbsent(
+          date,
+          () => {
+            'date': date,
+            'totalRevenue': 0.0,
+            'orderCount': 0,
+            'totalOrders': 0,
+            'cancelledOrders': 0,
+            'cashRevenue': 0.0,
+            'cardRevenue': 0.0,
+            'paymentBreakdown': <String, double>{},
+            'topItems': <Map<String, dynamic>>[],
+            'closedTables': <Map<String, dynamic>>[],
+          },
+        );
         bucket['totalOrders'] = (bucket['totalOrders'] as int) + 1;
 
         final isCancelled = sale['isCancelled'] == true;
@@ -593,7 +693,8 @@ class ManagerSyncService {
           continue;
         }
 
-        final totalAmount = (sale['totalAmount'] as num?)?.toDouble() ??
+        final totalAmount =
+            (sale['totalAmount'] as num?)?.toDouble() ??
             (sale['total'] as num?)?.toDouble() ??
             0.0;
         bucket['totalRevenue'] =
@@ -631,7 +732,8 @@ class ManagerSyncService {
         final normalizedItems = rawClosedItems.whereType<Map>().map((rawItem) {
           final item = Map<String, dynamic>.from(rawItem);
           final qty = (item['quantity'] as num?)?.toInt() ?? 0;
-          final unitPrice = (item['unitPrice'] as num?)?.toDouble() ??
+          final unitPrice =
+              (item['unitPrice'] as num?)?.toDouble() ??
               (item['price'] as num?)?.toDouble() ??
               0.0;
           return {
@@ -657,8 +759,8 @@ class ManagerSyncService {
         });
         bucket['closedTables'] = closedTables;
 
-        final paymentBreakdown =
-            (bucket['paymentBreakdown'] as Map).cast<String, double>();
+        final paymentBreakdown = (bucket['paymentBreakdown'] as Map)
+            .cast<String, double>();
         if (!isFiscal) {
           paymentBreakdown['non-fiscal'] =
               (paymentBreakdown['non-fiscal'] ?? 0) + totalAmount;
@@ -689,7 +791,8 @@ class ManagerSyncService {
           final name = (item['itemName'] as String?)?.trim();
           if (name == null || name.isEmpty) continue;
           final qty = (item['quantity'] as num?)?.toDouble() ?? 0.0;
-          final unitPrice = (item['unitPrice'] as num?)?.toDouble() ??
+          final unitPrice =
+              (item['unitPrice'] as num?)?.toDouble() ??
               (item['price'] as num?)?.toDouble() ??
               0.0;
           final revenue = qty * unitPrice;
@@ -698,18 +801,23 @@ class ManagerSyncService {
           cur['revenue'] = (cur['revenue'] ?? 0) + revenue;
           itemAgg[name] = cur;
         }
-        final sortedItems = itemAgg.entries
-            .map(
-              (entry) => {
-                'name': entry.key,
-                'qty': (entry.value['qty'] ?? 0).round(),
-                'revenue':
-                    double.parse((entry.value['revenue'] ?? 0).toStringAsFixed(2)),
-              },
-            )
-            .toList()
-          ..sort((a, b) => ((b['revenue'] as num?) ?? 0)
-              .compareTo((a['revenue'] as num?) ?? 0));
+        final sortedItems =
+            itemAgg.entries
+                .map(
+                  (entry) => {
+                    'name': entry.key,
+                    'qty': (entry.value['qty'] ?? 0).round(),
+                    'revenue': double.parse(
+                      (entry.value['revenue'] ?? 0).toStringAsFixed(2),
+                    ),
+                  },
+                )
+                .toList()
+              ..sort(
+                (a, b) => ((b['revenue'] as num?) ?? 0).compareTo(
+                  (a['revenue'] as num?) ?? 0,
+                ),
+              );
         bucket['topItems'] = sortedItems.take(300).toList();
       }
 
@@ -723,8 +831,9 @@ class ManagerSyncService {
           0,
           (sum, e) => e.key.startsWith('card') ? sum + e.value : sum,
         );
-        b['totalRevenue'] =
-            double.parse((b['totalRevenue'] as double).toStringAsFixed(2));
+        b['totalRevenue'] = double.parse(
+          (b['totalRevenue'] as double).toStringAsFixed(2),
+        );
         final expenseTotal = DatabaseService.getExpenseTotalForDate(entry.key);
         b['totalExpenses'] = double.parse(expenseTotal.toStringAsFixed(2));
         b['profit'] = double.parse(
@@ -858,8 +967,7 @@ class ManagerSyncService {
         'salesSummary': salesSummary,
         'salesAllTimeSummary': salesAllTimeSummary,
         'salesHistoryByDate': salesHistoryByDate,
-        'openTablesPayable':
-            double.parse(openTablesPayable.toStringAsFixed(2)),
+        'openTablesPayable': double.parse(openTablesPayable.toStringAsFixed(2)),
         'settings': {
           'serviceFeePercent': DatabaseService.getServiceFeePercentage(),
           'serviceFeeEnabled': DatabaseService.isServiceFeeEnabledByDefault(),
@@ -893,6 +1001,7 @@ class ManagerSyncService {
       }
 
       // 5. Send to NestJS
+      ConnectionStatusService.markAttempt();
       final response = await http.post(
         Uri.parse('$serverUrl/sync/manager-data'),
         headers: ApiConfig.posSyncHeaders,
@@ -903,11 +1012,15 @@ class ManagerSyncService {
         debugPrint(
           'Manager Sync Failed (${response.statusCode}) → $serverUrl: ${response.body}',
         );
+        ConnectionStatusService.markFailure(
+          'Manager sync failed (${response.statusCode}): ${response.body}',
+        );
       } else {
         debugPrint(
           '[ManagerSync] OK → $serverUrl '
           'callback=${payload['posCallbackUrl'] ?? "missing"}',
         );
+        await ConnectionStatusService.markSuccess();
       }
 
       // 6. Sync Audit Reports (fire-and-forget — best effort)
@@ -916,6 +1029,7 @@ class ManagerSyncService {
       debugPrint(
         'Manager Sync Error (cannot reach $serverUrl — is NestJS running on port 3000?): $e',
       );
+      ConnectionStatusService.markFailure(e);
     }
   }
 
@@ -1145,11 +1259,13 @@ class ManagerSyncService {
               ? 'სერვისის საფასური ჩართულია'
               : 'სერვისის საფასური გამორთულია';
           if (hint != null) {
-            hint['changeSummary'] = _mergeChangeSummaries(
-              hint['changeSummary'] as String?,
-              feeSummary,
-              preferServiceFee: true,
-            ) ?? feeSummary;
+            hint['changeSummary'] =
+                _mergeChangeSummaries(
+                  hint['changeSummary'] as String?,
+                  feeSummary,
+                  preferServiceFee: true,
+                ) ??
+                feeSummary;
             hint['changeKind'] = 'service_fee';
           } else {
             hint = {
@@ -1177,9 +1293,7 @@ class ManagerSyncService {
         touched.add(hint);
       }
 
-      _lastOrderItemsByOrderId[id] = nextItems
-          .map((i) => i.clone())
-          .toList();
+      _lastOrderItemsByOrderId[id] = nextItems.map((i) => i.clone()).toList();
       _lastOrderBillingByOrderId[id] = nextBilling;
     }
 
@@ -1368,7 +1482,8 @@ class ManagerSyncService {
           'tableNumber': raw['tableNumber'],
           'floor': raw['floor'],
           'changeType': nowOccupied ? 'reserved' : 'freed',
-          if (raw['activeOrderId'] != null) 'activeOrderId': raw['activeOrderId'],
+          if (raw['activeOrderId'] != null)
+            'activeOrderId': raw['activeOrderId'],
           if (raw['currentBill'] != null) 'currentBill': raw['currentBill'],
           'occurredAt': occurredAt,
         });

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
+import 'package:vynic/apps/windows_pos/widgets/home/pos_connection_status_indicator.dart';
 
 class HomeFeatureSwitchItem {
   const HomeFeatureSwitchItem({
@@ -168,6 +169,8 @@ class _HomeFeatureHeaderState extends State<HomeFeatureHeader> {
                     unreadCount: widget.notificationUnreadCount,
                     onTap: widget.onNotificationTap,
                   ),
+                  const SizedBox(width: 6),
+                  PosConnectionStatusIndicator(compact: narrow),
                   const SizedBox(width: 4),
                   _LogoutButton(onTap: widget.onLogoutTap),
                 ],

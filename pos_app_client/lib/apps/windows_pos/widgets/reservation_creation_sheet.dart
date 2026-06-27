@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
+import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 import 'on_screen_keyboard.dart';
 import 'time_entry_pad.dart';
 
@@ -67,7 +68,7 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
   void initState() {
     super.initState();
     _nameController.text = (widget.initialName ?? '').trim();
-    _phoneController.text = (widget.initialPhone ?? '').trim();
+    _phoneController.text = _digitsOnly(widget.initialPhone ?? '');
     _notesController.text = (widget.initialNotes ?? '').trim();
 
     final today = _normalizeDate(DatabaseService.getCurrentDate());
@@ -127,6 +128,33 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
   void _closeKeyboard() {
     setState(() {
       _activeController = null;
+    });
+  }
+
+  String _digitsOnly(String value) {
+    return value.replaceAll(RegExp(r'\D+'), '');
+  }
+
+  Future<void> _openPhoneKeyboard() async {
+    _closeKeyboard();
+
+    final updated = await showPosNumberKeyboardInputSheet(
+      context: context,
+      initialValue: _phoneController.text,
+      title: 'ტელეფონის ნომერი',
+      maxDigits: 15,
+    );
+
+    if (!mounted || updated == null) {
+      return;
+    }
+
+    final sanitized = _digitsOnly(updated);
+    setState(() {
+      _phoneController.value = TextEditingValue(
+        text: sanitized,
+        selection: TextSelection.collapsed(offset: sanitized.length),
+      );
     });
   }
 
@@ -202,7 +230,7 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
 
     final result = {
       'customerName': nameValue,
-      'customerPhone': _phoneController.text.trim(),
+      'customerPhone': _digitsOnly(_phoneController.text),
       'notes': _notesController.text.trim(),
       'date': _selectedDate,
       'time': time,
@@ -439,9 +467,9 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
                           const SizedBox(height: 8),
                           _buildInputField(
                             controller: _phoneController,
-                            hint: 'შეიყვანეთ ტელეფონი',
+                            hint: 'შეიყვანეთ ტელეფონის ნომერი',
                             icon: Icons.phone,
-                            onTap: () => _setActiveField(_phoneController),
+                            onTap: _openPhoneKeyboard,
                           ),
                           const SizedBox(height: 20),
                           _buildLabel('სტუმრების რაოდენობა'),

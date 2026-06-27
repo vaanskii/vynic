@@ -5,7 +5,9 @@ import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_calculator_screen.dart';
+import 'package:vynic/apps/mobile_app/presentation/screens/reservation_create_screen.dart';
 import 'package:vynic/apps/mobile_app/widgets/mobile_receipt_preview_dialog.dart';
+import 'package:vynic/apps/windows_pos/widgets/order/helpers/service_fee_adjust_dialog.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/mobile_api_service.dart';
 import 'package:vynic/core/services/printer_service.dart';
@@ -24,7 +26,10 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
   bool _loading = true;
   List<Map<String, dynamic>> _drafts = [];
   String? _error;
+  bool _serviceFeeAvailable = false;
+  int _defaultServiceFeePercent = 10;
   final Set<String> _printing = <String>{};
+  final Set<String> _updatingServiceFee = <String>{};
 
   static final _money = NumberFormat('#,##0.00', 'en_US');
   static final _date = DateFormat('dd MMM, HH:mm');
@@ -41,7 +46,15 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
       _error = null;
     });
     try {
-      final data = await MobileApiService.getCountedMenus();
+      final results = await Future.wait([
+        MobileApiService.getCountedMenus(),
+        MobileApiService.getRestaurantSettings(),
+      ]);
+      final data = results[0] as List<dynamic>;
+      final settings = results[1] as Map<String, dynamic>;
+      final serviceFeeAvailable = settings['serviceFeeAvailable'] == true;
+      final defaultServiceFeePercent =
+          (settings['serviceFeePercent'] as num?)?.round() ?? 10;
       final drafts = data
           .whereType<Map>()
           .map((e) => e.cast<String, dynamic>())
@@ -57,6 +70,8 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
       if (mounted) {
         setState(() {
           _drafts = drafts;
+          _serviceFeeAvailable = serviceFeeAvailable;
+          _defaultServiceFeePercent = defaultServiceFeePercent;
           _loading = false;
         });
       }
@@ -120,6 +135,192 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
       ),
     );
     if (saved == true) _load();
+  }
+
+  /// Confirm a counted menu: open the reservation-creation flow pre-filled with
+  /// this menu's items as the pre-order. Submitting creates a reservation on the
+  /// Windows POS (via the existing relay), so it appears in the POS home and
+  /// admin reservations like any other booking.
+  Future<void> _confirmCountedMenu(Map<String, dynamic> draft) async {
+    final rawItems = ((draft['items'] as List?) ?? const [])
+        .whereType<Map>()
+        .map((e) => e.cast<String, dynamic>())
+        .toList();
+
+    final items = <({String name, double price, int qty})>[];
+    for (final raw in rawItems) {
+      final name = (raw['itemName'] ?? raw['name'] ?? '').toString().trim();
+      final qty = (raw['quantity'] as num?)?.toInt() ?? 0;
+      final price =
+          ((raw['unitPrice'] ?? raw['price']) as num?)?.toDouble() ?? 0.0;
+      if (name.isEmpty || qty <= 0) continue;
+      items.add((name: name, price: price, qty: qty));
+    }
+
+    if (items.isEmpty) {
+      if (mounted) {
+        showErrorToast(context, 'დასადასტურებლად პროდუქტები არ მოიძებნა');
+      }
+      return;
+    }
+
+    final created = await Navigator.of(context).push<bool>(
+      ReservationCreateScreen.route(
+        user: widget.user,
+        initialDate: DateTime.now(),
+        initialName: draft['displayName']?.toString(),
+        initialItems: items,
+      ),
+    );
+    if (created == true && mounted) {
+      showSuccessToast(context, 'რეზერვაცია შეიქმნა');
+    }
+  }
+
+  List<Map<String, dynamic>> _countedMenuItemsFromDraft(
+    Map<String, dynamic> draft,
+  ) {
+    final rawItems = ((draft['items'] as List?) ?? const [])
+        .whereType<Map>()
+        .map((e) => e.cast<String, dynamic>())
+        .toList();
+
+    return rawItems
+        .map((it) => <String, dynamic>{
+              'itemName': (it['itemName'] ?? it['name'] ?? '').toString(),
+              'quantity': (it['quantity'] as num?)?.toInt() ?? 0,
+              'unitPrice':
+                  ((it['unitPrice'] ?? it['price']) as num?)?.toDouble() ?? 0.0,
+              if (it['comment'] != null) 'comment': it['comment'],
+            })
+        .where(
+          (it) =>
+              (it['itemName'] as String).trim().isNotEmpty &&
+              (it['quantity'] as int) > 0,
+        )
+        .toList();
+  }
+
+  double _subtotalFromDraft(
+    Map<String, dynamic> draft,
+    List<Map<String, dynamic>> items,
+  ) {
+    return (draft['subtotal'] as num?)?.toDouble() ??
+        items.fold<double>(0, (sum, it) {
+          final qty = (it['quantity'] as num?)?.toDouble() ?? 0;
+          final unitPrice = (it['unitPrice'] as num?)?.toDouble() ?? 0;
+          return sum + (qty * unitPrice);
+        });
+  }
+
+  double _serviceFeeRateFromDraft(Map<String, dynamic> draft) {
+    final stored = (draft['serviceFeeRate'] as num?)?.toDouble() ?? 0;
+    if (stored > 0) return stored;
+    return _defaultServiceFeePercent / 100;
+  }
+
+  Future<void> _updateCountedMenuServiceFee(
+    Map<String, dynamic> draft, {
+    required bool includeServiceFee,
+    required double serviceFeeRate,
+    required String successMessage,
+  }) async {
+    if (!_serviceFeeAvailable) {
+      if (mounted) {
+        showErrorToast(context, 'სერვისის საფასური მიუწვდომელია');
+      }
+      return;
+    }
+
+    final id = '${draft['id'] ?? ''}';
+    if (id.isEmpty || _updatingServiceFee.contains(id)) return;
+
+    final items = _countedMenuItemsFromDraft(draft);
+    if (items.isEmpty) {
+      if (mounted) {
+        showErrorToast(context, 'სერვისის განახლებისთვის პროდუქტები ვერ მოიძებნა');
+      }
+      return;
+    }
+
+    final subtotal = _subtotalFromDraft(draft, items);
+    final normalizedRate =
+        double.parse(serviceFeeRate.clamp(0.0, 1.0).toStringAsFixed(4));
+
+    setState(() => _updatingServiceFee.add(id));
+    try {
+      await MobileApiService.updateCountedMenu(
+        draftId: id,
+        name: draft['displayName']?.toString() ?? '',
+        items: items,
+        subtotal: subtotal,
+        includeServiceFee: includeServiceFee,
+        serviceFeeRate: normalizedRate,
+      );
+      if (mounted) showSuccessToast(context, successMessage);
+      await _load();
+    } catch (e) {
+      if (mounted) {
+        showErrorToast(context, 'სერვისის განახლება ვერ მოხერხდა: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _updatingServiceFee.remove(id));
+      }
+    }
+  }
+
+  Future<void> _toggleServiceFee(Map<String, dynamic> draft) async {
+    final includeServiceFee = !(draft['includeServiceFee'] == true);
+    final serviceFeeRate = _serviceFeeRateFromDraft(draft);
+    await _updateCountedMenuServiceFee(
+      draft,
+      includeServiceFee: includeServiceFee,
+      serviceFeeRate: serviceFeeRate,
+      successMessage:
+          includeServiceFee ? 'სერვისი ჩაირთო' : 'სერვისი გამოირთო',
+    );
+  }
+
+  Future<void> _openServiceFeeConfig(Map<String, dynamic> draft) async {
+    if (!_serviceFeeAvailable) {
+      if (mounted) {
+        showErrorToast(context, 'სერვისის საფასური მიუწვდომელია');
+      }
+      return;
+    }
+
+    final initialPercent = _serviceFeeRateFromDraft(draft) * 100;
+    final result = await showDialog<ServiceFeeAdjustResult>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => ServiceFeeAdjustDialog(
+        initialIncludeServiceFee: draft['includeServiceFee'] == true,
+        initialPercentage: initialPercent,
+        defaultPercentage: _defaultServiceFeePercent.toDouble(),
+        showQuickValues: false,
+        showSteppers: true,
+      ),
+    );
+    if (result == null || !mounted) return;
+
+    final normalizedPercent = double.parse(
+      result.percentage.clamp(0.0, 100.0).toStringAsFixed(2),
+    );
+    final nextRate = normalizedPercent / 100;
+    final prevInclude = draft['includeServiceFee'] == true;
+    final prevRate = _serviceFeeRateFromDraft(draft);
+    final changed =
+        result.includeServiceFee != prevInclude ||
+        (prevRate - nextRate).abs() > 0.00009;
+    if (!changed) return;
+
+    await _updateCountedMenuServiceFee(
+      draft,
+      includeServiceFee: result.includeServiceFee,
+      serviceFeeRate: nextRate,
+      successMessage: 'სერვისის პარამეტრები განახლდა',
+    );
   }
 
   Future<void> _delete(String id) async {
@@ -433,10 +634,18 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
           padding: const EdgeInsets.only(bottom: 12),
           child: _DraftCard(
             draft: _drafts[i],
+            onConfirm: () => _confirmCountedMenu(_drafts[i]),
             onEdit: () => _editCountedMenu(_drafts[i]),
             onPdf: () => _printPdf(_drafts[i]),
             onPrint: () => _printCountedMenu('${_drafts[i]['id']}'),
             isPrinting: _printing.contains('${_drafts[i]['id']}'),
+            serviceFeeAvailable: _serviceFeeAvailable,
+            includeServiceFee: _drafts[i]['includeServiceFee'] == true,
+            serviceFeePercent: _serviceFeePercentLabel(_drafts[i]),
+            onToggleServiceFee: () => _toggleServiceFee(_drafts[i]),
+            onOpenServiceFeeConfig: () => _openServiceFeeConfig(_drafts[i]),
+            isServiceFeeUpdating:
+                _updatingServiceFee.contains('${_drafts[i]['id']}'),
             onDelete: () => _delete('${_drafts[i]['id']}'),
             money: _money,
             date: _date,
@@ -445,24 +654,43 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
       ),
     );
   }
+
+  String _serviceFeePercentLabel(Map<String, dynamic> draft) {
+    final percent = (_serviceFeeRateFromDraft(draft) * 100).round();
+    return percent.toString();
+  }
 }
 
 class _DraftCard extends StatelessWidget {
   final Map<String, dynamic> draft;
+  final VoidCallback onConfirm;
   final VoidCallback onEdit;
   final VoidCallback onPdf;
   final VoidCallback onPrint;
   final bool isPrinting;
+  final bool serviceFeeAvailable;
+  final bool includeServiceFee;
+  final String serviceFeePercent;
+  final VoidCallback onToggleServiceFee;
+  final VoidCallback onOpenServiceFeeConfig;
+  final bool isServiceFeeUpdating;
   final VoidCallback onDelete;
   final NumberFormat money;
   final DateFormat date;
 
   const _DraftCard({
     required this.draft,
+    required this.onConfirm,
     required this.onEdit,
     required this.onPdf,
     required this.onPrint,
     required this.isPrinting,
+    required this.serviceFeeAvailable,
+    required this.includeServiceFee,
+    required this.serviceFeePercent,
+    required this.onToggleServiceFee,
+    required this.onOpenServiceFeeConfig,
+    required this.isServiceFeeUpdating,
     required this.onDelete,
     required this.money,
     required this.date,
@@ -586,6 +814,49 @@ class _DraftCard extends StatelessWidget {
             spacing: 4,
             runSpacing: 4,
             children: [
+              TextButton.icon(
+                onPressed: onConfirm,
+                icon: Icon(Icons.event_available_rounded, size: 18),
+                label: Text('დადასტურება'),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF0EA5A0),
+                ),
+              ),
+              if (serviceFeeAvailable)
+                TextButton.icon(
+                  onPressed: isServiceFeeUpdating ? null : onToggleServiceFee,
+                  onLongPress:
+                      isServiceFeeUpdating ? null : onOpenServiceFeeConfig,
+                  icon: isServiceFeeUpdating
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Color(0xFF0F766E),
+                            ),
+                          ),
+                        )
+                      : Icon(
+                          includeServiceFee
+                              ? Icons.toggle_on_rounded
+                              : Icons.toggle_off_rounded,
+                          size: 18,
+                        ),
+                  label: Text(
+                    isServiceFeeUpdating
+                        ? 'სერვისი...'
+                        : includeServiceFee
+                        ? 'სერვისი ($serviceFeePercent%)'
+                        : 'სერვისის ჩართვა',
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: includeServiceFee
+                        ? const Color(0xFF0F766E)
+                        : MobileGlassTheme.muted(0.65),
+                  ),
+                ),
               TextButton.icon(
                 onPressed: onEdit,
                 icon: Icon(Icons.edit_rounded, size: 18),

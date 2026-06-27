@@ -219,6 +219,14 @@ export class SyncController implements OnModuleInit {
     await this.loadPosCallbackFromDb();
   }
 
+  @Get('ping')
+  ping() {
+    return {
+      ok: true,
+      serverTime: new Date().toISOString(),
+    };
+  }
+
   private async loadPosCallbackFromDb(): Promise<void> {
     const [urlSetting, keySetting] = await Promise.all([
       (this.prisma as any).setting.findUnique({
@@ -1399,4 +1407,3 @@ export class SyncController implements OnModuleInit {
     return { success: true, count };
   }
 }
-

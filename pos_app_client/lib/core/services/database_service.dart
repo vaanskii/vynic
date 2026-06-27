@@ -33,6 +33,8 @@ class DatabaseService {
   static const String _menuBoxName = 'menu';
   static const String _settingsBoxName = 'settings';
   static const String _posIngestConnectionKeySetting = 'posIngestConnectionKey';
+  static const String _lastManagerSyncAtSetting = 'lastManagerSyncAt';
+  static const String _backendUrlOverrideSetting = 'backendUrlOverride';
   static const String _salesBoxName = 'sales';
   static const String _expenseBoxName = 'expenses';
   static const String _auditLogBoxName = 'auditLog';
@@ -200,10 +202,9 @@ class DatabaseService {
     '7',
     '8',
     '9',
-    '10',
   ];
 
-  static const List<String> _secondFloorTableNumbers = ['1', '2', '3'];
+  static const List<String> _secondFloorTableNumbers = ['1', '2', '3', '4'];
 
   static const Map<String, List<String>> _tableLayout = {
     'first': _firstFloorTableNumbers,
@@ -860,6 +861,31 @@ class DatabaseService {
     final fromEnv = dotenv.env['POS_CONNECTION_KEY']?.trim();
     if (fromEnv != null && fromEnv.isNotEmpty) return fromEnv;
     return _settingsBox?.get(_posIngestConnectionKeySetting) as String?;
+  }
+
+  static DateTime? getLastManagerSyncAt() {
+    final raw = _settingsBox?.get(_lastManagerSyncAtSetting) as String?;
+    if (raw == null || raw.isEmpty) return null;
+    return DateTime.tryParse(raw);
+  }
+
+  static Future<void> saveLastManagerSyncAt(DateTime value) async {
+    await _settingsBox?.put(_lastManagerSyncAtSetting, value.toIso8601String());
+  }
+
+  static String? getBackendUrlOverride() {
+    final raw = _settingsBox?.get(_backendUrlOverrideSetting) as String?;
+    final trimmed = raw?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    return trimmed;
+  }
+
+  static Future<void> saveBackendUrlOverride(String value) async {
+    await _settingsBox?.put(_backendUrlOverrideSetting, value.trim());
+  }
+
+  static Future<void> clearBackendUrlOverride() async {
+    await _settingsBox?.delete(_backendUrlOverrideSetting);
   }
 
   static Map<String, dynamic> serializeReservationForSync(

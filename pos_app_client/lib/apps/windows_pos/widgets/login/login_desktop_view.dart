@@ -35,7 +35,6 @@ class LoginDesktopView extends StatelessWidget {
   static const _muted = Color(0xFF52677A);
   static const _cyan = Color(0xFF319CB7);
   static const _teal = Color(0xFF14B8A6);
-  static const _tealDark = Color(0xFF0F766E);
 
   String _twoDigits(int value) => value.toString().padLeft(2, '0');
 
@@ -171,21 +170,13 @@ class LoginDesktopView extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [_teal, _tealDark],
-              ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.restaurant_rounded,
-              color: Colors.white,
-              size: 17,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.asset(
+              'assets/logo/vynicnew.png',
+              width: 28,
+              height: 28,
+              fit: BoxFit.cover,
             ),
           ),
           const SizedBox(width: 10),
@@ -231,11 +222,6 @@ class LoginDesktopView extends StatelessWidget {
           width: compact ? 72 : (dense ? 60 : 88),
           height: compact ? 72 : (dense ? 60 : 88),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [_teal, _tealDark],
-            ),
             borderRadius: BorderRadius.circular(
               compact ? 18 : (dense ? 16 : 24),
             ),
@@ -247,10 +233,14 @@ class LoginDesktopView extends StatelessWidget {
               ),
             ],
           ),
-          child: Icon(
-            Icons.restaurant_rounded,
-            color: Colors.white,
-            size: compact ? 40 : (dense ? 34 : 50),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(
+              compact ? 18 : (dense ? 16 : 24),
+            ),
+            child: Image.asset(
+              'assets/logo/vynicnew.png',
+              fit: BoxFit.cover,
+            ),
           ),
         ),
         SizedBox(height: dense ? 5 : 12),

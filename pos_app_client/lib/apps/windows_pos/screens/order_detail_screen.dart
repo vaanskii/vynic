@@ -73,6 +73,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
     _loadOrder();
   }
+
   static const Color _surfaceColor = Color(0xFFF6F7F9);
   static const Color _panelColor = Colors.white;
   static const Color _titleColor = Color(0xFF111827);
@@ -241,7 +242,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     return showGeneralDialog<Map<String, dynamic>>(
       context: context,
       barrierLabel: title,
-      barrierColor: Colors.black.withOpacity(0.85),
+      barrierColor: Colors.black.withValues(alpha: 0.85),
       barrierDismissible: true,
       transitionDuration: const Duration(milliseconds: 220),
       pageBuilder: (dialogContext, animation, secondaryAnimation) {
@@ -345,8 +346,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _mobileHighlightItemKeys =
-        PosChangeHighlightService.takeForOrder(widget.orderId);
+    _mobileHighlightItemKeys = PosChangeHighlightService.takeForOrder(
+      widget.orderId,
+    );
     _serviceFeeAvailable = DatabaseService.isServiceFeeAvailable();
     _loadOrder();
     _syncEventsSub = SyncHub.events.listen(_onSyncEvent);
@@ -2783,7 +2785,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
     _loadOrder();
   }
-
 
   @override
   Widget build(BuildContext context) {

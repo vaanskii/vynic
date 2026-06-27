@@ -238,7 +238,7 @@ class _MenuScreenState extends State<MenuScreen> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.15),
+                  color: Colors.orange.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -636,7 +636,7 @@ class _MenuScreenState extends State<MenuScreen> {
 
     if (_cart.isEmpty) return;
 
-    if (widget.isTakeAwayMode) {
+    if (widget.isTakeAwayMode && widget.existingOrderId == null) {
       final orderItems = _cart.values.map((cartEntry) {
         return OrderItem(
           itemKey: cartEntry.key,
@@ -1056,7 +1056,13 @@ class _MenuScreenState extends State<MenuScreen> {
           // Clear existing items and add new ones
           existingOrder.items.clear();
           existingOrder.items.addAll(orderItems);
+          final isExistingTakeAway =
+              existingOrder.floor.toLowerCase() == 'takeaway' ||
+              existingOrder.tableNumbers.any(
+                (table) => table.startsWith('TA-'),
+              );
           existingOrder.includeServiceFee =
+              !isExistingTakeAway &&
               DatabaseService.isServiceFeeAvailable() &&
               _serviceFeeDefaultEnabled;
           existingOrder.recalculateTotal();
@@ -1103,19 +1109,21 @@ class _MenuScreenState extends State<MenuScreen> {
         }
       } else {
         // Create new order
-        // Extract floor from selectedTables (assuming format "Table 1", "VIP Zone 1")
+        // Extract floor from selectedTables.
         String floor = 'first'; // Default
         if (widget.selectedTables.isNotEmpty) {
-          // Check if any table is from second floor (VIP zones are on second floor)
-          if (widget.selectedTables.any((t) => t.contains('VIP'))) {
+          if (widget.selectedTables.any(
+            (t) => t.startsWith('Second Floor Table ') || t.contains('VIP'),
+          )) {
             floor = 'second';
           }
         }
 
         // Extract table numbers from display names
         final tableNumbers = widget.selectedTables.map((displayName) {
-          // "Table 1" -> "1", "VIP Zone 1" -> "1"
+          // "Table 1" -> "1", "Second Floor Table 1" -> "1"
           return displayName
+              .replaceAll('Second Floor Table ', '')
               .replaceAll('Table ', '')
               .replaceAll('VIP Zone ', '');
         }).toList();
@@ -1204,8 +1212,18 @@ class _MenuScreenState extends State<MenuScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _confirmExitIfCartNotEmpty,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) {
+          return;
+        }
+        final navigator = Navigator.of(context);
+        final shouldPop = await _confirmExitIfCartNotEmpty();
+        if (shouldPop && mounted) {
+          navigator.pop();
+        }
+      },
       child: Scaffold(
         backgroundColor: _menuSurfaceColor,
         body: SafeArea(

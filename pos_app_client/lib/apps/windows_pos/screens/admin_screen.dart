@@ -13,6 +13,7 @@ import 'package:vynic/apps/windows_pos/widgets/admin/admin_sales_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_sales_report_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_audit_log_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_error_log_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_connection_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_settings_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/printers/admin_printers_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_reservations_section.dart';
@@ -1262,6 +1263,8 @@ class _AdminScreenState extends State<AdminScreen> {
         return 'შეცდომები';
       case 'printers':
         return 'პრინტერები';
+      case 'connection':
+        return 'კავშირი';
       case 'settings':
         return 'პარამეტრები';
       default:
@@ -1374,6 +1377,11 @@ class _AdminScreenState extends State<AdminScreen> {
         icon: Icons.print,
         title: 'პრინტერები',
         section: 'printers',
+      ),
+      _buildMenuItem(
+        icon: Icons.lan_outlined,
+        title: 'კავშირი',
+        section: 'connection',
       ),
       _buildMenuItem(
         icon: Icons.settings,
@@ -3412,6 +3420,8 @@ class _AdminScreenState extends State<AdminScreen> {
         return const AdminErrorLogSection();
       case 'printers':
         return _buildPrintersSection();
+      case 'connection':
+        return const AdminConnectionSection();
       case 'settings':
         return _buildSettingsSection();
       default:

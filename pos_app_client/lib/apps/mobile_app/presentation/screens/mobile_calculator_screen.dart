@@ -4,6 +4,7 @@ import 'package:vynic/core/services/mobile_api_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
 import 'package:vynic/apps/mobile_app/widgets/mobile_menu_pin_sheet.dart';
+import 'package:vynic/apps/windows_pos/widgets/order/helpers/service_fee_adjust_dialog.dart';
 
 /// Mobile-native menu calculator / Count Menu.
 class MobileCalculatorScreen extends StatefulWidget {
@@ -257,6 +258,30 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
   double get _serviceFee => _includeServiceFee ? _subtotal * _serviceFeeRate : 0.0;
   double get _total => _subtotal + _serviceFee;
   int get _totalItems => _cart.values.fold(0, (sum, qty) => sum + qty);
+
+  /// Long-press on the service-fee row: change the percentage / include flag,
+  /// same adjust dialog used elsewhere. [refreshSheet] repaints the open modal.
+  Future<void> _openServiceFeeConfig(StateSetter refreshSheet) async {
+    if (!_serviceFeeAvailable) return;
+    final result = await showDialog<ServiceFeeAdjustResult>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => ServiceFeeAdjustDialog(
+        initialIncludeServiceFee: _includeServiceFee,
+        initialPercentage: _serviceFeePercent.toDouble(),
+        defaultPercentage: _serviceFeePercent.toDouble(),
+      ),
+    );
+    if (result == null || !mounted) return;
+    final pct = result.percentage.clamp(0.0, 100.0);
+    setState(() {
+      _includeServiceFee = result.includeServiceFee;
+      _serviceFeePercent = pct.round();
+      _serviceFeeRate = pct / 100;
+    });
+    refreshSheet(() {});
+    if (mounted) showSuccessToast(context, 'სერვისის პარამეტრები განახლდა');
+  }
 
   List<_CartLine> get _cartLines {
     final lines = <_CartLine>[];
@@ -1053,11 +1078,28 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                       Row(
                         children: [
                           Expanded(
-                            child: Text(
-                              'სერვისი ($_serviceFeePercent%)',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: MobileGlassTheme.muted(0.55),
+                            child: GestureDetector(
+                              onLongPress: () =>
+                                  _openServiceFeeConfig(setModalState),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      'სერვისი ($_serviceFeePercent%)',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: MobileGlassTheme.muted(0.55),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    Icons.tune_rounded,
+                                    size: 14,
+                                    color: MobileGlassTheme.muted(0.4),
+                                  ),
+                                ],
                               ),
                             ),
                           ),

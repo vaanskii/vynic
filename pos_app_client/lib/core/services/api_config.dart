@@ -1,18 +1,27 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:vynic/core/services/database_service.dart';
 
 /// Central configuration for the backend API URL.
 ///
 /// Priority order:
-///   1. BACKEND_URL_<PLATFORM> from .env (e.g. BACKEND_URL_ANDROID)
-///   2. BACKEND_URL from .env (single URL for all platforms, production-friendly)
-///   3. --dart-define variants (BACKEND_URL_<PLATFORM>, BACKEND_URL)
-///   4. BACKEND_URL_FALLBACK from .env or localhost fallback
+///   1. Admin-saved override from local Hive settings
+///   2. `BACKEND_URL_<PLATFORM>` from .env (e.g. BACKEND_URL_ANDROID)
+///   3. BACKEND_URL from .env (single URL for all platforms, production-friendly)
+///   4. --dart-define variants (`BACKEND_URL_<PLATFORM>`, BACKEND_URL)
+///   5. BACKEND_URL_FALLBACK from .env or localhost fallback
 class ApiConfig {
   static bool _loggedResolvedUrl = false;
 
   static String get baseUrl {
+    final adminOverride = DatabaseService.getBackendUrlOverride();
+    if (adminOverride != null) {
+      final normalized = _normalizeAndroidLoopback(adminOverride);
+      _logResolvedUrlOnce(normalized, source: 'admin override');
+      return normalized;
+    }
+
     final override = _explicitBackendUrl;
     if (override != null) {
       final normalized = _normalizeAndroidLoopback(override);
@@ -23,6 +32,39 @@ class ApiConfig {
     final resolved = _normalizeAndroidLoopback(_defaultBaseUrl);
     _logResolvedUrlOnce(resolved, source: 'platform default');
     return resolved;
+  }
+
+  static String? normalizeEditableBackendUrl(String raw) {
+    var value = raw.trim();
+    if (value.isEmpty) return null;
+    if (!value.contains('://')) {
+      value = 'http://$value';
+    }
+
+    final uri = Uri.tryParse(value);
+    if (uri == null) return null;
+    final scheme = uri.scheme.toLowerCase();
+    if (scheme != 'http' && scheme != 'https') return null;
+    if (uri.host.trim().isEmpty) return null;
+    if (uri.hasQuery || uri.hasFragment) return null;
+    if (uri.path.isNotEmpty && uri.path != '/') return null;
+
+    final port = uri.hasPort ? uri.port : 3000;
+    if (port <= 0 || port > 65535) return null;
+
+    return uri
+        .replace(
+          scheme: scheme,
+          path: '',
+          query: null,
+          fragment: null,
+          port: port,
+        )
+        .toString();
+  }
+
+  static void resetResolvedUrlLog() {
+    _loggedResolvedUrl = false;
   }
 
   static String get _defaultBaseUrl {

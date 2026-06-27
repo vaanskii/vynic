@@ -35,6 +35,23 @@ class TablePaymentService {
 
   static const double _amountTolerance = 0.01;
 
+  // Shared design tokens — aligned with the redesigned POS surfaces
+  // (take-away section / order detail) for a consistent look.
+  static const Color _panel = Colors.white;
+  static const Color _surface = Color(0xFFF6F7F9);
+  static const Color _border = Color(0xFFE5E7EB);
+  static const Color _text = Color(0xFF111827);
+  static const Color _muted = Color(0xFF6B7280);
+  static const Color _accent = Color(0xFF0F766E);
+  static const Color _cash = Color(0xFF047857);
+  static const Color _bank = Color(0xFF2563EB);
+  static const Color _split = Color(0xFF7C3AED);
+  static const Color _danger = Color(0xFFB91C1C);
+
+  static const List<BoxShadow> _dialogShadow = [
+    BoxShadow(color: Color(0x1F0F172A), blurRadius: 32, offset: Offset(0, 16)),
+  ];
+
   Future<TablePaymentSelection?> collect() async {
     if (total <= 0) {
       await showErrorToast(context, 'გადახდამდე გადათვალეთ შეკვეთის ჯამი');
@@ -95,87 +112,92 @@ class TablePaymentService {
         return Dialog(
           backgroundColor: Colors.transparent,
           child: Container(
-            width: 600, // Reduced from 720
-            padding: const EdgeInsets.all(24), // Reduced from 32
+            width: 600,
+            padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 30,
-                  offset: Offset(0, 8),
-                ),
-              ],
+              color: _panel,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: _border),
+              boxShadow: _dialogShadow,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: _accent.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.point_of_sale_rounded,
+                    color: _accent,
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(height: 16),
                 const Text(
                   'აირჩიეთ გადახდის მეთოდი',
                   style: TextStyle(
-                    color: Colors.black87,
-                    fontSize: 22,
+                    color: _text,
+                    fontSize: 20,
                     fontWeight: FontWeight.w800,
+                    letterSpacing: -0.2,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 const Text(
-                  'Select Payment Method',
-                  style: TextStyle(color: Colors.black54, fontSize: 14),
+                  'Select payment method',
+                  style: TextStyle(color: _muted, fontSize: 13),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     _buildModernMethodCard(
                       dialogContext,
                       label: 'ნაღდი ფული',
-                      englishLabel: 'Cash Payment',
+                      englishLabel: 'Cash',
                       icon: Icons.payments_rounded,
-                      color: const Color(0xFF10B981),
+                      color: _cash,
                       method: TablePaymentMethod.cash,
                     ),
-                    const SizedBox(width: 20),
+                    const SizedBox(width: 14),
                     _buildModernMethodCard(
                       dialogContext,
                       label: 'ბარათით',
                       englishLabel: 'Bank POS',
                       icon: Icons.credit_card_rounded,
-                      color: const Color(0xFF3B82F6),
+                      color: _bank,
                       method: TablePaymentMethod.bank,
                     ),
-                    const SizedBox(width: 20),
+                    const SizedBox(width: 14),
                     _buildModernMethodCard(
                       dialogContext,
                       label: 'გაყოფილი',
-                      englishLabel: 'Split Bill',
+                      englishLabel: 'Split',
                       icon: Icons.call_split_rounded,
-                      color: const Color(0xFF8B5CF6),
+                      color: _split,
                       method: TablePaymentMethod.split,
                     ),
                   ],
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 20),
                 TextButton.icon(
                   onPressed: () => Navigator.of(dialogContext).pop(),
-                  icon: const Icon(
-                    Icons.close_rounded,
-                    color: Colors.black54,
-                    size: 20,
-                  ),
+                  icon: const Icon(Icons.close_rounded, color: _muted, size: 18),
                   label: const Text(
                     'გაუქმება',
                     style: TextStyle(
-                      color: Colors.black54,
-                      fontSize: 15,
+                      color: _muted,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
+                      horizontal: 18,
+                      vertical: 10,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -199,80 +221,88 @@ class TablePaymentService {
           backgroundColor: Colors.transparent,
           child: Container(
             width: 420,
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: _panel,
               borderRadius: BorderRadius.circular(24),
-              boxShadow: const [
-                BoxShadow(color: Colors.black26, blurRadius: 40),
-              ],
+              border: Border.all(color: _border),
+              boxShadow: _dialogShadow,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF3B82F6).withOpacity(0.15),
-                    shape: BoxShape.circle,
+                    color: _accent.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(18),
                   ),
                   child: const Icon(
-                    Icons.help_outline_rounded,
-                    color: Color(0xFF3B82F6),
-                    size: 48,
+                    Icons.lock_outline_rounded,
+                    color: _accent,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'მაგიდის დახურვა',
+                  style: TextStyle(
+                    color: _text,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'ნამდვილად გსურთ დახურვა — $methodLabel?',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: _muted,
+                    fontSize: 14,
+                    height: 1.4,
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text(
-                  'დადასტურება',
-                  style: TextStyle(
-                    color: Colors.black87,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'ნამდვილად გსურთ მაგიდის დახურვა ($methodLabel)-ით?',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.black54, fontSize: 16),
-                ),
-                const SizedBox(height: 32),
                 Row(
                   children: [
                     Expanded(
-                      child: TextButton(
+                      child: OutlinedButton(
                         onPressed: () => Navigator.of(dialogContext).pop(false),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 18),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: _muted,
+                          side: const BorderSide(color: _border),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         child: const Text(
                           'გაუქმება',
-                          style: TextStyle(color: Colors.black54, fontSize: 16),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () => Navigator.of(dialogContext).pop(true),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3B82F6),
+                          backgroundColor: _accent,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         child: const Text(
-                          'დიახ',
+                          'დახურვა',
                           style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
@@ -301,54 +331,44 @@ class TablePaymentService {
         color: Colors.transparent,
         child: InkWell(
           onTap: () => Navigator.of(context).pop(method),
-          borderRadius: BorderRadius.circular(20),
-          highlightColor: color.withOpacity(0.15),
-          splashColor: color.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(18),
+          hoverColor: color.withValues(alpha: 0.04),
+          highlightColor: color.withValues(alpha: 0.10),
+          splashColor: color.withValues(alpha: 0.12),
           child: Container(
-            height: 170, // Reduced from 190
-            padding: const EdgeInsets.all(20), // Reduced from 24
+            height: 158,
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: color.withOpacity(0.3), width: 1.5),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withOpacity(0.08),
-                  blurRadius: 12,
-                  spreadRadius: 1,
-                ),
-              ],
+              color: _surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: _border),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.15),
-                    shape: BoxShape.circle,
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(
-                    icon,
-                    size: 32,
-                    color: color,
-                  ), // Reduced icon size
+                  child: Icon(icon, size: 28, color: color),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 Text(
                   label,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.black87,
-                    fontSize: 16, // Reduced font size
-                    fontWeight: FontWeight.bold,
+                  style: const TextStyle(
+                    color: _text,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   englishLabel,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.black54, fontSize: 13),
+                  style: const TextStyle(color: _muted, fontSize: 12),
                 ),
               ],
             ),
@@ -366,18 +386,13 @@ class TablePaymentService {
         return Dialog(
           backgroundColor: Colors.transparent,
           child: Container(
-            width: 540,
-            padding: const EdgeInsets.all(32),
+            width: 520,
+            padding: const EdgeInsets.fromLTRB(28, 28, 28, 22),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: _panel,
               borderRadius: BorderRadius.circular(24),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 40,
-                  offset: Offset(0, 10),
-                ),
-              ],
+              border: Border.all(color: _border),
+              boxShadow: _dialogShadow,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -385,17 +400,18 @@ class TablePaymentService {
                 const Text(
                   'აირჩიეთ ტერმინალი',
                   style: TextStyle(
-                    color: Colors.black87,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                    color: _text,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.2,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 const Text(
-                  'Select Bank Terminal',
-                  style: TextStyle(color: Colors.black54, fontSize: 15),
+                  'Select bank terminal',
+                  style: TextStyle(color: _muted, fontSize: 13),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 24),
                 Row(
                   children: [
                     _buildModernBankCard(
@@ -405,7 +421,7 @@ class TablePaymentService {
                       color: const Color(0xFF0E69C3),
                       value: 'tbc',
                     ),
-                    const SizedBox(width: 20),
+                    const SizedBox(width: 14),
                     _buildModernBankCard(
                       dialogContext,
                       label: 'Bank of Georgia',
@@ -415,28 +431,29 @@ class TablePaymentService {
                     ),
                   ],
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 20),
                 TextButton.icon(
                   onPressed: () => Navigator.of(dialogContext).pop(),
                   icon: const Icon(
                     Icons.arrow_back_rounded,
-                    color: Colors.black54,
+                    color: _muted,
+                    size: 18,
                   ),
                   label: const Text(
-                    'უკან დაბრუნება',
+                    'უკან',
                     style: TextStyle(
-                      color: Colors.black54,
-                      fontSize: 16,
+                      color: _muted,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 16,
+                      horizontal: 18,
+                      vertical: 10,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                 ),
@@ -460,23 +477,17 @@ class TablePaymentService {
         color: Colors.transparent,
         child: InkWell(
           onTap: () => Navigator.of(context).pop(value),
-          borderRadius: BorderRadius.circular(20),
-          highlightColor: color.withOpacity(0.15),
-          splashColor: color.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(18),
+          hoverColor: color.withValues(alpha: 0.04),
+          highlightColor: color.withValues(alpha: 0.10),
+          splashColor: color.withValues(alpha: 0.12),
           child: Container(
-            height: 160,
-            padding: const EdgeInsets.all(20),
+            height: 150,
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: color.withOpacity(0.3), width: 1.5),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withOpacity(0.08),
-                  blurRadius: 15,
-                  spreadRadius: 2,
-                ),
-              ],
+              color: _surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: _border),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -484,19 +495,19 @@ class TablePaymentService {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.15),
-                    shape: BoxShape.circle,
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(iconAsset, size: 36, color: color),
+                  child: Icon(iconAsset, size: 30, color: color),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 Text(
                   label,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    color: _text,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -557,19 +568,14 @@ class TablePaymentService {
             return Dialog(
               backgroundColor: Colors.transparent,
               child: Container(
-                width: 720, // Reduced from 780
-                height: 520, // Reduced from 580
+                width: 720,
+                height: 520,
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: _panel,
                   borderRadius: BorderRadius.circular(24),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 40,
-                      offset: Offset(0, 10),
-                    ),
-                  ],
+                  border: Border.all(color: _border),
+                  boxShadow: _dialogShadow,
                 ),
                 child: Row(
                   children: [
@@ -578,8 +584,8 @@ class TablePaymentService {
                       flex: 5,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 20,
+                          horizontal: 20,
+                          vertical: 22,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -587,41 +593,46 @@ class TablePaymentService {
                             const Text(
                               'გაყოფილი გადახდა',
                               style: TextStyle(
-                                color: Colors.black87,
+                                color: _text,
                                 fontSize: 20,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.2,
                               ),
                             ),
+                            const SizedBox(height: 2),
                             const Text(
-                              'Split Payment',
-                              style: TextStyle(
-                                color: Colors.black54,
-                                fontSize: 12,
-                              ),
+                              'Split payment',
+                              style: TextStyle(color: _muted, fontSize: 12),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 16),
                             Container(
-                              padding: const EdgeInsets.all(10),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF3F4F6),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Colors.black12),
+                                color: _accent.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: _accent.withValues(alpha: 0.20),
+                                ),
                               ),
                               child: Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   const Text(
-                                    'სულ ჯამი :',
+                                    'სულ ჯამი',
                                     style: TextStyle(
-                                      color: Colors.black54,
-                                      fontSize: 16,
+                                      color: _muted,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   Text(
                                     '₾${total.toStringAsFixed(2)}',
                                     style: const TextStyle(
-                                      color: Colors.black87,
+                                      color: _accent,
                                       fontSize: 24,
                                       fontWeight: FontWeight.w900,
                                     ),
@@ -641,48 +652,26 @@ class TablePaymentService {
                               amount: cashPortion,
                               highlight: false,
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 14),
                             Row(
                               children: [
                                 Expanded(
-                                  child: ChoiceChip(
-                                    label: const Text('TBC POS'),
+                                  child: _buildBankChip(
+                                    label: 'TBC POS',
                                     selected: selectedBank == 'tbc',
-                                    onSelected: (_) =>
+                                    color: const Color(0xFF0E69C3),
+                                    onTap: () =>
                                         setState(() => selectedBank = 'tbc'),
-                                    selectedColor: const Color(0xFF0E69C3),
-                                    labelStyle: TextStyle(
-                                      color: selectedBank == 'tbc'
-                                          ? Colors.white
-                                          : Colors.black87,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    backgroundColor: const Color(0xFFF3F4F6),
-                                    side: BorderSide.none,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 10),
                                 Expanded(
-                                  child: ChoiceChip(
-                                    label: const Text('BOG POS'),
+                                  child: _buildBankChip(
+                                    label: 'BOG POS',
                                     selected: selectedBank == 'bog',
-                                    onSelected: (_) =>
+                                    color: const Color(0xFFFF8A00),
+                                    onTap: () =>
                                         setState(() => selectedBank = 'bog'),
-                                    selectedColor: const Color(0xFFFF8A00),
-                                    labelStyle: TextStyle(
-                                      color: selectedBank == 'bog'
-                                          ? Colors.white
-                                          : Colors.black87,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    backgroundColor: const Color(0xFFF3F4F6),
-                                    side: BorderSide.none,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
                                   ),
                                 ),
                               ],
@@ -696,19 +685,19 @@ class TablePaymentService {
                                   icon: const Icon(
                                     Icons.arrow_back_rounded,
                                     size: 18,
-                                    color: Colors.black54,
+                                    color: _muted,
                                   ),
                                   label: const Text(
-                                    'უკან დაბრუნება',
+                                    'უკან',
                                     style: TextStyle(
-                                      color: Colors.black54,
+                                      color: _muted,
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   style: TextButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
+                                      horizontal: 14,
                                       vertical: 12,
                                     ),
                                     shape: RoundedRectangleBorder(
@@ -716,7 +705,7 @@ class TablePaymentService {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 4),
+                                const SizedBox(width: 8),
                                 Expanded(
                                   child: ElevatedButton(
                                     onPressed: isValid
@@ -733,26 +722,25 @@ class TablePaymentService {
                                           }
                                         : null,
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF10B981),
+                                      backgroundColor: _accent,
                                       foregroundColor: Colors.white,
-                                      disabledBackgroundColor: const Color(
-                                        0xFF10B981,
-                                      ).withOpacity(0.3),
+                                      disabledBackgroundColor: _accent
+                                          .withValues(alpha: 0.30),
                                       disabledForegroundColor: Colors.white
-                                          .withOpacity(0.8),
+                                          .withValues(alpha: 0.85),
                                       elevation: 0,
                                       padding: const EdgeInsets.symmetric(
-                                        vertical: 14,
+                                        vertical: 15,
                                       ),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
+                                        borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
                                     child: const Text(
                                       'დადასტურება',
                                       style: TextStyle(
                                         fontSize: 14,
-                                        fontWeight: FontWeight.bold,
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
                                   ),
@@ -764,11 +752,11 @@ class TablePaymentService {
                       ),
                     ),
                     // Right Pane (PinPad)
-                    Container(width: 1, color: Colors.black12),
+                    Container(width: 1, color: _border),
                     Expanded(
                       flex: 4,
                       child: Container(
-                        color: const Color(0xFFF9FAFB),
+                        color: _surface,
                         child: Center(
                           child: SingleChildScrollView(
                             child: Padding(
@@ -799,21 +787,17 @@ class TablePaymentService {
                                         vertical: 6,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: const Color(
-                                          0xFFEF4444,
-                                        ).withOpacity(0.1),
+                                        color: _danger.withValues(alpha: 0.08),
                                         borderRadius: BorderRadius.circular(8),
                                         border: Border.all(
-                                          color: const Color(
-                                            0xFFEF4444,
-                                          ).withOpacity(0.5),
+                                          color: _danger.withValues(alpha: 0.4),
                                         ),
                                       ),
                                       child: Text(
                                         'თანხა უნდა უდრიდეს ₾${total.toStringAsFixed(2)}-ს',
                                         textAlign: TextAlign.center,
                                         style: const TextStyle(
-                                          color: Color(0xFFEF4444),
+                                          color: _danger,
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
                                         ),
@@ -846,17 +830,13 @@ class TablePaymentService {
     final displayValue =
         amountText ?? (amount != null ? amount.toStringAsFixed(2) : '0.00');
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
       decoration: BoxDecoration(
-        color: highlight
-            ? const Color(0xFF3B82F6).withOpacity(0.08)
-            : Colors.transparent,
+        color: highlight ? _bank.withValues(alpha: 0.06) : _surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: highlight
-              ? const Color(0xFF3B82F6).withOpacity(0.6)
-              : Colors.black12,
-          width: highlight ? 2 : 1,
+          color: highlight ? _bank.withValues(alpha: 0.55) : _border,
+          width: highlight ? 1.5 : 1,
         ),
       ),
       child: Row(
@@ -864,21 +844,56 @@ class TablePaymentService {
           Text(
             label,
             style: const TextStyle(
-              color: Colors.black54,
+              color: _muted,
               fontSize: 13,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const Spacer(),
           Text(
             '₾$displayValue',
             style: TextStyle(
-              color: highlight ? const Color(0xFF3B82F6) : Colors.black87,
-              fontWeight: FontWeight.bold,
+              color: highlight ? _bank : _text,
+              fontWeight: FontWeight.w800,
               fontSize: 16,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBankChip({
+    required String label,
+    required bool selected,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected ? color.withValues(alpha: 0.12) : _surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected ? color : _border,
+              width: selected ? 1.5 : 1,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected ? color : _muted,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          ),
+        ),
       ),
     );
   }

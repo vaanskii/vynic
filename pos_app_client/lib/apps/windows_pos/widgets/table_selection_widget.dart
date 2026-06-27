@@ -9,11 +9,13 @@ import 'package:vynic/core/models/reservation.dart';
 class TableSelectionWidget extends StatefulWidget {
   final VoidCallback? onSelectionChanged;
   final Function(TableModel)? onTableTap;
+  final int currentFloor;
 
   const TableSelectionWidget({
     super.key,
     this.onSelectionChanged,
     this.onTableTap,
+    this.currentFloor = 1,
   });
 
   @override
@@ -23,34 +25,35 @@ class TableSelectionWidget extends StatefulWidget {
 class TableSelectionWidgetState extends State<TableSelectionWidget> {
   String? selectedTable;
   final Set<String> _selectedTables = {};
+  final Set<String> _focusedReservedTables = {};
   String _svgString = '';
   Map<String, Rect> _tablePositions = {};
   int _currentFloor = 1; // Track current floor (1 or 2)
-  double _svgWidth = 1576.0;
-  double _svgHeight = 1112.0;
+  double _svgWidth = 1005.0;
+  double _svgHeight = 1101.0;
   List<TableModel> _tables = [];
   Map<String, Color> _reservationColors =
       {}; // Cached colors per group (reservation/order)
 
   // Floor 1 tables
   final List<String> _floor1TableIds = [
-    'table1',
-    'table2',
-    'table3',
-    'table4',
-    'table5',
-    'table6',
-    'table7',
-    'table8',
-    'table9',
-    'table10',
+    'floor1-table1',
+    'floor1-table2',
+    'floor1-table3',
+    'floor1-table4',
+    'floor1-table5',
+    'floor1-table6',
+    'floor1-table7',
+    'floor1-table8',
+    'floor1-table9',
   ];
 
-  // Floor 2 VIP zones
+  // Floor 2 tables
   final List<String> _floor2TableIds = [
-    'vip-zone-1',
-    'vip-zone-2',
-    'vip-zone-3',
+    'floor2-table1',
+    'floor2-table2',
+    'floor2-table3',
+    'floor2-table4',
   ];
 
   // Get current floor's table IDs
@@ -60,8 +63,18 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
   @override
   void initState() {
     super.initState();
+    _currentFloor = widget.currentFloor;
     _loadTables();
     _loadSvg();
+  }
+
+  @override
+  void didUpdateWidget(covariant TableSelectionWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.currentFloor != oldWidget.currentFloor &&
+        widget.currentFloor != _currentFloor) {
+      switchFloor(widget.currentFloor);
+    }
   }
 
   void _loadTables() {
@@ -76,17 +89,12 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
   }
 
   TableModel? _getTableModel(String tableId) {
-    // Extract table number from ID (e.g., 'table1' -> '1', 'vip-zone-1' -> '1')
-    String tableNumber;
-    if (tableId.startsWith('table')) {
-      tableNumber = tableId.replaceAll('table', '');
-    } else if (tableId.startsWith('vip-zone-')) {
-      tableNumber = tableId.replaceAll('vip-zone-', '');
-    } else {
+    final tableNumber = _tableNumberFromId(tableId);
+    if (tableNumber == null) {
       return null;
     }
 
-    final floor = _currentFloor == 1 ? 'first' : 'second';
+    final floor = _floorForTableId(tableId);
 
     // Find in cached tables first
     try {
@@ -99,18 +107,44 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     }
   }
 
+  String _svgTableIdFor(String tableId) {
+    return tableId.replaceFirst(RegExp(r'^floor[12]-'), '');
+  }
+
+  String? _tableNumberFromId(String tableId) {
+    final svgTableId = _svgTableIdFor(tableId);
+    if (!svgTableId.startsWith('table')) {
+      return null;
+    }
+    return svgTableId.replaceAll('table', '');
+  }
+
+  String _floorForTableId(String tableId) {
+    if (tableId.startsWith('floor2-')) {
+      return 'second';
+    }
+    return 'first';
+  }
+
+  String _displayNameForTableId(String tableId) {
+    final tableNumber = _tableNumberFromId(tableId) ?? tableId;
+    return _floorForTableId(tableId) == 'second'
+        ? 'Second Floor Table $tableNumber'
+        : 'Table $tableNumber';
+  }
+
   Future<void> _loadSvg() async {
-    final floorFile = _currentFloor == 1 ? 'floor1.svg' : 'floor2.svg';
+    final floorFile = _currentFloor == 1 ? 'new-floor1.svg' : 'new-floor2.svg';
     final svgString = await rootBundle.loadString('assets/$floorFile');
     final positions = _extractTablePositions(svgString);
 
     // Set SVG dimensions based on floor
     if (_currentFloor == 1) {
-      _svgWidth = 1576.0;
-      _svgHeight = 1112.0;
+      _svgWidth = 1005.0;
+      _svgHeight = 1101.0;
     } else {
-      _svgWidth = 1191.0;
-      _svgHeight = 842.0;
+      _svgWidth = 953.0;
+      _svgHeight = 958.0;
     }
 
     setState(() {
@@ -123,8 +157,11 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     if (floor != _currentFloor && (floor == 1 || floor == 2)) {
       setState(() {
         _currentFloor = floor;
-        // Don't clear selection - keep tables from both floors selected
+        _selectedTables.clear();
+        _focusedReservedTables.clear();
+        selectedTable = null;
       });
+      widget.onSelectionChanged?.call();
       _loadTables();
       _loadSvg();
     }
@@ -140,7 +177,7 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     final tables = DatabaseService.getTablesByFloor(floor);
     final reservationColors = _buildReservationColorMap();
 
-    final floorFile = _currentFloor == 1 ? 'floor1.svg' : 'floor2.svg';
+    final floorFile = _currentFloor == 1 ? 'new-floor1.svg' : 'new-floor2.svg';
     final svgString = await rootBundle.loadString('assets/$floorFile');
     final positions = _extractTablePositions(svgString);
 
@@ -161,42 +198,24 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
 
     if (_currentFloor == 1) {
       // Floor 1 - Restaurant tables
-      // Use hardcoded positions from Figma for accuracy
-      const double tableWidth = 105.0;
-      const double tableHeight = 165.0;
-
-      // For rotated tables, swap width and height
-      const double rotatedWidth = 165.0;
-      const double rotatedHeight = 105.0;
-
       positions = {
-        'table1': Rect.fromLTWH(320.4, 46.87, tableWidth, tableHeight),
-        'table2': Rect.fromLTWH(325.29, 307.18, tableWidth, tableHeight),
-        'table3': Rect.fromLTWH(504, 210, tableWidth, tableHeight),
-        'table4': Rect.fromLTWH(711.46, 211.29, tableWidth, tableHeight),
-        'table5': Rect.fromLTWH(
-          332,
-          728,
-          rotatedWidth,
-          rotatedHeight,
-        ), // Rotated 90°
-        'table6': Rect.fromLTWH(
-          335,
-          908.24,
-          rotatedWidth,
-          rotatedHeight,
-        ), // Rotated 90°
-        'table7': Rect.fromLTWH(606, 878.21, tableWidth, tableHeight),
-        'table8': Rect.fromLTWH(798.09, 878.21, tableWidth, tableHeight),
-        'table9': Rect.fromLTWH(983, 878.21, tableWidth, tableHeight),
-        'table10': Rect.fromLTWH(1158, 878.21, tableWidth, tableHeight),
+        'floor1-table1': Rect.fromLTWH(64.5, 260.65, 101.29, 161.76),
+        'floor1-table2': Rect.fromLTWH(266.5, 178.65, 101.29, 161.76),
+        'floor1-table3': Rect.fromLTWH(484.5, 178.65, 101.29, 161.76),
+        'floor1-table4': Rect.fromLTWH(699.5, 178.65, 101.29, 161.76),
+        'floor1-table5': Rect.fromLTWH(57.5, 737.65, 161.77, 101.29),
+        'floor1-table6': Rect.fromLTWH(60.5, 917.89, 161.77, 101.29),
+        'floor1-table7': Rect.fromLTWH(351.5, 887.65, 101.29, 161.77),
+        'floor1-table8': Rect.fromLTWH(583.5, 887.87, 101.29, 161.76),
+        'floor1-table9': Rect.fromLTWH(793.5, 887.87, 101.29, 161.76),
       };
     } else {
-      // Floor 2 - VIP zones
+      // Floor 2 - Restaurant tables
       positions = {
-        'vip-zone-1': Rect.fromLTWH(617.52, 54.36, 233.4, 209.4),
-        'vip-zone-2': Rect.fromLTWH(581.4, 458.88, 218.64, 269.04),
-        'vip-zone-3': Rect.fromLTWH(295.56, 54.36, 170.52, 134.52),
+        'floor2-table1': Rect.fromLTWH(45.23, 719.11, 101.29, 161.11),
+        'floor2-table2': Rect.fromLTWH(245.23, 719.11, 101.29, 161.11),
+        'floor2-table3': Rect.fromLTWH(445.23, 719.11, 101.29, 161.11),
+        'floor2-table4': Rect.fromLTWH(644.23, 721.11, 101.29, 161.11),
       };
     }
 
@@ -268,7 +287,7 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
   }
 
   String _colorToHex(Color color) {
-    final rgb = color.value & 0x00FFFFFF;
+    final rgb = color.toARGB32() & 0x00FFFFFF;
     return '#${rgb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
   }
 
@@ -279,9 +298,10 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
 
     // Find and modify each table group
     for (final tableId in tableIds) {
+      final svgTableId = _svgTableIdFor(tableId);
       final elements = document
           .findAllElements('g')
-          .where((element) => element.getAttribute('id') == tableId);
+          .where((element) => element.getAttribute('id') == svgTableId);
 
       final tableModel = _getTableModel(tableId);
       final isReserved = tableModel?.isReserved ?? false;
@@ -298,8 +318,8 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
             path.setAttribute('fill', _colorToHex(color));
             path.setAttribute('fill-opacity', '0.8');
           } else if (_selectedTables.contains(tableId)) {
-            // Selected state - gold color
-            path.setAttribute('fill', '#C0AD7B');
+            // Selected state - green color
+            path.setAttribute('fill', '#047857');
             path.setAttribute('fill-opacity', '0.7');
           } else {
             // Default state - white to be more visible
@@ -316,16 +336,45 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
   void _handleTableTap(String tableId) {
     final tableModel = _getTableModel(tableId);
 
-    // If table is reserved, trigger callback to show order
-    if (tableModel != null &&
-        tableModel.isReserved &&
-        widget.onTableTap != null) {
-      widget.onTableTap!(tableModel);
+    // Reserved tables show a quick overview first; the rail CTA opens them.
+    if (tableModel != null && tableModel.isReserved) {
+      final groupKey = _getReservationGroupKey(tableModel);
+      final groupedTableIds = tableIds.where((candidateId) {
+        final candidateTable = _getTableModel(candidateId);
+        if (candidateTable == null || !candidateTable.isReserved) {
+          return false;
+        }
+        if (groupKey == null) {
+          return candidateId == tableId;
+        }
+        return _getReservationGroupKey(candidateTable) == groupKey;
+      }).toSet();
+      final nextFocusedTableIds = groupedTableIds.isEmpty
+          ? {tableId}
+          : groupedTableIds;
+      final isAlreadyFocused =
+          _focusedReservedTables.length == nextFocusedTableIds.length &&
+          _focusedReservedTables.containsAll(nextFocusedTableIds);
+
+      setState(() {
+        _selectedTables.clear();
+        if (isAlreadyFocused) {
+          _focusedReservedTables.clear();
+          selectedTable = null;
+        } else {
+          _focusedReservedTables
+            ..clear()
+            ..addAll(nextFocusedTableIds);
+          selectedTable = tableId;
+        }
+      });
+      widget.onSelectionChanged?.call();
       return;
     }
 
     // Otherwise, handle normal selection
     setState(() {
+      _focusedReservedTables.clear();
       if (_selectedTables.contains(tableId)) {
         _selectedTables.remove(tableId);
         selectedTable = null;
@@ -341,6 +390,7 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
   void clearSelection() {
     setState(() {
       _selectedTables.clear();
+      _focusedReservedTables.clear();
       selectedTable = null;
     });
     widget.onSelectionChanged?.call();
@@ -356,6 +406,7 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
         final tableModel = _getTableModel(entry.key);
         final isReserved = tableModel?.isReserved ?? false;
         final isSelected = _selectedTables.contains(entry.key);
+        final isFocused = _focusedReservedTables.contains(entry.key);
         final Color? reservationColor = isReserved && tableModel != null
             ? _getReservationColor(tableModel)
             : null;
@@ -387,22 +438,24 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
               decoration: BoxDecoration(
                 color: isReserved
                     ? (reservationColor ?? Colors.red).withValues(
-                        alpha: 0.7,
+                        alpha: isFocused ? 0.86 : 0.68,
                       ) // Unique per reservation/order group
                     : isSelected
-                    ? const Color(0xFFC0AD7B).withValues(
-                        alpha: 0.6,
-                      ) // Gold for selected
+                    ? const Color(0xFF047857).withValues(alpha: 0.68)
                     : Colors.transparent,
                 border: Border.all(
                   color: isReserved
-                      ? (reservationColor ?? Colors.red)
+                      ? (isFocused
+                            ? const Color(0xFF0F172A)
+                            : (reservationColor ?? Colors.red))
                       : isSelected
-                      ? const Color(0xFFC0AD7B)
+                      ? const Color(0xFF047857)
                       : Colors.grey.withValues(
                           alpha: 0.15,
                         ), // Very subtle border
-                  width: isReserved
+                  width: isFocused
+                      ? 4
+                      : isReserved
                       ? 3
                       : isSelected
                       ? 2
@@ -415,7 +468,11 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (isReserved)
-                      const Icon(Icons.lock, color: Colors.white, size: 28)
+                      Icon(
+                        isFocused ? Icons.visibility : Icons.lock,
+                        color: Colors.white,
+                        size: isFocused ? 30 : 28,
+                      )
                     else if (isSelected)
                       const Icon(
                         Icons.check_circle,
@@ -425,9 +482,7 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
                     if (isReserved || isSelected) const SizedBox(height: 4),
                     // Show table number or VIP zone label - larger for touch
                     Text(
-                      entry.key
-                          .replaceAll('table', 'T')
-                          .replaceAll('vip-zone-', 'VIP'),
+                      'T${_tableNumberFromId(entry.key) ?? entry.key}',
                       style: TextStyle(
                         color: (isReserved || isSelected)
                             ? Colors.white
@@ -476,18 +531,28 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
   int get currentFloor => _currentFloor;
 
   // Expose selected tables list for navigation to menu
-  List<String> get selectedTables => _selectedTables
-      .map(
-        (t) => t
-            .replaceAll('table', 'Table ')
-            .replaceAll('vip-zone-', 'VIP Zone '),
-      )
-      .toList();
+  List<String> get selectedTables =>
+      _selectedTables.map(_displayNameForTableId).toList();
+
+  List<TableModel> get selectedTableModels => _selectedTables
+      .map(_getTableModel)
+      .whereType<TableModel>()
+      .toList(growable: false);
+
+  List<TableModel> get focusedReservedTables => _focusedReservedTables
+      .map(_getTableModel)
+      .whereType<TableModel>()
+      .toList(growable: false);
+
+  TableModel? get focusedReservedTable =>
+      focusedReservedTables.isEmpty ? null : focusedReservedTables.first;
 
   bool get hasMixedFloorSelection {
-    final hasFirstFloor = _selectedTables.any((id) => id.startsWith('table'));
+    final hasFirstFloor = _selectedTables.any(
+      (id) => _floorForTableId(id) == 'first',
+    );
     final hasSecondFloor = _selectedTables.any(
-      (id) => id.startsWith('vip-zone-'),
+      (id) => _floorForTableId(id) == 'second',
     );
     return hasFirstFloor && hasSecondFloor;
   }
@@ -495,13 +560,7 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
   // Expose selected tables for display in home screen
   String get selectedTablesText {
     if (_selectedTables.isEmpty) return 'None';
-    return _selectedTables
-        .map(
-          (t) => t
-              .replaceAll('table', 'Table ')
-              .replaceAll('vip-zone-', 'VIP Zone '),
-        )
-        .join(', ');
+    return _selectedTables.map(_displayNameForTableId).join(', ');
   }
 
   @override
@@ -573,7 +632,9 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
                                         // cached picture until the next tap.
                                         child: SvgPicture.string(
                                           modifiedSvg,
-                                          key: ValueKey<int>(modifiedSvg.hashCode),
+                                          key: ValueKey<int>(
+                                            modifiedSvg.hashCode,
+                                          ),
                                           fit: BoxFit.fill,
                                         ),
                                       );

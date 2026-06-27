@@ -30,7 +30,7 @@ import 'package:vynic/apps/windows_pos/widgets/home/home_reservation_table_assig
 import 'package:vynic/apps/windows_pos/widgets/home/home_take_away_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_x_report_helper.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_x_report_section.dart';
-import 'package:vynic/apps/windows_pos/widgets/reservations_management_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/home/home_reservations_section.dart';
 import 'login_screen.dart';
 import 'menu_screen.dart';
 import 'order_detail_screen.dart';
@@ -70,16 +70,12 @@ class _HomeScreenState extends State<HomeScreen> {
   static const Color _textPrimary = Color(0xFF1F2937);
   static const Color _mutedText = Color(0xFF475569);
 
-  String _reservationStatusFilter = 'confirmed';
-  DateTime? _reservationDateFilter;
   int _activeDestinationIndex = 0;
   late final DateTime _sessionStartedAt;
   late final List<_SidebarDestination> _destinations;
   final FocusNode _shortcutFocusNode = FocusNode(debugLabel: 'home-shortcuts');
   String? _lastToastNotificationId;
   bool _notificationsPanelOpen = false;
-  String? _highlightedReservationId;
-  Timer? _reservationHighlightTimer;
   StreamSubscription<SyncEvent>? _syncEventsSub;
   Timer? _syncRefreshDebounce;
   Timer? _syncRefreshFollowUp;
@@ -96,7 +92,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _sessionStartedAt = DateTime.now();
     // Activate today's confirmed reservations only if we haven't done it today
     _activateReservationsIfNeeded();
-    _reservationDateFilter = null;
     _destinations = _createDestinations();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -127,7 +122,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _syncRefreshDebounce?.cancel();
     _syncRefreshFollowUp?.cancel();
     _syncRefreshFinalFollowUp?.cancel();
-    _reservationHighlightTimer?.cancel();
     _shortcutFocusNode.dispose();
     super.dispose();
   }
@@ -235,20 +229,10 @@ class _HomeScreenState extends State<HomeScreen> {
       (d) => d.key == 'newReservation',
     );
 
-    // Switch to the reservations tab and highlight the new reservation card.
-    setState(() {
-      if (reservationIndex >= 0) {
-        _activeDestinationIndex = reservationIndex;
-      }
-      _highlightedReservationId = reservationId;
-    });
-
-    // Clear the highlight after a short while so it fades back to normal.
-    _reservationHighlightTimer?.cancel();
-    _reservationHighlightTimer = Timer(const Duration(seconds: 12), () {
-      if (!mounted) return;
-      setState(() => _highlightedReservationId = null);
-    });
+    // Switch to the reservations tab so the new booking is visible.
+    if (reservationIndex >= 0) {
+      setState(() => _activeDestinationIndex = reservationIndex);
+    }
   }
 
   List<Widget> _notificationOverlayWidgets(BuildContext context) {
@@ -342,10 +326,12 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: Icons.restaurant_outlined,
         label: 'მაგიდები',
         builder: (context) => HomeTablesDashboardSection(
-          primaryColor: _primaryColor,
+          textPrimary: _textPrimary,
+          mutedText: _mutedText,
           tableSelectionKey: _tableSelectionKey,
           onSelectionChanged: _updateButtonState,
           onTableTap: _handleReservedTableTap,
+          onContinueToMenu: _continueToMenu,
           currentFloor: _currentFloor,
           onSwitchFloor: _switchFloor,
         ),
@@ -609,9 +595,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: _surfaceColor,
       appBar: null,
       body: mainContentStack,
-      bottomNavigationBar: activeDestinationKey == 'menu'
-          ? _buildMenuButtonBar()
-          : null,
+      bottomNavigationBar: null,
     );
 
     return Focus(
@@ -695,37 +679,26 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildReservationsDashboard() {
-    final currentDate = DatabaseService.getCurrentDate();
-    final normalizedToday = HomeReservationsHelper.normalizeDateOnly(
-      currentDate,
-    );
-    final adminReservations =
-        HomeReservationsHelper.getAdminPanelReservations();
-
     final canManageReservations = widget.user.canManageReservationsOnHome;
 
+    final reservations = HomeReservationsHelper.getAdminPanelReservations()
+        .where(
+          (reservation) => HomeReservationsHelper.normalizeStatus(
+            reservation.status,
+          ).startsWith('confirmed'),
+        )
+        .toList();
+
     return SizedBox.expand(
-      child: ReservationsManagementSection(
-        reservations: adminReservations,
-        normalizedToday: normalizedToday,
-        filterDate: _reservationDateFilter,
-        statusFilter: _reservationStatusFilter,
-        showCancelledTab: false,
-        highlightReservationId: _highlightedReservationId,
-        canAssignTableToReservation: canManageReservations,
-        canCancelReservation: false,
-        canDeleteReservation: false,
-        onFilterDateChanged: (value) {
-          setState(() => _reservationDateFilter = value);
-        },
-        onStatusFilterChanged: (value) {
-          setState(() => _reservationStatusFilter = value);
-        },
-        onCreateReservation: null,
+      child: HomeReservationsSection(
+        user: widget.user,
+        reservations: reservations,
+        onRefreshRequested: _refreshTables,
+        canAssignTable: canManageReservations,
         onEditReservation: canManageReservations
             ? _editReservationDetails
             : null,
-        onViewPreOrder: (reservation) => HomeReservationMenuPreview.show(
+        onViewPreOrder: (reservation) async => HomeReservationMenuPreview.show(
           context: context,
           reservation: reservation,
           primaryColor: _primaryColor,
@@ -737,23 +710,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ? _sendReservationKitchenCheck
             : null,
         onAssignTable: canManageReservations ? _assignReservationToTable : null,
-        onAssignTableUnavailable: canManageReservations
-            ? (reservation) async {
-                final isToday = HomeReservationsHelper.isSameDate(
-                  reservation.reservationDate,
-                  DatabaseService.getCurrentDate(),
-                );
-                unawaited(
-                  showPosToast(
-                    context: context,
-                    message: isToday
-                        ? 'სუფრაზე გადაყვანა ვერ მოხერხდა.'
-                        : 'სუფრაზე გადაყვანა შესაძლებელია მხოლოდ რეზერვაციის დღეს.',
-                    style: PosToastStyle.info,
-                  ),
-                );
-              }
-            : null,
         primaryColor: _primaryColor,
         secondaryColor: _secondaryColor,
         textPrimary: _textPrimary,
@@ -993,55 +949,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     }
-  }
-
-  Widget _buildMenuButtonBar() {
-    final hasSelection =
-        _tableSelectionKey.currentState?.selectedTables.isNotEmpty ?? false;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(color: _primaryColor.withValues(alpha: 0.1)),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: _primaryColor.withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
-          child: SizedBox(
-            height: 56,
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: hasSelection ? _continueToMenu : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _primaryColor,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: _primaryColor.withValues(alpha: 0.25),
-                disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                elevation: hasSelection ? 4 : 0,
-              ),
-              icon: const Icon(Icons.restaurant_menu, size: 24),
-              label: const Text(
-                'გადასვლა მენიუში',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   Future<void> _activateReservationsIfNeeded() async {

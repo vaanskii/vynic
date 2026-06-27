@@ -89,7 +89,7 @@ class HomeTopBarSection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               padding: const EdgeInsets.all(2),
-              child: Image.asset('assets/logo/vynic.png', fit: BoxFit.contain),
+              child: Image.asset('assets/logo/vynicnew.png', fit: BoxFit.contain),
             ),
             const Spacer(),
             if (onNotificationTap != null) ...[
@@ -132,7 +132,7 @@ class HomeTopBarSection extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
           ),
           padding: const EdgeInsets.all(2),
-          child: Image.asset('assets/logo/vynic.png', fit: BoxFit.contain),
+          child: Image.asset('assets/logo/vynicnew.png', fit: BoxFit.contain),
         ),
         const SizedBox(width: 16),
         Expanded(

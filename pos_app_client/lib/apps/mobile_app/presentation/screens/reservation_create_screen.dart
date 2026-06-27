@@ -20,20 +20,35 @@ class ReservationCreateScreen extends StatefulWidget {
     super.key,
     required this.user,
     required this.initialDate,
+    this.initialName,
+    this.initialItems = const [],
   });
 
   final User user;
   final DateTime initialDate;
 
+  /// Optional pre-filled customer name (e.g. when confirming a counted menu).
+  final String? initialName;
+
+  /// Optional pre-filled pre-order items (e.g. from a confirmed counted menu).
+  final List<({String name, double price, int qty})> initialItems;
+
   static Route<bool> route({
     required User user,
     required DateTime initialDate,
+    String? initialName,
+    List<({String name, double price, int qty})> initialItems = const [],
   }) {
     return PageRouteBuilder<bool>(
       transitionDuration: const Duration(milliseconds: 320),
       reverseTransitionDuration: const Duration(milliseconds: 260),
       pageBuilder: (_, __, ___) => managerThemedPage(
-            ReservationCreateScreen(user: user, initialDate: initialDate),
+            ReservationCreateScreen(
+              user: user,
+              initialDate: initialDate,
+              initialName: initialName,
+              initialItems: initialItems,
+            ),
           ),
       transitionsBuilder: (context, animation, secondary, child) {
         final curved = CurvedAnimation(
@@ -73,6 +88,16 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
   void initState() {
     super.initState();
     _selectedDate = widget.initialDate;
+    if (widget.initialName != null && widget.initialName!.trim().isNotEmpty) {
+      _customerNameController.text = widget.initialName!.trim();
+    }
+    if (widget.initialItems.isNotEmpty) {
+      _selectedMenuItems.addAll(
+        widget.initialItems.map(
+          (e) => _DraftMenuItem(name: e.name, price: e.price, qty: e.qty),
+        ),
+      );
+    }
   }
 
   @override

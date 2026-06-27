@@ -122,14 +122,35 @@ export class MobileMenuService {
     });
   }
 
+  private resolveCountedMenuServiceFeeRate(
+    data: any,
+    feeSettings: Awaited<ReturnType<typeof readRestaurantServiceFeeSettings>>,
+    existingRate?: number | null,
+  ): number {
+    if (!feeSettings.serviceFeeAvailable) {
+      return 0;
+    }
+    if (
+      typeof data.serviceFeeRate === 'number' &&
+      Number.isFinite(data.serviceFeeRate)
+    ) {
+      return Math.max(0, Math.min(1, data.serviceFeeRate));
+    }
+    if (existingRate != null && existingRate > 0) {
+      return Number(existingRate);
+    }
+    return feeSettings.serviceFeePercent / 100;
+  }
+
   async saveCountedMenu(data: any, excludeOpts: BroadcastExclude) {
     const { displayName, items, subtotal, includeServiceFee, createdBy } = data;
     const feeSettings = await readRestaurantServiceFeeSettings(this.prisma);
     const shouldInclude =
       feeSettings.serviceFeeAvailable && includeServiceFee === true;
-    const serviceFeeRate = feeSettings.serviceFeeAvailable
-      ? feeSettings.serviceFeePercent / 100
-      : 0;
+    const serviceFeeRate = this.resolveCountedMenuServiceFeeRate(
+      data,
+      feeSettings,
+    );
     const serviceFeeAmount = shouldInclude ? subtotal * serviceFeeRate : 0;
     const total = subtotal + serviceFeeAmount;
 
@@ -202,9 +223,11 @@ export class MobileMenuService {
     const feeSettings = await readRestaurantServiceFeeSettings(this.prisma);
     const shouldInclude =
       feeSettings.serviceFeeAvailable && includeServiceFee === true;
-    const serviceFeeRate = feeSettings.serviceFeeAvailable
-      ? feeSettings.serviceFeePercent / 100
-      : 0;
+    const serviceFeeRate = this.resolveCountedMenuServiceFeeRate(
+      data,
+      feeSettings,
+      existing.serviceFeeRate,
+    );
     const serviceFeeAmount = shouldInclude ? subtotal * serviceFeeRate : 0;
     const total = subtotal + serviceFeeAmount;
 

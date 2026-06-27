@@ -258,17 +258,16 @@ class _HomeLandingDashboardState extends State<HomeLandingDashboard> {
           final showConnectionLabel = constraints.maxWidth >= 560;
           return Row(
             children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                padding: const EdgeInsets.all(2),
-                child: Image.asset(
-                  'assets/logo/vynicnew.png',
-                  fit: BoxFit.contain,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(7),
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  color: Colors.transparent,
+                  child: Image.asset(
+                    'assets/logo/vynicnew.png',
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),

@@ -14,6 +14,8 @@ import 'package:vynic/core/services/monitoring_socket_service.dart';
 import 'package:vynic/core/services/app_notification_history_store.dart';
 import 'package:vynic/core/services/pos_change_highlight_service.dart';
 import 'package:vynic/core/services/printer_service.dart';
+import 'package:vynic/core/services/pos_session.dart';
+import 'package:vynic/core/services/session_lock.dart';
 import 'package:vynic/core/widgets/notification_history_panel.dart';
 import 'package:vynic/apps/windows_pos/widgets/table_selection_widget.dart';
 import 'package:vynic/apps/windows_pos/widgets/reservation_creation_sheet.dart';
@@ -22,7 +24,6 @@ import 'package:vynic/apps/windows_pos/widgets/home/home_tables_dashboard_sectio
 import 'package:vynic/apps/windows_pos/widgets/home/home_landing_dashboard.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_feature_header.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_calculator_page.dart';
-import 'package:vynic/apps/windows_pos/widgets/home/home_logout_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_admin_tools_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_reservation_menu_preview.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_reservations_helper.dart';
@@ -31,7 +32,6 @@ import 'package:vynic/apps/windows_pos/widgets/home/home_take_away_section.dart'
 import 'package:vynic/apps/windows_pos/widgets/home/home_x_report_helper.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_x_report_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_reservations_section.dart';
-import 'login_screen.dart';
 import 'menu_screen.dart';
 import 'order_detail_screen.dart';
 import 'admin_screen.dart';
@@ -71,6 +71,9 @@ class _HomeScreenState extends State<HomeScreen> {
   static const Color _mutedText = Color(0xFF475569);
 
   int _activeDestinationIndex = 0;
+  // Indices of feature pages that have been opened at least once — drives the
+  // lazy IndexedStack so unopened sections are never built.
+  final Set<int> _builtPages = <int>{};
   late final DateTime _sessionStartedAt;
   late final List<_SidebarDestination> _destinations;
   final FocusNode _shortcutFocusNode = FocusNode(debugLabel: 'home-shortcuts');
@@ -81,14 +84,39 @@ class _HomeScreenState extends State<HomeScreen> {
   Timer? _syncRefreshFollowUp;
   Timer? _syncRefreshFinalFollowUp;
 
+  /// The staff member currently operating the POS. Quick-switch flips
+  /// [PosSession]; everything in this screen reads this getter so a switch
+  /// re-stamps actions and re-flows to child screens without a re-login.
+  User get _user => PosSession.user ?? widget.user;
+
   void _onLiveDataChanged() {
     if (!mounted) return;
     _scheduleLiveRefresh();
   }
 
+  /// Locks the terminal full-screen until a PIN is entered (manual, from the
+  /// staff role button). Resume/switch handling lives in [SessionLock].
+  void _lockTerminal() => SessionLock.lock();
+
+  /// Fired by [SessionLock] when an unlock switched to a DIFFERENT user: reset
+  /// to the landing tab and drop cached pages so the new staff starts fresh.
+  void _onSwitchResetToLanding() {
+    if (!mounted) return;
+    setState(() {
+      _builtPages.clear();
+      final homeIndex = _destinations.indexWhere((d) => d.key == 'home');
+      _activeDestinationIndex = homeIndex >= 0 ? homeIndex : 0;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
+    PosSession.start(widget.user);
+    // Arm the idle auto-lock and react to staff switches that happen from the
+    // lock screen (idle or manual).
+    SessionLock.arm();
+    SessionLock.resetToLanding.addListener(_onSwitchResetToLanding);
     _sessionStartedAt = DateTime.now();
     // Activate today's confirmed reservations only if we haven't done it today
     _activateReservationsIfNeeded();
@@ -118,6 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _onNotificationEntriesChanged,
     );
     MonitoringSocketService.updateCounter.removeListener(_onRemoteUpdateSignal);
+    SessionLock.resetToLanding.removeListener(_onSwitchResetToLanding);
     _syncEventsSub?.cancel();
     _syncRefreshDebounce?.cancel();
     _syncRefreshFollowUp?.cancel();
@@ -362,7 +391,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     ];
 
-    if (widget.user.canAccessManagementCenter) {
+    if (_user.canAccessManagementCenter) {
       destinations.add(
         _SidebarDestination(
           key: 'adminPanel',
@@ -378,28 +407,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     }
-
-    destinations.add(
-      _SidebarDestination(
-        key: 'logout',
-        icon: Icons.logout_outlined,
-        label: 'გამოსვლა',
-        builder: (context) => HomeLogoutSection(
-          username: widget.user.username,
-          role: widget.user.role,
-          onLogout: () {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => const LoginScreen()),
-              (route) => false,
-            );
-          },
-          primaryColor: _primaryColor,
-          secondaryColor: _secondaryColor,
-          textPrimary: _textPrimary,
-          mutedText: _mutedText,
-        ),
-      ),
-    );
 
     return destinations;
   }
@@ -446,7 +453,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final dailySalesTotal = DatabaseService.getDailySalesTotal();
     final currentDate = DatabaseService.getCurrentDate();
     final takeAwayCount = _countActiveTakeAways(currentDate);
-    final openedTablesAmount = widget.user.isAdmin
+    final openedTablesAmount = _user.isAdmin
         ? _calculateOpenedTablesAmount(currentDate)
         : null;
     final currentDateKey = currentDate.toIso8601String().split('T')[0];
@@ -468,7 +475,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCalculatorPage() {
     return HomeCalculatorPage(
-      user: widget.user,
+      user: _user,
       primaryColor: _primaryColor,
       secondaryColor: _secondaryColor,
       textPrimary: _textPrimary,
@@ -485,14 +492,21 @@ class _HomeScreenState extends State<HomeScreen> {
     final reservationCount =
         HomeReservationsHelper.countConfirmedReservationsForDate(currentDate);
 
-    final pages = _destinations
-        .map(
-          (destination) => KeyedSubtree(
-            key: ValueKey(destination.key),
-            child: destination.builder(context),
-          ),
-        )
-        .toList();
+    // Lazily build feature pages: only pages the user has actually opened are
+    // constructed (and then kept alive by IndexedStack to preserve their
+    // state). This avoids building every section — calculator, takeaways,
+    // x-report, etc. — up front on each home rebuild. Each page is wrapped in a
+    // RepaintBoundary so a repaint in one doesn't ripple into the others.
+    _builtPages.add(activeIndex);
+    final pages = [
+      for (var i = 0; i < _destinations.length; i++)
+        KeyedSubtree(
+          key: ValueKey(_destinations[i].key),
+          child: _builtPages.contains(i)
+              ? RepaintBoundary(child: _destinations[i].builder(context))
+              : const SizedBox.shrink(),
+        ),
+    ];
 
     final mainContentStack = Stack(
       clipBehavior: Clip.none,
@@ -506,8 +520,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 return HomeFeatureHeader(
                   title: activeDestination.label,
                   icon: activeDestination.icon,
-                  username: widget.user.username,
-                  roleLabel: widget.user.roleLabelKa,
+                  username: _user.username,
+                  roleLabel: _user.roleLabelKa,
                   activeKey: activeDestinationKey,
                   destinations: _featureSwitchItems(
                     takeAwayCount: takeAwayCount,
@@ -516,7 +530,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onDestinationSelected: _handleQuickSwitch,
                   notificationUnreadCount: unread,
                   onNotificationTap: _toggleNotificationsPanel,
-                  onLogoutTap: _logout,
+                  onStaffSwitchTap: _lockTerminal,
                 );
               },
             ),
@@ -561,8 +575,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     AppNotificationHistoryStore.instance.unreadCount,
                 builder: (context, unread, _) {
                   return HomeLandingDashboard(
-                    username: widget.user.username,
-                    roleLabel: widget.user.roleLabelKa,
+                    username: _user.username,
+                    roleLabel: _user.roleLabelKa,
                     workDate: currentDate,
                     sessionStartedAt: _sessionStartedAt,
                     openTablesCount: openTablesCount,
@@ -577,10 +591,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     onReservationsTap: () =>
                         _selectDestination('newReservation'),
                     onXReportTap: () => _selectDestination('xReport'),
-                    onAdminTap: widget.user.canAccessManagementCenter
+                    onAdminTap: _user.canAccessManagementCenter
                         ? _openAdminPanel
                         : null,
-                    onLogoutTap: _logout,
+                    onStaffSwitchTap: _lockTerminal,
                   );
                 },
               ),
@@ -646,17 +660,10 @@ class _HomeScreenState extends State<HomeScreen> {
     _selectDestination(key);
   }
 
-  void _logout() {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-      (route) => false,
-    );
-  }
-
   void _openAdminPanel() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => AdminScreen(user: widget.user)),
+      MaterialPageRoute(builder: (context) => AdminScreen(user: _user)),
     ).then((_) {
       if (mounted) setState(() {});
     });
@@ -668,7 +675,7 @@ class _HomeScreenState extends State<HomeScreen> {
       today,
     );
     return HomeTakeAwaySection(
-      user: widget.user,
+      user: _user,
       takeAwayReservations: takeAwayReservations,
       onRefreshRequested: _refreshTables,
       primaryColor: _primaryColor,
@@ -679,7 +686,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildReservationsDashboard() {
-    final canManageReservations = widget.user.canManageReservationsOnHome;
+    final canManageReservations = _user.canManageReservationsOnHome;
 
     final reservations = HomeReservationsHelper.getAdminPanelReservations()
         .where(
@@ -691,7 +698,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return SizedBox.expand(
       child: HomeReservationsSection(
-        user: widget.user,
+        user: _user,
         reservations: reservations,
         onRefreshRequested: _refreshTables,
         canAssignTable: canManageReservations,
@@ -706,7 +713,7 @@ class _HomeScreenState extends State<HomeScreen> {
           mutedText: _mutedText,
         ),
         onManagePreOrder: canManageReservations ? _editReservationMenu : null,
-        onSendKitchenCheck: widget.user.canSendReservationKitchenCheckOnHome
+        onSendKitchenCheck: _user.canSendReservationKitchenCheckOnHome
             ? _sendReservationKitchenCheck
             : null,
         onAssignTable: canManageReservations ? _assignReservationToTable : null,
@@ -745,7 +752,7 @@ class _HomeScreenState extends State<HomeScreen> {
       items: kitchenItems,
       tableNumber: tableLabel,
       orderNumber: orderLabel,
-      waiterName: widget.user.username,
+      waiterName: _user.username,
       createdAt: kitchenTime,
       onComplete: (success) {
         if (!mounted) return;
@@ -763,7 +770,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => MenuScreen(
-          user: widget.user,
+          user: _user,
           selectedTables: reservation.tableNumbers.map((e) => '$e').toList(),
           isPreOrderMode: true,
           reservationContext: ReservationContext(
@@ -850,7 +857,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _assignReservationToTable(Reservation reservation) async {
-    if (!widget.user.canManageReservationsOnHome) {
+    if (!_user.canManageReservationsOnHome) {
       unawaited(
         showPosToast(
           context: context,
@@ -892,7 +899,7 @@ class _HomeScreenState extends State<HomeScreen> {
       await DatabaseService.updateReservationTables(reservation.id, selected);
       final orderId = await DatabaseService.activateReservation(
         reservationId: reservation.id,
-        activatedBy: widget.user.username,
+        activatedBy: _user.username,
       );
 
       if (!mounted) {
@@ -909,7 +916,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           stackTrace: StackTrace.current,
           context: 'assign_reservation_to_table',
-          performedBy: widget.user.username,
+          performedBy: _user.username,
           metadata: {
             'reservationId': reservation.id,
             'tables': reservation.tableNumbers,
@@ -935,7 +942,7 @@ class _HomeScreenState extends State<HomeScreen> {
         error: error,
         stackTrace: stackTrace,
         context: 'assign_reservation_to_table',
-        performedBy: widget.user.username,
+        performedBy: _user.username,
         metadata: {
           'reservationId': reservation.id,
           'tables': reservation.tableNumbers,
@@ -983,7 +990,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final orderId = await DatabaseService.activateReservation(
       reservationId: reservationId,
-      activatedBy: widget.user.username,
+      activatedBy: _user.username,
     );
 
     if (!mounted) {
@@ -1022,7 +1029,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       MaterialPageRoute(
         builder: (context) =>
-            OrderDetailScreen(user: widget.user, orderId: orderId),
+            OrderDetailScreen(user: _user, orderId: orderId),
       ),
     ).then((result) {
       if (!mounted) {
@@ -1142,7 +1149,7 @@ class _HomeScreenState extends State<HomeScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => MenuScreen(
-            user: widget.user,
+            user: _user,
             selectedTables: state.selectedTables,
           ),
         ),

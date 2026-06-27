@@ -7,6 +7,7 @@ import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/apps/windows_pos/screens/menu_screen.dart';
+import 'package:vynic/apps/windows_pos/screens/order_detail_screen.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/table_payment_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
@@ -275,7 +276,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
     return 'გატანა - $preview';
   }
 
-  void _editTakeAwayOrder(Reservation reservation) {
+  void _openTakeAwayOrderDetails(Reservation reservation) {
     final orderId = reservation.linkedOrderId;
     if (orderId == null) {
       unawaited(showErrorToast(context, 'შეკვეთა ჯერ არ არის შექმნილი'));
@@ -285,11 +286,8 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MenuScreen(
-          user: widget.user,
-          selectedTables: [_buildTakeAwayLabel(reservation.notes)],
-          existingOrderId: orderId,
-        ),
+        builder: (context) =>
+            OrderDetailScreen(user: widget.user, orderId: orderId),
       ),
     ).then((_) async {
       await widget.onRefreshRequested();
@@ -1277,11 +1275,11 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
 
   Widget _buildEditOrderButton(Reservation reservation) {
     final hasOrder = reservation.linkedOrderId != null;
-    final canEdit = hasOrder && !_isTakeAwayFinalized(reservation);
+    final canOpen = hasOrder;
     return ElevatedButton.icon(
-      onPressed: canEdit ? () => _editTakeAwayOrder(reservation) : null,
-      icon: const Icon(Icons.edit_outlined),
-      label: const Text('შეცვლა'),
+      onPressed: canOpen ? () => _openTakeAwayOrderDetails(reservation) : null,
+      icon: const Icon(Icons.manage_search_outlined),
+      label: const Text('დეტალები'),
       style: ElevatedButton.styleFrom(
         backgroundColor: _accent,
         foregroundColor: Colors.white,

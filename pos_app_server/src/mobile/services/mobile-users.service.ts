@@ -6,6 +6,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma.service';
 import { PosCallbackClient } from '../../pos/pos-callback.client';
+import { PosOutboxService } from '../../pos/pos-outbox.service';
 import { StaffPinVault } from '../../auth/staff-pin-vault.service';
 import {
   ASSIGNABLE_STAFF_ROLES,
@@ -26,8 +27,27 @@ export class MobileUsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly posCallback: PosCallbackClient,
+    private readonly posOutbox: PosOutboxService,
     private readonly pinVault: StaffPinVault,
   ) {}
+
+  /**
+   * Shared handler for a failed direct POS-callback push. The cloud DB is
+   * already updated (source of truth here), so we always log; and when the
+   * failure means the POS was simply offline, we queue the change for durable
+   * delivery so it reaches POS Hive once the POS reconnects.
+   */
+  private async queueIfPosUnreachable(
+    context: string,
+    endpoint: string,
+    payload: Record<string, unknown>,
+    error: unknown,
+  ): Promise<void> {
+    console.warn(`[Mobile][Users] POS ${context} failed:`, (error as Error).message);
+    if (this.posOutbox.isPosUnreachableError(error)) {
+      await this.posOutbox.enqueue({ endpoint, payload });
+    }
+  }
 
   async getUsers() {
     const pinsMap = await this.pinVault.read();
@@ -86,16 +106,15 @@ export class MobileUsersService {
     const pinsMap = await this.pinVault.read();
     pinsMap[username] = pinCode;
     await this.pinVault.write(pinsMap);
+    const posUserPayload = { username, pinCode, role: toClientRole(role) };
     try {
-      await this.posCallback.createPosUser({
-        username,
-        pinCode,
-        role: toClientRole(role),
-      });
+      await this.posCallback.createPosUser(posUserPayload);
     } catch (e) {
-      console.warn(
-        '[Mobile][Users] POS create user failed:',
-        (e as Error).message,
+      await this.queueIfPosUnreachable(
+        'create user',
+        '/mobile-user-create',
+        posUserPayload,
+        e,
       );
     }
     return { ...created, pinCode };
@@ -131,9 +150,11 @@ export class MobileUsersService {
     try {
       await this.posCallback.updatePosUserPin({ username, pinCode });
     } catch (e) {
-      console.warn(
-        '[Mobile][Users] POS update pin failed:',
-        (e as Error).message,
+      await this.queueIfPosUnreachable(
+        'update pin',
+        '/mobile-user-update-pin',
+        { username, pinCode },
+        e,
       );
     }
     return {
@@ -194,9 +215,11 @@ export class MobileUsersService {
         role: toClientRole(role),
       });
     } catch (e) {
-      console.warn(
-        '[Mobile][Users] POS update role failed:',
-        (e as Error).message,
+      await this.queueIfPosUnreachable(
+        'update role',
+        '/mobile-user-update-role',
+        { username, role: toClientRole(role) },
+        e,
       );
     }
     return updated;
@@ -256,9 +279,11 @@ export class MobileUsersService {
         newUsername,
       });
     } catch (e) {
-      console.warn(
-        '[Mobile][Users] POS rename user failed:',
-        (e as Error).message,
+      await this.queueIfPosUnreachable(
+        'rename user',
+        '/mobile-user-rename',
+        { oldUsername, newUsername },
+        e,
       );
     }
     return { ...updated, pinCode };
@@ -288,9 +313,11 @@ export class MobileUsersService {
     try {
       await this.posCallback.deletePosUser({ username });
     } catch (e) {
-      console.warn(
-        '[Mobile][Users] POS delete user failed:',
-        (e as Error).message,
+      await this.queueIfPosUnreachable(
+        'delete user',
+        '/mobile-user-delete',
+        { username },
+        e,
       );
     }
     return { success: true };

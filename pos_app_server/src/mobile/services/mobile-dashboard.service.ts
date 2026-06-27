@@ -17,6 +17,11 @@ import {
   todayStart,
 } from '../util/mobile-date.util';
 
+const MANAGER_TABLE_LAYOUT: Record<string, Set<string>> = {
+  first: new Set(['1', '2', '3', '4', '5', '6', '7', '8', '9']),
+  second: new Set(['1', '2', '3', '4']),
+};
+
 export interface DashboardResponse {
   todayRevenue: number;
   shiftTotalRevenue: number;
@@ -90,6 +95,63 @@ export class MobileDashboardService {
     private readonly mutationSupport: MobileMutationSupport,
   ) {}
 
+  private normalizeManagerTableNumber(raw: unknown, floor: string): string {
+    const trimmed = String(raw ?? '').trim();
+    if (!trimmed) return '';
+    const withoutLabel = trimmed
+      .replace(/^table\s*/i, '')
+      .replace(/^vip zone\s*/i, '')
+      .trim();
+    const parsed = Number.parseInt(withoutLabel, 10);
+    if (Number.isFinite(parsed) && floor === 'second' && parsed > 10) {
+      return String(parsed - 10);
+    }
+    return withoutLabel;
+  }
+
+  private isManagerPhysicalTable(table: any): boolean {
+    const floor = String(table.floor ?? '')
+      .trim()
+      .toLowerCase();
+    const allowed = MANAGER_TABLE_LAYOUT[floor];
+    if (!allowed) return false;
+    return allowed.has(
+      this.normalizeManagerTableNumber(table.tableNumber, floor),
+    );
+  }
+
+  private managerTableSort(a: any, b: any): number {
+    const floorRank = (floor: unknown) =>
+      String(floor ?? '')
+        .trim()
+        .toLowerCase() === 'second'
+        ? 1
+        : 0;
+    const floorDiff = floorRank(a.floor) - floorRank(b.floor);
+    if (floorDiff !== 0) return floorDiff;
+
+    const aFloor = String(a.floor ?? '')
+      .trim()
+      .toLowerCase();
+    const bFloor = String(b.floor ?? '')
+      .trim()
+      .toLowerCase();
+    const aNum = Number.parseInt(
+      this.normalizeManagerTableNumber(a.tableNumber, aFloor),
+      10,
+    );
+    const bNum = Number.parseInt(
+      this.normalizeManagerTableNumber(b.tableNumber, bFloor),
+      10,
+    );
+    if (Number.isFinite(aNum) && Number.isFinite(bNum)) {
+      return aNum - bNum;
+    }
+    return String(a.tableNumber ?? '').localeCompare(
+      String(b.tableNumber ?? ''),
+    );
+  }
+
   async getDashboard(): Promise<DashboardResponse> {
     // Use the business date set by the POS (stored in Setting).
     // Falls back to calendar today if not yet set (first-run / no POS connected).
@@ -111,47 +173,65 @@ export class MobileDashboardService {
     yesterdayDateKey = previousDay(todayStartDate).toISOString().split('T')[0];
 
     const openedAtKey = `businessDayOpenedAt:${todayDateKey}`;
-    const [todayOrders, yesterdayOrders, allTables, openTableOrders, todaySummarySetting, openTablesPayableSetting, dailySalesTotalSetting, businessDayOpenedAtSetting] =
-      await Promise.all([
-        this.prisma.order.findMany({
-          where: businessDateWhere(todayDateKey),
-          select: { totalAmount: true },
-        }),
-        this.prisma.order.findMany({
-          where: businessDateWhere(yesterdayDateKey),
-          select: { totalAmount: true },
-        }),
-        (this.prisma as any).table.findMany({
-          select: { id: true, currentBill: true, isReserved: true, activeOrderId: true },
-        }),
-        this.prisma.order.findMany({
-          where: {
-            ...businessDateWhere(todayDateKey),
-            status: { notIn: ['closed', 'cancelled', 'paid'] },
-            NOT: {
-              OR: [
-                { floor: { contains: 'takeaway', mode: 'insensitive' } },
-                { floor: { contains: 'take away', mode: 'insensitive' } },
-              ],
-            },
+    const [
+      todayOrders,
+      yesterdayOrders,
+      allTables,
+      openTableOrders,
+      todaySummarySetting,
+      openTablesPayableSetting,
+      dailySalesTotalSetting,
+      businessDayOpenedAtSetting,
+    ] = await Promise.all([
+      this.prisma.order.findMany({
+        where: businessDateWhere(todayDateKey),
+        select: { totalAmount: true },
+      }),
+      this.prisma.order.findMany({
+        where: businessDateWhere(yesterdayDateKey),
+        select: { totalAmount: true },
+      }),
+      (this.prisma as any).table.findMany({
+        select: {
+          id: true,
+          tableNumber: true,
+          floor: true,
+          currentBill: true,
+          isReserved: true,
+          activeOrderId: true,
+        },
+      }),
+      this.prisma.order.findMany({
+        where: {
+          ...businessDateWhere(todayDateKey),
+          status: { notIn: ['closed', 'cancelled', 'paid'] },
+          NOT: {
+            OR: [
+              { floor: { contains: 'takeaway', mode: 'insensitive' } },
+              { floor: { contains: 'take away', mode: 'insensitive' } },
+            ],
           },
-          select: { posOrderId: true, totalAmount: true, businessDate: true },
-        }),
-        (this.prisma as any).setting.findUnique({
-          where: { key: `salesSummary:${todayDateKey}` },
-        }),
-        (this.prisma as any).setting.findUnique({
-          where: { key: `openTablesPayable:${todayDateKey}` },
-        }),
-        (this.prisma as any).setting.findUnique({
-          where: { key: `dailySalesTotal:${todayDateKey}` },
-        }),
-        (this.prisma as any).setting.findUnique({
-          where: { key: openedAtKey },
-        }),
-      ]);
+        },
+        select: { posOrderId: true, totalAmount: true, businessDate: true },
+      }),
+      (this.prisma as any).setting.findUnique({
+        where: { key: `salesSummary:${todayDateKey}` },
+      }),
+      (this.prisma as any).setting.findUnique({
+        where: { key: `openTablesPayable:${todayDateKey}` },
+      }),
+      (this.prisma as any).setting.findUnique({
+        where: { key: `dailySalesTotal:${todayDateKey}` },
+      }),
+      (this.prisma as any).setting.findUnique({
+        where: { key: openedAtKey },
+      }),
+    ]);
 
-    const totalTablesCount = allTables.length;
+    const physicalTables = allTables.filter((t: any) =>
+      this.isManagerPhysicalTable(t),
+    );
+    const totalTablesCount = physicalTables.length;
 
     // Open money = only orders physically linked to occupied tables right now.
     // Ignores ghost "open" orders in DB and stale openTablesPayable settings.
@@ -167,8 +247,8 @@ export class MobileDashboardService {
     }
 
     const openPosOrderIds = new Set<number>();
-    let openTablesPayable = 0;
-    for (const table of allTables) {
+    const openPayableByPosOrderId = new Map<number, number>();
+    for (const table of physicalTables) {
       if (table.activeOrderId == null) continue;
       const posId = Number(table.activeOrderId);
       const linked = openOrderByPosId.get(posId);
@@ -176,30 +256,40 @@ export class MobileDashboardService {
       const bd = linked.businessDate;
       if (bd !== '' && bd !== todayDateKey) continue;
       const bill = Number(table.currentBill ?? 0);
-      openTablesPayable += bill > 0 ? bill : linked.totalAmount;
+      const payable = bill > 0 ? bill : linked.totalAmount;
+      const previous = openPayableByPosOrderId.get(posId) ?? 0;
+      openPayableByPosOrderId.set(posId, Math.max(previous, payable));
       openPosOrderIds.add(posId);
     }
+    const openTablesPayable = Array.from(
+      openPayableByPosOrderId.values(),
+    ).reduce((sum, amount) => sum + amount, 0);
 
-    const occupiedTables = allTables.filter(
+    const occupiedTables = physicalTables.filter(
       (t: any) =>
-        t.activeOrderId != null &&
-        openPosOrderIds.has(Number(t.activeOrderId)),
+        t.activeOrderId != null && openPosOrderIds.has(Number(t.activeOrderId)),
     ).length;
-    const reservedTables = allTables.filter(
+    const reservedTables = physicalTables.filter(
       (t: any) => t.isReserved && t.activeOrderId == null,
     ).length;
-    const freeTables = Math.max(0, totalTablesCount - occupiedTables - reservedTables);
+    const freeTables = Math.max(
+      0,
+      totalTablesCount - occupiedTables - reservedTables,
+    );
     const activeTables = occupiedTables + reservedTables;
 
     const r = (n: number) => Math.round(n * 100) / 100;
     const computedTodayRev = todayOrders.reduce(
-      (s: number, o: any) => s + Number(o.totalAmount), 0,
+      (s: number, o: any) => s + Number(o.totalAmount),
+      0,
     );
     let todayRev = computedTodayRev;
     let closedTablesRevenue = computedTodayRev;
     let nonFiscalClosedRevenue = 0;
     if (dailySalesTotalSetting?.value !== undefined) {
-      const exactDaily = Number(dailySalesTotalSetting.value ?? computedTodayRev);
+      const exactDaily = Number(
+        dailySalesTotalSetting.value ?? computedTodayRev,
+      );
       closedTablesRevenue = exactDaily;
       todayRev = exactDaily;
     }
@@ -224,8 +314,12 @@ export class MobileDashboardService {
         // so do not add non-fiscal again (avoids double counting).
         todayRev = closedTablesRevenue;
         todayOrderCount = Number(summary.orderCount ?? todayOrders.length);
-        cashRevenue = Number(summary.cashRevenue ?? summary.paymentBreakdown?.cash ?? 0);
-        cardRevenue = Number(summary.cardRevenue ?? summary.paymentBreakdown?.card ?? 0);
+        cashRevenue = Number(
+          summary.cashRevenue ?? summary.paymentBreakdown?.cash ?? 0,
+        );
+        cardRevenue = Number(
+          summary.cardRevenue ?? summary.paymentBreakdown?.card ?? 0,
+        );
         const pb = summary.paymentBreakdown ?? {};
         refunds = Number(pb.refund ?? pb.refunds ?? pb['refund'] ?? 0);
       } catch {
@@ -247,7 +341,8 @@ export class MobileDashboardService {
     const computedOpenTablesPayable = openTablesPayable;
     const shiftTotalRevenue = closedTablesRevenue + openTablesPayable;
     const yestRev = yesterdayOrders.reduce(
-      (s: number, o: any) => s + Number(o.totalAmount), 0,
+      (s: number, o: any) => s + Number(o.totalAmount),
+      0,
     );
 
     console.log(
@@ -276,8 +371,7 @@ export class MobileDashboardService {
           ? Math.round((activeTables / totalTablesCount) * 1000) / 10
           : 0,
       yesterdayRevenue: r(yestRev),
-      avgOrderValue:
-        todayOrderCount > 0 ? r(todayRev / todayOrderCount) : 0,
+      avgOrderValue: todayOrderCount > 0 ? r(todayRev / todayOrderCount) : 0,
       revenueChange: pctChange(todayRev, yestRev),
       businessDate: todayDateKey,
       businessDayId: todayDateKey,
@@ -299,19 +393,22 @@ export class MobileDashboardService {
     const tables = await (this.prisma as any).table.findMany({
       orderBy: [{ floor: 'asc' }, { tableNumber: 'asc' }],
     });
-    return tables.map((t: any) => {
-      const occupied = !!(t.isReserved || t.activeOrderId);
-      return {
-        id: t.id,
-        tableNumber: t.tableNumber,
-        floor: t.floor,
-        isReserved: occupied,
-        isOccupied: occupied,
-        currentBill: occupied ? (t.currentBill ?? 0) : 0,
-        activeOrderId: occupied ? (t.activeOrderId ?? null) : null,
-        updatedAt: t.updatedAt,
-      };
-    });
+    return tables
+      .filter((t: any) => this.isManagerPhysicalTable(t))
+      .sort((a: any, b: any) => this.managerTableSort(a, b))
+      .map((t: any) => {
+        const occupied = !!(t.isReserved || t.activeOrderId);
+        return {
+          id: t.id,
+          tableNumber: this.normalizeManagerTableNumber(t.tableNumber, t.floor),
+          floor: t.floor,
+          isReserved: occupied,
+          isOccupied: occupied,
+          currentBill: occupied ? (t.currentBill ?? 0) : 0,
+          activeOrderId: occupied ? (t.activeOrderId ?? null) : null,
+          updatedAt: t.updatedAt,
+        };
+      });
   }
 
   async freeTable(
@@ -323,8 +420,12 @@ export class MobileDashboardService {
       where: { tableNumber, floor },
       data: { isReserved: false, activeOrderId: null, currentBill: 0 },
     });
-    if (updated.count === 0) return { success: false, error: 'table_not_found' };
-    this.mutationSupport.registerMobileMutationEchoGuard(undefined, { tableNumber, floor });
+    if (updated.count === 0)
+      return { success: false, error: 'table_not_found' };
+    this.mutationSupport.registerMobileMutationEchoGuard(undefined, {
+      tableNumber,
+      floor,
+    });
     this.gateway.broadcastUpdate(
       'data_updated',
       {
@@ -405,14 +506,16 @@ export class MobileDashboardService {
     ]);
 
     const revenue = orders.reduce(
-      (s: number, o: any) => s + Number(o.totalAmount), 0,
+      (s: number, o: any) => s + Number(o.totalAmount),
+      0,
     );
     const cashRev = orders.reduce((s: number, o: any) => {
       const method = normalizePaymentType(o.paymentType);
       return method === 'cash' ? s + Number(o.totalAmount) : s;
     }, 0);
     const totalExp = expenses.reduce(
-      (s: number, e: any) => s + Number(e.amount), 0,
+      (s: number, e: any) => s + Number(e.amount),
+      0,
     );
 
     const expMap = new Map<string, number>();
@@ -428,10 +531,12 @@ export class MobileDashboardService {
       cardRevenue: r(revenue - cashRev),
       orderCount: orders.length,
       avgOrderValue: orders.length > 0 ? r(revenue / orders.length) : 0,
-      expenseBreakdown: Array.from(expMap.entries()).map(([category, amount]) => ({
-        category,
-        amount: r(amount),
-      })),
+      expenseBreakdown: Array.from(expMap.entries()).map(
+        ([category, amount]) => ({
+          category,
+          amount: r(amount),
+        }),
+      ),
       expenseEntries: expenses.map((e) => ({
         id: e.id,
         description: e.description,
@@ -509,7 +614,10 @@ export class MobileDashboardService {
         businessDate: currentBusinessDate,
       });
     } catch (e) {
-      console.warn('[Mobile][Expenses] POS expense callback failed:', (e as Error).message);
+      console.warn(
+        '[Mobile][Expenses] POS expense callback failed:',
+        (e as Error).message,
+      );
     }
     return {
       id: created.id,

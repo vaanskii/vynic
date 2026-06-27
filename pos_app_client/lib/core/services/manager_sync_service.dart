@@ -12,6 +12,13 @@ import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/services/pos_change_highlight_service.dart';
 import 'package:vynic/core/utils/payment_utils.dart';
 
+/// Serializes a manager-data payload to JSON. Runs in a background isolate via
+/// [compute] so the (potentially large) encode never blocks the UI thread —
+/// this is what keeps the POS responsive (no PIN-typing or animation jank)
+/// while a sync is in flight.
+String _encodeManagerPayload(Map<String, dynamic> payload) =>
+    json.encode(payload);
+
 class ManagerSyncService {
   static String get serverUrl => ApiConfig.baseUrl;
 
@@ -44,6 +51,16 @@ class ManagerSyncService {
   static bool _hooksRegistered = false;
   static bool _realtimeOnly = false;
 
+  /// Periodic retry that flushes pending local changes to the backend so a POS
+  /// edit made while the server was unreachable reaches it on its own once it
+  /// comes back — no manual "Retry Sync Now" needed.
+  static Timer? _pendingFlushTimer;
+
+  /// Guards the periodic flush against overlapping its own pushes.
+  static bool _pendingFlushInFlight = false;
+
+  static const Duration _pendingFlushInterval = Duration(seconds: 30);
+
   static void initialize() {
     ConnectionStatusService.initialize();
 
@@ -64,6 +81,18 @@ class ManagerSyncService {
     }
 
     _bootstrapTableFingerprintsFromLocal();
+
+    // Auto-flush retry loop. The POS has no monitoring socket (that runs on the
+    // mobile app), so it can't react to the server returning — instead it polls:
+    // whenever there are unpushed local changes, re-attempt the push until it
+    // lands. A successful push clears the pending flag, so this is a no-op once
+    // everything is in sync.
+    _pendingFlushTimer ??= Timer.periodic(_pendingFlushInterval, (_) {
+      if (_pendingFlushInFlight) return;
+      if (!ConnectionStatusService.hasPendingLocalChanges.value) return;
+      _pendingFlushInFlight = true;
+      syncToManagerApp().whenComplete(() => _pendingFlushInFlight = false);
+    });
 
     if (_startupSyncScheduled) return;
     _startupSyncScheduled = true;
@@ -233,6 +262,9 @@ class ManagerSyncService {
 
   static void dispose() {
     _startupSyncScheduled = false;
+    _pendingFlushTimer?.cancel();
+    _pendingFlushTimer = null;
+    _pendingFlushInFlight = false;
   }
 
   /// Marks that local POS data should be pushed on the next manual sync.
@@ -333,6 +365,9 @@ class ManagerSyncService {
             return {
               'posOrderId': o.orderId,
               'status': o.status,
+              // Last local-edit time — lets the server resolve same-order
+              // conflicts by last-write-wins against a queued mobile change.
+              'updatedAt': (o.updatedAt ?? o.createdAt).toIso8601String(),
               'totalAmount': o.totalAmount,
               'paymentType': (o.paymentMethod ?? 'cash')
                   .toString()
@@ -419,7 +454,7 @@ class ManagerSyncService {
         final response = await http.post(
           Uri.parse('$serverUrl/sync/manager-data'),
           headers: ApiConfig.posSyncHeaders,
-          body: json.encode(payload),
+          body: await compute(_encodeManagerPayload, payload),
         );
         if (response.statusCode == 200 || response.statusCode == 201) {
           debugPrint('[ManagerSync] Realtime OK (${response.statusCode})');
@@ -926,7 +961,7 @@ class ManagerSyncService {
       final response = await http.post(
         Uri.parse('$serverUrl/sync/manager-data'),
         headers: ApiConfig.posSyncHeaders,
-        body: json.encode(payload),
+        body: await compute(_encodeManagerPayload, payload),
       );
 
       if (response.statusCode != 201 && response.statusCode != 200) {
@@ -977,7 +1012,7 @@ class ManagerSyncService {
       final response = await http.post(
         Uri.parse('$serverUrl/sync/audit-reports'),
         headers: ApiConfig.posSyncHeaders,
-        body: json.encode(payload),
+        body: await compute(_encodeManagerPayload, payload),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {

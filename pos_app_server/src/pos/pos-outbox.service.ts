@@ -184,6 +184,23 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
     // POS dropped offline mid-batch — stop, retry whole batch next tick.
     if (result.noUrl) return;
 
+    // Transport failure (connection refused / timeout) means the POS is offline,
+    // not that the change is bad. Don't spend the attempt budget on an
+    // unreachable POS — reschedule with backoff but keep the row recoverable so
+    // a long outage can't exhaust retries and strand the change as `failed`.
+    // Only a real HTTP response (4xx/5xx, which sets `status`) counts as an
+    // attempt against maxAttempts.
+    if (result.status === undefined) {
+      await (this.prisma as any).posCallbackOutbox.update({
+        where: { id: row.id },
+        data: {
+          lastError: result.error ?? 'pos_unreachable',
+          nextAttemptAt: new Date(Date.now() + BACKOFF_CAP_MS),
+        },
+      });
+      return;
+    }
+
     const attempts = row.attempts + 1;
     if (attempts >= row.maxAttempts) {
       await (this.prisma as any).posCallbackOutbox.update({
@@ -217,8 +234,13 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
   private async pruneDelivered(): Promise<void> {
     const cutoff = new Date(Date.now() - DELIVERED_RETENTION_MS);
     try {
+      // 'superseded' rows are terminal too (a newer POS edit won the LWW
+      // conflict), so prune them on the same retention as delivered rows.
       await (this.prisma as any).posCallbackOutbox.deleteMany({
-        where: { status: 'delivered', updatedAt: { lt: cutoff } },
+        where: {
+          status: { in: ['delivered', 'superseded'] },
+          updatedAt: { lt: cutoff },
+        },
       });
     } catch {
       // Non-fatal; pruning retries next tick.
@@ -262,6 +284,13 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
    */
   async kickPending(): Promise<void> {
     try {
+      // Revive rows that exhausted their attempts while the POS was offline:
+      // the POS is back now, so give them a clean retry budget. Without this a
+      // long outage would strand changes as `failed` until a manual admin sync.
+      await (this.prisma as any).posCallbackOutbox.updateMany({
+        where: { status: 'failed' },
+        data: { status: 'pending', attempts: 0, nextAttemptAt: new Date() },
+      });
       const pending = await (this.prisma as any).posCallbackOutbox.count({
         where: { status: 'pending' },
       });
@@ -274,6 +303,23 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
     } catch (e) {
       this.logger.warn(`kickPending failed: ${(e as Error).message}`);
     }
+  }
+
+  /**
+   * Classify an error thrown by the *direct* POS path (`PosCallbackClient`
+   * `requestPos`) so callers can fall back to the durable outbox only when the
+   * POS was unreachable — never when the POS actively rejected the request.
+   *
+   * - "callback URL is not available" → POS never registered (offline) → queue.
+   * - "POS request failed <status>: …" → an HTTP response came back, so the POS
+   *   is reachable and rejected it (validation, conflict, …) → do NOT queue.
+   * - anything else (network error, timeout/abort) → unreachable → queue.
+   */
+  isPosUnreachableError(error: unknown): boolean {
+    const message = (error as Error)?.message ?? '';
+    if (message.includes('callback URL is not available')) return true;
+    if (/POS request failed \d+/.test(message)) return false;
+    return true;
   }
 
   /** Force a retry of all failed rows (admin "Sync now" — sync-4). */

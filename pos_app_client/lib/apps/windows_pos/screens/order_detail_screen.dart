@@ -149,7 +149,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     if (_isFinalizedStatus(status)) {
       return false;
     }
-    if (widget.user.isManager || widget.user.isSupervisor) {
+    if (widget.user.isManager) {
       return true;
     }
     return _canCurrentUserModifyOrder(order);
@@ -2101,10 +2101,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   Future<void> _startNonFiscalClosureFlow() async {
     if (!widget.user.canCloseTablesNonFiscal) {
       unawaited(
-        showErrorToast(
-          context,
-          'არაფისკალური დახურვა მხოლოდ მენეჯერს ან ზედამხედველს შეუძლია',
-        ),
+        showErrorToast(context, 'არაფისკალური დახურვა მხოლოდ მენეჯერს შეუძლია'),
       );
       return;
     }

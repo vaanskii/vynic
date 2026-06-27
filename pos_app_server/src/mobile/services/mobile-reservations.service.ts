@@ -5,6 +5,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { PosCallbackClient } from '../../pos/pos-callback.client';
+import { PosOutboxService } from '../../pos/pos-outbox.service';
 import { MonitoringGateway } from '../../realtime/monitoring.gateway';
 import { suppressPosEchoForReservation } from '../../pos/sync-echo-guard';
 import { MobileMutationSupport } from './mobile-mutation-support.service';
@@ -34,6 +35,7 @@ export interface ReservationResponseItem {
 export class MobileReservationsService {
   constructor(
     private readonly posCallback: PosCallbackClient,
+    private readonly posOutbox: PosOutboxService,
     private readonly gateway: MonitoringGateway,
     private readonly mutationSupport: MobileMutationSupport,
   ) {}
@@ -117,7 +119,7 @@ export class MobileReservationsService {
       ? payload.preOrderItems
       : [];
 
-    const reservation = await this.posCallback.createPosReservation({
+    const reservationPayload = {
       customerName,
       customerPhone,
       tableNumbers,
@@ -129,7 +131,22 @@ export class MobileReservationsService {
       status: (payload.status ?? 'confirmed').toString(),
       isTakeAway: false,
       preOrderItems,
-    });
+    };
+
+    let reservation: any;
+    try {
+      reservation = await this.posCallback.createPosReservation(reservationPayload);
+    } catch (e) {
+      if (!this.posOutbox.isPosUnreachableError(e)) throw e;
+      // POS offline — queue for durable delivery so the reservation isn't lost.
+      // The POS assigns the real id on delivery; the mobile UI shows it after
+      // the POS reconnects (it round-trips back via /sync/manager-data).
+      await this.posOutbox.enqueue({
+        endpoint: '/mobile-reservation-create',
+        payload: reservationPayload,
+      });
+      reservation = null;
+    }
     // Suppress the POS round-trip echo so the device that created this
     // reservation isn't re-notified when the POS syncs it back.
     const newReservationId = String(reservation?.id ?? '').trim();
@@ -176,7 +193,15 @@ export class MobileReservationsService {
     if (status === 'completed' || status === 'in-progress' || status === 'inprogress') {
       throw new BadRequestException('Moving reservation to table is not allowed from mobile');
     }
-    await this.posCallback.updatePosReservationStatus(id, status);
+    try {
+      await this.posCallback.updatePosReservationStatus(id, status);
+    } catch (e) {
+      if (!this.posOutbox.isPosUnreachableError(e)) throw e;
+      await this.posOutbox.enqueue({
+        endpoint: '/mobile-reservation-status',
+        payload: { reservationId: id, status },
+      });
+    }
     this.gateway.broadcastUpdate(
       'data_updated',
       {
@@ -193,7 +218,15 @@ export class MobileReservationsService {
     id: string,
     monitoringSocketId?: string,
   ): Promise<{ success: true }> {
-    await this.posCallback.deletePosReservation(id);
+    try {
+      await this.posCallback.deletePosReservation(id);
+    } catch (e) {
+      if (!this.posOutbox.isPosUnreachableError(e)) throw e;
+      await this.posOutbox.enqueue({
+        endpoint: '/mobile-reservation-delete',
+        payload: { reservationId: id },
+      });
+    }
     this.gateway.broadcastUpdate(
       'data_updated',
       {

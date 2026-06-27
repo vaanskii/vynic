@@ -30,6 +30,7 @@ import {
 } from './sync-echo-guard';
 import * as bcrypt from 'bcrypt';
 import { normalizeStaffRole, StaffRole } from '../staff/staff-role';
+import { posWinsOrderConflict, pendingStaffUsernames } from './sync-conflict';
 
 interface TableSync {
   tableNumber: string;
@@ -60,6 +61,8 @@ interface OrderSync {
   discountAmount?: number;
   serviceFeePercent?: number;
   customServiceFeePercentage?: number;
+  /** ISO timestamp of the order's last local edit on the POS (LWW conflict resolution). */
+  updatedAt?: string;
 }
 
 interface ExpenseSync {
@@ -597,13 +600,26 @@ export class SyncController implements OnModuleInit {
         this.prisma as any
       ).posCallbackOutbox.findMany({
         where: { status: 'pending', posOrderId: { not: null } },
-        select: { posOrderId: true },
+        select: { posOrderId: true, createdAt: true },
       });
       const pendingOutboxOrderIds = new Set<number>(
         pendingOutboxRows
           .map((r: { posOrderId: number | null }) => r.posOrderId)
           .filter((id: number | null): id is number => id !== null),
       );
+      // Newest queued mobile-edit time per order — the "manager wrote at" side
+      // of the same-order last-write-wins comparison below.
+      const pendingOutboxEditedAt = new Map<number, Date>();
+      for (const row of pendingOutboxRows as Array<{
+        posOrderId: number | null;
+        createdAt: Date;
+      }>) {
+        if (row.posOrderId === null) continue;
+        const prev = pendingOutboxEditedAt.get(row.posOrderId);
+        if (!prev || row.createdAt > prev) {
+          pendingOutboxEditedAt.set(row.posOrderId, row.createdAt);
+        }
+      }
 
       const terminalStatuses = new Set([
         'paid',
@@ -615,12 +631,32 @@ export class SyncController implements OnModuleInit {
         const pOrderId = order.posOrderId ?? order.orderId;
         if (pOrderId === undefined) continue;
 
-        // Skip stale POS snapshot while a mobile change for this order is in flight.
+        // A mobile change for this order is queued for the POS. Resolve the
+        // same-order conflict by last-write-wins: the POS (source of truth)
+        // wins when its edit is strictly newer than the queued mobile edit;
+        // otherwise the mobile edit is authoritative and we ignore the POS's
+        // stale snapshot until the POS confirms it applied the change.
         if (pendingOutboxOrderIds.has(pOrderId)) {
+          const managerEditedAt = pendingOutboxEditedAt.get(pOrderId);
+          const posWins = posWinsOrderConflict(order.updatedAt, managerEditedAt);
+
+          if (!posWins) {
+            console.log(
+              `[Sync] Holding order #${pOrderId}: queued mobile edit is newer (or POS sent no timestamp) — ignoring POS snapshot.`,
+            );
+            continue;
+          }
+
+          // POS edit is newer — drop the stale queued mobile change so it isn't
+          // delivered back to the POS and overwrite the fresher POS state.
           console.log(
-            `[Sync] Holding order #${pOrderId}: mobile change pending POS delivery — ignoring POS snapshot.`,
+            `[Sync] Order #${pOrderId}: POS edit newer than queued mobile change — POS wins, discarding queued change.`,
           );
-          continue;
+          await (this.prisma as any).posCallbackOutbox.updateMany({
+            where: { status: 'pending', posOrderId: pOrderId },
+            data: { status: 'superseded', lastError: 'pos_newer_edit_won' },
+          });
+          pendingOutboxOrderIds.delete(pOrderId);
         }
 
         const dbOrder = await this.prisma.order.upsert({
@@ -856,12 +892,29 @@ export class SyncController implements OnModuleInit {
 
       // Reconcile deletions: if user disappeared from Windows POS list,
       // remove it from backend too so mobile and Windows stay 1:1.
+      //
+      // But never delete a user that has an in-flight queued mobile change
+      // (create/rename/pin/role): the POS simply hasn't applied it yet, so its
+      // current snapshot legitimately predates the user. Deleting here would
+      // wrongly remove a manager-created user until the POS catches up.
+      const pendingUserRows = await (
+        this.prisma as any
+      ).posCallbackOutbox.findMany({
+        where: { status: 'pending', endpoint: { startsWith: '/mobile-user-' } },
+        select: { endpoint: true, payload: true },
+      });
+      const protectedUsernames = pendingStaffUsernames(pendingUserRows);
       const existing = await (this.prisma as any).staff.findMany({
         select: { username: true },
       });
       const stale = existing
         .map((u: any) => String(u.username ?? ''))
-        .filter((username: string) => username.length > 0 && !incomingUsernames.has(username));
+        .filter(
+          (username: string) =>
+            username.length > 0 &&
+            !incomingUsernames.has(username) &&
+            !protectedUsernames.has(username),
+        );
       if (stale.length > 0) {
         await (this.prisma as any).staff.deleteMany({
           where: { username: { in: stale } },

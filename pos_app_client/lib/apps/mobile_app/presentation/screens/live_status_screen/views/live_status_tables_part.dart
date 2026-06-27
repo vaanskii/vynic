@@ -89,14 +89,20 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
     return null;
   }
 
-  Future<void> _showForceFreDialog(TableModel table) async {
+  Future<void> _showForceFreeTablesDialog(List<TableModel> tables) async {
+    final sortedTables = _sortTablesByNumber(tables);
+    final tableLabel = sortedTables.length == 1
+        ? sortedTables.first.tableNumber
+        : 'T${sortedTables.map((t) => t.tableNumber).join('-')}';
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('მაგიდა ${table.tableNumber} — გათავისუფლება'),
+        title: Text('მაგიდა $tableLabel — გათავისუფლება'),
         content: Text(
-          'ეს მაგიდა ბაზაში დაკავებულად არის მონიშნული. დარწმუნებული ხართ, რომ გსურთ მისი გათავისუფლება?',
+          sortedTables.length == 1
+              ? 'ეს მაგიდა ბაზაში დაკავებულად არის მონიშნული. დარწმუნებული ხართ, რომ გსურთ მისი გათავისუფლება?'
+              : 'ეს მაგიდები ერთ შეკვეთაზეა მიბმული. დარწმუნებული ხართ, რომ გსურთ ყველას გათავისუფლება?',
         ),
         actions: [
           TextButton(
@@ -105,7 +111,9 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFFEF4444)),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFEF4444),
+            ),
             child: Text('გათავისუფლება'),
           ),
         ],
@@ -113,11 +121,20 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
     );
     if (confirmed != true || !mounted) return;
 
-    final ok = await MobileApiService.freeTable(table.tableNumber, table.floor);
+    var ok = true;
+    for (final table in sortedTables) {
+      final freed = await MobileApiService.freeTable(
+        table.tableNumber,
+        table.floor,
+      );
+      ok = ok && freed;
+    }
     if (!mounted) return;
 
     _showStatusToast(
-      ok ? 'მაგიდა ${table.tableNumber} გათავისუფლდა' : 'შეცდომა — ვერ მოხდა გათავისუფლება',
+      ok
+          ? 'მაგიდა $tableLabel გათავისუფლდა'
+          : 'შეცდომა — ვერ მოხდა გათავისუფლება',
       isError: !ok,
       icon: ok ? Icons.table_restaurant_rounded : Icons.error_outline_rounded,
     );
@@ -152,7 +169,7 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
     if (d.inMinutes < 60) return '${d.inMinutes}წთ';
     final h = d.inHours;
     final m = d.inMinutes % 60;
-    return m == 0 ? '${h}სთ' : '${h}სთ ${m}წთ';
+    return m == 0 ? '$hსთ' : '$hსთ $mწთ';
   }
 
   Widget _buildTablesView() {
@@ -169,12 +186,14 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
     for (final floor in _tablesByFloor.keys) {
       final filtered = _tablesByFloor[floor]!.where(_matchesFilter).toList();
       if (filtered.isEmpty) continue;
-      sections.add(_buildFloorSection(
-        floor,
-        filtered,
-        groupColors: groupColors,
-        orderTableNumbers: orderTableNumbers,
-      ));
+      sections.add(
+        _buildFloorSection(
+          floor,
+          filtered,
+          groupColors: groupColors,
+          orderTableNumbers: orderTableNumbers,
+        ),
+      );
     }
 
     return ListView(
@@ -208,8 +227,11 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
       ),
       padding: const EdgeInsets.only(top: 120),
       children: [
-        Icon(Icons.table_bar_outlined,
-            size: 64, color: MobileGlassTheme.muted(0.25)),
+        Icon(
+          Icons.table_bar_outlined,
+          size: 64,
+          color: MobileGlassTheme.muted(0.25),
+        ),
         SizedBox(height: 16),
         Text(
           label,
@@ -238,22 +260,23 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
             behavior: HitTestBehavior.opaque,
             child: Container(
               margin: const EdgeInsets.only(right: 8),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
               decoration: BoxDecoration(
-                color: isSel ? MobileGlassTheme.primary : MobileGlassTheme.surface(0.05),
+                color: isSel
+                    ? MobileGlassTheme.primary
+                    : MobileGlassTheme.surface(0.05),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: isSel ? MobileGlassTheme.primary : MobileGlassTheme.border(0.1),
+                  color: isSel
+                      ? MobileGlassTheme.primary
+                      : MobileGlassTheme.border(0.1),
                 ),
               ),
               alignment: Alignment.center,
               child: Text(
                 _LiveStatusScreenState._tableFilters[index],
                 style: TextStyle(
-                  color: isSel
-                      ? Colors.white
-                      : MobileGlassTheme.textSecondary,
+                  color: isSel ? Colors.white : MobileGlassTheme.textSecondary,
                   fontWeight: isSel ? FontWeight.w600 : FontWeight.w400,
                   fontSize: 13,
                 ),
@@ -312,6 +335,7 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
     required Map<String, Color> groupColors,
     required Map<int, List<String>> orderTableNumbers,
   }) {
+    final entries = _tableCardEntries(tables);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -330,7 +354,11 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
         LayoutBuilder(
           builder: (context, constraints) {
             final width = constraints.maxWidth;
-            final crossAxisCount = width >= 900 ? 4 : width >= 640 ? 3 : 2;
+            final crossAxisCount = width >= 900
+                ? 4
+                : width >= 640
+                ? 3
+                : 2;
             final aspect = width >= 640 ? 1.05 : 0.92;
             return GridView.builder(
               shrinkWrap: true,
@@ -341,9 +369,10 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
                 mainAxisSpacing: 14,
                 childAspectRatio: aspect,
               ),
-              itemCount: tables.length,
+              itemCount: entries.length,
               itemBuilder: (context, index) => _buildTableCard(
-                tables[index],
+                entries[index].primary,
+                groupedTables: entries[index].tables,
                 groupColors: groupColors,
                 orderTableNumbers: orderTableNumbers,
               ),
@@ -353,6 +382,45 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
         SizedBox(height: 22),
       ],
     );
+  }
+
+  List<_ManagerTableCardEntry> _tableCardEntries(List<TableModel> tables) {
+    final groupedByOrder = <String, List<TableModel>>{};
+    for (final table in tables) {
+      final orderId = table.activeOrderId;
+      if (orderId == null || _tableState(table) != 'occupied') continue;
+      final key = '${table.floor}::$orderId';
+      groupedByOrder.putIfAbsent(key, () => <TableModel>[]).add(table);
+    }
+
+    final emittedGroups = <String>{};
+    final entries = <_ManagerTableCardEntry>[];
+    for (final table in tables) {
+      final orderId = table.activeOrderId;
+      if (orderId != null && _tableState(table) == 'occupied') {
+        final key = '${table.floor}::$orderId';
+        final group = groupedByOrder[key] ?? const <TableModel>[];
+        if (group.length > 1) {
+          if (emittedGroups.add(key)) {
+            entries.add(_ManagerTableCardEntry(_sortTablesByNumber(group)));
+          }
+          continue;
+        }
+      }
+      entries.add(_ManagerTableCardEntry([table]));
+    }
+    return entries;
+  }
+
+  List<TableModel> _sortTablesByNumber(Iterable<TableModel> tables) {
+    final sorted = tables.toList();
+    sorted.sort((a, b) {
+      final aNumber = int.tryParse(a.tableNumber.trim());
+      final bNumber = int.tryParse(b.tableNumber.trim());
+      if (aNumber != null && bNumber != null) return aNumber.compareTo(bNumber);
+      return a.tableNumber.compareTo(b.tableNumber);
+    });
+    return sorted;
   }
 
   void _showReservedNoOrderSheet(TableModel table) {
@@ -384,8 +452,11 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
                 color: MobileGlassTheme.warn.withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.event_seat_rounded,
-                  size: 36, color: MobileGlassTheme.warn),
+              child: Icon(
+                Icons.event_seat_rounded,
+                size: 36,
+                color: MobileGlassTheme.warn,
+              ),
             ),
             SizedBox(height: 14),
             Text(
@@ -399,7 +470,10 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
             SizedBox(height: 8),
             Text(
               'ეს მაგიდა დაჯავშნულია, მაგრამ შეკვეთა ჯერ არ გახსნილა.',
-              style: TextStyle(color: MobileGlassTheme.muted(0.6), fontSize: 13),
+              style: TextStyle(
+                color: MobileGlassTheme.muted(0.6),
+                fontSize: 13,
+              ),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 24),
@@ -416,8 +490,10 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: Text('დახურვა',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+                child: Text(
+                  'დახურვა',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
               ),
             ),
             SizedBox(height: MediaQuery.of(ctx).padding.bottom),
@@ -473,14 +549,21 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
 
   Widget _buildTableCard(
     TableModel table, {
+    List<TableModel>? groupedTables,
     required Map<String, Color> groupColors,
     required Map<int, List<String>> orderTableNumbers,
   }) {
+    final displayTables = _sortTablesByNumber(groupedTables ?? [table]);
+    final displayNumbers = displayTables.map((t) => t.tableNumber).toList();
+    final isCombined = displayTables.length > 1;
     final state = _tableState(table);
     final bool hasOrder = table.activeOrderId != null;
     final bool isOccupied = state == 'occupied';
     final bool isReserved = state == 'reserved';
-    final double bill = table.currentBill ?? 0.0;
+    final double bill = displayTables.fold<double>(0, (maxBill, t) {
+      final current = t.currentBill ?? 0.0;
+      return current > maxBill ? current : maxBill;
+    });
 
     final groupKey = TableGroupStyle.groupKey(table);
     final Color accent;
@@ -497,15 +580,18 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
     final linkedNumbers = table.activeOrderId != null
         ? orderTableNumbers[table.activeOrderId!]
         : null;
-    final combinedLabel = linkedNumbers != null && linkedNumbers.length > 1
+    final combinedLabel = isCombined && table.activeOrderId != null
+        ? 'შეკვეთა #${table.activeOrderId}'
+        : linkedNumbers != null && linkedNumbers.length > 1
         ? TableGroupStyle.formatTableNumbersList(linkedNumbers, table.floor)
         : null;
+    final title = 'T${displayNumbers.join('-')}';
 
     final IconData icon = isOccupied
         ? Icons.local_dining_rounded
         : isReserved
-            ? Icons.schedule_rounded
-            : Icons.chair_alt_rounded;
+        ? Icons.schedule_rounded
+        : Icons.chair_alt_rounded;
 
     final elapsed = _elapsedShort(table.reservedAt);
 
@@ -533,10 +619,11 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
               if (result != null) _loadTables();
             }
           : isReserved
-              ? () => _showReservedNoOrderSheet(table)
-              : () => _startWalkInForTable(table),
-      onLongPress:
-          (isOccupied || isReserved) ? () => _showForceFreDialog(table) : null,
+          ? () => _showReservedNoOrderSheet(table)
+          : () => _startWalkInForTable(table),
+      onLongPress: (isOccupied || isReserved)
+          ? () => _showForceFreeTablesDialog(displayTables)
+          : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -548,7 +635,7 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'T-${table.tableNumber}',
+                    title,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
@@ -600,8 +687,11 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
           Row(
             children: [
               if (isOccupied || isReserved) ...[
-                Icon(Icons.person_rounded,
-                    size: 14, color: MobileGlassTheme.textSecondary),
+                Icon(
+                  Icons.person_rounded,
+                  size: 14,
+                  color: MobileGlassTheme.textSecondary,
+                ),
                 SizedBox(width: 4),
                 Expanded(
                   child: Text(
@@ -630,8 +720,11 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
                   ),
                 ],
               ] else ...[
-                Icon(Icons.add_circle_outline_rounded,
-                    size: 14, color: MobileGlassTheme.good.withOpacity(0.9)),
+                Icon(
+                  Icons.add_circle_outline_rounded,
+                  size: 14,
+                  color: MobileGlassTheme.good.withOpacity(0.9),
+                ),
                 SizedBox(width: 4),
                 Expanded(
                   child: Text(
@@ -651,4 +744,12 @@ extension _LiveStatusTablesView on _LiveStatusScreenState {
       ),
     );
   }
+}
+
+class _ManagerTableCardEntry {
+  final List<TableModel> tables;
+
+  const _ManagerTableCardEntry(this.tables);
+
+  TableModel get primary => tables.first;
 }

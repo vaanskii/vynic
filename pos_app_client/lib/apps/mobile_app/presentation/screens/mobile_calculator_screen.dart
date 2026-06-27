@@ -49,6 +49,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
   int _serviceFeePercent = 10;
 
   String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
   late TabController _tabController;
   TabController? _subTabController;
 
@@ -221,6 +222,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
 
   @override
   void dispose() {
+    _searchController.dispose();
     if (!_loading && _categories.isNotEmpty) {
       _tabController.dispose();
       _subTabController?.dispose();
@@ -367,6 +369,12 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
     final finalKey = v != null ? '${item.key}_${v.size}' : item.key;
 
     setState(() {
+      // Reset the product search after an item is chosen so the grid returns to
+      // the normal category view and the next search starts fresh.
+      if (_searchQuery.isNotEmpty) {
+        _searchController.clear();
+        _searchQuery = '';
+      }
       if (addMode) {
         _cart[finalKey] = currentInCart + qty;
       } else {
@@ -598,6 +606,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
   Widget _buildSearchBar() => Padding(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
         child: TextField(
+          controller: _searchController,
           style: TextStyle(color: MobileGlassTheme.textPrimary, fontSize: 15),
           cursorColor: MobileGlassTheme.primary,
           decoration: InputDecoration(

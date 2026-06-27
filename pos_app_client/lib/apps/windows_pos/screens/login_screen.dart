@@ -20,7 +20,10 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  String pin = '';
+  // Holds the entered PIN as a listenable so keystrokes update only the PIN
+  // dots + login button (via ValueListenableBuilder in LoginDesktopView) rather
+  // than rebuilding the whole login card on every digit.
+  final ValueNotifier<String> _pin = ValueNotifier<String>('');
   bool _isLoading = false;
   late DateTime _now;
   Timer? _clock;
@@ -37,64 +40,65 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     _clock?.cancel();
+    _pin.dispose();
     super.dispose();
   }
 
   void addDigit(String digit) {
-    setState(() {
-      if (pin.length < 6) {
-        pin += digit;
+    if (_pin.value.length >= 6) return;
+    _pin.value = _pin.value + digit;
 
-        // Disable auto-login on mobile to allow access to the "Companion App" button
-        final bool isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
-        if (!isMobile && pin.length >= 4) {
-          _checkPinMatch();
-        }
-      }
-    });
+    // Disable auto-login on mobile to allow access to the "Companion App" button
+    final bool isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+    if (!isMobile && _pin.value.length >= 4) {
+      _checkPinMatch();
+    }
   }
 
-  void _checkPinMatch() async {
+  void _checkPinMatch() {
     // Check if the current PIN matches any user
-    final user = DatabaseService.authenticateByPin(pin);
+    final user = DatabaseService.authenticateByPin(_pin.value);
 
     if (user != null) {
-      // Authentication successful - auto login
+      // Authentication successful — navigate immediately for a snappy feel.
       setState(() {
         _isLoading = true;
       });
 
-      // Small delay for visual feedback
-      await Future.delayed(const Duration(milliseconds: 300));
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => HomeScreen(user: user)),
+      );
 
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => HomeScreen(user: user)),
-        );
-      }
+      // Push staff credentials + flush pending changes AFTER the transition,
+      // so the heavy serialization never competes with the screen animation.
+      _schedulePostLoginSync();
     }
   }
 
-  Future<void> _authenticateUser() async {
-    setState(() {
-      _isLoading = true;
+  /// Fires the manager-data sync a moment after login so the heavy payload
+  /// serialization never competes with the navigation transition (the cause
+  /// of the post-PIN stutter).
+  void _schedulePostLoginSync() {
+    Future.delayed(const Duration(milliseconds: 600), () {
+      unawaited(ManagerSyncService.syncToManagerApp());
     });
+  }
 
-    // Simulate a small delay for better UX
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    final user = DatabaseService.authenticateByPin(pin);
+  Future<void> _authenticateUser() async {
+    final user = DatabaseService.authenticateByPin(_pin.value);
 
     if (user != null) {
-      // Sync staff credentials to backend so mobile login works
-      unawaited(ManagerSyncService.syncToManagerApp());
+      // Authentication successful — navigate immediately.
+      setState(() {
+        _isLoading = true;
+      });
 
-      // Authentication successful
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => HomeScreen(user: user)),
-        );
-      }
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => HomeScreen(user: user)),
+      );
+
+      // Defer credential sync until after the transition.
+      _schedulePostLoginSync();
     } else {
       // Authentication failed
       if (mounted) {
@@ -113,17 +117,13 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void clearPin() {
-    setState(() {
-      pin = '';
-    });
+    _pin.value = '';
   }
 
   void deleteDigit() {
-    setState(() {
-      if (pin.isNotEmpty) {
-        pin = pin.substring(0, pin.length - 1);
-      }
-    });
+    if (_pin.value.isNotEmpty) {
+      _pin.value = _pin.value.substring(0, _pin.value.length - 1);
+    }
   }
 
   /// Launches the Mobile Manager Companion App.
@@ -135,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
   ///      access the app while offline.
   ///   3. If no cached token is available either, show a clear error.
   Future<void> _launchCompanionApp() async {
-    if (pin.length < 4) {
+    if (_pin.value.length < 4) {
       unawaited(showErrorToast(context, 'გთხოვთ შეიყვანოთ PIN კოდი'));
       return;
     }
@@ -146,10 +146,10 @@ class _LoginScreenState extends State<LoginScreen> {
     User? shellUser;
 
     try {
-      final result = await MobileAuthService.login(pin);
+      final result = await MobileAuthService.login(_pin.value);
       shellUser = User(
         username: result.username,
-        pinCode: pin,
+        pinCode: _pin.value,
         role: StaffRole.fromApi(result.role),
       );
     } on MobileAuthError catch (e) {
@@ -159,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (offline != null) {
           shellUser = User(
             username: offline.username,
-            pinCode: pin,
+            pinCode: _pin.value,
             role: StaffRole.fromApi(offline.role),
           );
           if (offline.isStale && mounted) {
@@ -182,15 +182,15 @@ class _LoginScreenState extends State<LoginScreen> {
       } else if (e == MobileAuthError.invalidPin) {
         // Backend Staff table may be empty (first run / DB reset).
         // Fall back to local DB — only valid when the POS runs on this device.
-        final localUser = DatabaseService.authenticateByPin(pin);
+        final localUser = DatabaseService.authenticateByPin(_pin.value);
         if (localUser != null && localUser.canUseManagerMobileApp) {
           // Sync staff to backend FIRST (awaited), then retry login to get JWT.
           await ManagerSyncService.syncToManagerApp();
           try {
-            final retryResult = await MobileAuthService.login(pin);
+            final retryResult = await MobileAuthService.login(_pin.value);
             shellUser = User(
               username: retryResult.username,
-              pinCode: pin,
+              pinCode: _pin.value,
               role: StaffRole.fromApi(retryResult.role),
             );
           } catch (_) {
@@ -249,14 +249,14 @@ class _LoginScreenState extends State<LoginScreen> {
     final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
     return Scaffold(
       body: LoginDesktopView(
-        pin: pin,
+        pin: _pin,
         isLoading: _isLoading,
         workDate: DatabaseService.getCurrentDate(),
         now: _now,
         onDigitPressed: addDigit,
         onClearPressed: clearPin,
         onDeletePressed: deleteDigit,
-        onLoginPressed: pin.length >= 4 ? _authenticateUser : null,
+        onLoginPressed: _authenticateUser,
         onOtherUserPressed: clearPin,
         showCompanionApp: isMobile,
         onCompanionAppPressed: isMobile ? _launchCompanionApp : null,

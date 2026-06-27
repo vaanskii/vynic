@@ -31,7 +31,8 @@ class HomeFeatureHeader extends StatefulWidget {
     required this.onDestinationSelected,
     required this.notificationUnreadCount,
     required this.onNotificationTap,
-    required this.onLogoutTap,
+    this.onLogoutTap,
+    this.onStaffSwitchTap,
   });
 
   final String title;
@@ -44,7 +45,14 @@ class HomeFeatureHeader extends StatefulWidget {
   final ValueChanged<String> onDestinationSelected;
   final int notificationUnreadCount;
   final VoidCallback onNotificationTap;
-  final VoidCallback onLogoutTap;
+
+  /// Optional — when null the logout button is hidden. The POS home passes null
+  /// (logout lives only on the lock screen); the preview still shows it.
+  final VoidCallback? onLogoutTap;
+
+  /// Tapping the staff badge opens the quick-switch PIN dialog. Null hides the
+  /// affordance (badge stays static).
+  final VoidCallback? onStaffSwitchTap;
 
   @override
   State<HomeFeatureHeader> createState() => _HomeFeatureHeaderState();
@@ -147,7 +155,10 @@ class _HomeFeatureHeaderState extends State<HomeFeatureHeader> {
                   Expanded(child: _buildDirectNavigation()),
                   if (!narrow) ...[
                     const SizedBox(width: 14),
-                    _RoleBadge(label: widget.roleLabel),
+                    _RoleBadge(
+                      label: widget.roleLabel,
+                      onLockTap: widget.onStaffSwitchTap,
+                    ),
                     const SizedBox(width: 14),
                     const Icon(
                       Icons.schedule_rounded,
@@ -171,8 +182,10 @@ class _HomeFeatureHeaderState extends State<HomeFeatureHeader> {
                   ),
                   const SizedBox(width: 6),
                   PosConnectionStatusIndicator(compact: narrow),
-                  const SizedBox(width: 4),
-                  _LogoutButton(onTap: widget.onLogoutTap),
+                  if (widget.onLogoutTap != null) ...[
+                    const SizedBox(width: 4),
+                    _LogoutButton(onTap: widget.onLogoutTap!),
+                  ],
                 ],
               );
             },
@@ -335,9 +348,12 @@ class _DirectNavigationItem extends StatelessWidget {
 }
 
 class _RoleBadge extends StatelessWidget {
-  const _RoleBadge({required this.label});
+  const _RoleBadge({required this.label, this.onLockTap});
 
   final String label;
+
+  /// Tapping the badge locks the terminal (PIN required to continue / switch).
+  final VoidCallback? onLockTap;
 
   @override
   Widget build(BuildContext context) {
@@ -354,27 +370,46 @@ class _RoleBadge extends StatelessWidget {
       _ => (Icons.badge_outlined, const Color(0xFF7DE2C3)),
     };
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+    // Sized to match the nav tabs (tables / count / takeaways) so the staff +
+    // lock control reads as an equally prominent, tappable button.
+    final badge = Container(
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.62)),
+        color: color.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: color.withValues(alpha: 0.6)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: color, size: 15),
-          const SizedBox(width: 6),
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 8),
           Text(
             label,
             style: TextStyle(
               color: color,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
             ),
           ),
+          if (onLockTap != null) ...[
+            const SizedBox(width: 9),
+            Container(width: 1, height: 18, color: color.withValues(alpha: 0.3)),
+            const SizedBox(width: 9),
+            Icon(Icons.lock_outline_rounded, color: color, size: 20),
+          ],
         ],
+      ),
+    );
+
+    if (onLockTap == null) return badge;
+    return Tooltip(
+      message: 'ჩაკეტვა / სტაფის გადართვა',
+      child: InkWell(
+        onTap: onLockTap,
+        borderRadius: BorderRadius.circular(11),
+        child: badge,
       ),
     );
   }

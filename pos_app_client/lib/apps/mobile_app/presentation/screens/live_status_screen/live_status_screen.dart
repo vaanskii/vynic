@@ -24,7 +24,6 @@ class LiveStatusScreen extends StatefulWidget {
   State<LiveStatusScreen> createState() => _LiveStatusScreenState();
 }
 
-
 class _LiveStatusScreenState extends State<LiveStatusScreen> {
   Timer? _refreshTimer;
 
@@ -76,7 +75,9 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
     _refreshTimer?.cancel();
     MonitoringSocketService.updateCounter.removeListener(_loadAll);
     MonitoringSocketService.isConnected.removeListener(_onConnectionChange);
-    MonitoringSocketService.pendingTableFocus.removeListener(_onPendingTableFocus);
+    MonitoringSocketService.pendingTableFocus.removeListener(
+      _onPendingTableFocus,
+    );
     super.dispose();
   }
 
@@ -127,12 +128,7 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
     IconData? icon,
   }) {
     if (!mounted) return;
-    ManagerToast.showSnackBar(
-      context,
-      message,
-      isError: isError,
-      icon: icon,
-    );
+    ManagerToast.showSnackBar(context, message, isError: isError, icon: icon);
   }
 
   void _setTableFilter(int index) {
@@ -208,8 +204,9 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
   @override
   Widget build(BuildContext context) {
     final allTables = _tablesByFloor.values.expand((t) => t).toList();
-    final occupiedCount =
-        allTables.where((t) => t.activeOrderId != null).length;
+    final occupiedCount = allTables
+        .where((t) => t.activeOrderId != null)
+        .length;
     final reservedCount = allTables
         .where((t) => t.isReserved && t.activeOrderId == null)
         .length;
@@ -276,8 +273,10 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
                           onTap: _openNewTakeaway,
                           shape: BoxShape.circle,
                           padding: const EdgeInsets.all(12),
-                          child: Icon(Icons.add_rounded,
-                              color: MobileGlassTheme.textPrimary),
+                          child: Icon(
+                            Icons.add_rounded,
+                            color: MobileGlassTheme.textPrimary,
+                          ),
                         ),
                     ],
                   ),
@@ -315,9 +314,7 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
                     color: MobileGlassTheme.primary,
                     backgroundColor: MobileGlassTheme.surfaceCard,
                     onRefresh: _loadAll,
-                    child: isTables
-                        ? _buildTablesView()
-                        : _buildTakeawayView(),
+                    child: isTables ? _buildTablesView() : _buildTakeawayView(),
                   ),
                 ),
               ],
@@ -364,8 +361,7 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
             Text(
               label,
               style: TextStyle(
-                color:
-                    isActive ? Colors.white : MobileGlassTheme.textPrimary,
+                color: isActive ? Colors.white : MobileGlassTheme.textPrimary,
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
@@ -373,8 +369,7 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
             if (badge > 0) ...[
               SizedBox(width: 8),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
                   color: isActive
                       ? Colors.white.withValues(alpha: 0.25)
@@ -596,8 +591,7 @@ class _TakeawayInfoSheetState extends State<_TakeawayInfoSheet> {
             },
             behavior: HitTestBehavior.opaque,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: _waitInPlace
                     ? MobileGlassTheme.primary.withValues(alpha: 0.10)
@@ -662,9 +656,7 @@ class _TakeawayInfoSheetState extends State<_TakeawayInfoSheet> {
               autofocus: true,
               keyboardType: TextInputType.phone,
               inputFormatters: [
-                FilteringTextInputFormatter.allow(
-                  RegExp(r'[\d\s\+\-\(\)]'),
-                ),
+                FilteringTextInputFormatter.allow(RegExp(r'[\d\s\+\-\(\)]')),
               ],
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
@@ -708,10 +700,10 @@ class _TakeawayInfoSheetState extends State<_TakeawayInfoSheet> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: MobileGlassTheme.primary,
                 foregroundColor: Colors.white,
-                disabledBackgroundColor:
-                    MobileGlassTheme.primary.withValues(alpha: 0.30),
-                disabledForegroundColor:
-                    Colors.white.withValues(alpha: 0.6),
+                disabledBackgroundColor: MobileGlassTheme.primary.withValues(
+                  alpha: 0.30,
+                ),
+                disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),

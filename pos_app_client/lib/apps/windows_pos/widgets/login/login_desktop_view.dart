@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 
@@ -17,7 +18,9 @@ class LoginDesktopView extends StatelessWidget {
     this.onCompanionAppPressed,
   });
 
-  final String pin;
+  /// Listenable so a keystroke only rebuilds the PIN dots + login button,
+  /// not the whole login card (keypad, logo, clock).
+  final ValueListenable<String> pin;
   final bool isLoading;
   final DateTime workDate;
   final DateTime now;
@@ -325,29 +328,34 @@ class LoginDesktopView extends StatelessWidget {
             borderRadius: BorderRadius.circular(11),
             border: Border.all(color: const Color(0xFFCBD5E1)),
           ),
-          child: Row(
-            children: [
-              for (var index = 0; index < 6; index++)
-                Expanded(
-                  child: Center(
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 160),
-                      width: index < pin.length ? 11 : 16,
-                      height: index < pin.length ? 11 : 16,
-                      decoration: BoxDecoration(
-                        color: index < pin.length ? _navy : Colors.transparent,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: index < pin.length
+          child: ValueListenableBuilder<String>(
+            valueListenable: pin,
+            builder: (context, pinValue, _) => Row(
+              children: [
+                for (var index = 0; index < 6; index++)
+                  Expanded(
+                    child: Center(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 160),
+                        width: index < pinValue.length ? 11 : 16,
+                        height: index < pinValue.length ? 11 : 16,
+                        decoration: BoxDecoration(
+                          color: index < pinValue.length
                               ? _navy
-                              : const Color(0xFF94A3B8),
-                          width: 1.5,
+                              : Colors.transparent,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: index < pinValue.length
+                                ? _navy
+                                : const Color(0xFF94A3B8),
+                            width: 1.5,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
         SizedBox(height: dense ? 8 : 14),
@@ -355,30 +363,38 @@ class LoginDesktopView extends StatelessWidget {
         SizedBox(height: dense ? 8 : 14),
         SizedBox(
           height: dense ? 44 : 54,
-          child: ElevatedButton.icon(
-            onPressed: isLoading ? null : onLoginPressed,
-            style: ElevatedButton.styleFrom(
-              elevation: 0,
-              backgroundColor: _navyLight,
-              disabledBackgroundColor: const Color(0xFF94A3B8),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+          child: ValueListenableBuilder<String>(
+            valueListenable: pin,
+            builder: (context, pinValue, _) => ElevatedButton.icon(
+              onPressed: (isLoading || pinValue.length < 4)
+                  ? null
+                  : onLoginPressed,
+              style: ElevatedButton.styleFrom(
+                elevation: 0,
+                backgroundColor: _navyLight,
+                disabledBackgroundColor: const Color(0xFF94A3B8),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-            ),
-            icon: isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2.5,
-                    ),
-                  )
-                : const Icon(Icons.lock_outline_rounded, size: 21),
-            label: Text(
-              isLoading ? 'მოწმდება...' : 'შესვლა',
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+              icon: isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.5,
+                      ),
+                    )
+                  : const Icon(Icons.lock_outline_rounded, size: 21),
+              label: Text(
+                isLoading ? 'მოწმდება...' : 'შესვლა',
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ),
           ),
         ),
@@ -612,7 +628,7 @@ Widget loginDesktopViewPreview() {
     debugShowCheckedModeBanner: false,
     theme: ThemeData(fontFamily: 'NotoSansGeorgian'),
     home: LoginDesktopView(
-      pin: '123',
+      pin: ValueNotifier('123'),
       isLoading: false,
       workDate: DateTime(2026, 6, 24),
       now: DateTime(2026, 6, 24, 11, 45),

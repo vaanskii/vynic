@@ -22,8 +22,9 @@ class HomeLandingDashboard extends StatefulWidget {
     required this.onTakeAwayTap,
     required this.onReservationsTap,
     required this.onXReportTap,
-    required this.onLogoutTap,
+    this.onLogoutTap,
     this.onAdminTap,
+    this.onStaffSwitchTap,
   });
 
   final String username;
@@ -42,7 +43,14 @@ class HomeLandingDashboard extends StatefulWidget {
   final VoidCallback onReservationsTap;
   final VoidCallback onXReportTap;
   final VoidCallback? onAdminTap;
-  final VoidCallback onLogoutTap;
+
+  /// Optional — when null the logout button is hidden. The POS home passes null
+  /// (logout lives only on the lock screen).
+  final VoidCallback? onLogoutTap;
+
+  /// Tapping the role badge opens the quick-switch PIN dialog. Null keeps the
+  /// badge static.
+  final VoidCallback? onStaffSwitchTap;
 
   @override
   State<HomeLandingDashboard> createState() => _HomeLandingDashboardState();
@@ -208,9 +216,10 @@ class _HomeLandingDashboardState extends State<HomeLandingDashboard> {
                                   SizedBox(height: dense ? 10 : 18)
                                 else
                                   const Spacer(),
-                                Center(
-                                  child: _buildLogoutButton(compact, dense),
-                                ),
+                                if (widget.onLogoutTap != null)
+                                  Center(
+                                    child: _buildLogoutButton(compact, dense),
+                                  ),
                               ],
                             ),
                           ),
@@ -346,7 +355,8 @@ class _HomeLandingDashboardState extends State<HomeLandingDashboard> {
 
   Widget _buildRoleBadge(bool compact, bool dense) {
     final visual = _roleVisual(widget.roleLabel);
-    return Container(
+    final iconSize = compact || dense ? 16.0 : 18.0;
+    final badge = Container(
       padding: EdgeInsets.symmetric(
         horizontal: compact || dense ? 11 : 13,
         vertical: compact || dense ? 5 : 7,
@@ -368,11 +378,7 @@ class _HomeLandingDashboardState extends State<HomeLandingDashboard> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            visual.icon,
-            color: visual.color,
-            size: compact || dense ? 16 : 18,
-          ),
+          Icon(visual.icon, color: visual.color, size: iconSize),
           const SizedBox(width: 7),
           Text(
             widget.roleLabel,
@@ -382,7 +388,27 @@ class _HomeLandingDashboardState extends State<HomeLandingDashboard> {
               fontWeight: FontWeight.w700,
             ),
           ),
+          if (widget.onStaffSwitchTap != null) ...[
+            const SizedBox(width: 8),
+            Container(
+              width: 1,
+              height: 15,
+              color: visual.color.withValues(alpha: 0.35),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.lock_outline_rounded, color: visual.color, size: iconSize),
+          ],
         ],
+      ),
+    );
+
+    if (widget.onStaffSwitchTap == null) return badge;
+    return Tooltip(
+      message: 'ჩაკეტვა / სტაფის გადართვა',
+      child: InkWell(
+        onTap: widget.onStaffSwitchTap,
+        borderRadius: BorderRadius.circular(999),
+        child: badge,
       ),
     );
   }

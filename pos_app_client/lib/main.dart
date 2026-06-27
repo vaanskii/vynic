@@ -18,6 +18,7 @@ import 'package:vynic/core/services/mobile_cache_service.dart';
 import 'package:vynic/core/services/manager_app_preferences.dart';
 import 'package:vynic/core/services/manager_sync_service.dart';
 import 'package:vynic/core/services/pos_ingest_server.dart';
+import 'package:vynic/core/services/session_lock.dart';
 import 'package:vynic/firebase_options.dart';
 
 /// True when the process is running on Android or iOS.
@@ -146,8 +147,9 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
-  static final GlobalKey<NavigatorState> navigatorKey =
-      GlobalKey<NavigatorState>();
+  // Root navigator key lives on SessionLock so the idle auto-lock can push the
+  // lock screen from outside any widget context.
+  static GlobalKey<NavigatorState> get navigatorKey => SessionLock.navigatorKey;
 
   @override
   void initState() {
@@ -292,6 +294,17 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     return MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
+      // App-wide activity detector: any pointer interaction resets the POS idle
+      // auto-lock countdown. No-op until SessionLock is armed (POS login), so it
+      // costs nothing on the mobile manager app.
+      builder: (context, child) {
+        return Listener(
+          behavior: HitTestBehavior.translucent,
+          onPointerDown: (_) => SessionLock.recordActivity(),
+          onPointerSignal: (_) => SessionLock.recordActivity(),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       home: widget.isMobile
           ? const ManagerThemeListener(child: MobileLoginScreen())
           : const LoginScreen(),

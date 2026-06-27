@@ -96,10 +96,9 @@ class StaffRole {
     return r == manager || r == supervisor || r == waiter;
   }
 
-  /// მაგიდის არაფისკალური დახურვა (შეკვეთის ეკრანი).
+  /// მაგიდის არაფისკალური დახურვა (შეკვეთის ეკრანი) — მხოლოდ მენეჯერი.
   static bool canCloseTablesNonFiscal(String clientRole) {
-    final r = normalizeClient(clientRole);
-    return r == manager || r == supervisor;
+    return normalizeClient(clientRole) == manager;
   }
 
   /// სრული პერსონალის მართვა (ყველა როლი, PIN-ები).

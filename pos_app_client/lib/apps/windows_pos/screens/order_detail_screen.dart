@@ -2649,9 +2649,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         final resDateString = reservation.reservationDate
             .toIso8601String()
             .split('T')[0];
-        if (resDateString == dateString &&
+        // linkedOrderId is the marker; the notes match only covers legacy
+        // records written before it existed.
+        final matchesLinked = reservation.linkedOrderId == widget.orderId;
+        final matchesLegacyNote =
             reservation.notes != null &&
-            reservation.notes!.contains('Order #${widget.orderId}')) {
+            reservation.notes!.contains('Order #${widget.orderId}');
+        if (resDateString == dateString &&
+            (matchesLinked || matchesLegacyNote)) {
           await DatabaseService.updateReservationStatus(
             reservation.id,
             'cancelled',

@@ -15,15 +15,37 @@ class HomeReservationTableAssignmentDialog {
     required Color secondaryColor,
     required Color textPrimary,
     String? excludeReservationId,
+    int? excludeOrderId,
     List<int> initialSelection = const [],
   }) async {
-    final reservations =
-        DatabaseService.getTableBlockingReservationsForDate(reservationDate);
+    final reservations = DatabaseService.getTableBlockingReservationsForDate(
+      reservationDate,
+    );
     final unavailable =
         ReservationTableAvailability.unavailableTableCodesFromReservations(
-      reservations: reservations,
-      excludeReservationId: excludeReservationId,
+          reservations: reservations,
+          excludeReservationId: excludeReservationId,
+        );
+
+    // For same-day assignment the reservation-record check above is not
+    // enough: tables can be locked live by walk-in orders or activated
+    // reservations (TableModel.isReserved / activeOrderId), which
+    // isRealTableBooking deliberately excludes. Clear stale locks first,
+    // then block whatever is still genuinely held.
+    final isToday = ReservationTableAvailability.isSameCalendarDate(
+      reservationDate,
+      DatabaseService.getCurrentDate(),
     );
+    if (isToday) {
+      await DatabaseService.releaseStaleReservedTables();
+      unavailable.addAll(
+        ReservationTableAvailability.unavailableTableCodesFromLiveTables(
+          tables: DatabaseService.getAllTables(),
+          excludeReservationId: excludeReservationId,
+          excludeOrderId: excludeOrderId,
+        ),
+      );
+    }
 
     final allTables = ReservationTableAvailability.sortTables(
       DatabaseService.getAllTables(),
@@ -45,9 +67,7 @@ class HomeReservationTableAssignmentDialog {
           builder: (ctx) => AlertDialog(
             backgroundColor: Colors.white,
             title: Text('მაგიდები', style: TextStyle(color: textPrimary)),
-            content: const Text(
-              'თავისუფალი მაგიდა არ არის არჩეულ თარიღზე.',
-            ),
+            content: const Text('თავისუფალი მაგიდა არ არის არჩეულ თარიღზე.'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
@@ -86,7 +106,9 @@ class HomeReservationTableAssignmentDialog {
                   Text(
                     'წითელი მაგიდები უკვე დაჯავშნულია ამ თარიღზე. '
                     'ერთ სართულზე შეგიძლიათ რამდენიმე თავისუფალი მაგიდის არჩევა.',
-                    style: TextStyle(color: textPrimary.withValues(alpha: 0.65)),
+                    style: TextStyle(
+                      color: textPrimary.withValues(alpha: 0.65),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Wrap(
@@ -103,10 +125,11 @@ class HomeReservationTableAssignmentDialog {
                         textPrimary: textPrimary,
                         onTap: () {
                           setDialogState(() {
-                            final code = ReservationTableAvailability.encodeTableCode(
-                              floor: table.floor,
-                              tableNumber: table.tableNumber,
-                            );
+                            final code =
+                                ReservationTableAvailability.encodeTableCode(
+                                  floor: table.floor,
+                                  tableNumber: table.tableNumber,
+                                );
                             if (unavailable.contains(code)) {
                               return;
                             }
@@ -141,9 +164,9 @@ class HomeReservationTableAssignmentDialog {
                 onPressed: selectedCodes.isEmpty
                     ? null
                     : () => Navigator.pop(
-                          dialogContext,
-                          selectedCodes.toList()..sort(),
-                        ),
+                        dialogContext,
+                        selectedCodes.toList()..sort(),
+                      ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: secondaryColor,
                   foregroundColor: Colors.white,
@@ -172,6 +195,7 @@ class HomeReservationTableAssignmentDialog {
       secondaryColor: secondaryColor,
       textPrimary: textPrimary,
       excludeReservationId: reservation.id,
+      excludeOrderId: reservation.linkedOrderId,
       initialSelection: reservation.tableNumbers,
     );
   }
@@ -204,15 +228,15 @@ class HomeReservationTableAssignmentDialog {
           color: isUnavailable
               ? Colors.red.withValues(alpha: 0.15)
               : isSelected
-                  ? secondaryColor
-                  : const Color(0xFFF8FAFF),
+              ? secondaryColor
+              : const Color(0xFFF8FAFF),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isUnavailable
                 ? Colors.red
                 : isSelected
-                    ? secondaryColor
-                    : primaryColor.withValues(alpha: disabled ? 0.08 : 0.2),
+                ? secondaryColor
+                : primaryColor.withValues(alpha: disabled ? 0.08 : 0.2),
             width: 2,
           ),
         ),
@@ -224,8 +248,8 @@ class HomeReservationTableAssignmentDialog {
               color: isUnavailable
                   ? Colors.red
                   : isSelected
-                      ? Colors.white
-                      : primaryColor.withValues(alpha: disabled ? 0.35 : 1),
+                  ? Colors.white
+                  : primaryColor.withValues(alpha: disabled ? 0.35 : 1),
               size: 26,
             ),
             const SizedBox(height: 6),
@@ -239,8 +263,8 @@ class HomeReservationTableAssignmentDialog {
                 color: isUnavailable
                     ? Colors.red
                     : isSelected
-                        ? Colors.white
-                        : textPrimary.withValues(alpha: disabled ? 0.35 : 1),
+                    ? Colors.white
+                    : textPrimary.withValues(alpha: disabled ? 0.35 : 1),
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),

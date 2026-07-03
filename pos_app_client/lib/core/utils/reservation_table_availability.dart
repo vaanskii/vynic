@@ -17,7 +17,10 @@ class ReservationTableAvailability {
       a.year == b.year && a.month == b.month && a.day == b.day;
 
   /// Encodes floor + table number into reservation `tableNumbers` format.
-  static int encodeTableCode({required String floor, required String tableNumber}) {
+  static int encodeTableCode({
+    required String floor,
+    required String tableNumber,
+  }) {
     final parsed = int.tryParse(tableNumber.trim());
     if (parsed == null) {
       throw ArgumentError('Invalid table number: $tableNumber');
@@ -48,15 +51,22 @@ class ReservationTableAvailability {
   static String floorLabel(String floor) =>
       floor == 'second' ? 'მე-2 სართული' : '1-ლი სართული';
 
-  static String displayLabel({required String floor, required String tableNumber}) =>
-      '${floorLabel(floor)} • $tableNumber';
+  static String displayLabel({
+    required String floor,
+    required String tableNumber,
+  }) => '${floorLabel(floor)} • $tableNumber';
 
   static String formatTableCodes(List<int> codes) {
     if (codes.isEmpty) return '';
-    return codes.map((code) {
-      final decoded = decodeTableCode(code);
-      return displayLabel(floor: decoded.floor, tableNumber: decoded.tableNumber);
-    }).join(', ');
+    return codes
+        .map((code) {
+          final decoded = decodeTableCode(code);
+          return displayLabel(
+            floor: decoded.floor,
+            tableNumber: decoded.tableNumber,
+          );
+        })
+        .join(', ');
   }
 
   static bool reservationTimesOverlap(String time1, String time2) {
@@ -74,10 +84,7 @@ class ReservationTableAvailability {
   }
 
   static bool isReservationBlocking(String? status) {
-    final normalized = (status ?? '')
-        .trim()
-        .toLowerCase()
-        .replaceAll('_', '-');
+    final normalized = (status ?? '').trim().toLowerCase().replaceAll('_', '-');
     return normalized != 'cancelled' &&
         normalized != 'canceled' &&
         normalized != 'completed' &&
@@ -184,7 +191,10 @@ class ReservationTableAvailability {
       floor: table.floor,
       tableNumber: table.tableNumber,
     );
-    return isTableCodeAvailable(tableCode: code, unavailableCodes: unavailableCodes);
+    return isTableCodeAvailable(
+      tableCode: code,
+      unavailableCodes: unavailableCodes,
+    );
   }
 
   static bool areTableCodesAvailable({
@@ -202,13 +212,49 @@ class ReservationTableAvailability {
     return tableCodes.every((code) => !unavailable.contains(code));
   }
 
+  /// Tables blocked by LIVE floor state (walk-in orders, activated
+  /// reservations, stale locks) — the reservation-record checks above cannot
+  /// see these because activated bookings are excluded from
+  /// [isRealTableBooking].
+  ///
+  /// Tables held by the reservation being (re)assigned itself are NOT
+  /// blocked: pass its [excludeReservationId] and/or [excludeOrderId].
+  /// Tables with non-numeric numbers are skipped (they cannot be encoded
+  /// into reservation table codes).
+  static Set<int> unavailableTableCodesFromLiveTables({
+    required Iterable<TableModel> tables,
+    String? excludeReservationId,
+    int? excludeOrderId,
+  }) {
+    final unavailable = <int>{};
+    for (final table in tables) {
+      if (!table.isReserved && table.activeOrderId == null) {
+        continue;
+      }
+      if (excludeReservationId != null &&
+          table.reservationId == excludeReservationId) {
+        continue;
+      }
+      if (excludeOrderId != null && table.activeOrderId == excludeOrderId) {
+        continue;
+      }
+      if (int.tryParse(table.tableNumber.trim()) == null) {
+        continue;
+      }
+      unavailable.add(
+        encodeTableCode(floor: table.floor, tableNumber: table.tableNumber),
+      );
+    }
+    return unavailable;
+  }
+
   static List<TableModel> sortTables(List<TableModel> tables) {
-    return tables.toList()
-      ..sort((a, b) {
-        final floorCmp = a.floor.compareTo(b.floor);
-        if (floorCmp != 0) return floorCmp;
-        return (int.tryParse(a.tableNumber) ?? 0)
-            .compareTo(int.tryParse(b.tableNumber) ?? 0);
-      });
+    return tables.toList()..sort((a, b) {
+      final floorCmp = a.floor.compareTo(b.floor);
+      if (floorCmp != 0) return floorCmp;
+      return (int.tryParse(a.tableNumber) ?? 0).compareTo(
+        int.tryParse(b.tableNumber) ?? 0,
+      );
+    });
   }
 }

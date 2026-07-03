@@ -267,6 +267,84 @@ void main() {
       );
     });
 
+    test('unavailableTableCodesFromLiveTables blocks reserved/ordered '
+        'tables', () {
+      final tables = [
+        // Free table — not blocked.
+        TableModel(tableNumber: '1', floor: 'first'),
+        // Walk-in order lock — blocked.
+        TableModel(
+          tableNumber: '3',
+          floor: 'first',
+          isReserved: true,
+          activeOrderId: 101,
+        ),
+        // Stale reservation lock (no order) — blocked.
+        TableModel(
+          tableNumber: '4',
+          floor: 'first',
+          isReserved: true,
+          reservationId: 'res-other',
+        ),
+        // Second-floor lock — blocked with encoded code (+10).
+        TableModel(tableNumber: '2', floor: 'second', isReserved: true),
+      ];
+
+      expect(
+        ReservationTableAvailability.unavailableTableCodesFromLiveTables(
+          tables: tables,
+        ),
+        {3, 4, 12},
+      );
+    });
+
+    test(
+      "unavailableTableCodesFromLiveTables skips the reservation's own tables",
+      () {
+        final tables = [
+          TableModel(
+            tableNumber: '3',
+            floor: 'first',
+            isReserved: true,
+            reservationId: 'res-self',
+          ),
+          TableModel(
+            tableNumber: '4',
+            floor: 'first',
+            isReserved: true,
+            activeOrderId: 55,
+          ),
+          TableModel(
+            tableNumber: '5',
+            floor: 'first',
+            isReserved: true,
+            reservationId: 'res-other',
+          ),
+        ];
+
+        expect(
+          ReservationTableAvailability.unavailableTableCodesFromLiveTables(
+            tables: tables,
+            excludeReservationId: 'res-self',
+            excludeOrderId: 55,
+          ),
+          {5},
+        );
+      },
+    );
+
+    test('unavailableTableCodesFromLiveTables skips non-numeric table '
+        'numbers', () {
+      expect(
+        ReservationTableAvailability.unavailableTableCodesFromLiveTables(
+          tables: [
+            TableModel(tableNumber: 'bar', floor: 'first', isReserved: true),
+          ],
+        ),
+        isEmpty,
+      );
+    });
+
     test('sortTables orders by floor then numeric table number', () {
       final sorted = ReservationTableAvailability.sortTables([
         TableModel(tableNumber: '10', floor: 'first'),

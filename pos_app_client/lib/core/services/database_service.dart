@@ -4533,6 +4533,53 @@ class DatabaseService {
 
       developer.log('✅ No active orders found - proceeding with day closure');
 
+      // Finalize dine-in reservations for the closed day (and any earlier
+      // stragglers) so nothing stays 'in-progress' with a linkedOrderId
+      // pointing at an order deleted below. Activated bookings become
+      // 'completed'; never-activated past bookings become 'no-show'.
+      // See docs/VYNIC_PROJECT_PLAN.md §2 (root cause 3).
+      var completedReservations = 0;
+      var noShowReservations = 0;
+      for (final reservation in _reservationBox!.values) {
+        if (reservation.isTakeAway) {
+          continue; // today's pending takeaways already blocked closing above
+        }
+        final resDateString = reservation.reservationDate
+            .toIso8601String()
+            .split('T')[0];
+        if (resDateString.compareTo(currentDateString) > 0) {
+          continue; // future booking — leave untouched
+        }
+        final status = reservation.status.toLowerCase();
+        final isFinal =
+            status == 'completed' ||
+            status == 'cancelled' ||
+            status == 'canceled' ||
+            status == 'no-show';
+        if (isFinal) {
+          if (reservation.linkedOrderId != null) {
+            // Its order is deleted below — do not keep a dangling id.
+            reservation.linkedOrderId = null;
+            await reservation.save();
+          }
+          continue;
+        }
+        final wasActivated =
+            reservation.linkedOrderId != null || status == 'in-progress';
+        reservation.status = wasActivated ? 'completed' : 'no-show';
+        reservation.linkedOrderId = null;
+        await reservation.save();
+        if (wasActivated) {
+          completedReservations++;
+        } else {
+          noShowReservations++;
+        }
+      }
+      developer.log(
+        'Finalized reservations: $completedReservations completed, '
+        '$noShowReservations no-show',
+      );
+
       // Persist the day being closed so empty days (without sales) are still
       // part of operated business history.
       await _rememberOperatedBusinessDate(currentDate);
@@ -4645,14 +4692,18 @@ class DatabaseService {
       final currentDate = getCurrentDate();
       final dateString = currentDate.toIso8601String().split('T')[0];
 
-      // Find reservation with matching tables and date
+      // Find the reservation for this order: linkedOrderId is the marker;
+      // the notes match only covers legacy records written before it existed.
       for (var reservation in _reservationBox!.values) {
         final resDateString = reservation.reservationDate
             .toIso8601String()
             .split('T')[0];
-        if (resDateString == dateString &&
+        final matchesLinked = reservation.linkedOrderId == orderId;
+        final matchesLegacyNote =
             reservation.notes != null &&
-            reservation.notes!.contains('Order #$orderId')) {
+            reservation.notes!.contains('Order #$orderId');
+        if (resDateString == dateString &&
+            (matchesLinked || matchesLegacyNote)) {
           reservation.status = 'completed';
           await reservation.save();
           break;
@@ -6324,123 +6375,125 @@ class DatabaseService {
     );
   }
 
-  static Future<int?> activateReservation({
+  /// Activates a reservation by creating (or re-linking) its order and
+  /// reserving its tables.
+  ///
+  /// Known business failures are returned as
+  /// [ReservationActivationResult.failure] with the real reason. Unexpected
+  /// errors (e.g. `StateError('Table X is busy')` from [createOrder]) are NOT
+  /// caught here — they propagate so callers can log and surface them.
+  static Future<ReservationActivationResult> activateReservation({
     required String reservationId,
     required String activatedBy,
   }) async {
-    try {
-      final reservations = _reservationBox!.values.where(
-        (r) => r.id == reservationId,
+    final reservations = _reservationBox!.values.where(
+      (r) => r.id == reservationId,
+    );
+    if (reservations.isEmpty) {
+      return ReservationActivationResult.failure(
+        'Reservation $reservationId not found',
       );
-      if (reservations.isEmpty) {
-        developer.log(
-          'Warning: Tried to activate missing reservation $reservationId',
-        );
-        return null;
-      }
-      final reservation = reservations.first;
-
-      if (reservation.isTakeAway) {
-        return reservation.linkedOrderId;
-      }
-
-      if (reservation.tableNumbers.isEmpty) {
-        return null;
-      }
-
-      final hasVipTables = reservation.tableNumbers.any(
-        (number) => number > 10,
-      );
-      final hasFirstFloorTables = reservation.tableNumbers.any(
-        (number) => number <= 10,
-      );
-
-      if (hasVipTables && hasFirstFloorTables) {
-        developer.log(
-          'Failed to activate reservation $reservationId: mixed-floor tables are not supported',
-        );
-        return null;
-      }
-
-      final floor = hasVipTables ? 'second' : 'first';
-
-      Future<void> ensureTablesReserved(int orderId) async {
-        for (final tableNumber in reservation.tableNumbers) {
-          final targetFloor = tableNumber > 10 ? 'second' : 'first';
-          final normalized = tableNumber > 10
-              ? (tableNumber - 10).toString()
-              : '$tableNumber';
-          await reserveTable(
-            tableNumber: normalized,
-            floor: targetFloor,
-            username: activatedBy,
-            orderId: orderId,
-            reservationId: reservation.id,
-          );
-        }
-      }
-
-      final existingOrderId = reservation.linkedOrderId;
-      if (existingOrderId != null) {
-        final existingOrder = getOrder(existingOrderId);
-        if (existingOrder != null) {
-          await ensureTablesReserved(existingOrderId);
-          if (existingOrder.status.toLowerCase() != 'confirmed') {
-            existingOrder.status = 'confirmed';
-            await existingOrder.save();
-          }
-          reservation.status = 'in-progress';
-          reservation.notes ??=
-              'Order #$existingOrderId - ${reservation.customerName}';
-          await reservation.save();
-          return existingOrderId;
-        }
-        reservation.linkedOrderId = null;
-      }
-
-      final order = await createOrder(
-        tableNumbers: reservation.tableNumbers
-            .map(
-              (number) =>
-                  number > 10 ? (number - 10).toString() : number.toString(),
-            )
-            .toList(),
-        floor: floor,
-        createdBy: activatedBy,
-        items: reservation.preOrderItems ?? const <OrderItem>[],
-        createReservationRecord: false,
-      );
-
-      // Set openedByUserId to track who activated this reservation
-      order.openedByUserId = activatedBy;
-
-      // Restore reservation link on tables (createOrder clears reservationId)
-      await ensureTablesReserved(order.orderId);
-
-      order.status = 'confirmed';
-      await order.save();
-
-      reservation.status = 'in-progress';
-      if (reservation.notes == null || reservation.notes!.trim().isEmpty) {
-        reservation.notes =
-            'Order #${order.orderId} - ${reservation.customerName}';
-      }
-      reservation.linkedOrderId = order.orderId;
-      await reservation.save();
-
-      SyncHub.notify(
-        SyncEvent(
-          type: SyncEventType.reservations,
-          action: 'activated',
-          payload: {'reservationId': reservationId, 'orderId': order.orderId},
-        ),
-      );
-
-      return order.orderId;
-    } catch (error) {
-      developer.log('Failed to activate reservation $reservationId: $error');
-      return null;
     }
+    final reservation = reservations.first;
+
+    if (reservation.isTakeAway) {
+      final linkedOrderId = reservation.linkedOrderId;
+      if (linkedOrderId != null) {
+        return ReservationActivationResult.success(linkedOrderId);
+      }
+      return ReservationActivationResult.failure(
+        'Take-away reservation $reservationId has no linked order',
+      );
+    }
+
+    if (reservation.tableNumbers.isEmpty) {
+      return ReservationActivationResult.failure(
+        'Reservation $reservationId has no tables assigned',
+      );
+    }
+
+    final hasVipTables = reservation.tableNumbers.any((number) => number > 10);
+    final hasFirstFloorTables = reservation.tableNumbers.any(
+      (number) => number <= 10,
+    );
+
+    if (hasVipTables && hasFirstFloorTables) {
+      return ReservationActivationResult.failure(
+        'Reservation $reservationId mixes tables from both floors, '
+        'which is not supported',
+      );
+    }
+
+    final floor = hasVipTables ? 'second' : 'first';
+
+    Future<void> ensureTablesReserved(int orderId) async {
+      for (final tableNumber in reservation.tableNumbers) {
+        final targetFloor = tableNumber > 10 ? 'second' : 'first';
+        final normalized = tableNumber > 10
+            ? (tableNumber - 10).toString()
+            : '$tableNumber';
+        await reserveTable(
+          tableNumber: normalized,
+          floor: targetFloor,
+          username: activatedBy,
+          orderId: orderId,
+          reservationId: reservation.id,
+        );
+      }
+    }
+
+    final existingOrderId = reservation.linkedOrderId;
+    if (existingOrderId != null) {
+      final existingOrder = getOrder(existingOrderId);
+      if (existingOrder != null) {
+        await ensureTablesReserved(existingOrderId);
+        if (existingOrder.status.toLowerCase() != 'confirmed') {
+          existingOrder.status = 'confirmed';
+          await existingOrder.save();
+        }
+        reservation.status = 'in-progress';
+        await reservation.save();
+        return ReservationActivationResult.success(existingOrderId);
+      }
+      reservation.linkedOrderId = null;
+    }
+
+    final order = await createOrder(
+      tableNumbers: reservation.tableNumbers
+          .map(
+            (number) =>
+                number > 10 ? (number - 10).toString() : number.toString(),
+          )
+          .toList(),
+      floor: floor,
+      createdBy: activatedBy,
+      items: reservation.preOrderItems ?? const <OrderItem>[],
+      createReservationRecord: false,
+    );
+
+    // Set openedByUserId to track who activated this reservation
+    order.openedByUserId = activatedBy;
+
+    // Restore reservation link on tables (createOrder clears reservationId)
+    await ensureTablesReserved(order.orderId);
+
+    order.status = 'confirmed';
+    await order.save();
+
+    // linkedOrderId is the activation marker; notes stay user-owned.
+    reservation.status = 'in-progress';
+    reservation.linkedOrderId = order.orderId;
+    await reservation.save();
+
+    SyncHub.notify(
+      SyncEvent(
+        type: SyncEventType.reservations,
+        action: 'activated',
+        payload: {'reservationId': reservationId, 'orderId': order.orderId},
+      ),
+    );
+
+    return ReservationActivationResult.success(order.orderId);
   }
 
   // Delete reservation
@@ -6513,10 +6566,9 @@ class DatabaseService {
       final resDateString = r.reservationDate.toIso8601String().split('T')[0];
       final isToday = resDateString == currentDateString;
       final isConfirmed = r.status == 'confirmed';
-      final notActivated =
-          r.notes == null ||
-          (!r.notes!.startsWith('Order #') &&
-              !r.notes!.startsWith('Reservation activated'));
+      // Activation is tracked by linkedOrderId — NOT by the user-editable
+      // notes field (editing notes used to allow double activation).
+      final notActivated = r.linkedOrderId == null;
 
       developer.log(
         '  ${r.customerName}: IsToday=$isToday, IsConfirmed=$isConfirmed, NotActivated=$notActivated',
@@ -6552,74 +6604,91 @@ class DatabaseService {
       return;
     }
 
-    // Reserve tables for each confirmed reservation
+    // Reserve tables for each confirmed reservation. Each reservation is
+    // isolated in its own try/catch so one bad record (e.g. empty tables)
+    // cannot abort activation of the remaining ones.
     for (var reservation in todaysReservations) {
-      developer.log(
-        '\n🔄 Activating reservation for ${reservation.customerName}:',
-      );
-      developer.log('  Tables: ${reservation.tableNumbers.join(", ")}');
-      developer.log('  Time: ${reservation.reservationTime}');
-
-      // Convert table numbers to table names
-      final tableNames = <String>[];
-      for (var num in reservation.tableNumbers) {
-        if (num <= 10) {
-          tableNames.add('Table $num');
-        } else {
-          tableNames.add('VIP Zone ${num - 10}');
-        }
-      }
-
-      // Determine floor based on table numbers
-      String floor = 'first';
-      if (reservation.tableNumbers.any((n) => n > 10)) {
-        floor = 'second';
-      }
-
-      developer.log(
-        '  Reserving tables: ${tableNames.join(", ")} on $floor floor',
-      );
-      developer.log(
-        '  Pre-order items: ${reservation.preOrderItems?.length ?? 0}',
-      );
-
-      // Create order with pre-order items (or empty if no pre-order)
-      final order = await createOrder(
-        tableNumbers: reservation.tableNumbers
-            .map((n) => n.toString())
-            .toList(),
-        floor: floor,
-        createdBy: 'System (Reservation)',
-        items:
-            reservation.preOrderItems ??
-            [], // Use pre-order items or empty list
-        createReservationRecord: false,
-      );
-
-      // If there are pre-order items, mark order as confirmed (already sent to kitchen)
-      if (reservation.preOrderItems != null &&
-          reservation.preOrderItems!.isNotEmpty) {
-        order.status = 'confirmed';
-        await order.save();
+      try {
         developer.log(
-          '  ✅ Order #${order.orderId} status set to "confirmed" (pre-ordered items)',
+          '\n🔄 Activating reservation for ${reservation.customerName}:',
+        );
+        developer.log('  Tables: ${reservation.tableNumbers.join(", ")}');
+        developer.log('  Time: ${reservation.reservationTime}');
+
+        // Convert table numbers to table names
+        final tableNames = <String>[];
+        for (var num in reservation.tableNumbers) {
+          if (num <= 10) {
+            tableNames.add('Table $num');
+          } else {
+            tableNames.add('VIP Zone ${num - 10}');
+          }
+        }
+
+        // Determine floor based on table numbers
+        String floor = 'first';
+        if (reservation.tableNumbers.any((n) => n > 10)) {
+          floor = 'second';
+        }
+
+        developer.log(
+          '  Reserving tables: ${tableNames.join(", ")} on $floor floor',
+        );
+        developer.log(
+          '  Pre-order items: ${reservation.preOrderItems?.length ?? 0}',
+        );
+
+        // Create order with pre-order items (or empty if no pre-order)
+        final order = await createOrder(
+          tableNumbers: reservation.tableNumbers
+              .map((n) => n.toString())
+              .toList(),
+          floor: floor,
+          createdBy: 'System (Reservation)',
+          items:
+              reservation.preOrderItems ??
+              [], // Use pre-order items or empty list
+          createReservationRecord: false,
+        );
+
+        // If there are pre-order items, mark order as confirmed (already sent to kitchen)
+        if (reservation.preOrderItems != null &&
+            reservation.preOrderItems!.isNotEmpty) {
+          order.status = 'confirmed';
+          await order.save();
+          developer.log(
+            '  ✅ Order #${order.orderId} status set to "confirmed" (pre-ordered items)',
+          );
+        }
+
+        developer.log(
+          '  ✅ Order #${order.orderId} created with ${reservation.preOrderItems?.length ?? 0} items',
+        );
+
+        // Update reservation status to 'in-progress' and link to order.
+        // linkedOrderId is the activation marker; notes stay user-owned.
+        reservation.status = 'in-progress';
+        reservation.linkedOrderId = order.orderId;
+        await reservation.save();
+
+        developer.log(
+          '  ✅ Activated successfully - Reservation ID: ${reservation.key}, Order ID: ${order.orderId}',
+        );
+      } catch (error, stackTrace) {
+        // Logged (not swallowed): the failed reservation stays 'confirmed'
+        // and unlinked so staff can activate it manually; the loop moves on.
+        await logError(
+          title: 'Reservation auto-activation failed',
+          error: error,
+          stackTrace: stackTrace,
+          context: 'activate_todays_reservations',
+          metadata: {
+            'reservationId': reservation.id,
+            'customerName': reservation.customerName,
+            'tables': reservation.tableNumbers,
+          },
         );
       }
-
-      developer.log(
-        '  ✅ Order #${order.orderId} created with ${reservation.preOrderItems?.length ?? 0} items',
-      );
-
-      // Update reservation status to 'in-progress' and link to order
-      reservation.status = 'in-progress';
-      reservation.notes =
-          'Order #${order.orderId} - ${reservation.customerName}';
-      reservation.linkedOrderId = order.orderId;
-      await reservation.save();
-
-      developer.log(
-        '  ✅ Activated successfully - Reservation ID: ${reservation.key}, Order ID: ${order.orderId}',
-      );
     }
 
     // Show reserved tables AFTER activation
@@ -6640,4 +6709,21 @@ class DatabaseService {
     developer.log('\n✅ All today\'s reservations activated');
     developer.log('========================================');
   }
+}
+
+/// Outcome of [DatabaseService.activateReservation].
+///
+/// Success always carries the linked order id; failure carries the real
+/// reason instead of a silent `null` (see docs/VYNIC_PROJECT_PLAN.md §2).
+class ReservationActivationResult {
+  final int? orderId;
+  final String? failureReason;
+
+  const ReservationActivationResult.success(int this.orderId)
+    : failureReason = null;
+
+  const ReservationActivationResult.failure(String this.failureReason)
+    : orderId = null;
+
+  bool get isSuccess => orderId != null;
 }

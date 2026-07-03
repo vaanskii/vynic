@@ -897,7 +897,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       await DatabaseService.updateReservationTables(reservation.id, selected);
-      final orderId = await DatabaseService.activateReservation(
+      final result = await DatabaseService.activateReservation(
         reservationId: reservation.id,
         activatedBy: _user.username,
       );
@@ -908,24 +908,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
       await _refreshTables();
 
-      if (orderId == null) {
+      if (!result.isSuccess) {
+        final reason = result.failureReason ?? 'Unknown reason';
         await DatabaseService.logError(
-          title: 'Reservation activation returned null',
-          error: StateError(
-            "Activation returned null. Tables: ${reservation.tableNumbers.join(', ')}",
-          ),
+          title: 'Reservation activation failed',
+          error: StateError(reason),
           stackTrace: StackTrace.current,
           context: 'assign_reservation_to_table',
           performedBy: _user.username,
           metadata: {
             'reservationId': reservation.id,
             'tables': reservation.tableNumbers,
+            'reason': reason,
           },
         );
         unawaited(
           showPosToast(
             context: context,
-            message: 'რეზერვაციის გააქტიურება ვერ მოხერხდა.',
+            message: 'რეზერვაციის გააქტიურება ვერ მოხერხდა: $reason',
             style: PosToastStyle.error,
           ),
         );
@@ -951,7 +951,7 @@ class _HomeScreenState extends State<HomeScreen> {
       unawaited(
         showPosToast(
           context: context,
-          message: 'რეზერვაციის სუფრაზე გადაყვანა ვერ მოხერხდა.',
+          message: 'რეზერვაციის სუფრაზე გადაყვანა ვერ მოხერხდა: $error',
           style: PosToastStyle.error,
         ),
       );
@@ -988,16 +988,50 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    final orderId = await DatabaseService.activateReservation(
-      reservationId: reservationId,
-      activatedBy: _user.username,
-    );
+    final ReservationActivationResult result;
+    try {
+      result = await DatabaseService.activateReservation(
+        reservationId: reservationId,
+        activatedBy: _user.username,
+      );
+    } catch (error, stackTrace) {
+      if (!mounted) {
+        return;
+      }
+      await DatabaseService.logError(
+        title: 'Reserved table activation failed',
+        error: error,
+        stackTrace: stackTrace,
+        context: 'reserved_table_tap',
+        performedBy: _user.username,
+        metadata: {'reservationId': reservationId},
+      );
+      await _refreshTables();
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'შეკვეთის გახსნა ვერ მოხერხდა: $error',
+          style: PosToastStyle.error,
+        ),
+      );
+      return;
+    }
 
     if (!mounted) {
       return;
     }
 
-    if (orderId == null) {
+    if (!result.isSuccess) {
+      final reason = result.failureReason ?? 'Unknown reason';
+      await DatabaseService.logError(
+        title: 'Reserved table activation failed',
+        error: StateError(reason),
+        stackTrace: StackTrace.current,
+        context: 'reserved_table_tap',
+        performedBy: _user.username,
+        metadata: {'reservationId': reservationId, 'reason': reason},
+      );
+
       // Check if reservation actually exists to heal ghost tables
       final resExists =
           DatabaseService.getReservation(reservationId) != null ||
@@ -1010,26 +1044,29 @@ class _HomeScreenState extends State<HomeScreen> {
         await table.save();
       }
 
+      if (!mounted) {
+        return;
+      }
+
       await _refreshTables();
       unawaited(
         showPosToast(
           context: context,
-          message: 'შეკვეთის გახსნა ვერ მოხერხდა.',
+          message: 'შეკვეთის გახსნა ვერ მოხერხდა: $reason',
           style: PosToastStyle.error,
         ),
       );
       return;
     }
 
-    _openOrderDetail(orderId);
+    _openOrderDetail(result.orderId!);
   }
 
   void _openOrderDetail(int orderId) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) =>
-            OrderDetailScreen(user: _user, orderId: orderId),
+        builder: (context) => OrderDetailScreen(user: _user, orderId: orderId),
       ),
     ).then((result) {
       if (!mounted) {
@@ -1148,10 +1185,8 @@ class _HomeScreenState extends State<HomeScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => MenuScreen(
-            user: _user,
-            selectedTables: state.selectedTables,
-          ),
+          builder: (context) =>
+              MenuScreen(user: _user, selectedTables: state.selectedTables),
         ),
       ).then((_) async {
         // Refresh tables and clear selection when coming back

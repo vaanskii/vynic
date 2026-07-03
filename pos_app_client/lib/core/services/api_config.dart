@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:vynic/core/services/database_service.dart';
+import 'package:vynic/core/services/manager_app_preferences.dart';
 
 /// Central configuration for the backend API URL.
 ///
@@ -15,7 +16,10 @@ class ApiConfig {
   static bool _loggedResolvedUrl = false;
 
   static String get baseUrl {
-    final adminOverride = DatabaseService.getBackendUrlOverride();
+    // Desktop POS stores its override in DatabaseService; the mobile manager app
+    // (which never inits DatabaseService) stores it in ManagerAppPreferences.
+    final adminOverride = DatabaseService.getBackendUrlOverride() ??
+        ManagerAppPreferences.backendUrlOverride.value;
     if (adminOverride != null) {
       final normalized = _normalizeAndroidLoopback(adminOverride);
       _logResolvedUrlOnce(normalized, source: 'admin override');

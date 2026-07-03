@@ -155,11 +155,6 @@ class _HomeFeatureHeaderState extends State<HomeFeatureHeader> {
                   Expanded(child: _buildDirectNavigation()),
                   if (!narrow) ...[
                     const SizedBox(width: 14),
-                    _RoleBadge(
-                      label: widget.roleLabel,
-                      onLockTap: widget.onStaffSwitchTap,
-                    ),
-                    const SizedBox(width: 14),
                     const Icon(
                       Icons.schedule_rounded,
                       color: Colors.white70,
@@ -176,6 +171,14 @@ class _HomeFeatureHeaderState extends State<HomeFeatureHeader> {
                     ),
                     const SizedBox(width: 10),
                   ],
+                  // Staff + lock control — ALWAYS visible (incl. narrow / 1024px
+                  // screens). Collapses to icon-only when narrow.
+                  _RoleBadge(
+                    label: widget.roleLabel,
+                    onLockTap: widget.onStaffSwitchTap,
+                    compact: narrow,
+                  ),
+                  const SizedBox(width: 10),
                   _NotificationButton(
                     unreadCount: widget.notificationUnreadCount,
                     onTap: widget.onNotificationTap,
@@ -348,12 +351,15 @@ class _DirectNavigationItem extends StatelessWidget {
 }
 
 class _RoleBadge extends StatelessWidget {
-  const _RoleBadge({required this.label, this.onLockTap});
+  const _RoleBadge({required this.label, this.onLockTap, this.compact = false});
 
   final String label;
 
   /// Tapping the badge locks the terminal (PIN required to continue / switch).
   final VoidCallback? onLockTap;
+
+  /// Icon-only (no role text) to fit narrow top bars (e.g. 1024px screens).
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -374,7 +380,7 @@ class _RoleBadge extends StatelessWidget {
     // lock control reads as an equally prominent, tappable button.
     final badge = Container(
       height: 44,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 14),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(11),
@@ -384,19 +390,21 @@ class _RoleBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, color: color, size: 20),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
+          if (!compact) ...[
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          ),
+          ],
           if (onLockTap != null) ...[
-            const SizedBox(width: 9),
+            SizedBox(width: compact ? 8 : 9),
             Container(width: 1, height: 18, color: color.withValues(alpha: 0.3)),
-            const SizedBox(width: 9),
+            SizedBox(width: compact ? 8 : 9),
             Icon(Icons.lock_outline_rounded, color: color, size: 20),
           ],
         ],

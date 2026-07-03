@@ -37,6 +37,86 @@ class _SettingsTabState extends State<_SettingsTab>
     super.dispose();
   }
 
+  /// Lets the manager set which backend (Windows POS server) this device
+  /// connects to — e.g. http://10.10.10.4:3000 — without rebuilding the app.
+  Future<void> _editBackendUrl() async {
+    final controller = TextEditingController(text: ApiConfig.baseUrl);
+    String? error;
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: const Text('Backend მისამართი'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'შეიყვანეთ Windows POS სერვერის მისამართი '
+                '(მაგ. http://10.10.10.4:3000).',
+                style: TextStyle(fontSize: 12),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                keyboardType: TextInputType.url,
+                decoration: InputDecoration(
+                  hintText: 'http://10.10.10.4:3000',
+                  errorText: error,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                await ManagerAppPreferences.setBackendUrlOverride(null);
+                ApiConfig.resetResolvedUrlLog();
+                if (ctx.mounted) Navigator.pop(ctx, true);
+              },
+              child: const Text('ნაგულისხმევზე დაბრუნება'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('გაუქმება'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final normalized = ApiConfig.normalizeEditableBackendUrl(
+                  controller.text,
+                );
+                if (normalized == null) {
+                  setLocal(() => error = 'არასწორი მისამართი');
+                  return;
+                }
+                await ManagerAppPreferences.setBackendUrlOverride(normalized);
+                ApiConfig.resetResolvedUrlLog();
+                if (ctx.mounted) Navigator.pop(ctx, true);
+              },
+              child: const Text('შენახვა'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    controller.dispose();
+
+    if (saved == true) {
+      // Reconnect the realtime socket to the new URL; REST calls read
+      // ApiConfig.baseUrl per request, so they pick it up automatically.
+      MonitoringSocketService.dispose();
+      MonitoringSocketService.initialize();
+      if (mounted) {
+        setState(() {});
+        _loadAll();
+      }
+    }
+  }
+
   void _onConnectionChanged() {
     if (!mounted) return;
     if (_isServerReachable) {
@@ -314,6 +394,12 @@ class _SettingsTabState extends State<_SettingsTab>
               label: 'Backend',
               value: ApiConfig.baseUrl,
               small: true,
+              onTap: _editBackendUrl,
+              trailing: Icon(
+                Icons.edit_outlined,
+                size: 18,
+                color: AdminTheme.primary,
+              ),
             ),
           ],
         ),
@@ -457,6 +543,8 @@ class _SettingsTile extends StatelessWidget {
   final String value;
   final bool small;
   final bool unavailable;
+  final VoidCallback? onTap;
+  final Widget? trailing;
 
   const _SettingsTile({
     required this.icon,
@@ -464,48 +552,53 @@ class _SettingsTile extends StatelessWidget {
     required this.value,
     this.small = false,
     this.unavailable = false,
+    this.onTap,
+    this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
     final muted = unavailable;
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 20,
+            color: muted ? AdminTheme.textDim : AdminTheme.primary,
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AdminTheme.textDim,
+                  ),
+                ),
+                Text(
+                  muted ? 'მიუწვდომელია' : value,
+                  style: TextStyle(
+                    fontSize: small ? 12 : 14,
+                    fontWeight: FontWeight.w600,
+                    color: muted ? AdminTheme.textDim : AdminTheme.text,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (trailing != null) ...[const SizedBox(width: 8), trailing!],
+        ],
+      ),
+    );
+
     return Opacity(
       opacity: muted ? 0.45 : 1,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 20,
-              color: muted ? AdminTheme.textDim : AdminTheme.primary,
-            ),
-            SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AdminTheme.textDim,
-                    ),
-                  ),
-                  Text(
-                    muted ? 'მიუწვდომელია' : value,
-                    style: TextStyle(
-                      fontSize: small ? 12 : 14,
-                      fontWeight: FontWeight.w600,
-                      color: muted ? AdminTheme.textDim : AdminTheme.text,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+      child: onTap == null ? content : InkWell(onTap: onTap, child: content),
     );
   }
 }

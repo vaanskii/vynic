@@ -28,9 +28,16 @@ tenant, no feature gating.
 
 ---
 
-## 2. Known bug — reservation activation after close-day (Phase 1)
+## 2. Known bug — reservation activation after close-day (Phase 1 — FIXED, uncommitted)
 
-**Symptom:** `Reservation activation returned null` logged from
+**Status:** Fixed. `ReservationRepository.activateReservation` now returns a typed
+`ReservationActivationResult` (success/failure with reason) instead of swallowing
+errors into `null`; the table picker checks `TableModel.isReserved`/`activeOrderId`;
+`closeDayTransaction` finalizes reservations. Verify against the symptom below before
+assuming it's fully closed out, and confirm `git status` still shows only the
+intended files before committing.
+
+**Symptom (historical):** `Reservation activation returned null` logged from
 `assign_reservation_to_table`; tables appear stuck/"busy" the day after close.
 
 **Root causes (all in `pos_app_client/lib/core/services/database_service.dart`
@@ -123,12 +130,16 @@ verification, not one big commit.
 
 - **Phase 0 — Repo hygiene + docs/skills cleanup.** (This doc set.) Archive stale
   docs, add AGENTS.md / plan / skill / prompts. Track `.DS_Store` in `.gitignore`.
-- **Phase 1 — Reservation close-day bug fix.** Section 2 above. Behavior fix, tightly
-  scoped, well tested.
-- **Phase 2 — Split `database_service.dart` into feature repositories.**
-  Behavior-preserving. E.g. `ReservationRepository`, `TableRepository`,
-  `OrderRepository`, `SalesRepository`, `SettingsRepository`. Move code, keep the
-  static façade delegating, change no logic.
+- **Phase 1 — Reservation close-day bug fix. DONE (uncommitted).** Section 2 above.
+- **Phase 2 — Split `database_service.dart` into feature repositories. DONE
+  (uncommitted).** `database_service.dart` is now a ~1,265-line delegating façade
+  over 13 repositories + 3 transactions in `pos_app_client/lib/core/database/`
+  (`database_core.dart`, `repositories/`, `transactions/`). Behavior-preserving,
+  not yet committed. `lib/core/services/` was also reorganized into concern
+  folders (`auth/`, `sync/`, `notifications/`, `printing/`, `audit/`,
+  `manager_app/`, `pos/`) as a follow-on hygiene pass — see git history for the
+  file-by-file mapping. `core/models/` was left flat (small, not misleading;
+  several files pair with Hive-generated `.g.dart` adapters we don't touch).
 - **Phase 3 — Data-driven tables/zones.** Replace `'first'`/`'second'` and `> 10`
   with `Zone { id, name }` + `Table { id, zoneId, label, capacity }`. Delete the
   integer-code arithmetic. Centralize the one remaining encode/decode if still

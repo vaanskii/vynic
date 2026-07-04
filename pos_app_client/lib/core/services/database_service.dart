@@ -7,6 +7,7 @@ import 'package:vynic/core/models/table_layout.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/reservation.dart';
+import 'package:vynic/core/models/table_ref.dart';
 import 'package:vynic/core/models/quick_order_draft.dart';
 import 'package:vynic/core/models/package.dart';
 import 'package:vynic/core/models/audit_report.dart';
@@ -1169,7 +1170,8 @@ class DatabaseService {
   static Future<String> createReservation({
     required String customerName,
     required String customerPhone,
-    required List<int> tableNumbers,
+    List<int> tableNumbers = const [],
+    List<TableRef>? tableRefs,
     required DateTime reservationDate,
     required String reservationTime,
     required int numberOfGuests,
@@ -1183,6 +1185,7 @@ class DatabaseService {
     customerName: customerName,
     customerPhone: customerPhone,
     tableNumbers: tableNumbers,
+    tableRefs: tableRefs,
     reservationDate: reservationDate,
     reservationTime: reservationTime,
     numberOfGuests: numberOfGuests,
@@ -1240,10 +1243,12 @@ class DatabaseService {
 
   static Future<void> updateReservationTables(
     String reservationId,
-    List<int> tableNumbers,
-  ) => ReservationRepository.updateReservationTables(
+    List<int> tableNumbers, {
+    List<TableRef>? tableRefs,
+  }) => ReservationRepository.updateReservationTables(
     reservationId,
     tableNumbers,
+    tableRefs: tableRefs,
   );
 
   /// Activates a reservation by creating (or re-linking) its order and

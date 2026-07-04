@@ -20,6 +20,7 @@ import 'package:vynic/core/widgets/notification_history_panel.dart';
 import 'package:vynic/apps/windows_pos/widgets/table_selection_widget.dart';
 import 'package:vynic/apps/windows_pos/widgets/reservation_creation_sheet.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
+import 'package:vynic/core/utils/reservation_table_availability.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_tables_dashboard_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_landing_dashboard.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_feature_header.dart';
@@ -740,8 +741,11 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    final tableLabel = reservation.tableNumbers.isNotEmpty
-        ? reservation.tableNumbers.join(', ')
+    final reservationTables = ReservationTableAvailability.tableRefsOf(
+      reservation,
+    );
+    final tableLabel = reservationTables.isNotEmpty
+        ? reservationTables.map((ref) => ref.tableNumber).join(', ')
         : null;
     final orderLabel = HomeReservationsHelper.buildKitchenOrderLabel(
       reservation,
@@ -771,15 +775,18 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute(
         builder: (context) => MenuScreen(
           user: _user,
-          selectedTables: reservation.tableNumbers.map((e) => '$e').toList(),
+          selectedTables: ReservationTableAvailability.tableRefsOf(
+            reservation,
+          ).map((ref) => ref.tableNumber).toList(),
           isPreOrderMode: true,
           reservationContext: ReservationContext(
             customerName: reservation.customerName,
             customerPhone: reservation.customerPhone,
             reservationDate: reservation.reservationDate,
             reservationTime: reservation.reservationTime,
-            tableNumbers: reservation.tableNumbers,
-            tableLabels: reservation.tableNumbers.map((e) => '$e').toList(),
+            tableLabels: ReservationTableAvailability.tableRefsOf(
+              reservation,
+            ).map((ref) => ref.tableNumber).toList(),
             numberOfGuests: reservation.numberOfGuests,
             notes: reservation.notes,
           ),
@@ -896,7 +903,11 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     try {
-      await DatabaseService.updateReservationTables(reservation.id, selected);
+      await DatabaseService.updateReservationTables(
+        reservation.id,
+        const [],
+        tableRefs: selected,
+      );
       final result = await DatabaseService.activateReservation(
         reservationId: reservation.id,
         activatedBy: _user.username,
@@ -918,7 +929,7 @@ class _HomeScreenState extends State<HomeScreen> {
           performedBy: _user.username,
           metadata: {
             'reservationId': reservation.id,
-            'tables': reservation.tableNumbers,
+            'tables': selected.map((ref) => ref.encode()).toList(),
             'reason': reason,
           },
         );
@@ -945,7 +956,7 @@ class _HomeScreenState extends State<HomeScreen> {
         performedBy: _user.username,
         metadata: {
           'reservationId': reservation.id,
-          'tables': reservation.tableNumbers,
+          'tables': selected.map((ref) => ref.encode()).toList(),
         },
       );
       unawaited(

@@ -8,6 +8,7 @@ import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/sync/manager_sync_service.dart';
+import 'package:vynic/core/utils/reservation_table_availability.dart';
 import 'package:vynic/core/services/notifications/manager_notification_inbox.dart';
 import 'package:vynic/core/services/sync/pos_callback_config.dart';
 import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
@@ -704,10 +705,13 @@ class PosIngestServer {
     final requestedBy = (body['requestedBy'] ?? reservation.createdBy)
         .toString()
         .trim();
+    final reservationTables = ReservationTableAvailability.tableRefsOf(
+      reservation,
+    );
     PrinterService.printKitchenCheckInBackground(
       items: kitchenItems,
-      tableNumber: reservation.tableNumbers.isNotEmpty
-          ? reservation.tableNumbers.join(', ')
+      tableNumber: reservationTables.isNotEmpty
+          ? reservationTables.map((ref) => ref.tableNumber).join(', ')
           : null,
       orderNumber: HomeReservationsHelper.buildKitchenOrderLabel(reservation),
       waiterName: requestedBy.isNotEmpty ? requestedBy : 'mobile_manager',

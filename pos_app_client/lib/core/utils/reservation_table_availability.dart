@@ -168,6 +168,19 @@ class ReservationTableAvailability {
     return formatTableRefs(codes.map(refFromLegacyCode).toList());
   }
 
+  /// Comma-joined table numbers of a reservation for compact labels
+  /// (reservations are single-floor, so bare numbers are unambiguous).
+  static String tableNumbersLabel(
+    Reservation reservation, {
+    String placeholder = '-',
+  }) {
+    final refs = tableRefsOf(reservation);
+    if (refs.isEmpty) {
+      return placeholder;
+    }
+    return refs.map((ref) => ref.tableNumber).join(', ');
+  }
+
   static bool reservationTimesOverlap(String time1, String time2) {
     final parts1 = time1.split(':');
     final parts2 = time2.split(':');

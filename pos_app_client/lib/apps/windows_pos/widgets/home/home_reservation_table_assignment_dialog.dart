@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/table.dart';
+import 'package:vynic/core/models/table_ref.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
 
 class HomeReservationTableAssignmentDialog {
   const HomeReservationTableAssignmentDialog._();
 
-  static Future<List<int>?> show({
+  static Future<List<TableRef>?> show({
     required BuildContext context,
     required DateTime reservationDate,
     required String reservationTime,
@@ -16,13 +17,13 @@ class HomeReservationTableAssignmentDialog {
     required Color textPrimary,
     String? excludeReservationId,
     int? excludeOrderId,
-    List<int> initialSelection = const [],
+    List<TableRef> initialSelection = const [],
   }) async {
     final reservations = DatabaseService.getTableBlockingReservationsForDate(
       reservationDate,
     );
     final unavailable =
-        ReservationTableAvailability.unavailableTableCodesFromReservations(
+        ReservationTableAvailability.unavailableTableRefsFromReservations(
           reservations: reservations,
           excludeReservationId: excludeReservationId,
         );
@@ -39,7 +40,7 @@ class HomeReservationTableAssignmentDialog {
     if (isToday) {
       await DatabaseService.releaseStaleReservedTables();
       unavailable.addAll(
-        ReservationTableAvailability.unavailableTableCodesFromLiveTables(
+        ReservationTableAvailability.unavailableTableRefsFromLiveTables(
           tables: DatabaseService.getAllTables(),
           excludeReservationId: excludeReservationId,
           excludeOrderId: excludeOrderId,
@@ -48,21 +49,13 @@ class HomeReservationTableAssignmentDialog {
     }
 
     final allTables = ReservationTableAvailability.sortTables(
-      DatabaseService.getAllTables()
-          .where(
-            (table) => ReservationTableAvailability.canEncodeTableCode(
-              floor: table.floor,
-              tableNumber: table.tableNumber,
-            ),
-          )
-          .toList(),
+      DatabaseService.getAllTables(),
     );
 
     final selectableCount = allTables
         .where(
-          (table) => ReservationTableAvailability.isTableModelAvailable(
-            table: table,
-            unavailableCodes: unavailable,
+          (table) => !unavailable.contains(
+            ReservationTableAvailability.refOfTableModel(table),
           ),
         )
         .length;
@@ -87,17 +80,19 @@ class HomeReservationTableAssignmentDialog {
       return null;
     }
 
-    String? selectedFloor;
-    final selectedCodes = <int>{...initialSelection};
+    final layout = DatabaseService.getRestaurantTableLayout();
+    String floorNameOf(String floor) =>
+        layout.zoneForLegacyFloor(floor)?.name ??
+        ReservationTableAvailability.floorLabel(floor);
 
-    if (selectedCodes.isNotEmpty) {
-      final first = ReservationTableAvailability.decodeTableCode(
-        selectedCodes.first,
-      );
-      selectedFloor = first.floor;
+    String? selectedFloor;
+    final selectedRefs = <TableRef>{...initialSelection};
+
+    if (selectedRefs.isNotEmpty) {
+      selectedFloor = selectedRefs.first.floor;
     }
 
-    return showDialog<List<int>>(
+    return showDialog<List<TableRef>>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) {
@@ -125,25 +120,25 @@ class HomeReservationTableAssignmentDialog {
                       return _tableChip(
                         table: table,
                         selectedFloor: selectedFloor,
-                        selectedCodes: selectedCodes,
+                        selectedRefs: selectedRefs,
                         unavailable: unavailable,
+                        floorNameOf: floorNameOf,
                         primaryColor: primaryColor,
                         secondaryColor: secondaryColor,
                         textPrimary: textPrimary,
                         onTap: () {
                           setDialogState(() {
-                            final code =
-                                ReservationTableAvailability.encodeTableCode(
-                                  floor: table.floor,
-                                  tableNumber: table.tableNumber,
+                            final ref =
+                                ReservationTableAvailability.refOfTableModel(
+                                  table,
                                 );
-                            if (unavailable.contains(code)) {
+                            if (unavailable.contains(ref)) {
                               return;
                             }
-                            final isSelected = selectedCodes.contains(code);
+                            final isSelected = selectedRefs.contains(ref);
                             if (isSelected) {
-                              selectedCodes.remove(code);
-                              if (selectedCodes.isEmpty) {
+                              selectedRefs.remove(ref);
+                              if (selectedRefs.isEmpty) {
                                 selectedFloor = null;
                               }
                             } else {
@@ -152,7 +147,7 @@ class HomeReservationTableAssignmentDialog {
                                 return;
                               }
                               selectedFloor = table.floor;
-                              selectedCodes.add(code);
+                              selectedRefs.add(ref);
                             }
                           });
                         },
@@ -168,11 +163,11 @@ class HomeReservationTableAssignmentDialog {
                 child: const Text('გაუქმება'),
               ),
               ElevatedButton(
-                onPressed: selectedCodes.isEmpty
+                onPressed: selectedRefs.isEmpty
                     ? null
                     : () => Navigator.pop(
                         dialogContext,
-                        selectedCodes.toList()..sort(),
+                        _sortedRefs(selectedRefs),
                       ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: secondaryColor,
@@ -187,7 +182,7 @@ class HomeReservationTableAssignmentDialog {
     );
   }
 
-  static Future<List<int>?> showForReservation({
+  static Future<List<TableRef>?> showForReservation({
     required BuildContext context,
     required Reservation reservation,
     required Color primaryColor,
@@ -203,26 +198,34 @@ class HomeReservationTableAssignmentDialog {
       textPrimary: textPrimary,
       excludeReservationId: reservation.id,
       excludeOrderId: reservation.linkedOrderId,
-      initialSelection: reservation.tableNumbers,
+      initialSelection: ReservationTableAvailability.tableRefsOf(reservation),
     );
+  }
+
+  static List<TableRef> _sortedRefs(Set<TableRef> refs) {
+    return refs.toList()..sort((a, b) {
+      final floorCmp = a.floor.compareTo(b.floor);
+      if (floorCmp != 0) return floorCmp;
+      return (int.tryParse(a.tableNumber) ?? 0).compareTo(
+        int.tryParse(b.tableNumber) ?? 0,
+      );
+    });
   }
 
   static Widget _tableChip({
     required TableModel table,
     required String? selectedFloor,
-    required Set<int> selectedCodes,
-    required Set<int> unavailable,
+    required Set<TableRef> selectedRefs,
+    required Set<TableRef> unavailable,
+    required String Function(String floor) floorNameOf,
     required Color primaryColor,
     required Color secondaryColor,
     required Color textPrimary,
     required VoidCallback onTap,
   }) {
-    final code = ReservationTableAvailability.encodeTableCode(
-      floor: table.floor,
-      tableNumber: table.tableNumber,
-    );
-    final isUnavailable = unavailable.contains(code);
-    final isSelected = selectedCodes.contains(code);
+    final ref = ReservationTableAvailability.refOfTableModel(table);
+    final isUnavailable = unavailable.contains(ref);
+    final isSelected = selectedRefs.contains(ref);
     final disabled =
         !isUnavailable && selectedFloor != null && selectedFloor != table.floor;
 
@@ -261,9 +264,9 @@ class HomeReservationTableAssignmentDialog {
             ),
             const SizedBox(height: 6),
             Text(
-              ReservationTableAvailability.displayLabel(
-                floor: table.floor,
-                tableNumber: table.tableNumber,
+              ReservationTableAvailability.displayLabelForRef(
+                ref,
+                floorNameOf: floorNameOf,
               ),
               textAlign: TextAlign.center,
               style: TextStyle(

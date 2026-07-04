@@ -558,7 +558,7 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
       return;
     }
 
-    final tableNumbers = await HomeReservationTableAssignmentDialog.show(
+    final tableRefs = await HomeReservationTableAssignmentDialog.show(
       context: context,
       reservationDate: selectedDate,
       reservationTime: timeString,
@@ -566,14 +566,14 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
       secondaryColor: widget.secondaryColor,
       textPrimary: widget.textPrimary,
     );
-    if (!mounted || tableNumbers == null || tableNumbers.isEmpty) {
+    if (!mounted || tableRefs == null || tableRefs.isEmpty) {
       return;
     }
 
     await DatabaseService.createReservation(
       customerName: customerName,
       customerPhone: customerPhone,
-      tableNumbers: tableNumbers,
+      tableRefs: tableRefs,
       reservationDate: selectedDate,
       reservationTime: timeString,
       numberOfGuests: guests,

@@ -14,6 +14,7 @@ import 'package:vynic/core/models/user.dart';
 import 'package:vynic/apps/windows_pos/screens/menu_screen.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
+import 'package:vynic/core/utils/reservation_table_availability.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:vynic/core/widgets/pos_on_screen_text_field.dart';
 
@@ -187,7 +188,10 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
           query.isEmpty ||
           reservation.customerName.toLowerCase().contains(query) ||
           reservation.customerPhone.toLowerCase().contains(query) ||
-          reservation.tableNumbers.join(',').contains(query);
+          ReservationTableAvailability.tableNumbersLabel(
+            reservation,
+            placeholder: '',
+          ).contains(query);
       return matchesStatus && matchesDate && matchesSearch;
     }).toList();
     final todayGuests = todayReservations.fold<int>(
@@ -195,7 +199,7 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
       (sum, reservation) => sum + reservation.numberOfGuests,
     );
     final todayTables = todayReservations
-        .expand((reservation) => reservation.tableNumbers)
+        .expand(ReservationTableAvailability.tableRefsOf)
         .toSet()
         .length;
     final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
@@ -648,9 +652,7 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
         ? const Color(0xFFB91C1C)
         : const Color(0xFF047857);
     final statusLabel = cancelled ? 'გაუქმებული' : 'დადასტურებული';
-    final tables = reservation.tableNumbers.isEmpty
-        ? '-'
-        : reservation.tableNumbers.join(', ');
+    final tables = ReservationTableAvailability.tableNumbersLabel(reservation);
     final dateLabel = DatabaseService.getGeorgianFormattedDate(
       reservation.reservationDate,
     );
@@ -1002,7 +1004,7 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${reservation.tableNumbers.isEmpty ? '-' : reservation.tableNumbers.join(', ')} • ${reservation.numberOfGuests} სტუმარი',
+                  '${ReservationTableAvailability.tableNumbersLabel(reservation)} • ${reservation.numberOfGuests} სტუმარი',
                   style: const TextStyle(
                     color: AdminDesign.muted,
                     fontSize: 10,
@@ -1244,7 +1246,6 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
               customerPhone: customerPhone,
               reservationDate: selectedDate,
               reservationTime: timeString,
-              tableNumbers: const [],
               tableLabels: const [],
               numberOfGuests: guestCount,
               notes: (notesRaw == null || notesRaw.isEmpty) ? null : notesRaw,
@@ -1261,7 +1262,7 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
         continue;
       }
 
-      final tableNumbers = await HomeReservationTableAssignmentDialog.show(
+      final tableRefs = await HomeReservationTableAssignmentDialog.show(
         context: context,
         reservationDate: selectedDate,
         reservationTime: timeString,
@@ -1269,14 +1270,14 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
         secondaryColor: _secondaryColor,
         textPrimary: _textPrimary,
       );
-      if (!mounted || tableNumbers == null || tableNumbers.isEmpty) {
+      if (!mounted || tableRefs == null || tableRefs.isEmpty) {
         continue;
       }
 
       final reservationId = await DatabaseService.createReservation(
         customerName: customerName,
         customerPhone: customerPhone,
-        tableNumbers: tableNumbers,
+        tableRefs: tableRefs,
         reservationDate: selectedDate,
         reservationTime: timeString,
         numberOfGuests: guestCount,
@@ -1294,7 +1295,8 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
         id: reservationId,
         customerName: customerName,
         customerPhone: customerPhone,
-        tableNumbers: tableNumbers,
+        tableNumbers: ReservationTableAvailability.legacyCodesOf(tableRefs),
+        tableRefs: [for (final ref in tableRefs) ref.encode()],
         reservationDate: selectedDate,
         reservationTime: timeString,
         numberOfGuests: guestCount,
@@ -1330,10 +1332,11 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
     );
     final createdAt = HomeReservationsHelper.buildKitchenTime(reservation);
 
+    final kitchenTables = ReservationTableAvailability.tableRefsOf(reservation);
     PrinterService.printKitchenCheckInBackground(
       items: kitchenItems,
-      tableNumber: reservation.tableNumbers.isNotEmpty
-          ? reservation.tableNumbers.join(', ')
+      tableNumber: kitchenTables.isNotEmpty
+          ? kitchenTables.map((ref) => ref.tableNumber).join(', ')
           : null,
       orderNumber: orderLabel,
       waiterName: widget.user.username,
@@ -1390,6 +1393,9 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
           'reservationDate': reservation.reservationDate.toIso8601String(),
           'reservationTime': reservation.reservationTime,
           'tableNumbers': reservation.tableNumbers,
+          'tableRefs': ReservationTableAvailability.tableRefsOf(
+            reservation,
+          ).map((ref) => ref.encode()).toList(),
           'previousStatus': previousStatus,
           'newStatus': newStatus,
           'isTakeAway': reservation.isTakeAway,

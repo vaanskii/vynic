@@ -3,7 +3,6 @@ class ReservationContext {
   final String customerPhone;
   final DateTime reservationDate;
   final String reservationTime;
-  final List<int> tableNumbers;
   final List<String> tableLabels;
   final int numberOfGuests;
   final String? notes;
@@ -13,7 +12,6 @@ class ReservationContext {
     required this.customerPhone,
     required this.reservationDate,
     required this.reservationTime,
-    required this.tableNumbers,
     required this.tableLabels,
     required this.numberOfGuests,
     this.notes,

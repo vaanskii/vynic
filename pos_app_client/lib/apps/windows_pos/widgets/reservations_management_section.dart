@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/services/database_service.dart';
+import 'package:vynic/core/utils/reservation_table_availability.dart';
 
 typedef ReservationAsyncAction = Future<void> Function(Reservation reservation);
 
@@ -326,8 +327,8 @@ class ReservationsManagementSection extends StatelessWidget {
         : reservation.customerName.trim();
     final customerPhone = reservation.customerPhone.trim();
     final notes = reservation.notes?.trim();
-    final tableNumbers = reservation.tableNumbers;
-    final hasTables = tableNumbers.isNotEmpty;
+    final tableRefs = ReservationTableAvailability.tableRefsOf(reservation);
+    final hasTables = tableRefs.isNotEmpty;
     final guestCount = reservation.numberOfGuests;
     final preOrderItems = reservation.preOrderItems ?? const [];
     final itemCount = preOrderItems.fold<int>(
@@ -508,7 +509,7 @@ class ReservationsManagementSection extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 hasTables
-                    ? 'სუფრები: ${tableNumbers.join(', ')}'
+                    ? 'სუფრები: ${tableRefs.map((ref) => ref.tableNumber).join(', ')}'
                     : 'სუფრები: -',
                 style: TextStyle(color: mutedText, fontSize: 13),
               ),

@@ -12,6 +12,7 @@ import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/apps/windows_pos/widgets/receipt_language_picker_dialog.dart';
 import 'package:vynic/core/widgets/service_fee_adjust_dialog.dart';
+import 'package:vynic/core/utils/reservation_table_availability.dart';
 
 typedef ReservationAction = Future<void> Function(Reservation reservation);
 
@@ -548,9 +549,10 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
     final subtotal = _preOrderSubtotal(reservation);
     final phone = reservation.customerPhone.trim();
     final notes = reservation.notes?.trim();
-    final tableLabel = reservation.tableNumbers.isEmpty
-        ? 'სუფრა არ არის'
-        : reservation.tableNumbers.join(', ');
+    final tableLabel = ReservationTableAvailability.tableNumbersLabel(
+      reservation,
+      placeholder: 'სუფრა არ არის',
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -1232,9 +1234,10 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
         : 0.0;
     final total = includeService ? subtotal + serviceFee : subtotal;
 
-    final tableLabel = reservation.tableNumbers.isEmpty
+    final tableRefs = ReservationTableAvailability.tableRefsOf(reservation);
+    final tableLabel = tableRefs.isEmpty
         ? null
-        : reservation.tableNumbers.join(', ');
+        : tableRefs.map((ref) => ref.tableNumber).join(', ');
 
     PrinterService.printReceiptInBackground(
       items: lines,

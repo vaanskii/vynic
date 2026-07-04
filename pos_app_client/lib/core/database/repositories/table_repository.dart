@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:developer' as developer;
+
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/table_layout.dart';
@@ -5,6 +8,7 @@ import 'package:vynic/core/models/table_layout.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'business_day_repository.dart';
 import '../database_core.dart';
+import 'error_log_repository.dart';
 import 'reservation_repository.dart';
 import 'order_repository.dart';
 import 'settings_repository.dart';
@@ -14,9 +18,36 @@ import 'settings_repository.dart';
 class TableRepository {
   TableRepository._();
 
-  static RestaurantTableLayout getRestaurantTableLayout() =>
-      SettingsRepository.getActiveTableLayout() ??
-      RestaurantTableLayouts.current;
+  static bool _reportedCorruptLayout = false;
+
+  static RestaurantTableLayout getRestaurantTableLayout() {
+    try {
+      return SettingsRepository.getActiveTableLayout() ??
+          RestaurantTableLayouts.current;
+    } catch (error, stackTrace) {
+      // A corrupted saved layout must not brick every table screen: fall
+      // back to the built-in layout. Reported once per session — this read
+      // path is hot and the broken value stays broken until re-saved.
+      if (!_reportedCorruptLayout) {
+        _reportedCorruptLayout = true;
+        developer.log(
+          'Saved table layout is corrupted, falling back to default: $error',
+          name: 'TableRepository',
+          error: error,
+          stackTrace: stackTrace,
+        );
+        unawaited(
+          ErrorLogRepository.logError(
+            title: 'Saved table layout is corrupted',
+            error: error,
+            stackTrace: stackTrace,
+            context: 'get_restaurant_table_layout',
+          ),
+        );
+      }
+      return RestaurantTableLayouts.current;
+    }
+  }
 
   static Future<void> saveActiveRestaurantTableLayout(
     RestaurantTableLayout layout,

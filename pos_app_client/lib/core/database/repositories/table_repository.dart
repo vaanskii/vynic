@@ -1,62 +1,69 @@
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/table.dart';
+import 'package:vynic/core/models/table_layout.dart';
 
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'business_day_repository.dart';
 import '../database_core.dart';
 import 'reservation_repository.dart';
 import 'order_repository.dart';
+import 'settings_repository.dart';
 
 /// Floor plan and live table state: layout, reserve/free, stale-lock
 /// analysis, and table-identifier normalization.
 class TableRepository {
   TableRepository._();
 
-  static const List<String> _firstFloorTableNumbers = [
-    '1',
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-    '7',
-    '8',
-    '9',
-  ];
+  static RestaurantTableLayout getRestaurantTableLayout() =>
+      SettingsRepository.getActiveTableLayout() ??
+      RestaurantTableLayouts.current;
 
-  static const List<String> _secondFloorTableNumbers = ['1', '2', '3', '4'];
+  static Future<void> saveActiveRestaurantTableLayout(
+    RestaurantTableLayout layout,
+  ) async {
+    await SettingsRepository.saveActiveTableLayout(layout);
+    await ensureTableLayoutConsistency();
+    SyncHub.notify(
+      SyncEvent(
+        type: SyncEventType.tables,
+        action: 'layout_changed',
+        payload: {'layoutId': layout.id, 'layoutName': layout.name},
+      ),
+    );
+  }
 
-  static const Map<String, List<String>> _tableLayout = {
-    'first': _firstFloorTableNumbers,
-    'second': _secondFloorTableNumbers,
-  };
+  static Future<void> clearActiveRestaurantTableLayout() async {
+    await SettingsRepository.clearActiveTableLayout();
+    await ensureTableLayoutConsistency();
+    final layout = getRestaurantTableLayout();
+    SyncHub.notify(
+      SyncEvent(
+        type: SyncEventType.tables,
+        action: 'layout_reset',
+        payload: {'layoutId': layout.id, 'layoutName': layout.name},
+      ),
+    );
+  }
 
   static Map<String, List<String>> getTableLayout() {
+    final layout = getRestaurantTableLayout().legacyTableLayout();
     return {
-      for (final entry in _tableLayout.entries)
-        entry.key: List<String>.from(entry.value),
+      for (final entry in layout.entries) entry.key: [...entry.value],
     };
   }
 
   static List<String> getAllTableNumbers() {
-    return _tableLayout.values.expand((tables) => tables).toList();
+    return getRestaurantTableLayout().tables
+        .map((table) => table.legacyTableNumber)
+        .toList();
   }
 
   // Initialize default tables
   static Future<void> initializeTables() async {
-    for (final tableNumber in _firstFloorTableNumbers) {
+    for (final tableDefinition in getRestaurantTableLayout().tables) {
       final table = TableModel(
-        tableNumber: tableNumber,
-        floor: 'first',
-        isReserved: false,
-      );
-      await DatabaseCore.tableBox!.add(table);
-    }
-
-    for (final tableNumber in _secondFloorTableNumbers) {
-      final table = TableModel(
-        tableNumber: tableNumber,
-        floor: 'second',
+        tableNumber: tableDefinition.legacyTableNumber,
+        floor: tableDefinition.legacyFloor,
         isReserved: false,
       );
       await DatabaseCore.tableBox!.add(table);
@@ -69,7 +76,7 @@ class TableRepository {
     }
 
     final allowedByFloor = <String, Set<String>>{};
-    for (final entry in _tableLayout.entries) {
+    for (final entry in getTableLayout().entries) {
       allowedByFloor[entry.key] = entry.value.toSet();
     }
 
@@ -93,7 +100,7 @@ class TableRepository {
       await DatabaseCore.tableBox!.deleteAll(invalidKeys);
     }
 
-    for (final entry in _tableLayout.entries) {
+    for (final entry in getTableLayout().entries) {
       for (final tableNumber in entry.value) {
         if (getTable(tableNumber, entry.key) == null) {
           final table = TableModel(
@@ -134,11 +141,11 @@ class TableRepository {
     required String tableNumber,
     required String floor,
   }) {
-    final layout = _tableLayout[floor];
-    if (layout == null) {
-      return false;
-    }
-    return layout.contains(tableNumber);
+    return getRestaurantTableLayout().tableForLegacy(
+          floor: floor,
+          tableNumber: tableNumber,
+        ) !=
+        null;
   }
 
   // Reserve a table

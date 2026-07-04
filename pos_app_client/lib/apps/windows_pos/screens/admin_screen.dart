@@ -18,6 +18,7 @@ import 'package:vynic/apps/windows_pos/widgets/admin/admin_settings_section.dart
 import 'package:vynic/apps/windows_pos/widgets/admin/printers/admin_printers_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_reservations_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_staff_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_table_layouts_section.dart';
 import 'package:vynic/core/utils/payment_utils.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/apps/windows_pos/screens/login_screen.dart';
@@ -1251,6 +1252,8 @@ class _AdminScreenState extends State<AdminScreen> {
         return 'პაკეტები';
       case 'reservations':
         return 'რეზერვაციები';
+      case 'tableLayouts':
+        return 'მაგიდების განლაგება';
       case 'closeday':
         return 'დღის დახურვა';
       case 'sales':
@@ -1349,6 +1352,11 @@ class _AdminScreenState extends State<AdminScreen> {
         icon: Icons.event_available,
         title: 'რეზერვაციები',
         section: 'reservations',
+      ),
+      _buildMenuItem(
+        icon: Icons.table_restaurant_outlined,
+        title: 'მაგიდები',
+        section: 'tableLayouts',
       ),
       if (!_isMobile)
         _buildMenuItem(
@@ -3388,6 +3396,8 @@ class _AdminScreenState extends State<AdminScreen> {
         return AdminPackagesSection(user: widget.user);
       case 'reservations':
         return AdminReservationsSection(user: widget.user);
+      case 'tableLayouts':
+        return const AdminTableLayoutsSection();
       case 'closeday':
         return AdminCloseDaySection(
           user: widget.user,

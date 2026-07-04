@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:vynic/core/models/table_layout.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'business_day_repository.dart';
 import '../database_core.dart';
@@ -39,6 +40,7 @@ class SettingsRepository {
       'monthlyReportLeaseCostByMonth';
   static const String _monthlyReportStaffDailyCostByMonthSetting =
       'monthlyReportStaffDailyCostByMonth';
+  static const String _activeTableLayoutSetting = 'activeTableLayoutJson';
 
   static const Uuid _uuid = Uuid();
 
@@ -649,5 +651,31 @@ class SettingsRepository {
 
   static Future<void> clearBackendUrlOverride() async {
     await _settingsBox?.delete(_backendUrlOverrideSetting);
+  }
+
+  static RestaurantTableLayout? getActiveTableLayout() {
+    final raw = _settingsBox?.get(_activeTableLayoutSetting);
+    if (raw == null) {
+      return null;
+    }
+
+    final decoded = raw is String ? jsonDecode(raw) : raw;
+    if (decoded is! Map) {
+      throw StateError('Saved table layout setting is not a JSON object');
+    }
+
+    return RestaurantTableLayout.fromJson(
+      decoded.map((key, value) => MapEntry(key.toString(), value)),
+    );
+  }
+
+  static Future<void> saveActiveTableLayout(
+    RestaurantTableLayout layout,
+  ) async {
+    await _settingsBox?.put(_activeTableLayoutSetting, jsonEncode(layout));
+  }
+
+  static Future<void> clearActiveTableLayout() async {
+    await _settingsBox?.delete(_activeTableLayoutSetting);
   }
 }

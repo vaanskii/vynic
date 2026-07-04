@@ -3,6 +3,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'dart:io';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/models/table.dart';
+import 'package:vynic/core/models/table_layout.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/reservation.dart';
@@ -63,6 +64,16 @@ class DatabaseService {
 
   static Map<String, List<String>> getTableLayout() =>
       TableRepository.getTableLayout();
+
+  static RestaurantTableLayout getRestaurantTableLayout() =>
+      TableRepository.getRestaurantTableLayout();
+
+  static Future<void> saveActiveRestaurantTableLayout(
+    RestaurantTableLayout layout,
+  ) => TableRepository.saveActiveRestaurantTableLayout(layout);
+
+  static Future<void> clearActiveRestaurantTableLayout() =>
+      TableRepository.clearActiveRestaurantTableLayout();
 
   static List<String> getAllTableNumbers() =>
       TableRepository.getAllTableNumbers();

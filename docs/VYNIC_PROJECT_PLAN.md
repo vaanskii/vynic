@@ -147,10 +147,18 @@ verification, not one big commit.
   `apps/mobile_app/presentation/widgets/`. `core/models/` was left flat (small,
   not misleading; several files pair with Hive-generated `.g.dart` adapters we
   don't touch).
-- **Phase 3 — Data-driven tables/zones.** Replace `'first'`/`'second'` and `> 10`
-  with `Zone { id, name }` + `Table { id, zoneId, label, capacity }`. Delete the
-  integer-code arithmetic. Centralize the one remaining encode/decode if still
-  needed for storage compatibility.
+- **Phase 3 — Data-driven tables/zones. IN PROGRESS (uncommitted).** Replace
+  `'first'`/`'second'` and `> 10` with `Zone { id, name }` +
+  `Table { id, zoneId, label, capacity }`. First slice added a
+  `RestaurantTableLayout` definition for the current venue, including render mode,
+  SVG assets, canvas sizes, and hitboxes, then wired table seeding/validation and
+  the Windows POS selector to read from it. A second slice kept the SVG layout as
+  `RestaurantTableLayouts.svgMap`, added `buttonGridPreview`, and made the selector
+  render from `TableLayoutRenderMode` so restaurants can use either mapped SVG
+  tables or simple table buttons. A third slice added a local Windows POS Admin
+  layout builder for button-grid plans, persisted as an active layout in settings.
+  Delete the integer-code arithmetic. Centralize the one remaining encode/decode
+  if still needed for storage compatibility.
 - **Phase 4 — Status enums + safer state.** Replace stringly-typed order/reservation
   statuses (`pending`/`confirmed`/`preparing`/`in-progress`, `startsWith('confirmed')`)
   with enums and explicit transitions.

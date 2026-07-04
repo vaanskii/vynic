@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation.dart';
+import 'package:vynic/core/models/table_ref.dart';
 import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
@@ -1516,19 +1517,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       // Also update any linked reservation if it exists
       if (_linkedReservation != null) {
         try {
-          final List<int> tableInts = toTableNumbers
-              .map((n) {
-                final parsed = int.tryParse(n);
-                if (parsed == null) return null;
-                // Add offset for second floor tables in reservation system
-                return toFloor == 'second' ? parsed + 10 : parsed;
-              })
-              .whereType<int>()
-              .toList();
+          final tableRefs = [
+            for (final n in toTableNumbers)
+              if (int.tryParse(n) != null)
+                TableRef(floor: toFloor, tableNumber: n),
+          ];
 
           await DatabaseService.updateReservationTables(
             _linkedReservation!.id,
-            tableInts,
+            const [],
+            tableRefs: tableRefs,
           );
         } catch (e) {
           debugPrint('Note: Linked reservation table update failed: $e');

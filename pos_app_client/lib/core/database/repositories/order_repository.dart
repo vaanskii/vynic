@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/package.dart';
+import 'package:vynic/core/models/table_ref.dart';
 
 import 'package:vynic/core/services/audit/audit_event_service.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
@@ -105,25 +106,7 @@ class OrderRepository {
     }
 
     if (createReservationRecord) {
-      final tableNumList = <int>[];
-      for (final tableName in orderTableNumbers) {
-        if (tableName.startsWith('Table ')) {
-          final parsed = int.tryParse(tableName.replaceAll('Table ', ''));
-          if (parsed != null) {
-            tableNumList.add(parsed);
-          }
-        } else if (tableName.startsWith('VIP Zone ')) {
-          final parsed = int.tryParse(tableName.replaceAll('VIP Zone ', ''));
-          if (parsed != null) {
-            tableNumList.add(10 + parsed);
-          }
-        } else {
-          final parsed = int.tryParse(tableName);
-          if (parsed != null) {
-            tableNumList.add(floor == 'second' ? parsed + 10 : parsed);
-          }
-        }
-      }
+      final tableRefs = _walkInTableRefs(orderTableNumbers, floor);
 
       final currentDate = BusinessDayRepository.getCurrentDate();
       final currentTime = BusinessDayRepository.getCurrentDateTime();
@@ -133,7 +116,7 @@ class OrderRepository {
       await ReservationRepository.createReservation(
         customerName: 'Walk-in',
         customerPhone: '-',
-        tableNumbers: tableNumList,
+        tableRefs: tableRefs,
         reservationDate: currentDate,
         reservationTime: timeString,
         numberOfGuests: 0,
@@ -413,28 +396,14 @@ class OrderRepository {
       );
     }
 
-    final tableNumList = <int>[];
-    for (final tableName in normalizedTables) {
-      if (tableName.startsWith('Table ')) {
-        final parsed = int.tryParse(tableName.replaceAll('Table ', ''));
-        if (parsed != null) tableNumList.add(parsed);
-      } else if (tableName.startsWith('VIP Zone ')) {
-        final parsed = int.tryParse(tableName.replaceAll('VIP Zone ', ''));
-        if (parsed != null) tableNumList.add(10 + parsed);
-      } else {
-        final parsed = int.tryParse(tableName);
-        if (parsed != null) {
-          tableNumList.add(floor == 'second' ? parsed + 10 : parsed);
-        }
-      }
-    }
+    final tableRefs = _walkInTableRefs(normalizedTables, floor);
     final currentTime = BusinessDayRepository.getCurrentDateTime();
     final timeString =
         '${currentTime.hour.toString().padLeft(2, '0')}:${currentTime.minute.toString().padLeft(2, '0')}';
     await ReservationRepository.createReservation(
       customerName: 'Walk-in',
       customerPhone: '-',
-      tableNumbers: tableNumList,
+      tableRefs: tableRefs,
       reservationDate: BusinessDayRepository.getCurrentDate(),
       reservationTime: timeString,
       numberOfGuests: guestCount,
@@ -808,5 +777,35 @@ class OrderRepository {
       order.updateItemQuantity(itemKey, quantity);
       await updateOrder(order);
     }
+  }
+
+  /// Table refs for a walk-in's linked reservation record. Order table
+  /// entries are either display labels ('Table N' = first floor,
+  /// 'VIP Zone N' = second floor) or bare numbers on [floor]; non-numeric
+  /// entries (e.g. takeaway 'TA-...') carry no table.
+  static List<TableRef> _walkInTableRefs(
+    List<String> tableNames,
+    String floor,
+  ) {
+    final refs = <TableRef>[];
+    for (final tableName in tableNames) {
+      if (tableName.startsWith('Table ')) {
+        final number = tableName.replaceAll('Table ', '').trim();
+        if (int.tryParse(number) != null) {
+          refs.add(TableRef(floor: 'first', tableNumber: number));
+        }
+      } else if (tableName.startsWith('VIP Zone ')) {
+        final number = tableName.replaceAll('VIP Zone ', '').trim();
+        if (int.tryParse(number) != null) {
+          refs.add(TableRef(floor: 'second', tableNumber: number));
+        }
+      } else {
+        final number = tableName.trim();
+        if (int.tryParse(number) != null) {
+          refs.add(TableRef(floor: floor, tableNumber: number));
+        }
+      }
+    }
+    return refs;
   }
 }

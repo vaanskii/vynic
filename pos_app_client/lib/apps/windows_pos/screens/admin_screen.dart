@@ -18,7 +18,7 @@ import 'package:vynic/apps/windows_pos/widgets/admin/admin_settings_section.dart
 import 'package:vynic/apps/windows_pos/widgets/admin/printers/admin_printers_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_reservations_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_staff_section.dart';
-import 'package:vynic/apps/windows_pos/widgets/admin/admin_table_layouts_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/table_layouts/admin_table_layouts_section.dart';
 import 'package:vynic/core/utils/payment_utils.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/apps/windows_pos/screens/login_screen.dart';

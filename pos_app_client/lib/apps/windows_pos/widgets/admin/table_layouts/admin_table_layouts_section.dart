@@ -7,9 +7,7 @@ import 'package:vynic/core/models/table_layout.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/apps/windows_pos/widgets/floor_plan/floor_plan_painters.dart';
-
-const double _defaultPlanCanvasWidth = 1000;
-const double _defaultPlanCanvasHeight = 1000;
+import 'package:vynic/apps/windows_pos/widgets/admin/table_layouts/layout_draft.dart';
 
 class AdminTableLayoutsSection extends StatefulWidget {
   const AdminTableLayoutsSection({super.key});
@@ -21,7 +19,7 @@ class AdminTableLayoutsSection extends StatefulWidget {
 
 class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
   late final TextEditingController _layoutNameController;
-  final List<_EditableZonePlan> _zones = [];
+  final List<EditableZonePlan> _zones = [];
   bool _isSaving = false;
 
   @override
@@ -50,13 +48,13 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     final sortedZones = [...layout.zones]
       ..sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
     for (final zone in sortedZones) {
-      _zones.add(_EditableZonePlan.fromLayout(layout, zone));
+      _zones.add(EditableZonePlan.fromLayout(layout, zone));
     }
 
     if (_zones.isEmpty) {
       _zones
-        ..add(_EditableZonePlan.create(1))
-        ..add(_EditableZonePlan.create(2));
+        ..add(EditableZonePlan.create(1))
+        ..add(EditableZonePlan.create(2));
     }
   }
 
@@ -138,7 +136,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     );
   }
 
-  List<RestaurantTableDefinition> _buildTables(_EditableZonePlan zone) {
+  List<RestaurantTableDefinition> _buildTables(EditableZonePlan zone) {
     return [
       for (var i = 0; i < zone.tables.length; i++)
         RestaurantTableDefinition(
@@ -153,7 +151,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     ];
   }
 
-  List<RestaurantLayoutObject> _buildObjects(_EditableZonePlan zone) {
+  List<RestaurantLayoutObject> _buildObjects(EditableZonePlan zone) {
     return [
       for (var i = 0; i < zone.tables.length; i++)
         RestaurantLayoutObject(
@@ -189,16 +187,16 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
 
   void _addFloor() {
     setState(() {
-      _zones.add(_EditableZonePlan.create(_zones.length + 1));
+      _zones.add(EditableZonePlan.create(_zones.length + 1));
     });
   }
 
-  _EditableTableDefinition _addTable(
-    _EditableZonePlan zone, {
+  EditableTableDefinition _addTable(
+    EditableZonePlan zone, {
     VoidCallback? refresh,
   }) {
-    late final _EditableTableDefinition table;
-    table = _EditableTableDefinition.create(
+    late final EditableTableDefinition table;
+    table = EditableTableDefinition.create(
       zone.floorKey,
       zone.tables.length + 1,
       zone.nextLegacyTableNumber(),
@@ -215,8 +213,8 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
   }
 
   bool _removeTable(
-    _EditableZonePlan zone,
-    _EditableTableDefinition table, {
+    EditableZonePlan zone,
+    EditableTableDefinition table, {
     VoidCallback? refresh,
   }) {
     if (zone.tables.length <= 1) {
@@ -254,13 +252,13 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     return true;
   }
 
-  _EditablePlanObject _addPlanObject(
-    _EditableZonePlan zone,
+  EditablePlanObject _addPlanObject(
+    EditableZonePlan zone,
     RestaurantLayoutObjectType type, {
     VoidCallback? refresh,
   }) {
-    late final _EditablePlanObject object;
-    object = _EditablePlanObject.create(type, zone.objects.length + 1);
+    late final EditablePlanObject object;
+    object = EditablePlanObject.create(type, zone.objects.length + 1);
     zone.objects.add(object);
     object.moveBy(
       0,
@@ -272,8 +270,8 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     return object;
   }
 
-  _EditablePlanObject _createPlanObject(
-    _EditableZonePlan zone,
+  EditablePlanObject _createPlanObject(
+    EditableZonePlan zone,
     RestaurantLayoutObjectType type, {
     required double x,
     required double y,
@@ -283,10 +281,10 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     String? label,
     VoidCallback? refresh,
   }) {
-    final object = _EditablePlanObject(
+    final object = EditablePlanObject(
       id: '${type.name}-${DateTime.now().microsecondsSinceEpoch}-${zone.objects.length + 1}',
       type: type,
-      label: label ?? _labelForType(type),
+      label: label ?? labelForObjectType(type),
       x: x,
       y: y,
       width: width,
@@ -305,7 +303,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
   }
 
   void _removePlanObject(
-    _EditableZonePlan zone,
+    EditableZonePlan zone,
     String id, {
     VoidCallback? refresh,
   }) {
@@ -313,9 +311,9 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     _refreshDraft(refresh);
   }
 
-  _EditablePlanObject _addEntranceInWall(
-    _EditableZonePlan zone,
-    _EditablePlanObject wall, {
+  EditablePlanObject _addEntranceInWall(
+    EditableZonePlan zone,
+    EditablePlanObject wall, {
     VoidCallback? refresh,
   }) {
     final entranceWidth = math
@@ -343,8 +341,8 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
   }
 
   void _splitWall(
-    _EditableZonePlan zone,
-    _EditablePlanObject wall, {
+    EditableZonePlan zone,
+    EditablePlanObject wall, {
     VoidCallback? refresh,
   }) {
     final index = zone.objects.indexOf(wall);
@@ -356,14 +354,14 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
       (endpoints.$1.dx + endpoints.$2.dx) / 2,
       (endpoints.$1.dy + endpoints.$2.dy) / 2,
     );
-    final first = _editableWallFromPoints(
+    final first = editableWallFromPoints(
       id: wall.id,
       start: endpoints.$1,
       end: midpoint,
       thickness: wall.height,
       label: wall.label,
     );
-    final second = _editableWallFromPoints(
+    final second = editableWallFromPoints(
       id: '${wall.id}-split-${DateTime.now().microsecondsSinceEpoch}',
       start: midpoint,
       end: endpoints.$2,
@@ -381,8 +379,8 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
   }
 
   void _splitWallForOpening(
-    _EditableZonePlan zone,
-    _EditablePlanObject wall, {
+    EditableZonePlan zone,
+    EditablePlanObject wall, {
     required double openingWidth,
     required double openingHeight,
     VoidCallback? refresh,
@@ -405,14 +403,14 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     final unit = Offset(vector.dx / length, vector.dy / length);
     final firstEnd = start + unit * segmentLength;
     final secondStart = end - unit * segmentLength;
-    final first = _editableWallFromPoints(
+    final first = editableWallFromPoints(
       id: wall.id,
       start: start,
       end: firstEnd,
       thickness: wall.height,
       label: wall.label,
     );
-    final second = _editableWallFromPoints(
+    final second = editableWallFromPoints(
       id: '${wall.id}-split-${DateTime.now().microsecondsSinceEpoch}',
       start: secondStart,
       end: end,
@@ -430,13 +428,13 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     _refreshDraft(refresh);
   }
 
-  _EditablePlanObject? _addWallSegmentFromPoints(
-    _EditableZonePlan zone,
+  EditablePlanObject? _addWallSegmentFromPoints(
+    EditableZonePlan zone,
     Offset start,
     Offset end, {
     VoidCallback? refresh,
   }) {
-    final wall = _editableWallFromPoints(
+    final wall = editableWallFromPoints(
       id: 'wall-${DateTime.now().microsecondsSinceEpoch}-${zone.objects.length + 1}',
       start: start,
       end: end,
@@ -458,7 +456,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     setState(() {});
   }
 
-  void _removeFloor(_EditableZonePlan zone) {
+  void _removeFloor(EditableZonePlan zone) {
     if (_zones.length <= 1) {
       unawaited(
         showPosToast(
@@ -493,11 +491,11 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     });
   }
 
-  void _showExpandedPlan(_EditableZonePlan zone) {
+  void _showExpandedPlan(EditableZonePlan zone) {
     final workingZone = zone.copy();
-    _EditableTableDefinition? selectedTable;
-    _EditablePlanObject? selectedObject;
-    final selectedTables = <_EditableTableDefinition>{};
+    EditableTableDefinition? selectedTable;
+    EditablePlanObject? selectedObject;
+    final selectedTables = <EditableTableDefinition>{};
     bool multiSelectMode = false;
     bool wallDrawMode = false;
     Offset? wallStart;
@@ -943,7 +941,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     );
   }
 
-  Widget _buildZoneEditor(_EditableZonePlan zone) {
+  Widget _buildZoneEditor(EditableZonePlan zone) {
     return AdminPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1013,9 +1011,9 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
   }
 
   Widget _buildAddObjectButton(
-    _EditableZonePlan zone, {
+    EditableZonePlan zone, {
     VoidCallback? refresh,
-    ValueChanged<_EditablePlanObject>? onAdded,
+    ValueChanged<EditablePlanObject>? onAdded,
   }) {
     return PopupMenuButton<RestaurantLayoutObjectType>(
       tooltip: 'ობიექტის დამატება',
@@ -1051,19 +1049,19 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
   }
 
   Widget _buildPlanCanvas({
-    required _EditableZonePlan zone,
+    required EditableZonePlan zone,
     bool expanded = false,
     bool editable = false,
-    _EditableTableDefinition? selectedTable,
-    Set<_EditableTableDefinition> selectedTables = const {},
-    _EditablePlanObject? selectedObject,
+    EditableTableDefinition? selectedTable,
+    Set<EditableTableDefinition> selectedTables = const {},
+    EditablePlanObject? selectedObject,
     Offset? wallDraftStart,
     Offset? wallDraftEnd,
     bool showLabels = true,
-    ValueChanged<_EditableTableDefinition>? onTableTap,
-    ValueChanged<_EditablePlanObject>? onObjectTap,
-    ValueChanged<_EditablePlanObject>? onObjectRemove,
-    void Function(_EditableTableDefinition table, Offset delta)? onTableDrag,
+    ValueChanged<EditableTableDefinition>? onTableTap,
+    ValueChanged<EditablePlanObject>? onObjectTap,
+    ValueChanged<EditablePlanObject>? onObjectRemove,
+    void Function(EditableTableDefinition table, Offset delta)? onTableDrag,
     ValueChanged<Offset>? onCanvasTap,
     VoidCallback? onCanvasDoubleTap,
     ValueChanged<Offset>? onCanvasHover,
@@ -1200,7 +1198,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
   }
 
   Widget _buildEditableTableOnCanvas(
-    _EditableTableDefinition table,
+    EditableTableDefinition table,
     double scale, {
     required double canvasWidth,
     required double canvasHeight,
@@ -1276,7 +1274,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
   }
 
   Widget _buildEditableObjectOnCanvas({
-    required _EditablePlanObject object,
+    required EditablePlanObject object,
     required double scale,
     required double canvasWidth,
     required double canvasHeight,
@@ -1422,10 +1420,10 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
   }
 
   Widget _buildSelectionEditor({
-    required _EditableZonePlan zone,
-    required _EditableTableDefinition? table,
-    required Set<_EditableTableDefinition> selectedTables,
-    required _EditablePlanObject? object,
+    required EditableZonePlan zone,
+    required EditableTableDefinition? table,
+    required Set<EditableTableDefinition> selectedTables,
+    required EditablePlanObject? object,
     required VoidCallback? onRemoveTable,
     required VoidCallback? onRemoveObject,
     required VoidCallback? onAddEntranceInWall,
@@ -1474,8 +1472,8 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
   }
 
   Widget _buildSelectedTablesEditor(
-    _EditableZonePlan zone,
-    Set<_EditableTableDefinition> tables,
+    EditableZonePlan zone,
+    Set<EditableTableDefinition> tables,
     ValueChanged<RestaurantTableShape> onShapeChanged,
     VoidCallback onAlignRow,
     VoidCallback onAlignColumn,
@@ -1567,8 +1565,8 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
   }
 
   Widget _buildSelectedTableEditor(
-    _EditableZonePlan zone,
-    _EditableTableDefinition table,
+    EditableZonePlan zone,
+    EditableTableDefinition table,
     VoidCallback refresh,
     VoidCallback? onRemove,
   ) {
@@ -1668,8 +1666,8 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
   }
 
   Widget _buildSelectedObjectEditor(
-    _EditableZonePlan zone,
-    _EditablePlanObject object,
+    EditableZonePlan zone,
+    EditablePlanObject object,
     VoidCallback refresh,
     VoidCallback? onRemove,
     VoidCallback? onAddEntranceInWall,
@@ -1686,7 +1684,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  _labelForType(object.type),
+                  labelForObjectType(object.type),
                   style: const TextStyle(
                     color: AdminDesign.text,
                     fontSize: 16,
@@ -1711,7 +1709,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
             initialValue: object.label,
             onChanged: (value) {
               object.label = value.trim().isEmpty
-                  ? _labelForType(object.type)
+                  ? labelForObjectType(object.type)
                   : value.trim();
               refresh();
             },
@@ -1822,8 +1820,8 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
   }
 
   Widget _shapePicker(
-    _EditableZonePlan zone,
-    _EditableTableDefinition table,
+    EditableZonePlan zone,
+    EditableTableDefinition table,
     VoidCallback refresh,
   ) {
     return DropdownButtonFormField<RestaurantTableShape>(
@@ -1847,10 +1845,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     );
   }
 
-  Widget _tableLabelField(
-    _EditableTableDefinition table,
-    VoidCallback refresh,
-  ) {
+  Widget _tableLabelField(EditableTableDefinition table, VoidCallback refresh) {
     return TextField(
       controller: table.labelController,
       onChanged: (_) => refresh(),
@@ -1861,7 +1856,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     );
   }
 
-  Widget _capacityField(_EditableTableDefinition table, VoidCallback refresh) {
+  Widget _capacityField(EditableTableDefinition table, VoidCallback refresh) {
     return TextField(
       controller: table.capacityController,
       keyboardType: TextInputType.number,
@@ -1874,9 +1869,9 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
   }
 
   void _applyShapeToTables(
-    Set<_EditableTableDefinition> tables,
+    Set<EditableTableDefinition> tables,
     RestaurantTableShape shape,
-    _EditableZonePlan zone,
+    EditableZonePlan zone,
   ) {
     for (final table in tables) {
       table.applyShape(
@@ -1888,9 +1883,9 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
   }
 
   void _moveTableSelection(
-    _EditableZonePlan zone,
-    _EditableTableDefinition draggedTable,
-    Set<_EditableTableDefinition> selectedTables, {
+    EditableZonePlan zone,
+    EditableTableDefinition draggedTable,
+    Set<EditableTableDefinition> selectedTables, {
     required double dx,
     required double dy,
   }) {
@@ -1931,8 +1926,8 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
   }
 
   void _alignSelectedTables(
-    Set<_EditableTableDefinition> tables,
-    _EditableZonePlan zone, {
+    Set<EditableTableDefinition> tables,
+    EditableZonePlan zone, {
     required Axis axis,
   }) {
     if (tables.length < 2) {
@@ -1977,7 +1972,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
   }
 
   RestaurantTableShape? _commonTableShape(
-    List<_EditableTableDefinition> tables,
+    List<EditableTableDefinition> tables,
   ) {
     if (tables.isEmpty) {
       return null;
@@ -2084,414 +2079,6 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
   }
 }
 
-class _EditableZonePlan {
-  _EditableZonePlan({
-    required this.zoneId,
-    required this.floorKey,
-    required this.displayOrder,
-    required this.canvasWidth,
-    required this.canvasHeight,
-    required String name,
-    required this.tables,
-    required this.objects,
-  }) : nameController = TextEditingController(text: name);
-
-  factory _EditableZonePlan.create(int displayOrder) {
-    final floorKey = displayOrder == 1
-        ? 'first'
-        : displayOrder == 2
-        ? 'second'
-        : 'floor-$displayOrder';
-    return _EditableZonePlan(
-      zoneId: displayOrder == 1
-          ? 'main-floor'
-          : displayOrder == 2
-          ? 'vip-floor'
-          : 'floor-$displayOrder',
-      floorKey: floorKey,
-      displayOrder: displayOrder,
-      canvasWidth: _defaultPlanCanvasWidth,
-      canvasHeight: _defaultPlanCanvasHeight,
-      name: displayOrder == 1
-          ? 'First floor'
-          : displayOrder == 2
-          ? 'Second floor'
-          : 'Floor $displayOrder',
-      tables: [_EditableTableDefinition.create(floorKey, 1, '1')],
-      objects: [],
-    );
-  }
-
-  factory _EditableZonePlan.fromLayout(
-    RestaurantTableLayout layout,
-    RestaurantZone zone,
-  ) {
-    final tables = layout.tablesForZone(zone.id);
-    return _EditableZonePlan(
-      zoneId: zone.id,
-      floorKey: zone.legacyFloor,
-      displayOrder: zone.displayOrder,
-      canvasWidth: zone.canvasWidth ?? _defaultPlanCanvasWidth,
-      canvasHeight: zone.canvasHeight ?? _defaultPlanCanvasHeight,
-      name: zone.name,
-      tables: [
-        for (var i = 0; i < tables.length; i++)
-          _EditableTableDefinition.fromLayout(
-            tables[i],
-            layout.objectForTable(tables[i].id),
-            i,
-          ),
-      ],
-      objects: [
-        for (final object in layout.objectsForZone(zone.id))
-          if (object.type != RestaurantLayoutObjectType.table)
-            _EditablePlanObject.fromLayout(object),
-      ],
-    );
-  }
-
-  _EditableZonePlan copy() {
-    return _EditableZonePlan(
-      zoneId: zoneId,
-      floorKey: floorKey,
-      displayOrder: displayOrder,
-      canvasWidth: canvasWidth,
-      canvasHeight: canvasHeight,
-      name: name,
-      tables: [for (final table in tables) table.copy()],
-      objects: [for (final object in objects) object.copy()],
-    );
-  }
-
-  final String zoneId;
-  final String floorKey;
-  final int displayOrder;
-  final double canvasWidth;
-  final double canvasHeight;
-  final TextEditingController nameController;
-  final List<_EditableTableDefinition> tables;
-  final List<_EditablePlanObject> objects;
-
-  String get name {
-    final value = nameController.text.trim();
-    return value.isEmpty ? 'Floor $displayOrder' : value;
-  }
-
-  void renumberTables() {
-    for (var i = 0; i < tables.length; i++) {
-      tables[i].sortOrder = i + 1;
-    }
-  }
-
-  String nextLegacyTableNumber() {
-    var highest = 0;
-    for (final table in tables) {
-      final parsed = int.tryParse(table.legacyTableNumber);
-      if (parsed != null && parsed > highest) {
-        highest = parsed;
-      }
-    }
-    return '${highest + 1}';
-  }
-
-  void replaceFrom(_EditableZonePlan other) {
-    for (final table in tables) {
-      table.dispose();
-    }
-    nameController.text = other.name;
-    tables
-      ..clear()
-      ..addAll([for (final table in other.tables) table.copy()]);
-    objects
-      ..clear()
-      ..addAll([for (final object in other.objects) object.copy()]);
-    renumberTables();
-  }
-
-  void dispose() {
-    nameController.dispose();
-    for (final table in tables) {
-      table.dispose();
-    }
-  }
-}
-
-class _EditableTableDefinition {
-  _EditableTableDefinition({
-    required this.legacyTableNumber,
-    required this.sortOrder,
-    required String label,
-    required int capacity,
-    required this.x,
-    required this.y,
-    required this.width,
-    required this.height,
-    required this.shape,
-    this.rotation = 0,
-  }) : labelController = TextEditingController(text: label),
-       capacityController = TextEditingController(
-         text: capacity > 0 ? capacity.toString() : '',
-       );
-
-  factory _EditableTableDefinition.create(
-    String floor,
-    int sortOrder,
-    String legacyTableNumber,
-  ) {
-    final label = floor == 'second'
-        ? 'VIP Zone $legacyTableNumber'
-        : 'Table $legacyTableNumber';
-    final point = _defaultTablePoint(sortOrder - 1);
-    final size = _tableSize(RestaurantTableShape.rectangle);
-    return _EditableTableDefinition(
-      legacyTableNumber: legacyTableNumber,
-      sortOrder: sortOrder,
-      label: label,
-      capacity: 0,
-      x: point.dx,
-      y: point.dy,
-      width: size.width,
-      height: size.height,
-      shape: RestaurantTableShape.rectangle,
-    );
-  }
-
-  factory _EditableTableDefinition.fromLayout(
-    RestaurantTableDefinition table,
-    RestaurantLayoutObject? object,
-    int index,
-  ) {
-    final shape = object?.tableShape ?? RestaurantTableShape.rectangle;
-    final point = _defaultTablePoint(index);
-    final size = _tableSize(shape);
-    return _EditableTableDefinition(
-      legacyTableNumber: table.legacyTableNumber,
-      sortOrder: table.sortOrder,
-      label: table.label,
-      capacity: table.capacity,
-      x: object?.x ?? point.dx,
-      y: object?.y ?? point.dy,
-      width: object?.width ?? size.width,
-      height: object?.height ?? size.height,
-      rotation: object?.rotation ?? 0,
-      shape: shape,
-    );
-  }
-
-  _EditableTableDefinition copy() {
-    return _EditableTableDefinition(
-      legacyTableNumber: legacyTableNumber,
-      sortOrder: sortOrder,
-      label: label,
-      capacity: capacity,
-      x: x,
-      y: y,
-      width: width,
-      height: height,
-      shape: shape,
-      rotation: rotation,
-    );
-  }
-
-  /// Stable identity: orders, reservations, and Hive table rows key on
-  /// (floor, tableNumber), so this must survive reorders and deletions.
-  final String legacyTableNumber;
-  int sortOrder;
-  final TextEditingController labelController;
-  final TextEditingController capacityController;
-  double x;
-  double y;
-  double width;
-  double height;
-  double rotation;
-  RestaurantTableShape shape;
-
-  String get label {
-    final value = labelController.text.trim();
-    return value.isEmpty ? 'Table $sortOrder' : value;
-  }
-
-  int get capacity {
-    final parsed = int.tryParse(capacityController.text.trim());
-    if (parsed == null || parsed < 0) {
-      return 0;
-    }
-    return parsed;
-  }
-
-  void applyShape(
-    RestaurantTableShape value, {
-    required double canvasWidth,
-    required double canvasHeight,
-  }) {
-    shape = value;
-    final size = _tableSize(value);
-    width = size.width;
-    height = size.height;
-    moveBy(0, 0, canvasWidth: canvasWidth, canvasHeight: canvasHeight);
-  }
-
-  void resizeBy({
-    double widthDelta = 0,
-    double heightDelta = 0,
-    required double canvasWidth,
-    required double canvasHeight,
-  }) {
-    width = (width + widthDelta).clamp(54, 280).toDouble();
-    height = (height + heightDelta).clamp(44, 180).toDouble();
-    moveBy(0, 0, canvasWidth: canvasWidth, canvasHeight: canvasHeight);
-  }
-
-  void rotateBy(double delta) {
-    rotation = (rotation + delta) % 360;
-  }
-
-  void moveBy(
-    double dx,
-    double dy, {
-    required double canvasWidth,
-    required double canvasHeight,
-  }) {
-    x = _clampCanvasCoordinate(x + dx, width, canvasWidth);
-    y = _clampCanvasCoordinate(y + dy, height, canvasHeight);
-  }
-
-  void placeAt(
-    double newX,
-    double newY, {
-    required double canvasWidth,
-    required double canvasHeight,
-  }) {
-    x = _clampCanvasCoordinate(newX, width, canvasWidth);
-    y = _clampCanvasCoordinate(newY, height, canvasHeight);
-  }
-
-  void dispose() {
-    labelController.dispose();
-    capacityController.dispose();
-  }
-}
-
-class _EditablePlanObject {
-  _EditablePlanObject({
-    required this.id,
-    required this.type,
-    required this.label,
-    required this.x,
-    required this.y,
-    required this.width,
-    required this.height,
-    this.rotation = 0,
-    this.colorHex,
-  });
-
-  factory _EditablePlanObject.create(
-    RestaurantLayoutObjectType type,
-    int index,
-  ) {
-    final size = _defaultObjectSize(type);
-    return _EditablePlanObject(
-      id: '${type.name}-${DateTime.now().microsecondsSinceEpoch}-$index',
-      type: type,
-      label: _labelForType(type),
-      x: 90 + (index * 28),
-      y: 80 + (index * 24),
-      width: size.width,
-      height: size.height,
-    );
-  }
-
-  factory _EditablePlanObject.fromLayout(RestaurantLayoutObject object) {
-    return _EditablePlanObject(
-      id: object.id,
-      type: object.type,
-      label: object.label,
-      x: object.x,
-      y: object.y,
-      width: object.width,
-      height: object.height,
-      rotation: object.rotation,
-      colorHex: object.colorHex,
-    );
-  }
-
-  _EditablePlanObject copy() {
-    return _EditablePlanObject(
-      id: id,
-      type: type,
-      label: label,
-      x: x,
-      y: y,
-      width: width,
-      height: height,
-      rotation: rotation,
-      colorHex: colorHex,
-    );
-  }
-
-  _EditablePlanObject copyWith({
-    String? id,
-    RestaurantLayoutObjectType? type,
-    String? label,
-    double? x,
-    double? y,
-    double? width,
-    double? height,
-    double? rotation,
-    String? colorHex,
-  }) {
-    return _EditablePlanObject(
-      id: id ?? this.id,
-      type: type ?? this.type,
-      label: label ?? this.label,
-      x: x ?? this.x,
-      y: y ?? this.y,
-      width: width ?? this.width,
-      height: height ?? this.height,
-      rotation: rotation ?? this.rotation,
-      colorHex: colorHex ?? this.colorHex,
-    );
-  }
-
-  final String id;
-  final RestaurantLayoutObjectType type;
-  String label;
-  double x;
-  double y;
-  double width;
-  double height;
-  double rotation;
-  final String? colorHex;
-
-  void moveBy(
-    double dx,
-    double dy, {
-    required double canvasWidth,
-    required double canvasHeight,
-  }) {
-    x = _clampCanvasCoordinate(x + dx, width, canvasWidth);
-    y = _clampCanvasCoordinate(y + dy, height, canvasHeight);
-  }
-
-  void resizeBy({
-    double widthDelta = 0,
-    double heightDelta = 0,
-    required double canvasWidth,
-    required double canvasHeight,
-  }) {
-    final maxWidth = type == RestaurantLayoutObjectType.wall ? 900.0 : 460.0;
-    final minHeight = type == RestaurantLayoutObjectType.wall ? 8.0 : 24.0;
-    final maxHeight = type == RestaurantLayoutObjectType.wall ? 110.0 : 240.0;
-    width = (width + widthDelta).clamp(40, maxWidth).toDouble();
-    height = (height + heightDelta).clamp(minHeight, maxHeight).toDouble();
-    moveBy(0, 0, canvasWidth: canvasWidth, canvasHeight: canvasHeight);
-  }
-
-  void rotateBy(double delta) {
-    rotation = (rotation + delta) % 360;
-  }
-}
-
 class _StepperControl extends StatelessWidget {
   const _StepperControl({
     required this.label,
@@ -2567,51 +2154,7 @@ class _WallDraftPainter extends CustomPainter {
   }
 }
 
-Offset _defaultTablePoint(int index) {
-  const columns = 4;
-  const cellWidth = 210.0;
-  const cellHeight = 130.0;
-  return Offset(
-    70 + (index % columns) * cellWidth,
-    70 + (index ~/ columns) * cellHeight,
-  );
-}
-
-double _clampCanvasCoordinate(
-  double value,
-  double objectSize,
-  double canvasSize,
-) {
-  final maxValue = math.max(0.0, canvasSize - objectSize);
-  return value.clamp(0.0, maxValue).toDouble();
-}
-
-_EditablePlanObject? _editableWallFromPoints({
-  required String id,
-  required Offset start,
-  required Offset end,
-  required double thickness,
-  String? label,
-}) {
-  final vector = end - start;
-  final length = vector.distance;
-  if (length < 18) {
-    return null;
-  }
-  final center = Offset((start.dx + end.dx) / 2, (start.dy + end.dy) / 2);
-  return _EditablePlanObject(
-    id: id,
-    type: RestaurantLayoutObjectType.wall,
-    label: label ?? _labelForType(RestaurantLayoutObjectType.wall),
-    x: center.dx - length / 2,
-    y: center.dy - thickness / 2,
-    width: length,
-    height: thickness,
-    rotation: math.atan2(vector.dy, vector.dx) * 180 / math.pi,
-  );
-}
-
-FloorPlanWallSegment _wallSegmentOf(_EditablePlanObject wall) {
+FloorPlanWallSegment _wallSegmentOf(EditablePlanObject wall) {
   return (
     x: wall.x,
     y: wall.y,
@@ -2621,7 +2164,7 @@ FloorPlanWallSegment _wallSegmentOf(_EditablePlanObject wall) {
   );
 }
 
-List<FloorPlanWallSegment> _wallSegmentsOf(List<_EditablePlanObject> objects) {
+List<FloorPlanWallSegment> _wallSegmentsOf(List<EditablePlanObject> objects) {
   return [
     for (final object in objects)
       if (object.type == RestaurantLayoutObjectType.wall)
@@ -2646,25 +2189,6 @@ String _safeId(String value) {
       .replaceAll(RegExp('(^-|-\$)'), '');
 }
 
-Size _tableSize(RestaurantTableShape shape) {
-  switch (shape) {
-    case RestaurantTableShape.rectangle:
-      return const Size(130, 86);
-    case RestaurantTableShape.rounded:
-      return const Size(136, 88);
-    case RestaurantTableShape.square:
-      return const Size(112, 112);
-    case RestaurantTableShape.circle:
-      return const Size(112, 112);
-    case RestaurantTableShape.long:
-      return const Size(190, 86);
-    case RestaurantTableShape.booth:
-      return const Size(160, 88);
-    case RestaurantTableShape.barSeat:
-      return const Size(86, 86);
-  }
-}
-
 double _tableRadius(RestaurantTableShape shape) {
   switch (shape) {
     case RestaurantTableShape.circle:
@@ -2678,48 +2202,5 @@ double _tableRadius(RestaurantTableShape shape) {
     case RestaurantTableShape.square:
     case RestaurantTableShape.long:
       return 8;
-  }
-}
-
-Size _defaultObjectSize(RestaurantLayoutObjectType type) {
-  switch (type) {
-    case RestaurantLayoutObjectType.wall:
-      return const Size(240, 24);
-    case RestaurantLayoutObjectType.entrance:
-      return const Size(180, 56);
-    case RestaurantLayoutObjectType.stairs:
-      return const Size(160, 90);
-    case RestaurantLayoutObjectType.stage:
-      return const Size(240, 90);
-    case RestaurantLayoutObjectType.bar:
-    case RestaurantLayoutObjectType.counter:
-      return const Size(220, 64);
-    case RestaurantLayoutObjectType.restroom:
-    case RestaurantLayoutObjectType.label:
-    case RestaurantLayoutObjectType.table:
-      return const Size(150, 48);
-  }
-}
-
-String _labelForType(RestaurantLayoutObjectType type) {
-  switch (type) {
-    case RestaurantLayoutObjectType.wall:
-      return 'Wall';
-    case RestaurantLayoutObjectType.entrance:
-      return 'Entrance';
-    case RestaurantLayoutObjectType.stairs:
-      return 'Stairs';
-    case RestaurantLayoutObjectType.stage:
-      return 'Stage';
-    case RestaurantLayoutObjectType.bar:
-      return 'Bar';
-    case RestaurantLayoutObjectType.counter:
-      return 'Counter';
-    case RestaurantLayoutObjectType.restroom:
-      return 'Restroom';
-    case RestaurantLayoutObjectType.table:
-      return 'Table';
-    case RestaurantLayoutObjectType.label:
-      return 'Label';
   }
 }

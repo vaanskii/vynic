@@ -162,7 +162,24 @@ verification, not one big commit.
   such as walls/entrances/stairs/stage/bar/labels can be placed on the plan, and
   the Windows POS table selector renders that saved visual plan. This keeps SVG
   maps and button grids as supported render modes while moving the future path to
-  an app-created floor plan.
+  an app-created floor plan. A fifth slice refined the editor with additional
+  table shape presets, rotation controls, resizable venue objects, a larger plan
+  preview dialog, dynamic extra floors/zones, stair-like rendering, and connected
+  reserved-table highlighting for nearby multi-table reservations/orders. A sixth
+  slice split the admin canvas into a compact read-only preview plus an expanded
+  edit workspace where clicking a table/object exposes name, shape, size, and
+  rotation controls. A seventh slice moved add/remove table and object actions
+  into the expanded workspace and added removable custom floors. An eighth slice
+  added an expanded-editor save action, a stable always-visible edit panel, and
+  two-column admin floor cards. A ninth slice top-aligned the table canvases so
+  floor plans start at the top of their page/panel. A tenth slice added a
+  multi-select table mode in the expanded editor, with bulk shape changes,
+  row/column alignment, and save-only application of expanded-editor changes. An
+  eleventh slice made selected table groups move together and added point-to-point
+  wall drawing for straight/corner/diagonal segments, thicker walls, wall
+  splitting, wall-based entrance placement, cleaner rounded wall joints, label-free
+  compact admin previews, a top-aligned table-layout admin section, and solid
+  endpoint joints for split/connected wall segments.
   Delete the integer-code arithmetic. Centralize the one remaining encode/decode
   if still needed for storage compatibility.
 - **Phase 4 — Status enums + safer state.** Replace stringly-typed order/reservation

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
@@ -33,6 +35,14 @@ class HomeTopBarSection extends StatelessWidget {
   /// Unread badge for mobile-origin / POS notification panel (Windows).
   final int notificationUnreadCount;
   final VoidCallback? onNotificationTap;
+
+  List<({int floor, String label})> get _floorEntries {
+    final zones = [...DatabaseService.getRestaurantTableLayout().zones]
+      ..sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
+    return [
+      for (final zone in zones) (floor: zone.displayOrder, label: zone.name),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,11 +84,7 @@ class HomeTopBarSection extends StatelessWidget {
                 child: InkWell(
                   onTap: onToggleSidebar,
                   borderRadius: BorderRadius.circular(8),
-                  child: Icon(
-                    Icons.menu,
-                    color: primaryColor,
-                    size: 28,
-                  ),
+                  child: Icon(Icons.menu, color: primaryColor, size: 28),
                 ),
               ),
             Container(
@@ -89,7 +95,10 @@ class HomeTopBarSection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               padding: const EdgeInsets.all(2),
-              child: Image.asset('assets/logo/vynicnew.png', fit: BoxFit.contain),
+              child: Image.asset(
+                'assets/logo/vynicnew.png',
+                fit: BoxFit.contain,
+              ),
             ),
             const Spacer(),
             if (onNotificationTap != null) ...[
@@ -117,11 +126,7 @@ class HomeTopBarSection extends StatelessWidget {
             child: InkWell(
               onTap: onToggleSidebar,
               borderRadius: BorderRadius.circular(8),
-              child: Icon(
-                Icons.menu,
-                color: primaryColor,
-                size: 32,
-              ),
+              child: Icon(Icons.menu, color: primaryColor, size: 32),
             ),
           ),
         Container(
@@ -135,9 +140,7 @@ class HomeTopBarSection extends StatelessWidget {
           child: Image.asset('assets/logo/vynicnew.png', fit: BoxFit.contain),
         ),
         const SizedBox(width: 16),
-        Expanded(
-          child: _buildUserInfo(isMobile: false),
-        ),
+        Expanded(child: _buildUserInfo(isMobile: false)),
         if (onNotificationTap != null) ...[
           const SizedBox(width: 12),
           Padding(
@@ -171,16 +174,13 @@ class HomeTopBarSection extends StatelessWidget {
           runSpacing: 8,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 4,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
                 color: user.isManager
                     ? secondaryColor
                     : user.isSupervisor
-                        ? const Color(0xFF7C3AED)
-                        : const Color(0xFF38BDF8),
+                    ? const Color(0xFF7C3AED)
+                    : const Color(0xFF38BDF8),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
@@ -205,10 +205,7 @@ class HomeTopBarSection extends StatelessWidget {
                   DatabaseService.getGeorgianFormattedDate(
                     DatabaseService.getCurrentDate(),
                   ),
-                  style: TextStyle(
-                    color: mutedText,
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: mutedText, fontSize: 13),
                 ),
               ],
             ),
@@ -219,23 +216,27 @@ class HomeTopBarSection extends StatelessWidget {
   }
 
   Widget _buildDesktopFloorSwitcher() {
+    final floors = _floorEntries;
     return SizedBox(
-      height: 100,
+      height: math.max(52, floors.length * 48).toDouble(),
       child: Container(
         padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
           color: surfaceColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: primaryColor.withValues(alpha: 0.08),
-          ),
+          border: Border.all(color: primaryColor.withValues(alpha: 0.08)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildFloorButton(1, isMobile: false),
-            const SizedBox(height: 4),
-            _buildFloorButton(2, isMobile: false),
+            for (var i = 0; i < floors.length; i++) ...[
+              if (i > 0) const SizedBox(height: 4),
+              _buildFloorButton(
+                floors[i].floor,
+                label: floors[i].label,
+                isMobile: false,
+              ),
+            ],
           ],
         ),
       ),
@@ -243,21 +244,25 @@ class HomeTopBarSection extends StatelessWidget {
   }
 
   Widget _buildMobileFloorSwitcher() {
+    final floors = _floorEntries;
     return Container(
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
         color: surfaceColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: primaryColor.withValues(alpha: 0.08),
-        ),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.08)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildFloorButton(1, isMobile: true),
-          const SizedBox(width: 4),
-          _buildFloorButton(2, isMobile: true),
+          for (var i = 0; i < floors.length; i++) ...[
+            if (i > 0) const SizedBox(width: 4),
+            _buildFloorButton(
+              floors[i].floor,
+              label: floors[i].label,
+              isMobile: true,
+            ),
+          ],
         ],
       ),
     );
@@ -311,9 +316,12 @@ class HomeTopBarSection extends StatelessWidget {
     );
   }
 
-  Widget _buildFloorButton(int floor, {required bool isMobile}) {
+  Widget _buildFloorButton(
+    int floor, {
+    required String label,
+    required bool isMobile,
+  }) {
     final isActive = currentFloor == floor;
-    final label = 'სართული $floor';
 
     return Semantics(
       selected: isActive,

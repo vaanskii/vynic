@@ -27,7 +27,10 @@ class HomeTablesDashboardSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final floorName = currentFloor == 1 ? 'first' : 'second';
+    final layout = DatabaseService.getRestaurantTableLayout();
+    final currentZone =
+        layout.zoneForDisplayOrder(currentFloor) ?? layout.zones.first;
+    final floorName = currentZone.legacyFloor;
     final tables = DatabaseService.getTablesByFloor(floorName);
     final reservedCount = tables.where((table) => table.isReserved).length;
     final availableCount = tables.length - reservedCount;
@@ -374,6 +377,7 @@ class HomeTablesDashboardSection extends StatelessWidget {
             activeColor: const Color(0xFF075E6B),
             mutedText: mutedText,
             onSwitchFloor: onSwitchFloor,
+            floors: _floorEntries(),
           ),
         ],
       ),
@@ -415,6 +419,7 @@ class HomeTablesDashboardSection extends StatelessWidget {
             activeColor: const Color(0xFF075E6B),
             mutedText: mutedText,
             onSwitchFloor: onSwitchFloor,
+            floors: _floorEntries(),
             expanded: true,
           ),
         ],
@@ -465,6 +470,14 @@ class HomeTablesDashboardSection extends StatelessWidget {
       ],
     );
   }
+
+  List<({int floor, String label})> _floorEntries() {
+    final zones = [...DatabaseService.getRestaurantTableLayout().zones]
+      ..sort((a, b) => a.displayOrder.compareTo(b.displayOrder));
+    return [
+      for (final zone in zones) (floor: zone.displayOrder, label: zone.name),
+    ];
+  }
 }
 
 class _FloorSwitch extends StatelessWidget {
@@ -473,6 +486,7 @@ class _FloorSwitch extends StatelessWidget {
     required this.activeColor,
     required this.mutedText,
     required this.onSwitchFloor,
+    required this.floors,
     this.expanded = false,
   });
 
@@ -480,6 +494,7 @@ class _FloorSwitch extends StatelessWidget {
   final Color activeColor;
   final Color mutedText;
   final ValueChanged<int> onSwitchFloor;
+  final List<({int floor, String label})> floors;
   final bool expanded;
 
   @override
@@ -494,7 +509,7 @@ class _FloorSwitch extends StatelessWidget {
       child: Row(
         mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
         children: [
-          for (final floor in [1, 2])
+          for (final floor in floors)
             expanded
                 ? Expanded(child: _buildFloorButton(floor))
                 : _buildFloorButton(floor),
@@ -503,9 +518,11 @@ class _FloorSwitch extends StatelessWidget {
     );
   }
 
-  Widget _buildFloorButton(int floor) {
+  Widget _buildFloorButton(({int floor, String label}) floor) {
     return InkWell(
-      onTap: floor == currentFloor ? null : () => onSwitchFloor(floor),
+      onTap: floor.floor == currentFloor
+          ? null
+          : () => onSwitchFloor(floor.floor),
       borderRadius: BorderRadius.circular(7),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
@@ -513,9 +530,9 @@ class _FloorSwitch extends StatelessWidget {
         alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: floor == currentFloor ? activeColor : Colors.white,
+          color: floor.floor == currentFloor ? activeColor : Colors.white,
           borderRadius: BorderRadius.circular(7),
-          boxShadow: floor == currentFloor
+          boxShadow: floor.floor == currentFloor
               ? [
                   BoxShadow(
                     color: activeColor.withValues(alpha: 0.18),
@@ -526,11 +543,11 @@ class _FloorSwitch extends StatelessWidget {
               : null,
         ),
         child: Text(
-          '$floor სართული',
+          floor.label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            color: floor == currentFloor ? Colors.white : mutedText,
+            color: floor.floor == currentFloor ? Colors.white : mutedText,
             fontSize: 12,
             fontWeight: FontWeight.w800,
           ),

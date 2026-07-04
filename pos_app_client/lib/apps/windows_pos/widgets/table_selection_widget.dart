@@ -553,13 +553,8 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
       focusedReservedTables.isEmpty ? null : focusedReservedTables.first;
 
   bool get hasMixedFloorSelection {
-    final hasFirstFloor = _selectedTables.any(
-      (id) => _floorForTableId(id) == 'first',
-    );
-    final hasSecondFloor = _selectedTables.any(
-      (id) => _floorForTableId(id) == 'second',
-    );
-    return hasFirstFloor && hasSecondFloor;
+    final selectedFloors = _selectedTables.map(_floorForTableId).toSet();
+    return selectedFloors.length > 1;
   }
 
   // Expose selected tables for display in home screen
@@ -591,7 +586,8 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
         final scaledWidth = svgWidth * scale;
         final scaledHeight = svgHeight * scale;
 
-        return Center(
+        return Align(
+          alignment: Alignment.topCenter,
           child: SizedBox(
             width: scaledWidth,
             height: scaledHeight,
@@ -675,7 +671,8 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
         final scaledWidth = canvasWidth * scale;
         final scaledHeight = canvasHeight * scale;
 
-        return Center(
+        return Align(
+          alignment: Alignment.topCenter,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: SizedBox(
@@ -688,9 +685,43 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
                     Positioned.fill(
                       child: CustomPaint(painter: _FloorPlanGridPainter()),
                     ),
+                    ..._buildConnectedReservationBands(objects, scale),
                     for (final object in objects)
                       if (object.type != RestaurantLayoutObjectType.table)
                         _buildFloorPlanObject(object, scale),
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: CustomPaint(
+                          painter: _FloorPlanWallJointsPainter(
+                            joints: _floorPlanWallJoints(objects, scale),
+                            color: _floorPlanObjectColors(
+                              const RestaurantLayoutObject(
+                                id: 'wall-color',
+                                zoneId: 'wall-color',
+                                type: RestaurantLayoutObjectType.wall,
+                                label: 'Wall',
+                                x: 0,
+                                y: 0,
+                                width: 1,
+                                height: 1,
+                              ),
+                            ).$1,
+                            borderColor: _floorPlanObjectColors(
+                              const RestaurantLayoutObject(
+                                id: 'wall-border',
+                                zoneId: 'wall-border',
+                                type: RestaurantLayoutObjectType.wall,
+                                label: 'Wall',
+                                x: 0,
+                                y: 0,
+                                width: 1,
+                                height: 1,
+                              ),
+                            ).$2,
+                          ),
+                        ),
+                      ),
+                    ),
                     for (final object in objects)
                       if (object.type == RestaurantLayoutObjectType.table &&
                           object.tableId != null)
@@ -741,6 +772,112 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
       tableId: table.id,
       tableShape: RestaurantTableShape.rectangle,
     );
+  }
+
+  List<Widget> _buildConnectedReservationBands(
+    List<RestaurantLayoutObject> objects,
+    double scale,
+  ) {
+    final grouped = <String, List<RestaurantLayoutObject>>{};
+    for (final object in objects) {
+      final tableId = object.tableId;
+      if (object.type != RestaurantLayoutObjectType.table || tableId == null) {
+        continue;
+      }
+      final table = _getTableModel(tableId);
+      final groupKey = table == null ? null : _getReservationGroupKey(table);
+      if (table == null || !table.isReserved || groupKey == null) {
+        continue;
+      }
+      grouped.putIfAbsent(groupKey, () => []).add(object);
+    }
+
+    final bands = <Widget>[];
+    for (final entry in grouped.entries) {
+      for (final component in _nearbyTableComponents(entry.value)) {
+        if (component.length < 2) {
+          continue;
+        }
+        final color =
+            _reservationColors[entry.key] ?? _generateColorFromId(entry.key);
+        final union = _unionForObjects(component).inflate(18);
+        bands.add(
+          Positioned(
+            left: union.left * scale,
+            top: union.top * scale,
+            width: union.width * scale,
+            height: union.height * scale,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: color.withValues(alpha: 0.58),
+                    width: 2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+    }
+    return bands;
+  }
+
+  List<List<RestaurantLayoutObject>> _nearbyTableComponents(
+    List<RestaurantLayoutObject> objects,
+  ) {
+    final remaining = {...objects};
+    final components = <List<RestaurantLayoutObject>>[];
+    while (remaining.isNotEmpty) {
+      final start = remaining.first;
+      final queue = <RestaurantLayoutObject>[start];
+      final component = <RestaurantLayoutObject>[];
+      remaining.remove(start);
+
+      while (queue.isNotEmpty) {
+        final current = queue.removeLast();
+        component.add(current);
+        final neighbors = remaining
+            .where((candidate) => _tableGap(current, candidate) <= 90)
+            .toList();
+        for (final neighbor in neighbors) {
+          remaining.remove(neighbor);
+          queue.add(neighbor);
+        }
+      }
+      components.add(component);
+    }
+    return components;
+  }
+
+  double _tableGap(RestaurantLayoutObject a, RestaurantLayoutObject b) {
+    final dx = math.max(
+      0,
+      (a.x + a.width / 2 - b.x - b.width / 2).abs() - (a.width + b.width) / 2,
+    );
+    final dy = math.max(
+      0,
+      (a.y + a.height / 2 - b.y - b.height / 2).abs() -
+          (a.height + b.height) / 2,
+    );
+    return math.sqrt(dx * dx + dy * dy);
+  }
+
+  Rect _unionForObjects(List<RestaurantLayoutObject> objects) {
+    var left = objects.first.x;
+    var top = objects.first.y;
+    var right = objects.first.x + objects.first.width;
+    var bottom = objects.first.y + objects.first.height;
+    for (final object in objects.skip(1)) {
+      left = math.min(left, object.x);
+      top = math.min(top, object.y);
+      right = math.max(right, object.x + object.width);
+      bottom = math.max(bottom, object.y + object.height);
+    }
+    return Rect.fromLTRB(left, top, right, bottom);
   }
 
   Widget _buildFloorPlanTable(RestaurantLayoutObject object, double scale) {
@@ -848,40 +985,55 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
       height: object.height * scale,
       child: Transform.rotate(
         angle: object.rotation * math.pi / 180,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.$1,
-            borderRadius: BorderRadius.circular(
-              object.type == RestaurantLayoutObjectType.wall ? 2 : 8,
-            ),
-            border: Border.all(color: colors.$2, width: 1.5),
-          ),
-          child: Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  _floorPlanObjectIcon(object.type),
-                  color: colors.$3,
-                  size: 18,
+        child: object.type == RestaurantLayoutObjectType.wall
+            ? CustomPaint(
+                painter: _FloorPlanWallSegmentPainter(
+                  color: colors.$1,
+                  borderColor: colors.$2,
                 ),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    object.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: colors.$3,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
+              )
+            : DecoratedBox(
+                decoration: BoxDecoration(
+                  color: colors.$1,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: colors.$2, width: 1.5),
+                ),
+                child: Stack(
+                  children: [
+                    if (object.type == RestaurantLayoutObjectType.stairs)
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: _FloorPlanStairsPainter(colors.$2),
+                        ),
+                      ),
+                    Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            _floorPlanObjectIcon(object.type),
+                            color: colors.$3,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              object.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: colors.$3,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-        ),
+              ),
       ),
     );
   }
@@ -895,9 +1047,7 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     return BoxDecoration(
       color: color,
       border: Border.all(color: borderColor, width: focused ? 3 : 2),
-      borderRadius: BorderRadius.circular(
-        shape == RestaurantTableShape.circle ? 999 : 8,
-      ),
+      borderRadius: BorderRadius.circular(_floorPlanTableRadius(shape)),
       boxShadow: [
         BoxShadow(
           color: borderColor.withValues(alpha: focused ? 0.28 : 0.16),
@@ -962,7 +1112,7 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
       case RestaurantLayoutObjectType.entrance:
         return Icons.login;
       case RestaurantLayoutObjectType.stairs:
-        return Icons.layers;
+        return Icons.stairs_outlined;
       case RestaurantLayoutObjectType.stage:
         return Icons.theaters;
       case RestaurantLayoutObjectType.bar:
@@ -1119,6 +1269,89 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
   }
 }
 
+double _floorPlanTableRadius(RestaurantTableShape shape) {
+  switch (shape) {
+    case RestaurantTableShape.circle:
+      return 999;
+    case RestaurantTableShape.rounded:
+    case RestaurantTableShape.booth:
+      return 22;
+    case RestaurantTableShape.barSeat:
+      return 14;
+    case RestaurantTableShape.rectangle:
+    case RestaurantTableShape.square:
+    case RestaurantTableShape.long:
+      return 8;
+  }
+}
+
+class _FloorPlanWallJoint {
+  const _FloorPlanWallJoint({required this.center, required this.radius});
+
+  final Offset center;
+  final double radius;
+}
+
+class _FloorPlanWallEndpoint {
+  const _FloorPlanWallEndpoint({required this.point, required this.radius});
+
+  final Offset point;
+  final double radius;
+}
+
+(Offset, Offset) _floorPlanWallEndpoints(RestaurantLayoutObject wall) {
+  final center = Offset(wall.x + wall.width / 2, wall.y + wall.height / 2);
+  final angle = wall.rotation * math.pi / 180;
+  final half = Offset(math.cos(angle), math.sin(angle)) * (wall.width / 2);
+  return (center - half, center + half);
+}
+
+List<_FloorPlanWallJoint> _floorPlanWallJoints(
+  List<RestaurantLayoutObject> objects,
+  double scale,
+) {
+  final endpoints = <_FloorPlanWallEndpoint>[];
+  for (final object in objects) {
+    if (object.type != RestaurantLayoutObjectType.wall) {
+      continue;
+    }
+    final points = _floorPlanWallEndpoints(object);
+    final radius = object.height * scale / 2;
+    endpoints
+      ..add(_FloorPlanWallEndpoint(point: points.$1 * scale, radius: radius))
+      ..add(_FloorPlanWallEndpoint(point: points.$2 * scale, radius: radius));
+  }
+
+  final used = <int>{};
+  final joints = <_FloorPlanWallJoint>[];
+  for (var i = 0; i < endpoints.length; i++) {
+    if (used.contains(i)) {
+      continue;
+    }
+    final group = <_FloorPlanWallEndpoint>[endpoints[i]];
+    for (var j = i + 1; j < endpoints.length; j++) {
+      if (used.contains(j)) {
+        continue;
+      }
+      final tolerance = math.max(8.0, endpoints[i].radius * 0.65);
+      if ((endpoints[i].point - endpoints[j].point).distance <= tolerance) {
+        group.add(endpoints[j]);
+        used.add(j);
+      }
+    }
+    if (group.length < 2) {
+      continue;
+    }
+    used.add(i);
+    final center =
+        group.map((entry) => entry.point).reduce((a, b) => a + b) /
+        group.length.toDouble();
+    final radius = group.map((entry) => entry.radius).reduce(math.max);
+    joints.add(_FloorPlanWallJoint(center: center, radius: radius));
+  }
+  return joints;
+}
+
 class _FloorPlanGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -1136,4 +1369,99 @@ class _FloorPlanGridPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _FloorPlanStairsPainter extends CustomPainter {
+  const _FloorPlanStairsPainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color.withValues(alpha: 0.55)
+      ..strokeWidth = 2;
+    const steps = 5;
+    for (var i = 1; i < steps; i++) {
+      final x = size.width * i / steps;
+      canvas.drawLine(Offset(x, 6), Offset(x, size.height - 6), paint);
+    }
+    for (var i = 1; i < steps; i++) {
+      final y = size.height * i / steps;
+      canvas.drawLine(Offset(6, y), Offset(size.width - 6, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _FloorPlanStairsPainter oldDelegate) {
+    return oldDelegate.color != color;
+  }
+}
+
+class _FloorPlanWallSegmentPainter extends CustomPainter {
+  const _FloorPlanWallSegmentPainter({
+    required this.color,
+    required this.borderColor,
+  });
+
+  final Color color;
+  final Color borderColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final centerY = size.height / 2;
+    final borderPaint = Paint()
+      ..color = borderColor
+      ..strokeWidth = size.height + 4
+      ..strokeCap = StrokeCap.round
+      ..isAntiAlias = true;
+    final fillPaint = Paint()
+      ..color = color
+      ..strokeWidth = size.height
+      ..strokeCap = StrokeCap.round
+      ..isAntiAlias = true;
+
+    canvas
+      ..drawLine(Offset(0, centerY), Offset(size.width, centerY), borderPaint)
+      ..drawLine(Offset(0, centerY), Offset(size.width, centerY), fillPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _FloorPlanWallSegmentPainter oldDelegate) {
+    return oldDelegate.color != color || oldDelegate.borderColor != borderColor;
+  }
+}
+
+class _FloorPlanWallJointsPainter extends CustomPainter {
+  const _FloorPlanWallJointsPainter({
+    required this.joints,
+    required this.color,
+    required this.borderColor,
+  });
+
+  final List<_FloorPlanWallJoint> joints;
+  final Color color;
+  final Color borderColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final borderPaint = Paint()
+      ..color = borderColor
+      ..isAntiAlias = true;
+    final fillPaint = Paint()
+      ..color = color
+      ..isAntiAlias = true;
+    for (final joint in joints) {
+      canvas
+        ..drawCircle(joint.center, joint.radius + 2, borderPaint)
+        ..drawCircle(joint.center, joint.radius, fillPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _FloorPlanWallJointsPainter oldDelegate) {
+    return oldDelegate.joints != joints ||
+        oldDelegate.color != color ||
+        oldDelegate.borderColor != borderColor;
+  }
 }

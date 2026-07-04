@@ -12,7 +12,15 @@ enum RestaurantLayoutObjectType {
   restroom,
 }
 
-enum RestaurantTableShape { rectangle, circle, booth, barSeat }
+enum RestaurantTableShape {
+  rectangle,
+  rounded,
+  square,
+  circle,
+  long,
+  booth,
+  barSeat,
+}
 
 class RestaurantTableLayout {
   final String id;

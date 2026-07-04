@@ -19,7 +19,10 @@ class DashboardController extends ChangeNotifier {
   Future<void> initialize() async {
     await loadAll();
     _refreshTimer?.cancel();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) => loadAll());
+    _refreshTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => loadAll(),
+    );
   }
 
   /// Lightweight refresh for realtime socket events (revenue + tables).

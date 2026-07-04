@@ -460,15 +460,15 @@ class _SettingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _AdminSectionTitle(title: title),
-          _AdminPanel(
-            padding: EdgeInsets.zero,
-            child: Column(children: children),
-          ),
-        ],
-      );
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _AdminSectionTitle(title: title),
+      _AdminPanel(
+        padding: EdgeInsets.zero,
+        child: Column(children: children),
+      ),
+    ],
+  );
 }
 
 class _DashboardAppearanceTile extends StatelessWidget {
@@ -486,11 +486,7 @@ class _DashboardAppearanceTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          Icon(
-            Icons.palette_outlined,
-            size: 20,
-            color: AdminTheme.primary,
-          ),
+          Icon(Icons.palette_outlined, size: 20, color: AdminTheme.primary),
           SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -514,10 +510,7 @@ class _DashboardAppearanceTile extends StatelessWidget {
           SegmentedButton<ManagerDashboardAppearance>(
             segments: [
               for (final mode in ManagerDashboardAppearance.values)
-                ButtonSegment(
-                  value: mode,
-                  label: Text(mode.labelGeorgian),
-                ),
+                ButtonSegment(value: mode, label: Text(mode.labelGeorgian)),
             ],
             selected: {appearance},
             onSelectionChanged: (selected) {
@@ -575,10 +568,7 @@ class _SettingsTile extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AdminTheme.textDim,
-                  ),
+                  style: TextStyle(fontSize: 12, color: AdminTheme.textDim),
                 ),
                 Text(
                   muted ? 'მიუწვდომელია' : value,

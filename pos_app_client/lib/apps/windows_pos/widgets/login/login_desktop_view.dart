@@ -240,10 +240,7 @@ class LoginDesktopView extends StatelessWidget {
             borderRadius: BorderRadius.circular(
               compact ? 18 : (dense ? 16 : 24),
             ),
-            child: Image.asset(
-              'assets/logo/vynicnew.png',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/logo/vynicnew.png', fit: BoxFit.cover),
           ),
         ),
         SizedBox(height: dense ? 5 : 12),

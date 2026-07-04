@@ -79,10 +79,7 @@ class OrderDetailDetailsPanel extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 )
-              : _GuestStepper(
-                  value: guestCount!,
-                  onChanged: onGuestsChanged!,
-                ),
+              : _GuestStepper(value: guestCount!, onChanged: onGuestsChanged!),
         ),
       );
     }
@@ -266,10 +263,7 @@ class _GuestStepper extends StatelessWidget {
               ),
             ),
           ),
-          _StepperButton(
-            icon: Icons.add,
-            onTap: () => onChanged(value + 1),
-          ),
+          _StepperButton(icon: Icons.add, onTap: () => onChanged(value + 1)),
         ],
       ),
     );

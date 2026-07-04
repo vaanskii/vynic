@@ -41,9 +41,7 @@ class ReceiptPreviewDialog extends StatelessWidget {
           pageFormat: PdfPageFormat.roll80,
           margin: pw.EdgeInsets.zero,
           build: (context) {
-            return pw.Center(
-              child: pw.Image(image, fit: pw.BoxFit.contain),
-            );
+            return pw.Center(child: pw.Image(image, fit: pw.BoxFit.contain));
           },
         ),
       );
@@ -74,12 +72,17 @@ class ReceiptPreviewDialog extends StatelessWidget {
         if (!context.mounted) return;
         showSuccessToast(context, 'ფაილი წარმატებით შეინახა');
       } else {
-        await Share.shareXFiles([XFile(tmpFile.path)], text: 'ქვითარი (Receipt)');
+        await Share.shareXFiles([
+          XFile(tmpFile.path),
+        ], text: 'ქვითარი (Receipt)');
       }
     } catch (e) {
       if (context.mounted) {
         if (e.toString().contains('MissingPluginException')) {
-          showErrorToast(context, 'გთხოვთ გადატვირთოთ აპლიკაცია (Missing Plugin)');
+          showErrorToast(
+            context,
+            'გთხოვთ გადატვირთოთ აპლიკაცია (Missing Plugin)',
+          );
         } else {
           showErrorToast(context, 'შეცდომა: $e');
         }

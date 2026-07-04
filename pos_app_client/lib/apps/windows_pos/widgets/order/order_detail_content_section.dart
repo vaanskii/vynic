@@ -50,9 +50,7 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
         order.packageItems.isNotEmpty ||
         order.packageGuestCount > 0;
 
-    final activeItems = order.items
-        .where((item) => item.quantity > 0)
-        .toList();
+    final activeItems = order.items.where((item) => item.quantity > 0).toList();
     final packageCount = order.packageItems
         .where((item) => item.quantity > 0)
         .length;
@@ -212,11 +210,7 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
     );
   }
 
-  Widget _buildTableRow(
-    OrderItem item,
-    int index, {
-    required bool shaded,
-  }) {
+  Widget _buildTableRow(OrderItem item, int index, {required bool shaded}) {
     final comment = item.comment?.trim();
     final highlighted = PosChangeHighlightService.shouldHighlightItem(
       widget.highlightItemKeys,
@@ -303,10 +297,7 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
             child: Text(
               '${item.unitPrice.toStringAsFixed(2)} ₾',
               textAlign: TextAlign.right,
-              style: const TextStyle(
-                color: _mutedTextColor,
-                fontSize: 13,
-              ),
+              style: const TextStyle(color: _mutedTextColor, fontSize: 13),
             ),
           ),
           Expanded(
@@ -1930,9 +1921,7 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: highlighted
-            ? const Color(0xFFFFF7ED)
-            : _panelColor,
+        color: highlighted ? const Color(0xFFFFF7ED) : _panelColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: highlighted ? const Color(0xFFF59E0B) : _borderColor,

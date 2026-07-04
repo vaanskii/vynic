@@ -19,7 +19,10 @@ class TakeawayRepository {
     return _service.createTakeawayOrder(payload);
   }
 
-  void _collectItems(Map<String, dynamic> category, List<TakeawayMenuItem> out) {
+  void _collectItems(
+    Map<String, dynamic> category,
+    List<TakeawayMenuItem> out,
+  ) {
     final catItems = category['items'] as List? ?? [];
     for (final item in catItems) {
       final m = item as Map<String, dynamic>;

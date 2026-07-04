@@ -396,7 +396,11 @@ class _HomeLandingDashboardState extends State<HomeLandingDashboard> {
               color: visual.color.withValues(alpha: 0.35),
             ),
             const SizedBox(width: 8),
-            Icon(Icons.lock_outline_rounded, color: visual.color, size: iconSize),
+            Icon(
+              Icons.lock_outline_rounded,
+              color: visual.color,
+              size: iconSize,
+            ),
           ],
         ],
       ),

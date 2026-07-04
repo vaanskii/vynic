@@ -55,58 +55,58 @@ class _ReportTabState extends State<_ReportTab>
           child: _loading
               ? const _AdminLoading()
               : _error != null
-                  ? _ErrorWidget(onRetry: _load)
-                  : _buildReport(),
+              ? _ErrorWidget(onRetry: _load)
+              : _buildReport(),
         ),
       ],
     );
   }
 
   Widget _buildPeriodSelector() => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-        child: Column(
+    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+    child: Column(
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _AdminFilterChip(
-                  label: 'დღეს',
-                  selected: _period == 'today',
-                  onTap: () {
-                    setState(() => _period = 'today');
-                    _load();
-                  },
-                ),
-                _AdminFilterChip(
-                  label: 'კვირა',
-                  selected: _period == 'week',
-                  onTap: () {
-                    setState(() => _period = 'week');
-                    _load();
-                  },
-                ),
-                _AdminFilterChip(
-                  label: 'თვე',
-                  selected: _period == 'month',
-                  onTap: () {
-                    setState(() => _period = 'month');
-                    _load();
-                  },
-                ),
-              ],
+            _AdminFilterChip(
+              label: 'დღეს',
+              selected: _period == 'today',
+              onTap: () {
+                setState(() => _period = 'today');
+                _load();
+              },
             ),
-            if (_period == 'month') ...[
-              SizedBox(height: 8),
-              _AdminMonthNav(
-                label: _monthKey,
-                onPrev: _prevMonth,
-                onNext: _nextMonth,
-              ),
-            ],
+            _AdminFilterChip(
+              label: 'კვირა',
+              selected: _period == 'week',
+              onTap: () {
+                setState(() => _period = 'week');
+                _load();
+              },
+            ),
+            _AdminFilterChip(
+              label: 'თვე',
+              selected: _period == 'month',
+              onTap: () {
+                setState(() => _period = 'month');
+                _load();
+              },
+            ),
           ],
         ),
-      );
+        if (_period == 'month') ...[
+          SizedBox(height: 8),
+          _AdminMonthNav(
+            label: _monthKey,
+            onPrev: _prevMonth,
+            onNext: _nextMonth,
+          ),
+        ],
+      ],
+    ),
+  );
 
   void _prevMonth() {
     final d = DateTime.tryParse('$_monthKey-01') ?? DateTime.now();
@@ -221,7 +221,8 @@ class _ReportTabState extends State<_ReportTab>
                           _AdminMetricRow(
                             label: _adminPaymentLabel(breakdownEntries[i].key),
                             value: _adminGel(
-                              (breakdownEntries[i].value as num?)?.toDouble() ?? 0,
+                              (breakdownEntries[i].value as num?)?.toDouble() ??
+                                  0,
                             ),
                             color: _adminPaymentColor(breakdownEntries[i].key),
                           ),
@@ -236,13 +237,16 @@ class _ReportTabState extends State<_ReportTab>
               title: 'ოფიციანტები',
               trailing: '${byWaiter.length}',
               child: Column(
-                children: byWaiter.cast<Map<String, dynamic>>().map(
-                  (w) => _WaiterRow(
-                    name: w['waiterName'] as String? ?? '',
-                    total: (w['totalSales'] as num?)?.toDouble() ?? 0,
-                    count: w['orderCount'] as int? ?? 0,
-                  ),
-                ).toList(),
+                children: byWaiter
+                    .cast<Map<String, dynamic>>()
+                    .map(
+                      (w) => _WaiterRow(
+                        name: w['waiterName'] as String? ?? '',
+                        total: (w['totalSales'] as num?)?.toDouble() ?? 0,
+                        count: w['orderCount'] as int? ?? 0,
+                      ),
+                    )
+                    .toList(),
               ),
             ),
           ],
@@ -276,14 +280,20 @@ class _ReportTabState extends State<_ReportTab>
                     style: TextStyle(color: AdminTheme.textMuted),
                   ),
                   childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-                  children: catItems.cast<Map<String, dynamic>>().asMap().entries.map((e) {
-                    return _TopItemRow(
-                      rank: e.key + 1,
-                      name: e.value['name'] as String? ?? '',
-                      qty: (e.value['qty'] as num?)?.toInt() ?? 0,
-                      revenue: (e.value['revenue'] as num?)?.toDouble() ?? 0,
-                    );
-                  }).toList(),
+                  children: catItems
+                      .cast<Map<String, dynamic>>()
+                      .asMap()
+                      .entries
+                      .map((e) {
+                        return _TopItemRow(
+                          rank: e.key + 1,
+                          name: e.value['name'] as String? ?? '',
+                          qty: (e.value['qty'] as num?)?.toInt() ?? 0,
+                          revenue:
+                              (e.value['revenue'] as num?)?.toDouble() ?? 0,
+                        );
+                      })
+                      .toList(),
                 ),
               );
             }),
@@ -292,13 +302,13 @@ class _ReportTabState extends State<_ReportTab>
             const _SectionTitle('ტოპ პროდუქტები'),
             SizedBox(height: 8),
             ...topItems.cast<Map<String, dynamic>>().asMap().entries.map(
-                  (e) => _TopItemRow(
-                    rank: e.key + 1,
-                    name: e.value['name'] as String? ?? '',
-                    qty: e.value['qty'] as int? ?? 0,
-                    revenue: (e.value['revenue'] as num?)?.toDouble() ?? 0,
-                  ),
-                ),
+              (e) => _TopItemRow(
+                rank: e.key + 1,
+                name: e.value['name'] as String? ?? '',
+                qty: e.value['qty'] as int? ?? 0,
+                revenue: (e.value['revenue'] as num?)?.toDouble() ?? 0,
+              ),
+            ),
           ],
         ],
       ),
@@ -323,13 +333,13 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(
-        text,
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-          color: AdminTheme.primary,
-        ),
-      );
+    text,
+    style: TextStyle(
+      fontSize: 14,
+      fontWeight: FontWeight.bold,
+      color: AdminTheme.primary,
+    ),
+  );
 }
 
 class _WaiterRow extends StatelessWidget {
@@ -345,43 +355,43 @@ class _WaiterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: AdminTheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AdminTheme.border),
+    margin: const EdgeInsets.only(bottom: 8),
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    decoration: BoxDecoration(
+      color: AdminTheme.surface,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: AdminTheme.border),
+    ),
+    child: Row(
+      children: [
+        const Icon(Icons.person_rounded, size: 18, color: Color(0xFF94A3B8)),
+        SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            name,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AdminTheme.text,
+            ),
+          ),
         ),
-        child: Row(
-          children: [
-            const Icon(Icons.person_rounded, size: 18, color: Color(0xFF94A3B8)),
-            SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                name,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AdminTheme.text,
-                ),
-              ),
-            ),
-            Text(
-              '$count შეკ.',
-              style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-            ),
-            SizedBox(width: 12),
-            Text(
-              _adminGel(total),
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: AdminTheme.primary,
-              ),
-            ),
-          ],
+        Text(
+          '$count შეკ.',
+          style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
         ),
-      );
+        SizedBox(width: 12),
+        Text(
+          _adminGel(total),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: AdminTheme.primary,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _TopItemRow extends StatelessWidget {
@@ -399,51 +409,51 @@ class _TopItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: AdminTheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AdminTheme.border),
+    margin: const EdgeInsets.only(bottom: 8),
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    decoration: BoxDecoration(
+      color: AdminTheme.surface,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: AdminTheme.border),
+    ),
+    child: Row(
+      children: [
+        SizedBox(
+          width: 24,
+          child: Text(
+            '$rank.',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF94A3B8),
+            ),
+          ),
         ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 24,
-              child: Text(
-                '$rank.',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF94A3B8),
-                ),
-              ),
+        SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            name,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AdminTheme.text,
             ),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                name,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AdminTheme.text,
-                ),
-              ),
-            ),
-            Text(
-              '$qtyც.',
-              style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-            ),
-            SizedBox(width: 12),
-            Text(
-              _adminGel(revenue),
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: AdminTheme.primary,
-              ),
-            ),
-          ],
+          ),
         ),
-      );
+        Text(
+          '$qtyც.',
+          style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+        ),
+        SizedBox(width: 12),
+        Text(
+          _adminGel(revenue),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: AdminTheme.primary,
+          ),
+        ),
+      ],
+    ),
+  );
 }

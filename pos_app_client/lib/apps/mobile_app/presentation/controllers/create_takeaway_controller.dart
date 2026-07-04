@@ -46,7 +46,9 @@ class CreateTakeawayController extends ChangeNotifier {
 
   void incrementItem(TakeawayMenuItem item) {
     final cart = Map<String, TakeawayCartEntry>.from(_state.cart);
-    cart.putIfAbsent(item.name, () => TakeawayCartEntry(price: item.price)).quantity++;
+    cart
+        .putIfAbsent(item.name, () => TakeawayCartEntry(price: item.price))
+        .quantity++;
     _state = _state.copyWith(cart: cart);
     notifyListeners();
   }
@@ -77,7 +79,9 @@ class CreateTakeawayController extends ChangeNotifier {
   }
 
   Future<SubmitResult> submit(User user) async {
-    final customerName = _state.waitInPlace ? 'აქ დაელოდება' : _state.customerName.trim();
+    final customerName = _state.waitInPlace
+        ? 'აქ დაელოდება'
+        : _state.customerName.trim();
     if (customerName.isEmpty) {
       return const SubmitResult(false, 'შეიყვანეთ მომხმარებლის ნომერი');
     }

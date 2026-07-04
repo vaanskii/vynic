@@ -120,7 +120,8 @@ class _SalesTabState extends State<_SalesTab>
     final closedOrders = (row['closedOrders'] as num?)?.toInt() ?? 0;
     final cancelledOrders = (row['cancelledOrders'] as num?)?.toInt() ?? 0;
     final totalExpenses = (row['totalExpenses'] as num?)?.toDouble() ?? 0;
-    final profit = (row['profit'] as num?)?.toDouble() ?? (totalRevenue - totalExpenses);
+    final profit =
+        (row['profit'] as num?)?.toDouble() ?? (totalRevenue - totalExpenses);
     final breakdown = Map<String, dynamic>.from(
       (row['paymentBreakdown'] as Map?) ?? const {},
     );
@@ -139,98 +140,108 @@ class _SalesTabState extends State<_SalesTab>
         child: Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
-        key: PageStorageKey<String>('admin-sales-$date'),
-        tilePadding: const EdgeInsets.fromLTRB(14, 2, 14, 2),
-        childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-        iconColor: AdminTheme.primary,
-        collapsedIconColor: AdminTheme.textDim,
-        title: Text(
-          date,
-          style: TextStyle(fontWeight: FontWeight.w700, color: AdminTheme.text),
-        ),
-        subtitle: Text(
-          'დახურული $closedOrders / გაუქმებული $cancelledOrders / სულ $totalOrders • ${_adminGel(totalRevenue)}\nხარჯი: ${_adminGel(totalExpenses)} • მოგება: ${_adminGel(profit)}\nარაფისკალური დახურული: ${_adminGel(nonFiscalAmount)}',
-          style: TextStyle(fontSize: 12, color: AdminTheme.textMuted),
-        ),
-        children: [
-          if (nonFiscalAmount > 0)
-            Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF7ED),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFFED7AA)),
+            key: PageStorageKey<String>('admin-sales-$date'),
+            tilePadding: const EdgeInsets.fromLTRB(14, 2, 14, 2),
+            childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+            iconColor: AdminTheme.primary,
+            collapsedIconColor: AdminTheme.textDim,
+            title: Text(
+              date,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: AdminTheme.text,
               ),
-              child: Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'არაფისკალური დახურული',
-                      style: TextStyle(
-                        color: Color(0xFF9A3412),
-                        fontWeight: FontWeight.w600,
+            ),
+            subtitle: Text(
+              'დახურული $closedOrders / გაუქმებული $cancelledOrders / სულ $totalOrders • ${_adminGel(totalRevenue)}\nხარჯი: ${_adminGel(totalExpenses)} • მოგება: ${_adminGel(profit)}\nარაფისკალური დახურული: ${_adminGel(nonFiscalAmount)}',
+              style: TextStyle(fontSize: 12, color: AdminTheme.textMuted),
+            ),
+            children: [
+              if (nonFiscalAmount > 0)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF7ED),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFFED7AA)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'არაფისკალური დახურული',
+                          style: TextStyle(
+                            color: Color(0xFF9A3412),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
+                      Text(
+                        _adminGel(nonFiscalAmount),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF9A3412),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (entries.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'გადახდის დეტალი არ არის',
+                      style: TextStyle(color: AdminTheme.textMuted),
                     ),
                   ),
-                  Text(
-                    _adminGel(nonFiscalAmount),
-                    style: const TextStyle(
+                )
+              else
+                _AdminPanel(
+                  margin: const EdgeInsets.only(bottom: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 2,
+                  ),
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < entries.length; i++) ...[
+                        if (i > 0) Divider(height: 1, color: AdminTheme.border),
+                        _AdminMetricRow(
+                          label: _adminPaymentLabel(entries[i].key),
+                          value: _adminGel(
+                            (entries[i].value as num).toDouble(),
+                          ),
+                          color: _adminPaymentColor(entries[i].key),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              if (closedTables.isNotEmpty) ...[
+                SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'დახურული მაგიდები',
+                    style: TextStyle(
+                      color: AdminTheme.text,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF9A3412),
+                      fontSize: 13,
                     ),
                   ),
-                ],
-              ),
-            ),
-          if (entries.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'გადახდის დეტალი არ არის',
-                  style: TextStyle(color: AdminTheme.textMuted),
                 ),
-              ),
-            )
-          else
-            _AdminPanel(
-              margin: const EdgeInsets.only(bottom: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              child: Column(
-                children: [
-                  for (var i = 0; i < entries.length; i++) ...[
-                    if (i > 0)
-                      Divider(height: 1, color: AdminTheme.border),
-                    _AdminMetricRow(
-                      label: _adminPaymentLabel(entries[i].key),
-                      value: _adminGel((entries[i].value as num).toDouble()),
-                      color: _adminPaymentColor(entries[i].key),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          if (closedTables.isNotEmpty) ...[
-            SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'დახურული მაგიდები',
-                style: TextStyle(
-                  color: AdminTheme.text,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
+                SizedBox(height: 6),
+                ...closedTables.map(
+                  (sale) => _buildClosedTableRow(context, sale),
                 ),
-              ),
-            ),
-            SizedBox(height: 6),
-            ...closedTables.map(
-              (sale) => _buildClosedTableRow(context, sale),
-            ),
-          ],
-        ],
+              ],
+            ],
           ),
         ),
       ),

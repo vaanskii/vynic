@@ -5,11 +5,7 @@ class MobileOrderDetailState {
   final bool loading;
   final String? error;
 
-  const MobileOrderDetailState({
-    this.order,
-    this.loading = true,
-    this.error,
-  });
+  const MobileOrderDetailState({this.order, this.loading = true, this.error});
 
   MobileOrderDetailState copyWith({
     Order? order,

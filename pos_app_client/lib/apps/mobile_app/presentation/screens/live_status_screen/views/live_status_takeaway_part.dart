@@ -20,7 +20,9 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFFEF4444)),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFEF4444),
+            ),
             child: Text('გაუქმება'),
           ),
         ],
@@ -58,7 +60,9 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFFEF4444)),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFEF4444),
+            ),
             child: Text('წაშლა'),
           ),
         ],
@@ -101,8 +105,11 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
         ),
         padding: const EdgeInsets.only(top: 110),
         children: [
-          Icon(Icons.takeout_dining_outlined,
-              size: 72, color: MobileGlassTheme.textSecondary.withValues(alpha: 0.35)),
+          Icon(
+            Icons.takeout_dining_outlined,
+            size: 72,
+            color: MobileGlassTheme.textSecondary.withValues(alpha: 0.35),
+          ),
           SizedBox(height: 16),
           Text(
             'გატანის შეკვეთები არ არის',
@@ -123,7 +130,8 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
       ),
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 130),
       itemCount: _takeawayOrders.length,
-      itemBuilder: (context, index) => _buildTakeawayCard(_takeawayOrders[index]),
+      itemBuilder: (context, index) =>
+          _buildTakeawayCard(_takeawayOrders[index]),
     );
   }
 
@@ -136,10 +144,12 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
     final isFinalized = _isFinalizedStatus(order.status);
     final statusColor = _takeawayStatusColor(order.status);
     final statusLabel = _takeawayStatusLabel(order.status);
-    final displayedItems = isFinalized ? order.items : order.items.take(4).toList();
+    final displayedItems = isFinalized
+        ? order.items
+        : order.items.take(4).toList();
     final extraItemCount = (!isFinalized && order.items.length > 4)
         ? order.items.fold(0, (s, it) => s + it.quantity) -
-            order.items.take(4).fold(0, (s, it) => s + it.quantity)
+              order.items.take(4).fold(0, (s, it) => s + it.quantity)
         : 0;
 
     Future<void> openDetails() async {
@@ -224,7 +234,9 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
                         SizedBox(height: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: statusColor.withOpacity(0.22),
                             borderRadius: BorderRadius.circular(20),
@@ -248,8 +260,11 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
                   Row(
                     children: [
                       if (order.customerName.isNotEmpty) ...[
-                        Icon(Icons.person_rounded,
-                            size: 13, color: MobileGlassTheme.textSecondary),
+                        Icon(
+                          Icons.person_rounded,
+                          size: 13,
+                          color: MobileGlassTheme.textSecondary,
+                        ),
                         SizedBox(width: 4),
                         Text(
                           order.customerName,
@@ -263,8 +278,11 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
                           order.pickupTime.isNotEmpty)
                         SizedBox(width: 12),
                       if (order.pickupTime.isNotEmpty) ...[
-                        Icon(Icons.access_time_rounded,
-                            size: 13, color: MobileGlassTheme.textSecondary),
+                        Icon(
+                          Icons.access_time_rounded,
+                          size: 13,
+                          color: MobileGlassTheme.textSecondary,
+                        ),
                         SizedBox(width: 4),
                         Text(
                           order.pickupTime,
@@ -287,7 +305,9 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
                     children: displayedItems.map((it) {
                       return Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: MobileGlassTheme.border(0.12),
                           borderRadius: BorderRadius.circular(8),
@@ -296,7 +316,9 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
                           '${it.quantity}× ${it.itemName}',
                           style: TextStyle(
                             fontSize: 12,
-                            color: MobileGlassTheme.textPrimary.withValues(alpha: 0.85),
+                            color: MobileGlassTheme.textPrimary.withValues(
+                              alpha: 0.85,
+                            ),
                           ),
                         ),
                       );
@@ -350,8 +372,11 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.delete_outline_rounded,
-                              size: 16, color: MobileGlassTheme.textSecondary),
+                          Icon(
+                            Icons.delete_outline_rounded,
+                            size: 16,
+                            color: MobileGlassTheme.textSecondary,
+                          ),
                           SizedBox(width: 4),
                           Text(
                             'წაშლა',
@@ -388,9 +413,7 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
         decoration: BoxDecoration(
           color: filled ? color : color.withOpacity(0.12),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: filled ? color : color.withOpacity(0.4),
-          ),
+          border: Border.all(color: filled ? color : color.withOpacity(0.4)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

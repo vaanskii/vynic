@@ -34,9 +34,9 @@ class HomeXReportSection extends StatelessWidget {
 
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
-        isMobile ? 16 : 24, 
-        isMobile ? 16 : 24, 
-        isMobile ? 16 : 24, 
+        isMobile ? 16 : 24,
+        isMobile ? 16 : 24,
+        isMobile ? 16 : 24,
         96,
       ),
       child: Column(
@@ -157,7 +157,10 @@ class HomeXReportSection extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   subtitle,
-                  style: TextStyle(color: mutedText, fontSize: isMobile ? 13 : 14),
+                  style: TextStyle(
+                    color: mutedText,
+                    fontSize: isMobile ? 13 : 14,
+                  ),
                 ),
               ],
             ],
@@ -316,7 +319,10 @@ class HomeXReportSection extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       description,
-                      style: TextStyle(color: mutedText, fontSize: isMobile ? 13 : 14),
+                      style: TextStyle(
+                        color: mutedText,
+                        fontSize: isMobile ? 13 : 14,
+                      ),
                     ),
                   ],
                 ),
@@ -330,7 +336,10 @@ class HomeXReportSection extends StatelessWidget {
     );
   }
 
-  Widget _buildWaiterSalesSection(List<Map<String, dynamic>> summaries, bool isMobile) {
+  Widget _buildWaiterSalesSection(
+    List<Map<String, dynamic>> summaries,
+    bool isMobile,
+  ) {
     if (summaries.isEmpty) {
       return Container(
         width: double.infinity,
@@ -421,7 +430,10 @@ class HomeXReportSection extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     'გაფორმებული შეკვეთების ჯამი ოფიციანტების მიხედვით.',
-                    style: TextStyle(color: mutedText, fontSize: isMobile ? 13 : 14),
+                    style: TextStyle(
+                      color: mutedText,
+                      fontSize: isMobile ? 13 : 14,
+                    ),
                   ),
                 ],
               ),

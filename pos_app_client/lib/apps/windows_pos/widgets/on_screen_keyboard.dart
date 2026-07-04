@@ -401,13 +401,14 @@ class _OnScreenKeyboardState extends State<OnScreenKeyboard> {
     final childCount = letterCount + 2;
     final contentWidth = maxWidth - childCount * _keyHorizontalPad;
     var sideWidth = preferredSideWidth.clamp(minSideWidth, preferredSideWidth);
-    var letterWidth =
-        (contentWidth - 2 * sideWidth) / letterCount;
+    var letterWidth = (contentWidth - 2 * sideWidth) / letterCount;
 
     if (letterWidth < minLetterWidth) {
       letterWidth = minLetterWidth;
-      sideWidth =
-          ((contentWidth - letterCount * letterWidth) / 2).clamp(minSideWidth, preferredSideWidth);
+      sideWidth = ((contentWidth - letterCount * letterWidth) / 2).clamp(
+        minSideWidth,
+        preferredSideWidth,
+      );
     }
 
     letterWidth = letterWidth.clamp(minLetterWidth, 58.0);
@@ -520,11 +521,12 @@ class _OnScreenKeyboardState extends State<OnScreenKeyboard> {
     const clearWidth = 66.0;
     const symbolWidth = 52.0;
     const switchWidth = 60.0;
-    const fixedWidth =
-        clearWidth + (symbolWidth * 4) + switchWidth;
+    const fixedWidth = clearWidth + (symbolWidth * 4) + switchWidth;
     const totalPadding = 7 * _keyHorizontalPad;
-    final spaceWidth =
-        (maxWidth - fixedWidth - totalPadding).clamp(36.0, 360.0);
+    final spaceWidth = (maxWidth - fixedWidth - totalPadding).clamp(
+      36.0,
+      360.0,
+    );
 
     return _fitKeyboardRow(
       maxWidth,
@@ -532,62 +534,62 @@ class _OnScreenKeyboardState extends State<OnScreenKeyboard> {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-        // Clear button
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: _buildSpecialKey(
-            'Clear',
-            _onClear,
-            width: 66,
-            backgroundColor: _dangerColor,
-            foregroundColor: const Color(0xFFB42323),
-            borderColor: _dangerBorderColor,
+          // Clear button
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: _buildSpecialKey(
+              'Clear',
+              _onClear,
+              width: 66,
+              backgroundColor: _dangerColor,
+              foregroundColor: const Color(0xFFB42323),
+              borderColor: _dangerBorderColor,
+            ),
           ),
-        ),
 
-        // Left side symbols
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: _buildSpecialKey(',', () => _onKeyPress(','), width: 52),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: _buildSpecialKey('.', () => _onKeyPress('.'), width: 52),
-        ),
-
-        // Space bar - fixed width
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: _buildSpecialKey(
-            'Space',
-            _onSpace,
-            width: spaceWidth,
-            backgroundColor: _surfaceColor,
-            foregroundColor: _mutedTextColor,
+          // Left side symbols
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: _buildSpecialKey(',', () => _onKeyPress(','), width: 52),
           ),
-        ),
-
-        // Right side symbols
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: _buildSpecialKey('?', () => _onKeyPress('?'), width: 52),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: _buildSpecialKey('!', () => _onKeyPress('!'), width: 52),
-        ),
-
-        // Language/Symbol switch placeholder
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: _buildSpecialKey(
-            '@#',
-            () {}, // Could be used to switch to symbols layout
-            width: 60,
-            backgroundColor: _specialSurfaceColor,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: _buildSpecialKey('.', () => _onKeyPress('.'), width: 52),
           ),
-        ),
-      ],
+
+          // Space bar - fixed width
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: _buildSpecialKey(
+              'Space',
+              _onSpace,
+              width: spaceWidth,
+              backgroundColor: _surfaceColor,
+              foregroundColor: _mutedTextColor,
+            ),
+          ),
+
+          // Right side symbols
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: _buildSpecialKey('?', () => _onKeyPress('?'), width: 52),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: _buildSpecialKey('!', () => _onKeyPress('!'), width: 52),
+          ),
+
+          // Language/Symbol switch placeholder
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: _buildSpecialKey(
+              '@#',
+              () {}, // Could be used to switch to symbols layout
+              width: 60,
+              backgroundColor: _specialSurfaceColor,
+            ),
+          ),
+        ],
       ),
     );
   }

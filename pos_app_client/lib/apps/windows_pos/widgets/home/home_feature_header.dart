@@ -403,7 +403,11 @@ class _RoleBadge extends StatelessWidget {
           ],
           if (onLockTap != null) ...[
             SizedBox(width: compact ? 8 : 9),
-            Container(width: 1, height: 18, color: color.withValues(alpha: 0.3)),
+            Container(
+              width: 1,
+              height: 18,
+              color: color.withValues(alpha: 0.3),
+            ),
             SizedBox(width: compact ? 8 : 9),
             Icon(Icons.lock_outline_rounded, color: color, size: 20),
           ],

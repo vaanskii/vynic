@@ -26,9 +26,9 @@ class DashboardRemoteService {
         (_) => <Map<String, dynamic>>[],
       ),
       // Reservations for the active business day (manager pulse card).
-      MobileApiService.getReservations(date: businessDate).catchError(
-        (_) => <Map<String, dynamic>>[],
-      ),
+      MobileApiService.getReservations(
+        date: businessDate,
+      ).catchError((_) => <Map<String, dynamic>>[]),
       MobileApiService.getCountedMenus().catchError((_) => <dynamic>[]),
     ]);
 

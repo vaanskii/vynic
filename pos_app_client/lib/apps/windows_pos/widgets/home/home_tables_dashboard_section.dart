@@ -34,10 +34,6 @@ class HomeTablesDashboardSection extends StatelessWidget {
     final tables = DatabaseService.getTablesByFloor(floorName);
     final reservedCount = tables.where((table) => table.isReserved).length;
     final availableCount = tables.length - reservedCount;
-    final selectionState = tableSelectionKey.currentState;
-    final selectedCount =
-        (selectionState?.selectedTables.length ?? 0) +
-        (selectionState?.focusedReservedTables.length ?? 0);
     final metrics = [
       _FloorMetricData(
         icon: Icons.table_restaurant_outlined,

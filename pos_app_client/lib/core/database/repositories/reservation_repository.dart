@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation.dart';
+import 'package:vynic/core/models/table_ref.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
 
 import 'package:vynic/core/services/sync/sync_events.dart';
@@ -32,7 +33,8 @@ class ReservationRepository {
   static Future<String> createReservation({
     required String customerName,
     required String customerPhone,
-    required List<int> tableNumbers,
+    List<int> tableNumbers = const [],
+    List<TableRef>? tableRefs,
     required DateTime reservationDate,
     required String reservationTime,
     required int numberOfGuests,
@@ -45,12 +47,24 @@ class ReservationRepository {
   }) async {
     final id = DateTime.now().millisecondsSinceEpoch.toString();
 
+    // Refs are canonical; the legacy int codes are kept in sync for backups
+    // and the server wire format (unrepresentable tables are omitted there).
+    final refs =
+        tableRefs ??
+        tableNumbers
+            .map(ReservationTableAvailability.refFromLegacyCode)
+            .toList();
+    final legacyCodes = tableRefs != null
+        ? ReservationTableAvailability.legacyCodesOf(tableRefs)
+        : tableNumbers;
+
     // All new reservations start as pending (will be confirmed manually when date arrives)
     final reservation = Reservation(
       id: id,
       customerName: customerName,
       customerPhone: customerPhone,
-      tableNumbers: tableNumbers,
+      tableNumbers: legacyCodes,
+      tableRefs: [for (final ref in refs) ref.encode()],
       reservationDate: reservationDate,
       reservationTime: reservationTime,
       numberOfGuests: numberOfGuests,
@@ -112,7 +126,7 @@ class ReservationRepository {
       )) {
         return false;
       }
-      return reservation.tableNumbers.isNotEmpty;
+      return ReservationTableAvailability.tableRefsOf(reservation).isNotEmpty;
     }).toList();
   }
 
@@ -330,8 +344,9 @@ class ReservationRepository {
 
   static Future<void> updateReservationTables(
     String reservationId,
-    List<int> tableNumbers,
-  ) async {
+    List<int> tableNumbers, {
+    List<TableRef>? tableRefs,
+  }) async {
     final reservations = DatabaseCore.reservationBox!.values.where(
       (r) => r.id == reservationId,
     );
@@ -343,7 +358,15 @@ class ReservationRepository {
     }
     final reservation = reservations.first;
 
-    reservation.tableNumbers = List<int>.from(tableNumbers);
+    final refs =
+        tableRefs ??
+        tableNumbers
+            .map(ReservationTableAvailability.refFromLegacyCode)
+            .toList();
+    reservation.tableNumbers = tableRefs != null
+        ? ReservationTableAvailability.legacyCodesOf(tableRefs)
+        : List<int>.from(tableNumbers);
+    reservation.tableRefs = [for (final ref in refs) ref.encode()];
     if (reservation.status == 'pending') {
       reservation.status = 'confirmed';
     }
@@ -388,6 +411,21 @@ class ReservationRepository {
     }
     return ReservationTableAvailability.areTableCodesAvailable(
       tableCodes: tableNumbers,
+      reservations: getTableBlockingReservationsForDate(reservationDate),
+      excludeReservationId: excludeReservationId,
+    );
+  }
+
+  static bool areTableRefsAvailableForReservation({
+    required List<TableRef> tableRefs,
+    required DateTime reservationDate,
+    String? excludeReservationId,
+  }) {
+    if (tableRefs.isEmpty) {
+      return true;
+    }
+    return ReservationTableAvailability.areTableRefsAvailable(
+      tableRefs: tableRefs,
       reservations: getTableBlockingReservationsForDate(reservationDate),
       excludeReservationId: excludeReservationId,
     );

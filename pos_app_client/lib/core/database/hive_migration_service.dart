@@ -5,6 +5,7 @@ import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/user.dart';
+import 'package:vynic/core/utils/reservation_table_availability.dart';
 
 class HiveMigrationContext {
   HiveMigrationContext({
@@ -34,7 +35,7 @@ class HiveMigrationService {
   static const String dbVersionKey = 'db_version';
   static const String lastMigrationKey = 'last_migration_timestamp';
   static const int initialVersion = 1;
-  static const int targetVersion = 2;
+  static const int targetVersion = 3;
 
   static Future<int> readCurrentVersion(Box metaBox) async {
     final stored = metaBox.get(dbVersionKey);
@@ -51,6 +52,16 @@ class HiveMigrationService {
     if (currentVersion < 2) {
       await migrateV1toV2(context);
       currentVersion = 2;
+      await context.metaBox.put(dbVersionKey, currentVersion);
+      await context.metaBox.put(
+        lastMigrationKey,
+        DateTime.now().toIso8601String(),
+      );
+    }
+
+    if (currentVersion < 3) {
+      await migrateV2toV3(context);
+      currentVersion = 3;
       await context.metaBox.put(dbVersionKey, currentVersion);
       await context.metaBox.put(
         lastMigrationKey,
@@ -91,5 +102,25 @@ class HiveMigrationService {
     }
 
     // Add additional box transformation logic here when evolving V1 data.
+  }
+
+  /// Backfills [Reservation.tableRefs] from the legacy encoded int codes in
+  /// `tableNumbers`. Idempotent: records that already carry refs are left
+  /// untouched.
+  static Future<void> migrateV2toV3(HiveMigrationContext context) async {
+    for (final reservation in context.reservationBox.values) {
+      final existingRefs = reservation.tableRefs;
+      if (existingRefs != null && existingRefs.isNotEmpty) {
+        continue;
+      }
+      if (reservation.tableNumbers.isEmpty) {
+        continue;
+      }
+      reservation.tableRefs = [
+        for (final code in reservation.tableNumbers)
+          ReservationTableAvailability.refFromLegacyCode(code).encode(),
+      ];
+      await reservation.save();
+    }
   }
 }

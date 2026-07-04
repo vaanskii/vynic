@@ -52,15 +52,13 @@ class ActivateReservationTransaction {
       );
     }
 
-    if (reservation.tableNumbers.isEmpty) {
+    final decodedTables = ReservationTableAvailability.tableRefsOf(reservation);
+    if (decodedTables.isEmpty) {
       return ReservationActivationResult.failure(
         'Reservation $reservationId has no tables assigned',
       );
     }
 
-    final decodedTables = reservation.tableNumbers
-        .map(ReservationTableAvailability.decodeTableCode)
-        .toList();
     final floors = decodedTables.map((table) => table.floor).toSet();
 
     if (floors.length > 1) {
@@ -153,7 +151,9 @@ class ActivateReservationTransaction {
         '    Date: $resDateString (${BusinessDayRepository.getGeorgianFormattedDate(r.reservationDate)})',
       );
       developer.log('    Status: ${r.status}');
-      developer.log('    Tables: ${r.tableNumbers.join(", ")}');
+      developer.log(
+        '    Tables: ${ReservationTableAvailability.tableRefsOf(r).map((ref) => ref.encode()).join(", ")}',
+      );
       developer.log('    Notes: ${r.notes ?? "null"}');
     }
 
@@ -213,27 +213,29 @@ class ActivateReservationTransaction {
         developer.log(
           '\n🔄 Activating reservation for ${reservation.customerName}:',
         );
-        developer.log('  Tables: ${reservation.tableNumbers.join(", ")}');
+        final tableRefs = ReservationTableAvailability.tableRefsOf(reservation);
+        developer.log(
+          '  Tables: ${tableRefs.map((ref) => ref.encode()).join(", ")}',
+        );
         developer.log('  Time: ${reservation.reservationTime}');
 
-        // Convert table numbers to table names
-        final tableNames = <String>[];
-        for (var num in reservation.tableNumbers) {
-          if (num <= 10) {
-            tableNames.add('Table $num');
-          } else {
-            tableNames.add('VIP Zone ${num - 10}');
-          }
+        if (tableRefs.isEmpty) {
+          throw StateError(
+            'Reservation ${reservation.id} has no tables assigned',
+          );
         }
-
-        // Determine floor based on table numbers
-        String floor = 'first';
-        if (reservation.tableNumbers.any((n) => n > 10)) {
-          floor = 'second';
+        final floors = tableRefs.map((ref) => ref.floor).toSet();
+        if (floors.length > 1) {
+          throw StateError(
+            'Reservation ${reservation.id} mixes tables from multiple floors',
+          );
         }
+        final floor = floors.first;
 
         developer.log(
-          '  Reserving tables: ${tableNames.join(", ")} on $floor floor',
+          '  Reserving tables: '
+          '${ReservationTableAvailability.formatTableRefs(tableRefs)} '
+          'on $floor floor',
         );
         developer.log(
           '  Pre-order items: ${reservation.preOrderItems?.length ?? 0}',
@@ -241,9 +243,7 @@ class ActivateReservationTransaction {
 
         // Create order with pre-order items (or empty if no pre-order)
         final order = await OrderRepository.createOrder(
-          tableNumbers: reservation.tableNumbers
-              .map((n) => n.toString())
-              .toList(),
+          tableNumbers: tableRefs.map((ref) => ref.tableNumber).toList(),
           floor: floor,
           createdBy: 'System (Reservation)',
           items:
@@ -286,7 +286,9 @@ class ActivateReservationTransaction {
           metadata: {
             'reservationId': reservation.id,
             'customerName': reservation.customerName,
-            'tables': reservation.tableNumbers,
+            'tables': ReservationTableAvailability.tableRefsOf(
+              reservation,
+            ).map((ref) => ref.encode()).toList(),
           },
         );
       }

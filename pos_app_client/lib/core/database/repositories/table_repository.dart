@@ -4,6 +4,7 @@ import 'dart:developer' as developer;
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/table_layout.dart';
+import 'package:vynic/core/utils/reservation_table_availability.dart';
 
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'business_day_repository.dart';
@@ -291,17 +292,6 @@ class TableRepository {
     }
   }
 
-  static int? _resolveReservationTableNumber(TableModel table) {
-    final parsed = int.tryParse(table.tableNumber.trim());
-    if (parsed == null) {
-      return null;
-    }
-    if (table.floor == 'second') {
-      return parsed + 10;
-    }
-    return parsed;
-  }
-
   static bool _orderContainsTable(Order order, TableModel table) {
     final identifiers = <String>{};
     final base = table.tableNumber.trim();
@@ -442,9 +432,10 @@ class TableRepository {
         return result;
       }
 
-      final normalizedTable = _resolveReservationTableNumber(table);
-      if (normalizedTable == null ||
-          !reservation.tableNumbers.contains(normalizedTable)) {
+      final tableRef = ReservationTableAvailability.refOfTableModel(table);
+      if (!ReservationTableAvailability.tableRefsOf(
+        reservation,
+      ).contains(tableRef)) {
         result['shouldRelease'] = true;
         result['reason'] = 'Reservation $reservationId lost table link';
         return result;

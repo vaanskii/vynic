@@ -8,7 +8,9 @@ import 'package:vynic/core/models/package.dart';
 import 'package:vynic/core/models/quick_order_draft.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/table.dart';
+import 'package:vynic/core/models/table_ref.dart';
 import 'package:vynic/core/models/user.dart';
+import 'package:vynic/core/utils/reservation_table_availability.dart';
 
 import 'package:vynic/core/database/hive_migration_service.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
@@ -167,6 +169,7 @@ class BackupRepository {
       'customerName': reservation.customerName,
       'customerPhone': reservation.customerPhone,
       'tableNumbers': reservation.tableNumbers,
+      if (reservation.tableRefs != null) 'tableRefs': reservation.tableRefs,
       'reservationDate': reservation.reservationDate.toIso8601String(),
       'reservationTime': reservation.reservationTime,
       'numberOfGuests': reservation.numberOfGuests,
@@ -459,6 +462,10 @@ class BackupRepository {
         .map((e) => _coerceToInt(e) ?? 0)
         .where((value) => value > 0)
         .toList();
+    final tableRefs = ((json['tableRefs'] as List?) ?? const [])
+        .map((e) => TableRef.tryDecode(e.toString()))
+        .whereType<TableRef>()
+        .toList();
     final reservationDate = _parseRequiredDate(
       json['reservationDate'] as String?,
     );
@@ -474,6 +481,7 @@ class BackupRepository {
       customerName: json['customerName'] as String? ?? 'Remote Guest',
       customerPhone: json['customerPhone'] as String? ?? '-',
       tableNumbers: tableNumbers,
+      tableRefs: tableRefs.isNotEmpty ? tableRefs : null,
       reservationDate: reservationDate,
       reservationTime: reservationTime,
       numberOfGuests: numberOfGuests,
@@ -826,16 +834,30 @@ class BackupRepository {
         .map((it) => _deserializeOrderItem(Map<String, dynamic>.from(it)))
         .toList();
 
+    final tableNumbers = ((json['tableNumbers'] as List?) ?? const [])
+        .map(_coerceToInt)
+        .whereType<int>()
+        .toList();
+    final tableRefs = ((json['tableRefs'] as List?) ?? const [])
+        .map((e) => e.toString())
+        .where((raw) => TableRef.tryDecode(raw) != null)
+        .toList();
+
     return Reservation(
       id:
           json['id']?.toString() ??
           DateTime.now().millisecondsSinceEpoch.toString(),
       customerName: json['customerName'] as String? ?? 'Unknown',
       customerPhone: json['customerPhone'] as String? ?? '-',
-      tableNumbers: ((json['tableNumbers'] as List?) ?? const [])
-          .map(_coerceToInt)
-          .whereType<int>()
-          .toList(),
+      tableNumbers: tableNumbers,
+      // Old backups carry no refs; derive them so restored records are
+      // complete regardless of the migration state.
+      tableRefs: tableRefs.isNotEmpty
+          ? tableRefs
+          : [
+              for (final code in tableNumbers)
+                ReservationTableAvailability.refFromLegacyCode(code).encode(),
+            ],
       reservationDate: _parseRequiredDate(json['reservationDate'] as String?),
       reservationTime: json['reservationTime'] as String? ?? '00:00',
       numberOfGuests: (json['numberOfGuests'] as num?)?.toInt() ?? 0,

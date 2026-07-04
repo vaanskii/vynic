@@ -1,5 +1,7 @@
 import 'dart:developer' as developer;
 
+import 'package:vynic/core/utils/reservation_table_availability.dart';
+
 import '../database_core.dart';
 import '../repositories/business_day_repository.dart';
 import '../repositories/sales_repository.dart';
@@ -70,7 +72,9 @@ class CloseDayTransaction {
           developer.log(
             '    Date: $resDate (${BusinessDayRepository.getGeorgianFormattedDate(reservation.reservationDate)})',
           );
-          developer.log('    Tables: ${reservation.tableNumbers.join(", ")}');
+          developer.log(
+            '    Tables: ${ReservationTableAvailability.tableRefsOf(reservation).map((ref) => ref.encode()).join(", ")}',
+          );
           developer.log('    Time: ${reservation.reservationTime}');
           developer.log('    Notes: ${reservation.notes ?? "none"}');
         }

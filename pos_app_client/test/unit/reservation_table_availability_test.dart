@@ -9,11 +9,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/table.dart';
+import 'package:vynic/core/models/table_ref.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
 
 Reservation _reservation({
   String id = 'r1',
   List<int> tableNumbers = const [1],
+  List<String>? tableRefs,
   String status = 'confirmed',
   String? notes,
   bool isTakeAway = false,
@@ -24,6 +26,7 @@ Reservation _reservation({
     customerName: 'Test',
     customerPhone: '000',
     tableNumbers: tableNumbers,
+    tableRefs: tableRefs,
     reservationDate: DateTime(2026, 6, 24),
     reservationTime: '19:00',
     numberOfGuests: 2,
@@ -37,6 +40,99 @@ Reservation _reservation({
 }
 
 void main() {
+  group('TableRef', () {
+    test('encode/tryDecode round-trip, including custom floors', () {
+      const ref = TableRef(floor: 'floor-3', tableNumber: '12');
+      expect(TableRef.tryDecode(ref.encode()), ref);
+      expect(
+        TableRef.tryDecode('first/3'),
+        isNot(TableRef.tryDecode('second/3')),
+      );
+    });
+
+    test('tryDecode rejects malformed input', () {
+      expect(TableRef.tryDecode('no-separator'), isNull);
+      expect(TableRef.tryDecode('/3'), isNull);
+      expect(TableRef.tryDecode('first/'), isNull);
+    });
+  });
+
+  group('tableRefsOf', () {
+    test('prefers stored refs over legacy codes', () {
+      final res = _reservation(
+        tableNumbers: [1],
+        tableRefs: ['floor-3/12', 'first/2'],
+      );
+      expect(ReservationTableAvailability.tableRefsOf(res), [
+        const TableRef(floor: 'floor-3', tableNumber: '12'),
+        const TableRef(floor: 'first', tableNumber: '2'),
+      ]);
+    });
+
+    test('falls back to decoding legacy codes', () {
+      final res = _reservation(tableNumbers: [3, 13]);
+      expect(ReservationTableAvailability.tableRefsOf(res), [
+        const TableRef(floor: 'first', tableNumber: '3'),
+        const TableRef(floor: 'second', tableNumber: '3'),
+      ]);
+    });
+
+    test('skips malformed stored refs', () {
+      final res = _reservation(tableNumbers: [], tableRefs: ['bad', 'first/4']);
+      expect(ReservationTableAvailability.tableRefsOf(res), [
+        const TableRef(floor: 'first', tableNumber: '4'),
+      ]);
+    });
+  });
+
+  group('legacy code projection', () {
+    test('legacyCodesOf omits unrepresentable tables', () {
+      expect(
+        ReservationTableAvailability.legacyCodesOf(const [
+          TableRef(floor: 'second', tableNumber: '2'),
+          TableRef(floor: 'floor-3', tableNumber: '1'),
+          TableRef(floor: 'first', tableNumber: '4'),
+        ]),
+        [4, 12],
+      );
+    });
+  });
+
+  group('refs-based availability', () {
+    test('a reservation on a custom floor blocks that exact table', () {
+      final reservations = [
+        _reservation(tableNumbers: [], tableRefs: ['floor-3/2']),
+      ];
+      expect(
+        ReservationTableAvailability.areTableRefsAvailable(
+          tableRefs: const [TableRef(floor: 'floor-3', tableNumber: '2')],
+          reservations: reservations,
+        ),
+        isFalse,
+      );
+      expect(
+        ReservationTableAvailability.areTableRefsAvailable(
+          tableRefs: const [TableRef(floor: 'first', tableNumber: '2')],
+          reservations: reservations,
+        ),
+        isTrue,
+      );
+    });
+
+    test('legacy-code checks still see ref-stored reservations', () {
+      final reservations = [
+        _reservation(tableNumbers: [], tableRefs: ['second/3']),
+      ];
+      expect(
+        ReservationTableAvailability.areTableCodesAvailable(
+          tableCodes: [13],
+          reservations: reservations,
+        ),
+        isFalse,
+      );
+    });
+  });
+
   group('table code encoding', () {
     test('first floor keeps the raw number; second floor offsets by 10', () {
       expect(

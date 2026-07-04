@@ -1,10 +1,15 @@
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/table.dart';
+import 'package:vynic/core/models/table_ref.dart';
 
 /// Shared reservation table encoding and availability checks.
 ///
 /// Table blocking is based only on existing **reservation records** for the
 /// chosen calendar day (not live walk-in / order occupancy on tables).
+///
+/// [TableRef] is the canonical table identity; the legacy int encoding
+/// (`encodeTableCode` / `decodeTableCode`) survives only for stored
+/// `Reservation.tableNumbers` backfill and the server wire format.
 class ReservationTableAvailability {
   ReservationTableAvailability._();
 
@@ -15,6 +20,44 @@ class ReservationTableAvailability {
 
   static bool isSameCalendarDate(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
+
+  /// Canonical tables of a reservation: stored [Reservation.tableRefs] when
+  /// present, otherwise decoded from the legacy int codes.
+  static List<TableRef> tableRefsOf(Reservation reservation) {
+    final stored = reservation.tableRefs;
+    if (stored != null && stored.isNotEmpty) {
+      return [
+        for (final raw in stored)
+          if (TableRef.tryDecode(raw) case final ref?) ref,
+      ];
+    }
+    return [
+      for (final code in reservation.tableNumbers) refFromLegacyCode(code),
+    ];
+  }
+
+  static TableRef refFromLegacyCode(int code) {
+    final decoded = decodeTableCode(code);
+    return TableRef(floor: decoded.floor, tableNumber: decoded.tableNumber);
+  }
+
+  /// Legacy int code for [ref], or null when the encoding cannot represent
+  /// it (3rd+ floors, first-floor tables above 10).
+  static int? legacyCodeOf(TableRef ref) {
+    if (!canEncodeTableCode(floor: ref.floor, tableNumber: ref.tableNumber)) {
+      return null;
+    }
+    return encodeTableCode(floor: ref.floor, tableNumber: ref.tableNumber);
+  }
+
+  /// Best-effort legacy projection of [refs] for backups and the server
+  /// wire format: unrepresentable tables are simply omitted.
+  static List<int> legacyCodesOf(Iterable<TableRef> refs) {
+    return [
+      for (final ref in refs)
+        if (legacyCodeOf(ref) case final code?) code,
+    ]..sort();
+  }
 
   /// Whether [encodeTableCode] can represent this table. Pickers must hide
   /// tables that fail this check instead of offering them for reservation.
@@ -91,25 +134,38 @@ class ReservationTableAvailability {
       ..sort();
   }
 
-  static String floorLabel(String floor) =>
-      floor == 'second' ? 'მე-2 სართული' : '1-ლი სართული';
+  static String floorLabel(String floor) {
+    if (floor == 'second') return 'მე-2 სართული';
+    if (floor == 'first') return '1-ლი სართული';
+    // Custom floors carry their layout key; callers with layout access can
+    // pass a nicer name via [formatTableRefs]'s floorNameOf.
+    return floor;
+  }
 
   static String displayLabel({
     required String floor,
     required String tableNumber,
   }) => '${floorLabel(floor)} • $tableNumber';
 
-  static String formatTableCodes(List<int> codes) {
-    if (codes.isEmpty) return '';
-    return codes
-        .map((code) {
-          final decoded = decodeTableCode(code);
-          return displayLabel(
-            floor: decoded.floor,
-            tableNumber: decoded.tableNumber,
-          );
-        })
+  static String displayLabelForRef(
+    TableRef ref, {
+    String Function(String floor)? floorNameOf,
+  }) {
+    final floorName = floorNameOf?.call(ref.floor) ?? floorLabel(ref.floor);
+    return '$floorName • ${ref.tableNumber}';
+  }
+
+  static String formatTableRefs(
+    List<TableRef> refs, {
+    String Function(String floor)? floorNameOf,
+  }) {
+    return refs
+        .map((ref) => displayLabelForRef(ref, floorNameOf: floorNameOf))
         .join(', ');
+  }
+
+  static String formatTableCodes(List<int> codes) {
+    return formatTableRefs(codes.map(refFromLegacyCode).toList());
   }
 
   static bool reservationTimesOverlap(String time1, String time2) {
@@ -169,7 +225,20 @@ class ReservationTableAvailability {
     required Iterable<Reservation> reservations,
     String? excludeReservationId,
   }) {
-    final unavailable = <int>{};
+    return {
+      for (final ref in unavailableTableRefsFromReservations(
+        reservations: reservations,
+        excludeReservationId: excludeReservationId,
+      ))
+        if (legacyCodeOf(ref) case final code?) code,
+    };
+  }
+
+  static Set<TableRef> unavailableTableRefsFromReservations({
+    required Iterable<Reservation> reservations,
+    String? excludeReservationId,
+  }) {
+    final unavailable = <TableRef>{};
     for (final existing in reservations) {
       if (excludeReservationId != null && existing.id == excludeReservationId) {
         continue;
@@ -180,10 +249,7 @@ class ReservationTableAvailability {
       if (!isRealTableBooking(existing)) {
         continue;
       }
-      if (existing.tableNumbers.isEmpty) {
-        continue;
-      }
-      unavailable.addAll(existing.tableNumbers);
+      unavailable.addAll(tableRefsOf(existing));
     }
     return unavailable;
   }
@@ -245,14 +311,26 @@ class ReservationTableAvailability {
     required Iterable<Reservation> reservations,
     String? excludeReservationId,
   }) {
-    if (tableCodes.isEmpty) {
-      return true;
-    }
-    final unavailable = unavailableTableCodesFromReservations(
+    return areTableRefsAvailable(
+      tableRefs: tableCodes.map(refFromLegacyCode).toList(),
       reservations: reservations,
       excludeReservationId: excludeReservationId,
     );
-    return tableCodes.every((code) => !unavailable.contains(code));
+  }
+
+  static bool areTableRefsAvailable({
+    required List<TableRef> tableRefs,
+    required Iterable<Reservation> reservations,
+    String? excludeReservationId,
+  }) {
+    if (tableRefs.isEmpty) {
+      return true;
+    }
+    final unavailable = unavailableTableRefsFromReservations(
+      reservations: reservations,
+      excludeReservationId: excludeReservationId,
+    );
+    return tableRefs.every((ref) => !unavailable.contains(ref));
   }
 
   /// Tables blocked by LIVE floor state (walk-in orders, activated
@@ -269,7 +347,22 @@ class ReservationTableAvailability {
     String? excludeReservationId,
     int? excludeOrderId,
   }) {
-    final unavailable = <int>{};
+    return {
+      for (final ref in unavailableTableRefsFromLiveTables(
+        tables: tables,
+        excludeReservationId: excludeReservationId,
+        excludeOrderId: excludeOrderId,
+      ))
+        if (legacyCodeOf(ref) case final code?) code,
+    };
+  }
+
+  static Set<TableRef> unavailableTableRefsFromLiveTables({
+    required Iterable<TableModel> tables,
+    String? excludeReservationId,
+    int? excludeOrderId,
+  }) {
+    final unavailable = <TableRef>{};
     for (final table in tables) {
       if (!table.isReserved && table.activeOrderId == null) {
         continue;
@@ -281,19 +374,13 @@ class ReservationTableAvailability {
       if (excludeOrderId != null && table.activeOrderId == excludeOrderId) {
         continue;
       }
-      if (!canEncodeTableCode(
-        floor: table.floor,
-        tableNumber: table.tableNumber,
-      )) {
-        // No reservation table code can refer to this table, so it cannot
-        // block one.
-        continue;
-      }
-      unavailable.add(
-        encodeTableCode(floor: table.floor, tableNumber: table.tableNumber),
-      );
+      unavailable.add(refOfTableModel(table));
     }
     return unavailable;
+  }
+
+  static TableRef refOfTableModel(TableModel table) {
+    return TableRef(floor: table.floor, tableNumber: table.tableNumber);
   }
 
   static List<TableModel> sortTables(List<TableModel> tables) {

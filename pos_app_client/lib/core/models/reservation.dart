@@ -14,6 +14,10 @@ class Reservation extends HiveObject {
   @HiveField(2)
   String customerPhone;
 
+  /// Legacy encoded table codes (see
+  /// `ReservationTableAvailability.encodeTableCode`). Still written for
+  /// backups and the server wire format, but [tableRefs] is canonical —
+  /// read tables via `ReservationTableAvailability.tableRefsOf`.
   @HiveField(3)
   List<int> tableNumbers;
 
@@ -47,6 +51,12 @@ class Reservation extends HiveObject {
   @HiveField(13)
   int? linkedOrderId;
 
+  /// Canonical table references as `floor/tableNumber` strings (see
+  /// `TableRef`). Nullable so records written before db v3 still
+  /// deserialize; the v2→v3 migration backfills it from [tableNumbers].
+  @HiveField(14)
+  List<String>? tableRefs;
+
   Reservation({
     required this.id,
     required this.customerName,
@@ -62,5 +72,6 @@ class Reservation extends HiveObject {
     this.preOrderItems,
     this.isTakeAway = false,
     this.linkedOrderId,
+    this.tableRefs,
   });
 }

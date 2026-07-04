@@ -31,13 +31,14 @@ class ReservationAdapter extends TypeAdapter<Reservation> {
       preOrderItems: (fields[11] as List?)?.cast<OrderItem>(),
       isTakeAway: fields[12] as bool,
       linkedOrderId: fields[13] as int?,
+      tableRefs: (fields[14] as List?)?.cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, Reservation obj) {
     writer
-      ..writeByte(14)
+      ..writeByte(15)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -65,7 +66,9 @@ class ReservationAdapter extends TypeAdapter<Reservation> {
       ..writeByte(12)
       ..write(obj.isTakeAway)
       ..writeByte(13)
-      ..write(obj.linkedOrderId);
+      ..write(obj.linkedOrderId)
+      ..writeByte(14)
+      ..write(obj.tableRefs);
   }
 
   @override

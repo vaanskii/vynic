@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:vynic/apps/windows_pos/screens/login_screen.dart';
 import 'package:vynic/apps/windows_pos/widgets/staff_lock_screen.dart';
 import 'package:vynic/core/models/user.dart';
-import 'package:vynic/core/services/pos_session.dart';
+import 'package:vynic/core/services/auth/pos_session.dart';
 
 /// Coordinates terminal locking for the Windows POS:
 ///   • idle auto-lock after [idleTimeout] of no interaction,

@@ -6,7 +6,7 @@ import 'package:vynic/core/models/quick_order_draft.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/apps/windows_pos/screens/menu_screen.dart';
 import 'package:vynic/core/services/database_service.dart';
-import 'package:vynic/core/services/printer_service.dart';
+import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_language.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';

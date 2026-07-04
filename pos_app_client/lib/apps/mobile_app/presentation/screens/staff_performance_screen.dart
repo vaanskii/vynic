@@ -12,8 +12,8 @@ import 'package:vynic/apps/mobile_app/presentation/screens/reservation_create_sc
 import 'package:vynic/apps/mobile_app/presentation/screens/reservation_detail_screen.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/user.dart';
-import 'package:vynic/core/services/mobile_api_service.dart';
-import 'package:vynic/core/services/monitoring_socket_service.dart';
+import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
+import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 import 'package:vynic/core/widgets/manager_toast.dart';
 
 

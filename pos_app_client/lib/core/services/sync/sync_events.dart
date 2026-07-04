@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:vynic/core/services/pos_live_refresh.dart';
+import 'package:vynic/core/services/sync/pos_live_refresh.dart';
 
 enum SyncEventType { menu, orders, reservations, tables, connection }
 

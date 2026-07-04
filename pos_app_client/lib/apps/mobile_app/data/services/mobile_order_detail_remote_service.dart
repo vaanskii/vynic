@@ -1,5 +1,5 @@
 import 'package:vynic/core/models/order.dart';
-import 'package:vynic/core/services/mobile_api_service.dart';
+import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 
 class MobileOrderDetailRemoteService {
   const MobileOrderDetailRemoteService();

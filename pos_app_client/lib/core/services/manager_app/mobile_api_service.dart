@@ -6,11 +6,11 @@ import 'package:http/http.dart' as http;
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/monitoring.dart';
-import 'package:vynic/core/services/api_config.dart';
-import 'package:vynic/core/services/auth_token_service.dart';
-import 'package:vynic/core/services/mobile_cache_service.dart';
-import 'package:vynic/core/services/mobile_edit_echo_guard.dart';
-import 'package:vynic/core/services/monitoring_socket_service.dart';
+import 'package:vynic/core/services/sync/api_config.dart';
+import 'package:vynic/core/services/auth/auth_token_service.dart';
+import 'package:vynic/core/services/manager_app/mobile_cache_service.dart';
+import 'package:vynic/core/services/sync/mobile_edit_echo_guard.dart';
+import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 
 /// Production-grade mobile API service.
 ///

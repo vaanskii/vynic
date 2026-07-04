@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:flutter/foundation.dart';
 import 'api_config.dart';
-import 'auth_token_service.dart';
-import 'manager_notification_inbox.dart';
-import 'mobile_cache_service.dart';
+import '../auth/auth_token_service.dart';
+import '../notifications/manager_notification_inbox.dart';
+import '../manager_app/mobile_cache_service.dart';
 
 /// Table to open from a manager notification (მაგიდები tab).
 class ManagerTableFocusRequest {

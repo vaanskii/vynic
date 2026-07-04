@@ -1,8 +1,8 @@
 import 'package:intl/intl.dart';
 import 'package:vynic/apps/mobile_app/data/models/dashboard_bundle.dart';
 import 'package:vynic/core/models/monitoring.dart';
-import 'package:vynic/core/services/mobile_api_service.dart';
-import 'package:vynic/core/services/monitoring_socket_service.dart';
+import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
+import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 
 class DashboardRemoteService {
   const DashboardRemoteService();

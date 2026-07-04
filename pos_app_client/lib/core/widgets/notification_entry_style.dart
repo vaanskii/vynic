@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vynic/core/services/app_notification_history_store.dart';
+import 'package:vynic/core/services/notifications/app_notification_history_store.dart';
 
 /// Semantic category for notification accent color (no per-row icons).
 enum NotificationEntryKind {

@@ -7,13 +7,13 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/services/database_service.dart';
-import 'package:vynic/core/services/manager_sync_service.dart';
-import 'package:vynic/core/services/manager_notification_inbox.dart';
-import 'package:vynic/core/services/pos_callback_config.dart';
-import 'package:vynic/core/services/pos_change_highlight_service.dart';
-import 'package:vynic/core/services/pos_live_refresh.dart';
-import 'package:vynic/core/services/printer_service.dart';
-import 'package:vynic/core/services/audit_order_diff_service.dart';
+import 'package:vynic/core/services/sync/manager_sync_service.dart';
+import 'package:vynic/core/services/notifications/manager_notification_inbox.dart';
+import 'package:vynic/core/services/sync/pos_callback_config.dart';
+import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
+import 'package:vynic/core/services/sync/pos_live_refresh.dart';
+import 'package:vynic/core/services/printing/printer_service.dart';
+import 'package:vynic/core/services/audit/audit_order_diff_service.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_reservations_helper.dart';
 
 /// Minimal HTTP server on Windows POS for cloud → Hive callbacks (Option A).

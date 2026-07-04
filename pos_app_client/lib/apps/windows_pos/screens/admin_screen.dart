@@ -5,7 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:vynic/core/services/backup_file_picker.dart';
+import 'package:vynic/core/services/pos/backup_file_picker.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_menu_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_packages_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_close_day_section.dart';
@@ -23,9 +23,9 @@ import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/apps/windows_pos/screens/login_screen.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
-import 'package:vynic/core/services/printer_service.dart';
-import 'package:vynic/core/services/monthly_report_service.dart';
-import 'package:vynic/core/services/manager_sync_service.dart';
+import 'package:vynic/core/services/printing/printer_service.dart';
+import 'package:vynic/core/services/pos/monthly_report_service.dart';
+import 'package:vynic/core/services/sync/manager_sync_service.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key, required this.user});

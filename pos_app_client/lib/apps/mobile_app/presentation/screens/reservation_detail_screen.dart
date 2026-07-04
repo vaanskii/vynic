@@ -2,7 +2,7 @@ import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:vynic/core/services/mobile_api_service.dart';
+import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 
 

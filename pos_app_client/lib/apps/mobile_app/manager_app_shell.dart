@@ -8,18 +8,18 @@ import 'package:vynic/apps/mobile_app/presentation/screens/live_status_screen.da
 import 'package:vynic/apps/mobile_app/presentation/screens/financials_screen.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/staff_performance_screen.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_admin_screen.dart';
-import 'package:vynic/core/services/manager_notification_inbox.dart';
-import 'package:vynic/core/services/monitoring_socket_service.dart';
-import 'package:vynic/core/services/mobile_auth_service.dart';
-import 'package:vynic/core/services/app_notification_history_store.dart';
+import 'package:vynic/core/services/notifications/manager_notification_inbox.dart';
+import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
+import 'package:vynic/core/services/auth/mobile_auth_service.dart';
+import 'package:vynic/core/services/notifications/app_notification_history_store.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/notifications_screen.dart';
 import 'package:vynic/core/widgets/manager_connection_status.dart';
 import 'package:vynic/core/widgets/manager_toast.dart';
 import 'package:vynic/core/widgets/notification_entry_style.dart';
-import 'package:vynic/core/services/notification_message_copy.dart';
-import 'package:vynic/core/services/pos_change_highlight_service.dart';
+import 'package:vynic/core/services/notifications/notification_message_copy.dart';
+import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
 import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
-import 'package:vynic/core/services/manager_app_preferences.dart';
+import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 import 'package:vynic/apps/mobile_app/widgets/manager_glass_nav_bar.dart';
 import 'package:vynic/apps/mobile_app/widgets/manager_tab_keep_alive.dart';
 

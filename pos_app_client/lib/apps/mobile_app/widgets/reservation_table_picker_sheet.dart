@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
 import 'package:vynic/core/models/table.dart';
-import 'package:vynic/core/services/mobile_api_service.dart';
+import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
 
 /// Multi-select table picker for reservations (same floor, date-aware).

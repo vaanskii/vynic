@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:vynic/core/services/database_service.dart';
-import 'package:vynic/core/services/manager_app_preferences.dart';
+import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 
 /// Central configuration for the backend API URL.
 ///

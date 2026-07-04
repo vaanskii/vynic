@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
-import 'package:vynic/core/services/api_config.dart';
-import 'package:vynic/core/services/app_mode.dart';
-import 'package:vynic/core/services/connection_status_service.dart';
+import 'package:vynic/core/services/sync/api_config.dart';
+import 'package:vynic/core/services/pos/app_mode.dart';
+import 'package:vynic/core/services/sync/connection_status_service.dart';
 import 'package:vynic/core/services/database_service.dart';
-import 'package:vynic/core/services/manager_sync_service.dart';
-import 'package:vynic/core/services/pos_callback_config.dart';
+import 'package:vynic/core/services/sync/manager_sync_service.dart';
+import 'package:vynic/core/services/sync/pos_callback_config.dart';
 
 class AdminConnectionSection extends StatefulWidget {
   const AdminConnectionSection({super.key});

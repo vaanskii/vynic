@@ -1,13 +1,13 @@
 import 'dart:ui' as ui;
 import 'dart:developer' as developer;
 import 'package:flutter/services.dart';
-import 'database_service.dart';
-import 'printing/escpos_kitchen_renderer.dart';
-import 'printing/escpos_receipt_renderer.dart';
-import 'printing/escpos_report_renderer.dart';
-import 'printing/kitchen_print_filter.dart';
-import 'printing/print_queue.dart';
-import 'printing/printer_transport.dart';
+import '../database_service.dart';
+import 'escpos_kitchen_renderer.dart';
+import 'escpos_receipt_renderer.dart';
+import 'escpos_report_renderer.dart';
+import 'kitchen_print_filter.dart';
+import 'print_queue.dart';
+import 'printer_transport.dart';
 import 'printer_connection.dart';
 
 /// Service for printing to POS printers over raw TCP sockets

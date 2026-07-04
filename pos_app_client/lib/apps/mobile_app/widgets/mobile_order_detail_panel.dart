@@ -1,7 +1,7 @@
 import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/order.dart';
-import 'package:vynic/core/services/pos_change_highlight_service.dart';
+import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
 
 /// Full-screen cart panel for order editing (dark glass).
 class MobileOrderDetailPanel extends StatelessWidget {

@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:vynic/apps/mobile_app/manager_app_shell.dart';
 import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/models/user.dart';
-import 'package:vynic/core/services/mobile_auth_service.dart';
+import 'package:vynic/core/services/auth/mobile_auth_service.dart';
 import 'package:vynic/core/widgets/manager_toast.dart';
 
 class MobileLoginScreen extends StatefulWidget {

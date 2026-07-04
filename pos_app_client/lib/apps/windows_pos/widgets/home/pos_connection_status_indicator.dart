@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vynic/core/services/connection_status_service.dart';
+import 'package:vynic/core/services/sync/connection_status_service.dart';
 
 class PosConnectionStatusIndicator extends StatelessWidget {
   const PosConnectionStatusIndicator({

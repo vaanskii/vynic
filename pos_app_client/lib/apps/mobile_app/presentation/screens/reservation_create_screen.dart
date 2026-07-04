@@ -9,8 +9,8 @@ import 'package:intl/intl.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_calculator_screen.dart';
 import 'package:vynic/apps/mobile_app/widgets/reservation_table_picker_sheet.dart';
 import 'package:vynic/core/models/user.dart';
-import 'package:vynic/core/services/mobile_api_service.dart';
-import 'package:vynic/core/services/monitoring_socket_service.dart';
+import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
+import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 import 'package:vynic/core/widgets/manager_toast.dart';
 
 

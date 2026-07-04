@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/mobile_app/core/theme/manager_dashboard_theme.dart';
 import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
-import 'package:vynic/core/services/manager_app_preferences.dart';
+import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 
 /// Shared glass / light palette for manager mobile screens.
 abstract final class MobileGlassTheme {

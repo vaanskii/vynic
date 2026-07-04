@@ -2,14 +2,14 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:vynic/core/services/connection_status_service.dart';
+import 'package:vynic/core/services/sync/connection_status_service.dart';
 import 'package:vynic/core/services/database_service.dart';
-import 'package:vynic/core/services/api_config.dart';
-import 'package:vynic/core/services/pos_callback_config.dart';
-import 'package:vynic/core/services/sync_events.dart';
+import 'package:vynic/core/services/sync/api_config.dart';
+import 'package:vynic/core/services/sync/pos_callback_config.dart';
+import 'package:vynic/core/services/sync/sync_events.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/staff_role.dart';
-import 'package:vynic/core/services/pos_change_highlight_service.dart';
+import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
 import 'package:vynic/core/utils/payment_utils.dart';
 
 /// Serializes a manager-data payload to JSON. Runs in a background isolate via

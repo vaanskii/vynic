@@ -6,7 +6,7 @@ import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/package.dart';
 import 'package:vynic/core/services/database_service.dart';
-import 'package:vynic/core/services/pos_change_highlight_service.dart';
+import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/apps/windows_pos/widgets/on_screen_keyboard.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';

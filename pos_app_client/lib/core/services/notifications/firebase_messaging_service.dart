@@ -5,10 +5,10 @@ import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:vynic/firebase_options.dart';
-import 'package:vynic/core/services/auth_token_service.dart';
-import 'package:vynic/core/services/local_notifications_service.dart';
-import 'package:vynic/core/services/manager_notification_inbox.dart';
-import 'package:vynic/core/services/mobile_api_service.dart';
+import 'package:vynic/core/services/auth/auth_token_service.dart';
+import 'package:vynic/core/services/notifications/local_notifications_service.dart';
+import 'package:vynic/core/services/notifications/manager_notification_inbox.dart';
+import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 
 class FirebaseMessagingService {
   FirebaseMessagingService._internal();

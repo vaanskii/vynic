@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
-import 'package:vynic/core/services/mobile_api_service.dart';
-import 'package:vynic/core/services/monitoring_socket_service.dart';
-import 'package:vynic/core/services/printer_service.dart';
+import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
+import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
+import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/apps/mobile_app/widgets/mobile_receipt_preview_dialog.dart';
 import 'package:vynic/core/widgets/manager_toast.dart';
-import 'package:vynic/core/services/pos_change_highlight_service.dart';
+import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
 import 'package:vynic/apps/mobile_app/widgets/mobile_order_detail_panel.dart';
 
 class OrderEditorScreen extends StatefulWidget {

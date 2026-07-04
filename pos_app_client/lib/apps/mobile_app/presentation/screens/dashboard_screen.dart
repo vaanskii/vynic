@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:vynic/apps/mobile_app/core/theme/manager_dashboard_theme.dart';
 import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/dashboard_theme_scope.dart';
-import 'package:vynic/core/services/manager_app_preferences.dart';
+import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 
 import 'package:intl/intl.dart';
 import 'package:vynic/apps/mobile_app/data/repositories/dashboard_repository.dart';
@@ -16,8 +16,8 @@ import 'package:vynic/apps/mobile_app/presentation/screens/mobile_counted_menus_
 import 'package:vynic/apps/mobile_app/state/providers/dashboard_state.dart';
 import 'package:vynic/core/models/monitoring.dart';
 import 'package:vynic/core/models/user.dart';
-import 'package:vynic/core/services/app_notification_history_store.dart';
-import 'package:vynic/core/services/monitoring_socket_service.dart';
+import 'package:vynic/core/services/notifications/app_notification_history_store.dart';
+import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 import 'package:vynic/core/widgets/manager_toast.dart';
 
 final _empty = ManagerDashboardMetrics(

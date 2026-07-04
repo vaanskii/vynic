@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/apps/mobile_app/core/theme/manager_dashboard_theme.dart';
 import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
-import 'package:vynic/core/services/app_notification_history_store.dart';
+import 'package:vynic/core/services/notifications/app_notification_history_store.dart';
 import 'package:vynic/core/widgets/notification_entry_tile.dart';
 
 /// Full-screen notifications list (swipe left to delete).

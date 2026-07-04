@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:vynic/core/services/app_notification_history_store.dart';
+import 'package:vynic/core/services/notifications/app_notification_history_store.dart';
 import 'package:vynic/core/widgets/notification_entry_style.dart';
 
 /// Scrollable list of notifications + optional clear action (Windows POS).

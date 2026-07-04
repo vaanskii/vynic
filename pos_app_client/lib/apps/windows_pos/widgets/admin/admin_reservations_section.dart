@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation_context.dart';
-import 'package:vynic/core/services/printer_service.dart';
+import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_reservations_helper.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_reservation_table_assignment_dialog.dart';
 import 'package:vynic/apps/windows_pos/widgets/reservation_creation_sheet.dart';

@@ -1,6 +1,6 @@
 import 'package:vynic/core/models/menu_models.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
-import 'database_service.dart';
+import '../database_service.dart';
 
 class MenuService {
   static List<MenuCategory>? _cachedCategories;

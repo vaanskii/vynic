@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:vynic/apps/mobile_app/data/repositories/dashboard_repository.dart';
 import 'package:vynic/apps/mobile_app/state/providers/dashboard_state.dart';
-import 'package:vynic/core/services/mobile_api_service.dart';
-import 'package:vynic/core/services/monitoring_socket_service.dart';
+import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
+import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 
 class DashboardController extends ChangeNotifier {
   final DashboardRepository _repository;

@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
-import 'package:vynic/core/services/manager_sync_service.dart';
-import 'package:vynic/core/services/printer_service.dart';
+import 'package:vynic/core/services/sync/manager_sync_service.dart';
+import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/core/utils/payment_utils.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 

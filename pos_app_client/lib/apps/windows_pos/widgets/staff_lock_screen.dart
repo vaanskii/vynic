@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
-import 'package:vynic/core/services/pos_session.dart';
-import 'package:vynic/core/services/session_lock.dart';
+import 'package:vynic/core/services/auth/pos_session.dart';
+import 'package:vynic/core/services/auth/session_lock.dart';
 
 /// Locks the terminal full-screen and requires a PIN to continue. There is NO
 /// cancel and NO way to skip — the only exit is a valid staff PIN:

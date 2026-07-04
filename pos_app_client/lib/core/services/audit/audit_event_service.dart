@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:vynic/core/models/audit_event_log.dart';
 import 'package:vynic/core/services/database_service.dart';
-import 'package:vynic/core/services/api_config.dart';
+import 'package:vynic/core/services/sync/api_config.dart';
 
 class AuditEventService {
   static bool _isSyncing = false;

@@ -9,10 +9,10 @@ import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/utils/table_group_style.dart';
-import 'package:vynic/core/services/mobile_api_service.dart';
-import 'package:vynic/core/services/monitoring_socket_service.dart';
-import 'package:vynic/core/services/pos_change_highlight_service.dart';
-import 'package:vynic/core/services/printer_service.dart';
+import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
+import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
+import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
+import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/core/widgets/manager_toast.dart';
 
 /// Read-only order view (Windows [OrderDetailScreen] flow) — edit via menu screen.

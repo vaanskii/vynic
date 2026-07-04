@@ -8,7 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:vynic/core/utils/payment_utils.dart';
 
-import 'database_service.dart';
+import '../database_service.dart';
 
 class MonthlyReportConfig {
   const MonthlyReportConfig({

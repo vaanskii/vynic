@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/models/user.dart';
-import 'package:vynic/core/services/mobile_api_service.dart';
+import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 import 'package:vynic/core/widgets/manager_toast.dart';
 
 

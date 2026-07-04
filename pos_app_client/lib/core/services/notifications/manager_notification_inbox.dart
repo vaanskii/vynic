@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:vynic/core/services/app_notification_history_store.dart';
-import 'package:vynic/core/services/mobile_api_service.dart';
-import 'package:vynic/core/services/mobile_cache_service.dart';
-import 'package:vynic/core/services/mobile_edit_echo_guard.dart';
-import 'package:vynic/core/services/notification_message_copy.dart';
+import 'package:vynic/core/services/notifications/app_notification_history_store.dart';
+import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
+import 'package:vynic/core/services/manager_app/mobile_cache_service.dart';
+import 'package:vynic/core/services/sync/mobile_edit_echo_guard.dart';
+import 'package:vynic/core/services/notifications/notification_message_copy.dart';
 
 /// Normalises Socket.IO / FCM payloads into the manager notification panel (dedupe-safe).
 class ManagerNotificationInbox {

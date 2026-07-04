@@ -2,7 +2,7 @@ import 'dart:developer' as developer;
 import 'dart:io';
 import 'dart:typed_data';
 
-import '../printer_connection.dart';
+import 'printer_connection.dart';
 
 /// Low-level TCP transport for ESC/POS printer bytes.
 class PrinterTransport {

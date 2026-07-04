@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:vynic/core/services/monitoring_socket_service.dart';
+import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 
 /// Live / reconnecting / offline indicator for the manager app.
 enum ManagerConnectionLevel {

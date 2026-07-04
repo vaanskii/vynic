@@ -26,7 +26,7 @@ import 'package:vynic/core/database/repositories/order_repository.dart';
 import 'package:vynic/core/database/repositories/settings_repository.dart';
 import 'package:vynic/core/database/repositories/table_repository.dart';
 import 'package:vynic/core/database/repositories/user_repository.dart';
-import 'package:vynic/core/services/audit_event_service.dart';
+import 'package:vynic/core/services/audit/audit_event_service.dart';
 
 export 'package:vynic/core/database/repositories/reservation_repository.dart'
     show ReservationActivationResult;

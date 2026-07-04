@@ -9,8 +9,8 @@ import 'package:vynic/apps/mobile_app/presentation/screens/reservation_create_sc
 import 'package:vynic/apps/mobile_app/widgets/mobile_receipt_preview_dialog.dart';
 import 'package:vynic/apps/windows_pos/widgets/order/helpers/service_fee_adjust_dialog.dart';
 import 'package:vynic/core/models/user.dart';
-import 'package:vynic/core/services/mobile_api_service.dart';
-import 'package:vynic/core/services/printer_service.dart';
+import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
+import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 
 class MobileCountedMenusScreen extends StatefulWidget {

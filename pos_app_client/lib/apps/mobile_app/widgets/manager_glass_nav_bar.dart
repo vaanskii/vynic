@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:vynic/apps/mobile_app/core/theme/manager_dashboard_theme.dart';
-import 'package:vynic/core/services/manager_app_preferences.dart';
+import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 
 /// Themed bottom bar with a sliding active pill (solid on Android and iOS).
 class ManagerGlassNavBar extends StatefulWidget {

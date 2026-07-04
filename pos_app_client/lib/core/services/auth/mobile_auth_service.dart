@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:vynic/core/services/api_config.dart';
-import 'package:vynic/core/services/auth_token_service.dart';
-import 'package:vynic/core/services/firebase_messaging_service.dart';
+import 'package:vynic/core/services/sync/api_config.dart';
+import 'package:vynic/core/services/auth/auth_token_service.dart';
+import 'package:vynic/core/services/notifications/firebase_messaging_service.dart';
 import 'package:vynic/core/models/staff_role.dart';
 
 /// Result of a successful mobile login against the backend.

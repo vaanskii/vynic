@@ -8,17 +8,17 @@ import 'package:vynic/apps/windows_pos/screens/login_screen.dart';
 import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_login_screen.dart';
 import 'package:vynic/core/services/database_service.dart';
-import 'package:vynic/core/services/printer_service.dart';
-import 'package:vynic/core/services/app_mode.dart';
-import 'package:vynic/core/services/firebase_messaging_service.dart';
-import 'package:vynic/core/services/local_notifications_service.dart';
+import 'package:vynic/core/services/printing/printer_service.dart';
+import 'package:vynic/core/services/pos/app_mode.dart';
+import 'package:vynic/core/services/notifications/firebase_messaging_service.dart';
+import 'package:vynic/core/services/notifications/local_notifications_service.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:vynic/core/services/auth_token_service.dart';
-import 'package:vynic/core/services/mobile_cache_service.dart';
-import 'package:vynic/core/services/manager_app_preferences.dart';
-import 'package:vynic/core/services/manager_sync_service.dart';
-import 'package:vynic/core/services/pos_ingest_server.dart';
-import 'package:vynic/core/services/session_lock.dart';
+import 'package:vynic/core/services/auth/auth_token_service.dart';
+import 'package:vynic/core/services/manager_app/mobile_cache_service.dart';
+import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
+import 'package:vynic/core/services/sync/manager_sync_service.dart';
+import 'package:vynic/core/services/sync/pos_ingest_server.dart';
+import 'package:vynic/core/services/auth/session_lock.dart';
 import 'package:vynic/firebase_options.dart';
 
 /// True when the process is running on Android or iOS.

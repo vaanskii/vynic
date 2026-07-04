@@ -21,7 +21,7 @@ class PinButton extends StatelessWidget {
     final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
     final isSmallScreen = screenHeight <= 768 || screenWidth <= 1024;
     final buttonSize = isMobile ? 56.0 : (isSmallScreen ? 64.0 : 80.0);
-    final fontSize = isMobile 
+    final fontSize = isMobile
         ? (isSpecial ? 14 : 18)
         : (isSmallScreen ? (isSpecial ? 16 : 20) : (isSpecial ? 20 : 24));
     const primaryColor = Color(0xFF1E3A8A);

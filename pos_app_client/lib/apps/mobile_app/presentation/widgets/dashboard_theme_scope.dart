@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vynic/apps/mobile_app/core/theme/manager_dashboard_theme.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_dashboard_theme.dart';
 
 /// Provides [DashboardThemeData] to the manager dashboard widget tree.
 class DashboardThemeScope extends InheritedWidget {
@@ -12,8 +12,8 @@ class DashboardThemeScope extends InheritedWidget {
   final DashboardThemeData theme;
 
   static DashboardThemeData of(BuildContext context) {
-    final scope =
-        context.dependOnInheritedWidgetOfExactType<DashboardThemeScope>();
+    final scope = context
+        .dependOnInheritedWidgetOfExactType<DashboardThemeScope>();
     assert(scope != null, 'DashboardThemeScope not found');
     return scope!.theme;
   }

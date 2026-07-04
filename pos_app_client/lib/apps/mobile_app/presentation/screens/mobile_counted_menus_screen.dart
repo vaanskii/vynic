@@ -1,13 +1,13 @@
 import 'dart:ui';
-import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
-import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_calculator_screen.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/reservation_create_screen.dart';
-import 'package:vynic/apps/mobile_app/widgets/mobile_receipt_preview_dialog.dart';
-import 'package:vynic/apps/windows_pos/widgets/order/helpers/service_fee_adjust_dialog.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_receipt_preview_dialog.dart';
+import 'package:vynic/core/widgets/service_fee_adjust_dialog.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 import 'package:vynic/core/services/printing/printer_service.dart';
@@ -55,18 +55,16 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
       final serviceFeeAvailable = settings['serviceFeeAvailable'] == true;
       final defaultServiceFeePercent =
           (settings['serviceFeePercent'] as num?)?.round() ?? 10;
-      final drafts = data
-          .whereType<Map>()
-          .map((e) => e.cast<String, dynamic>())
-          .toList()
-        ..sort((a, b) {
-          final ad = DateTime.tryParse('${a['createdAt'] ?? ''}');
-          final bd = DateTime.tryParse('${b['createdAt'] ?? ''}');
-          if (ad == null && bd == null) return 0;
-          if (ad == null) return 1;
-          if (bd == null) return -1;
-          return bd.compareTo(ad);
-        });
+      final drafts =
+          data.whereType<Map>().map((e) => e.cast<String, dynamic>()).toList()
+            ..sort((a, b) {
+              final ad = DateTime.tryParse('${a['createdAt'] ?? ''}');
+              final bd = DateTime.tryParse('${b['createdAt'] ?? ''}');
+              if (ad == null && bd == null) return 0;
+              if (ad == null) return 1;
+              if (bd == null) return -1;
+              return bd.compareTo(ad);
+            });
       if (mounted) {
         setState(() {
           _drafts = drafts;
@@ -86,26 +84,25 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
   }
 
   double get _totalValue => _drafts.fold<double>(
-        0,
-        (sum, d) =>
-            sum +
-            ((d['total'] as num?)?.toDouble() ??
-                (d['subtotal'] as num?)?.toDouble() ??
-                0),
-      );
+    0,
+    (sum, d) =>
+        sum +
+        ((d['total'] as num?)?.toDouble() ??
+            (d['subtotal'] as num?)?.toDouble() ??
+            0),
+  );
 
   int get _totalItems => _drafts.fold<int>(
-        0,
-        (sum, d) => sum + ((d['items'] as List?)?.length ?? 0),
-      );
+    0,
+    (sum, d) => sum + ((d['items'] as List?)?.length ?? 0),
+  );
 
   Future<void> _startNewCount() async {
     final saved = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => managerThemedPage(
-          const MobileCalculatorScreen(isCountMode: true),
-        ),
+        builder: (_) =>
+            managerThemedPage(const MobileCalculatorScreen(isCountMode: true)),
       ),
     );
     if (saved == true) _load();
@@ -186,13 +183,15 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
         .toList();
 
     return rawItems
-        .map((it) => <String, dynamic>{
-              'itemName': (it['itemName'] ?? it['name'] ?? '').toString(),
-              'quantity': (it['quantity'] as num?)?.toInt() ?? 0,
-              'unitPrice':
-                  ((it['unitPrice'] ?? it['price']) as num?)?.toDouble() ?? 0.0,
-              if (it['comment'] != null) 'comment': it['comment'],
-            })
+        .map(
+          (it) => <String, dynamic>{
+            'itemName': (it['itemName'] ?? it['name'] ?? '').toString(),
+            'quantity': (it['quantity'] as num?)?.toInt() ?? 0,
+            'unitPrice':
+                ((it['unitPrice'] ?? it['price']) as num?)?.toDouble() ?? 0.0,
+            if (it['comment'] != null) 'comment': it['comment'],
+          },
+        )
         .where(
           (it) =>
               (it['itemName'] as String).trim().isNotEmpty &&
@@ -238,14 +237,18 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
     final items = _countedMenuItemsFromDraft(draft);
     if (items.isEmpty) {
       if (mounted) {
-        showErrorToast(context, 'სერვისის განახლებისთვის პროდუქტები ვერ მოიძებნა');
+        showErrorToast(
+          context,
+          'სერვისის განახლებისთვის პროდუქტები ვერ მოიძებნა',
+        );
       }
       return;
     }
 
     final subtotal = _subtotalFromDraft(draft, items);
-    final normalizedRate =
-        double.parse(serviceFeeRate.clamp(0.0, 1.0).toStringAsFixed(4));
+    final normalizedRate = double.parse(
+      serviceFeeRate.clamp(0.0, 1.0).toStringAsFixed(4),
+    );
 
     setState(() => _updatingServiceFee.add(id));
     try {
@@ -277,8 +280,7 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
       draft,
       includeServiceFee: includeServiceFee,
       serviceFeeRate: serviceFeeRate,
-      successMessage:
-          includeServiceFee ? 'სერვისი ჩაირთო' : 'სერვისი გამოირთო',
+      successMessage: includeServiceFee ? 'სერვისი ჩაირთო' : 'სერვისი გამოირთო',
     );
   }
 
@@ -328,7 +330,10 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: MobileGlassTheme.surfaceCard,
-        title: Text('წაშლა', style: TextStyle(color: MobileGlassTheme.textPrimary)),
+        title: Text(
+          'წაშლა',
+          style: TextStyle(color: MobileGlassTheme.textPrimary),
+        ),
         content: Text(
           'ნამდვილად გსურთ ამ ჩანაწერის წაშლა?',
           style: TextStyle(color: MobileGlassTheme.muted(0.7)),
@@ -396,7 +401,8 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
 
       final pngBytes = await PrinterService.generateReceiptPngBytes(
         items: itemStrings,
-        total: (draft['total'] as num?)?.toDouble() ??
+        total:
+            (draft['total'] as num?)?.toDouble() ??
             (draft['subtotal'] as num?)?.toDouble() ??
             0.0,
         subtotal: (draft['subtotal'] as num?)?.toDouble(),
@@ -474,7 +480,10 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: Icon(Icons.arrow_back_rounded, color: MobileGlassTheme.textPrimary),
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: MobileGlassTheme.textPrimary,
+            ),
           ),
           Expanded(
             child: Text(
@@ -488,8 +497,10 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
           ),
           IconButton(
             onPressed: _load,
-            icon: Icon(Icons.refresh_rounded,
-                color: MobileGlassTheme.muted(0.7)),
+            icon: Icon(
+              Icons.refresh_rounded,
+              color: MobileGlassTheme.muted(0.7),
+            ),
           ),
         ],
       ),
@@ -558,8 +569,11 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.cloud_off_rounded,
-                  size: 48, color: MobileGlassTheme.muted(0.35)),
+              Icon(
+                Icons.cloud_off_rounded,
+                size: 48,
+                color: MobileGlassTheme.muted(0.35),
+              ),
               SizedBox(height: 12),
               Text(
                 'ჩატვირთვა ვერ მოხერხდა',
@@ -591,8 +605,11 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
                     color: MobileGlassTheme.warn.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.fact_check_outlined,
-                      color: MobileGlassTheme.warn, size: 36),
+                  child: Icon(
+                    Icons.fact_check_outlined,
+                    color: MobileGlassTheme.warn,
+                    size: 36,
+                  ),
                 ),
                 SizedBox(height: 20),
                 Text(
@@ -644,8 +661,9 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
             serviceFeePercent: _serviceFeePercentLabel(_drafts[i]),
             onToggleServiceFee: () => _toggleServiceFee(_drafts[i]),
             onOpenServiceFeeConfig: () => _openServiceFeeConfig(_drafts[i]),
-            isServiceFeeUpdating:
-                _updatingServiceFee.contains('${_drafts[i]['id']}'),
+            isServiceFeeUpdating: _updatingServiceFee.contains(
+              '${_drafts[i]['id']}',
+            ),
             onDelete: () => _delete('${_drafts[i]['id']}'),
             money: _money,
             date: _date,
@@ -700,7 +718,8 @@ class _DraftCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final createdAt = DateTime.tryParse('${draft['createdAt'] ?? ''}');
     final items = (draft['items'] as List?) ?? [];
-    final total = (draft['total'] as num?)?.toDouble() ??
+    final total =
+        (draft['total'] as num?)?.toDouble() ??
         (draft['subtotal'] as num?)?.toDouble() ??
         0.0;
     final qty = items.fold<int>(0, (sum, raw) {
@@ -728,8 +747,11 @@ class _DraftCard extends StatelessWidget {
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.receipt_long_rounded,
-                    color: MobileGlassTheme.textPrimary, size: 22),
+                child: Icon(
+                  Icons.receipt_long_rounded,
+                  color: MobileGlassTheme.textPrimary,
+                  size: 22,
+                ),
               ),
               SizedBox(width: 12),
               Expanded(
@@ -825,8 +847,9 @@ class _DraftCard extends StatelessWidget {
               if (serviceFeeAvailable)
                 TextButton.icon(
                   onPressed: isServiceFeeUpdating ? null : onToggleServiceFee,
-                  onLongPress:
-                      isServiceFeeUpdating ? null : onOpenServiceFeeConfig,
+                  onLongPress: isServiceFeeUpdating
+                      ? null
+                      : onOpenServiceFeeConfig,
                   icon: isServiceFeeUpdating
                       ? const SizedBox(
                           width: 16,
@@ -873,8 +896,9 @@ class _DraftCard extends StatelessWidget {
                         height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Color(0xFF10B981),
+                          ),
                         ),
                       )
                     : Icon(Icons.print_rounded, size: 18),
@@ -927,10 +951,7 @@ class _StatChip extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(
-              color: MobileGlassTheme.muted(0.5),
-              fontSize: 10,
-            ),
+            style: TextStyle(color: MobileGlassTheme.muted(0.5), fontSize: 10),
           ),
           SizedBox(height: 4),
           FittedBox(
@@ -955,10 +976,7 @@ class _GlassCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
 
-  const _GlassCard({
-    required this.child,
-    this.padding = EdgeInsets.zero,
-  });
+  const _GlassCard({required this.child, this.padding = EdgeInsets.zero});
 
   @override
   Widget build(BuildContext context) {

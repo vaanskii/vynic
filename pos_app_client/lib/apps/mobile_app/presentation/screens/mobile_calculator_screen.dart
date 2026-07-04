@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
-import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
-import 'package:vynic/apps/mobile_app/widgets/mobile_menu_pin_sheet.dart';
-import 'package:vynic/apps/windows_pos/widgets/order/helpers/service_fee_adjust_dialog.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_menu_pin_sheet.dart';
+import 'package:vynic/core/widgets/service_fee_adjust_dialog.dart';
 
 /// Mobile-native menu calculator / Count Menu.
 class MobileCalculatorScreen extends StatefulWidget {
@@ -90,8 +90,12 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
       _serviceFeeRate = _serviceFeeAvailable ? _serviceFeePercent / 100 : 0;
       _includeServiceFee = _serviceFeeAvailable;
       debugPrint('[CALC] Loaded raw menu: ${raw.length} categories');
-      final cats = raw.cast<Map<String, dynamic>>().map(_MenuCat.fromJson).toList()
-        ..sort((a, b) => _compareByWindowsOrder(a.nameKa, b.nameKa, a.slug, b.slug));
+      final cats =
+          raw.cast<Map<String, dynamic>>().map(_MenuCat.fromJson).toList()
+            ..sort(
+              (a, b) =>
+                  _compareByWindowsOrder(a.nameKa, b.nameKa, a.slug, b.slug),
+            );
 
       for (final c in cats) {
         debugPrint(
@@ -105,7 +109,10 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
       if (mounted) {
         setState(() {
           _categories = cats;
-          _tabController = TabController(length: _categories.length, vsync: this);
+          _tabController = TabController(
+            length: _categories.length,
+            vsync: this,
+          );
           _loading = false;
           _updateSubTabController();
           _applyEditPrefill();
@@ -178,8 +185,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
             // unitPrice: variant.price} (see _getItemCartLines).
             for (final v in item.variants) {
               final variantName = '${item.nameKa} (${v.label})'.trim();
-              if (variantName == target &&
-                  (v.price - unitPrice).abs() < eps) {
+              if (variantName == target && (v.price - unitPrice).abs() < eps) {
                 return '${item.key}_${v.size}';
               }
             }
@@ -195,10 +201,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final names = _unresolvedDraftItems.join(', ');
-      showErrorToast(
-        context,
-        'ვერ მოიძებნა მენიუში და გამოტოვებულია: $names',
-      );
+      showErrorToast(context, 'ვერ მოიძებნა მენიუში და გამოტოვებულია: $names');
     });
   }
 
@@ -257,7 +260,8 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
     return sum;
   }
 
-  double get _serviceFee => _includeServiceFee ? _subtotal * _serviceFeeRate : 0.0;
+  double get _serviceFee =>
+      _includeServiceFee ? _subtotal * _serviceFeeRate : 0.0;
   double get _total => _subtotal + _serviceFee;
   int get _totalItems => _cart.values.fold(0, (sum, qty) => sum + qty);
 
@@ -433,7 +437,9 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
     if (_cart.isEmpty) return;
 
     final isEdit = widget.editDraftId != null;
-    final nameController = TextEditingController(text: widget.initialName ?? '');
+    final nameController = TextEditingController(
+      text: widget.initialName ?? '',
+    );
     final name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -462,7 +468,13 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
 
     try {
       final items = _cartLines
-          .map((l) => {'itemName': l.item.nameKa, 'quantity': l.qty, 'unitPrice': l.item.price})
+          .map(
+            (l) => {
+              'itemName': l.item.nameKa,
+              'quantity': l.qty,
+              'unitPrice': l.item.price,
+            },
+          )
           .toList();
       final resolvedName = name.isEmpty
           ? 'დათვლილი ${DateFormat('HH:mm').format(DateTime.now())}'
@@ -526,8 +538,10 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                 indicatorColor: MobileGlassTheme.primary,
                 indicatorWeight: 3,
                 dividerColor: Colors.transparent,
-                labelStyle:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                labelStyle: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
                 tabs: _categories.map((c) => Tab(text: c.nameKa)).toList(),
               ),
       ),
@@ -585,52 +599,62 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
   }
 
   Widget _buildError() => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.wifi_off_rounded, size: 48, color: MobileGlassTheme.textSecondary),
-            SizedBox(height: 12),
-            Text(
-              'მენიუ ვერ ჩაიტვირთა',
-              style: TextStyle(color: MobileGlassTheme.textPrimary, fontWeight: FontWeight.bold),
-            ),
-            TextButton.icon(
-              onPressed: _loadMenu,
-              icon: Icon(Icons.refresh_rounded),
-              label: Text('თავიდან ცდა'),
-            ),
-          ],
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          Icons.wifi_off_rounded,
+          size: 48,
+          color: MobileGlassTheme.textSecondary,
         ),
-      );
+        SizedBox(height: 12),
+        Text(
+          'მენიუ ვერ ჩაიტვირთა',
+          style: TextStyle(
+            color: MobileGlassTheme.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        TextButton.icon(
+          onPressed: _loadMenu,
+          icon: Icon(Icons.refresh_rounded),
+          label: Text('თავიდან ცდა'),
+        ),
+      ],
+    ),
+  );
 
   Widget _buildSearchBar() => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-        child: TextField(
-          controller: _searchController,
-          style: TextStyle(color: MobileGlassTheme.textPrimary, fontSize: 15),
-          cursorColor: MobileGlassTheme.primary,
-          decoration: InputDecoration(
-            hintText: 'პროდუქტის ძიება...',
-            hintStyle: TextStyle(color: MobileGlassTheme.textSecondary),
-            prefixIcon: Icon(Icons.search_rounded, color: MobileGlassTheme.textSecondary),
-            filled: true,
-            fillColor: MobileGlassTheme.surface(0.05),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: MobileGlassTheme.borderSubtle),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: MobileGlassTheme.primary),
-            ),
-          ),
-          onChanged: (v) => setState(() => _searchQuery = v),
+    padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+    child: TextField(
+      controller: _searchController,
+      style: TextStyle(color: MobileGlassTheme.textPrimary, fontSize: 15),
+      cursorColor: MobileGlassTheme.primary,
+      decoration: InputDecoration(
+        hintText: 'პროდუქტის ძიება...',
+        hintStyle: TextStyle(color: MobileGlassTheme.textSecondary),
+        prefixIcon: Icon(
+          Icons.search_rounded,
+          color: MobileGlassTheme.textSecondary,
         ),
-      );
+        filled: true,
+        fillColor: MobileGlassTheme.surface(0.05),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: MobileGlassTheme.borderSubtle),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: MobileGlassTheme.primary),
+        ),
+      ),
+      onChanged: (v) => setState(() => _searchQuery = v),
+    ),
+  );
 
   Widget _buildItemGrid() {
     final List<_MenuItem> items;
@@ -652,7 +676,9 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
           .toList();
     } else {
       final cat = _categories[_selectedCatIndex];
-      debugPrint('[CALC] Grid Build - Cat: ${cat.nameKa}, SubIndex: $_selectedSubcatIndex');
+      debugPrint(
+        '[CALC] Grid Build - Cat: ${cat.nameKa}, SubIndex: $_selectedSubcatIndex',
+      );
       if (cat.subcategories.isNotEmpty) {
         if (_selectedSubcatIndex < cat.subcategories.length) {
           items = cat.subcategories[_selectedSubcatIndex].items;
@@ -670,7 +696,10 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
     if (items.isEmpty) {
       debugPrint('[CALC] Items list is EMPTY');
       return Center(
-        child: Text('პროდუქტი ვერ მოიძებნა', style: TextStyle(color: MobileGlassTheme.textSecondary)),
+        child: Text(
+          'პროდუქტი ვერ მოიძებნა',
+          style: TextStyle(color: MobileGlassTheme.textSecondary),
+        ),
       );
     }
 
@@ -715,7 +744,9 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
               : MobileGlassTheme.surface(0.04),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: active ? MobileGlassTheme.primary.withValues(alpha: 0.6) : MobileGlassTheme.borderSubtle,
+            color: active
+                ? MobileGlassTheme.primary.withValues(alpha: 0.6)
+                : MobileGlassTheme.borderSubtle,
             width: active ? 1.5 : 1,
           ),
         ),
@@ -804,7 +835,11 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
       return _circleBtn(
         Icons.add_rounded,
         filled: true,
-        onTap: () => _openSelectionQuantityDialog(item, totalQty: totalQty, addMore: true),
+        onTap: () => _openSelectionQuantityDialog(
+          item,
+          totalQty: totalQty,
+          addMore: true,
+        ),
       );
     }
 
@@ -815,7 +850,9 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
         decoration: BoxDecoration(
           color: MobileGlassTheme.primary.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: MobileGlassTheme.primary.withValues(alpha: 0.4)),
+          border: Border.all(
+            color: MobileGlassTheme.primary.withValues(alpha: 0.4),
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -829,7 +866,11 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
               ),
             ),
             SizedBox(width: 4),
-            Icon(Icons.tune_rounded, size: 15, color: MobileGlassTheme.accentText),
+            Icon(
+              Icons.tune_rounded,
+              size: 15,
+              color: MobileGlassTheme.accentText,
+            ),
           ],
         ),
       );
@@ -847,10 +888,7 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _circleBtn(
-          Icons.remove_rounded,
-          onTap: () => _decrement(item.key),
-        ),
+        _circleBtn(Icons.remove_rounded, onTap: () => _decrement(item.key)),
         SizedBox(width: 6),
         _circleBtn(
           Icons.add_rounded,
@@ -861,7 +899,11 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
     );
   }
 
-  Widget _circleBtn(IconData icon, {bool filled = false, required VoidCallback onTap}) {
+  Widget _circleBtn(
+    IconData icon, {
+    bool filled = false,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -870,10 +912,14 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
         height: 38,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: filled ? MobileGlassTheme.primary : MobileGlassTheme.surface(0.06),
+          color: filled
+              ? MobileGlassTheme.primary
+              : MobileGlassTheme.surface(0.06),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: filled ? MobileGlassTheme.primary : MobileGlassTheme.borderSubtle,
+            color: filled
+                ? MobileGlassTheme.primary
+                : MobileGlassTheme.borderSubtle,
           ),
         ),
         child: Icon(
@@ -896,7 +942,9 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
           decoration: BoxDecoration(
             color: MobileGlassTheme.surfaceCard,
             borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-            border: Border(top: BorderSide(color: MobileGlassTheme.borderSubtle)),
+            border: Border(
+              top: BorderSide(color: MobileGlassTheme.borderSubtle),
+            ),
           ),
           child: Column(
             children: [
@@ -1056,7 +1104,9 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                 ),
                 decoration: BoxDecoration(
                   color: MobileGlassTheme.surfaceElevated,
-                  border: Border(top: BorderSide(color: MobileGlassTheme.borderSubtle)),
+                  border: Border(
+                    top: BorderSide(color: MobileGlassTheme.borderSubtle),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1276,8 +1326,10 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
                     color: MobileGlassTheme.primary.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(Icons.shopping_cart_outlined,
-                      color: MobileGlassTheme.accentText),
+                  child: Icon(
+                    Icons.shopping_cart_outlined,
+                    color: MobileGlassTheme.accentText,
+                  ),
                 ),
                 SizedBox(width: 12),
                 Column(
@@ -1354,21 +1406,23 @@ class _MenuCat {
     required this.subcategories,
   });
   factory _MenuCat.fromJson(Map<String, dynamic> j) => _MenuCat(
-        slug: j['slug'] as String? ?? '',
-        nameKa: j['nameKa'] as String? ?? '',
-        nameEn: j['nameEn'] as String? ?? '',
-        items: ((j['items'] as List?) ?? [])
-            .cast<Map<String, dynamic>>()
-            .map(_MenuItem.fromJson)
-            .toList(),
-        subcategories: (((j['subcategories'] as List?) ?? [])
+    slug: j['slug'] as String? ?? '',
+    nameKa: j['nameKa'] as String? ?? '',
+    nameEn: j['nameEn'] as String? ?? '',
+    items: ((j['items'] as List?) ?? [])
+        .cast<Map<String, dynamic>>()
+        .map(_MenuItem.fromJson)
+        .toList(),
+    subcategories:
+        (((j['subcategories'] as List?) ?? [])
             .cast<Map<String, dynamic>>()
             .map(_MenuSubcat.fromJson)
             .toList()
           ..sort(
-            (a, b) => _compareByWindowsOrder(a.nameKa, b.nameKa, a.slug, b.slug),
+            (a, b) =>
+                _compareByWindowsOrder(a.nameKa, b.nameKa, a.slug, b.slug),
           )),
-      );
+  );
 }
 
 class _MenuSubcat {
@@ -1383,14 +1437,14 @@ class _MenuSubcat {
     required this.items,
   });
   factory _MenuSubcat.fromJson(Map<String, dynamic> j) => _MenuSubcat(
-        slug: j['slug'] as String? ?? '',
-        nameKa: j['nameKa'] as String? ?? '',
-        nameEn: j['nameEn'] as String? ?? '',
-        items: ((j['items'] as List?) ?? [])
-            .cast<Map<String, dynamic>>()
-            .map(_MenuItem.fromJson)
-            .toList(),
-      );
+    slug: j['slug'] as String? ?? '',
+    nameKa: j['nameKa'] as String? ?? '',
+    nameEn: j['nameEn'] as String? ?? '',
+    items: ((j['items'] as List?) ?? [])
+        .cast<Map<String, dynamic>>()
+        .map(_MenuItem.fromJson)
+        .toList(),
+  );
 }
 
 class _MenuVariant {
@@ -1398,9 +1452,9 @@ class _MenuVariant {
   final double price;
   const _MenuVariant({required this.size, required this.price});
   factory _MenuVariant.fromJson(Map<String, dynamic> j) => _MenuVariant(
-        size: (j['size'] as num?)?.toDouble() ?? 0.0,
-        price: (j['price'] as num?)?.toDouble() ?? 0.0,
-      );
+    size: (j['size'] as num?)?.toDouble() ?? 0.0,
+    price: (j['price'] as num?)?.toDouble() ?? 0.0,
+  );
   String get label {
     if (size < 1) return '${(size * 1000).toInt()} ml';
     return '${size.toStringAsFixed(1)} L';
@@ -1420,14 +1474,14 @@ class _MenuItem {
   });
   String get key => '${nameEn}_$nameKa';
   factory _MenuItem.fromJson(Map<String, dynamic> j) => _MenuItem(
-        nameKa: j['nameKa'] as String? ?? '',
-        nameEn: j['nameEn'] as String? ?? '',
-        price: (j['price'] as num?)?.toDouble() ?? 0.0,
-        variants: ((j['variants'] as List?) ?? [])
-            .cast<Map<String, dynamic>>()
-            .map(_MenuVariant.fromJson)
-            .toList(),
-      );
+    nameKa: j['nameKa'] as String? ?? '',
+    nameEn: j['nameEn'] as String? ?? '',
+    price: (j['price'] as num?)?.toDouble() ?? 0.0,
+    variants: ((j['variants'] as List?) ?? [])
+        .cast<Map<String, dynamic>>()
+        .map(_MenuVariant.fromJson)
+        .toList(),
+  );
 }
 
 class _CartLine {
@@ -1437,7 +1491,12 @@ class _CartLine {
   const _CartLine({required this.item, required this.qty, required this.key});
 }
 
-int _compareByWindowsOrder(String aName, String bName, String aSlug, String bSlug) {
+int _compareByWindowsOrder(
+  String aName,
+  String bName,
+  String aSlug,
+  String bSlug,
+) {
   int rank(String rawName, String rawSlug) {
     final n = rawName.toLowerCase();
     final s = rawSlug.toLowerCase();
@@ -1449,13 +1508,19 @@ int _compareByWindowsOrder(String aName, String bName, String aSlug, String bSlu
       return 4;
     }
     if (n.contains('დესერტ') || s.contains('dessert')) return 5;
-    if (n.contains('უალკოჰოლო') || s.contains('soft') || s.contains('non-alcohol')) {
+    if (n.contains('უალკოჰოლო') ||
+        s.contains('soft') ||
+        s.contains('non-alcohol')) {
       return 6;
     }
-    if (n.contains('ალკოჰოლ') || s.contains('alcohol') || s.contains('beer') || s.contains('wine')) {
+    if (n.contains('ალკოჰოლ') ||
+        s.contains('alcohol') ||
+        s.contains('beer') ||
+        s.contains('wine')) {
       return 7;
     }
-    if (n.contains('ყავა') || s.contains('coffee') || s.contains('tea')) return 8;
+    if (n.contains('ყავა') || s.contains('coffee') || s.contains('tea'))
+      return 8;
     return 100;
   }
 

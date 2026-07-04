@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/mobile_app/data/models/takeaway_models.dart';
-import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 
 class SectionCard extends StatelessWidget {
   final String title;

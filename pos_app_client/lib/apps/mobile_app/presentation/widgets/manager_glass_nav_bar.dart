@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:vynic/apps/mobile_app/core/theme/manager_dashboard_theme.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_dashboard_theme.dart';
 import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 
 /// Themed bottom bar with a sliding active pill (solid on Android and iOS).
@@ -90,8 +90,10 @@ class _ManagerGlassNavBarState extends State<ManagerGlassNavBar> {
   void _scrubByDelta(double dx) {
     if (!widget.pageController.hasClients || _barWidth <= 0) return;
     final slot = _barWidth / widget.itemCount;
-    final next = (_pagePosition - dx / slot)
-        .clamp(0.0, (widget.itemCount - 1).toDouble());
+    final next = (_pagePosition - dx / slot).clamp(
+      0.0,
+      (widget.itemCount - 1).toDouble(),
+    );
     final pageWidth = widget.pageController.position.viewportDimension;
     if (pageWidth > 0) {
       widget.pageController.jumpTo(pageWidth * next);
@@ -153,10 +155,7 @@ class _ManagerGlassNavBarState extends State<ManagerGlassNavBar> {
         decoration: BoxDecoration(
           color: nav.barGradientBottom,
           borderRadius: BorderRadius.circular(_radius),
-          border: Border.all(
-            color: nav.borderColor,
-            width: 1.2,
-          ),
+          border: Border.all(color: nav.borderColor, width: 1.2),
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -164,8 +163,10 @@ class _ManagerGlassNavBarState extends State<ManagerGlassNavBar> {
             final barWidth = _barWidth;
             final slotWidth = barWidth / widget.itemCount;
             final page = _pagePosition;
-            final pillLeft =
-                (page * slotWidth).clamp(0.0, barWidth - slotWidth);
+            final pillLeft = (page * slotWidth).clamp(
+              0.0,
+              barWidth - slotWidth,
+            );
 
             return Stack(
               clipBehavior: Clip.none,
@@ -185,10 +186,7 @@ class _ManagerGlassNavBarState extends State<ManagerGlassNavBar> {
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [
-                          nav.pillGradientStart,
-                          nav.pillGradientEnd,
-                        ],
+                        colors: [nav.pillGradientStart, nav.pillGradientEnd],
                       ),
                       border: nav.pillBorderWidth > 0
                           ? Border.all(

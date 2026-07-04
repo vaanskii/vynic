@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 
 /// A single variant option passed to [showMobileMenuPinSheet].
 class MenuPinVariant {
@@ -9,11 +9,7 @@ class MenuPinVariant {
   /// Caller-supplied tag to recover the original model after the sheet returns.
   final dynamic tag;
 
-  const MenuPinVariant({
-    required this.label,
-    required this.price,
-    this.tag,
-  });
+  const MenuPinVariant({required this.label, required this.price, this.tag});
 }
 
 /// Result returned from [showMobileMenuPinSheet].
@@ -80,11 +76,12 @@ class _MobileMenuPinSheetState extends State<_MobileMenuPinSheet> {
   @override
   void initState() {
     super.initState();
-    _selectedVariant = widget.variants.isNotEmpty ? widget.variants.first : null;
+    _selectedVariant = widget.variants.isNotEmpty
+        ? widget.variants.first
+        : null;
   }
 
-  double get _effectiveUnitPrice =>
-      _selectedVariant?.price ?? widget.unitPrice;
+  double get _effectiveUnitPrice => _selectedVariant?.price ?? widget.unitPrice;
 
   int get _qty => int.tryParse(_input) ?? 0;
 
@@ -113,7 +110,10 @@ class _MobileMenuPinSheetState extends State<_MobileMenuPinSheet> {
         border: Border.all(color: MobileGlassTheme.border(0.12)),
       ),
       padding: EdgeInsets.fromLTRB(
-        16, 16, 16, 16 + MediaQuery.of(context).padding.bottom,
+        16,
+        16,
+        16,
+        16 + MediaQuery.of(context).padding.bottom,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -229,9 +229,7 @@ class _MobileMenuPinSheetState extends State<_MobileMenuPinSheet> {
             ['7', '8', '9'],
             ['C', '0', '⌫'],
           ])
-            Row(
-              children: row.map((k) => _pinBtn(k)).toList(),
-            ),
+            Row(children: row.map((k) => _pinBtn(k)).toList()),
 
           const SizedBox(height: 12),
 
@@ -241,9 +239,9 @@ class _MobileMenuPinSheetState extends State<_MobileMenuPinSheet> {
             icon: Icons.add_shopping_cart_rounded,
             onPressed: qty > 0
                 ? () => Navigator.pop(
-                      context,
-                      MenuPinResult(qty: qty, variant: _selectedVariant),
-                    )
+                    context,
+                    MenuPinResult(qty: qty, variant: _selectedVariant),
+                  )
                 : null,
           ),
         ],
@@ -283,8 +281,11 @@ class _MobileMenuPinSheetState extends State<_MobileMenuPinSheet> {
               height: 58,
               child: Center(
                 child: label == '⌫'
-                    ? Icon(Icons.backspace_outlined,
-                        color: fg ?? MobileGlassTheme.muted(0.8), size: 22)
+                    ? Icon(
+                        Icons.backspace_outlined,
+                        color: fg ?? MobileGlassTheme.muted(0.8),
+                        size: 22,
+                      )
                     : Text(
                         label,
                         style: TextStyle(

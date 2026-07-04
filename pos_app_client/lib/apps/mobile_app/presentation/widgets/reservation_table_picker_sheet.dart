@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
@@ -41,9 +41,9 @@ class ReservationTablePickerSheet {
 
     final unavailable =
         ReservationTableAvailability.unavailableTableCodesFromApiReservations(
-      reservations: reservations,
-      excludeReservationId: excludeReservationId,
-    );
+          reservations: reservations,
+          excludeReservationId: excludeReservationId,
+        );
 
     final selectableCount = tables
         .where(
@@ -106,15 +106,18 @@ class ReservationTablePickerSheet {
                       spacing: 8,
                       runSpacing: 8,
                       children: tables.map((t) {
-                        final code = ReservationTableAvailability.encodeTableCode(
-                          floor: t.floor,
-                          tableNumber: t.tableNumber,
-                        );
+                        final code =
+                            ReservationTableAvailability.encodeTableCode(
+                              floor: t.floor,
+                              tableNumber: t.tableNumber,
+                            );
                         final isTaken = unavailable.contains(code);
-                        final isSel = !isTaken &&
+                        final isSel =
+                            !isTaken &&
                             selectedTables.contains(t.tableNumber) &&
                             selectedFloor == t.floor;
-                        final disabled = isTaken ||
+                        final disabled =
+                            isTaken ||
                             (selectedFloor != null && selectedFloor != t.floor);
                         return GestureDetector(
                           onTap: disabled
@@ -141,17 +144,17 @@ class ReservationTablePickerSheet {
                               color: isTaken
                                   ? Colors.red.withValues(alpha: 0.15)
                                   : isSel
-                                      ? MobileGlassTheme.primary
-                                      : MobileGlassTheme.surface(
-                                          disabled ? 0.02 : 0.05,
-                                        ),
+                                  ? MobileGlassTheme.primary
+                                  : MobileGlassTheme.surface(
+                                      disabled ? 0.02 : 0.05,
+                                    ),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: isTaken
                                     ? Colors.red
                                     : isSel
-                                        ? MobileGlassTheme.primary
-                                        : MobileGlassTheme.data.borderSubtle,
+                                    ? MobileGlassTheme.primary
+                                    : MobileGlassTheme.data.borderSubtle,
                               ),
                             ),
                             child: Text(
@@ -163,10 +166,10 @@ class ReservationTablePickerSheet {
                                 color: isTaken
                                     ? Colors.red
                                     : isSel
-                                        ? Colors.white
-                                        : MobileGlassTheme.textPrimary.withValues(
-                                            alpha: disabled ? 0.35 : 0.85,
-                                          ),
+                                    ? Colors.white
+                                    : MobileGlassTheme.textPrimary.withValues(
+                                        alpha: disabled ? 0.35 : 0.85,
+                                      ),
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13,
                               ),
@@ -179,20 +182,21 @@ class ReservationTablePickerSheet {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: selectedTables.isEmpty || selectedFloor == null
+                        onPressed:
+                            selectedTables.isEmpty || selectedFloor == null
                             ? null
                             : () {
                                 final codes =
                                     ReservationTableAvailability.encodeFloorSelection(
-                                  floor: selectedFloor!,
-                                  tableNumbers: selectedTables.toList(),
-                                );
+                                      floor: selectedFloor!,
+                                      tableNumbers: selectedTables.toList(),
+                                    );
                                 Navigator.of(sheetContext).pop(codes);
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: MobileGlassTheme.primary,
-                          disabledBackgroundColor:
-                              MobileGlassTheme.primary.withValues(alpha: 0.3),
+                          disabledBackgroundColor: MobileGlassTheme.primary
+                              .withValues(alpha: 0.3),
                           padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),

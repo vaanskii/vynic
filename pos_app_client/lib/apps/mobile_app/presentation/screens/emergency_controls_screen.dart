@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/user.dart';
-import 'package:vynic/apps/windows_pos/screens/admin_screen.dart';
-import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
+import 'package:vynic/apps/mobile_app/presentation/screens/mobile_admin_screen.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 
 class EmergencyControlsScreen extends StatelessWidget {
   final User user;
@@ -77,7 +77,12 @@ class EmergencyControlsScreen extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => AdminScreen(user: user)),
+          MaterialPageRoute(
+            builder: (context) => MobileAdminScreen(
+              user: user,
+              onLogout: () => Navigator.of(context).maybePop(),
+            ),
+          ),
         );
       },
       borderRadius: BorderRadius.circular(20),
@@ -98,7 +103,10 @@ class EmergencyControlsScreen extends StatelessWidget {
           children: [
             CircleAvatar(
               backgroundColor: Colors.white24,
-              child: Icon(Icons.settings_suggest_rounded, color: MobileGlassTheme.textPrimary),
+              child: Icon(
+                Icons.settings_suggest_rounded,
+                color: MobileGlassTheme.textPrimary,
+              ),
             ),
             SizedBox(width: 16),
             Expanded(
@@ -115,12 +123,19 @@ class EmergencyControlsScreen extends StatelessWidget {
                   ),
                   Text(
                     'მენიუ, მომხმარებლები, პარამეტრები',
-                    style: TextStyle(color: MobileGlassTheme.textSecondary, fontSize: 12),
+                    style: TextStyle(
+                      color: MobileGlassTheme.textSecondary,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios_rounded, color: Colors.white54, size: 16),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Colors.white54,
+              size: 16,
+            ),
           ],
         ),
       ),
@@ -185,7 +200,10 @@ class EmergencyControlsScreen extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          const Icon(Icons.add_circle_outline_rounded, color: Color(0xFF64748B)),
+          const Icon(
+            Icons.add_circle_outline_rounded,
+            color: Color(0xFF64748B),
+          ),
         ],
       ),
     );

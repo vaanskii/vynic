@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:vynic/apps/windows_pos/widgets/pin_button.dart';
+import 'package:vynic/core/widgets/pin_button.dart';
 import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';

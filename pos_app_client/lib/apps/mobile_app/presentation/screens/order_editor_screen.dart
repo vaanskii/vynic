@@ -1,5 +1,5 @@
-import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
-import 'package:vynic/apps/mobile_app/widgets/mobile_menu_pin_sheet.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_menu_pin_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/models/order.dart';
@@ -7,10 +7,10 @@ import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 import 'package:vynic/core/services/printing/printer_service.dart';
-import 'package:vynic/apps/mobile_app/widgets/mobile_receipt_preview_dialog.dart';
-import 'package:vynic/core/widgets/manager_toast.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_receipt_preview_dialog.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_toast.dart';
 import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
-import 'package:vynic/apps/mobile_app/widgets/mobile_order_detail_panel.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_order_detail_panel.dart';
 
 class OrderEditorScreen extends StatefulWidget {
   final User user;
@@ -50,7 +50,8 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
   @override
   void initState() {
     super.initState();
-    _highlightKeys = widget.highlightItemKeys ??
+    _highlightKeys =
+        widget.highlightItemKeys ??
         PosChangeHighlightService.takeForOrder(widget.orderId) ??
         {};
     if (_highlightKeys.isNotEmpty) {
@@ -285,11 +286,15 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
         menuItem.translationsEn['name'] ??
         '';
     final variants = (menuItem.variants ?? [])
-        .map((v) => MenuPinVariant(label: v.getSizeLabel(), price: v.price, tag: v))
+        .map(
+          (v) =>
+              MenuPinVariant(label: v.getSizeLabel(), price: v.price, tag: v),
+        )
         .toList();
 
     final currentKey = menuItem.translationsEn['name'] ?? itemName;
-    final inCart = _order?.items
+    final inCart =
+        _order?.items
             .where((it) => it.itemKey == currentKey)
             .fold(0, (sum, it) => sum + it.quantity) ??
         0;
@@ -408,7 +413,10 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(
           'მაგიდის გაუქმება?',
-          style: TextStyle(fontWeight: FontWeight.bold, color: MobileGlassTheme.textPrimary),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: MobileGlassTheme.textPrimary,
+          ),
         ),
         content: Text(
           'შეკვეთა #${widget.orderId} (მაგიდა ${widget.tableNumber}) '
@@ -418,7 +426,10 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('უკან', style: TextStyle(color: MobileGlassTheme.muted())),
+            child: Text(
+              'უკან',
+              style: TextStyle(color: MobileGlassTheme.muted()),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -456,7 +467,11 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
     if (_isLoading) {
       return MobileGlassScreen(
         orbs: [
-          Positioned(top: -80, right: -50, child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 220)),
+          Positioned(
+            top: -80,
+            right: -50,
+            child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 220),
+          ),
         ],
         body: Column(
           children: [
@@ -466,7 +481,11 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
               onBack: () => Navigator.pop(context),
             ),
             Expanded(
-              child: Center(child: CircularProgressIndicator(color: MobileGlassTheme.primary)),
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: MobileGlassTheme.primary,
+                ),
+              ),
             ),
           ],
         ),
@@ -476,7 +495,11 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
     if (_order == null) {
       return MobileGlassScreen(
         orbs: [
-          Positioned(top: -80, right: -60, child: MobileGlowOrb(color: MobileGlassTheme.warn, size: 220)),
+          Positioned(
+            top: -80,
+            right: -60,
+            child: MobileGlowOrb(color: MobileGlassTheme.warn, size: 220),
+          ),
         ],
         body: Column(
           children: [
@@ -494,7 +517,11 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.warning_amber_rounded, size: 48, color: MobileGlassTheme.warn),
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          size: 48,
+                          color: MobileGlassTheme.warn,
+                        ),
                         SizedBox(height: 16),
                         Text(
                           'შეკვეთა #${widget.orderId} ვერ მოიძებნა',
@@ -562,14 +589,18 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                                 content: Text(
                                   'შეკვეთა #${widget.orderId} გაუქმდება '
                                   'და მაგიდა ${widget.tableNumber} გათავისუფლდება.',
-                                  style: TextStyle(color: MobileGlassTheme.muted(0.7)),
+                                  style: TextStyle(
+                                    color: MobileGlassTheme.muted(0.7),
+                                  ),
                                 ),
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.pop(ctx, false),
                                     child: Text(
                                       'გაუქმება',
-                                      style: TextStyle(color: MobileGlassTheme.muted()),
+                                      style: TextStyle(
+                                        color: MobileGlassTheme.muted(),
+                                      ),
                                     ),
                                   ),
                                   ElevatedButton(
@@ -589,7 +620,9 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                             );
                             if (confirmed != true || !context.mounted) return;
                             try {
-                              await MobileApiService.cancelOrder(widget.orderId);
+                              await MobileApiService.cancelOrder(
+                                widget.orderId,
+                              );
                               if (!context.mounted) return;
                               ManagerToast.show(context, 'შეკვეთა გაუქმებულია');
                               Navigator.pop(context, 'cancelled');
@@ -610,10 +643,15 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                         ),
                         SizedBox(height: 12),
                         TextButton.icon(
-                          icon: Icon(Icons.refresh_rounded, color: MobileGlassTheme.muted(0.75)),
+                          icon: Icon(
+                            Icons.refresh_rounded,
+                            color: MobileGlassTheme.muted(0.75),
+                          ),
                           label: Text(
                             'თავიდან ცდა',
-                            style: TextStyle(color: MobileGlassTheme.muted(0.75)),
+                            style: TextStyle(
+                              color: MobileGlassTheme.muted(0.75),
+                            ),
                           ),
                           onPressed: () {
                             setState(() => _isLoading = true);
@@ -646,8 +684,16 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
       },
       child: MobileGlassScreen(
         orbs: [
-          Positioned(top: -90, right: -70, child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 240)),
-          Positioned(bottom: 80, left: -80, child: MobileGlowOrb(color: MobileGlassTheme.good, size: 220)),
+          Positioned(
+            top: -90,
+            right: -70,
+            child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 240),
+          ),
+          Positioned(
+            bottom: 80,
+            left: -80,
+            child: MobileGlowOrb(color: MobileGlassTheme.good, size: 220),
+          ),
         ],
         body: Column(
           children: [
@@ -670,24 +716,40 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                       isLabelVisible: _order!.items.isNotEmpty,
                       backgroundColor: MobileGlassTheme.primary,
                       label: Text('${_order!.items.length}'),
-                      child: Icon(Icons.shopping_cart_outlined, color: MobileGlassTheme.muted(0.85)),
+                      child: Icon(
+                        Icons.shopping_cart_outlined,
+                        color: MobileGlassTheme.muted(0.85),
+                      ),
                     ),
                   ),
                   IconButton(
                     onPressed: _viewCheckPdf,
-                    icon: Icon(Icons.receipt_long_rounded, color: MobileGlassTheme.muted(0.85)),
+                    icon: Icon(
+                      Icons.receipt_long_rounded,
+                      color: MobileGlassTheme.muted(0.85),
+                    ),
                   ),
                   IconButton(
                     onPressed: _cancelOrder,
-                    icon: Icon(Icons.delete_outline_rounded, color: MobileGlassTheme.bad.withValues(alpha: 0.9)),
+                    icon: Icon(
+                      Icons.delete_outline_rounded,
+                      color: MobileGlassTheme.bad.withValues(alpha: 0.9),
+                    ),
                   ),
                   if (_hasChanges)
                     TextButton.icon(
                       onPressed: _saveChanges,
-                      icon: Icon(Icons.check_circle_rounded, size: 18, color: MobileGlassTheme.good),
+                      icon: Icon(
+                        Icons.check_circle_rounded,
+                        size: 18,
+                        color: MobileGlassTheme.good,
+                      ),
                       label: Text(
                         'შენახვა',
-                        style: TextStyle(color: MobileGlassTheme.good, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: MobileGlassTheme.good,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                 ],
@@ -712,8 +774,8 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
         tableLabel: _isTakeaway
             ? 'გატანა'
             : (_order!.tableNumbers.length > 1
-                ? 'მაგიდები ${_order!.tableNumbers.join(', ')}'
-                : 'მაგიდა ${widget.tableNumber}'),
+                  ? 'მაგიდები ${_order!.tableNumbers.join(', ')}'
+                  : 'მაგიდა ${widget.tableNumber}'),
         onClose: () => setState(() => _isOrderPanelOpen = false),
         onQtyDelta: (index, delta) {
           _updateQuantity(index, delta);
@@ -757,7 +819,10 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                     color: MobileGlassTheme.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(Icons.menu_rounded, color: MobileGlassTheme.primary),
+                  child: Icon(
+                    Icons.menu_rounded,
+                    color: MobileGlassTheme.primary,
+                  ),
                 ),
                 SizedBox(width: 12),
                 Column(
@@ -838,7 +903,8 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
       orElse: () => _categories.first,
     );
     final displayItems = _getDisplayItems();
-    final hasSubs = selectedCategory.subcategories != null &&
+    final hasSubs =
+        selectedCategory.subcategories != null &&
         selectedCategory.subcategories!.isNotEmpty;
 
     return Column(
@@ -858,12 +924,15 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                   itemCount: displayItems.length,
                   itemBuilder: (context, index) {
                     final item = displayItems[index];
-                    final itemKey = item.translationsEn['name'] ?? item.getName('ka');
-                    final inCart = _order?.items
+                    final itemKey =
+                        item.translationsEn['name'] ?? item.getName('ka');
+                    final inCart =
+                        _order?.items
                             .where((it) => it.itemKey.startsWith(itemKey))
                             .fold(0, (sum, it) => sum + it.quantity) ??
                         0;
-                    final lineTotal = _order?.items
+                    final lineTotal =
+                        _order?.items
                             .where((it) => it.itemKey.startsWith(itemKey))
                             .fold(0.0, (sum, it) => sum + it.total) ??
                         0.0;
@@ -876,15 +945,22 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                         behavior: HitTestBehavior.opaque,
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 180),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
                           decoration: BoxDecoration(
                             color: active
-                                ? MobileGlassTheme.primary.withValues(alpha: 0.12)
+                                ? MobileGlassTheme.primary.withValues(
+                                    alpha: 0.12,
+                                  )
                                 : MobileGlassTheme.surfaceCard,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: active
-                                  ? MobileGlassTheme.primary.withValues(alpha: 0.6)
+                                  ? MobileGlassTheme.primary.withValues(
+                                      alpha: 0.6,
+                                    )
                                   : MobileGlassTheme.border(0.08),
                               width: active ? 1.5 : 1,
                             ),
@@ -940,7 +1016,9 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                                           Text(
                                             '  •  ',
                                             style: TextStyle(
-                                              color: MobileGlassTheme.muted(0.25),
+                                              color: MobileGlassTheme.muted(
+                                                0.25,
+                                              ),
                                               fontSize: 13,
                                             ),
                                           ),
@@ -948,7 +1026,9 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                                             '= ${lineTotal.toStringAsFixed(1)} ₾',
                                             style: TextStyle(
                                               fontSize: 13,
-                                              color: MobileGlassTheme.muted(0.6),
+                                              color: MobileGlassTheme.muted(
+                                                0.6,
+                                              ),
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
@@ -966,10 +1046,15 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
                                 decoration: BoxDecoration(
                                   color: MobileGlassTheme.primary,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: MobileGlassTheme.primary),
+                                  border: Border.all(
+                                    color: MobileGlassTheme.primary,
+                                  ),
                                 ),
-                                child: const Icon(Icons.add_rounded,
-                                    size: 20, color: Colors.white),
+                                child: const Icon(
+                                  Icons.add_rounded,
+                                  size: 20,
+                                  color: Colors.white,
+                                ),
                               ),
                             ],
                           ),
@@ -987,7 +1072,9 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
     return Container(
       height: 50,
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: MobileGlassTheme.border(0.08))),
+        border: Border(
+          bottom: BorderSide(color: MobileGlassTheme.border(0.08)),
+        ),
       ),
       child: Row(
         children: [
@@ -1042,7 +1129,10 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
             ),
           ),
           IconButton(
-            icon: Icon(Icons.chevron_right, color: MobileGlassTheme.muted(0.85)),
+            icon: Icon(
+              Icons.chevron_right,
+              color: MobileGlassTheme.muted(0.85),
+            ),
             onPressed: _scrollCategoryRight,
           ),
         ],
@@ -1055,12 +1145,18 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
     return Container(
       height: 44,
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: MobileGlassTheme.border(0.06))),
+        border: Border(
+          bottom: BorderSide(color: MobileGlassTheme.border(0.06)),
+        ),
       ),
       child: Row(
         children: [
           IconButton(
-            icon: Icon(Icons.chevron_left, size: 22, color: MobileGlassTheme.muted(0.85)),
+            icon: Icon(
+              Icons.chevron_left,
+              size: 22,
+              color: MobileGlassTheme.muted(0.85),
+            ),
             onPressed: _scrollSubcategoryLeft,
           ),
           Expanded(
@@ -1159,7 +1255,10 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(
           'დარწმუნებული ხართ?',
-          style: TextStyle(fontWeight: FontWeight.bold, color: MobileGlassTheme.textPrimary),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: MobileGlassTheme.textPrimary,
+          ),
         ),
         content: Text(
           'ცვლილებები არ არის შენახული და დაიკარგება.',

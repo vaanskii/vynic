@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_calculator_screen.dart';
-import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'package:vynic/apps/mobile_app/data/repositories/takeaway_repository.dart';
 import 'package:vynic/apps/mobile_app/data/services/takeaway_remote_service.dart';
 import 'package:vynic/apps/mobile_app/presentation/controllers/create_takeaway_controller.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/create_takeaway_sections.dart';
 import 'package:vynic/core/models/user.dart';
-import 'package:vynic/core/widgets/manager_toast.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_toast.dart';
 
 class CreateTakeawayScreen extends StatefulWidget {
   final User user;
@@ -141,9 +141,7 @@ class _CreateTakeawayScreenState extends State<CreateTakeawayScreen> {
       ),
       body: s.loading
           ? Center(
-              child: CircularProgressIndicator(
-                color: MobileGlassTheme.primary,
-              ),
+              child: CircularProgressIndicator(color: MobileGlassTheme.primary),
             )
           : Column(
               children: [
@@ -253,8 +251,9 @@ class _CreateTakeawayScreenState extends State<CreateTakeawayScreen> {
                         cart: s.cart,
                         total: s.total,
                         onInc: (itemName) {
-                          final matches =
-                              s.menuItems.where((e) => e.name == itemName);
+                          final matches = s.menuItems.where(
+                            (e) => e.name == itemName,
+                          );
                           if (matches.isNotEmpty) {
                             final item = matches.first;
                             _controller.incrementItem(item);
@@ -283,8 +282,9 @@ class _CreateTakeawayScreenState extends State<CreateTakeawayScreen> {
                             style: OutlinedButton.styleFrom(
                               foregroundColor: MobileGlassTheme.primary,
                               side: BorderSide(
-                                color: MobileGlassTheme.primary
-                                    .withValues(alpha: 0.45),
+                                color: MobileGlassTheme.primary.withValues(
+                                  alpha: 0.45,
+                                ),
                               ),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
@@ -332,10 +332,11 @@ class _CreateTakeawayScreenState extends State<CreateTakeawayScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: MobileGlassTheme.primary,
                           foregroundColor: Colors.white,
-                          disabledBackgroundColor:
-                              MobileGlassTheme.primary.withValues(alpha: 0.35),
-                          disabledForegroundColor:
-                              Colors.white.withValues(alpha: 0.7),
+                          disabledBackgroundColor: MobileGlassTheme.primary
+                              .withValues(alpha: 0.35),
+                          disabledForegroundColor: Colors.white.withValues(
+                            alpha: 0.7,
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),

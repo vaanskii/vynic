@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:vynic/apps/mobile_app/core/theme/manager_dashboard_theme.dart';
+import 'package:vynic/core/services/manager_app/manager_dashboard_appearance.dart';
 
 /// Local preferences for the mobile manager app (Hive-backed).
 class ManagerAppPreferences {

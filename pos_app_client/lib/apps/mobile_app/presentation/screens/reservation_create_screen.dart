@@ -1,5 +1,5 @@
-import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
-import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
@@ -7,12 +7,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_calculator_screen.dart';
-import 'package:vynic/apps/mobile_app/widgets/reservation_table_picker_sheet.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/reservation_table_picker_sheet.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
-import 'package:vynic/core/widgets/manager_toast.dart';
-
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_toast.dart';
 
 /// Full-screen, dark "glass" reservation creation form. Slides in from right.
 class ReservationCreateScreen extends StatefulWidget {
@@ -43,13 +42,13 @@ class ReservationCreateScreen extends StatefulWidget {
       transitionDuration: const Duration(milliseconds: 320),
       reverseTransitionDuration: const Duration(milliseconds: 260),
       pageBuilder: (_, __, ___) => managerThemedPage(
-            ReservationCreateScreen(
-              user: user,
-              initialDate: initialDate,
-              initialName: initialName,
-              initialItems: initialItems,
-            ),
-          ),
+        ReservationCreateScreen(
+          user: user,
+          initialDate: initialDate,
+          initialName: initialName,
+          initialItems: initialItems,
+        ),
+      ),
       transitionsBuilder: (context, animation, secondary, child) {
         final curved = CurvedAnimation(
           parent: animation,
@@ -75,9 +74,11 @@ class ReservationCreateScreen extends StatefulWidget {
 class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
   final DateFormat _dateFmt = DateFormat('yyyy-MM-dd');
   final TextEditingController _customerNameController = TextEditingController();
-  final TextEditingController _customerPhoneController = TextEditingController();
-  final TextEditingController _guestsController =
-      TextEditingController(text: '2');
+  final TextEditingController _customerPhoneController =
+      TextEditingController();
+  final TextEditingController _guestsController = TextEditingController(
+    text: '2',
+  );
   final TextEditingController _notesController = TextEditingController();
   TimeOfDay _selectedTime = TimeOfDay.now();
   late DateTime _selectedDate;
@@ -126,8 +127,8 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
     return DateTime.now();
   }
 
-  double get _preOrderTotal => _selectedMenuItems.fold<double>(
-      0, (sum, e) => sum + e.price * e.qty);
+  double get _preOrderTotal =>
+      _selectedMenuItems.fold<double>(0, (sum, e) => sum + e.price * e.qty);
 
   void _toast(String msg, {bool error = false}) {
     if (!mounted) return;
@@ -136,8 +137,9 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
 
   Future<void> _pickDate() async {
     final businessDate = _businessNow();
-    final initial =
-        _selectedDate.isBefore(businessDate) ? businessDate : _selectedDate;
+    final initial = _selectedDate.isBefore(businessDate)
+        ? businessDate
+        : _selectedDate;
     if (!kIsWeb && Platform.isIOS) {
       DateTime temp = initial;
       await showModalBottomSheet<void>(
@@ -149,24 +151,37 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
             child: Column(
               children: [
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
                       TextButton(
                         onPressed: () => Navigator.pop(ctx),
-                        child: Text('გაუქმება',
-                            style: TextStyle(color: MobileGlassTheme.textSecondary)),
+                        child: Text(
+                          'გაუქმება',
+                          style: TextStyle(
+                            color: MobileGlassTheme.textSecondary,
+                          ),
+                        ),
                       ),
                       const Spacer(),
                       TextButton(
                         onPressed: () {
-                          setState(() => _selectedDate =
-                              DateTime(temp.year, temp.month, temp.day));
+                          setState(
+                            () => _selectedDate = DateTime(
+                              temp.year,
+                              temp.month,
+                              temp.day,
+                            ),
+                          );
                           Navigator.pop(ctx);
                         },
-                        child: Text('არჩევა',
-                            style: TextStyle(color: MobileGlassTheme.accentText)),
+                        child: Text(
+                          'არჩევა',
+                          style: TextStyle(color: MobileGlassTheme.accentText),
+                        ),
                       ),
                     ],
                   ),
@@ -176,8 +191,11 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
                     data: const CupertinoThemeData(brightness: Brightness.dark),
                     child: CupertinoDatePicker(
                       mode: CupertinoDatePickerMode.date,
-                      minimumDate: DateTime(businessDate.year,
-                          businessDate.month, businessDate.day),
+                      minimumDate: DateTime(
+                        businessDate.year,
+                        businessDate.month,
+                        businessDate.day,
+                      ),
                       initialDateTime: initial,
                       onDateTimeChanged: (value) => temp = value,
                     ),
@@ -192,8 +210,11 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
     }
     final picked = await showDatePicker(
       context: context,
-      firstDate:
-          DateTime(businessDate.year, businessDate.month, businessDate.day),
+      firstDate: DateTime(
+        businessDate.year,
+        businessDate.month,
+        businessDate.day,
+      ),
       lastDate: businessDate.add(const Duration(days: 365)),
       initialDate: initial,
       builder: (ctx, child) => Theme(
@@ -207,8 +228,13 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
   }
 
   Future<void> _pickTime() async {
-    DateTime temp = DateTime(_selectedDate.year, _selectedDate.month,
-        _selectedDate.day, _selectedTime.hour, _selectedTime.minute);
+    DateTime temp = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _selectedTime.hour,
+      _selectedTime.minute,
+    );
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: MobileGlassTheme.data.surfaceCard,
@@ -230,24 +256,34 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
                 ),
               ),
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),
-                      child: Text('გაუქმება',
-                          style: TextStyle(color: MobileGlassTheme.textSecondary)),
+                      child: Text(
+                        'გაუქმება',
+                        style: TextStyle(color: MobileGlassTheme.textSecondary),
+                      ),
                     ),
                     const Spacer(),
                     TextButton(
                       onPressed: () {
-                        setState(() => _selectedTime = TimeOfDay(
-                            hour: temp.hour, minute: temp.minute));
+                        setState(
+                          () => _selectedTime = TimeOfDay(
+                            hour: temp.hour,
+                            minute: temp.minute,
+                          ),
+                        );
                         Navigator.pop(ctx);
                       },
-                      child: Text('არჩევა',
-                          style: TextStyle(color: MobileGlassTheme.accentText)),
+                      child: Text(
+                        'არჩევა',
+                        style: TextStyle(color: MobileGlassTheme.accentText),
+                      ),
                     ),
                   ],
                 ),
@@ -275,15 +311,17 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
       MaterialPageRoute(
         builder: (_) => managerThemedPage(
           MobileCalculatorScreen(
-          selectionMode: true,
-          initialSelection: _selectedMenuItems
-              .map((e) => MenuSelectionLine(
+            selectionMode: true,
+            initialSelection: _selectedMenuItems
+                .map(
+                  (e) => MenuSelectionLine(
                     key: '${e.name}_${e.price}',
                     itemName: e.name,
                     unitPrice: e.price,
                     qty: e.qty,
-                  ))
-              .toList(),
+                  ),
+                )
+                .toList(),
           ),
         ),
       ),
@@ -292,11 +330,15 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
     setState(() {
       _selectedMenuItems
         ..clear()
-        ..addAll(selected.map((e) => _DraftMenuItem(
+        ..addAll(
+          selected.map(
+            (e) => _DraftMenuItem(
               name: e.itemName,
               price: e.unitPrice,
               qty: e.qty,
-            )));
+            ),
+          ),
+        );
     });
   }
 
@@ -330,14 +372,16 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
         notes: _notesController.text.trim(),
         createdBy: widget.user.username,
         preOrderItems: _selectedMenuItems
-            .map((e) => {
-                  'itemKey': '${e.name}_${e.price.toStringAsFixed(2)}',
-                  'itemName': e.name,
-                  'unitPrice': e.price,
-                  'quantity': e.qty,
-                  'total': e.price * e.qty,
-                  'comment': null,
-                })
+            .map(
+              (e) => {
+                'itemKey': '${e.name}_${e.price.toStringAsFixed(2)}',
+                'itemName': e.name,
+                'unitPrice': e.price,
+                'quantity': e.qty,
+                'total': e.price * e.qty,
+                'comment': null,
+              },
+            )
             .toList(),
       );
       if (mounted) Navigator.of(context).pop(true);
@@ -396,14 +440,25 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
                       _GlassCard(
                         child: Column(
                           children: [
-                            _field(_customerNameController, 'კლიენტის სახელი',
-                                icon: Icons.person_outline_rounded),
+                            _field(
+                              _customerNameController,
+                              'კლიენტის სახელი',
+                              icon: Icons.person_outline_rounded,
+                            ),
                             SizedBox(height: 12),
-                            _field(_customerPhoneController, 'ტელეფონი',
-                                icon: Icons.phone_outlined, phone: true),
+                            _field(
+                              _customerPhoneController,
+                              'ტელეფონი',
+                              icon: Icons.phone_outlined,
+                              phone: true,
+                            ),
                             SizedBox(height: 12),
-                            _field(_guestsController, 'სტუმრები',
-                                icon: Icons.groups_outlined, number: true),
+                            _field(
+                              _guestsController,
+                              'სტუმრები',
+                              icon: Icons.groups_outlined,
+                              number: true,
+                            ),
                           ],
                         ),
                       ),
@@ -431,8 +486,12 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
                       ),
                       SizedBox(height: 16),
                       _GlassCard(
-                        child: _field(_notesController, 'შენიშვნა',
-                            icon: Icons.notes_rounded, maxLines: 2),
+                        child: _field(
+                          _notesController,
+                          'შენიშვნა',
+                          icon: Icons.notes_rounded,
+                          maxLines: 2,
+                        ),
                       ),
                       SizedBox(height: 16),
                       _buildPreOrder(),
@@ -461,22 +520,28 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.restaurant_menu_rounded,
-                  color: MobileGlassTheme.accentText, size: 18),
+              Icon(
+                Icons.restaurant_menu_rounded,
+                color: MobileGlassTheme.accentText,
+                size: 18,
+              ),
               SizedBox(width: 8),
               Text(
                 'წინასწარი შეკვეთა',
                 style: TextStyle(
-                    color: MobileGlassTheme.textPrimary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15),
+                  color: MobileGlassTheme.textPrimary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
               ),
               const Spacer(),
               if (_selectedMenuItems.isNotEmpty)
                 Text(
                   '₾${_preOrderTotal.toStringAsFixed(2)}',
                   style: TextStyle(
-                      color: MobileGlassTheme.good, fontWeight: FontWeight.bold),
+                    color: MobileGlassTheme.good,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
             ],
           ),
@@ -484,8 +549,10 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
           if (_selectedMenuItems.isEmpty)
             Text(
               'პოზიციები არჩეული არ არის',
-              style:
-                  TextStyle(color: MobileGlassTheme.muted(0.5), fontSize: 13),
+              style: TextStyle(
+                color: MobileGlassTheme.muted(0.5),
+                fontSize: 13,
+              ),
             )
           else
             ..._selectedMenuItems.asMap().entries.map((entry) {
@@ -500,7 +567,10 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
                         item.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: MobileGlassTheme.textPrimary, fontSize: 14),
+                        style: TextStyle(
+                          color: MobileGlassTheme.textPrimary,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
                     _qtyBtn(Icons.remove_rounded, () {
@@ -508,21 +578,28 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
                         if (item.qty <= 1) {
                           _selectedMenuItems.removeAt(idx);
                         } else {
-                          _selectedMenuItems[idx] =
-                              item.copyWith(qty: item.qty - 1);
+                          _selectedMenuItems[idx] = item.copyWith(
+                            qty: item.qty - 1,
+                          );
                         }
                       });
                     }),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Text('${item.qty}',
-                          style: TextStyle(
-                              color: MobileGlassTheme.textPrimary,
-                              fontWeight: FontWeight.bold)),
+                      child: Text(
+                        '${item.qty}',
+                        style: TextStyle(
+                          color: MobileGlassTheme.textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                     _qtyBtn(Icons.add_rounded, () {
-                      setState(() => _selectedMenuItems[idx] =
-                          item.copyWith(qty: item.qty + 1));
+                      setState(
+                        () => _selectedMenuItems[idx] = item.copyWith(
+                          qty: item.qty + 1,
+                        ),
+                      );
                     }),
                   ],
                 ),
@@ -572,13 +649,21 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label,
-                  style: TextStyle(color: MobileGlassTheme.textSecondary, fontSize: 11)),
-              Text(value,
-                  style: TextStyle(
-                      color: MobileGlassTheme.textPrimary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15)),
+              Text(
+                label,
+                style: TextStyle(
+                  color: MobileGlassTheme.textSecondary,
+                  fontSize: 11,
+                ),
+              ),
+              Text(
+                value,
+                style: TextStyle(
+                  color: MobileGlassTheme.textPrimary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
             ],
           ),
         ],
@@ -600,20 +685,25 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
       keyboardType: number
           ? TextInputType.number
           : phone
-              ? TextInputType.phone
-              : null,
+          ? TextInputType.phone
+          : null,
       style: TextStyle(color: MobileGlassTheme.textPrimary, fontSize: 15),
       cursorColor: MobileGlassTheme.primary,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: MobileGlassTheme.textSecondary, fontSize: 13),
+        labelStyle: TextStyle(
+          color: MobileGlassTheme.textSecondary,
+          fontSize: 13,
+        ),
         prefixIcon: icon != null
             ? Icon(icon, color: MobileGlassTheme.muted(0.4), size: 20)
             : null,
         filled: true,
         fillColor: MobileGlassTheme.surface(0.05),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: MobileGlassTheme.data.borderSubtle),
@@ -634,7 +724,9 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: MobileGlassTheme.primary,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: MobileGlassTheme.primary.withValues(alpha: 0.4),
+          disabledBackgroundColor: MobileGlassTheme.primary.withValues(
+            alpha: 0.4,
+          ),
           disabledForegroundColor: MobileGlassTheme.textSecondary,
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -642,8 +734,10 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
             borderRadius: BorderRadius.circular(16),
           ),
         ),
-        child: Text(label,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+        child: Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        ),
       ),
     );
   }
@@ -662,7 +756,9 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
         style: OutlinedButton.styleFrom(
           foregroundColor: MobileGlassTheme.accentText,
           padding: const EdgeInsets.symmetric(vertical: 13),
-          side: BorderSide(color: MobileGlassTheme.primary.withValues(alpha: 0.5)),
+          side: BorderSide(
+            color: MobileGlassTheme.primary.withValues(alpha: 0.5),
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -676,8 +772,11 @@ class _DraftMenuItem {
   final String name;
   final double price;
   final int qty;
-  const _DraftMenuItem(
-      {required this.name, required this.price, required this.qty});
+  const _DraftMenuItem({
+    required this.name,
+    required this.price,
+    required this.qty,
+  });
 
   _DraftMenuItem copyWith({String? name, double? price, int? qty}) =>
       _DraftMenuItem(
@@ -693,11 +792,7 @@ class _GlassCard extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
 
-  const _GlassCard({
-    required this.child,
-    this.padding,
-    this.onTap,
-  });
+  const _GlassCard({required this.child, this.padding, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -736,7 +831,10 @@ class _GlassCard extends StatelessWidget {
     }
     if (onTap != null) {
       card = GestureDetector(
-          onTap: onTap, behavior: HitTestBehavior.opaque, child: card);
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: card,
+      );
     }
     return card;
   }

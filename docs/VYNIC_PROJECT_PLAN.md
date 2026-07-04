@@ -138,8 +138,15 @@ verification, not one big commit.
   not yet committed. `lib/core/services/` was also reorganized into concern
   folders (`auth/`, `sync/`, `notifications/`, `printing/`, `audit/`,
   `manager_app/`, `pos/`) as a follow-on hygiene pass — see git history for the
-  file-by-file mapping. `core/models/` was left flat (small, not misleading;
-  several files pair with Hive-generated `.g.dart` adapters we don't touch).
+  file-by-file mapping. A second boundary cleanup moved shared UI/helpers
+  (`pin_button.dart`, `service_fee_adjust_dialog.dart`,
+  `home_reservations_helper.dart`) into `lib/core/`, kept manager-only toast UI in
+  `apps/mobile_app/`, and removed `lib/core/` imports of `apps/*`. A final mobile
+  layout cleanup renamed app-only `apps/mobile_app/core/theme/` to
+  `apps/mobile_app/theme/` and consolidated mobile UI components under
+  `apps/mobile_app/presentation/widgets/`. `core/models/` was left flat (small,
+  not misleading; several files pair with Hive-generated `.g.dart` adapters we
+  don't touch).
 - **Phase 3 — Data-driven tables/zones.** Replace `'first'`/`'second'` and `> 10`
   with `Zone { id, name }` + `Table { id, zoneId, label, capacity }`. Delete the
   integer-code arithmetic. Centralize the one remaining encode/decode if still

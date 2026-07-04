@@ -1,4 +1,4 @@
-import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
@@ -67,13 +67,18 @@ class MobileOrderDetailPanel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(4, 8, 8, 12),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: MobileGlassTheme.border(0.08))),
+        border: Border(
+          bottom: BorderSide(color: MobileGlassTheme.border(0.08)),
+        ),
       ),
       child: Row(
         children: [
           IconButton(
             onPressed: onClose,
-            icon: Icon(Icons.arrow_back_rounded, color: MobileGlassTheme.textPrimary),
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: MobileGlassTheme.textPrimary,
+            ),
             tooltip: 'უკან',
           ),
           Expanded(
@@ -91,12 +96,18 @@ class MobileOrderDetailPanel extends StatelessWidget {
                 if (tableLabel != null && tableLabel!.isNotEmpty)
                   Text(
                     tableLabel!,
-                    style: TextStyle(fontSize: 12, color: MobileGlassTheme.muted()),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: MobileGlassTheme.muted(),
+                    ),
                   ),
                 if (orderIdLabel != null)
                   Text(
                     orderIdLabel!,
-                    style: TextStyle(fontSize: 10, color: MobileGlassTheme.muted(0.4)),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: MobileGlassTheme.muted(0.4),
+                    ),
                   ),
               ],
             ),
@@ -106,7 +117,9 @@ class MobileOrderDetailPanel extends StatelessWidget {
               onPressed: onSave,
               icon: const Icon(Icons.check_circle_rounded, size: 18),
               label: const Text('შენახვა'),
-              style: TextButton.styleFrom(foregroundColor: MobileGlassTheme.good),
+              style: TextButton.styleFrom(
+                foregroundColor: MobileGlassTheme.good,
+              ),
             ),
         ],
       ),
@@ -122,7 +135,11 @@ class MobileOrderDetailPanel extends StatelessWidget {
         borderColor: MobileGlassTheme.highlightBorder.withValues(alpha: 0.5),
         child: Row(
           children: [
-            Icon(Icons.auto_awesome_rounded, color: MobileGlassTheme.warn, size: 18),
+            Icon(
+              Icons.auto_awesome_rounded,
+              color: MobileGlassTheme.warn,
+              size: 18,
+            ),
             SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -164,13 +181,18 @@ class MobileOrderDetailPanel extends StatelessWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
-                    color: highlighted ? MobileGlassTheme.warn : MobileGlassTheme.textPrimary,
+                    color: highlighted
+                        ? MobileGlassTheme.warn
+                        : MobileGlassTheme.textPrimary,
                   ),
                 ),
                 SizedBox(height: 4),
                 Text(
                   '${item.unitPrice.toStringAsFixed(1)} ₾ × ${item.quantity}',
-                  style: TextStyle(fontSize: 13, color: MobileGlassTheme.muted()),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: MobileGlassTheme.muted(),
+                  ),
                 ),
                 if (item.comment != null && item.comment!.isNotEmpty)
                   Padding(
@@ -214,7 +236,9 @@ class MobileOrderDetailPanel extends StatelessWidget {
               textAlign: TextAlign.end,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: highlighted ? MobileGlassTheme.warn : MobileGlassTheme.good,
+                color: highlighted
+                    ? MobileGlassTheme.warn
+                    : MobileGlassTheme.good,
               ),
             ),
           ),
@@ -258,7 +282,10 @@ class MobileOrderDetailPanel extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'სერვისი ($serviceFeePercentLabel%)',
-                    style: TextStyle(fontSize: 14, color: MobileGlassTheme.muted()),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: MobileGlassTheme.muted(),
+                    ),
                   ),
                 ),
                 Switch.adaptive(
@@ -273,7 +300,10 @@ class MobileOrderDetailPanel extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('სულ', style: TextStyle(fontSize: 13, color: MobileGlassTheme.muted())),
+              Text(
+                'სულ',
+                style: TextStyle(fontSize: 13, color: MobileGlassTheme.muted()),
+              ),
               Text(
                 '${order.totalAmount.toStringAsFixed(2)} ₾',
                 style: TextStyle(

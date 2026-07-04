@@ -8,7 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:file_selector/file_selector.dart'
     show getSaveLocation, FileSaveLocation, XTypeGroup;
-import 'package:vynic/core/widgets/manager_toast.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_toast.dart';
 
 class MobileReceiptPreviewDialog extends StatelessWidget {
   final Uint8List pngBytes;
@@ -20,10 +20,15 @@ class MobileReceiptPreviewDialog extends StatelessWidget {
     this.title = 'ქვითრის ნახვა',
   });
 
-  static Future<void> show(BuildContext context, Uint8List bytes, {String title = 'ქვითრის ნახვა'}) {
+  static Future<void> show(
+    BuildContext context,
+    Uint8List bytes, {
+    String title = 'ქვითრის ნახვა',
+  }) {
     return showDialog(
       context: context,
-      builder: (context) => MobileReceiptPreviewDialog(pngBytes: bytes, title: title),
+      builder: (context) =>
+          MobileReceiptPreviewDialog(pngBytes: bytes, title: title),
     );
   }
 
@@ -35,9 +40,8 @@ class MobileReceiptPreviewDialog extends StatelessWidget {
       pw.Page(
         pageFormat: PdfPageFormat.roll80,
         margin: pw.EdgeInsets.zero,
-        build: (context) => pw.Center(
-          child: pw.Image(image, fit: pw.BoxFit.contain),
-        ),
+        build: (context) =>
+            pw.Center(child: pw.Image(image, fit: pw.BoxFit.contain)),
       ),
     );
     return doc.save();
@@ -161,7 +165,10 @@ class MobileReceiptPreviewDialog extends StatelessWidget {
       backgroundColor: const Color(0xFFF1F5F9),
       child: Scaffold(
         appBar: AppBar(
-          title: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          title: Text(
+            title,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           backgroundColor: Colors.white,
           foregroundColor: const Color(0xFF1E293B),
           elevation: 0,
@@ -174,16 +181,20 @@ class MobileReceiptPreviewDialog extends StatelessWidget {
               builder: (context) => TextButton.icon(
                 onPressed: () => _downloadPdf(context),
                 icon: const Icon(Icons.download_rounded, size: 20),
-                label: const Text('ჩამოტვირთვა',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                label: const Text(
+                  'ჩამოტვირთვა',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ),
             Builder(
               builder: (context) => TextButton.icon(
                 onPressed: () => _shareAsPdf(context),
                 icon: const Icon(Icons.picture_as_pdf, size: 20),
-                label: const Text('გაზიარება',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                label: const Text(
+                  'გაზიარება',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ),
             SizedBox(width: 8),
@@ -203,10 +214,7 @@ class MobileReceiptPreviewDialog extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Image.memory(
-                pngBytes,
-                fit: BoxFit.contain,
-              ),
+              child: Image.memory(pngBytes, fit: BoxFit.contain),
             ),
           ),
         ),

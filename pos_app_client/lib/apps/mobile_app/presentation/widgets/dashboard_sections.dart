@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:vynic/apps/mobile_app/core/theme/dashboard_colors.dart';
+import 'package:vynic/apps/mobile_app/theme/dashboard_colors.dart';
 import 'package:vynic/core/models/monitoring.dart';
 import 'package:vynic/core/widgets/skeleton.dart';
 
@@ -155,11 +155,26 @@ class KpiRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _KpiCard('შეკვეთები', metrics.todayOrderCount.toString(), Icons.receipt_long_rounded, dashboardBlue),
+        _KpiCard(
+          'შეკვეთები',
+          metrics.todayOrderCount.toString(),
+          Icons.receipt_long_rounded,
+          dashboardBlue,
+        ),
         SizedBox(width: 10),
-        _KpiCard('საშუალო ჩეკი', '${avgOrder.toStringAsFixed(1)} ₾', Icons.payments_rounded, dashboardGreen),
+        _KpiCard(
+          'საშუალო ჩეკი',
+          '${avgOrder.toStringAsFixed(1)} ₾',
+          Icons.payments_rounded,
+          dashboardGreen,
+        ),
         SizedBox(width: 10),
-        _KpiCard('აქტიური', '${metrics.activeTablesCount} მაგ.', Icons.table_restaurant_rounded, dashboardAmber),
+        _KpiCard(
+          'აქტიური',
+          '${metrics.activeTablesCount} მაგ.',
+          Icons.table_restaurant_rounded,
+          dashboardAmber,
+        ),
       ],
     );
   }
@@ -178,11 +193,20 @@ class RevenueCompareCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _CardTitle('დღეს vs. გუშინ', Icons.bar_chart_rounded, dashboardBlue),
+          const _CardTitle(
+            'დღეს vs. გუშინ',
+            Icons.bar_chart_rounded,
+            dashboardBlue,
+          ),
           SizedBox(height: 16),
           _BarRow('დღეს', metrics.todayRevenue, todayFrac, dashboardBlue),
           SizedBox(height: 10),
-          _BarRow('გუშინ', metrics.yesterdayRevenue, yestFrac, dashboardTextSecondary),
+          _BarRow(
+            'გუშინ',
+            metrics.yesterdayRevenue,
+            yestFrac,
+            dashboardTextSecondary,
+          ),
         ],
       ),
     );
@@ -213,7 +237,11 @@ class PaymentSplitCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _CardTitle('გადახდის მეთოდი', Icons.donut_large_rounded, dashboardPurple),
+          const _CardTitle(
+            'გადახდის მეთოდი',
+            Icons.donut_large_rounded,
+            dashboardPurple,
+          ),
           SizedBox(height: 16),
           Row(
             children: [
@@ -252,7 +280,11 @@ class PaymentSplitCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    _LegendItem(label: 'ჯამი', value: total, color: dashboardTextPrimary),
+                    _LegendItem(
+                      label: 'ჯამი',
+                      value: total,
+                      color: dashboardTextPrimary,
+                    ),
                   ],
                 ),
               ),
@@ -267,23 +299,62 @@ class PaymentSplitCard extends StatelessWidget {
 class EfficiencyRow extends StatelessWidget {
   final ManagerDashboardMetrics metrics;
   final Map<String, dynamic>? salesReport;
-  const EfficiencyRow({super.key, required this.metrics, required this.salesReport});
+  const EfficiencyRow({
+    super.key,
+    required this.metrics,
+    required this.salesReport,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final orderCount = (salesReport?['orderCount'] as num?)?.toInt() ?? metrics.todayOrderCount;
-    final totalRev = (salesReport?['totalRevenue'] as num?)?.toDouble() ?? metrics.todayRevenue;
+    final orderCount =
+        (salesReport?['orderCount'] as num?)?.toInt() ??
+        metrics.todayOrderCount;
+    final totalRev =
+        (salesReport?['totalRevenue'] as num?)?.toDouble() ??
+        metrics.todayRevenue;
     final avgOrder = orderCount > 0 ? totalRev / orderCount : 0.0;
     final occ = metrics.occupancyPercentage;
-    final score = (occ * 0.5 + math.min(avgOrder / 100.0, 1.0) * 100.0 * 0.5).clamp(0, 100).toDouble();
+    final score = (occ * 0.5 + math.min(avgOrder / 100.0, 1.0) * 100.0 * 0.5)
+        .clamp(0, 100)
+        .toDouble();
 
     return Row(
       children: [
-        Expanded(child: _EffCard(label: 'საშ. ჩეკი', value: '${avgOrder.toStringAsFixed(2)} ₾', icon: Icons.receipt_rounded, color: dashboardGreen)),
+        Expanded(
+          child: _EffCard(
+            label: 'საშ. ჩეკი',
+            value: '${avgOrder.toStringAsFixed(2)} ₾',
+            icon: Icons.receipt_rounded,
+            color: dashboardGreen,
+          ),
+        ),
         SizedBox(width: 10),
-        Expanded(child: _EffCard(label: 'ეფექტურობა', value: '${score.toStringAsFixed(0)}%', icon: Icons.speed_rounded, color: score >= 70 ? dashboardGreen : score >= 40 ? dashboardAmber : dashboardRed)),
+        Expanded(
+          child: _EffCard(
+            label: 'ეფექტურობა',
+            value: '${score.toStringAsFixed(0)}%',
+            icon: Icons.speed_rounded,
+            color: score >= 70
+                ? dashboardGreen
+                : score >= 40
+                ? dashboardAmber
+                : dashboardRed,
+          ),
+        ),
         SizedBox(width: 10),
-        Expanded(child: _EffCard(label: 'დატვირთვა', value: '${occ.toStringAsFixed(0)}%', icon: Icons.pie_chart_rounded, color: occ >= 70 ? dashboardRed : occ >= 40 ? dashboardAmber : dashboardGreen)),
+        Expanded(
+          child: _EffCard(
+            label: 'დატვირთვა',
+            value: '${occ.toStringAsFixed(0)}%',
+            icon: Icons.pie_chart_rounded,
+            color: occ >= 70
+                ? dashboardRed
+                : occ >= 40
+                ? dashboardAmber
+                : dashboardGreen,
+          ),
+        ),
       ],
     );
   }
@@ -295,17 +366,28 @@ class StaffChartCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sorted = [...staff]..sort((a, b) => b.totalSales.compareTo(a.totalSales));
+    final sorted = [...staff]
+      ..sort((a, b) => b.totalSales.compareTo(a.totalSales));
     final top = sorted.take(5).toList();
     if (top.isEmpty) return const SizedBox.shrink();
     final maxSales = top.first.totalSales;
-    const colors = [dashboardBlue, dashboardPurple, dashboardGreen, dashboardAmber, dashboardRed];
+    const colors = [
+      dashboardBlue,
+      dashboardPurple,
+      dashboardGreen,
+      dashboardAmber,
+      dashboardRed,
+    ];
 
     return _CardContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _CardTitle('პერსონალის რეიტინგი', Icons.leaderboard_rounded, dashboardBlue),
+          const _CardTitle(
+            'პერსონალის რეიტინგი',
+            Icons.leaderboard_rounded,
+            dashboardBlue,
+          ),
           SizedBox(height: 16),
           ...top.asMap().entries.map((e) {
             final i = e.key;
@@ -323,13 +405,21 @@ class StaffChartCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           '${i + 1}. ${s.waiterName}',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: dashboardTextPrimary),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: dashboardTextPrimary,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Text(
                         '${s.totalSales.toStringAsFixed(2)} ₾',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: color,
+                        ),
                       ),
                     ],
                   ),
@@ -360,7 +450,10 @@ class TopItemsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (topItems.isEmpty) return const SizedBox.shrink();
-    final maxRev = topItems.fold<double>(0, (m, e) => math.max(m, (e['revenue'] as num).toDouble()));
+    final maxRev = topItems.fold<double>(
+      0,
+      (m, e) => math.max(m, (e['revenue'] as num).toDouble()),
+    );
     final barGroups = topItems.asMap().entries.map((e) {
       final i = e.key;
       final rev = (e.value['revenue'] as num).toDouble();
@@ -385,11 +478,19 @@ class TopItemsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _CardTitle('Top პოზიციები (შემოსავლით)', Icons.star_rounded, dashboardAmber),
+          const _CardTitle(
+            'Top პოზიციები (შემოსავლით)',
+            Icons.star_rounded,
+            dashboardAmber,
+          ),
           SizedBox(height: 16),
           const Text(
             'Top 10 (შემოსავლით)',
-            style: TextStyle(fontSize: 11, color: dashboardTextSecondary, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontSize: 11,
+              color: dashboardTextSecondary,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           SizedBox(height: 8),
           SingleChildScrollView(
@@ -414,9 +515,12 @@ class TopItemsCard extends StatelessWidget {
                         if (groupIndex < 0 || groupIndex >= topItems.length) {
                           return null;
                         }
-                        final name = (topItems[groupIndex]['name'] as String?) ?? '';
+                        final name =
+                            (topItems[groupIndex]['name'] as String?) ?? '';
                         final revenue =
-                            (topItems[groupIndex]['revenue'] as num?)?.toDouble() ?? 0;
+                            (topItems[groupIndex]['revenue'] as num?)
+                                ?.toDouble() ??
+                            0;
                         return BarTooltipItem(
                           '$name\n${revenue.toStringAsFixed(2)} ₾',
                           const TextStyle(
@@ -431,7 +535,8 @@ class TopItemsCard extends StatelessWidget {
                   gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,
-                    getDrawingHorizontalLine: (_) => FlLine(color: dashboardBorder, strokeWidth: 1),
+                    getDrawingHorizontalLine: (_) =>
+                        FlLine(color: dashboardBorder, strokeWidth: 1),
                   ),
                   borderData: FlBorderData(show: false),
                   titlesData: FlTitlesData(
@@ -459,18 +564,31 @@ class TopItemsCard extends StatelessWidget {
                         reservedSize: 38,
                         getTitlesWidget: (v, _) {
                           final idx = v.toInt();
-                          if (idx < 0 || idx >= topItems.length) return const SizedBox.shrink();
+                          if (idx < 0 || idx >= topItems.length)
+                            return const SizedBox.shrink();
                           final name = (topItems[idx]['name'] as String?) ?? '';
-                          final short = name.length > 10 ? '${name.substring(0, 9)}…' : name;
+                          final short = name.length > 10
+                              ? '${name.substring(0, 9)}…'
+                              : name;
                           return Padding(
                             padding: const EdgeInsets.only(top: 6),
-                            child: Text(short, style: const TextStyle(fontSize: 9, color: dashboardTextSecondary)),
+                            child: Text(
+                              short,
+                              style: const TextStyle(
+                                fontSize: 9,
+                                color: dashboardTextSecondary,
+                              ),
+                            ),
                           );
                         },
                       ),
                     ),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
                   ),
                 ),
               ),
@@ -539,8 +657,18 @@ class _LiveBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(99)),
-      child: const Text('Live', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: const Text(
+        'Live',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 }
@@ -554,7 +682,9 @@ class _ChangePill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: up ? const Color(0xFF4ADE80).withValues(alpha: 0.2) : const Color(0xFFF87171).withValues(alpha: 0.2),
+        color: up
+            ? const Color(0xFF4ADE80).withValues(alpha: 0.2)
+            : const Color(0xFFF87171).withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(99),
       ),
       child: Text(
@@ -591,9 +721,22 @@ class _KpiCard extends StatelessWidget {
           children: [
             Icon(icon, color: color, size: 16),
             SizedBox(height: 10),
-            Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: dashboardTextPrimary)),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: dashboardTextPrimary,
+              ),
+            ),
             SizedBox(height: 2),
-            Text(label, style: const TextStyle(fontSize: 10, color: dashboardTextSecondary)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 10,
+                color: dashboardTextSecondary,
+              ),
+            ),
           ],
         ),
       ),
@@ -617,8 +760,21 @@ class _BarRow extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontSize: 12, color: dashboardTextSecondary)),
-            Text('${fmt.format(value)} ₾', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: dashboardTextPrimary)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                color: dashboardTextSecondary,
+              ),
+            ),
+            Text(
+              '${fmt.format(value)} ₾',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: dashboardTextPrimary,
+              ),
+            ),
           ],
         ),
         SizedBox(height: 6),
@@ -640,21 +796,42 @@ class _LegendItem extends StatelessWidget {
   final String label;
   final double value;
   final Color color;
-  const _LegendItem({required this.label, required this.value, required this.color});
+  const _LegendItem({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
     final fmt = NumberFormat('#,##0.00', 'ka_GE');
     return Row(
       children: [
-        Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
         SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: const TextStyle(fontSize: 11, color: dashboardTextSecondary)),
-              Text('${fmt.format(value)} ₾', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: dashboardTextPrimary)),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: dashboardTextSecondary,
+                ),
+              ),
+              Text(
+                '${fmt.format(value)} ₾',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: dashboardTextPrimary,
+                ),
+              ),
             ],
           ),
         ),
@@ -668,7 +845,12 @@ class _EffCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
-  const _EffCard({required this.label, required this.value, required this.icon, required this.color});
+  const _EffCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -684,9 +866,19 @@ class _EffCard extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 20),
           SizedBox(height: 10),
-          Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: dashboardTextPrimary)),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: dashboardTextPrimary,
+            ),
+          ),
           SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 10, color: dashboardTextSecondary)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 10, color: dashboardTextSecondary),
+          ),
         ],
       ),
     );
@@ -724,8 +916,21 @@ class _QuickButton extends StatelessWidget {
           children: [
             Icon(icon, color: color, size: 26),
             SizedBox(height: 12),
-            Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color)),
-            Text(subtitle, style: TextStyle(fontSize: 11, color: color.withValues(alpha: 0.7))),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 11,
+                color: color.withValues(alpha: 0.7),
+              ),
+            ),
           ],
         ),
       ),
@@ -766,7 +971,11 @@ class _CardTitle extends StatelessWidget {
         SizedBox(width: 10),
         Text(
           title,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: dashboardTextPrimary),
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: dashboardTextPrimary,
+          ),
         ),
       ],
     );

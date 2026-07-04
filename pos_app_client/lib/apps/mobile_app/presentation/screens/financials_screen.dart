@@ -1,11 +1,10 @@
-import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
-import 'package:vynic/core/widgets/manager_toast.dart';
-
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_toast.dart';
 
 const List<Color> _kCatColors = [
   Color(0xFFF59E0B),
@@ -40,7 +39,8 @@ class _FinancialsScreenState extends State<FinancialsScreen>
   final TextEditingController _categoryController = TextEditingController();
   final TextEditingController _expenseDescriptionController =
       TextEditingController();
-  final TextEditingController _expenseAmountController = TextEditingController();
+  final TextEditingController _expenseAmountController =
+      TextEditingController();
   final TextEditingController _staffNameController = TextEditingController();
   final TextEditingController _staffSalaryController = TextEditingController();
 
@@ -107,8 +107,10 @@ class _FinancialsScreenState extends State<FinancialsScreen>
         if (e is Map) rows.add(Map<String, dynamic>.from(e));
       }
     }
-    rows.sort((a, b) =>
-        ((b['amount'] ?? 0) as num).compareTo((a['amount'] ?? 0) as num));
+    rows.sort(
+      (a, b) =>
+          ((b['amount'] ?? 0) as num).compareTo((a['amount'] ?? 0) as num),
+    );
     return rows;
   }
 
@@ -121,7 +123,10 @@ class _FinancialsScreenState extends State<FinancialsScreen>
     final category = _categoryController.text.trim();
     final description = _expenseDescriptionController.text.trim();
     final amount = double.tryParse(_expenseAmountController.text.trim());
-    if (category.isEmpty || description.isEmpty || amount == null || amount <= 0) {
+    if (category.isEmpty ||
+        description.isEmpty ||
+        amount == null ||
+        amount <= 0) {
       _toast('შეავსეთ კატეგორია, აღწერა და სწორი თანხა', error: true);
       return;
     }
@@ -213,11 +218,13 @@ class _FinancialsScreenState extends State<FinancialsScreen>
             bottom: false,
             child: _isLoading
                 ? Center(
-                    child: CircularProgressIndicator(color: MobileGlassTheme.primary),
+                    child: CircularProgressIndicator(
+                      color: MobileGlassTheme.primary,
+                    ),
                   )
                 : _error != null
-                    ? _buildError()
-                    : _buildContent(),
+                ? _buildError()
+                : _buildContent(),
           ),
         ],
       ),
@@ -225,25 +232,33 @@ class _FinancialsScreenState extends State<FinancialsScreen>
   }
 
   Widget _buildError() => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.wifi_off_rounded, size: 56, color: MobileGlassTheme.textSecondary),
-            SizedBox(height: 14),
-            Text(
-              _error!,
-              style: TextStyle(
-                  color: MobileGlassTheme.textPrimary, fontWeight: FontWeight.w600),
-            ),
-            TextButton.icon(
-              onPressed: _loadFinancials,
-              icon: Icon(Icons.refresh_rounded, color: MobileGlassTheme.accentText),
-              label: Text('თავიდან ცდა',
-                  style: TextStyle(color: MobileGlassTheme.accentText)),
-            ),
-          ],
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          Icons.wifi_off_rounded,
+          size: 56,
+          color: MobileGlassTheme.textSecondary,
         ),
-      );
+        SizedBox(height: 14),
+        Text(
+          _error!,
+          style: TextStyle(
+            color: MobileGlassTheme.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        TextButton.icon(
+          onPressed: _loadFinancials,
+          icon: Icon(Icons.refresh_rounded, color: MobileGlassTheme.accentText),
+          label: Text(
+            'თავიდან ცდა',
+            style: TextStyle(color: MobileGlassTheme.accentText),
+          ),
+        ),
+      ],
+    ),
+  );
 
   Widget _buildContent() {
     final double revenue = (_data!['revenue'] ?? 0).toDouble();
@@ -322,7 +337,11 @@ class _FinancialsScreenState extends State<FinancialsScreen>
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
               children: [
-                Icon(Icons.refresh_rounded, color: MobileGlassTheme.textPrimary, size: 18),
+                Icon(
+                  Icons.refresh_rounded,
+                  color: MobileGlassTheme.textPrimary,
+                  size: 18,
+                ),
                 SizedBox(width: 8),
                 Text(
                   'განახლება',
@@ -388,10 +407,14 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: (positive ? MobileGlassTheme.good : MobileGlassTheme.bad).withValues(alpha: 0.15),
+                  color:
+                      (positive ? MobileGlassTheme.good : MobileGlassTheme.bad)
+                          .withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -400,14 +423,18 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                       positive
                           ? Icons.trending_up_rounded
                           : Icons.trending_down_rounded,
-                      color: positive ? MobileGlassTheme.good : MobileGlassTheme.bad,
+                      color: positive
+                          ? MobileGlassTheme.good
+                          : MobileGlassTheme.bad,
                       size: 16,
                     ),
                     SizedBox(width: 4),
                     Text(
                       '${margin.toStringAsFixed(1)}%',
                       style: TextStyle(
-                        color: positive ? MobileGlassTheme.good : MobileGlassTheme.bad,
+                        color: positive
+                            ? MobileGlassTheme.good
+                            : MobileGlassTheme.bad,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),
@@ -472,12 +499,11 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                     ),
                   if (expFrac + profFrac < 1)
                     Expanded(
-                      flex: ((1 - expFrac - profFrac) * 1000)
-                          .round()
-                          .clamp(1, 1000),
-                      child: Container(
-                        color: MobileGlassTheme.border(0.12),
+                      flex: ((1 - expFrac - profFrac) * 1000).round().clamp(
+                        1,
+                        1000,
                       ),
+                      child: Container(color: MobileGlassTheme.border(0.12)),
                     ),
                 ],
               ),
@@ -508,10 +534,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
         SizedBox(width: 6),
         Text(
           label,
-          style: TextStyle(
-            color: MobileGlassTheme.textSecondary,
-            fontSize: 12,
-          ),
+          style: TextStyle(color: MobileGlassTheme.textSecondary, fontSize: 12),
         ),
       ],
     );
@@ -544,13 +567,23 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                             children: [
                               if (cashFrac > 0)
                                 Expanded(
-                                  flex: (cashFrac * 1000).round().clamp(1, 1000),
-                                  child: Container(color: const Color(0xFF3B82F6)),
+                                  flex: (cashFrac * 1000).round().clamp(
+                                    1,
+                                    1000,
+                                  ),
+                                  child: Container(
+                                    color: const Color(0xFF3B82F6),
+                                  ),
                                 ),
                               if (cardFrac > 0)
                                 Expanded(
-                                  flex: (cardFrac * 1000).round().clamp(1, 1000),
-                                  child: Container(color: const Color(0xFF8B5CF6)),
+                                  flex: (cardFrac * 1000).round().clamp(
+                                    1,
+                                    1000,
+                                  ),
+                                  child: Container(
+                                    color: const Color(0xFF8B5CF6),
+                                  ),
                                 ),
                             ],
                           ),
@@ -604,9 +637,11 @@ class _FinancialsScreenState extends State<FinancialsScreen>
   Widget _buildExpenseBreakdownCard() {
     final rows = _expenseBreakdown;
     final double maxAmount = rows.fold<double>(
-        0, (m, e) => ((e['amount'] ?? 0) as num).toDouble() > m
-            ? ((e['amount'] ?? 0) as num).toDouble()
-            : m);
+      0,
+      (m, e) => ((e['amount'] ?? 0) as num).toDouble() > m
+          ? ((e['amount'] ?? 0) as num).toDouble()
+          : m,
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -632,8 +667,9 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                           amount: ((rows[i]['amount'] ?? 0) as num).toDouble(),
                           maxAmount: maxAmount <= 0 ? 1 : maxAmount,
                           color: _kCatColors[i % _kCatColors.length],
-                          formatted:
-                              _gel(((rows[i]['amount'] ?? 0) as num).toDouble()),
+                          formatted: _gel(
+                            ((rows[i]['amount'] ?? 0) as num).toDouble(),
+                          ),
                         ),
                       ],
                     ],
@@ -662,11 +698,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                 SizedBox(height: 12),
                 _darkField(_expenseDescriptionController, 'აღწერა'),
                 SizedBox(height: 12),
-                _darkField(
-                  _expenseAmountController,
-                  'თანხა',
-                  number: true,
-                ),
+                _darkField(_expenseAmountController, 'თანხა', number: true),
                 SizedBox(height: 16),
                 _primaryButton(
                   label: _isAddingExpense ? 'ემატება...' : 'ხარჯის დამატება',
@@ -757,14 +789,17 @@ class _FinancialsScreenState extends State<FinancialsScreen>
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => setState(() =>
-                _salaryItems[idx] = item.copyWith(selected: !item.selected)),
+            onTap: () => setState(
+              () => _salaryItems[idx] = item.copyWith(selected: !item.selected),
+            ),
             behavior: HitTestBehavior.opaque,
             child: Container(
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: item.selected ? MobileGlassTheme.primary : Colors.transparent,
+                color: item.selected
+                    ? MobileGlassTheme.primary
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(7),
                 border: Border.all(
                   color: item.selected
@@ -773,7 +808,11 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                 ),
               ),
               child: item.selected
-                  ? Icon(Icons.check_rounded, size: 16, color: MobileGlassTheme.textPrimary)
+                  ? Icon(
+                      Icons.check_rounded,
+                      size: 16,
+                      color: MobileGlassTheme.textPrimary,
+                    )
                   : null,
             ),
           ),
@@ -785,7 +824,9 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                 Text(
                   item.name,
                   style: TextStyle(
-                      color: MobileGlassTheme.textPrimary, fontWeight: FontWeight.w600),
+                    color: MobileGlassTheme.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 Text(
                   _gel(item.amount),
@@ -830,14 +871,12 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                     padding: const EdgeInsets.all(16),
                     child: Text(
                       'დღეს ხარჯები არ არის',
-                      style:
-                          TextStyle(color: MobileGlassTheme.textSecondary),
+                      style: TextStyle(color: MobileGlassTheme.textSecondary),
                     ),
                   )
                 : Column(
                     children: [
-                      for (final e in entries)
-                        _buildExpenseLogRow(e, fmt),
+                      for (final e in entries) _buildExpenseLogRow(e, fmt),
                     ],
                   ),
           ),
@@ -853,8 +892,9 @@ class _FinancialsScreenState extends State<FinancialsScreen>
       createdAt = DateTime.tryParse(createdAtRaw)?.toLocal();
     }
     final amount = (e['amount'] ?? 0);
-    final double amt =
-        amount is num ? amount.toDouble() : double.tryParse('$amount') ?? 0;
+    final double amt = amount is num
+        ? amount.toDouble()
+        : double.tryParse('$amount') ?? 0;
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Row(
@@ -865,8 +905,11 @@ class _FinancialsScreenState extends State<FinancialsScreen>
               color: MobileGlassTheme.bad.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(Icons.receipt_long_rounded,
-                color: MobileGlassTheme.bad, size: 20),
+            child: Icon(
+              Icons.receipt_long_rounded,
+              color: MobileGlassTheme.bad,
+              size: 20,
+            ),
           ),
           SizedBox(width: 14),
           Expanded(
@@ -878,7 +921,10 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                      color: MobileGlassTheme.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
+                    color: MobileGlassTheme.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
                 ),
                 if (createdAt != null)
                   Text(
@@ -895,7 +941,10 @@ class _FinancialsScreenState extends State<FinancialsScreen>
           Text(
             '-${_gel(amt)}',
             style: TextStyle(
-                color: MobileGlassTheme.bad, fontWeight: FontWeight.bold, fontSize: 14),
+              color: MobileGlassTheme.bad,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
           ),
           GestureDetector(
             onTap: () => _deleteExpense((e['id'] ?? '').toString()),
@@ -922,17 +971,23 @@ class _FinancialsScreenState extends State<FinancialsScreen>
   }) {
     return TextField(
       controller: controller,
-      keyboardType:
-          number ? const TextInputType.numberWithOptions(decimal: true) : null,
+      keyboardType: number
+          ? const TextInputType.numberWithOptions(decimal: true)
+          : null,
       style: TextStyle(color: MobileGlassTheme.textPrimary, fontSize: 15),
       cursorColor: MobileGlassTheme.primary,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: MobileGlassTheme.textSecondary, fontSize: 13),
+        labelStyle: TextStyle(
+          color: MobileGlassTheme.textSecondary,
+          fontSize: 13,
+        ),
         filled: true,
         fillColor: Colors.white.withValues(alpha: 0.05),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: MobileGlassTheme.data.borderSubtle),
@@ -953,7 +1008,9 @@ class _FinancialsScreenState extends State<FinancialsScreen>
         style: ElevatedButton.styleFrom(
           backgroundColor: MobileGlassTheme.primary,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: MobileGlassTheme.primary.withValues(alpha: 0.4),
+          disabledBackgroundColor: MobileGlassTheme.primary.withValues(
+            alpha: 0.4,
+          ),
           disabledForegroundColor: Colors.white70,
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 15),
@@ -961,8 +1018,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
             borderRadius: BorderRadius.circular(14),
           ),
         ),
-        child: Text(label,
-            style: const TextStyle(fontWeight: FontWeight.bold)),
+        child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -975,7 +1031,9 @@ class _FinancialsScreenState extends State<FinancialsScreen>
         style: OutlinedButton.styleFrom(
           foregroundColor: MobileGlassTheme.accentText,
           padding: const EdgeInsets.symmetric(vertical: 14),
-          side: BorderSide(color: MobileGlassTheme.primary.withValues(alpha: 0.5)),
+          side: BorderSide(
+            color: MobileGlassTheme.primary.withValues(alpha: 0.5),
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -1032,15 +1090,19 @@ class _MiniStatBlock extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(4),
-              decoration:
-                  BoxDecoration(color: color.withValues(alpha: 0.2), shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
               child: Icon(icon, color: color, size: 12),
             ),
             SizedBox(width: 8),
             Text(
               title,
               style: TextStyle(
-                  color: MobileGlassTheme.textSecondary, fontSize: 13),
+                color: MobileGlassTheme.textSecondary,
+                fontSize: 13,
+              ),
             ),
           ],
         ),
@@ -1050,7 +1112,10 @@ class _MiniStatBlock extends StatelessWidget {
           child: Text(
             amount,
             style: TextStyle(
-                color: MobileGlassTheme.textPrimary, fontSize: 17, fontWeight: FontWeight.bold),
+              color: MobileGlassTheme.textPrimary,
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ],
@@ -1087,7 +1152,10 @@ class _CategoryBar extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                  color: MobileGlassTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
+                color: MobileGlassTheme.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             Text(
               formatted,
@@ -1104,10 +1172,7 @@ class _CategoryBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           child: Stack(
             children: [
-              Container(
-                height: 9,
-                color: Colors.white.withValues(alpha: 0.06),
-              ),
+              Container(height: 9, color: Colors.white.withValues(alpha: 0.06)),
               FractionallySizedBox(
                 widthFactor: frac == 0 ? 0.02 : frac,
                 child: Container(
@@ -1116,9 +1181,10 @@ class _CategoryBar extends StatelessWidget {
                     color: color,
                     boxShadow: [
                       BoxShadow(
-                          color: color.withValues(alpha: 0.5),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2)),
+                        color: color.withValues(alpha: 0.5),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
                     ],
                   ),
                 ),
@@ -1174,7 +1240,10 @@ class _GlassCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.04),
             borderRadius: radius,
-            border: Border.all(color: MobileGlassTheme.data.borderSubtle, width: 1),
+            border: Border.all(
+              color: MobileGlassTheme.data.borderSubtle,
+              width: 1,
+            ),
           ),
           child: child,
         ),

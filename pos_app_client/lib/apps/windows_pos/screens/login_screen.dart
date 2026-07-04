@@ -9,11 +9,12 @@ import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/auth/mobile_auth_service.dart';
 import 'package:vynic/core/services/sync/manager_sync_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
-import 'package:vynic/apps/mobile_app/manager_app_shell.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.companionAppBuilder});
+
+  final Widget Function(User user)? companionAppBuilder;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -238,8 +239,14 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     if (mounted) {
+      final companionAppBuilder = widget.companionAppBuilder;
+      if (companionAppBuilder == null) {
+        setState(() => _isLoading = false);
+        unawaited(showErrorToast(context, 'Companion app is not configured'));
+        return;
+      }
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => ManagerAppShell(user: shellUser!)),
+        MaterialPageRoute(builder: (_) => companionAppBuilder(shellUser!)),
       );
     }
   }
@@ -258,8 +265,10 @@ class _LoginScreenState extends State<LoginScreen> {
         onDeletePressed: deleteDigit,
         onLoginPressed: _authenticateUser,
         onOtherUserPressed: clearPin,
-        showCompanionApp: isMobile,
-        onCompanionAppPressed: isMobile ? _launchCompanionApp : null,
+        showCompanionApp: isMobile && widget.companionAppBuilder != null,
+        onCompanionAppPressed: isMobile && widget.companionAppBuilder != null
+            ? _launchCompanionApp
+            : null,
       ),
     );
   }

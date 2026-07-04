@@ -8,10 +8,10 @@ import 'package:vynic/core/services/sync/api_config.dart';
 import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
-import 'package:vynic/apps/mobile_app/core/theme/manager_dashboard_theme.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_dashboard_theme.dart';
 import 'package:vynic/core/services/printing/printer_service.dart';
-import 'package:vynic/apps/mobile_app/widgets/mobile_receipt_preview_dialog.dart';
-import 'package:vynic/core/widgets/manager_toast.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_receipt_preview_dialog.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_toast.dart';
 import 'package:vynic/core/widgets/pos_on_screen_text_field.dart';
 
 part 'tabs/mobile_admin_users_tab.dart';
@@ -26,7 +26,11 @@ class MobileAdminScreen extends StatefulWidget {
   final User user;
   final VoidCallback onLogout;
 
-  const MobileAdminScreen({super.key, required this.user, required this.onLogout});
+  const MobileAdminScreen({
+    super.key,
+    required this.user,
+    required this.onLogout,
+  });
 
   @override
   State<MobileAdminScreen> createState() => _MobileAdminScreenState();
@@ -35,9 +39,8 @@ class MobileAdminScreen extends StatefulWidget {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => Center(
-        child: CircularProgressIndicator(color: AdminTheme.primary),
-      ),
+      builder: (context) =>
+          Center(child: CircularProgressIndicator(color: AdminTheme.primary)),
     );
 
     try {
@@ -107,8 +110,7 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
 
   @override
   Widget build(BuildContext context) {
-    final roleLabel =
-        widget.user.roleLabelKa;
+    final roleLabel = widget.user.roleLabelKa;
 
     return Scaffold(
       backgroundColor: AdminTheme.bg,

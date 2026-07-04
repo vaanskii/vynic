@@ -1,8 +1,8 @@
-import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:vynic/apps/mobile_app/core/theme/manager_dashboard_theme.dart';
-import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_dashboard_theme.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/core/services/notifications/app_notification_history_store.dart';
 import 'package:vynic/core/widgets/notification_entry_tile.dart';
 
@@ -60,10 +60,7 @@ class NotificationsScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Text(
                 'მარცხნივ გადასმა — წაშლა',
-                style: TextStyle(
-                  color: theme.textSecondary,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: theme.textSecondary, fontSize: 12),
               ),
             ),
             SizedBox(height: 8),
@@ -189,11 +186,7 @@ class _SwipeDeleteBackground extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.delete_outline_rounded,
-            color: Colors.white,
-            size: 22,
-          ),
+          Icon(Icons.delete_outline_rounded, color: Colors.white, size: 22),
           SizedBox(width: 8),
           Text(
             'წაშლა',

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:vynic/apps/windows_pos/widgets/pin_button.dart';
+import 'package:vynic/core/widgets/pin_button.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/utils/payment_utils.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
@@ -185,7 +185,11 @@ class TablePaymentService {
                 const SizedBox(height: 20),
                 TextButton.icon(
                   onPressed: () => Navigator.of(dialogContext).pop(),
-                  icon: const Icon(Icons.close_rounded, color: _muted, size: 18),
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    color: _muted,
+                    size: 18,
+                  ),
                   label: const Text(
                     'გაუქმება',
                     style: TextStyle(

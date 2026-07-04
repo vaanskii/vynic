@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'pin_button.dart';
+import 'package:vynic/core/widgets/pin_button.dart';
 
 const Color _timeAccent = Color(0xFF2563EB);
 const Color _timeSurface = Color(0xFFFFFFFF);

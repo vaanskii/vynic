@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:vynic/apps/mobile_app/core/theme/manager_dashboard_theme.dart';
-import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_dashboard_theme.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/dashboard_theme_scope.dart';
 import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 
@@ -18,7 +18,7 @@ import 'package:vynic/core/models/monitoring.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/notifications/app_notification_history_store.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
-import 'package:vynic/core/widgets/manager_toast.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_toast.dart';
 
 final _empty = ManagerDashboardMetrics(
   todayRevenue: 0,
@@ -479,7 +479,10 @@ class _DashboardScreenState extends State<DashboardScreen>
 
                                       // Header + AI banner always span full
                                       // width; the responsive grid sits below.
-                                      Widget shell(double maxWidth, Widget grid) {
+                                      Widget shell(
+                                        double maxWidth,
+                                        Widget grid,
+                                      ) {
                                         return Center(
                                           child: ConstrainedBox(
                                             constraints: BoxConstraints(

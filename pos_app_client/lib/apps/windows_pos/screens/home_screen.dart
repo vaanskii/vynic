@@ -26,7 +26,7 @@ import 'package:vynic/apps/windows_pos/widgets/home/home_feature_header.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_calculator_page.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_admin_tools_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_reservation_menu_preview.dart';
-import 'package:vynic/apps/windows_pos/widgets/home/home_reservations_helper.dart';
+import 'package:vynic/core/utils/home_reservations_helper.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_reservation_table_assignment_dialog.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_take_away_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_x_report_helper.dart';

@@ -14,14 +14,14 @@ import 'package:vynic/core/services/auth/mobile_auth_service.dart';
 import 'package:vynic/core/services/notifications/app_notification_history_store.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/notifications_screen.dart';
 import 'package:vynic/core/widgets/manager_connection_status.dart';
-import 'package:vynic/core/widgets/manager_toast.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_toast.dart';
 import 'package:vynic/core/widgets/notification_entry_style.dart';
 import 'package:vynic/core/services/notifications/notification_message_copy.dart';
 import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
-import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
-import 'package:vynic/apps/mobile_app/widgets/manager_glass_nav_bar.dart';
-import 'package:vynic/apps/mobile_app/widgets/manager_tab_keep_alive.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_glass_nav_bar.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_tab_keep_alive.dart';
 
 class ManagerAppShell extends StatefulWidget {
   final User user;
@@ -41,7 +41,10 @@ class _ManagerAppShellState extends State<ManagerAppShell>
   static const _navItems = <ManagerNavItem>[
     ManagerNavItem(label: 'დაფა', icon: Icons.dashboard_rounded),
     ManagerNavItem(label: 'მაგიდები', icon: Icons.table_bar_rounded),
-    ManagerNavItem(label: 'ფინანსები', icon: Icons.account_balance_wallet_rounded),
+    ManagerNavItem(
+      label: 'ფინანსები',
+      icon: Icons.account_balance_wallet_rounded,
+    ),
     ManagerNavItem(label: 'რეზერვაციები', icon: Icons.book_online_rounded),
     ManagerNavItem(label: 'მართვა', icon: Icons.settings_rounded),
   ];
@@ -74,7 +77,9 @@ class _ManagerAppShellState extends State<ManagerAppShell>
     // Initial catch-up for notifications created before socket connected.
     unawaited(ManagerNotificationInbox.syncMissedFromServer());
     _screens = _buildScreens();
-    ManagerAppPreferences.dashboardAppearance.addListener(_onDashboardAppearanceChanged);
+    ManagerAppPreferences.dashboardAppearance.addListener(
+      _onDashboardAppearanceChanged,
+    );
   }
 
   void _onDashboardAppearanceChanged() {
@@ -331,9 +336,7 @@ class _ManagerAppShellState extends State<ManagerAppShell>
             : null);
 
     final rawKeys = navMeta['highlightItemKeys'] ?? meta['highlightItemKeys'];
-    if (resolvedOrderId != null &&
-        rawKeys is List &&
-        rawKeys.isNotEmpty) {
+    if (resolvedOrderId != null && rawKeys is List && rawKeys.isNotEmpty) {
       PosChangeHighlightService.setForOrder(
         resolvedOrderId,
         rawKeys.map((e) => e.toString()).toSet(),
@@ -341,19 +344,22 @@ class _ManagerAppShellState extends State<ManagerAppShell>
     }
 
     final floor = (navMeta['floor'] ?? meta['floor'] ?? 'first').toString();
-    final tableNumber = tableNumberFromNotificationMeta(navMeta) ??
+    final tableNumber =
+        tableNumberFromNotificationMeta(navMeta) ??
         tableNumberFromNotificationMeta(meta) ??
         (fallbackMessage != null
             ? tableNumberFromNotificationMessage(fallbackMessage)
             : null);
 
-    if (resolvedOrderId != null || (tableNumber != null && tableNumber.isNotEmpty)) {
+    if (resolvedOrderId != null ||
+        (tableNumber != null && tableNumber.isNotEmpty)) {
       MonitoringSocketService.pendingTableFocus.value = null;
-      MonitoringSocketService.pendingTableFocus.value = ManagerTableFocusRequest(
-        tableNumber: tableNumber ?? '',
-        floor: floor,
-        orderId: resolvedOrderId,
-      );
+      MonitoringSocketService.pendingTableFocus.value =
+          ManagerTableFocusRequest(
+            tableNumber: tableNumber ?? '',
+            floor: floor,
+            orderId: resolvedOrderId,
+          );
     }
 
     _goToTab(1);
@@ -421,9 +427,9 @@ class _ManagerAppShellState extends State<ManagerAppShell>
       _onConnectionSignalsChanged,
     );
     MonitoringSocketService.dispose();
-    ManagerAppPreferences.dashboardAppearance
-        .removeListener(_onDashboardAppearanceChanged);
+    ManagerAppPreferences.dashboardAppearance.removeListener(
+      _onDashboardAppearanceChanged,
+    );
     super.dispose();
   }
 }
-

@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:vynic/apps/mobile_app/core/theme/manager_dashboard_theme.dart';
-import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_dashboard_theme.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 
 /// Visual variant for manager overlay toasts.
-enum ManagerToastVariant {
-  standard,
-  error,
-}
+enum ManagerToastVariant { standard, error }
 
 /// Resolved colors for manager toasts / snackbars.
 class ManagerToastColors {
@@ -94,7 +91,8 @@ class ManagerToast {
     ManagerToastVariant? variant,
     Color? accentColor,
   }) {
-    final v = variant ??
+    final v =
+        variant ??
         (isError ? ManagerToastVariant.error : ManagerToastVariant.standard);
     _insertToast(context, message, v, accentColor: accentColor);
   }
@@ -173,7 +171,8 @@ class ManagerToast {
   }) {
     final theme = _themeOf(context);
     void tryInsert({int attempt = 0}) {
-      final overlay = Overlay.maybeOf(context, rootOverlay: true) ??
+      final overlay =
+          Overlay.maybeOf(context, rootOverlay: true) ??
           Navigator.maybeOf(context, rootNavigator: true)?.overlay;
       if (overlay == null) {
         if (attempt < 8) {

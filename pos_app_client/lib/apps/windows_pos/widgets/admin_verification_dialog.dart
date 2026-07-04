@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
-import 'pin_button.dart';
+import 'package:vynic/core/widgets/pin_button.dart';
 
 class AdminVerificationDialog extends StatefulWidget {
   const AdminVerificationDialog({super.key});

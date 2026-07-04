@@ -1,6 +1,6 @@
-import 'package:vynic/apps/mobile_app/core/theme/manager_dashboard_theme.dart';
-import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
-import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_dashboard_theme.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui';
@@ -10,7 +10,7 @@ import 'package:vynic/apps/mobile_app/manager_app_shell.dart';
 import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/auth/mobile_auth_service.dart';
-import 'package:vynic/core/widgets/manager_toast.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_toast.dart';
 
 class MobileLoginScreen extends StatefulWidget {
   const MobileLoginScreen({super.key});
@@ -184,7 +184,9 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                     MobileGlassCard(
                       padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
                       radius: 28,
-                      borderColor: MobileGlassTheme.primary.withValues(alpha: 0.25),
+                      borderColor: MobileGlassTheme.primary.withValues(
+                        alpha: 0.25,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -263,12 +265,16 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                   ],
                 ),
                 border: Border.all(
-                  color: MobileGlassTheme.primary.withValues(alpha: 0.35 + t * 0.15),
+                  color: MobileGlassTheme.primary.withValues(
+                    alpha: 0.35 + t * 0.15,
+                  ),
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: MobileGlassTheme.primary.withValues(alpha: 0.18 + t * 0.12),
+                    color: MobileGlassTheme.primary.withValues(
+                      alpha: 0.18 + t * 0.12,
+                    ),
                     blurRadius: 28 + t * 12,
                     spreadRadius: 2,
                   ),
@@ -437,8 +443,16 @@ class _GridPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1
       ..color = theme.primary.withValues(alpha: 0.06);
-    canvas.drawCircle(center, math.min(size.width, size.height) * 0.42, ringPaint);
-    canvas.drawCircle(center, math.min(size.width, size.height) * 0.28, ringPaint);
+    canvas.drawCircle(
+      center,
+      math.min(size.width, size.height) * 0.42,
+      ringPaint,
+    );
+    canvas.drawCircle(
+      center,
+      math.min(size.width, size.height) * 0.28,
+      ringPaint,
+    );
   }
 
   @override
@@ -519,18 +533,19 @@ class _LoginPadButtonState extends State<_LoginPadButton> {
           color: isDelete
               ? theme.bad.withValues(alpha: pressed ? 0.5 : 0.28)
               : isClear
-                  ? theme.warn.withValues(alpha: pressed ? 0.5 : 0.28)
-                  : theme.cardBorder,
+              ? theme.warn.withValues(alpha: pressed ? 0.5 : 0.28)
+              : theme.cardBorder,
         ),
         boxShadow: pressed
             ? [
                 BoxShadow(
-                  color: (isDelete
-                          ? theme.bad
-                          : isClear
+                  color:
+                      (isDelete
+                              ? theme.bad
+                              : isClear
                               ? theme.warn
                               : theme.primary)
-                      .withValues(alpha: 0.2),
+                          .withValues(alpha: 0.2),
                   blurRadius: 14,
                 ),
               ]
@@ -545,8 +560,8 @@ class _LoginPadButtonState extends State<_LoginPadButton> {
             color: isDelete
                 ? theme.bad
                 : isClear
-                    ? theme.warn
-                    : theme.textPrimary,
+                ? theme.warn
+                : theme.textPrimary,
           ),
         ),
       ),
@@ -580,7 +595,10 @@ class _LoginGradientButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               gradient: enabled
                   ? LinearGradient(
-                      colors: [MobileGlassTheme.primary, MobileGlassTheme.accent],
+                      colors: [
+                        MobileGlassTheme.primary,
+                        MobileGlassTheme.accent,
+                      ],
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                     )

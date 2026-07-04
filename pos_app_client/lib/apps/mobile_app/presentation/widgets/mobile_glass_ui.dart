@@ -1,15 +1,15 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:vynic/apps/mobile_app/core/theme/manager_dashboard_theme.dart';
-import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_dashboard_theme.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 
 /// Shared glass / light palette for manager mobile screens.
 abstract final class MobileGlassTheme {
   static DashboardThemeData get data => DashboardThemeData.forAppearance(
-        ManagerAppPreferences.dashboardAppearance.value,
-      );
+    ManagerAppPreferences.dashboardAppearance.value,
+  );
 
   static Color get bg => data.scaffoldBackground;
   static Color get primary => data.primary;
@@ -37,7 +37,9 @@ abstract final class MobileGlassTheme {
     if (data.isDark) {
       return Colors.white.withValues(alpha: opacity);
     }
-    return data.textPrimary.withValues(alpha: (opacity * 0.35).clamp(0.06, 0.22));
+    return data.textPrimary.withValues(
+      alpha: (opacity * 0.35).clamp(0.06, 0.22),
+    );
   }
 
   static Color surface([double opacity = 0.06]) {
@@ -52,11 +54,7 @@ abstract final class MobileGlassTheme {
 }
 
 class MobileGlowOrb extends StatelessWidget {
-  const MobileGlowOrb({
-    super.key,
-    required this.color,
-    required this.size,
-  });
+  const MobileGlowOrb({super.key, required this.color, required this.size});
 
   final Color color;
   final double size;
@@ -69,10 +67,7 @@ class MobileGlowOrb extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: RadialGradient(
-          colors: [
-            color.withValues(alpha: 0.35),
-            color.withValues(alpha: 0),
-          ],
+          colors: [color.withValues(alpha: 0.35), color.withValues(alpha: 0)],
         ),
       ),
     );
@@ -103,9 +98,7 @@ class MobileGlassCard extends StatelessWidget {
             ? MobileGlassTheme.surface()
             : theme.heroCardBackground,
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(
-          color: borderColor ?? theme.cardBorder,
-        ),
+        border: Border.all(color: borderColor ?? theme.cardBorder),
         boxShadow: theme.isDark
             ? null
             : [
@@ -204,10 +197,7 @@ class MobileGlassHeader extends StatelessWidget {
                 if (subtitle != null && subtitle!.isNotEmpty)
                   Text(
                     subtitle!,
-                    style: TextStyle(
-                      color: theme.textSecondary,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: theme.textSecondary, fontSize: 12),
                   ),
               ],
             ),
@@ -292,11 +282,7 @@ class MobileGlassIconButton extends StatelessWidget {
       child: InkWell(
         onTap: onPressed,
         borderRadius: BorderRadius.circular(14),
-        child: SizedBox(
-          width: 52,
-          height: 52,
-          child: Icon(icon, color: c),
-        ),
+        child: SizedBox(width: 52, height: 52, child: Icon(icon, color: c)),
       ),
     );
   }

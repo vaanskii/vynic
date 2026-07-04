@@ -1,10 +1,10 @@
-import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
-import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/order_editor_screen.dart';
-import 'package:vynic/apps/mobile_app/widgets/mobile_receipt_preview_dialog.dart';
-import 'package:vynic/apps/windows_pos/widgets/order/helpers/service_fee_adjust_dialog.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_receipt_preview_dialog.dart';
+import 'package:vynic/core/widgets/service_fee_adjust_dialog.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/user.dart';
@@ -13,7 +13,7 @@ import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
 import 'package:vynic/core/services/printing/printer_service.dart';
-import 'package:vynic/core/widgets/manager_toast.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_toast.dart';
 
 /// Read-only order view (Windows [OrderDetailScreen] flow) — edit via menu screen.
 class MobileOrderDetailScreen extends StatefulWidget {
@@ -49,7 +49,8 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _highlightKeys = widget.highlightItemKeys ??
+    _highlightKeys =
+        widget.highlightItemKeys ??
         PosChangeHighlightService.takeForOrder(widget.orderId) ??
         {};
     MonitoringSocketService.updateCounter.addListener(_onRemoteChange);
@@ -96,7 +97,11 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      ManagerToast.show(context, 'შეკვეთის ჩატვირთვა ვერ მოხერხდა', isError: true);
+      ManagerToast.show(
+        context,
+        'შეკვეთის ჩატვირთვა ვერ მოხერხდა',
+        isError: true,
+      );
     }
   }
 
@@ -125,10 +130,9 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
       return TableGroupStyle.formatOrderTablesLabel(order);
     }
     if (widget.tableNumber != null && widget.tableNumber!.trim().isNotEmpty) {
-      return TableGroupStyle.formatTableNumbersList(
-        [widget.tableNumber!],
-        widget.floor ?? order.floor,
-      );
+      return TableGroupStyle.formatTableNumbersList([
+        widget.tableNumber!,
+      ], widget.floor ?? order.floor);
     }
     return '—';
   }
@@ -186,10 +190,10 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
     setState(() => _isTogglingServiceFee = true);
     try {
       final turningOn = !order.includeServiceFee;
-      final rate = order
-              .getEffectiveServiceFeePercentage(
-                globalDefaultPercentage: _serviceFeePercent.toDouble(),
-              ) /
+      final rate =
+          order.getEffectiveServiceFeePercentage(
+            globalDefaultPercentage: _serviceFeePercent.toDouble(),
+          ) /
           100;
       order.includeServiceFee = turningOn;
       order.recalculateTotal(serviceFeeRate: turningOn ? rate : 0);
@@ -249,8 +253,9 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
       final useGlobalDefault =
           (normalizedPercent - defaultPercent).abs() < 0.01;
       order.includeServiceFee = result.includeServiceFee;
-      order.customServiceFeePercentage =
-          useGlobalDefault ? null : normalizedPercent;
+      order.customServiceFeePercentage = useGlobalDefault
+          ? null
+          : normalizedPercent;
       order.recalculateTotal(serviceFeeRate: normalizedPercent / 100);
       await MobileApiService.updateOrder(
         order,
@@ -297,8 +302,9 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
             user: widget.user,
             orderId: widget.orderId,
             tableNumber: tableNum,
-            floor:
-                order.floor.isNotEmpty ? order.floor : (widget.floor ?? 'first'),
+            floor: order.floor.isNotEmpty
+                ? order.floor
+                : (widget.floor ?? 'first'),
           ),
         ),
       ),
@@ -322,7 +328,10 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: Text(
           'მაგიდის გაუქმება?',
-          style: TextStyle(fontWeight: FontWeight.bold, color: MobileGlassTheme.textPrimary),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: MobileGlassTheme.textPrimary,
+          ),
         ),
         content: Text(
           'შეკვეთა #${order.orderId} (${_tableLabel(order)}) '
@@ -333,7 +342,10 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('უკან', style: TextStyle(color: MobileGlassTheme.muted())),
+            child: Text(
+              'უკან',
+              style: TextStyle(color: MobileGlassTheme.muted()),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -424,7 +436,11 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
       if (!mounted) return;
       final message = e.toString();
       if (message.contains('404')) {
-        ManagerToast.show(context, 'შეკვეთა ვერ მოიძებნა POS-ზე', isError: true);
+        ManagerToast.show(
+          context,
+          'შეკვეთა ვერ მოიძებნა POS-ზე',
+          isError: true,
+        );
       } else {
         ManagerToast.show(
           context,
@@ -442,13 +458,30 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
     if (_isLoading) {
       return MobileGlassScreen(
         orbs: [
-          Positioned(top: -80, right: -60, child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 220)),
-          Positioned(bottom: 80, left: -80, child: MobileGlowOrb(color: MobileGlassTheme.accent, size: 260)),
+          Positioned(
+            top: -80,
+            right: -60,
+            child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 220),
+          ),
+          Positioned(
+            bottom: 80,
+            left: -80,
+            child: MobileGlowOrb(color: MobileGlassTheme.accent, size: 260),
+          ),
         ],
         body: Column(
           children: [
-            MobileGlassHeader(title: 'შეკვეთა #${widget.orderId}', onBack: () => Navigator.pop(context)),
-            Expanded(child: Center(child: CircularProgressIndicator(color: MobileGlassTheme.primary))),
+            MobileGlassHeader(
+              title: 'შეკვეთა #${widget.orderId}',
+              onBack: () => Navigator.pop(context),
+            ),
+            Expanded(
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: MobileGlassTheme.primary,
+                ),
+              ),
+            ),
           ],
         ),
       );
@@ -457,11 +490,18 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
     if (_order == null) {
       return MobileGlassScreen(
         orbs: [
-          Positioned(top: -80, right: -60, child: MobileGlowOrb(color: MobileGlassTheme.warn, size: 220)),
+          Positioned(
+            top: -80,
+            right: -60,
+            child: MobileGlowOrb(color: MobileGlassTheme.warn, size: 220),
+          ),
         ],
         body: Column(
           children: [
-            MobileGlassHeader(title: 'შეკვეთა #${widget.orderId}', onBack: () => Navigator.pop(context)),
+            MobileGlassHeader(
+              title: 'შეკვეთა #${widget.orderId}',
+              onBack: () => Navigator.pop(context),
+            ),
             Expanded(
               child: Center(
                 child: Padding(
@@ -471,11 +511,19 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.warning_amber_rounded, size: 48, color: MobileGlassTheme.warn),
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          size: 48,
+                          color: MobileGlassTheme.warn,
+                        ),
                         SizedBox(height: 16),
                         Text(
                           'შეკვეთა ვერ მოიძებნა',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: MobileGlassTheme.textPrimary),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: MobileGlassTheme.textPrimary,
+                          ),
                         ),
                         SizedBox(height: 16),
                         MobileGlassPrimaryButton(
@@ -502,8 +550,16 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
 
     return MobileGlassScreen(
       orbs: [
-        Positioned(top: -90, right: -70, child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 240)),
-        Positioned(bottom: 100, left: -90, child: MobileGlowOrb(color: MobileGlassTheme.accent, size: 280)),
+        Positioned(
+          top: -90,
+          right: -70,
+          child: MobileGlowOrb(color: MobileGlassTheme.primary, size: 240),
+        ),
+        Positioned(
+          bottom: 100,
+          left: -90,
+          child: MobileGlowOrb(color: MobileGlassTheme.accent, size: 280),
+        ),
       ],
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -515,7 +571,10 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
             actions: [
               IconButton(
                 onPressed: _viewReceipt,
-                icon: Icon(Icons.receipt_long_rounded, color: MobileGlassTheme.muted(0.85)),
+                icon: Icon(
+                  Icons.receipt_long_rounded,
+                  color: MobileGlassTheme.muted(0.85),
+                ),
                 tooltip: 'ქვითარი',
               ),
             ],
@@ -524,7 +583,8 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
           _buildHeaderCard(order, dateFmt),
           Expanded(child: _buildItemsList(order)),
           _buildTotalsFooter(order),
-          if (_canEdit && _serviceFeeAvailable && widget.floor != 'takeaway') _buildServiceFeeRow(order),
+          if (_canEdit && _serviceFeeAvailable && widget.floor != 'takeaway')
+            _buildServiceFeeRow(order),
           _buildPrintCheckBar(),
           if (_canEdit) _buildActionBar(),
         ],
@@ -533,9 +593,7 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
   }
 
   Widget _buildChangeBanner() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-    );
+    return Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 8));
   }
 
   Widget _buildHeaderCard(Order order, DateFormat dateFmt) {
@@ -552,13 +610,19 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
                 children: [
                   Text(
                     'შექმნილია: ${dateFmt.format(order.createdAt)}',
-                    style: TextStyle(fontSize: 13, color: MobileGlassTheme.muted()),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: MobileGlassTheme.muted(),
+                    ),
                   ),
                   if (order.createdBy.isNotEmpty) ...[
                     SizedBox(height: 4),
                     Text(
                       'ოპერატორი: ${order.createdBy}',
-                      style: TextStyle(fontSize: 13, color: MobileGlassTheme.muted(0.45)),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: MobileGlassTheme.muted(0.45),
+                      ),
                     ),
                   ],
                 ],
@@ -573,7 +637,11 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
               ),
               child: Text(
                 _statusLabel(order.status),
-                style: TextStyle(color: statusColor, fontWeight: FontWeight.w700, fontSize: 11),
+                style: TextStyle(
+                  color: statusColor,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                ),
               ),
             ),
           ],
@@ -630,7 +698,9 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
               '${item.quantity}',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: highlighted ? MobileGlassTheme.warn : MobileGlassTheme.primary,
+                color: highlighted
+                    ? MobileGlassTheme.warn
+                    : MobileGlassTheme.primary,
               ),
             ),
           ),
@@ -650,7 +720,10 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
                 SizedBox(height: 4),
                 Text(
                   '${item.unitPrice.toStringAsFixed(2)} ₾ × ${item.quantity}',
-                  style: TextStyle(fontSize: 13, color: MobileGlassTheme.muted()),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: MobileGlassTheme.muted(),
+                  ),
                 ),
                 if (item.comment != null && item.comment!.isNotEmpty)
                   Padding(
@@ -672,7 +745,9 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 15,
-              color: highlighted ? MobileGlassTheme.warn : MobileGlassTheme.good,
+              color: highlighted
+                  ? MobileGlassTheme.warn
+                  : MobileGlassTheme.good,
             ),
           ),
         ],
@@ -685,9 +760,9 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
     final serviceFee = order.getServiceFee(
       serviceFeeRate: order.includeServiceFee && _serviceFeeAvailable
           ? order.getEffectiveServiceFeePercentage(
-                globalDefaultPercentage: _serviceFeePercent.toDouble(),
-              ) /
-              100
+                  globalDefaultPercentage: _serviceFeePercent.toDouble(),
+                ) /
+                100
           : 0,
     );
     final feeLabel = order
@@ -703,7 +778,10 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
         child: Column(
           children: [
             _totalRow('ქვეჯამი', subtotal),
-            if (_serviceFeeAvailable && widget.floor != 'takeaway' && order.includeServiceFee && serviceFee > 0)
+            if (_serviceFeeAvailable &&
+                widget.floor != 'takeaway' &&
+                order.includeServiceFee &&
+                serviceFee > 0)
               _totalRow('სერვისი ($feeLabel%)', serviceFee),
             if (order.discountAmount > 0)
               _totalRow('ფასდაკლება', -order.discountAmount),
@@ -711,7 +789,14 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('სულ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: MobileGlassTheme.muted())),
+                Text(
+                  'სულ',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: MobileGlassTheme.muted(),
+                  ),
+                ),
                 Text(
                   '${order.totalAmount.toStringAsFixed(2)} ₾',
                   style: TextStyle(
@@ -734,10 +819,17 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 13, color: MobileGlassTheme.muted())),
+          Text(
+            label,
+            style: TextStyle(fontSize: 13, color: MobileGlassTheme.muted()),
+          ),
           Text(
             '${amount.toStringAsFixed(2)} ₾',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: MobileGlassTheme.textPrimary),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: MobileGlassTheme.textPrimary,
+            ),
           ),
         ],
       ),

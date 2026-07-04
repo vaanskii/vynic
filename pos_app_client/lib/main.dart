@@ -5,7 +5,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:vynic/apps/windows_pos/screens/login_screen.dart';
-import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
+import 'package:vynic/apps/windows_pos/widgets/staff_lock_screen.dart';
+import 'package:vynic/apps/mobile_app/manager_app_shell.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_login_screen.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/printing/printer_service.dart';
@@ -76,11 +78,12 @@ void main() async {
   // on the same machine without editing .env), then falls back to the bundled
   // .env. e.g. `flutter run -d macos --dart-define=APP_ROLE=pos` forces the POS UI.
   const roleFromDefine = String.fromEnvironment('APP_ROLE');
-  final appRole = (roleFromDefine.isNotEmpty
-          ? roleFromDefine
-          : (dotenv.env['APP_ROLE'] ?? ''))
-      .toLowerCase()
-      .trim();
+  final appRole =
+      (roleFromDefine.isNotEmpty
+              ? roleFromDefine
+              : (dotenv.env['APP_ROLE'] ?? ''))
+          .toLowerCase()
+          .trim();
   final isDesktopClient = appRole == 'client';
   if (isDesktopClient) {
     await Hive.initFlutter();
@@ -108,6 +111,11 @@ void main() async {
   }
 
   // ── Windows / macOS / Linux POS ────────────────────────────────────────────
+  SessionLock.configureRoutes(
+    lockRouteBuilder: staffLockRoute,
+    loginBuilder: (_) =>
+        LoginScreen(companionAppBuilder: (user) => ManagerAppShell(user: user)),
+  );
 
   // Initialize database, run migrations, and prepare app data.
   await DatabaseService.init();
@@ -307,7 +315,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       },
       home: widget.isMobile
           ? const ManagerThemeListener(child: MobileLoginScreen())
-          : const LoginScreen(),
+          : LoginScreen(
+              companionAppBuilder: (user) => ManagerAppShell(user: user),
+            ),
     );
   }
 }

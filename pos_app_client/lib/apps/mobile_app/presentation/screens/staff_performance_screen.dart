@@ -1,5 +1,5 @@
-import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
-import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
@@ -14,13 +14,14 @@ import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
-import 'package:vynic/core/widgets/manager_toast.dart';
-
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_toast.dart';
 
 ({Color color, String label}) _statusMeta(String status) {
   final s = status.toLowerCase();
-  if (s.startsWith('confirmed')) return (color: MobileGlassTheme.good, label: 'დადასტურებული');
-  if (s.startsWith('completed')) return (color: MobileGlassTheme.good, label: 'დასრულებული');
+  if (s.startsWith('confirmed'))
+    return (color: MobileGlassTheme.good, label: 'დადასტურებული');
+  if (s.startsWith('completed'))
+    return (color: MobileGlassTheme.good, label: 'დასრულებული');
   if (s.startsWith('cancelled') || s.startsWith('canceled')) {
     return (color: MobileGlassTheme.bad, label: 'გაუქმებული');
   }
@@ -82,8 +83,11 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
     final parsed = DateTime.tryParse(raw);
     if (parsed == null) return;
     final target = DateTime(parsed.year, parsed.month, parsed.day);
-    final current =
-        DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    final current = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+    );
     if (target == current) return;
     if (mounted) {
       setState(() => _selectedDate = target);
@@ -109,18 +113,20 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
       final rows = _showAll
           ? await MobileApiService.getReservations()
           : await MobileApiService.getReservations(
-              date: _dateFmt.format(_selectedDate));
+              date: _dateFmt.format(_selectedDate),
+            );
       rows.sort((a, b) {
         if (_showAll) {
           final d = _dateKey(a).compareTo(_dateKey(b));
           if (d != 0) return d;
         }
-        final r = _statusRank((a['status'] ?? '').toString())
-            .compareTo(_statusRank((b['status'] ?? '').toString()));
+        final r = _statusRank(
+          (a['status'] ?? '').toString(),
+        ).compareTo(_statusRank((b['status'] ?? '').toString()));
         if (r != 0) return r;
-        return (a['reservationTime'] ?? '')
-            .toString()
-            .compareTo((b['reservationTime'] ?? '').toString());
+        return (a['reservationTime'] ?? '').toString().compareTo(
+          (b['reservationTime'] ?? '').toString(),
+        );
       });
       if (mounted) {
         setState(() {
@@ -173,8 +179,9 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
 
   Future<void> _pickReservationDate() async {
     final businessDate = _businessNow();
-    final initial =
-        _selectedDate.isBefore(businessDate) ? businessDate : _selectedDate;
+    final initial = _selectedDate.isBefore(businessDate)
+        ? businessDate
+        : _selectedDate;
     if (!kIsWeb && Platform.isIOS) {
       DateTime temp = initial;
       await showModalBottomSheet<void>(
@@ -186,25 +193,38 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
             child: Column(
               children: [
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
                       TextButton(
                         onPressed: () => Navigator.pop(ctx),
-                        child: Text('გაუქმება',
-                            style: TextStyle(color: MobileGlassTheme.textSecondary)),
+                        child: Text(
+                          'გაუქმება',
+                          style: TextStyle(
+                            color: MobileGlassTheme.textSecondary,
+                          ),
+                        ),
                       ),
                       const Spacer(),
                       TextButton(
                         onPressed: () {
-                          setState(() => _selectedDate =
-                              DateTime(temp.year, temp.month, temp.day));
+                          setState(
+                            () => _selectedDate = DateTime(
+                              temp.year,
+                              temp.month,
+                              temp.day,
+                            ),
+                          );
                           Navigator.pop(ctx);
                           unawaited(_loadReservations());
                         },
-                        child: Text('არჩევა',
-                            style: TextStyle(color: MobileGlassTheme.accentText)),
+                        child: Text(
+                          'არჩევა',
+                          style: TextStyle(color: MobileGlassTheme.accentText),
+                        ),
                       ),
                     ],
                   ),
@@ -214,8 +234,11 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
                     data: const CupertinoThemeData(brightness: Brightness.dark),
                     child: CupertinoDatePicker(
                       mode: CupertinoDatePickerMode.date,
-                      minimumDate: DateTime(businessDate.year,
-                          businessDate.month, businessDate.day),
+                      minimumDate: DateTime(
+                        businessDate.year,
+                        businessDate.month,
+                        businessDate.day,
+                      ),
                       initialDateTime: initial,
                       onDateTimeChanged: (value) => temp = value,
                     ),
@@ -230,8 +253,11 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
     }
     final picked = await showDatePicker(
       context: context,
-      firstDate:
-          DateTime(businessDate.year, businessDate.month, businessDate.day),
+      firstDate: DateTime(
+        businessDate.year,
+        businessDate.month,
+        businessDate.day,
+      ),
       lastDate: businessDate.add(const Duration(days: 365)),
       initialDate: initial,
       builder: (ctx, child) => Theme(
@@ -250,8 +276,11 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
   void _shiftDay(int delta) {
     final next = _selectedDate.add(Duration(days: delta));
     final businessDate = _businessNow();
-    final floor =
-        DateTime(businessDate.year, businessDate.month, businessDate.day);
+    final floor = DateTime(
+      businessDate.year,
+      businessDate.month,
+      businessDate.day,
+    );
     if (next.isBefore(floor)) return;
     setState(() => _selectedDate = next);
     unawaited(_loadReservations());
@@ -301,11 +330,13 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
     setState(() => _isSubmitting = true);
     try {
       final items = selected
-          .map((e) => <String, dynamic>{
-                'itemName': e.itemName,
-                'unitPrice': e.unitPrice,
-                'quantity': e.qty,
-              })
+          .map(
+            (e) => <String, dynamic>{
+              'itemName': e.itemName,
+              'unitPrice': e.unitPrice,
+              'quantity': e.qty,
+            },
+          )
           .toList();
       await MobileApiService.createWalkInOrder(
         tableNumbers: tables,
@@ -334,8 +365,9 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
       ..sort((a, b) {
         final f = a.floor.compareTo(b.floor);
         if (f != 0) return f;
-        return (int.tryParse(a.tableNumber) ?? 0)
-            .compareTo(int.tryParse(b.tableNumber) ?? 0);
+        return (int.tryParse(a.tableNumber) ?? 0).compareTo(
+          int.tryParse(b.tableNumber) ?? 0,
+        );
       });
     if (!mounted) return null;
     if (free.isEmpty) {
@@ -377,18 +409,20 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
                     Text(
                       'ერთ სართულზე ერთი ან რამდენიმე მაგიდა',
                       style: TextStyle(
-                          color: MobileGlassTheme.textSecondary,
-                          fontSize: 13),
+                        color: MobileGlassTheme.textSecondary,
+                        fontSize: 13,
+                      ),
                     ),
                     SizedBox(height: 16),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: free.map((t) {
-                        final isSel = selectedTables.contains(t.tableNumber) &&
+                        final isSel =
+                            selectedTables.contains(t.tableNumber) &&
                             selectedFloor == t.floor;
-                        final disabled = selectedFloor != null &&
-                            selectedFloor != t.floor;
+                        final disabled =
+                            selectedFloor != null && selectedFloor != t.floor;
                         return GestureDetector(
                           onTap: disabled
                               ? null
@@ -407,15 +441,20 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
                                 },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 10),
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
                             decoration: BoxDecoration(
                               color: isSel
                                   ? MobileGlassTheme.primary
                                   : MobileGlassTheme.surface(
-                                      disabled ? 0.02 : 0.05),
+                                      disabled ? 0.02 : 0.05,
+                                    ),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: isSel ? MobileGlassTheme.primary : MobileGlassTheme.data.borderSubtle,
+                                color: isSel
+                                    ? MobileGlassTheme.primary
+                                    : MobileGlassTheme.data.borderSubtle,
                               ),
                             ),
                             child: Text(
@@ -424,7 +463,8 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
                                 color: isSel
                                     ? Colors.white
                                     : MobileGlassTheme.textPrimary.withValues(
-                                        alpha: disabled ? 0.35 : 0.85),
+                                        alpha: disabled ? 0.35 : 0.85,
+                                      ),
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13,
                               ),
@@ -440,13 +480,13 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
                         onPressed: selectedTables.isEmpty
                             ? null
                             : () => Navigator.of(sheetContext).pop({
-                                  'floor': selectedFloor,
-                                  'tables': selectedTables.toList(),
-                                }),
+                                'floor': selectedFloor,
+                                'tables': selectedTables.toList(),
+                              }),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: MobileGlassTheme.primary,
-                          disabledBackgroundColor:
-                              MobileGlassTheme.primary.withValues(alpha: 0.3),
+                          disabledBackgroundColor: MobileGlassTheme.primary
+                              .withValues(alpha: 0.3),
                           padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
@@ -455,9 +495,10 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
                         child: Text(
                           'დადასტურება',
                           style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold),
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -492,10 +533,13 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
             bottom: false,
             child: _isLoading
                 ? Center(
-                    child: CircularProgressIndicator(color: MobileGlassTheme.primary))
+                    child: CircularProgressIndicator(
+                      color: MobileGlassTheme.primary,
+                    ),
+                  )
                 : _error != null
-                    ? _buildError()
-                    : _buildContent(),
+                ? _buildError()
+                : _buildContent(),
           ),
         ],
       ),
@@ -503,23 +547,33 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
   }
 
   Widget _buildError() => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.wifi_off_rounded, size: 56, color: MobileGlassTheme.textSecondary),
-            SizedBox(height: 14),
-            Text(_error!,
-                style: TextStyle(
-                    color: MobileGlassTheme.textPrimary, fontWeight: FontWeight.w600)),
-            TextButton.icon(
-              onPressed: _loadReservations,
-              icon: Icon(Icons.refresh_rounded, color: MobileGlassTheme.accentText),
-              label: Text('თავიდან ცდა',
-                  style: TextStyle(color: MobileGlassTheme.accentText)),
-            ),
-          ],
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          Icons.wifi_off_rounded,
+          size: 56,
+          color: MobileGlassTheme.textSecondary,
         ),
-      );
+        SizedBox(height: 14),
+        Text(
+          _error!,
+          style: TextStyle(
+            color: MobileGlassTheme.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        TextButton.icon(
+          onPressed: _loadReservations,
+          icon: Icon(Icons.refresh_rounded, color: MobileGlassTheme.accentText),
+          label: Text(
+            'თავიდან ცდა',
+            style: TextStyle(color: MobileGlassTheme.accentText),
+          ),
+        ),
+      ],
+    ),
+  );
 
   Widget _buildContent() {
     return Column(
@@ -541,10 +595,7 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
                 SizedBox(height: 14),
                 _buildStatsCard(),
                 SizedBox(height: 16),
-                if (!_showAll) ...[
-                  _buildDateBar(),
-                  SizedBox(height: 12),
-                ],
+                if (!_showAll) ...[_buildDateBar(), SizedBox(height: 12)],
                 _buildWalkInButton(),
                 SizedBox(height: 16),
                 if (_reservations.isEmpty)
@@ -618,7 +669,11 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
   }
 
   Widget _togglePill(
-      String label, IconData icon, bool selected, VoidCallback onTap) {
+    String label,
+    IconData icon,
+    bool selected,
+    VoidCallback onTap,
+  ) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -634,11 +689,11 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon,
-                  size: 17,
-                  color: selected
-                      ? Colors.white
-                      : MobileGlassTheme.textSecondary),
+              Icon(
+                icon,
+                size: 17,
+                color: selected ? Colors.white : MobileGlassTheme.textSecondary,
+              ),
               SizedBox(width: 7),
               Text(
                 label,
@@ -661,8 +716,11 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
     final widgets = <Widget>[];
     String? currentKey;
     final businessDate = _businessNow();
-    final today =
-        DateTime(businessDate.year, businessDate.month, businessDate.day);
+    final today = DateTime(
+      businessDate.year,
+      businessDate.month,
+      businessDate.day,
+    );
     final tomorrow = today.add(const Duration(days: 1));
 
     // Pre-count reservations per day for the header badge.
@@ -704,7 +762,9 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
             width: 6,
             height: 6,
             decoration: BoxDecoration(
-                color: MobileGlassTheme.accentText, shape: BoxShape.circle),
+              color: MobileGlassTheme.accentText,
+              shape: BoxShape.circle,
+            ),
           ),
           SizedBox(width: 8),
           Text(
@@ -725,9 +785,10 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
             child: Text(
               '$count',
               style: TextStyle(
-                  color: MobileGlassTheme.accentText,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold),
+                color: MobileGlassTheme.accentText,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           Expanded(
@@ -744,7 +805,11 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
   Widget _buildStatsCard() {
     final total = _reservations.length;
     final confirmed = _reservations
-        .where((r) => (r['status'] ?? '').toString().toLowerCase().startsWith('confirmed'))
+        .where(
+          (r) => (r['status'] ?? '').toString().toLowerCase().startsWith(
+            'confirmed',
+          ),
+        )
         .length;
     final guests = _reservations.fold<int>(0, (sum, r) {
       final g = r['numberOfGuests'];
@@ -777,9 +842,13 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
         children: [
           Expanded(child: _stat('$total', 'სულ', MobileGlassTheme.accentText)),
           _divider(),
-          Expanded(child: _stat('$confirmed', 'დადასტ.', MobileGlassTheme.good)),
+          Expanded(
+            child: _stat('$confirmed', 'დადასტ.', MobileGlassTheme.good),
+          ),
           _divider(),
-          Expanded(child: _stat('$guests', 'სტუმარი', MobileGlassTheme.textPrimary)),
+          Expanded(
+            child: _stat('$guests', 'სტუმარი', MobileGlassTheme.textPrimary),
+          ),
           _divider(),
           Expanded(child: _stat(lastValue, lastLabel, MobileGlassTheme.warn)),
         ],
@@ -787,8 +856,8 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
     );
   }
 
-  Widget _divider() => Container(
-      width: 1, height: 36, color: MobileGlassTheme.border(0.12));
+  Widget _divider() =>
+      Container(width: 1, height: 36, color: MobileGlassTheme.border(0.12));
 
   Widget _stat(String value, String label, Color color) {
     return Column(
@@ -798,13 +867,17 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
           child: Text(
             value,
             style: TextStyle(
-                color: color, fontSize: 22, fontWeight: FontWeight.w800),
+              color: color,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
         SizedBox(height: 4),
-        Text(label,
-            style: TextStyle(
-                color: MobileGlassTheme.textSecondary, fontSize: 11)),
+        Text(
+          label,
+          style: TextStyle(color: MobileGlassTheme.textSecondary, fontSize: 11),
+        ),
       ],
     );
   }
@@ -812,7 +885,8 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
   Widget _buildDateBar() {
     final businessDate = _businessNow();
     final atFloor = !_selectedDate.isAfter(
-        DateTime(businessDate.year, businessDate.month, businessDate.day));
+      DateTime(businessDate.year, businessDate.month, businessDate.day),
+    );
     return Row(
       children: [
         _GlassCircleButton(
@@ -828,19 +902,26 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.calendar_today_rounded,
-                    color: MobileGlassTheme.accentText, size: 18),
+                Icon(
+                  Icons.calendar_today_rounded,
+                  color: MobileGlassTheme.accentText,
+                  size: 18,
+                ),
                 SizedBox(width: 10),
                 Text(
                   _prettyFmt.format(_selectedDate),
                   style: TextStyle(
-                      color: MobileGlassTheme.textPrimary,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600),
+                    color: MobileGlassTheme.textPrimary,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 SizedBox(width: 6),
-                Icon(Icons.keyboard_arrow_down_rounded,
-                    color: MobileGlassTheme.textSecondary, size: 18),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: MobileGlassTheme.textSecondary,
+                  size: 18,
+                ),
               ],
             ),
           ),
@@ -861,8 +942,13 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.directions_walk_rounded,
-              color: _isSubmitting ? MobileGlassTheme.textSecondary : MobileGlassTheme.good, size: 20),
+          Icon(
+            Icons.directions_walk_rounded,
+            color: _isSubmitting
+                ? MobileGlassTheme.textSecondary
+                : MobileGlassTheme.good,
+            size: 20,
+          ),
           SizedBox(width: 8),
           Text(
             _isSubmitting ? 'მუშავდება...' : 'Walk-in შეკვეთა',
@@ -885,23 +971,29 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
       child: Center(
         child: Column(
           children: [
-            Icon(Icons.event_busy_rounded,
-                size: 60, color: MobileGlassTheme.muted(0.25)),
+            Icon(
+              Icons.event_busy_rounded,
+              size: 60,
+              color: MobileGlassTheme.muted(0.25),
+            ),
             SizedBox(height: 16),
             Text(
               _showAll
                   ? 'რეზერვაცია არ მოიძებნა'
                   : 'ამ თარიღზე რეზერვაცია არ არის',
               style: TextStyle(
-                  color: MobileGlassTheme.textSecondary,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600),
+                color: MobileGlassTheme.textSecondary,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             SizedBox(height: 6),
             Text(
               'დაამატე ახალი + ღილაკით',
               style: TextStyle(
-                  color: MobileGlassTheme.textSecondary, fontSize: 13),
+                color: MobileGlassTheme.textSecondary,
+                fontSize: 13,
+              ),
             ),
           ],
         ),
@@ -946,15 +1038,18 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                              color: MobileGlassTheme.textPrimary,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700),
+                            color: MobileGlassTheme.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                       if (time.isNotEmpty)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: MobileGlassTheme.surface(0.08),
                             borderRadius: BorderRadius.circular(10),
@@ -962,9 +1057,10 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
                           child: Text(
                             time,
                             style: TextStyle(
-                                color: MobileGlassTheme.textPrimary,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600),
+                              color: MobileGlassTheme.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                     ],
@@ -972,32 +1068,45 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
                   SizedBox(height: 6),
                   Row(
                     children: [
-                      Icon(Icons.groups_rounded,
-                          size: 14, color: MobileGlassTheme.textSecondary),
+                      Icon(
+                        Icons.groups_rounded,
+                        size: 14,
+                        color: MobileGlassTheme.textSecondary,
+                      ),
                       SizedBox(width: 4),
-                      Text('$guests',
-                          style: TextStyle(
-                              color: MobileGlassTheme.textSecondary,
-                              fontSize: 12)),
+                      Text(
+                        '$guests',
+                        style: TextStyle(
+                          color: MobileGlassTheme.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
                       if (tables.isNotEmpty) ...[
                         SizedBox(width: 12),
-                        Icon(Icons.table_bar_rounded,
-                            size: 14,
-                            color: MobileGlassTheme.textSecondary),
+                        Icon(
+                          Icons.table_bar_rounded,
+                          size: 14,
+                          color: MobileGlassTheme.textSecondary,
+                        ),
                         SizedBox(width: 4),
                         Flexible(
-                          child: Text(tables,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                  color: MobileGlassTheme.textSecondary,
-                                  fontSize: 12)),
+                          child: Text(
+                            tables,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: MobileGlassTheme.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
                         ),
                       ],
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: meta.color.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
@@ -1005,9 +1114,10 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
                         child: Text(
                           meta.label,
                           style: TextStyle(
-                              color: meta.color,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600),
+                            color: meta.color,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
@@ -1016,8 +1126,10 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
               ),
             ),
             SizedBox(width: 8),
-            Icon(Icons.chevron_right_rounded,
-                color: MobileGlassTheme.muted(0.4)),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: MobileGlassTheme.muted(0.4),
+            ),
           ],
         ),
       ),
@@ -1069,7 +1181,10 @@ class _GlassCard extends StatelessWidget {
     }
     if (onTap != null) {
       card = GestureDetector(
-          onTap: onTap, behavior: HitTestBehavior.opaque, child: card);
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: card,
+      );
     }
     return card;
   }
@@ -1096,12 +1211,8 @@ class _GlassCircleButton extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: filled
-            ? theme.primary
-            : theme.headerButtonBackground,
-        border: Border.all(
-          color: filled ? theme.primary : theme.cardBorder,
-        ),
+        color: filled ? theme.primary : theme.headerButtonBackground,
+        border: Border.all(color: filled ? theme.primary : theme.cardBorder),
       ),
       child: Icon(
         icon,

@@ -11,7 +11,7 @@ import 'package:vynic/core/services/sync/pos_live_refresh.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/apps/windows_pos/widgets/comment_input_dialog.dart';
-import 'package:vynic/apps/windows_pos/widgets/pin_button.dart';
+import 'package:vynic/core/widgets/pin_button.dart';
 import 'package:vynic/core/services/pos/table_payment_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/apps/windows_pos/widgets/order/order_detail_content_section.dart';
@@ -22,7 +22,7 @@ import 'package:vynic/apps/windows_pos/widgets/order/helpers/order_detail_action
 import 'package:vynic/apps/windows_pos/widgets/order/helpers/order_detail_common_helpers.dart';
 import 'package:vynic/apps/windows_pos/widgets/reservation_creation_sheet.dart';
 import 'package:vynic/apps/windows_pos/widgets/receipt_language_picker_dialog.dart';
-import 'package:vynic/apps/windows_pos/widgets/order/helpers/service_fee_adjust_dialog.dart';
+import 'package:vynic/core/widgets/service_fee_adjust_dialog.dart';
 import 'menu_screen.dart';
 
 class OrderDetailScreen extends StatefulWidget {

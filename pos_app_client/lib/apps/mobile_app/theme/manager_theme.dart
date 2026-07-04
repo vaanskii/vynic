@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vynic/apps/mobile_app/core/theme/manager_dashboard_theme.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_dashboard_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/dashboard_theme_scope.dart';
 import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 

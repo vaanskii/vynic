@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
-import 'package:vynic/apps/mobile_app/core/theme/manager_theme.dart';
-import 'package:vynic/apps/mobile_app/widgets/mobile_glass_ui.dart';
+import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -10,7 +10,7 @@ import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 import 'package:vynic/core/utils/table_group_style.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
-import 'package:vynic/core/widgets/manager_toast.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/manager_toast.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_order_detail_screen.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_calculator_screen.dart';
 part 'views/live_status_tables_part.dart';

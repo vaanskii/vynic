@@ -11,7 +11,7 @@ import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/apps/windows_pos/widgets/receipt_language_picker_dialog.dart';
-import 'package:vynic/apps/windows_pos/widgets/order/helpers/service_fee_adjust_dialog.dart';
+import 'package:vynic/core/widgets/service_fee_adjust_dialog.dart';
 
 typedef ReservationAction = Future<void> Function(Reservation reservation);
 

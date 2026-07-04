@@ -1,15 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:vynic/core/services/manager_app/manager_dashboard_appearance.dart';
 
-/// Dashboard visual mode (persisted in [ManagerAppPreferences]).
-enum ManagerDashboardAppearance {
-  light,
-  dark;
-
-  String get labelGeorgian => switch (this) {
-        ManagerDashboardAppearance.light => 'ღია',
-        ManagerDashboardAppearance.dark => 'მუქი',
-      };
-}
+export 'package:vynic/core/services/manager_app/manager_dashboard_appearance.dart';
 
 /// Bottom navigation bar styling (paired with [DashboardThemeData]).
 class ManagerNavBarTheme {
@@ -140,7 +132,9 @@ class DashboardThemeData {
 
   bool get isDark => appearance == ManagerDashboardAppearance.dark;
 
-  static DashboardThemeData forAppearance(ManagerDashboardAppearance appearance) {
+  static DashboardThemeData forAppearance(
+    ManagerDashboardAppearance appearance,
+  ) {
     return appearance == ManagerDashboardAppearance.dark ? dark() : light();
   }
 

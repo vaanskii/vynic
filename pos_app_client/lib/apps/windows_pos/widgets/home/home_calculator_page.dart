@@ -12,7 +12,7 @@ import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_language.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_calculator_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_reservation_table_assignment_dialog.dart';
-import 'package:vynic/apps/windows_pos/widgets/order/helpers/service_fee_adjust_dialog.dart';
+import 'package:vynic/core/widgets/service_fee_adjust_dialog.dart';
 import 'package:vynic/apps/windows_pos/widgets/receipt_language_picker_dialog.dart';
 import 'package:vynic/apps/windows_pos/widgets/receipt_preview_dialog.dart';
 import 'package:vynic/apps/windows_pos/widgets/reservation_creation_sheet.dart';

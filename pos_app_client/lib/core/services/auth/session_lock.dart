@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:vynic/apps/windows_pos/screens/login_screen.dart';
-import 'package:vynic/apps/windows_pos/widgets/staff_lock_screen.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/auth/pos_session.dart';
+
+typedef PosLockRouteBuilder = Route<User> Function();
 
 /// Coordinates terminal locking for the Windows POS:
 ///   • idle auto-lock after [idleTimeout] of no interaction,
@@ -21,6 +21,8 @@ class SessionLock {
   /// Root navigator — also used for app-level dialogs in main.
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
+  static PosLockRouteBuilder? _lockRouteBuilder;
+  static WidgetBuilder? _loginBuilder;
 
   /// Bumped when an unlock switched to a different user. HomeScreen listens and
   /// resets to the landing tab.
@@ -32,6 +34,14 @@ class SessionLock {
   static Timer? _idleTimer;
   static bool _armed = false;
   static bool _locked = false;
+
+  static void configureRoutes({
+    required PosLockRouteBuilder lockRouteBuilder,
+    required WidgetBuilder loginBuilder,
+  }) {
+    _lockRouteBuilder = lockRouteBuilder;
+    _loginBuilder = loginBuilder;
+  }
 
   /// Start watching for inactivity — call when a POS user enters the app.
   static void arm() {
@@ -66,12 +76,16 @@ class SessionLock {
     if (PosSession.user == null) return; // not logged in
     final nav = navigatorKey.currentState;
     if (nav == null) return;
+    final lockRouteBuilder = _lockRouteBuilder;
+    if (lockRouteBuilder == null) {
+      throw StateError('SessionLock lock route is not configured.');
+    }
 
     _locked = true;
     _idleTimer?.cancel();
     final before = PosSession.user;
 
-    final unlocked = await nav.push<User>(staffLockRoute());
+    final unlocked = await nav.push<User>(lockRouteBuilder());
 
     _locked = false;
     _restartIdleTimer();
@@ -92,8 +106,12 @@ class SessionLock {
     disarm();
     PosSession.clear();
     final nav = navigatorKey.currentState;
+    final loginBuilder = _loginBuilder;
+    if (loginBuilder == null) {
+      throw StateError('SessionLock login route is not configured.');
+    }
     nav?.pushAndRemoveUntil(
-      MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
+      MaterialPageRoute<void>(builder: loginBuilder),
       (route) => false,
     );
   }

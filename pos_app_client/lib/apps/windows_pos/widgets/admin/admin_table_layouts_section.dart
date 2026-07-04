@@ -78,6 +78,18 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
           style: PosToastStyle.success,
         ),
       );
+    } on StateError catch (error) {
+      // The repository refuses layouts that would drop occupied tables.
+      if (!mounted) {
+        return;
+      }
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'გეგმა ვერ შეინახა: ${error.message}',
+          style: PosToastStyle.error,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);

@@ -49,9 +49,39 @@ class TableRepository {
     }
   }
 
+  /// Live tables (reserved or with an active order) that the given layout
+  /// no longer contains. Saving such a layout would strand their orders.
+  static List<TableModel> occupiedTablesMissingFromLayout(
+    RestaurantTableLayout layout,
+  ) {
+    if (DatabaseCore.tableBox == null) {
+      return const [];
+    }
+    return [
+      for (final table in DatabaseCore.tableBox!.values)
+        if ((table.isReserved || table.activeOrderId != null) &&
+            layout.tableForLegacy(
+                  floor: table.floor,
+                  tableNumber: table.tableNumber,
+                ) ==
+                null)
+          table,
+    ];
+  }
+
   static Future<void> saveActiveRestaurantTableLayout(
     RestaurantTableLayout layout,
   ) async {
+    final occupied = occupiedTablesMissingFromLayout(layout);
+    if (occupied.isNotEmpty) {
+      final labels = occupied
+          .map((table) => '${table.floor}/${table.tableNumber}')
+          .join(', ');
+      throw StateError(
+        'Layout removes occupied tables: $labels. '
+        'Close or move their orders first.',
+      );
+    }
     await SettingsRepository.saveActiveTableLayout(layout);
     await ensureTableLayoutConsistency();
     SyncHub.notify(
@@ -123,6 +153,17 @@ class TableRepository {
       final isAllowed =
           allowedSet != null && allowedSet.contains(table.tableNumber);
       if (!isAllowed) {
+        if (table.isReserved || table.activeOrderId != null) {
+          // Never drop a live table, even if the layout no longer has it —
+          // its order/reservation would be stranded. It gets cleaned up on
+          // a later pass once freed.
+          developer.log(
+            'Keeping occupied table ${table.floor}/${table.tableNumber} '
+            'that is missing from the active layout',
+            name: 'TableRepository',
+          );
+          continue;
+        }
         invalidKeys.add(key);
       }
     }

@@ -28,14 +28,13 @@ tenant, no feature gating.
 
 ---
 
-## 2. Known bug — reservation activation after close-day (Phase 1 — FIXED, uncommitted)
+## 2. Known bug — reservation activation after close-day (Phase 1 — FIXED)
 
-**Status:** Fixed. `ReservationRepository.activateReservation` now returns a typed
-`ReservationActivationResult` (success/failure with reason) instead of swallowing
-errors into `null`; the table picker checks `TableModel.isReserved`/`activeOrderId`;
-`closeDayTransaction` finalizes reservations. Verify against the symptom below before
-assuming it's fully closed out, and confirm `git status` still shows only the
-intended files before committing.
+**Status:** Fixed and committed (`40ed96d`). `ReservationRepository.activateReservation`
+now returns a typed `ReservationActivationResult` (success/failure with reason) instead
+of swallowing errors into `null`; the table picker checks
+`TableModel.isReserved`/`activeOrderId`; `closeDayTransaction` finalizes reservations.
+Verify against the symptom below before assuming it's fully closed out.
 
 **Symptom (historical):** `Reservation activation returned null` logged from
 `assign_reservation_to_table`; tables appear stuck/"busy" the day after close.
@@ -130,12 +129,12 @@ verification, not one big commit.
 
 - **Phase 0 — Repo hygiene + docs/skills cleanup.** (This doc set.) Archive stale
   docs, add AGENTS.md / plan / skill / prompts. Track `.DS_Store` in `.gitignore`.
-- **Phase 1 — Reservation close-day bug fix. DONE (uncommitted).** Section 2 above.
-- **Phase 2 — Split `database_service.dart` into feature repositories. DONE
-  (uncommitted).** `database_service.dart` is now a ~1,265-line delegating façade
+- **Phase 1 — Reservation close-day bug fix. DONE.** Section 2 above.
+- **Phase 2 — Split `database_service.dart` into feature repositories. DONE.**
+  `database_service.dart` is now a ~1,265-line delegating façade
   over 13 repositories + 3 transactions in `pos_app_client/lib/core/database/`
-  (`database_core.dart`, `repositories/`, `transactions/`). Behavior-preserving,
-  not yet committed. `lib/core/services/` was also reorganized into concern
+  (`database_core.dart`, `repositories/`, `transactions/`). Behavior-preserving.
+  `lib/core/services/` was also reorganized into concern
   folders (`auth/`, `sync/`, `notifications/`, `printing/`, `audit/`,
   `manager_app/`, `pos/`) as a follow-on hygiene pass — see git history for the
   file-by-file mapping. A second boundary cleanup moved shared UI/helpers
@@ -147,41 +146,39 @@ verification, not one big commit.
   `apps/mobile_app/presentation/widgets/`. `core/models/` was left flat (small,
   not misleading; several files pair with Hive-generated `.g.dart` adapters we
   don't touch).
-- **Phase 3 — Data-driven tables/zones. IN PROGRESS (uncommitted).** Replace
+- **Phase 3 — Data-driven tables/zones. MOSTLY DONE.** Replace
   `'first'`/`'second'` and `> 10` with `Zone { id, name }` +
-  `Table { id, zoneId, label, capacity }`. First slice added a
-  `RestaurantTableLayout` definition for the current venue, including render mode,
-  SVG assets, canvas sizes, and hitboxes, then wired table seeding/validation and
-  the Windows POS selector to read from it. A second slice kept the SVG layout as
-  `RestaurantTableLayouts.svgMap`, added `buttonGridPreview`, and made the selector
-  render from `TableLayoutRenderMode` so restaurants can use either mapped SVG
-  tables or simple table buttons. A third slice added a local Windows POS Admin
-  layout builder for button-grid plans, persisted as an active layout in settings.
-  A fourth slice upgraded this into a first visual floor-plan editor: tables are
-  saved as draggable layout objects with shapes/coordinates, non-table objects
-  such as walls/entrances/stairs/stage/bar/labels can be placed on the plan, and
-  the Windows POS table selector renders that saved visual plan. This keeps SVG
-  maps and button grids as supported render modes while moving the future path to
-  an app-created floor plan. A fifth slice refined the editor with additional
-  table shape presets, rotation controls, resizable venue objects, a larger plan
-  preview dialog, dynamic extra floors/zones, stair-like rendering, and connected
-  reserved-table highlighting for nearby multi-table reservations/orders. A sixth
-  slice split the admin canvas into a compact read-only preview plus an expanded
-  edit workspace where clicking a table/object exposes name, shape, size, and
-  rotation controls. A seventh slice moved add/remove table and object actions
-  into the expanded workspace and added removable custom floors. An eighth slice
-  added an expanded-editor save action, a stable always-visible edit panel, and
-  two-column admin floor cards. A ninth slice top-aligned the table canvases so
-  floor plans start at the top of their page/panel. A tenth slice added a
-  multi-select table mode in the expanded editor, with bulk shape changes,
-  row/column alignment, and save-only application of expanded-editor changes. An
-  eleventh slice made selected table groups move together and added point-to-point
-  wall drawing for straight/corner/diagonal segments, thicker walls, wall
-  splitting, wall-based entrance placement, cleaner rounded wall joints, label-free
-  compact admin previews, a top-aligned table-layout admin section, and solid
-  endpoint joints for split/connected wall segments.
-  Delete the integer-code arithmetic. Centralize the one remaining encode/decode
-  if still needed for storage compatibility.
+  `Table { id, zoneId, label, capacity }`.
+
+  **What exists now:** `RestaurantTableLayout` (zones + tables + visual objects,
+  JSON round-trip, `legacyFloor`/`legacyTableNumber` compatibility bridge) with
+  three render modes — SVG map, button grid, and an app-created visual floor
+  plan. The Windows POS Admin has a full floor-plan editor
+  (`widgets/admin/table_layouts/`): draggable tables with shape presets,
+  rotation, multi-select with bulk edits and group moves, point-to-point wall
+  drawing with splitting/joints, wall-based entrances, venue objects
+  (stage/bar/stairs/labels/…), dynamic extra floors, and a compact preview +
+  expanded edit workspace. The active layout persists in settings
+  (`activeTableLayoutJson`); saving reconciles the Hive table rows
+  (`ensureTableLayoutConsistency`) and notifies sync. The table selector renders
+  the saved plan; shared painters live in `widgets/floor_plan/`.
+
+  **Hardening done:** corrupted saved layouts fall back to the default with a
+  logged admin error; editor table numbers are stable across reorders/deletes;
+  layout saves refuse to drop occupied tables (and the consistency pass never
+  deletes them); all reservation table-code arithmetic is centralized in
+  `ReservationTableAvailability`, `encodeTableCode` throws on codes the int
+  encoding cannot represent (3rd floors, first-floor tables > 10), and pickers
+  hide such tables (`canEncodeTableCode`). Unit-tested in
+  `test/unit/reservation_table_availability_test.dart`.
+
+  **Remaining:** (a) migrate `Reservation.tableNumbers` from encoded ints to
+  stable table references so layouts beyond two floors / 10 first-floor tables
+  become reservable — requires a Hive model change + `.g.dart` regeneration and
+  a migration per `pos_app_client/docs/HIVE_MIGRATIONS.md`; get explicit
+  sign-off before touching those. (b) Optional: extract the expanded-editor
+  dialog out of `admin_table_layouts_section.dart` (~2,200 lines) into its own
+  widget.
 - **Phase 4 — Status enums + safer state.** Replace stringly-typed order/reservation
   statuses (`pending`/`confirmed`/`preparing`/`in-progress`, `startsWith('confirmed')`)
   with enums and explicit transitions.

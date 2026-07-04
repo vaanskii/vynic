@@ -15,10 +15,7 @@ enum NotificationEntryKind {
 }
 
 class NotificationEntryStyle {
-  const NotificationEntryStyle({
-    required this.kind,
-    required this.accent,
-  });
+  const NotificationEntryStyle({required this.kind, required this.accent});
 
   final NotificationEntryKind kind;
   final Color accent;
@@ -30,7 +27,9 @@ class NotificationEntryStyle {
       accent.withValues(alpha: unread ? 0.35 : 0.14);
 }
 
-NotificationEntryStyle resolveNotificationEntryStyle(AppNotificationEntry entry) {
+NotificationEntryStyle resolveNotificationEntryStyle(
+  AppNotificationEntry entry,
+) {
   final kind = _resolveKind(entry);
   return NotificationEntryStyle(kind: kind, accent: _accentFor(kind));
 }

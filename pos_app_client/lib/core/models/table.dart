@@ -77,7 +77,9 @@ class TableModel extends HiveObject {
       tableNumber: json['tableNumber'] ?? '',
       floor: json['floor'] ?? '',
       isReserved: isReserved,
-      reservedAt: json['reservedAt'] != null ? DateTime.parse(json['reservedAt']) : null,
+      reservedAt: json['reservedAt'] != null
+          ? DateTime.parse(json['reservedAt'])
+          : null,
       reservedBy: json['reservedBy'],
       activeOrderId: isReserved ? activeOrderId : null,
       reservationId: json['reservationId'],

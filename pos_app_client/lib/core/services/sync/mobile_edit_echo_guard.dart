@@ -8,11 +8,14 @@ class MobileEditEchoGuard {
   static const Duration _defaultTtl = Duration(seconds: 60);
 
   static void markOrderEdited(int posOrderId, {Duration? ttl}) {
-    _orderSuppressUntil[posOrderId] =
-        DateTime.now().add(ttl ?? _defaultTtl);
+    _orderSuppressUntil[posOrderId] = DateTime.now().add(ttl ?? _defaultTtl);
   }
 
-  static void markTableEdited(String tableNumber, String floor, {Duration? ttl}) {
+  static void markTableEdited(
+    String tableNumber,
+    String floor, {
+    Duration? ttl,
+  }) {
     final key = '${tableNumber.trim()}_${floor.trim()}';
     if (key.replaceAll('_', '').isEmpty) return;
     _tableSuppressUntil[key] = DateTime.now().add(ttl ?? _defaultTtl);

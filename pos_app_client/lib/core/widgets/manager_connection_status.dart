@@ -4,11 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 
 /// Live / reconnecting / offline indicator for the manager app.
-enum ManagerConnectionLevel {
-  online,
-  connecting,
-  offline,
-}
+enum ManagerConnectionLevel { online, connecting, offline }
 
 ManagerConnectionLevel resolveManagerConnectionLevel() {
   if (MonitoringSocketService.isAppPaused) {
@@ -90,11 +86,11 @@ class _ManagerConnectionStatusDotState extends State<ManagerConnectionStatusDot>
   }
 
   List<ValueNotifier<dynamic>> get _notifiers => [
-        MonitoringSocketService.isConnected,
-        MonitoringSocketService.isInitializing,
-        MonitoringSocketService.isReconnecting,
-        MonitoringSocketService.apiError,
-      ];
+    MonitoringSocketService.isConnected,
+    MonitoringSocketService.isInitializing,
+    MonitoringSocketService.isReconnecting,
+    MonitoringSocketService.apiError,
+  ];
 
   void _onSignals() {
     final level = resolveManagerConnectionLevel();
@@ -157,18 +153,15 @@ class _ManagerConnectionStatusDotState extends State<ManagerConnectionStatusDot>
   @override
   Widget build(BuildContext context) {
     if (!_shouldShow) {
-      return SizedBox(
-        width: widget.size + 6,
-        height: widget.size + 6,
-      );
+      return SizedBox(width: widget.size + 6, height: widget.size + 6);
     }
 
     final level = _showingRestored
         ? ManagerConnectionLevel.online
         : resolveManagerConnectionLevel();
     final color = colorForManagerConnectionLevel(level);
-    final pulsing = _showingRestored ||
-        level == ManagerConnectionLevel.connecting;
+    final pulsing =
+        _showingRestored || level == ManagerConnectionLevel.connecting;
 
     return Semantics(
       label: labelForManagerConnectionLevel(level),

@@ -187,7 +187,9 @@ class MonthlyReportService {
         return sum + totalAmount;
       }),
     );
-    final manualSales = _roundCurrency(manualSalesAdjustment < 0 ? 0 : manualSalesAdjustment);
+    final manualSales = _roundCurrency(
+      manualSalesAdjustment < 0 ? 0 : manualSalesAdjustment,
+    );
     final totalSales = _roundCurrency(calculatedSales + manualSales);
     double cashRevenue = 0.0;
     double cardTbcRevenue = 0.0;
@@ -224,7 +226,8 @@ class MonthlyReportService {
       manualSalesAmount: manualSales,
     );
     final realTransactionCount = relevantSales.length;
-    final effectiveTransactionCount = realTransactionCount + manualEntries.length;
+    final effectiveTransactionCount =
+        realTransactionCount + manualEntries.length;
 
     final averageTicket = effectiveTransactionCount <= 0
         ? 0.0
@@ -345,18 +348,27 @@ class MonthlyReportService {
     );
     final paymentReconciliationDiff = _roundCurrency(
       summary.totalSales -
-          (summary.cashRevenue + summary.cardTbcRevenue + summary.cardBogRevenue),
+          (summary.cashRevenue +
+              summary.cardTbcRevenue +
+              summary.cardBogRevenue),
     );
-    final paymentReconciliationStatus =
-        paymentReconciliationDiff.abs() <= 0.01 ? 'OK' : 'CHECK';
+    final paymentReconciliationStatus = paymentReconciliationDiff.abs() <= 0.01
+        ? 'OK'
+        : 'CHECK';
 
     addRow([_officialRestaurantName, '']);
-    addRow(['ოფიციალური თვიური ფინანსური ანგარიში', _formatMonthLabel(summary.year, summary.month)]);
+    addRow([
+      'ოფიციალური თვიური ფინანსური ანგარიში',
+      _formatMonthLabel(summary.year, summary.month),
+    ]);
     addRow(['რეპორტის თარიღი', _formatDateLabel(generatedAt)]);
     addRow(['გენერაციის დრო', DateFormat('HH:mm').format(generatedAt)]);
     addRow(['საიდენტიფიკაციო კოდი', legalId]);
     addRow(['ვალუტა', 'GEL (₾)']);
-    addRow(['ფილტრის პერიოდი', '${_formatDateLabel(summary.periodStart)} - ${_formatDateLabel(summary.periodEnd)}']);
+    addRow([
+      'ფილტრის პერიოდი',
+      '${_formatDateLabel(summary.periodStart)} - ${_formatDateLabel(summary.periodEnd)}',
+    ]);
     addRow(['']);
     addRow(['გადახდის დეტალი', 'თანხა']);
     addRow(['ნაღდი (Cash)', _currencyFormat.format(summary.cashRevenue)]);
@@ -370,22 +382,34 @@ class MonthlyReportService {
     addRow(['']);
     addRow(['ფინანსური მაჩვენებელი', 'მნიშვნელობა']);
     addRow(['საკვების მოგება', _currencyFormat.format(summary.foodProfit)]);
-    addRow(['საკვების თვითღირებულება', _currencyFormat.format(summary.foodCost)]);
+    addRow([
+      'საკვების თვითღირებულება',
+      _currencyFormat.format(summary.foodCost),
+    ]);
     addRow(['თანამშრომლების ხარჯი', _currencyFormat.format(summary.staffCost)]);
     addRow(['ქირის ხარჯი', _currencyFormat.format(summary.leaseCost)]);
-    addRow(['საერთო ოპერაციული ხარჯი', _currencyFormat.format(summary.operatingCost)]);
-    addRow([summary.netProfit >= 0 ? 'წმინდა მოგება' : 'წმინდა ზარალი', _currencyFormat.format(summary.netProfit)]);
-    addRow(['სავაჭრო ოპერაციების რაოდენობა', summary.transactionCount.toString()]);
+    addRow([
+      'საერთო ოპერაციული ხარჯი',
+      _currencyFormat.format(summary.operatingCost),
+    ]);
+    addRow([
+      summary.netProfit >= 0 ? 'წმინდა მოგება' : 'წმინდა ზარალი',
+      _currencyFormat.format(summary.netProfit),
+    ]);
+    addRow([
+      'სავაჭრო ოპერაციების რაოდენობა',
+      summary.transactionCount.toString(),
+    ]);
     addRow(['საშუალო ჩეკი', _currencyFormat.format(summary.averageTicket)]);
-    addRow(['დღიური საშუალო გაყიდვა', _currencyFormat.format(summary.dailyAverageSales)]);
+    addRow([
+      'დღიური საშუალო გაყიდვა',
+      _currencyFormat.format(summary.dailyAverageSales),
+    ]);
     addRow(['ანგარიშში გამოყენებული დღეები', summary.daysInPeriod.toString()]);
     addRow(['']);
     addRow(['თარიღი', _formatDateLabel(generatedAt)]);
 
-    _setBasicStyles(
-      sheet: sheet,
-      headerRows: const {1, 7, 17, 29},
-    );
+    _setBasicStyles(sheet: sheet, headerRows: const {1, 7, 17, 29});
     _buildTransactionsSheet(
       detailsSheet: detailsSheet,
       details: <Map<String, dynamic>>[...details, ...manualDetails],
@@ -407,11 +431,9 @@ class MonthlyReportService {
     required Map<String, double> staffDailyByMonth,
     Map<String, DateTime>? periodEndByMonth,
   }) {
-    final normalizedMonths = months
-        .map((m) => DateTime(m.year, m.month))
-        .toSet()
-        .toList()
-      ..sort((a, b) => a.compareTo(b));
+    final normalizedMonths =
+        months.map((m) => DateTime(m.year, m.month)).toSet().toList()
+          ..sort((a, b) => a.compareTo(b));
 
     final excel = Excel.createExcel();
     final sheet = excel['Full Report'];
@@ -431,9 +453,12 @@ class MonthlyReportService {
     addRow(['გენერაციის დრო', DateFormat('HH:mm').format(generatedAt)]);
     addRow(['საიდენტიფიკაციო კოდი', legalId]);
     addRow(['ვალუტა', 'GEL (₾)']);
-    addRow(['პერიოდი', normalizedMonths.isEmpty
-        ? '-'
-        : '${_formatMonthLabel(normalizedMonths.first.year, normalizedMonths.first.month)} - ${_formatMonthLabel(normalizedMonths.last.year, normalizedMonths.last.month)}']);
+    addRow([
+      'პერიოდი',
+      normalizedMonths.isEmpty
+          ? '-'
+          : '${_formatMonthLabel(normalizedMonths.first.year, normalizedMonths.first.month)} - ${_formatMonthLabel(normalizedMonths.last.year, normalizedMonths.last.month)}',
+    ]);
     addRow(['']);
     addRow([
       'თვე',
@@ -548,10 +573,7 @@ class MonthlyReportService {
     ]);
     addRow(['']);
     addRow(['თარიღი', _formatDateLabel(generatedAt)]);
-    _setBasicStyles(
-      sheet: sheet,
-      headerRows: const {1, 8},
-    );
+    _setBasicStyles(sheet: sheet, headerRows: const {1, 8});
     _buildTransactionsSheet(
       detailsSheet: detailsSheet,
       details: allDetailSales,
@@ -600,8 +622,12 @@ class MonthlyReportService {
       if (sale['isCancelled'] == true) return false;
       final closedAtRaw = sale['closedAt'] as String?;
       final dateRaw = sale['date'] as String?;
-      DateTime? closedAt = closedAtRaw != null ? DateTime.tryParse(closedAtRaw) : null;
-      closedAt ??= dateRaw != null ? DateTime.tryParse('${dateRaw}T00:00:00') : null;
+      DateTime? closedAt = closedAtRaw != null
+          ? DateTime.tryParse(closedAtRaw)
+          : null;
+      closedAt ??= dateRaw != null
+          ? DateTime.tryParse('${dateRaw}T00:00:00')
+          : null;
       if (closedAt == null) return false;
       if (closedAt.year != year || closedAt.month != month) return false;
       final closedDate = DateTime(closedAt.year, closedAt.month, closedAt.day);
@@ -649,7 +675,8 @@ class MonthlyReportService {
           break;
         }
         if (remaining <= minChunk * 2) {
-          final seed = year * 100000 + month * 1000 + index * 113 + total.round();
+          final seed =
+              year * 100000 + month * 1000 + index * 113 + total.round();
           final rng = Random(seed);
           final ratio = 0.42 + (rng.nextDouble() * 0.16); // 42%..58%
           final first = _roundCurrency(remaining * ratio);
@@ -662,7 +689,9 @@ class MonthlyReportService {
         final seed = year * 100000 + month * 1000 + index * 97 + total.round();
         final rng = Random(seed);
         final upper = min(remaining - minChunk, minChunk * 2.4);
-        var next = _roundCurrency(minChunk + rng.nextDouble() * (upper - minChunk));
+        var next = _roundCurrency(
+          minChunk + rng.nextDouble() * (upper - minChunk),
+        );
         // Avoid suspicious round numbers like 2000.00/3000.00.
         if (next % 1000 == 0 || next % 500 == 0) {
           next = _roundCurrency(next + 0.37);
@@ -691,7 +720,10 @@ class MonthlyReportService {
     }
 
     final sum = _roundCurrency(
-      rows.fold<double>(0.0, (acc, row) => acc + _parseAmount(row['totalAmount'])),
+      rows.fold<double>(
+        0.0,
+        (acc, row) => acc + _parseAmount(row['totalAmount']),
+      ),
     );
     final diff = _roundCurrency(total - sum);
     if (rows.isNotEmpty && diff.abs() > 0) {
@@ -761,8 +793,16 @@ class MonthlyReportService {
     void addRow(List<String> row) {
       detailsSheet.appendRow(row.map((v) => TextCellValue(v)).toList());
     }
+
     addRow([title]);
-    addRow(['Order/Invoice ID', 'Date', 'Cash', 'Card TBC', 'Card BOG', 'Total']);
+    addRow([
+      'Order/Invoice ID',
+      'Date',
+      'Cash',
+      'Card TBC',
+      'Card BOG',
+      'Total',
+    ]);
     final sortedDetails = _sortSalesByClosedAtDesc(details);
     for (final sale in sortedDetails) {
       final orderId = _formatDisplayInvoiceId(sale);
@@ -785,7 +825,9 @@ class MonthlyReportService {
       final total = _parseAmount(sale['totalAmount'] ?? sale['total']);
       addRow([
         orderId,
-        closedAt == null ? '-' : DateFormat('yyyy-MM-dd HH:mm').format(closedAt),
+        closedAt == null
+            ? '-'
+            : DateFormat('yyyy-MM-dd HH:mm').format(closedAt),
         _currencyFormat.format(_roundCurrency(cash)),
         _currencyFormat.format(_roundCurrency(tbc)),
         _currencyFormat.format(_roundCurrency(bog)),
@@ -806,8 +848,10 @@ class MonthlyReportService {
       return DateTime.tryParse(normalized) ??
           DateTime.fromMillisecondsSinceEpoch(0);
     }
+
     int parseOrderId(Map<String, dynamic> sale) {
-      return int.tryParse((sale['orderId'] ?? sale['id'] ?? '').toString()) ?? 0;
+      return int.tryParse((sale['orderId'] ?? sale['id'] ?? '').toString()) ??
+          0;
     }
 
     copy.sort((a, b) {
@@ -891,11 +935,16 @@ class MonthlyReportService {
           ),
           pw.SizedBox(height: 8),
           _pdfKeyValue('საიდენტიფიკაციო კოდი', '436687168'),
-          _pdfKeyValue('პერიოდი',
-              '${_formatDateLabel(summary.periodStart)} - ${_formatDateLabel(summary.periodEnd)}'),
+          _pdfKeyValue(
+            'პერიოდი',
+            '${_formatDateLabel(summary.periodStart)} - ${_formatDateLabel(summary.periodEnd)}',
+          ),
           _pdfKeyValue('ვალუტა', 'GEL'),
           pw.SizedBox(height: 10),
-          pw.Text('შეჯამება', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+          pw.Text(
+            'შეჯამება',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
           pw.SizedBox(height: 6),
           pw.TableHelper.fromTextArray(
             headers: ['მაჩვენებელი', 'მნიშვნელობა'],
@@ -904,11 +953,23 @@ class MonthlyReportService {
               ['Card (TBC)', _currencyFormat.format(summary.cardTbcRevenue)],
               ['Card (BOG)', _currencyFormat.format(summary.cardBogRevenue)],
               ['მთლიანი გაყიდვები', _currencyFormat.format(summary.totalSales)],
-              ['საკვების თვითღირებულება', _currencyFormat.format(summary.foodCost)],
-              ['თანამშრომლების ხარჯი', _currencyFormat.format(summary.staffCost)],
+              [
+                'საკვების თვითღირებულება',
+                _currencyFormat.format(summary.foodCost),
+              ],
+              [
+                'თანამშრომლების ხარჯი',
+                _currencyFormat.format(summary.staffCost),
+              ],
               ['ქირის ხარჯი', _currencyFormat.format(summary.leaseCost)],
-              ['საერთო ოპერაციული ხარჯი', _currencyFormat.format(summary.operatingCost)],
-              ['წმინდა მოგება/ზარალი', _currencyFormat.format(summary.netProfit)],
+              [
+                'საერთო ოპერაციული ხარჯი',
+                _currencyFormat.format(summary.operatingCost),
+              ],
+              [
+                'წმინდა მოგება/ზარალი',
+                _currencyFormat.format(summary.netProfit),
+              ],
               ['ოპერაციები', summary.transactionCount.toString()],
             ],
           ),
@@ -920,19 +981,28 @@ class MonthlyReportService {
           pw.SizedBox(height: 6),
           pw.TableHelper.fromTextArray(
             headers: const ['შეკვეთის/ინვოისის ID', 'თარიღი', 'ჯამი'],
-            data: _sortSalesByClosedAtDesc(
-              <Map<String, dynamic>>[...details, ...manualDetails],
-            ).map((sale) {
-              final orderId = _formatDisplayInvoiceId(sale);
-              final raw = (sale['closedAt'] ?? sale['date'] ?? '').toString();
-              final dt = DateTime.tryParse(raw.contains('T') ? raw : '${raw}T00:00:00');
-              final total = _parseAmount(sale['totalAmount'] ?? sale['total']);
-              return [
-                orderId,
-                dt == null ? '-' : DateFormat('yyyy-MM-dd HH:mm').format(dt),
-                _currencyFormat.format(_roundCurrency(total)),
-              ];
-            }).toList(),
+            data:
+                _sortSalesByClosedAtDesc(<Map<String, dynamic>>[
+                  ...details,
+                  ...manualDetails,
+                ]).map((sale) {
+                  final orderId = _formatDisplayInvoiceId(sale);
+                  final raw = (sale['closedAt'] ?? sale['date'] ?? '')
+                      .toString();
+                  final dt = DateTime.tryParse(
+                    raw.contains('T') ? raw : '${raw}T00:00:00',
+                  );
+                  final total = _parseAmount(
+                    sale['totalAmount'] ?? sale['total'],
+                  );
+                  return [
+                    orderId,
+                    dt == null
+                        ? '-'
+                        : DateFormat('yyyy-MM-dd HH:mm').format(dt),
+                    _currencyFormat.format(_roundCurrency(total)),
+                  ];
+                }).toList(),
           ),
         ],
       ),
@@ -948,11 +1018,9 @@ class MonthlyReportService {
     required Map<String, double> staffDailyByMonth,
     Map<String, DateTime>? periodEndByMonth,
   }) async {
-    final normalizedMonths = months
-        .map((m) => DateTime(m.year, m.month))
-        .toSet()
-        .toList()
-      ..sort((a, b) => a.compareTo(b));
+    final normalizedMonths =
+        months.map((m) => DateTime(m.year, m.month)).toSet().toList()
+          ..sort((a, b) => a.compareTo(b));
     final rows = <List<String>>[];
     final details = <Map<String, dynamic>>[];
     double totalSales = 0;
@@ -988,12 +1056,14 @@ class MonthlyReportService {
       totalSales += summary.totalSales;
       totalNet += summary.netProfit;
       totalOps += summary.transactionCount;
-      details.addAll(_collectRelevantSales(
-        year: m.year,
-        month: m.month,
-        periodStart: periodStart,
-        periodEnd: periodEnd,
-      ));
+      details.addAll(
+        _collectRelevantSales(
+          year: m.year,
+          month: m.month,
+          periodStart: periodStart,
+          periodEnd: periodEnd,
+        ),
+      );
       details.addAll(
         _generateManualSalesEntries(
           year: m.year,
@@ -1042,8 +1112,14 @@ class MonthlyReportService {
             data: rows,
           ),
           pw.SizedBox(height: 8),
-          _pdfKeyValue('სრული გაყიდვები', _currencyFormat.format(_roundCurrency(totalSales))),
-          _pdfKeyValue('სრული წმინდა შედეგი', _currencyFormat.format(_roundCurrency(totalNet))),
+          _pdfKeyValue(
+            'სრული გაყიდვები',
+            _currencyFormat.format(_roundCurrency(totalSales)),
+          ),
+          _pdfKeyValue(
+            'სრული წმინდა შედეგი',
+            _currencyFormat.format(_roundCurrency(totalNet)),
+          ),
           _pdfKeyValue('სრული ოპერაციები', totalOps.toString()),
           pw.SizedBox(height: 12),
           pw.Text(
@@ -1056,7 +1132,9 @@ class MonthlyReportService {
             data: _sortSalesByClosedAtDesc(details).map((sale) {
               final orderId = _formatDisplayInvoiceId(sale);
               final raw = (sale['closedAt'] ?? sale['date'] ?? '').toString();
-              final dt = DateTime.tryParse(raw.contains('T') ? raw : '${raw}T00:00:00');
+              final dt = DateTime.tryParse(
+                raw.contains('T') ? raw : '${raw}T00:00:00',
+              );
               final total = _parseAmount(sale['totalAmount'] ?? sale['total']);
               return [
                 orderId,

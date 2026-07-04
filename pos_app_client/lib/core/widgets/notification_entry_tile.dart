@@ -42,10 +42,7 @@ class NotificationEntryTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          NotificationEntryAccentBar(
-            entry: entry,
-            height: compact ? 36 : 40,
-          ),
+          NotificationEntryAccentBar(entry: entry, height: compact ? 36 : 40),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,10 +64,7 @@ class NotificationEntryTile extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       timeLabel,
-                      style: TextStyle(
-                        color: timeColor,
-                        fontSize: 11,
-                      ),
+                      style: TextStyle(color: timeColor, fontSize: 11),
                     ),
                   ],
                 ),
@@ -103,15 +97,15 @@ class NotificationEntryTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: light
                 ? (unread
-                    ? style.accent.withValues(alpha: 0.06)
-                    : const Color(0xFFF8FAFC))
+                      ? style.accent.withValues(alpha: 0.06)
+                      : const Color(0xFFF8FAFC))
                 : style.backgroundTint(unread: unread),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: light
                   ? (unread
-                      ? style.accent.withValues(alpha: 0.22)
-                      : const Color(0xFFE2E8F0))
+                        ? style.accent.withValues(alpha: 0.22)
+                        : const Color(0xFFE2E8F0))
                   : style.borderTint(unread: unread),
             ),
           ),

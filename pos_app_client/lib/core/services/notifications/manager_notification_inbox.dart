@@ -168,7 +168,9 @@ class ManagerNotificationInbox {
       switch (eventType) {
         case 'takeaway_created':
           final id = payloadMap?['posOrderId'];
-          final customer = (payloadMap?['customerName'] ?? '').toString().trim();
+          final customer = (payloadMap?['customerName'] ?? '')
+              .toString()
+              .trim();
           final pickup = (payloadMap?['pickupTime'] ?? '').toString().trim();
           final detail = [
             if (customer.isNotEmpty) customer,
@@ -197,13 +199,17 @@ class ManagerNotificationInbox {
           final src = (payloadMap?['source'] ?? 'pos_sync').toString();
           final isPos = src == 'pos_sync';
           final touchesRaw = payloadMap?['touches'];
-          final touchesList =
-              touchesRaw is List ? touchesRaw : const <dynamic>[];
-          final serviceFeeOnly = touchesList.isNotEmpty &&
+          final touchesList = touchesRaw is List
+              ? touchesRaw
+              : const <dynamic>[];
+          final serviceFeeOnly =
+              touchesList.isNotEmpty &&
               touchesList.every((t) {
                 if (t is! Map) return false;
-                final kind =
-                    (t['changeKind'] ?? '').toString().trim().toLowerCase();
+                final kind = (t['changeKind'] ?? '')
+                    .toString()
+                    .trim()
+                    .toLowerCase();
                 return kind == 'service_fee';
               });
           // Realtime socket refresh (no notificationId) — wait for coalesced push.
@@ -230,9 +236,13 @@ class ManagerNotificationInbox {
                   ? 'მაგიდა: $tableLabel — '
                   : '';
               final summary = (tm['changeSummary'] ?? '').toString().trim();
-              final kind = (tm['changeKind'] ?? '').toString().trim().toLowerCase();
+              final kind = (tm['changeKind'] ?? '')
+                  .toString()
+                  .trim()
+                  .toLowerCase();
               // Requested behavior: ignore waiter increases; keep decreases + service fee only.
-              final shouldNotify = kind == 'service_fee' || _isDecreaseSummary(summary);
+              final shouldNotify =
+                  kind == 'service_fee' || _isDecreaseSummary(summary);
               if (!shouldNotify) continue;
               if (handledOrderIds.contains(id)) continue;
               handledOrderIds.add(id);
@@ -242,14 +252,14 @@ class ManagerNotificationInbox {
               final rawHighlights = tm['highlightItemKeys'];
               Iterable<String>? highlightKeys;
               if (rawHighlights is List && rawHighlights.isNotEmpty) {
-                highlightKeys =
-                    rawHighlights.map((e) => e.toString()).where((s) => s.isNotEmpty);
+                highlightKeys = rawHighlights
+                    .map((e) => e.toString())
+                    .where((s) => s.isNotEmpty);
               }
               final title = isServiceFeeChange && tableLabel.isNotEmpty
                   ? 'მაგიდები'
                   : (isPos ? 'სალარო' : 'შეკვეთა');
-              final summarySeg =
-                  summary.isNotEmpty ? '\n$summary' : '';
+              final summarySeg = summary.isNotEmpty ? '\n$summary' : '';
               final message = isServiceFeeChange
                   ? formatServiceFeeMessage(
                       orderId: id,
@@ -257,8 +267,8 @@ class ManagerNotificationInbox {
                       summary: summary,
                     )
                   : (isPos
-                      ? 'შეკვეთა #$id — $tableSegდრო: $when$summarySeg'
-                      : 'შეკვეთა #$id განახლდა — $tableSegდრო: $when$summarySeg');
+                        ? 'შეკვეთა #$id — $tableSegდრო: $when$summarySeg'
+                        : 'შეკვეთა #$id განახლდა — $tableSegდრო: $when$summarySeg');
               final meta = orderNavMeta(
                 posOrderId: id,
                 tableLabel: tableLabel.isNotEmpty && tableLabel != '-'
@@ -297,7 +307,8 @@ class ManagerNotificationInbox {
                 })
                 .whereType<int>()
                 .where(
-                  (id) => !isPos || !MobileEditEchoGuard.shouldSuppressPosEcho(id),
+                  (id) =>
+                      !isPos || !MobileEditEchoGuard.shouldSuppressPosEcho(id),
                 )
                 .toList();
             if (ids.isEmpty) break;
@@ -346,17 +357,17 @@ class ManagerNotificationInbox {
               final floor = (tm['floor'] ?? 'first').toString().trim();
               final changeType = (tm['changeType'] ?? '').toString();
               if (changeType == 'freed') {
-                final when = _formatSyncOccurredAt(tm['occurredAt']?.toString());
+                final when = _formatSyncOccurredAt(
+                  tm['occurredAt']?.toString(),
+                );
                 _add(
-                  dedupeId: nid != null ? '$nid-$tableNumber-$floor-freed' : null,
+                  dedupeId: nid != null
+                      ? '$nid-$tableNumber-$floor-freed'
+                      : null,
                   title: 'მაგიდა',
-                  message:
-                      'მაგიდა $tableNumber გაუქმდა — დრო: $when',
+                  message: 'მაგიდა $tableNumber გაუქმდა — დრო: $when',
                   source: source,
-                  meta: {
-                    'tableNumber': tableNumber,
-                    'floor': floor,
-                  },
+                  meta: {'tableNumber': tableNumber, 'floor': floor},
                 );
                 continue;
               }
@@ -379,13 +390,11 @@ class ManagerNotificationInbox {
                 continue;
               }
               final when = _formatSyncOccurredAt(tm['occurredAt']?.toString());
-              final orderSeg =
-                  orderId != null ? ' — შეკვეთა #$orderId' : '';
+              final orderSeg = orderId != null ? ' — შეკვეთა #$orderId' : '';
               _add(
                 dedupeId: nid != null ? '$nid-$tableNumber-$floor' : null,
                 title: 'მაგიდები',
-                message:
-                    'მაგიდა $tableNumber დაკავდა$orderSeg — დრო: $when',
+                message: 'მაგიდა $tableNumber დაკავდა$orderSeg — დრო: $when',
                 source: source,
                 meta: orderId != null
                     ? orderNavMeta(
@@ -393,10 +402,7 @@ class ManagerNotificationInbox {
                         tableLabel: tableNumber,
                         floor: floor,
                       )
-                    : {
-                        'tableNumber': tableNumber,
-                        'floor': floor,
-                      },
+                    : {'tableNumber': tableNumber, 'floor': floor},
               );
             }
             break;
@@ -499,13 +505,15 @@ class ManagerNotificationInbox {
               break;
             case 'tables':
               if (payloadMap != null) {
-                final tableNumber =
-                    (payloadMap['tableNumber'] ?? '').toString().trim();
-                final action =
-                    (payloadMap['action'] ?? '').toString().trim().toLowerCase();
+                final tableNumber = (payloadMap['tableNumber'] ?? '')
+                    .toString()
+                    .trim();
+                final action = (payloadMap['action'] ?? '')
+                    .toString()
+                    .trim()
+                    .toLowerCase();
                 if (action == 'freed' || action == 'cancelled') {
-                  final label =
-                      tableNumber.isNotEmpty ? tableNumber : 'მაგიდა';
+                  final label = tableNumber.isNotEmpty ? tableNumber : 'მაგიდა';
                   _add(
                     dedupeId: nid,
                     title: 'მაგიდა',
@@ -562,10 +570,11 @@ class ManagerNotificationInbox {
       final lastSyncDt = lastSyncRaw != null
           ? DateTime.tryParse(lastSyncRaw)
           : null;
-      final since = (lastSyncDt ?? DateTime.now().subtract(const Duration(hours: 24)))
-          .subtract(const Duration(minutes: 1))
-          .toUtc()
-          .toIso8601String();
+      final since =
+          (lastSyncDt ?? DateTime.now().subtract(const Duration(hours: 24)))
+              .subtract(const Duration(minutes: 1))
+              .toUtc()
+              .toIso8601String();
 
       final rows = await MobileApiService.getNotifications(since: since);
       var added = 0;

@@ -32,8 +32,7 @@ class User extends HiveObject {
   bool get isAdmin => isManager;
 
   /// მენიუს დათვლა — სრული მართვა (მართვა, სახელი, წაშლა, რეზერვაცია).
-  bool get canManageMenuCountDrafts =>
-      StaffRole.canManageMenuCountDrafts(role);
+  bool get canManageMenuCountDrafts => StaffRole.canManageMenuCountDrafts(role);
 
   /// მართვის ცენტრი.
   bool get canAccessManagementCenter =>
@@ -48,15 +47,13 @@ class User extends HiveObject {
   bool get canSendReservationKitchenCheckOnHome =>
       StaffRole.canSendReservationKitchenCheckOnHome(role);
 
-  bool get canCloseTablesNonFiscal =>
-      StaffRole.canCloseTablesNonFiscal(role);
+  bool get canCloseTablesNonFiscal => StaffRole.canCloseTablesNonFiscal(role);
 
   bool get canDeleteReservations => StaffRole.canDeleteReservations(role);
 
   bool get canCancelReservations => StaffRole.canCancelReservations(role);
 
-  bool get canManageAllStaffInAdmin =>
-      StaffRole.canManageAllStaffInAdmin(role);
+  bool get canManageAllStaffInAdmin => StaffRole.canManageAllStaffInAdmin(role);
 
   bool canViewStaffPinOf(User other) =>
       StaffRole.canViewStaffPinInAdmin(role, other.role);

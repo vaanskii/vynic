@@ -50,10 +50,7 @@ class PosChangeHighlightService {
     return '${item.itemName.trim()}|${item.unitPrice.toStringAsFixed(4)}';
   }
 
-  static void _registerChangedItem(
-    OrderItem item,
-    Set<String> highlightKeys,
-  ) {
+  static void _registerChangedItem(OrderItem item, Set<String> highlightKeys) {
     final name = item.itemName.trim();
     final key = item.itemKey.trim();
     if (name.isNotEmpty) highlightKeys.add(name);
@@ -85,7 +82,9 @@ class PosChangeHighlightService {
         summaryLines.add('+ ${item.itemName} ×${item.quantity}');
       } else if (prev.quantity != item.quantity) {
         _registerChangedItem(item, highlightKeys);
-        summaryLines.add('${item.itemName}: ${prev.quantity} → ${item.quantity}');
+        summaryLines.add(
+          '${item.itemName}: ${prev.quantity} → ${item.quantity}',
+        );
       } else if ((prev.unitPrice - item.unitPrice).abs() > 0.009) {
         _registerChangedItem(item, highlightKeys);
         summaryLines.add(

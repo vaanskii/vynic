@@ -69,9 +69,7 @@ class NotificationHistoryPanel extends StatelessWidget {
               final style = resolveNotificationEntryStyle(e);
               final accent = style.accent;
               final borderColor = unread ? accent : _readBorder;
-              final bg = unread
-                  ? accent.withValues(alpha: 0.08)
-                  : _readBg;
+              final bg = unread ? accent.withValues(alpha: 0.08) : _readBg;
 
               return Material(
                 color: bg,

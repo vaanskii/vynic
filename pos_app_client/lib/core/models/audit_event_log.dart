@@ -18,8 +18,8 @@ class AuditEventLog {
     this.deviceType = 'mobile',
     DateTime? createdAt,
     this.synced = false,
-  })  : id = id ?? const Uuid().v4(),
-        createdAt = createdAt ?? DateTime.now();
+  }) : id = id ?? const Uuid().v4(),
+       createdAt = createdAt ?? DateTime.now();
 
   Map<String, dynamic> toMap() {
     return {
@@ -38,9 +38,13 @@ class AuditEventLog {
       id: map['id'],
       action: map['action'],
       userId: map['userId'],
-      data: map['data'] is String ? jsonDecode(map['data']) : (map['data'] ?? {}),
+      data: map['data'] is String
+          ? jsonDecode(map['data'])
+          : (map['data'] ?? {}),
       deviceType: map['deviceType'] ?? 'mobile',
-      createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt']) : null,
+      createdAt: map['createdAt'] != null
+          ? DateTime.parse(map['createdAt'])
+          : null,
       synced: map['synced'] == 1,
     );
   }

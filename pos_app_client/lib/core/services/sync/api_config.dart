@@ -18,7 +18,8 @@ class ApiConfig {
   static String get baseUrl {
     // Desktop POS stores its override in DatabaseService; the mobile manager app
     // (which never inits DatabaseService) stores it in ManagerAppPreferences.
-    final adminOverride = DatabaseService.getBackendUrlOverride() ??
+    final adminOverride =
+        DatabaseService.getBackendUrlOverride() ??
         ManagerAppPreferences.backendUrlOverride.value;
     if (adminOverride != null) {
       final normalized = _normalizeAndroidLoopback(adminOverride);

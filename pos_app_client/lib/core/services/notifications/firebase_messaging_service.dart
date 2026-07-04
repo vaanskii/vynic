@@ -122,7 +122,9 @@ class FirebaseMessagingService {
 
   //Handle notification taps when the app is opened from background or terminated state
   void _onMessageOpenedApp(RemoteMessage message) {
-    debugPrint("Notification caused to open the app: ${message.data.toString()}");
+    debugPrint(
+      "Notification caused to open the app: ${message.data.toString()}",
+    );
   }
 }
 
@@ -130,9 +132,7 @@ class FirebaseMessagingService {
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Background handlers run in a separate isolate with no Firebase context,
   // so Firebase must be initialized here before any Firebase API is used.
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   debugPrint("background message received: ${message.data.toString()}");
   final localNotifications = LocalNotificationsService.instance();
   await localNotifications.init();
@@ -241,8 +241,10 @@ String? _bodyFromData(Map<String, dynamic> data) {
             final first = touches.first;
             if (first is Map<String, dynamic>) {
               final orderId = first['posOrderId']?.toString();
-              final kind =
-                  (first['changeKind'] ?? '').toString().trim().toLowerCase();
+              final kind = (first['changeKind'] ?? '')
+                  .toString()
+                  .trim()
+                  .toLowerCase();
               final tableLabel = (first['tableLabel'] ?? '').toString().trim();
               final summary = first['changeSummary']?.toString() ?? '';
               final orderIdInt = int.tryParse(orderId ?? '');
@@ -256,8 +258,8 @@ String? _bodyFromData(Map<String, dynamic> data) {
               if (orderId != null && orderId.isNotEmpty) {
                 final normalized =
                     ManagerNotificationInbox.normalizeServiceFeeSummary(
-                  summary,
-                );
+                      summary,
+                    );
                 return summary.isNotEmpty
                     ? 'შეკვეთა #$orderId — $normalized'
                     : 'შეკვეთა #$orderId განახლდა';

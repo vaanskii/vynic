@@ -13,7 +13,7 @@ class AuditEventService {
   /// Initialize the background sync service.
   static void initialize() {
     if (_syncTimer != null) return;
-    
+
     // Periodic sync attempt every 2 minutes
     _syncTimer = Timer.periodic(const Duration(minutes: 2), (_) {
       unawaited(syncEvents());
@@ -41,17 +41,23 @@ class AuditEventService {
       action: action,
       userId: userId,
       data: data,
-      deviceType: kIsWeb ? 'web' : (defaultTargetPlatform == TargetPlatform.windows ? 'windows' : 'mobile'),
+      deviceType: kIsWeb
+          ? 'web'
+          : (defaultTargetPlatform == TargetPlatform.windows
+                ? 'windows'
+                : 'mobile'),
     );
 
     try {
       final box = DatabaseService.getAuditLogBox();
       await box.put(event.id, event.toMap());
-      
+
       // Proactive debounced sync
       unawaited(syncEvents());
     } catch (e) {
-      debugPrint('[AuditEventService] CRITICAL: Failed to write audit event: $e');
+      debugPrint(
+        '[AuditEventService] CRITICAL: Failed to write audit event: $e',
+      );
     }
   }
 
@@ -63,32 +69,39 @@ class AuditEventService {
     try {
       final box = DatabaseService.getAuditLogBox();
       final allEntries = box.toMap();
-      
+
       // Filter for unsynced entries
-      final unsynced = allEntries.entries
-          .map((entry) {
-            try {
-              final map = Map<String, dynamic>.from(entry.value);
-              return AuditEventLog.fromMap(map);
-            } catch (_) {
-              return null;
-            }
-          })
-          .whereType<AuditEventLog>()
-          .where((e) => !e.synced)
-          .toList()
-        ..sort((a, b) => a.createdAt.compareTo(b.createdAt)); // Oldest first
+      final unsynced =
+          allEntries.entries
+              .map((entry) {
+                try {
+                  final map = Map<String, dynamic>.from(entry.value);
+                  return AuditEventLog.fromMap(map);
+                } catch (_) {
+                  return null;
+                }
+              })
+              .whereType<AuditEventLog>()
+              .where((e) => !e.synced)
+              .toList()
+            ..sort(
+              (a, b) => a.createdAt.compareTo(b.createdAt),
+            ); // Oldest first
 
       if (unsynced.isEmpty) {
         _isSyncing = false;
         return;
       }
 
-      debugPrint('[AuditEventService] Found ${unsynced.length} unsynced events. Starting batch sync.');
+      debugPrint(
+        '[AuditEventService] Found ${unsynced.length} unsynced events. Starting batch sync.',
+      );
 
       const batchSize = 30;
       for (var i = 0; i < unsynced.length; i += batchSize) {
-        final end = (i + batchSize < unsynced.length) ? i + batchSize : unsynced.length;
+        final end = (i + batchSize < unsynced.length)
+            ? i + batchSize
+            : unsynced.length;
         final batch = unsynced.sublist(i, end);
 
         final success = await _sendBatch(batch);
@@ -100,7 +113,9 @@ class AuditEventService {
           }
         } else {
           // Stop processing further batches if one fails (preserve order)
-          debugPrint('[AuditEventService] Batch sync failed. Will retry later.');
+          debugPrint(
+            '[AuditEventService] Batch sync failed. Will retry later.',
+          );
           break;
         }
       }
@@ -113,15 +128,15 @@ class AuditEventService {
 
   static Future<bool> _sendBatch(List<AuditEventLog> batch) async {
     try {
-      final payload = {
-        'logs': batch.map((e) => e.toSyncMap()).toList(),
-      };
+      final payload = {'logs': batch.map((e) => e.toSyncMap()).toList()};
 
-      final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/sync/audit-logs'),
-        headers: ApiConfig.posSyncHeaders,
-        body: jsonEncode(payload),
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .post(
+            Uri.parse('${ApiConfig.baseUrl}/sync/audit-logs'),
+            headers: ApiConfig.posSyncHeaders,
+            body: jsonEncode(payload),
+          )
+          .timeout(const Duration(seconds: 15));
 
       return response.statusCode == 201 || response.statusCode == 200;
     } catch (e) {

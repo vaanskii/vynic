@@ -154,10 +154,7 @@ class MenuVariantDBAdapter extends TypeAdapter<MenuVariantDB> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return MenuVariantDB(
-      size: fields[0] as double,
-      price: fields[1] as double,
-    );
+    return MenuVariantDB(size: fields[0] as double, price: fields[1] as double);
   }
 
   @override

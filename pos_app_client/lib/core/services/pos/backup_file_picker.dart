@@ -37,10 +37,9 @@ class BackupFilePicker {
     if (Platform.isMacOS) {
       try {
         debugPrint('[BackupFilePicker] macOS native pickSaveFile');
-        final path = await _macChannel.invokeMethod<String>(
-          'pickSaveFile',
-          {'suggestedName': _defaultBackupName()},
-        );
+        final path = await _macChannel.invokeMethod<String>('pickSaveFile', {
+          'suggestedName': _defaultBackupName(),
+        });
         debugPrint('[BackupFilePicker] macOS native save path: $path');
         return path;
       } catch (e, st) {

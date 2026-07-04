@@ -64,7 +64,9 @@ class TableGroupStyle {
   }
 
   static String normalizeTableToken(String raw) {
-    return raw.replaceAll(RegExp(r'^Table\s*', caseSensitive: false), '').trim();
+    return raw
+        .replaceAll(RegExp(r'^Table\s*', caseSensitive: false), '')
+        .trim();
   }
 
   static String formatOrderTablesLabel(Order order) {
@@ -75,9 +77,7 @@ class TableGroupStyle {
         .where((s) => s.isNotEmpty)
         .toList();
     if (nums.isEmpty) return '—';
-    nums.sort(
-      (a, b) => (int.tryParse(a) ?? 0).compareTo(int.tryParse(b) ?? 0),
-    );
+    nums.sort((a, b) => (int.tryParse(a) ?? 0).compareTo(int.tryParse(b) ?? 0));
 
     if (floor == 'second') {
       return nums.map((n) => 'კუპე $n').join(', ');
@@ -90,13 +90,10 @@ class TableGroupStyle {
   }
 
   static String formatTableNumbersList(Iterable<String> numbers, String floor) {
-    final nums = numbers
-        .map((n) => n.trim())
-        .where((s) => s.isNotEmpty)
-        .toList()
-      ..sort(
-        (a, b) => (int.tryParse(a) ?? 0).compareTo(int.tryParse(b) ?? 0),
-      );
+    final nums =
+        numbers.map((n) => n.trim()).where((s) => s.isNotEmpty).toList()..sort(
+          (a, b) => (int.tryParse(a) ?? 0).compareTo(int.tryParse(b) ?? 0),
+        );
     if (nums.isEmpty) return '';
     final f = floor.trim().toLowerCase();
     if (f == 'second') return nums.map((n) => 'კუპე $n').join(', ');

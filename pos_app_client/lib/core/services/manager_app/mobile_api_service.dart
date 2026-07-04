@@ -491,7 +491,10 @@ class MobileApiService {
   /// this to the POS callback path, and the Windows POS (the only print host)
   /// prints it on the receipt printer. Not a mutation — no echo-guard marking.
   static Future<void> printOrderCheck(int orderId) async {
-    final response = await _post('/mobile/order/$orderId/print-check', const {});
+    final response = await _post(
+      '/mobile/order/$orderId/print-check',
+      const {},
+    );
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception('printOrderCheck failed: ${response.statusCode}');
     }

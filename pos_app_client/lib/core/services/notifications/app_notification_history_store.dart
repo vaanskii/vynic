@@ -133,8 +133,7 @@ class AppNotificationHistoryStore {
   }
 
   void markAllRead() {
-    if (unreadCount.value == 0 &&
-        entries.value.every((e) => e.isRead)) {
+    if (unreadCount.value == 0 && entries.value.every((e) => e.isRead)) {
       return;
     }
     entries.value = entries.value
@@ -152,7 +151,8 @@ class AppNotificationHistoryStore {
     final index = entries.value.indexWhere((e) => e.id == id);
     if (index < 0) return;
     final removed = entries.value[index];
-    final next = List<AppNotificationEntry>.from(entries.value)..removeAt(index);
+    final next = List<AppNotificationEntry>.from(entries.value)
+      ..removeAt(index);
     entries.value = next;
     if (!removed.isRead) {
       unreadCount.value = (unreadCount.value - 1).clamp(0, maxEntries);

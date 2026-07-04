@@ -45,8 +45,8 @@ class ManagerDashboardMetrics {
     this.occupiedTables = 0,
     this.reservedTables = 0,
     this.freeTables = 0,
-  }) : shiftTotalRevenue = shiftTotalRevenue ??
-            (todayRevenue + openTablesPayable);
+  }) : shiftTotalRevenue =
+           shiftTotalRevenue ?? (todayRevenue + openTablesPayable);
 
   factory ManagerDashboardMetrics.fromJson(Map<String, dynamic> json) {
     final closed = (json['closedTablesRevenue'] ?? json['todayRevenue'] ?? 0)
@@ -55,8 +55,8 @@ class ManagerDashboardMetrics {
         .toDouble();
     return ManagerDashboardMetrics(
       todayRevenue: (json['todayRevenue'] ?? 0).toDouble(),
-      shiftTotalRevenue:
-          (json['shiftTotalRevenue'] ?? (closed + open)).toDouble(),
+      shiftTotalRevenue: (json['shiftTotalRevenue'] ?? (closed + open))
+          .toDouble(),
       closedTablesRevenue: closed,
       nonFiscalClosedRevenue: (json['nonFiscalClosedRevenue'] ?? 0).toDouble(),
       todayOrderCount: json['todayOrderCount'] ?? 0,
@@ -83,29 +83,29 @@ class ManagerDashboardMetrics {
   }
 
   Map<String, dynamic> toJson() => {
-        'todayRevenue': todayRevenue,
-        'shiftTotalRevenue': shiftTotalRevenue,
-        'closedTablesRevenue': closedTablesRevenue,
-        'nonFiscalClosedRevenue': nonFiscalClosedRevenue,
-        'todayOrderCount': todayOrderCount,
-        'activeTablesCount': activeTablesCount,
-        'openTablesAmount': openTablesAmount,
-        'openTablesPayable': openTablesPayable,
-        'occupancyPercentage': occupancyPercentage,
-        'yesterdayRevenue': yesterdayRevenue,
-        'businessDate': businessDate,
-        'businessDayId': businessDayId,
-        'businessDayStatus': businessDayStatus,
-        'businessDayOpenedAt': businessDayOpenedAt,
-        'businessDayDurationMinutes': businessDayDurationMinutes,
-        'cashRevenue': cashRevenue,
-        'cardRevenue': cardRevenue,
-        'refunds': refunds,
-        'totalTables': totalTables,
-        'occupiedTables': occupiedTables,
-        'reservedTables': reservedTables,
-        'freeTables': freeTables,
-      };
+    'todayRevenue': todayRevenue,
+    'shiftTotalRevenue': shiftTotalRevenue,
+    'closedTablesRevenue': closedTablesRevenue,
+    'nonFiscalClosedRevenue': nonFiscalClosedRevenue,
+    'todayOrderCount': todayOrderCount,
+    'activeTablesCount': activeTablesCount,
+    'openTablesAmount': openTablesAmount,
+    'openTablesPayable': openTablesPayable,
+    'occupancyPercentage': occupancyPercentage,
+    'yesterdayRevenue': yesterdayRevenue,
+    'businessDate': businessDate,
+    'businessDayId': businessDayId,
+    'businessDayStatus': businessDayStatus,
+    'businessDayOpenedAt': businessDayOpenedAt,
+    'businessDayDurationMinutes': businessDayDurationMinutes,
+    'cashRevenue': cashRevenue,
+    'cardRevenue': cardRevenue,
+    'refunds': refunds,
+    'totalTables': totalTables,
+    'occupiedTables': occupiedTables,
+    'reservedTables': reservedTables,
+    'freeTables': freeTables,
+  };
 }
 
 class StaffMetric {
@@ -128,8 +128,8 @@ class StaffMetric {
   }
 
   Map<String, dynamic> toJson() => {
-        'waiterName': waiterName,
-        'totalSales': totalSales,
-        'orderCount': orderCount,
-      };
+    'waiterName': waiterName,
+    'totalSales': totalSales,
+    'orderCount': orderCount,
+  };
 }

@@ -19,7 +19,7 @@ class ReceiptPdfGenerator {
     // Load fonts and logo
     final fontData = await rootBundle.load('assets/fonts/NotoSansGeorgian.ttf');
     final font = pw.Font.ttf(fontData);
-    
+
     final logoData = await rootBundle.load('assets/black-logo.png');
     final logoImage = pw.MemoryImage(logoData.buffer.asUint8List());
 
@@ -35,16 +35,19 @@ class ReceiptPdfGenerator {
             crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
               // Logo
-              pw.Center(
-                child: pw.Image(logoImage, width: 120, height: 60),
-              ),
+              pw.Center(child: pw.Image(logoImage, width: 120, height: 60)),
               pw.SizedBox(height: 8),
               pw.Text(
                 'RESTAURANT VANKISI',
-                style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+                style: pw.TextStyle(
+                  fontSize: 14,
+                  fontWeight: pw.FontWeight.bold,
+                ),
               ),
               pw.Text(
-                isEnglish ? 'Aleksandre Pushkini ST N51' : 'ალექსანდრე პუშკინის ქ. N51',
+                isEnglish
+                    ? 'Aleksandre Pushkini ST N51'
+                    : 'ალექსანდრე პუშკინის ქ. N51',
                 style: const pw.TextStyle(fontSize: 9),
               ),
               pw.Text(
@@ -52,20 +55,26 @@ class ReceiptPdfGenerator {
                 style: const pw.TextStyle(fontSize: 9),
               ),
               pw.SizedBox(height: 12),
-              
+
               pw.Divider(thickness: 0.5),
-              
+
               // Order Info
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text(
                     'Order #${order.orderId}',
-                    style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                    style: pw.TextStyle(
+                      fontSize: 10,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
                   ),
                   pw.Text(
                     'Table: ${order.tableNumbers.join(", ")}',
-                    style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                    style: pw.TextStyle(
+                      fontSize: 10,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -76,13 +85,10 @@ class ReceiptPdfGenerator {
                     'Waiter: ${order.createdBy}',
                     style: const pw.TextStyle(fontSize: 8),
                   ),
-                  pw.Text(
-                    dateStr,
-                    style: const pw.TextStyle(fontSize: 8),
-                  ),
+                  pw.Text(dateStr, style: const pw.TextStyle(fontSize: 8)),
                 ],
               ),
-              
+
               pw.SizedBox(height: 8),
               pw.Divider(thickness: 0.5),
               pw.SizedBox(height: 4),
@@ -94,7 +100,10 @@ class ReceiptPdfGenerator {
                     flex: 3,
                     child: pw.Text(
                       isEnglish ? 'Item' : 'დასახელება',
-                      style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+                      style: pw.TextStyle(
+                        fontSize: 9,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
                     ),
                   ),
                   pw.Expanded(
@@ -102,7 +111,10 @@ class ReceiptPdfGenerator {
                     child: pw.Text(
                       isEnglish ? 'Qty' : 'რაოდ.',
                       textAlign: pw.TextAlign.center,
-                      style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+                      style: pw.TextStyle(
+                        fontSize: 9,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
                     ),
                   ),
                   pw.Expanded(
@@ -110,7 +122,10 @@ class ReceiptPdfGenerator {
                     child: pw.Text(
                       isEnglish ? 'Price' : 'ფასი',
                       textAlign: pw.TextAlign.right,
-                      style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+                      style: pw.TextStyle(
+                        fontSize: 9,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
                     ),
                   ),
                   pw.Expanded(
@@ -118,7 +133,10 @@ class ReceiptPdfGenerator {
                     child: pw.Text(
                       isEnglish ? 'Total' : 'ჯამი',
                       textAlign: pw.TextAlign.right,
-                      style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+                      style: pw.TextStyle(
+                        fontSize: 9,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -135,7 +153,10 @@ class ReceiptPdfGenerator {
                       flex: 3,
                       child: pw.Text(
                         order.packageName ?? 'Package',
-                        style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+                        style: pw.TextStyle(
+                          fontSize: 9,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
                       ),
                     ),
                     pw.Expanded(
@@ -159,7 +180,10 @@ class ReceiptPdfGenerator {
                       child: pw.Text(
                         '${order.packagePrice.toStringAsFixed(2)}',
                         textAlign: pw.TextAlign.right,
-                        style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+                        style: pw.TextStyle(
+                          fontSize: 9,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -219,21 +243,21 @@ class ReceiptPdfGenerator {
                 '${(order.getAdditionalItemsSubtotal() + order.packagePrice).toStringAsFixed(2)} GEL',
                 fontSize: 9,
               ),
-              
+
               if (order.includeServiceFee && order.getServiceFee() > 0)
                 _buildTotalRow(
                   '${isEnglish ? "Service" : "სერვისი"} (${(order.getEffectiveServiceFeePercentage()).toStringAsFixed(0)}%)',
                   '${order.getServiceFee().toStringAsFixed(2)} GEL',
                   fontSize: 9,
                 ),
-              
+
               if (order.discountAmount > 0)
                 _buildTotalRow(
                   isEnglish ? 'Discount' : 'ფასდაკლება',
                   '-${order.discountAmount.toStringAsFixed(2)} GEL',
                   fontSize: 9,
                 ),
-              
+
               if (order.manualAdjustmentAmount != 0)
                 _buildTotalRow(
                   isEnglish ? 'Adjustment' : 'კორექცია',
@@ -244,7 +268,7 @@ class ReceiptPdfGenerator {
               pw.SizedBox(height: 4),
               pw.Divider(thickness: 1),
               pw.SizedBox(height: 4),
-              
+
               _buildTotalRow(
                 isEnglish ? 'TOTAL' : 'სულ',
                 '${order.totalAmount.toStringAsFixed(2)} GEL',
@@ -255,7 +279,9 @@ class ReceiptPdfGenerator {
               pw.SizedBox(height: 20),
               pw.Center(
                 child: pw.Text(
-                  isEnglish ? 'Thank you for visiting!' : 'მადლობა სტუმრობისთვის!',
+                  isEnglish
+                      ? 'Thank you for visiting!'
+                      : 'მადლობა სტუმრობისთვის!',
                   style: const pw.TextStyle(fontSize: 8),
                 ),
               ),

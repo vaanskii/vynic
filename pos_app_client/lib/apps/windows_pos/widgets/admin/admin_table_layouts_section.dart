@@ -129,10 +129,10 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     return [
       for (var i = 0; i < zone.tables.length; i++)
         RestaurantTableDefinition(
-          id: _tableIdFor(zone.floorKey, i),
+          id: _tableIdFor(zone.floorKey, zone.tables[i].legacyTableNumber),
           zoneId: zone.zoneId,
           legacyFloor: zone.floorKey,
-          legacyTableNumber: '${i + 1}',
+          legacyTableNumber: zone.tables[i].legacyTableNumber,
           label: zone.tables[i].label,
           capacity: zone.tables[i].capacity,
           sortOrder: i + 1,
@@ -144,7 +144,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     return [
       for (var i = 0; i < zone.tables.length; i++)
         RestaurantLayoutObject(
-          id: '${_tableIdFor(zone.floorKey, i)}-visual',
+          id: '${_tableIdFor(zone.floorKey, zone.tables[i].legacyTableNumber)}-visual',
           zoneId: zone.zoneId,
           type: RestaurantLayoutObjectType.table,
           label: zone.tables[i].label,
@@ -154,7 +154,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
           height: zone.tables[i].height,
           rotation: zone.tables[i].rotation,
           sortOrder: i + 1,
-          tableId: _tableIdFor(zone.floorKey, i),
+          tableId: _tableIdFor(zone.floorKey, zone.tables[i].legacyTableNumber),
           tableShape: zone.tables[i].shape,
         ),
       for (var i = 0; i < zone.objects.length; i++)
@@ -188,6 +188,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     table = _EditableTableDefinition.create(
       zone.floorKey,
       zone.tables.length + 1,
+      zone.nextLegacyTableNumber(),
     );
     zone.tables.add(table);
     table.moveBy(
@@ -220,7 +221,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
       return false;
     }
     final liveTable = DatabaseService.getTable(
-      '${tableIndex + 1}',
+      table.legacyTableNumber,
       zone.floorKey,
     );
     if (liveTable?.isReserved == true || liveTable?.activeOrderId != null) {
@@ -455,9 +456,9 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
       );
       return;
     }
-    final hasBusyTables = zone.tables.asMap().entries.any((entry) {
+    final hasBusyTables = zone.tables.any((table) {
       final liveTable = DatabaseService.getTable(
-        '${entry.key + 1}',
+        table.legacyTableNumber,
         zone.floorKey,
       );
       return liveTable?.isReserved == true || liveTable?.activeOrderId != null;
@@ -2100,7 +2101,7 @@ class _EditableZonePlan {
           : displayOrder == 2
           ? 'Second floor'
           : 'Floor $displayOrder',
-      tables: [_EditableTableDefinition.create(floorKey, 1)],
+      tables: [_EditableTableDefinition.create(floorKey, 1, '1')],
       objects: [],
     );
   }
@@ -2166,6 +2167,17 @@ class _EditableZonePlan {
     }
   }
 
+  String nextLegacyTableNumber() {
+    var highest = 0;
+    for (final table in tables) {
+      final parsed = int.tryParse(table.legacyTableNumber);
+      if (parsed != null && parsed > highest) {
+        highest = parsed;
+      }
+    }
+    return '${highest + 1}';
+  }
+
   void replaceFrom(_EditableZonePlan other) {
     for (final table in tables) {
       table.dispose();
@@ -2190,6 +2202,7 @@ class _EditableZonePlan {
 
 class _EditableTableDefinition {
   _EditableTableDefinition({
+    required this.legacyTableNumber,
     required this.sortOrder,
     required String label,
     required int capacity,
@@ -2204,13 +2217,18 @@ class _EditableTableDefinition {
          text: capacity > 0 ? capacity.toString() : '',
        );
 
-  factory _EditableTableDefinition.create(String floor, int sortOrder) {
+  factory _EditableTableDefinition.create(
+    String floor,
+    int sortOrder,
+    String legacyTableNumber,
+  ) {
     final label = floor == 'second'
-        ? 'VIP Zone $sortOrder'
-        : 'Table $sortOrder';
+        ? 'VIP Zone $legacyTableNumber'
+        : 'Table $legacyTableNumber';
     final point = _defaultTablePoint(sortOrder - 1);
     final size = _tableSize(RestaurantTableShape.rectangle);
     return _EditableTableDefinition(
+      legacyTableNumber: legacyTableNumber,
       sortOrder: sortOrder,
       label: label,
       capacity: 0,
@@ -2231,6 +2249,7 @@ class _EditableTableDefinition {
     final point = _defaultTablePoint(index);
     final size = _tableSize(shape);
     return _EditableTableDefinition(
+      legacyTableNumber: table.legacyTableNumber,
       sortOrder: table.sortOrder,
       label: table.label,
       capacity: table.capacity,
@@ -2245,6 +2264,7 @@ class _EditableTableDefinition {
 
   _EditableTableDefinition copy() {
     return _EditableTableDefinition(
+      legacyTableNumber: legacyTableNumber,
       sortOrder: sortOrder,
       label: label,
       capacity: capacity,
@@ -2257,6 +2277,9 @@ class _EditableTableDefinition {
     );
   }
 
+  /// Stable identity: orders, reservations, and Hive table rows key on
+  /// (floor, tableNumber), so this must survive reorders and deletions.
+  final String legacyTableNumber;
   int sortOrder;
   final TextEditingController labelController;
   final TextEditingController capacityController;
@@ -2765,14 +2788,14 @@ List<_WallJoint> _editableWallJoints(
   return joints;
 }
 
-String _tableIdFor(String floor, int index) {
+String _tableIdFor(String floor, String tableNumber) {
   if (floor == 'second') {
-    return 'floor2-table${index + 1}';
+    return 'floor2-table$tableNumber';
   }
   if (floor == 'first') {
-    return 'floor1-table${index + 1}';
+    return 'floor1-table$tableNumber';
   }
-  return '${_safeId(floor)}-table${index + 1}';
+  return '${_safeId(floor)}-table$tableNumber';
 }
 
 String _safeId(String value) {

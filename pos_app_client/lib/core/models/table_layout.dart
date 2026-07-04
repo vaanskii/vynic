@@ -1,16 +1,32 @@
-enum TableLayoutRenderMode { svgMap, buttonGrid }
+enum TableLayoutRenderMode { svgMap, buttonGrid, floorPlan }
+
+enum RestaurantLayoutObjectType {
+  table,
+  wall,
+  entrance,
+  stairs,
+  stage,
+  bar,
+  counter,
+  label,
+  restroom,
+}
+
+enum RestaurantTableShape { rectangle, circle, booth, barSeat }
 
 class RestaurantTableLayout {
   final String id;
   final String name;
   final List<RestaurantZone> zones;
   final List<RestaurantTableDefinition> tables;
+  final List<RestaurantLayoutObject> objects;
 
   const RestaurantTableLayout({
     required this.id,
     this.name = 'Default layout',
     required this.zones,
     required this.tables,
+    this.objects = const [],
   });
 
   factory RestaurantTableLayout.fromJson(Map<String, dynamic> json) {
@@ -23,6 +39,9 @@ class RestaurantTableLayout {
       tables: _listValue(json['tables'])
           .map((entry) => RestaurantTableDefinition.fromJson(_mapValue(entry)))
           .toList(),
+      objects: _listValue(json['objects'])
+          .map((entry) => RestaurantLayoutObject.fromJson(_mapValue(entry)))
+          .toList(),
     );
   }
 
@@ -32,6 +51,7 @@ class RestaurantTableLayout {
       'name': name,
       'zones': zones.map((zone) => zone.toJson()).toList(),
       'tables': tables.map((table) => table.toJson()).toList(),
+      'objects': objects.map((object) => object.toJson()).toList(),
     };
   }
 
@@ -81,6 +101,24 @@ class RestaurantTableLayout {
     return zoneTables;
   }
 
+  List<RestaurantLayoutObject> objectsForZone(String zoneId) {
+    final zoneObjects = objects
+        .where((object) => object.zoneId == zoneId)
+        .toList();
+    zoneObjects.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    return zoneObjects;
+  }
+
+  RestaurantLayoutObject? objectForTable(String tableId) {
+    for (final object in objects) {
+      if (object.type == RestaurantLayoutObjectType.table &&
+          object.tableId == tableId) {
+        return object;
+      }
+    }
+    return null;
+  }
+
   List<RestaurantTableDefinition> tablesForLegacyFloor(String floor) {
     final zone = zoneForLegacyFloor(floor);
     if (zone == null) {
@@ -95,6 +133,74 @@ class RestaurantTableLayout {
         zone.legacyFloor: tablesForZone(
           zone.id,
         ).map((table) => table.legacyTableNumber).toList(),
+    };
+  }
+}
+
+class RestaurantLayoutObject {
+  final String id;
+  final String zoneId;
+  final RestaurantLayoutObjectType type;
+  final String label;
+  final double x;
+  final double y;
+  final double width;
+  final double height;
+  final double rotation;
+  final int sortOrder;
+  final String? tableId;
+  final RestaurantTableShape tableShape;
+  final String? colorHex;
+
+  const RestaurantLayoutObject({
+    required this.id,
+    required this.zoneId,
+    required this.type,
+    required this.label,
+    required this.x,
+    required this.y,
+    required this.width,
+    required this.height,
+    this.rotation = 0,
+    this.sortOrder = 0,
+    this.tableId,
+    this.tableShape = RestaurantTableShape.rectangle,
+    this.colorHex,
+  });
+
+  factory RestaurantLayoutObject.fromJson(Map<String, dynamic> json) {
+    return RestaurantLayoutObject(
+      id: _stringValue(json['id'], fallback: 'layout-object'),
+      zoneId: _stringValue(json['zoneId'], fallback: 'zone'),
+      type: _objectTypeFromJson(json['type']),
+      label: _stringValue(json['label'], fallback: 'Object'),
+      x: _doubleValue(json['x']) ?? 0,
+      y: _doubleValue(json['y']) ?? 0,
+      width: _doubleValue(json['width']) ?? 100,
+      height: _doubleValue(json['height']) ?? 80,
+      rotation: _doubleValue(json['rotation']) ?? 0,
+      sortOrder: _intValue(json['sortOrder'], fallback: 0),
+      tableId: _nullableStringValue(json['tableId']),
+      tableShape: _tableShapeFromJson(json['tableShape']),
+      colorHex: _nullableStringValue(json['colorHex']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'zoneId': zoneId,
+      'type': type.name,
+      'label': label,
+      'x': x,
+      'y': y,
+      'width': width,
+      'height': height,
+      'rotation': rotation,
+      'sortOrder': sortOrder,
+      if (tableId != null) 'tableId': tableId,
+      'tableShape': tableShape.name,
+      if (colorHex != null) 'colorHex': colorHex,
     };
   }
 }
@@ -283,12 +389,36 @@ TableLayoutRenderMode _renderModeFromJson(Object? value) {
   return TableLayoutRenderMode.buttonGrid;
 }
 
+RestaurantLayoutObjectType _objectTypeFromJson(Object? value) {
+  final name = value?.toString();
+  for (final type in RestaurantLayoutObjectType.values) {
+    if (type.name == name) {
+      return type;
+    }
+  }
+  return RestaurantLayoutObjectType.label;
+}
+
+RestaurantTableShape _tableShapeFromJson(Object? value) {
+  final name = value?.toString();
+  for (final shape in RestaurantTableShape.values) {
+    if (shape.name == name) {
+      return shape;
+    }
+  }
+  return RestaurantTableShape.rectangle;
+}
+
 class RestaurantTableLayouts {
   RestaurantTableLayouts._();
 
-  static final current = buttonGridPreview;
+  static final current = floorPlanPreview;
 
-  static final available = <RestaurantTableLayout>[svgMap, buttonGridPreview];
+  static final available = <RestaurantTableLayout>[
+    floorPlanPreview,
+    svgMap,
+    buttonGridPreview,
+  ];
 
   static const svgMap = RestaurantTableLayout(
     id: 'default-vynic-restaurant',
@@ -548,4 +678,102 @@ class RestaurantTableLayouts {
     ],
     tables: svgMap.tables,
   );
+
+  static final floorPlanPreview = RestaurantTableLayout(
+    id: 'floor-plan-preview',
+    name: 'Visual floor plan preview',
+    zones: const [
+      RestaurantZone(
+        id: 'main-floor',
+        name: 'First floor',
+        legacyFloor: 'first',
+        displayOrder: 1,
+        renderMode: TableLayoutRenderMode.floorPlan,
+        canvasWidth: 1005,
+        canvasHeight: 1101,
+      ),
+      RestaurantZone(
+        id: 'vip-floor',
+        name: 'Second floor',
+        legacyFloor: 'second',
+        displayOrder: 2,
+        renderMode: TableLayoutRenderMode.floorPlan,
+        canvasWidth: 953,
+        canvasHeight: 958,
+      ),
+    ],
+    tables: svgMap.tables,
+    objects: [
+      ..._objectsFromTables(svgMap.tablesForZone('main-floor'), 'main-floor'),
+      ..._objectsFromTables(svgMap.tablesForZone('vip-floor'), 'vip-floor'),
+      const RestaurantLayoutObject(
+        id: 'main-floor-entrance',
+        zoneId: 'main-floor',
+        type: RestaurantLayoutObjectType.entrance,
+        label: 'Entrance',
+        x: 392,
+        y: 20,
+        width: 220,
+        height: 42,
+        sortOrder: 200,
+      ),
+      const RestaurantLayoutObject(
+        id: 'main-floor-bar',
+        zoneId: 'main-floor',
+        type: RestaurantLayoutObjectType.bar,
+        label: 'Bar',
+        x: 20,
+        y: 560,
+        width: 180,
+        height: 52,
+        sortOrder: 201,
+      ),
+      const RestaurantLayoutObject(
+        id: 'vip-floor-stage',
+        zoneId: 'vip-floor',
+        type: RestaurantLayoutObjectType.stage,
+        label: 'Stage',
+        x: 330,
+        y: 80,
+        width: 280,
+        height: 72,
+        sortOrder: 200,
+      ),
+      const RestaurantLayoutObject(
+        id: 'vip-floor-stairs',
+        zoneId: 'vip-floor',
+        type: RestaurantLayoutObjectType.stairs,
+        label: 'Stairs',
+        x: 50,
+        y: 80,
+        width: 150,
+        height: 56,
+        sortOrder: 201,
+      ),
+    ],
+  );
+
+  static List<RestaurantLayoutObject> _objectsFromTables(
+    List<RestaurantTableDefinition> tables,
+    String zoneId,
+  ) {
+    return [
+      for (final table in tables)
+        RestaurantLayoutObject(
+          id: '${table.id}-visual',
+          zoneId: zoneId,
+          type: RestaurantLayoutObjectType.table,
+          label: table.label,
+          x: table.hitBox?.left ?? (80 + table.sortOrder * 24),
+          y: table.hitBox?.top ?? (80 + table.sortOrder * 24),
+          width: table.hitBox?.width ?? 120,
+          height: table.hitBox?.height ?? 90,
+          sortOrder: table.sortOrder,
+          tableId: table.id,
+          tableShape: table.sortOrder.isEven
+              ? RestaurantTableShape.rectangle
+              : RestaurantTableShape.circle,
+        ),
+    ];
+  }
 }

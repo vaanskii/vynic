@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -24,6 +26,9 @@ class TableSelectionWidget extends StatefulWidget {
 }
 
 class TableSelectionWidgetState extends State<TableSelectionWidget> {
+  static const double _fallbackCanvasWidth = 1000;
+  static const double _fallbackCanvasHeight = 620;
+
   RestaurantTableLayout get _layout =>
       DatabaseService.getRestaurantTableLayout();
   String? selectedTable;
@@ -46,6 +51,9 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
 
   bool get _usesSvgMap =>
       _currentZone.renderMode == TableLayoutRenderMode.svgMap;
+
+  bool get _usesFloorPlan =>
+      _currentZone.renderMode == TableLayoutRenderMode.floorPlan;
 
   // Get current floor's table IDs
   List<String> get tableIds =>
@@ -654,6 +662,320 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     );
   }
 
+  Widget _buildFloorPlan() {
+    final canvasWidth = _currentZone.canvasWidth ?? _fallbackCanvasWidth;
+    final canvasHeight = _currentZone.canvasHeight ?? _fallbackCanvasHeight;
+    final objects = _floorPlanObjectsForCurrentZone();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final scaleX = constraints.maxWidth / canvasWidth;
+        final scaleY = constraints.maxHeight / canvasHeight;
+        final scale = scaleX < scaleY ? scaleX : scaleY;
+        final scaledWidth = canvasWidth * scale;
+        final scaledHeight = canvasHeight * scale;
+
+        return Center(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(
+              width: scaledWidth,
+              height: scaledHeight,
+              child: ColoredBox(
+                color: const Color(0xFFF8FAFC),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: CustomPaint(painter: _FloorPlanGridPainter()),
+                    ),
+                    for (final object in objects)
+                      if (object.type != RestaurantLayoutObjectType.table)
+                        _buildFloorPlanObject(object, scale),
+                    for (final object in objects)
+                      if (object.type == RestaurantLayoutObjectType.table &&
+                          object.tableId != null)
+                        _buildFloorPlanTable(object, scale),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  List<RestaurantLayoutObject> _floorPlanObjectsForCurrentZone() {
+    final objects = _layout.objectsForZone(_currentZone.id);
+    final objectTableIds = objects
+        .where((object) => object.type == RestaurantLayoutObjectType.table)
+        .map((object) => object.tableId)
+        .whereType<String>()
+        .toSet();
+
+    return [
+      ...objects,
+      for (var i = 0; i < _currentTableDefinitions.length; i++)
+        if (!objectTableIds.contains(_currentTableDefinitions[i].id))
+          _fallbackTableObject(_currentTableDefinitions[i], i),
+    ];
+  }
+
+  RestaurantLayoutObject _fallbackTableObject(
+    RestaurantTableDefinition table,
+    int index,
+  ) {
+    const columns = 4;
+    const cellWidth = 210.0;
+    const cellHeight = 130.0;
+    return RestaurantLayoutObject(
+      id: '${table.id}-fallback-visual',
+      zoneId: table.zoneId,
+      type: RestaurantLayoutObjectType.table,
+      label: table.label,
+      x: 70 + (index % columns) * cellWidth,
+      y: 70 + (index ~/ columns) * cellHeight,
+      width: 130,
+      height: 86,
+      sortOrder: table.sortOrder,
+      tableId: table.id,
+      tableShape: RestaurantTableShape.rectangle,
+    );
+  }
+
+  Widget _buildFloorPlanTable(RestaurantLayoutObject object, double scale) {
+    final tableId = object.tableId!;
+    final tableModel = _getTableModel(tableId);
+    final isReserved = tableModel?.isReserved ?? false;
+    final isSelected = _selectedTables.contains(tableId);
+    final isFocused = _focusedReservedTables.contains(tableId);
+    final reservationColor = isReserved && tableModel != null
+        ? _getReservationColor(tableModel)
+        : null;
+
+    Color backgroundColor;
+    Color borderColor;
+    Color textColor;
+    IconData icon;
+
+    if (isReserved) {
+      backgroundColor = (reservationColor ?? Colors.red).withValues(
+        alpha: isFocused ? 0.94 : 0.82,
+      );
+      borderColor = isFocused
+          ? const Color(0xFF0F172A)
+          : (reservationColor ?? Colors.red);
+      textColor = Colors.white;
+      icon = isFocused ? Icons.visibility : Icons.lock;
+    } else if (isSelected) {
+      backgroundColor = const Color(0xFF047857);
+      borderColor = const Color(0xFF065F46);
+      textColor = Colors.white;
+      icon = Icons.check_circle;
+    } else {
+      backgroundColor = const Color(0xFFE0F2FE);
+      borderColor = const Color(0xFF0369A1);
+      textColor = const Color(0xFF0F172A);
+      icon = Icons.table_restaurant;
+    }
+
+    final label = _displayNameForTableId(tableId);
+
+    return Positioned(
+      left: object.x * scale,
+      top: object.y * scale,
+      width: object.width * scale,
+      height: object.height * scale,
+      child: GestureDetector(
+        onTap: () => _handleTableTap(tableId),
+        child: Transform.rotate(
+          angle: object.rotation * math.pi / 180,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            decoration: _floorPlanTableDecoration(
+              shape: object.tableShape,
+              color: backgroundColor,
+              borderColor: borderColor,
+              focused: isFocused,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, color: textColor, size: isFocused ? 24 : 20),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  if ((tableModel?.isReserved ?? false) &&
+                      tableModel?.reservationId != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      'დაკავებულია',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: textColor.withValues(alpha: 0.9),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFloorPlanObject(RestaurantLayoutObject object, double scale) {
+    final colors = _floorPlanObjectColors(object);
+    return Positioned(
+      left: object.x * scale,
+      top: object.y * scale,
+      width: object.width * scale,
+      height: object.height * scale,
+      child: Transform.rotate(
+        angle: object.rotation * math.pi / 180,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.$1,
+            borderRadius: BorderRadius.circular(
+              object.type == RestaurantLayoutObjectType.wall ? 2 : 8,
+            ),
+            border: Border.all(color: colors.$2, width: 1.5),
+          ),
+          child: Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  _floorPlanObjectIcon(object.type),
+                  color: colors.$3,
+                  size: 18,
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    object.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: colors.$3,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  BoxDecoration _floorPlanTableDecoration({
+    required RestaurantTableShape shape,
+    required Color color,
+    required Color borderColor,
+    required bool focused,
+  }) {
+    return BoxDecoration(
+      color: color,
+      border: Border.all(color: borderColor, width: focused ? 3 : 2),
+      borderRadius: BorderRadius.circular(
+        shape == RestaurantTableShape.circle ? 999 : 8,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: borderColor.withValues(alpha: focused ? 0.28 : 0.16),
+          blurRadius: focused ? 16 : 10,
+          offset: const Offset(0, 5),
+        ),
+      ],
+    );
+  }
+
+  (Color, Color, Color) _floorPlanObjectColors(RestaurantLayoutObject object) {
+    switch (object.type) {
+      case RestaurantLayoutObjectType.wall:
+        return (const Color(0xFF334155), const Color(0xFF0F172A), Colors.white);
+      case RestaurantLayoutObjectType.entrance:
+        return (
+          const Color(0xFFDCFCE7),
+          const Color(0xFF16A34A),
+          const Color(0xFF14532D),
+        );
+      case RestaurantLayoutObjectType.stairs:
+        return (
+          const Color(0xFFFFF7ED),
+          const Color(0xFFF97316),
+          const Color(0xFF7C2D12),
+        );
+      case RestaurantLayoutObjectType.stage:
+        return (
+          const Color(0xFFFCE7F3),
+          const Color(0xFFDB2777),
+          const Color(0xFF831843),
+        );
+      case RestaurantLayoutObjectType.bar:
+      case RestaurantLayoutObjectType.counter:
+        return (
+          const Color(0xFFE0F2FE),
+          const Color(0xFF0284C7),
+          const Color(0xFF0C4A6E),
+        );
+      case RestaurantLayoutObjectType.restroom:
+        return (
+          const Color(0xFFEDE9FE),
+          const Color(0xFF7C3AED),
+          const Color(0xFF3B0764),
+        );
+      case RestaurantLayoutObjectType.table:
+      case RestaurantLayoutObjectType.label:
+        return (
+          const Color(0xFFF8FAFC),
+          const Color(0xFFCBD5E1),
+          const Color(0xFF334155),
+        );
+    }
+  }
+
+  IconData _floorPlanObjectIcon(RestaurantLayoutObjectType type) {
+    switch (type) {
+      case RestaurantLayoutObjectType.table:
+        return Icons.table_restaurant;
+      case RestaurantLayoutObjectType.wall:
+        return Icons.horizontal_rule;
+      case RestaurantLayoutObjectType.entrance:
+        return Icons.login;
+      case RestaurantLayoutObjectType.stairs:
+        return Icons.layers;
+      case RestaurantLayoutObjectType.stage:
+        return Icons.theaters;
+      case RestaurantLayoutObjectType.bar:
+        return Icons.local_bar;
+      case RestaurantLayoutObjectType.counter:
+        return Icons.storefront;
+      case RestaurantLayoutObjectType.label:
+        return Icons.label_outline;
+      case RestaurantLayoutObjectType.restroom:
+        return Icons.wc;
+    }
+  }
+
   Widget _buildButtonGrid() {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -786,9 +1108,32 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     return Column(
       children: [
         Expanded(
-          child: _usesSvgMap ? _buildSvgFloorPlan() : _buildButtonGrid(),
+          child: _usesSvgMap
+              ? _buildSvgFloorPlan()
+              : _usesFloorPlan
+              ? _buildFloorPlan()
+              : _buildButtonGrid(),
         ),
       ],
     );
   }
+}
+
+class _FloorPlanGridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFE2E8F0)
+      ..strokeWidth = 1;
+    const spacing = 24.0;
+    for (var x = 0.0; x <= size.width; x += spacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (var y = 0.0; y <= size.height; y += spacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

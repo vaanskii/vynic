@@ -157,6 +157,12 @@ verification, not one big commit.
   render from `TableLayoutRenderMode` so restaurants can use either mapped SVG
   tables or simple table buttons. A third slice added a local Windows POS Admin
   layout builder for button-grid plans, persisted as an active layout in settings.
+  A fourth slice upgraded this into a first visual floor-plan editor: tables are
+  saved as draggable layout objects with shapes/coordinates, non-table objects
+  such as walls/entrances/stairs/stage/bar/labels can be placed on the plan, and
+  the Windows POS table selector renders that saved visual plan. This keeps SVG
+  maps and button grids as supported render modes while moving the future path to
+  an app-created floor plan.
   Delete the integer-code arithmetic. Centralize the one remaining encode/decode
   if still needed for storage compatibility.
 - **Phase 4 — Status enums + safer state.** Replace stringly-typed order/reservation

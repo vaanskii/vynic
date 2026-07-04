@@ -146,9 +146,9 @@ verification, not one big commit.
   `apps/mobile_app/presentation/widgets/`. `core/models/` was left flat (small,
   not misleading; several files pair with Hive-generated `.g.dart` adapters we
   don't touch).
-- **Phase 3 — Data-driven tables/zones. MOSTLY DONE.** Replace
-  `'first'`/`'second'` and `> 10` with `Zone { id, name }` +
-  `Table { id, zoneId, label, capacity }`.
+- **Phase 3 — Data-driven tables/zones. DONE.** Replaced
+  `'first'`/`'second'` and the `> 10` integer-code arithmetic with data-driven
+  layouts and stable table references.
 
   **What exists now:** `RestaurantTableLayout` (zones + tables + visual objects,
   JSON round-trip, `legacyFloor`/`legacyTableNumber` compatibility bridge) with
@@ -163,22 +163,27 @@ verification, not one big commit.
   (`ensureTableLayoutConsistency`) and notifies sync. The table selector renders
   the saved plan; shared painters live in `widgets/floor_plan/`.
 
-  **Hardening done:** corrupted saved layouts fall back to the default with a
-  logged admin error; editor table numbers are stable across reorders/deletes;
-  layout saves refuse to drop occupied tables (and the consistency pass never
-  deletes them); all reservation table-code arithmetic is centralized in
-  `ReservationTableAvailability`, `encodeTableCode` throws on codes the int
-  encoding cannot represent (3rd floors, first-floor tables > 10), and pickers
-  hide such tables (`canEncodeTableCode`). Unit-tested in
-  `test/unit/reservation_table_availability_test.dart`.
+  **Table identity:** reservations canonically store `tableRefs`
+  (`floor/tableNumber` strings, `TableRef` in `core/models/table_ref.dart`);
+  Hive db v3 backfilled them from the legacy encoded ints (see
+  `pos_app_client/docs/HIVE_MIGRATIONS.md`). The legacy `tableNumbers` codes
+  are still written in parallel — they are the **server wire format and backup
+  format** (mobile app + website reserve via the server and stay code-based
+  until Phase 7), so codes the encoding can't represent (3rd+ floors,
+  first-floor > 10) are simply omitted from the wire. All POS-local logic
+  (activation, availability, pickers, close-day, stale-lock analysis, kitchen
+  labels) speaks refs via `ReservationTableAvailability.tableRefsOf`; the only
+  remaining `> 10` sites are read-side tolerance for historical data
+  (`normalizeTableIdentifier`, `_orderContainsTable`, mobile live-status).
 
-  **Remaining:** (a) migrate `Reservation.tableNumbers` from encoded ints to
-  stable table references so layouts beyond two floors / 10 first-floor tables
-  become reservable — requires a Hive model change + `.g.dart` regeneration and
-  a migration per `pos_app_client/docs/HIVE_MIGRATIONS.md`; get explicit
-  sign-off before touching those. (b) Optional: extract the expanded-editor
-  dialog out of `admin_table_layouts_section.dart` (~2,200 lines) into its own
-  widget.
+  **Hardening done along the way:** corrupted saved layouts fall back to the
+  default with a logged admin error; editor table numbers are stable across
+  reorders/deletes; layout saves refuse to drop occupied tables; day-open
+  auto-activation no longer passes encoded codes as order table numbers.
+  Unit-tested in `test/unit/reservation_table_availability_test.dart`.
+
+  **Optional follow-up:** extract the expanded-editor dialog out of
+  `admin_table_layouts_section.dart` (~2,200 lines) into its own widget.
 - **Phase 4 — Status enums + safer state.** Replace stringly-typed order/reservation
   statuses (`pending`/`confirmed`/`preparing`/`in-progress`, `startsWith('confirmed')`)
   with enums and explicit transitions.
@@ -189,7 +194,11 @@ verification, not one big commit.
   Follow `plan.md`, screen by screen.
 - **Phase 7 — Server SaaS foundation.** `Venue` model + `venueId` on every row +
   per-venue scoped auth + per-venue sync credentials + venue-scoped queries, rooms,
-  notifications. Fix the global-unique `posOrderId`.
+  notifications. Fix the global-unique `posOrderId`. Also migrate the
+  reservation wire format from encoded int `tableNumbers` to the `tableRefs`
+  strings the POS already stores (server `reservation-table-codes.ts`, mobile
+  picker/live-status, website bridge) so custom-floor tables become reservable
+  from the manager app and website too.
 - **Phase 8 — Feature flags / entitlements.** Per-venue entitlements table synced to
   the client; single `Features.has(...)` gate replacing scattered checks.
 - **Phase 9 — Onboard a second venue** (café/hotel/other restaurant). Only after

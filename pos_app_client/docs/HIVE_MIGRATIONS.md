@@ -5,8 +5,18 @@ This document describes the new Hive migration workflow that protects existing P
 ## Metadata Tracking
 
 - All schema metadata lives in the `meta` box under the `db_version` key.
-- Versions start at `1`; the current build targets version `2`.
+- Versions start at `1`; the current build targets version `3`.
 - The key `last_migration_timestamp` records when the most recent upgrade finished.
+
+## Version history
+
+- **V2** — settings defaults (`serviceFeePercent`, `serviceFeeEnabled`),
+  order amount normalization, reservation status backfill.
+- **V3** — backfills `Reservation.tableRefs` (`floor/tableNumber` strings,
+  the canonical table identity) from the legacy encoded int codes in
+  `tableNumbers` (`> 10` = second floor). New writes keep both fields in
+  sync via `ReservationRepository`; the int codes remain only for backups
+  and the server wire format.
 
 ## Startup Flow
 

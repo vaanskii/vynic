@@ -6,6 +6,7 @@ import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:vynic/core/models/table_layout.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
+import 'package:vynic/apps/windows_pos/widgets/floor_plan/floor_plan_painters.dart';
 
 const double _defaultPlanCanvasWidth = 1000;
 const double _defaultPlanCanvasHeight = 1000;
@@ -350,7 +351,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     if (index < 0 || wall.type != RestaurantLayoutObjectType.wall) {
       return;
     }
-    final endpoints = _editableWallEndpoints(wall);
+    final endpoints = floorPlanWallEndpoints(_wallSegmentOf(wall));
     final midpoint = Offset(
       (endpoints.$1.dx + endpoints.$2.dx) / 2,
       (endpoints.$1.dy + endpoints.$2.dy) / 2,
@@ -391,7 +392,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
       return;
     }
 
-    final endpoints = _editableWallEndpoints(wall);
+    final endpoints = floorPlanWallEndpoints(_wallSegmentOf(wall));
     final start = endpoints.$1;
     final end = endpoints.$2;
     final vector = end - start;
@@ -1109,7 +1110,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
                   child: Stack(
                     children: [
                       Positioned.fill(
-                        child: CustomPaint(painter: _PlanGridPainter()),
+                        child: CustomPaint(painter: FloorPlanGridPainter()),
                       ),
                       if (editable && onCanvasTap != null)
                         Positioned.fill(
@@ -1155,8 +1156,11 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
                       Positioned.fill(
                         child: IgnorePointer(
                           child: CustomPaint(
-                            painter: _WallJointsPainter(
-                              joints: _editableWallJoints(zone.objects, scale),
+                            painter: FloorPlanWallJointsPainter(
+                              joints: floorPlanWallJoints(
+                                _wallSegmentsOf(zone.objects),
+                                scale,
+                              ),
                               color: _objectColors(
                                 RestaurantLayoutObjectType.wall,
                               ).$1,
@@ -1313,7 +1317,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
                   children: [
                     Positioned.fill(
                       child: CustomPaint(
-                        painter: _WallSegmentPainter(
+                        painter: FloorPlanWallSegmentPainter(
                           color: colors.$1,
                           borderColor: selected
                               ? const Color(0xFF0F172A)
@@ -1350,7 +1354,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
                       if (object.type == RestaurantLayoutObjectType.stairs)
                         Positioned.fill(
                           child: CustomPaint(
-                            painter: _StairsPainter(colors.$2),
+                            painter: FloorPlanStairsPainter(colors.$2),
                           ),
                         ),
                       Center(
@@ -2537,25 +2541,6 @@ class _StepperControl extends StatelessWidget {
   }
 }
 
-class _PlanGridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFE2E8F0)
-      ..strokeWidth = 1;
-    const spacing = 24.0;
-    for (var x = 0.0; x <= size.width; x += spacing) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-    for (var y = 0.0; y <= size.height; y += spacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
 class _WallDraftPainter extends CustomPainter {
   const _WallDraftPainter({required this.start, required this.end});
 
@@ -2579,127 +2564,6 @@ class _WallDraftPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _WallDraftPainter oldDelegate) {
     return oldDelegate.start != start || oldDelegate.end != end;
-  }
-}
-
-class _WallSegmentPainter extends CustomPainter {
-  const _WallSegmentPainter({
-    required this.color,
-    required this.borderColor,
-    required this.selected,
-  });
-
-  final Color color;
-  final Color borderColor;
-  final bool selected;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final centerY = size.height / 2;
-    final borderPaint = Paint()
-      ..color = borderColor
-      ..strokeWidth = size.height + (selected ? 8 : 4)
-      ..strokeCap = StrokeCap.round
-      ..isAntiAlias = true;
-    final fillPaint = Paint()
-      ..color = color
-      ..strokeWidth = size.height
-      ..strokeCap = StrokeCap.round
-      ..isAntiAlias = true;
-
-    canvas
-      ..drawLine(
-        Offset.zero.translate(0, centerY),
-        Offset(size.width, centerY),
-        borderPaint,
-      )
-      ..drawLine(
-        Offset.zero.translate(0, centerY),
-        Offset(size.width, centerY),
-        fillPaint,
-      );
-  }
-
-  @override
-  bool shouldRepaint(covariant _WallSegmentPainter oldDelegate) {
-    return oldDelegate.color != color ||
-        oldDelegate.borderColor != borderColor ||
-        oldDelegate.selected != selected;
-  }
-}
-
-class _WallJoint {
-  const _WallJoint({required this.center, required this.radius});
-
-  final Offset center;
-  final double radius;
-}
-
-class _WallEndpoint {
-  const _WallEndpoint({required this.point, required this.radius});
-
-  final Offset point;
-  final double radius;
-}
-
-class _WallJointsPainter extends CustomPainter {
-  const _WallJointsPainter({
-    required this.joints,
-    required this.color,
-    required this.borderColor,
-  });
-
-  final List<_WallJoint> joints;
-  final Color color;
-  final Color borderColor;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final borderPaint = Paint()
-      ..color = borderColor
-      ..isAntiAlias = true;
-    final fillPaint = Paint()
-      ..color = color
-      ..isAntiAlias = true;
-    for (final joint in joints) {
-      canvas
-        ..drawCircle(joint.center, joint.radius + 2, borderPaint)
-        ..drawCircle(joint.center, joint.radius, fillPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _WallJointsPainter oldDelegate) {
-    return oldDelegate.joints != joints ||
-        oldDelegate.color != color ||
-        oldDelegate.borderColor != borderColor;
-  }
-}
-
-class _StairsPainter extends CustomPainter {
-  const _StairsPainter(this.color);
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color.withValues(alpha: 0.55)
-      ..strokeWidth = 2;
-    const steps = 5;
-    for (var i = 1; i < steps; i++) {
-      final x = size.width * i / steps;
-      canvas.drawLine(Offset(x, 6), Offset(x, size.height - 6), paint);
-    }
-    for (var i = 1; i < steps; i++) {
-      final y = size.height * i / steps;
-      canvas.drawLine(Offset(6, y), Offset(size.width - 6, y), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _StairsPainter oldDelegate) {
-    return oldDelegate.color != color;
   }
 }
 
@@ -2747,57 +2611,22 @@ _EditablePlanObject? _editableWallFromPoints({
   );
 }
 
-(Offset, Offset) _editableWallEndpoints(_EditablePlanObject wall) {
-  final center = Offset(wall.x + wall.width / 2, wall.y + wall.height / 2);
-  final angle = wall.rotation * math.pi / 180;
-  final half = Offset(math.cos(angle), math.sin(angle)) * (wall.width / 2);
-  return (center - half, center + half);
+FloorPlanWallSegment _wallSegmentOf(_EditablePlanObject wall) {
+  return (
+    x: wall.x,
+    y: wall.y,
+    width: wall.width,
+    height: wall.height,
+    rotation: wall.rotation,
+  );
 }
 
-List<_WallJoint> _editableWallJoints(
-  List<_EditablePlanObject> objects,
-  double scale,
-) {
-  final endpoints = <_WallEndpoint>[];
-  for (final object in objects) {
-    if (object.type != RestaurantLayoutObjectType.wall) {
-      continue;
-    }
-    final points = _editableWallEndpoints(object);
-    final radius = object.height * scale / 2;
-    endpoints
-      ..add(_WallEndpoint(point: points.$1 * scale, radius: radius))
-      ..add(_WallEndpoint(point: points.$2 * scale, radius: radius));
-  }
-
-  final used = <int>{};
-  final joints = <_WallJoint>[];
-  for (var i = 0; i < endpoints.length; i++) {
-    if (used.contains(i)) {
-      continue;
-    }
-    final group = <_WallEndpoint>[endpoints[i]];
-    for (var j = i + 1; j < endpoints.length; j++) {
-      if (used.contains(j)) {
-        continue;
-      }
-      final tolerance = math.max(8.0, endpoints[i].radius * 0.65);
-      if ((endpoints[i].point - endpoints[j].point).distance <= tolerance) {
-        group.add(endpoints[j]);
-        used.add(j);
-      }
-    }
-    if (group.length < 2) {
-      continue;
-    }
-    used.add(i);
-    final center =
-        group.map((entry) => entry.point).reduce((a, b) => a + b) /
-        group.length.toDouble();
-    final radius = group.map((entry) => entry.radius).reduce(math.max);
-    joints.add(_WallJoint(center: center, radius: radius));
-  }
-  return joints;
+List<FloorPlanWallSegment> _wallSegmentsOf(List<_EditablePlanObject> objects) {
+  return [
+    for (final object in objects)
+      if (object.type == RestaurantLayoutObjectType.wall)
+        _wallSegmentOf(object),
+  ];
 }
 
 String _tableIdFor(String floor, String tableNumber) {

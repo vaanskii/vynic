@@ -16,17 +16,49 @@ class ReservationTableAvailability {
   static bool isSameCalendarDate(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
+  /// Whether [encodeTableCode] can represent this table. Pickers must hide
+  /// tables that fail this check instead of offering them for reservation.
+  static bool canEncodeTableCode({
+    required String floor,
+    required String tableNumber,
+  }) {
+    final parsed = int.tryParse(tableNumber.trim());
+    if (parsed == null || parsed < 1) {
+      return false;
+    }
+    if (floor == 'second') {
+      return true;
+    }
+    return floor == 'first' && parsed <= 10;
+  }
+
   /// Encodes floor + table number into reservation `tableNumbers` format.
+  ///
+  /// The legacy int encoding can only represent two floors ('first' ≤ 10,
+  /// 'second' = number + 10). Anything else must throw rather than encode a
+  /// code that silently decodes to a different table.
   static int encodeTableCode({
     required String floor,
     required String tableNumber,
   }) {
     final parsed = int.tryParse(tableNumber.trim());
-    if (parsed == null) {
+    if (parsed == null || parsed < 1) {
       throw ArgumentError('Invalid table number: $tableNumber');
     }
     if (floor == 'second') {
       return parsed + 10;
+    }
+    if (floor != 'first') {
+      throw ArgumentError(
+        'Floor "$floor" cannot be encoded as a reservation table code; '
+        'only first/second are supported',
+      );
+    }
+    if (parsed > 10) {
+      throw ArgumentError(
+        'Table $parsed on the first floor cannot be encoded as a '
+        'reservation table code (would decode as a second-floor table)',
+      );
     }
     return parsed;
   }
@@ -36,6 +68,17 @@ class ReservationTableAvailability {
       return (floor: 'second', tableNumber: '${code - 10}');
     }
     return (floor: 'first', tableNumber: '$code');
+  }
+
+  /// Bare table number for display. POS reservations encode 2nd-floor
+  /// tables as 10+N; API payloads carry the plain number plus a floor, so
+  /// an explicit non-'second' floor hint means the value is not encoded.
+  static String displayTableNumber(int value, {String? floorHint}) {
+    final floor = (floorHint ?? '').trim().toLowerCase();
+    if (floor == 'second' || floor.isEmpty) {
+      return decodeTableCode(value).tableNumber;
+    }
+    return '$value';
   }
 
   static List<int> encodeFloorSelection({
@@ -238,7 +281,12 @@ class ReservationTableAvailability {
       if (excludeOrderId != null && table.activeOrderId == excludeOrderId) {
         continue;
       }
-      if (int.tryParse(table.tableNumber.trim()) == null) {
+      if (!canEncodeTableCode(
+        floor: table.floor,
+        tableNumber: table.tableNumber,
+      )) {
+        // No reservation table code can refer to this table, so it cannot
+        // block one.
         continue;
       }
       unavailable.add(

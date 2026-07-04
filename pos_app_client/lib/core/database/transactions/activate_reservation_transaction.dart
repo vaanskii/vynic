@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/utils/reservation_table_availability.dart';
 
 import '../database_core.dart';
 import '../repositories/error_log_repository.dart';
@@ -57,29 +58,25 @@ class ActivateReservationTransaction {
       );
     }
 
-    final hasVipTables = reservation.tableNumbers.any((number) => number > 10);
-    final hasFirstFloorTables = reservation.tableNumbers.any(
-      (number) => number <= 10,
-    );
+    final decodedTables = reservation.tableNumbers
+        .map(ReservationTableAvailability.decodeTableCode)
+        .toList();
+    final floors = decodedTables.map((table) => table.floor).toSet();
 
-    if (hasVipTables && hasFirstFloorTables) {
+    if (floors.length > 1) {
       return ReservationActivationResult.failure(
         'Reservation $reservationId mixes tables from both floors, '
         'which is not supported',
       );
     }
 
-    final floor = hasVipTables ? 'second' : 'first';
+    final floor = floors.first;
 
     Future<void> ensureTablesReserved(int orderId) async {
-      for (final tableNumber in reservation.tableNumbers) {
-        final targetFloor = tableNumber > 10 ? 'second' : 'first';
-        final normalized = tableNumber > 10
-            ? (tableNumber - 10).toString()
-            : '$tableNumber';
+      for (final table in decodedTables) {
         await TableRepository.reserveTable(
-          tableNumber: normalized,
-          floor: targetFloor,
+          tableNumber: table.tableNumber,
+          floor: table.floor,
           username: activatedBy,
           orderId: orderId,
           reservationId: reservation.id,
@@ -104,12 +101,7 @@ class ActivateReservationTransaction {
     }
 
     final order = await OrderRepository.createOrder(
-      tableNumbers: reservation.tableNumbers
-          .map(
-            (number) =>
-                number > 10 ? (number - 10).toString() : number.toString(),
-          )
-          .toList(),
+      tableNumbers: decodedTables.map((table) => table.tableNumber).toList(),
       floor: floor,
       createdBy: activatedBy,
       items: reservation.preOrderItems ?? const <OrderItem>[],

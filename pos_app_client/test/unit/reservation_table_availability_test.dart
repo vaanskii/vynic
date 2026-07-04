@@ -84,6 +84,66 @@ void main() {
         throwsArgumentError,
       );
     });
+
+    test('encodeTableCode throws instead of encoding a colliding code', () {
+      // first/12 would encode to 12, which decodes as second/2.
+      expect(
+        () => ReservationTableAvailability.encodeTableCode(
+          floor: 'first',
+          tableNumber: '12',
+        ),
+        throwsArgumentError,
+      );
+      // Unknown floors have no representation in the int encoding.
+      expect(
+        () => ReservationTableAvailability.encodeTableCode(
+          floor: 'floor-3',
+          tableNumber: '1',
+        ),
+        throwsArgumentError,
+      );
+      // Second floor round-trips at any number.
+      expect(
+        ReservationTableAvailability.encodeTableCode(
+          floor: 'second',
+          tableNumber: '12',
+        ),
+        22,
+      );
+    });
+
+    test('canEncodeTableCode mirrors what encodeTableCode accepts', () {
+      bool can(String floor, String number) =>
+          ReservationTableAvailability.canEncodeTableCode(
+            floor: floor,
+            tableNumber: number,
+          );
+      expect(can('first', '10'), isTrue);
+      expect(can('first', '11'), isFalse);
+      expect(can('second', '11'), isTrue);
+      expect(can('floor-3', '1'), isFalse);
+      expect(can('first', 'abc'), isFalse);
+    });
+
+    test('displayTableNumber strips the offset only for encoded values', () {
+      expect(
+        ReservationTableAvailability.displayTableNumber(13, floorHint: null),
+        '3',
+      );
+      expect(
+        ReservationTableAvailability.displayTableNumber(
+          13,
+          floorHint: 'second',
+        ),
+        '3',
+      );
+      // An explicit non-'second' floor means the value is an API-plain
+      // number, not an encoded code.
+      expect(
+        ReservationTableAvailability.displayTableNumber(12, floorHint: 'first'),
+        '12',
+      );
+    });
   });
 
   group('reservationTimesOverlap (120-minute slots)', () {

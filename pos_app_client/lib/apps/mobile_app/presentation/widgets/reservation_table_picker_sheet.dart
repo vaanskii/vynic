@@ -24,7 +24,14 @@ class ReservationTablePickerSheet {
         MobileApiService.getReservations(date: dateKey),
       ]);
       tables = ReservationTableAvailability.sortTables(
-        results[0] as List<TableModel>,
+        (results[0] as List<TableModel>)
+            .where(
+              (table) => ReservationTableAvailability.canEncodeTableCode(
+                floor: table.floor,
+                tableNumber: table.tableNumber,
+              ),
+            )
+            .toList(),
       );
       reservations = results[1] as List<Map<String, dynamic>>;
     } catch (_) {

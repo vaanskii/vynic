@@ -48,7 +48,14 @@ class HomeReservationTableAssignmentDialog {
     }
 
     final allTables = ReservationTableAvailability.sortTables(
-      DatabaseService.getAllTables(),
+      DatabaseService.getAllTables()
+          .where(
+            (table) => ReservationTableAvailability.canEncodeTableCode(
+              floor: table.floor,
+              tableNumber: table.tableNumber,
+            ),
+          )
+          .toList(),
     );
 
     final selectableCount = allTables

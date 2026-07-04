@@ -1,3 +1,5 @@
+import 'package:vynic/core/utils/reservation_table_availability.dart';
+
 /// Human-readable notification title/body from WS / FCM payloads.
 class NotificationMessageCopy {
   const NotificationMessageCopy({required this.title, required this.message});
@@ -10,8 +12,9 @@ NotificationMessageCopy buildReservationsCopy(Map<String, dynamic> payload) {
   final action = (payload['action'] ?? '').toString().trim().toLowerCase();
   final customerName = (payload['customerName'] ?? '').toString().trim();
   final resDateRaw = (payload['reservationDate'] ?? '').toString().trim();
-  final resDate =
-      resDateRaw.length >= 10 ? resDateRaw.substring(0, 10) : resDateRaw;
+  final resDate = resDateRaw.length >= 10
+      ? resDateRaw.substring(0, 10)
+      : resDateRaw;
   final resTime = (payload['reservationTime'] ?? '').toString().trim();
   final tablesRaw = payload['tableNumbers'];
   final tables = tablesRaw is List
@@ -30,7 +33,8 @@ NotificationMessageCopy buildReservationsCopy(Map<String, dynamic> payload) {
   ];
   final detail = detailParts.join(' • ');
 
-  final walkIn = customerName.toLowerCase() == 'walk-in' ||
+  final walkIn =
+      customerName.toLowerCase() == 'walk-in' ||
       customerName.toLowerCase().contains('walk-in');
 
   if (action == 'deleted' || action == 'cancelled') {
@@ -45,9 +49,7 @@ NotificationMessageCopy buildReservationsCopy(Map<String, dynamic> payload) {
   if (walkIn) {
     return NotificationMessageCopy(
       title: 'მაგიდა',
-      message: detail.isNotEmpty
-          ? 'ახალი walk-in — $detail'
-          : 'ახალი walk-in',
+      message: detail.isNotEmpty ? 'ახალი walk-in — $detail' : 'ახალი walk-in',
     );
   }
 
@@ -71,8 +73,7 @@ NotificationMessageCopy buildReservationsCopy(Map<String, dynamic> payload) {
 
   return NotificationMessageCopy(
     title: 'რეზერვაციები',
-    message:
-        detail.isNotEmpty ? 'რეზერვაცია — $detail' : 'რეზერვაცია განახლდა',
+    message: detail.isNotEmpty ? 'რეზერვაცია — $detail' : 'რეზერვაცია განახლდა',
   );
 }
 
@@ -82,7 +83,10 @@ NotificationMessageCopy buildOrderCreatedCopy(Map<String, dynamic> payload) {
   final tableLabel = (payload['tableLabel'] ?? '').toString().trim();
   final tableNumbersRaw = payload['tableNumbers'];
   final tableNumbers = tableNumbersRaw is List
-      ? tableNumbersRaw.map((e) => e.toString().trim()).where((s) => s.isNotEmpty).join(', ')
+      ? tableNumbersRaw
+            .map((e) => e.toString().trim())
+            .where((s) => s.isNotEmpty)
+            .join(', ')
       : '';
   final tableSeg = tableLabel.isNotEmpty
       ? tableLabel
@@ -141,7 +145,10 @@ int? orderIdFromWalkInNotificationMeta(Map<String, dynamic> meta) {
   }
 
   final notes = (meta['notes'] ?? '').toString();
-  final match = RegExp(r'order\s*#(\d+)', caseSensitive: false).firstMatch(notes);
+  final match = RegExp(
+    r'order\s*#(\d+)',
+    caseSensitive: false,
+  ).firstMatch(notes);
   if (match != null) return int.tryParse(match.group(1)!);
 
   return null;
@@ -159,14 +166,13 @@ String? tableNumberFromNotificationMeta(Map<String, dynamic> meta) {
   return null;
 }
 
-/// POS encodes 2nd-floor tables as 10+N; API uses tableNumber + floor.
 String _displayTableNumber(dynamic raw, String? floorHint) {
   final encoded = raw is num ? raw.toInt() : int.tryParse(raw.toString());
   if (encoded == null) return raw.toString().trim();
-  final floor = (floorHint ?? '').trim().toLowerCase();
-  if (floor == 'second' && encoded > 10) return (encoded - 10).toString();
-  if (encoded > 10 && floor.isEmpty) return (encoded - 10).toString();
-  return encoded.toString();
+  return ReservationTableAvailability.displayTableNumber(
+    encoded,
+    floorHint: floorHint,
+  );
 }
 
 int? orderIdFromNotificationMessage(String message) {

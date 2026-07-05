@@ -39,6 +39,17 @@ a stringly-typed backend means re-deriving state logic in the UI layer that
 Phase 4 is about to replace with enums. Do the enum work first; the UI state
 model in §3 should consume Phase 4's enums directly, not the raw strings.
 
+**Phase 4 code status (as of this update):** the status-enum foundation
+landed (`600475f feat(pos): add operational status enums`) — `OrderStatus`,
+`ReservationStatus`, `TableOperationalStatus`, and a scaffold-only
+`PrintOperationalStatus` now exist in code (see §3 for the mapping and §9 UI
+Phase 1 for what's still outstanding). `docs/VYNIC_PROJECT_PLAN.md` §6 has
+**not yet been marked DONE for Phase 4** — the status-enum work is in, but
+the permissions-matrix half of what this plan's UI Phase 1 asks for
+(new `StaffRole` checks) is not. Treat the gate below as satisfied for the
+state-model dependency only; re-confirm the master plan's own Phase 4 line
+before treating every downstream phase as fully unblocked.
+
 ---
 
 ## 1. Current UI Diagnosis
@@ -133,6 +144,51 @@ combination — if a state is only distinguishable by color, colorblind staff
 lose the signal (see the accessibility bar in §6.1). Every state above gets an
 icon or text label, never color alone.
 
+### 3.1 Code-backing status (post-Phase-4)
+
+| State group | Backing today | Notes |
+|---|---|---|
+| Free / Occupied / Reserved | `TableOperationalStatus` (`core/models/table_operational_status.dart`), exposed as `TableModel.operationalStatus` | Computed, not stored — derives from existing `isReserved`/`activeOrderId`/`reservationId`. |
+| Reserved soon / Seated late / Dirty / Blocked | **No code backing yet** | Need either a new stored flag (`Dirty`, `Blocked`) or a time-comparison helper against the linked reservation (`Reserved soon`/`Seated late`) — out of scope for the enum foundation, still future work. |
+| Unpaid (and the order lifecycle generally) | `OrderStatus` (`core/models/order_status.dart`), exposed as `Order.statusEnum` | "Unpaid" = `!OrderStatus.isTerminal`; no separate enum needed for this state. |
+| Printed / Sent to kitchen / Kitchen failed / Printer failed | **No code backing yet** — `PrintOperationalStatus` (`core/services/printing/print_operational_status.dart`) exists as an **unused scaffold enum only**; `printer_service.dart` has no observable status to wire it to | Wiring is a printer-service instrumentation task, not a status-enum task — remaining debt, see below. |
+| Sync failed / Offline | `BackendConnectionState` (`core/services/sync/connection_status_service.dart`) — **pre-existing, not new** | No `SyncOperationalStatus` was added; this enum already covered the need. |
+| Stale | Not modeled — would derive from `ConnectionStatusService.lastSyncedAt` age, not built yet | Future. |
+| Manager approval needed | Not modeled as a status — `AdminVerificationDialog` exists as an interactive PIN step-up flow, not an observable state | This is a permission gate, not an operational status; belongs to §4/UI Phase 1's permissions-matrix half, not the state-enum half. |
+
+Reservation lifecycle (pending/preparing/confirmed/in-progress/completed/
+cancelled/no-show) is backed by `ReservationStatus`
+(`core/models/reservation_status.dart`), exposed as `Reservation.statusEnum`.
+
+**Two enums considered and deliberately not added:**
+- **`PaymentMethod`** — `core/utils/payment_utils.dart` already normalizes
+  payment method strings correctly, including genuinely open-ended values
+  (`card-amex` collapsing to `card`, `other:voucher` carrying a custom label)
+  that a closed enum would lose. Wrapping it in an enum would be a
+  regression, not a fix.
+- **`SyncOperationalStatus`** — `BackendConnectionState` already exists,
+  wired, and observable (see table above). Adding a second enum for the same
+  concept would recreate the exact fragmentation this plan exists to remove.
+
+**Remaining status debt (not fixed by the Phase 4 enum work, flagged for
+follow-up phases):**
+1. `apps/windows_pos/widgets/table_selection_widget.dart` still computes
+   table-tile color/state from the raw `isReserved`/`activeOrderId` fields
+   directly, not from `TableModel.operationalStatus`. It's the natural next
+   consumer of the new enum, but it's a widget file and was out of scope for
+   the enum-foundation task — first real consumer for UI Phase 3.
+2. Fuzzy `status.startsWith('confirmed')` / `startsWith('cancelled')`
+   matching remains in `core/utils/home_reservations_helper.dart`,
+   `apps/windows_pos/widgets/admin/admin_reservations_section.dart`, and
+   `apps/windows_pos/widgets/reservations_management_section.dart`, instead
+   of exact `ReservationStatus` comparisons. Left unmigrated because there's
+   no way to confirm from source alone whether live restaurant data relies
+   on a composite value that tolerance was written to catch.
+3. Printer, sync-failure-as-distinct-from-offline, and manager-approval
+   states have no observable instrumentation at all yet (see table above) —
+   needs new plumbing in `printer_service.dart` and a discount/void approval
+   flow before any UI phase can display them, not just a status enum.
+
 ---
 
 ## 4. Role & Permissions Model
@@ -168,14 +224,46 @@ between `supervisor`/`waiter`. An existing `AdminVerificationDialog`
 (`apps/windows_pos/widgets/admin_verification_dialog.dart`) already implements
 a manager-PIN step-up flow — reuse it, don't build a second one.
 
+**Since the UI Phase 1 permissions pass (below):** order-level cancel/void
+was found to already be manager-only in the UI (`order_detail_action_helpers.dart`
+only renders the cancel button for `PosPermission.voidOrder`, i.e. `isManager`)
+— the note below that void had "zero role gating" was inaccurate; it was
+mixing up order-level void (already gated) with the not-yet-built line-item
+void. Discount and X-report were genuinely ungated and are now closed — see
+below.
+
 ### 4.3 What is NOT enforced today (confirmed gap)
 
-Discount, void, refund, X-report, and the payment surface itself have **zero**
-role gating in the current code — any authenticated staff member can reach
-all of them. UI Phase 1 must close this gap by adding new `StaffRole` checks
-(e.g. `canApplyDiscount`, `canVoidItem`, `canAccessXReport`,
-`canProcessRefund`) following the existing pattern in `staff_role.dart`,
-**not** a parallel permission system.
+**Closed this pass:** discount / manual price adjustment (`order_detail_screen.dart`
+— both actions share one risk class: they change what the customer owes) and
+X-report (`home_screen.dart` sidebar + landing-dashboard tile) were reachable
+by every role with **zero** gating. Both are now hidden for `waiter` via a new
+central lookup, `core/models/pos_permission.dart` (`PosPermission` enum +
+`PosPermissions.has(user, permission)`), which is a thin facade over new
+`StaffRole.canApplyDiscount` / `StaffRole.canAccessXReport` methods — added
+following the existing pattern in `staff_role.dart`, **not** a parallel
+permission system. The facade also gave the existing manager-override bypass
+in `_confirmCancelOrder` (previously three `widget.user.isAdmin` checks) a
+named permission (`PosPermission.overrideManagerApproval`) with zero behavior
+change, since `isAdmin` already meant `isManager`.
+
+**Still open / scaffolded, not yet wired to a real screen:**
+- `PosPermission.refundPayment`, `.deleteOrder`, `.editClosedOrder` — no such
+  workflows exist in the app yet (§5); the enum values exist so the permission
+  is ready the day those workflows are built, mirroring how
+  `PrintOperationalStatus` was scaffolded ahead of its consumer in Phase 4.
+- `PosPermission.manageMenu` / `.managePrinters` / `.viewSales` — already
+  unreachable for `supervisor` because those sections are absent from the
+  limited-admin sidebar in `admin_screen.dart`; the enum values document that
+  fact but there is **no defense-in-depth check inside the section widgets
+  themselves** (only nav-level gating). Flagged as remaining permission debt
+  in case `AdminScreen` ever gains a second entry path.
+- `PosPermission.closeDay` / `.manageStaff` / `.openAdmin` — facades over the
+  existing `canAccessManagementCenter` gate; no behavior change.
+- `PosPermission.closeTable` / `.reprintReceipt` / `.changeTable` — deliberately
+  `true` for every role. These are everyday waiter operations (§4.4 marks them
+  "Yes" for every role) and must stay open — do not gate these later without
+  re-reading §4.4 first.
 
 ### 4.4 Target permissions matrix
 
@@ -398,6 +486,13 @@ reference plus phase-specific additions — not repeated in full each time.
 See §0. Blocks everything below until master Phase 4 is done.
 
 ### UI Phase 0 — Baseline & safety
+- **Status: static-analysis half done.** `docs/UI_BASELINE.md` now covers
+  tap counts (workflows A–G, verified against actual dialog code), the full
+  dialog inventory, fixed-size/touch-target risk, resolution risk, keyboard/
+  focus gaps, and status-display gaps. **Not done yet:** the manual
+  screenshot pass (`docs/UI_BASELINE.md` §8 lists exactly what to capture)
+  and the 125–150% Windows-scaling verification, both of which require
+  driving the running app rather than reading source.
 - **Goal:** measure before touching anything.
 - **Files touched:** none (screenshots/notes only, saved under
   `docs/archive/` or a new `docs/ui-baseline/`).
@@ -416,27 +511,42 @@ See §0. Blocks everything below until master Phase 4 is done.
 - **Rollback risk:** none.
 
 ### UI Phase 1 — Operational state model & permissions matrix
-- **Goal:** turn §3 and §4 from this document into implementation-ready specs
-  tied to Phase 4's actual enum names; add the missing `StaffRole` checks
-  identified in §4.3.
-- **Files touched:** `core/models/staff_role.dart` (new permission checks,
-  following the existing pattern — additive methods, not a rewrite); a new
-  short doc or code-comment mapping each §3 state to its Phase-4 enum value.
-- **Allowed:** adding new `StaffRole.canX(...)` methods; documenting the
-  state→enum→token mapping. UI changes only if strictly needed to document
-  (e.g. a throwaway preview widget), not shipped to any real screen.
-- **Forbidden:** wiring these new permission checks into any real screen yet
-  (that happens per-phase, e.g. discount gating ships in Phase 5) — this
-  phase defines the checks, it doesn't enforce them in the UI.
-- **Acceptance criteria:** every state in §3 maps to a concrete Phase-4 enum
-  value (or is flagged as needing a new one, escalated back to Phase 4 rather
-  than worked around here); every row in §4.4's matrix has a corresponding
-  `StaffRole` method or an explicit "existing method X already covers this"
-  note. No Baseline Bar applicability (docs-only phase).
-- **Verification:** `flutter analyze` passes on the new `staff_role.dart`
-  methods; unit test coverage for each new permission check (mirroring
-  existing tests if any exist for `StaffRole`).
-- **Rollback risk:** low — additive methods, unused by any screen yet.
+- **Status: done.** The state-model half landed with the Phase 4 status-enum
+  foundation (`OrderStatus`, `ReservationStatus`, `TableOperationalStatus`,
+  scaffold `PrintOperationalStatus` — see §3.1). The permissions half landed
+  as a follow-up pass: `core/models/pos_permission.dart` (`PosPermission`
+  enum + `PosPermissions.has(user, permission)`) plus two new `StaffRole`
+  methods (`canApplyDiscount`, `canAccessXReport`) — see §4.3 for exactly
+  what changed and what's still scaffolded.
+- **What actually got wired into a real screen (a deliberate, narrow
+  acceleration of two Phase 5/8 items, not a full Phase 5 discount/admin
+  redesign):** discount + manual price adjustment hidden from `waiter` in
+  `order_detail_screen.dart` / `order_detail_action_helpers.dart`; X-report
+  hidden from `waiter` in `home_screen.dart` and `home_landing_dashboard.dart`;
+  the existing manager-override bypass in `_confirmCancelOrder` renamed to a
+  permission call with zero behavior change. No visual/styling changes, no
+  token work, no other workflow changed — matches the narrow foundation scope
+  this pass was authorized for.
+- **Files touched:** `core/models/staff_role.dart`, `core/models/user.dart`,
+  `core/models/pos_permission.dart` (new),
+  `apps/windows_pos/widgets/order/helpers/order_detail_action_helpers.dart`,
+  `apps/windows_pos/screens/order_detail_screen.dart`,
+  `apps/windows_pos/screens/home_screen.dart`,
+  `apps/windows_pos/widgets/home/home_landing_dashboard.dart`,
+  `test/unit/pos_permission_test.dart` (new).
+- **Acceptance criteria:** every row in §4.4's matrix has a corresponding
+  `PosPermission` value or an explicit "existing method X already covers
+  this" note (done — see §4.3). The two confirmed-ungated, high-risk gaps
+  (discount, X-report) are closed; scaffolded/future permissions are
+  documented, not silently skipped.
+- **Verification:** `flutter analyze` (0 new issues), `flutter test` (99/99
+  passing, 12 new in `pos_permission_test.dart`), `flutter build macos
+  --debug` (succeeds).
+- **Rollback risk:** low — every real-screen change is either an additive
+  `if (permission)` guard around an existing button/dialog/destination, or a
+  same-value rename (`isAdmin` → `overrideManagerApproval`). No screen lost
+  functionality it needs; waiters keep every everyday operation (open table,
+  add items, take payment, close table, reprint, change table).
 
 ### UI Phase 2 — Token layer & shared primitives (additive only)
 - **Goal:** add the design system from §6.2/§6.4, completely unused.
@@ -685,6 +795,8 @@ have already mapped to real enum values).
 
 - `docs/VYNIC_PROJECT_PLAN.md` — master roadmap; this doc is its Phase 5–6
   detail; **check its Phase 4 status before starting anything here (§0).**
+- `docs/UI_BASELINE.md` — UI Phase 0's measurement output (tap counts,
+  dialog inventory, fixed-size/resolution/keyboard/status-display risk).
 - `docs/archive/plan.md` — superseded first draft this document replaces.
 - `AGENTS.md` — root rules for all agents.
 - `design/mockups/` — **stale**: referenced files are deleted from the

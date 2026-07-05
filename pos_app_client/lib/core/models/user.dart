@@ -49,6 +49,10 @@ class User extends HiveObject {
 
   bool get canCloseTablesNonFiscal => StaffRole.canCloseTablesNonFiscal(role);
 
+  bool get canApplyDiscount => StaffRole.canApplyDiscount(role);
+
+  bool get canAccessXReport => StaffRole.canAccessXReport(role);
+
   bool get canDeleteReservations => StaffRole.canDeleteReservations(role);
 
   bool get canCancelReservations => StaffRole.canCancelReservations(role);

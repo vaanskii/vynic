@@ -384,13 +384,18 @@ class _HomeScreenState extends State<HomeScreen> {
         label: 'რეზერვაცია',
         builder: (context) => _buildReservationsDashboard(),
       ),
-      _SidebarDestination(
-        key: 'xReport',
-        icon: Icons.assessment_outlined,
-        label: 'X ანგარიში',
-        builder: (context) => _buildXReportPage(),
-      ),
     ];
+
+    if (_user.canAccessXReport) {
+      destinations.add(
+        _SidebarDestination(
+          key: 'xReport',
+          icon: Icons.assessment_outlined,
+          label: 'X ანგარიში',
+          builder: (context) => _buildXReportPage(),
+        ),
+      );
+    }
 
     if (_user.canAccessManagementCenter) {
       destinations.add(
@@ -591,7 +596,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTakeAwayTap: () => _selectDestination('todaysTakeaways'),
                     onReservationsTap: () =>
                         _selectDestination('newReservation'),
-                    onXReportTap: () => _selectDestination('xReport'),
+                    onXReportTap: _user.canAccessXReport
+                        ? () => _selectDestination('xReport')
+                        : null,
                     onAdminTap: _user.canAccessManagementCenter
                         ? _openAdminPanel
                         : null,

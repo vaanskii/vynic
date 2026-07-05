@@ -101,6 +101,20 @@ class StaffRole {
     return normalizeClient(clientRole) == manager;
   }
 
+  /// ფასდაკლების/ფასის კორექციის გამოყენება შეკვეთაზე — ოფიციანტს არა
+  /// (docs/UI_PLAN.md §4.4: hidden for waiter, allowed for supervisor/manager).
+  static bool canApplyDiscount(String clientRole) {
+    final r = normalizeClient(clientRole);
+    return r == manager || r == supervisor;
+  }
+
+  /// X ანგარიშის ნახვა მთავარი ეკრანიდან — ოფიციანტს არა
+  /// (docs/UI_PLAN.md §4.4: hidden for waiter, allowed for supervisor/manager).
+  static bool canAccessXReport(String clientRole) {
+    final r = normalizeClient(clientRole);
+    return r == manager || r == supervisor;
+  }
+
   /// სრული პერსონალის მართვა (ყველა როლი, PIN-ები).
   static bool canManageAllStaffInAdmin(String clientRole) {
     return normalizeClient(clientRole) == manager;

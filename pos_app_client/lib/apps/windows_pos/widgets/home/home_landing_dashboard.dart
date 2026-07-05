@@ -21,7 +21,7 @@ class HomeLandingDashboard extends StatefulWidget {
     required this.onCalculatorTap,
     required this.onTakeAwayTap,
     required this.onReservationsTap,
-    required this.onXReportTap,
+    this.onXReportTap,
     this.onLogoutTap,
     this.onAdminTap,
     this.onStaffSwitchTap,
@@ -41,7 +41,10 @@ class HomeLandingDashboard extends StatefulWidget {
   final VoidCallback onCalculatorTap;
   final VoidCallback onTakeAwayTap;
   final VoidCallback onReservationsTap;
-  final VoidCallback onXReportTap;
+
+  /// Optional — hidden for roles without X-report access (see
+  /// `User.canAccessXReport`). Null hides the tile, matching [onAdminTap].
+  final VoidCallback? onXReportTap;
   final VoidCallback? onAdminTap;
 
   /// Optional — when null the logout button is hidden. The POS home passes null
@@ -149,14 +152,15 @@ class _HomeLandingDashboardState extends State<HomeLandingDashboard> {
         iconColor: const Color(0xFF573092),
         onTap: widget.onReservationsTap,
       ),
-      _HomeAction(
-        title: 'X რეპორტი',
-        subtitle: 'დღის ფინანსური ანგარიში და რეპორტები',
-        icon: Icons.description_outlined,
-        tint: const Color(0xFFD9F2FF),
-        iconColor: const Color(0xFF174F69),
-        onTap: widget.onXReportTap,
-      ),
+      if (widget.onXReportTap != null)
+        _HomeAction(
+          title: 'X რეპორტი',
+          subtitle: 'დღის ფინანსური ანგარიში და რეპორტები',
+          icon: Icons.description_outlined,
+          tint: const Color(0xFFD9F2FF),
+          iconColor: const Color(0xFF174F69),
+          onTap: widget.onXReportTap!,
+        ),
       if (widget.onAdminTap != null)
         _HomeAction(
           title: 'მართვის ცენტრი',

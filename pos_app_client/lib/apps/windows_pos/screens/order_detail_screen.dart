@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/models/pos_permission.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/table_ref.dart';
 import 'package:vynic/core/models/audit_report.dart';
@@ -766,6 +767,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   Future<void> _showDiscountDialog() async {
     if (_order == null) return;
+    if (!PosPermissions.has(widget.user, PosPermission.applyDiscount)) {
+      unawaited(
+        showErrorToast(
+          context,
+          'ფასდაკლების დამატება მხოლოდ მენეჯერს ან ზედამხედველს შეუძლია',
+        ),
+      );
+      return;
+    }
 
     // Calculate the maximum discount based on the full pre-discount total
     final packageSubtotal = _order!.getPackageSubtotal();
@@ -952,6 +962,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   Future<void> _showManualAdjustmentDialog() async {
     if (_order == null) return;
+    if (!PosPermissions.has(widget.user, PosPermission.applyDiscount)) {
+      unawaited(
+        showErrorToast(
+          context,
+          'ფასის კორექციის დამატება მხოლოდ მენეჯერს ან ზედამხედველს შეუძლია',
+        ),
+      );
+      return;
+    }
 
     final controller = TextEditingController(
       text: _order!.manualAdjustmentAmount.abs() >= 0.01
@@ -1757,7 +1776,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       return;
     }
 
-    final passwordConfirmed = widget.user.isAdmin
+    final canOverrideApproval = PosPermissions.has(
+      widget.user,
+      PosPermission.overrideManagerApproval,
+    );
+    final passwordConfirmed = canOverrideApproval
         ? true
         : await _promptCancellationPassword();
     if (!mounted || _order == null) {
@@ -1768,7 +1791,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
 
     String? comment;
-    if (!widget.user.isAdmin) {
+    if (!canOverrideApproval) {
       comment = await showDialog<String>(
         context: context,
         builder: (context) => const CommentInputDialog(
@@ -1789,10 +1812,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final tablesLabel = _order!.tableNumbers.join(', ');
     final waiterName = widget.user.username;
     final commentText = comment?.trim() ?? '';
-    final approvalDescriptor = widget.user.isAdmin
+    final approvalDescriptor = canOverrideApproval
         ? 'Administrator (${widget.user.username})'
         : 'Cancellation PIN Verified';
-    final approvedBy = widget.user.isAdmin
+    final approvedBy = canOverrideApproval
         ? widget.user.username
         : 'Cancellation PIN';
 

@@ -549,21 +549,40 @@ See §0. Blocks everything below until master Phase 4 is done.
   add items, take payment, close table, reprint, change table).
 
 ### UI Phase 2 — Token layer & shared primitives (additive only)
-- **Goal:** add the design system from §6.2/§6.4, completely unused.
-- **Files touched:** `core/theme/*` (new: `vynic_colors.dart`,
-  `vynic_spacing.dart`, `vynic_radii.dart`, `vynic_text_styles.dart`,
-  `vynic_theme.dart`), `core/widgets/design/*` (new primitives).
+- **Status: done.** The full token layer, status-token mapping, responsive
+  foundation, and shared primitives landed under `lib/core/ui/`, completely
+  unused by existing screens. Docs: `docs/UI_TOKENS.md` (color/type/spacing/
+  radius/motion/elevation/touch) and `docs/UI_RESPONSIVE.md` (breakpoints/
+  layout modes/panel+dialog+sidebar width rules).
+- **Goal:** add the design system from §6.2/§6.4 plus a responsive layout
+  foundation, completely unused.
+- **Files added (actual):** under `lib/core/ui/` — tokens
+  (`vynic_colors.dart`, `vynic_text_styles.dart`, `vynic_spacing.dart`,
+  `vynic_radius.dart`, `vynic_motion.dart`, `vynic_shadows.dart`,
+  `vynic_touch_targets.dart`, `vynic_status_tokens.dart`) and responsive
+  (`vynic_breakpoints.dart`, `vynic_responsive.dart`); primitives under
+  `lib/core/ui/widgets/` (`vynic_button`, `vynic_status_chip`, `vynic_card`,
+  `vynic_section_header`, `vynic_metric_tile`, `vynic_empty_state`,
+  `vynic_loading_state`, `vynic_side_sheet`, `vynic_responsive_dialog`,
+  `vynic_two_pane_layout`, `vynic_scrollable_panel`,
+  `vynic_constrained_content`); a barrel `vynic_ui.dart`; tests
+  `test/unit/vynic_tokens_test.dart`, `test/widget/vynic_primitives_test.dart`.
+  (Located under `core/ui/` rather than the earlier-sketched `core/theme/` +
+  `core/widgets/design/` — one cohesive namespace, matching the existing
+  single-file `admin_design.dart` precedent.)
 - **Allowed:** pure additions.
 - **Forbidden:** wiring `ThemeData` into `main.dart` (see §6.3 risk note);
-  touching any existing screen file.
-- **Acceptance criteria:** Baseline Bar (§6.1) verified against the token
-  values themselves (contrast ratios for text/status tokens against
-  `surface/background` and `surface/card`, specifically checked for
-  colorblind distinguishability per §6.1) — plus: every primitive has a
-  documented minimum touch-target size where applicable.
-- **Verification:** `dart format`, `flutter analyze`,
-  `flutter build macos --debug`; manual contrast check (WCAG AA) on every
-  text/status token pair.
+  touching any existing screen file. **Held:** zero existing screens changed.
+- **Acceptance criteria:** met — token values verified against the Baseline
+  Bar (§6.1): all text/status pairs pass **WCAG AA** (chip text uses darkened
+  success/warning/danger shades to clear 4.5:1 on their tints — asserted in
+  tests); every primitive ellipsizes long Georgian labels; every primitive
+  has a documented touch-target floor (see `docs/UI_TOKENS.md`); responsive
+  primitives don't overflow at 1280×720 (asserted in the widget test).
+- **Verification:** `dart format` clean, `flutter analyze` (0 issues in
+  `core/ui/`), `flutter test` (99→122 total; +23 new), `flutter build macos
+  --debug` (succeeds). WCAG-AA contrast asserted in
+  `test/unit/vynic_tokens_test.dart`.
 - **Rollback risk:** near zero — nothing consumes the new files yet.
 
 ### UI Phase 3 — POS shell & Tables first
@@ -797,6 +816,10 @@ have already mapped to real enum values).
   detail; **check its Phase 4 status before starting anything here (§0).**
 - `docs/UI_BASELINE.md` — UI Phase 0's measurement output (tap counts,
   dialog inventory, fixed-size/resolution/keyboard/status-display risk).
+- `docs/UI_TOKENS.md` — UI Phase 2 token layer: color/type/spacing/radius/
+  motion/elevation/touch-target tokens, status→state mapping, primitives.
+- `docs/UI_RESPONSIVE.md` — UI Phase 2 responsive foundation: breakpoints,
+  layout modes, panel/dialog/sidebar width rules, target resolutions.
 - `docs/archive/plan.md` — superseded first draft this document replaces.
 - `AGENTS.md` — root rules for all agents.
 - `design/mockups/` — **stale**: referenced files are deleted from the

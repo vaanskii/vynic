@@ -39,10 +39,24 @@ reservations), `activateTodaysReservations` (~6483, re-grabs tables).
 Picker ignoring live table state:
 `apps/windows_pos/widgets/home/home_reservation_table_assignment_dialog.dart`.
 
+## Run the app (two roles, same codebase)
+`APP_ROLE` selects which UI boots (`lib/main.dart` ~L79): no define = **manager**
+app; `APP_ROLE=pos` = **Windows POS** UI. The user runs on macOS via:
+- `vynic-manager` → `flutter run -d macos` (manager app)
+- `vynic-pos` → `flutter run -d macos --dart-define=APP_ROLE=pos` (POS UI)
+
+When verifying a change, run/build the role you actually touched — POS-facing
+work (tables, order, menu, payment, X-report, POS permissions) must be checked
+with the **pos** role, not the default manager build:
+`flutter build macos --debug --dart-define=APP_ROLE=pos`.
+Role-gated UI only differs by login: e.g. discount/X-report are hidden for
+**waiter**, visible for manager — log in with the right PIN to see it.
+
 ## Verify before done
 - `git status --short` before and after — only intended files changed.
 - Client: `dart format --set-exit-if-changed .` · `flutter analyze` ·
-  `flutter build macos --debug` (or windows) · `flutter test` if relevant.
+  `flutter build macos --debug` (add `--dart-define=APP_ROLE=pos` for POS work) ·
+  `flutter test` if relevant.
 - Server: `npm run lint && npm run build && npm test`.
 - Phase 1: reproduce the old failure, confirm it's gone, confirm happy path.
 - Do not commit unless the user says to.

@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/models/order_status.dart';
 import 'package:vynic/core/models/package.dart';
+import 'package:vynic/core/models/reservation_status.dart';
 import 'package:vynic/core/models/table_ref.dart';
 
 import 'package:vynic/core/services/audit/audit_event_service.dart';
@@ -85,7 +87,7 @@ class OrderRepository {
       totalAmount: 0,
       createdAt: BusinessDayRepository.getCurrentDateTime(),
       createdBy: createdBy,
-      status: 'pending',
+      status: OrderStatus.pending.storageValue,
       includeServiceFee: shouldIncludeServiceFee,
       openedByUserId: createdBy, // Set owner when table is created
     );
@@ -202,7 +204,7 @@ class OrderRepository {
       totalAmount: 0,
       createdAt: BusinessDayRepository.getCurrentDateTime(),
       createdBy: createdBy,
-      status: 'pending',
+      status: OrderStatus.pending.storageValue,
       includeServiceFee: false,
     );
     order.recalculateTotal();
@@ -226,7 +228,7 @@ class OrderRepository {
       preOrderItems: items,
       isTakeAway: true,
       linkedOrderId: orderId,
-      status: 'confirmed',
+      status: ReservationStatus.confirmed.storageValue,
     );
 
     SyncHub.notify(
@@ -284,7 +286,7 @@ class OrderRepository {
       createdBy: waiterName,
       // Mobile-originated takeaway orders are auto-confirmed (skip manual
       // "შეკვეთის დადასტურება" step on POS) so the kitchen check fires immediately.
-      status: 'confirmed',
+      status: OrderStatus.confirmed.storageValue,
       includeServiceFee: false,
     );
     if (totalAmount == null) {
@@ -310,7 +312,7 @@ class OrderRepository {
       preOrderItems: items,
       isTakeAway: true,
       linkedOrderId: posOrderId,
-      status: 'confirmed',
+      status: ReservationStatus.confirmed.storageValue,
     );
 
     SyncHub.notify(
@@ -372,7 +374,7 @@ class OrderRepository {
       createdBy: waiterName,
       // Mobile-originated walk-in orders are auto-confirmed (skip manual
       // "შეკვეთის დადასტურება" step on POS) so the kitchen check fires immediately.
-      status: 'confirmed',
+      status: OrderStatus.confirmed.storageValue,
       includeServiceFee: false,
       openedByUserId: waiterName,
     );
@@ -411,7 +413,7 @@ class OrderRepository {
       createdBy: waiterName,
       preOrderItems: items,
       linkedOrderId: posOrderId,
-      status: 'confirmed',
+      status: ReservationStatus.confirmed.storageValue,
     );
 
     SyncHub.notify(
@@ -527,7 +529,10 @@ class OrderRepository {
     order.updatedAt = BusinessDayRepository.getCurrentDateTime();
 
     await updateOrder(order);
-    await updateOrderStatus(orderId: order.orderId, status: 'confirmed');
+    await updateOrderStatus(
+      orderId: order.orderId,
+      status: OrderStatus.confirmed.storageValue,
+    );
 
     return order;
   }

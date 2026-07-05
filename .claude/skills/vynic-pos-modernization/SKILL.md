@@ -15,7 +15,7 @@ l10n/theme, responsive UI, or SaaS. Not for unrelated one-off questions.
 1. `AGENTS.md` — root rules.
 2. `docs/VYNIC_PROJECT_PLAN.md` — find your phase; read that section + §7 + §8.
 3. The matching file in `prompts/` if one exists.
-4. For UI phases only: `plan.md`.
+4. For UI phases only: `docs/UI_PLAN.md`.
 
 ## Phase order (never skip)
 0 hygiene/docs · 1 reservation close-day bug · 2 split `database_service.dart`

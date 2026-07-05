@@ -3,6 +3,7 @@ import 'package:hive/hive.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation.dart';
+import 'package:vynic/core/models/reservation_status.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
@@ -96,7 +97,7 @@ class HiveMigrationService {
     // Guarantee reservations have a valid status string.
     for (final reservation in context.reservationBox.values) {
       if (reservation.status.trim().isEmpty) {
-        reservation.status = 'pending';
+        reservation.statusEnum = ReservationStatus.pending;
         await reservation.save();
       }
     }

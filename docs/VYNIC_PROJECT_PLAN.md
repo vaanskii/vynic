@@ -18,7 +18,7 @@ don't read the whole file if you don't need to.
 - **`pos_app_server/`** — NestJS + Prisma + PostgreSQL. Mirrors POS data for the
   manager app and runs the customer website (menu, reservations, BOG payments).
   Architecture detail: `pos_app_server/CLAUDE.md`. Data-flow contract:
-  `pos_app_client/docs/SYNC_CONTRACT.md`.
+  `docs/SYNC_CONTRACT.md`.
 - **Persistence:** POS = Hive boxes; server = Postgres (`pos` + `website` schemas).
 - **Business date:** POS tracks `currentDate` in settings, decoupled from wall clock
   ("POS day" ends at close-day, not midnight). Important — many bugs live here.
@@ -117,7 +117,7 @@ seating). Ship in small steps, each verified.
   trees instead of `ThemeData`/`ColorScheme`.
 - Staff workflow has too many modal/dialog layers (reservation → sheet → picker →
   confirm), which is slow and error-prone.
-- **`plan.md` (root) is the detailed design/UI sub-plan** for this work. Phases 5–6
+- **`docs/UI_PLAN.md` is the detailed design/UI sub-plan** for this work. Phases 5–6
   below defer to it. Do not duplicate its content here.
 
 ---
@@ -188,10 +188,10 @@ verification, not one big commit.
   statuses (`pending`/`confirmed`/`preparing`/`in-progress`, `startsWith('confirmed')`)
   with enums and explicit transitions.
 - **Phase 5 — Localization + theme cleanup.** ARB l10n (`ka` + `en`); move colors
-  into `ThemeData`/`ColorScheme`. Follow `plan.md`.
+  into `ThemeData`/`ColorScheme`. Follow `docs/UI_PLAN.md`.
 - **Phase 6 — Responsive UI rework.** Breakpoints (POS terminal / tablet / phone),
   `LayoutBuilder`/`Flexible` instead of fixed sizes, spacing/type scale from theme.
-  Follow `plan.md`, screen by screen.
+  Follow `docs/UI_PLAN.md`, screen by screen.
 - **Phase 7 — Server SaaS foundation.** `Venue` model + `venueId` on every row +
   per-venue scoped auth + per-venue sync credentials + venue-scoped queries, rooms,
   notifications. Fix the global-unique `posOrderId`. Also migrate the
@@ -246,8 +246,8 @@ npm test
 ## 9. Related docs
 
 - `AGENTS.md` — root rules for all agents.
-- `plan.md` — UI/design system sub-plan (Phases 5–6).
+- `docs/UI_PLAN.md` — UI/design system sub-plan (Phases 5–6).
 - `pos_app_server/CLAUDE.md` — server architecture.
-- `pos_app_client/docs/SYNC_CONTRACT.md` — POS↔server↔mobile data-flow contract.
+- `docs/SYNC_CONTRACT.md` — POS↔server↔mobile data-flow contract.
 - `pos_app_client/docs/HIVE_MIGRATIONS.md` — local schema migration workflow.
 - `pos_app_client/docs/archive/` — superseded/historical docs (not current).

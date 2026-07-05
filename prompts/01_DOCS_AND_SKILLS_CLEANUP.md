@@ -10,7 +10,7 @@ Task: tidy Vynic's guidance/documentation only. Do not edit Flutter or NestJS so
 1. Run `git status --short`.
 2. Inspect: `AGENTS.md`, `docs/VYNIC_PROJECT_PLAN.md`,
    `.claude/skills/vynic-pos-modernization/SKILL.md`, `prompts/*.md`,
-   `plan.md`, `pos_app_server/CLAUDE.md`, `pos_app_client/docs/**`,
+   `docs/UI_PLAN.md`, `pos_app_server/CLAUDE.md`, `pos_app_client/docs/**`,
    `pos_app_client/docs/archive/**`.
 3. Report a table before changing anything:
 

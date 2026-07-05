@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'table_operational_status.dart';
 
 part 'table.g.dart';
 
@@ -39,6 +40,14 @@ class TableModel extends HiveObject {
 
   // Helper method to get display name
   String get displayName => 'Table $tableNumber';
+
+  /// Derived operational status from [isReserved]/[activeOrderId] — no new
+  /// storage, no behavior change. See `core/models/table_operational_status.dart`.
+  TableOperationalStatus get operationalStatus {
+    if (activeOrderId != null) return TableOperationalStatus.occupied;
+    if (isReserved) return TableOperationalStatus.reserved;
+    return TableOperationalStatus.free;
+  }
 
   // Helper method to reserve table for an order
   void reserve(String username, int orderId, {String? reservationId}) {

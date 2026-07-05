@@ -1,4 +1,9 @@
-# Vynic Frontend Design Modernization Plan
+# Vynic Frontend Design Modernization Plan (superseded)
+
+> **Superseded by `docs/UI_PLAN.md`** (now moved here). This early draft only got as far as
+> "generate mockups" (its own Phase 1) before being replaced by a plan grounded in
+> the actual codebase and two independent UX audits. Kept here for history —
+> the mockups it produced (`design/mockups/`) informed `docs/UI_PLAN.md` §5.
 
 ## Findings
 

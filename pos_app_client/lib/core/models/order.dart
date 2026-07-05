@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'order_status.dart';
 part 'order.g.dart';
 
 @HiveType(typeId: 3)
@@ -365,6 +366,12 @@ class Order extends HiveObject {
     updatedAt = _resolveTimestamp();
     save();
   }
+
+  /// Typed view of [status]. Storage stays the raw `String` field (Hive
+  /// field 7, unchanged) — this is a computed read/write wrapper, not a new
+  /// source of truth. See `core/models/order_status.dart`.
+  OrderStatus get statusEnum => OrderStatus.fromStorage(status);
+  set statusEnum(OrderStatus value) => status = value.storageValue;
 
   // Add item to order
   void addItem(OrderItem item) {

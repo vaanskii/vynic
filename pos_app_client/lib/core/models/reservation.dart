@@ -1,5 +1,6 @@
 import 'package:hive/hive.dart';
 import 'order.dart';
+import 'reservation_status.dart';
 
 part 'reservation.g.dart';
 
@@ -74,4 +75,12 @@ class Reservation extends HiveObject {
     this.linkedOrderId,
     this.tableRefs,
   });
+
+  /// Typed view of [status]. Storage stays the raw `String` field (Hive
+  /// field 10, unchanged) — this is a computed read/write wrapper, not a new
+  /// source of truth. See `core/models/reservation_status.dart` for the
+  /// exact-match parsing and the note on `startsWith`-tolerant call sites
+  /// this does not replace.
+  ReservationStatus get statusEnum => ReservationStatus.fromStorage(status);
+  set statusEnum(ReservationStatus value) => status = value.storageValue;
 }

@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 
 import 'package:uuid/uuid.dart';
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/models/order_status.dart';
 
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'business_day_repository.dart';
@@ -387,7 +388,7 @@ class SalesRepository {
           totalAmount: (sale['totalAmount'] as num?)?.toDouble() ?? 0.0,
           createdAt: parsedCreatedAt ?? restoreTimestamp,
           createdBy: (sale['createdBy'] as String?) ?? restoredBy,
-          status: 'confirmed',
+          status: OrderStatus.confirmed.storageValue,
           includeServiceFee: includeServiceFee,
           discountAmount: discountAmount,
           manualAdjustmentAmount: manualAdjustment,
@@ -422,7 +423,7 @@ class SalesRepository {
         );
       }
 
-      order.status = 'confirmed';
+      order.statusEnum = OrderStatus.confirmed;
       order.paymentMethod = null;
       order.closedAt = null;
       order.updatedAt = restoreTimestamp;

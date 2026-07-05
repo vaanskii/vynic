@@ -1,6 +1,8 @@
 import 'dart:developer' as developer;
 
 import 'package:vynic/core/models/audit_report.dart';
+import 'package:vynic/core/models/order_status.dart';
+import 'package:vynic/core/models/reservation_status.dart';
 
 import '../database_core.dart';
 import '../repositories/audit_repository.dart';
@@ -27,7 +29,7 @@ class CloseTableTransaction {
       final order = DatabaseCore.orderBox!.values.firstWhere(
         (o) => o.orderId == orderId,
       );
-      order.status = 'closed';
+      order.statusEnum = OrderStatus.closed;
       order.paymentMethod = paymentMethod;
       final closureTimestamp = BusinessDayRepository.getCurrentDateTime();
       order.closedAt = closureTimestamp;
@@ -58,7 +60,7 @@ class CloseTableTransaction {
             reservation.notes!.contains('Order #$orderId');
         if (resDateString == dateString &&
             (matchesLinked || matchesLegacyNote)) {
-          reservation.status = 'completed';
+          reservation.statusEnum = ReservationStatus.completed;
           await reservation.save();
           break;
         }
@@ -106,7 +108,7 @@ class CloseTableTransaction {
       final order = DatabaseCore.orderBox!.values.firstWhere(
         (o) => o.orderId == orderId,
       );
-      order.status = 'closed';
+      order.statusEnum = OrderStatus.closed;
       order.paymentMethod = 'non-fiscal';
       final closureTimestamp = BusinessDayRepository.getCurrentDateTime();
       order.closedAt = closureTimestamp;
@@ -130,7 +132,7 @@ class CloseTableTransaction {
         if (resDateString == dateString &&
             reservation.notes != null &&
             reservation.notes!.contains('Order #$orderId')) {
-          reservation.status = 'completed';
+          reservation.statusEnum = ReservationStatus.completed;
           await reservation.save();
           break;
         }

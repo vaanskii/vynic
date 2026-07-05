@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation.dart';
+import 'package:vynic/core/models/reservation_status.dart';
 import 'package:vynic/core/models/table_ref.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
 
@@ -138,7 +139,7 @@ class ReservationRepository {
             reservation.notes != null &&
             reservation.notes!.contains('Order #$orderId');
         if (matchesLinked || matchesNote) {
-          reservation.status = 'cancelled';
+          reservation.statusEnum = ReservationStatus.cancelled;
           await reservation.save();
           return true;
         }
@@ -322,13 +323,13 @@ class ReservationRepository {
 
     if (clonedItems.isEmpty) {
       reservation.preOrderItems = null;
-      if (reservation.status == 'preparing') {
-        reservation.status = 'pending';
+      if (reservation.statusEnum == ReservationStatus.preparing) {
+        reservation.statusEnum = ReservationStatus.pending;
       }
     } else {
       reservation.preOrderItems = clonedItems;
-      if (reservation.status == 'pending') {
-        reservation.status = 'preparing';
+      if (reservation.statusEnum == ReservationStatus.pending) {
+        reservation.statusEnum = ReservationStatus.preparing;
       }
     }
 
@@ -367,8 +368,8 @@ class ReservationRepository {
         ? ReservationTableAvailability.legacyCodesOf(tableRefs)
         : List<int>.from(tableNumbers);
     reservation.tableRefs = [for (final ref in refs) ref.encode()];
-    if (reservation.status == 'pending') {
-      reservation.status = 'confirmed';
+    if (reservation.statusEnum == ReservationStatus.pending) {
+      reservation.statusEnum = ReservationStatus.confirmed;
     }
     await reservation.save();
     SyncHub.notify(

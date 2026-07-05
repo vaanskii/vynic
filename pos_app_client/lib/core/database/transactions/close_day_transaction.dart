@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 
+import 'package:vynic/core/models/reservation_status.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
 
 import '../database_core.dart';
@@ -164,13 +165,7 @@ class CloseDayTransaction {
         if (resDateString.compareTo(currentDateString) > 0) {
           continue; // future booking — leave untouched
         }
-        final status = reservation.status.toLowerCase();
-        final isFinal =
-            status == 'completed' ||
-            status == 'cancelled' ||
-            status == 'canceled' ||
-            status == 'no-show';
-        if (isFinal) {
+        if (reservation.statusEnum.isFinal) {
           if (reservation.linkedOrderId != null) {
             // Its order is deleted below — do not keep a dangling id.
             reservation.linkedOrderId = null;
@@ -179,8 +174,11 @@ class CloseDayTransaction {
           continue;
         }
         final wasActivated =
-            reservation.linkedOrderId != null || status == 'in-progress';
-        reservation.status = wasActivated ? 'completed' : 'no-show';
+            reservation.linkedOrderId != null ||
+            reservation.statusEnum == ReservationStatus.inProgress;
+        reservation.statusEnum = wasActivated
+            ? ReservationStatus.completed
+            : ReservationStatus.noShow;
         reservation.linkedOrderId = null;
         await reservation.save();
         if (wasActivated) {

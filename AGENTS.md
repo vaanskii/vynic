@@ -46,6 +46,6 @@ started**.
 ## Detailed plans
 
 - `docs/VYNIC_PROJECT_PLAN.md` — master plan, phases, constraints, the bug.
-- `plan.md` — detailed UI/design system sub-plan (used by Phases 5–6 only).
+- `docs/UI_PLAN.md` — detailed UI/design system sub-plan (used by Phases 5–6 only).
 - `.claude/skills/vynic-pos-modernization/SKILL.md` — compact per-task checklist.
 - `prompts/` — ready-to-run, single-focus task prompts.

@@ -1,6 +1,8 @@
 import 'dart:developer' as developer;
 
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/models/order_status.dart';
+import 'package:vynic/core/models/reservation_status.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
 
 import '../database_core.dart';
@@ -87,11 +89,11 @@ class ActivateReservationTransaction {
       final existingOrder = OrderRepository.getOrder(existingOrderId);
       if (existingOrder != null) {
         await ensureTablesReserved(existingOrderId);
-        if (existingOrder.status.toLowerCase() != 'confirmed') {
-          existingOrder.status = 'confirmed';
+        if (existingOrder.statusEnum != OrderStatus.confirmed) {
+          existingOrder.statusEnum = OrderStatus.confirmed;
           await existingOrder.save();
         }
-        reservation.status = 'in-progress';
+        reservation.statusEnum = ReservationStatus.inProgress;
         await reservation.save();
         return ReservationActivationResult.success(existingOrderId);
       }
@@ -112,11 +114,11 @@ class ActivateReservationTransaction {
     // Restore reservation link on tables (createOrder clears reservationId)
     await ensureTablesReserved(order.orderId);
 
-    order.status = 'confirmed';
+    order.statusEnum = OrderStatus.confirmed;
     await order.save();
 
     // linkedOrderId is the activation marker; notes stay user-owned.
-    reservation.status = 'in-progress';
+    reservation.statusEnum = ReservationStatus.inProgress;
     reservation.linkedOrderId = order.orderId;
     await reservation.save();
 
@@ -255,7 +257,7 @@ class ActivateReservationTransaction {
         // If there are pre-order items, mark order as confirmed (already sent to kitchen)
         if (reservation.preOrderItems != null &&
             reservation.preOrderItems!.isNotEmpty) {
-          order.status = 'confirmed';
+          order.statusEnum = OrderStatus.confirmed;
           await order.save();
           developer.log(
             '  ✅ Order #${order.orderId} status set to "confirmed" (pre-ordered items)',
@@ -268,7 +270,7 @@ class ActivateReservationTransaction {
 
         // Update reservation status to 'in-progress' and link to order.
         // linkedOrderId is the activation marker; notes stay user-owned.
-        reservation.status = 'in-progress';
+        reservation.statusEnum = ReservationStatus.inProgress;
         reservation.linkedOrderId = order.orderId;
         await reservation.save();
 

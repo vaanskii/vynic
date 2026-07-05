@@ -4,9 +4,11 @@ import 'dart:io';
 import 'package:uuid/uuid.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/models/order_status.dart';
 import 'package:vynic/core/models/package.dart';
 import 'package:vynic/core/models/quick_order_draft.dart';
 import 'package:vynic/core/models/reservation.dart';
+import 'package:vynic/core/models/reservation_status.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/table_ref.dart';
 import 'package:vynic/core/models/user.dart';
@@ -363,7 +365,7 @@ class BackupRepository {
       totalAmount: 0,
       createdAt: now,
       createdBy: waiterName,
-      status: 'confirmed',
+      status: OrderStatus.confirmed.storageValue,
       includeServiceFee: false,
     );
     order.recalculateTotal();
@@ -387,7 +389,7 @@ class BackupRepository {
       numberOfGuests: 1,
       createdAt: now,
       createdBy: waiterName,
-      status: 'confirmed',
+      status: ReservationStatus.confirmed.storageValue,
       isTakeAway: true,
       linkedOrderId: orderId,
     );

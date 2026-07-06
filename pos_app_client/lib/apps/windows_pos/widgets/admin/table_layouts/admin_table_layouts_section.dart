@@ -1158,6 +1158,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
                               joints: floorPlanWallJoints(
                                 _wallSegmentsOf(zone.objects),
                                 scale,
+                                scale,
                               ),
                               color: _objectColors(
                                 RestaurantLayoutObjectType.wall,

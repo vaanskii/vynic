@@ -38,17 +38,33 @@ class _FloorPlanWallEndpoint {
 
 /// Groups wall endpoints that (nearly) touch into solid joint dots so
 /// split/connected segments render as one continuous wall.
+///
+/// Takes [scaleX]/[scaleY] separately (rather than one uniform `scale`) so
+/// callers can support a non-uniform fit; both current callers pass the
+/// same value for both, since the POS floor plan and the admin layout
+/// editor both preserve aspect ratio (no stretching).
 List<FloorPlanWallJoint> floorPlanWallJoints(
   List<FloorPlanWallSegment> walls,
-  double scale,
+  double scaleX,
+  double scaleY,
 ) {
   final endpoints = <_FloorPlanWallEndpoint>[];
   for (final wall in walls) {
     final points = floorPlanWallEndpoints(wall);
-    final radius = wall.height * scale / 2;
+    final radius = wall.height * scaleY / 2;
     endpoints
-      ..add(_FloorPlanWallEndpoint(point: points.$1 * scale, radius: radius))
-      ..add(_FloorPlanWallEndpoint(point: points.$2 * scale, radius: radius));
+      ..add(
+        _FloorPlanWallEndpoint(
+          point: Offset(points.$1.dx * scaleX, points.$1.dy * scaleY),
+          radius: radius,
+        ),
+      )
+      ..add(
+        _FloorPlanWallEndpoint(
+          point: Offset(points.$2.dx * scaleX, points.$2.dy * scaleY),
+          radius: radius,
+        ),
+      );
   }
 
   final used = <int>{};

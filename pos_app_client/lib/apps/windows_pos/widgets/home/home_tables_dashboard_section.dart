@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/home/home_staff_admin_rail.dart';
+import 'package:vynic/apps/windows_pos/widgets/home/table_status_presentation.dart';
 import 'package:vynic/apps/windows_pos/widgets/table_selection_widget.dart';
 import 'package:vynic/core/models/table.dart';
+import 'package:vynic/core/models/table_operational_status.dart';
 import 'package:vynic/core/services/database_service.dart';
+import 'package:vynic/core/ui/vynic_colors.dart';
+import 'package:vynic/core/ui/vynic_shadows.dart';
+import 'package:vynic/core/ui/widgets/vynic_status_chip.dart';
 
 class HomeTablesDashboardSection extends StatelessWidget {
   const HomeTablesDashboardSection({
     super.key,
+    required this.username,
+    required this.roleLabel,
     required this.textPrimary,
     required this.mutedText,
     required this.tableSelectionKey,
@@ -14,8 +22,14 @@ class HomeTablesDashboardSection extends StatelessWidget {
     required this.onContinueToMenu,
     required this.currentFloor,
     required this.onSwitchFloor,
+    this.onStaffSwitchTap,
+    this.onOpenAdminPanel,
   });
 
+  /// The staff member currently operating the POS and their role — shown at
+  /// the bottom of the side rail, below the table metrics.
+  final String username;
+  final String roleLabel;
   final Color textPrimary;
   final Color mutedText;
   final GlobalKey<TableSelectionWidgetState> tableSelectionKey;
@@ -25,6 +39,20 @@ class HomeTablesDashboardSection extends StatelessWidget {
   final int currentFloor;
   final ValueChanged<int> onSwitchFloor;
 
+  /// Tapping the staff card locks the terminal (PIN required to continue /
+  /// switch). Null hides the lock affordance (card stays static).
+  final VoidCallback? onStaffSwitchTap;
+
+  /// Opens the Management Center. Null hides the button entirely — the
+  /// caller only passes this for manager/supervisor (`canAccessManagementCenter`),
+  /// matching every other admin-panel entry point in the app.
+  final VoidCallback? onOpenAdminPanel;
+
+  /// A single-tap on a free table with nothing else selected fires this
+  /// directly — the fast path so opening a table takes one tap instead of
+  /// tap-then-continue. Wired to the same handler as the "continue" button.
+  VoidCallback get onQuickEnterTable => onContinueToMenu;
+
   @override
   Widget build(BuildContext context) {
     final layout = DatabaseService.getRestaurantTableLayout();
@@ -32,8 +60,19 @@ class HomeTablesDashboardSection extends StatelessWidget {
         layout.zoneForDisplayOrder(currentFloor) ?? layout.zones.first;
     final floorName = currentZone.legacyFloor;
     final tables = DatabaseService.getTablesByFloor(floorName);
-    final reservedCount = tables.where((table) => table.isReserved).length;
-    final availableCount = tables.length - reservedCount;
+    // Counted via TableOperationalStatus (not the raw `isReserved` boolean,
+    // which is also true for occupied tables) so "თავისუფალი"/"დაკავებული"
+    // actually mean free/occupied, and reserved-but-not-yet-seated gets its
+    // own accurate count instead of being folded into "occupied".
+    final freeCount = tables
+        .where((t) => t.operationalStatus == TableOperationalStatus.free)
+        .length;
+    final occupiedCount = tables
+        .where((t) => t.operationalStatus == TableOperationalStatus.occupied)
+        .length;
+    final reservedCount = tables
+        .where((t) => t.operationalStatus == TableOperationalStatus.reserved)
+        .length;
     final metrics = [
       _FloorMetricData(
         icon: Icons.table_restaurant_outlined,
@@ -45,74 +84,133 @@ class HomeTablesDashboardSection extends StatelessWidget {
         icon: Icons.event_available_outlined,
         iconColor: const Color(0xFF047857),
         label: 'თავისუფალი',
-        value: '$availableCount',
+        value: '$freeCount',
       ),
       _FloorMetricData(
-        icon: Icons.lock_clock_outlined,
-        iconColor: const Color(0xFFB45309),
+        icon: Icons.receipt_long_outlined,
+        iconColor: VynicColors.info,
         label: 'დაკავებული',
+        value: '$occupiedCount',
+      ),
+      _FloorMetricData(
+        icon: Icons.event_outlined,
+        iconColor: const Color(0xFFB45309),
+        label: 'დაჯავშნილი',
         value: '$reservedCount',
       ),
     ];
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final useSideRailLayout = constraints.maxWidth >= 920;
+    // Deliberately checked against the window's actual logical width
+    // (MediaQuery), not the LayoutBuilder's `constraints.maxWidth` — this
+    // widget sits inside `home_screen.dart`'s 16px-each-side content padding,
+    // so `constraints.maxWidth` here is already ~32px short of the real
+    // window width. At a nominal 1024px-wide window that reads as 992,
+    // which is why an earlier version of this threshold (compared against
+    // `constraints.maxWidth >= 1000`) still silently fell back to the
+    // stacked layout at 1024×768 despite the fix's intent. Comparing
+    // against the true window width avoids depending on exactly how much
+    // padding sits between the window edge and this widget.
+    final windowWidth = MediaQuery.sizeOf(context).width;
+    // Not the shared `VynicBreakpoints.compactMax` (1100px) either: that's
+    // tuned for screens in general, but this screen's side rail is a fixed
+    // 220px, so it comfortably fits next to the floor plan down to
+    // ~1000px — and the side rail is strictly better for the floor plan
+    // than the stacked fallback at any width where it fits, since it skips
+    // stacking heading/floor-card/selection-overview ABOVE the canvas
+    // (stacked mode leaves the floor plan roughly 250px shorter at the same
+    // window height). The shared 1100px threshold was pushing 1024×768 — a
+    // real supported POS resolution — into the strictly worse stacked
+    // layout for no width reason.
+    final useSideRailLayout = windowWidth >= 1000;
 
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(8, 16, 8, 16),
-          child: useSideRailLayout
-              ? Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(width: 292, child: _buildControlRail(metrics)),
-                    const SizedBox(width: 14),
-                    Expanded(child: _buildPlanPanel(showHeader: false)),
-                  ],
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildPageHeading(),
-                    const SizedBox(height: 16),
-                    _buildFloorControlCard(),
-                    const SizedBox(height: 12),
-                    _buildSelectionOverview(),
-                    const SizedBox(height: 12),
-                    Expanded(child: _buildPlanPanel(showHeader: true)),
-                  ],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 16, 8, 16),
+      child: useSideRailLayout
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 220px (down from 260px) — the floor switch inside the
+                // rail now stacks its buttons vertically instead of side by
+                // side, so the rail needs less width, leaving more of it to
+                // the floor plan.
+                SizedBox(width: 220, child: _buildControlRail(metrics)),
+                const SizedBox(width: 14),
+                Expanded(child: _buildPlanPanel(showHeader: false)),
+              ],
+            )
+          // Stacked/compact mode: every row here eats into the floor plan's
+          // vertical budget, so the heading is shrunk and the selection card
+          // collapses to a one-line hint when idle. The chrome (heading +
+          // floor card + selection overview) is wrapped in a scroll view as
+          // a safety net — if a window is ever so short that even this
+          // shrunk chrome doesn't fit, it scrolls instead of overflowing.
+          // The floor plan itself stays outside the scroll view (it needs
+          // bounded height to do its own scale-to-fit math), so it still
+          // gets whatever height remains, however little.
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildPageHeading(compact: true),
+                      const SizedBox(height: 10),
+                      _buildFloorControlCard(),
+                      const SizedBox(height: 10),
+                      _buildSelectionOverview(),
+                    ],
+                  ),
                 ),
-        );
-      },
+                const SizedBox(height: 10),
+                Expanded(child: _buildPlanPanel(showHeader: true)),
+              ],
+            ),
     );
   }
 
   Widget _buildControlRail(List<_FloorMetricData> metrics) {
+    // The staff card + admin button are pinned outside the Expanded so they
+    // always render, at the bottom of the rail. Everything above them
+    // (heading, floor card, selection overview, metrics) lives inside an
+    // Expanded+SingleChildScrollView instead of a bare Column: at tight
+    // heights (e.g. 1024×768, where these fixed-height pieces plus the
+    // staff/admin footer add up to more than the rail actually has room
+    // for) it scrolls instead of overflowing the rail.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildPageHeading(compact: true),
-        const SizedBox(height: 12),
-        _buildFloorControlCard(),
-        const SizedBox(height: 12),
-        _buildSelectionOverview(),
-        const SizedBox(height: 12),
         Expanded(
-          child: ListView.separated(
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: metrics.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              final metric = metrics[index];
-              return _FloorMetricCard(
-                icon: metric.icon,
-                iconColor: metric.iconColor,
-                label: metric.label,
-                value: metric.value,
-                compact: true,
-              );
-            },
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildPageHeading(compact: true),
+                const SizedBox(height: 12),
+                _buildFloorControlCard(),
+                const SizedBox(height: 12),
+                _buildSelectionOverview(),
+                const SizedBox(height: 12),
+                for (final metric in metrics) ...[
+                  _FloorMetricCard(
+                    icon: metric.icon,
+                    iconColor: metric.iconColor,
+                    label: metric.label,
+                    value: metric.value,
+                    compact: true,
+                  ),
+                  const SizedBox(height: 10),
+                ],
+              ],
+            ),
           ),
+        ),
+        const SizedBox(height: 10),
+        HomeStaffAdminRail(
+          username: username,
+          roleLabel: roleLabel,
+          onStaffSwitchTap: onStaffSwitchTap,
+          onOpenAdminPanel: onOpenAdminPanel,
         ),
       ],
     );
@@ -128,52 +226,78 @@ class HomeTablesDashboardSection extends StatelessWidget {
     final selectedTables = state?.selectedTableModels ?? const <TableModel>[];
     final hasFreeSelection = selectedTables.isNotEmpty;
     final hasBusySelection = focusedBusyTable != null;
-    final activeOrder = focusedBusyTable?.activeOrderId != null
-        ? DatabaseService.getOrder(focusedBusyTable!.activeOrderId!)
-        : null;
-    final reservation = focusedBusyTable?.reservationId != null
-        ? DatabaseService.findReservationById(focusedBusyTable!.reservationId!)
-        : null;
 
-    final Color statusColor = hasBusySelection
-        ? const Color(0xFFB45309)
-        : hasFreeSelection
-        ? const Color(0xFF047857)
-        : const Color(0xFF075E6B);
-    final String title = hasBusySelection
-        ? 'დაკავებული მაგიდა'
-        : hasFreeSelection
-        ? 'არჩეული მაგიდები'
-        : 'აირჩიეთ მაგიდა';
-    final String subtitle = hasBusySelection
-        ? 'სწრაფი მიმოხილვა და შეკვეთაზე გადასვლა'
-        : hasFreeSelection
-        ? 'გააგრძელეთ მენიუში შეკვეთის შესაქმნელად'
-        : 'შეკვეთის გასაგრძელებლად მონიშნეთ თავისუფალი მაგიდა';
-    final String buttonLabel = hasBusySelection
-        ? 'გაგრძელება'
-        : hasFreeSelection
-        ? 'მენიუში გადასვლა'
-        : 'აირჩიეთ მაგიდა';
-    final IconData buttonIcon = hasBusySelection
-        ? Icons.open_in_new_rounded
-        : hasFreeSelection
-        ? Icons.restaurant_menu_rounded
-        : Icons.touch_app_outlined;
+    // Reserved/occupied tables open immediately on tap (see
+    // TableSelectionWidgetState._handleTableTap) — there's no "continue"
+    // decision to make here anymore, so this is just a brief, non-
+    // interactive acknowledgement while the async order lookup/activation
+    // completes, not a card the user is meant to act on.
+    if (hasBusySelection) {
+      final presentation = TableStatusPresentation.of(focusedBusyTable);
+      final tableNumbers = focusedBusyTables
+          .map((table) => table.tableNumber)
+          .join(', ');
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: VynicColors.card,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: const Color(0xFFB45309).withValues(alpha: 0.24),
+          ),
+          boxShadow: VynicShadows.panel,
+        ),
+        child: Row(
+          children: [
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Color(0xFFB45309),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                '$tableNumbers • იხსნება...',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: textPrimary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            VynicStatusChip.forState(
+              label: presentation.label,
+              state: presentation.vynicState,
+              icon: presentation.icon,
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Nothing selected — no card at all. It used to show an "აირჩიეთ
+    // მაგიდა" hint here (a full card, or a slim one-liner in compact mode),
+    // but that idle state doesn't need to occupy space in the rail; the
+    // floor plan itself is the affordance for picking a table.
+    if (!hasFreeSelection) {
+      return const SizedBox.shrink();
+    }
+
+    const statusColor = Color(0xFF047857);
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: VynicColors.card,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: statusColor.withValues(alpha: 0.24)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x080F172A),
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
+        boxShadow: VynicShadows.panel,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -187,12 +311,8 @@ class HomeTablesDashboardSection extends StatelessWidget {
                   color: statusColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(11),
                 ),
-                child: Icon(
-                  hasBusySelection
-                      ? Icons.lock_clock_outlined
-                      : hasFreeSelection
-                      ? Icons.check_circle_outline_rounded
-                      : Icons.event_available_outlined,
+                child: const Icon(
+                  Icons.check_circle_outline_rounded,
                   color: statusColor,
                   size: 22,
                 ),
@@ -203,7 +323,7 @@ class HomeTablesDashboardSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      title,
+                      'არჩეული მაგიდები',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -214,7 +334,7 @@ class HomeTablesDashboardSection extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      subtitle,
+                      'გააგრძელეთ მენიუში შეკვეთის შესაქმნელად',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(color: mutedText, fontSize: 11),
@@ -225,65 +345,20 @@ class HomeTablesDashboardSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          if (hasBusySelection) ...[
-            _OverviewLine(
-              icon: Icons.table_restaurant_outlined,
-              label: focusedBusyTables.length > 1 ? 'მაგიდები' : 'მაგიდა',
-              value:
-                  '${focusedBusyTable.floor == 'second' ? 'II' : 'I'} • ${focusedBusyTables.map((table) => table.tableNumber).join(', ')}',
-            ),
-            if (activeOrder != null) ...[
-              const SizedBox(height: 7),
-              _OverviewLine(
-                icon: Icons.receipt_long_outlined,
-                label: 'შეკვეთა',
-                value:
-                    '#${activeOrder.orderId} • ${activeOrder.items.length} პროდუქტი',
-              ),
-              const SizedBox(height: 7),
-              _OverviewLine(
-                icon: Icons.payments_outlined,
-                label: 'ჯამი',
-                value: '${activeOrder.totalAmount.toStringAsFixed(2)} ₾',
-              ),
-            ] else if (reservation != null) ...[
-              const SizedBox(height: 7),
-              _OverviewLine(
-                icon: Icons.person_outline,
-                label: 'რეზერვაცია',
-                value: reservation.customerName.trim().isEmpty
-                    ? reservation.reservationTime
-                    : reservation.customerName.trim(),
-              ),
-            ],
-          ] else if (hasFreeSelection) ...[
-            _OverviewLine(
-              icon: Icons.table_bar_outlined,
-              label: 'არჩეული',
-              value: selectedTables
-                  .map((table) => table.tableNumber)
-                  .join(', '),
-            ),
-            const SizedBox(height: 7),
-            _OverviewLine(
-              icon: Icons.layers_outlined,
-              label: 'სართული',
-              value: currentFloor == 1 ? 'პირველი' : 'მეორე',
-            ),
-          ] else ...[
-            _OverviewLine(
-              icon: Icons.info_outline,
-              label: 'სტატუსი',
-              value: 'მაგიდა არ არის არჩეული',
-            ),
-          ],
+          _OverviewLine(
+            icon: Icons.table_bar_outlined,
+            label: 'არჩეული',
+            value: selectedTables.map((table) => table.tableNumber).join(', '),
+          ),
+          const SizedBox(height: 7),
+          _OverviewLine(
+            icon: Icons.layers_outlined,
+            label: 'სართული',
+            value: currentFloor == 1 ? 'პირველი' : 'მეორე',
+          ),
           const SizedBox(height: 12),
           FilledButton.icon(
-            onPressed: hasBusySelection
-                ? () => onTableTap(focusedBusyTable)
-                : hasFreeSelection
-                ? onContinueToMenu
-                : null,
+            onPressed: onContinueToMenu,
             style: FilledButton.styleFrom(
               backgroundColor: statusColor,
               foregroundColor: Colors.white,
@@ -294,12 +369,12 @@ class HomeTablesDashboardSection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            icon: Icon(buttonIcon, size: 18),
-            label: Text(
-              buttonLabel,
+            icon: const Icon(Icons.restaurant_menu_rounded, size: 18),
+            label: const Text(
+              'მენიუში გადასვლა',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w800),
+              style: TextStyle(fontWeight: FontWeight.w800),
             ),
           ),
         ],
@@ -310,16 +385,10 @@ class HomeTablesDashboardSection extends StatelessWidget {
   Widget _buildPlanPanel({required bool showHeader}) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: VynicColors.card,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFDDE4ED)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0B0F172A),
-            blurRadius: 14,
-            offset: Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: VynicColors.border),
+        boxShadow: VynicShadows.panel,
       ),
       child: Column(
         children: [
@@ -335,6 +404,7 @@ class HomeTablesDashboardSection extends StatelessWidget {
                 currentFloor: currentFloor,
                 onSelectionChanged: onSelectionChanged,
                 onTableTap: onTableTap,
+                onQuickEnterTable: onQuickEnterTable,
               ),
             ),
           ),
@@ -384,9 +454,9 @@ class HomeTablesDashboardSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: VynicColors.card,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFDDE4ED)),
+        border: Border.all(color: VynicColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -416,7 +486,7 @@ class HomeTablesDashboardSection extends StatelessWidget {
             mutedText: mutedText,
             onSwitchFloor: onSwitchFloor,
             floors: _floorEntries(),
-            expanded: true,
+            vertical: true,
           ),
         ],
       ),
@@ -483,7 +553,7 @@ class _FloorSwitch extends StatelessWidget {
     required this.mutedText,
     required this.onSwitchFloor,
     required this.floors,
-    this.expanded = false,
+    this.vertical = false,
   });
 
   final int currentFloor;
@@ -491,7 +561,11 @@ class _FloorSwitch extends StatelessWidget {
   final Color mutedText;
   final ValueChanged<int> onSwitchFloor;
   final List<({int floor, String label})> floors;
-  final bool expanded;
+
+  /// Stacks the floor buttons top-to-bottom instead of side-by-side — used
+  /// in the rail's floor control card so the switch takes less width,
+  /// leaving more of the rail's fixed width for the floor plan next to it.
+  final bool vertical;
 
   @override
   Widget build(BuildContext context) {
@@ -502,19 +576,28 @@ class _FloorSwitch extends StatelessWidget {
         borderRadius: BorderRadius.circular(9),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
-      child: Row(
-        mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
-        children: [
-          for (final floor in floors)
-            expanded
-                ? Expanded(child: _buildFloorButton(floor))
-                : _buildFloorButton(floor),
-        ],
-      ),
+      child: vertical
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var i = 0; i < floors.length; i++) ...[
+                  _buildFloorButton(floors[i], fullWidth: true),
+                  if (i != floors.length - 1) const SizedBox(height: 4),
+                ],
+              ],
+            )
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [for (final floor in floors) _buildFloorButton(floor)],
+            ),
     );
   }
 
-  Widget _buildFloorButton(({int floor, String label}) floor) {
+  Widget _buildFloorButton(
+    ({int floor, String label}) floor, {
+    bool fullWidth = false,
+  }) {
     return InkWell(
       onTap: floor.floor == currentFloor
           ? null
@@ -522,7 +605,7 @@ class _FloorSwitch extends StatelessWidget {
       borderRadius: BorderRadius.circular(7),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        width: expanded ? null : 104,
+        width: fullWidth ? null : 104,
         alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
@@ -574,9 +657,9 @@ class _FloorMetricCard extends StatelessWidget {
       height: compact ? 72 : 84,
       padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: VynicColors.card,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFDDE4ED)),
+        border: Border.all(color: VynicColors.border),
       ),
       child: Row(
         children: [

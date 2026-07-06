@@ -9,16 +9,26 @@ import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/table_layout.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/apps/windows_pos/widgets/floor_plan/floor_plan_painters.dart';
+import 'package:vynic/apps/windows_pos/widgets/home/table_status_presentation.dart';
+import 'package:vynic/core/ui/vynic_colors.dart';
 
 class TableSelectionWidget extends StatefulWidget {
   final VoidCallback? onSelectionChanged;
   final Function(TableModel)? onTableTap;
   final int currentFloor;
 
+  /// Fired right after a fresh short tap selects exactly one free table (no
+  /// other table already selected) — the fast path: home_screen jumps
+  /// straight to the menu instead of requiring a separate "continue" tap.
+  /// Building a multi-table selection (long-press, or tapping a further
+  /// table once one is already selected) does not fire this.
+  final VoidCallback? onQuickEnterTable;
+
   const TableSelectionWidget({
     super.key,
     this.onSelectionChanged,
     this.onTableTap,
+    this.onQuickEnterTable,
     this.currentFloor = 1,
   });
 
@@ -246,6 +256,23 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     return inflatedPositions;
   }
 
+  /// Converts a local tap position (in scaled SVG canvas coordinates) into
+  /// the table id at that position, or null if it misses every table.
+  String? _svgTableIdAtLocalPosition(
+    Offset localPosition,
+    double scaleX,
+    double scaleY,
+  ) {
+    final x = localPosition.dx / scaleX;
+    final y = localPosition.dy / scaleY;
+    for (final entry in _tablePositions.entries) {
+      if (entry.value.contains(Offset(x, y))) {
+        return entry.key;
+      }
+    }
+    return null;
+  }
+
   Map<String, Color> _buildReservationColorMap() {
     final map = <String, Color>{};
     for (final table in DatabaseService.getAllTables()) {
@@ -342,7 +369,13 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
   void _handleTableTap(String tableId) {
     final tableModel = _getTableModel(tableId);
 
-    // Reserved tables show a quick overview first; the rail CTA opens them.
+    // Reserved/occupied tables open immediately — no separate "continue"
+    // step. Tables sharing the same reservation/order (e.g. two tables
+    // pushed together for one party) are grouped by reservation/order key
+    // and all get the focus highlight, but `onTableTap` only needs the
+    // tapped table: `_handleReservedTableTap` reads its shared
+    // activeOrderId/reservationId, which is identical across the whole
+    // group, so opening any one of them opens the shared order for all.
     if (tableModel != null && tableModel.isReserved) {
       final groupKey = _getReservationGroupKey(tableModel);
       final groupedTableIds = tableIds.where((candidateId) {
@@ -358,32 +391,83 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
       final nextFocusedTableIds = groupedTableIds.isEmpty
           ? {tableId}
           : groupedTableIds;
-      final isAlreadyFocused =
-          _focusedReservedTables.length == nextFocusedTableIds.length &&
-          _focusedReservedTables.containsAll(nextFocusedTableIds);
 
       setState(() {
         _selectedTables.clear();
-        if (isAlreadyFocused) {
-          _focusedReservedTables.clear();
-          selectedTable = null;
-        } else {
-          _focusedReservedTables
-            ..clear()
-            ..addAll(nextFocusedTableIds);
-          selectedTable = tableId;
+        _focusedReservedTables
+          ..clear()
+          ..addAll(nextFocusedTableIds);
+        selectedTable = tableId;
+      });
+      widget.onSelectionChanged?.call();
+      widget.onTableTap?.call(tableModel);
+      return;
+    }
+
+    // Free table. If the waiter is already mid-way through building a
+    // multi-table selection (started via long-press, or a previous tap that
+    // already picked one table), a further tap just adds/removes from that
+    // set — it must not discard progress or auto-navigate. Only a tap from a
+    // completely clean slate takes the fast, single-tap-opens-the-table path.
+    final buildingMultiSelect =
+        _selectedTables.isNotEmpty && !_selectedTables.contains(tableId);
+    // Tapping any already-selected table (whether it's the only one or one of
+    // several) removes just that table from the set instead of navigating —
+    // e.g. selecting 1, 2, 3 then tapping 3 again drops 3 and keeps 1, 2.
+    final togglingOffASelectedTable =
+        _selectedTables.isNotEmpty && _selectedTables.contains(tableId);
+
+    if (buildingMultiSelect) {
+      setState(() {
+        _focusedReservedTables.clear();
+        _selectedTables.add(tableId);
+        selectedTable = tableId;
+      });
+      widget.onSelectionChanged?.call();
+      return;
+    }
+
+    if (togglingOffASelectedTable) {
+      setState(() {
+        _selectedTables.remove(tableId);
+        if (selectedTable == tableId) {
+          selectedTable = _selectedTables.isNotEmpty
+              ? _selectedTables.last
+              : null;
         }
       });
       widget.onSelectionChanged?.call();
       return;
     }
 
-    // Otherwise, handle normal selection
+    setState(() {
+      _focusedReservedTables.clear();
+      _selectedTables
+        ..clear()
+        ..add(tableId);
+      selectedTable = tableId;
+    });
+    widget.onSelectionChanged?.call();
+    widget.onQuickEnterTable?.call();
+  }
+
+  /// Long-press on a free table toggles it into/out of a multi-table
+  /// selection without auto-navigating — the deliberate path for merging
+  /// several free tables into one order. Reserved/occupied tables ignore
+  /// long-press; short tap already handles their quick-overview flow.
+  void _handleTableLongPress(String tableId) {
+    final tableModel = _getTableModel(tableId);
+    if (tableModel != null && tableModel.isReserved) {
+      return;
+    }
+
     setState(() {
       _focusedReservedTables.clear();
       if (_selectedTables.contains(tableId)) {
         _selectedTables.remove(tableId);
-        selectedTable = null;
+        if (selectedTable == tableId) {
+          selectedTable = null;
+        }
       } else {
         _selectedTables.add(tableId);
         selectedTable = tableId;
@@ -410,7 +494,8 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     return Stack(
       children: _tablePositions.entries.map((entry) {
         final tableModel = _getTableModel(entry.key);
-        final isReserved = tableModel?.isReserved ?? false;
+        final presentation = TableStatusPresentation.of(tableModel);
+        final isReserved = presentation.isBusy;
         final isSelected = _selectedTables.contains(entry.key);
         final isFocused = _focusedReservedTables.contains(entry.key);
         final Color? reservationColor = isReserved && tableModel != null
@@ -475,7 +560,7 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
                   children: [
                     if (isReserved)
                       Icon(
-                        isFocused ? Icons.visibility : Icons.lock,
+                        isFocused ? Icons.visibility : presentation.icon,
                         color: Colors.white,
                         size: isFocused ? 30 : 28,
                       )
@@ -499,9 +584,9 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
                     ),
                     if (isReserved) ...[
                       const SizedBox(height: 2),
-                      const Text(
-                        'დაკავებულია',
-                        style: TextStyle(
+                      Text(
+                        presentation.label,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -579,10 +664,14 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
         final availableWidth = constraints.maxWidth;
         final availableHeight = constraints.maxHeight;
 
-        // Calculate scale to fit entire SVG while maintaining aspect ratio
-        final scaleX = availableWidth / svgWidth;
-        final scaleY = availableHeight / svgHeight;
-        final scale = scaleX < scaleY ? scaleX : scaleY;
+        // Aspect-ratio preserved (uniform scale), not stretched — stretching
+        // was tried and reverted: it made the POS floor plan look visibly
+        // different from the same layout shown true-to-scale in the admin
+        // layout editor, which was more confusing than the empty side
+        // margins it was meant to fix.
+        final rawScaleX = availableWidth / svgWidth;
+        final rawScaleY = availableHeight / svgHeight;
+        final scale = rawScaleX < rawScaleY ? rawScaleX : rawScaleY;
 
         final scaledWidth = svgWidth * scale;
         final scaledHeight = svgHeight * scale;
@@ -595,16 +684,23 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
             child: GestureDetector(
               behavior: HitTestBehavior.opaque, // Better touch detection
               onTapUp: (details) {
-                // Convert tap position to SVG coordinates
-                final tapX = details.localPosition.dx / scale;
-                final tapY = details.localPosition.dy / scale;
-
-                // Check which table was tapped
-                for (final entry in _tablePositions.entries) {
-                  if (entry.value.contains(Offset(tapX, tapY))) {
-                    _handleTableTap(entry.key);
-                    break;
-                  }
+                final tableId = _svgTableIdAtLocalPosition(
+                  details.localPosition,
+                  scale,
+                  scale,
+                );
+                if (tableId != null) {
+                  _handleTableTap(tableId);
+                }
+              },
+              onLongPressStart: (details) {
+                final tableId = _svgTableIdAtLocalPosition(
+                  details.localPosition,
+                  scale,
+                  scale,
+                );
+                if (tableId != null) {
+                  _handleTableLongPress(tableId);
                 }
               },
               child: Stack(
@@ -666,9 +762,14 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final scaleX = constraints.maxWidth / canvasWidth;
-        final scaleY = constraints.maxHeight / canvasHeight;
-        final scale = scaleX < scaleY ? scaleX : scaleY;
+        // Aspect-ratio preserved (uniform scale), not stretched — stretching
+        // was tried and reverted: it made the POS floor plan look visibly
+        // different from the same layout shown true-to-scale in the admin
+        // layout editor, which was more confusing than the empty side
+        // margins it was meant to fix.
+        final rawScaleX = constraints.maxWidth / canvasWidth;
+        final rawScaleY = constraints.maxHeight / canvasHeight;
+        final scale = rawScaleX < rawScaleY ? rawScaleX : rawScaleY;
         final scaledWidth = canvasWidth * scale;
         final scaledHeight = canvasHeight * scale;
 
@@ -686,16 +787,17 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
                     Positioned.fill(
                       child: CustomPaint(painter: FloorPlanGridPainter()),
                     ),
-                    ..._buildConnectedReservationBands(objects, scale),
+                    ..._buildConnectedReservationBands(objects, scale, scale),
                     for (final object in objects)
                       if (object.type != RestaurantLayoutObjectType.table)
-                        _buildFloorPlanObject(object, scale),
+                        _buildFloorPlanObject(object, scale, scale),
                     Positioned.fill(
                       child: IgnorePointer(
                         child: CustomPaint(
                           painter: FloorPlanWallJointsPainter(
                             joints: floorPlanWallJoints(
                               _wallSegmentsOf(objects),
+                              scale,
                               scale,
                             ),
                             color: _floorPlanObjectColors(
@@ -729,7 +831,7 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
                     for (final object in objects)
                       if (object.type == RestaurantLayoutObjectType.table &&
                           object.tableId != null)
-                        _buildFloorPlanTable(object, scale),
+                        _buildFloorPlanTable(object, scale, scale),
                   ],
                 ),
               ),
@@ -780,7 +882,8 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
 
   List<Widget> _buildConnectedReservationBands(
     List<RestaurantLayoutObject> objects,
-    double scale,
+    double scaleX,
+    double scaleY,
   ) {
     final grouped = <String, List<RestaurantLayoutObject>>{};
     for (final object in objects) {
@@ -807,10 +910,10 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
         final union = _unionForObjects(component).inflate(18);
         bands.add(
           Positioned(
-            left: union.left * scale,
-            top: union.top * scale,
-            width: union.width * scale,
-            height: union.height * scale,
+            left: union.left * scaleX,
+            top: union.top * scaleY,
+            width: union.width * scaleX,
+            height: union.height * scaleY,
             child: IgnorePointer(
               child: DecoratedBox(
                 decoration: BoxDecoration(
@@ -884,13 +987,18 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     return Rect.fromLTRB(left, top, right, bottom);
   }
 
-  Widget _buildFloorPlanTable(RestaurantLayoutObject object, double scale) {
+  Widget _buildFloorPlanTable(
+    RestaurantLayoutObject object,
+    double scaleX,
+    double scaleY,
+  ) {
     final tableId = object.tableId!;
     final tableModel = _getTableModel(tableId);
-    final isReserved = tableModel?.isReserved ?? false;
+    final presentation = TableStatusPresentation.of(tableModel);
+    final isBusy = presentation.isBusy;
     final isSelected = _selectedTables.contains(tableId);
     final isFocused = _focusedReservedTables.contains(tableId);
-    final reservationColor = isReserved && tableModel != null
+    final reservationColor = isBusy && tableModel != null
         ? _getReservationColor(tableModel)
         : null;
 
@@ -899,7 +1007,7 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     Color textColor;
     IconData icon;
 
-    if (isReserved) {
+    if (isBusy) {
       backgroundColor = (reservationColor ?? Colors.red).withValues(
         alpha: isFocused ? 0.94 : 0.82,
       );
@@ -907,28 +1015,29 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
           ? const Color(0xFF0F172A)
           : (reservationColor ?? Colors.red);
       textColor = Colors.white;
-      icon = isFocused ? Icons.visibility : Icons.lock;
+      icon = isFocused ? Icons.visibility : presentation.icon;
     } else if (isSelected) {
       backgroundColor = const Color(0xFF047857);
       borderColor = const Color(0xFF065F46);
       textColor = Colors.white;
       icon = Icons.check_circle;
     } else {
-      backgroundColor = const Color(0xFFE0F2FE);
-      borderColor = const Color(0xFF0369A1);
-      textColor = const Color(0xFF0F172A);
+      backgroundColor = VynicColors.cardSoft;
+      borderColor = VynicColors.borderStrong;
+      textColor = VynicColors.textPrimary;
       icon = Icons.table_restaurant;
     }
 
     final label = _displayNameForTableId(tableId);
 
     return Positioned(
-      left: object.x * scale,
-      top: object.y * scale,
-      width: object.width * scale,
-      height: object.height * scale,
+      left: object.x * scaleX,
+      top: object.y * scaleY,
+      width: object.width * scaleX,
+      height: object.height * scaleY,
       child: GestureDetector(
         onTap: () => _handleTableTap(tableId),
+        onLongPress: () => _handleTableLongPress(tableId),
         child: Transform.rotate(
           angle: object.rotation * math.pi / 180,
           child: AnimatedContainer(
@@ -941,37 +1050,45 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
             ),
             child: Padding(
               padding: const EdgeInsets.all(8),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, color: textColor, size: isFocused ? 24 : 20),
-                  const SizedBox(height: 4),
-                  Text(
-                    label,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: textColor,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  if ((tableModel?.isReserved ?? false) &&
-                      tableModel?.reservationId != null) ...[
-                    const SizedBox(height: 2),
+              // FittedBox+scaleDown so a table box that's too short for its
+              // icon+label+status text (e.g. at 1024×768, where the whole
+              // canvas scales down) shrinks the content instead of
+              // overflowing — it only ever shrinks, never enlarges past the
+              // content's natural size.
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(icon, color: textColor, size: isFocused ? 24 : 20),
+                    const SizedBox(height: 4),
                     Text(
-                      'დაკავებულია',
-                      maxLines: 1,
+                      label,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: textColor.withValues(alpha: 0.9),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
+                        color: textColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
+                    if (isBusy) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        presentation.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: textColor.withValues(alpha: 0.9),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
@@ -980,13 +1097,17 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     );
   }
 
-  Widget _buildFloorPlanObject(RestaurantLayoutObject object, double scale) {
+  Widget _buildFloorPlanObject(
+    RestaurantLayoutObject object,
+    double scaleX,
+    double scaleY,
+  ) {
     final colors = _floorPlanObjectColors(object);
     return Positioned(
-      left: object.x * scale,
-      top: object.y * scale,
-      width: object.width * scale,
-      height: object.height * scale,
+      left: object.x * scaleX,
+      top: object.y * scaleY,
+      width: object.width * scaleX,
+      height: object.height * scaleY,
       child: Transform.rotate(
         angle: object.rotation * math.pi / 180,
         child: object.type == RestaurantLayoutObjectType.wall
@@ -1159,7 +1280,8 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
 
   Widget _buildTableButton(String tableId) {
     final tableModel = _getTableModel(tableId);
-    final isReserved = tableModel?.isReserved ?? false;
+    final presentation = TableStatusPresentation.of(tableModel);
+    final isReserved = presentation.isBusy;
     final isSelected = _selectedTables.contains(tableId);
     final isFocused = _focusedReservedTables.contains(tableId);
     final reservationColor = isReserved && tableModel != null
@@ -1179,16 +1301,16 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
           ? const Color(0xFF0F172A)
           : (reservationColor ?? Colors.red);
       textColor = Colors.white;
-      icon = isFocused ? Icons.visibility : Icons.lock;
+      icon = isFocused ? Icons.visibility : presentation.icon;
     } else if (isSelected) {
       backgroundColor = const Color(0xFF047857);
       borderColor = const Color(0xFF065F46);
       textColor = Colors.white;
       icon = Icons.check_circle;
     } else {
-      backgroundColor = const Color(0xFFF8FAFC);
-      borderColor = const Color(0xFFE2E8F0);
-      textColor = const Color(0xFF0F172A);
+      backgroundColor = VynicColors.cardSoft;
+      borderColor = VynicColors.border;
+      textColor = VynicColors.textPrimary;
       icon = Icons.table_restaurant;
     }
 
@@ -1197,6 +1319,7 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
         onTap: () => _handleTableTap(tableId),
+        onLongPress: () => _handleTableLongPress(tableId),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.all(14),
@@ -1235,7 +1358,7 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
                     const SizedBox(height: 4),
                     Text(
                       isReserved
-                          ? 'დაკავებულია'
+                          ? presentation.label
                           : isSelected
                           ? 'არჩეულია'
                           : _currentZone.name,

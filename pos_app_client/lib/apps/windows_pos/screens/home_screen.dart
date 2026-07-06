@@ -21,11 +21,10 @@ import 'package:vynic/apps/windows_pos/widgets/table_selection_widget.dart';
 import 'package:vynic/apps/windows_pos/widgets/reservation_creation_sheet.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
+import 'package:vynic/core/ui/vynic_colors.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_tables_dashboard_section.dart';
-import 'package:vynic/apps/windows_pos/widgets/home/home_landing_dashboard.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_feature_header.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_calculator_page.dart';
-import 'package:vynic/apps/windows_pos/widgets/home/home_admin_tools_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_reservation_menu_preview.dart';
 import 'package:vynic/core/utils/home_reservations_helper.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_reservation_table_assignment_dialog.dart';
@@ -67,7 +66,6 @@ class _HomeScreenState extends State<HomeScreen> {
   _lastActivationDate; // Track when we last activated reservations
   static const Color _primaryColor = Color(0xFF1E3A8A);
   static const Color _secondaryColor = Color(0xFF2563EB);
-  static const Color _surfaceColor = Color(0xFFF4F6FF);
   static const Color _textPrimary = Color(0xFF1F2937);
   static const Color _mutedText = Color(0xFF475569);
 
@@ -75,7 +73,6 @@ class _HomeScreenState extends State<HomeScreen> {
   // Indices of feature pages that have been opened at least once — drives the
   // lazy IndexedStack so unopened sections are never built.
   final Set<int> _builtPages = <int>{};
-  late final DateTime _sessionStartedAt;
   late final List<_SidebarDestination> _destinations;
   final FocusNode _shortcutFocusNode = FocusNode(debugLabel: 'home-shortcuts');
   String? _lastToastNotificationId;
@@ -100,13 +97,14 @@ class _HomeScreenState extends State<HomeScreen> {
   void _lockTerminal() => SessionLock.lock();
 
   /// Fired by [SessionLock] when an unlock switched to a DIFFERENT user: reset
-  /// to the landing tab and drop cached pages so the new staff starts fresh.
+  /// to the landing tab (Tables) and drop cached pages so the new staff
+  /// starts fresh.
   void _onSwitchResetToLanding() {
     if (!mounted) return;
     setState(() {
       _builtPages.clear();
-      final homeIndex = _destinations.indexWhere((d) => d.key == 'home');
-      _activeDestinationIndex = homeIndex >= 0 ? homeIndex : 0;
+      final tablesIndex = _destinations.indexWhere((d) => d.key == 'menu');
+      _activeDestinationIndex = tablesIndex >= 0 ? tablesIndex : 0;
     });
   }
 
@@ -118,7 +116,6 @@ class _HomeScreenState extends State<HomeScreen> {
     // lock screen (idle or manual).
     SessionLock.arm();
     SessionLock.resetToLanding.addListener(_onSwitchResetToLanding);
-    _sessionStartedAt = DateTime.now();
     // Activate today's confirmed reservations only if we haven't done it today
     _activateReservationsIfNeeded();
     _destinations = _createDestinations();
@@ -345,17 +342,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<_SidebarDestination> _createDestinations() {
     final destinations = <_SidebarDestination>[
-      _SidebarDestination(
-        key: 'home',
-        icon: Icons.home_outlined,
-        label: 'მთავარი',
-        builder: (context) => const SizedBox.shrink(),
-      ),
+      // Tables is the landing destination (index 0) — UI Phase 3 retires the
+      // decorative HomeLandingDashboard route (docs/UI_PLAN.md §9 Phase 3):
+      // waiters/managers land directly on the operational floor plan instead
+      // of a dashboard they had to click through first.
       _SidebarDestination(
         key: 'menu',
         icon: Icons.restaurant_outlined,
         label: 'მაგიდები',
         builder: (context) => HomeTablesDashboardSection(
+          username: _user.username,
+          roleLabel: _user.roleLabelKa,
           textPrimary: _textPrimary,
           mutedText: _mutedText,
           tableSelectionKey: _tableSelectionKey,
@@ -364,6 +361,10 @@ class _HomeScreenState extends State<HomeScreen> {
           onContinueToMenu: _continueToMenu,
           currentFloor: _currentFloor,
           onSwitchFloor: _switchFloor,
+          onStaffSwitchTap: _lockTerminal,
+          onOpenAdminPanel: _user.canAccessManagementCenter
+              ? _openAdminPanel
+              : null,
         ),
       ),
       _SidebarDestination(
@@ -391,25 +392,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _SidebarDestination(
           key: 'xReport',
           icon: Icons.assessment_outlined,
-          label: 'X ანგარიში',
+          label: 'X',
           builder: (context) => _buildXReportPage(),
-        ),
-      );
-    }
-
-    if (_user.canAccessManagementCenter) {
-      destinations.add(
-        _SidebarDestination(
-          key: 'adminPanel',
-          icon: Icons.settings_suggest_outlined,
-          label: 'მართვის ცენტრი',
-          builder: (context) => HomeAdminToolsSection(
-            onOpenAdminPanel: _openAdminPanel,
-            primaryColor: _primaryColor,
-            secondaryColor: _secondaryColor,
-            textPrimary: _textPrimary,
-            mutedText: _mutedText,
-          ),
         ),
       );
     }
@@ -495,8 +479,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final activeDestinationKey = _destinations[activeIndex].key;
     final currentDate = DatabaseService.getCurrentDate();
     final takeAwayCount = _countActiveTakeAways(currentDate);
-    final reservationCount =
-        HomeReservationsHelper.countConfirmedReservationsForDate(currentDate);
 
     // Lazily build feature pages: only pages the user has actually opened are
     // constructed (and then kept alive by IndexedStack to preserve their
@@ -522,34 +504,21 @@ class _HomeScreenState extends State<HomeScreen> {
             ValueListenableBuilder<int>(
               valueListenable: AppNotificationHistoryStore.instance.unreadCount,
               builder: (context, unread, _) {
-                final activeDestination = _destinations[activeIndex];
                 return HomeFeatureHeader(
-                  title: activeDestination.label,
-                  icon: activeDestination.icon,
-                  username: _user.username,
-                  roleLabel: _user.roleLabelKa,
+                  businessDate: currentDate,
                   activeKey: activeDestinationKey,
                   destinations: _featureSwitchItems(
                     takeAwayCount: takeAwayCount,
                   ),
-                  onHomeTap: () => _selectDestination('home'),
-                  onDestinationSelected: _handleQuickSwitch,
+                  onDestinationSelected: _selectDestination,
                   notificationUnreadCount: unread,
                   onNotificationTap: _toggleNotificationsPanel,
-                  onStaffSwitchTap: _lockTerminal,
                 );
               },
             ),
             Expanded(
-              child: Container(
-                padding: EdgeInsets.zero,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFF8FAFF), Color(0xFFEFF4FF)],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
+              child: ColoredBox(
+                color: VynicColors.background,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: IndexedStack(index: activeIndex, children: pages),
@@ -562,59 +531,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     );
 
-    if (activeDestinationKey == 'home') {
-      final openTablesCount = DatabaseService.getAllTables()
-          .where((table) => table.activeOrderId != null)
-          .length;
-      final printerConfigured =
-          DatabaseService.getKitchenPrinterIp().trim().isNotEmpty ||
-          DatabaseService.getReceiptPrinterIp().trim().isNotEmpty;
-
-      return Focus(
-        focusNode: _shortcutFocusNode,
-        autofocus: true,
-        child: Scaffold(
-          body: Stack(
-            children: [
-              ValueListenableBuilder<int>(
-                valueListenable:
-                    AppNotificationHistoryStore.instance.unreadCount,
-                builder: (context, unread, _) {
-                  return HomeLandingDashboard(
-                    username: _user.username,
-                    roleLabel: _user.roleLabelKa,
-                    workDate: currentDate,
-                    sessionStartedAt: _sessionStartedAt,
-                    openTablesCount: openTablesCount,
-                    takeAwayCount: takeAwayCount,
-                    reservationCount: reservationCount,
-                    printerConfigured: printerConfigured,
-                    notificationUnreadCount: unread,
-                    onNotificationTap: _toggleNotificationsPanel,
-                    onTablesTap: () => _selectDestination('menu'),
-                    onCalculatorTap: () => _selectDestination('calculate'),
-                    onTakeAwayTap: () => _selectDestination('todaysTakeaways'),
-                    onReservationsTap: () =>
-                        _selectDestination('newReservation'),
-                    onXReportTap: _user.canAccessXReport
-                        ? () => _selectDestination('xReport')
-                        : null,
-                    onAdminTap: _user.canAccessManagementCenter
-                        ? _openAdminPanel
-                        : null,
-                    onStaffSwitchTap: _lockTerminal,
-                  );
-                },
-              ),
-              ..._notificationOverlayWidgets(context),
-            ],
-          ),
-        ),
-      );
-    }
-
     final scaffold = Scaffold(
-      backgroundColor: _surfaceColor,
+      backgroundColor: VynicColors.background,
       appBar: null,
       body: mainContentStack,
       bottomNavigationBar: null,
@@ -637,35 +555,24 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  /// Direct-nav items shown inline in the top bar — every section the
+  /// current role can reach, all in one row, no hidden "More" menu. Derived
+  /// from [_destinations] (not hand-duplicated) so nothing can drift out of
+  /// sync with the permission gating that already builds that list.
   List<HomeFeatureSwitchItem> _featureSwitchItems({
     required int takeAwayCount,
   }) {
     return [
-      const HomeFeatureSwitchItem(
-        key: 'menu',
-        label: 'მაგიდები',
-        icon: Icons.table_restaurant_outlined,
-      ),
-      const HomeFeatureSwitchItem(
-        key: 'calculate',
-        label: 'დათვლა',
-        icon: Icons.functions_outlined,
-      ),
-      HomeFeatureSwitchItem(
-        key: 'todaysTakeaways',
-        label: 'გატანები',
-        icon: Icons.shopping_bag_outlined,
-        badgeCount: takeAwayCount > 0 ? takeAwayCount : null,
-      ),
+      for (final destination in _destinations)
+        HomeFeatureSwitchItem(
+          key: destination.key,
+          label: destination.label,
+          icon: destination.icon,
+          badgeCount: destination.key == 'todaysTakeaways' && takeAwayCount > 0
+              ? takeAwayCount
+              : null,
+        ),
     ];
-  }
-
-  void _handleQuickSwitch(String key) {
-    if (key == 'adminPanel') {
-      _openAdminPanel();
-      return;
-    }
-    _selectDestination(key);
   }
 
   void _openAdminPanel() {

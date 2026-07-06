@@ -10,6 +10,7 @@ import 'package:vynic/apps/windows_pos/screens/menu_screen.dart';
 import 'package:vynic/apps/windows_pos/screens/order_detail_screen.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/pos/table_payment_service.dart';
+import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 
@@ -430,6 +431,43 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
     await DatabaseService.refreshDailySalesTotalForDate(
       DatabaseService.getCurrentDate(),
     );
+
+    final receiptLines = _buildTakeAwayFinalReceiptLines(
+      order,
+      selection,
+      closedAt,
+    );
+    PrinterService.printReceiptInBackground(
+      items: receiptLines,
+      total: order.totalAmount,
+      subtotal: null,
+      serviceFee: null,
+      includeServiceFee: false,
+      tableNumber: null,
+      orderNumber: order.orderId.toString(),
+      paymentMethod: paymentMethodKey,
+      language: 'ka',
+      packageSubtotal: order.getPackageSubtotal() > 0
+          ? order.getPackageSubtotal()
+          : null,
+      additionalSubtotal: order.getAdditionalItemsSubtotal() > 0
+          ? order.getAdditionalItemsSubtotal()
+          : null,
+      discountAmount: null,
+      manualAdjustment: null,
+      receiptType: 'close_table',
+      onComplete: (success) {
+        if (!mounted) {
+          return;
+        }
+        if (!success) {
+          unawaited(
+            showErrorToast(context, 'ფინალური ქვითრის ბეჭდვა ვერ მოხერხდა'),
+          );
+        }
+      },
+    );
+
     await widget.onRefreshRequested();
 
     if (!mounted) {
@@ -442,6 +480,40 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
         'შეკვეთა დაიხურა: ${TableClosureHelper.buildSuccessMessage(selection)}',
       ),
     );
+  }
+
+  List<String> _buildTakeAwayFinalReceiptLines(
+    Order order,
+    TablePaymentSelection selection,
+    DateTime closedAt,
+  ) {
+    final lines = <String>[
+      'Order #${order.orderId}',
+      'დახურვა: ${_formatTakeAwayClosureTimestamp(closedAt)}',
+      for (final item in [...order.packageItems, ...order.items])
+        '${item.quantity}x ${item.itemName} - ₾${item.total.toStringAsFixed(2)}',
+      'გადახდა:',
+    ];
+
+    if (selection.bankAmount > 0) {
+      final bankLabel = TableClosureHelper.bankDisplayLabel(selection);
+      lines.add(
+        '• ბანკი ($bankLabel) ₾${selection.bankAmount.toStringAsFixed(2)}',
+      );
+    }
+    if (selection.cashAmount > 0) {
+      lines.add('• ნაღდი ₾${selection.cashAmount.toStringAsFixed(2)}');
+    }
+
+    return lines;
+  }
+
+  String _formatTakeAwayClosureTimestamp(DateTime value) {
+    final datePart =
+        '${value.year.toString().padLeft(4, '0')}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
+    final timePart =
+        '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
+    return '$datePart $timePart';
   }
 
   Future<void> _openNumberKeyboardSheet({

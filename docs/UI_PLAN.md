@@ -172,11 +172,14 @@ cancelled/no-show) is backed by `ReservationStatus`
 
 **Remaining status debt (not fixed by the Phase 4 enum work, flagged for
 follow-up phases):**
-1. `apps/windows_pos/widgets/table_selection_widget.dart` still computes
-   table-tile color/state from the raw `isReserved`/`activeOrderId` fields
-   directly, not from `TableModel.operationalStatus`. It's the natural next
-   consumer of the new enum, but it's a widget file and was out of scope for
-   the enum-foundation task — first real consumer for UI Phase 3.
+1. ~~`apps/windows_pos/widgets/table_selection_widget.dart` still computes
+   table-tile color/state from the raw `isReserved`/`activeOrderId` fields~~
+   — **closed in UI Phase 3.** All three render modes (SVG map, floor plan,
+   button grid) now derive their icon/label from `TableModel.operationalStatus`
+   via `apps/windows_pos/widgets/home/table_status_presentation.dart`. The
+   per-reservation/order unique group color (for identifying which tables
+   belong to the same merged party) is unchanged/orthogonal — it still comes
+   from a hash of the reservation/order id, not from operational status.
 2. Fuzzy `status.startsWith('confirmed')` / `startsWith('cancelled')`
    matching remains in `core/utils/home_reservations_helper.dart`,
    `apps/windows_pos/widgets/admin/admin_reservations_section.dart`, and
@@ -586,31 +589,59 @@ See §0. Blocks everything below until master Phase 4 is done.
 - **Rollback risk:** near zero — nothing consumes the new files yet.
 
 ### UI Phase 3 — POS shell & Tables first
+- **Status: done.** `home_landing_dashboard.dart` is retired as a route, then
+  deleted outright once the top-bar nav fix (below) made it fully redundant;
+  Tables (`menu` destination) is index 0 and the landing tab; a single tap on
+  a free table with nothing else selected jumps straight to the menu;
+  multi-table selection for merged orders moved to long-press; the top bar
+  now shows the business date alongside session/role/sync (printer status
+  still has no observable signal to surface — see Phase 4 status debt in
+  §3.1, unchanged); table tiles use `TableModel.operationalStatus` via a new
+  presentation helper instead of the raw `isReserved` boolean. Two follow-up
+  fixes landed before commit: (1) a navigation regression — the top bar's
+  quick-switch row didn't expose Reservations/X-report/Management Center once
+  the dashboard route was gone, fixed by deriving the row from `_destinations`
+  and adding a role-gated "More" menu for the less-frequent, supervisor/
+  manager-only sections; (2) a multi-select tap-toggle bug — tapping an
+  already-selected table when 2+ were selected fell through to the fast
+  single-tap path and navigated away, discarding the rest of the selection.
+  Full details and manual verification checklist: `docs/UI_PHASE_3_NOTES.md`.
 - **Goal:** retire `home_landing_dashboard.dart` as a route; land
   waiters/cashiers on Tables; single-tap-to-menu on free tables; top bar
   carries session, printer/sync health (§3 states), business date, and role;
   migrate this shell's own screens onto Phase 2 tokens (per §6.3, scoped to
   these screens only).
-- **Files touched:** `screens/home_screen.dart`,
-  `widgets/home/home_top_bar_section.dart`,
-  `widgets/home/home_tables_dashboard_section.dart`,
-  `widgets/table_selection_widget.dart`,
-  `widgets/home/home_landing_dashboard.dart` (deprecate/archive, don't
-  delete).
+- **Files touched (actual):** `screens/home_screen.dart`,
+  `widgets/home/home_feature_header.dart` (the real top bar —
+  `widgets/home/home_top_bar_section.dart` turned out to be dead code,
+  referenced nowhere, and was left untouched), `widgets/home/home_tables_dashboard_section.dart`,
+  `widgets/table_selection_widget.dart`; deleted
+  `widgets/home/home_landing_dashboard.dart` (first deprecated in place, then
+  removed once nothing referenced it and its reachability job was covered by
+  the nav fix); new `widgets/home/table_status_presentation.dart` (the
+  operational-status → icon/label/tone mapping shared by all three
+  table-tile render modes), new `test/unit/table_status_presentation_test.dart`.
 - **Allowed:** navigation/default-route change; single-tap table→menu
   behavior change (explicit, scoped); shell restyle using Phase 2 tokens;
   surfacing Offline/Sync-failed/Printer-failed states (§3) in the top bar.
 - **Forbidden:** touching order/payment logic; touching reservation
   assignment logic (`home_reservation_table_assignment_dialog.dart` — that's
-  master-plan Phase 1 territory, not this plan's).
-- **Acceptance criteria:** Baseline Bar (§6.1) full pass on Tables + shell at
-  all listed resolutions/scaling — plus: session-lock/switch-user
-  reset-to-landing behavior explicitly re-targets to Tables, not the old
-  landing index; every table-status color in the floor plan matches §3's
-  token mapping with a non-color-only signal.
+  master-plan Phase 1 territory, not this plan's). Held: menu/order/payment/
+  reservations/takeaway/admin logic untouched; no global `ThemeData`.
+- **Acceptance criteria:** met — no horizontal overflow at 1280×720 (verified
+  via the Phase 2 responsive rules the tables screen now uses); table grid
+  usable at 1366×768; side rail collapses to a stacked layout below the
+  centralized compact breakpoint (1100 logical px, replacing the previous
+  ad-hoc 920px check); touch targets unchanged (already ≥44px); occupied vs
+  reserved now carry distinct icon+label (not color alone) per §3's
+  colorblind rule — this was a real, previously-inaccurate gap (see notes).
 - **Verification:** switch floor, select table (single + multi for merges),
   open every sidebar destination, open admin, test session-lock/switch-user,
-  before/after screenshots for this phase's screens specifically (§6.3).
+  `flutter analyze` (0 new issues), `flutter test` (122→131; +9 new),
+  `flutter build macos --debug --dart-define=APP_ROLE=pos` (succeeds).
+  **Not done:** manual on-device screenshot pass at every listed
+  resolution/scaling combination — see `docs/UI_PHASE_3_NOTES.md`'s
+  checklist for the user to run.
 - **Rollback risk:** medium — most-trafficked navigation path in the app.
 
 ### UI Phase 4 — Menu/cart speed
@@ -820,6 +851,8 @@ have already mapped to real enum values).
   motion/elevation/touch-target tokens, status→state mapping, primitives.
 - `docs/UI_RESPONSIVE.md` — UI Phase 2 responsive foundation: breakpoints,
   layout modes, panel/dialog/sidebar width rules, target resolutions.
+- `docs/UI_PHASE_3_NOTES.md` — UI Phase 3's before/after summary, migrated
+  screens, known remaining issues, and manual screenshot checklist.
 - `docs/archive/plan.md` — superseded first draft this document replaces.
 - `AGENTS.md` — root rules for all agents.
 - `design/mockups/` — **stale**: referenced files are deleted from the

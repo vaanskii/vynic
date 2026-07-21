@@ -9,6 +9,7 @@ import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/quick_order_draft.dart';
 import 'package:vynic/core/models/package.dart';
+import 'package:vynic/core/models/sale_record.dart';
 
 import 'package:vynic/core/database/hive_migration_service.dart';
 
@@ -123,6 +124,8 @@ class DatabaseCore {
     Hive.registerAdapter(QuickOrderDraftAdapter());
     Hive.registerAdapter(PackageAdapter());
     Hive.registerAdapter(PackageItemAdapter());
+    Hive.registerAdapter(SaleRecordAdapter());
+    Hive.registerAdapter(SaleRecordItemAdapter());
 
     metaBox = await Hive.openBox(metaBoxName);
 

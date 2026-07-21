@@ -151,6 +151,7 @@ class BackupRepository {
       'closedAt': order.closedAt?.toIso8601String(),
       'discountAmount': order.discountAmount,
       'openedByUserId': order.openedByUserId,
+      'closureId': order.closureId,
     };
   }
 
@@ -824,6 +825,7 @@ class BackupRepository {
       closedAt: _tryParseDate(json['closedAt'] as String?),
       discountAmount: (json['discountAmount'] as num?)?.toDouble() ?? 0.0,
       openedByUserId: json['openedByUserId'] as String?,
+      closureId: json['closureId'] as String?,
     );
 
     order.recalculateTotal();

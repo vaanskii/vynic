@@ -88,13 +88,14 @@ class OrderAdapter extends TypeAdapter<Order> {
       manualAdjustmentAmount: (fields[19] as double?) ?? 0.0,
       openedByUserId: fields[20] as String?,
       customServiceFeePercentage: fields[21] as double?,
+      closureId: fields[22] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Order obj) {
     writer
-      ..writeByte(22)
+      ..writeByte(23)
       ..writeByte(0)
       ..write(obj.orderId)
       ..writeByte(1)
@@ -138,7 +139,9 @@ class OrderAdapter extends TypeAdapter<Order> {
       ..writeByte(20)
       ..write(obj.openedByUserId)
       ..writeByte(21)
-      ..write(obj.customServiceFeePercentage);
+      ..write(obj.customServiceFeePercentage)
+      ..writeByte(22)
+      ..write(obj.closureId);
   }
 
   @override

@@ -36,7 +36,7 @@ class HiveMigrationService {
   static const String dbVersionKey = 'db_version';
   static const String lastMigrationKey = 'last_migration_timestamp';
   static const int initialVersion = 1;
-  static const int targetVersion = 3;
+  static const int targetVersion = 4;
 
   static Future<int> readCurrentVersion(Box metaBox) async {
     final stored = metaBox.get(dbVersionKey);
@@ -63,6 +63,16 @@ class HiveMigrationService {
     if (currentVersion < 3) {
       await migrateV2toV3(context);
       currentVersion = 3;
+      await context.metaBox.put(dbVersionKey, currentVersion);
+      await context.metaBox.put(
+        lastMigrationKey,
+        DateTime.now().toIso8601String(),
+      );
+    }
+
+    if (currentVersion < 4) {
+      await migrateV3toV4(context);
+      currentVersion = 4;
       await context.metaBox.put(dbVersionKey, currentVersion);
       await context.metaBox.put(
         lastMigrationKey,
@@ -103,6 +113,32 @@ class HiveMigrationService {
     }
 
     // Add additional box transformation logic here when evolving V1 data.
+  }
+
+  /// V4 accompanies the typed `SaleRecord` schema and `Order.closureId`
+  /// (docs/VYNIC_ROADMAP.md Task 1). Both new fields are nullable, so no
+  /// order/sale data needs restructuring. This migration only materializes
+  /// the sales-map default keys (`isCancelled`, `restoredToOrder`,
+  /// `isFiscal`) that every read path already assumes
+  /// (`SalesRepository._mapSalesRecords` defaults them on read), so the
+  /// stored maps and the future typed conversion agree on shape.
+  /// Idempotent: records that already carry the keys are left untouched.
+  static Future<void> migrateV3toV4(HiveMigrationContext context) async {
+    for (final key in context.salesBox.keys) {
+      final raw = context.salesBox.get(key);
+      if (raw is! Map) continue;
+      final needsCancelled = !raw.containsKey('isCancelled');
+      final needsRestored = !raw.containsKey('restoredToOrder');
+      final needsFiscal = !raw.containsKey('isFiscal');
+      if (!needsCancelled && !needsRestored && !needsFiscal) {
+        continue;
+      }
+      final updated = Map<dynamic, dynamic>.from(raw);
+      if (needsCancelled) updated['isCancelled'] = false;
+      if (needsRestored) updated['restoredToOrder'] = false;
+      if (needsFiscal) updated['isFiscal'] = true;
+      await context.salesBox.put(key, updated);
+    }
   }
 
   /// Backfills [Reservation.tableRefs] from the legacy encoded int codes in

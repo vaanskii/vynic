@@ -5,7 +5,7 @@ This document describes the new Hive migration workflow that protects existing P
 ## Metadata Tracking
 
 - All schema metadata lives in the `meta` box under the `db_version` key.
-- Versions start at `1`; the current build targets version `3`.
+- Versions start at `1`; the current build targets version `4`.
 - The key `last_migration_timestamp` records when the most recent upgrade finished.
 
 ## Version history
@@ -17,6 +17,14 @@ This document describes the new Hive migration workflow that protects existing P
   `tableNumbers` (`> 10` = second floor). New writes keep both fields in
   sync via `ReservationRepository`; the int codes remain only for backups
   and the server wire format.
+- **V4** — accompanies the typed `SaleRecord`/`SaleRecordItem` adapters
+  (typeIds 15/16) and the nullable `Order.closureId` field (`@HiveField(22)`)
+  from roadmap Task 1 (schema only — nothing writes them yet). The migration
+  itself only materializes the sales-map default keys (`isCancelled`,
+  `restoredToOrder`, `isFiscal`) that read paths already assume, so stored
+  maps and the future typed conversion agree on shape. No order or sale data
+  is restructured; rollback is safe because old builds ignore the extra
+  field/keys.
 
 ## Startup Flow
 

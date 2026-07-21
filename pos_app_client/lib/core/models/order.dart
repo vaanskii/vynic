@@ -135,6 +135,13 @@ class Order extends HiveObject {
   @HiveField(21)
   double? customServiceFeePercentage; // Per-order override percentage
 
+  /// Idempotency key linking this order to its sale record when it is closed.
+  /// Schema-only for now (docs/VYNIC_ROADMAP.md Task 1): nothing writes it
+  /// until the atomic close-table flow lands (Task 2). Always null for
+  /// orders closed before that flow exists.
+  @HiveField(22)
+  String? closureId;
+
   // Not persisted in Hive — populated from server for takeaway orders
   String customerName;
   String customerPhone;
@@ -165,6 +172,7 @@ class Order extends HiveObject {
     this.manualAdjustmentAmount = 0.0,
     this.openedByUserId,
     this.customServiceFeePercentage,
+    this.closureId,
     this.customerPhone = '',
     this.pickupTime = '',
     this.customerName = '',
@@ -194,6 +202,7 @@ class Order extends HiveObject {
       manualAdjustmentAmount: manualAdjustmentAmount,
       openedByUserId: openedByUserId,
       customServiceFeePercentage: customServiceFeePercentage,
+      closureId: closureId,
       customerPhone: customerPhone,
       pickupTime: pickupTime,
       customerName: customerName,
@@ -242,6 +251,7 @@ class Order extends HiveObject {
       customServiceFeePercentage:
           (json['customServiceFeePercentage'] as num?)?.toDouble() ??
           (json['serviceFeePercent'] as num?)?.toDouble(),
+      closureId: json['closureId'] as String?,
       customerPhone: json['customerPhone'] as String? ?? '',
       pickupTime: json['pickupTime'] as String? ?? '',
       customerName: json['customerName'] as String? ?? '',
@@ -273,6 +283,7 @@ class Order extends HiveObject {
       'manualAdjustmentAmount': manualAdjustmentAmount,
       'openedByUserId': openedByUserId,
       'customServiceFeePercentage': customServiceFeePercentage,
+      'closureId': closureId,
     };
   }
 

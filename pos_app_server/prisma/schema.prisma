@@ -26,6 +26,10 @@ model Table {
 model Order {
   id                String      @id @default(uuid())
   posOrderId        Int         @unique
+  /// Idempotency key written by the POS atomic table-close flow
+  /// (docs/VYNIC_ARCHITECTURE_PLAN.md §1). Null for every order closed
+  /// before that flow exists; schema-only until roadmap Task 2.
+  closureId         String?     @unique
   status            String
   totalAmount       Float
   guestCount        Int         @default(0)

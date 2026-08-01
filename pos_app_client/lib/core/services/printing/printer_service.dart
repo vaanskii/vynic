@@ -26,7 +26,7 @@ class PrinterService {
   static ui.Image? _cachedReceiptLogo;
   static Rect? _cachedReceiptLogoContentRect;
 
-  /// Reads the admin "hide the service-fee row" receipt setting.
+  /// Reads the admin "show the service-fee row" receipt setting.
   ///
   /// Display only: the fee stays inside the printed total either way. Read
   /// here — the single choke point every receipt passes through — rather than
@@ -35,7 +35,7 @@ class PrinterService {
   /// initializes it), preserving today's behavior.
   static bool _shouldShowServiceFeeLine() {
     try {
-      return !DatabaseService.isReceiptServiceFeeLineHidden();
+      return DatabaseService.isReceiptServiceFeeLineVisible();
     } catch (e) {
       developer.log('Receipt service-fee display setting unavailable: $e');
       return true;

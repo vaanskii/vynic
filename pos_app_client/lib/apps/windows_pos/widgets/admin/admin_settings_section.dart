@@ -26,8 +26,8 @@ class AdminSettingsSection extends StatelessWidget {
     required this.monthlyReportManualSalesController,
     required this.serviceFeeEnabledByDefault,
     required this.onServiceFeeEnabledByDefaultChanged,
-    required this.receiptServiceFeeLineHidden,
-    required this.onReceiptServiceFeeLineHiddenChanged,
+    required this.receiptServiceFeeLineVisible,
+    required this.onReceiptServiceFeeLineVisibleChanged,
     required this.serviceFeePercentDisplay,
     required this.isSavingServiceFee,
     required this.defaultLanguageSetting,
@@ -95,8 +95,8 @@ class AdminSettingsSection extends StatelessWidget {
 
   final bool serviceFeeEnabledByDefault;
   final ValueChanged<bool> onServiceFeeEnabledByDefaultChanged;
-  final bool receiptServiceFeeLineHidden;
-  final ValueChanged<bool> onReceiptServiceFeeLineHiddenChanged;
+  final bool receiptServiceFeeLineVisible;
+  final ValueChanged<bool> onReceiptServiceFeeLineVisibleChanged;
   final String serviceFeePercentDisplay;
   final bool isSavingServiceFee;
   final String defaultLanguageSetting;
@@ -787,16 +787,16 @@ class AdminSettingsSection extends StatelessWidget {
             Row(
               children: [
                 Switch(
-                  value: receiptServiceFeeLineHidden,
+                  value: receiptServiceFeeLineVisible,
                   activeThumbColor: _accentDark,
-                  onChanged: onReceiptServiceFeeLineHiddenChanged,
+                  onChanged: onReceiptServiceFeeLineVisibleChanged,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    receiptServiceFeeLineHidden
-                        ? 'ჩეკზე საკომისიოს ცალკე ხაზი არ იბეჭდება — თანხა ჯამშია.'
-                        : 'ჩეკზე საკომისიო ცალკე ხაზად იბეჭდება.',
+                    receiptServiceFeeLineVisible
+                        ? 'ჩეკზე საკომისიო ცალკე ხაზად იბეჭდება.'
+                        : 'ჩეკზე საკომისიოს ცალკე ხაზი არ იბეჭდება — თანხა ჯამშია.',
                     style: const TextStyle(color: _textMuted, fontSize: 14),
                   ),
                 ),

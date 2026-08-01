@@ -14,7 +14,7 @@ class ReceiptPdfGenerator {
   /// row wherever the settings box is unavailable.
   static bool _resolveShowServiceFeeLine() {
     try {
-      return !DatabaseService.isReceiptServiceFeeLineHidden();
+      return DatabaseService.isReceiptServiceFeeLineVisible();
     } catch (_) {
       return true;
     }
@@ -23,7 +23,7 @@ class ReceiptPdfGenerator {
   /// Generates a PDF receipt for [order].
   ///
   /// [showServiceFeeLine] mirrors the POS receipts: when omitted it follows
-  /// the admin "hide the service-fee row" setting. Display only — the totals
+  /// the admin "show the service-fee row" setting. Display only — the totals
   /// below are unaffected either way.
   static Future<File> generateOrderReceipt({
     required Order order,

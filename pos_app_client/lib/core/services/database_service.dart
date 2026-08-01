@@ -886,14 +886,14 @@ class DatabaseService {
 
   // ========== RECEIPT DISPLAY SETTINGS ==========
 
-  /// Whether printed receipts omit the separate service-fee line. Display
-  /// only — the fee remains inside the receipt total. Default: false.
-  static bool isReceiptServiceFeeLineHidden() =>
-      SettingsRepository.isReceiptServiceFeeLineHidden();
+  /// Whether printed receipts show the separate service-fee line. Display
+  /// only — the fee is inside the receipt total either way. Default: true.
+  static bool isReceiptServiceFeeLineVisible() =>
+      SettingsRepository.isReceiptServiceFeeLineVisible();
 
-  /// Set whether printed receipts omit the separate service-fee line.
-  static Future<void> setReceiptServiceFeeLineHidden(bool hidden) =>
-      SettingsRepository.setReceiptServiceFeeLineHidden(hidden);
+  /// Set whether printed receipts show the separate service-fee line.
+  static Future<void> setReceiptServiceFeeLineVisible(bool visible) =>
+      SettingsRepository.setReceiptServiceFeeLineVisible(visible);
 
   static Future<File> createDataBackup({String? targetFilePath}) =>
       BackupRepository.createDataBackup(targetFilePath: targetFilePath);

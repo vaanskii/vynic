@@ -69,7 +69,7 @@ class _AdminScreenState extends State<AdminScreen> {
       TextEditingController();
 
   bool _serviceFeeEnabledByDefault = false;
-  bool _receiptServiceFeeLineHidden = false;
+  bool _receiptServiceFeeLineVisible = true;
   double _serviceFeePercent = 10.0;
   String _defaultLanguageSetting = 'ka';
   String? _lastBackupPath;
@@ -168,8 +168,8 @@ class _AdminScreenState extends State<AdminScreen> {
     _serviceFeePercent = DatabaseService.getServiceFeePercentage();
     _serviceFeeEnabledByDefault =
         DatabaseService.isServiceFeeEnabledByDefault();
-    _receiptServiceFeeLineHidden =
-        DatabaseService.isReceiptServiceFeeLineHidden();
+    _receiptServiceFeeLineVisible =
+        DatabaseService.isReceiptServiceFeeLineVisible();
     _serviceFeeController.text = _formatServiceFeeField(_serviceFeePercent);
 
     _defaultLanguageSetting = DatabaseService.getDefaultLanguage();
@@ -1569,10 +1569,10 @@ class _AdminScreenState extends State<AdminScreen> {
           _serviceFeeEnabledByDefault = value;
         });
       },
-      receiptServiceFeeLineHidden: _receiptServiceFeeLineHidden,
-      onReceiptServiceFeeLineHiddenChanged: (value) {
+      receiptServiceFeeLineVisible: _receiptServiceFeeLineVisible,
+      onReceiptServiceFeeLineVisibleChanged: (value) {
         setState(() {
-          _receiptServiceFeeLineHidden = value;
+          _receiptServiceFeeLineVisible = value;
         });
       },
       serviceFeePercentDisplay:
@@ -1900,8 +1900,8 @@ class _AdminScreenState extends State<AdminScreen> {
       );
       // Receipt display preference is saved by the same action: it lives in
       // the same card and never affects totals.
-      await DatabaseService.setReceiptServiceFeeLineHidden(
-        _receiptServiceFeeLineHidden,
+      await DatabaseService.setReceiptServiceFeeLineVisible(
+        _receiptServiceFeeLineVisible,
       );
       _serviceFeePercent = parsedPercent;
       _serviceFeeController.text = _formatServiceFeeField(parsedPercent);

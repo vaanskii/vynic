@@ -21,7 +21,12 @@ class SettingsRepository {
   static const String _backendUrlOverrideSetting = 'backendUrlOverride';
   static const String _restrictTableCloseToOwnerSetting =
       'restrictTableCloseToOwner';
-  static const String _receiptHideServiceFeeLineSetting =
+  static const String _receiptShowServiceFeeLineSetting =
+      'receiptShowServiceFeeLine';
+
+  /// Superseded by [_receiptShowServiceFeeLineSetting] (inverted). Read only,
+  /// so a terminal that already toggled the old key keeps its choice.
+  static const String _legacyReceiptHideServiceFeeLineSetting =
       'receiptHideServiceFeeLine';
   static const String _destructivePasswordSetting =
       'destructiveActionPasswordHash';
@@ -607,23 +612,29 @@ class SettingsRepository {
     await _settingsBox!.put(_restrictTableCloseToOwnerSetting, restricted);
   }
 
-  /// Whether printed customer receipts omit the separate service-fee line.
+  /// Whether printed customer receipts show the separate service-fee line.
   ///
-  /// Display only: the fee stays in the receipt total exactly as before, this
-  /// just hides the "სერვისის საფასური დამატებულია" row. Defaults to `false`
-  /// so existing installs keep printing the line.
-  static bool isReceiptServiceFeeLineHidden() {
-    if (_settingsBox == null) return false; // not initialized on mobile
-    return _settingsBox!.get(
-          _receiptHideServiceFeeLineSetting,
-          defaultValue: false,
-        )
-        as bool;
+  /// Display only: the fee is inside the receipt total either way, this just
+  /// controls the "სერვისის საფასური დამატებულია" row. Defaults to `true` —
+  /// the row prints, which is how the POS has always behaved.
+  static bool isReceiptServiceFeeLineVisible() {
+    if (_settingsBox == null) return true; // not initialized on mobile
+    final stored = _settingsBox!.get(_receiptShowServiceFeeLineSetting);
+    if (stored is bool) return stored;
+    // Fall back to the superseded inverted key so a terminal that already
+    // chose "hide" before the rename keeps that choice.
+    final legacyHidden = _settingsBox!.get(
+      _legacyReceiptHideServiceFeeLineSetting,
+    );
+    if (legacyHidden is bool) return !legacyHidden;
+    return true;
   }
 
-  /// Set whether printed receipts omit the separate service-fee line.
-  static Future<void> setReceiptServiceFeeLineHidden(bool hidden) async {
-    await _settingsBox!.put(_receiptHideServiceFeeLineSetting, hidden);
+  /// Set whether printed receipts show the separate service-fee line.
+  static Future<void> setReceiptServiceFeeLineVisible(bool visible) async {
+    await _settingsBox!.put(_receiptShowServiceFeeLineSetting, visible);
+    // Keep the superseded key from overriding a newer choice on re-read.
+    await _settingsBox!.delete(_legacyReceiptHideServiceFeeLineSetting);
   }
 
   // ==================== POS ↔ SERVER CONNECTION ====================

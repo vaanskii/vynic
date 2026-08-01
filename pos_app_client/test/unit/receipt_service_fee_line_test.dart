@@ -255,25 +255,44 @@ void main() {
       tempDir.deleteSync(recursive: true);
     });
 
-    test('defaults to false for existing installs (key absent)', () {
-      expect(settingsBox.containsKey('receiptHideServiceFeeLine'), isFalse);
-      expect(SettingsRepository.isReceiptServiceFeeLineHidden(), isFalse);
+    test('defaults to visible for existing installs (key absent)', () {
+      expect(settingsBox.containsKey('receiptShowServiceFeeLine'), isFalse);
+      expect(SettingsRepository.isReceiptServiceFeeLineVisible(), isTrue);
     });
 
     test('persists and round-trips', () async {
-      await SettingsRepository.setReceiptServiceFeeLineHidden(true);
-      expect(SettingsRepository.isReceiptServiceFeeLineHidden(), isTrue);
-      expect(settingsBox.get('receiptHideServiceFeeLine'), isTrue);
+      await SettingsRepository.setReceiptServiceFeeLineVisible(false);
+      expect(SettingsRepository.isReceiptServiceFeeLineVisible(), isFalse);
+      expect(settingsBox.get('receiptShowServiceFeeLine'), isFalse);
 
-      await SettingsRepository.setReceiptServiceFeeLineHidden(false);
-      expect(SettingsRepository.isReceiptServiceFeeLineHidden(), isFalse);
+      await SettingsRepository.setReceiptServiceFeeLineVisible(true);
+      expect(SettingsRepository.isReceiptServiceFeeLineVisible(), isTrue);
+      expect(settingsBox.get('receiptShowServiceFeeLine'), isTrue);
+    });
+
+    test('honours the superseded inverted key when the new one is absent', () {
+      // A terminal that toggled the setting before the rename kept
+      // `receiptHideServiceFeeLine: true` — that must still mean "hidden".
+      settingsBox.put('receiptHideServiceFeeLine', true);
+      expect(SettingsRepository.isReceiptServiceFeeLineVisible(), isFalse);
+
+      settingsBox.put('receiptHideServiceFeeLine', false);
+      expect(SettingsRepository.isReceiptServiceFeeLineVisible(), isTrue);
+    });
+
+    test('a new write wins over the superseded key', () async {
+      await settingsBox.put('receiptHideServiceFeeLine', true); // legacy hidden
+      await SettingsRepository.setReceiptServiceFeeLineVisible(true);
+
+      expect(SettingsRepository.isReceiptServiceFeeLineVisible(), isTrue);
+      expect(settingsBox.containsKey('receiptHideServiceFeeLine'), isFalse);
     });
 
     test('does not disturb the service-fee rate settings', () async {
       await settingsBox.put('serviceFeePercent', 12.0);
       await settingsBox.put('serviceFeeEnabled', true);
 
-      await SettingsRepository.setReceiptServiceFeeLineHidden(true);
+      await SettingsRepository.setReceiptServiceFeeLineVisible(false);
 
       expect(SettingsRepository.getServiceFeePercentage(), 12.0);
       expect(SettingsRepository.getServiceFeeRate(), closeTo(0.12, 1e-9));

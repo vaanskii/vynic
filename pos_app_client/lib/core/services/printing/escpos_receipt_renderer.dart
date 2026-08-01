@@ -14,6 +14,23 @@ typedef GetReceiptLogoContentRect = Future<Rect> Function(ui.Image image);
 class EscposReceiptRenderer {
   const EscposReceiptRenderer._();
 
+  /// Whether the separate service-fee row should be drawn.
+  ///
+  /// Purely a display decision — the fee's contribution to the printed total
+  /// is governed by `includeServiceFee` where the total is computed, and this
+  /// predicate is deliberately not consulted there. Close-table receipts have
+  /// never shown the row (the total already covers it), so the admin toggle
+  /// is a no-op for them.
+  static bool shouldShowServiceFeeLine({
+    required bool isCloseTableReceipt,
+    required bool includeServiceFee,
+    required bool showServiceFeeLine,
+  }) {
+    if (isCloseTableReceipt) return false;
+    if (!includeServiceFee) return false;
+    return showServiceFeeLine;
+  }
+
   /// Generate ESC/POS byte commands for customer receipt.
   static Future<List<int>> generateBytes({
     required List<String> items,
@@ -30,6 +47,9 @@ class EscposReceiptRenderer {
     double? discountAmount,
     double? manualAdjustment,
     String? receiptType,
+    // Display only: when false the separate service-fee row is not drawn.
+    // Never affects the receipt total (includeServiceFee governs that).
+    bool showServiceFeeLine = true,
     required LoadReceiptLogoImage loadReceiptLogoImage,
     required GetReceiptLogoContentRect getReceiptLogoContentRect,
   }) async {
@@ -58,6 +78,7 @@ class EscposReceiptRenderer {
       discountAmount: discountAmount,
       manualAdjustment: manualAdjustment,
       receiptType: receiptType,
+      showServiceFeeLine: showServiceFeeLine,
       loadReceiptLogoImage: loadReceiptLogoImage,
       getReceiptLogoContentRect: getReceiptLogoContentRect,
     );
@@ -91,6 +112,9 @@ class EscposReceiptRenderer {
     double? discountAmount,
     double? manualAdjustment,
     String? receiptType,
+    // Display only: when false the separate service-fee row is not drawn.
+    // Never affects the receipt total (includeServiceFee governs that).
+    bool showServiceFeeLine = true,
     required LoadReceiptLogoImage loadReceiptLogoImage,
     required GetReceiptLogoContentRect getReceiptLogoContentRect,
   }) async {
@@ -110,6 +134,7 @@ class EscposReceiptRenderer {
         discountAmount: discountAmount,
         manualAdjustment: manualAdjustment,
         receiptType: receiptType,
+        showServiceFeeLine: showServiceFeeLine,
         loadReceiptLogoImage: loadReceiptLogoImage,
         getReceiptLogoContentRect: getReceiptLogoContentRect,
       );
@@ -139,6 +164,9 @@ class EscposReceiptRenderer {
     double? discountAmount,
     double? manualAdjustment,
     String? receiptType,
+    // Display only: when false the separate service-fee row is not drawn.
+    // Never affects the receipt total (includeServiceFee governs that).
+    bool showServiceFeeLine = true,
     required LoadReceiptLogoImage loadReceiptLogoImage,
     required GetReceiptLogoContentRect getReceiptLogoContentRect,
   }) async {
@@ -615,7 +643,11 @@ class EscposReceiptRenderer {
         currentY += 12;
       }
 
-      if (!isCloseTableReceipt && includeServiceFee) {
+      if (shouldShowServiceFeeLine(
+        isCloseTableReceipt: isCloseTableReceipt,
+        includeServiceFee: includeServiceFee,
+        showServiceFeeLine: showServiceFeeLine,
+      )) {
         final serviceFeeLabel = isEnglish
             ? 'Service Fee Included'
             : 'სერვისის საფასური დამატებულია';
@@ -732,6 +764,9 @@ class EscposReceiptRenderer {
     double? discountAmount,
     double? manualAdjustment,
     String? receiptType,
+    // Display only: when false the separate service-fee row is not drawn.
+    // Never affects the receipt total (includeServiceFee governs that).
+    bool showServiceFeeLine = true,
     required LoadReceiptLogoImage loadReceiptLogoImage,
     required GetReceiptLogoContentRect getReceiptLogoContentRect,
   }) async {
@@ -751,6 +786,7 @@ class EscposReceiptRenderer {
         discountAmount: discountAmount,
         manualAdjustment: manualAdjustment,
         receiptType: receiptType,
+        showServiceFeeLine: showServiceFeeLine,
         loadReceiptLogoImage: loadReceiptLogoImage,
         getReceiptLogoContentRect: getReceiptLogoContentRect,
       );

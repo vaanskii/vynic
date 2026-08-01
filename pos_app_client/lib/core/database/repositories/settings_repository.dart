@@ -21,6 +21,8 @@ class SettingsRepository {
   static const String _backendUrlOverrideSetting = 'backendUrlOverride';
   static const String _restrictTableCloseToOwnerSetting =
       'restrictTableCloseToOwner';
+  static const String _receiptHideServiceFeeLineSetting =
+      'receiptHideServiceFeeLine';
   static const String _destructivePasswordSetting =
       'destructiveActionPasswordHash';
   static const String _destructivePasswordSaltSetting =
@@ -603,6 +605,25 @@ class SettingsRepository {
   /// Set whether table closing is restricted to the owner
   static Future<void> setTableCloseRestrictedToOwner(bool restricted) async {
     await _settingsBox!.put(_restrictTableCloseToOwnerSetting, restricted);
+  }
+
+  /// Whether printed customer receipts omit the separate service-fee line.
+  ///
+  /// Display only: the fee stays in the receipt total exactly as before, this
+  /// just hides the "სერვისის საფასური დამატებულია" row. Defaults to `false`
+  /// so existing installs keep printing the line.
+  static bool isReceiptServiceFeeLineHidden() {
+    if (_settingsBox == null) return false; // not initialized on mobile
+    return _settingsBox!.get(
+          _receiptHideServiceFeeLineSetting,
+          defaultValue: false,
+        )
+        as bool;
+  }
+
+  /// Set whether printed receipts omit the separate service-fee line.
+  static Future<void> setReceiptServiceFeeLineHidden(bool hidden) async {
+    await _settingsBox!.put(_receiptHideServiceFeeLineSetting, hidden);
   }
 
   // ==================== POS ↔ SERVER CONNECTION ====================

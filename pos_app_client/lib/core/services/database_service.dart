@@ -884,6 +884,17 @@ class DatabaseService {
   static Future<void> setTableCloseRestrictedToOwner(bool restricted) =>
       SettingsRepository.setTableCloseRestrictedToOwner(restricted);
 
+  // ========== RECEIPT DISPLAY SETTINGS ==========
+
+  /// Whether printed receipts omit the separate service-fee line. Display
+  /// only — the fee remains inside the receipt total. Default: false.
+  static bool isReceiptServiceFeeLineHidden() =>
+      SettingsRepository.isReceiptServiceFeeLineHidden();
+
+  /// Set whether printed receipts omit the separate service-fee line.
+  static Future<void> setReceiptServiceFeeLineHidden(bool hidden) =>
+      SettingsRepository.setReceiptServiceFeeLineHidden(hidden);
+
   static Future<File> createDataBackup({String? targetFilePath}) =>
       BackupRepository.createDataBackup(targetFilePath: targetFilePath);
 

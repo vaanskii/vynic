@@ -26,6 +26,8 @@ class AdminSettingsSection extends StatelessWidget {
     required this.monthlyReportManualSalesController,
     required this.serviceFeeEnabledByDefault,
     required this.onServiceFeeEnabledByDefaultChanged,
+    required this.receiptServiceFeeLineHidden,
+    required this.onReceiptServiceFeeLineHiddenChanged,
     required this.serviceFeePercentDisplay,
     required this.isSavingServiceFee,
     required this.defaultLanguageSetting,
@@ -93,6 +95,8 @@ class AdminSettingsSection extends StatelessWidget {
 
   final bool serviceFeeEnabledByDefault;
   final ValueChanged<bool> onServiceFeeEnabledByDefaultChanged;
+  final bool receiptServiceFeeLineHidden;
+  final ValueChanged<bool> onReceiptServiceFeeLineHiddenChanged;
   final String serviceFeePercentDisplay;
   final bool isSavingServiceFee;
   final String defaultLanguageSetting;
@@ -767,6 +771,41 @@ class AdminSettingsSection extends StatelessWidget {
             Text(
               'მიმდინარე განაკვეთი: $serviceFeePercentDisplay% (გამოიყენება ჩეკებსა და ანგარიშებში).',
               style: const TextStyle(color: _textMuted, fontSize: 12),
+            ),
+            const SizedBox(height: 20),
+            const Divider(height: 1, color: _borderColor),
+            const SizedBox(height: 20),
+            const Text(
+              'ჩეკზე ასახვა',
+              style: TextStyle(
+                color: _textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Switch(
+                  value: receiptServiceFeeLineHidden,
+                  activeThumbColor: _accentDark,
+                  onChanged: onReceiptServiceFeeLineHiddenChanged,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    receiptServiceFeeLineHidden
+                        ? 'ჩეკზე საკომისიოს ცალკე ხაზი არ იბეჭდება — თანხა ჯამშია.'
+                        : 'ჩეკზე საკომისიო ცალკე ხაზად იბეჭდება.',
+                    style: const TextStyle(color: _textMuted, fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'მხოლოდ ჩეკის ვიზუალი იცვლება — ჯამური თანხა და ანგარიშები უცვლელია.',
+              style: TextStyle(color: _textMuted, fontSize: 12),
             ),
             const SizedBox(height: 24),
             _buildActionRow(

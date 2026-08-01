@@ -5,15 +5,33 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/services/database_service.dart';
 
 class ReceiptPdfGenerator {
   ReceiptPdfGenerator._();
 
+  /// Same admin setting the ESC/POS receipts honor. Falls back to showing the
+  /// row wherever the settings box is unavailable.
+  static bool _resolveShowServiceFeeLine() {
+    try {
+      return !DatabaseService.isReceiptServiceFeeLineHidden();
+    } catch (_) {
+      return true;
+    }
+  }
+
+  /// Generates a PDF receipt for [order].
+  ///
+  /// [showServiceFeeLine] mirrors the POS receipts: when omitted it follows
+  /// the admin "hide the service-fee row" setting. Display only — the totals
+  /// below are unaffected either way.
   static Future<File> generateOrderReceipt({
     required Order order,
     String language = 'ka',
+    bool? showServiceFeeLine,
   }) async {
     final isEnglish = language == 'en';
+    final showFeeRow = showServiceFeeLine ?? _resolveShowServiceFeeLine();
     final pdf = pw.Document();
 
     // Load fonts and logo
@@ -244,7 +262,9 @@ class ReceiptPdfGenerator {
                 fontSize: 9,
               ),
 
-              if (order.includeServiceFee && order.getServiceFee() > 0)
+              if (showFeeRow &&
+                  order.includeServiceFee &&
+                  order.getServiceFee() > 0)
                 _buildTotalRow(
                   '${isEnglish ? "Service" : "სერვისი"} (${(order.getEffectiveServiceFeePercentage()).toStringAsFixed(0)}%)',
                   '${order.getServiceFee().toStringAsFixed(2)} GEL',

@@ -26,6 +26,22 @@ class PrinterService {
   static ui.Image? _cachedReceiptLogo;
   static Rect? _cachedReceiptLogoContentRect;
 
+  /// Reads the admin "hide the service-fee row" receipt setting.
+  ///
+  /// Display only: the fee stays inside the printed total either way. Read
+  /// here — the single choke point every receipt passes through — rather than
+  /// at each of the ~13 call sites. Falls back to showing the row wherever the
+  /// settings box is unavailable (e.g. the mobile app, which never
+  /// initializes it), preserving today's behavior.
+  static bool _shouldShowServiceFeeLine() {
+    try {
+      return !DatabaseService.isReceiptServiceFeeLineHidden();
+    } catch (e) {
+      developer.log('Receipt service-fee display setting unavailable: $e');
+      return true;
+    }
+  }
+
   static Future<ui.Image?> _loadReceiptLogoImage() async {
     if (_cachedReceiptLogo != null) {
       return _cachedReceiptLogo;
@@ -447,7 +463,9 @@ class PrinterService {
         return false;
       }
 
-      // Generate ESC/POS commands for receipt
+      // Generate ESC/POS commands for receipt.
+      // Display-only admin setting: hides the separate service-fee row while
+      // leaving the printed total untouched.
       final List<int> bytes = await EscposReceiptRenderer.generateBytes(
         items: items,
         total: total,
@@ -463,6 +481,7 @@ class PrinterService {
         discountAmount: discountAmount,
         manualAdjustment: manualAdjustment,
         receiptType: receiptType,
+        showServiceFeeLine: _shouldShowServiceFeeLine(),
         loadReceiptLogoImage: _loadReceiptLogoImage,
         getReceiptLogoContentRect: _getReceiptLogoContentRect,
       );
@@ -513,6 +532,7 @@ class PrinterService {
       discountAmount: discountAmount,
       manualAdjustment: manualAdjustment,
       receiptType: receiptType,
+      showServiceFeeLine: _shouldShowServiceFeeLine(),
       loadReceiptLogoImage: _loadReceiptLogoImage,
       getReceiptLogoContentRect: _getReceiptLogoContentRect,
     );

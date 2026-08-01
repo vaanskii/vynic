@@ -951,6 +951,42 @@ class TablePaymentService {
 }
 
 class TableClosureHelper {
+  /// Tolerance for reconciling tendered amounts against a sale total. Matches
+  /// [TablePaymentService._amountTolerance] so a split that the payment dialog
+  /// accepted can never be rejected here.
+  static const double breakdownTolerance = 0.01;
+
+  /// Returns `null` when [breakdown] reconciles with [total]; otherwise a
+  /// description of the mismatch.
+  ///
+  /// A sale whose tender lines don't add up to its recorded total is a
+  /// money-integrity failure: the guest was charged one amount and a different
+  /// one would be booked. Callers must block the close and surface the reason
+  /// rather than persisting the two numbers.
+  static String? describeBreakdownMismatch({
+    required Map<String, double>? breakdown,
+    required double total,
+  }) {
+    if (breakdown == null || breakdown.isEmpty) {
+      return 'payment breakdown is empty for a total of '
+          '${total.toStringAsFixed(2)}';
+    }
+    // Round before comparing: binary floating point makes an exact
+    // one-tetri difference (105.01 - 105.00) come out fractionally above
+    // 0.01, which would reject a legitimate tender.
+    final sum = _round(breakdown.values.fold<double>(0, (a, b) => a + b));
+    final delta = _round(sum - total);
+    if (delta.abs() <= breakdownTolerance) {
+      return null;
+    }
+    final parts = breakdown.entries
+        .map((entry) => '${entry.key}=${entry.value.toStringAsFixed(2)}')
+        .join(', ');
+    return 'payment breakdown ($parts) sums to ${sum.toStringAsFixed(2)} '
+        'but the sale total is ${total.toStringAsFixed(2)} '
+        '(difference ${delta.toStringAsFixed(2)})';
+  }
+
   static Map<String, double>? buildSaleBreakdown(
     TablePaymentSelection? selection,
   ) {

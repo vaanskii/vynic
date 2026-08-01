@@ -435,14 +435,31 @@ class Order extends HiveObject {
     return _resolveDefaultServiceFeeRate() * 100;
   }
 
+  /// Single source of truth for the rate used by both [recalculateTotal] and
+  /// [getServiceFee]. Resolution order:
+  ///
+  /// 1. this order's own [customServiceFeePercentage],
+  /// 2. an explicitly supplied [serviceFeeRate],
+  /// 3. the global default from [serviceFeeRateResolver].
+  ///
+  /// The per-order override must win over an explicitly passed rate. The close
+  /// flow recalculates the total with the *global* rate while the sale record
+  /// reads [getServiceFee] (which has no rate to pass); when an explicit rate
+  /// took precedence those two disagreed, so the guest was charged one amount
+  /// and a different one was booked. Keeping the override first makes every
+  /// caller — with or without an explicit rate — agree on one number.
+  ///
+  /// Note: a custom percentage of exactly 0 still falls through to the next
+  /// tier (unchanged from before); "0% means no fee" is expressed by
+  /// [includeServiceFee], which short-circuits both callers.
   double _resolveEffectiveServiceFeeRate({double? serviceFeeRate}) {
-    if (serviceFeeRate != null) {
-      return serviceFeeRate >= 0 ? serviceFeeRate : 0;
-    }
-
     final customPercent = customServiceFeePercentage;
     if (customPercent != null && customPercent > 0) {
       return customPercent / 100;
+    }
+
+    if (serviceFeeRate != null) {
+      return serviceFeeRate >= 0 ? serviceFeeRate : 0;
     }
 
     return _resolveDefaultServiceFeeRate();

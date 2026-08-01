@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/user.dart';
@@ -2359,15 +2360,38 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final serviceFee = order.getServiceFee();
     final closedAt = DatabaseService.getCurrentDateTime();
     final advanceAmount = order.discountAmount > 0 ? order.discountAmount : 0.0;
-    final computedRemainingTotal =
-        subtotal + serviceFee + order.manualAdjustmentAmount - advanceAmount;
-    final remainingFiscalTotal = double.parse(
-      (computedRemainingTotal < 0 ? 0.0 : computedRemainingTotal)
-          .toStringAsFixed(2),
-    );
+    // Record exactly what the guest was charged. `order.totalAmount` is the
+    // number the payment dialog collected against (both come from the same
+    // recalculateTotal above), so the sale can no longer disagree with the
+    // tender. The non-fiscal, take-away and cancelled paths already record
+    // this field; re-deriving it here is what let a per-order service fee
+    // book a different total than the one presented to the guest.
+    final remainingFiscalTotal = order.totalAmount;
 
     final saleBreakdown = TableClosureHelper.buildSaleBreakdown(selection);
     final paymentMethodKey = TableClosureHelper.resolvePaymentMethod(selection);
+
+    // Money-integrity gate: never persist a sale whose tender doesn't add up
+    // to its recorded total. Block the close and say why instead of silently
+    // storing two different numbers.
+    final breakdownMismatch = TableClosureHelper.describeBreakdownMismatch(
+      breakdown: saleBreakdown,
+      total: remainingFiscalTotal,
+    );
+    if (breakdownMismatch != null) {
+      developer.log(
+        'Table closure blocked for order #${order.orderId}: $breakdownMismatch',
+        name: 'order_close',
+      );
+      if (!mounted) {
+        return;
+      }
+      await showErrorToast(
+        context,
+        'გადახდის ჯამი არ ემთხვევა შეკვეთის თანხას — დახურვა შეჩერდა',
+      );
+      return;
+    }
     final finalTransaction = TableClosureHelper.buildFinalTransactionRecord(
       order: order,
       selection: selection,

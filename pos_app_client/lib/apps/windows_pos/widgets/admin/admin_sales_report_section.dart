@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/services/database_service.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_financial_reports_panel.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 
 enum _SalesPeriod { today, week, month }
@@ -13,12 +14,17 @@ class AdminSalesReportSection extends StatefulWidget {
     required this.selectedSalesMonth,
     required this.onChangeSalesMonth,
     required this.onSetSelectedSalesMonth,
+    required this.financialReports,
   });
 
   final int selectedSalesYear;
   final int selectedSalesMonth;
   final ValueChanged<int> onChangeSalesMonth;
   final ValueChanged<DateTime> onSetSelectedSalesMonth;
+
+  /// Monthly / full report tooling, relocated here from the Settings tab.
+  /// Built by `AdminScreen` so the controllers and callbacks stay in one place.
+  final AdminFinancialReportsPanel financialReports;
 
   @override
   State<AdminSalesReportSection> createState() =>
@@ -151,6 +157,8 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
                   totalQuantity: kpis.totalItems,
                   isMobile: isMobile,
                 ),
+                const SizedBox(height: 18),
+                widget.financialReports,
               ],
             ),
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_data_backup_panel.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:vynic/core/services/sync/api_config.dart';
 import 'package:vynic/core/services/pos/app_mode.dart';
@@ -8,7 +9,24 @@ import 'package:vynic/core/services/sync/manager_sync_service.dart';
 import 'package:vynic/core/services/sync/pos_callback_config.dart';
 
 class AdminConnectionSection extends StatefulWidget {
-  const AdminConnectionSection({super.key});
+  const AdminConnectionSection({
+    super.key,
+    required this.lastBackupPath,
+    required this.lastRestorePath,
+    required this.isCreatingBackup,
+    required this.isRestoringBackup,
+    required this.onCreateBackupFile,
+    required this.onRestoreBackupFromFile,
+  });
+
+  /// Backup state and actions, owned by `AdminScreen`. Passed through to
+  /// [AdminDataBackupPanel] unchanged — this section only hosts the panel.
+  final String? lastBackupPath;
+  final String? lastRestorePath;
+  final bool isCreatingBackup;
+  final bool isRestoringBackup;
+  final AsyncVoidCallback onCreateBackupFile;
+  final AsyncVoidCallback onRestoreBackupFromFile;
 
   @override
   State<AdminConnectionSection> createState() => _AdminConnectionSectionState();
@@ -57,9 +75,9 @@ class _AdminConnectionSectionState extends State<AdminConnectionSection> {
                 children: [
                   AdminSectionHeader(
                     icon: Icons.lan_outlined,
-                    title: 'კავშირი',
+                    title: 'კავშირი და მონაცემები',
                     subtitle:
-                        'Windows POS კავშირი backend-თან, sync სტატუსი და callback მისამართები.',
+                        'Windows POS კავშირი backend-თან, sync სტატუსი, callback მისამართები და მონაცემების სარეზერვო ასლი.',
                     badge: _StatusBadge(state: state),
                   ),
                   const SizedBox(height: 16),
@@ -91,6 +109,15 @@ class _AdminConnectionSectionState extends State<AdminConnectionSection> {
                   ),
                   const SizedBox(height: 14),
                   _buildPrintHostPanel(),
+                  const SizedBox(height: 14),
+                  AdminDataBackupPanel(
+                    lastBackupPath: widget.lastBackupPath,
+                    lastRestorePath: widget.lastRestorePath,
+                    isCreatingBackup: widget.isCreatingBackup,
+                    isRestoringBackup: widget.isRestoringBackup,
+                    onCreateBackupFile: widget.onCreateBackupFile,
+                    onRestoreBackupFromFile: widget.onRestoreBackupFromFile,
+                  ),
                 ],
               );
             },

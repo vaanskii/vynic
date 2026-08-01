@@ -14,6 +14,7 @@ import 'package:vynic/apps/windows_pos/widgets/admin/admin_sales_report_section.
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_audit_log_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_error_log_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_connection_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_financial_reports_panel.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_settings_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/printers/admin_printers_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_reservations_section.dart';
@@ -1551,8 +1552,6 @@ class _AdminScreenState extends State<AdminScreen> {
     return AdminSettingsSection(
       formatDateTimeDisplay: _formatDateTimeDisplay,
       formatRelativeTime: _formatRelativeTime,
-      getGeorgianMonthName: _getGeorgianMonthName,
-      getDaysInMonth: _getDaysInMonth,
       serviceFeeController: _serviceFeeController,
       currentCancellationPasswordController:
           _currentCancellationPasswordController,
@@ -1560,9 +1559,6 @@ class _AdminScreenState extends State<AdminScreen> {
       confirmCancellationPasswordController:
           _confirmCancellationPasswordController,
       cancellationPasswordHintController: _cancellationPasswordHintController,
-      monthlyReportLeaseController: _monthlyReportLeaseController,
-      monthlyReportStaffDailyController: _monthlyReportStaffDailyController,
-      monthlyReportManualSalesController: _monthlyReportManualSalesController,
       serviceFeeEnabledByDefault: _serviceFeeEnabledByDefault,
       onServiceFeeEnabledByDefaultChanged: (value) {
         setState(() {
@@ -1585,10 +1581,6 @@ class _AdminScreenState extends State<AdminScreen> {
         });
       },
       isSavingLocalization: _isSavingLocalization,
-      lastBackupPath: _lastBackupPath,
-      lastRestorePath: _lastRestorePath,
-      isCreatingBackup: _isCreatingBackup,
-      isRestoringBackup: _isRestoringBackup,
       isCancellationPasswordSet: _isCancellationPasswordSet,
       isSavingCancellationPassword: _isSavingCancellationPassword,
       cancellationPasswordUpdatedAt: _cancellationPasswordUpdatedAt,
@@ -1599,6 +1591,24 @@ class _AdminScreenState extends State<AdminScreen> {
         });
       },
       isSavingTableOwnershipSettings: _isSavingTableOwnershipSettings,
+      onSaveServiceFeeSettings: _saveServiceFeeSettings,
+      onSaveCancellationPassword: _saveCancellationPassword,
+      onSaveTableOwnershipSettings: _saveTableOwnershipSettings,
+      onSaveLocalizationSettings: _saveLocalizationSettings,
+    );
+  }
+
+  /// Monthly + full report tooling. Rendered inside the sales report section;
+  /// the state, controllers and callbacks stay owned by this screen, exactly
+  /// as they were when the settings tab hosted these cards.
+  AdminFinancialReportsPanel _buildFinancialReportsPanel() {
+    return AdminFinancialReportsPanel(
+      getGeorgianMonthName: _getGeorgianMonthName,
+      getDaysInMonth: _getDaysInMonth,
+      monthlyReportLeaseController: _monthlyReportLeaseController,
+      monthlyReportStaffDailyController: _monthlyReportStaffDailyController,
+      monthlyReportManualSalesController: _monthlyReportManualSalesController,
+      currencyFormatter: _currencyFormatter,
       monthlyReportProfitRatio: _monthlyReportProfitRatio,
       onMonthlyReportProfitRatioChanged: (value) {
         setState(() {
@@ -1656,7 +1666,6 @@ class _AdminScreenState extends State<AdminScreen> {
       monthlyReportMonthOptions: _monthlyReportMonthOptions,
       monthlyReportPreview: _monthlyReportPreview,
       monthlyReportInputError: _monthlyReportInputError,
-      currencyFormatter: _currencyFormatter,
       fullReportStartMonth: _fullReportStartMonth,
       fullReportEndMonth: _fullReportEndMonth,
       fullReportMonthOptions: _fullReportMonthOptions,
@@ -1688,12 +1697,6 @@ class _AdminScreenState extends State<AdminScreen> {
       onSaveMonthlyReportConfig: _saveMonthlyReportConfig,
       onGenerateMonthlyReportExcel: _generateMonthlyReportExcel,
       onGenerateMonthlyReportPdf: _generateMonthlyReportPdf,
-      onSaveServiceFeeSettings: _saveServiceFeeSettings,
-      onSaveCancellationPassword: _saveCancellationPassword,
-      onSaveTableOwnershipSettings: _saveTableOwnershipSettings,
-      onSaveLocalizationSettings: _saveLocalizationSettings,
-      onCreateBackupFile: _createBackupFile,
-      onRestoreBackupFromFile: _restoreBackupFromFile,
     );
   }
 
@@ -3432,6 +3435,7 @@ class _AdminScreenState extends State<AdminScreen> {
           selectedSalesMonth: _selectedSalesMonth,
           onChangeSalesMonth: _changeSalesMonth,
           onSetSelectedSalesMonth: _setSelectedSalesMonth,
+          financialReports: _buildFinancialReportsPanel(),
         );
       case 'audit':
         return AdminAuditLogSection(
@@ -3445,7 +3449,14 @@ class _AdminScreenState extends State<AdminScreen> {
       case 'printers':
         return _buildPrintersSection();
       case 'connection':
-        return const AdminConnectionSection();
+        return AdminConnectionSection(
+          lastBackupPath: _lastBackupPath,
+          lastRestorePath: _lastRestorePath,
+          isCreatingBackup: _isCreatingBackup,
+          isRestoringBackup: _isRestoringBackup,
+          onCreateBackupFile: _createBackupFile,
+          onRestoreBackupFromFile: _restoreBackupFromFile,
+        );
       case 'settings':
         return _buildSettingsSection();
       default:

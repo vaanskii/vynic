@@ -12,6 +12,7 @@ import 'package:vynic/apps/mobile_app/presentation/screens/mobile_login_screen.d
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/core/services/pos/app_mode.dart';
+import 'package:vynic/core/services/pos/pos_display_settings_controller.dart';
 import 'package:vynic/core/services/notifications/firebase_messaging_service.dart';
 import 'package:vynic/core/services/notifications/local_notifications_service.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -119,6 +120,7 @@ void main() async {
 
   // Initialize database, run migrations, and prepare app data.
   await DatabaseService.init();
+  await PosDisplaySettingsController.loadFromStorage();
   if (kDebugMode) {}
 
   // Initialize mobile-specific services (safe to call on all platforms)
@@ -306,11 +308,23 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       // auto-lock countdown. No-op until SessionLock is armed (POS login), so it
       // costs nothing on the mobile manager app.
       builder: (context, child) {
-        return Listener(
+        final activityAwareChild = Listener(
           behavior: HitTestBehavior.translucent,
           onPointerDown: (_) => SessionLock.recordActivity(),
           onPointerSignal: (_) => SessionLock.recordActivity(),
           child: child ?? const SizedBox.shrink(),
+        );
+        if (widget.isMobile) {
+          return activityAwareChild;
+        }
+        return ValueListenableBuilder(
+          valueListenable: PosDisplaySettingsController.settings,
+          builder: (context, settings, _) {
+            return _ScaledPosSurface(
+              scale: settings.scaleFactor,
+              child: activityAwareChild,
+            );
+          },
         );
       },
       home: widget.isMobile
@@ -318,6 +332,57 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           : LoginScreen(
               companionAppBuilder: (user) => ManagerAppShell(user: user),
             ),
+    );
+  }
+}
+
+class _ScaledPosSurface extends StatelessWidget {
+  const _ScaledPosSurface({required this.scale, required this.child});
+
+  final double scale;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if ((scale - 1).abs() < 0.001) {
+      return child;
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final height = constraints.maxHeight;
+        if (!width.isFinite || !height.isFinite || width <= 0 || height <= 0) {
+          return child;
+        }
+        final scaledSize = Size(width / scale, height / scale);
+        return ClipRect(
+          child: OverflowBox(
+            alignment: Alignment.topLeft,
+            minWidth: 0,
+            minHeight: 0,
+            maxWidth: scaledSize.width,
+            maxHeight: scaledSize.height,
+            child: Transform.scale(
+              scale: scale,
+              alignment: Alignment.topLeft,
+              child: SizedBox(
+                width: scaledSize.width,
+                height: scaledSize.height,
+                // The subtree is laid out at scaledSize, so MediaQuery has to
+                // report scaledSize too. Without this every responsive
+                // decision below (layout class, breakpoints, side rails) reads
+                // the unscaled window and picks a layout too big for the space
+                // it actually has — which shows up as overflow at any UI scale
+                // other than 100%.
+                child: MediaQuery(
+                  data: MediaQuery.of(context).copyWith(size: scaledSize),
+                  child: child,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' show min;
 
 import 'package:flutter/material.dart';
+import 'package:vynic/core/models/pos_display_settings.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/order.dart';
@@ -11,8 +12,10 @@ import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'package:vynic/core/services/sync/pos_live_refresh.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
+import 'package:vynic/core/services/sync/connection_status_service.dart';
 import 'package:vynic/core/services/notifications/app_notification_history_store.dart';
 import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
+import 'package:vynic/core/services/pos/pos_display_settings_controller.dart';
 import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/core/services/auth/pos_session.dart';
 import 'package:vynic/core/services/auth/session_lock.dart';
@@ -22,8 +25,10 @@ import 'package:vynic/apps/windows_pos/widgets/reservation_creation_sheet.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
 import 'package:vynic/core/ui/vynic_colors.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
+import 'package:vynic/core/ui/vynic_radius.dart';
+import 'package:vynic/core/ui/vynic_status_tokens.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_tables_dashboard_section.dart';
-import 'package:vynic/apps/windows_pos/widgets/home/home_feature_header.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_calculator_page.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_reservation_menu_preview.dart';
 import 'package:vynic/core/utils/home_reservations_helper.dart';
@@ -135,6 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // when the local ingest write races behind it. Refresh on it too.
     MonitoringSocketService.updateCounter.addListener(_onRemoteUpdateSignal);
     PosLiveRefresh.generation.addListener(_onLiveDataChanged);
+    ConnectionStatusService.initialize();
   }
 
   @override
@@ -348,11 +354,9 @@ class _HomeScreenState extends State<HomeScreen> {
       // of a dashboard they had to click through first.
       _SidebarDestination(
         key: 'menu',
-        icon: Icons.restaurant_outlined,
+        icon: Icons.table_restaurant_outlined,
         label: 'მაგიდები',
         builder: (context) => HomeTablesDashboardSection(
-          username: _user.username,
-          roleLabel: _user.roleLabelKa,
           textPrimary: _textPrimary,
           mutedText: _mutedText,
           tableSelectionKey: _tableSelectionKey,
@@ -361,10 +365,8 @@ class _HomeScreenState extends State<HomeScreen> {
           onContinueToMenu: _continueToMenu,
           currentFloor: _currentFloor,
           onSwitchFloor: _switchFloor,
-          onStaffSwitchTap: _lockTerminal,
-          onOpenAdminPanel: _user.canAccessManagementCenter
-              ? _openAdminPanel
-              : null,
+          onOpenReservations: () => _selectDestination('newReservation'),
+          displaySettings: PosDisplaySettingsController.settings.value,
         ),
       ),
       _SidebarDestination(
@@ -475,6 +477,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return ValueListenableBuilder<PosDisplaySettings>(
+      valueListenable: PosDisplaySettingsController.settings,
+      builder: (context, displaySettings, _) {
+        return _buildWithDisplaySettings(context, displaySettings);
+      },
+    );
+  }
+
+  Widget _buildWithDisplaySettings(
+    BuildContext context,
+    PosDisplaySettings displaySettings,
+  ) {
     final activeIndex = _activeDestinationIndex;
     final activeDestinationKey = _destinations[activeIndex].key;
     final currentDate = DatabaseService.getCurrentDate();
@@ -496,45 +510,81 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
     ];
 
-    final mainContentStack = Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Column(
-          children: [
-            ValueListenableBuilder<int>(
-              valueListenable: AppNotificationHistoryStore.instance.unreadCount,
-              builder: (context, unread, _) {
-                return HomeFeatureHeader(
-                  businessDate: currentDate,
-                  activeKey: activeDestinationKey,
-                  destinations: _featureSwitchItems(
-                    takeAwayCount: takeAwayCount,
-                  ),
-                  onDestinationSelected: _selectDestination,
-                  notificationUnreadCount: unread,
-                  onNotificationTap: _toggleNotificationsPanel,
-                );
-              },
-            ),
-            Expanded(
-              child: ColoredBox(
-                color: VynicColors.background,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: IndexedStack(index: activeIndex, children: pages),
-                ),
-              ),
-            ),
-          ],
-        ),
-        ..._notificationOverlayWidgets(context),
-      ],
-    );
-
     final scaffold = Scaffold(
       backgroundColor: VynicColors.background,
       appBar: null,
-      body: mainContentStack,
+      body: ValueListenableBuilder<int>(
+        valueListenable: AppNotificationHistoryStore.instance.unreadCount,
+        builder: (context, unread, _) {
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final layoutClass = displaySettings.layoutClassForWidth(
+                constraints.maxWidth,
+              );
+              final density = displaySettings.effectiveDensityForWidth(
+                constraints.maxWidth,
+              );
+              final narrow = layoutClass.isXs;
+
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Column(
+                    children: [
+                      _HomeUtilityBar(
+                        businessDate: currentDate,
+                        activeLabel: _destinations[activeIndex].label,
+                        username: _user.username,
+                        roleLabel: _user.roleLabelKa,
+                        languageCode: DatabaseService.getDefaultLanguage()
+                            .toUpperCase(),
+                        unreadCount: unread,
+                        density: density,
+                        layoutClass: layoutClass,
+                        onNotificationTap: _toggleNotificationsPanel,
+                        onLockTap: _lockTerminal,
+                        onLanguageTap: _user.canAccessManagementCenter
+                            ? _openAdminPanel
+                            : null,
+                        fullscreenPosMode: displaySettings.fullscreenPosMode,
+                      ),
+                      _HomeNavigationTabs(
+                        destinations: _destinations,
+                        activeKey: activeDestinationKey,
+                        takeAwayCount: takeAwayCount,
+                        compact: density == PosUiDensity.compact,
+                        narrow: narrow,
+                        onDestinationSelected: _selectDestination,
+                        onOpenAdminPanel: _user.canAccessManagementCenter
+                            ? _openAdminPanel
+                            : null,
+                      ),
+                      Expanded(
+                        child: ColoredBox(
+                          color: VynicColors.background,
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              constraints.maxWidth < 1180 ? 10 : 16,
+                              0,
+                              constraints.maxWidth < 1180 ? 10 : 16,
+                              0,
+                            ),
+                            child: IndexedStack(
+                              index: activeIndex,
+                              children: pages,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  ..._notificationOverlayWidgets(context),
+                ],
+              );
+            },
+          );
+        },
+      ),
       bottomNavigationBar: null,
     );
 
@@ -555,32 +605,14 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  /// Direct-nav items shown inline in the top bar — every section the
-  /// current role can reach, all in one row, no hidden "More" menu. Derived
-  /// from [_destinations] (not hand-duplicated) so nothing can drift out of
-  /// sync with the permission gating that already builds that list.
-  List<HomeFeatureSwitchItem> _featureSwitchItems({
-    required int takeAwayCount,
-  }) {
-    return [
-      for (final destination in _destinations)
-        HomeFeatureSwitchItem(
-          key: destination.key,
-          label: destination.label,
-          icon: destination.icon,
-          badgeCount: destination.key == 'todaysTakeaways' && takeAwayCount > 0
-              ? takeAwayCount
-              : null,
-        ),
-    ];
-  }
-
   void _openAdminPanel() {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => AdminScreen(user: _user)),
     ).then((_) {
-      if (mounted) setState(() {});
+      if (mounted) {
+        setState(() {});
+      }
     });
   }
 
@@ -1119,5 +1151,690 @@ class _HomeScreenState extends State<HomeScreen> {
         _tableSelectionKey.currentState?.clearSelection();
       });
     }
+  }
+}
+
+class _HomeNavigationTabs extends StatelessWidget {
+  const _HomeNavigationTabs({
+    required this.destinations,
+    required this.activeKey,
+    required this.takeAwayCount,
+    required this.compact,
+    required this.narrow,
+    required this.onDestinationSelected,
+    required this.onOpenAdminPanel,
+  });
+
+  final List<_SidebarDestination> destinations;
+  final String activeKey;
+  final int takeAwayCount;
+  final bool compact;
+  final bool narrow;
+  final ValueChanged<String> onDestinationSelected;
+  final VoidCallback? onOpenAdminPanel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: compact ? 56 : 64,
+      padding: EdgeInsets.symmetric(horizontal: narrow ? 12 : 20),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: VynicColors.border)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (final destination in destinations) ...[
+                    _HomeNavigationTab(
+                      label: destination.label,
+                      active: destination.key == activeKey,
+                      badgeCount:
+                          destination.key == 'todaysTakeaways' &&
+                              takeAwayCount > 0
+                          ? takeAwayCount
+                          : null,
+                      compact: compact,
+                      onTap: () => onDestinationSelected(destination.key),
+                    ),
+                    SizedBox(width: compact ? 6 : 10),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          if (onOpenAdminPanel != null) ...[
+            SizedBox(width: narrow ? 8 : 12),
+            _TopAdminButton(
+              compact: compact,
+              narrow: narrow,
+              onTap: onOpenAdminPanel!,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeNavigationTab extends StatelessWidget {
+  const _HomeNavigationTab({
+    required this.label,
+    required this.active,
+    required this.compact,
+    required this.onTap,
+    this.badgeCount,
+  });
+
+  final String label;
+  final bool active;
+  final bool compact;
+  final VoidCallback onTap;
+  final int? badgeCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: active ? null : onTap,
+      borderRadius: VynicRadius.smAll,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        height: compact ? 38 : 42,
+        padding: EdgeInsets.symmetric(horizontal: compact ? 13 : 16),
+        decoration: BoxDecoration(
+          color: active ? VynicColors.accentSoft : Colors.transparent,
+          borderRadius: VynicRadius.smAll,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: active
+                    ? VynicFloorTokens.accentText
+                    : VynicFloorTokens.textMuted,
+                fontSize: compact ? 13 : 13.5,
+                fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+              ),
+            ),
+            if ((badgeCount ?? 0) > 0) ...[
+              const SizedBox(width: 8),
+              Container(
+                constraints: const BoxConstraints(minWidth: 17),
+                height: 17,
+                padding: const EdgeInsets.symmetric(horizontal: 5),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: active
+                      ? VynicFloorTokens.panel
+                      : VynicColors.dangerSoft,
+                  // A fixed 9px radius, not a pill: at 17px tall a pill
+                  // rounds the sides into an oval, which is what read as
+                  // "not rounded right".
+                  borderRadius: BorderRadius.circular(
+                    VynicFloorTokens.badgeRadius,
+                  ),
+                ),
+                child: Text(
+                  badgeCount! > 9 ? '9+' : '$badgeCount',
+                  style: const TextStyle(
+                    color: VynicFloorTokens.text,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TopAdminButton extends StatelessWidget {
+  const _TopAdminButton({
+    required this.compact,
+    required this.narrow,
+    required this.onTap,
+  });
+
+  final bool compact;
+  final bool narrow;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton(
+      onPressed: onTap,
+      style: FilledButton.styleFrom(
+        backgroundColor: VynicFloorTokens.accentText,
+        foregroundColor: VynicFloorTokens.panel,
+        minimumSize: Size(narrow ? 40 : 0, compact ? 32 : 34),
+        padding: EdgeInsets.symmetric(horizontal: narrow ? 0 : 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(9),
+        ),
+      ),
+      child: narrow
+          ? const Icon(Icons.settings_outlined, size: 17)
+          : const Text(
+              'პარამეტრები',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+    );
+  }
+}
+
+class _HomeUtilityBar extends StatelessWidget {
+  const _HomeUtilityBar({
+    required this.businessDate,
+    required this.activeLabel,
+    required this.username,
+    required this.roleLabel,
+    required this.languageCode,
+    required this.unreadCount,
+    required this.density,
+    required this.layoutClass,
+    required this.onNotificationTap,
+    required this.onLockTap,
+    required this.onLanguageTap,
+    required this.fullscreenPosMode,
+  });
+
+  final DateTime businessDate;
+  final String activeLabel;
+  final String username;
+  final String roleLabel;
+  final String languageCode;
+  final int unreadCount;
+  final PosUiDensity density;
+  final PosLayoutClass layoutClass;
+  final VoidCallback onNotificationTap;
+  final VoidCallback onLockTap;
+  final VoidCallback? onLanguageTap;
+  final bool fullscreenPosMode;
+
+  @override
+  Widget build(BuildContext context) {
+    final compact = density == PosUiDensity.compact;
+    final narrow = layoutClass.isXs;
+    final hideSecondary = layoutClass.isCompactWidth || fullscreenPosMode;
+    return Container(
+      height: compact ? 58 : 64,
+      padding: EdgeInsets.symmetric(horizontal: narrow ? 12 : 20),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: VynicColors.border)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: VynicColors.accentSoft,
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: const Text(
+              'V',
+              style: TextStyle(
+                color: VynicColors.accentHover,
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                height: 1,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          if (!narrow) ...[
+            const Text(
+              'Vynic POS',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: VynicColors.textPrimary,
+                fontSize: 15,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Container(width: 1, height: 24, color: VynicColors.border),
+            const SizedBox(width: 14),
+          ],
+          Expanded(
+            child: Text(
+              activeLabel,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: VynicColors.neutral,
+                fontSize: narrow ? 13 : 15,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          SizedBox(width: narrow ? 8 : 16),
+          if (!fullscreenPosMode && !hideSecondary) ...[
+            _BusinessDayChip(label: _formatBusinessDate(businessDate)),
+            const SizedBox(width: 8),
+          ],
+          _ConnectionChip(compact: narrow),
+          SizedBox(width: narrow ? 6 : 10),
+          _ClockChip(compact: narrow),
+          SizedBox(width: narrow ? 6 : 10),
+          _LanguageButton(code: languageCode, onTap: onLanguageTap),
+          SizedBox(width: narrow ? 6 : 8),
+          _NotificationUtilityButton(
+            unreadCount: unreadCount,
+            onTap: onNotificationTap,
+          ),
+          SizedBox(width: narrow ? 6 : 10),
+          _EmployeeChip(
+            username: username,
+            roleLabel: hideSecondary ? '' : roleLabel,
+            compact: narrow,
+            onTap: onLockTap,
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _formatBusinessDate(DateTime date) {
+    const months = [
+      'იან',
+      'თებ',
+      'მარ',
+      'აპრ',
+      'მაი',
+      'ივნ',
+      'ივლ',
+      'აგვ',
+      'სექ',
+      'ოქტ',
+      'ნოე',
+      'დეკ',
+    ];
+    return '${date.day} ${months[date.month - 1]}';
+  }
+}
+
+class _ClockChip extends StatelessWidget {
+  const _ClockChip({required this.compact});
+
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final label =
+        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    return Text(
+      label,
+      style: TextStyle(
+        color: VynicColors.textPrimary,
+        fontSize: compact ? 12 : 14,
+        fontWeight: FontWeight.w800,
+        fontFeatures: const [FontFeature.tabularFigures()],
+      ),
+    );
+  }
+}
+
+class _BusinessDayChip extends StatelessWidget {
+  const _BusinessDayChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 34,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: VynicColors.warningSoft,
+        borderRadius: VynicRadius.smAll,
+        border: Border.all(color: VynicColors.warningBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: const BoxDecoration(
+              color: Color(0xFFD7A72C),
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: VynicColors.warningText,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ConnectionChip extends StatelessWidget {
+  const _ConnectionChip({required this.compact});
+
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<BackendConnectionState>(
+      valueListenable: ConnectionStatusService.backendState,
+      builder: (context, state, _) {
+        return ValueListenableBuilder<bool>(
+          valueListenable: ConnectionStatusService.hasPendingLocalChanges,
+          builder: (context, pending, _) {
+            final presentation = _connectionPresentation(state, pending);
+            final token = VynicStatusTokens.ofTone(presentation.tone);
+            return Container(
+              height: 34,
+              padding: EdgeInsets.symmetric(horizontal: compact ? 9 : 10),
+              decoration: BoxDecoration(
+                color: token.background,
+                borderRadius: VynicRadius.smAll,
+                border: Border.all(color: token.border),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(presentation.icon, size: 16, color: token.text),
+                  if (!compact) ...[
+                    const SizedBox(width: 7),
+                    Text(
+                      presentation.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: token.text,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  ({String label, IconData icon, VynicStatusTone tone}) _connectionPresentation(
+    BackendConnectionState state,
+    bool pending,
+  ) {
+    if (pending && state != BackendConnectionState.offline) {
+      return (
+        label: 'რიგშია',
+        icon: Icons.cloud_upload_outlined,
+        tone: VynicStatusTone.warning,
+      );
+    }
+    switch (state) {
+      case BackendConnectionState.syncing:
+        return (
+          label: 'სინქი',
+          icon: Icons.sync_rounded,
+          tone: VynicStatusTone.info,
+        );
+      case BackendConnectionState.connected:
+        return (
+          label: 'სინქრონულია',
+          icon: Icons.cloud_done_outlined,
+          tone: VynicStatusTone.success,
+        );
+      case BackendConnectionState.offline:
+        return (
+          label: 'ოფლაინი',
+          icon: Icons.cloud_off_outlined,
+          tone: VynicStatusTone.warning,
+        );
+      case BackendConnectionState.idle:
+        return (
+          label: 'ლოკალური',
+          icon: Icons.storage_outlined,
+          tone: VynicStatusTone.neutral,
+        );
+    }
+  }
+}
+
+class _LanguageButton extends StatelessWidget {
+  const _LanguageButton({required this.code, required this.onTap});
+
+  final String code;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'ენის პარამეტრები',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: VynicRadius.smAll,
+        child: Container(
+          height: 34,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: VynicRadius.smAll,
+            border: Border.all(color: VynicColors.border),
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.language_outlined,
+                size: 16,
+                color: VynicColors.textMuted,
+              ),
+              const SizedBox(width: 7),
+              Text(
+                code,
+                style: const TextStyle(
+                  color: VynicColors.textPrimary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NotificationUtilityButton extends StatelessWidget {
+  const _NotificationUtilityButton({
+    required this.unreadCount,
+    required this.onTap,
+  });
+
+  final int unreadCount;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'შეტყობინებები',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: VynicRadius.smAll,
+        child: Container(
+          width: 38,
+          height: 34,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: VynicRadius.smAll,
+            border: Border.all(color: VynicColors.border),
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              const Icon(
+                Icons.notifications_none_rounded,
+                size: 19,
+                color: VynicColors.textPrimary,
+              ),
+              if (unreadCount > 0)
+                Positioned(
+                  right: -8,
+                  top: -8,
+                  child: _MiniBadge(count: unreadCount),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmployeeChip extends StatelessWidget {
+  const _EmployeeChip({
+    required this.username,
+    required this.roleLabel,
+    required this.compact,
+    required this.onTap,
+  });
+
+  final String username;
+  final String roleLabel;
+  final bool compact;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final initials = username.trim().isEmpty
+        ? 'POS'
+        : username
+              .trim()
+              .split(RegExp(r'\s+'))
+              .take(2)
+              .map((part) => part.characters.first.toUpperCase())
+              .join();
+    return Tooltip(
+      message: 'ტერმინალის ჩაკეტვა / თანამშრომლის შეცვლა',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: VynicRadius.smAll,
+        child: Container(
+          height: 38,
+          padding: EdgeInsets.only(left: 4, right: compact ? 4 : 10),
+          decoration: BoxDecoration(
+            color: VynicColors.cardSoft,
+            borderRadius: VynicRadius.smAll,
+            border: Border.all(color: VynicColors.border),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: VynicColors.accentSoft,
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: Text(
+                  initials,
+                  maxLines: 1,
+                  overflow: TextOverflow.clip,
+                  style: const TextStyle(
+                    color: VynicColors.accent,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              if (!compact) ...[
+                const SizedBox(width: 8),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 150),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        username,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: VynicColors.textPrimary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      if (roleLabel.isNotEmpty)
+                        Text(
+                          roleLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: VynicColors.textMuted,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniBadge extends StatelessWidget {
+  const _MiniBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        color: VynicColors.danger,
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        count > 9 ? '9+' : '$count',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 8,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
   }
 }

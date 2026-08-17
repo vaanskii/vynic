@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:vynic/core/models/pos_display_settings.dart';
 import 'package:vynic/core/models/table_layout.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'business_day_repository.dart';
@@ -48,6 +49,13 @@ class SettingsRepository {
   static const String _monthlyReportStaffDailyCostByMonthSetting =
       'monthlyReportStaffDailyCostByMonth';
   static const String _activeTableLayoutSetting = 'activeTableLayoutJson';
+  static const String _posDisplayModeSetting = 'posDisplayMode';
+  static const String _posUiDensitySetting = 'posUiDensity';
+  static const String _posUiScalePercentSetting = 'posUiScalePercent';
+  static const String _posSidebarDefaultSetting = 'posSidebarDefault';
+  static const String _posTableTileSizeSetting = 'posTableTileSize';
+  static const String _posFullscreenModeSetting = 'posFullscreenMode';
+  static const String _posFloorPlanGridSetting = 'posFloorPlanGrid';
 
   static const Uuid _uuid = Uuid();
 
@@ -126,6 +134,50 @@ class SettingsRepository {
       await _settingsBox!.put(
         'defaultLanguage',
         (language == 'en' || language == 'ka') ? language : 'ka',
+      );
+    }
+
+    final displayDefaults = PosDisplaySettings.defaults;
+    if (!_settingsBox!.containsKey(_posDisplayModeSetting)) {
+      await _settingsBox!.put(
+        _posDisplayModeSetting,
+        displayDefaults.displayMode.storageValue,
+      );
+    }
+    if (!_settingsBox!.containsKey(_posUiDensitySetting)) {
+      await _settingsBox!.put(
+        _posUiDensitySetting,
+        displayDefaults.density.storageValue,
+      );
+    }
+    if (!_settingsBox!.containsKey(_posUiScalePercentSetting)) {
+      await _settingsBox!.put(
+        _posUiScalePercentSetting,
+        displayDefaults.scalePercent,
+      );
+    }
+    if (!_settingsBox!.containsKey(_posSidebarDefaultSetting)) {
+      await _settingsBox!.put(
+        _posSidebarDefaultSetting,
+        displayDefaults.sidebarDefault.storageValue,
+      );
+    }
+    if (!_settingsBox!.containsKey(_posTableTileSizeSetting)) {
+      await _settingsBox!.put(
+        _posTableTileSizeSetting,
+        displayDefaults.tableTileSize.storageValue,
+      );
+    }
+    if (!_settingsBox!.containsKey(_posFullscreenModeSetting)) {
+      await _settingsBox!.put(
+        _posFullscreenModeSetting,
+        displayDefaults.fullscreenPosMode,
+      );
+    }
+    if (!_settingsBox!.containsKey(_posFloorPlanGridSetting)) {
+      await _settingsBox!.put(
+        _posFloorPlanGridSetting,
+        displayDefaults.floorPlanGrid,
       );
     }
   }
@@ -593,6 +645,66 @@ class SettingsRepository {
       'defaultLanguageUpdatedAt',
       DateTime.now().toIso8601String(),
     );
+  }
+
+  // ==================== DISPLAY & INTERFACE ====================
+
+  static PosDisplaySettings getPosDisplaySettings() {
+    if (_settingsBox == null) return PosDisplaySettings.defaults;
+    final scale = _settingsBox!.get(_posUiScalePercentSetting);
+    final scalePercent = scale is num
+        ? scale.toInt()
+        : int.tryParse(scale?.toString() ?? '') ?? 100;
+    final fullscreen = _settingsBox!.get(_posFullscreenModeSetting);
+    final floorPlanGrid = _settingsBox!.get(_posFloorPlanGridSetting);
+
+    return PosDisplaySettings(
+      displayMode: PosDisplayMode.fromStorage(
+        _settingsBox!.get(_posDisplayModeSetting),
+      ),
+      density: PosUiDensity.fromStorage(
+        _settingsBox!.get(_posUiDensitySetting),
+      ),
+      scalePercent: scalePercent.clamp(90, 110),
+      sidebarDefault: PosSidebarDefault.fromStorage(
+        _settingsBox!.get(_posSidebarDefaultSetting),
+      ),
+      tableTileSize: PosTableTileSize.fromStorage(
+        _settingsBox!.get(_posTableTileSizeSetting),
+      ),
+      fullscreenPosMode: fullscreen is bool ? fullscreen : false,
+      // Defaults to on, so a terminal that predates this setting keeps the
+      // floor plan it already had.
+      floorPlanGrid: floorPlanGrid is bool ? floorPlanGrid : true,
+    );
+  }
+
+  static Future<void> setPosDisplaySettings(PosDisplaySettings settings) async {
+    await _settingsBox!.put(
+      _posDisplayModeSetting,
+      settings.displayMode.storageValue,
+    );
+    await _settingsBox!.put(
+      _posUiDensitySetting,
+      settings.density.storageValue,
+    );
+    await _settingsBox!.put(
+      _posUiScalePercentSetting,
+      settings.scalePercent.clamp(90, 110),
+    );
+    await _settingsBox!.put(
+      _posSidebarDefaultSetting,
+      settings.sidebarDefault.storageValue,
+    );
+    await _settingsBox!.put(
+      _posTableTileSizeSetting,
+      settings.tableTileSize.storageValue,
+    );
+    await _settingsBox!.put(
+      _posFullscreenModeSetting,
+      settings.fullscreenPosMode,
+    );
+    await _settingsBox!.put(_posFloorPlanGridSetting, settings.floorPlanGrid);
   }
 
   // ==================== TABLE CLOSING OWNERSHIP ====================

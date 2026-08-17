@@ -10,6 +10,14 @@ enum RestaurantLayoutObjectType {
   counter,
   label,
   restroom,
+
+  /// Half-height partition: drawn as a segment like [wall], but visually
+  /// lighter and non-structural.
+  divider,
+
+  /// Named background region (Main hall, Terrace, VIP...). Drawn behind
+  /// tables and never intercepts taps.
+  zone,
 }
 
 enum RestaurantTableShape {

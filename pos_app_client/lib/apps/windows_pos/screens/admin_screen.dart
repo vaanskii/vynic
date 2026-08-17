@@ -19,13 +19,16 @@ import 'package:vynic/apps/windows_pos/widgets/admin/admin_settings_section.dart
 import 'package:vynic/apps/windows_pos/widgets/admin/printers/admin_printers_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_reservations_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_staff_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_display_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/table_layouts/admin_table_layouts_section.dart';
 import 'package:vynic/core/utils/payment_utils.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/apps/windows_pos/screens/login_screen.dart';
+import 'package:vynic/core/models/pos_display_settings.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/printing/printer_service.dart';
+import 'package:vynic/core/services/pos/pos_display_settings_controller.dart';
 import 'package:vynic/core/services/pos/monthly_report_service.dart';
 import 'package:vynic/core/services/sync/manager_sync_service.dart';
 
@@ -81,6 +84,8 @@ class _AdminScreenState extends State<AdminScreen> {
   String _lastSavedCancellationHint = '';
   bool _restrictTableCloseToOwner = false;
   bool _isSavingTableOwnershipSettings = false;
+  PosDisplaySettings _displaySettings = PosDisplaySettings.defaults;
+  bool _isSavingDisplaySettings = false;
 
   late int _selectedSalesYear;
   late int _selectedSalesMonth;
@@ -179,6 +184,7 @@ class _AdminScreenState extends State<AdminScreen> {
         DatabaseService.getDestructiveActionPasswordUpdatedAt();
     _restrictTableCloseToOwner =
         DatabaseService.isTableCloseRestrictedToOwner();
+    _displaySettings = DatabaseService.getPosDisplaySettings();
     _lastSavedCancellationHint =
         DatabaseService.getDestructiveActionPasswordHint();
     _cancellationPasswordHintController.text = _lastSavedCancellationHint;
@@ -1258,6 +1264,8 @@ class _AdminScreenState extends State<AdminScreen> {
         return 'რეზერვაციები';
       case 'tableLayouts':
         return 'მაგიდების განლაგება';
+      case 'display':
+        return 'ეკრანი და ინტერფეისი';
       case 'closeday':
         return 'დღის დახურვა';
       case 'sales':
@@ -1362,6 +1370,12 @@ class _AdminScreenState extends State<AdminScreen> {
         title: 'მაგიდები',
         section: 'tableLayouts',
       ),
+      if (!_isMobile)
+        _buildMenuItem(
+          icon: Icons.desktop_windows_outlined,
+          title: 'ეკრანი',
+          section: 'display',
+        ),
       if (!_isMobile)
         _buildMenuItem(
           icon: Icons.calendar_today,
@@ -2096,6 +2110,32 @@ class _AdminScreenState extends State<AdminScreen> {
       if (mounted) {
         setState(() {
           _isSavingTableOwnershipSettings = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _saveDisplaySettings() async {
+    setState(() {
+      _isSavingDisplaySettings = true;
+    });
+
+    try {
+      await PosDisplaySettingsController.save(_displaySettings);
+      if (mounted) {
+        await showSuccessToast(context, 'Display settings saved');
+      }
+    } catch (error) {
+      if (mounted) {
+        await showErrorToast(
+          context,
+          'Display settings could not be saved: $error',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingDisplaySettings = false;
         });
       }
     }
@@ -3415,6 +3455,20 @@ class _AdminScreenState extends State<AdminScreen> {
         return AdminReservationsSection(user: widget.user);
       case 'tableLayouts':
         return const AdminTableLayoutsSection();
+      case 'display':
+        return AdminDisplaySection(
+          displaySettings: _displaySettings,
+          onDisplaySettingsChanged: (value) {
+            setState(() {
+              _displaySettings = value;
+            });
+            // Preview immediately so the effect is visible while choosing;
+            // Save persists it to this terminal.
+            unawaited(PosDisplaySettingsController.preview(value));
+          },
+          isSaving: _isSavingDisplaySettings,
+          onSave: _saveDisplaySettings,
+        );
       case 'closeday':
         return AdminCloseDaySection(
           user: widget.user,

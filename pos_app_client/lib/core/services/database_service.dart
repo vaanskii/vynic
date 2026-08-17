@@ -11,6 +11,7 @@ import 'package:vynic/core/models/table_ref.dart';
 import 'package:vynic/core/models/quick_order_draft.dart';
 import 'package:vynic/core/models/package.dart';
 import 'package:vynic/core/models/audit_report.dart';
+import 'package:vynic/core/models/pos_display_settings.dart';
 import 'package:vynic/core/database/repositories/audit_repository.dart';
 import 'package:vynic/core/database/transactions/activate_reservation_transaction.dart';
 import 'package:vynic/core/database/transactions/close_day_transaction.dart';
@@ -872,6 +873,12 @@ class DatabaseService {
 
   static Future<void> setDefaultLanguage(String language) =>
       SettingsRepository.setDefaultLanguage(language);
+
+  static PosDisplaySettings getPosDisplaySettings() =>
+      SettingsRepository.getPosDisplaySettings();
+
+  static Future<void> setPosDisplaySettings(PosDisplaySettings settings) =>
+      SettingsRepository.setPosDisplaySettings(settings);
 
   // ========== TABLE CLOSING OWNERSHIP SETTINGS ==========
 

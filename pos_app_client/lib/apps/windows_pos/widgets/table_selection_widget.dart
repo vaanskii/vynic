@@ -15,6 +15,7 @@ import 'package:vynic/core/models/table_operational_status.dart';
 import 'package:vynic/core/models/table_layout.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/apps/windows_pos/widgets/floor_plan/floor_plan_grouping.dart';
+import 'package:vynic/apps/windows_pos/widgets/floor_plan/floor_plan_names.dart';
 import 'package:vynic/apps/windows_pos/widgets/floor_plan/floor_plan_painters.dart';
 import 'package:vynic/apps/windows_pos/widgets/floor_plan/floor_plan_seats.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/table_status_presentation.dart';
@@ -153,14 +154,21 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     return _layout.tableForId(tableId)?.legacyFloor ?? _currentZone.legacyFloor;
   }
 
+  /// What a table is *called* — whatever was typed into the floor editor.
+  ///
+  /// This used to synthesise 'Second Floor Table N' for the upstairs zone,
+  /// which threw away the name the admin had set. The layout owns the name for
+  /// every floor now; identity still travels as (floor, tableNumber).
   String _displayNameForTableId(String tableId) {
     final tableDefinition = _layout.tableForId(tableId);
     if (tableDefinition == null) {
       return tableId;
     }
-    return tableDefinition.legacyFloor == 'second'
-        ? 'Second Floor Table ${tableDefinition.legacyTableNumber}'
-        : tableDefinition.label;
+    return floorPlanTableNameOrNumber(
+      _layout,
+      floor: tableDefinition.legacyFloor,
+      tableNumber: tableDefinition.legacyTableNumber,
+    );
   }
 
   Future<void> _loadSvg() async {
@@ -412,7 +420,10 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
   }
 
   String _elapsedSince(DateTime startedAt) {
-    final elapsed = DateTime.now().difference(startedAt);
+    // Business clock, not the wall clock: orders carry the business date with
+    // the current time of day, so DateTime.now() measures the gap between the
+    // two calendars whenever the venue's business day is not today.
+    final elapsed = DatabaseService.getCurrentDateTime().difference(startedAt);
     if (elapsed.inMinutes < 1) return 'ახლახან';
     if (elapsed.inHours < 1) return '${elapsed.inMinutes} წთ';
     final minutes = elapsed.inMinutes.remainder(60).toString().padLeft(2, '0');
@@ -745,15 +756,22 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
                         size: 32,
                       ),
                     if (isReserved || isSelected) const SizedBox(height: 4),
-                    // Show table number or VIP zone label - larger for touch
-                    Text(
-                      'T${_tableNumberFromId(entry.key) ?? entry.key}',
-                      style: TextStyle(
-                        color: (isReserved || isSelected)
-                            ? Colors.white
-                            : Colors.black,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                    // The name set in the floor editor. scaleDown because a
+                    // marker is only as wide as its SVG hit box and a name is
+                    // free text.
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        _displayNameForTableId(entry.key),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: (isReserved || isSelected)
+                              ? Colors.white
+                              : Colors.black,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     if (isReserved) ...[
@@ -798,6 +816,27 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
   // Expose selected tables list for navigation to menu
   List<String> get selectedTables =>
       _selectedTables.map(_displayNameForTableId).toList();
+
+  /// The identity behind [selectedTables], in the same order.
+  ///
+  /// Names are free text now, so the menu screen can no longer recover a table
+  /// number by stripping 'Table ' off a display name — it has to be handed the
+  /// real one.
+  List<String> get selectedTableNumbers => _selectedTables
+      .map((id) => _tableNumberFromId(id))
+      .whereType<String>()
+      .toList(growable: false);
+
+  /// Legacy floor of the current selection, or null when nothing is selected.
+  ///
+  /// [hasMixedFloorSelection] is what guards against a selection that spans
+  /// floors, so this reports the first one.
+  String? get selectedFloor {
+    for (final id in _selectedTables) {
+      return _floorForTableId(id);
+    }
+    return null;
+  }
 
   List<TableModel> get selectedTableModels => _selectedTables
       .map(_getTableModel)
@@ -941,11 +980,25 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
         // different from the same layout shown true-to-scale in the admin
         // layout editor, which was more confusing than the empty side
         // margins it was meant to fix.
-        final rawScaleX = constraints.maxWidth / canvasWidth;
-        final rawScaleY = constraints.maxHeight / canvasHeight;
-        final scale = rawScaleX < rawScaleY ? rawScaleX : rawScaleY;
-        final scaledWidth = canvasWidth * scale;
-        final scaledHeight = canvasHeight * scale;
+        // Fit what is actually on the plan, not the editor's working area.
+        // The built-in canvas is 1005x1101 with everything in the upper part
+        // of it; fitting that whole box into a landscape panel binds on the
+        // height and throws away about a third of the scale, on top of the
+        // app's own. Cropping to the content keeps the scale that legibility
+        // depends on, and it is still a uniform fit — nothing is stretched.
+        final content = floorPlanContentBounds(
+          objects,
+          Size(canvasWidth, canvasHeight),
+        );
+        final rawScaleX = constraints.maxWidth / content.width;
+        final rawScaleY = constraints.maxHeight / content.height;
+        final fitted = rawScaleX < rawScaleY ? rawScaleX : rawScaleY;
+        // A nearly empty floor would otherwise blow two tables up to fill the
+        // panel; a plan should never read as more zoomed-in than its own
+        // design size by much.
+        final scale = math.min(fitted, maxFloorPlanZoom);
+        final scaledWidth = content.width * scale;
+        final scaledHeight = content.height * scale;
         final clusters = _buildTableClusters(objects);
 
         return Align(
@@ -967,73 +1020,86 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
                   ? Border.all(color: VynicFloorTokens.canvasBorder)
                   : null,
             ),
-            child: SizedBox(
-              width: scaledWidth,
-              height: scaledHeight,
-              child: Stack(
-                children: [
-                  if (widget.showFloorPlanGrid)
-                    Positioned.fill(
-                      child: CustomPaint(painter: FloorPlanGridPainter()),
-                    ),
-                  // Chairs get their own layer: table tiles are positioned
-                  // widgets that clip to their own box, and seat marks sit
-                  // just outside it.
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: CustomPaint(
-                        painter: FloorPlanSeatsPainter(
-                          tables: _seatedTables(clusters),
-                          scale: scale,
-                          color: VynicFloorTokens.freeDot,
+            // The inner stack keeps the plan's own coordinate space — every
+            // child is still positioned at `x * scale` — and is slid so the
+            // content box lands on the container's origin. Cropping here
+            // rather than in each child's arithmetic leaves the positioning
+            // maths and the full-canvas painters (grid, seats, walls)
+            // untouched.
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  left: -content.left * scale,
+                  top: -content.top * scale,
+                  width: canvasWidth * scale,
+                  height: canvasHeight * scale,
+                  child: Stack(
+                    children: [
+                      if (widget.showFloorPlanGrid)
+                        Positioned.fill(
+                          child: CustomPaint(painter: FloorPlanGridPainter()),
                         ),
-                      ),
-                    ),
-                  ),
-                  for (final object in objects)
-                    if (object.type != RestaurantLayoutObjectType.table)
-                      _buildFloorPlanObject(object, scale, scale),
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: CustomPaint(
-                        painter: FloorPlanWallJointsPainter(
-                          joints: floorPlanWallJoints(
-                            _wallSegmentsOf(objects),
-                            scale,
-                            scale,
+                      // Chairs get their own layer: table tiles are positioned
+                      // widgets that clip to their own box, and seat marks sit
+                      // just outside it.
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: CustomPaint(
+                            painter: FloorPlanSeatsPainter(
+                              tables: _seatedTables(clusters),
+                              scale: scale,
+                              color: VynicFloorTokens.freeDot,
+                            ),
                           ),
-                          color: _floorPlanObjectColors(
-                            const RestaurantLayoutObject(
-                              id: 'wall-color',
-                              zoneId: 'wall-color',
-                              type: RestaurantLayoutObjectType.wall,
-                              label: 'Wall',
-                              x: 0,
-                              y: 0,
-                              width: 1,
-                              height: 1,
-                            ),
-                          ).$1,
-                          borderColor: _floorPlanObjectColors(
-                            const RestaurantLayoutObject(
-                              id: 'wall-border',
-                              zoneId: 'wall-border',
-                              type: RestaurantLayoutObjectType.wall,
-                              label: 'Wall',
-                              x: 0,
-                              y: 0,
-                              width: 1,
-                              height: 1,
-                            ),
-                          ).$2,
                         ),
                       ),
-                    ),
+                      for (final object in objects)
+                        if (object.type != RestaurantLayoutObjectType.table)
+                          _buildFloorPlanObject(object, scale, scale),
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: CustomPaint(
+                            painter: FloorPlanWallJointsPainter(
+                              joints: floorPlanWallJoints(
+                                _wallSegmentsOf(objects),
+                                scale,
+                                scale,
+                              ),
+                              color: _floorPlanObjectColors(
+                                const RestaurantLayoutObject(
+                                  id: 'wall-color',
+                                  zoneId: 'wall-color',
+                                  type: RestaurantLayoutObjectType.wall,
+                                  label: 'Wall',
+                                  x: 0,
+                                  y: 0,
+                                  width: 1,
+                                  height: 1,
+                                ),
+                              ).$1,
+                              borderColor: _floorPlanObjectColors(
+                                const RestaurantLayoutObject(
+                                  id: 'wall-border',
+                                  zoneId: 'wall-border',
+                                  type: RestaurantLayoutObjectType.wall,
+                                  label: 'Wall',
+                                  x: 0,
+                                  y: 0,
+                                  width: 1,
+                                  height: 1,
+                                ),
+                              ).$2,
+                            ),
+                          ),
+                        ),
+                      ),
+                      for (final cluster in clusters)
+                        _buildTableCluster(cluster, scale),
+                    ],
                   ),
-                  for (final cluster in clusters)
-                    _buildTableCluster(cluster, scale),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         );
@@ -1091,8 +1157,10 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
       dot = VynicFloorTokens.freeDot;
     }
 
+    // Names, not numbers: a run of renamed tables should read
+    // „ფანჯარასთან + კუთხე", not „3 + 4".
     final numbers = [
-      for (final id in cluster.tableIds) _tableNumberFromId(id) ?? id,
+      for (final id in cluster.tableIds) _displayNameForTableId(id),
     ].join(' + ');
 
     return Positioned(
@@ -1118,78 +1186,17 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
                   ? VynicFloorTokens.occupiedTileShadow
                   : VynicFloorTokens.tileShadow,
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: dot,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 7),
-                        Text(
-                          numbers,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: VynicFloorTokens.text,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (cluster.capacity > 0) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        '${cluster.capacity} სტუმარი',
-                        maxLines: 1,
-                        style: const TextStyle(
-                          color: VynicFloorTokens.textFaint,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                    if (order != null) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        _formatMoney(order.totalAmount),
-                        maxLines: 1,
-                        style: const TextStyle(
-                          color: VynicFloorTokens.text,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        [
-                          _elapsedSince(order.createdAt),
-                          ?_waiterFor(order, busyModel),
-                        ].join(' · '),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: VynicFloorTokens.occupiedMeta,
-                          fontSize: 11.5,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+            child: _FloorPlanTileLabel(
+              numbers: numbers,
+              dot: dot,
+              capacity: cluster.capacity,
+              money: order == null ? null : _formatMoney(order.totalAmount),
+              meta: order == null
+                  ? null
+                  : [
+                      _elapsedSince(order.createdAt),
+                      ?_waiterFor(order, busyModel),
+                    ].join(' · '),
             ),
           ),
         ),
@@ -1433,135 +1440,29 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
                   ? VynicFloorTokens.occupiedTileShadow
                   : VynicFloorTokens.tileShadow,
             ),
-            child: isBusy
-                ? _buildBusyTileBody(
-                    label: label,
-                    dot: dot,
-                    order: order,
-                    tableModel: tableModel,
-                  )
-                : _buildFreeTileBody(label: label, dot: dot),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Free tile: just the name, centred.
-  Widget _buildFreeTileBody({required String label, required Color dot}) {
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      // scaleDown so a tile too short for its label shrinks the text rather
-      // than overflowing — it never enlarges past the natural size.
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Text(
-          label,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: VynicFloorTokens.text,
-            fontSize: 14.5,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Busy tile: name + status dot, the running total, then elapsed and waiter
-  /// pinned to the bottom.
-  Widget _buildBusyTileBody({
-    required String label,
-    required Color dot,
-    required Order? order,
-    required TableModel? tableModel,
-  }) {
-    final amount = order == null ? null : _formatMoney(order.totalAmount);
-    final startedAt = order?.createdAt ?? tableModel?.reservedAt;
-    final elapsed = startedAt == null ? null : _elapsedSince(startedAt);
-    final waiter = _waiterFor(order, tableModel);
-
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: Alignment.topLeft,
-        child: SizedBox(
-          width: 128,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: VynicFloorTokens.text,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: dot,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ],
-              ),
-              if (amount != null) ...[
-                const SizedBox(height: 6),
-                Text(
-                  amount,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: VynicFloorTokens.text,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-              if (elapsed != null || waiter != null) ...[
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    if (elapsed != null)
-                      Text(
-                        elapsed,
-                        style: const TextStyle(
-                          color: VynicFloorTokens.occupiedMeta,
-                          fontSize: 11.5,
-                        ),
-                      ),
-                    if (elapsed != null && waiter != null) const Spacer(),
-                    if (waiter != null)
-                      Flexible(
-                        child: Text(
-                          waiter,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.right,
-                          style: const TextStyle(
-                            color: VynicFloorTokens.occupiedMeta,
-                            fontSize: 11.5,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ],
+            // Same label as a merged tile. This path had its own copy —
+            // another `FittedBox(scaleDown)` around a fixed 128pt column — so
+            // the single tables, which is most of them, kept shrinking their
+            // type while the merged ones had already stopped.
+            child: _FloorPlanTileLabel(
+              numbers: label,
+              dot: dot,
+              capacity: _layout.tableForId(tableId)?.capacity ?? 0,
+              money: !isBusy || order == null
+                  ? null
+                  : _formatMoney(order.totalAmount),
+              meta: !isBusy
+                  ? null
+                  : () {
+                      final startedAt =
+                          order?.createdAt ?? tableModel?.reservedAt;
+                      final parts = [
+                        if (startedAt != null) _elapsedSince(startedAt),
+                        ?_waiterFor(order, tableModel),
+                      ];
+                      return parts.isEmpty ? null : parts.join(' · ');
+                    }(),
+            ),
           ),
         ),
       ),
@@ -2033,4 +1934,321 @@ List<FloorPlanWallSegment> _wallSegmentsOf(
           rotation: object.rotation,
         ),
   ];
+}
+
+/// What a table tile says, and how much of it survives a small tile.
+///
+/// This used to be a `FittedBox(fit: BoxFit.scaleDown)` wrapped around every
+/// row the tile could show. That shrinks the *type* until the content fits,
+/// which on a 1024x768 terminal produced the exact inversion of what you want:
+/// a free table has one line and stayed readable, while an occupied table —
+/// number, guests, total, elapsed·waiter — had four rows crushed into the same
+/// box and came out around six physical pixels. The tables carrying money were
+/// the ones nobody could read.
+///
+/// Detail is dropped instead. Type size is fixed at every level, and the tile
+/// shows as many rows as it can actually fit: everything, then number and
+/// total, then just the number. Only the last of those may still scale down,
+/// and one short string shrinks far less than a four-row column.
+class _FloorPlanTileLabel extends StatelessWidget {
+  const _FloorPlanTileLabel({
+    required this.numbers,
+    required this.dot,
+    required this.capacity,
+    required this.money,
+    required this.meta,
+  });
+
+  final String numbers;
+  final Color dot;
+  final int capacity;
+
+  /// Null on a free table.
+  final String? money;
+  final String? meta;
+
+  /// How far type may be shrunk before a line is dropped instead.
+  ///
+  /// The original bug was unbounded shrinking: four rows squeezed into a small
+  /// tile came out around six physical pixels. Measured against real tiles, a
+  /// name-plus-total lands at 0.92 on a short label and 0.80 on „440.00 ₾" —
+  /// so the floor sits just under that. Above it type is still comfortably
+  /// legible; below it, losing a line beats shrinking the tile into mush.
+  static const double _minTypeScale = 0.78;
+
+  /// Gap between rows, and the dot plus its gutter on the number row.
+  static const double _rowGap = 4;
+  static const double _dotSpan = 15;
+
+  /// Secondary lines are read at a glance from standing distance on a panel
+  /// that is often neither bright nor high-resolution. The old
+  /// `textFaint`/`occupiedMeta` greys measured 3.6:1 and 4.1:1 against a busy
+  /// tile — the two lightest things on the tile were also the two smallest.
+  static const Color _secondary = VynicFloorTokens.text;
+  static const Color _tertiary = VynicFloorTokens.textMuted;
+
+  /// One line of a tile, carrying what it needs to both measure and draw.
+  ///
+  /// [base] is the style the line will actually be rendered in — taken from
+  /// the enclosing [DefaultTextStyle], so it carries the app's font family.
+  /// Measuring with a bare `TextStyle` instead measured a *different* font
+  /// from the one on screen (the POS renders in NotoSansGeorgian), which made
+  /// every width here wrong by however much the two faces differ.
+  static _TileLine _line(
+    TextStyle base,
+    String text,
+    double size,
+    FontWeight weight,
+    Color color, {
+    bool withDot = false,
+  }) {
+    final style = base.copyWith(
+      fontSize: size,
+      fontWeight: weight,
+      color: color,
+      height: 1.15,
+    );
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout();
+    return _TileLine(
+      text: text,
+      style: style,
+      withDot: withDot,
+      width: painter.width + (withDot ? _dotSpan : 0),
+      height: painter.height,
+    );
+  }
+
+  /// Richest first. The first one that fits is the one drawn — so raising a
+  /// font size can never silently push a tile into the wrong level, which is
+  /// what hand-tuned pixel thresholds would have done.
+  List<List<_TileLine>> _levels(TextStyle base) {
+    final busy = money != null;
+    return [
+      if (busy)
+        [
+          _line(
+            base,
+            numbers,
+            16,
+            FontWeight.w700,
+            VynicFloorTokens.text,
+            withDot: true,
+          ),
+          if (capacity > 0)
+            _line(base, '$capacity სტუმარი', 12.5, FontWeight.w600, _tertiary),
+          _line(base, money!, 18, FontWeight.w700, VynicFloorTokens.text),
+          if (meta != null)
+            _line(base, meta!, 12.5, FontWeight.w500, _secondary),
+        ],
+      if (busy)
+        [
+          _line(
+            base,
+            numbers,
+            15,
+            FontWeight.w700,
+            VynicFloorTokens.text,
+            withDot: true,
+          ),
+          _line(base, money!, 17, FontWeight.w700, VynicFloorTokens.text),
+          if (meta != null) _line(base, meta!, 12, FontWeight.w500, _secondary),
+        ],
+      if (busy)
+        // The total is the reason anybody looks at an occupied table, so it is
+        // the last thing to go.
+        [
+          _line(base, numbers, 13, FontWeight.w700, VynicFloorTokens.text),
+          _line(base, money!, 15, FontWeight.w700, VynicFloorTokens.text),
+        ],
+      if (!busy && capacity > 0)
+        [
+          _line(
+            base,
+            numbers,
+            15,
+            FontWeight.w700,
+            VynicFloorTokens.text,
+            withDot: true,
+          ),
+          _line(base, '$capacity სტუმარი', 12.5, FontWeight.w600, _tertiary),
+        ],
+      [_line(base, numbers, 15, FontWeight.w700, VynicFloorTokens.text)],
+    ];
+  }
+
+  Widget _draw(_TileLine line) {
+    final text = Text(
+      line.text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: line.style,
+    );
+    if (!line.withDot) return text;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 7),
+        Flexible(child: text),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // A small tile that spends 12 units a side on padding has nothing left
+        // for the label.
+        final pad = constraints.maxWidth < 90 ? 5.0 : 12.0;
+        final inner = Size(
+          math.max(0, constraints.maxWidth - pad * 2),
+          math.max(0, constraints.maxHeight - pad * 2),
+        );
+
+        final levels = _levels(DefaultTextStyle.of(context).style);
+
+        // Pick the richest level that can be drawn at no less than
+        // [_minTypeScale] of its intended size, and let a `FittedBox` take up
+        // the remaining sliver.
+        //
+        // A hard "must fit exactly" rule was tried first and was wrong twice
+        // over. It dropped a tile straight from four lines to one for the sake
+        // of a couple of points, and it depends on text measurement — which
+        // differs between the real font and the fallback the test harness
+        // substitutes, so any fixed threshold would have been tuned against
+        // the wrong numbers. A floor on how small type may go is the property
+        // that actually matters, and it holds whatever the font measures.
+        var chosen = levels.last;
+        for (final level in levels) {
+          final needWidth = level.fold<double>(
+            0,
+            (widest, line) => math.max(widest, line.width),
+          );
+          final needHeight =
+              level.fold<double>(0, (sum, line) => sum + line.height) +
+              _rowGap * (level.length - 1);
+          if (needWidth <= 0 || needHeight <= 0) continue;
+          final fit = math.min(
+            inner.width / needWidth,
+            inner.height / needHeight,
+          );
+          if (fit >= _minTypeScale) {
+            chosen = level;
+            break;
+          }
+        }
+
+        return Padding(
+          padding: EdgeInsets.all(pad),
+          child: Center(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (var i = 0; i < chosen.length; i++) ...[
+                    if (i > 0) const SizedBox(height: _rowGap),
+                    _draw(chosen[i]),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// A measured line of tile text: what to draw, and what it costs.
+class _TileLine {
+  const _TileLine({
+    required this.text,
+    required this.style,
+    required this.withDot,
+    required this.width,
+    required this.height,
+  });
+
+  final String text;
+  final TextStyle style;
+  final bool withDot;
+  final double width;
+  final double height;
+}
+
+/// Never zoom a plan in past this, however little is on it.
+///
+/// Without a cap, a floor holding two tables would scale them up until they
+/// filled the panel, which reads as a different room rather than a quiet one.
+const double maxFloorPlanZoom = 1.6;
+
+/// Breathing room left around the content, in layout units.
+///
+/// Seat marks are painted just outside a table's own box, so a fit that hugged
+/// the tables exactly would clip the chairs off the outermost ones.
+const double _floorPlanContentMargin = 44;
+
+/// The region of the plan worth showing: what is actually placed on it, plus a
+/// margin — never larger than the canvas itself.
+///
+/// The declared canvas is the editor's working area and is routinely far bigger
+/// than its contents. The built-in plan is 1005x1101 with everything in the
+/// upper portion, so fitting the whole canvas into a landscape panel binds on
+/// height and gives up roughly a third of the scale for empty space. On a
+/// 1024x768 terminal that was one of three compounding shrinks that left table
+/// labels at about six physical pixels.
+///
+/// Returns the full canvas when there is nothing placed, so an empty floor
+/// still looks like a floor rather than a zoomed-in speck.
+Rect floorPlanContentBounds(List<RestaurantLayoutObject> objects, Size canvas) {
+  final full = Rect.fromLTWH(0, 0, canvas.width, canvas.height);
+  if (objects.isEmpty || canvas.width <= 0 || canvas.height <= 0) {
+    return full;
+  }
+
+  var left = double.infinity;
+  var top = double.infinity;
+  var right = double.negativeInfinity;
+  var bottom = double.negativeInfinity;
+  for (final object in objects) {
+    // Width/height can be negative if a layout was authored by dragging
+    // up-left; normalise rather than trusting the sign.
+    final l = math.min(object.x, object.x + object.width);
+    final t = math.min(object.y, object.y + object.height);
+    final r = math.max(object.x, object.x + object.width);
+    final b = math.max(object.y, object.y + object.height);
+    if (l < left) left = l;
+    if (t < top) top = t;
+    if (r > right) right = r;
+    if (b > bottom) bottom = b;
+  }
+
+  if (!left.isFinite || !top.isFinite || !right.isFinite || !bottom.isFinite) {
+    return full;
+  }
+
+  final bounds = Rect.fromLTRB(
+    left - _floorPlanContentMargin,
+    top - _floorPlanContentMargin,
+    right + _floorPlanContentMargin,
+    bottom + _floorPlanContentMargin,
+  ).intersect(full);
+
+  // A degenerate result — everything stacked on one point, or placed outside
+  // the canvas entirely — is not something to zoom into.
+  if (bounds.width < 1 || bounds.height < 1) {
+    return full;
+  }
+  return bounds;
 }

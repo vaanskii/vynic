@@ -4,8 +4,11 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/services/pos/backup_file_picker.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_menu_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_packages_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_close_day_section.dart';
@@ -14,6 +17,7 @@ import 'package:vynic/apps/windows_pos/widgets/admin/admin_sales_report_section.
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_audit_log_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_error_log_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_connection_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_data_backup_panel.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_financial_reports_panel.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_settings_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/printers/admin_printers_section.dart';
@@ -33,6 +37,33 @@ import 'package:vynic/core/services/pos/monthly_report_service.dart';
 import 'package:vynic/core/services/sync/manager_sync_service.dart';
 
 class AdminScreen extends StatefulWidget {
+  /// Every section the management centre can navigate to.
+  ///
+  /// Kept beside the title map so a tool cannot be added to one and forgotten
+  /// in the other — which is how backup ended up buried inside „კავშირი".
+  static const List<String> navigableSections = [
+    'staff',
+    'menu',
+    'packages',
+    'reservations',
+    'tableLayouts',
+    'display',
+    'closeday',
+    'sales',
+    'salesReport',
+    'financialReports',
+    'audit',
+    'errors',
+    'printers',
+    'connection',
+    'settings',
+  ];
+
+  /// Georgian title for a section, for tests and for the content header.
+  static String sectionTitle(String section) {
+    return _AdminScreenState._titleFor(section);
+  }
+
   const AdminScreen({super.key, required this.user});
 
   final User user;
@@ -44,11 +75,15 @@ class AdminScreen extends StatefulWidget {
 class _AdminScreenState extends State<AdminScreen> {
   String _selectedSection = 'staff'; // Default section
 
-  static const Color _surfaceColor = Color(0xFFF6F7F9);
-  static const Color _sidebarColor = Color(0xFF111827);
-  static const Color _sidebarMuted = Color(0xFF9CA3AF);
-  static const Color _sidebarSelected = Color(0xFF1F2937);
-  static const Color _adminAccent = Color(0xFF14B8A6);
+  // The admin chrome is the same rail the floor screen uses: a light panel on
+  // a warm page, with the lavender accent marking the one selected thing. It
+  // used to be a dark navy rail with a teal accent — a second product's
+  // colours bolted onto the side of this one.
+  static const Color _surfaceColor = VynicFloorTokens.page;
+  static const Color _sidebarColor = VynicFloorTokens.panel;
+  static const Color _sidebarMuted = VynicFloorTokens.textMuted;
+  static const Color _sidebarSelected = VynicFloorTokens.accentSoft;
+  static const Color _adminAccent = VynicFloorTokens.accentStrong;
 
   final TextEditingController _kitchenPrinterController =
       TextEditingController();
@@ -74,6 +109,7 @@ class _AdminScreenState extends State<AdminScreen> {
 
   bool _serviceFeeEnabledByDefault = false;
   bool _receiptServiceFeeLineVisible = true;
+  bool _closeReceiptServiceFeeLineVisible = false;
   double _serviceFeePercent = 10.0;
   String _defaultLanguageSetting = 'ka';
   String? _lastBackupPath;
@@ -176,6 +212,8 @@ class _AdminScreenState extends State<AdminScreen> {
         DatabaseService.isServiceFeeEnabledByDefault();
     _receiptServiceFeeLineVisible =
         DatabaseService.isReceiptServiceFeeLineVisible();
+    _closeReceiptServiceFeeLineVisible =
+        DatabaseService.isCloseReceiptServiceFeeLineVisible();
     _serviceFeeController.text = _formatServiceFeeField(_serviceFeePercent);
 
     _defaultLanguageSetting = DatabaseService.getDefaultLanguage();
@@ -471,8 +509,8 @@ class _AdminScreenState extends State<AdminScreen> {
                                   fontWeight: FontWeight.w600,
                                   fontSize: 12,
                                   color: isProfit
-                                      ? const Color(0xFF2E7D32)
-                                      : const Color(0xFFC62828),
+                                      ? AdminTones.successText
+                                      : AdminDesign.danger,
                                 ),
                               ),
                             ],
@@ -1250,7 +1288,7 @@ class _AdminScreenState extends State<AdminScreen> {
     });
   }
 
-  String _getSectionTitle(String section) {
+  static String _titleFor(String section) {
     switch (section) {
       case 'staff':
       case 'waiters':
@@ -1272,6 +1310,8 @@ class _AdminScreenState extends State<AdminScreen> {
         return 'გაყიდვები';
       case 'salesReport':
         return 'გაყიდვების რეპორტი';
+      case 'financialReports':
+        return 'ფინანსური რეპორტები';
       case 'audit':
         return 'აუდიტი';
       case 'errors':
@@ -1300,7 +1340,9 @@ class _AdminScreenState extends State<AdminScreen> {
       height: double.infinity,
       decoration: const BoxDecoration(
         color: _sidebarColor,
-        border: Border(right: BorderSide(color: Color(0xFF243244))),
+        border: Border(
+          right: BorderSide(color: VynicFloorTokens.panelBorder),
+        ),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -1389,6 +1431,11 @@ class _AdminScreenState extends State<AdminScreen> {
         section: 'salesReport',
       ),
       _buildMenuItem(
+        icon: Icons.summarize_outlined,
+        title: 'ფინანსური რეპორტები',
+        section: 'financialReports',
+      ),
+      _buildMenuItem(
         icon: Icons.report_problem,
         title: 'აუდიტი',
         section: 'audit',
@@ -1421,12 +1468,9 @@ class _AdminScreenState extends State<AdminScreen> {
     return Container(
       height: 76,
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         border: Border(
-          bottom: BorderSide(
-            color: Colors.white.withValues(alpha: 0.08),
-            width: 1,
-          ),
+          bottom: BorderSide(color: VynicFloorTokens.divider, width: 1),
         ),
       ),
       child: Row(
@@ -1438,13 +1482,13 @@ class _AdminScreenState extends State<AdminScreen> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
+                color: VynicFloorTokens.metricFill,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                border: Border.all(color: VynicFloorTokens.panelBorder),
               ),
               child: const Icon(
                 Icons.arrow_back,
-                color: Color(0xFFE5E7EB),
+                color: VynicFloorTokens.text,
                 size: 18,
               ),
             ),
@@ -1458,7 +1502,7 @@ class _AdminScreenState extends State<AdminScreen> {
                 Text(
                   'Vynic',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: VynicFloorTokens.text,
                     fontWeight: FontWeight.w800,
                     fontSize: 18,
                   ),
@@ -1488,7 +1532,9 @@ class _AdminScreenState extends State<AdminScreen> {
     final isSelected = _selectedSection == section;
     final iconColor = isSelected ? _adminAccent : _sidebarMuted;
     final textStyle = TextStyle(
-      color: isSelected ? Colors.white : const Color(0xFFD1D5DB),
+      color: isSelected
+          ? VynicFloorTokens.accentText
+          : VynicFloorTokens.textMuted,
       fontSize: 13,
       fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
     );
@@ -1502,9 +1548,7 @@ class _AdminScreenState extends State<AdminScreen> {
         color: isSelected ? _sidebarSelected : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isSelected
-              ? Colors.white.withValues(alpha: 0.08)
-              : Colors.transparent,
+          color: isSelected ? const Color(0xFFE2DCF2) : Colors.transparent,
         ),
       ),
       child: Row(
@@ -1525,8 +1569,8 @@ class _AdminScreenState extends State<AdminScreen> {
             height: 30,
             decoration: BoxDecoration(
               color: isSelected
-                  ? _adminAccent.withValues(alpha: 0.12)
-                  : Colors.white.withValues(alpha: 0.04),
+                  ? VynicFloorTokens.panel
+                  : VynicFloorTokens.metricFill,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: iconColor, size: 18),
@@ -1564,6 +1608,14 @@ class _AdminScreenState extends State<AdminScreen> {
 
   Widget _buildSettingsSection() {
     return AdminSettingsSection(
+      dataBackup: AdminDataBackupPanel(
+        lastBackupPath: _lastBackupPath,
+        lastRestorePath: _lastRestorePath,
+        isCreatingBackup: _isCreatingBackup,
+        isRestoringBackup: _isRestoringBackup,
+        onCreateBackupFile: _createBackupFile,
+        onRestoreBackupFromFile: _restoreBackupFromFile,
+      ),
       formatDateTimeDisplay: _formatDateTimeDisplay,
       formatRelativeTime: _formatRelativeTime,
       serviceFeeController: _serviceFeeController,
@@ -1583,6 +1635,12 @@ class _AdminScreenState extends State<AdminScreen> {
       onReceiptServiceFeeLineVisibleChanged: (value) {
         setState(() {
           _receiptServiceFeeLineVisible = value;
+        });
+      },
+      closeReceiptServiceFeeLineVisible: _closeReceiptServiceFeeLineVisible,
+      onCloseReceiptServiceFeeLineVisibleChanged: (value) {
+        setState(() {
+          _closeReceiptServiceFeeLineVisible = value;
         });
       },
       serviceFeePercentDisplay:
@@ -1919,6 +1977,9 @@ class _AdminScreenState extends State<AdminScreen> {
       // the same card and never affects totals.
       await DatabaseService.setReceiptServiceFeeLineVisible(
         _receiptServiceFeeLineVisible,
+      );
+      await DatabaseService.setCloseReceiptServiceFeeLineVisible(
+        _closeReceiptServiceFeeLineVisible,
       );
       _serviceFeePercent = parsedPercent;
       _serviceFeeController.text = _formatServiceFeeField(parsedPercent);
@@ -2269,7 +2330,7 @@ class _AdminScreenState extends State<AdminScreen> {
                           ),
                           child: const Icon(
                             Icons.cloud_done_outlined,
-                            color: Color(0xFF1E3A8A),
+                            color: AdminDesign.accentDark,
                             size: 22,
                           ),
                         ),
@@ -2278,7 +2339,7 @@ class _AdminScreenState extends State<AdminScreen> {
                           child: Text(
                             'აღდგენა დასრულდა',
                             style: TextStyle(
-                              color: Color(0xFF0F172A),
+                              color: AdminDesign.text,
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                             ),
@@ -2291,14 +2352,14 @@ class _AdminScreenState extends State<AdminScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: AdminDesign.panelSoft,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: AdminDesign.border),
                       ),
                       child: Text(
                         'სარეზერვო ასლი აღდგენილია (DB v${DatabaseService.dbVersion}). მონაცემების სრულად განახლებისთვის აპი გადაიყვანება ავტორიზაციაზე.',
                         style: const TextStyle(
-                          color: Color(0xFF334155),
+                          color: AdminDesign.muted,
                           fontSize: 14,
                           height: 1.35,
                         ),
@@ -2310,7 +2371,7 @@ class _AdminScreenState extends State<AdminScreen> {
                       child: ElevatedButton(
                         onPressed: () => Navigator.of(dialogContext).pop(true),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1E3A8A),
+                          backgroundColor: AdminDesign.accentDark,
                           foregroundColor: Colors.white,
                           minimumSize: const Size.fromHeight(52),
                           shape: RoundedRectangleBorder(
@@ -2417,7 +2478,7 @@ class _AdminScreenState extends State<AdminScreen> {
       barrierColor: Colors.black54,
       builder: (dialogContext) {
         return Dialog.fullscreen(
-          backgroundColor: const Color(0xFFF8FAFC),
+          backgroundColor: AdminDesign.panelSoft,
           child: SafeArea(
             child: Column(
               children: [
@@ -2429,21 +2490,21 @@ class _AdminScreenState extends State<AdminScreen> {
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     border: Border(
-                      bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                      bottom: BorderSide(color: AdminDesign.border),
                     ),
                   ),
                   child: Row(
                     children: [
                       const Icon(
                         Icons.history_rounded,
-                        color: Color(0xFF1E3A8A),
+                        color: AdminDesign.accentDark,
                       ),
                       const SizedBox(width: 10),
                       const Expanded(
                         child: Text(
                           'აირჩიე ბიზნეს თარიღი',
                           style: TextStyle(
-                            color: Color(0xFF1F2937),
+                            color: AdminDesign.text,
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
                           ),
@@ -2452,7 +2513,7 @@ class _AdminScreenState extends State<AdminScreen> {
                       IconButton(
                         onPressed: () => Navigator.of(dialogContext).pop(),
                         icon: const Icon(Icons.close_rounded),
-                        color: const Color(0xFF64748B),
+                        color: AdminDesign.muted,
                       ),
                     ],
                   ),
@@ -2474,7 +2535,7 @@ class _AdminScreenState extends State<AdminScreen> {
 
                       return Material(
                         color: isCurrentDate
-                            ? const Color(0xFFEFF6FF)
+                            ? AdminTones.infoFill
                             : Colors.white,
                         borderRadius: BorderRadius.circular(14),
                         child: InkWell(
@@ -2689,7 +2750,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                                 const Text(
                                                   'ეს ქმედება გახსნის არჩეულ ბიზნეს დღეს, რათა შეძლო შეკვეთების და ჯავშნების კორექტირება.',
                                                   style: TextStyle(
-                                                    color: Color(0xFF64748B),
+                                                    color: AdminDesign.muted,
                                                     fontSize: 13,
                                                     fontWeight: FontWeight.w400,
                                                     height: 1.5,
@@ -2823,7 +2884,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                     isCurrentDate
                                         ? Icons.event_available
                                         : Icons.event,
-                                    color: const Color(0xFF1E3A8A),
+                                    color: AdminDesign.accentDark,
                                     size: 20,
                                   ),
                                 ),
@@ -2837,8 +2898,8 @@ class _AdminScreenState extends State<AdminScreen> {
                                         georgianLabel,
                                         style: TextStyle(
                                           color: isCurrentDate
-                                              ? const Color(0xFF1E3A8A)
-                                              : const Color(0xFF0F172A),
+                                              ? AdminDesign.accentDark
+                                              : AdminDesign.text,
                                           fontWeight: FontWeight.w700,
                                           fontSize: 15,
                                         ),
@@ -2847,7 +2908,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                       Text(
                                         technicalLabel,
                                         style: const TextStyle(
-                                          color: Color(0xFF64748B),
+                                          color: AdminDesign.muted,
                                           fontWeight: FontWeight.w500,
                                           fontSize: 12,
                                         ),
@@ -2862,7 +2923,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                       vertical: 3,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF1E3A8A),
+                                      color: AdminDesign.accentDark,
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: const Text(
@@ -2877,7 +2938,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                 else
                                   const Icon(
                                     Icons.chevron_right_rounded,
-                                    color: Color(0xFF94A3B8),
+                                    color: VynicFloorTokens.textFaint,
                                   ),
                               ],
                             ),
@@ -2892,13 +2953,13 @@ class _AdminScreenState extends State<AdminScreen> {
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
                   decoration: const BoxDecoration(
                     color: Colors.white,
-                    border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+                    border: Border(top: BorderSide(color: AdminDesign.border)),
                   ),
                   child: OutlinedButton(
                     onPressed: () => Navigator.of(dialogContext).pop(),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF334155),
-                      side: const BorderSide(color: Color(0xFFCBD5E1)),
+                      foregroundColor: AdminDesign.muted,
+                      side: const BorderSide(color: VynicFloorTokens.textFaint),
                       minimumSize: const Size.fromHeight(48),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -2954,12 +3015,12 @@ class _AdminScreenState extends State<AdminScreen> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E3A8A).withValues(alpha: 0.1),
+                          color: AdminDesign.accentDark.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Icon(
                           Icons.event_repeat_rounded,
-                          color: Color(0xFF1E3A8A),
+                          color: AdminDesign.accentDark,
                           size: 20,
                         ),
                       ),
@@ -2968,7 +3029,7 @@ class _AdminScreenState extends State<AdminScreen> {
                         child: Text(
                           'თარიღის დადასტურება',
                           style: TextStyle(
-                            color: Color(0xFF0F172A),
+                            color: AdminDesign.text,
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
                           ),
@@ -2977,7 +3038,7 @@ class _AdminScreenState extends State<AdminScreen> {
                       IconButton(
                         onPressed: () => Navigator.of(dialogContext).pop(false),
                         icon: const Icon(Icons.close_rounded),
-                        color: const Color(0xFF94A3B8),
+                        color: VynicFloorTokens.textFaint,
                         iconSize: 20,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
@@ -2992,9 +3053,9 @@ class _AdminScreenState extends State<AdminScreen> {
                       vertical: 14,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: AdminDesign.panelSoft,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: AdminDesign.border),
                     ),
                     child: Row(
                       children: [
@@ -3005,7 +3066,7 @@ class _AdminScreenState extends State<AdminScreen> {
                               Text(
                                 'მიმდინარე',
                                 style: TextStyle(
-                                  color: Colors.blueGrey.shade600,
+                                  color: AdminDesign.muted,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -3014,7 +3075,7 @@ class _AdminScreenState extends State<AdminScreen> {
                               Text(
                                 georgianCurrent,
                                 style: const TextStyle(
-                                  color: Color(0xFF374151),
+                                  color: AdminDesign.muted,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -3024,7 +3085,7 @@ class _AdminScreenState extends State<AdminScreen> {
                         ),
                         const Icon(
                           Icons.arrow_forward_rounded,
-                          color: Color(0xFF94A3B8),
+                          color: VynicFloorTokens.textFaint,
                           size: 18,
                         ),
                         Expanded(
@@ -3034,7 +3095,7 @@ class _AdminScreenState extends State<AdminScreen> {
                               Text(
                                 'გადასვლა',
                                 style: TextStyle(
-                                  color: Colors.blueGrey.shade600,
+                                  color: AdminDesign.muted,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -3043,7 +3104,7 @@ class _AdminScreenState extends State<AdminScreen> {
                               Text(
                                 georgianTarget,
                                 style: const TextStyle(
-                                  color: Color(0xFF1E3A8A),
+                                  color: AdminDesign.accentDark,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -3058,7 +3119,7 @@ class _AdminScreenState extends State<AdminScreen> {
                   const Text(
                     'ეს ქმედება გახსნის არჩეულ ბიზნეს დღეს, რათა შეძლო შეკვეთების და ჯავშნების კორექტირება.',
                     style: TextStyle(
-                      color: Color(0xFF64748B),
+                      color: AdminDesign.muted,
                       fontSize: 13,
                       fontWeight: FontWeight.w400,
                       height: 1.5,
@@ -3072,8 +3133,8 @@ class _AdminScreenState extends State<AdminScreen> {
                           onPressed: () =>
                               Navigator.of(dialogContext).pop(false),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF334155),
-                            side: const BorderSide(color: Color(0xFFCBD5E1)),
+                            foregroundColor: AdminDesign.muted,
+                            side: const BorderSide(color: VynicFloorTokens.textFaint),
                             minimumSize: const Size.fromHeight(44),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -3088,7 +3149,7 @@ class _AdminScreenState extends State<AdminScreen> {
                           onPressed: () =>
                               Navigator.of(dialogContext).pop(true),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1E3A8A),
+                            backgroundColor: AdminDesign.accentDark,
                             foregroundColor: Colors.white,
                             minimumSize: const Size.fromHeight(44),
                             shape: RoundedRectangleBorder(
@@ -3314,7 +3375,7 @@ class _AdminScreenState extends State<AdminScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2B2B2B),
+        backgroundColor: AdminDesign.text,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Cancel Sale Record',
@@ -3327,11 +3388,11 @@ class _AdminScreenState extends State<AdminScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('გაუქმება', style: TextStyle(color: Colors.grey)),
+            child: const Text('გაუქმება', style: TextStyle(color: AdminDesign.muted)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: AdminDesign.danger),
             child: const Text('გაუქმება / Cancel'),
           ),
         ],
@@ -3388,7 +3449,7 @@ class _AdminScreenState extends State<AdminScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF2B2B2B),
+        backgroundColor: AdminDesign.text,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'მაგიდაზე დაბრუნება',
@@ -3401,12 +3462,12 @@ class _AdminScreenState extends State<AdminScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('გაუქმება', style: TextStyle(color: Colors.grey)),
+            child: const Text('გაუქმება', style: TextStyle(color: AdminDesign.muted)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0F766E),
+              backgroundColor: AdminDesign.accentDark,
             ),
             child: const Text('დაბრუნება'),
           ),
@@ -3489,7 +3550,15 @@ class _AdminScreenState extends State<AdminScreen> {
           selectedSalesMonth: _selectedSalesMonth,
           onChangeSalesMonth: _changeSalesMonth,
           onSetSelectedSalesMonth: _setSelectedSalesMonth,
-          financialReports: _buildFinancialReportsPanel(),
+        );
+      case 'financialReports':
+        // Its own destination. These two exports were at the foot of the
+        // Settings tab, then at the foot of the sales report — both times
+        // below a screenful of other content, which is why they read as
+        // deleted.
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(18),
+          child: _buildFinancialReportsPanel(),
         );
       case 'audit':
         return AdminAuditLogSection(
@@ -3503,14 +3572,7 @@ class _AdminScreenState extends State<AdminScreen> {
       case 'printers':
         return _buildPrintersSection();
       case 'connection':
-        return AdminConnectionSection(
-          lastBackupPath: _lastBackupPath,
-          lastRestorePath: _lastRestorePath,
-          isCreatingBackup: _isCreatingBackup,
-          isRestoringBackup: _isRestoringBackup,
-          onCreateBackupFile: _createBackupFile,
-          onRestoreBackupFromFile: _restoreBackupFromFile,
-        );
+        return const AdminConnectionSection();
       case 'settings':
         return _buildSettingsSection();
       default:
@@ -3520,6 +3582,21 @@ class _AdminScreenState extends State<AdminScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // One theme for the whole panel. The admin has roughly two hundred stock
+    // Material buttons, fields and switches; restyling them individually would
+    // have been both enormous and unstable, because the next one anybody added
+    // would come out in the old navy again. Setting them here means a plain
+    // `ElevatedButton` already looks like the rest of the product.
+    //
+    // The Builder matters: it puts the sections' build contexts *below* the
+    // Theme, so `Theme.of(context)` inside them resolves to this one.
+    return Theme(
+      data: AdminTheme.of(context),
+      child: Builder(builder: _buildScaffold),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     final mainContent = Expanded(child: ClipRect(child: _buildContent()));
 
     return Scaffold(
@@ -3527,18 +3604,22 @@ class _AdminScreenState extends State<AdminScreen> {
       appBar: _isMobile
           ? AppBar(
               backgroundColor: _sidebarColor,
+              surfaceTintColor: Colors.transparent,
               elevation: 0,
-              iconTheme: const IconThemeData(color: Colors.white),
+              shape: const Border(
+                bottom: BorderSide(color: VynicFloorTokens.panelBorder),
+              ),
+              iconTheme: const IconThemeData(color: VynicFloorTokens.text),
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () => Navigator.of(context).pop(),
               ),
               title: Text(
-                _getSectionTitle(_selectedSection),
+                _titleFor(_selectedSection),
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: VynicFloorTokens.text,
                   fontSize: 18,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
               actions: [
@@ -3559,7 +3640,10 @@ class _AdminScreenState extends State<AdminScreen> {
           _isMobile
               ? Stack(
                   children: [
-                    Column(children: [mainContent]),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [mainContent],
+                    ),
                     if (_isSidebarExpanded)
                       Positioned.fill(
                         child: GestureDetector(
@@ -3577,6 +3661,11 @@ class _AdminScreenState extends State<AdminScreen> {
                   ],
                 )
               : Row(
+                  // Stretch, not the default centre: a section whose content
+                  // is shorter than the window would otherwise be handed a
+                  // loose height and float in the middle of the page instead
+                  // of starting at the top.
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // Sidebar
                     _buildSidebar(),

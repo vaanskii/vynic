@@ -9,7 +9,8 @@ import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/apps/windows_pos/widgets/on_screen_keyboard.dart';
-import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
+import 'package:vynic/apps/windows_pos/widgets/shared/pos_surface.dart';
 
 class OrderDetailContentSection extends StatefulWidget {
   const OrderDetailContentSection({
@@ -40,6 +41,12 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
   static const Color _mutedTextColor = Color(0xFF6B7280);
   static const Color _accentColor = Color(0xFF0F766E);
 
+  // Numeric columns are fixed so figures line up down the bill; only the
+  // dish name flexes.
+  static const double _quantityColumnWidth = 64;
+  static const double _priceColumnWidth = 96;
+  static const double _totalColumnWidth = 104;
+
   @override
   Widget build(BuildContext context) {
     final order = widget.order;
@@ -60,88 +67,87 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
         ? 'დამატებითი პოზიციები'
         : 'მიმდინარე შეკვეთა';
 
+    // With a package on the order the list is no longer a single flat table,
+    // so the column header travels with the items table instead of being
+    // pinned under the heading.
+    final pinColumnHeader = !hasPackage && activeItems.isNotEmpty;
+
     return Container(
-      decoration: AdminDesign.panelDecoration(),
+      decoration: BoxDecoration(
+        color: VynicFloorTokens.panel,
+        borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
+        border: Border.all(color: VynicFloorTokens.panelBorder),
+      ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
             child: Row(
               children: [
-                const Icon(
-                  Icons.receipt_long_outlined,
-                  size: 18,
-                  color: _accentColor,
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  'მიმდინარე შეკვეთა',
-                  style: TextStyle(
-                    color: _titleColor,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
+                const PosSectionLabel('ORDER'),
                 const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _accentColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    '$totalCount პოზიცია',
-                    style: const TextStyle(
-                      color: _accentColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
+                Text(
+                  '$totalCount',
+                  style: const TextStyle(
+                    color: VynicFloorTokens.textMuted,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
           ),
-          const Divider(height: 1, color: _borderColor),
+          if (pinColumnHeader) _buildTableHeader(),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(0, pinColumnHeader ? 0 : 4, 0, 16),
               children: [
                 if (hasPackage) ...[
-                  _buildPackageSummary(order, canModify),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                    child: _buildPackageSummary(order, canModify),
+                  ),
                   if (packageCount > 0) ...[
                     const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: () => _showOrderItemsDialog([
-                          for (final item in order.packageItems)
-                            _buildOrderItemTile(item, isPackageItem: true),
-                        ]),
-                        style: TextButton.styleFrom(
-                          foregroundColor: _accentColor,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: () => _showOrderItemsDialog([
+                            for (final item in order.packageItems)
+                              _buildOrderItemTile(item, isPackageItem: true),
+                          ]),
+                          style: TextButton.styleFrom(
+                            foregroundColor: VynicFloorTokens.accentText,
+                          ),
+                          icon: const Icon(Icons.list_alt, size: 18),
+                          label: Text('პაკეტის შემადგენლობა ($packageCount)'),
                         ),
-                        icon: const Icon(Icons.list_alt, size: 18),
-                        label: Text('პაკეტის შემადგენლობა ($packageCount)'),
                       ),
                     ),
                   ],
                   const SizedBox(height: 16),
                 ],
                 if (activeItems.isEmpty && hasPackage)
-                  _buildNoAdditionalItemsNotice()
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _buildNoAdditionalItemsNotice(),
+                  )
                 else if (activeItems.isEmpty)
                   _buildEmptyOrderNotice()
                 else ...[
                   if (hasPackage) ...[
-                    _buildSectionLabel(sectionLabel),
-                    const SizedBox(height: 10),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                      child: _buildSectionLabel(sectionLabel),
+                    ),
+                    _buildTableHeader(),
                   ],
-                  _buildItemsTable(activeItems),
+                  for (int i = 0; i < activeItems.length; i++)
+                    _buildTableRow(activeItems[i], divided: i > 0),
                 ],
               ],
             ),
@@ -151,165 +157,131 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
     );
   }
 
-  Widget _buildItemsTable(List<OrderItem> items) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AdminDesign.radius),
-        border: Border.all(color: _borderColor),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          _buildTableHeader(),
-          for (int i = 0; i < items.length; i++)
-            _buildTableRow(items[i], i + 1, shaded: i.isOdd),
-        ],
-      ),
-    );
-  }
-
+  /// Column captions. Quiet and small — they orient the eye once and then get
+  /// out of the way of the figures.
   Widget _buildTableHeader() {
-    Widget cell(String text, int flex, {TextAlign align = TextAlign.left}) {
-      return Expanded(
-        flex: flex,
+    Widget numeric(String text, double width) {
+      return SizedBox(
+        width: width,
         child: Text(
           text,
-          textAlign: align,
+          textAlign: TextAlign.right,
           style: const TextStyle(
-            color: _mutedTextColor,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.3,
+            color: VynicFloorTokens.sectionLabel,
+            fontSize: 11.5,
           ),
         ),
       );
     }
 
-    return Container(
-      color: _surfaceColor,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
       child: Row(
         children: [
-          SizedBox(
-            width: 28,
+          const Expanded(
             child: Text(
-              '#',
-              style: const TextStyle(
-                color: _mutedTextColor,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
+              'დასახელება',
+              style: TextStyle(
+                color: VynicFloorTokens.sectionLabel,
+                fontSize: 11.5,
               ),
             ),
           ),
-          cell('კერძი', 5),
-          cell('რაოდ.', 2, align: TextAlign.center),
-          cell('ერთ. ფასი', 3, align: TextAlign.right),
-          cell('ჯამი', 3, align: TextAlign.right),
+          numeric('რაოდ.', _quantityColumnWidth),
+          numeric('ფასი', _priceColumnWidth),
+          numeric('ჯამი', _totalColumnWidth),
         ],
       ),
     );
   }
 
-  Widget _buildTableRow(OrderItem item, int index, {required bool shaded}) {
+  /// One line of the bill.
+  ///
+  /// Separated by a hairline rather than zebra shading: on a long order the
+  /// alternating fills fight with the highlight that marks items the kitchen
+  /// has just been sent.
+  Widget _buildTableRow(OrderItem item, {required bool divided}) {
     final comment = item.comment?.trim();
     final highlighted = PosChangeHighlightService.shouldHighlightItem(
       widget.highlightItemKeys,
       item.itemKey,
       item.itemName,
     );
-    final Color rowColor = highlighted
-        ? const Color(0xFFFFF7ED)
-        : (shaded ? _surfaceColor : _panelColor);
+
+    Widget numeric(
+      String text, {
+      required double width,
+      required TextStyle style,
+    }) {
+      return SizedBox(
+        width: width,
+        child: Text(text, textAlign: TextAlign.right, style: style),
+      );
+    }
 
     return Container(
       decoration: BoxDecoration(
-        color: rowColor,
-        border: const Border(top: BorderSide(color: _borderColor)),
+        color: highlighted ? VynicFloorTokens.occupiedTileFill : null,
+        border: divided
+            ? const Border(top: BorderSide(color: VynicFloorTokens.divider))
+            : null,
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.fromLTRB(20, 13, 20, 13),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          SizedBox(
-            width: 28,
-            child: Text(
-              '$index',
-              style: const TextStyle(
-                color: _mutedTextColor,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
           Expanded(
-            flex: 5,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   item.itemName,
                   style: const TextStyle(
-                    color: _titleColor,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+                    color: VynicFloorTokens.text,
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 if (comment != null && comment.isNotEmpty) ...[
                   const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.chat_bubble_outline,
-                        size: 12,
-                        color: _mutedTextColor,
-                      ),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          comment,
-                          style: const TextStyle(
-                            color: _mutedTextColor,
-                            fontSize: 12,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
-                    ],
+                  Text(
+                    comment,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: VynicFloorTokens.textMuted,
+                      fontSize: 12.5,
+                    ),
                   ),
                 ],
               ],
             ),
           ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              '${item.quantity}',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: _titleColor,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
+          numeric(
+            '${item.quantity}',
+            width: _quantityColumnWidth,
+            style: const TextStyle(
+              color: VynicFloorTokens.text,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              '${item.unitPrice.toStringAsFixed(2)} ₾',
-              textAlign: TextAlign.right,
-              style: const TextStyle(color: _mutedTextColor, fontSize: 13),
+          numeric(
+            '${item.unitPrice.toStringAsFixed(2)} ₾',
+            width: _priceColumnWidth,
+            style: const TextStyle(
+              color: VynicFloorTokens.textMuted,
+              fontSize: 13.5,
             ),
           ),
-          Expanded(
-            flex: 3,
-            child: Text(
-              '${item.total.toStringAsFixed(2)} ₾',
-              textAlign: TextAlign.right,
-              style: const TextStyle(
-                color: _titleColor,
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-              ),
+          numeric(
+            '${item.total.toStringAsFixed(2)} ₾',
+            width: _totalColumnWidth,
+            style: const TextStyle(
+              color: VynicFloorTokens.text,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -319,15 +291,19 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
 
   Widget _buildEmptyOrderNotice() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 36),
+      padding: const EdgeInsets.symmetric(vertical: 44),
       alignment: Alignment.center,
       child: const Column(
         children: [
-          Icon(Icons.no_meals_outlined, size: 40, color: _mutedTextColor),
+          Icon(
+            Icons.no_meals_outlined,
+            size: 36,
+            color: VynicFloorTokens.freeDot,
+          ),
           SizedBox(height: 10),
           Text(
             'შეკვეთაში პოზიციები არ არის',
-            style: TextStyle(color: _mutedTextColor, fontSize: 14),
+            style: TextStyle(color: VynicFloorTokens.textMuted, fontSize: 14),
           ),
         ],
       ),

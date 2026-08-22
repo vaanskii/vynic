@@ -457,6 +457,8 @@ class _HomeScreenState extends State<HomeScreen> {
       takeAwayCount: takeAwayCount,
       activeWaitersCount: waiterSummaries.length,
       waiterSummaries: waiterSummaries,
+      closedTables: HomeXReportHelper.buildClosedTables(todaysSales),
+      soldItems: HomeXReportHelper.buildSoldItems(todaysSales),
       onPrintReport: () => unawaited(HomeXReportHelper.printReport(context)),
       primaryColor: _primaryColor,
       secondaryColor: _secondaryColor,
@@ -1142,8 +1144,14 @@ class _HomeScreenState extends State<HomeScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) =>
-              MenuScreen(user: _user, selectedTables: state.selectedTables),
+          builder: (context) => MenuScreen(
+            user: _user,
+            selectedTables: state.selectedTables,
+            // The names above are whatever the admin typed; these carry the
+            // identity the order is actually written against.
+            tableNumbers: state.selectedTableNumbers,
+            tableFloor: state.selectedFloor,
+          ),
         ),
       ).then((_) async {
         // Refresh tables and clear selection when coming back
@@ -1319,9 +1327,7 @@ class _TopAdminButton extends StatelessWidget {
         foregroundColor: VynicFloorTokens.panel,
         minimumSize: Size(narrow ? 40 : 0, compact ? 32 : 34),
         padding: EdgeInsets.symmetric(horizontal: narrow ? 0 : 14),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(9),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
       ),
       child: narrow
           ? const Icon(Icons.settings_outlined, size: 17)

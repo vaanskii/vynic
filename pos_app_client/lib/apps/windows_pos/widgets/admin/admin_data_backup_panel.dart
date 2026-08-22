@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_form_controls.dart';
 
@@ -70,7 +71,7 @@ class AdminDataBackupPanel extends StatelessWidget {
           if (lastRestorePath != null)
             SelectableText(
               'ბოლო აღდგენა: $lastRestorePath',
-              style: const TextStyle(color: Color(0xFF10B981), fontSize: 12),
+              style: const TextStyle(color: AdminTones.successText, fontSize: 12),
             ),
           const SizedBox(height: 12),
           AdminActionRow(

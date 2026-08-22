@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 
 import 'package:vynic/core/ui/vynic_colors.dart';
 import 'floor_editor_controller.dart';
@@ -31,8 +33,8 @@ class FloorEditorPalette extends StatelessWidget {
         return Container(
           width: _width,
           decoration: const BoxDecoration(
-            color: VynicColors.card,
-            border: Border(right: BorderSide(color: VynicColors.border)),
+            color: AdminDesign.panel,
+            border: Border(right: BorderSide(color: AdminDesign.border)),
           ),
           child: ListView(
             padding: const EdgeInsets.symmetric(vertical: 10),
@@ -82,7 +84,7 @@ class _PaletteSectionTitle extends StatelessWidget {
     if (compact) {
       return const Padding(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Divider(height: 1, color: VynicColors.border),
+        child: Divider(height: 1, color: AdminDesign.border),
       );
     }
     return Padding(
@@ -93,7 +95,7 @@ class _PaletteSectionTitle extends StatelessWidget {
           fontSize: 10,
           letterSpacing: 0.7,
           fontWeight: FontWeight.w800,
-          color: VynicColors.textDisabled,
+          color: VynicFloorTokens.textFaint,
         ),
       ),
     );
@@ -125,16 +127,16 @@ class _PaletteButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = selected ? VynicColors.accent : VynicColors.textPrimary;
+    final foreground = selected ? AdminDesign.accentDark : AdminDesign.text;
 
     final content = Container(
       margin: EdgeInsets.symmetric(horizontal: compact ? 8 : 8, vertical: 2),
       padding: EdgeInsets.symmetric(horizontal: compact ? 0 : 10, vertical: 9),
       decoration: BoxDecoration(
-        color: selected ? VynicColors.accentSoft : Colors.transparent,
+        color: selected ? AdminDesign.accentSoft : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: selected ? VynicColors.accent : Colors.transparent,
+          color: selected ? AdminDesign.accentDark : Colors.transparent,
         ),
       ),
       child: compact
@@ -159,7 +161,7 @@ class _PaletteButton extends StatelessWidget {
                   Icon(
                     Icons.expand_more,
                     size: 15,
-                    color: VynicColors.textDisabled,
+                    color: VynicFloorTokens.textFaint,
                   ),
               ],
             ),
@@ -182,10 +184,10 @@ class _PaletteButton extends StatelessWidget {
     return PopupMenuButton<EditorPlacementSpec>(
       tooltip: tooltip,
       position: PopupMenuPosition.under,
-      color: VynicColors.card,
+      color: AdminDesign.panel,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
-        side: const BorderSide(color: VynicColors.border),
+        side: const BorderSide(color: AdminDesign.border),
       ),
       onSelected: (spec) => onVariantSelected?.call(spec),
       itemBuilder: (context) => [
@@ -201,8 +203,8 @@ class _PaletteButton extends StatelessWidget {
                       : Icons.chair_alt_outlined,
                   size: 16,
                   color: variant.id == activeVariantId
-                      ? VynicColors.accent
-                      : VynicColors.textMuted,
+                      ? AdminDesign.accentDark
+                      : AdminDesign.muted,
                 ),
                 const SizedBox(width: 10),
                 Text(
@@ -210,7 +212,7 @@ class _PaletteButton extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
-                    color: VynicColors.textPrimary,
+                    color: AdminDesign.text,
                   ),
                 ),
               ],

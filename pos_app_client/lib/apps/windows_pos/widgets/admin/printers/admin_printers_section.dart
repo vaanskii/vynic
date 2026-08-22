@@ -2,6 +2,9 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:flutter/services.dart';
 
 typedef AsyncVoidCallback = Future<void> Function();
@@ -33,15 +36,15 @@ class AdminPrintersSection extends StatefulWidget {
 enum _PrinterInputTarget { kitchen, receipt }
 
 class _AdminPrintersSectionState extends State<AdminPrintersSection> {
-  static const Color _accent = Color(0xFF14B8A6);
-  static const Color _accentDark = Color(0xFF0F766E);
-  static const Color _surface = Color(0xFFF6F7F9);
-  static const Color _panel = Colors.white;
-  static const Color _panelSoft = Color(0xFFF9FAFB);
-  static const Color _border = Color(0xFFE5E7EB);
-  static const Color _text = Color(0xFF111827);
-  static const Color _muted = Color(0xFF6B7280);
-  static const Color _warning = Color(0xFFD97706);
+  static const Color _accent = AdminDesign.accentDark;
+  static const Color _accentDark = AdminDesign.accentDark;
+  static const Color _surface = AdminDesign.surface;
+  static const Color _panel = AdminDesign.panel;
+  static const Color _panelSoft = AdminDesign.panelSoft;
+  static const Color _border = AdminDesign.border;
+  static const Color _text = AdminDesign.text;
+  static const Color _muted = AdminDesign.muted;
+  static const Color _warning = AdminTones.warningText;
 
   _PrinterInputTarget _activeTarget = _PrinterInputTarget.kitchen;
 
@@ -70,7 +73,7 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
                 18,
               ),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1080),
+                constraints: const BoxConstraints(maxWidth: adminSectionMaxWidth),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -164,8 +167,8 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
             icon: Icons.lan_outlined,
             label: 'TCP 9100',
             color: _warning,
-            background: const Color(0xFFFFFBEB),
-            border: const Color(0xFFFDE68A),
+            background: AdminTones.warningFill,
+            border: AdminTones.warningBorder,
           );
 
           if (compact) {
@@ -268,7 +271,7 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.all(13),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xFFECFDF5) : _panelSoft,
+          color: isActive ? AdminTones.successFill : _panelSoft,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isActive ? _accent : _border,
@@ -487,7 +490,7 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
       child: Align(
         alignment: Alignment.centerLeft,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1080),
+          constraints: const BoxConstraints(maxWidth: adminSectionMaxWidth),
           child: _buildActionBar(),
         ),
       ),
@@ -498,9 +501,9 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFECFDF5),
+        color: AdminTones.successFill,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFA7F3D0)),
+        border: Border.all(color: AdminTones.successBorder),
       ),
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -736,9 +739,9 @@ class _PrinterModeBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: const Color(0xFFEEF2FF),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFC7D2FE)),
+        color: AdminTones.accentFill,
+        borderRadius: BorderRadius.circular(VynicFloorTokens.badgeRadius),
+        border: Border.all(color: AdminTones.accentBorder),
       ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
@@ -746,13 +749,13 @@ class _PrinterModeBadge extends StatelessWidget {
           Icon(
             Icons.desktop_windows_outlined,
             size: 16,
-            color: Color(0xFF4338CA),
+            color: AdminTones.accentText,
           ),
           SizedBox(width: 6),
           Text(
             'Windows POS',
             style: TextStyle(
-              color: Color(0xFF3730A3),
+              color: AdminTones.accentText,
               fontSize: 12,
               fontWeight: FontWeight.w800,
             ),

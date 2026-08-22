@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/table_status_presentation.dart';
+import 'package:vynic/apps/windows_pos/widgets/floor_plan/floor_plan_names.dart';
 import 'package:vynic/apps/windows_pos/widgets/table_selection_widget.dart';
 import 'package:vynic/core/models/pos_display_settings.dart';
 import 'package:vynic/core/models/order_status.dart';
@@ -362,9 +363,7 @@ class HomeTablesDashboardSection extends StatelessWidget {
     // completes, not a card the user is meant to act on.
     if (hasBusySelection) {
       final presentation = TableStatusPresentation.of(focusedBusyTable);
-      final tableNumbers = focusedBusyTables
-          .map((table) => table.tableNumber)
-          .join(', ');
+      final tableNumbers = focusedBusyTables.map(_tableName).join(', ');
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
@@ -483,7 +482,7 @@ class HomeTablesDashboardSection extends StatelessWidget {
           _OverviewLine(
             icon: Icons.table_bar_outlined,
             label: 'არჩეული',
-            value: selectedTables.map((table) => table.tableNumber).join(', '),
+            value: selectedTables.map(_tableName).join(', '),
           ),
           const SizedBox(height: 8),
           _OverviewLine(
@@ -564,6 +563,17 @@ class HomeTablesDashboardSection extends StatelessWidget {
     ];
   }
 
+  /// What a live table row is called on screen: the name set in the floor
+  /// editor, falling back to „მაგიდა N" for a row whose layout entry is gone.
+  String _tableName(TableModel table) {
+    return floorPlanTableName(
+          DatabaseService.getRestaurantTableLayout(),
+          floor: table.floor,
+          tableNumber: table.tableNumber,
+        ) ??
+        'მაგიდა ${table.tableNumber}';
+  }
+
   String _currentFloorLabel() {
     for (final floor in _floorEntries()) {
       if (floor.floor == currentFloor) return floor.label;
@@ -580,7 +590,7 @@ class HomeTablesDashboardSection extends StatelessWidget {
       if (order == null || order.statusEnum != OrderStatus.served) continue;
       items.add(
         _AttentionItem(
-          title: 'მაგიდა ${table.tableNumber}',
+          title: _tableName(table),
           detail:
               '${order.totalAmount.toStringAsFixed(2)} ₾ · ${order.createdBy}',
           time: _elapsedSince(order.createdAt),
@@ -612,7 +622,10 @@ class HomeTablesDashboardSection extends StatelessWidget {
   }
 
   static String _elapsedSince(DateTime startedAt) {
-    final elapsed = DateTime.now().difference(startedAt);
+    // Business clock, not the wall clock: orders carry the business date with
+    // the current time of day, so DateTime.now() measures the gap between the
+    // two calendars whenever the venue's business day is not today.
+    final elapsed = DatabaseService.getCurrentDateTime().difference(startedAt);
     if (elapsed.inMinutes < 1) return 'ახლახან';
     if (elapsed.inHours < 1) return '${elapsed.inMinutes} წთ';
     final minutes = elapsed.inMinutes.remainder(60).toString().padLeft(2, '0');
@@ -1084,9 +1097,16 @@ class _ReservationRailCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tables = ReservationTableAvailability.tableRefsOf(
-      reservation,
-    ).map((ref) => ref.tableNumber).join(', ');
+    final layout = DatabaseService.getRestaurantTableLayout();
+    final tables = ReservationTableAvailability.tableRefsOf(reservation)
+        .map(
+          (ref) => floorPlanTableNameOrNumber(
+            layout,
+            floor: ref.floor,
+            tableNumber: ref.tableNumber,
+          ),
+        )
+        .join(', ');
     final detail = [
       if (reservation.numberOfGuests > 0)
         '${reservation.numberOfGuests} სტუმარი',

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 
 import 'package:vynic/apps/windows_pos/widgets/floor_plan/floor_plan_seats.dart';
 import 'package:vynic/core/models/table_layout.dart';
@@ -33,7 +34,7 @@ class FloorEditorPreviewDialog extends StatelessWidget {
     final media = MediaQuery.of(context).size;
 
     return Dialog(
-      backgroundColor: VynicColors.card,
+      backgroundColor: AdminDesign.panel,
       insetPadding: const EdgeInsets.all(28),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: SizedBox(
@@ -44,14 +45,14 @@ class FloorEditorPreviewDialog extends StatelessWidget {
             Container(
               padding: const EdgeInsets.fromLTRB(18, 14, 12, 14),
               decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: VynicColors.border)),
+                border: Border(bottom: BorderSide(color: AdminDesign.border)),
               ),
               child: Row(
                 children: [
                   const Icon(
                     Icons.visibility_outlined,
                     size: 19,
-                    color: VynicColors.accent,
+                    color: AdminDesign.accentDark,
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -63,14 +64,14 @@ class FloorEditorPreviewDialog extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
-                            color: VynicColors.textPrimary,
+                            color: AdminDesign.text,
                           ),
                         ),
                         const Text(
                           'ყველა მაგიდა ნაჩვენებია თავისუფალ მდგომარეობაში',
                           style: TextStyle(
                             fontSize: 11.5,
-                            color: VynicColors.textMuted,
+                            color: AdminDesign.muted,
                           ),
                         ),
                       ],
@@ -79,14 +80,14 @@ class FloorEditorPreviewDialog extends StatelessWidget {
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.close, size: 19),
-                    color: VynicColors.textMuted,
+                    color: AdminDesign.muted,
                   ),
                 ],
               ),
             ),
             Expanded(
               child: ColoredBox(
-                color: VynicColors.background,
+                color: AdminDesign.surface,
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: _PreviewSurface(floor: floor),
@@ -215,11 +216,11 @@ class _PreviewTable extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            border: Border.all(color: VynicColors.border, width: 2),
+            border: Border.all(color: AdminDesign.border, width: 2),
             borderRadius: BorderRadius.circular(_radiusFor(table.tableShape)),
             boxShadow: [
               BoxShadow(
-                color: VynicColors.border.withValues(alpha: 0.16),
+                color: AdminDesign.border.withValues(alpha: 0.16),
                 blurRadius: 10,
                 offset: const Offset(0, 5),
               ),
@@ -236,7 +237,7 @@ class _PreviewTable extends StatelessWidget {
                   const Icon(
                     Icons.table_restaurant,
                     size: 20,
-                    color: VynicColors.textPrimary,
+                    color: AdminDesign.text,
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -245,7 +246,7 @@ class _PreviewTable extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: VynicColors.textPrimary,
+                      color: AdminDesign.text,
                       fontSize: 13,
                       fontWeight: FontWeight.w900,
                     ),

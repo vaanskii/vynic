@@ -1,6 +1,7 @@
 import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -88,7 +89,9 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedDate = widget.initialDate;
+    // Callers pass DateTime.now(), whose time-of-day would otherwise sit
+    // inside a value the pickers compare against midnight boundaries.
+    _selectedDate = _dateOnly(widget.initialDate);
     if (widget.initialName != null && widget.initialName!.trim().isNotEmpty) {
       _customerNameController.text = widget.initialName!.trim();
     }
@@ -113,6 +116,13 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
   String _timeAsText(TimeOfDay t) =>
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
+  /// The business day, always at midnight.
+  ///
+  /// This used to return a bare date when the socket knew the business day and
+  /// `DateTime.now()` — carrying a time — when it did not. That single
+  /// inconsistency fed both the picker's `minimumDate` and the clamp above it,
+  /// so whether the wheel could move depended on whether the socket had
+  /// connected yet.
   DateTime _businessNow() {
     final raw = MonitoringSocketService.currentBusinessDate.value;
     if (raw != null && raw.trim().isNotEmpty) {
@@ -124,7 +134,12 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
         if (y != null && m != null && d != null) return DateTime(y, m, d);
       }
     }
-    return DateTime.now();
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day);
+  }
+
+  static DateTime _dateOnly(DateTime value) {
+    return DateTime(value.year, value.month, value.day);
   }
 
   double get _preOrderTotal =>
@@ -133,6 +148,13 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
   void _toast(String msg, {bool error = false}) {
     if (!mounted) return;
     ManagerToast.showSnackBar(context, msg, isError: error);
+  }
+
+  /// Enough height for the wheel to be scrollable, without swallowing the
+  /// screen on a tall phone.
+  static double _sheetHeight(BuildContext context) {
+    final available = MediaQuery.sizeOf(context).height;
+    return math.min(360, math.max(240, available * 0.45));
   }
 
   Future<void> _pickDate() async {
@@ -145,9 +167,13 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
       await showModalBottomSheet<void>(
         context: context,
         backgroundColor: MobileGlassTheme.data.surfaceCard,
+        // Without this the sheet is capped at 9/16 of the screen, and the
+        // 300pt box below gets squeezed until the wheel has almost no height
+        // left to scroll in — it looks present but will not move.
+        isScrollControlled: true,
         builder: (ctx) => SafeArea(
           child: SizedBox(
-            height: 300,
+            height: _sheetHeight(ctx),
             child: Column(
               children: [
                 Padding(
@@ -208,15 +234,17 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
       );
       return;
     }
+    final firstDate = businessDate;
+    final lastDate = businessDate.add(const Duration(days: 365));
     final picked = await showDatePicker(
       context: context,
-      firstDate: DateTime(
-        businessDate.year,
-        businessDate.month,
-        businessDate.day,
-      ),
-      lastDate: businessDate.add(const Duration(days: 365)),
-      initialDate: initial,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      // showDatePicker asserts the initial date is inside the range, so it is
+      // clamped rather than trusted.
+      initialDate: initial.isBefore(firstDate)
+          ? firstDate
+          : (initial.isAfter(lastDate) ? lastDate : initial),
       builder: (ctx, child) => Theme(
         data: ThemeData.dark().copyWith(
           colorScheme: ColorScheme.dark(primary: MobileGlassTheme.primary),
@@ -224,7 +252,7 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
         child: child!,
       ),
     );
-    if (picked != null) setState(() => _selectedDate = picked);
+    if (picked != null) setState(() => _selectedDate = _dateOnly(picked));
   }
 
   Future<void> _pickTime() async {
@@ -241,9 +269,10 @@ class _ReservationCreateScreenState extends State<ReservationCreateScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
+      isScrollControlled: true,
       builder: (ctx) => SafeArea(
         child: SizedBox(
-          height: 300,
+          height: _sheetHeight(ctx),
           child: Column(
             children: [
               Container(

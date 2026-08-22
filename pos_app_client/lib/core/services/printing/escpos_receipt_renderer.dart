@@ -25,9 +25,14 @@ class EscposReceiptRenderer {
     required bool isCloseTableReceipt,
     required bool includeServiceFee,
     required bool showServiceFeeLine,
+    bool showCloseReceiptServiceFeeLine = false,
   }) {
-    if (isCloseTableReceipt) return false;
+    // No fee charged, no row to print — on either receipt.
     if (!includeServiceFee) return false;
+    // The two receipts are different documents and carry their own switch.
+    // The closing check has always defaulted to hiding the row (the total
+    // already includes the fee), so its switch defaults to false.
+    if (isCloseTableReceipt) return showCloseReceiptServiceFeeLine;
     return showServiceFeeLine;
   }
 
@@ -50,6 +55,9 @@ class EscposReceiptRenderer {
     // Display only: when false the separate service-fee row is not drawn.
     // Never affects the receipt total (includeServiceFee governs that).
     bool showServiceFeeLine = true,
+    // The same switch for the closing (fiscal) check, which is a separate
+    // document with its own setting.
+    bool showCloseReceiptServiceFeeLine = false,
     required LoadReceiptLogoImage loadReceiptLogoImage,
     required GetReceiptLogoContentRect getReceiptLogoContentRect,
   }) async {
@@ -79,6 +87,7 @@ class EscposReceiptRenderer {
       manualAdjustment: manualAdjustment,
       receiptType: receiptType,
       showServiceFeeLine: showServiceFeeLine,
+      showCloseReceiptServiceFeeLine: showCloseReceiptServiceFeeLine,
       loadReceiptLogoImage: loadReceiptLogoImage,
       getReceiptLogoContentRect: getReceiptLogoContentRect,
     );
@@ -115,6 +124,9 @@ class EscposReceiptRenderer {
     // Display only: when false the separate service-fee row is not drawn.
     // Never affects the receipt total (includeServiceFee governs that).
     bool showServiceFeeLine = true,
+    // The same switch for the closing (fiscal) check, which is a separate
+    // document with its own setting.
+    bool showCloseReceiptServiceFeeLine = false,
     required LoadReceiptLogoImage loadReceiptLogoImage,
     required GetReceiptLogoContentRect getReceiptLogoContentRect,
   }) async {
@@ -135,6 +147,7 @@ class EscposReceiptRenderer {
         manualAdjustment: manualAdjustment,
         receiptType: receiptType,
         showServiceFeeLine: showServiceFeeLine,
+        showCloseReceiptServiceFeeLine: showCloseReceiptServiceFeeLine,
         loadReceiptLogoImage: loadReceiptLogoImage,
         getReceiptLogoContentRect: getReceiptLogoContentRect,
       );
@@ -167,6 +180,9 @@ class EscposReceiptRenderer {
     // Display only: when false the separate service-fee row is not drawn.
     // Never affects the receipt total (includeServiceFee governs that).
     bool showServiceFeeLine = true,
+    // The same switch for the closing (fiscal) check, which is a separate
+    // document with its own setting.
+    bool showCloseReceiptServiceFeeLine = false,
     required LoadReceiptLogoImage loadReceiptLogoImage,
     required GetReceiptLogoContentRect getReceiptLogoContentRect,
   }) async {
@@ -647,6 +663,7 @@ class EscposReceiptRenderer {
         isCloseTableReceipt: isCloseTableReceipt,
         includeServiceFee: includeServiceFee,
         showServiceFeeLine: showServiceFeeLine,
+        showCloseReceiptServiceFeeLine: showCloseReceiptServiceFeeLine,
       )) {
         final serviceFeeLabel = isEnglish
             ? 'Service Fee Included'
@@ -767,6 +784,9 @@ class EscposReceiptRenderer {
     // Display only: when false the separate service-fee row is not drawn.
     // Never affects the receipt total (includeServiceFee governs that).
     bool showServiceFeeLine = true,
+    // The same switch for the closing (fiscal) check, which is a separate
+    // document with its own setting.
+    bool showCloseReceiptServiceFeeLine = false,
     required LoadReceiptLogoImage loadReceiptLogoImage,
     required GetReceiptLogoContentRect getReceiptLogoContentRect,
   }) async {
@@ -787,6 +807,7 @@ class EscposReceiptRenderer {
         manualAdjustment: manualAdjustment,
         receiptType: receiptType,
         showServiceFeeLine: showServiceFeeLine,
+        showCloseReceiptServiceFeeLine: showCloseReceiptServiceFeeLine,
         loadReceiptLogoImage: loadReceiptLogoImage,
         getReceiptLogoContentRect: getReceiptLogoContentRect,
       );

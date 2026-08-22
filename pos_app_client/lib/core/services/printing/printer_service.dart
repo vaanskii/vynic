@@ -42,6 +42,17 @@ class PrinterService {
     }
   }
 
+  /// The closing (fiscal) check's own switch. Defaults to hidden, which is how
+  /// the closing check has always printed.
+  static bool _shouldShowCloseReceiptServiceFeeLine() {
+    try {
+      return DatabaseService.isCloseReceiptServiceFeeLineVisible();
+    } catch (e) {
+      developer.log('Close-receipt service-fee setting unavailable: $e');
+      return false;
+    }
+  }
+
   static Future<ui.Image?> _loadReceiptLogoImage() async {
     if (_cachedReceiptLogo != null) {
       return _cachedReceiptLogo;
@@ -482,6 +493,7 @@ class PrinterService {
         manualAdjustment: manualAdjustment,
         receiptType: receiptType,
         showServiceFeeLine: _shouldShowServiceFeeLine(),
+        showCloseReceiptServiceFeeLine: _shouldShowCloseReceiptServiceFeeLine(),
         loadReceiptLogoImage: _loadReceiptLogoImage,
         getReceiptLogoContentRect: _getReceiptLogoContentRect,
       );
@@ -533,6 +545,7 @@ class PrinterService {
       manualAdjustment: manualAdjustment,
       receiptType: receiptType,
       showServiceFeeLine: _shouldShowServiceFeeLine(),
+      showCloseReceiptServiceFeeLine: _shouldShowCloseReceiptServiceFeeLine(),
       loadReceiptLogoImage: _loadReceiptLogoImage,
       getReceiptLogoContentRect: _getReceiptLogoContentRect,
     );

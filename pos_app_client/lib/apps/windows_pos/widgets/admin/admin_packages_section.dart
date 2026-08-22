@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 
 import 'package:vynic/core/models/package.dart';
 import 'package:vynic/core/models/user.dart';
@@ -36,23 +38,29 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
   static const Color _borderColor = AdminDesign.border;
   static const Color _textPrimary = AdminDesign.text;
   static const Color _textMuted = AdminDesign.muted;
-  static const Color _textSoft = Color(0xFF94A3B8);
+  static const Color _textSoft = VynicFloorTokens.textFaint;
 
+  // Table identity colours. This is the one place in the panel where a colour
+  // is not saying anything — it only has to tell table 4 from table 9 at a
+  // glance — so they stay a spread instead of collapsing into the semantic
+  // tones. They were the stock Material 300s, which made them the brightest
+  // thing in the admin; these are the same eight hues pulled down to the warm
+  // palette's saturation so they read as part of the set.
   static const Map<String, Color> _tableColorOverrides = {
-    '1': Color(0xFF81C784),
-    '2': Color(0xFF81C784),
-    '3': Color(0xFF81C784),
+    '1': Color(0xFF7E9A80),
+    '2': Color(0xFF7E9A80),
+    '3': Color(0xFF7E9A80),
   };
 
   static const List<Color> _tablePalette = [
-    Color(0xFF64B5F6),
-    Color(0xFFF06292),
-    Color(0xFFFFB74D),
-    Color(0xFF4DB6AC),
-    Color(0xFFBA68C8),
-    Color(0xFFA1887F),
-    Color(0xFF90A4AE),
-    Color(0xFFAED581),
+    Color(0xFF7A93AD),
+    Color(0xFFB2828E),
+    Color(0xFFC2A05F),
+    Color(0xFF6F9A95),
+    Color(0xFF9585AD),
+    Color(0xFFA08E80),
+    Color(0xFF8D9298),
+    Color(0xFF8FA377),
   ];
 
   @override
@@ -179,9 +187,9 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
         alignment: Alignment.topLeft,
         child: SingleChildScrollView(
           controller: _packagesScrollController,
-          padding: const EdgeInsets.fromLTRB(28, 20, 28, 24),
+          padding: const EdgeInsets.fromLTRB(22, 18, 22, 24),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1100),
+            constraints: const BoxConstraints(maxWidth: adminSectionMaxWidth),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -234,9 +242,9 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
               decoration: BoxDecoration(
-                color: const Color(0xFFECFDF5),
+                color: AdminTones.successFill,
                 borderRadius: BorderRadius.circular(AdminDesign.radius),
-                border: Border.all(color: const Color(0xFFA7F3D0)),
+                border: Border.all(color: AdminTones.successBorder),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -616,8 +624,8 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                       unawaited(_duplicatePackage(pkg));
                     },
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFB45309),
-                side: const BorderSide(color: Color(0xFFFCD9A4)),
+                foregroundColor: AdminTones.warningText,
+                side: const BorderSide(color: AdminTones.warningBorder),
               ),
               icon: const Icon(Icons.copy),
               label: const Text('დუბლირება'),
@@ -703,7 +711,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                       const SizedBox(height: 8),
                       Text(
                         errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(color: AdminDesign.danger),
                       ),
                     ],
                   ],
@@ -871,7 +879,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
           ElevatedButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AdminDesign.danger,
               foregroundColor: Colors.white,
             ),
             child: const Text('წაშლა'),
@@ -1003,7 +1011,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                     ElevatedButton(
                       onPressed: () => Navigator.of(confirmContext).pop(true),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
+                        backgroundColor: AdminDesign.danger,
                         foregroundColor: Colors.white,
                       ),
                       child: const Text('დახურვა'),
@@ -1207,14 +1215,14 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                                 const SizedBox(height: 8),
                                 const Text(
                                   'დაკავებული მაგიდები ვერ აირჩევა.',
-                                  style: TextStyle(color: Color(0xFFB45309)),
+                                  style: TextStyle(color: AdminTones.warningText),
                                 ),
                               ],
                               if (errorMessage != null) ...[
                                 const SizedBox(height: 12),
                                 Text(
                                   errorMessage!,
-                                  style: const TextStyle(color: Colors.red),
+                                  style: const TextStyle(color: AdminDesign.danger),
                                 ),
                               ],
                             ],
@@ -1561,7 +1569,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                     ElevatedButton(
                       onPressed: () => Navigator.of(confirmContext).pop(true),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
+                        backgroundColor: AdminDesign.danger,
                         foregroundColor: Colors.white,
                       ),
                       child: const Text('დახურვა'),
@@ -1896,7 +1904,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                                                 IconButton(
                                                   icon: const Icon(
                                                     Icons.delete_outline,
-                                                    color: Colors.red,
+                                                    color: AdminDesign.danger,
                                                   ),
                                                   onPressed: () =>
                                                       onRemoveItem(index),
@@ -1911,7 +1919,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                                     const SizedBox(height: 12),
                                     Text(
                                       errorMessage!,
-                                      style: const TextStyle(color: Colors.red),
+                                      style: const TextStyle(color: AdminDesign.danger),
                                     ),
                                   ],
                                 ],
@@ -2025,7 +2033,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                     ElevatedButton(
                       onPressed: () => Navigator.of(confirmContext).pop(true),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
+                        backgroundColor: AdminDesign.danger,
                         foregroundColor: Colors.white,
                       ),
                       child: const Text('დახურვა'),
@@ -2266,7 +2274,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                                   color: _textMuted,
                                 ),
                                 filled: true,
-                                fillColor: const Color(0xFFF8FAFF),
+                                fillColor: AdminTones.infoFill,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: const BorderSide(

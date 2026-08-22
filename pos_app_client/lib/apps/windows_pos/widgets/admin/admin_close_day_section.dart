@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
@@ -28,12 +31,12 @@ class AdminCloseDaySection extends StatefulWidget {
 }
 
 class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
-  static const Color _primaryColor = Color(0xFF1E3A8A);
-  static const Color _secondaryColor = Color(0xFF2563EB);
+  static const Color _primaryColor = AdminDesign.accentDark;
+  static const Color _secondaryColor = AdminTones.infoText;
   static const Color _cardColor = Colors.white;
-  static const Color _borderColor = Color(0xFFE2E8F0);
-  static const Color _textPrimary = Color(0xFF1F2937);
-  static const Color _textMuted = Color(0xFF64748B);
+  static const Color _borderColor = AdminDesign.border;
+  static const Color _textPrimary = AdminDesign.text;
+  static const Color _textMuted = AdminDesign.muted;
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +56,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
       child: Align(
         alignment: Alignment.topLeft,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          padding: const EdgeInsets.fromLTRB(22, 18, 22, 12),
           child: SizedBox(
             width: double.infinity,
             child: Column(
@@ -110,7 +113,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                                     label: 'მთლიანი შემოსავალი',
                                     value:
                                         '₾${totalRevenue.toStringAsFixed(2)}',
-                                    color: const Color(0xFF16A34A),
+                                    color: AdminTones.successText,
                                   ),
                                 ),
                               ],
@@ -230,7 +233,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                     unawaited(widget.onShowBusinessDateSelector());
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFBFDBFE),
+                    backgroundColor: AdminTones.infoBorder,
                     foregroundColor: _textPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -423,10 +426,10 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2B2B2B),
+        backgroundColor: AdminDesign.text,
         title: const Row(
           children: [
-            Icon(Icons.delete_forever, color: Colors.redAccent, size: 30),
+            Icon(Icons.delete_forever, color: AdminDesign.danger, size: 30),
             SizedBox(width: 12),
             Text('შეკვეთის წაშლა', style: TextStyle(color: Colors.white)),
           ],
@@ -442,7 +445,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            style: ElevatedButton.styleFrom(backgroundColor: AdminDesign.danger),
             child: const Text(
               'დასტური',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -499,7 +502,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
               children: [
                 const Icon(
                   Icons.warning_amber_rounded,
-                  color: Color(0xFFEA580C),
+                  color: AdminTones.warningText,
                   size: 28,
                 ),
                 const SizedBox(width: 10),
@@ -546,8 +549,8 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                         : () => _showOpenTablesModal(openOrders),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _primaryColor,
-                      side: const BorderSide(color: Color(0xFFBFDBFE)),
-                      backgroundColor: const Color(0xFFEFF6FF),
+                      side: const BorderSide(color: AdminTones.infoBorder),
+                      backgroundColor: AdminTones.infoFill,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -588,7 +591,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                 children: [
                   const Icon(
                     Icons.table_restaurant,
-                    color: Color(0xFFEA580C),
+                    color: AdminTones.warningText,
                     size: 24,
                   ),
                   const SizedBox(width: 10),
@@ -673,15 +676,15 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7ED),
+        color: AdminTones.warningFill,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFFEECDC)),
+        border: Border.all(color: AdminTones.warningFill),
       ),
       child: Row(
         children: [
           const Icon(
             Icons.table_restaurant,
-            color: Color(0xFFB45309),
+            color: AdminTones.warningText,
             size: 20,
           ),
           const SizedBox(width: 10),
@@ -692,7 +695,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                 Text(
                   'შეკვეთა #${order.orderId} • სტატუსი: ${order.status}',
                   style: const TextStyle(
-                    color: Color(0xFFB45309),
+                    color: AdminTones.warningText,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -713,9 +716,9 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                 unawaited(onDelete());
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.redAccent,
-                side: const BorderSide(color: Color(0xFFFECACA)),
-                backgroundColor: const Color(0xFFFFF1F2),
+                foregroundColor: AdminDesign.danger,
+                side: const BorderSide(color: VynicFloorTokens.dangerBorder),
+                backgroundColor: VynicFloorTokens.dangerFill,
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -1122,7 +1125,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                               ),
                               child: const Icon(
                                 Icons.block_rounded,
-                                color: Color(0xFFEA580C),
+                                color: AdminTones.warningText,
                                 size: 22,
                               ),
                             ),
@@ -1134,7 +1137,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                                   Text(
                                     'დახურვა შეუძლებელია',
                                     style: TextStyle(
-                                      color: Color(0xFF0F172A),
+                                      color: AdminDesign.text,
                                       fontSize: 17,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -1143,7 +1146,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                                   Text(
                                     'გთხოვთ გადაწყვიტოთ შემდეგი პრობლემები',
                                     style: TextStyle(
-                                      color: Color(0xFF64748B),
+                                      color: AdminDesign.muted,
                                       fontSize: 12,
                                     ),
                                   ),
@@ -1157,9 +1160,9 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFF7ED),
+                            color: AdminTones.warningFill,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFFEE2C2)),
+                            border: Border.all(color: AdminTones.warningBorder),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1167,7 +1170,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                               const Text(
                                 'დახურვის ხელშეშლის მიზეზები:',
                                 style: TextStyle(
-                                  color: Color(0xFFB45309),
+                                  color: AdminTones.warningText,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -1183,7 +1186,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                                       Icon(
                                         r.icon,
                                         size: 18,
-                                        color: const Color(0xFFEA580C),
+                                        color: AdminTones.warningText,
                                       ),
                                       const SizedBox(width: 10),
                                       Expanded(
@@ -1194,7 +1197,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                                             Text(
                                               r.title,
                                               style: const TextStyle(
-                                                color: Color(0xFF1F2937),
+                                                color: AdminDesign.text,
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w600,
                                               ),
@@ -1202,7 +1205,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                                             Text(
                                               r.detail,
                                               style: const TextStyle(
-                                                color: Color(0xFF6B7280),
+                                                color: AdminDesign.muted,
                                                 fontSize: 12,
                                               ),
                                             ),
@@ -1222,7 +1225,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                           child: ElevatedButton(
                             onPressed: () => Navigator.of(dialogContext).pop(),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF1E3A8A),
+                              backgroundColor: AdminDesign.accentDark,
                               foregroundColor: Colors.white,
                               minimumSize: const Size.fromHeight(44),
                               shape: RoundedRectangleBorder(
@@ -1272,7 +1275,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                             padding: EdgeInsets.all(16),
                             child: CircularProgressIndicator(
                               strokeWidth: 2.5,
-                              color: Color(0xFF1E3A8A),
+                              color: AdminDesign.accentDark,
                             ),
                           ),
                         ),
@@ -1280,7 +1283,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                         const Text(
                           'დახურვა მიმდინარეობს...',
                           style: TextStyle(
-                            color: Color(0xFF0F172A),
+                            color: AdminDesign.text,
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
                           ),
@@ -1289,7 +1292,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                         const Text(
                           'გთხოვთ დაელოდოთ',
                           style: TextStyle(
-                            color: Color(0xFF64748B),
+                            color: AdminDesign.muted,
                             fontSize: 13,
                           ),
                         ),
@@ -1299,8 +1302,8 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                           child: LinearProgressIndicator(
                             value: (step + 1) / loadingSteps.length,
                             minHeight: 6,
-                            backgroundColor: const Color(0xFFE2E8F0),
-                            color: const Color(0xFF1E3A8A),
+                            backgroundColor: AdminDesign.border,
+                            color: AdminDesign.accentDark,
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -1320,15 +1323,15 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     color: isDone
-                                        ? const Color(0xFF16A34A)
+                                        ? AdminTones.successText
                                         : isCurrent
                                         ? const Color(
                                             0xFF1E3A8A,
                                           ).withValues(alpha: 0.12)
-                                        : const Color(0xFFF1F5F9),
+                                        : AdminDesign.panelSoft,
                                     border: isCurrent
                                         ? Border.all(
-                                            color: const Color(0xFF1E3A8A),
+                                            color: AdminDesign.accentDark,
                                             width: 1.5,
                                           )
                                         : null,
@@ -1344,7 +1347,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                                           padding: EdgeInsets.all(4),
                                           child: CircularProgressIndicator(
                                             strokeWidth: 1.5,
-                                            color: Color(0xFF1E3A8A),
+                                            color: AdminDesign.accentDark,
                                           ),
                                         )
                                       : null,
@@ -1354,10 +1357,10 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                                   label,
                                   style: TextStyle(
                                     color: isDone
-                                        ? const Color(0xFF16A34A)
+                                        ? AdminTones.successText
                                         : isCurrent
-                                        ? const Color(0xFF0F172A)
-                                        : const Color(0xFF94A3B8),
+                                        ? AdminDesign.text
+                                        : VynicFloorTokens.textFaint,
                                     fontSize: 13,
                                     fontWeight: isCurrent
                                         ? FontWeight.w600
@@ -1407,7 +1410,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                             ),
                             child: const Icon(
                               Icons.lock_clock,
-                              color: Color(0xFF1E3A8A),
+                              color: AdminDesign.accentDark,
                               size: 22,
                             ),
                           ),
@@ -1419,7 +1422,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                                 Text(
                                   'დღის დახურვა',
                                   style: TextStyle(
-                                    color: Color(0xFF0F172A),
+                                    color: AdminDesign.text,
                                     fontSize: 17,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -1428,7 +1431,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                                 Text(
                                   'გთხოვთ, დაადასტუროთ მოქმედება',
                                   style: TextStyle(
-                                    color: Color(0xFF64748B),
+                                    color: AdminDesign.muted,
                                     fontSize: 12,
                                   ),
                                 ),
@@ -1438,7 +1441,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                           IconButton(
                             onPressed: () => Navigator.of(dialogContext).pop(),
                             icon: const Icon(Icons.close_rounded),
-                            color: const Color(0xFF94A3B8),
+                            color: VynicFloorTokens.textFaint,
                             iconSize: 20,
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
@@ -1450,9 +1453,9 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: AdminDesign.panelSoft,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: AdminDesign.border),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1460,7 +1463,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                             const Text(
                               'ეს მოქმედება:',
                               style: TextStyle(
-                                color: Color(0xFF374151),
+                                color: AdminDesign.muted,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -1488,23 +1491,23 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFF7ED),
+                          color: AdminTones.warningFill,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFFEE2C2)),
+                          border: Border.all(color: AdminTones.warningBorder),
                         ),
                         child: const Row(
                           children: [
                             Icon(
                               Icons.info_outline,
                               size: 14,
-                              color: Color(0xFFB45309),
+                              color: AdminTones.warningText,
                             ),
                             SizedBox(width: 6),
                             Expanded(
                               child: Text(
                                 'ეს ქმედება შეუქცევადია. Z-რეპორტის ბეჭდვა გირჩევნია.',
                                 style: TextStyle(
-                                  color: Color(0xFFB45309),
+                                  color: AdminTones.warningText,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -1521,9 +1524,9 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                               onPressed: () =>
                                   Navigator.of(dialogContext).pop(),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF334155),
+                                foregroundColor: AdminDesign.muted,
                                 side: const BorderSide(
-                                  color: Color(0xFFCBD5E1),
+                                  color: VynicFloorTokens.textFaint,
                                 ),
                                 minimumSize: const Size.fromHeight(44),
                                 shape: RoundedRectangleBorder(
@@ -1538,7 +1541,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                             child: ElevatedButton.icon(
                               onPressed: runClose,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF1E3A8A),
+                                backgroundColor: AdminDesign.accentDark,
                                 foregroundColor: Colors.white,
                                 minimumSize: const Size.fromHeight(44),
                                 shape: RoundedRectangleBorder(
@@ -1603,7 +1606,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                         ),
                         child: const Icon(
                           Icons.warning_amber_rounded,
-                          color: Color(0xFFEA580C),
+                          color: AdminTones.warningText,
                           size: 22,
                         ),
                       ),
@@ -1612,7 +1615,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                         child: Text(
                           'დღის დახურვა დაბლოკილია',
                           style: TextStyle(
-                            color: Color(0xFF0F172A),
+                            color: AdminDesign.text,
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
                           ),
@@ -1624,7 +1627,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                   Text(
                     'ამ თარიღზე დახურვა შეუძლებელია, რადგან უკვე არსებობს უფრო ახალი დახურული დღე.',
                     style: const TextStyle(
-                      color: Color(0xFF475569),
+                      color: AdminDesign.muted,
                       fontSize: 14,
                       height: 1.4,
                     ),
@@ -1633,7 +1636,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                   Text(
                     'მიმდინარე თარიღი: ${DatabaseService.getGeorgianFormattedDate(currentDate)}\nბოლო ოპერირებული თარიღი: ${DatabaseService.getGeorgianFormattedDate(lastOperatedDate)}',
                     style: const TextStyle(
-                      color: Color(0xFF334155),
+                      color: AdminDesign.muted,
                       fontSize: 13,
                       height: 1.45,
                       fontWeight: FontWeight.w600,
@@ -1643,7 +1646,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                   const Text(
                     'შეცვალეთ ბიზნეს თარიღი ბოლო ოპერირებულ დღეზე ან მიმდინარე დღეზე და შემდეგ სცადეთ ისევ.',
                     style: TextStyle(
-                      color: Color(0xFF64748B),
+                      color: AdminDesign.muted,
                       fontSize: 13,
                       height: 1.45,
                     ),
@@ -1654,7 +1657,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                     child: ElevatedButton(
                       onPressed: () => Navigator.of(dialogContext).pop(),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E3A8A),
+                        backgroundColor: AdminDesign.accentDark,
                         foregroundColor: Colors.white,
                         minimumSize: const Size.fromHeight(46),
                         shape: RoundedRectangleBorder(
@@ -1754,13 +1757,13 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
       padding: const EdgeInsets.only(bottom: 7),
       child: Row(
         children: [
-          Icon(icon, size: 15, color: const Color(0xFF1E3A8A)),
+          Icon(icon, size: 15, color: AdminDesign.accentDark),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
               style: const TextStyle(
-                color: Color(0xFF374151),
+                color: AdminDesign.muted,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),

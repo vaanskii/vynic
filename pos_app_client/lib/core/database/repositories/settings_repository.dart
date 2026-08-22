@@ -25,6 +25,9 @@ class SettingsRepository {
   static const String _receiptShowServiceFeeLineSetting =
       'receiptShowServiceFeeLine';
 
+  static const String _closeReceiptShowServiceFeeLineSetting =
+      'closeReceiptShowServiceFeeLine';
+
   /// Superseded by [_receiptShowServiceFeeLineSetting] (inverted). Read only,
   /// so a terminal that already toggled the old key keeps its choice.
   static const String _legacyReceiptHideServiceFeeLineSetting =
@@ -747,6 +750,28 @@ class SettingsRepository {
     await _settingsBox!.put(_receiptShowServiceFeeLineSetting, visible);
     // Keep the superseded key from overriding a newer choice on re-read.
     await _settingsBox!.delete(_legacyReceiptHideServiceFeeLineSetting);
+  }
+
+  /// Whether the *closing* receipt shows the separate service-fee line.
+  ///
+  /// A separate switch from [isReceiptServiceFeeLineVisible] because the two
+  /// receipts are different documents: the customer receipt printed during
+  /// service, and the fiscal check produced when the table is closed and paid
+  /// (cash, card, or split).
+  ///
+  /// Defaults to `false`, which is how the POS has always behaved — the
+  /// closing check never carried the row, because the total already includes
+  /// the fee. Turning it on is display only; no total changes either way.
+  static bool isCloseReceiptServiceFeeLineVisible() {
+    if (_settingsBox == null) return false; // not initialized on mobile
+    final stored = _settingsBox!.get(_closeReceiptShowServiceFeeLineSetting);
+    return stored is bool ? stored : false;
+  }
+
+  static Future<void> setCloseReceiptServiceFeeLineVisible(
+    bool visible,
+  ) async {
+    await _settingsBox!.put(_closeReceiptShowServiceFeeLineSetting, visible);
   }
 
   // ==================== POS ↔ SERVER CONNECTION ====================

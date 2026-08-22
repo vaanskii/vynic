@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import 'package:vynic/apps/windows_pos/widgets/shared/pos_surface.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/quick_order_draft.dart';
@@ -160,46 +163,16 @@ class _HomeCalculatorSectionState extends State<HomeCalculatorSection> {
   }
 
   Widget _buildPageHeading() {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'დათვლილი მენიუ',
-                style: TextStyle(
-                  color: widget.textPrimary,
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'აირჩიეთ შენახული მენიუ და მართეთ მისი პროდუქტები მარჯვენა პანელიდან.',
-                style: TextStyle(color: widget.mutedText, fontSize: 13),
-              ),
-            ],
-          ),
-        ),
-        FilledButton.icon(
-          onPressed: widget.onStartQuickOrder,
-          style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFF075E6B),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 17),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          icon: const Icon(Icons.add_rounded),
-          label: const Text(
-            'ახალი დათვლა',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
-        ),
-      ],
+    return PosPageHeading(
+      title: 'დათვლილი მენიუ',
+      subtitle:
+          'აირჩიეთ შენახული მენიუ და მართეთ მისი პროდუქტები მარჯვენა '
+          'პანელიდან.',
+      trailing: PosPrimaryButton(
+        label: 'ახალი დათვლა',
+        icon: Icons.add_rounded,
+        onTap: widget.onStartQuickOrder,
+      ),
     );
   }
 
@@ -220,36 +193,22 @@ class _HomeCalculatorSectionState extends State<HomeCalculatorSection> {
     return Row(
       children: [
         Expanded(
-          child: _StatCard(
-            icon: Icons.receipt_long_outlined,
-            iconColor: const Color(0xFF087EC2),
+          child: PosMetricCard(
             label: 'შენახული მენიუ',
             value: '${drafts.length}',
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: _StatCard(
-            icon: Icons.inventory_2_outlined,
-            iconColor: const Color(0xFFF59E0B),
-            label: 'პროდუქტები',
-            value: '$totalItems',
-          ),
+          child: PosMetricCard(label: 'პროდუქტები', value: '$totalItems'),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: _StatCard(
-            icon: Icons.verified_outlined,
-            iconColor: const Color(0xFF16A34A),
-            label: 'სერვისით',
-            value: '$serviceCount',
-          ),
+          child: PosMetricCard(label: 'სერვისით', value: '$serviceCount'),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: _StatCard(
-            icon: Icons.trending_up_rounded,
-            iconColor: const Color(0xFF078A88),
+          child: PosMetricCard(
             label: 'სრული ღირებულება',
             value: '${totalValue.toStringAsFixed(2)} ₾',
           ),
@@ -285,7 +244,7 @@ class _HomeCalculatorSectionState extends State<HomeCalculatorSection> {
                   IconButton(
                     tooltip: 'ყველას წაშლა',
                     onPressed: widget.onClearAllDrafts,
-                    color: const Color(0xFFDC2626),
+                    color: VynicFloorTokens.dangerText,
                     icon: const Icon(Icons.delete_sweep_outlined),
                   ),
               ],
@@ -442,8 +401,10 @@ class _HomeCalculatorSectionState extends State<HomeCalculatorSection> {
           Container(
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
             decoration: const BoxDecoration(
-              color: Color(0xFFFBFCFE),
-              border: Border(top: BorderSide(color: Color(0xFFE5EAF1))),
+              color: VynicFloorTokens.metricFill,
+              border: Border(
+                top: BorderSide(color: VynicFloorTokens.panelBorder),
+              ),
             ),
             child: Column(
               children: [
@@ -465,15 +426,15 @@ class _HomeCalculatorSectionState extends State<HomeCalculatorSection> {
                               widget.onOpenServiceFeeConfig(draft),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: draft.includeServiceFee
-                                ? const Color(0xFF15803D)
-                                : const Color(0xFF475569),
+                                ? VynicFloorTokens.accentText
+                                : VynicFloorTokens.textMuted,
                             backgroundColor: draft.includeServiceFee
-                                ? const Color(0xFFF0FDF4)
+                                ? VynicFloorTokens.accentSoft
                                 : Colors.white,
                             side: BorderSide(
                               color: draft.includeServiceFee
-                                  ? const Color(0xFF86EFAC)
-                                  : const Color(0xFFD7DEE8),
+                                  ? VynicFloorTokens.accentBadgeText
+                                  : VynicFloorTokens.panelBorder,
                             ),
                             minimumSize: const Size(0, 32),
                             padding: const EdgeInsets.symmetric(horizontal: 9),
@@ -517,7 +478,7 @@ class _HomeCalculatorSectionState extends State<HomeCalculatorSection> {
                       child: FilledButton.icon(
                         onPressed: () => widget.onContinueDraft(draft),
                         style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF052F43),
+                          backgroundColor: VynicFloorTokens.accentStrong,
                           minimumSize: const Size(0, 36),
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           visualDensity: VisualDensity.compact,
@@ -536,7 +497,7 @@ class _HomeCalculatorSectionState extends State<HomeCalculatorSection> {
                         child: FilledButton.icon(
                           onPressed: () => widget.onOpenDraftManage(draft),
                           style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF16A34A),
+                            backgroundColor: VynicFloorTokens.accentText,
                             minimumSize: const Size(0, 36),
                             padding: const EdgeInsets.symmetric(horizontal: 10),
                             visualDensity: VisualDensity.compact,
@@ -574,8 +535,8 @@ class _Panel extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFDDE4ED)),
+        borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
+        border: Border.all(color: VynicFloorTokens.panelBorder),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0B0F172A),
@@ -584,76 +545,9 @@ class _Panel extends StatelessWidget {
           ),
         ],
       ),
-      child: ClipRRect(borderRadius: BorderRadius.circular(10), child: child),
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.icon,
-    required this.iconColor,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final Color iconColor;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 84,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFDDE4ED)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: Icon(icon, color: iconColor, size: 25),
-          ),
-          const SizedBox(width: 13),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF5B677A),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF102033),
-                    fontSize: 19,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
+        child: child,
       ),
     );
   }
@@ -677,10 +571,12 @@ class _DraftListCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? const Color(0xFFF2F9FF) : Colors.white,
+      color: selected ? VynicFloorTokens.accentSoft : VynicFloorTokens.panel,
       shape: RoundedRectangleBorder(
         side: BorderSide(
-          color: selected ? const Color(0xFF3B9DF2) : const Color(0xFFE0E6EE),
+          color: selected
+              ? VynicFloorTokens.accentBadgeText
+              : VynicFloorTokens.panelBorder,
           width: selected ? 1.4 : 1,
         ),
         borderRadius: BorderRadius.circular(8),
@@ -722,7 +618,7 @@ class _DraftListCard extends StatelessWidget {
                       textAlign: TextAlign.right,
                       maxLines: 1,
                       style: const TextStyle(
-                        color: Color(0xFF102033),
+                        color: VynicFloorTokens.text,
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
                       ),
@@ -757,16 +653,22 @@ class _ServiceBadge extends StatelessWidget {
         height: 28,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: active ? const Color(0xFFF0FDF4) : const Color(0xFFF8FAFC),
+          color: active
+              ? VynicFloorTokens.accentSoft
+              : VynicFloorTokens.metricFill,
           border: Border.all(
-            color: active ? const Color(0xFFBBF7D0) : const Color(0xFFE2E8F0),
+            color: active
+                ? VynicFloorTokens.accentBadgeText
+                : VynicFloorTokens.panelBorder,
           ),
           borderRadius: BorderRadius.circular(7),
         ),
         child: Icon(
           Icons.percent_rounded,
           size: 15,
-          color: active ? const Color(0xFF16A34A) : const Color(0xFF94A3B8),
+          color: active
+              ? VynicFloorTokens.accentText
+              : VynicFloorTokens.textFaint,
         ),
       ),
     );
@@ -827,7 +729,7 @@ class _SelectedItemRow extends StatelessWidget {
               child: Container(
                 height: 27,
                 decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFD8E0EA)),
+                  border: Border.all(color: VynicFloorTokens.panelBorder),
                   borderRadius: BorderRadius.circular(5),
                 ),
                 child: Row(
@@ -839,7 +741,9 @@ class _SelectedItemRow extends StatelessWidget {
                       alignment: Alignment.center,
                       decoration: const BoxDecoration(
                         border: Border.symmetric(
-                          vertical: BorderSide(color: Color(0xFFD8E0EA)),
+                          vertical: BorderSide(
+                            color: VynicFloorTokens.panelBorder,
+                          ),
                         ),
                       ),
                       child: Text(
@@ -903,7 +807,7 @@ class _QuantityButton extends StatelessWidget {
       child: SizedBox(
         width: 27,
         height: 26,
-        child: Icon(icon, size: 14, color: const Color(0xFF334155)),
+        child: Icon(icon, size: 14, color: VynicFloorTokens.text),
       ),
     );
   }
@@ -937,7 +841,7 @@ class _CompactTotal extends StatelessWidget {
         Text(
           '$label: ',
           style: TextStyle(
-            color: muted ? const Color(0xFF64748B) : const Color(0xFF102033),
+            color: muted ? VynicFloorTokens.textMuted : VynicFloorTokens.text,
             fontSize: muted ? 10 : 12,
             fontWeight: FontWeight.w600,
           ),
@@ -945,7 +849,7 @@ class _CompactTotal extends StatelessWidget {
         Text(
           '${value.toStringAsFixed(2)} ₾',
           style: TextStyle(
-            color: const Color(0xFF102033),
+            color: VynicFloorTokens.text,
             fontSize: muted ? 11 : 16,
             fontWeight: FontWeight.w800,
           ),
@@ -1039,7 +943,7 @@ Widget countedMenusDesktopPreview() {
       colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E3A8A)),
     ),
     home: Scaffold(
-      backgroundColor: const Color(0xFFF3F6FA),
+      backgroundColor: VynicFloorTokens.page,
       body: HomeCalculatorSection(
         quickOrderDrafts: drafts,
         onStartQuickOrder: () {},

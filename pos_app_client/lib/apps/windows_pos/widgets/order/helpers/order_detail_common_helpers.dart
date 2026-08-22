@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation.dart';
+import 'package:vynic/core/models/table_layout.dart';
+import 'package:vynic/core/services/database_service.dart';
+import 'package:vynic/apps/windows_pos/widgets/floor_plan/floor_plan_names.dart';
 
 class OrderDetailCommonHelpers {
   static String tableDisplayName({
@@ -174,6 +177,58 @@ class OrderDetailCommonHelpers {
     final dd = created.day.toString().padLeft(2, '0');
     final seq = order.orderId.toString().padLeft(4, '0');
     return '$yy$mm$dd-$seq';
+  }
+
+  // ------------------------------------------------------- layout-derived
+
+  /// The table's own name, as set in the floor editor — „Table 1",
+  /// „ფანჯარასთან". Multi-table orders join them.
+  ///
+  /// This is what the order screen puts in its title, so it has to agree with
+  /// the floor plan the waiter just tapped. Falls back to the bare number for
+  /// a table that no longer exists in the layout.
+  static String tableTitle(Order order, {RestaurantTableLayout? layout}) {
+    if (order.tableNumbers.isEmpty) {
+      return '—';
+    }
+    final resolved = layout ?? DatabaseService.getRestaurantTableLayout();
+    return order.tableNumbers
+        .map(
+          (number) => floorPlanTableNameOrNumber(
+            resolved,
+            floor: order.floor,
+            tableNumber: number,
+          ),
+        )
+        .join(' + ');
+  }
+
+  /// The zone's own name („სართული 1"), not a hardcoded hall name.
+  ///
+  /// [zoneLabel] is kept for the places that only have a floor string; this
+  /// one prefers whatever the admin called the zone.
+  static String zoneName(Order order, {RestaurantTableLayout? layout}) {
+    final resolved = layout ?? DatabaseService.getRestaurantTableLayout();
+    return resolved.zoneForLegacyFloor(order.floor)?.name ??
+        zoneLabel(order.floor);
+  }
+
+  /// Seats across the order's tables, or null when none of them are in the
+  /// layout (so the caller can drop the „N ადგილი" bit rather than show 0).
+  static int? seatCount(Order order, {RestaurantTableLayout? layout}) {
+    final resolved = layout ?? DatabaseService.getRestaurantTableLayout();
+    var seats = 0;
+    var found = false;
+    for (final number in order.tableNumbers) {
+      final definition = resolved.tableForLegacy(
+        floor: order.floor,
+        tableNumber: number,
+      );
+      if (definition == null) continue;
+      found = true;
+      seats += definition.capacity;
+    }
+    return found && seats > 0 ? seats : null;
   }
 
   static Color statusColor(String status) {

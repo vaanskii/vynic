@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 
 import 'package:vynic/core/ui/vynic_colors.dart';
 import 'floor_editor_controller.dart';
@@ -36,8 +39,8 @@ class FloorEditorToolbar extends StatelessWidget {
         return Container(
           height: 54,
           decoration: const BoxDecoration(
-            color: VynicColors.card,
-            border: Border(bottom: BorderSide(color: VynicColors.border)),
+            color: AdminDesign.panel,
+            border: Border(bottom: BorderSide(color: AdminDesign.border)),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Row(
@@ -60,7 +63,7 @@ class FloorEditorToolbar extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
-                        color: VynicColors.textPrimary,
+                        color: AdminDesign.text,
                       ),
                     ),
                     if (controller.isDirty)
@@ -69,7 +72,7 @@ class FloorEditorToolbar extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: VynicColors.warningText,
+                          color: AdminTones.warningText,
                         ),
                       ),
                   ],
@@ -114,7 +117,7 @@ class FloorEditorToolbar extends StatelessWidget {
                   icon: const Icon(Icons.visibility_outlined, size: 17),
                   label: const Text('გადახედვა'),
                   style: TextButton.styleFrom(
-                    foregroundColor: VynicColors.textPrimary,
+                    foregroundColor: AdminDesign.text,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 10,
@@ -137,9 +140,9 @@ class FloorEditorToolbar extends StatelessWidget {
                     : const Icon(Icons.save_outlined, size: 17),
                 label: const Text('შენახვა'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: VynicColors.accent,
-                  foregroundColor: VynicColors.onAccent,
-                  disabledBackgroundColor: VynicColors.border,
+                  backgroundColor: AdminDesign.accentDark,
+                  foregroundColor: AdminDesign.panel,
+                  disabledBackgroundColor: AdminDesign.border,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
@@ -230,7 +233,7 @@ class _OverflowMenu extends StatelessWidget {
     return PopupMenuButton<String>(
       tooltip: 'დამატებითი მოქმედებები',
       icon: const Icon(Icons.more_horiz, size: 19),
-      color: VynicColors.card,
+      color: AdminDesign.panel,
       onSelected: (value) {
         switch (value) {
           case 'grid':
@@ -300,8 +303,8 @@ class _ToolbarIcon extends StatelessWidget {
       child: IconButton(
         onPressed: onPressed,
         icon: Icon(icon, size: 18),
-        color: VynicColors.textPrimary,
-        disabledColor: VynicColors.textDisabled,
+        color: AdminDesign.text,
+        disabledColor: VynicFloorTokens.textFaint,
         constraints: const BoxConstraints.tightFor(width: 34, height: 34),
         padding: EdgeInsets.zero,
         splashRadius: 18,
@@ -334,10 +337,10 @@ class _ToolbarToggle extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 2),
           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
           decoration: BoxDecoration(
-            color: value ? VynicColors.accentSoft : Colors.transparent,
+            color: value ? AdminDesign.accentSoft : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: value ? VynicColors.accent : VynicColors.border,
+              color: value ? AdminDesign.accentDark : AdminDesign.border,
             ),
           ),
           child: Row(
@@ -346,7 +349,7 @@ class _ToolbarToggle extends StatelessWidget {
               Icon(
                 icon,
                 size: 15,
-                color: value ? VynicColors.accent : VynicColors.textMuted,
+                color: value ? AdminDesign.accentDark : AdminDesign.muted,
               ),
               const SizedBox(width: 6),
               Text(
@@ -354,7 +357,7 @@ class _ToolbarToggle extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: value ? VynicColors.accent : VynicColors.textMuted,
+                  color: value ? AdminDesign.accentDark : AdminDesign.muted,
                 ),
               ),
             ],
@@ -372,7 +375,7 @@ class _ToolbarDivider extends StatelessWidget {
       width: 1,
       height: 22,
       margin: const EdgeInsets.symmetric(horizontal: 6),
-      color: VynicColors.border,
+      color: AdminDesign.border,
     );
   }
 }

@@ -66,6 +66,16 @@ class BackupRepository {
           HiveMigrationService.lastMigrationKey,
         ),
       },
+      // Every key in the settings box, not a hand-picked few.
+      //
+      // This used to list seven settings by name, which silently dropped
+      // everything added since — the floor plan (`activeTableLayoutJson`), the
+      // printer list, the monthly-report configuration, the destructive-action
+      // password, the display settings. A restore looked successful and came
+      // back without the table layout.
+      'settingsAll': _serializeSettingsBox(),
+      // Kept so a backup taken now still restores on a build that only knows
+      // the old shape.
       'settings': {
         'serviceFeePercent': SettingsRepository.getServiceFeePercentage(),
         'serviceFeeEnabled': SettingsRepository.isServiceFeeEnabledByDefault(),
@@ -106,6 +116,48 @@ class BackupRepository {
       const JsonEncoder.withIndent('  ').convert(backupPayload),
     );
     return backupFile;
+  }
+
+  /// The whole settings box as plain JSON.
+  ///
+  /// Values are Hive primitives (strings, numbers, bools, lists, maps), so
+  /// they survive a JSON round trip as they are. Anything that does not is
+  /// stringified rather than dropped, because a setting restored as text is
+  /// recoverable and a missing one is not.
+  static Map<String, dynamic> _serializeSettingsBox() {
+    final box = DatabaseCore.settingsBox;
+    if (box == null) return const {};
+    final out = <String, dynamic>{};
+    for (final key in box.keys) {
+      final value = box.get(key);
+      if (value == null) continue;
+      out['$key'] = _jsonSafe(value);
+    }
+    return out;
+  }
+
+  static dynamic _jsonSafe(dynamic value) {
+    if (value is String || value is num || value is bool) return value;
+    if (value is DateTime) return value.toIso8601String();
+    if (value is List) return value.map(_jsonSafe).toList();
+    if (value is Map) {
+      return value.map((key, item) => MapEntry('$key', _jsonSafe(item)));
+    }
+    return value.toString();
+  }
+
+  /// Writes every key from a `settingsAll` block back.
+  ///
+  /// Returns false when the backup predates the block, so the caller falls
+  /// back to the old per-key restore.
+  static Future<bool> _restoreSettingsBox(Map<String, dynamic> payload) async {
+    final all = payload['settingsAll'];
+    if (all is! Map || all.isEmpty) return false;
+    final box = DatabaseCore.settingsBox!;
+    for (final entry in all.entries) {
+      await box.put('${entry.key}', entry.value);
+    }
+    return true;
   }
 
   static Map<String, dynamic> _serializeDynamicMap(dynamic value) {
@@ -722,7 +774,11 @@ class BackupRepository {
       await DatabaseCore.settingsBox!.put('currentDate', currentDateIso);
     }
 
-    final settings = payload['settings'] as Map?;
+    // A full settings block supersedes the curated one; the per-key restore
+    // below stays for backups taken before it existed.
+    final restoredEverySetting = await _restoreSettingsBox(payload);
+
+    final settings = restoredEverySetting ? null : payload['settings'] as Map?;
     if (settings != null) {
       if (settings.containsKey('serviceFeePercent')) {
         final percent = settings['serviceFeePercent'];

@@ -3,12 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_form_controls.dart';
 import 'package:vynic/core/models/pos_display_settings.dart';
-import 'package:vynic/core/ui/vynic_colors.dart';
 
-const Color _borderColor = Color(0xFFE5E7EB);
-const Color _panelSoft = Color(0xFFF9FAFB);
-const Color _textPrimary = Color(0xFF111827);
-const Color _textMuted = Color(0xFF6B7280);
+const Color _borderColor = AdminDesign.border;
+const Color _panelSoft = AdminDesign.panelSoft;
+const Color _textPrimary = AdminDesign.text;
+const Color _textMuted = AdminDesign.muted;
 
 /// Display & interface — its own management-centre section.
 ///
@@ -33,7 +32,16 @@ class AdminDisplaySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final windowSize = MediaQuery.sizeOf(context);
+    // The *real* window, not the box the POS is laid out in. `PosScaledSurface`
+    // overrides MediaQuery with its layout size, so `MediaQuery.sizeOf` here
+    // reported 1280x960 on a 1024x768 terminal — the one number on this screen
+    // that has to be the truth was the scaled one.
+    final view = View.of(context);
+    final windowSize = view.physicalSize / view.devicePixelRatio;
+    final layoutSize = MediaQuery.sizeOf(context);
+    final renderScale = windowSize.width <= 0
+        ? 1.0
+        : windowSize.width / layoutSize.width;
     final layoutClass = displaySettings.layoutClassForWidth(windowSize.width);
     final effectiveDensity = displaySettings.effectiveDensityForWidth(
       windowSize.width,
@@ -73,6 +81,19 @@ class AdminDisplaySection extends StatelessWidget {
                         label: 'აქტიური განლაგება',
                         value: displaySettings.activeLayoutLabel(windowSize),
                         icon: Icons.view_compact_alt_outlined,
+                      ),
+                      // Says out loud what the terminal is actually doing. When
+                      // the window is smaller than the layout the POS is built
+                      // for, the shortfall comes out of the pixels — and this
+                      // is where you can see by how much.
+                      _DisplaySummaryTile(
+                        label: 'რენდერის მასშტაბი',
+                        value: (renderScale - 1).abs() < 0.005
+                            ? '100%'
+                            : '${(renderScale * 100).round()}% · '
+                                  '${layoutSize.width.round()} x '
+                                  '${layoutSize.height.round()}',
+                        icon: Icons.zoom_out_map_outlined,
                       ),
                       _DisplaySummaryTile(
                         label: 'ზომის კლასი',
@@ -266,7 +287,7 @@ class _SwitchBlock extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: VynicColors.textMuted, size: 22),
+          Icon(icon, color: AdminDesign.muted, size: 22),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -291,7 +312,7 @@ class _SwitchBlock extends StatelessWidget {
           const SizedBox(width: 12),
           Switch(
             value: value,
-            activeThumbColor: VynicColors.accent,
+            activeThumbColor: AdminDesign.accentDark,
             onChanged: onChanged,
           ),
         ],
@@ -316,13 +337,13 @@ class _DisplaySummaryTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFAF9F7),
+        color: AdminDesign.panelSoft,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE6E3DE)),
+        border: Border.all(color: AdminDesign.border),
       ),
       child: Row(
         children: [
-          Icon(icon, color: VynicColors.accent, size: 22),
+          Icon(icon, color: AdminDesign.accentDark, size: 22),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -333,7 +354,7 @@ class _DisplaySummaryTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: VynicColors.textMuted,
+                    color: AdminDesign.muted,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                   ),
@@ -344,7 +365,7 @@ class _DisplaySummaryTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: VynicColors.textPrimary,
+                    color: AdminDesign.text,
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
                   ),
@@ -382,7 +403,7 @@ class _DisplayControlBlock extends StatelessWidget {
               Text(
                 title,
                 style: const TextStyle(
-                  color: VynicColors.textPrimary,
+                  color: AdminDesign.text,
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
                 ),
@@ -391,7 +412,7 @@ class _DisplayControlBlock extends StatelessWidget {
               Text(
                 helper,
                 style: const TextStyle(
-                  color: VynicColors.textMuted,
+                  color: AdminDesign.muted,
                   fontSize: 12,
                 ),
               ),
@@ -478,10 +499,10 @@ class _OptionPill<T> extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 38),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           decoration: BoxDecoration(
-            color: selected ? VynicColors.accent : Colors.white,
+            color: selected ? AdminDesign.accentDark : Colors.white,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: selected ? VynicColors.accent : VynicColors.border,
+              color: selected ? AdminDesign.accentDark : AdminDesign.border,
             ),
           ),
           child: Text(
@@ -489,7 +510,7 @@ class _OptionPill<T> extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: selected ? Colors.white : VynicColors.textPrimary,
+              color: selected ? Colors.white : AdminDesign.text,
               fontSize: 13,
               fontWeight: FontWeight.w800,
             ),

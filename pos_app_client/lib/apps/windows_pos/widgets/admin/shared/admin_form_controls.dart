@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_language.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 
@@ -74,32 +75,36 @@ class AdminPosTextField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        labelStyle: const TextStyle(color: AdminDesign.muted),
-        hintStyle: TextStyle(color: AdminDesign.muted.withValues(alpha: 0.6)),
+        labelStyle: const TextStyle(color: AdminDesign.muted, fontSize: 13.5),
+        hintStyle: const TextStyle(
+          color: VynicFloorTokens.textFaint,
+          fontSize: 13.5,
+        ),
         suffixIcon: enabled
             ? Icon(
                 usesNumberKeyboard
                     ? Icons.dialpad_outlined
                     : Icons.keyboard_alt_outlined,
-                color: AdminDesign.accentDark,
+                color: VynicFloorTokens.textFaint,
                 size: 20,
               )
             : null,
         filled: true,
-        fillColor: enabled ? AdminDesign.panelSoft : AdminDesign.surface,
+        fillColor: enabled ? AdminDesign.panel : AdminDesign.panelSoft,
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AdminDesign.radius),
           borderSide: const BorderSide(color: AdminDesign.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AdminDesign.radius),
-          borderSide: const BorderSide(color: AdminDesign.accentDark, width: 2),
+          borderSide: const BorderSide(
+            color: AdminDesign.accentDark,
+            width: 1.4,
+          ),
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AdminDesign.radius),
-          borderSide: BorderSide(
-            color: AdminDesign.border.withValues(alpha: 0.5),
-          ),
+          borderSide: const BorderSide(color: VynicFloorTokens.divider),
         ),
       ),
     );
@@ -139,21 +144,27 @@ abstract final class AdminFormButtons {
   static ButtonStyle primary() {
     return ElevatedButton.styleFrom(
       backgroundColor: AdminDesign.accentDark,
-      foregroundColor: Colors.white,
+      foregroundColor: VynicFloorTokens.panel,
+      disabledBackgroundColor: VynicFloorTokens.badgeFill,
+      disabledForegroundColor: VynicFloorTokens.textFaint,
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
+      textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AdminDesign.radius),
       ),
       elevation: 0,
+      shadowColor: Colors.transparent,
     );
   }
 
   static ButtonStyle outline() {
     return OutlinedButton.styleFrom(
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
-      side: const BorderSide(color: AdminDesign.border, width: 1.4),
+      side: const BorderSide(color: AdminDesign.border),
       foregroundColor: AdminDesign.text,
-      backgroundColor: Colors.white,
+      disabledForegroundColor: VynicFloorTokens.textFaint,
+      backgroundColor: VynicFloorTokens.panel,
+      textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AdminDesign.radius),
       ),

@@ -323,7 +323,28 @@ class ManagerSyncService {
     }
   }
 
-  static Future<void> syncToManagerApp() async {
+  /// Guards against two pushes being in flight at once.
+  ///
+  /// The periodic flush had its own flag, but every other caller — login,
+  /// the connection test, close-day, the backup flow — went straight in. Two
+  /// overlapping pushes made the server delete and recreate the same order's
+  /// lines twice over, which surfaced on the manager app as duplicated items.
+  static Future<void>? _inFlight;
+
+  static Future<void> syncToManagerApp() {
+    final running = _inFlight;
+    if (running != null) {
+      // Coalesce: the push already running carries the same local state.
+      return running;
+    }
+    final next = _syncToManagerApp();
+    _inFlight = next;
+    return next.whenComplete(() {
+      if (identical(_inFlight, next)) _inFlight = null;
+    });
+  }
+
+  static Future<void> _syncToManagerApp() async {
     try {
       // 1. Prepare Today's Orders (needed to enrich table occupancy)
       final allOrders = DatabaseService.getAllOrders();

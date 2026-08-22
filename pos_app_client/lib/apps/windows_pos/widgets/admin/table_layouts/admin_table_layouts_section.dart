@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/table_layouts/floor_editor/floor_editor_model.dart';
@@ -208,19 +209,19 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: VynicColors.card,
+        backgroundColor: AdminDesign.panel,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: Text(
           '„${floor.name}“ წაიშალოს?',
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w800,
-            color: VynicColors.textPrimary,
+            color: AdminDesign.text,
           ),
         ),
         content: Text(
           'სართული და მისი ${floor.tableCount} მაგიდა სამუდამოდ წაიშლება.',
-          style: const TextStyle(fontSize: 13, color: VynicColors.textMuted),
+          style: const TextStyle(fontSize: 13, color: AdminDesign.muted),
         ),
         actions: [
           TextButton(
@@ -229,7 +230,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: VynicColors.danger),
+            style: TextButton.styleFrom(foregroundColor: AdminDesign.danger),
             child: const Text('წაშლა'),
           ),
         ],
@@ -252,19 +253,19 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: VynicColors.card,
+        backgroundColor: AdminDesign.panel,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text(
           'საწყის განლაგებაზე დაბრუნება?',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w800,
-            color: VynicColors.textPrimary,
+            color: AdminDesign.text,
           ),
         ),
         content: const Text(
           'ყველა შენახული ცვლილება დაიკარგება.',
-          style: TextStyle(fontSize: 13, color: VynicColors.textMuted),
+          style: TextStyle(fontSize: 13, color: AdminDesign.muted),
         ),
         actions: [
           TextButton(
@@ -273,7 +274,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: VynicColors.danger),
+            style: TextButton.styleFrom(foregroundColor: AdminDesign.danger),
             child: const Text('დაბრუნება'),
           ),
         ],
@@ -301,14 +302,14 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: VynicColors.card,
+        backgroundColor: AdminDesign.panel,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: Text(
           title,
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w800,
-            color: VynicColors.textPrimary,
+            color: AdminDesign.text,
           ),
         ),
         content: TextField(
@@ -318,10 +319,10 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
           decoration: InputDecoration(
             isDense: true,
             filled: true,
-            fillColor: VynicColors.cardSoft,
+            fillColor: AdminDesign.panelSoft,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: VynicColors.border),
+              borderSide: const BorderSide(color: AdminDesign.border),
             ),
           ),
         ),
@@ -332,7 +333,7 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            style: FilledButton.styleFrom(backgroundColor: VynicColors.accent),
+            style: FilledButton.styleFrom(backgroundColor: AdminDesign.accentDark),
             child: const Text('დადასტურება'),
           ),
         ],
@@ -467,14 +468,14 @@ class _FloorCard extends StatelessWidget {
                 height: 42,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: VynicColors.accentSoft,
+                  color: AdminDesign.accentSoft,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: VynicColors.border),
+                  border: Border.all(color: AdminDesign.border),
                 ),
                 child: const Icon(
                   Icons.layers_outlined,
                   size: 20,
-                  color: VynicColors.accent,
+                  color: AdminDesign.accentDark,
                 ),
               ),
               const SizedBox(width: 12),
@@ -489,7 +490,7 @@ class _FloorCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 15.5,
                         fontWeight: FontWeight.w800,
-                        color: VynicColors.textPrimary,
+                        color: AdminDesign.text,
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -531,10 +532,10 @@ class _FloorCard extends StatelessWidget {
                 enabled: !busy,
                 tooltip: 'დამატებითი',
                 icon: const Icon(Icons.more_horiz, size: 20),
-                color: VynicColors.card,
+                color: AdminDesign.panel,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
-                  side: const BorderSide(color: VynicColors.border),
+                  side: const BorderSide(color: AdminDesign.border),
                 ),
                 onSelected: (value) {
                   switch (value) {
@@ -554,7 +555,7 @@ class _FloorCard extends StatelessWidget {
                     value: 'delete',
                     child: Text(
                       'წაშლა',
-                      style: TextStyle(color: VynicColors.danger),
+                      style: TextStyle(color: AdminDesign.danger),
                     ),
                   ),
                 ],
@@ -597,14 +598,14 @@ class _Metric extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 13, color: VynicColors.textDisabled),
+        Icon(icon, size: 13, color: VynicFloorTokens.textFaint),
         const SizedBox(width: 5),
         Text(
           value,
           style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: VynicColors.textMuted,
+            color: AdminDesign.muted,
           ),
         ),
       ],
@@ -634,16 +635,16 @@ class _FloorPlanGridCard extends StatelessWidget {
                 height: 42,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: VynicColors.cardSoft,
+                  color: AdminDesign.panelSoft,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: VynicColors.border),
+                  border: Border.all(color: AdminDesign.border),
                 ),
                 child: Icon(
                   settings.floorPlanGrid
                       ? Icons.grid_on_outlined
                       : Icons.grid_off_outlined,
                   size: 20,
-                  color: VynicColors.textMuted,
+                  color: AdminDesign.muted,
                 ),
               ),
               const SizedBox(width: 12),
@@ -656,7 +657,7 @@ class _FloorPlanGridCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w800,
-                        color: VynicColors.textPrimary,
+                        color: AdminDesign.text,
                       ),
                     ),
                     SizedBox(height: 3),
@@ -666,7 +667,7 @@ class _FloorPlanGridCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         height: 1.35,
-                        color: VynicColors.textMuted,
+                        color: AdminDesign.muted,
                       ),
                     ),
                   ],
@@ -675,7 +676,7 @@ class _FloorPlanGridCard extends StatelessWidget {
               const SizedBox(width: 12),
               Switch(
                 value: settings.floorPlanGrid,
-                activeThumbColor: VynicColors.accent,
+                activeThumbColor: AdminDesign.accentDark,
                 // Persisted straight away: this is a one-switch preference,
                 // not part of the layout the editor saves.
                 onChanged: (value) => unawaited(

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/utils/payment_utils.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
@@ -276,7 +277,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
       context: context,
       builder: (dialogContext) {
         return Dialog.fullscreen(
-          backgroundColor: const Color(0xFFF8FAFC),
+          backgroundColor: AdminDesign.panelSoft,
           child: SafeArea(
             child: Column(
               children: [
@@ -352,8 +353,11 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                     width: 38,
                                     height: 38,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFE0E7FF),
+                                      color: AdminDesign.accentSoft,
                                       borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: AdminDesign.accentSoftBorder,
+                                      ),
                                     ),
                                     child: Center(
                                       child: Text(
@@ -711,9 +715,9 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
         alignment: Alignment.topLeft,
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(
-            isMobile ? 16 : 24,
-            isMobile ? 16 : 20,
-            isMobile ? 16 : 24,
+            isMobile ? 16 : 22,
+            isMobile ? 16 : 18,
+            isMobile ? 16 : 22,
             24,
           ),
           child: SizedBox(
@@ -763,7 +767,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                           label: 'შეკვეთები',
                                           value:
                                               '${todayFiscalSales.length} / ${todayOperationalNonFiscalSales.length}',
-                                          color: Colors.blue,
+                                          color: AdminTones.infoText,
                                         ),
                                       ),
                                       const SizedBox(width: 12),
@@ -773,7 +777,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                           label: 'ფისკალური',
                                           value:
                                               '₾${todayFiscalTotal.toStringAsFixed(2)}',
-                                          color: Colors.green,
+                                          color: AdminTones.successText,
                                         ),
                                       ),
                                     ],
@@ -787,7 +791,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                           label: 'არაფისკალური',
                                           value:
                                               '₾${todayNonFiscalTotal.toStringAsFixed(2)}',
-                                          color: Colors.orangeAccent,
+                                          color: AdminTones.warningText,
                                         ),
                                       ),
                                       const SizedBox(width: 12),
@@ -797,7 +801,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                           label: 'სრული',
                                           value:
                                               '₾${todayCombinedTotal.toStringAsFixed(2)}',
-                                          color: Colors.purpleAccent,
+                                          color: AdminDesign.accentDark,
                                         ),
                                       ),
                                     ],
@@ -813,7 +817,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                           'შეკვეთები (ფისკალური / არაფისკალური)',
                                       value:
                                           '${todayFiscalSales.length} / ${todayOperationalNonFiscalSales.length}',
-                                      color: Colors.blue,
+                                      color: AdminTones.infoText,
                                     ),
                                   ),
                                   const SizedBox(width: 16),
@@ -823,7 +827,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                       label: 'ფისკალური თანხა',
                                       value:
                                           '₾${todayFiscalTotal.toStringAsFixed(2)}',
-                                      color: Colors.green,
+                                      color: AdminTones.successText,
                                     ),
                                   ),
                                   const SizedBox(width: 16),
@@ -833,7 +837,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                       label: 'არაფისკალური თანხა',
                                       value:
                                           '₾${todayNonFiscalTotal.toStringAsFixed(2)}',
-                                      color: Colors.orangeAccent,
+                                      color: AdminTones.warningText,
                                     ),
                                   ),
                                   const SizedBox(width: 16),
@@ -843,7 +847,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                       label: 'სრული თანხა',
                                       value:
                                           '₾${todayCombinedTotal.toStringAsFixed(2)}',
-                                      color: Colors.purpleAccent,
+                                      color: AdminDesign.accentDark,
                                     ),
                                   ),
                                 ],
@@ -854,7 +858,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                             child: Text(
                               'ავანსი (ჯამში არ შედის): ₾${todayAdvanceTotal.toStringAsFixed(2)}',
                               style: TextStyle(
-                                color: Colors.orange.shade700,
+                                color: AdminTones.warningText,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -866,7 +870,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                             child: Text(
                               'სუფრების სრული თანხა (ავანსით): ₾${todayTablesGrossTotal.toStringAsFixed(2)}  =  გადახდილი ₾${todayCombinedTotal.toStringAsFixed(2)} + ავანსი ₾${todayAppliedAdvanceFromTables.toStringAsFixed(2)}',
                               style: TextStyle(
-                                color: Colors.blueGrey.shade700,
+                                color: AdminDesign.muted,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -877,7 +881,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                           child: Text(
                             'სულ ხარჯი: ₾${todayExpenses.toStringAsFixed(2)} • მოგება: ₾${todayProfit.toStringAsFixed(2)}',
                             style: TextStyle(
-                              color: Colors.indigo.shade700,
+                              color: AdminDesign.accentDark,
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                             ),
@@ -1036,7 +1040,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                               ),
                                         icon: const Icon(Icons.chevron_left),
                                         color: _primaryColor,
-                                        disabledColor: Colors.grey,
+                                        disabledColor: AdminDesign.muted,
                                       ),
                                       const SizedBox(width: 8),
                                       DropdownButtonHideUnderline(
@@ -1060,7 +1064,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                                 : null,
                                             dropdownColor: Colors.white,
                                             iconEnabledColor: _primaryColor,
-                                            iconDisabledColor: Colors.grey,
+                                            iconDisabledColor: AdminDesign.muted,
                                             style: const TextStyle(
                                               color: _textPrimary,
                                               fontWeight: FontWeight.w600,
@@ -1101,7 +1105,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                               ),
                                         icon: const Icon(Icons.chevron_right),
                                         color: _primaryColor,
-                                        disabledColor: Colors.grey,
+                                        disabledColor: AdminDesign.muted,
                                       ),
                                     ],
                                   ),
@@ -1119,7 +1123,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                           label: 'შეკვეთები',
                                           value:
                                               '${monthlyFiscalCount} / ${monthlyNonFiscalCount}',
-                                          color: Colors.blue,
+                                          color: AdminTones.infoText,
                                         ),
                                       ),
                                       const SizedBox(width: 12),
@@ -1129,7 +1133,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                           label: 'ფისკალური',
                                           value:
                                               '₾${monthlyTotal.toStringAsFixed(2)}',
-                                          color: Colors.green,
+                                          color: AdminTones.successText,
                                         ),
                                       ),
                                     ],
@@ -1143,7 +1147,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                           label: 'არაფისკალური',
                                           value:
                                               '₾${monthlyNonFiscalTotal.toStringAsFixed(2)}',
-                                          color: Colors.orangeAccent,
+                                          color: AdminTones.warningText,
                                         ),
                                       ),
                                       const SizedBox(width: 12),
@@ -1153,7 +1157,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                           label: 'სრული',
                                           value:
                                               '₾${monthlyCombinedTotal.toStringAsFixed(2)}',
-                                          color: Colors.purpleAccent,
+                                          color: AdminDesign.accentDark,
                                         ),
                                       ),
                                     ],
@@ -1169,7 +1173,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                           'შეკვეთები (ფისკალური / არაფისკალური)',
                                       value:
                                           '${monthlyFiscalCount.toString()} / ${monthlyNonFiscalCount.toString()}',
-                                      color: Colors.blue,
+                                      color: AdminTones.infoText,
                                     ),
                                   ),
                                   const SizedBox(width: 16),
@@ -1179,7 +1183,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                       label: 'ფისკალური თანხა',
                                       value:
                                           '₾${monthlyTotal.toStringAsFixed(2)}',
-                                      color: Colors.green,
+                                      color: AdminTones.successText,
                                     ),
                                   ),
                                   const SizedBox(width: 16),
@@ -1189,7 +1193,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                       label: 'არაფისკალური თანხა',
                                       value:
                                           '₾${monthlyNonFiscalTotal.toStringAsFixed(2)}',
-                                      color: Colors.orangeAccent,
+                                      color: AdminTones.warningText,
                                     ),
                                   ),
                                   const SizedBox(width: 16),
@@ -1199,7 +1203,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                       label: 'სრული თანხა',
                                       value:
                                           '₾${monthlyCombinedTotal.toStringAsFixed(2)}',
-                                      color: Colors.purpleAccent,
+                                      color: AdminDesign.accentDark,
                                     ),
                                   ),
                                 ],
@@ -1210,7 +1214,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                             child: Text(
                               'ავანსი (ჯამში არ შედის): ₾${monthlyAdvanceTotal.toStringAsFixed(2)}',
                               style: TextStyle(
-                                color: Colors.orange.shade700,
+                                color: AdminTones.warningText,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -1222,7 +1226,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                             child: Text(
                               'სუფრების სრული თანხა (ავანსით): ₾${monthlyTablesGrossTotal.toStringAsFixed(2)}  =  გადახდილი ₾${monthlyCombinedTotal.toStringAsFixed(2)} + ავანსი ₾${monthlyAppliedAdvanceFromTables.toStringAsFixed(2)}',
                               style: TextStyle(
-                                color: Colors.blueGrey.shade700,
+                                color: AdminDesign.muted,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -1233,7 +1237,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                           child: Text(
                             'სულ ხარჯი: ₾${monthlyExpenses.toStringAsFixed(2)} • მოგება: ₾${monthlyProfit.toStringAsFixed(2)}',
                             style: TextStyle(
-                              color: Colors.indigo.shade700,
+                              color: AdminDesign.accentDark,
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                             ),
@@ -1251,7 +1255,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                 value: monthlyCancelled > 0
                                     ? '$monthlyActiveCount / ${monthlySales.length}'
                                     : '$monthlyActiveCount',
-                                color: Colors.lightBlueAccent,
+                                color: AdminTones.infoText,
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -1261,7 +1265,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                 label: 'საშუალო შეკვეთა',
                                 value:
                                     '₾${averageOrderValue.toStringAsFixed(2)}',
-                                color: Colors.tealAccent,
+                                color: AdminDesign.accentDark,
                               ),
                             ),
                           ],
@@ -1272,7 +1276,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                             child: Text(
                               'გაუქმებული შეკვეთები: $monthlyCancelled',
                               style: TextStyle(
-                                color: Colors.orange.shade700,
+                                color: AdminTones.warningText,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -1352,7 +1356,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                             : '${topDateEntry.key} • ₾${topDateEntry.value.toStringAsFixed(2)}',
                                         subtitle:
                                             'ყველაზე მაღალი დღიური ამონაგები',
-                                        accent: Colors.indigo,
+                                        accent: AdminDesign.accentDark,
                                       ),
                                     ),
                                     SizedBox(
@@ -1363,7 +1367,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                         value: _formatPercent(nonFiscalRate),
                                         subtitle:
                                             'არაფისკალური ₾${monthlyNonFiscalTotal.toStringAsFixed(2)} / სრული ₾${monthlyCombinedTotal.toStringAsFixed(2)}',
-                                        accent: Colors.deepOrange,
+                                        accent: AdminTones.warningText,
                                       ),
                                     ),
                                     SizedBox(
@@ -1374,7 +1378,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                         value: _formatPercent(cancellationRate),
                                         subtitle:
                                             '$monthlyCancelled გაუქმებული / ${monthlySales.length} სულ',
-                                        accent: Colors.redAccent,
+                                        accent: AdminDesign.danger,
                                       ),
                                     ),
                                     SizedBox(
@@ -1387,7 +1391,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                             .toStringAsFixed(1),
                                         subtitle:
                                             'აქტიური შეკვეთები: $monthlyActiveCount',
-                                        accent: Colors.blue,
+                                        accent: AdminTones.infoText,
                                       ),
                                     ),
                                     SizedBox(
@@ -1402,7 +1406,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                         subtitle: topPaymentMethod == null
                                             ? 'ამ თვეში ფისკალური გაყიდვები არ არის'
                                             : 'ფისკალური ბრუნვის ${_formatPercent(topPaymentShare)}',
-                                        accent: Colors.purple,
+                                        accent: AdminDesign.accentDark,
                                       ),
                                     ),
                                   ],
@@ -1566,7 +1570,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                     value:
                                         '₾${dateAverageOrderValue.toStringAsFixed(2)}',
                                     subtitle: 'აქტიური შეკვეთები: $activeCount',
-                                    accent: Colors.teal,
+                                    accent: AdminDesign.accentDark,
                                   ),
                                 ),
                                 SizedBox(
@@ -1583,7 +1587,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                           ),
                                     subtitle:
                                         'არაფისკალური ₾${nonFiscalDateTotal.toStringAsFixed(2)}',
-                                    accent: Colors.deepOrange,
+                                    accent: AdminTones.warningText,
                                   ),
                                 ),
                                 SizedBox(
@@ -1594,7 +1598,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                     value: _formatPercent(dateCancellationRate),
                                     subtitle:
                                         '$cancelledCount გაუქმებული / ${dateSales.length} სულ',
-                                    accent: Colors.redAccent,
+                                    accent: AdminDesign.danger,
                                   ),
                                 ),
                                 SizedBox(
@@ -1605,7 +1609,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                     value: dateAvgItems.toStringAsFixed(1),
                                     subtitle:
                                         'დღის აქტიური შეკვეთების მიხედვით',
-                                    accent: Colors.blue,
+                                    accent: AdminTones.infoText,
                                   ),
                                 ),
                               ],
@@ -1638,11 +1642,11 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                   !isCancelled && !_isFiscalSale(sale);
 
                               IconData paymentIcon = Icons.payments;
-                              Color paymentColor = Colors.green;
+                              Color paymentColor = AdminTones.successText;
 
                               if (isNonFiscal) {
                                 paymentIcon = Icons.shield_outlined;
-                                paymentColor = Colors.orangeAccent;
+                                paymentColor = AdminTones.warningText;
                               } else if (breakdown.length == 1) {
                                 final entry = breakdown.entries.first;
                                 final normalized =
@@ -1650,28 +1654,31 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                 switch (normalized) {
                                   case PaymentUtils.methodCardTbc:
                                     paymentIcon = Icons.credit_card;
-                                    paymentColor = const Color(0xFF0066CC);
+                                    paymentColor = AdminTones.infoText;
                                     break;
                                   case PaymentUtils.methodCardBog:
                                     paymentIcon = Icons.credit_card;
-                                    paymentColor = const Color(0xFFFF9800);
+                                    // Ochre against TBC's slate: the two card
+                                    // brands still read apart, but both now sit
+                                    // inside the warm palette.
+                                    paymentColor = AdminTones.warningText;
                                     break;
                                   case PaymentUtils.methodCardLegacy:
                                     paymentIcon = Icons.credit_card;
-                                    paymentColor = Colors.blue;
+                                    paymentColor = AdminTones.infoText;
                                     break;
                                   case PaymentUtils.methodCash:
                                     paymentIcon = Icons.payments;
-                                    paymentColor = Colors.green;
+                                    paymentColor = AdminTones.successText;
                                     break;
                                   case PaymentUtils.methodOther:
                                     paymentIcon = Icons.account_balance_wallet;
-                                    paymentColor = const Color(0xFF26A69A);
+                                    paymentColor = AdminDesign.muted;
                                     break;
                                 }
                               } else if (breakdown.length > 1) {
                                 paymentIcon = Icons.account_balance_wallet;
-                                paymentColor = Colors.purpleAccent;
+                                paymentColor = AdminDesign.accentDark;
                               }
 
                               return Card(
@@ -1740,7 +1747,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                               Text(
                                                 'ავანსი: ₾${advanceAmount.toStringAsFixed(2)}',
                                                 style: TextStyle(
-                                                  color: Colors.orange.shade700,
+                                                  color: AdminTones.warningText,
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w600,
                                                 ),
@@ -1761,7 +1768,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                               label: const Text(
                                                 'არაფისკალური',
                                                 style: TextStyle(
-                                                  color: Colors.orangeAccent,
+                                                  color: AdminTones.warningText,
                                                   fontWeight: FontWeight.w700,
                                                 ),
                                               ),
@@ -1773,13 +1780,13 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                               top: 8,
                                             ),
                                             child: Chip(
-                                              backgroundColor: Colors.redAccent
+                                              backgroundColor: AdminDesign.danger
                                                   .withOpacity(0.12),
                                               side: BorderSide.none,
                                               label: const Text(
                                                 'გაუქმებული',
                                                 style: TextStyle(
-                                                  color: Colors.redAccent,
+                                                  color: AdminDesign.danger,
                                                   fontWeight: FontWeight.w700,
                                                 ),
                                               ),
@@ -1923,7 +1930,7 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                                     );
                                                   },
                                             style: TextButton.styleFrom(
-                                              foregroundColor: Colors.redAccent,
+                                              foregroundColor: AdminDesign.danger,
                                               disabledForegroundColor: Colors
                                                   .redAccent
                                                   .withOpacity(0.3),

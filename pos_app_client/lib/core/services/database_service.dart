@@ -902,6 +902,12 @@ class DatabaseService {
   static Future<void> setReceiptServiceFeeLineVisible(bool visible) =>
       SettingsRepository.setReceiptServiceFeeLineVisible(visible);
 
+  static bool isCloseReceiptServiceFeeLineVisible() =>
+      SettingsRepository.isCloseReceiptServiceFeeLineVisible();
+
+  static Future<void> setCloseReceiptServiceFeeLineVisible(bool visible) =>
+      SettingsRepository.setCloseReceiptServiceFeeLineVisible(visible);
+
   static Future<File> createDataBackup({String? targetFilePath}) =>
       BackupRepository.createDataBackup(targetFilePath: targetFilePath);
 

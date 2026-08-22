@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:flutter/services.dart';
 
 import 'package:vynic/core/models/table_layout.dart';
@@ -74,8 +77,8 @@ class _FloorEditorInspectorState extends State<FloorEditorInspector> {
     return Container(
       width: widget.width,
       decoration: const BoxDecoration(
-        color: VynicColors.card,
-        border: Border(left: BorderSide(color: VynicColors.border)),
+        color: AdminDesign.panel,
+        border: Border(left: BorderSide(color: AdminDesign.border)),
       ),
       child: ListenableBuilder(
         listenable: _controller,
@@ -295,7 +298,7 @@ class _SectionLabel extends StatelessWidget {
           fontSize: 10,
           letterSpacing: 0.7,
           fontWeight: FontWeight.w800,
-          color: VynicColors.textDisabled,
+          color: VynicFloorTokens.textFaint,
         ),
       ),
     );
@@ -327,7 +330,7 @@ class _TextRow extends StatelessWidget {
           style: const TextStyle(
             fontSize: 11.5,
             fontWeight: FontWeight.w700,
-            color: VynicColors.textMuted,
+            color: AdminDesign.muted,
           ),
         ),
         const SizedBox(height: 5),
@@ -338,7 +341,7 @@ class _TextRow extends StatelessWidget {
           style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: VynicColors.textPrimary,
+            color: AdminDesign.text,
           ),
           decoration: _fieldDecoration(),
           onSubmitted: onSubmitted,
@@ -356,19 +359,19 @@ InputDecoration _fieldDecoration() {
   return InputDecoration(
     isDense: true,
     filled: true,
-    fillColor: VynicColors.cardSoft,
+    fillColor: AdminDesign.panelSoft,
     contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: VynicColors.border),
+      borderSide: const BorderSide(color: AdminDesign.border),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: VynicColors.border),
+      borderSide: const BorderSide(color: AdminDesign.border),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: VynicColors.accent, width: 1.5),
+      borderSide: const BorderSide(color: AdminDesign.accentDark, width: 1.5),
     ),
   );
 }
@@ -430,7 +433,7 @@ class _NumberFieldState extends State<_NumberField> {
           style: const TextStyle(
             fontSize: 11.5,
             fontWeight: FontWeight.w700,
-            color: VynicColors.textMuted,
+            color: AdminDesign.muted,
           ),
         ),
         const SizedBox(height: 5),
@@ -442,7 +445,7 @@ class _NumberFieldState extends State<_NumberField> {
           style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: VynicColors.textPrimary,
+            color: AdminDesign.text,
           ),
           decoration: _fieldDecoration(),
           onSubmitted: (_) => _commit(),
@@ -489,16 +492,16 @@ class _RotationRow extends StatelessWidget {
             height: 38,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: VynicColors.cardSoft,
+              color: AdminDesign.panelSoft,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: VynicColors.border),
+              border: Border.all(color: AdminDesign.border),
             ),
             child: Text(
               '${value.round()}°',
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
-                color: VynicColors.textPrimary,
+                color: AdminDesign.text,
               ),
             ),
           ),
@@ -552,21 +555,21 @@ class _ShapePicker extends StatelessWidget {
                 height: 36,
                 decoration: BoxDecoration(
                   color: value == shape.$1
-                      ? VynicColors.accentSoft
-                      : VynicColors.cardSoft,
+                      ? AdminDesign.accentSoft
+                      : AdminDesign.panelSoft,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: value == shape.$1
-                        ? VynicColors.accent
-                        : VynicColors.border,
+                        ? AdminDesign.accentDark
+                        : AdminDesign.border,
                   ),
                 ),
                 child: Icon(
                   shape.$3,
                   size: 17,
                   color: value == shape.$1
-                      ? VynicColors.accent
-                      : VynicColors.textMuted,
+                      ? AdminDesign.accentDark
+                      : AdminDesign.muted,
                 ),
               ),
             ),
@@ -638,11 +641,11 @@ class _AlignGrid extends StatelessWidget {
                 width: 40,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: VynicColors.cardSoft,
+                  color: AdminDesign.panelSoft,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: VynicColors.border),
+                  border: Border.all(color: AdminDesign.border),
                 ),
-                child: Icon(action.$1, size: 17, color: VynicColors.textMuted),
+                child: Icon(action.$1, size: 17, color: AdminDesign.muted),
               ),
             ),
           ),
@@ -696,7 +699,7 @@ class _MiniButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = danger ? VynicColors.danger : VynicColors.textPrimary;
+    final color = danger ? AdminDesign.danger : AdminDesign.text;
     return InkWell(
       borderRadius: BorderRadius.circular(8),
       onTap: onPressed,
@@ -704,10 +707,10 @@ class _MiniButton extends StatelessWidget {
         height: 38,
         padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
-          color: danger ? VynicColors.dangerSoft : VynicColors.cardSoft,
+          color: danger ? VynicFloorTokens.dangerFill : AdminDesign.panelSoft,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: danger ? VynicColors.dangerBorder : VynicColors.border,
+            color: danger ? VynicFloorTokens.dangerBorder : AdminDesign.border,
           ),
         ),
         child: Row(
@@ -758,7 +761,7 @@ class _StatRow extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: VynicColors.textMuted,
+                    color: AdminDesign.muted,
                   ),
                 ),
               ),
@@ -767,7 +770,7 @@ class _StatRow extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w800,
-                  color: VynicColors.textPrimary,
+                  color: AdminDesign.text,
                 ),
               ),
             ],
@@ -779,7 +782,7 @@ class _StatRow extends StatelessWidget {
                 hint!,
                 style: const TextStyle(
                   fontSize: 10.5,
-                  color: VynicColors.textDisabled,
+                  color: VynicFloorTokens.textFaint,
                 ),
               ),
             ),
@@ -799,9 +802,9 @@ class _HintCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: VynicColors.cardSoft,
+        color: AdminDesign.panelSoft,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: VynicColors.border),
+        border: Border.all(color: AdminDesign.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -817,7 +820,7 @@ class _HintCard extends StatelessWidget {
                     child: Icon(
                       Icons.circle,
                       size: 5,
-                      color: VynicColors.textDisabled,
+                      color: VynicFloorTokens.textFaint,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -827,7 +830,7 @@ class _HintCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 11.5,
                         height: 1.45,
-                        color: VynicColors.textMuted,
+                        color: AdminDesign.muted,
                       ),
                     ),
                   ),
@@ -898,13 +901,13 @@ class _CanvasAspectRow extends StatelessWidget {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: (aspect - preset.$2).abs() < 0.01
-                          ? VynicColors.accentSoft
-                          : VynicColors.cardSoft,
+                          ? AdminDesign.accentSoft
+                          : AdminDesign.panelSoft,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: (aspect - preset.$2).abs() < 0.01
-                            ? VynicColors.accent
-                            : VynicColors.border,
+                            ? AdminDesign.accentDark
+                            : AdminDesign.border,
                       ),
                     ),
                     child: Text(
@@ -913,8 +916,8 @@ class _CanvasAspectRow extends StatelessWidget {
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: (aspect - preset.$2).abs() < 0.01
-                            ? VynicColors.accent
-                            : VynicColors.textMuted,
+                            ? AdminDesign.accentDark
+                            : AdminDesign.muted,
                       ),
                     ),
                   ),
@@ -932,8 +935,8 @@ class _CanvasAspectRow extends StatelessWidget {
             fontSize: 11,
             height: 1.4,
             color: wastedPercent <= 1
-                ? VynicColors.successText
-                : VynicColors.warningText,
+                ? AdminTones.successText
+                : AdminTones.warningText,
           ),
         ),
       ],

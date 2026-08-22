@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
@@ -29,9 +30,9 @@ class _AdminErrorLogSectionState extends State<AdminErrorLogSection> {
       child: Align(
         alignment: Alignment.topLeft,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(28, 20, 28, 24),
+          padding: const EdgeInsets.fromLTRB(22, 18, 22, 24),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1100),
+            constraints: const BoxConstraints(maxWidth: adminSectionMaxWidth),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -51,11 +52,11 @@ class _AdminErrorLogSectionState extends State<AdminErrorLogSection> {
                         ? AdminDesign.accentDark
                         : AdminDesign.warning,
                     background: logs.isEmpty
-                        ? const Color(0xFFECFDF5)
-                        : const Color(0xFFFFFBEB),
+                        ? AdminTones.successFill
+                        : AdminTones.warningFill,
                     border: logs.isEmpty
-                        ? const Color(0xFFA7F3D0)
-                        : const Color(0xFFFDE68A),
+                        ? AdminTones.successBorder
+                        : AdminTones.warningBorder,
                   ),
                   action: logs.isNotEmpty
                       ? OutlinedButton.icon(
@@ -200,7 +201,7 @@ class _AdminErrorLogSectionState extends State<AdminErrorLogSection> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: AdminDesign.danger),
             child: const Text('წაშლა'),
           ),
         ],

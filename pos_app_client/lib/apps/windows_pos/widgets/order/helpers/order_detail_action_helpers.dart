@@ -22,6 +22,8 @@ class OrderDetailActionHelpers {
     required VoidCallback onPrintReceipt,
     required VoidCallback onToggleServiceFee,
     required VoidCallback onOpenServiceFeeConfig,
+    required bool receiptServiceFeeLineVisible,
+    required VoidCallback onToggleReceiptServiceFeeLine,
     required VoidCallback onStartNonFiscalClosureFlow,
     required VoidCallback onShowDiscountDialog,
     required VoidCallback onShowManualAdjustmentDialog,
@@ -33,6 +35,7 @@ class OrderDetailActionHelpers {
     if (status == 'pending') {
       primaryActions.add(
         OrderActionConfig(
+          id: OrderActionId.confirmOrder,
           label: 'შეკვეთის დადასტურება',
           icon: Icons.verified,
           onTap: onConfirmOrder,
@@ -46,6 +49,7 @@ class OrderDetailActionHelpers {
     if (canPrintKitchenCheck) {
       primaryActions.add(
         OrderActionConfig(
+          id: OrderActionId.printKitchenCheck,
           label: 'სამზარეულოს ჩეკი',
           icon: Icons.restaurant,
           onTap: onPrintKitchenCheck,
@@ -58,7 +62,8 @@ class OrderDetailActionHelpers {
     if (canPrintReceipt) {
       primaryActions.add(
         OrderActionConfig(
-          label: 'ქვითრის ბეჭდვა',
+          id: OrderActionId.printReceipt,
+          label: 'ჩეკის დაბეჭდვა',
           icon: Icons.receipt_long,
           onTap: onPrintReceipt,
           accent: const Color(0xFF16A34A),
@@ -72,6 +77,7 @@ class OrderDetailActionHelpers {
     if (serviceFeeAvailable && !isTakeAwayOrder && canModify) {
       secondaryActions.add(
         OrderActionConfig(
+          id: OrderActionId.toggleServiceFee,
           label: 'სერვისი ($serviceFeePercentageLabel%)',
           icon: Icons.room_service,
           onTap: onToggleServiceFee,
@@ -87,9 +93,29 @@ class OrderDetailActionHelpers {
       );
     }
 
+    if (serviceFeeAvailable && !isTakeAwayOrder && canModify) {
+      // The same admin setting as „ჩეკზე ასახვა", surfaced where the fee
+      // itself is toggled. It governs the printed row only — never the total,
+      // and never the close-table receipt, which has never carried the row.
+      secondaryActions.add(
+        OrderActionConfig(
+          id: OrderActionId.receiptServiceFeeLine,
+          label: 'ჩეკზე ასახვა',
+          icon: Icons.receipt_outlined,
+          onTap: onToggleReceiptServiceFeeLine,
+          accent: const Color(0xFF2563EB),
+          subtitle: receiptServiceFeeLineVisible
+              ? 'სერვისის ხაზი ჩეკზე ჩანს.'
+              : 'სერვისის ხაზი ჩეკზე დამალულია.',
+          emphasize: receiptServiceFeeLineVisible,
+        ),
+      );
+    }
+
     if (canNonFiscalClose) {
       secondaryActions.add(
         OrderActionConfig(
+          id: OrderActionId.nonFiscalClose,
           label: 'არაფისკალური დახურვა',
           icon: Icons.lock_person,
           onTap: onStartNonFiscalClosureFlow,
@@ -107,6 +133,7 @@ class OrderDetailActionHelpers {
       if (PosPermissions.has(user, PosPermission.applyDiscount)) {
         secondaryActions.add(
           OrderActionConfig(
+            id: OrderActionId.advance,
             label: 'ავანსი',
             icon: Icons.percent,
             onTap: onShowDiscountDialog,
@@ -122,6 +149,7 @@ class OrderDetailActionHelpers {
 
         secondaryActions.add(
           OrderActionConfig(
+            id: OrderActionId.priceAdjustment,
             label: 'ფასის კორექცია',
             icon: Icons.price_change,
             onTap: onShowManualAdjustmentDialog,
@@ -139,7 +167,8 @@ class OrderDetailActionHelpers {
       if (!isTakeAwayOrder) {
         secondaryActions.add(
           OrderActionConfig(
-            label: 'სუფრის შეცვლა',
+            id: OrderActionId.changeTable,
+            label: 'მაგიდის შეცვლა',
             icon: Icons.table_restaurant,
             onTap: onShowChangeTableDialog,
             accent: const Color(0xFF2563EB),
@@ -152,6 +181,7 @@ class OrderDetailActionHelpers {
       if (PosPermissions.has(user, PosPermission.voidOrder)) {
         secondaryActions.add(
           OrderActionConfig(
+            id: OrderActionId.cancelOrder,
             label: 'შეკვეთის გაუქმება',
             icon: Icons.cancel,
             onTap: onConfirmCancelOrder,
@@ -166,6 +196,7 @@ class OrderDetailActionHelpers {
     if (canCloseTable) {
       secondaryActions.add(
         OrderActionConfig(
+          id: OrderActionId.closeTable,
           label: 'მაგიდის დახურვა',
           icon: Icons.check_circle,
           onTap: onStartTableClosureFlow,

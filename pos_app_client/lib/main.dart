@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import 'package:vynic/core/ui/pos_scaled_surface.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:vynic/apps/windows_pos/screens/login_screen.dart';
 import 'package:vynic/apps/windows_pos/widgets/staff_lock_screen.dart';
@@ -320,7 +322,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         return ValueListenableBuilder(
           valueListenable: PosDisplaySettingsController.settings,
           builder: (context, settings, _) {
-            return _ScaledPosSurface(
+            return PosScaledSurface(
               scale: settings.scaleFactor,
               child: activityAwareChild,
             );
@@ -332,57 +334,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           : LoginScreen(
               companionAppBuilder: (user) => ManagerAppShell(user: user),
             ),
-    );
-  }
-}
-
-class _ScaledPosSurface extends StatelessWidget {
-  const _ScaledPosSurface({required this.scale, required this.child});
-
-  final double scale;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    if ((scale - 1).abs() < 0.001) {
-      return child;
-    }
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final height = constraints.maxHeight;
-        if (!width.isFinite || !height.isFinite || width <= 0 || height <= 0) {
-          return child;
-        }
-        final scaledSize = Size(width / scale, height / scale);
-        return ClipRect(
-          child: OverflowBox(
-            alignment: Alignment.topLeft,
-            minWidth: 0,
-            minHeight: 0,
-            maxWidth: scaledSize.width,
-            maxHeight: scaledSize.height,
-            child: Transform.scale(
-              scale: scale,
-              alignment: Alignment.topLeft,
-              child: SizedBox(
-                width: scaledSize.width,
-                height: scaledSize.height,
-                // The subtree is laid out at scaledSize, so MediaQuery has to
-                // report scaledSize too. Without this every responsive
-                // decision below (layout class, breakpoints, side rails) reads
-                // the unscaled window and picks a layout too big for the space
-                // it actually has — which shows up as overflow at any UI scale
-                // other than 100%.
-                child: MediaQuery(
-                  data: MediaQuery.of(context).copyWith(size: scaledSize),
-                  child: child,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 }

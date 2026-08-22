@@ -1,7 +1,16 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'package:vynic/apps/windows_pos/widgets/home/home_x_report_helper.dart';
+import 'package:vynic/apps/windows_pos/widgets/shared/pos_surface.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
+
+/// The day's operational report.
+///
+/// Four figures across the top, then the takings broken down by waiter. The
+/// old version wrapped each figure in its own tinted card — a different pastel
+/// per tile — which made four equally important numbers look like four
+/// unrelated things. They are one row of facts about one day, so they read as
+/// one row.
 class HomeXReportSection extends StatelessWidget {
   const HomeXReportSection({
     super.key,
@@ -10,6 +19,8 @@ class HomeXReportSection extends StatelessWidget {
     required this.takeAwayCount,
     required this.activeWaitersCount,
     required this.waiterSummaries,
+    this.closedTables = const [],
+    this.soldItems = const [],
     required this.onPrintReport,
     required this.primaryColor,
     required this.secondaryColor,
@@ -22,205 +33,141 @@ class HomeXReportSection extends StatelessWidget {
   final int takeAwayCount;
   final int activeWaitersCount;
   final List<Map<String, dynamic>> waiterSummaries;
+
+  /// Every table closed today, newest first — with the times it was opened
+  /// and paid, so the report says how the day actually ran and not only what
+  /// it took.
+  final List<XReportTableRow> closedTables;
+
+  /// Everything sold today, rolled up by dish.
+  final List<XReportSoldItem> soldItems;
+
   final VoidCallback onPrintReport;
+
+  // Kept so every caller keeps compiling; the section draws from the shared
+  // POS tokens now rather than from per-screen colours passed down.
   final Color primaryColor;
   final Color secondaryColor;
   final Color textPrimary;
   final Color mutedText;
 
+  static String _money(double value) => '${value.toStringAsFixed(2)} ₾';
+
   @override
   Widget build(BuildContext context) {
-    final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
-
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(
-        isMobile ? 16 : 24,
-        isMobile ? 16 : 24,
-        isMobile ? 16 : 24,
-        96,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle(
-            icon: Icons.receipt_long,
-            title: 'X ანგარიში',
-            subtitle:
-                'მიმდინარე დღის ოპერატიული ანგარიში და დეტალური მიმოხილვა.',
-            isMobile: isMobile,
-          ),
-          SizedBox(height: isMobile ? 16 : 20),
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: [
-              _buildMetricTile(
-                icon: Icons.payments_outlined,
-                label: 'დღიური გაყიდვები',
-                value: '₾${dailySalesTotal.toStringAsFixed(2)}',
-                backgroundColor: const Color(0xFFE0F2FE),
-                iconColor: primaryColor,
-                isMobile: isMobile,
-              ),
-              if (openedTablesAmount != null)
-                _buildMetricTile(
-                  icon: Icons.table_restaurant_outlined,
-                  label: 'ღია მაგიდების თანხა',
-                  value: '₾${openedTablesAmount!.toStringAsFixed(2)}',
-                  backgroundColor: const Color(0xFFECFDF5),
-                  iconColor: const Color(0xFF0F766E),
-                  isMobile: isMobile,
-                ),
-              _buildMetricTile(
-                icon: Icons.shopping_bag_outlined,
-                label: 'გატანები',
-                value: '$takeAwayCount',
-                backgroundColor: const Color(0xFFF1F5F9),
-                iconColor: secondaryColor,
-                isMobile: isMobile,
-              ),
-              _buildMetricTile(
-                icon: Icons.people_outline,
-                label: 'აქტიური ოფიციანტები',
-                value: '$activeWaitersCount',
-                backgroundColor: const Color(0xFFEEF2FF),
-                iconColor: primaryColor,
-                isMobile: isMobile,
-              ),
-            ],
-          ),
-          SizedBox(height: isMobile ? 16 : 24),
-          _buildActionCard(
-            icon: Icons.print_outlined,
-            title: 'ანგარიშის დაბეჭდვა',
-            description: 'დაბეჭდე დღიური X ანგარიში ყველა გადახდის დეტალით.',
-            isMobile: isMobile,
-            actions: [
-              ElevatedButton.icon(
-                onPressed: onPrintReport,
-                icon: const Icon(Icons.print, size: 20),
-                label: const Text('ბეჭდვა'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: secondaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 2,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: isMobile ? 16 : 24),
-          _buildWaiterSalesSection(waiterSummaries, isMobile),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle({
-    required IconData icon,
-    required String title,
-    String? subtitle,
-    required bool isMobile,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          height: 48,
-          width: 48,
-          decoration: BoxDecoration(
-            color: primaryColor.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Icon(icon, color: primaryColor),
+    final metrics = <PosMetricCard>[
+      PosMetricCard(label: 'დღიური გაყიდვები', value: _money(dailySalesTotal)),
+      if (openedTablesAmount != null)
+        PosMetricCard(
+          label: 'ღია მაგიდების თანხა',
+          value: _money(openedTablesAmount!),
+          // Money still on the floor, not yet taken — the one figure here
+          // that is not settled.
+          tone: VynicFloorTokens.occupiedValue,
         ),
-        const SizedBox(width: 16),
-        Expanded(
+      PosMetricCard(label: 'გატანები', value: '$takeAwayCount'),
+      PosMetricCard(label: 'აქტიური ოფიციანტები', value: '$activeWaitersCount'),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final narrow = constraints.maxWidth < 860;
+        return SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            narrow ? 14 : 20,
+            16,
+            narrow ? 14 : 20,
+            24,
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: textPrimary,
-                  fontSize: isMobile ? 18 : 22,
-                  fontWeight: FontWeight.w700,
+              PosPageHeading(
+                title: 'X ანგარიში',
+                subtitle: 'მიმდინარე დღის ოპერატიული ანგარიში.',
+                trailing: PosPrimaryButton(
+                  label: 'ანგარიშის დაბეჭდვა',
+                  icon: Icons.print_outlined,
+                  onTap: onPrintReport,
                 ),
               ),
-              if (subtitle != null) ...[
-                const SizedBox(height: 6),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: mutedText,
-                    fontSize: isMobile ? 13 : 14,
+              const SizedBox(height: 16),
+              if (narrow)
+                for (var i = 0; i < metrics.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 10),
+                  metrics[i],
+                ]
+              else
+                Row(
+                  children: [
+                    for (var i = 0; i < metrics.length; i++) ...[
+                      if (i > 0) const SizedBox(width: 12),
+                      Expanded(child: metrics[i]),
+                    ],
+                  ],
+                ),
+              const SizedBox(height: 16),
+              // The bill of the day and the kitchen's output are two views of
+              // the same sales, so they sit side by side where there is room.
+              if (narrow) ...[
+                _ClosedTables(rows: closedTables),
+                const SizedBox(height: 16),
+                _SoldItems(items: soldItems),
+              ] else
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: _ClosedTables(rows: closedTables),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(flex: 2, child: _SoldItems(items: soldItems)),
+                    ],
                   ),
                 ),
-              ],
+              const SizedBox(height: 16),
+              _WaiterSales(summaries: waiterSummaries),
             ],
           ),
-        ),
-      ],
+        );
+      },
     );
   }
+}
 
-  Widget _buildMetricTile({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color backgroundColor,
-    required Color iconColor,
-    required bool isMobile,
-  }) {
-    if (isMobile) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: iconColor.withValues(alpha: 0.08)),
-        ),
-        child: Row(
+/// Fiscal takings per waiter, ranked.
+class _WaiterSales extends StatelessWidget {
+  const _WaiterSales({required this.summaries});
+
+  final List<Map<String, dynamic>> summaries;
+
+  @override
+  Widget build(BuildContext context) {
+    if (summaries.isEmpty) {
+      return const PosPanel(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(10),
+            PosSectionLabel('ოფიციანტები'),
+            SizedBox(height: 10),
+            Text(
+              'დღის ფისკალური გაყიდვები ჯერ არ არის',
+              style: TextStyle(
+                color: VynicFloorTokens.text,
+                fontSize: 14.5,
+                fontWeight: FontWeight.w600,
               ),
-              child: Icon(icon, color: iconColor, size: 20),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: mutedText,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    value,
-                    style: TextStyle(
-                      color: textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
+            SizedBox(height: 4),
+            Text(
+              'ჩამონათვალი გამოჩნდება პირველი გაფორმებული შეკვეთის შემდეგ.',
+              style: TextStyle(
+                color: VynicFloorTokens.textMuted,
+                fontSize: 13,
+                height: 1.35,
               ),
             ),
           ],
@@ -228,265 +175,433 @@ class HomeXReportSection extends StatelessWidget {
       );
     }
 
-    return Container(
-      width: 200,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: iconColor.withValues(alpha: 0.08)),
-      ),
+    return PosPanel(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(icon, color: iconColor),
+          Row(
+            children: [
+              const PosSectionLabel('ოფიციანტების გაყიდვები'),
+              const Spacer(),
+              Text(
+                '${summaries.length}',
+                style: const TextStyle(
+                  color: VynicFloorTokens.textMuted,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
-          Text(
-            label,
-            style: TextStyle(
-              color: mutedText,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+          for (var i = 0; i < summaries.length; i++)
+            _WaiterRow(rank: i + 1, summary: summaries[i], divided: i > 0),
+        ],
+      ),
+    );
+  }
+}
+
+class _WaiterRow extends StatelessWidget {
+  const _WaiterRow({
+    required this.rank,
+    required this.summary,
+    required this.divided,
+  });
+
+  final int rank;
+  final Map<String, dynamic> summary;
+  final bool divided;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = (summary['total'] as num?)?.toDouble() ?? 0;
+    final orders = summary['orderCount'] ?? 0;
+
+    return Container(
+      decoration: divided
+          ? const BoxDecoration(
+              border: Border(top: BorderSide(color: VynicFloorTokens.divider)),
+            )
+          : null,
+      padding: const EdgeInsets.symmetric(vertical: 13),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 24,
+            child: Text(
+              '$rank',
+              style: const TextStyle(
+                color: VynicFloorTokens.sectionLabel,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-          const SizedBox(height: 4),
+          Expanded(
+            child: Text(
+              '${summary['username'] ?? ''}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: VynicFloorTokens.text,
+                fontSize: 14.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
           Text(
-            value,
-            style: TextStyle(
-              color: textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
+            '$orders შეკვეთა',
+            style: const TextStyle(
+              color: VynicFloorTokens.textMuted,
+              fontSize: 12.5,
+            ),
+          ),
+          const SizedBox(width: 16),
+          SizedBox(
+            width: 104,
+            child: Text(
+              '${total.toStringAsFixed(2)} ₾',
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                color: VynicFloorTokens.text,
+                fontSize: 14.5,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildActionCard({
-    required IconData icon,
-    required String title,
-    required String description,
-    required List<Widget> actions,
-    required bool isMobile,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(isMobile ? 16 : 24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: primaryColor.withValues(alpha: 0.06),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-        border: Border.all(
-          color: primaryColor.withValues(alpha: 0.05),
-          width: 1,
-        ),
-      ),
+String _clock(DateTime? value) {
+  if (value == null) return '—';
+  return '${value.hour.toString().padLeft(2, '0')}:'
+      '${value.minute.toString().padLeft(2, '0')}';
+}
+
+/// How long the table ran, from opened to paid.
+String _span(DateTime? from, DateTime? to) {
+  if (from == null || to == null) return '—';
+  final minutes = to.difference(from).inMinutes;
+  if (minutes < 0) return '—';
+  if (minutes < 60) return '$minutes წთ';
+  return '${minutes ~/ 60}:${(minutes % 60).toString().padLeft(2, '0')}';
+}
+
+/// An empty panel that says what would be here, rather than a blank box.
+class _EmptyPanel extends StatelessWidget {
+  const _EmptyPanel({required this.title, required this.message});
+
+  final String title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return PosPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          PosSectionLabel(title),
+          const SizedBox(height: 10),
+          Text(
+            message,
+            style: const TextStyle(
+              color: VynicFloorTokens.textMuted,
+              fontSize: 13,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Column caption inside a report panel.
+class _ColumnLabel extends StatelessWidget {
+  const _ColumnLabel(this.text, {this.width, this.align = TextAlign.right});
+
+  final String text;
+  final double? width;
+  final TextAlign align;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = Text(
+      text,
+      textAlign: align,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(
+        color: VynicFloorTokens.sectionLabel,
+        fontSize: 11.5,
+      ),
+    );
+    return width == null
+        ? Expanded(child: label)
+        : SizedBox(width: width, child: label);
+  }
+}
+
+/// Every table closed today: who ran it, when it opened and closed, how long
+/// it sat, how it paid and what it took.
+class _ClosedTables extends StatelessWidget {
+  const _ClosedTables({required this.rows});
+
+  final List<XReportTableRow> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    if (rows.isEmpty) {
+      return const _EmptyPanel(
+        title: 'დახურული მაგიდები',
+        message: 'დღეს ჯერ არცერთი მაგიდა არ დახურულა.',
+      );
+    }
+
+    return PosPanel(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                height: 48,
-                width: 48,
-                decoration: BoxDecoration(
-                  color: secondaryColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(16),
+              const PosSectionLabel('დახურული მაგიდები'),
+              const Spacer(),
+              Text(
+                '${rows.length}',
+                style: const TextStyle(
+                  color: VynicFloorTokens.textMuted,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
                 ),
-                child: Icon(icon, color: secondaryColor),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        color: textPrimary,
-                        fontSize: isMobile ? 16 : 20,
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Row(
+            children: [
+              _ColumnLabel('მაგიდა', align: TextAlign.left),
+              _ColumnLabel('გახსნა', width: 58),
+              _ColumnLabel('დახურვა', width: 64),
+              _ColumnLabel('ხანგრძ.', width: 62),
+              _ColumnLabel('ჯამი', width: 88),
+            ],
+          ),
+          const SizedBox(height: 6),
+          for (var i = 0; i < rows.length; i++)
+            _ClosedTableRow(row: rows[i], divided: i > 0),
+        ],
+      ),
+    );
+  }
+}
+
+class _ClosedTableRow extends StatelessWidget {
+  const _ClosedTableRow({required this.row, required this.divided});
+
+  final XReportTableRow row;
+  final bool divided;
+
+  @override
+  Widget build(BuildContext context) {
+    // A cancelled or non-fiscal closure still happened and still occupied the
+    // table, so it stays on the list — greyed, and labelled for what it is.
+    final struck = row.cancelled;
+    final valueColor = struck
+        ? VynicFloorTokens.textFaint
+        : VynicFloorTokens.text;
+
+    final meta = [
+      if (row.waiter.isNotEmpty) row.waiter,
+      '${row.itemCount} პოზიცია',
+      if (row.payment.trim().isNotEmpty) row.payment.trim(),
+      if (row.cancelled) 'გაუქმებული' else if (!row.fiscal) 'არაფისკალური',
+    ].join(' · ');
+
+    Widget cell(String text, double width) {
+      return SizedBox(
+        width: width,
+        child: Text(
+          text,
+          textAlign: TextAlign.right,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: struck
+                ? VynicFloorTokens.textFaint
+                : VynicFloorTokens.textMuted,
+            fontSize: 13,
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      decoration: divided
+          ? const BoxDecoration(
+              border: Border(top: BorderSide(color: VynicFloorTokens.divider)),
+            )
+          : null,
+      padding: const EdgeInsets.symmetric(vertical: 11),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  row.tables,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: valueColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    decoration: struck ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  meta,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: VynicFloorTokens.textFaint,
+                    fontSize: 11.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          cell(_clock(row.openedAt), 58),
+          cell(_clock(row.closedAt), 64),
+          cell(_span(row.openedAt, row.closedAt), 62),
+          SizedBox(
+            width: 88,
+            child: Text(
+              '${row.total.toStringAsFixed(2)} ₾',
+              textAlign: TextAlign.right,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: valueColor,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Everything that left the kitchen today, ranked by takings.
+class _SoldItems extends StatelessWidget {
+  const _SoldItems({required this.items});
+
+  final List<XReportSoldItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return const _EmptyPanel(
+        title: 'გაყიდული პროდუქტები',
+        message: 'დღეს ჯერ არაფერი გაყიდულა.',
+      );
+    }
+
+    final units = items.fold<int>(0, (sum, item) => sum + item.quantity);
+
+    return PosPanel(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const PosSectionLabel('გაყიდული პროდუქტები'),
+              const Spacer(),
+              Text(
+                '$units',
+                style: const TextStyle(
+                  color: VynicFloorTokens.textMuted,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Row(
+            children: [
+              _ColumnLabel('დასახელება', align: TextAlign.left),
+              _ColumnLabel('რაოდ.', width: 56),
+              _ColumnLabel('ჯამი', width: 88),
+            ],
+          ),
+          const SizedBox(height: 6),
+          for (var i = 0; i < items.length; i++)
+            Container(
+              decoration: i > 0
+                  ? const BoxDecoration(
+                      border: Border(
+                        top: BorderSide(color: VynicFloorTokens.divider),
+                      ),
+                    )
+                  : null,
+              padding: const EdgeInsets.symmetric(vertical: 11),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      items[i].name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: VynicFloorTokens.text,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 56,
+                    child: Text(
+                      '${items[i].quantity}',
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(
+                        color: VynicFloorTokens.text,
+                        fontSize: 14,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      description,
-                      style: TextStyle(
-                        color: mutedText,
-                        fontSize: isMobile ? 13 : 14,
+                  ),
+                  SizedBox(
+                    width: 88,
+                    child: Text(
+                      '${items[i].total.toStringAsFixed(2)} ₾',
+                      textAlign: TextAlign.right,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: VynicFloorTokens.textMuted,
+                        fontSize: 13.5,
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Wrap(spacing: 12, runSpacing: 12, children: actions),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWaiterSalesSection(
-    List<Map<String, dynamic>> summaries,
-    bool isMobile,
-  ) {
-    if (summaries.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(isMobile ? 16 : 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: primaryColor.withValues(alpha: 0.05)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              height: 44,
-              width: 44,
-              decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(Icons.info_outline),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'დღის ფისკალური გაყიდვები ოფიციანტებზე არ იძებნება',
-                    style: TextStyle(
-                      color: textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'ფიქსირებული გაყიდვების გარეშე ოფიციანტების ჩამონათვალი არ ჩანს.',
-                    style: TextStyle(color: mutedText, fontSize: 13),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(isMobile ? 16 : 24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: primaryColor.withValues(alpha: 0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
-        border: Border.all(color: primaryColor.withValues(alpha: 0.05)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                height: 48,
-                width: 48,
-                decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(Icons.person_search, color: primaryColor),
-              ),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'ოფიციანტების ფისკალური გაყიდვები',
-                    style: TextStyle(
-                      color: textPrimary,
-                      fontSize: isMobile ? 16 : 20,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'გაფორმებული შეკვეთების ჯამი ოფიციანტების მიხედვით.',
-                    style: TextStyle(
-                      color: mutedText,
-                      fontSize: isMobile ? 13 : 14,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          ...List.generate(summaries.length, (index) {
-            final summary = summaries[index];
-            return Column(
-              children: [
-                if (index != 0)
-                  const Divider(height: 24, color: Color(0xFFE2E8F0)),
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 28,
-                      child: Text(
-                        '${index + 1}.',
-                        style: TextStyle(
-                          color: mutedText,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        '${summary['username'] ?? ''}',
-                        style: TextStyle(
-                          color: textPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      '${summary['orderCount'] ?? 0} შეკვეთა',
-                      style: TextStyle(color: mutedText, fontSize: 13),
-                    ),
-                    const SizedBox(width: 16),
-                    Text(
-                      '₾${(summary['total'] as num?)?.toStringAsFixed(2) ?? '0.00'}',
-                      style: TextStyle(
-                        color: primaryColor,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            );
-          }),
         ],
       ),
     );

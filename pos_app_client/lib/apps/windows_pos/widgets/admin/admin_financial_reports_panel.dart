@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_form_controls.dart';
@@ -228,7 +229,7 @@ class AdminFinancialReportsPanel extends StatelessWidget {
         ),
       ),
       selected: isSelected,
-      selectedColor: const Color(0xFFCCFBF1),
+      selectedColor: AdminDesign.accentSoft,
       backgroundColor: AdminDesign.surface,
       onSelected: (_) => onMonthlyReportProfitRatioChanged(value),
     );
@@ -450,7 +451,7 @@ class AdminFinancialReportsPanel extends StatelessWidget {
             if (monthlyReportInputError != null)
               Text(
                 monthlyReportInputError!,
-                style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+                style: const TextStyle(color: AdminDesign.danger, fontSize: 13),
               )
             else if (summary != null) ...[
               const SizedBox(height: 10),
@@ -505,15 +506,15 @@ class AdminFinancialReportsPanel extends StatelessWidget {
                     : 'წმინდა ზარალი',
                 value: currencyFormatter.format(summary.netProfit),
                 valueColor: summary.netProfit >= 0
-                    ? const Color(0xFF22C55E)
-                    : const Color(0xFFEF4444),
+                    ? AdminTones.successText
+                    : AdminDesign.danger,
               ),
               _buildMonthlySummaryRow(
                 label: 'მოგების მარჟა',
                 value: '${summary.profitMarginPercent.toStringAsFixed(1)}%',
                 valueColor: summary.profitMarginPercent >= 0
-                    ? const Color(0xFF22C55E)
-                    : const Color(0xFFEF4444),
+                    ? AdminTones.successText
+                    : AdminDesign.danger,
               ),
             ],
             const SizedBox(height: 16),

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation_context.dart';
 import 'package:vynic/core/services/printing/printer_service.dart';
@@ -58,10 +59,10 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
   }
 
   Widget _buildSupervisorReservationsNotice() {
-    const noticeBorder = Color(0xFFFCD34D);
-    const noticeBg = Color(0xFFFFFBEB);
-    const noticeTitle = Color(0xFF92400E);
-    const noticeBody = Color(0xFFB45309);
+    const noticeBorder = AdminTones.warningBorder;
+    const noticeBg = AdminTones.warningFill;
+    const noticeTitle = AdminTones.warningText;
+    const noticeBody = AdminTones.warningText;
 
     return Container(
       width: double.infinity,
@@ -343,25 +344,25 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
         label: 'მომავალი ჯავშნები',
         value: upcoming,
         icon: Icons.calendar_month_outlined,
-        color: const Color(0xFF0F9D58),
+        color: AdminTones.successText,
       ),
       _ReservationKpiData(
         label: 'დადასტურებული',
         value: confirmed,
         icon: Icons.check_circle_outline,
-        color: const Color(0xFF0369A1),
+        color: AdminTones.infoText,
       ),
       _ReservationKpiData(
         label: 'დღეს',
         value: today,
         icon: Icons.schedule_outlined,
-        color: const Color(0xFFEA580C),
+        color: AdminTones.warningText,
       ),
       _ReservationKpiData(
         label: 'გაუქმებული',
         value: cancelled,
         icon: Icons.event_busy_outlined,
-        color: const Color(0xFF7C3AED),
+        color: AdminDesign.accentDark,
       ),
     ];
     return LayoutBuilder(
@@ -649,8 +650,8 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
   }) {
     final cancelled = _isCancelled(reservation);
     final statusColor = cancelled
-        ? const Color(0xFFB91C1C)
-        : const Color(0xFF047857);
+        ? AdminDesign.danger
+        : AdminTones.successText;
     final statusLabel = cancelled ? 'გაუქმებული' : 'დადასტურებული';
     final tables = ReservationTableAvailability.tableNumbersLabel(reservation);
     final dateLabel = DatabaseService.getGeorgianFormattedDate(
@@ -941,14 +942,14 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
                 icon: Icons.people_outline,
                 label: 'სტუმრები',
                 value: '$todayGuests',
-                color: const Color(0xFF0F9D58),
+                color: AdminTones.successText,
               ),
               const SizedBox(height: 10),
               _buildLoadRow(
                 icon: Icons.table_restaurant_outlined,
                 label: 'დაკავებული მაგიდები',
                 value: '$todayTables',
-                color: const Color(0xFFEA580C),
+                color: AdminTones.warningText,
               ),
             ],
           ),
@@ -959,7 +960,7 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
 
   Widget _buildTimelineRow(Reservation reservation) {
     final cancelled = _isCancelled(reservation);
-    final color = cancelled ? const Color(0xFFB91C1C) : const Color(0xFF047857);
+    final color = cancelled ? AdminDesign.danger : AdminTones.successText;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
       decoration: const BoxDecoration(
@@ -1060,13 +1061,6 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: AdminDesign.border)),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 14,
-            offset: Offset(0, -4),
-          ),
-        ],
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {

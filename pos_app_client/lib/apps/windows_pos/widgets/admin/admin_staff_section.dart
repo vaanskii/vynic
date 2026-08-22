@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
 import 'package:vynic/core/widgets/pin_button.dart';
 import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/models/user.dart';
@@ -205,10 +206,10 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
   }
 
   Widget _buildSupervisorAccessNotice(bool isMobile) {
-    const noticeBorder = Color(0xFFFCD34D);
-    const noticeBg = Color(0xFFFFFBEB);
-    const noticeTitle = Color(0xFF92400E);
-    const noticeBody = Color(0xFFB45309);
+    const noticeBorder = AdminTones.warningBorder;
+    const noticeBg = AdminTones.warningFill;
+    const noticeTitle = AdminTones.warningText;
+    const noticeBody = AdminTones.warningText;
 
     return Container(
       width: double.infinity,
@@ -317,7 +318,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
             _KpiChip(
               label: 'ყველა ოფიციანტი',
               value: waiters,
-              color: const Color(0xFF0F9D58),
+              color: AdminTones.successText,
               icon: Icons.groups_2_outlined,
             ),
           ]
@@ -325,25 +326,25 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
             _KpiChip(
               label: 'სულ თანამშრომლები',
               value: total,
-              color: const Color(0xFF0F9D58),
+              color: AdminTones.successText,
               icon: Icons.groups_2_outlined,
             ),
             _KpiChip(
               label: 'მენეჯერი',
               value: managers,
-              color: const Color(0xFF0F766E),
+              color: AdminDesign.accentDark,
               icon: Icons.admin_panel_settings_outlined,
             ),
             _KpiChip(
               label: 'სუპერვაიზერი',
               value: supervisors,
-              color: const Color(0xFF7C3AED),
+              color: AdminDesign.accentDark,
               icon: Icons.supervisor_account_outlined,
             ),
             _KpiChip(
               label: 'ოფიციანტი',
               value: waiters,
-              color: const Color(0xFFEA580C),
+              color: AdminTones.warningText,
               icon: Icons.room_service_outlined,
             ),
           ];
@@ -402,18 +403,21 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
                       size: 21,
                     ),
                     SizedBox(width: 9),
-                    Text(
-                      'თანამშრომლების სია',
-                      style: TextStyle(
-                        color: _staffText,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
+                    Flexible(
+                      child: Text(
+                        'თანამშრომლების სია',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: _staffText,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ],
                 );
                 final searchField = SizedBox(
-                  width: compact ? null : 270,
                   height: 42,
                   child: PosOnScreenTextField(
                     controller: _searchController,
@@ -451,7 +455,20 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
                 final controls = Row(
                   mainAxisSize: compact ? MainAxisSize.max : MainAxisSize.min,
                   children: [
-                    if (compact) Expanded(child: searchField) else searchField,
+                    // 270 is the field's preferred width, not a floor. It used
+                    // to be a hard SizedBox, so once the title and the filter
+                    // button had taken their share there was nothing left to
+                    // give and the row overflowed instead of the field
+                    // shrinking.
+                    if (compact)
+                      Expanded(child: searchField)
+                    else
+                      Flexible(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 270),
+                          child: searchField,
+                        ),
+                      ),
                     if (!_waitersOnlyAdmin) ...[
                       const SizedBox(width: 8),
                       _buildFilterMenu(iconOnly: compact),
@@ -467,7 +484,8 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
                 }
                 return Row(
                   children: [
-                    title,
+                    Flexible(child: title),
+                    const SizedBox(width: 12),
                     const Spacer(),
                     Flexible(child: controls),
                   ],
@@ -630,7 +648,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
                 title: 'მენეჯერი',
                 description:
                     'სრული ადმინისტრაციული წვდომა, პერსონალი და ანგარიშები.',
-                color: const Color(0xFF0F766E),
+                color: AdminDesign.accentDark,
               ),
               const SizedBox(height: 9),
               _RoleAccessTile(
@@ -638,7 +656,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
                 title: 'სუპერვაიზერი',
                 description:
                     'ოპერაციული მართვა და ოფიციანტების შეზღუდული კონტროლი.',
-                color: const Color(0xFF7C3AED),
+                color: AdminDesign.accentDark,
               ),
               const SizedBox(height: 9),
               _RoleAccessTile(
@@ -646,7 +664,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
                 title: 'ოფიციანტი',
                 description:
                     'შეკვეთები, მაგიდები და რეზერვაციის სამზარეულოს ჩეკი.',
-                color: const Color(0xFFEA580C),
+                color: AdminTones.warningText,
               ),
             ],
           ),
@@ -681,13 +699,6 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: _staffBorder)),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 14,
-            offset: Offset(0, -4),
-          ),
-        ],
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -820,7 +831,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: AdminDesign.danger),
             child: const Text('წაშლა'),
           ),
         ],
@@ -1288,13 +1299,6 @@ class _KpiChip extends StatelessWidget {
         color: _staffCard,
         borderRadius: BorderRadius.circular(AdminDesign.radius),
         border: Border.all(color: _staffBorder),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
       ),
       child: Row(
         children: [
@@ -1617,7 +1621,7 @@ class _StaffUserTile extends StatelessWidget {
     final accent = isManager
         ? _staffAccent
         : isSupervisor
-        ? const Color(0xFF7C3AED)
+        ? AdminDesign.accentDark
         : _staffPrimary;
     final allUsers = DatabaseService.getAllUsers();
     final canDelete =
@@ -2024,7 +2028,7 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
               ),
               if (_errorMessage.isNotEmpty) ...[
                 const SizedBox(height: 8),
-                Text(_errorMessage, style: const TextStyle(color: Colors.red)),
+                Text(_errorMessage, style: const TextStyle(color: AdminDesign.danger)),
               ],
               const SizedBox(height: 16),
               _PinPad(

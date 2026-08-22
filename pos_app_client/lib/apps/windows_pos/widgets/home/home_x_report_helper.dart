@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:vynic/apps/windows_pos/widgets/floor_plan/floor_plan_names.dart';
+import 'package:vynic/core/models/table_layout.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/core/utils/payment_utils.dart';
@@ -51,6 +53,147 @@ class HomeXReportHelper {
           );
 
     return results;
+  }
+
+  /// One closed table on the X report: what was sold on it, and when it was
+  /// open.
+  ///
+  /// Everything here comes off the sale record the closure already writes —
+  /// no new persisted fields. `createdAt` is when the table was opened and
+  /// `closedAt` is when it was paid, so the report can state how long each
+  /// table ran rather than only what it took.
+  static List<XReportTableRow> buildClosedTables(
+    List<Map<String, dynamic>> sales, {
+    RestaurantTableLayout? layout,
+  }) {
+    final resolved = layout ?? DatabaseService.getRestaurantTableLayout();
+    final rows = <XReportTableRow>[];
+
+    for (final sale in sales) {
+      final floor = (sale['floor'] as String?) ?? '';
+      final numbers = _stringList(sale['tableNumbers']);
+      final openedAt = _dateTime(sale['createdAt']);
+      final closedAt = _dateTime(sale['closedAt']);
+
+      var itemCount = 0;
+      for (final item in _mapList(sale['items'])) {
+        itemCount += _int(item['quantity']);
+      }
+
+      rows.add((
+        orderId: sale['orderId'] as int?,
+        // The table's own name, so the report agrees with the floor plan the
+        // waiter was looking at rather than showing a bare number.
+        tables: numbers.isEmpty
+            ? 'გატანა'
+            : numbers
+                  .map(
+                    (number) => floorPlanTableNameOrNumber(
+                      resolved,
+                      floor: floor,
+                      tableNumber: number,
+                    ),
+                  )
+                  .join(' + '),
+        waiter: ((sale['createdBy'] as String?) ?? '').trim(),
+        openedAt: openedAt,
+        closedAt: closedAt,
+        itemCount: itemCount,
+        total: _extractSaleTotal(sale),
+        payment: PaymentUtils.formatPaymentDisplay(sale),
+        cancelled: (sale['isCancelled'] ?? false) == true,
+        fiscal: (sale['isFiscal'] ?? true) == true,
+      ));
+    }
+
+    // Most recently closed first — the tail of the day is what anyone
+    // checking a running X report actually wants to see.
+    rows.sort((a, b) {
+      final aClosed = a.closedAt;
+      final bClosed = b.closedAt;
+      if (aClosed == null && bClosed == null) return 0;
+      if (aClosed == null) return 1;
+      if (bClosed == null) return -1;
+      return bClosed.compareTo(aClosed);
+    });
+    return rows;
+  }
+
+  /// Everything sold today, rolled up by dish and ranked by takings.
+  ///
+  /// Cancelled sales are left out: they were reversed, so counting their
+  /// dishes would overstate what actually left the kitchen.
+  static List<XReportSoldItem> buildSoldItems(
+    List<Map<String, dynamic>> sales,
+  ) {
+    final byName = <String, ({int quantity, double total})>{};
+
+    for (final sale in sales) {
+      if ((sale['isCancelled'] ?? false) == true) {
+        continue;
+      }
+      for (final item in _mapList(sale['items'])) {
+        final name = (item['itemName'] as String?)?.trim() ?? '';
+        if (name.isEmpty) continue;
+        final quantity = _int(item['quantity']);
+        final total = _double(item['total']);
+        final existing = byName[name];
+        byName[name] = existing == null
+            ? (quantity: quantity, total: total)
+            : (
+                quantity: existing.quantity + quantity,
+                total: existing.total + total,
+              );
+      }
+    }
+
+    final rows =
+        [
+          for (final entry in byName.entries)
+            (
+              name: entry.key,
+              quantity: entry.value.quantity,
+              total: entry.value.total,
+            ),
+        ]..sort((a, b) {
+          final byTotal = b.total.compareTo(a.total);
+          return byTotal != 0 ? byTotal : b.quantity.compareTo(a.quantity);
+        });
+    return rows;
+  }
+
+  static List<String> _stringList(Object? value) {
+    if (value is! List) return const [];
+    return [
+      for (final entry in value)
+        if (entry != null) entry.toString(),
+    ];
+  }
+
+  static List<Map<String, dynamic>> _mapList(Object? value) {
+    if (value is! List) return const [];
+    return [
+      for (final entry in value)
+        if (entry is Map)
+          entry.map((key, value) => MapEntry(key.toString(), value)),
+    ];
+  }
+
+  static DateTime? _dateTime(Object? value) {
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
+    return null;
+  }
+
+  static int _int(Object? value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  static double _double(Object? value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? 0;
   }
 
   static Future<void> printReport(BuildContext context) async {
@@ -236,6 +379,23 @@ class HomeXReportHelper {
     return 0.0;
   }
 }
+
+/// One closed table on the X report.
+typedef XReportTableRow = ({
+  int? orderId,
+  String tables,
+  String waiter,
+  DateTime? openedAt,
+  DateTime? closedAt,
+  int itemCount,
+  double total,
+  String payment,
+  bool cancelled,
+  bool fiscal,
+});
+
+/// One dish, rolled up across every sale of the day.
+typedef XReportSoldItem = ({String name, int quantity, double total});
 
 class _WaiterSalesAccumulator {
   double total = 0;

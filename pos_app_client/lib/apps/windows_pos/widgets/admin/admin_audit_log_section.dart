@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/services/database_service.dart';
@@ -178,7 +179,7 @@ class AdminAuditLogSection extends StatelessWidget {
           child: Align(
             alignment: Alignment.topLeft,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+              padding: const EdgeInsets.fromLTRB(22, 18, 22, 20),
               child: SizedBox(
                 width: double.infinity,
                 child: Column(
@@ -365,7 +366,7 @@ class AdminAuditLogSection extends StatelessWidget {
                           child: _buildStatTile(
                             'აქტიური',
                             monthOpenCount,
-                            const Color(0xFFF59E0B),
+                            AdminTones.warningText,
                           ),
                         ),
                         SizedBox(
@@ -375,7 +376,7 @@ class AdminAuditLogSection extends StatelessWidget {
                           child: _buildStatTile(
                             'დახურული',
                             monthClosedCount,
-                            const Color(0xFF10B981),
+                            AdminTones.successText,
                           ),
                         ),
                         SizedBox(
@@ -385,7 +386,7 @@ class AdminAuditLogSection extends StatelessWidget {
                           child: _buildStatTile(
                             'გაუქმებული',
                             monthCancelledCount,
-                            const Color(0xFFEF4444),
+                            AdminDesign.danger,
                           ),
                         ),
                         SizedBox(
@@ -404,7 +405,7 @@ class AdminAuditLogSection extends StatelessWidget {
                             child: _buildStatTile(
                               'დღევანდელი',
                               todayReports.length,
-                              const Color(0xFF7C3AED),
+                              AdminDesign.accentDark,
                             ),
                           ),
                       ],
@@ -497,17 +498,17 @@ class AdminAuditLogSection extends StatelessWidget {
                                     _miniBadge(
                                       'A',
                                       dayOpenCount,
-                                      const Color(0xFFF59E0B),
+                                      AdminTones.warningText,
                                     ),
                                     _miniBadge(
                                       'D',
                                       dayClosedCount,
-                                      const Color(0xFF10B981),
+                                      AdminTones.successText,
                                     ),
                                     _miniBadge(
                                       'G',
                                       dayCancelledCount,
-                                      const Color(0xFFEF4444),
+                                      AdminDesign.danger,
                                     ),
                                   ],
                                 ),
@@ -678,7 +679,7 @@ class AdminAuditLogSection extends StatelessWidget {
                 icon: const Icon(Icons.fact_check_outlined, size: 16),
                 label: const Text('დეტალურად ნახვა'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFBFDBFE),
+                  backgroundColor: AdminTones.infoBorder,
                   foregroundColor: _text,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -970,11 +971,11 @@ class AdminAuditLogSection extends StatelessWidget {
   Color _auditStatusColor(AuditReportStatus status) {
     switch (status) {
       case AuditReportStatus.open:
-        return const Color(0xFFF59E0B);
+        return AdminTones.warningText;
       case AuditReportStatus.closed:
-        return const Color(0xFF10B981);
+        return AdminTones.successText;
       case AuditReportStatus.cancelled:
-        return const Color(0xFFEF4444);
+        return AdminDesign.danger;
     }
   }
 
@@ -996,15 +997,15 @@ class AdminAuditLogSection extends StatelessWidget {
   Color _auditEventColor(AuditEventType type) {
     switch (type) {
       case AuditEventType.addItem:
-        return const Color(0xFF16A34A);
+        return AdminTones.successText;
       case AuditEventType.reduceQty:
-        return const Color(0xFFD97706);
+        return AdminTones.warningText;
       case AuditEventType.deleteItem:
-        return const Color(0xFFDC2626);
+        return AdminDesign.danger;
       case AuditEventType.cancelTable:
-        return const Color(0xFFB91C1C);
+        return AdminDesign.danger;
       case AuditEventType.custom:
-        return const Color(0xFF475569);
+        return AdminDesign.muted;
     }
   }
 

@@ -56,9 +56,10 @@ void main() {
       }
     });
 
-    test('close-table receipts are unaffected either way', () {
+    test('the customer switch never reaches the closing check', () {
       // Dine-in close, take-away close, split tender and admin reprint #7a all
-      // resolve to close_table and have never printed the row.
+      // resolve to close_table. They are a different document with their own
+      // switch, so „ჩეკზე ასახვა" must not move them.
       for (final show in [true, false]) {
         for (final include in [true, false]) {
           expect(
@@ -72,6 +73,58 @@ void main() {
           );
         }
       }
+    });
+
+    test('the closing check has its own switch, defaulting to hidden', () {
+      // Unchanged behaviour when the new setting is left alone: the closing
+      // check does not print the row, because its total already includes the
+      // fee.
+      expect(
+        EscposReceiptRenderer.shouldShowServiceFeeLine(
+          isCloseTableReceipt: true,
+          includeServiceFee: true,
+          showServiceFeeLine: true,
+        ),
+        isFalse,
+      );
+
+      // Turned on, it prints — independently of the customer-receipt switch.
+      for (final customerSwitch in [true, false]) {
+        expect(
+          EscposReceiptRenderer.shouldShowServiceFeeLine(
+            isCloseTableReceipt: true,
+            includeServiceFee: true,
+            showServiceFeeLine: customerSwitch,
+            showCloseReceiptServiceFeeLine: true,
+          ),
+          isTrue,
+          reason: 'customer switch = $customerSwitch must not matter',
+        );
+      }
+    });
+
+    test('no fee charged still means no row on the closing check', () {
+      expect(
+        EscposReceiptRenderer.shouldShowServiceFeeLine(
+          isCloseTableReceipt: true,
+          includeServiceFee: false,
+          showServiceFeeLine: true,
+          showCloseReceiptServiceFeeLine: true,
+        ),
+        isFalse,
+      );
+    });
+
+    test('the closing switch never reaches the customer receipt', () {
+      expect(
+        EscposReceiptRenderer.shouldShowServiceFeeLine(
+          isCloseTableReceipt: false,
+          includeServiceFee: true,
+          showServiceFeeLine: false,
+          showCloseReceiptServiceFeeLine: true,
+        ),
+        isFalse,
+      );
     });
   });
 
@@ -216,6 +269,45 @@ void main() {
       );
     });
 
+    test('the closing check prints the row once its switch is on', () async {
+      final off = await EscposReceiptRenderer.generatePngBytes(
+        items: const ['1x Item - 100.00'],
+        total: 110.0,
+        subtotal: 100.0,
+        serviceFee: 10.0,
+        includeServiceFee: true,
+        orderNumber: '1',
+        tableNumber: 'Table 1',
+        language: 'en',
+        receiptType: 'close_table',
+        showServiceFeeLine: true,
+        loadReceiptLogoImage: noLogo,
+        getReceiptLogoContentRect: noLogoRect,
+      );
+      final on = await EscposReceiptRenderer.generatePngBytes(
+        items: const ['1x Item - 100.00'],
+        total: 110.0,
+        subtotal: 100.0,
+        serviceFee: 10.0,
+        includeServiceFee: true,
+        orderNumber: '1',
+        tableNumber: 'Table 1',
+        language: 'en',
+        receiptType: 'close_table',
+        showServiceFeeLine: true,
+        showCloseReceiptServiceFeeLine: true,
+        loadReceiptLogoImage: noLogo,
+        getReceiptLogoContentRect: noLogoRect,
+      );
+      expect(off, isNotNull);
+      expect(on, isNotNull);
+      expect(
+        on,
+        isNot(equals(off)),
+        reason: 'the row should appear only when the closing switch is on',
+      );
+    });
+
     test('menu_count receipt honours the setting', () async {
       final shown = await render(
         receiptType: 'menu_count',
@@ -253,6 +345,24 @@ void main() {
     tearDownAll(() async {
       await Hive.close();
       tempDir.deleteSync(recursive: true);
+    });
+
+    test('the closing switch defaults to hidden and round-trips', () async {
+      // Existing terminals must not suddenly start printing the row on their
+      // closing checks.
+      expect(
+        settingsBox.containsKey('closeReceiptShowServiceFeeLine'),
+        isFalse,
+      );
+      expect(SettingsRepository.isCloseReceiptServiceFeeLineVisible(), isFalse);
+
+      await SettingsRepository.setCloseReceiptServiceFeeLineVisible(true);
+      expect(SettingsRepository.isCloseReceiptServiceFeeLineVisible(), isTrue);
+
+      // And it is a genuinely separate key from the customer-receipt one.
+      expect(SettingsRepository.isReceiptServiceFeeLineVisible(), isTrue);
+      await SettingsRepository.setReceiptServiceFeeLineVisible(false);
+      expect(SettingsRepository.isCloseReceiptServiceFeeLineVisible(), isTrue);
     });
 
     test('defaults to visible for existing installs (key absent)', () {

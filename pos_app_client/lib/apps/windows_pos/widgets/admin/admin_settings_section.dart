@@ -1,6 +1,8 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:flutter/foundation.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_form_controls.dart';
 
@@ -14,6 +16,7 @@ typedef AsyncVoidCallback = Future<void> Function();
 class AdminSettingsSection extends StatelessWidget {
   const AdminSettingsSection({
     super.key,
+    required this.dataBackup,
     required this.formatDateTimeDisplay,
     required this.formatRelativeTime,
     required this.serviceFeeController,
@@ -25,6 +28,8 @@ class AdminSettingsSection extends StatelessWidget {
     required this.onServiceFeeEnabledByDefaultChanged,
     required this.receiptServiceFeeLineVisible,
     required this.onReceiptServiceFeeLineVisibleChanged,
+    required this.closeReceiptServiceFeeLineVisible,
+    required this.onCloseReceiptServiceFeeLineVisibleChanged,
     required this.serviceFeePercentDisplay,
     required this.isSavingServiceFee,
     required this.defaultLanguageSetting,
@@ -41,6 +46,12 @@ class AdminSettingsSection extends StatelessWidget {
     required this.onSaveTableOwnershipSettings,
     required this.onSaveLocalizationSettings,
   });
+
+  /// Backup and restore. Small enough that it does not warrant a destination
+  /// of its own — it sits at the foot of Settings, where the rest of the
+  /// terminal's housekeeping lives.
+  final Widget dataBackup;
+
   final String Function(DateTime) formatDateTimeDisplay;
   final String Function(DateTime) formatRelativeTime;
 
@@ -54,6 +65,11 @@ class AdminSettingsSection extends StatelessWidget {
   final ValueChanged<bool> onServiceFeeEnabledByDefaultChanged;
   final bool receiptServiceFeeLineVisible;
   final ValueChanged<bool> onReceiptServiceFeeLineVisibleChanged;
+
+  /// The closing (fiscal) check is a separate document from the customer
+  /// receipt, so it carries its own switch.
+  final bool closeReceiptServiceFeeLineVisible;
+  final ValueChanged<bool> onCloseReceiptServiceFeeLineVisibleChanged;
   final String serviceFeePercentDisplay;
   final bool isSavingServiceFee;
   final String defaultLanguageSetting;
@@ -70,13 +86,13 @@ class AdminSettingsSection extends StatelessWidget {
   final AsyncVoidCallback onSaveCancellationPassword;
   final AsyncVoidCallback onSaveTableOwnershipSettings;
   final AsyncVoidCallback onSaveLocalizationSettings;
-  static const Color _accent = Color(0xFF14B8A6);
-  static const Color _accentDark = Color(0xFF0F766E);
-  static const Color _panelSoft = Color(0xFFF9FAFB);
+  static const Color _accent = AdminDesign.accentDark;
+  static const Color _accentDark = AdminDesign.accentDark;
+  static const Color _panelSoft = AdminDesign.panelSoft;
   static const Color _cardColor = Colors.white;
-  static const Color _borderColor = Color(0xFFE5E7EB);
-  static const Color _textPrimary = Color(0xFF111827);
-  static const Color _textMuted = Color(0xFF6B7280);
+  static const Color _borderColor = AdminDesign.border;
+  static const Color _textPrimary = AdminDesign.text;
+  static const Color _textMuted = AdminDesign.muted;
 
   bool get isMobile => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
@@ -85,13 +101,6 @@ class AdminSettingsSection extends StatelessWidget {
       color: _cardColor,
       borderRadius: BorderRadius.circular(8),
       border: Border.all(color: _borderColor),
-      boxShadow: const [
-        BoxShadow(
-          color: Color(0x0F000000),
-          blurRadius: 18,
-          offset: Offset(0, 8),
-        ),
-      ],
     );
   }
 
@@ -103,13 +112,13 @@ class AdminSettingsSection extends StatelessWidget {
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
-                isMobile ? 16 : 28,
-                isMobile ? 16 : 20,
-                isMobile ? 16 : 28,
+                isMobile ? 16 : 22,
+                isMobile ? 16 : 18,
+                isMobile ? 16 : 22,
                 18,
               ),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1100),
+                constraints: const BoxConstraints(maxWidth: adminSectionMaxWidth),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -152,6 +161,15 @@ class AdminSettingsSection extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     _buildLocalizationCard(),
+                    const SizedBox(height: 18),
+                    _buildSettingsHeader(
+                      icon: Icons.backup_outlined,
+                      title: 'სარეზერვო ასლი',
+                      subtitle:
+                          'შექმენით ბაზის სრული ასლი ან აღადგინეთ ფაილიდან.',
+                    ),
+                    const SizedBox(height: 12),
+                    dataBackup,
                   ],
                 ),
               ),
@@ -204,8 +222,8 @@ class AdminSettingsSection extends StatelessWidget {
             icon: Icons.keyboard_alt_outlined,
             label: 'POS კლავიატურა',
             color: _accentDark,
-            background: const Color(0xFFECFDF5),
-            border: const Color(0xFFA7F3D0),
+            background: AdminTones.successFill,
+            border: AdminTones.successBorder,
           ),
         ],
       ),
@@ -414,13 +432,6 @@ class AdminSettingsSection extends StatelessWidget {
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: _borderColor)),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 20,
-            offset: Offset(0, -8),
-          ),
-        ],
       ),
       child: SafeArea(
         top: false,
@@ -549,6 +560,42 @@ class AdminSettingsSection extends StatelessWidget {
               'მხოლოდ ჩეკის ვიზუალი იცვლება — ჯამური თანხა და ანგარიშები უცვლელია.',
               style: TextStyle(color: _textMuted, fontSize: 12),
             ),
+            const SizedBox(height: 20),
+            const Divider(height: 1, color: _borderColor),
+            const SizedBox(height: 20),
+            const Text(
+              'დახურვის ჩეკზე ასახვა',
+              style: TextStyle(
+                color: _textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Switch(
+                  value: closeReceiptServiceFeeLineVisible,
+                  activeThumbColor: _accentDark,
+                  onChanged: onCloseReceiptServiceFeeLineVisibleChanged,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    closeReceiptServiceFeeLineVisible
+                        ? 'მაგიდის დახურვის ჩეკზე საკომისიო ცალკე ხაზად იბეჭდება.'
+                        : 'მაგიდის დახურვის ჩეკზე საკომისიოს ცალკე ხაზი არ იბეჭდება.',
+                    style: const TextStyle(color: _textMuted, fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'ეს ეხება მხოლოდ იმ ჩეკს, რომელიც მაგიდის დახურვისას იბეჭდება '
+              '(ნაღდი, ბარათი ან გაყოფილი გადახდა). ჯამური თანხა უცვლელია.',
+              style: TextStyle(color: _textMuted, fontSize: 12),
+            ),
             const SizedBox(height: 24),
             AdminActionRow(
               children: [
@@ -581,8 +628,8 @@ class AdminSettingsSection extends StatelessWidget {
         ? 'გაუქმების პაროლი აქტიურია.'
         : 'გაუქმების პაროლი ჯერ არ არის დაყენებული.';
     final statusColor = isCancellationPasswordSet
-        ? const Color(0xFF16A34A)
-        : const Color(0xFFEA580C);
+        ? AdminTones.successText
+        : AdminTones.warningText;
 
     return Card(
       color: _cardColor,
@@ -728,8 +775,8 @@ class AdminSettingsSection extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: restrictTableCloseToOwner
-                        ? const Color(0xFFDCFCE7)
-                        : const Color(0xFFE2E8F0),
+                        ? AdminTones.successFill
+                        : AdminDesign.border,
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(

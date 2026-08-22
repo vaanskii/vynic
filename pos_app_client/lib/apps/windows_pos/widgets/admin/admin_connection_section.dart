@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:vynic/apps/windows_pos/widgets/admin/admin_data_backup_panel.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:vynic/core/services/sync/api_config.dart';
 import 'package:vynic/core/services/pos/app_mode.dart';
@@ -9,24 +10,7 @@ import 'package:vynic/core/services/sync/manager_sync_service.dart';
 import 'package:vynic/core/services/sync/pos_callback_config.dart';
 
 class AdminConnectionSection extends StatefulWidget {
-  const AdminConnectionSection({
-    super.key,
-    required this.lastBackupPath,
-    required this.lastRestorePath,
-    required this.isCreatingBackup,
-    required this.isRestoringBackup,
-    required this.onCreateBackupFile,
-    required this.onRestoreBackupFromFile,
-  });
-
-  /// Backup state and actions, owned by `AdminScreen`. Passed through to
-  /// [AdminDataBackupPanel] unchanged — this section only hosts the panel.
-  final String? lastBackupPath;
-  final String? lastRestorePath;
-  final bool isCreatingBackup;
-  final bool isRestoringBackup;
-  final AsyncVoidCallback onCreateBackupFile;
-  final AsyncVoidCallback onRestoreBackupFromFile;
+  const AdminConnectionSection({super.key});
 
   @override
   State<AdminConnectionSection> createState() => _AdminConnectionSectionState();
@@ -57,9 +41,9 @@ class _AdminConnectionSectionState extends State<AdminConnectionSection> {
   Widget build(BuildContext context) {
     return SizedBox.expand(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(28, 20, 28, 18),
+        padding: const EdgeInsets.fromLTRB(22, 18, 22, 18),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1080),
+          constraints: const BoxConstraints(maxWidth: adminSectionMaxWidth),
           child: AnimatedBuilder(
             animation: Listenable.merge([
               ConnectionStatusService.backendState,
@@ -109,15 +93,6 @@ class _AdminConnectionSectionState extends State<AdminConnectionSection> {
                   ),
                   const SizedBox(height: 14),
                   _buildPrintHostPanel(),
-                  const SizedBox(height: 14),
-                  AdminDataBackupPanel(
-                    lastBackupPath: widget.lastBackupPath,
-                    lastRestorePath: widget.lastRestorePath,
-                    isCreatingBackup: widget.isCreatingBackup,
-                    isRestoringBackup: widget.isRestoringBackup,
-                    onCreateBackupFile: widget.onCreateBackupFile,
-                    onRestoreBackupFromFile: widget.onRestoreBackupFromFile,
-                  ),
                 ],
               );
             },
@@ -530,21 +505,21 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = switch (state) {
       BackendConnectionState.connected => AdminDesign.accentDark,
-      BackendConnectionState.syncing => const Color(0xFF2563EB),
+      BackendConnectionState.syncing => AdminTones.infoText,
       BackendConnectionState.offline => AdminDesign.danger,
       BackendConnectionState.idle => AdminDesign.warning,
     };
     final background = switch (state) {
-      BackendConnectionState.connected => const Color(0xFFECFDF5),
-      BackendConnectionState.syncing => const Color(0xFFEFF6FF),
-      BackendConnectionState.offline => const Color(0xFFFEF2F2),
-      BackendConnectionState.idle => const Color(0xFFFFFBEB),
+      BackendConnectionState.connected => AdminTones.successFill,
+      BackendConnectionState.syncing => AdminTones.infoFill,
+      BackendConnectionState.offline => VynicFloorTokens.dangerFill,
+      BackendConnectionState.idle => AdminTones.warningFill,
     };
     final border = switch (state) {
-      BackendConnectionState.connected => const Color(0xFFA7F3D0),
-      BackendConnectionState.syncing => const Color(0xFFBFDBFE),
-      BackendConnectionState.offline => const Color(0xFFFECACA),
-      BackendConnectionState.idle => const Color(0xFFFDE68A),
+      BackendConnectionState.connected => AdminTones.successBorder,
+      BackendConnectionState.syncing => AdminTones.infoBorder,
+      BackendConnectionState.offline => VynicFloorTokens.dangerBorder,
+      BackendConnectionState.idle => AdminTones.warningBorder,
     };
     final label = switch (state) {
       BackendConnectionState.connected => 'Connected',

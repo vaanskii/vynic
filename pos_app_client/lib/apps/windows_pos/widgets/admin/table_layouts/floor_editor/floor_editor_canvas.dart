@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:flutter/services.dart';
 
 import 'package:vynic/core/ui/vynic_colors.dart';
@@ -245,7 +246,7 @@ class _FloorEditorCanvasState extends State<FloorEditorCanvas> {
           listenable: Listenable.merge([_controller, _viewport]),
           builder: (context, _) {
             return ColoredBox(
-              color: VynicColors.background,
+              color: AdminDesign.surface,
               child: MouseRegion(
                 cursor: _cursor,
                 child: Listener(
@@ -293,9 +294,9 @@ class FloorEditorZoomControls extends StatelessWidget {
       builder: (context, _) {
         return Container(
           decoration: BoxDecoration(
-            color: VynicColors.card,
+            color: AdminDesign.panel,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: VynicColors.border),
+            border: Border.all(color: AdminDesign.border),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x14000000),
@@ -323,7 +324,7 @@ class FloorEditorZoomControls extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: VynicColors.textMuted,
+                    color: AdminDesign.muted,
                   ),
                 ),
               ),
@@ -336,7 +337,7 @@ class FloorEditorZoomControls extends StatelessWidget {
               Container(
                 width: 1,
                 height: 18,
-                color: VynicColors.border,
+                color: AdminDesign.border,
                 margin: const EdgeInsets.symmetric(horizontal: 3),
               ),
               _ZoomButton(
@@ -372,7 +373,7 @@ class _ZoomButton extends StatelessWidget {
         onTap: onPressed,
         child: Padding(
           padding: const EdgeInsets.all(6),
-          child: Icon(icon, size: 17, color: VynicColors.textPrimary),
+          child: Icon(icon, size: 17, color: AdminDesign.text),
         ),
       ),
     );
@@ -407,9 +408,9 @@ class FloorEditorStatusStrip extends StatelessWidget {
 
         return Container(
           decoration: BoxDecoration(
-            color: VynicColors.card,
+            color: AdminDesign.panel,
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: VynicColors.border),
+            border: Border.all(color: AdminDesign.border),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           child: Row(
@@ -421,8 +422,8 @@ class FloorEditorStatusStrip extends StatelessWidget {
                     : Icons.info_outline,
                 size: 14,
                 color: pending != null
-                    ? VynicColors.accent
-                    : VynicColors.textMuted,
+                    ? AdminDesign.accentDark
+                    : AdminDesign.muted,
               ),
               const SizedBox(width: 7),
               Text(
@@ -431,8 +432,8 @@ class FloorEditorStatusStrip extends StatelessWidget {
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: pending != null
-                      ? VynicColors.accent
-                      : VynicColors.textMuted,
+                      ? AdminDesign.accentDark
+                      : AdminDesign.muted,
                 ),
               ),
             ],

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:flutter/services.dart';
 
 import 'package:vynic/core/models/table_layout.dart';
@@ -116,19 +117,19 @@ class _FloorEditorScreenState extends State<FloorEditorScreen> {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: VynicColors.card,
+        backgroundColor: AdminDesign.panel,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: const Text(
           'შენახვის გარეშე გასვლა?',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w800,
-            color: VynicColors.textPrimary,
+            color: AdminDesign.text,
           ),
         ),
         content: const Text(
           'განლაგებაში შეტანილი ცვლილებები დაიკარგება.',
-          style: TextStyle(fontSize: 13, color: VynicColors.textMuted),
+          style: TextStyle(fontSize: 13, color: AdminDesign.muted),
         ),
         actions: [
           TextButton(
@@ -137,7 +138,7 @@ class _FloorEditorScreenState extends State<FloorEditorScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: VynicColors.danger),
+            style: TextButton.styleFrom(foregroundColor: AdminDesign.danger),
             child: const Text('ცვლილებების გაუქმება'),
           ),
         ],
@@ -248,7 +249,7 @@ class _FloorEditorScreenState extends State<FloorEditorScreen> {
         unawaited(_handleBack());
       },
       child: Scaffold(
-        backgroundColor: VynicColors.background,
+        backgroundColor: AdminDesign.surface,
         body: SafeArea(
           child: Column(
             children: [
@@ -351,14 +352,14 @@ class _InspectorHandle extends StatelessWidget {
         child: Container(
           width: 18,
           decoration: const BoxDecoration(
-            color: VynicColors.card,
-            border: Border(left: BorderSide(color: VynicColors.border)),
+            color: AdminDesign.panel,
+            border: Border(left: BorderSide(color: AdminDesign.border)),
           ),
           alignment: Alignment.center,
           child: Icon(
             expanded ? Icons.chevron_right : Icons.chevron_left,
             size: 15,
-            color: VynicColors.textMuted,
+            color: AdminDesign.muted,
           ),
         ),
       ),

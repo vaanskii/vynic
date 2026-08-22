@@ -89,7 +89,21 @@ class _KitchenItemSnapshot {
 
 class MenuScreen extends StatefulWidget {
   final User user;
+
+  /// What the tables are *called* — used for display and on the receipt.
   final List<String> selectedTables;
+
+  /// What the tables *are*. Supplied whenever the caller knows the legacy
+  /// numbers; the order is created against these.
+  ///
+  /// Table names are admin-editable free text, so they cannot be parsed back
+  /// into numbers. Callers that still pass raw numbers as [selectedTables]
+  /// leave this null and get the old stripping behaviour.
+  final List<String>? tableNumbers;
+
+  /// Legacy floor ('first'/'second') the tables belong to. Null falls back to
+  /// sniffing [selectedTables], which only ever worked for default names.
+  final String? tableFloor;
   final int? existingOrderId;
   final bool
   isPreOrderMode; // If true, return cart items instead of creating order
@@ -107,6 +121,8 @@ class MenuScreen extends StatefulWidget {
     super.key,
     required this.user,
     required this.selectedTables,
+    this.tableNumbers,
+    this.tableFloor,
     this.existingOrderId,
     this.isPreOrderMode = false,
     this.isQuickOrder = false,
@@ -1109,9 +1125,12 @@ class _MenuScreenState extends State<MenuScreen> {
         }
       } else {
         // Create new order
-        // Extract floor from selectedTables.
-        String floor = 'first'; // Default
-        if (widget.selectedTables.isNotEmpty) {
+        // Prefer the identity the caller handed us. Names are admin-editable
+        // now, so deriving a table number or a floor from a display name is
+        // only safe for the callers that still pass raw numbers through
+        // selectedTables — they leave both fields null.
+        String floor = widget.tableFloor ?? 'first';
+        if (widget.tableFloor == null && widget.selectedTables.isNotEmpty) {
           if (widget.selectedTables.any(
             (t) => t.startsWith('Second Floor Table ') || t.contains('VIP'),
           )) {
@@ -1119,14 +1138,15 @@ class _MenuScreenState extends State<MenuScreen> {
           }
         }
 
-        // Extract table numbers from display names
-        final tableNumbers = widget.selectedTables.map((displayName) {
-          // "Table 1" -> "1", "Second Floor Table 1" -> "1"
-          return displayName
-              .replaceAll('Second Floor Table ', '')
-              .replaceAll('Table ', '')
-              .replaceAll('VIP Zone ', '');
-        }).toList();
+        final tableNumbers =
+            widget.tableNumbers ??
+            widget.selectedTables.map((displayName) {
+              // "Table 1" -> "1", "Second Floor Table 1" -> "1"
+              return displayName
+                  .replaceAll('Second Floor Table ', '')
+                  .replaceAll('Table ', '')
+                  .replaceAll('VIP Zone ', '');
+            }).toList();
 
         // Create order in database
         final order = await DatabaseService.createOrder(

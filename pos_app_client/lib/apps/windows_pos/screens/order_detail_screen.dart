@@ -9,6 +9,7 @@ import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/table_ref.dart';
 import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/services/database_service.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
 import 'package:vynic/core/services/sync/pos_live_refresh.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
@@ -136,6 +137,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       onPrintReceipt: _printReceipt,
       onToggleServiceFee: _toggleServiceFee,
       onOpenServiceFeeConfig: _openServiceFeeAdjustDialog,
+      receiptServiceFeeLineVisible:
+          DatabaseService.isReceiptServiceFeeLineVisible(),
+      onToggleReceiptServiceFeeLine: _toggleReceiptServiceFeeLine,
       onStartNonFiscalClosureFlow: _startNonFiscalClosureFlow,
       onShowDiscountDialog: _showDiscountDialog,
       onShowManualAdjustmentDialog: _showManualAdjustmentDialog,
@@ -290,6 +294,71 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         );
       },
     );
+  }
+
+  /// Attaches a new reservation to the table that is already sitting here.
+  ///
+  /// Guests often ask to be put in the book after they have been seated. The
+  /// record is created against this order via `linkedOrderId`, which is what
+  /// [DatabaseService.findReservationForOrder] looks for — and which also
+  /// keeps it out of table-availability checks, since the table is plainly not
+  /// bookable by anyone else while this order is open.
+  Future<void> _createReservationForTable() async {
+    final order = _order;
+    if (order == null || _isTakeAwayOrder) {
+      return;
+    }
+
+    final result = await _showReservationSheet(
+      title: 'რეზერვაციის დამატება',
+      confirmLabel: 'შენახვა',
+      initialGuests: _guestCount,
+    );
+    if (result == null || !mounted) {
+      return;
+    }
+
+    final selectedDate =
+        (result['date'] as DateTime?) ?? DatabaseService.getCurrentDate();
+    final selectedTime = result['time'] as TimeOfDay?;
+    final guestsRaw =
+        (result['numberOfGuests'] as int?) ?? (result['guests'] as int?);
+    final notes = (result['notes'] as String?)?.trim();
+
+    final tableRefs = [
+      for (final tableNumber in order.tableNumbers)
+        TableRef(floor: order.floor, tableNumber: tableNumber),
+    ];
+
+    await DatabaseService.createReservation(
+      customerName: (result['customerName'] as String? ?? '').trim(),
+      customerPhone: (result['customerPhone'] as String? ?? '').trim(),
+      tableRefs: tableRefs,
+      reservationDate: selectedDate,
+      reservationTime: selectedTime == null
+          ? _clockLabel(order.createdAt)
+          : '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}',
+      numberOfGuests: guestsRaw != null && guestsRaw > 0
+          ? guestsRaw
+          : (_guestCount ?? 1),
+      notes: notes != null && notes.isNotEmpty ? notes : null,
+      createdBy: widget.user.username,
+      linkedOrderId: order.orderId,
+      // The party is already at the table, so this is not a booking waiting
+      // to be honoured — it is confirmed the moment it is written.
+      status: 'confirmed',
+    );
+
+    if (!mounted) {
+      return;
+    }
+    _loadOrder();
+    unawaited(showSuccessToast(context, 'რეზერვაცია დაემატა'));
+  }
+
+  static String _clockLabel(DateTime value) {
+    return '${value.hour.toString().padLeft(2, '0')}:'
+        '${value.minute.toString().padLeft(2, '0')}';
   }
 
   Future<void> _editLinkedReservationDetails() async {
@@ -703,6 +772,27 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         ),
       );
     });
+  }
+
+  /// Flips the admin's „ჩეკზე ასახვა" setting from the order screen.
+  ///
+  /// Display only: the fee stays in the total either way. It is a terminal
+  /// setting rather than a per-order one, so the toast says so — changing it
+  /// here changes it for every receipt this terminal prints.
+  Future<void> _toggleReceiptServiceFeeLine() async {
+    final next = !DatabaseService.isReceiptServiceFeeLineVisible();
+    await DatabaseService.setReceiptServiceFeeLineVisible(next);
+    if (!mounted) return;
+    setState(() {});
+    unawaited(
+      showPosToast(
+        context: context,
+        message: next
+            ? 'სერვისის ხაზი ჩეკზე გამოჩნდება (ყველა ჩეკზე)'
+            : 'სერვისის ხაზი ჩეკზე დაიმალება (ყველა ჩეკზე)',
+        style: PosToastStyle.info,
+      ),
+    );
   }
 
   void _openServiceFeeAdjustDialog() {
@@ -2873,84 +2963,88 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         !_isTakeAwayOrder && _linkedReservation != null;
 
     return Scaffold(
-      backgroundColor: _surfaceColor,
-      body: Column(
-        children: [
-          OrderDetailHeaderSection(
-            order: _order!,
-            isTakeAwayOrder: _isTakeAwayOrder,
-            guestCount: _guestCount,
-            onBack: () => Navigator.of(context).maybePop(),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SizedBox(
-                    width: 360,
-                    child: SingleChildScrollView(
-                      child: OrderDetailDetailsPanel(
-                        order: _order!,
-                        isTakeAwayOrder: _isTakeAwayOrder,
-                        hasReservation: _linkedReservation != null,
-                        customerName: _reservationCustomerName,
-                        customerPhone: _reservationCustomerPhone,
-                        scheduleLabel: _reservationScheduleLabelKa,
-                        guestCount: _guestCount,
-                        notes: _reservationNotesLabel,
-                        onEditReservation: canEditReservation
-                            ? _editLinkedReservationDetails
-                            : null,
-                        onGuestsChanged: canModify && canEditReservation
-                            ? _updateReservationGuests
-                            : null,
+      backgroundColor: VynicFloorTokens.page,
+      body: SafeArea(
+        child: Column(
+          children: [
+            OrderDetailHeaderSection(
+              order: _order!,
+              isTakeAwayOrder: _isTakeAwayOrder,
+              guestCount: _guestCount,
+              onBack: () => Navigator.of(context).maybePop(),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // The bill is the reason the screen exists, so it takes
+                    // the room; the rail is only as wide as its buttons need.
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          OrderDetailMetricsRow(
+                            order: _order!,
+                            isTakeAwayOrder: _isTakeAwayOrder,
+                            guestCount: _guestCount,
+                            onGuestsChanged: canModify && canEditReservation
+                                ? _updateReservationGuests
+                                : null,
+                          ),
+                          const SizedBox(height: 12),
+                          if (!_isTakeAwayOrder) ...[
+                            OrderDetailReservationPanel(
+                              isTakeAwayOrder: _isTakeAwayOrder,
+                              hasReservation: _linkedReservation != null,
+                              customerName: _reservationCustomerName,
+                              customerPhone: _reservationCustomerPhone,
+                              scheduleLabel: _reservationScheduleLabelKa,
+                              notes: _reservationNotesLabel,
+                              onEditReservation: canEditReservation
+                                  ? _editLinkedReservationDetails
+                                  : null,
+                              onAddReservation:
+                                  canModify && _linkedReservation == null
+                                  ? _createReservationForTable
+                                  : null,
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                          Expanded(
+                            child: OrderDetailContentSection(
+                              order: _order!,
+                              canModify: canModify,
+                              isAdmin: widget.user.isAdmin,
+                              highlightItemKeys: _mobileHighlightItemKeys,
+                              onOrderUpdated: () async {
+                                _loadOrder();
+                              },
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: OrderDetailContentSection(
-                      order: _order!,
-                      canModify: canModify,
-                      isAdmin: widget.user.isAdmin,
-                      highlightItemKeys: _mobileHighlightItemKeys,
-                      onOrderUpdated: () async {
-                        _loadOrder();
-                      },
+                    const SizedBox(width: 16),
+                    SizedBox(
+                      width: 300,
+                      child: OrderDetailActionRail(
+                        order: _order!,
+                        actionsBundle: actionsBundle,
+                        serviceFeePercentageLabel: _serviceFeeLabelForOrder(
+                          _order!,
+                        ),
+                        onEditOrder: _editOrder,
+                        canEditOrder: canEditOrder,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          OrderDetailActionsPanel(
-            order: _order!,
-            actionsBundle: actionsBundle,
-            serviceFeePercentageLabel: _serviceFeeLabelForOrder(_order!),
-            onEditOrder: _editOrder,
-            canEditOrder: canEditOrder,
-            otherActionsProvider: () {
-              final refreshedBundle = _resolveOrderActions(
-                status: _order?.status ?? status,
-                canPrintKitchenCheck: canPrintKitchenCheck,
-                canPrintReceipt: canPrintReceipt,
-              );
-              final merged = <OrderActionConfig>[
-                ...refreshedBundle.primary,
-                ...refreshedBundle.secondary,
-              ];
-              merged.removeWhere(
-                (action) =>
-                    action.label == 'მაგიდის დახურვა' ||
-                    action.label == 'ქვითრის ბეჭდვა' ||
-                    action.label == 'სხვა',
-              );
-              return merged;
-            },
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

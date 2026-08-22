@@ -3,19 +3,24 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:vynic/core/services/database_service.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 import 'on_screen_keyboard.dart';
 import 'time_entry_pad.dart';
 
-const Color _reservationAccent = Color(0xFF2563EB);
-const Color _reservationAccentSoft = Color(0xFF3B82F6);
-const Color _reservationSurface = Color(0xFFFFFFFF);
-const Color _reservationSurfaceAlt = Color(0xFFF8FAFC);
-const Color _reservationOutline = Color(0xFFE2E8F0);
-const Color _reservationLabel = Color(0xFF475569);
-const Color _reservationMuted = Color(0xFF94A3B8);
-const Color _reservationTextPrimary = Color(0xFF0F172A);
+// The sheet used to carry its own slate-and-blue palette, which read as a
+// different product from the screen that opened it. It now draws from the
+// same tokens as the order detail and floor screens, so „დეტალების შეცვლა"
+// looks like it belongs to the page behind it.
+const Color _reservationAccent = VynicFloorTokens.accentStrong;
+const Color _reservationAccentSoft = VynicFloorTokens.accentText;
+const Color _reservationSurface = VynicFloorTokens.panel;
+const Color _reservationSurfaceAlt = VynicFloorTokens.metricFill;
+const Color _reservationOutline = VynicFloorTokens.panelBorder;
+const Color _reservationLabel = VynicFloorTokens.textMuted;
+const Color _reservationMuted = VynicFloorTokens.textFaint;
+const Color _reservationTextPrimary = VynicFloorTokens.text;
 const double _reservationKeyboardHeight = 380;
 
 class ReservationCreationSheet extends StatefulWidget {

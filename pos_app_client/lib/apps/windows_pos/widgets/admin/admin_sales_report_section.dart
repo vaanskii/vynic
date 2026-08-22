@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/services/database_service.dart';
-import 'package:vynic/apps/windows_pos/widgets/admin/admin_financial_reports_panel.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 
 enum _SalesPeriod { today, week, month }
@@ -14,17 +14,12 @@ class AdminSalesReportSection extends StatefulWidget {
     required this.selectedSalesMonth,
     required this.onChangeSalesMonth,
     required this.onSetSelectedSalesMonth,
-    required this.financialReports,
   });
 
   final int selectedSalesYear;
   final int selectedSalesMonth;
   final ValueChanged<int> onChangeSalesMonth;
   final ValueChanged<DateTime> onSetSelectedSalesMonth;
-
-  /// Monthly / full report tooling, relocated here from the Settings tab.
-  /// Built by `AdminScreen` so the controllers and callbacks stay in one place.
-  final AdminFinancialReportsPanel financialReports;
 
   @override
   State<AdminSalesReportSection> createState() =>
@@ -116,7 +111,7 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
       child: Align(
         alignment: Alignment.topLeft,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+          padding: const EdgeInsets.fromLTRB(22, 18, 22, 20),
           child: SizedBox(
             width: double.infinity,
             child: Column(
@@ -157,8 +152,6 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
                   totalQuantity: kpis.totalItems,
                   isMobile: isMobile,
                 ),
-                const SizedBox(height: 18),
-                widget.financialReports,
               ],
             ),
           ),
@@ -172,11 +165,11 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
       final isSelected = _selectedPeriod == period;
       return ChoiceChip(
         selected: isSelected,
-        selectedColor: const Color(0xFFDBEAFE),
+        selectedColor: AdminTones.infoFill,
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           side: BorderSide(
-            color: isSelected ? const Color(0xFFBFDBFE) : _border,
+            color: isSelected ? AdminTones.infoBorder : _border,
           ),
           borderRadius: BorderRadius.circular(10),
         ),
@@ -235,8 +228,8 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: const Color(0xFFECFDF5),
-        border: Border.all(color: const Color(0xFFA7F3D0)),
+        color: AdminTones.successFill,
+        border: Border.all(color: AdminTones.successBorder),
       ),
       child: Row(
         children: [
@@ -373,31 +366,31 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
         title: 'ტრანზაქციები',
         value: kpis.transactions.toString(),
         subtitle: 'გაუქმების გარეშე',
-        color: const Color(0xFF7C3AED),
+        color: AdminDesign.accentDark,
       ),
       _kpiCard(
         title: 'საშუალო ჩეკი',
         value: _money.format(kpis.avgCheck),
         subtitle: 'საშუალო ჩეკი',
-        color: const Color(0xFF0EA5E9),
+        color: AdminTones.infoText,
       ),
       _kpiCard(
         title: 'გაუქმებული',
         value: kpis.cancelledCount.toString(),
         subtitle: 'გაუქმებული გაყიდვები',
-        color: const Color(0xFFEF4444),
+        color: AdminDesign.danger,
       ),
       _kpiCard(
         title: 'Items Sold',
         value: kpis.totalItems.toString(),
         subtitle: 'მენიუს ერთეულები',
-        color: const Color(0xFF16A34A),
+        color: AdminTones.successText,
       ),
       _kpiCard(
         title: 'Top Category',
         value: kpis.topCategoryName,
         subtitle: _money.format(kpis.topCategoryRevenue),
-        color: const Color(0xFFF59E0B),
+        color: AdminTones.warningText,
       ),
     ];
 
@@ -509,18 +502,18 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
               _infoPill(
                 icon: Icons.trending_up,
                 text: 'Top კატეგორია: ${kpis.topCategoryName}',
-                color: const Color(0xFFF59E0B),
+                color: AdminTones.warningText,
               ),
               _infoPill(
                 icon: Icons.cancel_outlined,
                 text: 'გაუქმების წილი: ${cancelRate.toStringAsFixed(1)}%',
-                color: const Color(0xFFEF4444),
+                color: AdminDesign.danger,
               ),
               _infoPill(
                 icon: Icons.shopping_cart_outlined,
                 text:
                     'ერთ ტრანზაქციაზე საშუალო ერთეული: ${kpis.avgItemsPerTransaction.toStringAsFixed(1)}',
-                color: const Color(0xFF16A34A),
+                color: AdminTones.successText,
               ),
             ],
           ),
@@ -1043,11 +1036,11 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDDE7FF)),
+        border: Border.all(color: AdminDesign.border),
       ),
       child: Theme(
         data: Theme.of(context).copyWith(
-          dividerColor: const Color(0xFFDDE7FF),
+          dividerColor: AdminDesign.border,
           expansionTileTheme: const ExpansionTileThemeData(
             tilePadding: EdgeInsets.symmetric(horizontal: 12, vertical: 2),
             childrenPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1084,7 +1077,7 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
                 child: LinearProgressIndicator(
                   value: progress,
                   minHeight: 5,
-                  backgroundColor: const Color(0xFFE2E8F0),
+                  backgroundColor: AdminDesign.border,
                   color: _primary,
                 ),
               ),
@@ -1094,7 +1087,7 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
             for (var i = 0; i < items.length; i++) ...[
               if (i > 0)
                 const Divider(
-                  color: Color(0xFFDDE7FF),
+                  color: AdminDesign.border,
                   height: 12,
                   thickness: 1,
                 ),

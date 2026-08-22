@@ -29,10 +29,16 @@ abstract final class VynicFloorTokens {
 
   static const Color text = Color(0xFF1C1A19);
   static const Color textMuted = Color(0xFF6F6A65);
-  static const Color textFaint = Color(0xFF8A8480);
+  /// Was #8A8480 — 3.7:1, below WCAG AA and, on a 1024x768 POS panel with no
+  /// HiDPI, the point at which small Georgian glyphs stop holding together.
+  /// The faint tier still reads as the quietest text on a screen; it is just
+  /// no longer quieter than a person can see.
+  static const Color textFaint = Color(0xFF5F5A55);
 
   /// Section headings in the rail (uppercase, tracked out).
-  static const Color sectionLabel = Color(0xFF9A948F);
+  /// Was #9A948F — exactly 3.0:1, which is the floor for large text and these
+  /// are 11pt.
+  static const Color sectionLabel = Color(0xFF6F6A65);
 
   // --- accent -------------------------------------------------------------
 
@@ -41,7 +47,26 @@ abstract final class VynicFloorTokens {
   static const Color accentText = Color(0xFF52447A);
   static const Color accentBadgeText = Color(0xFF6F5F92);
 
+  /// Filled primary CTA — the deep aubergine the mock uses for the single
+  /// most important button on a screen („მაგიდის დახურვა").
+  static const Color accentStrong = Color(0xFF4C4272);
+  static const Color accentStrongHover = Color(0xFF413964);
+
+  // --- destructive --------------------------------------------------------
+
+  /// Cancel/void: a muted brick, not a fire-engine red. It has to read as
+  /// serious without shouting at a waiter mid-service.
+  static const Color dangerText = Color(0xFFB5503F);
+  static const Color dangerBorder = Color(0xFFEBD5CE);
+  static const Color dangerFill = Color(0xFFFDF8F6);
+
   // --- status -------------------------------------------------------------
+
+  /// Status pill on the order header — the same amber family as the occupied
+  /// dot, one step more present than [occupiedFill] so it survives on a card.
+  static const Color statusPillFill = Color(0xFFFBF4E0);
+  static const Color statusPillBorder = Color(0xFFF0E3C0);
+  static const Color statusPillText = Color(0xFF7A6526);
 
   /// Free — a neutral dot, deliberately not green.
   static const Color freeDot = Color(0xFFE2E0DB);
@@ -50,7 +75,10 @@ abstract final class VynicFloorTokens {
   static const Color occupiedDot = Color(0xFFD9A531);
   static const Color occupiedFill = Color(0xFFFFFDF7);
   static const Color occupiedBorder = Color(0xFFECDCB6);
-  static const Color occupiedMeta = Color(0xFF8A7A52);
+  /// Was #8A7A52 — 4.2:1, and it carried the two smallest lines on a busy
+  /// table (elapsed and waiter), so it was the lightest *and* the smallest
+  /// thing on the tile.
+  static const Color occupiedMeta = Color(0xFF5C5445);
   static const Color occupiedValue = Color(0xFF8A6A20);
   static const Color occupiedTileFill = Color(0xFFFDF9EF);
 
@@ -99,20 +127,12 @@ abstract final class VynicFloorTokens {
 
   /// Free tile: `0 1px 2px rgba(28,26,25,0.03)`.
   static const List<BoxShadow> tileShadow = [
-    BoxShadow(
-      color: Color(0x081C1A19),
-      blurRadius: 2,
-      offset: Offset(0, 1),
-    ),
+    BoxShadow(color: Color(0x081C1A19), blurRadius: 2, offset: Offset(0, 1)),
   ];
 
   /// Occupied tile sits a hair higher: `rgba(28,26,25,0.04)`.
   static const List<BoxShadow> occupiedTileShadow = [
-    BoxShadow(
-      color: Color(0x0A1C1A19),
-      blurRadius: 2,
-      offset: Offset(0, 1),
-    ),
+    BoxShadow(color: Color(0x0A1C1A19), blurRadius: 2, offset: Offset(0, 1)),
   ];
 
   // --- venue objects ------------------------------------------------------

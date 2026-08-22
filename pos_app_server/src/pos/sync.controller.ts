@@ -694,22 +694,27 @@ export class SyncController implements OnModuleInit {
           },
         });
 
-        // Sync Items
+        // Sync Items.
+        //
+        // One nested write, not a deleteMany followed by loose creates. Prisma
+        // runs a nested write in a single transaction, so two overlapping
+        // syncs cannot interleave as delete/delete/create/create and leave the
+        // order holding every line twice — which is what the manager app was
+        // showing after an item was added on the POS.
         if (order.items) {
-          await (this.prisma as any).orderItem.deleteMany({
-            where: { orderId: dbOrder.id },
-          });
-
-          for (const item of order.items) {
-            await (this.prisma as any).orderItem.create({
-              data: {
-                orderId: dbOrder.id,
-                name: item.name,
-                quantity: item.quantity,
-                price: item.price,
+          await this.prisma.order.update({
+            where: { id: dbOrder.id },
+            data: {
+              items: {
+                deleteMany: {},
+                create: order.items.map((item: any) => ({
+                  name: item.name,
+                  quantity: item.quantity,
+                  price: item.price,
+                })),
               },
-            });
-          }
+            },
+          });
         }
 
         const status = (order.status ?? '').toLowerCase();

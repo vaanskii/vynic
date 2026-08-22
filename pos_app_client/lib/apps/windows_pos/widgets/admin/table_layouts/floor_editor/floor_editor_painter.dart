@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 
 import 'package:vynic/apps/windows_pos/widgets/floor_plan/floor_plan_seats.dart';
 import 'package:vynic/core/models/table_layout.dart';
@@ -12,13 +14,13 @@ import 'floor_editor_model.dart';
 /// as one drawing rather than a pile of arbitrary object colours.
 abstract final class _Ink {
   static const canvas = Color(0xFFFFFFFF);
-  static const canvasEdge = VynicColors.borderStrong;
+  static const canvasEdge = VynicFloorTokens.tileBorderHover;
   static const gridFine = Color(0xFFF0EEEA);
   static const gridMajor = Color(0xFFE4E1DB);
 
   static const tableFill = Color(0xFFFCFBF9);
   static const tableLine = Color(0xFFBFB8AC);
-  static const tableText = VynicColors.textPrimary;
+  static const tableText = AdminDesign.text;
   static const seat = Color(0xFFD9D3C7);
   static const bench = Color(0xFFE6E0D4);
 
@@ -30,12 +32,12 @@ abstract final class _Ink {
   static const zoneLine = Color(0xFFB9A9BD);
   static const zoneFill = Color(0x14764B7C);
 
-  static const selection = VynicColors.accent;
+  static const selection = AdminDesign.accentDark;
 
   /// Selected objects are re-tinted rather than only outlined — on a busy
   /// floor an outline alone is easy to lose.
   static const selectedFill = Color(0xFFF1E8F3);
-  static const selectedLine = VynicColors.accent;
+  static const selectedLine = AdminDesign.accentDark;
   static const selectedText = Color(0xFF4A2F4E);
   static const selectedSeat = Color(0xFFD8C4DC);
 
@@ -492,7 +494,7 @@ class FloorEditorPainter extends CustomPainter {
     final seatsPainter = _text(
       '${object.capacity}',
       size: math.max(9.0, labelSize * 0.66),
-      color: VynicColors.textMuted,
+      color: AdminDesign.muted,
       weight: FontWeight.w700,
     );
     final totalHeight = labelPainter.height + seatsPainter.height + 2;
@@ -700,7 +702,7 @@ class FloorEditorPainter extends CustomPainter {
       object.label,
       rect.center,
       size: math.min(17, math.max(11, rect.height * 0.42)),
-      color: selected ? _Ink.selectedLine : VynicColors.textMuted,
+      color: selected ? _Ink.selectedLine : AdminDesign.muted,
       weight: FontWeight.w800,
     );
   }
@@ -743,7 +745,7 @@ class FloorEditorPainter extends CustomPainter {
         object.label,
         rect.center,
         size: math.min(14, math.max(10, rect.shortestSide * 0.24)),
-        color: selected ? _Ink.selectedText : VynicColors.textMuted,
+        color: selected ? _Ink.selectedText : AdminDesign.muted,
       );
     }
   }

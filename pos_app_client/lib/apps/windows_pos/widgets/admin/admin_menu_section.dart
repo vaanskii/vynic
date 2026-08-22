@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
 import 'package:flutter/services.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/user.dart';
@@ -204,25 +205,25 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
         label: 'სულ პროდუქტები',
         value: totalItems,
         icon: Icons.room_service_outlined,
-        color: const Color(0xFF0F9D58),
+        color: AdminTones.successText,
       ),
       _MenuKpiData(
         label: 'კატეგორიები',
         value: categories,
         icon: Icons.folder_outlined,
-        color: const Color(0xFF0369A1),
+        color: AdminTones.infoText,
       ),
       _MenuKpiData(
         label: 'სამზარეულო ჩართული',
         value: kitchenEnabled,
         icon: Icons.check_circle_outline,
-        color: const Color(0xFF047857),
+        color: AdminTones.successText,
       ),
       _MenuKpiData(
         label: 'სამზარეულო გამორთული',
         value: kitchenDisabled,
         icon: Icons.warning_amber_outlined,
-        color: const Color(0xFFEA580C),
+        color: AdminTones.warningText,
       ),
     ];
     return LayoutBuilder(
@@ -411,8 +412,8 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
   }) {
     final price = _priceLabel(row.item);
     final kitchenColor = row.item.sendToKitchen
-        ? const Color(0xFF047857)
-        : const Color(0xFFB45309);
+        ? AdminTones.successText
+        : AdminTones.warningText;
     final actions = PopupMenuButton<String>(
       tooltip: 'მოქმედებები',
       icon: const Icon(Icons.more_vert, color: _textPrimary, size: 20),
@@ -588,8 +589,8 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       height: 36,
       decoration: BoxDecoration(
         color: item.sendToKitchen
-            ? const Color(0xFFECFDF5)
-            : const Color(0xFFFFFBEB),
+            ? AdminTones.successFill
+            : AdminTones.warningFill,
         borderRadius: BorderRadius.circular(AdminDesign.radius),
         border: Border.all(color: _borderColor),
       ),
@@ -747,7 +748,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFECFDF5) : Colors.white,
+          color: selected ? AdminTones.successFill : Colors.white,
           border: const Border(bottom: BorderSide(color: _borderColor)),
         ),
         child: Row(
@@ -814,13 +815,6 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: _borderColor)),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 14,
-            offset: Offset(0, -4),
-          ),
-        ],
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -1260,8 +1254,8 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                     : 'სამზარეულო გამორთულია',
                 style: TextStyle(
                   color: item.sendToKitchen
-                      ? const Color(0xFF047857)
-                      : const Color(0xFFB45309),
+                      ? AdminTones.successText
+                      : AdminTones.warningText,
                   fontSize: 12,
                 ),
               ),
@@ -1287,7 +1281,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                     IconButton(
                       icon: Icon(
                         Icons.delete,
-                        color: Colors.red,
+                        color: AdminDesign.danger,
                         size: isMobile ? 18 : 20,
                       ),
                       onPressed: onDelete,
@@ -1365,7 +1359,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             IconButton(
               icon: Icon(
                 Icons.delete,
-                color: Colors.red,
+                color: AdminDesign.danger,
                 size: isMobile ? 20 : 24,
               ),
               onPressed: () => _confirmDeleteCategory(categoryIndex, nameEn),
@@ -1546,7 +1540,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                         IconButton(
                           icon: Icon(
                             Icons.delete,
-                            color: Colors.red,
+                            color: AdminDesign.danger,
                             size: isMobile ? 18 : 20,
                           ),
                           onPressed: () => _confirmDeleteSubcategory(
@@ -1727,7 +1721,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
         fontWeight: FontWeight.w500,
       ),
       filled: true,
-      fillColor: const Color(0xFFF9FAFB),
+      fillColor: AdminDesign.panelSoft,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: _borderColor),
@@ -2116,7 +2110,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2B2B2B),
+        backgroundColor: AdminDesign.text,
         title: const Text(
           'კატეგორიის წაშლა',
           style: TextStyle(color: Colors.white),
@@ -2132,7 +2126,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: AdminDesign.danger),
             child: const Text('წაშლა'),
           ),
         ],
@@ -2324,7 +2318,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2B2B2B),
+        backgroundColor: AdminDesign.text,
         title: const Text(
           'ქვეკატეგორიის წაშლა',
           style: TextStyle(color: Colors.white),
@@ -2340,7 +2334,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: AdminDesign.danger),
             child: const Text('წაშლა'),
           ),
         ],
@@ -2458,7 +2452,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                             style: const TextStyle(color: _textPrimary),
                           ),
                           trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
+                            icon: const Icon(Icons.delete, color: AdminDesign.danger),
                             onPressed: () {
                               setDialogState(() {
                                 variants.removeAt(idx);
@@ -2631,7 +2625,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                             style: const TextStyle(color: _textPrimary),
                           ),
                           trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
+                            icon: const Icon(Icons.delete, color: AdminDesign.danger),
                             onPressed: () {
                               setDialogState(() {
                                 variants.removeAt(idx);
@@ -2807,7 +2801,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                             style: const TextStyle(color: _textPrimary),
                           ),
                           trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
+                            icon: const Icon(Icons.delete, color: AdminDesign.danger),
                             onPressed: () {
                               setDialogState(() {
                                 variants.removeAt(idx);
@@ -2890,7 +2884,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2B2B2B),
+        backgroundColor: AdminDesign.text,
         title: const Text(
           'პროდუქტის წაშლა',
           style: TextStyle(color: Colors.white),
@@ -2906,7 +2900,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: AdminDesign.danger),
             child: const Text('წაშლა'),
           ),
         ],
@@ -3029,7 +3023,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                             style: const TextStyle(color: _textPrimary),
                           ),
                           trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
+                            icon: const Icon(Icons.delete, color: AdminDesign.danger),
                             onPressed: () {
                               setDialogState(() {
                                 variants.removeAt(idx);
@@ -3110,7 +3104,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2B2B2B),
+        backgroundColor: AdminDesign.text,
         title: const Text(
           'პროდუქტის წაშლა',
           style: TextStyle(color: Colors.white),
@@ -3126,7 +3120,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: AdminDesign.danger),
             child: const Text('წაშლა'),
           ),
         ],

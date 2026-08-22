@@ -4,6 +4,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'package:vynic/apps/windows_pos/widgets/shared/pos_surface.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
+
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/user.dart';
@@ -60,19 +63,25 @@ class HomeReservationsSection extends StatefulWidget {
 class _HomeReservationsSectionState extends State<HomeReservationsSection> {
   String? _selectedReservationId;
 
+  /// Which pane a narrow window is showing: 0 = the queue, 1 = the selected
+  /// booking. Wide windows show both and ignore this.
+  int _narrowPane = 0;
+
   /// Per-reservation service-fee toggle and rate (UI/print only; reservations
   /// have no persistent service-fee field). Tap toggles on/off; long-press
   /// opens the adjust dialog to change the percentage.
   final Map<String, bool> _serviceFeeOn = {};
   final Map<String, double> _serviceFeeRate = {};
 
-  static const Color _accent = Color(0xFF0F766E);
-  static const Color _success = Color(0xFF047857);
-  static const Color _warning = Color(0xFFB45309);
-  static const Color _danger = Color(0xFFB91C1C);
-  static const Color _surface = Color(0xFFFFFFFF);
-  static const Color _surfaceAlt = Color(0xFFF7F8FB);
-  static const Color _outline = Color(0xFFDDE4ED);
+  // Shared POS tokens rather than this screen's own teal-and-slate set, so a
+  // reservation looks the same here as it does on the floor and on an order.
+  static const Color _accent = VynicFloorTokens.accentStrong;
+  static const Color _success = VynicFloorTokens.accentText;
+  static const Color _warning = VynicFloorTokens.occupiedValue;
+  static const Color _danger = VynicFloorTokens.dangerText;
+  static const Color _surface = VynicFloorTokens.panel;
+  static const Color _surfaceAlt = VynicFloorTokens.metricFill;
+  static const Color _outline = VynicFloorTokens.panelBorder;
 
   @override
   Widget build(BuildContext context) {
@@ -105,16 +114,23 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
       builder: (context, constraints) {
         final platformMobile =
             !kIsWeb && (Platform.isAndroid || Platform.isIOS);
-        final isCompact = platformMobile || constraints.maxWidth < 860;
+        // Only a genuine phone/tablet gets the single-pane layout. Desktop
+        // windows are never laid out below PosScaledSurface.designSize, so
+        // the three-column layout always has the room it needs and never has
+        // to fold anything away.
+        final isCompact = platformMobile;
 
         if (isCompact) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(12, 14, 12, 92),
+          // Two panes, one at a time, each filling the height. Stacking them
+          // in a scroll pushed the detail below the fold, so tapping a
+          // booking appeared to do nothing.
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildHeader(compact: true),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 _buildMetricGrid(
                   total: ordered.length,
                   todayCount: todayCount,
@@ -122,17 +138,40 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
                   preOrderValue: preOrderValue,
                   compact: true,
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 if (ordered.isEmpty)
-                  _buildEmptyState()
+                  Expanded(child: _buildEmptyState())
                 else ...[
-                  _buildQueuePanel(
-                    reservations: ordered,
-                    selected: selected,
-                    compact: true,
+                  PosPaneSwitch(
+                    labels: const ['სია', 'დეტალები'],
+                    selectedIndex: _narrowPane,
+                    onSelected: (index) => setState(() => _narrowPane = index),
                   ),
-                  const SizedBox(height: 14),
-                  _buildDetailPanel(reservation: selected, compact: true),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: _narrowPane == 0
+                        ? _buildQueuePanel(
+                            reservations: ordered,
+                            selected: selected,
+                            compact: true,
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                child: _buildDetailPanel(
+                                  reservation: selected,
+                                  compact: true,
+                                  footerActions: false,
+                                ),
+                              ),
+                              if (selected != null) ...[
+                                const SizedBox(height: 12),
+                                _buildActionRail(selected),
+                              ],
+                            ],
+                          ),
+                  ),
                 ],
               ],
             ),
@@ -161,7 +200,9 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           SizedBox(
-                            width: constraints.maxWidth < 1120 ? 330 : 380,
+                            // The rail takes a column of its own, so the
+                            // queue gives up its wider setting to pay for it.
+                            width: constraints.maxWidth < 1400 ? 330 : 380,
                             child: _buildQueuePanel(
                               reservations: ordered,
                               selected: selected,
@@ -173,8 +214,23 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
                             child: _buildDetailPanel(
                               reservation: selected,
                               compact: false,
+                              footerActions: false,
                             ),
                           ),
+                          // What you can do with the selected booking gets its
+                          // own rail, the way it does on an order. As a footer
+                          // Wrap the same eight buttons reflowed into two or
+                          // three ragged rows and their order changed with the
+                          // window width, so nothing sat where you last left
+                          // it. Below 1180 there is no room for a third
+                          // column, so the footer comes back.
+                          if (selected != null) ...[
+                            const SizedBox(width: 14),
+                            SizedBox(
+                              width: 250,
+                              child: _buildActionRail(selected),
+                            ),
+                          ],
                         ],
                       ),
               ),
@@ -188,27 +244,9 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
   // ───────────────────────── Header & metrics ─────────────────────────
 
   Widget _buildHeader({required bool compact}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'რეზერვაციები',
-          style: TextStyle(
-            color: widget.textPrimary,
-            fontSize: compact ? 24 : 28,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'დაჯავშნული სუფრების მართვა და წინასწარი შეკვეთები',
-          style: TextStyle(
-            color: widget.mutedText,
-            fontSize: compact ? 13 : 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
+    return const PosPageHeading(
+      title: 'რეზერვაციები',
+      subtitle: 'დაჯავშნული სუფრების მართვა და წინასწარი შეკვეთები.',
     );
   }
 
@@ -225,41 +263,61 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
         label: 'რეზერვაციები',
         value: '$total',
         helper: 'სულ',
-        color: _accent,
+        color: VynicFloorTokens.text,
       ),
       _ResMetric(
         icon: Icons.today_outlined,
         label: 'დღევანდელი',
         value: '$todayCount',
         helper: 'დღეს',
-        color: _success,
+        color: VynicFloorTokens.text,
       ),
       _ResMetric(
         icon: Icons.groups_outlined,
         label: 'სტუმრები',
         value: '$guestCount',
         helper: 'სულ',
-        color: _warning,
+        color: VynicFloorTokens.text,
       ),
       _ResMetric(
         icon: Icons.restaurant_menu_outlined,
         label: 'წინასწარი შეკვეთა',
         value: '₾${preOrderValue.toStringAsFixed(2)}',
         helper: 'ჯამური',
-        color: const Color(0xFF7C3AED),
+        color: VynicFloorTokens.text,
       ),
     ];
 
     if (compact) {
+      // Two across rather than four stacked: four full-width cards ate most
+      // of a 700px-tall window before the panes below them got any height.
       return Column(
-        children: metrics
-            .map(
-              (m) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _buildMetricCard(m, compact: true),
+        children: [
+          for (var row = 0; row < (metrics.length + 1) ~/ 2; row++) ...[
+            if (row > 0) const SizedBox(height: 10),
+            // IntrinsicHeight, not a stretched Row: this sits in a
+            // Column with no height budget, and stretch needs a
+            // bounded cross axis.
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var column = 0; column < 2; column++) ...[
+                    if (column > 0) const SizedBox(width: 10),
+                    Expanded(
+                      child: row * 2 + column < metrics.length
+                          ? _buildMetricCard(
+                              metrics[row * 2 + column],
+                              compact: true,
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
+                ],
               ),
-            )
-            .toList(),
+            ),
+          ],
+        ],
       );
     }
 
@@ -278,78 +336,8 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
   }
 
   Widget _buildMetricCard(_ResMetric metric, {required bool compact}) {
-    return Container(
-      constraints: BoxConstraints(minHeight: compact ? 86 : 96),
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 14 : 18,
-        vertical: compact ? 14 : 16,
-      ),
-      decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _outline),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            height: 42,
-            width: 42,
-            decoration: BoxDecoration(
-              color: metric.color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(metric.icon, color: metric.color, size: 23),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  metric.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: widget.mutedText,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  metric.value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: widget.textPrimary,
-                    fontSize: compact ? 19 : 21,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  metric.helper,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: widget.mutedText, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+    return PosMetricCard(label: metric.label, value: metric.value);
   }
-
-  // ───────────────────────── Queue (master) ─────────────────────────
 
   Widget _buildQueuePanel({
     required List<Reservation> reservations,
@@ -359,15 +347,8 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
     return Container(
       decoration: BoxDecoration(
         color: _surface,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
         border: Border.all(color: _outline),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
       ),
       child: Column(
         children: [
@@ -390,38 +371,24 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
             ),
           ),
           const Divider(height: 1, color: _outline),
-          if (compact)
-            Padding(
+          // One scrolling list in both layouts. The compact branch used to
+          // render every card in a plain Column, which only worked while the
+          // whole section sat inside an outer scroll view; in a
+          // height-bounded pane it overflowed.
+          Expanded(
+            child: ListView.separated(
               padding: const EdgeInsets.all(12),
-              child: Column(
-                children: reservations
-                    .map(
-                      (r) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: _buildQueueCard(
-                          reservation: r,
-                          selected: r.id == selected?.id,
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
-            )
-          else
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.all(12),
-                itemCount: reservations.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final r = reservations[index];
-                  return _buildQueueCard(
-                    reservation: r,
-                    selected: r.id == selected?.id,
-                  );
-                },
-              ),
+              itemCount: reservations.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final r = reservations[index];
+                return _buildQueueCard(
+                  reservation: r,
+                  selected: r.id == selected?.id,
+                );
+              },
             ),
+          ),
         ],
       ),
     );
@@ -439,7 +406,11 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
 
     return InkWell(
       borderRadius: BorderRadius.circular(8),
-      onTap: () => setState(() => _selectedReservationId = reservation.id),
+      onTap: () => setState(() {
+        _selectedReservationId = reservation.id;
+        // On a narrow window, picking one is a request to see it.
+        _narrowPane = 1;
+      }),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
         width: double.infinity,
@@ -538,6 +509,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
   Widget _buildDetailPanel({
     required Reservation? reservation,
     required bool compact,
+    bool footerActions = true,
   }) {
     if (reservation == null) {
       return _buildEmptyState();
@@ -557,15 +529,8 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
     return Container(
       decoration: BoxDecoration(
         color: _surface,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
         border: Border.all(color: _outline),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
       ),
       child: Column(
         children: [
@@ -701,11 +666,116 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
               ),
             ),
           ),
-          const Divider(height: 1, color: _outline),
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: _buildActions(reservation),
+          // Wide layouts move these into the rail beside the panel; anything
+          // narrower has no room for a third column, so they stay as a footer.
+          if (footerActions) ...[
+            const Divider(height: 1, color: _outline),
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: _buildActions(reservation),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// The selected booking's actions, grouped by what they touch — the same
+  /// shape as the order detail screen's right-hand rail.
+  Widget _buildActionRail(Reservation reservation) {
+    final hasPreOrder = (reservation.preOrderItems ?? const []).isNotEmpty;
+    final serviceAvailable = DatabaseService.isServiceFeeAvailable();
+    final serviceOn = _isServiceOn(reservation);
+
+    final booking = <Widget>[
+      if (widget.onEditReservation != null)
+        PosActionButton(
+          label: 'რეზერვაციის შეცვლა',
+          icon: Icons.edit_outlined,
+          expand: true,
+          onTap: () => widget.onEditReservation!(reservation),
+        ),
+      if (widget.canAssignTable && widget.onAssignTable != null)
+        PosActionButton(
+          label: 'სუფრაზე გადაყვანა',
+          icon: Icons.table_restaurant_outlined,
+          tone: PosActionTone.caution,
+          expand: true,
+          onTap: () => widget.onAssignTable!(reservation),
+        ),
+    ];
+
+    final preOrder = <Widget>[
+      if (widget.onManagePreOrder != null)
+        PosActionButton(
+          label: 'მენიუს შეცვლა',
+          icon: Icons.restaurant_menu,
+          expand: true,
+          onTap: () => widget.onManagePreOrder!(reservation),
+        ),
+      if (widget.onViewPreOrder != null)
+        PosActionButton(
+          label: 'მენიუს ნახვა',
+          icon: Icons.visibility_outlined,
+          expand: true,
+          onTap: () => widget.onViewPreOrder!(reservation),
+        ),
+      if (serviceAvailable)
+        PosActionButton(
+          label: serviceOn
+              ? 'სერვისი ${(_serviceRateFor(reservation) * 100).toStringAsFixed(_serviceRateFor(reservation) * 100 % 1 == 0 ? 0 : 1)}%'
+              : 'სერვისი',
+          icon: serviceOn ? Icons.room_service : Icons.room_service_outlined,
+          tone: PosActionTone.money,
+          expand: true,
+          onTap: () => _toggleServiceFee(reservation),
+          // Press and hold is the only way into the rate configuration.
+          onLongPress: () => _openServiceFeeConfig(reservation),
+          trailing: Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: serviceOn
+                    ? VynicFloorTokens.occupiedDot
+                    : VynicFloorTokens.freeDot,
+                shape: BoxShape.circle,
+              ),
+            ),
           ),
+        ),
+    ];
+
+    final kitchen = <Widget>[
+      if (widget.onSendKitchenCheck != null)
+        PosActionButton(
+          label: 'სამზარეულოში გაგზავნა',
+          icon: Icons.outbox_outlined,
+          expand: true,
+          onTap: hasPreOrder
+              ? () => widget.onSendKitchenCheck!(reservation)
+              : null,
+        ),
+      PosActionButton(
+        label: 'ჩეკის ბეჭდვა',
+        icon: Icons.receipt_long_outlined,
+        expand: true,
+        onTap: hasPreOrder ? () => _printReservationReceipt(reservation) : null,
+      ),
+    ];
+
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (booking.isNotEmpty)
+            _RailGroup(title: 'რეზერვაცია', children: booking),
+          if (preOrder.isNotEmpty)
+            _RailGroup(title: 'მენიუ', children: preOrder),
+          if (kitchen.isNotEmpty)
+            _RailGroup(title: 'ბეჭდვა', children: kitchen),
         ],
       ),
     );
@@ -783,36 +853,16 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
     bool primary = false,
     Color? color,
   }) {
-    if (primary) {
-      return ElevatedButton.icon(
-        onPressed: onTap,
-        icon: Icon(icon, size: 18),
-        label: Text(label),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color ?? _accent,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: const Color(0xFFE5EAF1),
-          disabledForegroundColor: widget.mutedText,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
-        ),
-      );
-    }
-    final tint = color ?? _accent;
-    return OutlinedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, size: 18),
-      label: Text(label),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: tint,
-        disabledForegroundColor: widget.mutedText,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        side: BorderSide(color: tint.withValues(alpha: 0.3)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
-      ),
+    return PosActionButton(
+      label: label,
+      icon: icon,
+      onTap: onTap,
+      // „primary" used to mean a filled teal button, and there were two of
+      // them competing in the same Wrap. Both are money-shaped actions, so
+      // they take the money tint and nothing on this row is filled.
+      tone: primary || color != null
+          ? PosActionTone.money
+          : PosActionTone.neutral,
     );
   }
 
@@ -820,7 +870,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
     return Container(
       decoration: BoxDecoration(
         color: _surface,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
         border: Border.all(color: _outline),
       ),
       child: Column(
@@ -938,7 +988,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: _surface,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
         border: Border.all(color: _outline),
       ),
       alignment: Alignment.topLeft,
@@ -967,7 +1017,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFFF2F5F9),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
         border: Border.all(color: _outline),
       ),
       child: Column(
@@ -1072,24 +1122,10 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
   }
 
   Widget _buildStatusChip(String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.24)),
-      ),
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-    );
+    if (color == _danger) return PosStatusPill.alert(label);
+    if (color == _success) return PosStatusPill.done(label);
+    if (color == _warning) return PosStatusPill.active(label);
+    return PosStatusPill.booked(label);
   }
 
   Widget _buildTableHeader(String label) {
@@ -1340,4 +1376,32 @@ class _ResMetric {
   final String value;
   final String helper;
   final Color color;
+}
+
+/// One titled block of rail buttons.
+class _RailGroup extends StatelessWidget {
+  const _RailGroup({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 2, bottom: 8),
+            child: PosSectionLabel(title),
+          ),
+          for (var i = 0; i < children.length; i++) ...[
+            if (i > 0) const SizedBox(height: 10),
+            children[i],
+          ],
+        ],
+      ),
+    );
+  }
 }

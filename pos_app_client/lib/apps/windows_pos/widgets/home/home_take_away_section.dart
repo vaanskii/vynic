@@ -3,6 +3,9 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import 'package:vynic/apps/windows_pos/widgets/shared/pos_surface.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/user.dart';
@@ -41,13 +44,20 @@ class HomeTakeAwaySection extends StatefulWidget {
 class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
   String? _selectedReservationId;
 
-  static const Color _accent = Color(0xFF0F766E);
-  static const Color _success = Color(0xFF047857);
-  static const Color _warning = Color(0xFFB45309);
-  static const Color _danger = Color(0xFFB91C1C);
-  static const Color _surface = Color(0xFFFFFFFF);
-  static const Color _surfaceAlt = Color(0xFFF7F8FB);
-  static const Color _outline = Color(0xFFDDE4ED);
+  /// Which pane a narrow window is showing: 0 = the queue, 1 = the selected
+  /// take-away. Wide windows show both and ignore this.
+  int _narrowPane = 0;
+
+  // The screen used to carry its own teal-and-slate palette, so the same
+  // concepts looked different here than on the floor or the order page. It
+  // draws from the shared POS tokens now.
+  static const Color _accent = VynicFloorTokens.accentStrong;
+  static const Color _success = VynicFloorTokens.accentText;
+  static const Color _warning = VynicFloorTokens.occupiedValue;
+  static const Color _danger = VynicFloorTokens.dangerText;
+  static const Color _surface = VynicFloorTokens.panel;
+  static const Color _surfaceAlt = VynicFloorTokens.metricFill;
+  static const Color _outline = VynicFloorTokens.panelBorder;
 
   @override
   Widget build(BuildContext context) {
@@ -93,16 +103,22 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
       builder: (context, constraints) {
         final platformMobile =
             !kIsWeb && (Platform.isAndroid || Platform.isIOS);
-        final isCompact = platformMobile || constraints.maxWidth < 980;
+        // Only a genuine phone/tablet gets the single-pane layout. Desktop
+        // windows are never laid out below PosScaledSurface.designSize, so
+        // the three-column layout always has the room it needs.
+        final isCompact = platformMobile;
 
         if (isCompact) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(12, 14, 12, 92),
+          // Two panes, one at a time, each filling the height. Stacking them
+          // in a scroll pushed the detail below the fold, so tapping a
+          // take-away appeared to do nothing.
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildTakeAwayHeader(compact: true),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 _buildMetricGrid(
                   activeCount: activeCount,
                   completedCount: completedCount,
@@ -110,22 +126,38 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                   totalAmount: totalAmount,
                   compact: true,
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 if (orderedTakeaways.isEmpty)
-                  _buildTakeAwayEmptyState()
+                  Expanded(child: _buildTakeAwayEmptyState())
                 else ...[
-                  _buildTakeAwayQueuePanel(
-                    reservations: orderedTakeaways,
-                    selectedReservation: selectedReservation,
-                    compact: true,
+                  PosPaneSwitch(
+                    labels: const ['სია', 'დეტალები'],
+                    selectedIndex: _narrowPane,
+                    onSelected: (index) => setState(() => _narrowPane = index),
                   ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    height: 620,
-                    child: _buildTakeAwayDetailPanel(
-                      reservation: selectedReservation,
-                      compact: true,
-                    ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: _narrowPane == 0
+                        ? _buildTakeAwayQueuePanel(
+                            reservations: orderedTakeaways,
+                            selectedReservation: selectedReservation,
+                            compact: true,
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                child: _buildTakeAwayDetailPanel(
+                                  reservation: selectedReservation,
+                                  compact: true,
+                                ),
+                              ),
+                              if (selectedReservation != null) ...[
+                                const SizedBox(height: 12),
+                                _buildTakeAwayActionRail(selectedReservation),
+                              ],
+                            ],
+                          ),
                   ),
                 ],
               ],
@@ -153,7 +185,9 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     SizedBox(
-                      width: constraints.maxWidth < 1200 ? 340 : 380,
+                      // The rail takes a column of its own, so the queue
+                      // gives up its wider setting to pay for it.
+                      width: constraints.maxWidth < 1400 ? 340 : 380,
                       child: _buildTakeAwayQueuePanel(
                         reservations: orderedTakeaways,
                         selectedReservation: selectedReservation,
@@ -167,6 +201,13 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                         compact: false,
                       ),
                     ),
+                    if (selectedReservation != null) ...[
+                      const SizedBox(width: 14),
+                      SizedBox(
+                        width: 250,
+                        child: _buildTakeAwayActionRail(selectedReservation),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -275,27 +316,6 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
         ? '${trimmed.substring(0, 24)}…'
         : trimmed;
     return 'გატანა - $preview';
-  }
-
-  void _openTakeAwayOrderDetails(Reservation reservation) {
-    final orderId = reservation.linkedOrderId;
-    if (orderId == null) {
-      unawaited(showErrorToast(context, 'შეკვეთა ჯერ არ არის შექმნილი'));
-      return;
-    }
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            OrderDetailScreen(user: widget.user, orderId: orderId),
-      ),
-    ).then((_) async {
-      await widget.onRefreshRequested();
-      if (mounted) {
-        setState(() {});
-      }
-    });
   }
 
   Future<void> _cancelTakeAwayOrder(Reservation reservation) async {
@@ -482,6 +502,17 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
     );
   }
 
+  bool _isTakeAwayFinalized(Reservation reservation) {
+    final orderStatus = _linkedOrderForReservation(
+      reservation,
+    )?.status.toLowerCase();
+    final status = orderStatus ?? reservation.status.toLowerCase();
+    return status == 'completed' ||
+        status == 'paid' ||
+        status == 'closed' ||
+        status == 'cancelled';
+  }
+
   List<String> _buildTakeAwayFinalReceiptLines(
     Order order,
     TablePaymentSelection selection,
@@ -516,6 +547,27 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
     return '$datePart $timePart';
   }
 
+  void _openTakeAwayOrderDetails(Reservation reservation) {
+    final orderId = reservation.linkedOrderId;
+    if (orderId == null) {
+      unawaited(showErrorToast(context, 'შეკვეთა ჯერ არ არის შექმნილი'));
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            OrderDetailScreen(user: widget.user, orderId: orderId),
+      ),
+    ).then((_) async {
+      await widget.onRefreshRequested();
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
   Future<void> _openNumberKeyboardSheet({
     required TextEditingController controller,
     required String title,
@@ -539,53 +591,14 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
   }
 
   Widget _buildTakeAwayHeader({required bool compact}) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'გატანები',
-                style: TextStyle(
-                  color: widget.textPrimary,
-                  fontSize: compact ? 24 : 28,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'დღევანდელი შეკვეთების მართვა და სტატუსების კონტროლი',
-                style: TextStyle(
-                  color: widget.mutedText,
-                  fontSize: compact ? 13 : 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 16),
-        ElevatedButton.icon(
-          onPressed: _startTakeAwayFlow,
-          icon: const Icon(Icons.add, size: 19),
-          label: Text(compact ? 'ახალი' : 'ახალი გატანა'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _accent,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            padding: EdgeInsets.symmetric(
-              horizontal: compact ? 14 : 22,
-              vertical: compact ? 13 : 16,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        ),
-      ],
+    return PosPageHeading(
+      title: 'გატანები',
+      subtitle: 'დღევანდელი შეკვეთების მართვა და სტატუსების კონტროლი.',
+      trailing: PosPrimaryButton(
+        label: compact ? 'ახალი' : 'ახალი გატანა',
+        icon: Icons.add,
+        onTap: _startTakeAwayFlow,
+      ),
     );
   }
 
@@ -602,14 +615,14 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
         label: 'აქტიური შეკვეთები',
         value: '$activeCount',
         helper: 'დღეს',
-        color: _accent,
+        color: VynicFloorTokens.text,
       ),
       _TakeAwayMetricData(
         icon: Icons.check_circle_outline,
         label: 'გადახდილი',
         value: '$completedCount',
         helper: 'დასრულებულია',
-        color: _success,
+        color: VynicFloorTokens.text,
       ),
       _TakeAwayMetricData(
         icon: Icons.schedule_outlined,
@@ -623,20 +636,40 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
         label: 'დღიური შემოსავალი',
         value: '₾${totalAmount.toStringAsFixed(2)}',
         helper: '${widget.takeAwayReservations.length} შეკვეთა',
-        color: const Color(0xFF7C3AED),
+        color: VynicFloorTokens.text,
       ),
     ];
 
     if (compact) {
+      // Two across rather than four stacked: four full-width cards ate most
+      // of a 700px-tall window before the panes below them got any height.
       return Column(
-        children: metrics
-            .map(
-              (metric) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _buildMetricCard(metric, compact: true),
+        children: [
+          for (var row = 0; row < (metrics.length + 1) ~/ 2; row++) ...[
+            if (row > 0) const SizedBox(height: 10),
+            // IntrinsicHeight, not a stretched Row: this sits in a
+            // Column with no height budget, and stretch needs a
+            // bounded cross axis.
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var column = 0; column < 2; column++) ...[
+                    if (column > 0) const SizedBox(width: 10),
+                    Expanded(
+                      child: row * 2 + column < metrics.length
+                          ? _buildMetricCard(
+                              metrics[row * 2 + column],
+                              compact: true,
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
+                ],
               ),
-            )
-            .toList(),
+            ),
+          ],
+        ],
       );
     }
 
@@ -657,74 +690,12 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
   }
 
   Widget _buildMetricCard(_TakeAwayMetricData metric, {required bool compact}) {
-    return Container(
-      constraints: BoxConstraints(minHeight: compact ? 86 : 96),
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 14 : 18,
-        vertical: compact ? 14 : 16,
-      ),
-      decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _outline),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            height: 42,
-            width: 42,
-            decoration: BoxDecoration(
-              color: metric.color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(metric.icon, color: metric.color, size: 23),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  metric.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: widget.mutedText,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  metric.value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: widget.textPrimary,
-                    fontSize: compact ? 19 : 21,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  metric.helper,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: widget.mutedText, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return PosMetricCard(
+      label: metric.label,
+      value: metric.value,
+      // Only the figures that mean something is wrong or outstanding get a
+      // colour; the rest stay plain so the coloured one actually stands out.
+      tone: metric.color == VynicFloorTokens.text ? null : metric.color,
     );
   }
 
@@ -736,15 +707,8 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
     return Container(
       decoration: BoxDecoration(
         color: _surface,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
         border: Border.all(color: _outline),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
       ),
       child: Column(
         children: [
@@ -767,26 +731,12 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
             ),
           ),
           const Divider(height: 1, color: _outline),
+          // One scrolling list in both layouts. The compact branch used
+          // to render every card in a plain Column, which only worked
+          // while the whole section sat inside an outer scroll view;
+          // in a height-bounded pane it overflowed.
           if (reservations.isEmpty)
             Expanded(child: _buildTakeAwayEmptyState())
-          else if (compact)
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                children: reservations
-                    .map(
-                      (reservation) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: _buildQueueCard(
-                          reservation: reservation,
-                          selected: reservation.id == selectedReservation?.id,
-                          compact: true,
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
-            )
           else
             Expanded(
               child: ListView.separated(
@@ -822,7 +772,11 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
 
     return InkWell(
       borderRadius: BorderRadius.circular(8),
-      onTap: () => setState(() => _selectedReservationId = reservation.id),
+      onTap: () => setState(() {
+        _selectedReservationId = reservation.id;
+        // On a narrow window, picking one is a request to see it.
+        _narrowPane = 1;
+      }),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
         width: double.infinity,
@@ -934,15 +888,8 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
     return Container(
       decoration: BoxDecoration(
         color: _surface,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
         border: Border.all(color: _outline),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
       ),
       child: Column(
         children: [
@@ -1079,34 +1026,6 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
               ),
             ),
           ),
-          const Divider(height: 1, color: _outline),
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: compact
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildEditOrderButton(reservation),
-                      const SizedBox(height: 8),
-                      _buildCloseOrderButton(reservation),
-                      if (widget.user.isManager) ...[
-                        const SizedBox(height: 8),
-                        _buildCancelOrderButton(reservation),
-                      ],
-                    ],
-                  )
-                : Row(
-                    children: [
-                      Expanded(child: _buildEditOrderButton(reservation)),
-                      const SizedBox(width: 10),
-                      Expanded(child: _buildCloseOrderButton(reservation)),
-                      if (widget.user.isManager) ...[
-                        const SizedBox(width: 10),
-                        Expanded(child: _buildCancelOrderButton(reservation)),
-                      ],
-                    ],
-                  ),
-          ),
         ],
       ),
     );
@@ -1116,7 +1035,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
     return Container(
       decoration: BoxDecoration(
         color: _surface,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
         border: Border.all(color: _outline),
       ),
       child: Column(
@@ -1153,7 +1072,9 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                   vertical: 15,
                 ),
                 decoration: const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: Color(0xFFE8EDF4))),
+                  border: Border(
+                    bottom: BorderSide(color: VynicFloorTokens.divider),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -1234,7 +1155,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: _surface,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
         border: Border.all(color: _outline),
       ),
       alignment: Alignment.topLeft,
@@ -1255,7 +1176,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFFF2F5F9),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
         border: Border.all(color: _outline),
       ),
       child: Column(
@@ -1325,80 +1246,56 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
   }
 
   Widget _buildStatusChip(String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.24)),
+    if (color == _danger) return PosStatusPill.alert(label);
+    if (color == _success) return PosStatusPill.done(label);
+    if (color == _warning) return PosStatusPill.active(label);
+    return PosStatusPill.booked(label);
+  }
+
+  /// What you can do with the selected take-away, grouped by what it touches
+  /// — the same rail the order detail screen uses.
+  ///
+  /// These used to be a row of buttons under the preview, which meant the
+  /// detail and the actions competed for the same strip of width and the row
+  /// reflowed as the window changed.
+  Widget _buildTakeAwayActionRail(Reservation? reservation) {
+    if (reservation == null) {
+      return const SizedBox.shrink();
+    }
+    final hasOrder = reservation.linkedOrderId != null;
+    final open = hasOrder && !_isTakeAwayFinalized(reservation);
+
+    final buttons = <Widget>[
+      PosActionButton(
+        label: 'სრული დეტალები',
+        icon: Icons.manage_search_outlined,
+        expand: true,
+        onTap: hasOrder ? () => _openTakeAwayOrderDetails(reservation) : null,
       ),
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
+      // Closing takes the money, so it reads as the money tone rather than
+      // sharing a red with „გაუქმება".
+      PosActionButton(
+        label: 'შეკვეთის დახურვა',
+        icon: Icons.check_circle_outline,
+        tone: PosActionTone.money,
+        expand: true,
+        onTap: open ? () => _closeTakeAwayOrder(reservation) : null,
+      ),
+      if (widget.user.isManager)
+        PosActionButton(
+          label: 'გაუქმება',
+          icon: Icons.cancel_outlined,
+          tone: PosActionTone.danger,
+          expand: true,
+          onTap: open ? () => _cancelTakeAwayOrder(reservation) : null,
         ),
-      ),
-    );
-  }
+    ];
 
-  Widget _buildEditOrderButton(Reservation reservation) {
-    final hasOrder = reservation.linkedOrderId != null;
-    final canOpen = hasOrder;
-    return ElevatedButton.icon(
-      onPressed: canOpen ? () => _openTakeAwayOrderDetails(reservation) : null,
-      icon: const Icon(Icons.manage_search_outlined),
-      label: const Text('დეტალები'),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: _accent,
-        foregroundColor: Colors.white,
-        disabledBackgroundColor: const Color(0xFFE5EAF1),
-        disabledForegroundColor: widget.mutedText,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
-      ),
-    );
-  }
-
-  Widget _buildCloseOrderButton(Reservation reservation) {
-    final hasOrder = reservation.linkedOrderId != null;
-    final canClose = hasOrder && !_isTakeAwayFinalized(reservation);
-    return ElevatedButton.icon(
-      onPressed: canClose ? () => _closeTakeAwayOrder(reservation) : null,
-      icon: const Icon(Icons.check_circle_outline),
-      label: const Text('შეკვეთის დახურვა'),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: _danger,
-        foregroundColor: Colors.white,
-        disabledBackgroundColor: const Color(0xFFE5EAF1),
-        disabledForegroundColor: widget.mutedText,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
-      ),
-    );
-  }
-
-  Widget _buildCancelOrderButton(Reservation reservation) {
-    final hasOrder = reservation.linkedOrderId != null;
-    final canCancel = hasOrder && !_isTakeAwayFinalized(reservation);
-    return OutlinedButton.icon(
-      onPressed: canCancel ? () => _cancelTakeAwayOrder(reservation) : null,
-      icon: const Icon(Icons.cancel_outlined),
-      label: const Text('გაუქმება'),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: _danger,
-        disabledForegroundColor: widget.mutedText,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-        side: BorderSide(color: _danger.withValues(alpha: 0.28)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [_RailGroup(title: 'შეკვეთა', children: buttons)],
       ),
     );
   }
@@ -1434,17 +1331,6 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
       minute,
     );
     return pickupDateTime.isBefore(DateTime.now());
-  }
-
-  bool _isTakeAwayFinalized(Reservation reservation) {
-    final orderStatus = _linkedOrderForReservation(
-      reservation,
-    )?.status.toLowerCase();
-    final status = orderStatus ?? reservation.status.toLowerCase();
-    return status == 'completed' ||
-        status == 'paid' ||
-        status == 'closed' ||
-        status == 'cancelled';
   }
 
   String _takeAwayCustomerName(Reservation reservation) {
@@ -2022,6 +1908,31 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// One titled block of rail buttons.
+class _RailGroup extends StatelessWidget {
+  const _RailGroup({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 2, bottom: 8),
+          child: PosSectionLabel(title),
+        ),
+        for (var i = 0; i < children.length; i++) ...[
+          if (i > 0) const SizedBox(height: 10),
+          children[i],
+        ],
+      ],
     );
   }
 }

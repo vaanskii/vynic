@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
+import 'package:vynic/apps/windows_pos/widgets/shared/pos_surface.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/table_layouts/floor_editor/floor_editor_model.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/table_layouts/floor_editor/floor_editor_screen.dart';
 import 'package:vynic/core/models/pos_display_settings.dart';
@@ -333,7 +334,9 @@ class _AdminTableLayoutsSectionState extends State<AdminTableLayoutsSection> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            style: FilledButton.styleFrom(backgroundColor: AdminDesign.accentDark),
+            style: FilledButton.styleFrom(
+              backgroundColor: AdminDesign.accentDark,
+            ),
             child: const Text('დადასტურება'),
           ),
         ],
@@ -674,9 +677,9 @@ class _FloorPlanGridCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Switch(
+              PosToggle(
                 value: settings.floorPlanGrid,
-                activeThumbColor: AdminDesign.accentDark,
+                semanticLabel: 'ბადე',
                 // Persisted straight away: this is a one-switch preference,
                 // not part of the layout the editor saves.
                 onChanged: (value) => unawaited(

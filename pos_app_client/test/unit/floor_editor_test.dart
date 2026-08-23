@@ -40,10 +40,13 @@ void main() {
       }
     });
 
-    test('gives SVG-mapped tables real geometry from their hit boxes', () {
-      // The SVG layout stores no floor-plan objects at all; without the hit
-      // box fallback, opening it in the editor would show an empty canvas.
-      final document = EditorDocument.fromLayout(RestaurantTableLayouts.svgMap);
+    test('gives a button-grid layout real geometry to open with', () {
+      // A button-grid layout stores no floor-plan objects at all; without the
+      // fallback grid, opening it in the editor would show an empty canvas.
+      // (This used to be the SVG layout, whose tables carried hit boxes.)
+      final document = EditorDocument.fromLayout(
+        RestaurantTableLayouts.buttonGridPreview,
+      );
       final tables = document.floors.first.tables.toList();
 
       expect(tables, isNotEmpty);
@@ -54,7 +57,7 @@ void main() {
     });
 
     test('preserves legacy identity and render mode through a round trip', () {
-      const original = RestaurantTableLayouts.svgMap;
+      final original = RestaurantTableLayouts.buttonGridPreview;
       final rebuilt = EditorDocument.fromLayout(original).toLayout();
 
       expect(
@@ -90,7 +93,9 @@ void main() {
     });
 
     test('the edited floor is written as a floor plan', () {
-      final controller = _controllerFor(RestaurantTableLayouts.svgMap);
+      final controller = _controllerFor(
+        RestaurantTableLayouts.buttonGridPreview,
+      );
       final saved = controller.toLayout();
 
       final editedZone = saved.zones.firstWhere(
@@ -101,7 +106,7 @@ void main() {
       final otherZone = saved.zones.firstWhere(
         (zone) => zone.id != controller.activeFloorId,
       );
-      expect(otherZone.renderMode, TableLayoutRenderMode.svgMap);
+      expect(otherZone.renderMode, TableLayoutRenderMode.buttonGrid);
     });
   });
 

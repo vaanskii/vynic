@@ -1,4 +1,10 @@
-enum TableLayoutRenderMode { svgMap, buttonGrid, floorPlan }
+/// How a zone is drawn.
+///
+/// `svgMap` used to be a third value here, pointing at a bundled SVG drawing of
+/// the room. It was removed along with the drawings; a layout saved by an older
+/// build still says `"svgMap"` on disk and is read as [floorPlan], which is the
+/// mode that replaced it.
+enum TableLayoutRenderMode { buttonGrid, floorPlan }
 
 enum RestaurantLayoutObjectType {
   table,
@@ -227,7 +233,6 @@ class RestaurantZone {
   final String legacyFloor;
   final int displayOrder;
   final TableLayoutRenderMode renderMode;
-  final String? svgAsset;
   final double? canvasWidth;
   final double? canvasHeight;
 
@@ -237,7 +242,6 @@ class RestaurantZone {
     required this.legacyFloor,
     required this.displayOrder,
     required this.renderMode,
-    this.svgAsset,
     this.canvasWidth,
     this.canvasHeight,
   });
@@ -249,7 +253,6 @@ class RestaurantZone {
       legacyFloor: _stringValue(json['legacyFloor'], fallback: 'first'),
       displayOrder: _intValue(json['displayOrder'], fallback: 1),
       renderMode: _renderModeFromJson(json['renderMode']),
-      svgAsset: _nullableStringValue(json['svgAsset']),
       canvasWidth: _doubleValue(json['canvasWidth']),
       canvasHeight: _doubleValue(json['canvasHeight']),
     );
@@ -262,7 +265,6 @@ class RestaurantZone {
       'legacyFloor': legacyFloor,
       'displayOrder': displayOrder,
       'renderMode': renderMode.name,
-      if (svgAsset != null) 'svgAsset': svgAsset,
       if (canvasWidth != null) 'canvasWidth': canvasWidth,
       if (canvasHeight != null) 'canvasHeight': canvasHeight,
     };
@@ -277,8 +279,6 @@ class RestaurantTableDefinition {
   final String label;
   final int capacity;
   final int sortOrder;
-  final String? svgElementId;
-  final TableHitBox? hitBox;
 
   const RestaurantTableDefinition({
     required this.id,
@@ -288,12 +288,13 @@ class RestaurantTableDefinition {
     required this.label,
     required this.capacity,
     required this.sortOrder,
-    this.svgElementId,
-    this.hitBox,
   });
 
+  /// A layout saved by an older build carries `svgElementId` and `hitBox` on
+  /// every table. Both described the table's place in a bundled SVG drawing,
+  /// which no longer exists, so both are read past — the position of a table on
+  /// the plan is a [RestaurantLayoutObject] now, and editable.
   factory RestaurantTableDefinition.fromJson(Map<String, dynamic> json) {
-    final hitBoxJson = json['hitBox'];
     return RestaurantTableDefinition(
       id: _stringValue(json['id'], fallback: 'table'),
       zoneId: _stringValue(json['zoneId'], fallback: 'zone'),
@@ -302,10 +303,6 @@ class RestaurantTableDefinition {
       label: _stringValue(json['label'], fallback: 'Table'),
       capacity: _intValue(json['capacity'], fallback: 0),
       sortOrder: _intValue(json['sortOrder'], fallback: 0),
-      svgElementId: _nullableStringValue(json['svgElementId']),
-      hitBox: hitBoxJson is Map
-          ? TableHitBox.fromJson(_mapValue(hitBoxJson))
-          : null,
     );
   }
 
@@ -318,36 +315,7 @@ class RestaurantTableDefinition {
       'label': label,
       'capacity': capacity,
       'sortOrder': sortOrder,
-      if (svgElementId != null) 'svgElementId': svgElementId,
-      if (hitBox != null) 'hitBox': hitBox!.toJson(),
     };
-  }
-}
-
-class TableHitBox {
-  final double left;
-  final double top;
-  final double width;
-  final double height;
-
-  const TableHitBox({
-    required this.left,
-    required this.top,
-    required this.width,
-    required this.height,
-  });
-
-  factory TableHitBox.fromJson(Map<String, dynamic> json) {
-    return TableHitBox(
-      left: _doubleValue(json['left']) ?? 0,
-      top: _doubleValue(json['top']) ?? 0,
-      width: _doubleValue(json['width']) ?? 0,
-      height: _doubleValue(json['height']) ?? 0,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {'left': left, 'top': top, 'width': width, 'height': height};
   }
 }
 
@@ -397,6 +365,13 @@ double? _doubleValue(Object? value) {
 
 TableLayoutRenderMode _renderModeFromJson(Object? value) {
   final name = value?.toString();
+  // A terminal updated in place still has `"svgMap"` on disk from the build
+  // that drew the room from a bundled SVG. Dropping the value from the enum
+  // without this would silently demote every one of those zones to a button
+  // grid — a working floor plan replaced by a list of numbers, on update.
+  if (name == 'svgMap') {
+    return TableLayoutRenderMode.floorPlan;
+  }
   for (final mode in TableLayoutRenderMode.values) {
     if (mode.name == name) {
       return mode;
@@ -432,246 +407,313 @@ class RestaurantTableLayouts {
 
   static final available = <RestaurantTableLayout>[
     floorPlanPreview,
-    svgMap,
     buttonGridPreview,
   ];
 
-  static const svgMap = RestaurantTableLayout(
-    id: 'default-vynic-restaurant',
-    name: 'SVG floor map',
-    zones: [
-      RestaurantZone(
-        id: 'main-floor',
-        name: 'First floor',
-        legacyFloor: 'first',
-        displayOrder: 1,
-        renderMode: TableLayoutRenderMode.svgMap,
-        svgAsset: 'assets/new-floor1.svg',
-        canvasWidth: 1005,
-        canvasHeight: 1101,
-      ),
-      RestaurantZone(
-        id: 'vip-floor',
-        name: 'Second floor',
-        legacyFloor: 'second',
-        displayOrder: 2,
-        renderMode: TableLayoutRenderMode.svgMap,
-        svgAsset: 'assets/new-floor2.svg',
-        canvasWidth: 953,
-        canvasHeight: 958,
-      ),
-    ],
-    tables: [
-      RestaurantTableDefinition(
-        id: 'floor1-table1',
-        zoneId: 'main-floor',
-        legacyFloor: 'first',
-        legacyTableNumber: '1',
-        label: 'Table 1',
-        capacity: 0,
-        sortOrder: 1,
-        svgElementId: 'table1',
-        hitBox: TableHitBox(
-          left: 64.5,
-          top: 260.65,
-          width: 101.29,
-          height: 161.76,
-        ),
-      ),
-      RestaurantTableDefinition(
-        id: 'floor1-table2',
-        zoneId: 'main-floor',
-        legacyFloor: 'first',
-        legacyTableNumber: '2',
-        label: 'Table 2',
-        capacity: 0,
-        sortOrder: 2,
-        svgElementId: 'table2',
-        hitBox: TableHitBox(
-          left: 266.5,
-          top: 178.65,
-          width: 101.29,
-          height: 161.76,
-        ),
-      ),
-      RestaurantTableDefinition(
-        id: 'floor1-table3',
-        zoneId: 'main-floor',
-        legacyFloor: 'first',
-        legacyTableNumber: '3',
-        label: 'Table 3',
-        capacity: 0,
-        sortOrder: 3,
-        svgElementId: 'table3',
-        hitBox: TableHitBox(
-          left: 484.5,
-          top: 178.65,
-          width: 101.29,
-          height: 161.76,
-        ),
-      ),
-      RestaurantTableDefinition(
-        id: 'floor1-table4',
-        zoneId: 'main-floor',
-        legacyFloor: 'first',
-        legacyTableNumber: '4',
-        label: 'Table 4',
-        capacity: 0,
-        sortOrder: 4,
-        svgElementId: 'table4',
-        hitBox: TableHitBox(
-          left: 699.5,
-          top: 178.65,
-          width: 101.29,
-          height: 161.76,
-        ),
-      ),
-      RestaurantTableDefinition(
-        id: 'floor1-table5',
-        zoneId: 'main-floor',
-        legacyFloor: 'first',
-        legacyTableNumber: '5',
-        label: 'Table 5',
-        capacity: 0,
-        sortOrder: 5,
-        svgElementId: 'table5',
-        hitBox: TableHitBox(
-          left: 57.5,
-          top: 737.65,
-          width: 161.77,
-          height: 101.29,
-        ),
-      ),
-      RestaurantTableDefinition(
-        id: 'floor1-table6',
-        zoneId: 'main-floor',
-        legacyFloor: 'first',
-        legacyTableNumber: '6',
-        label: 'Table 6',
-        capacity: 0,
-        sortOrder: 6,
-        svgElementId: 'table6',
-        hitBox: TableHitBox(
-          left: 60.5,
-          top: 917.89,
-          width: 161.77,
-          height: 101.29,
-        ),
-      ),
-      RestaurantTableDefinition(
-        id: 'floor1-table7',
-        zoneId: 'main-floor',
-        legacyFloor: 'first',
-        legacyTableNumber: '7',
-        label: 'Table 7',
-        capacity: 0,
-        sortOrder: 7,
-        svgElementId: 'table7',
-        hitBox: TableHitBox(
-          left: 351.5,
-          top: 887.65,
-          width: 101.29,
-          height: 161.77,
-        ),
-      ),
-      RestaurantTableDefinition(
-        id: 'floor1-table8',
-        zoneId: 'main-floor',
-        legacyFloor: 'first',
-        legacyTableNumber: '8',
-        label: 'Table 8',
-        capacity: 0,
-        sortOrder: 8,
-        svgElementId: 'table8',
-        hitBox: TableHitBox(
-          left: 583.5,
-          top: 887.87,
-          width: 101.29,
-          height: 161.76,
-        ),
-      ),
-      RestaurantTableDefinition(
-        id: 'floor1-table9',
-        zoneId: 'main-floor',
-        legacyFloor: 'first',
-        legacyTableNumber: '9',
-        label: 'Table 9',
-        capacity: 0,
-        sortOrder: 9,
-        svgElementId: 'table9',
-        hitBox: TableHitBox(
-          left: 793.5,
-          top: 887.87,
-          width: 101.29,
-          height: 161.76,
-        ),
-      ),
-      RestaurantTableDefinition(
-        id: 'floor2-table1',
-        zoneId: 'vip-floor',
-        legacyFloor: 'second',
-        legacyTableNumber: '1',
-        label: 'VIP Zone 1',
-        capacity: 0,
-        sortOrder: 1,
-        svgElementId: 'table1',
-        hitBox: TableHitBox(
-          left: 45.23,
-          top: 719.11,
-          width: 101.29,
-          height: 161.11,
-        ),
-      ),
-      RestaurantTableDefinition(
-        id: 'floor2-table2',
-        zoneId: 'vip-floor',
-        legacyFloor: 'second',
-        legacyTableNumber: '2',
-        label: 'VIP Zone 2',
-        capacity: 0,
-        sortOrder: 2,
-        svgElementId: 'table2',
-        hitBox: TableHitBox(
-          left: 245.23,
-          top: 719.11,
-          width: 101.29,
-          height: 161.11,
-        ),
-      ),
-      RestaurantTableDefinition(
-        id: 'floor2-table3',
-        zoneId: 'vip-floor',
-        legacyFloor: 'second',
-        legacyTableNumber: '3',
-        label: 'VIP Zone 3',
-        capacity: 0,
-        sortOrder: 3,
-        svgElementId: 'table3',
-        hitBox: TableHitBox(
-          left: 445.23,
-          top: 719.11,
-          width: 101.29,
-          height: 161.11,
-        ),
-      ),
-      RestaurantTableDefinition(
-        id: 'floor2-table4',
-        zoneId: 'vip-floor',
-        legacyFloor: 'second',
-        legacyTableNumber: '4',
-        label: 'VIP Zone 4',
-        capacity: 0,
-        sortOrder: 4,
-        svgElementId: 'table4',
-        hitBox: TableHitBox(
-          left: 644.23,
-          top: 721.11,
-          width: 101.29,
-          height: 161.11,
-        ),
-      ),
-    ],
-  );
+  /// The tables the venue ships with: who they are, not where they sit.
+  ///
+  /// These used to live on a `svgMap` layout whose real job was to point at two
+  /// bundled SVG drawings, and every other layout borrowed its `tables` list.
+  /// The drawings are gone; the identities are not, because `(legacyFloor,
+  /// legacyTableNumber)` is what every order, reservation and live table row
+  /// on an existing terminal points at.
+  static const List<RestaurantTableDefinition> _defaultTables = [
+    RestaurantTableDefinition(
+      id: 'floor1-table1',
+      zoneId: 'main-floor',
+      legacyFloor: 'first',
+      legacyTableNumber: '1',
+      label: 'Table 1',
+      capacity: 0,
+      sortOrder: 1,
+    ),
+    RestaurantTableDefinition(
+      id: 'floor1-table2',
+      zoneId: 'main-floor',
+      legacyFloor: 'first',
+      legacyTableNumber: '2',
+      label: 'Table 2',
+      capacity: 0,
+      sortOrder: 2,
+    ),
+    RestaurantTableDefinition(
+      id: 'floor1-table3',
+      zoneId: 'main-floor',
+      legacyFloor: 'first',
+      legacyTableNumber: '3',
+      label: 'Table 3',
+      capacity: 0,
+      sortOrder: 3,
+    ),
+    RestaurantTableDefinition(
+      id: 'floor1-table4',
+      zoneId: 'main-floor',
+      legacyFloor: 'first',
+      legacyTableNumber: '4',
+      label: 'Table 4',
+      capacity: 0,
+      sortOrder: 4,
+    ),
+    RestaurantTableDefinition(
+      id: 'floor1-table5',
+      zoneId: 'main-floor',
+      legacyFloor: 'first',
+      legacyTableNumber: '5',
+      label: 'Table 5',
+      capacity: 0,
+      sortOrder: 5,
+    ),
+    RestaurantTableDefinition(
+      id: 'floor1-table6',
+      zoneId: 'main-floor',
+      legacyFloor: 'first',
+      legacyTableNumber: '6',
+      label: 'Table 6',
+      capacity: 0,
+      sortOrder: 6,
+    ),
+    RestaurantTableDefinition(
+      id: 'floor1-table7',
+      zoneId: 'main-floor',
+      legacyFloor: 'first',
+      legacyTableNumber: '7',
+      label: 'Table 7',
+      capacity: 0,
+      sortOrder: 7,
+    ),
+    RestaurantTableDefinition(
+      id: 'floor1-table8',
+      zoneId: 'main-floor',
+      legacyFloor: 'first',
+      legacyTableNumber: '8',
+      label: 'Table 8',
+      capacity: 0,
+      sortOrder: 8,
+    ),
+    RestaurantTableDefinition(
+      id: 'floor1-table9',
+      zoneId: 'main-floor',
+      legacyFloor: 'first',
+      legacyTableNumber: '9',
+      label: 'Table 9',
+      capacity: 0,
+      sortOrder: 9,
+    ),
+    RestaurantTableDefinition(
+      id: 'floor2-table1',
+      zoneId: 'vip-floor',
+      legacyFloor: 'second',
+      legacyTableNumber: '1',
+      label: 'VIP Zone 1',
+      capacity: 0,
+      sortOrder: 1,
+    ),
+    RestaurantTableDefinition(
+      id: 'floor2-table2',
+      zoneId: 'vip-floor',
+      legacyFloor: 'second',
+      legacyTableNumber: '2',
+      label: 'VIP Zone 2',
+      capacity: 0,
+      sortOrder: 2,
+    ),
+    RestaurantTableDefinition(
+      id: 'floor2-table3',
+      zoneId: 'vip-floor',
+      legacyFloor: 'second',
+      legacyTableNumber: '3',
+      label: 'VIP Zone 3',
+      capacity: 0,
+      sortOrder: 3,
+    ),
+    RestaurantTableDefinition(
+      id: 'floor2-table4',
+      zoneId: 'vip-floor',
+      legacyFloor: 'second',
+      legacyTableNumber: '4',
+      label: 'VIP Zone 4',
+      capacity: 0,
+      sortOrder: 4,
+    ),
+  ];
+
+  /// Where those tables sit on the plan.
+  ///
+  /// The numbers were the SVG hit-boxes, which is where they came from
+  /// originally — but they are the plan's own coordinates now, editable in the
+  /// floor editor like any other object, and nothing re-derives them from a
+  /// drawing.
+  static const List<RestaurantLayoutObject> _defaultTableObjects = [
+    RestaurantLayoutObject(
+      id: 'floor1-table1-visual',
+      zoneId: 'main-floor',
+      type: RestaurantLayoutObjectType.table,
+      label: 'Table 1',
+      x: 64.5,
+      y: 260.65,
+      width: 101.29,
+      height: 161.76,
+      sortOrder: 1,
+      tableId: 'floor1-table1',
+      tableShape: RestaurantTableShape.circle,
+    ),
+    RestaurantLayoutObject(
+      id: 'floor1-table2-visual',
+      zoneId: 'main-floor',
+      type: RestaurantLayoutObjectType.table,
+      label: 'Table 2',
+      x: 266.5,
+      y: 178.65,
+      width: 101.29,
+      height: 161.76,
+      sortOrder: 2,
+      tableId: 'floor1-table2',
+      tableShape: RestaurantTableShape.rectangle,
+    ),
+    RestaurantLayoutObject(
+      id: 'floor1-table3-visual',
+      zoneId: 'main-floor',
+      type: RestaurantLayoutObjectType.table,
+      label: 'Table 3',
+      x: 484.5,
+      y: 178.65,
+      width: 101.29,
+      height: 161.76,
+      sortOrder: 3,
+      tableId: 'floor1-table3',
+      tableShape: RestaurantTableShape.circle,
+    ),
+    RestaurantLayoutObject(
+      id: 'floor1-table4-visual',
+      zoneId: 'main-floor',
+      type: RestaurantLayoutObjectType.table,
+      label: 'Table 4',
+      x: 699.5,
+      y: 178.65,
+      width: 101.29,
+      height: 161.76,
+      sortOrder: 4,
+      tableId: 'floor1-table4',
+      tableShape: RestaurantTableShape.rectangle,
+    ),
+    RestaurantLayoutObject(
+      id: 'floor1-table5-visual',
+      zoneId: 'main-floor',
+      type: RestaurantLayoutObjectType.table,
+      label: 'Table 5',
+      x: 57.5,
+      y: 737.65,
+      width: 161.77,
+      height: 101.29,
+      sortOrder: 5,
+      tableId: 'floor1-table5',
+      tableShape: RestaurantTableShape.circle,
+    ),
+    RestaurantLayoutObject(
+      id: 'floor1-table6-visual',
+      zoneId: 'main-floor',
+      type: RestaurantLayoutObjectType.table,
+      label: 'Table 6',
+      x: 60.5,
+      y: 917.89,
+      width: 161.77,
+      height: 101.29,
+      sortOrder: 6,
+      tableId: 'floor1-table6',
+      tableShape: RestaurantTableShape.rectangle,
+    ),
+    RestaurantLayoutObject(
+      id: 'floor1-table7-visual',
+      zoneId: 'main-floor',
+      type: RestaurantLayoutObjectType.table,
+      label: 'Table 7',
+      x: 351.5,
+      y: 887.65,
+      width: 101.29,
+      height: 161.77,
+      sortOrder: 7,
+      tableId: 'floor1-table7',
+      tableShape: RestaurantTableShape.circle,
+    ),
+    RestaurantLayoutObject(
+      id: 'floor1-table8-visual',
+      zoneId: 'main-floor',
+      type: RestaurantLayoutObjectType.table,
+      label: 'Table 8',
+      x: 583.5,
+      y: 887.87,
+      width: 101.29,
+      height: 161.76,
+      sortOrder: 8,
+      tableId: 'floor1-table8',
+      tableShape: RestaurantTableShape.rectangle,
+    ),
+    RestaurantLayoutObject(
+      id: 'floor1-table9-visual',
+      zoneId: 'main-floor',
+      type: RestaurantLayoutObjectType.table,
+      label: 'Table 9',
+      x: 793.5,
+      y: 887.87,
+      width: 101.29,
+      height: 161.76,
+      sortOrder: 9,
+      tableId: 'floor1-table9',
+      tableShape: RestaurantTableShape.circle,
+    ),
+    RestaurantLayoutObject(
+      id: 'floor2-table1-visual',
+      zoneId: 'vip-floor',
+      type: RestaurantLayoutObjectType.table,
+      label: 'VIP Zone 1',
+      x: 45.23,
+      y: 719.11,
+      width: 101.29,
+      height: 161.11,
+      sortOrder: 1,
+      tableId: 'floor2-table1',
+      tableShape: RestaurantTableShape.circle,
+    ),
+    RestaurantLayoutObject(
+      id: 'floor2-table2-visual',
+      zoneId: 'vip-floor',
+      type: RestaurantLayoutObjectType.table,
+      label: 'VIP Zone 2',
+      x: 245.23,
+      y: 719.11,
+      width: 101.29,
+      height: 161.11,
+      sortOrder: 2,
+      tableId: 'floor2-table2',
+      tableShape: RestaurantTableShape.rectangle,
+    ),
+    RestaurantLayoutObject(
+      id: 'floor2-table3-visual',
+      zoneId: 'vip-floor',
+      type: RestaurantLayoutObjectType.table,
+      label: 'VIP Zone 3',
+      x: 445.23,
+      y: 719.11,
+      width: 101.29,
+      height: 161.11,
+      sortOrder: 3,
+      tableId: 'floor2-table3',
+      tableShape: RestaurantTableShape.circle,
+    ),
+    RestaurantLayoutObject(
+      id: 'floor2-table4-visual',
+      zoneId: 'vip-floor',
+      type: RestaurantLayoutObjectType.table,
+      label: 'VIP Zone 4',
+      x: 644.23,
+      y: 721.11,
+      width: 101.29,
+      height: 161.11,
+      sortOrder: 4,
+      tableId: 'floor2-table4',
+      tableShape: RestaurantTableShape.rectangle,
+    ),
+  ];
 
   static final buttonGridPreview = RestaurantTableLayout(
     id: 'button-grid-preview',
@@ -692,7 +734,7 @@ class RestaurantTableLayouts {
         renderMode: TableLayoutRenderMode.buttonGrid,
       ),
     ],
-    tables: svgMap.tables,
+    tables: _defaultTables,
   );
 
   static final floorPlanPreview = RestaurantTableLayout(
@@ -718,10 +760,9 @@ class RestaurantTableLayouts {
         canvasHeight: 958,
       ),
     ],
-    tables: svgMap.tables,
+    tables: _defaultTables,
     objects: [
-      ..._objectsFromTables(svgMap.tablesForZone('main-floor'), 'main-floor'),
-      ..._objectsFromTables(svgMap.tablesForZone('vip-floor'), 'vip-floor'),
+      ..._defaultTableObjects,
       const RestaurantLayoutObject(
         id: 'main-floor-entrance',
         zoneId: 'main-floor',
@@ -768,28 +809,4 @@ class RestaurantTableLayouts {
       ),
     ],
   );
-
-  static List<RestaurantLayoutObject> _objectsFromTables(
-    List<RestaurantTableDefinition> tables,
-    String zoneId,
-  ) {
-    return [
-      for (final table in tables)
-        RestaurantLayoutObject(
-          id: '${table.id}-visual',
-          zoneId: zoneId,
-          type: RestaurantLayoutObjectType.table,
-          label: table.label,
-          x: table.hitBox?.left ?? (80 + table.sortOrder * 24),
-          y: table.hitBox?.top ?? (80 + table.sortOrder * 24),
-          width: table.hitBox?.width ?? 120,
-          height: table.hitBox?.height ?? 90,
-          sortOrder: table.sortOrder,
-          tableId: table.id,
-          tableShape: table.sortOrder.isEven
-              ? RestaurantTableShape.rectangle
-              : RestaurantTableShape.circle,
-        ),
-    ];
-  }
 }

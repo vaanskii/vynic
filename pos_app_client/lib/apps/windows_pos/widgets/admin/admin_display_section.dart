@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
+import 'package:vynic/apps/windows_pos/widgets/shared/pos_surface.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_form_controls.dart';
 import 'package:vynic/core/models/pos_display_settings.dart';
 
@@ -310,11 +311,7 @@ class _SwitchBlock extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Switch(
-            value: value,
-            activeThumbColor: AdminDesign.accentDark,
-            onChanged: onChanged,
-          ),
+          PosToggle(value: value, semanticLabel: title, onChanged: onChanged),
         ],
       ),
     );
@@ -411,10 +408,7 @@ class _DisplayControlBlock extends StatelessWidget {
               const SizedBox(height: 3),
               Text(
                 helper,
-                style: const TextStyle(
-                  color: AdminDesign.muted,
-                  fontSize: 12,
-                ),
+                style: const TextStyle(color: AdminDesign.muted, fontSize: 12),
               ),
             ],
           );

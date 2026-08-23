@@ -471,6 +471,117 @@ class PosStatusPill extends StatelessWidget {
   }
 }
 
+/// An on/off control that says which it is.
+///
+/// A Material `Switch` is a thin track and a small thumb, and its off state is
+/// grey on grey. On a 1024x768 terminal — where the whole POS is painted at
+/// about 0.85 and there is no HiDPI to fall back on — that comes out as a
+/// smudge: operators could not tell a toggle from a label, let alone which way
+/// it was set. So this one carries a word as well as a position, and a border
+/// heavy enough to survive being painted down.
+///
+/// The words default to „ჩართული"/„გამორთული" because that is what every one of
+/// these means on this POS; a call site with its own vocabulary can pass its
+/// own.
+class PosToggle extends StatelessWidget {
+  const PosToggle({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.onLabel = 'ჩართ.',
+    this.offLabel = 'გამორთ.',
+    this.semanticLabel,
+  });
+
+  final bool value;
+
+  /// Null disables the control, the same as a `Switch`.
+  final ValueChanged<bool>? onChanged;
+  final String onLabel;
+  final String offLabel;
+
+  /// What the toggle governs, for screen readers — the visible words only say
+  /// which way it is set.
+  final String? semanticLabel;
+
+  static const double _height = 34;
+  static const double _thumb = 24;
+  static const double _pad = 4;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onChanged != null;
+    final on = value;
+
+    final fill = !enabled
+        ? VynicFloorTokens.metricFill
+        : (on ? VynicFloorTokens.accentStrong : VynicFloorTokens.panel);
+    final border = !enabled
+        ? VynicFloorTokens.panelBorder
+        : (on
+              ? VynicFloorTokens.accentStrong
+              : VynicFloorTokens.tileBorderHover);
+    final foreground = !enabled
+        ? VynicFloorTokens.textFaint
+        : (on ? VynicFloorTokens.panel : VynicFloorTokens.textMuted);
+    final thumb = !enabled
+        ? VynicFloorTokens.freeDot
+        : (on ? VynicFloorTokens.panel : VynicFloorTokens.textFaint);
+
+    return Semantics(
+      label: semanticLabel,
+      toggled: on,
+      child: Material(
+        color: fill,
+        borderRadius: BorderRadius.circular(_height / 2),
+        child: InkWell(
+          onTap: enabled ? () => onChanged!(!on) : null,
+          borderRadius: BorderRadius.circular(_height / 2),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            curve: Curves.easeOut,
+            height: _height,
+            padding: const EdgeInsets.symmetric(horizontal: _pad),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(_height / 2),
+              // 1.5 rather than a hairline: at 0.85 paint a 1pt border lands on
+              // less than a full pixel and disappears exactly where it is most
+              // needed.
+              border: Border.all(color: border, width: 1.5),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (on) _dot(thumb),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 7),
+                  child: Text(
+                    on ? onLabel : offLabel,
+                    style: TextStyle(
+                      color: foreground,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                if (!on) _dot(thumb),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _dot(Color color) {
+    return Container(
+      width: _thumb,
+      height: _thumb,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
+  }
+}
+
 /// Switches which of two panes fills a narrow window.
 ///
 /// On a small screen the list and the detail cannot sit side by side, and

@@ -37,8 +37,6 @@ class EditorObject {
     this.capacity = 0,
     this.legacyTableNumber,
     this.tableDefinitionId,
-    this.svgElementId,
-    this.hitBox,
     this.colorHex,
     this.sortOrder = 0,
   });
@@ -66,8 +64,6 @@ class EditorObject {
 
   /// Carried through untouched so switching a legacy SVG-mapped layout into
   /// the floor-plan editor and back does not lose its SVG bindings.
-  final String? svgElementId;
-  final TableHitBox? hitBox;
 
   final String? colorHex;
   final int sortOrder;
@@ -173,8 +169,6 @@ class EditorObject {
       capacity: capacity ?? this.capacity,
       legacyTableNumber: legacyTableNumber,
       tableDefinitionId: tableDefinitionId,
-      svgElementId: svgElementId,
-      hitBox: hitBox,
       colorHex: colorHex ?? this.colorHex,
       sortOrder: sortOrder ?? this.sortOrder,
     );
@@ -221,7 +215,6 @@ class EditorFloor {
     required this.canvasHeight,
     required this.objects,
     this.renderMode = TableLayoutRenderMode.floorPlan,
-    this.svgAsset,
   });
 
   final String zoneId;
@@ -241,8 +234,6 @@ class EditorFloor {
   /// editor itself flips a floor to [TableLayoutRenderMode.floorPlan], and
   /// only for the floor whose geometry it actually edited.
   final TableLayoutRenderMode renderMode;
-
-  final String? svgAsset;
 
   Iterable<EditorObject> get tables => objects.where((o) => o.isTable);
 
@@ -284,7 +275,6 @@ class EditorFloor {
       canvasHeight: canvasHeight ?? this.canvasHeight,
       objects: objects ?? this.objects,
       renderMode: renderMode ?? this.renderMode,
-      svgAsset: svgAsset,
     );
   }
 
@@ -390,11 +380,11 @@ class EditorDocument {
     for (var i = 0; i < definitions.length; i++) {
       final definition = definitions[i];
       final visual = layout.objectForTable(definition.id);
-      // A button-grid or SVG layout has no floor-plan geometry for its
-      // tables; fall back to the SVG hit box, then to a readable grid, so
-      // opening such a layout in the editor shows real tables rather than a
-      // blank canvas.
-      final fallback = _fallbackTableRect(i, definition.hitBox);
+      // A button-grid layout has no floor-plan geometry for its tables; fall
+      // back to a readable grid so opening one in the editor shows real tables
+      // rather than a blank canvas. (This used to fall back to the SVG hit box
+      // first, which is gone along with the drawings.)
+      final fallback = _fallbackTableRect(i);
       objects.add(
         EditorObject(
           id: visual?.id ?? '${definition.id}-visual',
@@ -409,8 +399,6 @@ class EditorDocument {
           capacity: definition.capacity,
           legacyTableNumber: definition.legacyTableNumber,
           tableDefinitionId: definition.id,
-          svgElementId: definition.svgElementId,
-          hitBox: definition.hitBox,
           sortOrder: definition.sortOrder,
         ),
       );
@@ -444,20 +432,11 @@ class EditorDocument {
       canvasWidth: canvasWidth,
       canvasHeight: canvasHeight,
       renderMode: zone.renderMode,
-      svgAsset: zone.svgAsset,
       objects: objects,
     );
   }
 
-  static Rect _fallbackTableRect(int index, TableHitBox? hitBox) {
-    if (hitBox != null && hitBox.width > 0 && hitBox.height > 0) {
-      return Rect.fromLTWH(
-        hitBox.left,
-        hitBox.top,
-        hitBox.width,
-        hitBox.height,
-      );
-    }
+  static Rect _fallbackTableRect(int index) {
     const columns = 4;
     const cellWidth = 210.0;
     const cellHeight = 130.0;
@@ -489,7 +468,6 @@ class EditorDocument {
           legacyFloor: floor.legacyFloor,
           displayOrder: floor.displayOrder,
           renderMode: floor.renderMode,
-          svgAsset: floor.svgAsset,
           canvasWidth: floor.canvasWidth,
           canvasHeight: floor.canvasHeight,
         ),
@@ -513,8 +491,6 @@ class EditorDocument {
               label: object.label,
               capacity: object.capacity,
               sortOrder: tableIndex,
-              svgElementId: object.svgElementId,
-              hitBox: object.hitBox,
             ),
           );
           objects.add(

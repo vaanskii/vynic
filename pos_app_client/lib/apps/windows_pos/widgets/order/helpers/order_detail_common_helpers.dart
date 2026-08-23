@@ -3,6 +3,7 @@ import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/table_layout.dart';
 import 'package:vynic/core/services/database_service.dart';
+import 'package:vynic/core/utils/table_naming.dart';
 import 'package:vynic/apps/windows_pos/widgets/floor_plan/floor_plan_names.dart';
 
 class OrderDetailCommonHelpers {
@@ -10,11 +11,7 @@ class OrderDetailCommonHelpers {
     required String tableNumber,
     required String floor,
   }) {
-    final normalizedFloor = floor.toLowerCase();
-    if (normalizedFloor == 'second') {
-      return 'კუპე $tableNumber';
-    }
-    return 'მაგიდა $tableNumber';
+    return TableNaming.table(tableNumber: tableNumber, floor: floor);
   }
 
   /// Compact table label for headers, e.g. `T 7` or `T 6/7` for multi-table
@@ -27,21 +24,17 @@ class OrderDetailCommonHelpers {
   }
 
   static String orderTableDisplayLabel(Order order) {
-    return order.tableNumbers
-        .map(
-          (table) => tableDisplayName(tableNumber: table, floor: order.floor),
-        )
-        .join(', ');
+    return TableNaming.orderTables(order);
   }
 
+  /// What the kitchen check says the food is for.
+  ///
+  /// This used to print „5, კუპე 5" for anything on the second floor — the
+  /// number twice, once bare and once behind a word the floor editor does not
+  /// use. The kitchen now reads the same name as the floor screen, so a runner
+  /// carrying a plate is looking for a table that exists under that name.
   static String kitchenTableLabel(Order order) {
-    final normalizedFloor = order.floor.toLowerCase();
-    if (normalizedFloor == 'second') {
-      return order.tableNumbers
-          .map((table) => '$table, კუპე $table')
-          .join(' / ');
-    }
-    return order.tableNumbers.join(', ');
+    return TableNaming.orderTables(order);
   }
 
   static bool isFinalizedStatus(String status) {

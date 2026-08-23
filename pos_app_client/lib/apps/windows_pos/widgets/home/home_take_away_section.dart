@@ -1894,9 +1894,9 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
               ),
             ),
           ),
-          Switch(
+          PosToggle(
             value: _waitHere,
-            activeThumbColor: _accent,
+            semanticLabel: 'ადგილზე დაელოდება',
             onChanged: (value) {
               setState(() {
                 _waitHere = value;

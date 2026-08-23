@@ -3,8 +3,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:xml/xml.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/core/models/order.dart';
@@ -13,7 +11,6 @@ import 'package:vynic/core/models/pos_display_settings.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/table_operational_status.dart';
 import 'package:vynic/core/models/table_layout.dart';
-import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/apps/windows_pos/widgets/floor_plan/floor_plan_grouping.dart';
 import 'package:vynic/apps/windows_pos/widgets/floor_plan/floor_plan_names.dart';
 import 'package:vynic/apps/windows_pos/widgets/floor_plan/floor_plan_painters.dart';
@@ -67,11 +64,7 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
   String? selectedTable;
   final Set<String> _selectedTables = {};
   final Set<String> _focusedReservedTables = {};
-  String _svgString = '';
-  Map<String, Rect> _tablePositions = {};
   int _currentFloor = 1; // Track current floor (1 or 2)
-  double _svgWidth = 1005.0;
-  double _svgHeight = 1101.0;
   List<TableModel> _tables = [];
   Map<String, Color> _reservationColors =
       {}; // Cached colors per group (reservation/order)
@@ -81,9 +74,6 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
 
   List<RestaurantTableDefinition> get _currentTableDefinitions =>
       _layout.tablesForZone(_currentZone.id);
-
-  bool get _usesSvgMap =>
-      _currentZone.renderMode == TableLayoutRenderMode.svgMap;
 
   bool get _usesFloorPlan =>
       _currentZone.renderMode == TableLayoutRenderMode.floorPlan;
@@ -97,7 +87,6 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     super.initState();
     _currentFloor = widget.currentFloor;
     _loadTables();
-    _loadSvg();
   }
 
   @override
@@ -142,10 +131,6 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     }
   }
 
-  String _svgTableIdFor(String tableId) {
-    return _layout.tableForId(tableId)?.svgElementId ?? tableId;
-  }
-
   String? _tableNumberFromId(String tableId) {
     return _layout.tableForId(tableId)?.legacyTableNumber;
   }
@@ -171,37 +156,6 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     );
   }
 
-  Future<void> _loadSvg() async {
-    final zone = _currentZone;
-    if (!_usesSvgMap) {
-      setState(() {
-        _svgString = '';
-        _tablePositions = {};
-      });
-      return;
-    }
-
-    final asset = zone.svgAsset;
-    if (asset == null) {
-      setState(() {
-        _svgString = '';
-        _tablePositions = {};
-      });
-      return;
-    }
-
-    final svgString = await rootBundle.loadString(asset);
-    final positions = _extractTablePositions();
-
-    _svgWidth = zone.canvasWidth ?? _svgWidth;
-    _svgHeight = zone.canvasHeight ?? _svgHeight;
-
-    setState(() {
-      _svgString = svgString;
-      _tablePositions = positions;
-    });
-  }
-
   void switchFloor(int floor) {
     if (floor != _currentFloor && _layout.zoneForDisplayOrder(floor) != null) {
       setState(() {
@@ -212,7 +166,6 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
       });
       widget.onSelectionChanged?.call();
       _loadTables();
-      _loadSvg();
     }
   }
 
@@ -227,16 +180,6 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     final tables = DatabaseService.getTablesByFloor(floor);
     final reservationColors = _buildReservationColorMap();
 
-    var svgString = '';
-    var positions = <String, Rect>{};
-    if (zone.renderMode == TableLayoutRenderMode.svgMap) {
-      final asset = zone.svgAsset;
-      if (asset != null) {
-        svgString = await rootBundle.loadString(asset);
-        positions = _extractTablePositions();
-      }
-    }
-
     if (!mounted) {
       return;
     }
@@ -244,62 +187,7 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     setState(() {
       _tables = tables;
       _reservationColors = reservationColors;
-      _svgString = svgString;
-      _tablePositions = positions;
     });
-  }
-
-  Map<String, Rect> _extractTablePositions() {
-    final positions = <String, Rect>{};
-    for (final table in _currentTableDefinitions) {
-      final hitBox = table.hitBox;
-      if (hitBox == null) {
-        continue;
-      }
-      positions[table.id] = Rect.fromLTWH(
-        hitBox.left,
-        hitBox.top,
-        hitBox.width,
-        hitBox.height,
-      );
-    }
-
-    // Inflate hitboxes for better touch target size (minimum 48px recommended for touch)
-    const double minTouchSize = 48.0;
-    const double padding = 8.0; // Extra padding to make touch targets easier
-
-    final Map<String, Rect> inflatedPositions = {};
-    positions.forEach((id, rect) {
-      final center = rect.center;
-      final width = rect.width < minTouchSize ? minTouchSize : rect.width;
-      final height = rect.height < minTouchSize ? minTouchSize : rect.height;
-
-      // Add padding to make touch targets more forgiving
-      inflatedPositions[id] = Rect.fromCenter(
-        center: center,
-        width: width + padding,
-        height: height + padding,
-      );
-    });
-
-    return inflatedPositions;
-  }
-
-  /// Converts a local tap position (in scaled SVG canvas coordinates) into
-  /// the table id at that position, or null if it misses every table.
-  String? _svgTableIdAtLocalPosition(
-    Offset localPosition,
-    double scaleX,
-    double scaleY,
-  ) {
-    final x = localPosition.dx / scaleX;
-    final y = localPosition.dy / scaleY;
-    for (final entry in _tablePositions.entries) {
-      if (entry.value.contains(Offset(x, y))) {
-        return entry.key;
-      }
-    }
-    return null;
   }
 
   Map<String, Color> _buildReservationColorMap() {
@@ -428,53 +316,6 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     if (elapsed.inHours < 1) return '${elapsed.inMinutes} წთ';
     final minutes = elapsed.inMinutes.remainder(60).toString().padLeft(2, '0');
     return '${elapsed.inHours}:$minutes';
-  }
-
-  String _colorToHex(Color color) {
-    final rgb = color.toARGB32() & 0x00FFFFFF;
-    return '#${rgb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
-  }
-
-  String _modifySvgForSelection(String svgString) {
-    if (svgString.isEmpty) return svgString;
-
-    final document = XmlDocument.parse(svgString);
-
-    // Find and modify each table group
-    for (final tableId in tableIds) {
-      final svgTableId = _svgTableIdFor(tableId);
-      final elements = document
-          .findAllElements('g')
-          .where((element) => element.getAttribute('id') == svgTableId);
-
-      final tableModel = _getTableModel(tableId);
-      final isReserved = tableModel?.isReserved ?? false;
-
-      for (final element in elements) {
-        // Find all path elements within this table group
-        final paths = element.findAllElements('path');
-        for (final path in paths) {
-          if (isReserved) {
-            // Reserved state - unique color per reservation/order group (highest priority)
-            final color = tableModel != null
-                ? _getReservationColor(tableModel)
-                : Colors.red;
-            path.setAttribute('fill', _colorToHex(color));
-            path.setAttribute('fill-opacity', '0.8');
-          } else if (_selectedTables.contains(tableId)) {
-            // Selected state - green color
-            path.setAttribute('fill', '#047857');
-            path.setAttribute('fill-opacity', '0.7');
-          } else {
-            // Default state - white to be more visible
-            path.setAttribute('fill', '#FFFFFF');
-            path.setAttribute('fill-opacity', '1');
-          }
-        }
-      }
-    }
-
-    return document.toXmlString();
   }
 
   void _handleTableTap(String tableId) {
@@ -667,149 +508,6 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     widget.onSelectionChanged?.call();
   }
 
-  Widget _buildTableOverlay() {
-    if (_tablePositions.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Stack(
-      children: _tablePositions.entries.map((entry) {
-        final tableModel = _getTableModel(entry.key);
-        final presentation = TableStatusPresentation.of(tableModel);
-        final isReserved = presentation.isBusy;
-        final isSelected = _selectedTables.contains(entry.key);
-        final isFocused = _focusedReservedTables.contains(entry.key);
-        final Color? reservationColor = isReserved && tableModel != null
-            ? _getReservationColor(tableModel)
-            : null;
-
-        Reservation? reservation;
-        if (tableModel?.reservationId != null) {
-          reservation = DatabaseService.findReservationById(
-            tableModel!.reservationId!,
-          );
-        }
-
-        if (reservation == null && tableModel?.activeOrderId != null) {
-          final order = DatabaseService.getOrder(tableModel!.activeOrderId!);
-          if (order != null) {
-            reservation = DatabaseService.findReservationForOrder(order);
-          }
-        }
-
-        final note = reservation?.notes?.trim();
-        final overlayRect = _scaledAroundCenter(
-          entry.value,
-          _tableSizeMultiplier(),
-        );
-
-        return Positioned(
-          left: overlayRect.left,
-          top: overlayRect.top,
-          width: overlayRect.width,
-          height: overlayRect.height,
-          child: IgnorePointer(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              decoration: BoxDecoration(
-                color: isReserved
-                    ? (reservationColor ?? Colors.red).withValues(
-                        alpha: isFocused ? 0.86 : 0.68,
-                      ) // Unique per reservation/order group
-                    : isSelected
-                    ? const Color(0xFF047857).withValues(alpha: 0.68)
-                    : Colors.transparent,
-                border: Border.all(
-                  color: isReserved
-                      ? (isFocused
-                            ? const Color(0xFF0F172A)
-                            : (reservationColor ?? Colors.red))
-                      : isSelected
-                      ? const Color(0xFF047857)
-                      : Colors.grey.withValues(
-                          alpha: 0.15,
-                        ), // Very subtle border
-                  width: isFocused
-                      ? 4
-                      : isReserved
-                      ? 3
-                      : isSelected
-                      ? 2
-                      : 0.5,
-                ),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (isReserved)
-                      Icon(
-                        isFocused ? Icons.visibility : presentation.icon,
-                        color: Colors.white,
-                        size: isFocused ? 30 : 28,
-                      )
-                    else if (isSelected)
-                      const Icon(
-                        Icons.check_circle,
-                        color: Colors.white,
-                        size: 32,
-                      ),
-                    if (isReserved || isSelected) const SizedBox(height: 4),
-                    // The name set in the floor editor. scaleDown because a
-                    // marker is only as wide as its SVG hit box and a name is
-                    // free text.
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        _displayNameForTableId(entry.key),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: (isReserved || isSelected)
-                              ? Colors.white
-                              : Colors.black,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    if (isReserved) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        presentation.label,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (note != null && note.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          'ნოუთი: $note',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
   // Expose current floor getter for home screen to show floor buttons
   int get currentFloor => _currentFloor;
 
@@ -860,112 +558,6 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
   String get selectedTablesText {
     if (_selectedTables.isEmpty) return 'None';
     return _selectedTables.map(_displayNameForTableId).join(', ');
-  }
-
-  Widget _buildSvgFloorPlan() {
-    if (_svgString.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xFFC0AD7B)),
-      );
-    }
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Use dynamic SVG dimensions based on current floor
-        final svgWidth = _svgWidth;
-        final svgHeight = _svgHeight;
-        final availableWidth = constraints.maxWidth;
-        final availableHeight = constraints.maxHeight;
-
-        // Aspect-ratio preserved (uniform scale), not stretched — stretching
-        // was tried and reverted: it made the POS floor plan look visibly
-        // different from the same layout shown true-to-scale in the admin
-        // layout editor, which was more confusing than the empty side
-        // margins it was meant to fix.
-        final rawScaleX = availableWidth / svgWidth;
-        final rawScaleY = availableHeight / svgHeight;
-        final scale = rawScaleX < rawScaleY ? rawScaleX : rawScaleY;
-
-        final scaledWidth = svgWidth * scale;
-        final scaledHeight = svgHeight * scale;
-
-        return Align(
-          alignment: Alignment.topCenter,
-          child: SizedBox(
-            width: scaledWidth,
-            height: scaledHeight,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque, // Better touch detection
-              onTapUp: (details) {
-                final tableId = _svgTableIdAtLocalPosition(
-                  details.localPosition,
-                  scale,
-                  scale,
-                );
-                if (tableId != null) {
-                  _handleTableTap(tableId);
-                }
-              },
-              onLongPressStart: (details) {
-                final tableId = _svgTableIdAtLocalPosition(
-                  details.localPosition,
-                  scale,
-                  scale,
-                );
-                if (tableId != null) {
-                  _handleTableLongPress(tableId);
-                }
-              },
-              child: Stack(
-                children: [
-                  // SVG Background
-                  SizedBox(
-                    width: scaledWidth,
-                    height: scaledHeight,
-                    child: FittedBox(
-                      fit: BoxFit.contain,
-                      alignment: Alignment.topLeft,
-                      child: Builder(
-                        builder: (context) {
-                          final modifiedSvg = _modifySvgForSelection(
-                            _svgString,
-                          );
-                          return SizedBox(
-                            width: svgWidth,
-                            height: svgHeight,
-                            // Key on the rendered content so the raster is
-                            // rebuilt the moment table colors change.
-                            child: SvgPicture.string(
-                              modifiedSvg,
-                              key: ValueKey<int>(modifiedSvg.hashCode),
-                              fit: BoxFit.fill,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  // Interactive overlay
-                  SizedBox(
-                    width: scaledWidth,
-                    height: scaledHeight,
-                    child: FittedBox(
-                      fit: BoxFit.contain,
-                      alignment: Alignment.topLeft,
-                      child: SizedBox(
-                        width: svgWidth,
-                        height: svgHeight,
-                        child: _buildTableOverlay(),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
   }
 
   Widget _buildFloorPlan() {
@@ -1502,13 +1094,6 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     }
   }
 
-  Rect _scaledAroundCenter(Rect rect, double multiplier) {
-    if ((multiplier - 1).abs() < 0.001) return rect;
-    final width = rect.width * multiplier;
-    final height = rect.height * multiplier;
-    return Rect.fromCenter(center: rect.center, width: width, height: height);
-  }
-
   Widget _buildFloorPlanObject(
     RestaurantLayoutObject object,
     double scaleX,
@@ -1863,11 +1448,7 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
     return Column(
       children: [
         Expanded(
-          child: _usesSvgMap
-              ? _buildSvgFloorPlan()
-              : _usesFloorPlan
-              ? _buildFloorPlan()
-              : _buildButtonGrid(),
+          child: _usesFloorPlan ? _buildFloorPlan() : _buildButtonGrid(),
         ),
       ],
     );

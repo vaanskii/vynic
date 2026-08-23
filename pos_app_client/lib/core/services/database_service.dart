@@ -380,6 +380,9 @@ class DatabaseService {
     reservationId: reservationId,
   );
 
+  static Future<bool> completeReservationForOrder(int orderId) =>
+      ReservationRepository.completeReservationByOrderId(orderId);
+
   static Future<void> freeTable({
     required String tableNumber,
     required String floor,

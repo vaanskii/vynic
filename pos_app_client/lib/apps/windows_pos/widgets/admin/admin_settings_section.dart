@@ -118,7 +118,9 @@ class AdminSettingsSection extends StatelessWidget {
                 18,
               ),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: adminSectionMaxWidth),
+                constraints: const BoxConstraints(
+                  maxWidth: adminSectionMaxWidth,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -493,9 +495,9 @@ class AdminSettingsSection extends StatelessWidget {
             const SizedBox(height: 16),
             Row(
               children: [
-                Switch(
+                PosToggle(
                   value: serviceFeeEnabledByDefault,
-                  activeThumbColor: _accentDark,
+                  semanticLabel: 'საკომისიო ნაგულისხმევად',
                   onChanged: onServiceFeeEnabledByDefaultChanged,
                 ),
                 const SizedBox(width: 12),
@@ -539,9 +541,9 @@ class AdminSettingsSection extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                Switch(
+                PosToggle(
                   value: receiptServiceFeeLineVisible,
-                  activeThumbColor: _accentDark,
+                  semanticLabel: 'სერვისის ხაზი ჩეკზე',
                   onChanged: onReceiptServiceFeeLineVisibleChanged,
                 ),
                 const SizedBox(width: 12),
@@ -574,9 +576,9 @@ class AdminSettingsSection extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                Switch(
+                PosToggle(
                   value: closeReceiptServiceFeeLineVisible,
-                  activeThumbColor: _accentDark,
+                  semanticLabel: 'სერვისის ხაზი დახურვის ჩეკზე',
                   onChanged: onCloseReceiptServiceFeeLineVisibleChanged,
                 ),
                 const SizedBox(width: 12),
@@ -813,9 +815,9 @@ class AdminSettingsSection extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Switch(
+            PosToggle(
               value: restrictTableCloseToOwner,
-              activeThumbColor: _accentDark,
+              semanticLabel: 'მაგიდას მხოლოდ გამხსნელი ხურავს',
               onChanged: isSavingTableOwnershipSettings
                   ? null
                   : onRestrictTableCloseToOwnerChanged,

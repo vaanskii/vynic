@@ -131,6 +131,36 @@ class ReservationRepository {
     }).toList();
   }
 
+  /// Marks the booking linked to [orderId] as finished.
+  ///
+  /// The sibling of [cancelReservationByOrderId], for the case where the party
+  /// was served and the order is being closed for a reason that is not a
+  /// cancellation — items moved to another table, for instance. Leaving the
+  /// booking `confirmed` against a closed order is what blocks the day close.
+  static Future<bool> completeReservationByOrderId(int orderId) async {
+    try {
+      for (final reservation in DatabaseCore.reservationBox!.values) {
+        final matchesLinked = reservation.linkedOrderId == orderId;
+        final matchesNote =
+            reservation.notes != null &&
+            reservation.notes!.contains('Order #$orderId');
+        if (matchesLinked || matchesNote) {
+          reservation.statusEnum = ReservationStatus.completed;
+          await reservation.save();
+          return true;
+        }
+      }
+      return false;
+    } catch (error, stackTrace) {
+      developer.log(
+        'Error completing reservation by order id',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return false;
+    }
+  }
+
   static Future<bool> cancelReservationByOrderId(int orderId) async {
     try {
       for (final reservation in DatabaseCore.reservationBox!.values) {

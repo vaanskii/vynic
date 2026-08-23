@@ -22,12 +22,11 @@ class OrderDetailActionHelpers {
     required VoidCallback onPrintReceipt,
     required VoidCallback onToggleServiceFee,
     required VoidCallback onOpenServiceFeeConfig,
-    required bool receiptServiceFeeLineVisible,
-    required VoidCallback onToggleReceiptServiceFeeLine,
     required VoidCallback onStartNonFiscalClosureFlow,
     required VoidCallback onShowDiscountDialog,
     required VoidCallback onShowManualAdjustmentDialog,
     required VoidCallback onShowChangeTableDialog,
+    required VoidCallback onShowMoveItemsDialog,
     required VoidCallback onConfirmCancelOrder,
     required VoidCallback onStartTableClosureFlow,
   }) {
@@ -93,25 +92,6 @@ class OrderDetailActionHelpers {
       );
     }
 
-    if (serviceFeeAvailable && !isTakeAwayOrder && canModify) {
-      // The same admin setting as „ჩეკზე ასახვა", surfaced where the fee
-      // itself is toggled. It governs the printed row only — never the total,
-      // and never the close-table receipt, which has never carried the row.
-      secondaryActions.add(
-        OrderActionConfig(
-          id: OrderActionId.receiptServiceFeeLine,
-          label: 'ჩეკზე ასახვა',
-          icon: Icons.receipt_outlined,
-          onTap: onToggleReceiptServiceFeeLine,
-          accent: const Color(0xFF2563EB),
-          subtitle: receiptServiceFeeLineVisible
-              ? 'სერვისის ხაზი ჩეკზე ჩანს.'
-              : 'სერვისის ხაზი ჩეკზე დამალულია.',
-          emphasize: receiptServiceFeeLineVisible,
-        ),
-      );
-    }
-
     if (canNonFiscalClose) {
       secondaryActions.add(
         OrderActionConfig(
@@ -173,6 +153,21 @@ class OrderDetailActionHelpers {
             onTap: onShowChangeTableDialog,
             accent: const Color(0xFF2563EB),
             subtitle: 'გადაანაწილე შეკვეთა სხვა სუფრებზე.',
+          ),
+        );
+      }
+
+      // Offered on take-away too: „we ordered to go but we will sit down" is
+      // the case this exists for, and it only works if it runs both ways.
+      if (order.items.isNotEmpty) {
+        secondaryActions.add(
+          OrderActionConfig(
+            id: OrderActionId.moveItems,
+            label: 'პროდუქტების გადატანა',
+            icon: Icons.swap_horiz,
+            onTap: onShowMoveItemsDialog,
+            accent: const Color(0xFF2563EB),
+            subtitle: 'გადაიტანე პროდუქტები სხვა ღია შეკვეთაზე.',
           ),
         );
       }

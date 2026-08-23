@@ -118,12 +118,11 @@ OrderActionsBundle _bundle() {
     onPrintReceipt: () {},
     onToggleServiceFee: () {},
     onOpenServiceFeeConfig: () {},
-    receiptServiceFeeLineVisible: true,
-    onToggleReceiptServiceFeeLine: () {},
     onStartNonFiscalClosureFlow: () {},
     onShowDiscountDialog: () {},
     onShowManualAdjustmentDialog: () {},
     onShowChangeTableDialog: () {},
+    onShowMoveItemsDialog: () {},
     onConfirmCancelOrder: () {},
     onStartTableClosureFlow: () {},
   );
@@ -366,16 +365,26 @@ void main() {
       'ავანსი',
       'ფასის კორექცია',
       'სერვისი (10%)',
-      'ჩეკზე ასახვა',
       'სამზარეულოს ჩეკი',
       'ჩეკის დაბეჭდვა',
       'მაგიდის შეცვლა',
+      'პროდუქტების გადატანა',
       'არაფისკალური დახურვა',
       'შეკვეთის გაუქმება',
       'მაგიდის დახურვა',
     ]) {
       expect(find.text(label), findsWidgets, reason: label);
     }
+  });
+
+  testWidgets('the receipt service-fee row is an admin setting, not a rail '
+      'button', (tester) async {
+    // „ჩეკზე ასახვა" governs every receipt the venue prints, not this one
+    // order. Having it on the order rail put a house-wide setting one tap from
+    // a waiter mid-service, and made it look like a per-table choice. It lives
+    // in Settings only.
+    await _pump(tester, const Size(1440, 900));
+    expect(find.text('ჩეკზე ასახვა'), findsNothing);
   });
 
   testWidgets('press-and-hold on the service fee still opens its config', (
@@ -401,12 +410,11 @@ void main() {
       onPrintReceipt: () {},
       onToggleServiceFee: () {},
       onOpenServiceFeeConfig: () => configOpened = true,
-      receiptServiceFeeLineVisible: true,
-      onToggleReceiptServiceFeeLine: () {},
       onStartNonFiscalClosureFlow: () {},
       onShowDiscountDialog: () {},
       onShowManualAdjustmentDialog: () {},
       onShowChangeTableDialog: () {},
+      onShowMoveItemsDialog: () {},
       onConfirmCancelOrder: () {},
       onStartTableClosureFlow: () {},
     );

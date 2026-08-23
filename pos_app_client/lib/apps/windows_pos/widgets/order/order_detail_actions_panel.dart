@@ -14,11 +14,11 @@ enum OrderActionId {
   printKitchenCheck,
   printReceipt,
   toggleServiceFee,
-  receiptServiceFeeLine,
   nonFiscalClose,
   advance,
   priceAdjustment,
   changeTable,
+  moveItems,
   cancelOrder,
   closeTable,
 }
@@ -103,7 +103,6 @@ class OrderDetailActionRail extends StatelessWidget {
         tone: PosActionTone.money,
       ),
       ?_serviceFeeAction(),
-      ?_receiptLineAction(),
     ];
 
     final printActions = <OrderActionConfig>[
@@ -111,8 +110,13 @@ class OrderDetailActionRail extends StatelessWidget {
       ?actionsBundle[OrderActionId.printReceipt],
     ];
 
+    // Every action must be named here: the rail looks each one up by id rather
+    // than walking the bundle, so a config that nothing asks for is silently
+    // dropped rather than appearing at the end. Adding to the bundle is half
+    // the job.
     final tableActions = <Widget>[
       ?_action(actionsBundle[OrderActionId.changeTable]),
+      ?_action(actionsBundle[OrderActionId.moveItems]),
       ?_action(
         actionsBundle[OrderActionId.nonFiscalClose],
         tone: PosActionTone.caution,
@@ -209,36 +213,6 @@ class OrderDetailActionRail extends StatelessWidget {
           height: 8,
           decoration: BoxDecoration(
             color: order.includeServiceFee
-                ? VynicFloorTokens.occupiedDot
-                : VynicFloorTokens.freeDot,
-            shape: BoxShape.circle,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Whether the service row is printed on the receipt.
-///
-/// Display only, and separate from whether the fee is charged: the row can be
-/// hidden while the fee is still in the total.
-extension _ReceiptLineAction on OrderDetailActionRail {
-  Widget? _receiptLineAction() {
-    final action = actionsBundle[OrderActionId.receiptServiceFeeLine];
-    if (action == null) return null;
-    return PosActionButton(
-      label: action.label,
-      onTap: action.onTap,
-      tone: PosActionTone.money,
-      expand: true,
-      trailing: Padding(
-        padding: const EdgeInsets.only(left: 8),
-        child: Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: action.emphasize
                 ? VynicFloorTokens.occupiedDot
                 : VynicFloorTokens.freeDot,
             shape: BoxShape.circle,

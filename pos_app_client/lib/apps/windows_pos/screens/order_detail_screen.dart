@@ -16,12 +16,16 @@ import 'package:vynic/core/services/sync/sync_events.dart';
 import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/apps/windows_pos/widgets/comment_input_dialog.dart';
 import 'package:vynic/core/widgets/pin_button.dart';
+import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 import 'package:vynic/core/services/pos/table_payment_service.dart';
+import 'package:vynic/core/services/pos/order_item_transfer.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
+import 'package:vynic/core/utils/table_naming.dart';
 import 'package:vynic/apps/windows_pos/widgets/order/order_detail_content_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/order/order_detail_actions_panel.dart';
 import 'package:vynic/apps/windows_pos/widgets/order/order_detail_header_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/order/order_detail_side_panels.dart';
+import 'package:vynic/apps/windows_pos/widgets/order/order_move_items_dialog.dart';
 import 'package:vynic/apps/windows_pos/widgets/order/helpers/order_detail_action_helpers.dart';
 import 'package:vynic/apps/windows_pos/widgets/order/helpers/order_detail_common_helpers.dart';
 import 'package:vynic/apps/windows_pos/widgets/reservation_creation_sheet.dart';
@@ -137,13 +141,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       onPrintReceipt: _printReceipt,
       onToggleServiceFee: _toggleServiceFee,
       onOpenServiceFeeConfig: _openServiceFeeAdjustDialog,
-      receiptServiceFeeLineVisible:
-          DatabaseService.isReceiptServiceFeeLineVisible(),
-      onToggleReceiptServiceFeeLine: _toggleReceiptServiceFeeLine,
       onStartNonFiscalClosureFlow: _startNonFiscalClosureFlow,
       onShowDiscountDialog: _showDiscountDialog,
       onShowManualAdjustmentDialog: _showManualAdjustmentDialog,
       onShowChangeTableDialog: _showChangeTableDialog,
+      onShowMoveItemsDialog: _showMoveItemsDialog,
       onConfirmCancelOrder: _confirmCancelOrder,
       onStartTableClosureFlow: _startTableClosureFlow,
     );
@@ -779,22 +781,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   /// Display only: the fee stays in the total either way. It is a terminal
   /// setting rather than a per-order one, so the toast says so — changing it
   /// here changes it for every receipt this terminal prints.
-  Future<void> _toggleReceiptServiceFeeLine() async {
-    final next = !DatabaseService.isReceiptServiceFeeLineVisible();
-    await DatabaseService.setReceiptServiceFeeLineVisible(next);
-    if (!mounted) return;
-    setState(() {});
-    unawaited(
-      showPosToast(
-        context: context,
-        message: next
-            ? 'სერვისის ხაზი ჩეკზე გამოჩნდება (ყველა ჩეკზე)'
-            : 'სერვისის ხაზი ჩეკზე დაიმალება (ყველა ჩეკზე)',
-        style: PosToastStyle.info,
-      ),
-    );
-  }
-
   void _openServiceFeeAdjustDialog() {
     unawaited(_showServiceFeeAdjustDialog());
   }
@@ -1333,6 +1319,369 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         ],
       ),
     );
+  }
+
+  /// Hands some of this order's items somewhere else.
+  ///
+  /// „Change table" moves the whole order and needs a *free* table; this is the
+  /// other half — part of a bill going to an order that is already open, or to
+  /// a table or take-away opened for the purpose, in either direction. Before
+  /// it existed the only route was cancelling and re-keying, which loses the
+  /// audit trail and, on a booked table, the reservation with it.
+  Future<void> _showMoveItemsDialog() async {
+    final order = _order;
+    if (order == null) return;
+
+    if (order.items.isEmpty) {
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'შეკვეთაზე გადასატანი პროდუქტი არ არის',
+          style: PosToastStyle.info,
+        ),
+      );
+      return;
+    }
+
+    final options = _moveOptions(order);
+    if (options.isEmpty) {
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'დანიშნულება არ მოიძებნა',
+          style: PosToastStyle.info,
+        ),
+      );
+      return;
+    }
+
+    final request = await showDialog<OrderMoveRequest>(
+      context: context,
+      builder: (_) => OrderMoveItemsDialog(
+        source: order,
+        sourceLabel: _moveLabel(order),
+        options: options,
+      ),
+    );
+    if (request == null || !mounted) return;
+
+    // Opening the destination is the caller's job, not the transfer's: a move
+    // onto a table that is already open and a move onto one that has to be
+    // opened first are the same operation once the order exists.
+    final Order? destination = await _resolveMoveTarget(request.option);
+    if (destination == null || !mounted) return;
+
+    final sourceLabel = _moveLabel(order);
+    final destinationLabel = _moveLabel(destination);
+
+    final result = await OrderItemTransfer.apply(
+      source: order,
+      destination: destination,
+      moves: request.moves,
+      user: widget.user,
+      sourceLabel: sourceLabel,
+      destinationLabel: destinationLabel,
+    );
+
+    if (!mounted) return;
+
+    if (!result.ok) {
+      unawaited(
+        showPosToast(
+          context: context,
+          message: _moveErrorMessage(result.error!),
+          style: PosToastStyle.error,
+        ),
+      );
+      return;
+    }
+
+    // Everything went. The table it went from is now open with an empty bill
+    // on it, which reads as occupied on the floor and holds its booking against
+    // the day close — so it is released. Deliberately without a sale record:
+    // see `OrderItemTransfer.releaseEmptiedOrder`.
+    var released = false;
+    if (result.sourceLeftEmpty) {
+      await OrderItemTransfer.releaseEmptiedOrder(order);
+      released = true;
+    }
+
+    if (!mounted) return;
+
+    _loadOrder();
+
+    final tail = released ? ' — $sourceLabel გათავისუფლდა' : '';
+    unawaited(
+      showSuccessToast(
+        context,
+        '${result.totalQuantity} ცალი გადავიდა: $destinationLabel$tail',
+      ),
+    );
+
+    // The order this screen is showing no longer exists as an open one. Staying
+    // on it would leave the operator looking at an empty closed bill with live
+    // buttons on it.
+    if (released && mounted) {
+      Navigator.of(context).maybePop();
+    }
+  }
+
+  /// Everywhere this order's items may go: the orders that are open right now,
+  /// then every free table, then a fresh take-away.
+  ///
+  /// „Open right now" is a live table row pointing at the order, not
+  /// `getActiveOrders()`. That returns everything whose status string is not
+  /// paid/closed/cancelled, which on a real terminal includes orders abandoned
+  /// on earlier business days — a table nobody has sat at for a week, offered
+  /// as a destination with a four-figure total on it.
+  List<OrderMoveOption> _moveOptions(Order order) {
+    final liveOrderIds = <int>{
+      for (final table in DatabaseService.getAllTables())
+        if (table.activeOrderId != null) table.activeOrderId!,
+    };
+    final today = DatabaseService.getCurrentDate();
+
+    final open =
+        DatabaseService.getActiveOrders().where((candidate) {
+          if (candidate.orderId == order.orderId) return false;
+          if (OrderDetailCommonHelpers.isTakeAway(candidate)) {
+            // A take-away has no table row to vouch for it, so the business
+            // day does instead. Yesterday's uncollected order is not somewhere
+            // to put food.
+            return DateUtils.isSameDay(candidate.createdAt, today);
+          }
+          return liveOrderIds.contains(candidate.orderId);
+        }).toList()..sort((a, b) {
+          final byFloor = a.floor.compareTo(b.floor);
+          return byFloor != 0 ? byFloor : a.orderId.compareTo(b.orderId);
+        });
+
+    final options = <OrderMoveOption>[
+      for (final candidate in open)
+        OrderMoveOption(
+          target: ExistingOrderTarget(candidate),
+          label: _moveLabel(candidate),
+          detail: _openOrderDetail(candidate),
+        ),
+    ];
+
+    final freeTables =
+        DatabaseService.getAllTables()
+            .where(
+              (table) =>
+                  !table.isReserved &&
+                  table.activeOrderId == null &&
+                  DatabaseService.isTableConfigured(
+                    tableNumber: table.tableNumber,
+                    floor: table.floor,
+                  ),
+            )
+            .toList()
+          ..sort((a, b) {
+            final byFloor = a.floor.compareTo(b.floor);
+            if (byFloor != 0) return byFloor;
+            return (int.tryParse(a.tableNumber) ?? 0).compareTo(
+              int.tryParse(b.tableNumber) ?? 0,
+            );
+          });
+
+    for (final table in freeTables) {
+      final zone = TableNaming.zone(table.floor);
+      final name = TableNaming.table(
+        tableNumber: table.tableNumber,
+        floor: table.floor,
+      );
+      options.add(
+        OrderMoveOption(
+          target: FreeTableTarget(
+            tableNumber: table.tableNumber,
+            floor: table.floor,
+          ),
+          label: name,
+          detail: [
+            if (zone != null) zone,
+            // The number, even when the table has been renamed to something
+            // without one: „ფანჯარასთან" and „ტერასა" are impossible to tell
+            // apart in a list if that is all a row says.
+            '№${table.tableNumber}',
+            'თავისუფალი',
+          ].join('  ·  '),
+          isNew: true,
+        ),
+      );
+    }
+
+    options.add(
+      const OrderMoveOption(
+        target: NewTakeAwayTarget(),
+        label: 'ახალი გატანა',
+        detail: 'შეიქმნება ახალი გატანის შეკვეთა',
+        isNew: true,
+      ),
+    );
+
+    return options;
+  }
+
+  /// The second line under an open order: which one it is, where, and what is
+  /// on it.
+  ///
+  /// The order number is not decoration. Tables can be renamed to anything —
+  /// „ფანჯარასთან", „ტერასა" — and two of them in a list are then
+  /// indistinguishable. `#1756` is the one label that is always unique and is
+  /// what the operator sees on the check.
+  static String _openOrderDetail(Order order) {
+    final parts = <String>['#${order.orderId}'];
+    final zone = TableNaming.zone(order.floor);
+    if (zone != null) parts.add(zone);
+    if (!OrderDetailCommonHelpers.isTakeAway(order) &&
+        order.tableNumbers.isNotEmpty) {
+      parts.add('№${order.tableNumbers.join(", ")}');
+    }
+    parts.add('${order.items.length} პოზიცია');
+    parts.add('${order.totalAmount.toStringAsFixed(2)} ₾');
+    return parts.join('  ·  ');
+  }
+
+  /// Turns the chosen target into an order that exists, opening one if it does
+  /// not. Returns null when the operator backed out or the open failed — in
+  /// which case they have already been told why.
+  Future<Order?> _resolveMoveTarget(OrderMoveOption option) async {
+    switch (option.target) {
+      case ExistingOrderTarget(:final order):
+        return order;
+
+      case FreeTableTarget(:final tableNumber, :final floor):
+        try {
+          return await DatabaseService.createOrder(
+            tableNumbers: [tableNumber],
+            floor: floor,
+            createdBy: widget.user.username,
+            items: const [],
+          );
+        } catch (error, stackTrace) {
+          // `createOrder` throws when the table was taken between the dialog
+          // opening and the move being confirmed — a real race on a floor with
+          // several terminals, and one the operator has to be told about
+          // rather than left staring at a dialog that did nothing.
+          developer.log(
+            'Opening $floor/$tableNumber for a move failed',
+            error: error,
+            stackTrace: stackTrace,
+          );
+          if (mounted) {
+            unawaited(
+              showPosToast(
+                context: context,
+                message: '${option.label} ამასობაში დაიკავეს',
+                style: PosToastStyle.error,
+              ),
+            );
+          }
+          return null;
+        }
+
+      case NewTakeAwayTarget():
+        return _openTakeAwayForMove();
+    }
+  }
+
+  /// Opens a take-away to receive the moved items, asking who it is for.
+  ///
+  /// The name is not optional-with-a-default: a take-away with no customer on
+  /// it is one nobody can hand over at the counter. A source that is already a
+  /// take-away pre-fills its own customer, because „same people, different
+  /// bill" is the usual reason to do this.
+  Future<Order?> _openTakeAwayForMove() async {
+    final controller = TextEditingController(
+      text: _linkedReservation?.customerName.trim() ?? '',
+    );
+    try {
+      final name = await showPosKeyboardInputSheet(
+        context: context,
+        controller: controller,
+        title: 'ვისთვის არის გატანა?',
+      );
+      if (name == null || !mounted) return null;
+
+      final customer = name.trim();
+      if (customer.isEmpty) {
+        unawaited(
+          showPosToast(
+            context: context,
+            message: 'გატანას სახელი სჭირდება',
+            style: PosToastStyle.info,
+          ),
+        );
+        return null;
+      }
+
+      final now = DatabaseService.getCurrentDateTime();
+      return await DatabaseService.createTakeAwayOrder(
+        customerName: customer,
+        customerPhone: '',
+        pickupTime:
+            '${now.hour.toString().padLeft(2, '0')}:'
+            '${now.minute.toString().padLeft(2, '0')}',
+        items: const [],
+        createdBy: widget.user.username,
+      );
+    } catch (error, stackTrace) {
+      developer.log(
+        'Opening a take-away for a move failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      if (mounted) {
+        unawaited(
+          showPosToast(
+            context: context,
+            message: 'ახალი გატანა ვერ შეიქმნა',
+            style: PosToastStyle.error,
+          ),
+        );
+      }
+      return null;
+    } finally {
+      controller.dispose();
+    }
+  }
+
+  /// What an order is called on screen.
+  ///
+  /// A take-away's customer lives on its linked reservation, not on the order —
+  /// `Order.customerName` is populated from the server and is empty for one
+  /// opened here. Reading it alone made every take-away in the picker read
+  /// „გატანა", so there was no way to tell which one you were choosing.
+  static String _moveLabel(Order order) {
+    if (!OrderDetailCommonHelpers.isTakeAway(order)) {
+      return TableNaming.orderTables(order);
+    }
+    final fromOrder = order.customerName.trim();
+    final name = fromOrder.isNotEmpty
+        ? fromOrder
+        : (DatabaseService.findReservationForOrder(
+                order,
+              )?.customerName.trim() ??
+              '');
+    final slot = order.tableNumbers.isEmpty ? '' : order.tableNumbers.first;
+    if (name.isEmpty) return slot.isEmpty ? 'გატანა' : 'გატანა $slot';
+    return 'გატანა — $name';
+  }
+
+  static String _moveErrorMessage(OrderTransferError error) {
+    switch (error) {
+      case OrderTransferError.sameOrder:
+        return 'ერთსა და იმავე შეკვეთაზე გადატანა შეუძლებელია';
+      case OrderTransferError.sourceFinalized:
+        return 'ეს შეკვეთა უკვე დახურულია';
+      case OrderTransferError.destinationFinalized:
+        return 'დანიშნულების შეკვეთა უკვე დახურულია';
+      case OrderTransferError.nothingSelected:
+        return 'პროდუქტი არ არის არჩეული';
+      case OrderTransferError.quantityOutOfRange:
+        return 'არჩეული რაოდენობა შეკვეთაზე არ არის — გვერდი განახლდა';
+    }
   }
 
   Future<void> _showChangeTableDialog() async {

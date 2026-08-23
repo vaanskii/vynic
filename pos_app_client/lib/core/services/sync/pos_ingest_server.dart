@@ -980,10 +980,13 @@ class PosIngestServer {
     return 'შეკვეთა #$posOrderId განახლდა';
   }
 
+  /// The word in front of a list of table numbers in a notification.
+  ///
+  /// „კუპე" used to be hardcoded for the second floor. Where a table has a
+  /// name of its own the caller uses [TableNaming] instead of this; this is
+  /// only the generic prefix for a bare list.
   static String _tableWordForFloor(String floor) {
     switch (floor.toLowerCase()) {
-      case 'second':
-        return 'კუპე';
       case 'takeaway':
         return 'გატანა';
       default:

@@ -108,19 +108,22 @@ class SettingsRepository {
       );
     }
 
-    // Initialize printer configuration defaults
+    // Printer configuration starts empty, not from `.env`.
+    //
+    // `.env` is bundled as an asset, so it is baked into whatever build ships.
+    // Seeding from it meant a terminal installed at a customer site came up
+    // pre-configured with whichever printer IPs were in the developer's file —
+    // addresses on a network it has never been on. Silently wrong beats
+    // obviously blank only if nobody has to debug it: an empty field says „set
+    // me", `10.10.10.4` says „already done".
     if (!_settingsBox!.containsKey('printerKitchenIp')) {
-      final envValue = dotenv.env['PRINTER_KITCHEN_IP'] ?? '';
-      await _settingsBox!.put('printerKitchenIp', envValue.trim());
+      await _settingsBox!.put('printerKitchenIp', '');
     }
     if (!_settingsBox!.containsKey('printerReceiptIp')) {
-      final envValue = dotenv.env['PRINTER_RECEIPT_IP'] ?? '';
-      await _settingsBox!.put('printerReceiptIp', envValue.trim());
+      await _settingsBox!.put('printerReceiptIp', '');
     }
     if (!_settingsBox!.containsKey('printerPort')) {
-      final defaultPort =
-          int.tryParse(dotenv.env['PRINTER_PORT'] ?? '9100') ?? 9100;
-      await _settingsBox!.put('printerPort', defaultPort);
+      await _settingsBox!.put('printerPort', 9100);
     }
 
     // Initialize service fee configuration
@@ -133,11 +136,8 @@ class SettingsRepository {
 
     // Initialize localization defaults
     if (!_settingsBox!.containsKey('defaultLanguage')) {
-      final language = (dotenv.env['DEFAULT_LANGUAGE'] ?? 'ka').toLowerCase();
-      await _settingsBox!.put(
-        'defaultLanguage',
-        (language == 'en' || language == 'ka') ? language : 'ka',
-      );
+      // Georgian, not whatever the build's `.env` happened to say.
+      await _settingsBox!.put('defaultLanguage', 'ka');
     }
 
     final displayDefaults = PosDisplaySettings.defaults;
@@ -341,20 +341,20 @@ class SettingsRepository {
 
   // ==================== PRINTERS ====================
 
+  /// The kitchen printer's address, as configured in the admin panel.
+  ///
+  /// This used to fall through to `PRINTER_KITCHEN_IP` from the bundled `.env`
+  /// whenever the stored value was blank — so clearing the field in Settings
+  /// did not clear the printer, it reverted it to a build-time address. What
+  /// the admin panel shows is now what the POS uses.
   static String getKitchenPrinterIp() {
     final stored = _settingsBox!.get('printerKitchenIp');
-    if (stored is String && stored.trim().isNotEmpty) {
-      return stored.trim();
-    }
-    return (dotenv.env['PRINTER_KITCHEN_IP'] ?? '').trim();
+    return stored is String ? stored.trim() : '';
   }
 
   static String getReceiptPrinterIp() {
     final stored = _settingsBox!.get('printerReceiptIp');
-    if (stored is String && stored.trim().isNotEmpty) {
-      return stored.trim();
-    }
-    return (dotenv.env['PRINTER_RECEIPT_IP'] ?? '').trim();
+    return stored is String ? stored.trim() : '';
   }
 
   static int getPrinterPort() {

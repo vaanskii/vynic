@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/table.dart';
+import 'package:vynic/core/utils/table_naming.dart';
 
 /// Shared table-group colors and labels (matches Windows POS floor map).
 class TableGroupStyle {
@@ -79,14 +80,14 @@ class TableGroupStyle {
     if (nums.isEmpty) return '—';
     nums.sort((a, b) => (int.tryParse(a) ?? 0).compareTo(int.tryParse(b) ?? 0));
 
-    if (floor == 'second') {
-      return nums.map((n) => 'კუპე $n').join(', ');
-    }
     if (floor == 'takeaway') {
       return nums.map((n) => 'Take Away $n').join(', ');
     }
-    if (nums.length == 1) return 'მაგიდა ${nums.first}';
-    return 'მაგიდები ${nums.join(', ')}';
+    // One bill, joined with a plus. The floor no longer decides the word: the
+    // layout does, so a renamed table reads the same here as on the POS.
+    return nums
+        .map((n) => TableNaming.table(tableNumber: n, floor: order.floor))
+        .join(TableNaming.joiner);
   }
 
   static String formatTableNumbersList(Iterable<String> numbers, String floor) {
@@ -95,8 +96,8 @@ class TableGroupStyle {
           (a, b) => (int.tryParse(a) ?? 0).compareTo(int.tryParse(b) ?? 0),
         );
     if (nums.isEmpty) return '';
-    final f = floor.trim().toLowerCase();
-    if (f == 'second') return nums.map((n) => 'კუპე $n').join(', ');
-    return nums.join(', ');
+    return nums
+        .map((n) => TableNaming.table(tableNumber: n, floor: floor))
+        .join(TableNaming.joiner);
   }
 }

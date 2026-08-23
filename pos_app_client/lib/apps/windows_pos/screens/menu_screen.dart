@@ -15,16 +15,69 @@ import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_language.dart';
 import 'package:vynic/core/models/reservation_context.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
+import 'package:vynic/apps/windows_pos/widgets/shared/pos_surface.dart';
 import 'order_detail_screen.dart';
 
-const Color _menuPrimaryColor = Color(0xFF0F766E);
-const Color _menuSecondaryColor = Color(0xFF14B8A6);
-const Color _menuSurfaceColor = Color(0xFFF6F7F9);
-const Color _menuCardColor = Color(0xFFFFFFFF);
-const Color _menuBorderColor = Color(0xFFE5E7EB);
-const Color _menuTextPrimary = Color(0xFF111827);
-const Color _menuTextMuted = Color(0xFF6B7280);
-const Color _menuTextSoft = Color(0xFF9CA3AF);
+/// This screen's names for the shared floor tokens.
+///
+/// It used to carry its own palette — a saturated teal on cool grey — which is
+/// why walking from the floor into „შეკვეთის რედაქტირება" felt like changing
+/// application. The names are kept because a hundred call sites below use
+/// them; only what they point at has moved.
+///
+/// The old `_menuPrimaryColor` did two jobs at once: it was a bare foreground
+/// (prices, links, step arrows) *and* a fill behind white text (selected chips,
+/// the confirm button). One colour cannot be both in this palette, so the
+/// foreground and the tint are separate below, and the filled aubergine lives
+/// in `PosPrimaryButton` where the one filled button on a screen belongs.
+/// Mapping it to a single token would have made every one of those foregrounds
+/// either invisible or shouting.
+const Color _menuAccent = VynicFloorTokens.accentText;
+const Color _menuAccentSoft = VynicFloorTokens.accentSoft;
+const Color _menuAccentSoftBorder = Color(0xFFE2DCF2);
+
+const Color _menuSurfaceColor = VynicFloorTokens.page;
+const Color _menuCardColor = VynicFloorTokens.panel;
+const Color _menuBorderColor = VynicFloorTokens.panelBorder;
+const Color _menuTextPrimary = VynicFloorTokens.text;
+const Color _menuTextMuted = VynicFloorTokens.textMuted;
+const Color _menuTextSoft = VynicFloorTokens.textFaint;
+const Color _menuDanger = VynicFloorTokens.dangerText;
+
+// --- product card geometry --------------------------------------------------
+//
+// The grid used to size its cells with `childAspectRatio: 2.1`, which ties the
+// card's *height* to the column width. A 1200pt layout fits three columns of
+// 184.7, so every cell came out 88pt tall — for content that needs 93.6 — and
+// every dish whose name wrapped to two lines wore a yellow-and-black overflow
+// bar. The same layout at 1440 tore by 2.9pt, at 1920 not at all: whether the
+// screen was broken depended on the resolution it was opened at.
+//
+// So the height is stated instead of inferred, and the two texts inside carry
+// explicit `height:` multipliers to keep this arithmetic true rather than
+// approximately true. Nothing here can overflow at any width.
+const double _menuCardPadding = 12;
+const double _menuCardBorder = 1;
+const double _menuCardNameSize = 14;
+const double _menuCardLineHeight = 1.2;
+
+/// One line of the dish name, as the engine actually lays it out.
+///
+/// 14 x 1.2 is 16.8, but Flutter rounds every line box up to a whole logical
+/// pixel, so two lines measure 34 and not 33.6. Doing the multiplication in the
+/// obvious way left the card 0.4pt short — and the `Border.all` below, which is
+/// drawn *inside* the box, took another 2. Between them the card overflowed by
+/// 2.4pt at every resolution, which is the arithmetic being almost right.
+const double _menuCardNameLine = 17;
+const double _menuCardNameLines = 2;
+const double _menuCardGap = 6;
+const double _menuCardFooterHeight = 30;
+const double _menuCardHeight =
+    (_menuCardPadding + _menuCardBorder) * 2 +
+    _menuCardNameLine * _menuCardNameLines +
+    _menuCardGap +
+    _menuCardFooterHeight;
 
 class _CartEntry {
   final String key;
@@ -1253,8 +1306,14 @@ class _MenuScreenState extends State<MenuScreen> {
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    final compactDesktop = constraints.maxWidth < 1100;
-                    final categoryWidth = compactDesktop ? 172.0 : 210.0;
+                    // The breakpoint used to be 1100, which nothing could
+                    // reach: `PosScaledSurface` never lays this screen out
+                    // below 1200 wide, so the compact widths were dead code and
+                    // a 1024x768 terminal spent 590 of its 1200 points on
+                    // chrome — half the screen, to show three columns of
+                    // 184pt cards. Moved to where a real terminal lands.
+                    final compactDesktop = constraints.maxWidth < 1360;
+                    final categoryWidth = compactDesktop ? 180.0 : 210.0;
                     final orderPanelWidth = compactDesktop ? 340.0 : 380.0;
 
                     return Row(
@@ -1265,7 +1324,7 @@ class _MenuScreenState extends State<MenuScreen> {
                           child: _isLoading
                               ? const Center(
                                   child: CircularProgressIndicator(
-                                    color: _menuPrimaryColor,
+                                    color: _menuAccent,
                                   ),
                                 )
                               : Column(
@@ -1312,62 +1371,66 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   Widget _buildTopBar() {
-    final subtitleLines = _buildMenuSubtitleLines();
+    final subtitle = _menuSubtitle();
     return Container(
       decoration: const BoxDecoration(
         color: _menuCardColor,
         border: Border(bottom: BorderSide(color: _menuBorderColor)),
       ),
-      padding: const EdgeInsets.fromLTRB(12, 10, 16, 10),
+      padding: const EdgeInsets.fromLTRB(14, 10, 16, 10),
       child: Row(
         children: [
-          Material(
-            color: _menuSurfaceColor,
-            borderRadius: BorderRadius.circular(8),
-            child: InkWell(
-              onTap: _handleBackNavigation,
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: _menuBorderColor),
-                ),
-                child: const Icon(
-                  Icons.arrow_back,
-                  size: 20,
-                  color: _menuTextPrimary,
-                ),
-              ),
-            ),
+          _TopBarIconButton(
+            icon: Icons.arrow_back,
+            onTap: _handleBackNavigation,
           ),
           const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                _screenTitle,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: _menuTextPrimary,
+          // The context block gets a share of the bar rather than all the room
+          // it asks for. A reservation note is free text: left unbounded it
+          // used to push the search field down to nothing while the operator
+          // watched, and a long enough one tore the row outright.
+          Flexible(
+            flex: 5,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _screenTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                    color: _menuTextPrimary,
+                    height: 1.15,
+                  ),
                 ),
-              ),
-              ...subtitleLines,
-            ],
-          ),
-          const SizedBox(width: 28),
-          Expanded(child: _buildSearchField()),
-          const SizedBox(width: 14),
-          IconButton(
-            icon: Icon(
-              _currentLanguage == 'en' ? Icons.language : Icons.translate,
-              size: 26,
-              color: _menuTextPrimary,
+                if (subtitle != null) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    // Two lines is the ceiling: the bar is the one thing on
+                    // this screen whose height comes straight out of the grid
+                    // below it, and at 720 the grid has none to give.
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: _menuTextMuted,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ],
             ),
-            onPressed: _toggleLanguage,
+          ),
+          const SizedBox(width: 20),
+          Flexible(flex: 4, child: _buildSearchField()),
+          const SizedBox(width: 10),
+          _TopBarIconButton(
+            icon: _currentLanguage == 'en' ? Icons.language : Icons.translate,
+            onTap: _toggleLanguage,
             tooltip: _currentLanguage == 'en' ? 'ქართული' : 'English',
           ),
         ],
@@ -1375,60 +1438,42 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
-  List<Widget> _buildMenuSubtitleLines() {
-    final List<Widget> lines = [];
-
-    Text buildLine(String text, {bool italic = false}) {
-      return Text(
-        text,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.normal,
-          color: _menuTextMuted,
-          fontStyle: italic ? FontStyle.italic : FontStyle.normal,
-        ),
-      );
-    }
-
+  /// One line of context under the screen name: who the order is for.
+  ///
+  /// This used to be a stack of up to four `Text` widgets — guest, phone,
+  /// tables, note — each free to be as wide and as tall as it liked. On a
+  /// booked table that made the header the tallest thing on the screen and left
+  /// the search field a sliver. The same facts read fine joined up and clipped
+  /// at two lines; the full note is on the order detail either way.
+  String? _menuSubtitle() {
     if (widget.isTakeAwayMode) {
       final customer = (widget.takeAwayCustomerName ?? 'Guest').trim();
       final pickup = widget.takeAwayPickupTime;
-      lines.add(
-        buildLine('Take Away • $customer${pickup != null ? ' @ $pickup' : ''}'),
-      );
-      return lines;
+      return 'Take Away • $customer${pickup != null ? ' @ $pickup' : ''}';
     }
 
+    final parts = <String>[];
     final reservationCtx = widget.reservationContext;
     if (reservationCtx != null) {
       final name = reservationCtx.customerName.trim();
-      if (name.isNotEmpty) {
-        lines.add(buildLine('სტუმარი: $name'));
-      }
+      if (name.isNotEmpty) parts.add(name);
 
       final phone = reservationCtx.customerPhone.trim();
-      if (phone.isNotEmpty && phone != '-' && phone != '--') {
-        lines.add(buildLine('ტელეფონი: $phone'));
-      }
+      if (phone.isNotEmpty && phone != '-' && phone != '--') parts.add(phone);
 
       if (reservationCtx.tableLabels.isNotEmpty) {
-        lines.add(
-          buildLine('სუფრები: ${reservationCtx.tableLabels.join(", ")}'),
-        );
+        parts.add(reservationCtx.tableLabels.join(', '));
       }
 
       final notes = reservationCtx.notes?.trim();
-      if (notes != null && notes.isNotEmpty) {
-        lines.add(buildLine('შენიშვნა: $notes', italic: true));
-      }
+      if (notes != null && notes.isNotEmpty) parts.add(notes);
 
-      if (lines.isNotEmpty) {
-        return lines;
-      }
+      if (parts.isNotEmpty) return parts.join('  ·  ');
     }
 
-    lines.add(buildLine('Tables: ${widget.selectedTables.join(", ")}'));
-    return lines;
+    if (widget.selectedTables.isEmpty) return null;
+    final label = _currentLanguage == 'en' ? 'Tables' : 'მაგიდები';
+    return '$label: ${widget.selectedTables.join(", ")}';
   }
 
   Widget _buildCategorySidebar({required double width}) {
@@ -1442,15 +1487,9 @@ class _MenuScreenState extends State<MenuScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-            child: Text(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+            child: PosSectionLabel(
               _currentLanguage == 'en' ? 'Categories' : 'კატეგორიები',
-              style: const TextStyle(
-                color: _menuTextMuted,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.3,
-              ),
             ),
           ),
           Expanded(
@@ -1466,21 +1505,32 @@ class _MenuScreenState extends State<MenuScreen> {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 2),
                   child: Material(
-                    color: isSelected ? _menuTextPrimary : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
+                    color: isSelected ? _menuAccentSoft : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
                     child: InkWell(
                       onTap: () => _selectCategory(category),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
+                          horizontal: 13,
+                          vertical: 11,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isSelected
+                                ? _menuAccentSoftBorder
+                                : Colors.transparent,
+                          ),
                         ),
                         child: Text(
                           category.getName(_currentLanguage),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: isSelected ? Colors.white : _menuTextPrimary,
-                            fontSize: 14,
+                            color: isSelected ? _menuAccent : _menuTextPrimary,
+                            fontSize: 13.5,
+                            height: 1.2,
                             fontWeight: isSelected
                                 ? FontWeight.w700
                                 : FontWeight.w500,
@@ -1512,18 +1562,18 @@ class _MenuScreenState extends State<MenuScreen> {
           onTap: onTap,
           borderRadius: BorderRadius.circular(999),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 7),
             decoration: BoxDecoration(
-              color: selected ? _menuPrimaryColor : _menuSurfaceColor,
+              color: selected ? _menuAccentSoft : _menuSurfaceColor,
               borderRadius: BorderRadius.circular(999),
               border: Border.all(
-                color: selected ? _menuPrimaryColor : _menuBorderColor,
+                color: selected ? _menuAccentSoftBorder : _menuBorderColor,
               ),
             ),
             child: Text(
               label,
               style: TextStyle(
-                color: selected ? Colors.white : _menuTextPrimary,
+                color: selected ? _menuAccent : _menuTextPrimary,
                 fontSize: 13,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               ),
@@ -1591,16 +1641,16 @@ class _MenuScreenState extends State<MenuScreen> {
           fillColor: _menuSurfaceColor,
           isDense: true,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: _menuBorderColor),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: _menuBorderColor),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: _menuSecondaryColor),
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: _menuAccent),
           ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 14,
@@ -1698,7 +1748,9 @@ class _MenuScreenState extends State<MenuScreen> {
             crossAxisCount: columns,
             mainAxisSpacing: spacing,
             crossAxisSpacing: spacing,
-            childAspectRatio: 2.1,
+            // A height the card is known to need, not a ratio guessed against
+            // the column width. See [_menuCardHeight].
+            mainAxisExtent: _menuCardHeight,
           ),
           itemCount: items.length,
           itemBuilder: (context, index) {
@@ -1716,7 +1768,7 @@ class _MenuScreenState extends State<MenuScreen> {
         ? (_currentLanguage == 'en'
               ? '${item.variants!.length} variants'
               : '${item.variants!.length} ვარიანტი')
-        : '₾${(item.price ?? 0).toStringAsFixed(2)}';
+        : '${(item.price ?? 0).toStringAsFixed(2)} ₾';
 
     return Material(
       color: _menuCardColor,
@@ -1725,53 +1777,76 @@ class _MenuScreenState extends State<MenuScreen> {
         onTap: () => _onAddPressed(item),
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(_menuCardPadding),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _menuBorderColor),
+            border: Border.all(
+              color: VynicFloorTokens.tileBorder,
+              width: _menuCardBorder,
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                itemName,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: _menuTextPrimary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  height: 1.2,
+              // Expanded rather than intrinsic, so the card cannot tear even
+              // if a font, a text scale or a rounding rule disagrees with the
+              // arithmetic above. The name gives way; the price and the add
+              // button — the two things a waiter is actually reaching for —
+              // keep their size.
+              Expanded(
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: Text(
+                    itemName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: _menuTextPrimary,
+                      fontSize: _menuCardNameSize,
+                      fontWeight: FontWeight.w700,
+                      height: _menuCardLineHeight,
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      priceLabel,
-                      style: TextStyle(
-                        color: hasVariants ? _menuTextMuted : _menuPrimaryColor,
-                        fontSize: hasVariants ? 13 : 17,
-                        fontWeight: FontWeight.w800,
+              const SizedBox(height: _menuCardGap),
+              SizedBox(
+                height: _menuCardFooterHeight,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        priceLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: hasVariants ? _menuTextMuted : _menuAccent,
+                          fontSize: hasVariants ? 13 : 17,
+                          fontWeight: FontWeight.w800,
+                          // Pinned so the footer's height is the box's height
+                          // and not whatever the font decides — the arithmetic
+                          // in [_menuCardHeight] depends on it.
+                          height: 1.2,
+                        ),
                       ),
                     ),
-                  ),
-                  Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: _menuSecondaryColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: _menuCardFooterHeight,
+                      height: _menuCardFooterHeight,
+                      decoration: BoxDecoration(
+                        color: _menuAccentSoft,
+                        borderRadius: BorderRadius.circular(9),
+                        border: Border.all(color: _menuAccentSoftBorder),
+                      ),
+                      child: const Icon(
+                        Icons.add,
+                        size: 18,
+                        color: _menuAccent,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.add,
-                      size: 20,
-                      color: _menuPrimaryColor,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -1851,42 +1926,29 @@ class _MenuScreenState extends State<MenuScreen> {
             ),
             child: Row(
               children: [
-                const Icon(
-                  Icons.shopping_cart_outlined,
-                  size: 18,
-                  color: _menuPrimaryColor,
-                ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'შეკვეთა',
-                    style: TextStyle(
-                      color: _menuTextPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
+                const Expanded(child: PosSectionLabel('შეკვეთა')),
                 if (DatabaseService.isServiceFeeAvailable()) ...[
-                  const Text(
-                    'სერვისი',
-                    style: TextStyle(
-                      color: _menuTextMuted,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+                  const Flexible(
+                    child: Text(
+                      'სერვისი',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: _menuTextMuted,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Switch(
+                  PosToggle(
                     value: _serviceFeeDefaultEnabled,
+                    semanticLabel: 'სერვისი',
                     onChanged: (value) {
                       setState(() {
                         _serviceFeeDefaultEnabled = value;
                       });
                     },
-                    activeThumbColor: Colors.white,
-                    activeTrackColor: const Color(0xFF16A34A),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ],
               ],
@@ -2008,7 +2070,7 @@ class _MenuScreenState extends State<MenuScreen> {
                   const SizedBox(width: 6),
                   _cartIconButton(
                     icon: Icons.close,
-                    color: const Color(0xFFDC2626),
+                    color: _menuDanger,
                     onTap: () => setState(() => _cart.remove(entry.key)),
                     tooltip: _currentLanguage == 'en' ? 'Remove' : 'წაშლა',
                   ),
@@ -2070,7 +2132,7 @@ class _MenuScreenState extends State<MenuScreen> {
         child: Icon(
           icon,
           size: 16,
-          color: enabled ? _menuPrimaryColor : _menuTextSoft,
+          color: enabled ? _menuAccent : _menuTextSoft,
         ),
       ),
     );
@@ -2106,7 +2168,7 @@ class _MenuScreenState extends State<MenuScreen> {
       child: Text(
         label,
         style: const TextStyle(
-          color: _menuPrimaryColor,
+          color: _menuAccent,
           fontSize: 12,
           fontWeight: FontWeight.w600,
         ),
@@ -2143,25 +2205,14 @@ class _MenuScreenState extends State<MenuScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: _cart.isNotEmpty ? _confirmClearCart : null,
-              icon: const Icon(Icons.delete_outline, size: 18),
-              label: Text(
-                _currentLanguage == 'en'
-                    ? 'Clear order'
-                    : 'შეკვეთის გასუფთავება',
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _menuTextMuted,
-                side: const BorderSide(color: _menuBorderColor),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
+          PosActionButton(
+            label: _currentLanguage == 'en'
+                ? 'Clear order'
+                : 'შეკვეთის გასუფთავება',
+            icon: Icons.delete_outline,
+            tone: PosActionTone.danger,
+            expand: true,
+            onTap: _cart.isNotEmpty ? _confirmClearCart : null,
           ),
           const SizedBox(height: 14),
           _totalLine(
@@ -2187,20 +2238,27 @@ class _MenuScreenState extends State<MenuScreen> {
           ],
           const Divider(height: 20, color: _menuBorderColor),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(
-                _currentLanguage == 'en' ? 'Total' : 'სულ ჯამი',
-                style: const TextStyle(
-                  color: _menuTextPrimary,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
+              Expanded(
+                child: Text(
+                  _currentLanguage == 'en' ? 'Total' : 'სულ ჯამი',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: _menuTextPrimary,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               Text(
                 '${total.toStringAsFixed(2)} ₾',
+                maxLines: 1,
                 style: const TextStyle(
-                  color: _menuPrimaryColor,
+                  color: _menuTextPrimary,
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
                 ),
@@ -2210,40 +2268,20 @@ class _MenuScreenState extends State<MenuScreen> {
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: widget.isPreOrderMode || _cart.isNotEmpty
+            child: PosPrimaryButton(
+              label: widget.isPreOrderMode
+                  ? 'რეზერვაციის დადასტურება'
+                  : (widget.existingOrderId != null
+                        ? 'შეკვეთის განახლება'
+                        : 'შეკვეთის დამატება'),
+              icon: widget.isPreOrderMode
+                  ? Icons.restaurant_menu
+                  : (widget.existingOrderId != null
+                        ? Icons.check
+                        : Icons.check_circle),
+              onTap: widget.isPreOrderMode || _cart.isNotEmpty
                   ? _placeOrder
                   : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _menuTextPrimary,
-                disabledBackgroundColor: _menuBorderColor,
-                foregroundColor: Colors.white,
-                disabledForegroundColor: _menuTextMuted,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              icon: Icon(
-                widget.isPreOrderMode
-                    ? Icons.restaurant_menu
-                    : (widget.existingOrderId != null
-                          ? Icons.check
-                          : Icons.check_circle),
-                size: 22,
-              ),
-              label: Text(
-                widget.isPreOrderMode
-                    ? 'რეზერვაციის დადასტურება'
-                    : (widget.existingOrderId != null
-                          ? 'შეკვეთის განახლება'
-                          : 'შეკვეთის დამატება'),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
             ),
           ),
         ],
@@ -2330,6 +2368,44 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 }
 
+/// A 40pt square with a hairline. The back arrow and the language toggle are
+/// the same control, so they are the same shape — the language toggle used to
+/// be a bare `IconButton` floating next to a bordered box.
+class _TopBarIconButton extends StatelessWidget {
+  const _TopBarIconButton({
+    required this.icon,
+    required this.onTap,
+    this.tooltip,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final button = Material(
+      color: _menuSurfaceColor,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: _menuBorderColor),
+          ),
+          child: Icon(icon, size: 19, color: _menuTextPrimary),
+        ),
+      ),
+    );
+    if (tooltip == null) return button;
+    return Tooltip(message: tooltip!, child: button);
+  }
+}
+
 // New simplified variant selection dialog
 class _VariantSelectionDialog extends StatefulWidget {
   final MenuItem item;
@@ -2348,109 +2424,145 @@ class _VariantSelectionDialogState extends State<_VariantSelectionDialog> {
   @override
   Widget build(BuildContext context) {
     final variants = widget.item.variants ?? [];
+    final english = widget.language == 'en';
 
     return AlertDialog(
       backgroundColor: _menuCardColor,
-      title: Text(
-        widget.item.getName(widget.language),
-        style: const TextStyle(
-          color: _menuTextPrimary,
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-        ),
+      surfaceTintColor: _menuCardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
       ),
-      contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+      titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            widget.item.getName(widget.language),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: _menuTextPrimary,
+              fontSize: 19,
+              fontWeight: FontWeight.w800,
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(height: 6),
+          PosSectionLabel(english ? 'Select a size' : 'აირჩიეთ ზომა'),
+        ],
+      ),
+      contentPadding: const EdgeInsets.fromLTRB(24, 18, 24, 8),
       content: SizedBox(
         width: 400,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Select Size / Variant:',
-              style: TextStyle(color: _menuTextMuted, fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            ...variants.asMap().entries.map((e) {
-              final i = e.key;
-              final v = e.value;
-              final label = v.getSizeLabel();
-              final isSelected = _selectedIndex == i;
-
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
-                child: InkWell(
-                  onTap: () => setState(() => _selectedIndex = i),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isSelected ? _menuPrimaryColor : _menuSurfaceColor,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isSelected
-                            ? _menuPrimaryColor
-                            : _menuBorderColor,
-                        width: 2,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            label,
-                            style: TextStyle(
-                              color: isSelected
-                                  ? Colors.white
-                                  : _menuTextPrimary,
-                              fontSize: 18,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          '₾${v.price.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            color: isSelected
-                                ? Colors.white
-                                : _menuPrimaryColor,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
+        child: SingleChildScrollView(
+          // A drinks menu with eight pours used to run straight off the bottom
+          // of the dialog: the list was a bare `Column` inside a box that
+          // cannot grow. It scrolls now, so the number of variants an admin
+          // adds is their business rather than a layout constraint.
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final e in variants.asMap().entries)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _VariantOption(
+                    label: e.value.getSizeLabel(),
+                    price: e.value.price,
+                    selected: _selectedIndex == e.key,
+                    onTap: () => setState(() => _selectedIndex = e.key),
                   ),
                 ),
-              );
-            }),
-          ],
+            ],
+          ),
         ),
       ),
+      actionsPadding: const EdgeInsets.fromLTRB(24, 4, 24, 20),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text(
-            'Cancel',
-            style: TextStyle(color: _menuTextPrimary, fontSize: 16),
-          ),
+        PosActionButton(
+          label: english ? 'Cancel' : 'გაუქმება',
+          onTap: () => Navigator.of(context).pop(),
         ),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.of(context).pop(variants[_selectedIndex]);
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _menuSecondaryColor,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-          ),
-          child: const Text(
-            'Next',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+        const SizedBox(width: 8),
+        PosPrimaryButton(
+          label: english ? 'Next' : 'შემდეგ',
+          height: 46,
+          onTap: variants.isEmpty
+              ? null
+              : () => Navigator.of(context).pop(variants[_selectedIndex]),
         ),
       ],
+    );
+  }
+}
+
+/// One pour size and its price. Selected reads as a tinted card with a filled
+/// radio, not as a saturated block of colour with white text on it.
+class _VariantOption extends StatelessWidget {
+  const _VariantOption({
+    required this.label,
+    required this.price,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final double price;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? _menuAccentSoft : _menuCardColor,
+      borderRadius: BorderRadius.circular(11),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(11),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(11),
+            border: Border.all(
+              color: selected ? _menuAccentSoftBorder : _menuBorderColor,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                selected
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_unchecked,
+                size: 18,
+                color: selected ? _menuAccent : _menuTextSoft,
+              ),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: selected ? _menuAccent : _menuTextPrimary,
+                    fontSize: 16,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                '${price.toStringAsFixed(2)} ₾',
+                maxLines: 1,
+                style: TextStyle(
+                  color: selected ? _menuAccent : _menuTextPrimary,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -2503,89 +2615,75 @@ class _QuantityDialogState extends State<_QuantityDialog> {
 
     return AlertDialog(
       backgroundColor: _menuCardColor,
+      surfaceTintColor: _menuCardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
+      ),
+      titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
       title: Text(
         widget.title,
-        style: const TextStyle(color: _menuTextPrimary, fontSize: 22),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: _menuTextPrimary,
+          fontSize: 19,
+          fontWeight: FontWeight.w800,
+          height: 1.2,
+        ),
       ),
-      contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+      contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
       content: SizedBox(
-        width: 400, // Set wider dialog
+        width: 380,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // The running figure, in the same tinted well the rest of the POS
+            // uses to say „this is what you have entered so far".
             Container(
-              padding: const EdgeInsets.all(16),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: _menuAccentSoft,
+                borderRadius: BorderRadius.circular(11),
+                border: Border.all(color: _menuAccentSoftBorder),
+              ),
               child: Text(
                 _quantityInput.isEmpty ? '0' : _quantityInput,
+                textAlign: TextAlign.center,
                 style: const TextStyle(
-                  color: _menuTextPrimary,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
+                  color: _menuAccent,
+                  fontSize: 30,
+                  fontWeight: FontWeight.w900,
+                  height: 1.1,
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
             SizedBox(
-              width: 340, // Give more width for better spacing
+              width: 320,
               child: PinPad(
                 onDigitPressed: _onDigitPressed,
                 onClearPressed: _onClearPressed,
                 onDeletePressed: _onDeletePressed,
               ),
             ),
-            const SizedBox(height: 24), // Extra spacing before buttons
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 200,
-                  height: 48,
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: TextButton.styleFrom(
-                      backgroundColor: _menuSurfaceColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'გაუქმება',
-                      style: TextStyle(color: _menuTextPrimary, fontSize: 16),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: 200,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: qty > 0
-                        ? () => Navigator.of(context).pop(qty)
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _menuSecondaryColor,
-                      disabledBackgroundColor: _menuBorderColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'დამატება',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8), // Bottom padding
+            const SizedBox(height: 18),
           ],
         ),
       ),
-      actions: const [], // Remove default actions row
+      actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+      actions: [
+        PosActionButton(
+          label: 'გაუქმება',
+          onTap: () => Navigator.of(context).pop(),
+        ),
+        const SizedBox(width: 8),
+        PosPrimaryButton(
+          label: 'დამატება',
+          height: 46,
+          onTap: qty > 0 ? () => Navigator.of(context).pop(qty) : null,
+        ),
+      ],
     );
   }
 }
@@ -2620,196 +2718,143 @@ class _CommentDialogState extends State<_CommentDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final hasExisting =
+        widget.existingComment != null && widget.existingComment!.isNotEmpty;
+
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: EdgeInsets.zero,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          // Main dialog content
+          // The card used to be charcoal with a brass accent, sitting directly
+          // on top of a white on-screen keyboard — two products in one modal.
           Container(
             margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFF2B2B2B),
-              borderRadius: BorderRadius.circular(16),
+              color: _menuCardColor,
+              borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
+              border: Border.all(color: _menuBorderColor),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.comment,
-                      color: Color(0xFFC0AD7B),
-                      size: 28,
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text(
-                        'კომენტარი',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                // Item name
+                const PosSectionLabel('კომენტარი'),
+                const SizedBox(height: 6),
                 Text(
                   widget.itemName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: Color(0xFFC0AD7B),
-                    fontSize: 16,
+                    color: _menuTextPrimary,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
                   ),
                 ),
-                const SizedBox(height: 16),
-                // Text field
+                const SizedBox(height: 14),
                 TextField(
                   controller: _controller,
                   readOnly: true, // Prevent system keyboard
                   maxLines: 3,
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  style: const TextStyle(color: _menuTextPrimary, fontSize: 15),
                   decoration: InputDecoration(
                     hintText: 'მაგალითად: ხახვის გარეშე, ცხარე...',
-                    hintStyle: const TextStyle(color: Colors.white30),
+                    hintStyle: const TextStyle(color: _menuTextSoft),
                     filled: true,
-                    fillColor: const Color(0xFF333333),
+                    fillColor: _menuSurfaceColor,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: _menuBorderColor),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: _menuBorderColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: _menuAccent),
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                // Action buttons
+                const SizedBox(height: 16),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    if (widget.existingComment != null &&
-                        widget.existingComment!.isNotEmpty)
-                      TextButton(
-                        onPressed: () => Navigator.pop(
-                          context,
-                          '',
-                        ), // Empty string means remove comment
-                        child: const Text(
-                          'წაშლა',
-                          style: TextStyle(
-                            color: Colors.redAccent,
-                            fontSize: 16,
-                          ),
-                        ),
+                    if (hasExisting)
+                      PosActionButton(
+                        label: 'წაშლა',
+                        icon: Icons.delete_outline,
+                        tone: PosActionTone.danger,
+                        // Empty string means remove the comment; null means
+                        // leave it alone. Two different answers, so they cannot
+                        // share a button.
+                        onTap: () => Navigator.pop(context, ''),
                       ),
-                    const SizedBox(width: 8),
-                    TextButton(
-                      onPressed: () => Navigator.pop(
-                        context,
-                        null,
-                      ), // Cancel - keep existing
-                      child: const Text(
-                        'გაუქმება',
-                        style: TextStyle(color: Colors.white70, fontSize: 16),
-                      ),
+                    const Spacer(),
+                    PosActionButton(
+                      label: 'გაუქმება',
+                      onTap: () => Navigator.pop(context, null),
                     ),
                     const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {
+                    PosPrimaryButton(
+                      label: 'შენახვა',
+                      height: 46,
+                      onTap: () {
                         final text = _controller.text.trim();
                         Navigator.pop(context, text.isEmpty ? null : text);
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFC0AD7B),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                      ),
-                      child: const Text(
-                        'შენახვა',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          // On-screen keyboard
           if (_showKeyboard)
             Container(
-              color: const Color(0xFF1E1E1E),
+              color: _menuCardColor,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Language toggle and hide keyboard button
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                      horizontal: 10,
+                      vertical: 6,
                     ),
-                    color: const Color(0xFF2B2B2B),
+                    decoration: const BoxDecoration(
+                      color: _menuSurfaceColor,
+                      border: Border(
+                        top: BorderSide(color: _menuBorderColor),
+                        bottom: BorderSide(color: _menuBorderColor),
+                      ),
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(
                           children: [
-                            TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  _currentLanguage = 'ka';
-                                });
-                              },
-                              child: Text(
-                                'ქართული',
-                                style: TextStyle(
-                                  color: _currentLanguage == 'ka'
-                                      ? const Color(0xFFC0AD7B)
-                                      : Colors.white70,
-                                  fontWeight: _currentLanguage == 'ka'
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                ),
-                              ),
+                            _KeyboardLanguageTab(
+                              label: 'ქართული',
+                              selected: _currentLanguage == 'ka',
+                              onTap: () =>
+                                  setState(() => _currentLanguage = 'ka'),
                             ),
                             const SizedBox(width: 8),
-                            TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  _currentLanguage = 'en';
-                                });
-                              },
-                              child: Text(
-                                'English',
-                                style: TextStyle(
-                                  color: _currentLanguage == 'en'
-                                      ? const Color(0xFFC0AD7B)
-                                      : Colors.white70,
-                                  fontWeight: _currentLanguage == 'en'
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                ),
-                              ),
+                            _KeyboardLanguageTab(
+                              label: 'English',
+                              selected: _currentLanguage == 'en',
+                              onTap: () =>
+                                  setState(() => _currentLanguage = 'en'),
                             ),
                           ],
                         ),
                         IconButton(
-                          onPressed: () {
-                            setState(() {
-                              _showKeyboard = false;
-                            });
-                          },
+                          onPressed: () =>
+                              setState(() => _showKeyboard = false),
                           icon: const Icon(
                             Icons.keyboard_hide,
-                            color: Colors.white70,
+                            color: _menuTextMuted,
                           ),
                         ),
                       ],
@@ -2832,6 +2877,49 @@ class _CommentDialogState extends State<_CommentDialog> {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Which layout the on-screen keyboard is showing. A tab, not a text button —
+/// the selected one has to be visible at a glance from across a counter.
+class _KeyboardLanguageTab extends StatelessWidget {
+  const _KeyboardLanguageTab({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? _menuAccentSoft : Colors.transparent,
+      borderRadius: BorderRadius.circular(9),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(9),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(9),
+            border: Border.all(
+              color: selected ? _menuAccentSoftBorder : Colors.transparent,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected ? _menuAccent : _menuTextMuted,
+              fontSize: 13,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -202,8 +202,33 @@ void main() {
       // document does not need a migration of its own.
       final layout = SettingsRepository.getActiveTableLayout();
       expect(layout, isNotNull);
-      expect(layout!.zones.single.renderMode, TableLayoutRenderMode.svgMap);
-      expect(layout.zones.single.svgAsset, 'assets/new-floor1.svg');
+      expect(layout!.zones.single.legacyFloor, 'first');
+      expect(layout.tables, hasLength(1));
+    });
+
+    test('an SVG-mode zone is read as a floor plan, not a button grid', () {
+      // `svgMap` was removed from the enum with the drawings it referred to.
+      // An unknown render mode falls back to `buttonGrid`, so without an
+      // explicit mapping every zone on an updated terminal would come back as
+      // a list of numbered buttons instead of the plan it had yesterday.
+      final layout = RestaurantTableLayout.fromJson(
+        jsonDecode(legacySvgLayoutJson()) as Map<String, dynamic>,
+      );
+
+      expect(layout.zones.single.renderMode, TableLayoutRenderMode.floorPlan);
+    });
+
+    test('the hit boxes an old layout carries are simply read past', () {
+      // They described where a table sat inside a bundled SVG. Both the field
+      // and the drawings are gone; the table itself is not.
+      final layout = RestaurantTableLayout.fromJson(
+        jsonDecode(legacySvgLayoutJson()) as Map<String, dynamic>,
+      );
+      final table = layout.tableForLegacy(floor: 'first', tableNumber: '7');
+
+      expect(table, isNotNull);
+      expect(table!.label, 'Table 7');
+      expect(table.legacyTableNumber, '7');
     });
 
     test('a table that had an order on it still resolves after the update', () {
@@ -218,10 +243,11 @@ void main() {
     });
 
     test('the new default layout carries every old table identity', () {
-      // `floorPlanPreview.tables` is literally `svgMap.tables` — the redesign
-      // changed how a zone is drawn, not what the tables are called. Every
-      // (floor, number) pair the old build could have written still resolves.
-      for (final old in RestaurantTableLayouts.svgMap.tables) {
+      // The SVG layout is gone, but its thirteen table identities were moved
+      // into the default plan rather than deleted with it — every (floor,
+      // number) pair an old build could have written still resolves, which is
+      // what keeps an open bill reachable after the update.
+      for (final old in RestaurantTableLayouts.current.tables) {
         final match = RestaurantTableLayouts.current.tableForLegacy(
           floor: old.legacyFloor,
           tableNumber: old.legacyTableNumber,
@@ -267,21 +293,24 @@ void main() {
       expect(context.salesBox.length, 1);
     });
 
-    test('an install with no saved layout falls back to the new floor', () async {
-      await seedLegacyInstall();
-      await context.settingsBox.delete('activeTableLayoutJson');
-      await HiveMigrationService.runPendingMigrations(context);
+    test(
+      'an install with no saved layout falls back to the new floor',
+      () async {
+        await seedLegacyInstall();
+        await context.settingsBox.delete('activeTableLayoutJson');
+        await HiveMigrationService.runPendingMigrations(context);
 
-      expect(SettingsRepository.getActiveTableLayout(), isNull);
-      // TableRepository substitutes the built-in layout for a null read, so a
-      // terminal that never customised its floor comes up on the new plan.
-      expect(
-        RestaurantTableLayouts.current.tableForLegacy(
-          floor: 'first',
-          tableNumber: '7',
-        ),
-        isNotNull,
-      );
-    });
+        expect(SettingsRepository.getActiveTableLayout(), isNull);
+        // TableRepository substitutes the built-in layout for a null read, so a
+        // terminal that never customised its floor comes up on the new plan.
+        expect(
+          RestaurantTableLayouts.current.tableForLegacy(
+            floor: 'first',
+            tableNumber: '7',
+          ),
+          isNotNull,
+        );
+      },
+    );
   });
 }

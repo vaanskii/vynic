@@ -73,7 +73,8 @@ export class BogController {
         subtotal: validatedData.subtotal,
         serviceFee: validatedData.serviceFee,
         validatedItems: validatedData.menuItems,
-        priceManipulationDetected: body.totalAmount !== validatedData.totalAmount,
+        priceManipulationDetected:
+          body.totalAmount !== validatedData.totalAmount,
         correctedCartItems: validatedData.menuItems,
       },
     };
@@ -87,22 +88,27 @@ export class BogController {
       const status = paymentDetails.status || paymentDetails.order_status?.key;
       if (!externalOrderId) throw new Error('External order ID not found');
 
-      const confirmedStatuses = ['completed', 'partial_completed', 'auth_requested'];
+      const confirmedStatuses = [
+        'completed',
+        'partial_completed',
+        'auth_requested',
+      ];
       const failedStatuses = ['rejected', 'refunded', 'refunded_partially'];
       const statusKey = status?.toLowerCase() || 'unknown';
       const isSuccess = confirmedStatuses.includes(statusKey);
       const isFailed = failedStatuses.includes(statusKey);
 
-      const reservation = await this.reservationService.updateReservationPaymentStatus(
-        externalOrderId,
-        status,
-        isSuccess
-          ? 'Payment confirmed via status check'
-          : isFailed
-            ? 'Payment failed (checked via status check)'
-            : `Status check: ${status}`,
-        orderId,
-      );
+      const reservation =
+        await this.reservationService.updateReservationPaymentStatus(
+          externalOrderId,
+          status,
+          isSuccess
+            ? 'Payment confirmed via status check'
+            : isFailed
+              ? 'Payment failed (checked via status check)'
+              : `Status check: ${status}`,
+          orderId,
+        );
 
       return {
         success: true,
@@ -110,7 +116,10 @@ export class BogController {
         reservation,
       };
     } catch {
-      throw new HttpException('Failed to check order status', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        'Failed to check order status',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -119,7 +128,10 @@ export class BogController {
     const paymentId =
       await this.reservationService.getPaymentIdByReservationId(reservationId);
     if (!paymentId) {
-      return { success: false, message: 'Payment ID not found for this reservation' };
+      return {
+        success: false,
+        message: 'Payment ID not found for this reservation',
+      };
     }
     return this.checkOrderStatus(paymentId);
   }
@@ -172,7 +184,11 @@ export class BogController {
       return { status: 'error', message: 'Missing order_status' };
     }
 
-    const confirmedStatuses = ['completed', 'partial_completed', 'auth_requested'];
+    const confirmedStatuses = [
+      'completed',
+      'partial_completed',
+      'auth_requested',
+    ];
     const failedStatuses = ['rejected', 'refunded', 'refunded_partially'];
     const statusKey = orderStatus.key.toLowerCase();
     const isSuccess = confirmedStatuses.includes(statusKey);
@@ -182,7 +198,11 @@ export class BogController {
       externalOrderId,
       orderStatus.key,
       paymentDetail?.code_description ||
-        (isSuccess ? 'Payment processed' : isFailed ? 'Payment Failed' : `Unknown status: ${statusKey}`),
+        (isSuccess
+          ? 'Payment processed'
+          : isFailed
+            ? 'Payment Failed'
+            : `Unknown status: ${statusKey}`),
       orderId || '',
     );
 
@@ -193,7 +213,11 @@ export class BogController {
         : isFailed
           ? 'Payment failed'
           : `Payment status ${statusKey} recorded`,
-      reservation_status: isSuccess ? 'CONFIRMED' : isFailed ? 'FAILED' : 'PENDING',
+      reservation_status: isSuccess
+        ? 'CONFIRMED'
+        : isFailed
+          ? 'FAILED'
+          : 'PENDING',
     };
   }
 }

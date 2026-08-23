@@ -97,7 +97,7 @@ function makeController(prisma: any) {
   const posOutbox = { kickPending: jest.fn() } as any;
   const posCallback = new PosCallbackClient();
   const pinVault = {
-    read: jest.fn(async () => ({}) as Record<string, string>),
+    read: jest.fn(async () => ({})),
     write: jest.fn(async () => {}),
   } as any;
   return new SyncController(prisma, gateway, posOutbox, posCallback, pinVault);
@@ -138,7 +138,7 @@ describe('SyncController /sync/manager-data — order last-write-wins', () => {
           items: [],
         },
       ],
-    } as any);
+    });
 
     const superseded = calls.find(
       (c) =>
@@ -175,7 +175,7 @@ describe('SyncController /sync/manager-data — order last-write-wins', () => {
           items: [],
         },
       ],
-    } as any);
+    });
 
     const upsertedOrder5 = calls.find(
       (c) => c.key === 'order.upsert' && c.arg?.where?.posOrderId === 5,
@@ -211,7 +211,7 @@ describe('SyncController /sync/manager-data — order last-write-wins', () => {
           items: [],
         },
       ],
-    } as any);
+    });
 
     const upsertedOrder5 = calls.find(
       (c) => c.key === 'order.upsert' && c.arg?.where?.posOrderId === 5,

@@ -201,7 +201,9 @@ class _AdminErrorLogSectionState extends State<AdminErrorLogSection> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: AdminDesign.danger),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AdminDesign.danger,
+            ),
             child: const Text('წაშლა'),
           ),
         ],

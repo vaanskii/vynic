@@ -10,7 +10,6 @@ import 'package:vynic/apps/windows_pos/widgets/admin/table_layouts/floor_editor/
 import 'package:vynic/core/models/pos_display_settings.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/pos/pos_display_settings_controller.dart';
-import 'package:vynic/core/ui/vynic_colors.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 
 /// Floors & areas overview.

@@ -831,7 +831,9 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AdminDesign.danger),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AdminDesign.danger,
+            ),
             child: const Text('წაშლა'),
           ),
         ],
@@ -2028,7 +2030,10 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
               ),
               if (_errorMessage.isNotEmpty) ...[
                 const SizedBox(height: 8),
-                Text(_errorMessage, style: const TextStyle(color: AdminDesign.danger)),
+                Text(
+                  _errorMessage,
+                  style: const TextStyle(color: AdminDesign.danger),
+                ),
               ],
               const SizedBox(height: 16),
               _PinPad(

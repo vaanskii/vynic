@@ -1215,14 +1215,18 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                                 const SizedBox(height: 8),
                                 const Text(
                                   'დაკავებული მაგიდები ვერ აირჩევა.',
-                                  style: TextStyle(color: AdminTones.warningText),
+                                  style: TextStyle(
+                                    color: AdminTones.warningText,
+                                  ),
                                 ),
                               ],
                               if (errorMessage != null) ...[
                                 const SizedBox(height: 12),
                                 Text(
                                   errorMessage!,
-                                  style: const TextStyle(color: AdminDesign.danger),
+                                  style: const TextStyle(
+                                    color: AdminDesign.danger,
+                                  ),
                                 ),
                               ],
                             ],
@@ -1919,7 +1923,9 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                                     const SizedBox(height: 12),
                                     Text(
                                       errorMessage!,
-                                      style: const TextStyle(color: AdminDesign.danger),
+                                      style: const TextStyle(
+                                        color: AdminDesign.danger,
+                                      ),
                                     ),
                                   ],
                                 ],

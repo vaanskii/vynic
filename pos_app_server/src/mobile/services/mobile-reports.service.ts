@@ -118,14 +118,19 @@ export class MobileReportsService {
       }
     } else {
       // today = current business date
-      const businessDateSetting = await (this.prisma as any).setting.findUnique({
-        where: { key: 'currentBusinessDate' },
-      });
+      const businessDateSetting = await (this.prisma as any).setting.findUnique(
+        {
+          where: { key: 'currentBusinessDate' },
+        },
+      );
       const resolvedBusinessDate =
         businessDateSetting?.value ?? todayStart().toISOString().split('T')[0];
       currentBusinessDate = resolvedBusinessDate;
       from = parseBusinessDateStart(resolvedBusinessDate);
-      where = { ...businessDateWhere(resolvedBusinessDate), status: { not: 'cancelled' } };
+      where = {
+        ...businessDateWhere(resolvedBusinessDate),
+        status: { not: 'cancelled' },
+      };
     }
 
     const [orders, byWaiter, expenses] = await Promise.all([
@@ -158,27 +163,39 @@ export class MobileReportsService {
     const paymentBreakdown: Record<string, number> = {};
     for (const o of orders) {
       const key = normalizePaymentType((o as any).paymentType);
-      paymentBreakdown[key] = (paymentBreakdown[key] ?? 0) + Number(o.totalAmount);
+      paymentBreakdown[key] =
+        (paymentBreakdown[key] ?? 0) + Number(o.totalAmount);
     }
     const cashRev = paymentBreakdown['cash'] ?? 0;
     const cardRev = Object.entries(paymentBreakdown).reduce(
       (sum, [key, amount]) => (key.startsWith('card') ? sum + amount : sum),
       0,
     );
-    const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+    const totalExpenses = expenses.reduce(
+      (sum, e) => sum + Number(e.amount),
+      0,
+    );
     const expenseBreakdownMap = new Map<string, number>();
     for (const e of expenses) {
       const key = (e.category ?? '').trim() || 'სხვა';
-      expenseBreakdownMap.set(key, (expenseBreakdownMap.get(key) ?? 0) + Number(e.amount));
+      expenseBreakdownMap.set(
+        key,
+        (expenseBreakdownMap.get(key) ?? 0) + Number(e.amount),
+      );
     }
 
     let effectiveTotalRevenue = totalRev;
     let effectiveOrderCount = orders.length;
     let effectiveCashRevenue = cashRev;
     let effectiveCardRevenue = cardRev;
-    let effectivePaymentBreakdown: Record<string, number> = { ...paymentBreakdown };
-    let effectiveTopItems: Array<{ name: string; qty: number; revenue: number }> | null =
-      null;
+    let effectivePaymentBreakdown: Record<string, number> = {
+      ...paymentBreakdown,
+    };
+    let effectiveTopItems: Array<{
+      name: string;
+      qty: number;
+      revenue: number;
+    }> | null = null;
 
     // For today, prefer Windows-POS sales summary (local closed-sales records)
     // when available, so mobile payment-method analytics match Windows exactly.
@@ -195,10 +212,18 @@ export class MobileReportsService {
             cardRevenue?: number;
             paymentBreakdown?: Record<string, number>;
           };
-          effectiveTotalRevenue = Number(summary.totalRevenue ?? effectiveTotalRevenue);
-          effectiveOrderCount = Number(summary.orderCount ?? effectiveOrderCount);
-          effectiveCashRevenue = Number(summary.cashRevenue ?? effectiveCashRevenue);
-          effectiveCardRevenue = Number(summary.cardRevenue ?? effectiveCardRevenue);
+          effectiveTotalRevenue = Number(
+            summary.totalRevenue ?? effectiveTotalRevenue,
+          );
+          effectiveOrderCount = Number(
+            summary.orderCount ?? effectiveOrderCount,
+          );
+          effectiveCashRevenue = Number(
+            summary.cashRevenue ?? effectiveCashRevenue,
+          );
+          effectiveCardRevenue = Number(
+            summary.cardRevenue ?? effectiveCardRevenue,
+          );
           effectivePaymentBreakdown = {
             ...effectivePaymentBreakdown,
             ...(summary.paymentBreakdown ?? {}),
@@ -223,10 +248,18 @@ export class MobileReportsService {
             paymentBreakdown?: Record<string, number>;
             topItems?: Array<{ name: string; qty: number; revenue: number }>;
           };
-          effectiveTotalRevenue = Number(summary.totalRevenue ?? effectiveTotalRevenue);
-          effectiveOrderCount = Number(summary.orderCount ?? effectiveOrderCount);
-          effectiveCashRevenue = Number(summary.cashRevenue ?? effectiveCashRevenue);
-          effectiveCardRevenue = Number(summary.cardRevenue ?? effectiveCardRevenue);
+          effectiveTotalRevenue = Number(
+            summary.totalRevenue ?? effectiveTotalRevenue,
+          );
+          effectiveOrderCount = Number(
+            summary.orderCount ?? effectiveOrderCount,
+          );
+          effectiveCashRevenue = Number(
+            summary.cashRevenue ?? effectiveCashRevenue,
+          );
+          effectiveCardRevenue = Number(
+            summary.cardRevenue ?? effectiveCardRevenue,
+          );
           effectiveTopItems = Array.isArray(summary.topItems)
             ? summary.topItems
             : null;
@@ -333,10 +366,7 @@ export class MobileReportsService {
     });
     const nameToCategory = new Map<string, string>();
     for (const it of menuItems) {
-      const catName =
-        it.subcategory?.nameKa ??
-        it.category?.nameKa ??
-        'სხვა';
+      const catName = it.subcategory?.nameKa ?? it.category?.nameKa ?? 'სხვა';
       const ka = (it.nameKa ?? '').trim().toLowerCase();
       const en = (it.nameEn ?? '').trim().toLowerCase();
       if (ka) nameToCategory.set(ka, catName);
@@ -360,7 +390,11 @@ export class MobileReportsService {
     });
     const topItemsByCategoryMap = new Map<
       string,
-      { totalRevenue: number; totalQty: number; items: Array<{ name: string; qty: number; revenue: number }> }
+      {
+        totalRevenue: number;
+        totalQty: number;
+        items: Array<{ name: string; qty: number; revenue: number }>;
+      }
     >();
     for (const item of topItemsWithCategory) {
       const category = item.category;
@@ -391,17 +425,24 @@ export class MobileReportsService {
       cashRevenue: r(effectiveCashRevenue),
       cardRevenue: r(effectiveCardRevenue),
       paymentBreakdown: Object.fromEntries(
-        Object.entries(effectivePaymentBreakdown).map(([key, value]) => [key, r(value)]),
+        Object.entries(effectivePaymentBreakdown).map(([key, value]) => [
+          key,
+          r(value),
+        ]),
       ),
       orderCount: effectiveOrderCount,
       avgOrderValue:
-        effectiveOrderCount > 0 ? r(effectiveTotalRevenue / effectiveOrderCount) : 0,
+        effectiveOrderCount > 0
+          ? r(effectiveTotalRevenue / effectiveOrderCount)
+          : 0,
       totalExpenses: r(totalExpenses),
       profit: r(effectiveTotalRevenue - totalExpenses),
-      expenseBreakdown: Array.from(expenseBreakdownMap.entries()).map(([category, amount]) => ({
-        category,
-        amount: r(amount),
-      })),
+      expenseBreakdown: Array.from(expenseBreakdownMap.entries()).map(
+        ([category, amount]) => ({
+          category,
+          amount: r(amount),
+        }),
+      ),
       topItems,
       topItemsByCategory,
       byWaiter: byWaiter.map((w) => ({
@@ -426,8 +467,11 @@ export class MobileReportsService {
     for (const e of expenses) {
       // Use local date parts instead of UTC ISO split to avoid off-by-one-day
       // shifts for business dates in positive timezones (e.g. +04).
-      const date = dateKey(e.createdAt as Date);
-      expensesByDate.set(date, (expensesByDate.get(date) ?? 0) + Number(e.amount ?? 0));
+      const date = dateKey(e.createdAt);
+      expensesByDate.set(
+        date,
+        (expensesByDate.get(date) ?? 0) + Number(e.amount ?? 0),
+      );
     }
     const historyIndexSetting = await (this.prisma as any).setting.findUnique({
       where: { key: 'salesSummary:history_index' },
@@ -487,7 +531,8 @@ export class MobileReportsService {
         const amount = Number(o.totalAmount ?? 0);
         cur.nonCancelledTotal += amount;
         const method = normalizePaymentType((o as any).paymentType);
-        cur.paymentBreakdown[method] = (cur.paymentBreakdown[method] ?? 0) + amount;
+        cur.paymentBreakdown[method] =
+          (cur.paymentBreakdown[method] ?? 0) + amount;
       }
       byDate.set(date, cur);
     }
@@ -505,7 +550,7 @@ export class MobileReportsService {
       }
     }
     let rows = Array.from(allDates).map((date) => {
-      const summary = summaryByDate.get(date) as any;
+      const summary = summaryByDate.get(date);
       const fallback = byDate.get(date) ?? {
         totalOrders: 0,
         cancelledOrders: 0,
@@ -514,15 +559,24 @@ export class MobileReportsService {
       };
       return {
         date,
-        totalRevenue: Number(summary?.totalRevenue ?? fallback.nonCancelledTotal ?? 0),
-        closedOrders: Number(summary?.orderCount ?? (fallback.totalOrders - fallback.cancelledOrders)),
+        totalRevenue: Number(
+          summary?.totalRevenue ?? fallback.nonCancelledTotal ?? 0,
+        ),
+        closedOrders: Number(
+          summary?.orderCount ??
+            fallback.totalOrders - fallback.cancelledOrders,
+        ),
         cancelledOrders: fallback.cancelledOrders,
         totalOrders: fallback.totalOrders,
-        paymentBreakdown: summary?.paymentBreakdown ?? fallback.paymentBreakdown,
-        closedTables: Array.isArray(summary?.closedTables) ? summary.closedTables : [],
+        paymentBreakdown:
+          summary?.paymentBreakdown ?? fallback.paymentBreakdown,
+        closedTables: Array.isArray(summary?.closedTables)
+          ? summary.closedTables
+          : [],
         totalExpenses:
           Math.round(
-            Number(summary?.totalExpenses ?? expensesByDate.get(date) ?? 0) * 100,
+            Number(summary?.totalExpenses ?? expensesByDate.get(date) ?? 0) *
+              100,
           ) / 100,
         profit:
           Math.round(

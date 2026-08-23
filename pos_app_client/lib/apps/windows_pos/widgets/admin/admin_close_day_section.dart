@@ -445,7 +445,9 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: AdminDesign.danger),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AdminDesign.danger,
+            ),
             child: const Text(
               'დასტური',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),

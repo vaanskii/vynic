@@ -48,7 +48,8 @@ export class UserService {
     const userReservations = reservations.filter(
       (reservation) =>
         reservation.userId === userId ||
-        (reservation.userId === null && reservation.customerEmail === user.email),
+        (reservation.userId === null &&
+          reservation.customerEmail === user.email),
     );
 
     return Promise.all(
@@ -69,7 +70,9 @@ export class UserService {
               });
 
               parsedMenuItems = menuItemsData.map((reservationItem) => {
-                const dbItem = menuItems.find((item) => item.id === reservationItem.id);
+                const dbItem = menuItems.find(
+                  (item) => item.id === reservationItem.id,
+                );
                 return {
                   ...reservationItem,
                   name: dbItem?.nameEn || `Item ${reservationItem.id}`,
@@ -103,7 +106,10 @@ export class UserService {
     );
   }
 
-  async updateProfile(userId: string, dto: { firstName: string; lastName: string }) {
+  async updateProfile(
+    userId: string,
+    dto: { firstName: string; lastName: string },
+  ) {
     return this.prisma.websiteUser.update({
       where: { id: userId },
       data: {

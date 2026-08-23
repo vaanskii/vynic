@@ -29,6 +29,7 @@ abstract final class VynicFloorTokens {
 
   static const Color text = Color(0xFF1C1A19);
   static const Color textMuted = Color(0xFF6F6A65);
+
   /// Was #8A8480 — 3.7:1, below WCAG AA and, on a 1024x768 POS panel with no
   /// HiDPI, the point at which small Georgian glyphs stop holding together.
   /// The faint tier still reads as the quietest text on a screen; it is just
@@ -83,6 +84,7 @@ abstract final class VynicFloorTokens {
   static const Color occupiedDot = Color(0xFFD9A531);
   static const Color occupiedFill = Color(0xFFFFFDF7);
   static const Color occupiedBorder = Color(0xFFECDCB6);
+
   /// Was #8A7A52 — 4.2:1, and it carried the two smallest lines on a busy
   /// table (elapsed and waiter), so it was the lightest *and* the smallest
   /// thing on the tile.

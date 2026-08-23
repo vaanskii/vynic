@@ -66,7 +66,10 @@ export class WebsiteAuthService {
       await this.updateRefreshToken(user.id, tokens.refresh_token);
       return tokens;
     } catch (error) {
-      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
         throw new ForbiddenException('Phone number or email already exists');
       }
       throw error;
@@ -107,7 +110,10 @@ export class WebsiteAuthService {
     return { access_token: at, refresh_token: rt };
   }
 
-  async updateRefreshToken(userId: string, refreshToken: string): Promise<void> {
+  async updateRefreshToken(
+    userId: string,
+    refreshToken: string,
+  ): Promise<void> {
     const hashedRefreshToken = await argon.hash(refreshToken);
     await this.prisma.websiteUser.update({
       where: { id: userId },
@@ -143,9 +149,14 @@ export class WebsiteAuthService {
   }
 
   /** Returns null when the request is anonymous or the cookie token is invalid. */
-  async tryGetUserFromRequest(request: Request): Promise<WebsiteAuthUser | null> {
+  async tryGetUserFromRequest(
+    request: Request,
+  ): Promise<WebsiteAuthUser | null> {
     const encryptedAccessToken = request.cookies?.access_token;
-    if (typeof encryptedAccessToken !== 'string' || encryptedAccessToken.length === 0) {
+    if (
+      typeof encryptedAccessToken !== 'string' ||
+      encryptedAccessToken.length === 0
+    ) {
       return null;
     }
     try {
@@ -157,7 +168,9 @@ export class WebsiteAuthService {
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto) {
-    const user = await this.prisma.websiteUser.findUnique({ where: { id: userId } });
+    const user = await this.prisma.websiteUser.findUnique({
+      where: { id: userId },
+    });
     if (!user) throw new ForbiddenException('User not found');
 
     const passwordMatches = await argon.verify(user.password, dto.oldPassword);

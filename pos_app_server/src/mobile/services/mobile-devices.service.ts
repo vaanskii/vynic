@@ -30,7 +30,9 @@ export class MobileDevicesService {
       sinceDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
     }
 
-    const rows = await (this.prisma as any).managerNotificationDelivery.findMany({
+    const rows = await (
+      this.prisma as any
+    ).managerNotificationDelivery.findMany({
       where: {
         staffUsername: username,
         notification: { createdAt: { gte: sinceDate } },

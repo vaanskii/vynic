@@ -168,9 +168,7 @@ class _AdminSalesReportSectionState extends State<AdminSalesReportSection> {
         selectedColor: AdminTones.infoFill,
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
-          side: BorderSide(
-            color: isSelected ? AdminTones.infoBorder : _border,
-          ),
+          side: BorderSide(color: isSelected ? AdminTones.infoBorder : _border),
           borderRadius: BorderRadius.circular(10),
         ),
         avatar: Icon(icon, size: 16, color: isSelected ? _primary : _muted),

@@ -14,20 +14,31 @@ export class BogService {
   private orderUrl = 'https://api.bog.ge/payments/v1/ecommerce/orders';
 
   async getAccessToken(): Promise<string> {
-    const auth = Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64');
-    const response = await axios.post(this.tokenUrl, 'grant_type=client_credentials', {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${auth}`,
+    const auth = Buffer.from(`${this.clientId}:${this.clientSecret}`).toString(
+      'base64',
+    );
+    const response = await axios.post(
+      this.tokenUrl,
+      'grant_type=client_credentials',
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: `Basic ${auth}`,
+        },
       },
-    });
+    );
     return response.data.access_token;
   }
 
-  async createOrder(reservationId: string, totalAmount: number, language = 'en') {
+  async createOrder(
+    reservationId: string,
+    totalAmount: number,
+    language = 'en',
+  ) {
     const token = await this.getAccessToken();
     const amountInGel = Math.max(totalAmount, 1);
-    const apiUrl = process.env.API_URL || `http://127.0.0.1:${process.env.PORT ?? 3000}`;
+    const apiUrl =
+      process.env.API_URL || `http://127.0.0.1:${process.env.PORT ?? 3000}`;
 
     const body = {
       callback_url: `${apiUrl}/api/bog/payment-callback`,

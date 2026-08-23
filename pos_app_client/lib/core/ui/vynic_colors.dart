@@ -58,10 +58,11 @@ abstract final class VynicColors {
   // their 12%-tint chip backgrounds; 11px bold chip text is not "large" under
   // WCAG, so chip *text* uses these darker shades (green-700 / amber-700) to
   // clear AA-normal (4.5:1). Fills, icons, and dots keep the hues above.
-  // info/neutral already pass on their tints, so their text == hue.
+  // info already passes on its tint, so its text == hue.
   static const Color successText = Color(0xFF1F5F44);
   static const Color warningText = Color(0xFF8A5B14);
   static const Color dangerText = Color(0xFF8E3323);
+  static const Color neutralText = Color(0xFF4F4941);
 
   // --- Status soft backgrounds (chip fills) -------------------------------
   static const Color successSoft = Color(0xFFE7F2EC);

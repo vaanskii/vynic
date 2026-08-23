@@ -146,7 +146,12 @@ interface SyncPayload {
         totalAmount?: number;
         closedAt?: string;
         paymentBreakdown?: Record<string, number>;
-        items?: Array<{ name: string; qty: number; unitPrice: number; total: number }>;
+        items?: Array<{
+          name: string;
+          qty: number;
+          unitPrice: number;
+          total: number;
+        }>;
       }>;
     }
   >;
@@ -193,9 +198,9 @@ interface SyncPayload {
 }
 
 /** Keep the latest hint per order so rapid service-fee toggles emit one touch. */
-function dedupeOrderHintsByPosOrderId<
-  T extends { posOrderId: number },
->(hints: T[]): T[] {
+function dedupeOrderHintsByPosOrderId<T extends { posOrderId: number }>(
+  hints: T[],
+): T[] {
   const byId = new Map<number, T>();
   for (const h of hints) {
     if (!Number.isFinite(h.posOrderId)) continue;
@@ -249,10 +254,7 @@ export class SyncController implements OnModuleInit {
     }
   }
 
-  private async persistPosCallback(
-    url?: string,
-    key?: string,
-  ): Promise<void> {
+  private async persistPosCallback(url?: string, key?: string): Promise<void> {
     if (url && url.trim().length > 0) {
       const trimmedUrl = url.trim();
       // SSRF guard: only accept a private/LAN POS address; never persist others.
@@ -379,10 +381,18 @@ export class SyncController implements OnModuleInit {
 
         // Sync Subcategories
         if (cat.subcategories) {
-          for (let subIndex = 0; subIndex < cat.subcategories.length; subIndex++) {
+          for (
+            let subIndex = 0;
+            subIndex < cat.subcategories.length;
+            subIndex++
+          ) {
             const sub = cat.subcategories[subIndex];
-            const subcategory = await (this.prisma as any).menuSubcategory.upsert({
-              where: { slug_categoryId: { slug: sub.slug, categoryId: category.id } },
+            const subcategory = await (
+              this.prisma as any
+            ).menuSubcategory.upsert({
+              where: {
+                slug_categoryId: { slug: sub.slug, categoryId: category.id },
+              },
               update: {
                 nameKa: sub.nameKa,
                 nameEn: sub.nameEn,
@@ -398,9 +408,15 @@ export class SyncController implements OnModuleInit {
             });
 
             if (sub.items) {
-              for (let itemIndex = 0; itemIndex < sub.items.length; itemIndex++) {
+              for (
+                let itemIndex = 0;
+                itemIndex < sub.items.length;
+                itemIndex++
+              ) {
                 const it = sub.items[itemIndex];
-                let existingItem = await (this.prisma as any).menuItem.findFirst({
+                let existingItem = await (
+                  this.prisma as any
+                ).menuItem.findFirst({
                   where: { nameEn: it.nameEn, subcategoryId: subcategory.id },
                 });
                 if (existingItem) {
@@ -429,12 +445,12 @@ export class SyncController implements OnModuleInit {
                 // Sync Variants
                 if (it.variants) {
                   await (this.prisma as any).menuItemVariant.deleteMany({
-                    where: { menuItemId: (existingItem as any).id },
+                    where: { menuItemId: existingItem.id },
                   });
                   for (const v of it.variants) {
                     await (this.prisma as any).menuItemVariant.create({
                       data: {
-                        menuItemId: (existingItem as any).id,
+                        menuItemId: existingItem.id,
                         size: v.size,
                         price: v.price,
                       },
@@ -450,7 +466,11 @@ export class SyncController implements OnModuleInit {
           for (let itemIndex = 0; itemIndex < cat.items.length; itemIndex++) {
             const it = cat.items[itemIndex];
             let existingItem = await (this.prisma as any).menuItem.findFirst({
-              where: { nameEn: it.nameEn, categoryId: category.id, subcategoryId: null },
+              where: {
+                nameEn: it.nameEn,
+                categoryId: category.id,
+                subcategoryId: null,
+              },
             });
 
             if (existingItem) {
@@ -479,12 +499,12 @@ export class SyncController implements OnModuleInit {
             // Sync Variants
             if (it.variants) {
               await (this.prisma as any).menuItemVariant.deleteMany({
-                where: { menuItemId: (existingItem as any).id },
+                where: { menuItemId: existingItem.id },
               });
               for (const v of it.variants) {
                 await (this.prisma as any).menuItemVariant.create({
                   data: {
-                    menuItemId: (existingItem as any).id,
+                    menuItemId: existingItem.id,
                     size: v.size,
                     price: v.price,
                   },
@@ -529,9 +549,7 @@ export class SyncController implements OnModuleInit {
       // Only skip "all free" snapshot on cold full sync (POS boot). Realtime pushes
       // must always apply — e.g. manager closes a table on Windows.
       const isPosDataStale =
-        !data.realtimeOnly &&
-        existingReservedCount > 0 &&
-        !hasAnyReserved;
+        !data.realtimeOnly && existingReservedCount > 0 && !hasAnyReserved;
 
       if (isPosDataStale) {
         console.log(
@@ -545,8 +563,7 @@ export class SyncController implements OnModuleInit {
         for (const table of tables) {
           const isActuallyReserved =
             table.isReserved ||
-            (table.activeOrderId !== undefined &&
-              table.activeOrderId !== null);
+            (table.activeOrderId !== undefined && table.activeOrderId !== null);
 
           if (isActuallyReserved) {
             console.log(
@@ -621,11 +638,7 @@ export class SyncController implements OnModuleInit {
         }
       }
 
-      const terminalStatuses = new Set([
-        'paid',
-        'closed',
-        'cancelled',
-      ]);
+      const terminalStatuses = new Set(['paid', 'closed', 'cancelled']);
 
       for (const order of orders) {
         const pOrderId = order.posOrderId ?? order.orderId;
@@ -638,7 +651,10 @@ export class SyncController implements OnModuleInit {
         // stale snapshot until the POS confirms it applied the change.
         if (pendingOutboxOrderIds.has(pOrderId)) {
           const managerEditedAt = pendingOutboxEditedAt.get(pOrderId);
-          const posWins = posWinsOrderConflict(order.updatedAt, managerEditedAt);
+          const posWins = posWinsOrderConflict(
+            order.updatedAt,
+            managerEditedAt,
+          );
 
           if (!posWins) {
             console.log(
@@ -674,7 +690,8 @@ export class SyncController implements OnModuleInit {
             pickupTime: order.pickupTime ?? '',
             includeServiceFee: order.includeServiceFee ?? false,
             discountAmount: order.discountAmount ?? 0,
-            serviceFeePercent: order.serviceFeePercent ?? order.customServiceFeePercentage ?? 10,
+            serviceFeePercent:
+              order.serviceFeePercent ?? order.customServiceFeePercentage ?? 10,
           },
           create: {
             posOrderId: pOrderId,
@@ -690,7 +707,8 @@ export class SyncController implements OnModuleInit {
             pickupTime: order.pickupTime ?? '',
             includeServiceFee: order.includeServiceFee ?? false,
             discountAmount: order.discountAmount ?? 0,
-            serviceFeePercent: order.serviceFeePercent ?? order.customServiceFeePercentage ?? 10,
+            serviceFeePercent:
+              order.serviceFeePercent ?? order.customServiceFeePercentage ?? 10,
           },
         });
 
@@ -853,8 +871,7 @@ export class SyncController implements OnModuleInit {
       const incomingUsernames = new Set<string>();
       for (const member of staff) {
         incomingUsernames.add(member.username);
-        const pin =
-          typeof member.pin === 'string' ? member.pin.trim() : '';
+        const pin = typeof member.pin === 'string' ? member.pin.trim() : '';
         const hasPin = pin.length > 0;
 
         if (hasPin) {
@@ -932,23 +949,30 @@ export class SyncController implements OnModuleInit {
           .map((h: any) => ({
             posOrderId: Number(h?.posOrderId),
             occurredAt:
-              typeof h?.occurredAt === 'string' && h.occurredAt.trim().length > 0
+              typeof h?.occurredAt === 'string' &&
+              h.occurredAt.trim().length > 0
                 ? h.occurredAt.trim()
                 : undefined,
             tableLabel:
               typeof h?.tableLabel === 'string' ? h.tableLabel.trim() : '',
             floor: typeof h?.floor === 'string' ? h.floor.trim() : undefined,
             waiterName:
-              typeof h?.waiterName === 'string' ? h.waiterName.trim() : undefined,
+              typeof h?.waiterName === 'string'
+                ? h.waiterName.trim()
+                : undefined,
             highlightItemKeys: Array.isArray(h?.highlightItemKeys)
               ? h.highlightItemKeys
                   .map((k: unknown) => String(k).trim())
                   .filter((k: string) => k.length > 0)
               : undefined,
             changeSummary:
-              typeof h?.changeSummary === 'string' ? h.changeSummary.trim() : undefined,
+              typeof h?.changeSummary === 'string'
+                ? h.changeSummary.trim()
+                : undefined,
             changeKind:
-              typeof h?.changeKind === 'string' ? h.changeKind.trim() : undefined,
+              typeof h?.changeKind === 'string'
+                ? h.changeKind.trim()
+                : undefined,
           }))
           .filter((h: any) => Number.isFinite(h.posOrderId))
       : [];
@@ -961,7 +985,9 @@ export class SyncController implements OnModuleInit {
     if (hadOrderLineTouch) {
       this.gateway.broadcastUpdate('orders_bulk_touch', {
         touches: filteredOrderHints,
-        posOrderIds: filteredOrderHints.map((h: { posOrderId: number }) => h.posOrderId),
+        posOrderIds: filteredOrderHints.map(
+          (h: { posOrderId: number }) => h.posOrderId,
+        ),
         source: 'pos_sync',
       });
     }
@@ -972,7 +998,9 @@ export class SyncController implements OnModuleInit {
             tableNumber: String(h?.tableNumber ?? '').trim(),
             floor: String(h?.floor ?? 'first').trim(),
             changeType:
-              h?.changeType === 'freed' ? ('freed' as const) : ('reserved' as const),
+              h?.changeType === 'freed'
+                ? ('freed' as const)
+                : ('reserved' as const),
             activeOrderId:
               h?.activeOrderId !== undefined && h?.activeOrderId !== null
                 ? Number(h.activeOrderId)
@@ -982,7 +1010,8 @@ export class SyncController implements OnModuleInit {
                 ? Number(h.currentBill)
                 : undefined,
             occurredAt:
-              typeof h?.occurredAt === 'string' && h.occurredAt.trim().length > 0
+              typeof h?.occurredAt === 'string' &&
+              h.occurredAt.trim().length > 0
                 ? h.occurredAt.trim()
                 : undefined,
           }))
@@ -1057,7 +1086,8 @@ export class SyncController implements OnModuleInit {
                 : undefined,
             walkIn: h?.walkIn === true,
             occurredAt:
-              typeof h?.occurredAt === 'string' && h.occurredAt.trim().length > 0
+              typeof h?.occurredAt === 'string' &&
+              h.occurredAt.trim().length > 0
                 ? h.occurredAt.trim()
                 : undefined,
           }))
@@ -1067,7 +1097,8 @@ export class SyncController implements OnModuleInit {
       (h) => !isReservationEchoSuppressed(h.reservationId),
     );
     if (filteredReservationHints.length > 0) {
-      const latest = filteredReservationHints[filteredReservationHints.length - 1];
+      const latest =
+        filteredReservationHints[filteredReservationHints.length - 1];
       const customer = (latest.customerName ?? '').trim().toLowerCase();
       const walkIn =
         latest.walkIn === true ||
@@ -1095,11 +1126,7 @@ export class SyncController implements OnModuleInit {
     }
 
     const changed =
-      didSyncTables ||
-      !!orders ||
-      !!expenses ||
-      !!menu ||
-      !!staff;
+      didSyncTables || !!orders || !!expenses || !!menu || !!staff;
 
     // Avoid duplicate "სალარო" + "მაგიდები" toasts: line changes use orders_bulk_touch only.
     if (orders && orders.length > 0 && !hadOrderLineTouch && !hadTableTouch) {
@@ -1154,7 +1181,9 @@ export class SyncController implements OnModuleInit {
 
       // If the date actually advanced, the manager closed the day → notify mobile
       if (dayAdvanced) {
-        console.log(`[Sync] Business date advanced: ${prevDate} → ${newDate}. Clearing all table reservations.`);
+        console.log(
+          `[Sync] Business date advanced: ${prevDate} → ${newDate}. Clearing all table reservations.`,
+        );
         // Reset every table to free so ghost tables from the previous business
         // day cannot persist. The stale-data protection in the table sync below
         // would otherwise block the next "all tables free" push from the POS.
@@ -1182,7 +1211,10 @@ export class SyncController implements OnModuleInit {
       await (this.prisma as any).setting.upsert({
         where: { key: `salesSummary:${salesSummary.date}` },
         update: { value: summaryValue },
-        create: { key: `salesSummary:${salesSummary.date}`, value: summaryValue },
+        create: {
+          key: `salesSummary:${salesSummary.date}`,
+          value: summaryValue,
+        },
       });
     }
 
@@ -1203,7 +1235,11 @@ export class SyncController implements OnModuleInit {
       });
     }
 
-    if (salesHistoryByDate && typeof salesHistoryByDate === 'object' && !realtimeOnly) {
+    if (
+      salesHistoryByDate &&
+      typeof salesHistoryByDate === 'object' &&
+      !realtimeOnly
+    ) {
       for (const [date, summary] of Object.entries(salesHistoryByDate)) {
         if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
         const summaryValue = JSON.stringify({
@@ -1228,7 +1264,9 @@ export class SyncController implements OnModuleInit {
       }
       await (this.prisma as any).setting.upsert({
         where: { key: 'salesSummary:history_index' },
-        update: { value: JSON.stringify(Object.keys(salesHistoryByDate).sort()) },
+        update: {
+          value: JSON.stringify(Object.keys(salesHistoryByDate).sort()),
+        },
         create: {
           key: 'salesSummary:history_index',
           value: JSON.stringify(Object.keys(salesHistoryByDate).sort()),
@@ -1314,7 +1352,9 @@ export class SyncController implements OnModuleInit {
    */
   @Post('audit-reports')
   @UseGuards(PosSyncGuard)
-  async syncAuditReports(@Body() body: { reports?: any[]; fullSync?: boolean }) {
+  async syncAuditReports(
+    @Body() body: { reports?: any[]; fullSync?: boolean },
+  ) {
     const reports = body?.reports;
     const fullSync = body?.fullSync === true;
     if (!Array.isArray(reports)) {
@@ -1376,11 +1416,7 @@ export class SyncController implements OnModuleInit {
         await (this.prisma as any).auditEvent.createMany({
           data: events.map((ev, seq) => ({
             reportId: dbReport.id,
-            type: normalizeAuditEventType(
-              ev.type,
-              ev.previousQty,
-              ev.newQty,
-            ),
+            type: normalizeAuditEventType(ev.type, ev.previousQty, ev.newQty),
             itemName: ev.itemName ?? '',
             previousQty: ev.previousQty ?? 0,
             newQty: ev.newQty ?? 0,
@@ -1458,7 +1494,10 @@ export class SyncController implements OnModuleInit {
         count++;
       } catch (e) {
         // Log error but continue with other logs
-        console.warn(`[Sync] Error upserting audit log ${log.id}:`, (e as Error).message);
+        console.warn(
+          `[Sync] Error upserting audit log ${log.id}:`,
+          (e as Error).message,
+        );
       }
     }
 

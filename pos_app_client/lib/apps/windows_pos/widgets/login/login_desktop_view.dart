@@ -30,6 +30,7 @@ class LoginDesktopView extends StatelessWidget {
     required this.onLoginPressed,
     this.showCompanionApp = false,
     this.onCompanionAppPressed,
+    this.onBrandLongPress,
   });
 
   /// Listenable so a keystroke only rebuilds the PIN dots + login button,
@@ -44,6 +45,10 @@ class LoginDesktopView extends StatelessWidget {
   final VoidCallback? onLoginPressed;
   final bool showCompanionApp;
   final VoidCallback? onCompanionAppPressed;
+
+  /// Long press on the top-bar wordmark. The hidden way into the developer
+  /// tools, deliberately unlabelled — see [DeveloperScreen].
+  final VoidCallback? onBrandLongPress;
 
   static const _ink = VynicFloorTokens.text;
   static const _muted = VynicFloorTokens.textMuted;
@@ -171,22 +176,30 @@ class LoginDesktopView extends StatelessWidget {
           final compact = constraints.maxWidth < 620;
           return Row(
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.asset(
-                  'assets/logo/vynic-logo.png',
-                  width: 28,
-                  height: 28,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Text(
-                'Vynic POS',
-                style: TextStyle(
-                  color: _ink,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onLongPress: onBrandLongPress,
+                child: Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        'assets/logo/vynic-logo.png',
+                        width: 28,
+                        height: 28,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Vynic POS',
+                      style: TextStyle(
+                        color: _ink,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const Spacer(),

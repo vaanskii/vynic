@@ -5,13 +5,13 @@ import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_form_controls.
 
 typedef AsyncVoidCallback = Future<void> Function();
 
-/// Local database backup and restore.
+/// Local database backup, and — for the developer only — restore.
 ///
-/// This lived at the bottom of the Settings tab, where it sat next to service
-/// fee and language options that have nothing to do with it. It now renders in
-/// the connection section alongside the other terminal-level plumbing (backend
-/// URL, sync status, print host). Same two callbacks, same busy flags — only
-/// the parent and the surrounding chrome changed.
+/// Settings renders this with [allowRestore] false. Taking a copy is the
+/// venue's own business and they should do it often; putting one back is not,
+/// because restore clears every box first, so a manager reaching for last
+/// week's file to "check something" destroys everything entered since. That
+/// button lives in the developer section behind a signed token.
 class AdminDataBackupPanel extends StatelessWidget {
   const AdminDataBackupPanel({
     super.key,
@@ -21,6 +21,7 @@ class AdminDataBackupPanel extends StatelessWidget {
     required this.isRestoringBackup,
     required this.onCreateBackupFile,
     required this.onRestoreBackupFromFile,
+    this.allowRestore = true,
   });
 
   final String? lastBackupPath;
@@ -29,6 +30,9 @@ class AdminDataBackupPanel extends StatelessWidget {
   final bool isRestoringBackup;
   final AsyncVoidCallback onCreateBackupFile;
   final AsyncVoidCallback onRestoreBackupFromFile;
+
+  /// Whether the restore button is drawn at all.
+  final bool allowRestore;
 
   @override
   Widget build(BuildContext context) {
@@ -44,8 +48,8 @@ class AdminDataBackupPanel extends StatelessWidget {
                 size: 20,
               ),
               const SizedBox(width: 8),
-              const Text(
-                'სარეზერვო ასლი და აღდგენა',
+              Text(
+                allowRestore ? 'სარეზერვო ასლი და აღდგენა' : 'სარეზერვო ასლი',
                 style: TextStyle(
                   color: AdminDesign.text,
                   fontSize: 16,
@@ -68,10 +72,13 @@ class AdminDataBackupPanel extends StatelessWidget {
                 fontSize: 12,
               ),
             ),
-          if (lastRestorePath != null)
+          if (allowRestore && lastRestorePath != null)
             SelectableText(
               'ბოლო აღდგენა: $lastRestorePath',
-              style: const TextStyle(color: AdminTones.successText, fontSize: 12),
+              style: const TextStyle(
+                color: AdminTones.successText,
+                fontSize: 12,
+              ),
             ),
           const SizedBox(height: 12),
           AdminActionRow(
@@ -102,36 +109,37 @@ class AdminDataBackupPanel extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(
-                width: 330,
-                child: OutlinedButton.icon(
-                  onPressed: isRestoringBackup
-                      ? null
-                      : () async {
-                          debugPrint(
-                            '[BackupUI] Restore backup button clicked',
-                          );
-                          try {
-                            await onRestoreBackupFromFile();
+              if (allowRestore)
+                SizedBox(
+                  width: 330,
+                  child: OutlinedButton.icon(
+                    onPressed: isRestoringBackup
+                        ? null
+                        : () async {
                             debugPrint(
-                              '[BackupUI] Restore backup callback finished',
+                              '[BackupUI] Restore backup button clicked',
                             );
-                          } catch (e, st) {
-                            debugPrint(
-                              '[BackupUI] Restore backup callback error: $e',
-                            );
-                            debugPrint('$st');
-                          }
-                        },
-                  style: AdminFormButtons.outline(),
-                  icon: const Icon(Icons.restore, size: 20),
-                  label: Text(
-                    isRestoringBackup
-                        ? 'აღდგენა...'
-                        : 'სარეზერვო ასლიდან აღდგენა',
+                            try {
+                              await onRestoreBackupFromFile();
+                              debugPrint(
+                                '[BackupUI] Restore backup callback finished',
+                              );
+                            } catch (e, st) {
+                              debugPrint(
+                                '[BackupUI] Restore backup callback error: $e',
+                              );
+                              debugPrint('$st');
+                            }
+                          },
+                    style: AdminFormButtons.outline(),
+                    icon: const Icon(Icons.restore, size: 20),
+                    label: Text(
+                      isRestoringBackup
+                          ? 'აღდგენა...'
+                          : 'სარეზერვო ასლიდან აღდგენა',
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ],

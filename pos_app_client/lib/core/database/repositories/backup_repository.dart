@@ -22,6 +22,7 @@ import 'order_repository.dart';
 import 'reservation_repository.dart';
 import 'table_repository.dart';
 import 'settings_repository.dart';
+import 'user_repository.dart';
 
 /// JSON backup/restore of every Hive box, plus the serialize/deserialize
 /// helpers shared with the POS↔server sync payloads.
@@ -634,6 +635,64 @@ class BackupRepository {
 
     final payload = Map<String, dynamic>.from(decoded);
     await _applyBackupPayload(payload, clearExisting: clearExisting);
+  }
+
+  /// Erases every box on this terminal and leaves it as if freshly installed.
+  ///
+  /// Developer-only, and deliberately not reachable from any manager screen.
+  /// A safety backup is written first and its path returned, because the one
+  /// certainty about a wipe is that somebody will want the data back.
+  ///
+  /// Settings are cleared too, but the terminal identity and the developer
+  /// clock high-water mark survive: a wipe must not become a way to shed an
+  /// unlock token's device binding or to rewind expiry checks.
+  static Future<String?> wipeAllData({bool backupFirst = true}) async {
+    String? safetyBackupPath;
+    if (backupFirst) {
+      final file = await createDataBackup();
+      safetyBackupPath = file.path;
+    }
+
+    final settings = DatabaseCore.settingsBox;
+    final preservedSettings = <String, dynamic>{
+      for (final key in const [
+        'developerTerminalId',
+        'developerClockHighWater',
+      ])
+        if (settings?.containsKey(key) ?? false) key: settings!.get(key),
+    };
+
+    await Future.wait([
+      DatabaseCore.userBox!.clear(),
+      DatabaseCore.tableBox!.clear(),
+      DatabaseCore.orderBox!.clear(),
+      DatabaseCore.packageBox!.clear(),
+      DatabaseCore.reservationBox!.clear(),
+      DatabaseCore.quickOrderBox!.clear(),
+      DatabaseCore.menuBox!.clear(),
+      DatabaseCore.salesBox!.clear(),
+      DatabaseCore.expenseBox!.clear(),
+      DatabaseCore.auditLogBox!.clear(),
+      DatabaseCore.errorLogBox!.clear(),
+      if (settings != null) settings.clear(),
+    ]);
+
+    if (settings != null && preservedSettings.isNotEmpty) {
+      await settings.putAll(preservedSettings);
+    }
+
+    // Re-seed the minimum a terminal needs to be usable again: first-run
+    // defaults and one manager account, matching what `DatabaseService.init`
+    // does on a fresh install.
+    await SettingsRepository.seedDefaults();
+    // Without this the terminal has no account to sign in with and the wipe is
+    // indistinguishable from a brick.
+    await UserRepository.createDefaultAdmin();
+
+    SyncHub.notify(SyncEvent(type: SyncEventType.tables, action: 'updated'));
+    SyncHub.notify(SyncEvent(type: SyncEventType.orders, action: 'updated'));
+
+    return safetyBackupPath;
   }
 
   static Future<void> _applyBackupPayload(

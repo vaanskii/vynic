@@ -182,7 +182,8 @@ class AdminSettingsSection extends StatelessWidget {
                       icon: Icons.backup_outlined,
                       title: 'სარეზერვო ასლი',
                       subtitle:
-                          'შექმენით ბაზის სრული ასლი ან აღადგინეთ ფაილიდან.',
+                          'შექმენით ბაზის სრული ასლი და შეინახეთ უსაფრთხო '
+                          'ადგილას. აღდგენა ხდება მხოლოდ დეველოპერის მიერ.',
                     ),
                     const SizedBox(height: 12),
                     dataBackup,

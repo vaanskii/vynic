@@ -1,4 +1,6 @@
 .idea
 .vscode
 secrets/
-.DS_Store 
+.DS_Store
+# Build output (SwiftPM caches land here when building desktop targets).
+build/

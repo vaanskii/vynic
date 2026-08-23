@@ -20,6 +20,8 @@ import 'package:vynic/apps/windows_pos/widgets/admin/admin_connection_section.da
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_data_backup_panel.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_financial_reports_panel.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_settings_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_developer_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/developer_unlock_dialog.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/printers/admin_printers_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_reservations_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_staff_section.dart';
@@ -35,13 +37,11 @@ import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/core/services/pos/pos_display_settings_controller.dart';
 import 'package:vynic/core/services/pos/monthly_report_service.dart';
 import 'package:vynic/core/services/sync/manager_sync_service.dart';
+import 'package:vynic/core/services/security/developer_access.dart';
 
 class AdminScreen extends StatefulWidget {
-  /// Every section the management centre can navigate to.
-  ///
-  /// Kept beside the title map so a tool cannot be added to one and forgotten
-  /// in the other — which is how backup ended up buried inside „კავშირი".
-  static const List<String> navigableSections = [
+  /// Sections a venue's own manager reaches with their admin PIN.
+  static const List<String> managerSections = [
     'staff',
     'menu',
     'packages',
@@ -53,10 +53,29 @@ class AdminScreen extends StatefulWidget {
     'salesReport',
     'financialReports',
     'audit',
+    'settings',
+  ];
+
+  /// Destinations that need a signed developer token.
+  ///
+  /// These are the tools a venue cannot be trusted with once the app is sold:
+  /// the backend URL and printer plumbing brick sync and printing when they
+  /// are guessed at, the error log is a support tool rather than a business
+  /// one, and „developer" itself holds restore, wipe and PIN recovery.
+  static const List<String> developerSections = [
     'errors',
     'printers',
     'connection',
-    'settings',
+    'developer',
+  ];
+
+  /// Every section the management centre can navigate to, whoever is looking.
+  ///
+  /// Kept beside the title map so a tool cannot be added to one and forgotten
+  /// in the other — which is how backup ended up buried inside „კავშირი".
+  static const List<String> navigableSections = [
+    ...managerSections,
+    ...developerSections,
   ];
 
   /// Georgian title for a section, for tests and for the content header.
@@ -170,10 +189,46 @@ class _AdminScreenState extends State<AdminScreen> {
     'reservations',
   };
 
+  /// Whether a signed developer token is currently active on this terminal.
+  ///
+  /// Supervisors never see the developer half regardless: the token unlocks
+  /// tools, it does not promote whoever happens to be signed in.
+  bool get _isDeveloperUnlocked =>
+      !_isLimitedAdmin && DeveloperAccess.isUnlocked;
+
+  void _onDeveloperAccessChanged() {
+    if (!mounted) return;
+    setState(() {
+      // Locking while standing in a developer section would otherwise leave
+      // the manager looking at the backend URL field with no way back.
+      if (!_isDeveloperUnlocked &&
+          AdminScreen.developerSections.contains(_selectedSection)) {
+        _selectedSection = 'settings';
+      }
+    });
+  }
+
+  /// The hidden entry point: a long press on the sidebar wordmark.
+  ///
+  /// Not a menu item, not a gesture anyone finds by accident, and not security
+  /// on its own — the signed token behind it is. This only keeps the door out
+  /// of a curious manager's way.
+  Future<void> _openDeveloperUnlock() async {
+    if (_isLimitedAdmin) return;
+    if (DeveloperAccess.isUnlocked) {
+      setState(() => _selectedSection = 'developer');
+      return;
+    }
+    final unlocked = await DeveloperUnlockDialog.show(context);
+    if (!mounted || !unlocked) return;
+    setState(() => _selectedSection = 'developer');
+  }
+
   @override
   void initState() {
     super.initState();
     _isSidebarExpanded = !_isMobile;
+    DeveloperAccess.unlocked.addListener(_onDeveloperAccessChanged);
     if (_isLimitedAdmin) {
       _selectedSection = 'staff';
     }
@@ -187,6 +242,7 @@ class _AdminScreenState extends State<AdminScreen> {
 
   @override
   void dispose() {
+    DeveloperAccess.unlocked.removeListener(_onDeveloperAccessChanged);
     _kitchenPrinterController.dispose();
     _receiptPrinterController.dispose();
     _printerPortController.dispose();
@@ -1320,6 +1376,8 @@ class _AdminScreenState extends State<AdminScreen> {
         return 'პრინტერები';
       case 'connection':
         return 'კავშირი';
+      case 'developer':
+        return 'დეველოპერი';
       case 'settings':
         return 'პარამეტრები';
       default:
@@ -1340,9 +1398,7 @@ class _AdminScreenState extends State<AdminScreen> {
       height: double.infinity,
       decoration: const BoxDecoration(
         color: _sidebarColor,
-        border: Border(
-          right: BorderSide(color: VynicFloorTokens.panelBorder),
-        ),
+        border: Border(right: BorderSide(color: VynicFloorTokens.panelBorder)),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -1440,28 +1496,61 @@ class _AdminScreenState extends State<AdminScreen> {
         title: 'აუდიტი',
         section: 'audit',
       ),
-      if (!_isMobile)
-        _buildMenuItem(
-          icon: Icons.bug_report,
-          title: 'შეცდომები',
-          section: 'errors',
-        ),
-      _buildMenuItem(
-        icon: Icons.print,
-        title: 'პრინტერები',
-        section: 'printers',
-      ),
-      _buildMenuItem(
-        icon: Icons.lan_outlined,
-        title: 'კავშირი',
-        section: 'connection',
-      ),
       _buildMenuItem(
         icon: Icons.settings,
         title: 'პარამეტრები',
         section: 'settings',
       ),
+      // Terminal plumbing and the developer tools, only while a signed token
+      // is active. They are absent rather than disabled: a greyed-out
+      // „კავშირი" is an invitation to ask what it does.
+      if (_isDeveloperUnlocked) ...[
+        const SizedBox(height: 10),
+        _buildSidebarGroupLabel('DEVELOPER'),
+        if (!_isMobile)
+          _buildMenuItem(
+            icon: Icons.bug_report,
+            title: 'შეცდომები',
+            section: 'errors',
+          ),
+        _buildMenuItem(
+          icon: Icons.print,
+          title: 'პრინტერები',
+          section: 'printers',
+        ),
+        _buildMenuItem(
+          icon: Icons.lan_outlined,
+          title: 'კავშირი',
+          section: 'connection',
+        ),
+        _buildMenuItem(
+          icon: Icons.engineering_outlined,
+          title: 'დეველოპერი',
+          section: 'developer',
+        ),
+      ],
     ];
+  }
+
+  Widget _buildSidebarGroupLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: _sidebarMuted,
+              fontSize: 9.5,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.1,
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Expanded(child: Divider(color: VynicFloorTokens.divider)),
+        ],
+      ),
+    );
   }
 
   Widget _buildSidebarHeader() {
@@ -1495,28 +1584,46 @@ class _AdminScreenState extends State<AdminScreen> {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'Vynic',
-                  style: TextStyle(
-                    color: VynicFloorTokens.text,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onLongPress: _openDeveloperUnlock,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Vynic',
+                    style: TextStyle(
+                      color: VynicFloorTokens.text,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
                   ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'მართვის ცენტრი',
-                  style: TextStyle(
-                    color: _sidebarMuted,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 11,
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      const Text(
+                        'მართვის ცენტრი',
+                        style: TextStyle(
+                          color: _sidebarMuted,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                        ),
+                      ),
+                      // The only outward sign the developer half exists, and
+                      // it appears only once a token has already opened it.
+                      if (_isDeveloperUnlocked) ...[
+                        const SizedBox(width: 6),
+                        const Icon(
+                          Icons.engineering_outlined,
+                          size: 12,
+                          color: _adminAccent,
+                        ),
+                      ],
+                    ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -1615,6 +1722,8 @@ class _AdminScreenState extends State<AdminScreen> {
         isRestoringBackup: _isRestoringBackup,
         onCreateBackupFile: _createBackupFile,
         onRestoreBackupFromFile: _restoreBackupFromFile,
+        // Managers take copies; only the developer section puts one back.
+        allowRestore: false,
       ),
       formatDateTimeDisplay: _formatDateTimeDisplay,
       formatRelativeTime: _formatRelativeTime,
@@ -3134,7 +3243,9 @@ class _AdminScreenState extends State<AdminScreen> {
                               Navigator.of(dialogContext).pop(false),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AdminDesign.muted,
-                            side: const BorderSide(color: VynicFloorTokens.textFaint),
+                            side: const BorderSide(
+                              color: VynicFloorTokens.textFaint,
+                            ),
                             minimumSize: const Size.fromHeight(44),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -3388,11 +3499,16 @@ class _AdminScreenState extends State<AdminScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('გაუქმება', style: TextStyle(color: AdminDesign.muted)),
+            child: const Text(
+              'გაუქმება',
+              style: TextStyle(color: AdminDesign.muted),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: AdminDesign.danger),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AdminDesign.danger,
+            ),
             child: const Text('გაუქმება / Cancel'),
           ),
         ],
@@ -3462,7 +3578,10 @@ class _AdminScreenState extends State<AdminScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('გაუქმება', style: TextStyle(color: AdminDesign.muted)),
+            child: const Text(
+              'გაუქმება',
+              style: TextStyle(color: AdminDesign.muted),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
@@ -3501,6 +3620,14 @@ class _AdminScreenState extends State<AdminScreen> {
   Widget _buildContent() {
     if (_isLimitedAdmin && !_limitedAdminSections.contains(_selectedSection)) {
       return AdminStaffSection(user: widget.user);
+    }
+
+    // The routing check, not just the menu. Hiding an entry is presentation;
+    // this is what makes a developer section unreachable when the token has
+    // expired mid-session or was never presented.
+    if (AdminScreen.developerSections.contains(_selectedSection) &&
+        !_isDeveloperUnlocked) {
+      return _buildSettingsSection();
     }
 
     switch (_selectedSection) {
@@ -3573,6 +3700,15 @@ class _AdminScreenState extends State<AdminScreen> {
         return _buildPrintersSection();
       case 'connection':
         return const AdminConnectionSection();
+      case 'developer':
+        return AdminDeveloperSection(
+          onCreateBackupFile: _createBackupFile,
+          onRestoreBackupFromFile: _restoreBackupFromFile,
+          isCreatingBackup: _isCreatingBackup,
+          isRestoringBackup: _isRestoringBackup,
+          lastBackupPath: _lastBackupPath,
+          lastRestorePath: _lastRestorePath,
+        );
       case 'settings':
         return _buildSettingsSection();
       default:

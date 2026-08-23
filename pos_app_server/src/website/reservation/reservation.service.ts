@@ -8,7 +8,8 @@ import {
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { BogService } from '../payment/payment.service';
-import { WebsitePosReservationBridgeService,
+import {
+  WebsitePosReservationBridgeService,
   normalizeMapReservationStatus,
   serializeWebsiteTableForMap,
 } from './website-pos-reservation-bridge.service';
@@ -44,7 +45,8 @@ export class ReservationService {
   async getTableAvailability(date: string) {
     const tables = await this.getAllTables();
     const { dateKey, start, end } = dayBounds(date);
-    const unavailable = await this.posBridge.getUnavailableTableCodesForDate(dateKey);
+    const unavailable =
+      await this.posBridge.getUnavailableTableCodesForDate(dateKey);
 
     const websiteReservations = await this.prisma.websiteReservation.findMany({
       where: {
@@ -88,7 +90,8 @@ export class ReservationService {
     if (!table) return false;
 
     const { dateKey } = dayBounds(date);
-    const unavailable = await this.posBridge.getUnavailableTableCodesForDate(dateKey);
+    const unavailable =
+      await this.posBridge.getUnavailableTableCodesForDate(dateKey);
     const tableCode = encodeTableCode(table.posFloor, table.posTableNumber);
     return !unavailable.has(tableCode);
   }
@@ -268,7 +271,9 @@ export class ReservationService {
         id: String(pos.id ?? ''),
         date: reservationDate,
         timeSlot: String(pos.reservationTime ?? ''),
-        status: normalizeMapReservationStatus(String(pos.status ?? 'confirmed')),
+        status: normalizeMapReservationStatus(
+          String(pos.status ?? 'confirmed'),
+        ),
         customerName: String(pos.customerName ?? ''),
         customerPhone: String(pos.customerPhone ?? ''),
         numberOfGuests: Number(pos.numberOfGuests ?? 0) || null,
@@ -316,7 +321,11 @@ export class ReservationService {
     paymentDescription: string,
     paymentId: string,
   ) {
-    const confirmedStatuses = ['completed', 'partial_completed', 'auth_requested'];
+    const confirmedStatuses = [
+      'completed',
+      'partial_completed',
+      'auth_requested',
+    ];
     const failedStatuses = ['rejected', 'refunded', 'refunded_partially'];
     const normalized = paymentStatus.toLowerCase();
     const status = confirmedStatuses.includes(normalized)
@@ -362,7 +371,9 @@ export class ReservationService {
     return updated;
   }
 
-  async getPaymentIdByReservationId(reservationId: string): Promise<string | null> {
+  async getPaymentIdByReservationId(
+    reservationId: string,
+  ): Promise<string | null> {
     const reservation = await this.prisma.websiteReservation.findUnique({
       where: { id: reservationId },
       select: { paymentId: true },

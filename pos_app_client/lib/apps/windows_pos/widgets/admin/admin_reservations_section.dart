@@ -649,9 +649,7 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
     required bool showDivider,
   }) {
     final cancelled = _isCancelled(reservation);
-    final statusColor = cancelled
-        ? AdminDesign.danger
-        : AdminTones.successText;
+    final statusColor = cancelled ? AdminDesign.danger : AdminTones.successText;
     final statusLabel = cancelled ? 'გაუქმებული' : 'დადასტურებული';
     final tables = ReservationTableAvailability.tableNumbersLabel(reservation);
     final dateLabel = DatabaseService.getGeorgianFormattedDate(

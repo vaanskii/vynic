@@ -45,7 +45,10 @@ export class MobileReservationsService {
     try {
       rows = await this.posCallback.fetchPosReservations();
     } catch (e) {
-      console.warn('[Mobile][Reservations] fetch failed:', (e as Error).message);
+      console.warn(
+        '[Mobile][Reservations] fetch failed:',
+        (e as Error).message,
+      );
       // Keep mobile UI functional even before POS callback URL is synced.
       return [];
     }
@@ -68,7 +71,9 @@ export class MobileReservationsService {
         customerName: String(r.customerName ?? ''),
         customerPhone: String(r.customerPhone ?? ''),
         tableNumbers: Array.isArray(r.tableNumbers)
-          ? r.tableNumbers.map((x: any) => Number(x)).filter((x: number) => Number.isFinite(x))
+          ? r.tableNumbers
+              .map((x: any) => Number(x))
+              .filter((x: number) => Number.isFinite(x))
           : [],
         reservationDate: String(r.reservationDate ?? ''),
         reservationTime: String(r.reservationTime ?? ''),
@@ -105,11 +110,19 @@ export class MobileReservationsService {
     const reservationDate = (payload.reservationDate ?? '').trim();
     const reservationTime = (payload.reservationTime ?? '').trim();
     const tableNumbers = Array.isArray(payload.tableNumbers)
-      ? payload.tableNumbers.map((n) => Number(n)).filter((n) => Number.isFinite(n))
+      ? payload.tableNumbers
+          .map((n) => Number(n))
+          .filter((n) => Number.isFinite(n))
       : [];
     const numberOfGuests = Number(payload.numberOfGuests ?? 0);
-    if (customerName.length === 0 || reservationDate.length === 0 || reservationTime.length === 0) {
-      throw new BadRequestException('customerName, reservationDate, reservationTime are required');
+    if (
+      customerName.length === 0 ||
+      reservationDate.length === 0 ||
+      reservationTime.length === 0
+    ) {
+      throw new BadRequestException(
+        'customerName, reservationDate, reservationTime are required',
+      );
     }
     if (!Number.isFinite(numberOfGuests) || numberOfGuests <= 0) {
       throw new BadRequestException('numberOfGuests must be greater than zero');
@@ -135,7 +148,8 @@ export class MobileReservationsService {
 
     let reservation: any;
     try {
-      reservation = await this.posCallback.createPosReservation(reservationPayload);
+      reservation =
+        await this.posCallback.createPosReservation(reservationPayload);
     } catch (e) {
       if (!this.posOutbox.isPosUnreachableError(e)) throw e;
       // POS offline — queue for durable delivery so the reservation isn't lost.
@@ -170,14 +184,18 @@ export class MobileReservationsService {
       customerName: String(reservation?.customerName ?? customerName),
       customerPhone: String(reservation?.customerPhone ?? customerPhone),
       tableNumbers: Array.isArray(reservation?.tableNumbers)
-        ? reservation.tableNumbers.map((x: any) => Number(x)).filter((x: number) => Number.isFinite(x))
+        ? reservation.tableNumbers
+            .map((x: any) => Number(x))
+            .filter((x: number) => Number.isFinite(x))
         : tableNumbers,
       reservationDate: String(reservation?.reservationDate ?? reservationDate),
       reservationTime: String(reservation?.reservationTime ?? reservationTime),
       numberOfGuests: Number(reservation?.numberOfGuests ?? numberOfGuests),
       notes: reservation?.notes ? String(reservation.notes) : undefined,
       status: String(reservation?.status ?? 'confirmed'),
-      createdBy: reservation?.createdBy ? String(reservation.createdBy) : undefined,
+      createdBy: reservation?.createdBy
+        ? String(reservation.createdBy)
+        : undefined,
     };
   }
 
@@ -190,8 +208,14 @@ export class MobileReservationsService {
     if (status.length === 0) {
       throw new BadRequestException('status is required');
     }
-    if (status === 'completed' || status === 'in-progress' || status === 'inprogress') {
-      throw new BadRequestException('Moving reservation to table is not allowed from mobile');
+    if (
+      status === 'completed' ||
+      status === 'in-progress' ||
+      status === 'inprogress'
+    ) {
+      throw new BadRequestException(
+        'Moving reservation to table is not allowed from mobile',
+      );
     }
     try {
       await this.posCallback.updatePosReservationStatus(id, status);
@@ -255,7 +279,10 @@ export class MobileReservationsService {
       await this.posCallback.printPosReservationCheck(reservationId);
     } catch (e) {
       const message = (e as Error).message ?? '';
-      if (message.includes('reservation_not_found') || message.includes('404')) {
+      if (
+        message.includes('reservation_not_found') ||
+        message.includes('404')
+      ) {
         throw new NotFoundException('Reservation not found on POS');
       }
       throw new ServiceUnavailableException(

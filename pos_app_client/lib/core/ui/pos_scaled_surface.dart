@@ -42,7 +42,7 @@ class PosScaledSurface extends StatelessWidget {
   /// stop resolving to the same factor at this width). Getting there needs
   /// those two sections to survive ~1120, which is layout work, not a constant.
   static const Size designSize = Size(1200, 720);
-  
+
   /// Box the subtree is laid out in, and the factor it is painted at.
   ///
   /// Split out so the behaviour can be checked without pumping a window.

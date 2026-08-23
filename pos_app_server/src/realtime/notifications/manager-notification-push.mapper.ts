@@ -51,13 +51,15 @@ function isWalkInCustomerName(name: string): boolean {
 }
 
 /** Shared copy for reservation / table WS payloads (FCM + DB). */
-export function buildReservationsDataUpdatedCopy(
-  p: Record<string, unknown>,
-): { title: string; body: string } {
+export function buildReservationsDataUpdatedCopy(p: Record<string, unknown>): {
+  title: string;
+  body: string;
+} {
   const action = asString(p.action).trim().toLowerCase();
   const customerName = asString(p.customerName).trim();
   const resDateRaw = asString(p.reservationDate).trim();
-  const resDate = resDateRaw.length >= 10 ? resDateRaw.slice(0, 10) : resDateRaw;
+  const resDate =
+    resDateRaw.length >= 10 ? resDateRaw.slice(0, 10) : resDateRaw;
   const resTime = asString(p.reservationTime).trim();
   const tables = formatTableNumbers(p.tableNumbers);
   const today = todayIsoDate();
@@ -84,10 +86,7 @@ export function buildReservationsDataUpdatedCopy(
   if (isWalkInCustomerName(customerName)) {
     return {
       title: 'მაგიდა',
-      body:
-        detail.length > 0
-          ? `ახალი walk-in — ${detail}`
-          : 'ახალი walk-in',
+      body: detail.length > 0 ? `ახალი walk-in — ${detail}` : 'ახალი walk-in',
     };
   }
 
@@ -112,10 +111,7 @@ export function buildReservationsDataUpdatedCopy(
 
   return {
     title: 'რეზერვაციები',
-    body:
-      detail.length > 0
-        ? `რეზერვაცია — ${detail}`
-        : 'რეზერვაცია განახლდა',
+    body: detail.length > 0 ? `რეზერვაცია — ${detail}` : 'რეზერვაცია განახლდა',
   };
 }
 
@@ -133,8 +129,7 @@ function buildOrderCreatedCopy(p: Record<string, unknown>): {
       : tableNumbers.length > 0
         ? tableNumbers
         : '';
-  const tablePart =
-    tableSeg.length > 0 ? ` — მაგიდა $tableSeg` : '';
+  const tablePart = tableSeg.length > 0 ? ` — მაგიდა $tableSeg` : '';
   const idPart = id !== null ? ' #$id' : '';
 
   if (walkIn) {
@@ -214,20 +209,14 @@ export function buildManagerPushCopy(
       const id = asOrderId(p?.posOrderId);
       return {
         title: 'გატანა',
-        body:
-          id !== null
-            ? `დაემატა შეკვეთა #${id}`
-            : 'დაემატა შეკვეთა',
+        body: id !== null ? `დაემატა შეკვეთა #${id}` : 'დაემატა შეკვეთა',
       };
     }
     case 'takeaway_deleted': {
       const id = asOrderId(p?.posOrderId);
       return {
         title: 'გატანა',
-        body:
-          id !== null
-            ? `შეკვეთა წაიშალა #${id}`
-            : 'შეკვეთა წაიშალა',
+        body: id !== null ? `შეკვეთა წაიშალა #${id}` : 'შეკვეთა წაიშალა',
       };
     }
     case 'orders_bulk_touch': {
@@ -267,9 +256,10 @@ export function buildManagerPushCopy(
       const bodyCore = orderId !== null ? `შეკვეთა #${orderId}` : 'შეკვეთა';
       return {
         title: 'სალარო',
-        body: summary.length > 0
-          ? `${bodyCore} — ${summary}`
-          : `${bodyCore} განახლდა`,
+        body:
+          summary.length > 0
+            ? `${bodyCore} — ${summary}`
+            : `${bodyCore} განახლდა`,
       };
     }
     case 'tables_bulk_touch':
@@ -280,7 +270,9 @@ export function buildManagerPushCopy(
       const singleId = asOrderId(p?.posOrderId);
       const idsRaw = p?.posOrderIds;
       const ids = Array.isArray(idsRaw)
-        ? idsRaw.map((e) => asOrderId(e)).filter((id): id is number => id !== null)
+        ? idsRaw
+            .map((e) => asOrderId(e))
+            .filter((id): id is number => id !== null)
         : [];
       if (ids.length > 1) {
         return {
@@ -323,8 +315,7 @@ export function buildManagerPushCopy(
           const floor = asString(p?.floor).trim();
           const action = asString(p?.action).trim().toLowerCase();
           if (action === 'freed' || action === 'cancelled') {
-            const label =
-              tableNumber.length > 0 ? tableNumber : 'მაგიდა';
+            const label = tableNumber.length > 0 ? tableNumber : 'მაგიდა';
             return {
               title: 'მაგიდა',
               body: `მაგიდა $label გაუქმდა`,

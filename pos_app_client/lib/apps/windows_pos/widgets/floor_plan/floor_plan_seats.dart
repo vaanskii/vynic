@@ -56,7 +56,9 @@ List<Offset> _rectSeats(Rect rect, int capacity) {
   final longSide = horizontal ? rect.width : rect.height;
   final shortSide = horizontal ? rect.height : rect.width;
 
-  var ends = (capacity >= 6 && longSide / math.max(shortSide, 1) >= 1.4) ? 2 : 0;
+  var ends = (capacity >= 6 && longSide / math.max(shortSide, 1) >= 1.4)
+      ? 2
+      : 0;
   if (capacity - ends < 2) {
     ends = 0;
   }

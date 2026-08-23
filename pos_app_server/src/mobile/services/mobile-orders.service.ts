@@ -121,13 +121,11 @@ export class MobileOrdersService {
       where: { activeOrderId: Number(id) },
       orderBy: [{ floor: 'asc' }, { tableNumber: 'asc' }],
     });
-    const tableNumbers = linkedTables.map((t: { tableNumber: string }) =>
-      String(t.tableNumber).trim(),
-    ).filter((n: string) => n.length > 0);
+    const tableNumbers = linkedTables
+      .map((t: { tableNumber: string }) => String(t.tableNumber).trim())
+      .filter((n: string) => n.length > 0);
     const linkedFloor =
-      linkedTables.length > 0
-        ? String(linkedTables[0].floor ?? '').trim()
-        : '';
+      linkedTables.length > 0 ? String(linkedTables[0].floor ?? '').trim() : '';
 
     const itemsSubtotal = order.items.reduce(
       (sum, it) => sum + Number(it.price) * it.quantity,
@@ -171,7 +169,9 @@ export class MobileOrdersService {
       where: { orderId: order.id },
     });
 
-    await (this.prisma as any).orderItem.deleteMany({ where: { orderId: order.id } });
+    await (this.prisma as any).orderItem.deleteMany({
+      where: { orderId: order.id },
+    });
     for (const item of body.items ?? []) {
       await (this.prisma as any).orderItem.create({
         data: {
@@ -223,7 +223,7 @@ export class MobileOrdersService {
     const floor =
       typeof body.floor === 'string' && body.floor.trim().length > 0
         ? body.floor
-        : order.floor ?? 'first';
+        : (order.floor ?? 'first');
     if (tableNumbers.length > 0 && newTotal >= 0) {
       for (const rawNum of tableNumbers) {
         const tableNumber = String(rawNum)
@@ -240,7 +240,8 @@ export class MobileOrdersService {
     const performer = String(
       body.updatedBy ?? body.waiterName ?? 'მობილური მენეჯერი',
     ).trim();
-    const performerName = performer.length > 0 ? performer : 'მობილური მენეჯერი';
+    const performerName =
+      performer.length > 0 ? performer : 'მობილური მენეჯერი';
     const posOrderId = Number(id);
     this.mutationSupport.registerMobileMutationEchoGuard(posOrderId);
 
@@ -487,10 +488,16 @@ export class MobileOrdersService {
     },
   ) {
     // Resolve current business date
-    const bdSetting = await (this.prisma as any).setting.findUnique({ where: { key: 'currentBusinessDate' } });
-    const businessDate: string = bdSetting?.value ?? new Date().toISOString().slice(0, 10);
+    const bdSetting = await (this.prisma as any).setting.findUnique({
+      where: { key: 'currentBusinessDate' },
+    });
+    const businessDate: string =
+      bdSetting?.value ?? new Date().toISOString().slice(0, 10);
 
-    const totalAmount = body.items.reduce((s, it) => s + it.unitPrice * it.quantity, 0);
+    const totalAmount = body.items.reduce(
+      (s, it) => s + it.unitPrice * it.quantity,
+      0,
+    );
 
     // Allocate a posOrderId and create the order, retrying on the (rare) race
     // where two mobile requests grabbed the same id.
@@ -512,7 +519,7 @@ export class MobileOrdersService {
             customerPhone: '-',
             pickupTime: body.pickupTime,
             items: {
-              create: body.items.map(it => ({
+              create: body.items.map((it) => ({
                 name: it.itemName,
                 quantity: it.quantity,
                 price: it.unitPrice,
@@ -583,7 +590,11 @@ export class MobileOrdersService {
     const floor = (body.floor ?? 'first').toString().trim() || 'first';
     const tableNumbers = Array.isArray(body.tableNumbers)
       ? body.tableNumbers
-          .map((t) => String(t).replace(/^table\s*/i, '').trim())
+          .map((t) =>
+            String(t)
+              .replace(/^table\s*/i, '')
+              .trim(),
+          )
           .filter((t) => t.length > 0)
       : [];
     if (tableNumbers.length === 0) {
@@ -613,7 +624,10 @@ export class MobileOrdersService {
       // Suppress echo for the order and every reserved table.
       this.mutationSupport.registerMobileMutationEchoGuard(candidateId);
       for (const tableNumber of tableNumbers) {
-        this.mutationSupport.registerMobileMutationEchoGuard(candidateId, { tableNumber, floor });
+        this.mutationSupport.registerMobileMutationEchoGuard(candidateId, {
+          tableNumber,
+          floor,
+        });
       }
       try {
         order = await this.prisma.order.create({
@@ -649,7 +663,11 @@ export class MobileOrdersService {
     for (const tableNumber of tableNumbers) {
       await (this.prisma as any).table.upsert({
         where: { tableIdentifier: { tableNumber, floor } },
-        update: { isReserved: true, activeOrderId: nextId, currentBill: totalAmount },
+        update: {
+          isReserved: true,
+          activeOrderId: nextId,
+          currentBill: totalAmount,
+        },
         create: {
           tableNumber,
           floor,
@@ -752,7 +770,21 @@ export class MobileOrdersService {
           ? {
               OR: [
                 { businessDate: currentBD },
-                { businessDate: '', createdAt: { gte: (() => { const [y,m,d] = currentBD.split('-').map(Number); return new Date(y,m-1,d,0,0,0,0); })(), lt: (() => { const [y,m,d] = currentBD.split('-').map(Number); const s = new Date(y,m-1,d,0,0,0,0); s.setDate(s.getDate()+1); return s; })() } },
+                {
+                  businessDate: '',
+                  createdAt: {
+                    gte: (() => {
+                      const [y, m, d] = currentBD.split('-').map(Number);
+                      return new Date(y, m - 1, d, 0, 0, 0, 0);
+                    })(),
+                    lt: (() => {
+                      const [y, m, d] = currentBD.split('-').map(Number);
+                      const s = new Date(y, m - 1, d, 0, 0, 0, 0);
+                      s.setDate(s.getDate() + 1);
+                      return s;
+                    })(),
+                  },
+                },
               ],
             }
           : {}),

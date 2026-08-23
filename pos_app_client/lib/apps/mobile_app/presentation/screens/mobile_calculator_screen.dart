@@ -334,12 +334,12 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
     return list;
   }
 
-  void _increment(_MenuItem item, {double? size, double? price, int qty = 1}) {
+  void _increment(_MenuItem item, {double? size, int qty = 1}) {
     final key = size == null ? item.key : '${item.key}_$size';
     setState(() => _cart[key] = (_cart[key] ?? 0) + qty);
   }
 
-  void _onItemTap(_MenuItem item, {int? initialQty, String? cartKey}) async {
+  void _onItemTap(_MenuItem item, {String? cartKey}) async {
     await _openPinSheet(item, cartKey: cartKey, addMode: false);
   }
 
@@ -409,28 +409,6 @@ class _MobileCalculatorScreenState extends State<MobileCalculatorScreen>
         _cart[key] = cur - 1;
       }
     });
-  }
-
-  _MenuItem? _findMenuItemForCartKey(String cartKey) {
-    for (final cat in _categories) {
-      for (final item in cat.items) {
-        if (_menuItemMatchesCartKey(item, cartKey)) return item;
-      }
-      for (final sub in cat.subcategories) {
-        for (final item in sub.items) {
-          if (_menuItemMatchesCartKey(item, cartKey)) return item;
-        }
-      }
-    }
-    return null;
-  }
-
-  bool _menuItemMatchesCartKey(_MenuItem item, String cartKey) {
-    if (item.key == cartKey) return true;
-    for (final v in item.variants) {
-      if ('${item.key}_${v.size}' == cartKey) return true;
-    }
-    return false;
   }
 
   Future<void> _saveCount() async {

@@ -5,10 +5,7 @@ import { BogController } from './payment.controller';
 import { BogService } from './payment.service';
 
 @Module({
-  imports: [
-    WebsiteMenuModule,
-    forwardRef(() => WebsiteReservationModule),
-  ],
+  imports: [WebsiteMenuModule, forwardRef(() => WebsiteReservationModule)],
   controllers: [BogController],
   providers: [BogService],
   exports: [BogService],

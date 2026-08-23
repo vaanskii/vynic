@@ -22,7 +22,9 @@ function isDevLanOrigin(origin: string): boolean {
 function buildAllowedOrigins(): string[] {
   const fromEnv = [
     process.env.FRONTEND_URL,
-    ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : []),
+    ...(process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(',')
+      : []),
   ]
     .map((value) => value?.trim())
     .filter((value): value is string => Boolean(value))

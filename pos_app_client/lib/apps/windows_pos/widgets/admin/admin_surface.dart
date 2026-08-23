@@ -160,7 +160,10 @@ abstract final class AdminTheme {
           elevation: 0,
           shadowColor: Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-          textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
+          textStyle: const TextStyle(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w700,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radius),
           ),
@@ -172,7 +175,10 @@ abstract final class AdminTheme {
           foregroundColor: VynicFloorTokens.text,
           disabledForegroundColor: VynicFloorTokens.textFaint,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-          textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w600,
+          ),
           side: const BorderSide(color: VynicFloorTokens.panelBorder),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radius),
@@ -184,7 +190,10 @@ abstract final class AdminTheme {
           foregroundColor: VynicFloorTokens.accentText,
           disabledForegroundColor: VynicFloorTokens.textFaint,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w600,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radius),
           ),
@@ -227,9 +236,7 @@ abstract final class AdminTheme {
       ),
       dropdownMenuTheme: DropdownMenuThemeData(
         menuStyle: MenuStyle(
-          backgroundColor: const WidgetStatePropertyAll(
-            VynicFloorTokens.panel,
-          ),
+          backgroundColor: const WidgetStatePropertyAll(VynicFloorTokens.panel),
           surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
@@ -352,10 +359,7 @@ abstract final class AdminTheme {
           color: VynicFloorTokens.text,
           borderRadius: BorderRadius.circular(8),
         ),
-        textStyle: const TextStyle(
-          color: VynicFloorTokens.panel,
-          fontSize: 12,
-        ),
+        textStyle: const TextStyle(color: VynicFloorTokens.panel, fontSize: 12),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: VynicFloorTokens.text,
@@ -378,10 +382,7 @@ abstract final class AdminTheme {
 /// Sections each used to pick their own — 16, 22, 24, 28 — so switching tabs
 /// nudged the content sideways by up to twelve points. One number means the
 /// panels line up across the whole panel.
-EdgeInsets adminSectionPadding({
-  required bool isMobile,
-  double bottom = 18,
-}) {
+EdgeInsets adminSectionPadding({required bool isMobile, double bottom = 18}) {
   final side = isMobile ? 16.0 : 22.0;
   return EdgeInsets.fromLTRB(side, isMobile ? 16 : 18, side, bottom);
 }

@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 
 import 'package:vynic/core/models/table_layout.dart';
 import 'package:vynic/core/services/database_service.dart';
-import 'package:vynic/core/ui/vynic_colors.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'floor_editor_canvas.dart';
 import 'floor_editor_controller.dart';

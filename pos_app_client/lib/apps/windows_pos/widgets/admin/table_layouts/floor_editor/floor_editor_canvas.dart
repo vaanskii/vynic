@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:flutter/services.dart';
 
-import 'package:vynic/core/ui/vynic_colors.dart';
 import 'floor_editor_controller.dart';
 import 'floor_editor_painter.dart';
 import 'floor_editor_viewport.dart';

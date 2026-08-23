@@ -73,7 +73,9 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
                 18,
               ),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: adminSectionMaxWidth),
+                constraints: const BoxConstraints(
+                  maxWidth: adminSectionMaxWidth,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

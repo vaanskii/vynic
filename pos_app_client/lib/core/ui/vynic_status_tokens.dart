@@ -10,7 +10,8 @@ enum VynicStatusTone { neutral, info, success, warning, danger }
 /// [foreground] is the full-strength hue for dots/icons/large fills.
 /// [text] is the WCAG-AA-compliant shade for small chip text on [background]
 /// (identical to [foreground] for tones that already pass; darker for
-/// success/warning). [background]/[border] are the 12%-tint fill and outline.
+/// success/warning/neutral). [background]/[border] are the 12%-tint fill and
+/// outline.
 @immutable
 class VynicStatusToken {
   const VynicStatusToken({
@@ -64,7 +65,7 @@ abstract final class VynicStatusTokens {
         return const VynicStatusToken(
           tone: VynicStatusTone.neutral,
           foreground: VynicColors.neutral,
-          text: VynicColors.neutral,
+          text: VynicColors.neutralText,
           background: VynicColors.neutralSoft,
           border: VynicColors.neutralBorder,
         );

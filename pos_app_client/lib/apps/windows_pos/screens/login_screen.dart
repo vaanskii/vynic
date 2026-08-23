@@ -9,6 +9,7 @@ import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/auth/mobile_auth_service.dart';
 import 'package:vynic/core/services/sync/manager_sync_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
+import 'developer_screen.dart';
 import 'home_screen.dart';
 import 'venue_setup_screen.dart';
 
@@ -291,6 +292,10 @@ class _LoginScreenState extends State<LoginScreen> {
         onCompanionAppPressed: isMobile && widget.companionAppBuilder != null
             ? _launchCompanionApp
             : null,
+        // Support has to work when the venue cannot sign in — a forgotten
+        // admin PIN is the case the recovery tool exists for, and routing it
+        // through the admin panel would put it behind the thing that is lost.
+        onBrandLongPress: () => DeveloperScreen.unlockAndOpen(context),
       ),
     );
   }

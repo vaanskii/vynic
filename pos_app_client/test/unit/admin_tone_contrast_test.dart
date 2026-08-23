@@ -20,9 +20,7 @@ double _luminance(Color c) {
         : math.pow((v + 0.055) / 1.055, 2.4).toDouble();
   }
 
-  return 0.2126 * channel(c.r) +
-      0.7152 * channel(c.g) +
-      0.0722 * channel(c.b);
+  return 0.2126 * channel(c.r) + 0.7152 * channel(c.g) + 0.0722 * channel(c.b);
 }
 
 double _ratio(Color fg, Color bg) {
@@ -95,10 +93,7 @@ void main() {
 
   group('Admin chrome', () {
     test('body and muted text read on both panel surfaces', () {
-      for (final surface in const [
-        AdminDesign.panel,
-        AdminDesign.panelSoft,
-      ]) {
+      for (final surface in const [AdminDesign.panel, AdminDesign.panelSoft]) {
         expect(_ratio(AdminDesign.text, surface), greaterThanOrEqualTo(4.5));
         expect(_ratio(AdminDesign.muted, surface), greaterThanOrEqualTo(4.5));
       }

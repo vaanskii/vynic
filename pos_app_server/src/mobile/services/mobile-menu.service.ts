@@ -180,11 +180,7 @@ export class MobileMenuService {
       });
     }
 
-    this.gateway.broadcastUpdate(
-      'data_updated',
-      { type: 'all' },
-      excludeOpts,
-    );
+    this.gateway.broadcastUpdate('data_updated', { type: 'all' }, excludeOpts);
     return { success: true, id: dbDraft.draftId };
   }
 
@@ -192,11 +188,7 @@ export class MobileMenuService {
     await (this.prisma as any).quickOrderDraft.delete({
       where: { draftId: id },
     });
-    this.gateway.broadcastUpdate(
-      'data_updated',
-      { type: 'all' },
-      excludeOpts,
-    );
+    this.gateway.broadcastUpdate('data_updated', { type: 'all' }, excludeOpts);
     return { success: true };
   }
 
@@ -260,11 +252,7 @@ export class MobileMenuService {
       });
     }
 
-    this.gateway.broadcastUpdate(
-      'data_updated',
-      { type: 'all' },
-      excludeOpts,
-    );
+    this.gateway.broadcastUpdate('data_updated', { type: 'all' }, excludeOpts);
     return { success: true, id: existing.draftId };
   }
 

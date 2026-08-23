@@ -1,9 +1,4 @@
-import {
-  forwardRef,
-  Inject,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { getApps, initializeApp, applicationDefault } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
@@ -119,9 +114,7 @@ export class HybridNotificationService {
             onlineUsernames: online,
           });
         } catch (fcmError) {
-          this.logger.warn(
-            `FCM send failed: ${(fcmError as Error).message}`,
-          );
+          this.logger.warn(`FCM send failed: ${(fcmError as Error).message}`);
         }
       }
     } catch (e) {

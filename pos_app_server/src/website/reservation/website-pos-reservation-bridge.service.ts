@@ -50,9 +50,7 @@ export class WebsitePosReservationBridgeService {
 
   encodeWebsiteTables(tables: WebsiteTableRow[]): number[] {
     return tables
-      .map((table) =>
-        encodeTableCode(table.posFloor, table.posTableNumber),
-      )
+      .map((table) => encodeTableCode(table.posFloor, table.posTableNumber))
       .sort((a, b) => a - b);
   }
 
@@ -136,10 +134,7 @@ export class WebsitePosReservationBridgeService {
   ): WebsiteTableRow[] {
     const byCode = new Map<number, WebsiteTableRow>();
     for (const table of websiteTables) {
-      byCode.set(
-        encodeTableCode(table.posFloor, table.posTableNumber),
-        table,
-      );
+      byCode.set(encodeTableCode(table.posFloor, table.posTableNumber), table);
     }
 
     const mapped: WebsiteTableRow[] = [];

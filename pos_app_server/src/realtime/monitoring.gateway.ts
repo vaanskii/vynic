@@ -57,9 +57,10 @@ export class MonitoringGateway
 
     server.use(async (socket, next) => {
       try {
-        const auth = socket.handshake.auth as Record<string, unknown> | undefined;
-        let token =
-          typeof auth?.token === 'string' ? (auth.token as string) : undefined;
+        const auth = socket.handshake.auth as
+          | Record<string, unknown>
+          | undefined;
+        let token = typeof auth?.token === 'string' ? auth.token : undefined;
         if (!token) {
           const h = socket.handshake.headers.authorization;
           if (typeof h === 'string' && h.startsWith('Bearer ')) {
@@ -100,7 +101,7 @@ export class MonitoringGateway
     payload: T,
     options?: BroadcastOptions,
   ): void {
-    void this.hybrid.deliver(type, payload as unknown, options);
+    void this.hybrid.deliver(type, payload, options);
   }
 
   /**

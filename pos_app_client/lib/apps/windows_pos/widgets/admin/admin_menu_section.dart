@@ -2126,7 +2126,9 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: AdminDesign.danger),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AdminDesign.danger,
+            ),
             child: const Text('წაშლა'),
           ),
         ],
@@ -2334,7 +2336,9 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: AdminDesign.danger),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AdminDesign.danger,
+            ),
             child: const Text('წაშლა'),
           ),
         ],
@@ -2452,7 +2456,10 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                             style: const TextStyle(color: _textPrimary),
                           ),
                           trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: AdminDesign.danger),
+                            icon: const Icon(
+                              Icons.delete,
+                              color: AdminDesign.danger,
+                            ),
                             onPressed: () {
                               setDialogState(() {
                                 variants.removeAt(idx);
@@ -2625,7 +2632,10 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                             style: const TextStyle(color: _textPrimary),
                           ),
                           trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: AdminDesign.danger),
+                            icon: const Icon(
+                              Icons.delete,
+                              color: AdminDesign.danger,
+                            ),
                             onPressed: () {
                               setDialogState(() {
                                 variants.removeAt(idx);
@@ -2801,7 +2811,10 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                             style: const TextStyle(color: _textPrimary),
                           ),
                           trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: AdminDesign.danger),
+                            icon: const Icon(
+                              Icons.delete,
+                              color: AdminDesign.danger,
+                            ),
                             onPressed: () {
                               setDialogState(() {
                                 variants.removeAt(idx);
@@ -2900,7 +2913,9 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: AdminDesign.danger),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AdminDesign.danger,
+            ),
             child: const Text('წაშლა'),
           ),
         ],
@@ -3023,7 +3038,10 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                             style: const TextStyle(color: _textPrimary),
                           ),
                           trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: AdminDesign.danger),
+                            icon: const Icon(
+                              Icons.delete,
+                              color: AdminDesign.danger,
+                            ),
                             onPressed: () {
                               setDialogState(() {
                                 variants.removeAt(idx);
@@ -3120,7 +3138,9 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: AdminDesign.danger),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AdminDesign.danger,
+            ),
             child: const Text('წაშლა'),
           ),
         ],

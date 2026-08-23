@@ -19,14 +19,22 @@ function lineKey(name: string, unitPrice: number): string {
 }
 
 function toLineItems(
-  items: Array<{ name?: string; itemName?: string; quantity?: number; unitPrice?: number; price?: number }>,
+  items: Array<{
+    name?: string;
+    itemName?: string;
+    quantity?: number;
+    unitPrice?: number;
+    price?: number;
+  }>,
 ): LineItem[] {
   return items.map((it) => {
     const name = (it.itemName ?? it.name ?? '').toString();
     const unitPrice = Number(it.unitPrice ?? it.price ?? 0);
     const quantity = Number(it.quantity ?? 0);
     return {
-      itemKey: (it as { itemKey?: string }).itemKey?.toString() || lineKey(name, unitPrice),
+      itemKey:
+        (it as { itemKey?: string }).itemKey?.toString() ||
+        lineKey(name, unitPrice),
       itemName: name,
       quantity,
     };
@@ -34,8 +42,22 @@ function toLineItems(
 }
 
 export function buildAuditEventsForOrderDiff(params: {
-  previousItems: Array<{ name?: string; itemName?: string; quantity?: number; unitPrice?: number; price?: number; itemKey?: string }>;
-  updatedItems: Array<{ name?: string; itemName?: string; quantity?: number; unitPrice?: number; price?: number; itemKey?: string }>;
+  previousItems: Array<{
+    name?: string;
+    itemName?: string;
+    quantity?: number;
+    unitPrice?: number;
+    price?: number;
+    itemKey?: string;
+  }>;
+  updatedItems: Array<{
+    name?: string;
+    itemName?: string;
+    quantity?: number;
+    unitPrice?: number;
+    price?: number;
+    itemKey?: string;
+  }>;
   performerId: string;
   performerName: string;
 }): AuditEventInput[] {

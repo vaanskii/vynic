@@ -11,7 +11,10 @@ export function encodeTableCode(floor: string, tableNumber: string): number {
   return parsed;
 }
 
-export function decodeTableCode(code: number): { floor: string; tableNumber: string } {
+export function decodeTableCode(code: number): {
+  floor: string;
+  tableNumber: string;
+} {
   if (code > 10) {
     return { floor: 'second', tableNumber: String(code - 10) };
   }
@@ -33,7 +36,11 @@ export function dateKeyFromString(date: string): string {
   return `${y}-${m}-${d}`;
 }
 
-export function dayBounds(date: string): { start: Date; end: Date; dateKey: string } {
+export function dayBounds(date: string): {
+  start: Date;
+  end: Date;
+  dateKey: string;
+} {
   const dateKey = dateKeyFromString(date);
   const [y, m, d] = dateKey.split('-').map(Number);
   return {
@@ -43,11 +50,10 @@ export function dayBounds(date: string): { start: Date; end: Date; dateKey: stri
   };
 }
 
-export function isReservationBlocking(status: string | null | undefined): boolean {
-  const normalized = (status ?? '')
-    .trim()
-    .toLowerCase()
-    .replaceAll('_', '-');
+export function isReservationBlocking(
+  status: string | null | undefined,
+): boolean {
+  const normalized = (status ?? '').trim().toLowerCase().replaceAll('_', '-');
   return (
     normalized !== 'cancelled' &&
     normalized !== 'canceled' &&
@@ -59,7 +65,9 @@ export function isReservationBlocking(status: string | null | undefined): boolea
   );
 }
 
-export function isRealPosTableBooking(reservation: Record<string, unknown>): boolean {
+export function isRealPosTableBooking(
+  reservation: Record<string, unknown>,
+): boolean {
   if (reservation.isTakeAway === true) return false;
   if (reservation.linkedOrderId != null) return false;
   const notes = String(reservation.notes ?? '').trim();

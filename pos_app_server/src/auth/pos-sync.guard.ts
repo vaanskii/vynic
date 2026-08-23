@@ -21,8 +21,7 @@ export class PosSyncGuard implements CanActivate {
     const req = context.switchToHttp().getRequest<{
       headers: Record<string, string | string[] | undefined>;
     }>();
-    const raw =
-      req.headers['x-pos-sync-key'] ?? req.headers['X-POS-Sync-Key'];
+    const raw = req.headers['x-pos-sync-key'] ?? req.headers['X-POS-Sync-Key'];
     const provided = (Array.isArray(raw) ? raw[0] : raw)?.trim();
 
     if (!expected) {

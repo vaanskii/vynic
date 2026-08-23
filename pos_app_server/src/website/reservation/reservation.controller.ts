@@ -52,7 +52,9 @@ export class TableController {
     @Query('timeSlot') timeSlot: string,
   ) {
     if (!date || !timeSlot) {
-      throw new BadRequestException('Date and timeSlot parameters are required');
+      throw new BadRequestException(
+        'Date and timeSlot parameters are required',
+      );
     }
     const isAvailable = await this.reservationService.isTableAvailable(
       tableNumber,

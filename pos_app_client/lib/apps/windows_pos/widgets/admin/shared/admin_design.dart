@@ -86,9 +86,7 @@ abstract final class AdminDesign {
           ? VynicFloorTokens.dangerFill
           : VynicFloorTokens.panel,
       side: BorderSide(
-        color: foreground == danger
-            ? VynicFloorTokens.dangerBorder
-            : border,
+        color: foreground == danger ? VynicFloorTokens.dangerBorder : border,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
       textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
@@ -141,11 +139,7 @@ class AdminSectionHeader extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AdminDesign.radius),
                   border: Border.all(color: const Color(0xFFE2DCF2)),
                 ),
-                child: Icon(
-                  icon,
-                  color: VynicFloorTokens.accentText,
-                  size: 20,
-                ),
+                child: Icon(icon, color: VynicFloorTokens.accentText, size: 20),
               ),
               const SizedBox(width: 14),
               Expanded(

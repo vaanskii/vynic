@@ -111,17 +111,25 @@ export class WebsiteAuthController {
     tokens: { access_token: string; refresh_token: string },
   ) {
     const secure = process.env.NODE_ENV === 'production';
-    res.cookie('access_token', this.cryptoService.encrypt(tokens.access_token), {
-      httpOnly: true,
-      secure,
-      sameSite: 'strict',
-      maxAge: 15 * 60 * 1000,
-    });
-    res.cookie('refresh_token', this.cryptoService.encrypt(tokens.refresh_token), {
-      httpOnly: true,
-      secure,
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie(
+      'access_token',
+      this.cryptoService.encrypt(tokens.access_token),
+      {
+        httpOnly: true,
+        secure,
+        sameSite: 'strict',
+        maxAge: 15 * 60 * 1000,
+      },
+    );
+    res.cookie(
+      'refresh_token',
+      this.cryptoService.encrypt(tokens.refresh_token),
+      {
+        httpOnly: true,
+        secure,
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      },
+    );
   }
 }

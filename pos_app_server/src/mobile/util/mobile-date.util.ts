@@ -42,9 +42,9 @@ export function normalizePaymentType(raw: string | null | undefined): string {
   return key;
 }
 
-export function businessDateWhere(
-  businessDate: string,
-): { OR: Array<Record<string, unknown>> } {
+export function businessDateWhere(businessDate: string): {
+  OR: Array<Record<string, unknown>>;
+} {
   const start = parseBusinessDateStart(businessDate);
   const end = nextDay(start);
   return {
@@ -62,10 +62,10 @@ export function pctChange(today: number, yesterday: number): number {
 
 export async function readRestaurantServiceFeeSettings(prisma: any) {
   const [percentRow, enabledRow] = await Promise.all([
-    (prisma as any).setting.findUnique({
+    prisma.setting.findUnique({
       where: { key: 'restaurant:serviceFeePercent' },
     }),
-    (prisma as any).setting.findUnique({
+    prisma.setting.findUnique({
       where: { key: 'restaurant:serviceFeeEnabled' },
     }),
   ]);

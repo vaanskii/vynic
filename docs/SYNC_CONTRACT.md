@@ -94,13 +94,23 @@ On every successful `manager-data` sync, Windows POS sends:
 
 Server stores these in `SyncController` (in-memory; refreshed each sync). If `posCallbackUrl` is missing, mobile-originated mutations update **server only** and **do not** reach Hive until URL is registered again.
 
-**Implementation note:** LAN sync server was removed from the client; restoring a **minimal secured ingest server** on Windows is todo **`sync-8`**. Handlers should match what `pos_app_server` already calls.
+**Implementation status:** the client now starts a minimal secured ingest server
+from `PosIngestServer.start()` on desktop POS runs, stores its base URL in
+`PosCallbackConfig.baseUrl`, and includes `posCallbackUrl` plus
+`posConnectionKey` in `manager-data` sync. The backend persists that callback
+URL/key and uses them for mobile/website-originated mutations that must reach
+Hive. Keep route changes in sync with
+`pos_app_client/lib/core/services/sync/pos_ingest_server.dart` and
+`pos_app_server/src/pos/pos-callback.client.ts`.
 
 ---
 
 ## 5. Required POS HTTP routes (server → POS)
 
-These paths are invoked by `pos_app_server/src/sync.controller.ts` and `mobile.controller.ts`. Windows must implement them again (secured).
+These paths are invoked by `pos_app_server/src/pos/sync.controller.ts`,
+`pos_app_server/src/pos/pos-callback.client.ts`, and the mobile/website
+services that call the callback client. Windows POS implements them in
+`pos_app_client/lib/core/services/sync/pos_ingest_server.dart`.
 
 | Method | Path | Purpose |
 |--------|------|---------|
@@ -108,18 +118,26 @@ These paths are invoked by `pos_app_server/src/sync.controller.ts` and `mobile.c
 | POST | `/mobile-order-cancel` | Cancel/delete order + cleanup tables |
 | POST | `/mobile-order-status` | Update order status in Hive |
 | POST | `/mobile-order-create` | Create takeaway (or remote) order in Hive |
+| POST | `/mobile-walk-in-order-create` | Create table/walk-in order in Hive |
+| POST | `/mobile-order-print-check` | Print an order/table check on POS printers |
 | GET | `/mobile-reservations` | List reservations for mobile |
 | POST | `/mobile-reservation-create` | Create reservation in Hive |
 | POST | `/mobile-reservation-status` | Update reservation status |
 | POST | `/mobile-reservation-delete` | Delete reservation |
+| POST | `/mobile-reservation-print-check` | Print a reservation check on POS printers |
+| POST | `/mobile-counted-menu-print` | Print a counted-menu draft on POS printers |
 | POST | `/mobile-expense-create` | Record expense in Hive |
 | POST | `/mobile-user-create` | Add staff user to Hive |
 | POST | `/mobile-user-update-pin` | Update staff PIN in Hive |
+| POST | `/mobile-user-update-role` | Update staff role in Hive |
+| POST | `/mobile-user-rename` | Rename staff user in Hive |
 | POST | `/mobile-user-delete` | Remove staff user from Hive |
 
 Optional health: `GET /health` for reachability checks.
 
-**Previous implementation reference:** Logic existed in deleted `lib/core/services/pos_sync_server.dart` (restore in new `pos_ingest_server.dart` or equivalent, not full LAN peer sync).
+**Previous implementation reference:** Logic existed in deleted
+`lib/core/services/pos_sync_server.dart`; the current replacement is
+`pos_ingest_server.dart`, not full LAN peer sync.
 
 ---
 
@@ -145,13 +163,13 @@ Optional health: `GET /health` for reachability checks.
 
 | Todo | Description |
 |------|-------------|
-| sync-2 | Wire `ManagerSyncService.initialize()` on Windows |
+| sync-2 | Wire `ManagerSyncService.initialize()` on Windows — done |
 | sync-3 | Secure cloud sync + remove PIN from payload |
 | sync-4 | Admin UI: last sync / error / Sync now |
 | sync-5 | Fix mobile invalid-PIN sync call |
 | sync-6 | SyncHub refresh or removal |
 | sync-7 | Sync outbox + retry worker |
-| **sync-8** | **Restore secured POS ingest server + `posCallbackUrl` in push** |
+| **sync-8** | **Restore secured POS ingest server + `posCallbackUrl` in push — implemented; needs end-to-end LAN verification** |
 | sync-9 | Table/order race guard |
 | struct-1 | Split `DatabaseService` |
 
@@ -159,11 +177,12 @@ Optional health: `GET /health` for reachability checks.
 
 ## 9. Acceptance criteria for Option A
 
-- [ ] Windows POS starts local ingest HTTP server when in server/print-host mode.
-- [ ] `manager-data` includes reachable `posCallbackUrl` (and key if used).
+- [x] Windows POS starts local ingest HTTP server on desktop POS runs.
+- [x] `manager-data` includes `posCallbackUrl` and `posConnectionKey` when ingest is bound.
 - [ ] Mobile order edit on backend results in updated Hive order on POS within callback timeout.
 - [ ] Failed callbacks are logged; admin can see sync health (sync-4).
-- [ ] Callback and cloud sync endpoints require authentication (sync-3).
+- [x] Callback routes require the connection key when one exists.
+- [ ] Cloud sync endpoints require deployment-provided POS sync auth (sync-3).
 
 ---
 

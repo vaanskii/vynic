@@ -183,10 +183,15 @@ export class MenuService {
     };
   }
 
-  private toWebsiteMenuItem(item: MenuItemRow, subcategory?: SubcategoryContext) {
+  private toWebsiteMenuItem(
+    item: MenuItemRow,
+    subcategory?: SubcategoryContext,
+  ) {
     const variants = item.variants ?? [];
     const basePrice =
-      variants.length > 0 ? Math.min(...variants.map((v) => v.price)) : item.price;
+      variants.length > 0
+        ? Math.min(...variants.map((v) => v.price))
+        : item.price;
 
     return {
       id: item.id,

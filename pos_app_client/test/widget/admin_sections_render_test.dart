@@ -8,6 +8,7 @@ import 'package:hive/hive.dart';
 
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_audit_log_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_data_backup_panel.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_developer_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_menu_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_packages_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_sales_report_section.dart';
@@ -26,6 +27,7 @@ import 'package:vynic/core/models/pos_display_settings.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/user.dart';
+import 'package:vynic/core/services/security/developer_access.dart';
 
 /// Builds every admin section under the panel's real theme and asserts none of
 /// them throws. The restyle touched all fourteen, and a section that fails to
@@ -185,7 +187,11 @@ void main() {
   });
 
   testWidgets('reservations', (tester) async {
-    await _render(tester, 'reservations', AdminReservationsSection(user: _user));
+    await _render(
+      tester,
+      'reservations',
+      AdminReservationsSection(user: _user),
+    );
   });
 
   testWidgets('sales', (tester) async {
@@ -234,6 +240,53 @@ void main() {
         ),
       ),
     );
+  });
+
+  testWidgets('backup, as Settings renders it — create only', (tester) async {
+    // Restore clears every box before it writes, so a manager reaching for
+    // last week's file to „check something" destroys the week. Settings gets
+    // the create button and nothing else.
+    await _render(
+      tester,
+      'backup_create_only',
+      SingleChildScrollView(
+        padding: const EdgeInsets.all(18),
+        child: AdminDataBackupPanel(
+          lastBackupPath: '/Users/giorgi/vynic-backup-2026-08-22.json',
+          lastRestorePath: '/Users/giorgi/vynic-backup-2026-08-01.json',
+          isCreatingBackup: false,
+          isRestoringBackup: false,
+          onCreateBackupFile: () async {},
+          onRestoreBackupFromFile: () async {},
+          allowRestore: false,
+        ),
+      ),
+    );
+
+    expect(find.text('სარეზერვო ასლიდან აღდგენა'), findsNothing);
+    expect(find.text('სარეზერვო ფაილის შექმნა'), findsOneWidget);
+  });
+
+  testWidgets('developer', (tester) async {
+    DeveloperAccess.resetForTest();
+    addTearDown(DeveloperAccess.resetForTest);
+
+    await _render(
+      tester,
+      'developer',
+      const AdminDeveloperSection(
+        onCreateBackupFile: _noop,
+        onRestoreBackupFromFile: _noop,
+        isCreatingBackup: false,
+        isRestoringBackup: false,
+        lastBackupPath: null,
+        lastRestorePath: null,
+      ),
+    );
+
+    // Locked, so every tool renders as denied rather than throwing — the state
+    // a manager would land in if the routing guard ever let them through.
+    expect(find.textContaining('not granted by this token'), findsWidgets);
   });
 
   testWidgets('audit', (tester) async {
@@ -323,3 +376,5 @@ void main() {
     );
   });
 }
+
+Future<void> _noop() async {}

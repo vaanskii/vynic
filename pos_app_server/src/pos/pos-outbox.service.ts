@@ -80,9 +80,11 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
 
     try {
       if (dedupeKey) {
-        const existing = await (this.prisma as any).posCallbackOutbox.findFirst({
-          where: { dedupeKey, status: 'pending' },
-        });
+        const existing = await (this.prisma as any).posCallbackOutbox.findFirst(
+          {
+            where: { dedupeKey, status: 'pending' },
+          },
+        );
         if (existing) {
           await (this.prisma as any).posCallbackOutbox.update({
             where: { id: existing.id },
@@ -164,7 +166,10 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
     attempts: number;
     maxAttempts: number;
   }): Promise<void> {
-    const result = await this.posCallback.deliverToPos(row.endpoint, row.payload);
+    const result = await this.posCallback.deliverToPos(
+      row.endpoint,
+      row.payload,
+    );
 
     if (result.ok) {
       await (this.prisma as any).posCallbackOutbox.update({

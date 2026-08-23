@@ -33,11 +33,49 @@ void main() {
     }
   });
 
+  test('a venue manager sees the business tools and nothing else', () {
+    // The line the app is sold across. A manager runs the restaurant: staff,
+    // menu, floor, money. They do not get the terminal's plumbing, because a
+    // guessed backend URL or printer port is a support call, and they do not
+    // get the developer section, because it holds restore and wipe.
+    for (final section in const [
+      'staff',
+      'menu',
+      'packages',
+      'reservations',
+      'tableLayouts',
+      'display',
+      'closeday',
+      'sales',
+      'salesReport',
+      'financialReports',
+      'audit',
+      'settings',
+    ]) {
+      expect(AdminScreen.managerSections, contains(section), reason: section);
+    }
+
+    for (final section in AdminScreen.developerSections) {
+      expect(
+        AdminScreen.managerSections,
+        isNot(contains(section)),
+        reason: section,
+      );
+    }
+  });
+
+  test('the developer half is exactly the plumbing and the danger tools', () {
+    expect(
+      AdminScreen.developerSections,
+      containsAll(const ['errors', 'printers', 'connection', 'developer']),
+    );
+  });
+
   test('the exports are a destination of their own', () {
     // The monthly/full XLSX and PDF exports were buried twice — first under
     // Settings, then under the sales report — so they get their own entry.
-    // Backup is deliberately not one: it is two buttons, and it lives with
-    // the rest of the terminal's housekeeping in Settings.
+    // Backup is deliberately not one: creating a copy is two buttons inside
+    // Settings, and restoring one lives in the developer section.
     expect(AdminScreen.navigableSections, contains('financialReports'));
     expect(AdminScreen.navigableSections, contains('salesReport'));
     expect(AdminScreen.navigableSections, isNot(contains('backup')));

@@ -27,7 +27,9 @@ function asOrderId(value: unknown): number | null {
   return null;
 }
 
-function normalizeTouches(payload: Record<string, unknown>): Record<string, unknown>[] {
+function normalizeTouches(
+  payload: Record<string, unknown>,
+): Record<string, unknown>[] {
   const touchesRaw = payload.touches;
   if (!Array.isArray(touchesRaw)) return [];
   return touchesRaw.filter(
@@ -70,10 +72,7 @@ export function mergeOrdersBulkTouchPayload(
   const next = asRecord(incoming) ?? {};
   const byId = new Map<number, Record<string, unknown>>();
 
-  for (const touch of [
-    ...normalizeTouches(prev),
-    ...normalizeTouches(next),
-  ]) {
+  for (const touch of [...normalizeTouches(prev), ...normalizeTouches(next)]) {
     const id = asOrderId(touch.posOrderId);
     if (id === null) continue;
     const prev = byId.get(id);
@@ -99,7 +98,10 @@ export function mergeOrdersBulkTouchPayload(
     posOrderIds: touches
       .map((t) => asOrderId(t.posOrderId))
       .filter((id): id is number => id !== null),
-    source: asString(next.source).trim() || asString(prev.source).trim() || 'pos_sync',
+    source:
+      asString(next.source).trim() ||
+      asString(prev.source).trim() ||
+      'pos_sync',
   };
 }
 
@@ -135,7 +137,10 @@ export class ServiceFeeNotificationCoalescer {
     const existing = this.pending.get(key);
     if (existing) {
       clearTimeout(existing.timer);
-      existing.payload = mergeOrdersBulkTouchPayload(existing.payload, incoming);
+      existing.payload = mergeOrdersBulkTouchPayload(
+        existing.payload,
+        incoming,
+      );
       existing.options = options ?? existing.options;
       existing.timer = setTimeout(() => {
         void this.flush(key);

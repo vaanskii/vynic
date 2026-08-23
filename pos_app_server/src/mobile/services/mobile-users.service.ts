@@ -43,7 +43,10 @@ export class MobileUsersService {
     payload: Record<string, unknown>,
     error: unknown,
   ): Promise<void> {
-    console.warn(`[Mobile][Users] POS ${context} failed:`, (error as Error).message);
+    console.warn(
+      `[Mobile][Users] POS ${context} failed:`,
+      (error as Error).message,
+    );
     if (this.posOutbox.isPosUnreachableError(error)) {
       await this.posOutbox.enqueue({ endpoint, payload });
     }
@@ -267,7 +270,7 @@ export class MobileUsersService {
       },
     });
     const pinsMap = await this.pinVault.read();
-    let pinCode = pinsMap[oldUsername] ?? '';
+    const pinCode = pinsMap[oldUsername] ?? '';
     if (pinCode) {
       delete pinsMap[oldUsername];
       pinsMap[newUsername] = pinCode;

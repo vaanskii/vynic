@@ -33,16 +33,18 @@ export class BootstrapService implements OnModuleInit {
         },
       });
     }
-    this.logger.log(`Website tables ready (${WEBSITE_TABLE_MAPPINGS.length} mappings)`);
+    this.logger.log(
+      `Website tables ready (${WEBSITE_TABLE_MAPPINGS.length} mappings)`,
+    );
   }
 
-  private adminCredentials():
-    | { phone: string; email: string; password: string }
-    | null {
-    const phone =
-      this.config.get<string>('SUPER_ADMIN_PHONE');
-    const password =
-      this.config.get<string>('SUPER_ADMIN_PASSWORD');
+  private adminCredentials(): {
+    phone: string;
+    email: string;
+    password: string;
+  } | null {
+    const phone = this.config.get<string>('SUPER_ADMIN_PHONE');
+    const password = this.config.get<string>('SUPER_ADMIN_PASSWORD');
 
     if (!phone?.trim() || !password?.trim()) {
       return null;
@@ -51,8 +53,7 @@ export class BootstrapService implements OnModuleInit {
     return {
       phone: phone.trim(),
       email: (
-        this.config.get<string>('SUPER_ADMIN_EMAIL') ||
-        'admin@example.com'
+        this.config.get<string>('SUPER_ADMIN_EMAIL') || 'admin@example.com'
       ).trim(),
       password: password.trim(),
     };
@@ -111,9 +112,13 @@ export class BootstrapService implements OnModuleInit {
       'FRONTEND_URL',
       'API_URL',
     ];
-    const missing = optionalWebsite.filter((key) => !this.config.get(key)?.trim());
+    const missing = optionalWebsite.filter(
+      (key) => !this.config.get(key)?.trim(),
+    );
     if (missing.length > 0) {
-      this.logger.warn(`Website features incomplete — missing: ${missing.join(', ')}`);
+      this.logger.warn(
+        `Website features incomplete — missing: ${missing.join(', ')}`,
+      );
     }
   }
 }

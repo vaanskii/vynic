@@ -1064,7 +1064,8 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                                 : null,
                                             dropdownColor: Colors.white,
                                             iconEnabledColor: _primaryColor,
-                                            iconDisabledColor: AdminDesign.muted,
+                                            iconDisabledColor:
+                                                AdminDesign.muted,
                                             style: const TextStyle(
                                               color: _textPrimary,
                                               fontWeight: FontWeight.w600,
@@ -1780,7 +1781,8 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                               top: 8,
                                             ),
                                             child: Chip(
-                                              backgroundColor: AdminDesign.danger
+                                              backgroundColor: AdminDesign
+                                                  .danger
                                                   .withOpacity(0.12),
                                               side: BorderSide.none,
                                               label: const Text(
@@ -1930,7 +1932,8 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                                     );
                                                   },
                                             style: TextButton.styleFrom(
-                                              foregroundColor: AdminDesign.danger,
+                                              foregroundColor:
+                                                  AdminDesign.danger,
                                               disabledForegroundColor: Colors
                                                   .redAccent
                                                   .withOpacity(0.3),

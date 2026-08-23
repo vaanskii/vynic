@@ -2,47 +2,79 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
+
+/// Transient messages, in the same vocabulary as everything else on the POS.
+///
+/// These used to be saturated blocks — navy `#1E3A8A`, slate `#1F2937`, a
+/// fire-engine red — with white text and a heavy drop shadow. A third palette,
+/// after the floor's and the admin's, and the loudest thing on a screen whose
+/// whole design is quiet. They are panels now: the venue's off-white, a
+/// hairline, and a single tinted square carrying the meaning.
+
 enum PosToastStyle { success, error, info }
 
 class _PosToastTheme {
   const _PosToastTheme({
-    required this.backgroundColor,
-    required this.textColor,
+    required this.fill,
+    required this.border,
+    required this.foreground,
     required this.icon,
-    required this.iconColor,
     required this.defaultDuration,
   });
 
-  final Color backgroundColor;
-  final Color textColor;
+  /// The tone's wash, behind the icon only — never behind the message. A
+  /// tinted card is a status; a tinted icon on a white card is a message with
+  /// a status.
+  final Color fill;
+  final Color border;
+  final Color foreground;
   final IconData icon;
-  final Color iconColor;
   final Duration defaultDuration;
 }
 
 const _toastThemes = <PosToastStyle, _PosToastTheme>{
   PosToastStyle.success: _PosToastTheme(
-    backgroundColor: Color(0xFF1E3A8A),
-    textColor: Colors.white,
-    icon: Icons.check_circle,
-    iconColor: Color(0xFFBBF7D0),
-    defaultDuration: Duration(milliseconds: 1800),
+    fill: VynicFloorTokens.successFill,
+    border: VynicFloorTokens.successBorder,
+    foreground: VynicFloorTokens.successText,
+    icon: Icons.check_rounded,
+    defaultDuration: Duration(milliseconds: 2000),
   ),
   PosToastStyle.error: _PosToastTheme(
-    backgroundColor: Color(0xFFB91C1C),
-    textColor: Colors.white,
-    icon: Icons.error_rounded,
-    iconColor: Color(0xFFFFE4E6),
-    defaultDuration: Duration(milliseconds: 2500),
+    fill: VynicFloorTokens.dangerFill,
+    border: VynicFloorTokens.dangerBorder,
+    foreground: VynicFloorTokens.dangerText,
+    icon: Icons.priority_high_rounded,
+    defaultDuration: Duration(milliseconds: 3000),
   ),
   PosToastStyle.info: _PosToastTheme(
-    backgroundColor: Color(0xFF1F2937),
-    textColor: Colors.white,
-    icon: Icons.info_outline,
-    iconColor: Color(0xFFBFDBFE),
-    defaultDuration: Duration(milliseconds: 2200),
+    fill: VynicFloorTokens.accentSoft,
+    border: Color(0xFFE2DCF2),
+    foreground: VynicFloorTokens.accentText,
+    icon: Icons.info_outline_rounded,
+    defaultDuration: Duration(milliseconds: 2400),
   ),
 };
+
+/// How many toasts are on screen, so a second one does not land exactly on top
+/// of the first.
+///
+/// Every toast used to be inserted at the same `top: 28, right: 24`. Two in
+/// quick succession — and a POS produces them in bursts, „order updated" then
+/// „printed" — drew one on top of the other, so the first was unreadable and
+/// the second looked like a rendering fault.
+final List<_ToastSlot> _liveToasts = <_ToastSlot>[];
+
+class _ToastSlot {
+  _ToastSlot(this.rebuild);
+
+  /// Asks this toast's overlay entry to repaint after the stack shifts.
+  final VoidCallback rebuild;
+}
+
+const double _toastHeight = 62;
+const double _toastGap = 10;
 
 Future<void> showPosToast({
   required BuildContext context,
@@ -60,37 +92,34 @@ Future<void> showPosToast({
   }
 
   final isTop = position == ToastPosition.top;
-  final margin = alignToRight
-      ? EdgeInsets.only(top: isTop ? 28 : 0, bottom: isTop ? 0 : 28, right: 24)
-      : EdgeInsets.only(
-          top: isTop ? 28 : 0,
-          bottom: isTop ? 0 : 28,
-          left: 24,
-          right: 24,
-        );
-
   final completer = Completer<void>();
   final controller = AnimationController(
     vsync: overlay,
-    duration: const Duration(milliseconds: 260),
-    reverseDuration: const Duration(milliseconds: 180),
+    duration: const Duration(milliseconds: 240),
+    reverseDuration: const Duration(milliseconds: 160),
   );
 
   late final OverlayEntry entry;
+  late final _ToastSlot slot;
+
   entry = OverlayEntry(
     builder: (overlayContext) {
+      final index = _liveToasts.indexOf(slot);
+      final offset = (index < 0 ? 0 : index) * (_toastHeight + _toastGap);
+
       return Positioned(
-        top: isTop ? margin.top : null,
-        bottom: isTop ? null : margin.bottom,
-        left: alignToRight ? null : margin.left,
-        right: alignToRight ? margin.right : margin.right,
+        top: isTop ? 24 + offset : null,
+        bottom: isTop ? null : 24 + offset,
+        left: alignToRight ? null : 24,
+        right: 24,
         child: IgnorePointer(
-          // Let gestures pass through so toast never blocks interaction.
+          // Pointer-transparent on purpose. A message that appears over a busy
+          // floor screen must never be the thing a waiter taps by accident.
           ignoring: true,
           child: SlideTransition(
             position:
                 Tween<Offset>(
-                  begin: const Offset(1.0, 0.0),
+                  begin: const Offset(0.35, 0),
                   end: Offset.zero,
                 ).animate(
                   CurvedAnimation(
@@ -107,62 +136,10 @@ Future<void> showPosToast({
               ),
               child: Material(
                 color: Colors.transparent,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 16,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.backgroundColor,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.18),
-                          blurRadius: 16,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(theme.icon, color: theme.iconColor, size: 26),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (title != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 2),
-                                  child: Text(
-                                    title,
-                                    style: TextStyle(
-                                      color: theme.textColor.withValues(
-                                        alpha: 0.9,
-                                      ),
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              Text(
-                                message,
-                                style: TextStyle(
-                                  color: theme.textColor,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                child: _PosToastCard(
+                  theme: theme,
+                  title: title,
+                  message: message,
                 ),
               ),
             ),
@@ -172,7 +149,10 @@ Future<void> showPosToast({
     },
   );
 
+  slot = _ToastSlot(entry.markNeedsBuild);
+  _liveToasts.add(slot);
   overlay.insert(entry);
+
   unawaited(
     Future<void>(() async {
       try {
@@ -182,6 +162,11 @@ Future<void> showPosToast({
       } finally {
         entry.remove();
         controller.dispose();
+        _liveToasts.remove(slot);
+        // The ones still on screen close the gap this left behind.
+        for (final other in _liveToasts) {
+          other.rebuild();
+        }
         if (!completer.isCompleted) {
           completer.complete();
         }
@@ -190,6 +175,102 @@ Future<void> showPosToast({
   );
 
   await completer.future;
+}
+
+/// A panel, not a banner: the venue's own surface with a hairline round it and
+/// one tinted square saying what kind of message this is.
+class _PosToastCard extends StatelessWidget {
+  const _PosToastCard({
+    required this.theme,
+    required this.title,
+    required this.message,
+  });
+
+  final _PosToastTheme theme;
+  final String? title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 400, minHeight: _toastHeight),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 12, 18, 12),
+        decoration: BoxDecoration(
+          color: VynicFloorTokens.panel,
+          borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
+          border: Border.all(color: VynicFloorTokens.panelBorder),
+          // The one place these screens carry a shadow. A panel floating over
+          // another panel has nothing else to separate it from what it covers.
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x1A1C1A19),
+              blurRadius: 20,
+              offset: Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: theme.fill,
+                borderRadius: BorderRadius.circular(9),
+                border: Border.all(color: theme.border),
+              ),
+              child: Icon(theme.icon, color: theme.foreground, size: 17),
+            ),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (title != null) ...[
+                    Text(
+                      title!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: VynicFloorTokens.text,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
+                        height: 1.25,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                  ],
+                  Text(
+                    message,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      // 14, not 15: at the 0.85 paint scale a 1024x768
+                      // terminal runs at, a message is the one thing that has
+                      // to stay readable while it is disappearing.
+                      color: title == null
+                          ? VynicFloorTokens.text
+                          : VynicFloorTokens.textMuted,
+                      fontSize: 14,
+                      fontWeight: title == null
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 enum ToastPosition { top, bottom }
@@ -202,11 +283,14 @@ Future<T?> showPosDialog<T>({
   return showDialog<T>(
     context: context,
     barrierDismissible: barrierDismissible,
-    barrierColor: Colors.black.withValues(alpha: 0.45),
+    barrierColor: const Color(0x591C1A19),
     builder: (dialogContext) {
       return Dialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: VynicFloorTokens.panel,
+        surfaceTintColor: VynicFloorTokens.panel,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
+        ),
         insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 440),
@@ -258,9 +342,9 @@ Future<String?> promptForAdminPassword({
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF0F172A),
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                    color: VynicFloorTokens.text,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -268,7 +352,8 @@ Future<String?> promptForAdminPassword({
                   message,
                   style: const TextStyle(
                     fontSize: 14,
-                    color: Color(0xFF475569),
+                    color: VynicFloorTokens.textMuted,
+                    height: 1.35,
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -280,8 +365,28 @@ Future<String?> promptForAdminPassword({
                     autofocus: true,
                     decoration: InputDecoration(
                       labelText: 'Admin Password',
+                      labelStyle: const TextStyle(
+                        color: VynicFloorTokens.textMuted,
+                      ),
+                      filled: true,
+                      fillColor: VynicFloorTokens.page,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: VynicFloorTokens.panelBorder,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: VynicFloorTokens.panelBorder,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: VynicFloorTokens.accentText,
+                        ),
                       ),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -310,19 +415,22 @@ Future<String?> promptForAdminPassword({
                       onPressed: () {
                         Navigator.of(dialogContext).pop();
                       },
+                      style: TextButton.styleFrom(
+                        foregroundColor: VynicFloorTokens.textMuted,
+                      ),
                       child: const Text('Cancel'),
                     ),
                     const SizedBox(width: 12),
                     FilledButton(
                       style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E3A8A),
-                        foregroundColor: Colors.white,
+                        backgroundColor: VynicFloorTokens.accentStrong,
+                        foregroundColor: VynicFloorTokens.panel,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 22,
                           vertical: 14,
                         ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(11),
                         ),
                       ),
                       onPressed: () {
@@ -372,15 +480,19 @@ Future<bool> confirmDeletion({
             Text(
               title,
               style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
+                fontSize: 19,
+                fontWeight: FontWeight.w800,
+                color: VynicFloorTokens.text,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               message,
-              style: const TextStyle(fontSize: 14, color: Color(0xFF475569)),
+              style: const TextStyle(
+                fontSize: 14,
+                color: VynicFloorTokens.textMuted,
+                height: 1.35,
+              ),
             ),
             const SizedBox(height: 24),
             Row(
@@ -395,14 +507,14 @@ Future<bool> confirmDeletion({
                 const SizedBox(width: 12),
                 FilledButton.tonal(
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFB91C1C),
-                    foregroundColor: Colors.white,
+                    backgroundColor: VynicFloorTokens.dangerText,
+                    foregroundColor: VynicFloorTokens.panel,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 22,
                       vertical: 14,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(11),
                     ),
                   ),
                   onPressed: () {

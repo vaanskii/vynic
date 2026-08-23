@@ -727,6 +727,7 @@ class _HomeScreenState extends State<HomeScreen> {
             reservation,
           ).map((ref) => ref.tableNumber).toList(),
           isPreOrderMode: true,
+          isTakeAwayMode: reservation.isTakeAway,
           reservationContext: ReservationContext(
             customerName: reservation.customerName,
             customerPhone: reservation.customerPhone,
@@ -1390,14 +1391,10 @@ class _HomeUtilityBar extends StatelessWidget {
               color: VynicColors.accentSoft,
               borderRadius: BorderRadius.circular(9),
             ),
-            child: const Text(
-              'V',
-              style: TextStyle(
-                color: VynicColors.accentHover,
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                height: 1,
-              ),
+            padding: const EdgeInsets.all(5),
+            child: Image.asset(
+              'assets/logo/vynic-logo.png',
+              fit: BoxFit.contain,
             ),
           ),
           const SizedBox(width: 10),

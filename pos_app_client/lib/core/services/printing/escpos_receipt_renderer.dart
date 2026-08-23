@@ -5,6 +5,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as imglib;
 
+import 'package:vynic/core/models/receipt_header_layout.dart';
+
 import 'escpos_bitmap.dart';
 
 typedef LoadReceiptLogoImage = Future<ui.Image?> Function();
@@ -60,6 +62,8 @@ class EscposReceiptRenderer {
     bool showCloseReceiptServiceFeeLine = false,
     required LoadReceiptLogoImage loadReceiptLogoImage,
     required GetReceiptLogoContentRect getReceiptLogoContentRect,
+    required ({String name, String address, String phone}) venue,
+    required ReceiptHeaderLayout layout,
   }) async {
     List<int> bytes = [];
 
@@ -90,6 +94,8 @@ class EscposReceiptRenderer {
       showCloseReceiptServiceFeeLine: showCloseReceiptServiceFeeLine,
       loadReceiptLogoImage: loadReceiptLogoImage,
       getReceiptLogoContentRect: getReceiptLogoContentRect,
+      venue: venue,
+      layout: layout,
     );
 
     if (imageBytes != null) {
@@ -129,6 +135,8 @@ class EscposReceiptRenderer {
     bool showCloseReceiptServiceFeeLine = false,
     required LoadReceiptLogoImage loadReceiptLogoImage,
     required GetReceiptLogoContentRect getReceiptLogoContentRect,
+    required ({String name, String address, String phone}) venue,
+    required ReceiptHeaderLayout layout,
   }) async {
     try {
       final img = await _generateReceiptUiImage(
@@ -150,6 +158,8 @@ class EscposReceiptRenderer {
         showCloseReceiptServiceFeeLine: showCloseReceiptServiceFeeLine,
         loadReceiptLogoImage: loadReceiptLogoImage,
         getReceiptLogoContentRect: getReceiptLogoContentRect,
+        venue: venue,
+        layout: layout,
       );
       if (img == null) return null;
 
@@ -185,6 +195,8 @@ class EscposReceiptRenderer {
     bool showCloseReceiptServiceFeeLine = false,
     required LoadReceiptLogoImage loadReceiptLogoImage,
     required GetReceiptLogoContentRect getReceiptLogoContentRect,
+    required ({String name, String address, String phone}) venue,
+    required ReceiptHeaderLayout layout,
   }) async {
     try {
       // Create a custom painter for the receipt
@@ -234,6 +246,7 @@ class EscposReceiptRenderer {
         double fontSize = 16,
         bool bold = false,
         bool center = false,
+        ReceiptAlign? align,
         double maxWidth = width - 20,
         String fontFamily = 'Roboto',
       }) {
@@ -251,7 +264,14 @@ class EscposReceiptRenderer {
         );
         textPainter.layout(maxWidth: maxWidth);
 
-        final xPosition = center ? (width - textPainter.width) / 2 : 4.0;
+        // `align` wins where a caller has one; `center` is the older switch
+        // every other line on the receipt still uses.
+        final xPosition = align != null
+            ? align.offsetFor(
+                paperWidth: width,
+                contentWidth: textPainter.width,
+              )
+            : (center ? (width - textPainter.width) / 2 : 4.0);
 
         textPainter.paint(canvas, Offset(xPosition, y));
       }
@@ -399,23 +419,27 @@ class EscposReceiptRenderer {
         return maxH;
       }
 
-      final logoImage = await loadReceiptLogoImage();
-      if (logoImage != null) {
-        // Fit into requested bounds without cropping.
-        const maxLogoWidth = 384.0;
-        const maxLogoHeight = 120.0;
+      // The header is drawn as two blocks — the mark and the words — so their
+      // order and alignment can be set independently.
+      Future<void> drawLogoBlock() async {
+        final logoImage = await loadReceiptLogoImage();
+        if (logoImage == null) return;
+        // One shared answer with the settings preview, so what the operator
+        // arranges is what the paper gets.
         final srcRect = await getReceiptLogoContentRect(logoImage);
-        final sourceWidth = srcRect.width;
-        final sourceHeight = srcRect.height;
-        final scale = sourceWidth <= 0 || sourceHeight <= 0
-            ? 1.0
-            : (maxLogoWidth / sourceWidth < maxLogoHeight / sourceHeight
-                  ? maxLogoWidth / sourceWidth
-                  : maxLogoHeight / sourceHeight);
-        final logoWidth = sourceWidth * scale;
-        final logoHeight = sourceHeight * scale;
+        final drawn = receiptLogoSize(
+          sourceWidth: srcRect.width,
+          sourceHeight: srcRect.height,
+          scale: layout.clampedScale,
+        );
+        if (drawn.isEmpty) return;
+        final logoWidth = drawn.width;
+        final logoHeight = drawn.height;
 
-        final logoLeft = (width - logoWidth) / 2;
+        final logoLeft = layout.logoAlign.offsetFor(
+          paperWidth: width,
+          contentWidth: logoWidth,
+        );
         final logoTop = currentY;
         final dstRect = Rect.fromLTWH(logoLeft, logoTop, logoWidth, logoHeight);
         final logoPaint = Paint()
@@ -426,44 +450,54 @@ class EscposReceiptRenderer {
 
         canvas.drawImageRect(logoImage, srcRect, dstRect, logoPaint);
         currentY += logoHeight + 18;
-
-        drawText(
-          'RESTAURANT VANKISI',
-          currentY,
-          fontSize: 36,
-          bold: false,
-          center: true,
-        );
-        currentY += 42;
-      } else {
-        // Fallback if custom logo asset is missing.
-        drawText(
-          'RESTAURANT VANKISI',
-          currentY,
-          fontSize: 36,
-          bold: false,
-          center: true,
-        );
-        currentY += 44;
       }
 
-      drawText(
-        isEnglish ? 'Aleksandre Pushkini ST N51' : 'ალექსანდრე პუშკინის ქ. N51',
-        currentY,
-        fontSize: 22,
-        bold: false,
-        center: true,
-      );
-      currentY += 34;
+      // Name, street and phone were three string literals here — one venue's
+      // details, printed on the checks of every venue that installed this POS.
+      // Blank lines are skipped rather than printed empty: a venue that has
+      // not filled in a phone number should not get a gap where one goes.
+      void drawTextBlock() {
+        if (venue.name.isNotEmpty) {
+          drawText(
+            venue.name,
+            currentY,
+            fontSize: 36,
+            bold: false,
+            align: layout.textAlign,
+          );
+          currentY += 44;
+        }
 
-      drawText(
-        '+995 599 98 93 76',
-        currentY,
-        fontSize: 22,
-        bold: false,
-        center: true,
-      );
-      currentY += 34;
+        if (venue.address.isNotEmpty) {
+          drawText(
+            venue.address,
+            currentY,
+            fontSize: 22,
+            bold: false,
+            align: layout.textAlign,
+          );
+          currentY += 34;
+        }
+
+        if (venue.phone.isNotEmpty) {
+          drawText(
+            venue.phone,
+            currentY,
+            fontSize: 22,
+            bold: false,
+            align: layout.textAlign,
+          );
+          currentY += 34;
+        }
+      }
+
+      if (layout.logoFirst) {
+        await drawLogoBlock();
+        drawTextBlock();
+      } else {
+        drawTextBlock();
+        await drawLogoBlock();
+      }
 
       // Body/footer layout with bilingual labels and fixed-width alignment.
       final now = DateTime.now();
@@ -789,6 +823,8 @@ class EscposReceiptRenderer {
     bool showCloseReceiptServiceFeeLine = false,
     required LoadReceiptLogoImage loadReceiptLogoImage,
     required GetReceiptLogoContentRect getReceiptLogoContentRect,
+    required ({String name, String address, String phone}) venue,
+    required ReceiptHeaderLayout layout,
   }) async {
     try {
       final img = await _generateReceiptUiImage(
@@ -810,6 +846,8 @@ class EscposReceiptRenderer {
         showCloseReceiptServiceFeeLine: showCloseReceiptServiceFeeLine,
         loadReceiptLogoImage: loadReceiptLogoImage,
         getReceiptLogoContentRect: getReceiptLogoContentRect,
+        venue: venue,
+        layout: layout,
       );
       if (img == null) return null;
 

@@ -68,6 +68,14 @@ abstract final class VynicFloorTokens {
   static const Color statusPillBorder = Color(0xFFF0E3C0);
   static const Color statusPillText = Color(0xFF7A6526);
 
+  /// Confirmation — the one place green is allowed, and only as a wash.
+  ///
+  /// Lived in `admin_surface.dart` until the toasts needed it too. Two copies
+  /// of „the green we use" is how a palette starts drifting.
+  static const Color successFill = Color(0xFFF4F8F4);
+  static const Color successBorder = Color(0xFFD9E5D9);
+  static const Color successText = Color(0xFF3E6146);
+
   /// Free — a neutral dot, deliberately not green.
   static const Color freeDot = Color(0xFFE2E0DB);
 

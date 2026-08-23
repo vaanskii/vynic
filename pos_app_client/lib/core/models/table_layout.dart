@@ -715,6 +715,34 @@ class RestaurantTableLayouts {
     ),
   ];
 
+  /// The plan a brand-new install starts on: the rooms, and nothing in them.
+  ///
+  /// A venue that has just unboxed a terminal does not have this restaurant's
+  /// nine tables and four VIP booths — it has its own, and the floor editor is
+  /// where it draws them. The zones are kept so there is somewhere to draw
+  /// *onto*; a layout with no zones gives the editor no canvas at all.
+  ///
+  /// This is deliberately not [current]. An existing terminal that never
+  /// customised its plan falls back to the built-in one, and handing it an
+  /// empty layout would strand every open bill on a table that no longer
+  /// exists.
+  static const emptyVenue = RestaurantTableLayout(
+    id: 'new-venue',
+    name: 'New venue',
+    zones: [
+      RestaurantZone(
+        id: 'main-floor',
+        name: 'First floor',
+        legacyFloor: 'first',
+        displayOrder: 1,
+        renderMode: TableLayoutRenderMode.floorPlan,
+        canvasWidth: 1005,
+        canvasHeight: 1101,
+      ),
+    ],
+    tables: [],
+  );
+
   static final buttonGridPreview = RestaurantTableLayout(
     id: 'button-grid-preview',
     name: 'Button grid preview',

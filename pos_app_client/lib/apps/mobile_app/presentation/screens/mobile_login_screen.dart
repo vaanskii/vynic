@@ -127,7 +127,9 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       return;
     }
 
-    if (shellUser != null && !shellUser.canUseManagerMobileApp) {
+    final User user = shellUser;
+
+    if (!user.canUseManagerMobileApp) {
       await MobileAuthService.logout();
       if (mounted) {
         setState(() => _isLoading = false);
@@ -143,7 +145,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
 
     if (mounted) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => ManagerAppShell(user: shellUser!)),
+        MaterialPageRoute(builder: (_) => ManagerAppShell(user: user)),
       );
     }
   }
@@ -286,7 +288,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
           child: ClipRRect(
             borderRadius: BorderRadius.circular(18),
             child: Image.asset(
-              'assets/logo/vynicnew.png',
+              'assets/logo/vynic-logo.png',
               width: 64,
               height: 64,
               fit: BoxFit.cover,

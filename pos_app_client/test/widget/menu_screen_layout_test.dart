@@ -351,4 +351,15 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('service fee controls stay out of take-away menu selection', (
+    tester,
+  ) async {
+    await _pump(tester, const Size(1440, 900));
+    expect(find.text('სერვისი'), findsOneWidget);
+
+    await _pumpTakeAway(tester, const Size(1440, 900));
+    expect(find.text('სერვისი'), findsNothing);
+    expect(find.textContaining('სერვისი'), findsNothing);
+  });
 }

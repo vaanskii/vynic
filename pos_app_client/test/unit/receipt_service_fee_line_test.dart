@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/database/repositories/settings_repository.dart';
+import 'package:vynic/core/models/receipt_header_layout.dart';
 import 'package:vynic/core/services/printing/escpos_receipt_renderer.dart';
 
 /// Tests for the admin "hide the service-fee row on receipts" setting.
@@ -139,6 +140,11 @@ void main() {
     Future<ui.Image?> noLogo() async => null;
     Future<Rect> noLogoRect(ui.Image image) async => Rect.zero;
 
+    // The venue header is data now, not three string literals in the renderer.
+    // These tests are about the service-fee row, so the header is empty.
+    const noVenue = (name: '', address: '', phone: '');
+    const defaultLayout = ReceiptHeaderLayout();
+
     /// Renders a receipt whose total (110.00) includes a 10.00 service fee.
     Future<List<int>?> render({
       required String receiptType,
@@ -159,6 +165,8 @@ void main() {
         showServiceFeeLine: showServiceFeeLine,
         loadReceiptLogoImage: noLogo,
         getReceiptLogoContentRect: noLogoRect,
+        venue: noVenue,
+        layout: defaultLayout,
       );
       return bytes;
     }
@@ -204,6 +212,8 @@ void main() {
               showServiceFeeLine: false,
               loadReceiptLogoImage: noLogo,
               getReceiptLogoContentRect: noLogoRect,
+              venue: noVenue,
+              layout: defaultLayout,
             );
         final feeExcludedFromTotal =
             await EscposReceiptRenderer.generatePngBytes(
@@ -219,6 +229,8 @@ void main() {
               showServiceFeeLine: false,
               loadReceiptLogoImage: noLogo,
               getReceiptLogoContentRect: noLogoRect,
+              venue: noVenue,
+              layout: defaultLayout,
             );
         expect(feeInTotalButRowHidden, isNotNull);
         expect(feeExcludedFromTotal, isNotNull);
@@ -283,6 +295,8 @@ void main() {
         showServiceFeeLine: true,
         loadReceiptLogoImage: noLogo,
         getReceiptLogoContentRect: noLogoRect,
+        venue: noVenue,
+        layout: defaultLayout,
       );
       final on = await EscposReceiptRenderer.generatePngBytes(
         items: const ['1x Item - 100.00'],
@@ -298,6 +312,8 @@ void main() {
         showCloseReceiptServiceFeeLine: true,
         loadReceiptLogoImage: noLogo,
         getReceiptLogoContentRect: noLogoRect,
+        venue: noVenue,
+        layout: defaultLayout,
       );
       expect(off, isNotNull);
       expect(on, isNotNull);

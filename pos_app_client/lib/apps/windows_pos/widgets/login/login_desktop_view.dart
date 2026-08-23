@@ -1,8 +1,23 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/core/services/database_service.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:flutter/widget_previews.dart';
 
 class LoginDesktopView extends StatelessWidget {
+  /// What this venue is called, for the login screen's headline.
+  ///
+  /// Read at build time rather than passed in: the login view is rebuilt after
+  /// setup completes, and threading it through every constructor for one
+  /// string would touch more of this file than the change is worth.
+  static String get _venueName {
+    try {
+      return DatabaseService.getVenueName();
+    } catch (_) {
+      return '';
+    }
+  }
+
   const LoginDesktopView({
     super.key,
     required this.pin,
@@ -13,7 +28,6 @@ class LoginDesktopView extends StatelessWidget {
     required this.onClearPressed,
     required this.onDeletePressed,
     required this.onLoginPressed,
-    required this.onOtherUserPressed,
     this.showCompanionApp = false,
     this.onCompanionAppPressed,
   });
@@ -28,16 +42,14 @@ class LoginDesktopView extends StatelessWidget {
   final VoidCallback onClearPressed;
   final VoidCallback onDeletePressed;
   final VoidCallback? onLoginPressed;
-  final VoidCallback onOtherUserPressed;
   final bool showCompanionApp;
   final VoidCallback? onCompanionAppPressed;
 
-  static const _navy = Color(0xFF001F31);
-  static const _navyLight = Color(0xFF073B53);
-  static const _ink = Color(0xFF09243B);
-  static const _muted = Color(0xFF52677A);
-  static const _cyan = Color(0xFF319CB7);
-  static const _teal = Color(0xFF14B8A6);
+  static const _ink = VynicFloorTokens.text;
+  static const _muted = VynicFloorTokens.textMuted;
+  static const _accent = VynicFloorTokens.accentStrong;
+  static const _accentSoft = VynicFloorTokens.accentSoft;
+  static const _line = VynicFloorTokens.panelBorder;
 
   String _twoDigits(int value) => value.toString().padLeft(2, '0');
 
@@ -66,14 +78,12 @@ class LoginDesktopView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFF1F5F7), Color(0xFFE6EDF0), Color(0xFFD9E5E9)],
-        ),
-      ),
+    return _buildScaffold();
+  }
+
+  Widget _buildScaffold() {
+    return ColoredBox(
+      color: VynicFloorTokens.page,
       child: SafeArea(
         child: Column(
           children: [
@@ -81,77 +91,62 @@ class LoginDesktopView extends StatelessWidget {
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final stacked = constraints.maxWidth < 850;
-                  final dense = constraints.maxHeight < 720;
-
-                  final cardDecoration = BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(color: const Color(0xFFE4E9EC)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF0F2A3A).withValues(alpha: 0.10),
-                        blurRadius: 28,
-                        offset: const Offset(0, 14),
-                      ),
-                    ],
-                  );
-
-                  final Widget card = Container(
-                    constraints: BoxConstraints(maxWidth: stacked ? 460 : 860),
-                    padding: EdgeInsets.all(stacked ? 22 : (dense ? 26 : 36)),
-                    decoration: cardDecoration,
-                    child: stacked
-                        ? Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _buildIdentityPanel(compact: true, dense: dense),
-                              SizedBox(height: dense ? 18 : 26),
-                              _buildLoginPanel(compact: true, dense: dense),
-                            ],
-                          )
-                        : IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Expanded(
-                                  flex: 10,
-                                  child: _buildIdentityPanel(dense: dense),
-                                ),
-                                Container(
-                                  width: 1,
-                                  margin: const EdgeInsets.symmetric(
-                                    horizontal: 36,
-                                  ),
-                                  color: const Color(0xFFE9EEF1),
-                                ),
-                                Expanded(
-                                  flex: 11,
-                                  child: Center(
-                                    child: ConstrainedBox(
-                                      constraints: const BoxConstraints(
-                                        maxWidth: 300,
-                                      ),
-                                      child: _buildLoginPanel(dense: dense),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                  final stacked = constraints.maxWidth < 920;
+                  final dense = constraints.maxHeight < 690;
+                  final panels = stacked
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _LoginPanelSurface(
+                              child: _buildIdentityPanel(
+                                compact: true,
+                                dense: dense,
+                              ),
                             ),
-                          ),
-                  );
+                            SizedBox(height: dense ? 12 : 16),
+                            _LoginPanelSurface(
+                              child: _buildLoginPanel(dense: dense),
+                            ),
+                          ],
+                        )
+                      : Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 6,
+                              child: _LoginPanelSurface(
+                                child: _buildIdentityPanel(dense: dense),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              flex: 5,
+                              child: _LoginPanelSurface(
+                                compact: true,
+                                child: _buildLoginPanel(dense: dense),
+                              ),
+                            ),
+                          ],
+                        );
 
                   final double vPad = dense ? 16 : 28;
                   return SingleChildScrollView(
                     padding: EdgeInsets.symmetric(
-                      horizontal: stacked ? 18 : 34,
+                      horizontal: stacked ? 16 : 34,
                       vertical: vPad,
                     ),
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
                         minHeight: constraints.maxHeight - vPad * 2,
                       ),
-                      child: Center(child: card),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: stacked ? 500 : 1040,
+                          ),
+                          child: panels,
+                        ),
+                      ),
                     ),
                   );
                 },
@@ -165,54 +160,65 @@ class LoginDesktopView extends StatelessWidget {
 
   Widget _buildTopBar() {
     return Container(
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 18),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.7),
-        border: const Border(bottom: BorderSide(color: Color(0xFFDDE5E9))),
+      height: 56,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: const BoxDecoration(
+        color: VynicFloorTokens.panel,
+        border: Border(bottom: BorderSide(color: _line)),
       ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              'assets/logo/vynicnew.png',
-              width: 28,
-              height: 28,
-              fit: BoxFit.cover,
-            ),
-          ),
-          const SizedBox(width: 10),
-          const Text(
-            'Vynic POS',
-            style: TextStyle(
-              color: _ink,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const Spacer(),
-          Text(
-            'სამუშაო თარიღი: ${_dateLabel(workDate)}',
-            style: const TextStyle(color: _muted, fontSize: 13),
-          ),
-          Container(
-            width: 1,
-            height: 20,
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            color: const Color(0xFFD7DFE3),
-          ),
-          const Icon(Icons.schedule_rounded, color: _muted, size: 18),
-          const SizedBox(width: 7),
-          Text(
-            _timeLabel(now),
-            style: const TextStyle(
-              color: _ink,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 620;
+          return Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  'assets/logo/vynic-logo.png',
+                  width: 28,
+                  height: 28,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Vynic POS',
+                style: TextStyle(
+                  color: _ink,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              if (!compact) ...[
+                Flexible(
+                  child: Text(
+                    'სამუშაო თარიღი: ${_dateLabel(workDate)}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: _muted, fontSize: 13),
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 20,
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  color: _line,
+                ),
+              ],
+              const Icon(Icons.schedule_rounded, color: _muted, size: 18),
+              const SizedBox(width: 7),
+              Text(
+                _timeLabel(now),
+                style: const TextStyle(
+                  color: _ink,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -220,58 +226,82 @@ class LoginDesktopView extends StatelessWidget {
   Widget _buildIdentityPanel({bool compact = false, bool dense = false}) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: compact
+          ? CrossAxisAlignment.center
+          : CrossAxisAlignment.start,
       children: [
-        Container(
-          width: compact ? 72 : (dense ? 60 : 88),
-          height: compact ? 72 : (dense ? 60 : 88),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(
-              compact ? 18 : (dense ? 16 : 24),
+        Row(
+          mainAxisAlignment: compact
+              ? MainAxisAlignment.center
+              : MainAxisAlignment.start,
+          children: [
+            Container(
+              width: compact ? 72 : (dense ? 64 : 84),
+              height: compact ? 72 : (dense ? 64 : 84),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: _accentSoft,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: _line),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset(
+                  'assets/logo/vynic-logo.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: _teal.withValues(alpha: 0.35),
-                blurRadius: 22,
-                offset: const Offset(0, 10),
+            if (!compact) ...[
+              const SizedBox(width: 16),
+              const Expanded(
+                child: Text(
+                  'რესტორნის მართვის სისტემა',
+                  style: TextStyle(
+                    color: _muted,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(
-              compact ? 18 : (dense ? 16 : 24),
-            ),
-            child: Image.asset('assets/logo/vynicnew.png', fit: BoxFit.cover),
-          ),
+          ],
         ),
-        SizedBox(height: dense ? 5 : 12),
+        SizedBox(height: dense ? 10 : 18),
         Text(
           'Vynic POS',
+          textAlign: compact ? TextAlign.center : TextAlign.left,
           style: TextStyle(
             color: _ink,
-            fontSize: dense ? 24 : 30,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        Text(
-          'ვანკისი',
-          style: TextStyle(
-            color: _cyan,
             fontSize: dense ? 26 : 34,
             fontWeight: FontWeight.w900,
-            height: 1.15,
+            height: 1,
           ),
         ),
-        SizedBox(height: dense ? 1 : 4),
-        const Text(
-          'რესტორნის მართვის სისტემა',
-          style: TextStyle(color: _muted, fontSize: 13),
+        // The venue's own name, not this one's. „ვანკისი" was hardcoded here,
+        // so every restaurant that installed the POS logged into someone
+        // else's. Hidden entirely until setup has been through, rather than
+        // leaving a gap where a name goes.
+        if (_venueName.isNotEmpty)
+          Text(
+            _venueName,
+            textAlign: compact ? TextAlign.center : TextAlign.left,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: _accent,
+              fontSize: dense ? 22 : 30,
+              fontWeight: FontWeight.w800,
+              height: 1.15,
+            ),
+          ),
+        SizedBox(height: dense ? 8 : 12),
+        Text(
+          'შედით PIN კოდით და გააგრძელეთ მაგიდების, შეკვეთებისა და მენიუს მართვა.',
+          textAlign: compact ? TextAlign.center : TextAlign.left,
+          style: const TextStyle(color: _muted, fontSize: 14, height: 1.45),
         ),
-        SizedBox(height: dense ? 7 : 20),
-        Divider(
-          color: const Color(0xFFE2E8F0),
-          height: compact || dense ? 1 : 20,
-        ),
-        SizedBox(height: dense ? 6 : 12),
+        SizedBox(height: dense ? 14 : 24),
         _InfoTile(
           icon: Icons.storefront_outlined,
           label: 'ფილიალი',
@@ -292,38 +322,64 @@ class LoginDesktopView extends StatelessWidget {
           value: _dateLabel(workDate),
           dense: dense,
         ),
+        SizedBox(height: dense ? 4 : 7),
+        _InfoTile(
+          icon: Icons.check_circle_outline_rounded,
+          label: 'სისტემა',
+          value: 'მზად არის შესვლისთვის',
+          dense: dense,
+          statusOn: true,
+        ),
       ],
     );
   }
 
-  Widget _buildLoginPanel({bool compact = false, bool dense = false}) {
+  Widget _buildLoginPanel({bool dense = false}) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Align(
+          alignment: Alignment.center,
+          child: Container(
+            width: dense ? 42 : 48,
+            height: dense ? 42 : 48,
+            decoration: BoxDecoration(
+              color: _accentSoft,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: _line),
+            ),
+            child: const Icon(
+              Icons.lock_person_outlined,
+              color: _accent,
+              size: 24,
+            ),
+          ),
+        ),
+        SizedBox(height: dense ? 10 : 16),
         Text(
-          'PIN კოდით შესვლა',
+          'PIN კოდი',
           textAlign: TextAlign.center,
           style: TextStyle(
             color: _ink,
-            fontSize: dense ? 18 : 21,
-            fontWeight: FontWeight.w800,
+            fontSize: dense ? 22 : 26,
+            fontWeight: FontWeight.w900,
           ),
         ),
-        SizedBox(height: dense ? 3 : 8),
+        SizedBox(height: dense ? 4 : 8),
         const Text(
-          'შეიყვანეთ თქვენი 6-ნიშნა PIN კოდი',
+          'შეიყვანეთ თანამშრომლის PIN',
           textAlign: TextAlign.center,
           style: TextStyle(color: _muted, fontSize: 13),
         ),
-        SizedBox(height: dense ? 8 : 18),
+        SizedBox(height: dense ? 12 : 20),
         Container(
-          height: dense ? 42 : 56,
+          height: dense ? 46 : 58,
           padding: const EdgeInsets.symmetric(horizontal: 20),
           decoration: BoxDecoration(
-            color: const Color(0xFFFCFDFE),
-            borderRadius: BorderRadius.circular(11),
-            border: Border.all(color: const Color(0xFFCBD5E1)),
+            color: VynicFloorTokens.canvas,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _line),
           ),
           child: ValueListenableBuilder<String>(
             valueListenable: pin,
@@ -338,13 +394,13 @@ class LoginDesktopView extends StatelessWidget {
                         height: index < pinValue.length ? 11 : 16,
                         decoration: BoxDecoration(
                           color: index < pinValue.length
-                              ? _navy
+                              ? _accent
                               : Colors.transparent,
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: index < pinValue.length
-                                ? _navy
-                                : const Color(0xFF94A3B8),
+                                ? _accent
+                                : const Color(0xFFCFCAC3),
                             width: 1.5,
                           ),
                         ),
@@ -356,8 +412,8 @@ class LoginDesktopView extends StatelessWidget {
           ),
         ),
         SizedBox(height: dense ? 8 : 14),
-        _buildKeypad(compact, dense),
-        SizedBox(height: dense ? 8 : 14),
+        _buildKeypad(dense),
+        SizedBox(height: dense ? 10 : 16),
         SizedBox(
           height: dense ? 44 : 54,
           child: ValueListenableBuilder<String>(
@@ -368,11 +424,11 @@ class LoginDesktopView extends StatelessWidget {
                   : onLoginPressed,
               style: ElevatedButton.styleFrom(
                 elevation: 0,
-                backgroundColor: _navyLight,
-                disabledBackgroundColor: const Color(0xFF94A3B8),
+                backgroundColor: _accent,
+                disabledBackgroundColor: const Color(0xFFC7C2D2),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
               icon: isLoading
@@ -395,18 +451,8 @@ class LoginDesktopView extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(height: dense ? 0 : 10),
-        TextButton.icon(
-          onPressed: isLoading ? null : onOtherUserPressed,
-          style: TextButton.styleFrom(foregroundColor: _navyLight),
-          icon: const Icon(Icons.person_outline_rounded, size: 19),
-          label: const Text(
-            'სხვა მომხმარებელი',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
-        ),
         if (showCompanionApp) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: 10),
           TextButton.icon(
             onPressed: isLoading ? null : onCompanionAppPressed,
             icon: const Icon(Icons.admin_panel_settings_outlined),
@@ -417,7 +463,7 @@ class LoginDesktopView extends StatelessWidget {
     );
   }
 
-  Widget _buildKeypad(bool compact, bool dense) {
+  Widget _buildKeypad(bool dense) {
     final rows = [
       ['1', '2', '3'],
       ['4', '5', '6'],
@@ -453,8 +499,7 @@ class LoginDesktopView extends StatelessWidget {
       keyRow([
         _KeypadButton(
           label: 'გასუფთავება',
-          icon: Icons.backspace_outlined,
-          compact: true,
+          icon: Icons.clear_all_rounded,
           dense: dense,
           onTap: onClearPressed,
         ),
@@ -466,7 +511,6 @@ class LoginDesktopView extends StatelessWidget {
         _KeypadButton(
           label: 'წაშლა',
           icon: Icons.backspace_rounded,
-          compact: true,
           dense: dense,
           onTap: onDeletePressed,
         ),
@@ -474,6 +518,33 @@ class LoginDesktopView extends StatelessWidget {
     );
 
     return Column(mainAxisSize: MainAxisSize.min, children: rowWidgets);
+  }
+}
+
+class _LoginPanelSurface extends StatelessWidget {
+  const _LoginPanelSurface({required this.child, this.compact = false});
+
+  final Widget child;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(compact ? 28 : 32),
+      decoration: BoxDecoration(
+        color: VynicFloorTokens.panel,
+        borderRadius: BorderRadius.circular(VynicFloorTokens.panelRadius),
+        border: Border.all(color: VynicFloorTokens.panelBorder),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A1C1A19),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: child,
+    );
   }
 }
 
@@ -498,22 +569,31 @@ class _InfoTile extends StatelessWidget {
       height: dense ? 43 : 56,
       padding: const EdgeInsets.symmetric(horizontal: 13),
       decoration: BoxDecoration(
-        color: const Color(0xFFFDFEFE),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFDCE3E8)),
+        color: VynicFloorTokens.metricFill,
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: VynicFloorTokens.panelBorder),
       ),
       child: Row(
         children: [
           Container(
             width: dense ? 29 : 35,
             height: dense ? 29 : 35,
-            decoration: const BoxDecoration(
-              color: LoginDesktopView._navyLight,
-              shape: BoxShape.circle,
+            decoration: BoxDecoration(
+              color: statusOn
+                  ? VynicFloorTokens.successFill
+                  : VynicFloorTokens.accentSoft,
+              borderRadius: BorderRadius.circular(9),
+              border: Border.all(
+                color: statusOn
+                    ? VynicFloorTokens.successBorder
+                    : VynicFloorTokens.panelBorder,
+              ),
             ),
             child: Icon(
               icon,
-              color: Colors.white,
+              color: statusOn
+                  ? VynicFloorTokens.successText
+                  : VynicFloorTokens.accentStrong,
               size: icon == Icons.circle ? 11 : (dense ? 16 : 19),
             ),
           ),
@@ -528,6 +608,7 @@ class _InfoTile extends StatelessWidget {
                   style: const TextStyle(
                     color: LoginDesktopView._muted,
                     fontSize: 11,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
@@ -563,14 +644,12 @@ class _KeypadButton extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.icon,
-    this.compact = false,
     this.dense = false,
   });
 
   final String label;
   final VoidCallback onTap;
   final IconData? icon;
-  final bool compact;
   final bool dense;
 
   @override
@@ -607,11 +686,10 @@ class _KeypadButton extends StatelessWidget {
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
           foregroundColor: LoginDesktopView._ink,
-          side: const BorderSide(color: Color(0xFFD8E0E5)),
+          backgroundColor: VynicFloorTokens.canvas,
+          side: const BorderSide(color: VynicFloorTokens.panelBorder),
           padding: const EdgeInsets.symmetric(horizontal: 4),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
         child: FittedBox(fit: BoxFit.scaleDown, child: content),
       ),
@@ -633,7 +711,6 @@ Widget loginDesktopViewPreview() {
       onClearPressed: _noop,
       onDeletePressed: _noop,
       onLoginPressed: _noop,
-      onOtherUserPressed: _noop,
     ),
   );
 }

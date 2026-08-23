@@ -222,9 +222,9 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
     return showGeneralDialog<Map<String, String>>(
       context: context,
       barrierLabel: 'გატანის შეკვეთა',
-      barrierColor: Colors.black.withValues(alpha: 0.85),
+      barrierColor: Colors.black.withValues(alpha: 0.58),
       barrierDismissible: true,
-      transitionDuration: const Duration(milliseconds: 220),
+      transitionDuration: const Duration(milliseconds: 200),
       pageBuilder: (dialogContext, animation, secondaryAnimation) {
         final mediaQuery = MediaQuery.of(dialogContext);
         return SafeArea(
@@ -234,10 +234,10 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   maxWidth: mediaQuery.size.width > 560
-                      ? 480
+                      ? 560
                       : mediaQuery.size.width - 48,
                   maxHeight: mediaQuery.size.height > 720
-                      ? 620
+                      ? 640
                       : mediaQuery.size.height * 0.9,
                 ),
                 child: _TakeAwayDetailsSheet(
@@ -574,16 +574,21 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
   }) async {
     final updated = await showPosNumberKeyboardInputSheet(
       context: context,
-      initialValue: controller.text.replaceAll(RegExp(r'\D+'), ''),
+      initialValue: controller.text.trim() == '?'
+          ? '?'
+          : controller.text.replaceAll(RegExp(r'\D+'), ''),
       title: title,
       maxDigits: 15,
+      allowQuestionMark: true,
     );
 
     if (!mounted || updated == null) {
       return;
     }
 
-    final sanitized = updated.replaceAll(RegExp(r'\D+'), '');
+    final sanitized = updated.trim() == '?'
+        ? '?'
+        : updated.replaceAll(RegExp(r'\D+'), '');
     controller.value = TextEditingValue(
       text: sanitized,
       selection: TextSelection.collapsed(offset: sanitized.length),
@@ -1507,13 +1512,13 @@ class _TakeAwayDetailsSheet extends StatefulWidget {
 }
 
 class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
-  static const Color _accent = Color(0xFF0F766E);
-  static const Color _surface = Color(0xFFFFFFFF);
-  static const Color _surfaceAlt = Color(0xFFF6F8F7);
-  static const Color _outline = Color(0xFFDDE4ED);
-  static const Color _label = Color(0xFF115E59);
-  static const Color _muted = Color(0xFF64748B);
-  static const Color _textPrimary = Color(0xFF0F172A);
+  static const Color _accent = VynicFloorTokens.accentStrong;
+  static const Color _surface = VynicFloorTokens.panel;
+  static const Color _surfaceAlt = VynicFloorTokens.metricFill;
+  static const Color _outline = VynicFloorTokens.panelBorder;
+  static const Color _label = VynicFloorTokens.sectionLabel;
+  static const Color _muted = VynicFloorTokens.textMuted;
+  static const Color _textPrimary = VynicFloorTokens.text;
 
   late TimeOfDay _selectedTime;
   final TextEditingController _numberController = TextEditingController();
@@ -1552,7 +1557,7 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
       );
       return;
     }
-    if (!_waitHere && !RegExp(r'^\d+$').hasMatch(number)) {
+    if (!_waitHere && number != '?' && !RegExp(r'^\d+$').hasMatch(number)) {
       unawaited(showErrorToast(context, 'მხოლოდ ციფრებია დასაშვები'));
       return;
     }
@@ -1573,7 +1578,9 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
     }
     await widget.onEditNumber(_numberController);
     final raw = _numberController.text;
-    final sanitized = raw.replaceAll(RegExp(r'\D+'), '');
+    final sanitized = raw.trim() == '?'
+        ? '?'
+        : raw.replaceAll(RegExp(r'\D+'), '');
     if (sanitized != raw) {
       _numberController
         ..text = sanitized
@@ -1599,27 +1606,22 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final borderRadius = BorderRadius.circular(20);
-    const double bottomPadding = 24;
+    final borderRadius = BorderRadius.circular(VynicFloorTokens.panelRadius);
 
     return Material(
       color: Colors.transparent,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+        padding: const EdgeInsets.all(12),
         child: Container(
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [_surface, _surfaceAlt],
-            ),
+            color: _surface,
             border: Border.all(color: _outline),
             borderRadius: borderRadius,
             boxShadow: [
               BoxShadow(
-                color: _accent.withValues(alpha: 0.12),
-                blurRadius: 20,
-                offset: const Offset(0, 14),
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 28,
+                offset: const Offset(0, 18),
               ),
             ],
           ),
@@ -1630,148 +1632,142 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
                 Column(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
-                      ),
+                      padding: const EdgeInsets.fromLTRB(18, 16, 12, 16),
                       decoration: const BoxDecoration(
                         color: _surface,
                         border: Border(bottom: BorderSide(color: _outline)),
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'ახალი გატანის შეკვეთა',
-                            style: TextStyle(
-                              color: _textPrimary,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.4,
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: VynicFloorTokens.accentSoft,
+                              borderRadius: BorderRadius.circular(11),
+                              border: Border.all(
+                                color: const Color(0xFFE2DCF2),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.takeout_dining_outlined,
+                              color: _accent,
+                              size: 22,
                             ),
                           ),
-                          IconButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            icon: const Icon(Icons.close, color: _muted),
-                            tooltip: 'დახურვა',
+                          const SizedBox(width: 13),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'ახალი გატანის შეკვეთა',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: _textPrimary,
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                SizedBox(height: 3),
+                                Text(
+                                  'გატანის დეტალები',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: _muted,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          PosStatusPill.booked('ახალი'),
+                          const SizedBox(width: 8),
+                          SizedBox(
+                            width: 44,
+                            height: 44,
+                            child: IconButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              icon: const Icon(
+                                Icons.close_rounded,
+                                color: _muted,
+                              ),
+                              tooltip: 'დახურვა',
+                            ),
                           ),
                         ],
                       ),
                     ),
                     Expanded(
                       child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(
-                          20,
-                          20,
-                          20,
-                          bottomPadding,
-                        ),
+                        padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _buildLabel('გატანის დრო'),
                             const SizedBox(height: 8),
-                            GestureDetector(
+                            _FieldShell(
                               onTap: _pickTime,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 18,
-                                  vertical: 14,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _surface,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: _outline),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Color(0x11000000),
-                                      blurRadius: 14,
-                                      offset: Offset(0, 8),
+                              icon: Icons.schedule_rounded,
+                              iconColor: _accent,
+                              child: Row(
+                                children: [
+                                  Text(
+                                    _formatDisplayTime(_selectedTime),
+                                    style: const TextStyle(
+                                      color: _textPrimary,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w800,
                                     ),
-                                  ],
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.schedule,
-                                      color: _accent,
-                                      size: 22,
-                                    ),
-                                    const SizedBox(width: 14),
-                                    Text(
-                                      _formatDisplayTime(_selectedTime),
-                                      style: const TextStyle(
-                                        color: _textPrimary,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    const Icon(
-                                      Icons.edit,
-                                      color: _muted,
-                                      size: 20,
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                  const Spacer(),
+                                  const Icon(
+                                    Icons.edit_rounded,
+                                    color: _muted,
+                                    size: 19,
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 18),
+                            const SizedBox(height: 16),
                             _buildLabel('ნომერი'),
                             const SizedBox(height: 8),
                             _buildNumberField(),
-                            const SizedBox(height: 14),
+                            const SizedBox(height: 12),
                             _buildWaitHereSwitch(),
-                            const SizedBox(height: 20),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: _muted,
-                                      side: BorderSide(
-                                        color: _muted.withValues(alpha: 0.4),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 12,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                    ),
-                                    child: const Text('გაუქმება'),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: ElevatedButton(
-                                    onPressed: _submit,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: _accent,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 12,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                      elevation: 3,
-                                    ),
-                                    child: const Text(
-                                      'შეკვეთის დაწყება',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
                           ],
                         ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
+                      decoration: const BoxDecoration(
+                        color: _surface,
+                        border: Border(top: BorderSide(color: _outline)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: PosActionButton(
+                              label: 'გაუქმება',
+                              icon: Icons.close_rounded,
+                              expand: true,
+                              onTap: () => Navigator.of(context).pop(),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: PosPrimaryButton(
+                              label: 'შეკვეთის დაწყება',
+                              icon: Icons.arrow_forward_rounded,
+                              onTap: _submit,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -1789,100 +1785,76 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
       text,
       style: const TextStyle(
         color: _label,
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.2,
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
       ),
     );
   }
 
   Widget _buildNumberField() {
-    return GestureDetector(
-      onTap: _handleEditNumber,
-      behavior: HitTestBehavior.opaque,
-      child: ValueListenableBuilder<TextEditingValue>(
-        valueListenable: _numberController,
-        builder: (context, value, _) {
-          final text = value.text.trim();
-          final isEmpty = text.isEmpty || _waitHere;
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: _numberController,
+      builder: (context, value, _) {
+        final text = value.text.trim();
+        final isEmpty = text.isEmpty || _waitHere;
 
-          return AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-            decoration: BoxDecoration(
-              color: _waitHere ? _surfaceAlt.withValues(alpha: 0.8) : _surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _outline, width: 1),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x11000000),
-                  blurRadius: 12,
-                  offset: Offset(0, 6),
+        return _FieldShell(
+          onTap: _handleEditNumber,
+          icon: Icons.pin_outlined,
+          iconColor: _waitHere ? _muted : _accent,
+          disabled: _waitHere,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _waitHere ? 'აქ დაელოდება ჩართულია' : 'ნომერი',
+                style: TextStyle(
+                  color: isEmpty ? _muted : _accent,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
                 ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.pin_outlined,
-                      color: _waitHere ? _muted : _accent,
-                      size: 22,
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      _waitHere
-                          ? 'აქ დაელოდება ჩართულია'
-                          : (isEmpty ? 'ჩაწერეთ ნომერი' : 'ნომერი'),
-                      style: TextStyle(
-                        color: isEmpty ? _muted : _accent,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 44),
-                  child: Align(
-                    alignment: Alignment.topLeft,
-                    child: Text(
-                      _waitHere
-                          ? 'ნომრის ველი გამორთულია'
-                          : (isEmpty
-                                ? 'დააჭირეთ და ჩაწერეთ ნომერი'
-                                : value.text),
-                      style: TextStyle(
-                        color: isEmpty ? _muted : _textPrimary,
-                        fontSize: 16,
-                        height: 1.4,
-                        fontWeight: isEmpty ? FontWeight.w400 : FontWeight.w600,
-                      ),
+              ),
+              const SizedBox(height: 7),
+              ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 28),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _waitHere
+                        ? 'ნომრის ველი გამორთულია'
+                        : (isEmpty ? 'ჩაწერეთ ნომერი' : value.text),
+                    style: TextStyle(
+                      color: isEmpty ? _muted : _textPrimary,
+                      fontSize: 18,
+                      height: 1.2,
+                      fontWeight: isEmpty ? FontWeight.w500 : FontWeight.w800,
                     ),
                   ),
                 ),
-              ],
-            ),
-          );
-        },
-      ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
   Widget _buildWaitHereSwitch() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      constraints: const BoxConstraints(minHeight: 56),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(14),
+        color: _waitHere ? VynicFloorTokens.accentSoft : _surfaceAlt,
+        borderRadius: BorderRadius.circular(11),
         border: Border.all(color: _outline),
       ),
       child: Row(
         children: [
-          const Icon(Icons.chair_alt_outlined, color: _accent, size: 20),
+          Icon(
+            Icons.chair_alt_outlined,
+            color: _waitHere ? _accent : _muted,
+            size: 20,
+          ),
           const SizedBox(width: 10),
           const Expanded(
             child: Text(
@@ -1907,6 +1879,65 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FieldShell extends StatelessWidget {
+  const _FieldShell({
+    required this.onTap,
+    required this.icon,
+    required this.iconColor,
+    required this.child,
+    this.disabled = false,
+  });
+
+  final VoidCallback onTap;
+  final IconData icon;
+  final Color iconColor;
+  final Widget child;
+  final bool disabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final fill = disabled
+        ? VynicFloorTokens.metricFill
+        : VynicFloorTokens.panel;
+
+    return Material(
+      color: fill,
+      borderRadius: BorderRadius.circular(11),
+      child: InkWell(
+        onTap: disabled ? null : onTap,
+        borderRadius: BorderRadius.circular(11),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          constraints: const BoxConstraints(minHeight: 64),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(11),
+            border: Border.all(color: VynicFloorTokens.panelBorder),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: disabled
+                      ? VynicFloorTokens.badgeFill
+                      : VynicFloorTokens.accentSoft,
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(icon, color: iconColor, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(child: child),
+            ],
+          ),
+        ),
       ),
     );
   }

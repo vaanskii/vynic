@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
+import 'package:vynic/apps/windows_pos/widgets/shared/venue_identity_panel.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:flutter/foundation.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_form_controls.dart';
@@ -127,6 +128,19 @@ class AdminSettingsSection extends StatelessWidget {
                     _buildModernHeader(),
                     const SizedBox(height: 14),
                     _buildStatusStrip(),
+                    const SizedBox(height: 16),
+                    _buildSettingsHeader(
+                      icon: Icons.storefront,
+                      title: 'რესტორნის მონაცემები',
+                      subtitle:
+                          'სახელი, მისამართი, ტელეფონი და ლოგო — ჩეკის თავში იბეჭდება.',
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: AdminDesign.panelDecoration(),
+                      child: const VenueIdentityCard(),
+                    ),
                     const SizedBox(height: 16),
                     _buildSettingsHeader(
                       icon: Icons.percent,

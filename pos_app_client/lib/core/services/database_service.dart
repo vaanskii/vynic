@@ -3,6 +3,12 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'dart:io';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/models/table.dart';
+import 'dart:developer' as developer;
+import 'dart:typed_data';
+
+import 'package:flutter/services.dart' show rootBundle;
+
+import 'package:vynic/core/models/receipt_header_layout.dart';
 import 'package:vynic/core/models/table_layout.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
@@ -214,21 +220,47 @@ class DatabaseService {
     // language, monthly-report inputs).
     await SettingsRepository.seedDefaults();
 
-    // Create default admin user if no users exist
+    // A terminal being switched on for the very first time, as opposed to one
+    // being updated. „Fresh" means nothing has ever been entered here: no
+    // staff, no tables, no menu.
+    //
+    // The distinction matters because everything below used to run
+    // unconditionally, so a venue unboxing a POS inherited this restaurant's
+    // nine tables, four VIP booths and entire menu, and had to delete them one
+    // by one before it could enter its own.
+    final isFreshInstall =
+        !SettingsRepository.isSetupComplete() &&
+        _userBox!.isEmpty &&
+        _tableBox!.isEmpty &&
+        _menuBox!.isEmpty;
+
     if (_userBox!.isEmpty) {
       await createDefaultAdmin();
     }
 
-    // Initialize tables if empty
-    if (_tableBox!.isEmpty) {
-      await TableRepository.initializeTables();
+    if (isFreshInstall) {
+      // No tables and no menu: the venue enters its own. The empty plan is
+      // *saved*, not merely defaulted to — `getRestaurantTableLayout()` falls
+      // back to the built-in thirteen-table layout when nothing is stored, and
+      // an unconfigured terminal would otherwise draw a floor plan full of
+      // tables that do not exist here.
+      await SettingsRepository.saveActiveTableLayout(
+        RestaurantTableLayouts.emptyVenue,
+      );
+    } else {
+      // An existing terminal. Anything missing is backfilled exactly as before,
+      // and it is marked configured so it is never sent through setup.
+      if (_tableBox!.isEmpty) {
+        await TableRepository.initializeTables();
+      }
+      if (_menuBox!.isEmpty) {
+        await MenuRepository.initializeMenuFromJson();
+      }
+      await adoptLegacyVenueHeader();
+      await SettingsRepository.markSetupComplete();
     }
-    await TableRepository.ensureTableLayoutConsistency();
 
-    // Initialize menu from JSON if empty
-    if (_menuBox!.isEmpty) {
-      await MenuRepository.initializeMenuFromJson();
-    }
+    await TableRepository.ensureTableLayoutConsistency();
 
     await MenuRepository.ensureKitchenRoutingDefaults();
 
@@ -379,6 +411,75 @@ class DatabaseService {
     username: username,
     reservationId: reservationId,
   );
+
+  static String getVenueName() => SettingsRepository.getVenueName();
+
+  static Future<void> setVenueName(String name) =>
+      SettingsRepository.setVenueName(name);
+
+  static String getVenueAddress() => SettingsRepository.getVenueAddress();
+
+  static Future<void> setVenueAddress(String address) =>
+      SettingsRepository.setVenueAddress(address);
+
+  static String getVenuePhone() => SettingsRepository.getVenuePhone();
+
+  static Future<void> setVenuePhone(String phone) =>
+      SettingsRepository.setVenuePhone(phone);
+
+  static Uint8List? getVenueLogoPng() => SettingsRepository.getVenueLogoPng();
+
+  static Future<void> setVenueLogoPng(Uint8List? png) =>
+      SettingsRepository.setVenueLogoPng(png);
+
+  static ReceiptHeaderLayout getReceiptHeaderLayout() =>
+      SettingsRepository.getReceiptHeaderLayout();
+
+  static Future<void> saveReceiptHeaderLayout(ReceiptHeaderLayout layout) =>
+      SettingsRepository.saveReceiptHeaderLayout(layout);
+
+  /// Keeps a terminal printing exactly what it printed yesterday.
+  ///
+  /// The venue's name, street, phone and logo were literals in the renderers
+  /// and an asset in the bundle. Moving them into settings emptied the header
+  /// on every terminal that already existed — the receipts would simply have
+  /// lost their top. This copies the old values in once, for installs that
+  /// predate the setting, so nothing changes for them until someone edits it.
+  ///
+  /// A fresh install never reaches this: it has no header to preserve, and
+  /// inheriting another restaurant's address is the bug this whole change is
+  /// about.
+  static Future<void> adoptLegacyVenueHeader() async {
+    if (SettingsRepository.getVenueName().isEmpty) {
+      await SettingsRepository.setVenueName('RESTAURANT VANKISI');
+    }
+    if (SettingsRepository.getVenueAddress().isEmpty) {
+      await SettingsRepository.setVenueAddress('ალექსანდრე პუშკინის ქ. N51');
+    }
+    if (SettingsRepository.getVenuePhone().isEmpty) {
+      await SettingsRepository.setVenuePhone('+995 599 98 93 76');
+    }
+    if (SettingsRepository.getVenueLogoPng() == null) {
+      try {
+        final data = await rootBundle.load('assets/black-logo.png');
+        await SettingsRepository.setVenueLogoPng(
+          data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+        );
+      } catch (error, stackTrace) {
+        developer.log(
+          'Legacy receipt logo could not be adopted',
+          error: error,
+          stackTrace: stackTrace,
+          name: 'DatabaseService',
+        );
+      }
+    }
+  }
+
+  static bool isSetupComplete() => SettingsRepository.isSetupComplete();
+
+  static Future<void> markSetupComplete() =>
+      SettingsRepository.markSetupComplete();
 
   static Future<bool> completeReservationForOrder(int orderId) =>
       ReservationRepository.completeReservationByOrderId(orderId);

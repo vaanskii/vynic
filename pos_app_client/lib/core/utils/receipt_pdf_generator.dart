@@ -38,8 +38,14 @@ class ReceiptPdfGenerator {
     final fontData = await rootBundle.load('assets/fonts/NotoSansGeorgian.ttf');
     final font = pw.Font.ttf(fontData);
 
-    final logoData = await rootBundle.load('assets/black-logo.png');
-    final logoImage = pw.MemoryImage(logoData.buffer.asUint8List());
+    // The venue's own logo, from the database. It used to be
+    // `assets/black-logo.png`, bundled in the binary, so every venue's PDF
+    // receipt carried the same mark.
+    final logoBytes = DatabaseService.getVenueLogoPng();
+    final logoImage = logoBytes == null ? null : pw.MemoryImage(logoBytes);
+    final venueName = DatabaseService.getVenueName();
+    final venueAddress = DatabaseService.getVenueAddress();
+    final venuePhone = DatabaseService.getVenuePhone();
 
     final now = DateTime.now();
     final dateStr = DateFormat('yyyy-MM-dd HH:mm').format(now);
@@ -52,26 +58,24 @@ class ReceiptPdfGenerator {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
-              // Logo
-              pw.Center(child: pw.Image(logoImage, width: 120, height: 60)),
-              pw.SizedBox(height: 8),
-              pw.Text(
-                'RESTAURANT VANKISI',
-                style: pw.TextStyle(
-                  fontSize: 14,
-                  fontWeight: pw.FontWeight.bold,
+              // Header: whatever the venue has filled in. A line it has not
+              // set is skipped rather than printed blank.
+              if (logoImage != null) ...[
+                pw.Center(child: pw.Image(logoImage, width: 120, height: 60)),
+                pw.SizedBox(height: 8),
+              ],
+              if (venueName.isNotEmpty)
+                pw.Text(
+                  venueName,
+                  style: pw.TextStyle(
+                    fontSize: 14,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
-              ),
-              pw.Text(
-                isEnglish
-                    ? 'Aleksandre Pushkini ST N51'
-                    : 'ალექსანდრე პუშკინის ქ. N51',
-                style: const pw.TextStyle(fontSize: 9),
-              ),
-              pw.Text(
-                '+995 599 98 93 76',
-                style: const pw.TextStyle(fontSize: 9),
-              ),
+              if (venueAddress.isNotEmpty)
+                pw.Text(venueAddress, style: const pw.TextStyle(fontSize: 9)),
+              if (venuePhone.isNotEmpty)
+                pw.Text(venuePhone, style: const pw.TextStyle(fontSize: 9)),
               pw.SizedBox(height: 12),
 
               pw.Divider(thickness: 0.5),

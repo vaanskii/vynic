@@ -1,9 +1,12 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:uuid/uuid.dart';
+
+import 'package:vynic/core/models/receipt_header_layout.dart';
 
 import 'package:vynic/core/models/pos_display_settings.dart';
 import 'package:vynic/core/models/table_layout.dart';
@@ -17,6 +20,15 @@ import '../database_core.dart';
 class SettingsRepository {
   SettingsRepository._();
 
+  static const String _venueNameSetting = 'venueName';
+  static const String _venueAddressSetting = 'venueAddress';
+  static const String _venuePhoneSetting = 'venuePhone';
+  static const String _venueLogoSetting = 'venueLogoPng';
+  static const String _venueLogoAlignSetting = 'venueLogoAlign';
+  static const String _venueTextAlignSetting = 'venueTextAlign';
+  static const String _venueLogoFirstSetting = 'venueLogoFirst';
+  static const String _venueLogoScaleSetting = 'venueLogoScale';
+  static const String _setupCompleteSetting = 'setupComplete';
   static const String _posIngestConnectionKeySetting = 'posIngestConnectionKey';
   static const String _lastManagerSyncAtSetting = 'lastManagerSyncAt';
   static const String _backendUrlOverrideSetting = 'backendUrlOverride';
@@ -768,10 +780,126 @@ class SettingsRepository {
     return stored is bool ? stored : false;
   }
 
-  static Future<void> setCloseReceiptServiceFeeLineVisible(
-    bool visible,
-  ) async {
+  static Future<void> setCloseReceiptServiceFeeLineVisible(bool visible) async {
     await _settingsBox!.put(_closeReceiptShowServiceFeeLineSetting, visible);
+  }
+
+  // ==================== VENUE IDENTITY & SETUP ====================
+
+  /// What this venue is called. Empty until someone types it in at setup.
+  ///
+  /// New in this build: nothing stored it before, so an existing terminal
+  /// returns empty here until its operator fills it in.
+  static String getVenueName() {
+    final raw = _settingsBox?.get(_venueNameSetting);
+    return raw is String ? raw.trim() : '';
+  }
+
+  static Future<void> setVenueName(String name) async {
+    await _settingsBox?.put(_venueNameSetting, name.trim());
+  }
+
+  /// The street line under the name on a receipt.
+  ///
+  /// Hardcoded as „ალექსანდრე პუშკინის ქ. N51" until now — one venue's address,
+  /// printed on every other venue's checks.
+  static String getVenueAddress() {
+    final raw = _settingsBox?.get(_venueAddressSetting);
+    return raw is String ? raw.trim() : '';
+  }
+
+  static Future<void> setVenueAddress(String address) async {
+    await _settingsBox?.put(_venueAddressSetting, address.trim());
+  }
+
+  /// Likewise the phone number, which was „+995 599 98 93 76".
+  static String getVenuePhone() {
+    final raw = _settingsBox?.get(_venuePhoneSetting);
+    return raw is String ? raw.trim() : '';
+  }
+
+  static Future<void> setVenuePhone(String phone) async {
+    await _settingsBox?.put(_venuePhoneSetting, phone.trim());
+  }
+
+  /// The receipt logo, as PNG bytes.
+  ///
+  /// Stored in the database rather than as a bundled asset, because a logo is
+  /// the one thing on a check that is definitely not ours. It was
+  /// `assets/black-logo.png`, shipped in the binary, so every venue printed
+  /// the same mark. Null means „no logo" — the name is printed instead, which
+  /// is what a venue that has not uploaded one should get.
+  static Uint8List? getVenueLogoPng() {
+    final raw = _settingsBox?.get(_venueLogoSetting);
+    if (raw is Uint8List) return raw.isEmpty ? null : raw;
+
+    // A backup writes the bytes out as a JSON array and reads them back as
+    // `List<dynamic>`, not `List<int>` — so a type check for the latter alone
+    // silently dropped the venue's logo on every restore. Accepting any list
+    // of numbers is what makes a restored terminal print its own mark again.
+    if (raw is List) {
+      if (raw.isEmpty) return null;
+      final bytes = <int>[];
+      for (final value in raw) {
+        if (value is! num) return null;
+        bytes.add(value.toInt() & 0xFF);
+      }
+      return Uint8List.fromList(bytes);
+    }
+    return null;
+  }
+
+  static Future<void> setVenueLogoPng(Uint8List? png) async {
+    if (png == null || png.isEmpty) {
+      await _settingsBox?.delete(_venueLogoSetting);
+      return;
+    }
+    await _settingsBox?.put(_venueLogoSetting, png);
+  }
+
+  /// Where the logo and the name sit at the top of a check.
+  static ReceiptHeaderLayout getReceiptHeaderLayout() {
+    return ReceiptHeaderLayout(
+      logoAlign: ReceiptAlign.fromStorage(
+        _settingsBox?.get(_venueLogoAlignSetting),
+      ),
+      textAlign: ReceiptAlign.fromStorage(
+        _settingsBox?.get(_venueTextAlignSetting),
+      ),
+      logoFirst: _settingsBox?.get(_venueLogoFirstSetting) as bool? ?? true,
+      logoScale:
+          (_settingsBox?.get(_venueLogoScaleSetting) as num?)?.toDouble() ??
+          1.0,
+    );
+  }
+
+  static Future<void> saveReceiptHeaderLayout(
+    ReceiptHeaderLayout layout,
+  ) async {
+    await _settingsBox?.put(
+      _venueLogoAlignSetting,
+      layout.logoAlign.storageValue,
+    );
+    await _settingsBox?.put(
+      _venueTextAlignSetting,
+      layout.textAlign.storageValue,
+    );
+    await _settingsBox?.put(_venueLogoFirstSetting, layout.logoFirst);
+    await _settingsBox?.put(_venueLogoScaleSetting, layout.clampedScale);
+  }
+
+  /// Whether someone has been through first-run setup on this terminal.
+  ///
+  /// An install that predates setup has data in it — users, tables, a menu —
+  /// and must never be sent through a „name your restaurant" wizard on update.
+  /// [markSetupComplete] is therefore called for those too, at init, so the
+  /// flag means „this terminal is configured", not „this build ran the wizard".
+  static bool isSetupComplete() {
+    return _settingsBox?.get(_setupCompleteSetting) == true;
+  }
+
+  static Future<void> markSetupComplete() async {
+    await _settingsBox?.put(_setupCompleteSetting, true);
   }
 
   // ==================== POS ↔ SERVER CONNECTION ====================

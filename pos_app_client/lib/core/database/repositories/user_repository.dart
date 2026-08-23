@@ -28,11 +28,19 @@ class UserRepository {
     }
   }
 
-  // Create default manager user
+  /// The one account a brand-new terminal comes up with.
+  ///
+  /// PIN `000000`, so whoever unboxes it can get in; the operator renames it
+  /// and sets a real PIN from Staff. It used to be created as „vaanskii" —
+  /// the developer's own username, shipped to every venue and printed on their
+  /// checks as the waiter who opened the table.
+  static const String defaultManagerUsername = 'manager';
+  static const String defaultManagerPin = '000000';
+
   static Future<void> createDefaultAdmin() async {
     final manager = User(
-      username: 'vaanskii',
-      pinCode: '000000',
+      username: defaultManagerUsername,
+      pinCode: defaultManagerPin,
       role: 'manager',
     );
     await DatabaseCore.userBox!.add(manager);

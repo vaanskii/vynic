@@ -51,6 +51,7 @@ class EscposReportRenderer {
     required String reportType,
     required Future<ui.Image?> Function() loadReceiptLogoImage,
     required Future<Rect> Function(ui.Image image) getReceiptLogoContentRect,
+    required ({String name, String address, String phone}) venue,
   }) async {
     try {
       final recorder = ui.PictureRecorder();
@@ -127,7 +128,9 @@ class EscposReportRenderer {
         currentY += logoHeight + 20;
       }
 
-      drawText('RESTAURANT VANKISI', currentY, fontSize: 30, center: true);
+      if (venue.name.isNotEmpty) {
+        drawText(venue.name, currentY, fontSize: 30, center: true);
+      }
       currentY += 38;
 
       drawLine(currentY);

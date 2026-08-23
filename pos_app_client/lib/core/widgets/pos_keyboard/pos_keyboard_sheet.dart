@@ -58,12 +58,18 @@ Future<String?> showPosNumberKeyboardInputSheet({
   required String title,
   int maxDigits = 15,
   bool allowDecimal = false,
+  bool allowQuestionMark = false,
   int maxDecimalPlaces = 2,
 }) async {
   final screenWidth = MediaQuery.sizeOf(context).width;
   var value = initialValue.trim();
 
   String? nextValueAfterDigit(String currentValue, String digit) {
+    if (digit == '?') {
+      if (!allowQuestionMark) return null;
+      return '?';
+    }
+
     if (digit == '.') {
       if (!allowDecimal ||
           maxDecimalPlaces == 0 ||
@@ -71,6 +77,10 @@ Future<String?> showPosNumberKeyboardInputSheet({
         return null;
       }
       return currentValue.isEmpty ? '0.' : '$currentValue.';
+    }
+
+    if (currentValue == '?') {
+      return digit;
     }
 
     final proposed = currentValue.isEmpty || currentValue == '0'
@@ -104,6 +114,7 @@ Future<String?> showPosNumberKeyboardInputSheet({
             title: title,
             value: value,
             allowDecimal: allowDecimal,
+            allowQuestionMark: allowQuestionMark,
             onDigit: (digit) {
               setSheetState(() {
                 final next = nextValueAfterDigit(value, digit);
@@ -136,6 +147,7 @@ class _PosNumberKeyboardSheet extends StatelessWidget {
     required this.title,
     required this.value,
     required this.allowDecimal,
+    required this.allowQuestionMark,
     required this.onDigit,
     required this.onDelete,
     required this.onClear,
@@ -156,6 +168,7 @@ class _PosNumberKeyboardSheet extends StatelessWidget {
   final String title;
   final String value;
   final bool allowDecimal;
+  final bool allowQuestionMark;
   final ValueChanged<String> onDigit;
   final VoidCallback onDelete;
   final VoidCallback onClear;
@@ -240,7 +253,11 @@ class _PosNumberKeyboardSheet extends StatelessWidget {
                     border: Border.all(color: _border),
                   ),
                   child: Text(
-                    value.isEmpty ? 'დააჭირეთ ციფრებს შესაყვანად' : value,
+                    value.isEmpty
+                        ? (allowQuestionMark
+                              ? 'დააჭირეთ ციფრებს ან ?'
+                              : 'დააჭირეთ ციფრებს შესაყვანად')
+                        : value,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -274,10 +291,20 @@ class _PosNumberKeyboardSheet extends StatelessWidget {
                       ])
                         _NumberKey(label: digit, onTap: () => onDigit(digit)),
                       _NumberKey(
-                        label: allowDecimal ? '.' : 'Clear',
-                        background: allowDecimal ? null : _danger,
-                        foreground: allowDecimal ? null : _dangerText,
-                        onTap: allowDecimal ? () => onDigit('.') : onClear,
+                        label: allowDecimal
+                            ? '.'
+                            : (allowQuestionMark ? '?' : 'Clear'),
+                        background: allowDecimal || allowQuestionMark
+                            ? null
+                            : _danger,
+                        foreground: allowDecimal || allowQuestionMark
+                            ? null
+                            : _dangerText,
+                        onTap: allowDecimal
+                            ? () => onDigit('.')
+                            : (allowQuestionMark
+                                  ? () => onDigit('?')
+                                  : onClear),
                       ),
                       _NumberKey(label: '0', onTap: () => onDigit('0')),
                       _NumberKey(

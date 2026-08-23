@@ -137,7 +137,9 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
   }
 
   String _digitsOnly(String value) {
-    return value.replaceAll(RegExp(r'\D+'), '');
+    final trimmed = value.trim();
+    if (trimmed == '?') return '?';
+    return trimmed.replaceAll(RegExp(r'\D+'), '');
   }
 
   Future<void> _openPhoneKeyboard() async {
@@ -148,6 +150,7 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
       initialValue: _phoneController.text,
       title: 'ტელეფონის ნომერი',
       maxDigits: 15,
+      allowQuestionMark: true,
     );
 
     if (!mounted || updated == null) {

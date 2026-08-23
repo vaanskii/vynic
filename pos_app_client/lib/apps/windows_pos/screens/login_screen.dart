@@ -10,6 +10,7 @@ import 'package:vynic/core/services/auth/mobile_auth_service.dart';
 import 'package:vynic/core/services/sync/manager_sync_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'home_screen.dart';
+import 'venue_setup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, this.companionAppBuilder});
@@ -67,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => HomeScreen(user: user)),
+        MaterialPageRoute(builder: (context) => _landing(user)),
       );
 
       // Push staff credentials + flush pending changes AFTER the transition,
@@ -95,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => HomeScreen(user: user)),
+        MaterialPageRoute(builder: (context) => _landing(user)),
       );
 
       // Defer credential sync until after the transition.
@@ -251,6 +252,28 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  /// Where a successful login lands.
+  ///
+  /// A terminal that has never been configured has no tables, no menu and no
+  /// name, so the home screen would be an empty floor with nothing to tap. It
+  /// gets one question first. Every other login goes straight to work —
+  /// `isSetupComplete` is set at init for any install that already has data,
+  /// so an update never sends anyone through this.
+  Widget _landing(User user) {
+    if (DatabaseService.isSetupComplete()) {
+      return HomeScreen(user: user);
+    }
+    return VenueSetupScreen(
+      onCompleted: () {
+        final navigator = Navigator.of(context);
+        if (!navigator.mounted) return;
+        navigator.pushReplacement(
+          MaterialPageRoute(builder: (_) => HomeScreen(user: user)),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
@@ -264,7 +287,6 @@ class _LoginScreenState extends State<LoginScreen> {
         onClearPressed: clearPin,
         onDeletePressed: deleteDigit,
         onLoginPressed: _authenticateUser,
-        onOtherUserPressed: clearPin,
         showCompanionApp: isMobile && widget.companionAppBuilder != null,
         onCompanionAppPressed: isMobile && widget.companionAppBuilder != null
             ? _launchCompanionApp

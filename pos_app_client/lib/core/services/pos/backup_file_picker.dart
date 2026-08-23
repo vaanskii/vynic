@@ -50,6 +50,88 @@ class BackupFilePicker {
     return _pickSaveWithPlugins();
   }
 
+  /// Picks an image file — the venue's receipt logo.
+  ///
+  /// Deliberately not routed through the macOS native channel: that one is a
+  /// backup-specific panel filtered to JSON. This uses the cross-platform
+  /// pickers, which is enough for a file the operator chooses once.
+  static Future<String?> pickImageFile() async {
+    const imageGroup = fs.XTypeGroup(
+      label: 'Image',
+      extensions: ['png', 'jpg', 'jpeg', 'bmp', 'gif', 'webp'],
+      mimeTypes: ['image/png', 'image/jpeg', 'image/bmp', 'image/webp'],
+      uniformTypeIdentifiers: ['public.image'],
+    );
+
+    if (!Platform.isWindows) {
+      try {
+        final selected = await fs
+            .openFile(
+              acceptedTypeGroups: const [imageGroup],
+              confirmButtonText: 'Select logo',
+            )
+            .timeout(const Duration(seconds: 30));
+        final path = selected?.path;
+        if (path != null && path.isNotEmpty) return path;
+      } catch (e) {
+        debugPrint('[BackupFilePicker] file_selector image open failed: $e');
+      }
+    }
+
+    try {
+      final pickerResult = await FilePicker.platform.pickFiles(
+        dialogTitle: 'Select receipt logo',
+        type: FileType.custom,
+        allowedExtensions: const ['png', 'jpg', 'jpeg', 'bmp', 'gif', 'webp'],
+        withData: false,
+      );
+      if (pickerResult == null || pickerResult.files.isEmpty) return null;
+      return pickerResult.files.single.path;
+    } catch (e) {
+      debugPrint('[BackupFilePicker] FilePicker image open failed: $e');
+      return null;
+    }
+  }
+
+  /// Where to write the venue's logo out to.
+  ///
+  /// A logo lives in the database and nowhere else once the source file is
+  /// gone, so exporting it is the difference between „reinstall the POS" and
+  /// „find the designer's original".
+  static Future<String?> pickSaveImageFile({
+    String suggestedName = 'logo.png',
+  }) async {
+    const pngGroup = fs.XTypeGroup(
+      label: 'PNG',
+      extensions: ['png'],
+      mimeTypes: ['image/png'],
+      uniformTypeIdentifiers: ['public.png'],
+    );
+
+    try {
+      final location = await fs.getSaveLocation(
+        acceptedTypeGroups: const [pngGroup],
+        suggestedName: suggestedName,
+      );
+      final path = location?.path;
+      if (path != null && path.isNotEmpty) return path;
+    } catch (e) {
+      debugPrint('[BackupFilePicker] file_selector save image failed: $e');
+    }
+
+    try {
+      return await FilePicker.platform.saveFile(
+        dialogTitle: 'Export receipt logo',
+        fileName: suggestedName,
+        type: FileType.custom,
+        allowedExtensions: const ['png'],
+      );
+    } catch (e) {
+      debugPrint('[BackupFilePicker] FilePicker save image failed: $e');
+      return null;
+    }
+  }
+
   static Future<String?> _pickRestoreWithPlugins() async {
     const jsonGroup = fs.XTypeGroup(
       label: 'JSON',

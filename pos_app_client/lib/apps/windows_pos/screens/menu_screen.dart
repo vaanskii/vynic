@@ -201,6 +201,7 @@ class _MenuScreenState extends State<MenuScreen> {
   late String _currentLanguage;
   late double _serviceFeeRate;
   late bool _serviceFeeDefaultEnabled;
+  bool _existingOrderIsTakeAway = false;
   // Discount carried over from an existing order being edited (0 for new).
   double _existingDiscount = 0.0;
   // Per-order service-fee override from an existing order (null = use global).
@@ -212,6 +213,20 @@ class _MenuScreenState extends State<MenuScreen> {
   bool _initialSnapshotFrozen = false;
   List<QuickOrderDraft> _quickOrderDrafts = [];
   String? _selectedQuickOrderDraftId;
+
+  bool get _canApplyServiceFee =>
+      DatabaseService.isServiceFeeAvailable() &&
+      !widget.isPreOrderMode &&
+      !widget.isTakeAwayMode &&
+      !_existingOrderIsTakeAway;
+
+  bool get _shouldIncludeServiceFee =>
+      _canApplyServiceFee && _serviceFeeDefaultEnabled;
+
+  bool _isTakeAwayOrder(Order order) {
+    return order.floor.toLowerCase() == 'takeaway' ||
+        order.tableNumbers.any((table) => table.startsWith('TA-'));
+  }
 
   // Scroll controllers for category and subcategory bars
   final ScrollController _categoryScrollController = ScrollController();
@@ -485,7 +500,8 @@ class _MenuScreenState extends State<MenuScreen> {
     super.initState();
     _currentLanguage = DatabaseService.getDefaultLanguage();
     _serviceFeeRate = DatabaseService.getServiceFeeRate();
-    _serviceFeeDefaultEnabled = DatabaseService.defaultIncludeServiceFee();
+    _serviceFeeDefaultEnabled =
+        _canApplyServiceFee && DatabaseService.defaultIncludeServiceFee();
     if (widget.isQuickOrder) {
       _quickOrderDrafts = DatabaseService.getQuickOrderDrafts();
       _selectedQuickOrderDraftId = widget.initialQuickOrderDraftId;
@@ -537,10 +553,11 @@ class _MenuScreenState extends State<MenuScreen> {
       final order = DatabaseService.getOrder(widget.existingOrderId!);
       if (order != null) {
         setState(() {
+          _existingOrderIsTakeAway = _isTakeAwayOrder(order);
           // Reflect the existing order's service-fee state in the toggle.
-          if (DatabaseService.isServiceFeeAvailable()) {
-            _serviceFeeDefaultEnabled = order.includeServiceFee;
-          }
+          _serviceFeeDefaultEnabled = _canApplyServiceFee
+              ? order.includeServiceFee
+              : false;
           _existingDiscount = order.discountAmount;
           _orderCustomServicePercent = order.customServiceFeePercentage;
           // Load existing order items into cart
@@ -677,7 +694,7 @@ class _MenuScreenState extends State<MenuScreen> {
       }
       _selectedQuickOrderDraftId = draft.id;
       _serviceFeeDefaultEnabled =
-          DatabaseService.isServiceFeeAvailable() && draft.includeServiceFee;
+          _canApplyServiceFee && draft.includeServiceFee;
       _serviceFeeRate = draft.serviceFeeRate > 0
           ? draft.serviceFeeRate
           : DatabaseService.getServiceFeeRate();
@@ -782,7 +799,7 @@ class _MenuScreenState extends State<MenuScreen> {
                   createdBy: widget.user.username,
                   items: _cartToOrderItems(),
                   subtotal: _getCartTotal(),
-                  includeServiceFee: _serviceFeeDefaultEnabled,
+                  includeServiceFee: _shouldIncludeServiceFee,
                   serviceFeeRate: _serviceFeeRate,
                 )
               : await DatabaseService.updateQuickOrderDraft(
@@ -790,7 +807,7 @@ class _MenuScreenState extends State<MenuScreen> {
                   createdBy: widget.user.username,
                   items: _cartToOrderItems(),
                   subtotal: _getCartTotal(),
-                  includeServiceFee: _serviceFeeDefaultEnabled,
+                  includeServiceFee: _shouldIncludeServiceFee,
                   serviceFeeRate: _serviceFeeRate,
                 );
 
@@ -1125,15 +1142,8 @@ class _MenuScreenState extends State<MenuScreen> {
           // Clear existing items and add new ones
           existingOrder.items.clear();
           existingOrder.items.addAll(orderItems);
-          final isExistingTakeAway =
-              existingOrder.floor.toLowerCase() == 'takeaway' ||
-              existingOrder.tableNumbers.any(
-                (table) => table.startsWith('TA-'),
-              );
-          existingOrder.includeServiceFee =
-              !isExistingTakeAway &&
-              DatabaseService.isServiceFeeAvailable() &&
-              _serviceFeeDefaultEnabled;
+          _existingOrderIsTakeAway = _isTakeAwayOrder(existingOrder);
+          existingOrder.includeServiceFee = _shouldIncludeServiceFee;
           existingOrder.recalculateTotal();
           existingOrder.updatedAt = DatabaseService.getCurrentDateTime();
 
@@ -1207,9 +1217,7 @@ class _MenuScreenState extends State<MenuScreen> {
           floor: floor,
           createdBy: widget.user.username,
           items: orderItems,
-          includeServiceFee:
-              DatabaseService.isServiceFeeAvailable() &&
-              _serviceFeeDefaultEnabled,
+          includeServiceFee: _shouldIncludeServiceFee,
         );
         orderId = order.orderId;
       }
@@ -1927,7 +1935,7 @@ class _MenuScreenState extends State<MenuScreen> {
             child: Row(
               children: [
                 const Expanded(child: PosSectionLabel('შეკვეთა')),
-                if (DatabaseService.isServiceFeeAvailable()) ...[
+                if (_canApplyServiceFee) ...[
                   const Flexible(
                     child: Text(
                       'სერვისი',
@@ -2190,8 +2198,7 @@ class _MenuScreenState extends State<MenuScreen> {
 
   Widget _buildOrderTotals() {
     final subtotal = _getCartTotal();
-    final serviceFeeOn =
-        DatabaseService.isServiceFeeAvailable() && _serviceFeeDefaultEnabled;
+    final serviceFeeOn = _shouldIncludeServiceFee;
     final servicePercent = _effectiveServicePercent;
     final serviceFee = serviceFeeOn
         ? double.parse((subtotal * (servicePercent / 100)).toStringAsFixed(2))

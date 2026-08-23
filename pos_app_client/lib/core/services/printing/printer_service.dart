@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 import 'dart:developer' as developer;
 import 'package:flutter/services.dart';
+import '../../models/receipt_header_layout.dart';
 import '../database_service.dart';
 import 'escpos_kitchen_renderer.dart';
 import 'escpos_receipt_renderer.dart';
@@ -22,7 +23,6 @@ class PrinterService {
 
   // Persistent printer connections
   static bool _isInitialized = false;
-  static const String _receiptLogoAssetPath = 'assets/black-logo.png';
   static ui.Image? _cachedReceiptLogo;
   static Rect? _cachedReceiptLogoContentRect;
 
@@ -53,21 +53,76 @@ class PrinterService {
     }
   }
 
+  /// The venue's own logo, from the database.
+  ///
+  /// It used to come from `assets/black-logo.png`, bundled in the binary, so
+  /// every venue printed the same mark on their checks. A venue that has not
+  /// uploaded one gets no logo at all and the name is printed instead — which
+  /// is the honest result, rather than someone else's brand.
+  ///
+  /// [clearReceiptLogoCache] must be called when the setting changes; the
+  /// decoded image is held for the life of the process otherwise.
   static Future<ui.Image?> _loadReceiptLogoImage() async {
     if (_cachedReceiptLogo != null) {
       return _cachedReceiptLogo;
     }
 
+    final stored = _venueLogoBytes();
+    if (stored == null) return null;
+
     try {
-      final data = await rootBundle.load(_receiptLogoAssetPath);
-      final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+      final codec = await ui.instantiateImageCodec(stored);
       final frame = await codec.getNextFrame();
       _cachedReceiptLogo = frame.image;
       _cachedReceiptLogoContentRect = null;
       return _cachedReceiptLogo;
     } catch (e) {
-      developer.log('Receipt logo not available at $_receiptLogoAssetPath: $e');
+      developer.log('Stored receipt logo could not be decoded: $e');
       return null;
+    }
+  }
+
+  static Uint8List? _venueLogoBytes() {
+    try {
+      return DatabaseService.getVenueLogoPng();
+    } catch (e) {
+      developer.log('Venue logo unavailable: $e');
+      return null;
+    }
+  }
+
+  /// Drops the decoded logo so the next receipt picks up a new upload.
+  static void clearReceiptLogoCache() {
+    _cachedReceiptLogo = null;
+    _cachedReceiptLogoContentRect = null;
+  }
+
+  /// What the top of a receipt says this venue is.
+  ///
+  /// Name, street and phone were three string literals in three renderers —
+  /// „RESTAURANT VANKISI", „ალექსანდრე პუშკინის ქ. N51",
+  /// „+995 599 98 93 76" — printed on the checks of every venue that installed
+  /// this POS. Empty lines are dropped rather than printed blank.
+  /// Where the mark and the words go at the top of the check.
+  static ReceiptHeaderLayout receiptHeaderLayout() {
+    try {
+      return DatabaseService.getReceiptHeaderLayout();
+    } catch (e) {
+      developer.log('Receipt header layout unavailable: $e');
+      return const ReceiptHeaderLayout();
+    }
+  }
+
+  static ({String name, String address, String phone}) venueHeader() {
+    try {
+      return (
+        name: DatabaseService.getVenueName(),
+        address: DatabaseService.getVenueAddress(),
+        phone: DatabaseService.getVenuePhone(),
+      );
+    } catch (e) {
+      developer.log('Venue header unavailable: $e');
+      return (name: '', address: '', phone: '');
     }
   }
 
@@ -495,6 +550,8 @@ class PrinterService {
         showServiceFeeLine: _shouldShowServiceFeeLine(),
         showCloseReceiptServiceFeeLine: _shouldShowCloseReceiptServiceFeeLine(),
         loadReceiptLogoImage: _loadReceiptLogoImage,
+        venue: venueHeader(),
+        layout: receiptHeaderLayout(),
         getReceiptLogoContentRect: _getReceiptLogoContentRect,
       );
 
@@ -547,6 +604,8 @@ class PrinterService {
       showServiceFeeLine: _shouldShowServiceFeeLine(),
       showCloseReceiptServiceFeeLine: _shouldShowCloseReceiptServiceFeeLine(),
       loadReceiptLogoImage: _loadReceiptLogoImage,
+      venue: venueHeader(),
+      layout: receiptHeaderLayout(),
       getReceiptLogoContentRect: _getReceiptLogoContentRect,
     );
   }
@@ -676,6 +735,7 @@ class PrinterService {
         reportText: reportText,
         reportType: reportType,
         loadReceiptLogoImage: _loadReceiptLogoImage,
+        venue: venueHeader(),
         getReceiptLogoContentRect: _getReceiptLogoContentRect,
       );
 

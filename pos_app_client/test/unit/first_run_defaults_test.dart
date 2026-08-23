@@ -91,4 +91,27 @@ void main() {
     expect(SettingsRepository.getKitchenPrinterIp(), '192.168.1.50');
     expect(SettingsRepository.getDefaultLanguage(), 'en');
   });
+
+  group('venue identity', () {
+    test('starts empty — the venue types its own name', () {
+      expect(SettingsRepository.getVenueName(), '');
+    });
+
+    test('a fresh terminal is not marked configured', () {
+      expect(SettingsRepository.isSetupComplete(), isFalse);
+    });
+
+    test('once named, it stays named and setup is done', () async {
+      await SettingsRepository.setVenueName('  ღვინის სახლი  ');
+      await SettingsRepository.markSetupComplete();
+
+      expect(SettingsRepository.getVenueName(), 'ღვინის სახლი');
+      expect(SettingsRepository.isSetupComplete(), isTrue);
+
+      // A restart must not undo it.
+      await SettingsRepository.seedDefaults();
+      expect(SettingsRepository.getVenueName(), 'ღვინის სახლი');
+      expect(SettingsRepository.isSetupComplete(), isTrue);
+    });
+  });
 }

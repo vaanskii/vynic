@@ -48,9 +48,9 @@ abstract final class AdminTones {
   /// Settled, connected, active, paid. A muted sage — the warm palette has no
   /// green of its own, and a saturated one would be the loudest thing on a
   /// page full of quiet cards.
-  static const Color successFill = Color(0xFFF4F8F4);
-  static const Color successBorder = Color(0xFFD9E5D9);
-  static const Color successText = Color(0xFF3E6146);
+  static const Color successFill = VynicFloorTokens.successFill;
+  static const Color successBorder = VynicFloorTokens.successBorder;
+  static const Color successText = VynicFloorTokens.successText;
   static const AdminTone success = AdminTone(
     fill: successFill,
     border: successBorder,

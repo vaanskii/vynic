@@ -53,6 +53,7 @@ class AdminPosTextField extends StatelessWidget {
                   initialValue: controller.text,
                   title: label,
                   allowDecimal: allowsDecimal,
+                  allowQuestionMark: keyboardType == TextInputType.phone,
                 );
               } else {
                 updated = await showPosKeyboardInputSheet(

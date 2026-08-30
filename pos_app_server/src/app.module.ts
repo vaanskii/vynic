@@ -19,6 +19,7 @@ import { PosOutboxService } from './pos/pos-outbox.service';
 import { PrismaModule } from './shared/prisma/prisma.module';
 import { BootstrapModule } from './shared/bootstrap/bootstrap.module';
 import { SyncController } from './pos/sync/sync.controller';
+import { IngestAuditReportsService } from './pos/sync/application/ingest-audit-reports.service';
 import { IngestPosSnapshotService } from './pos/sync/application/ingest-pos-snapshot.service';
 import { PosConnectionRegistry } from './pos/sync/pos-connection.registry';
 import { BusinessDaySyncService } from './pos/sync/snapshot/business-day-sync.service';
@@ -48,6 +49,7 @@ import { WebsiteModule } from './website/website.module';
     PosOutboxService,
     PosConnectionRegistry,
     IngestPosSnapshotService,
+    IngestAuditReportsService,
     MenuSyncService,
     TableSyncService,
     OrderSyncService,

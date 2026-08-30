@@ -2,6 +2,7 @@ import 'reflect-metadata';
 
 // Named stubs: the guard assertions below compare class names, and the real
 // modules drag in the firebase-admin / uuid (ESM) chain ts-jest can't load.
+// The gateway is stubbed because the audit use case imported here pulls it in.
 jest.mock('../../realtime/monitoring.gateway', () => ({
   MonitoringGateway: class MonitoringGateway {},
 }));
@@ -33,6 +34,8 @@ type CtorArgs = ConstructorParameters<typeof SyncController>;
 interface Stubs {
   controller: SyncController;
   execute: jest.Mock;
+  ingestReports: jest.Mock;
+  ingestEventLogs: jest.Mock;
   restore: jest.Mock;
 }
 
@@ -40,14 +43,20 @@ function makeController(): Stubs {
   const execute = jest.fn(() =>
     Promise.resolve({ success: true, syncedAt: 'stamped' }),
   );
+  const ingestReports = jest.fn(() =>
+    Promise.resolve({ success: true, upserted: 3 }),
+  );
+  const ingestEventLogs = jest.fn(() =>
+    Promise.resolve({ success: true, count: 2 }),
+  );
   const restore = jest.fn(() => Promise.resolve());
   const controller = new SyncController(
     {} as unknown as CtorArgs[0],
-    {} as unknown as CtorArgs[1],
-    { execute } as unknown as CtorArgs[2],
+    { execute } as unknown as CtorArgs[1],
+    { ingestReports, ingestEventLogs } as unknown as CtorArgs[2],
     { restore } as unknown as CtorArgs[3],
   );
-  return { controller, execute, restore };
+  return { controller, execute, ingestReports, ingestEventLogs, restore };
 }
 
 function routeOf(method: keyof SyncController): {
@@ -132,6 +141,28 @@ describe('SyncController — delegation', () => {
       success: true,
       syncedAt: 'stamped',
     });
+  });
+
+  it('hands audit reports to the audit use case and returns its result', async () => {
+    const { controller, ingestReports } = makeController();
+    const body = { reports: [{ reportId: 'r-1' }], fullSync: true };
+
+    await expect(controller.syncAuditReports(body)).resolves.toEqual({
+      success: true,
+      upserted: 3,
+    });
+    expect(ingestReports).toHaveBeenCalledWith(body);
+  });
+
+  it('hands audit event logs to the audit use case and returns its result', async () => {
+    const { controller, ingestEventLogs } = makeController();
+    const body = { logs: [] };
+
+    await expect(controller.syncAuditEventLogs(body)).resolves.toEqual({
+      success: true,
+      count: 2,
+    });
+    expect(ingestEventLogs).toHaveBeenCalledWith(body);
   });
 
   it('restores the POS callback registration on module init', async () => {

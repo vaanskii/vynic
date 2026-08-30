@@ -8,14 +8,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
-import { MonitoringGateway } from '../../realtime/monitoring.gateway';
 import { PosSyncGuard } from '../../auth/pos-sync.guard';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { RolesGuard } from '../../auth/roles.guard';
 import { Roles } from '../../auth/roles.decorator';
 import { StaffRole } from '../../staff/staff-role';
-import { normalizeAuditEventType } from '../audit/audit-event-type';
-import { isPosAuditBroadcastSuppressed } from '../sync-echo-guard';
+import { IngestAuditReportsService } from './application/ingest-audit-reports.service';
 import { IngestPosSnapshotService } from './application/ingest-pos-snapshot.service';
 import { PosConnectionRegistry } from './pos-connection.registry';
 // `import type`: interfaces named in a decorated signature must not be value
@@ -34,8 +32,8 @@ import type { AuditEventLogSync, SyncPayload } from './sync-payload';
 export class SyncController implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly gateway: MonitoringGateway,
     private readonly ingestSnapshot: IngestPosSnapshotService,
+    private readonly ingestAudit: IngestAuditReportsService,
     private readonly posConnection: PosConnectionRegistry,
   ) {}
 
@@ -107,112 +105,7 @@ export class SyncController implements OnModuleInit {
   async syncAuditReports(
     @Body() body: { reports?: any[]; fullSync?: boolean },
   ) {
-    const reports = body?.reports;
-    const fullSync = body?.fullSync === true;
-    if (!Array.isArray(reports)) {
-      console.log('[SyncAudit] Invalid reports payload');
-      return { success: true, upserted: 0 };
-    }
-
-    console.log(`[SyncAudit] Processing batch of ${reports.length} reports...`);
-
-    let upserted = 0;
-    for (const r of reports) {
-      const reportId = r.reportId as string | undefined;
-      if (!reportId) continue;
-
-      const syncedUpdatedAt = r.updatedAt ? new Date(r.updatedAt) : new Date();
-
-      // Upsert the AuditReport row
-      const dbReport = await (this.prisma as any).auditReport.upsert({
-        where: { reportId },
-        update: {
-          posOrderId: r.orderId ?? 0,
-          tableNumbers: Array.isArray(r.tableNumbers) ? r.tableNumbers : [],
-          floor: r.floor ?? 'first',
-          openedById: r.openedById ?? '',
-          openedByName: r.openedByName ?? '',
-          openedAt: r.openedAt ? new Date(r.openedAt) : new Date(),
-          status: (r.status ?? 'OPEN').toUpperCase(),
-          closedAt: r.closedAt ? new Date(r.closedAt) : null,
-          closedById: r.closedById ?? null,
-          closedByName: r.closedByName ?? null,
-          locked: r.locked ?? false,
-          updatedAt: syncedUpdatedAt,
-        },
-        create: {
-          reportId,
-          posOrderId: r.orderId ?? 0,
-          tableNumbers: Array.isArray(r.tableNumbers) ? r.tableNumbers : [],
-          floor: r.floor ?? 'first',
-          openedById: r.openedById ?? '',
-          openedByName: r.openedByName ?? '',
-          openedAt: r.openedAt ? new Date(r.openedAt) : new Date(),
-          status: (r.status ?? 'OPEN').toUpperCase(),
-          closedAt: r.closedAt ? new Date(r.closedAt) : null,
-          closedById: r.closedById ?? null,
-          closedByName: r.closedByName ?? null,
-          locked: r.locked ?? false,
-          updatedAt: syncedUpdatedAt,
-        },
-      });
-
-      // Optimized event sync: Delete and createMany
-      await (this.prisma as any).auditEvent.deleteMany({
-        where: { reportId: dbReport.id },
-      });
-
-      const events: any[] = Array.isArray(r.events) ? r.events : [];
-      if (events.length > 0) {
-        console.log(`  Report ${reportId}: syncing ${events.length} events...`);
-        await (this.prisma as any).auditEvent.createMany({
-          data: events.map((ev, seq) => ({
-            reportId: dbReport.id,
-            type: normalizeAuditEventType(ev.type, ev.previousQty, ev.newQty),
-            itemName: ev.itemName ?? '',
-            previousQty: ev.previousQty ?? 0,
-            newQty: ev.newQty ?? 0,
-            waiterId: ev.waiterId ?? '',
-            waiterName: ev.waiterName ?? '',
-            eventTime: ev.timestamp ? new Date(ev.timestamp) : new Date(),
-            note: ev.note ?? null,
-            seq,
-          })),
-        });
-      }
-      upserted++;
-    }
-
-    // Full reconciliation mode: remove stale backend reports not present in
-    // current Windows snapshot (important after backup restore/import).
-    if (fullSync) {
-      const incomingReportIds = reports
-        .map((r) => r?.reportId as string | undefined)
-        .filter((id): id is string => !!id);
-
-      const staleReports = await (this.prisma as any).auditReport.findMany({
-        where:
-          incomingReportIds.length > 0
-            ? { reportId: { notIn: incomingReportIds } }
-            : {},
-        select: { id: true },
-      });
-
-      if (staleReports.length > 0) {
-        const staleIds = staleReports.map((r: any) => r.id as string);
-        await (this.prisma as any).auditEvent.deleteMany({
-          where: { reportId: { in: staleIds } },
-        });
-        await (this.prisma as any).auditReport.deleteMany({
-          where: { id: { in: staleIds } },
-        });
-      }
-    }
-
-    if (upserted > 0 && !isPosAuditBroadcastSuppressed()) {
-      this.gateway.broadcastUpdate('audit_updated', { count: upserted });
-    }
-    return { success: true, upserted };
+    return this.ingestAudit.ingestReports(body);
   }
 
   /**
@@ -223,36 +116,6 @@ export class SyncController implements OnModuleInit {
   @Post('audit-logs')
   @UseGuards(PosSyncGuard)
   async syncAuditEventLogs(@Body() body: { logs?: AuditEventLogSync[] }) {
-    const logs = body?.logs;
-    if (!Array.isArray(logs) || logs.length === 0) {
-      return { success: true, count: 0 };
-    }
-
-    let count = 0;
-    for (const log of logs) {
-      try {
-        await (this.prisma as any).auditEventLog.upsert({
-          where: { id: log.id },
-          update: {}, // Immutable: do nothing if exists
-          create: {
-            id: log.id,
-            action: log.action,
-            userId: log.userId,
-            data: log.data ?? {},
-            deviceType: log.deviceType,
-            createdAt: log.createdAt ? new Date(log.createdAt) : new Date(),
-          },
-        });
-        count++;
-      } catch (e) {
-        // Log error but continue with other logs
-        console.warn(
-          `[Sync] Error upserting audit log ${log.id}:`,
-          (e as Error).message,
-        );
-      }
-    }
-
-    return { success: true, count };
+    return this.ingestAudit.ingestEventLogs(body);
   }
 }

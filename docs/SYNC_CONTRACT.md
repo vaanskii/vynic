@@ -100,17 +100,17 @@ from `PosIngestServer.start()` on desktop POS runs, stores its base URL in
 `posConnectionKey` in `manager-data` sync. The backend persists that callback
 URL/key and uses them for mobile/website-originated mutations that must reach
 Hive. Keep route changes in sync with
-`pos_app_client/lib/core/services/sync/pos_ingest_server.dart` and
-`pos_app_server/src/pos/pos-callback.client.ts`.
+`apps/operations/lib/core/services/sync/pos_ingest_server.dart` and
+`apps/backend/src/pos/pos-callback.client.ts`.
 
 ---
 
 ## 5. Required POS HTTP routes (server → POS)
 
-These paths are invoked by `pos_app_server/src/pos/sync.controller.ts`,
-`pos_app_server/src/pos/pos-callback.client.ts`, and the mobile/website
+These paths are invoked by `apps/backend/src/pos/sync.controller.ts`,
+`apps/backend/src/pos/pos-callback.client.ts`, and the mobile/website
 services that call the callback client. Windows POS implements them in
-`pos_app_client/lib/core/services/sync/pos_ingest_server.dart`.
+`apps/operations/lib/core/services/sync/pos_ingest_server.dart`.
 
 | Method | Path | Purpose |
 |--------|------|---------|

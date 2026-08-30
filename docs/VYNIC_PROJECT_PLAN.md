@@ -10,14 +10,14 @@ don't read the whole file if you don't need to.
 
 ## 1. Current system summary
 
-- **`pos_app_client/`** — Flutter monorepo of two apps sharing `lib/core/`:
+- **`apps/operations/`** — Flutter monorepo of two apps sharing `lib/core/`:
   - `apps/windows_pos/` — the POS. Local-first, persists to **Hive**. This is the
     **operational source of truth** during service.
   - `apps/mobile_app/` — manager app. REST + sockets to the server, with a cache
     fallback. Reads mostly; limited mutations.
-- **`pos_app_server/`** — NestJS + Prisma + PostgreSQL. Mirrors POS data for the
+- **`apps/backend/`** — NestJS + Prisma + PostgreSQL. Mirrors POS data for the
   manager app and runs the customer website (menu, reservations, BOG payments).
-  Architecture detail: `pos_app_server/CLAUDE.md`. Data-flow contract:
+  Architecture detail: `apps/backend/CLAUDE.md`. Data-flow contract:
   `docs/SYNC_CONTRACT.md`.
 - **Persistence:** POS = Hive boxes; server = Postgres (`pos` + `website` schemas).
 - **Business date:** POS tracks `currentDate` in settings, decoupled from wall clock
@@ -39,7 +39,7 @@ Verify against the symptom below before assuming it's fully closed out.
 **Symptom (historical):** `Reservation activation returned null` logged from
 `assign_reservation_to_table`; tables appear stuck/"busy" the day after close.
 
-**Root causes (all in `pos_app_client/lib/core/services/database_service.dart`
+**Root causes (all in `apps/operations/lib/core/services/database_service.dart`
 unless noted):**
 
 1. **Errors hidden behind `null`.** `activateReservation` (~line 6327) has ~5 silent
@@ -87,7 +87,7 @@ seating). Ship in small steps, each verified.
 - **No domain layer on the POS side** — screens call `DatabaseService` directly.
 - **Duplicated table-code logic** — encode/decode + the `> 10 = VIP/second floor`
   convention is copied across ~11 files.
-- **Reverse sync (server→POS) status is uncertain** — `pos_app_server/CLAUDE.md`
+- **Reverse sync (server→POS) status is uncertain** — `apps/backend/CLAUDE.md`
   describes it as working via outbox/callback; verify against the client before
   relying on it.
 
@@ -132,7 +132,7 @@ verification, not one big commit.
 - **Phase 1 — Reservation close-day bug fix. DONE.** Section 2 above.
 - **Phase 2 — Split `database_service.dart` into feature repositories. DONE.**
   `database_service.dart` is now a ~1,265-line delegating façade
-  over 13 repositories + 3 transactions in `pos_app_client/lib/core/database/`
+  over 13 repositories + 3 transactions in `apps/operations/lib/core/database/`
   (`database_core.dart`, `repositories/`, `transactions/`). Behavior-preserving.
   `lib/core/services/` was also reorganized into concern
   folders (`auth/`, `sync/`, `notifications/`, `printing/`, `audit/`,
@@ -166,7 +166,7 @@ verification, not one big commit.
   **Table identity:** reservations canonically store `tableRefs`
   (`floor/tableNumber` strings, `TableRef` in `core/models/table_ref.dart`);
   Hive db v3 backfilled them from the legacy encoded ints (see
-  `pos_app_client/docs/HIVE_MIGRATIONS.md`). The legacy `tableNumbers` codes
+  `apps/operations/docs/HIVE_MIGRATIONS.md`). The legacy `tableNumbers` codes
   are still written in parallel — they are the **server wire format and backup
   format** (mobile app + website reserve via the server and stay code-based
   until Phase 7), so codes the encoding can't represent (3rd+ floors,
@@ -219,7 +219,7 @@ verification, not one big commit.
 
 ## 8. Verification
 
-**Flutter client** (`cd pos_app_client`):
+**Flutter client** (`cd apps/operations`):
 ```bash
 dart format --output=none --set-exit-if-changed .
 flutter analyze
@@ -227,7 +227,7 @@ flutter build macos --debug     # or: flutter build windows --debug
 flutter test                     # if the touched area has tests
 ```
 
-**NestJS server** (`cd pos_app_server`):
+**NestJS server** (`cd apps/backend`):
 ```bash
 npm run lint
 npm run build
@@ -247,7 +247,7 @@ npm test
 
 - `AGENTS.md` — root rules for all agents.
 - `docs/UI_PLAN.md` — UI/design system sub-plan (Phases 5–6).
-- `pos_app_server/CLAUDE.md` — server architecture.
+- `apps/backend/CLAUDE.md` — server architecture.
 - `docs/SYNC_CONTRACT.md` — POS↔server↔mobile data-flow contract.
-- `pos_app_client/docs/HIVE_MIGRATIONS.md` — local schema migration workflow.
-- `pos_app_client/docs/archive/` — superseded/historical docs (not current).
+- `apps/operations/docs/HIVE_MIGRATIONS.md` — local schema migration workflow.
+- `apps/operations/docs/archive/` — superseded/historical docs (not current).

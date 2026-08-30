@@ -5,7 +5,7 @@ in UI Phase 2 as an **additive, unused** layer — no existing screen imports it
 yet. Future phases migrate their own screens onto it (see `docs/UI_PLAN.md`
 §6.3 for why we do this screen-by-screen instead of flipping `ThemeData`).
 
-All of it lives under `pos_app_client/lib/core/ui/`, re-exported from a single
+All of it lives under `apps/operations/lib/core/ui/`, re-exported from a single
 barrel: `import 'package:vynic/core/ui/vynic_ui.dart';`
 
 Responsive/layout rules have their own companion doc: **`docs/UI_RESPONSIVE.md`**.

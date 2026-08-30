@@ -27,7 +27,7 @@ None of this requires a rewrite. The architecture is sound; the gaps are complet
 
 ```
 vynic/
-├── pos_app_client/            Flutter monorepo — ONE codebase, TWO apps via APP_ROLE
+├── apps/operations/           Flutter monorepo — ONE codebase, TWO apps via APP_ROLE
 │   └── lib/
 │       ├── main.dart          APP_ROLE dart-define selects UI: (default)=manager, pos=Windows POS
 │       ├── apps/windows_pos/  POS UI: login, home, menu, order_detail, admin (5 screens + widgets)
@@ -51,7 +51,7 @@ vynic/
 │           │   ├── pos/       table_payment_service, monthly_report_service, change highlights
 │           │   └── notifications/ firebase_messaging_service, manager_notification_inbox
 │           └── services/database_service.dart  1,281-line delegating façade over repositories
-├── pos_app_server/            NestJS + Prisma + PostgreSQL (schemas: pos, website)
+├── apps/backend/              NestJS + Prisma + PostgreSQL (schemas: pos, website)
 │   └── src/
 │       ├── pos/               sync.controller (POST /sync/manager-data, /sync/audit-reports,
 │       │                      /sync/audit-logs), pos-outbox.service (durable cloud→POS queue,
@@ -276,4 +276,4 @@ Findings [verified]:
 - Server: `npm test` **passes** (app.controller, sync-conflict, sync.controller specs). `npm audit`: **2 high, 1 moderate** (multer via @nestjs/platform-express; protobufjs DoS) — fix available.
 - Client: 8 unit test files (enums, permissions, availability, tokens) + widget test dir. **No tests for money paths** (close table, sale records, close-day) — the highest-risk code is untested.
 - `flutter analyze` clean of errors/warnings (275 infos).
-- Committed artifacts that shouldn't be: `pos_app_server/dev.db` (empty SQLite, still tracked), `pos_app_client/flutter_01.png/.log`, `deps.json`.
+- Committed artifacts that shouldn't be: `apps/backend/dev.db` (empty SQLite, still tracked), `apps/operations/flutter_01.png/.log`, `deps.json`.

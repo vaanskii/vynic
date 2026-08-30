@@ -1,6 +1,6 @@
 ---
 name: vynic-pos-modernization
-description: Use when working on the Vynic restaurant POS (pos_app_client Flutter / pos_app_server NestJS) — fixing the reservation close-day bug, splitting database_service.dart, data-driven tables, status enums, localization/theme, responsive UI, or SaaS/tenancy work. Loads the phased plan and hard constraints so you act on the right phase without re-deriving context.
+description: Use when working on the Vynic restaurant POS (apps/operations Flutter / apps/backend NestJS) — fixing the reservation close-day bug, splitting database_service.dart, data-driven tables, status enums, localization/theme, responsive UI, or SaaS/tenancy work. Loads the phased plan and hard constraints so you act on the right phase without re-deriving context.
 ---
 
 # Vynic POS modernization

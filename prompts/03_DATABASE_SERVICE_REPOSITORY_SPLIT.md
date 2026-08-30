@@ -4,7 +4,7 @@ Do this only after Phase 1 is done. **No behavior change.**
 
 ---
 
-Refactor `pos_app_client/lib/core/services/database_service.dart` (~6,600 lines) into
+Refactor `apps/operations/lib/core/services/database_service.dart` (~6,600 lines) into
 feature repositories, preserving behavior exactly. Read
 `docs/VYNIC_PROJECT_PLAN.md` §3 and §6 (Phase 2) first.
 

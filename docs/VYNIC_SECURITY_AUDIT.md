@@ -30,7 +30,7 @@ No committed live secrets were found (`.env*` and `secrets/` are correctly gitig
 
 ### S-1 · Plaintext staff PIN pipeline — **Critical**
 **Evidence:**
-- `pos_app_client/lib/core/models/user.dart:12` — `String pinCode;` plain Hive field; `user_repository.dart:authenticateByPin` compares plaintext.
+- `apps/operations/lib/core/models/user.dart:12` — `String pinCode;` plain Hive field; `user_repository.dart:authenticateByPin` compares plaintext.
 - `manager_sync_service.dart:862-872` — every **full** sync sends `'pin': u.pinCode` for all staff to `POST /sync/manager-data`.
 - `docs/SYNC_CONTRACT.md` §7.2 explicitly forbids this ("Do not send plaintext PINs in manager-data staff array") — the contract's own mandate is unmet. The server interface comment (`sync.controller.ts:78` "routine POS sync must not send PINs") documents the intent; the client violates it.
 **Impact:** anyone with the POS disk, a Hive backup, or a network position (if `BACKEND_URL` is plain HTTP) obtains every staff PIN — which is also the **mobile manager login credential** (`auth.service.ts:mobileLogin` authenticates managers by the same PIN).
@@ -74,7 +74,7 @@ Mitigations already present: key auto-generated via `ensurePosIngestConnectionKe
 **Remediation:** short access + refresh rotation, or at least a `tokenVersion` claim checked against Staff row so PIN change / deactivation kills sessions.
 
 ### S-10 · Repository hygiene — Low
-**Evidence:** `pos_app_server/dev.db` tracked (SQLite, tables empty — verified with sqlite3; added in commit 19a9b4e); `flutter_01.png/.log`, `deps.json` tracked. `firebase_options.dart` + `google-services.json` committed (normal for Firebase client apps; API keys there are not secret by design).
+**Evidence:** `apps/backend/dev.db` tracked (SQLite, tables empty — verified with sqlite3; added in commit 19a9b4e); `flutter_01.png/.log`, `deps.json` tracked. `firebase_options.dart` + `google-services.json` committed (normal for Firebase client apps; API keys there are not secret by design).
 **Remediation:** `git rm --cached dev.db` etc., extend `.gitignore`.
 
 ### S-11 · Logging — Low

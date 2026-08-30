@@ -10,8 +10,8 @@ Task: tidy Vynic's guidance/documentation only. Do not edit Flutter or NestJS so
 1. Run `git status --short`.
 2. Inspect: `AGENTS.md`, `docs/VYNIC_PROJECT_PLAN.md`,
    `.claude/skills/vynic-pos-modernization/SKILL.md`, `prompts/*.md`,
-   `docs/UI_PLAN.md`, `pos_app_server/CLAUDE.md`, `pos_app_client/docs/**`,
-   `pos_app_client/docs/archive/**`.
+   `docs/UI_PLAN.md`, `apps/backend/CLAUDE.md`, `apps/operations/docs/**`,
+   `apps/operations/docs/archive/**`.
 3. Report a table before changing anything:
 
    | File | Action (keep/update/archive/create) | Reason | Risk |

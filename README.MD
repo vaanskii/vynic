@@ -21,5 +21,5 @@
 
 ## Repository layout
 
-- `pos_app_client/` — Flutter app (Windows POS + Vynic Manager mobile)
-- `pos_app_server/` — NestJS API and sync services
+- `apps/operations/` — Flutter app (Windows POS + Vynic Manager mobile)
+- `apps/backend/` — NestJS API and sync services

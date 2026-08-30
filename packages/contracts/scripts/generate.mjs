@@ -41,7 +41,8 @@ const TS_OUT = join(PKG, 'generated', 'typescript', 'table-identity.ts');
 // cannot drift; the source of truth is still the schema alone.
 const DART_APP_OUT = join(
   REPO,
-  'pos_app_client',
+  'apps',
+  'operations',
   'lib',
   'core',
   'contracts',
@@ -49,7 +50,8 @@ const DART_APP_OUT = join(
 );
 const TS_APP_OUT = join(
   REPO,
-  'pos_app_server',
+  'apps',
+  'backend',
   'src',
   'shared',
   'contracts',
@@ -100,7 +102,7 @@ function renderDart() {
   return `${banner('//')}
 
 /// Table identity: the canonical [encodeTableRef] form and the transitional
-/// integer [encodeTableCode] encoding shared with pos_app_server.
+/// integer [encodeTableCode] encoding shared with apps/backend.
 library;
 
 const int tableIdentityContractVersion = ${contractVersion};
@@ -239,7 +241,7 @@ function renderTs() {
 
 /**
  * Table identity: the canonical \`encodeTableRef\` form and the transitional
- * integer \`encodeTableCode\` encoding shared with pos_app_client.
+ * integer \`encodeTableCode\` encoding shared with apps/operations.
  */
 
 export const TABLE_IDENTITY_CONTRACT_VERSION = ${contractVersion};

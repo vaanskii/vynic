@@ -82,13 +82,13 @@ needs sharing, JSON Schema is the thing to reach for, alongside this.
 
 | Side | Consumes via |
 | --- | --- |
-| `pos_app_client` (Flutter) | `lib/core/contracts/table_identity.dart`, re-exported by `ReservationTableAvailability` and `TableRef` |
-| `pos_app_server` (NestJS) | `src/website/reservation/reservation-table-codes.ts`, which re-exports the generated functions |
+| `apps/operations` (Flutter) | `lib/core/contracts/table_identity.dart`, re-exported by `ReservationTableAvailability` and `TableRef` |
+| `apps/backend` (NestJS) | `src/website/reservation/reservation-table-codes.ts`, which re-exports the generated functions |
 
 Both keep their existing public API, so call sites did not change when the
 implementation moved here.
 
-`restaurant-client` does not consume this package. It identifies tables by
+`apps/venue-web` does not consume this package. It identifies tables by
 `WebsiteTable.websiteTableNumber` strings (`table3`, `f2-table1`) and never
 computes a legacy code; the server maps those to codes on its behalf.
 

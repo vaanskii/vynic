@@ -5,10 +5,10 @@ Root instructions for all AI agents (Claude / Fable / Codex). Keep this file sho
 ## What Vynic is
 
 Restaurant POS system. Two parts:
-- `pos_app_client/` — Flutter app (Windows POS is the operational source of truth;
+- `apps/operations/` — Flutter app (Windows POS is the operational source of truth;
   mobile manager app; shared `core/`). Local-first on Hive.
-- `pos_app_server/` — NestJS + Prisma + PostgreSQL. Mirrors POS data for the
-  manager app and the customer website. See `pos_app_server/CLAUDE.md`.
+- `apps/backend/` — NestJS + Prisma + PostgreSQL. Mirrors POS data for the
+  manager app and the customer website. See `apps/backend/CLAUDE.md`.
 
 Currently single-restaurant. A modernization + SaaS effort is planned but **not
 started**.

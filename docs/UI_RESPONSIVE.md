@@ -5,7 +5,7 @@ panel/dialog/sidebar width rules that let UI Phase 3+ fix the shell and tables
 at low resolutions and Windows display scaling **without each screen inventing
 its own magic numbers**.
 
-Additive and unused in Phase 2. Lives in `pos_app_client/lib/core/ui/`
+Additive and unused in Phase 2. Lives in `apps/operations/lib/core/ui/`
 (`vynic_breakpoints.dart`, `vynic_responsive.dart`, plus the layout primitives
 in `widgets/`), re-exported from `vynic_ui.dart`.
 

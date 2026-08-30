@@ -47,12 +47,12 @@ identical — pick whichever is in front of you.
 ### The key tool (a small desktop app)
 
 ```bash
-./tool/build_unlocker.sh            # builds for this machine
-./tool/build_unlocker.sh windows    # builds the Windows executable
+./tools/build_unlocker.sh            # builds for this machine
+./tools/build_unlocker.sh windows    # builds the Windows executable
 ```
 
-`pos_app_devtool/` is a Flutter app of its own, deliberately separate from the
-POS so that `flutter build windows` in `pos_app_client` can never sweep the
+`apps/devtool/` is a Flutter app of its own, deliberately separate from the
+POS so that `flutter build windows` in `apps/operations` can never sweep the
 signing tool into a customer's install. The script builds only the tool and
 prints where it landed.
 
@@ -82,7 +82,7 @@ For a token bound to one machine:
 dart run tool/dev_key.dart sign --terminal <terminal-id> --hours 8
 ```
 
-Run either from `pos_app_client/`.
+Run either from `apps/operations/`.
 
 ## Master tokens vs per-terminal
 
@@ -164,8 +164,8 @@ A terminal running an old build only accepts tokens signed by the key that
 shipped in it, so the new build has to reach a venue before the old key stops
 working there. Rotate only if the private key actually leaks.
 Two tests catch a half-done rotation on your machine:
-`pos_app_client/test/unit/developer_token_roundtrip_test.dart` and
-`pos_app_devtool/test/signing_key_test.dart`. Both skip where the private key
+`apps/operations/test/unit/developer_token_roundtrip_test.dart` and
+`apps/devtool/test/signing_key_test.dart`. Both skip where the private key
 is absent.
 
 ## What the session is

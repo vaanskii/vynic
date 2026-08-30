@@ -7,7 +7,7 @@
 ## 1. P0 production blockers
 
 ### P0-1 · Table close is not atomic and not idempotent (money loss / duplication)
-**Evidence:** `pos_app_client/lib/apps/windows_pos/screens/order_detail_screen.dart:2351-2460` (`_finalizeTableClosure`): `closeOrderWithPayment` → `saveSaleRecord` → optional advance `saveSaleRecord` → `refreshDailySalesTotalForDate` → background print, each a separate `await`. `CloseTableTransaction.withPayment` (`close_table_transaction.dart`) returns `true` even if the audit append throws, and returns `true` again if called on an already-closed order.
+**Evidence:** `apps/operations/lib/apps/windows_pos/screens/order_detail_screen.dart:2351-2460` (`_finalizeTableClosure`): `closeOrderWithPayment` → `saveSaleRecord` → optional advance `saveSaleRecord` → `refreshDailySalesTotalForDate` → background print, each a separate `await`. `CloseTableTransaction.withPayment` (`close_table_transaction.dart`) returns `true` even if the audit append throws, and returns `true` again if called on an already-closed order.
 **Failure scenarios:**
 - Crash/power loss after close, before sale record → order is `closed` with **no revenue record**; close-day (`close_day_transaction.dart:213-219`) then deletes the order → the sale is gone from every report.
 - Double invocation (double-tap, dialog re-entry, event replay) → **duplicate sale records** → inflated revenue and cash expectation.

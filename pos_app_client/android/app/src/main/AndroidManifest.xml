@@ -1,10 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Required for FCM/local notifications on Android 13+ (API 33). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- The Flutter template declares INTERNET only in the debug and profile
+         manifests, for the tooling's own use. Without it here a release build
+         has no network at all, so the manager app installs, launches, and
+         fails every request against the POS. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Reaching the POS at all means resolving whether the LAN is up. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <application
         android:label="Vynic Manager"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:networkSecurityConfig="@xml/network_security_config">
         <activity
             android:name=".MainActivity"
             android:exported="true"

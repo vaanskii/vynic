@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The manager app talks to the Windows POS over the venue's own LAN, at
+  http://<ip>:3000. Android has blocked cleartext HTTP by default since API 28,
+  which is why the POS could reach the backend and the phone could not: the
+  request never left the handset.
+
+  Permitted for every destination rather than a pinned list, because the
+  address is a different private IP at every venue and is typed in by hand on
+  the login screen — there is no domain to enumerate. If the backend ever moves
+  to HTTPS, narrow this to a domain list or delete the file outright.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

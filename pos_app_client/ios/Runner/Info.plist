@@ -31,6 +31,11 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<!-- iOS 14 and later prompt before an app may reach anything on the local
+	     network, and refuse silently when the app has not declared why. The
+	     manager app's whole job is talking to the POS on the venue's own LAN. -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Vynic Manager connects to the restaurant's POS terminal on your local network.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

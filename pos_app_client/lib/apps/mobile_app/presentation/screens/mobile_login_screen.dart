@@ -10,6 +10,8 @@ import 'package:vynic/apps/mobile_app/manager_app_shell.dart';
 import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/auth/mobile_auth_service.dart';
+import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
+import 'package:vynic/core/services/sync/api_config.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/manager_toast.dart';
 
 class MobileLoginScreen extends StatefulWidget {
@@ -92,9 +94,12 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
         } else {
           if (mounted) {
             setState(() => _isLoading = false);
+            // Naming the address turns „it will not connect" into something
+            // the person holding the phone can act on: nearly every case is a
+            // stale IP, or the emulator default on a real handset.
             ManagerToast.show(
               context,
-              'სერვერთან კავშირი ვერ დამყარდა',
+              'ვერ დაუკავშირდა: ${ApiConfig.baseUrl}',
               isError: true,
             );
           }
@@ -150,6 +155,80 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     }
   }
 
+  Future<void> _editBackendUrl() async {
+    if (_isLoading) return;
+
+    final controller = TextEditingController(text: ApiConfig.baseUrl);
+    String? error;
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: const Text('სერვერის მისამართი'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'შეიყვანეთ Windows POS სერვერის IP მისამართი '
+                '(მაგ. http://192.168.1.50:3000).',
+                style: TextStyle(fontSize: 12),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                keyboardType: TextInputType.url,
+                decoration: InputDecoration(
+                  hintText: 'http://192.168.1.50:3000',
+                  errorText: error,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                await ManagerAppPreferences.setBackendUrlOverride(null);
+                ApiConfig.resetResolvedUrlLog();
+                if (ctx.mounted) Navigator.pop(ctx, true);
+              },
+              child: const Text('ნაგულისხმევი'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('გაუქმება'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final normalized = ApiConfig.normalizeEditableBackendUrl(
+                  controller.text,
+                );
+                if (normalized == null) {
+                  setLocal(() => error = 'არასწორი მისამართი');
+                  return;
+                }
+                await ManagerAppPreferences.setBackendUrlOverride(normalized);
+                ApiConfig.resetResolvedUrlLog();
+                if (ctx.mounted) Navigator.pop(ctx, true);
+              },
+              child: const Text('შენახვა'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    controller.dispose();
+
+    if (saved == true && mounted) {
+      setState(() {});
+      ManagerToast.show(context, 'სერვერის მისამართი შენახულია');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MobileGlassScreen(
@@ -183,6 +262,8 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                   children: [
                     _buildBrandHeader(),
                     SizedBox(height: 28),
+                    _buildConnectionSwitcher(),
+                    SizedBox(height: 14),
                     MobileGlassCard(
                       padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
                       radius: 28,
@@ -327,6 +408,75 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildConnectionSwitcher() {
+    final theme = managerThemeOf(context);
+    return ValueListenableBuilder<String?>(
+      valueListenable: ManagerAppPreferences.backendUrlOverride,
+      builder: (context, _, _) {
+        final url = ApiConfig.baseUrl;
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: _isLoading ? null : _editBackendUrl,
+            borderRadius: BorderRadius.circular(16),
+            child: Ink(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: theme.heroCardBackground,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: theme.cardBorder),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.link_rounded,
+                    size: 18,
+                    color: theme.primary.withValues(alpha: 0.9),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'სერვერი',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: MobileGlassTheme.muted(0.58),
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          url,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: theme.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Icon(
+                    Icons.edit_rounded,
+                    size: 18,
+                    color: MobileGlassTheme.muted(_isLoading ? 0.25 : 0.55),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

@@ -9,6 +9,8 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { PosSyncGuard } from '../../auth/pos-sync.guard';
+import { PosAuth } from '../../auth/pos-auth-context';
+import type { PosAuthContext } from '../../auth/pos-auth-context';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { RolesGuard } from '../../auth/roles.guard';
 import { Roles } from '../../auth/roles.decorator';
@@ -91,8 +93,11 @@ export class SyncController implements OnModuleInit {
 
   @Post('manager-data')
   @UseGuards(PosSyncGuard)
-  async syncManagerData(@Body() data: SyncPayload) {
-    return this.ingestSnapshot.execute(data);
+  async syncManagerData(
+    @Body() data: SyncPayload,
+    @PosAuth() authContext: PosAuthContext,
+  ) {
+    return this.ingestSnapshot.execute(data, authContext);
   }
 
   /**

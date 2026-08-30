@@ -8,6 +8,7 @@ import { StaffSyncService } from '../snapshot/staff-sync.service';
 import { SyncBroadcastService } from '../snapshot/sync-broadcast.service';
 import { TableSyncService } from '../snapshot/table-sync.service';
 import { SyncPayload } from '../sync-payload';
+import { PosAuthContext } from '../../../auth/pos-auth-context';
 
 export interface SnapshotIngestResult {
   success: boolean;
@@ -45,7 +46,14 @@ export class IngestPosSnapshotService {
     private readonly broadcasts: SyncBroadcastService,
   ) {}
 
-  async execute(data: SyncPayload): Promise<SnapshotIngestResult> {
+  async execute(
+    data: SyncPayload,
+    authContext?: PosAuthContext,
+  ): Promise<SnapshotIngestResult> {
+    // Authentication is established at the transport boundary. The context is
+    // intentionally available here for future ownership/audit work, while the
+    // snapshot services below remain independent of HTTP and credentials.
+    void authContext;
     // `quickOrders` is part of the wire format but has never been read here;
     // see the Step 2A report. It is deliberately left unconsumed.
     const { tables, orders, expenses, menu, staff } = data;

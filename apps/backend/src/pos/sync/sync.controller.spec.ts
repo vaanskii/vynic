@@ -126,21 +126,27 @@ describe('SyncController — delegation', () => {
   it('hands the request body to the ingestion use case untouched', async () => {
     const { controller, execute } = makeController();
     const body = { businessDate: '2026-06-27', orders: [] };
+    const authContext = {
+      authenticationMode: 'legacy_shared_key' as const,
+      deviceId: null,
+    };
 
-    await controller.syncManagerData(body);
+    await controller.syncManagerData(body, authContext);
 
     expect(execute).toHaveBeenCalledTimes(1);
-    expect(execute).toHaveBeenCalledWith(body);
+    expect(execute).toHaveBeenCalledWith(body, authContext);
     expect((execute.mock.calls as unknown[][])[0][0]).toBe(body);
   });
 
   it('returns the use case result unchanged', async () => {
     const { controller } = makeController();
 
-    await expect(controller.syncManagerData({})).resolves.toEqual({
-      success: true,
-      syncedAt: 'stamped',
-    });
+    await expect(
+      controller.syncManagerData(
+        {},
+        { authenticationMode: 'device', deviceId: 'device-1' },
+      ),
+    ).resolves.toEqual({ success: true, syncedAt: 'stamped' });
   });
 
   it('hands audit reports to the audit use case and returns its result', async () => {

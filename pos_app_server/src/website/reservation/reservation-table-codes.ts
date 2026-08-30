@@ -1,25 +1,26 @@
-/** Mirrors pos_app_client reservation_table_availability.dart encoding. */
+/**
+ * Table code helpers plus the reservation date/blocking utilities built on
+ * them.
+ *
+ * The encoding itself is no longer written here. It is generated from
+ * `packages/contracts/schema/table-identity.contract.json`, the same source
+ * pos_app_client renders its Dart copy from, and re-exported below so every
+ * existing import of this module keeps working unchanged.
+ *
+ * The date and reservation-status helpers further down are still
+ * hand-maintained on both sides. They are deliberately not part of the
+ * contract yet — see the Step 1B report.
+ */
 
-export function encodeTableCode(floor: string, tableNumber: string): number {
-  const parsed = Number.parseInt(tableNumber.trim(), 10);
-  if (!Number.isFinite(parsed)) {
-    throw new Error(`Invalid table number: ${tableNumber}`);
-  }
-  if (floor === 'second') {
-    return parsed + 10;
-  }
-  return parsed;
-}
-
-export function decodeTableCode(code: number): {
-  floor: string;
-  tableNumber: string;
-} {
-  if (code > 10) {
-    return { floor: 'second', tableNumber: String(code - 10) };
-  }
-  return { floor: 'first', tableNumber: String(code) };
-}
+export {
+  canEncodeTableCode,
+  decodeTableCode,
+  encodeTableCode,
+  encodeTableRef,
+  tryDecodeTableRef,
+  TABLE_IDENTITY_CONTRACT_VERSION,
+  TABLE_REF_SEPARATOR,
+} from '../../shared/contracts/table-identity';
 
 export function dateKeyFromString(date: string): string {
   const trimmed = date.trim();

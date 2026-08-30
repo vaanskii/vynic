@@ -1,3 +1,5 @@
+import 'package:vynic/core/contracts/table_identity.dart' as contract;
+
 /// Stable reference to a table: floor key + table number, e.g. `first/3`.
 ///
 /// This is the canonical way reservations refer to tables. It can represent
@@ -12,19 +14,21 @@ class TableRef {
 
   /// `floor/tableNumber`. Floor keys ('first', 'second', 'floor-3', …) never
   /// contain '/', so the first slash is an unambiguous separator.
-  String encode() => '$floor/$tableNumber';
+  ///
+  /// The wire form is defined by the shared contract in `packages/contracts`,
+  /// which pos_app_server renders from the same schema.
+  String encode() =>
+      contract.encodeTableRef(floor: floor, tableNumber: tableNumber);
 
   static TableRef? tryDecode(String raw) {
-    final separator = raw.indexOf('/');
-    if (separator <= 0 || separator >= raw.length - 1) {
+    final decoded = contract.tryDecodeTableRef(raw);
+    if (decoded == null) {
       return null;
     }
-    final floor = raw.substring(0, separator).trim();
-    final tableNumber = raw.substring(separator + 1).trim();
-    if (floor.isEmpty || tableNumber.isEmpty) {
-      return null;
-    }
-    return TableRef(floor: floor, tableNumber: tableNumber);
+    return TableRef(
+      floor: decoded.floor,
+      tableNumber: decoded.tableNumber,
+    );
   }
 
   @override

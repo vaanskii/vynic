@@ -1,3 +1,4 @@
+import 'package:vynic/core/contracts/table_identity.dart' as contract;
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/table_ref.dart';
@@ -61,57 +62,26 @@ class ReservationTableAvailability {
 
   /// Whether [encodeTableCode] can represent this table. Pickers must hide
   /// tables that fail this check instead of offering them for reservation.
+  ///
+  /// Delegates to the shared contract in `packages/contracts`, which
+  /// pos_app_server renders from the same schema.
   static bool canEncodeTableCode({
     required String floor,
     required String tableNumber,
-  }) {
-    final parsed = int.tryParse(tableNumber.trim());
-    if (parsed == null || parsed < 1) {
-      return false;
-    }
-    if (floor == 'second') {
-      return true;
-    }
-    return floor == 'first' && parsed <= 10;
-  }
+  }) => contract.canEncodeTableCode(floor: floor, tableNumber: tableNumber);
 
   /// Encodes floor + table number into reservation `tableNumbers` format.
   ///
   /// The legacy int encoding can only represent two floors ('first' ≤ 10,
-  /// 'second' = number + 10). Anything else must throw rather than encode a
+  /// 'second' = number + 10). Anything else throws rather than encoding a
   /// code that silently decodes to a different table.
   static int encodeTableCode({
     required String floor,
     required String tableNumber,
-  }) {
-    final parsed = int.tryParse(tableNumber.trim());
-    if (parsed == null || parsed < 1) {
-      throw ArgumentError('Invalid table number: $tableNumber');
-    }
-    if (floor == 'second') {
-      return parsed + 10;
-    }
-    if (floor != 'first') {
-      throw ArgumentError(
-        'Floor "$floor" cannot be encoded as a reservation table code; '
-        'only first/second are supported',
-      );
-    }
-    if (parsed > 10) {
-      throw ArgumentError(
-        'Table $parsed on the first floor cannot be encoded as a '
-        'reservation table code (would decode as a second-floor table)',
-      );
-    }
-    return parsed;
-  }
+  }) => contract.encodeTableCode(floor: floor, tableNumber: tableNumber);
 
-  static ({String floor, String tableNumber}) decodeTableCode(int code) {
-    if (code > 10) {
-      return (floor: 'second', tableNumber: '${code - 10}');
-    }
-    return (floor: 'first', tableNumber: '$code');
-  }
+  static ({String floor, String tableNumber}) decodeTableCode(int code) =>
+      contract.decodeTableCode(code);
 
   /// Bare table number for display. POS reservations encode 2nd-floor
   /// tables as 10+N; API payloads carry the plain number plus a floor, so

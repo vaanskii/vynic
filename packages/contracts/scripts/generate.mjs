@@ -27,8 +27,34 @@ const PKG = join(HERE, '..');
 const REPO = join(PKG, '..', '..');
 
 const SCHEMA = join(PKG, 'schema', 'table-identity.contract.json');
+
+// The canonical rendered artefacts.
 const DART_OUT = join(PKG, 'generated', 'dart', 'table_identity.dart');
 const TS_OUT = join(PKG, 'generated', 'typescript', 'table-identity.ts');
+
+// Byte-identical copies inside each app, because neither toolchain can reach
+// outside its own package without a change we do not want to make: Dart would
+// need a path dependency in pubspec.yaml, and an import above the server's
+// sources would move tsc's inferred rootDir to the repo root, relocating
+// dist/src/main.js and breaking `npm run start:prod`. All four files are
+// rendered from the one schema and all four are validated by --check, so they
+// cannot drift; the source of truth is still the schema alone.
+const DART_APP_OUT = join(
+  REPO,
+  'pos_app_client',
+  'lib',
+  'core',
+  'contracts',
+  'table_identity.dart',
+);
+const TS_APP_OUT = join(
+  REPO,
+  'pos_app_server',
+  'src',
+  'shared',
+  'contracts',
+  'table-identity.ts',
+);
 
 const contract = JSON.parse(readFileSync(SCHEMA, 'utf8'));
 const { contractVersion, tableRef, legacyTableCode } = contract;
@@ -338,9 +364,14 @@ export function tryDecodeTableRef(
 
 // ── Emit ─────────────────────────────────────────────────────────────────────
 
+const dart = renderDart();
+const ts = renderTs();
+
 const outputs = [
-  { path: DART_OUT, body: renderDart() },
-  { path: TS_OUT, body: renderTs() },
+  { path: DART_OUT, body: dart },
+  { path: DART_APP_OUT, body: dart },
+  { path: TS_OUT, body: ts },
+  { path: TS_APP_OUT, body: ts },
 ];
 
 const check = process.argv.includes('--check');

@@ -2232,11 +2232,11 @@ class _TopItemsSection extends StatelessWidget {
   const _TopItemsSection({required this.topItems});
 
   static const _gradients = <List<Color>>[
-    [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+    [Color(0xFF2563EB), Color(0xFF60A5FA)],
     [Color(0xFF3B82F6), Color(0xFF06B6D4)],
     [Color(0xFFF59E0B), Color(0xFFEF4444)],
     [Color(0xFF10B981), Color(0xFF059669)],
-    [Color(0xFFEC4899), Color(0xFF8B5CF6)],
+    [Color(0xFF0EA5E9), Color(0xFF38BDF8)],
   ];
 
   @override

@@ -240,7 +240,7 @@ class PaymentSplitCard extends StatelessWidget {
           const _CardTitle(
             'გადახდის მეთოდი',
             Icons.donut_large_rounded,
-            dashboardPurple,
+            dashboardBlue,
           ),
           SizedBox(height: 16),
           Row(
@@ -632,7 +632,7 @@ class QuickActionsRow extends StatelessWidget {
             title: 'დათვლილი მენიუ',
             subtitle: 'ისტორია',
             icon: Icons.inventory_2_rounded,
-            color: dashboardPurple,
+            color: dashboardBlue,
             onTap: onOpenCountedMenus,
           ),
         ),
@@ -642,7 +642,7 @@ class QuickActionsRow extends StatelessWidget {
             title: 'ახალი დათვლა',
             subtitle: 'მენიუს აღრიცხვა',
             icon: Icons.add_task_rounded,
-            color: const Color(0xFFEC4899),
+            color: const Color(0xFF0EA5E9),
             onTap: onOpenCalculator,
           ),
         ),

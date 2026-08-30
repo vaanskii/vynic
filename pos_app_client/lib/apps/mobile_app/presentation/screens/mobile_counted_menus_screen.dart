@@ -446,7 +446,7 @@ class _MobileCountedMenusScreenState extends State<MobileCountedMenusScreen> {
           Positioned(
             bottom: 120,
             left: -80,
-            child: _GlowOrb(color: Color(0xFF6366F1), size: 260),
+            child: _GlowOrb(color: Color(0xFF2563EB), size: 260),
           ),
           SafeArea(
             child: Column(
@@ -741,7 +741,7 @@ class _DraftCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      const Color(0xFF6366F1).withValues(alpha: 0.35),
+                      const Color(0xFF2563EB).withValues(alpha: 0.35),
                       const Color(0xFFF59E0B).withValues(alpha: 0.25),
                     ],
                   ),
@@ -912,7 +912,7 @@ class _DraftCard extends StatelessWidget {
                 icon: Icon(Icons.picture_as_pdf_outlined, size: 18),
                 label: Text('PDF'),
                 style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF6366F1),
+                  foregroundColor: const Color(0xFF2563EB),
                 ),
               ),
               TextButton.icon(

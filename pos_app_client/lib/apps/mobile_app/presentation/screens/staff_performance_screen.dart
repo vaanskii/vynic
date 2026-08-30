@@ -527,7 +527,7 @@ class _StaffPerformanceScreenState extends State<StaffPerformanceScreen> {
           Positioned(
             top: 320,
             left: -100,
-            child: _GlowOrb(color: Color(0xFFEC4899), size: 240),
+            child: _GlowOrb(color: Color(0xFF0EA5E9), size: 240),
           ),
           SafeArea(
             bottom: false,

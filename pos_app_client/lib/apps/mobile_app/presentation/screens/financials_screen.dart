@@ -207,12 +207,12 @@ class _FinancialsScreenState extends State<FinancialsScreen>
           Positioned(
             top: -100,
             right: -50,
-            child: _GlowOrb(color: Color(0xFFEC4899), size: 300),
+            child: _GlowOrb(color: Color(0xFF0EA5E9), size: 300),
           ),
           Positioned(
             top: 300,
             left: -100,
-            child: _GlowOrb(color: Color(0xFF6366F1), size: 250),
+            child: _GlowOrb(color: Color(0xFF2563EB), size: 250),
           ),
           SafeArea(
             bottom: false,
@@ -572,7 +572,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                                     1000,
                                   ),
                                   child: Container(
-                                    color: const Color(0xFF3B82F6),
+                                    color: const Color(0xFF2563EB),
                                   ),
                                 ),
                               if (cardFrac > 0)
@@ -582,7 +582,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                                     1000,
                                   ),
                                   child: Container(
-                                    color: const Color(0xFF8B5CF6),
+                                    color: const Color(0xFF38BDF8),
                                   ),
                                 ),
                             ],
@@ -590,9 +590,9 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                   ),
                 ),
                 SizedBox(height: 16),
-                _payRow('ნაღდი', cash, total, const Color(0xFF3B82F6)),
+                _payRow('ნაღდი', cash, total, const Color(0xFF2563EB)),
                 SizedBox(height: 12),
-                _payRow('ბარათი', card, total, const Color(0xFF8B5CF6)),
+                _payRow('ბარათი', card, total, const Color(0xFF38BDF8)),
               ],
             ),
           ),

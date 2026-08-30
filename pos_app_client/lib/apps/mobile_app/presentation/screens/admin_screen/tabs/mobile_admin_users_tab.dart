@@ -429,7 +429,7 @@ class _UserCard extends StatelessWidget {
     final isManager = normalized == StaffRole.manager;
     final isSupervisor = normalized == StaffRole.supervisor;
     final accent = isManager
-        ? const Color(0xFF8B5CF6)
+        ? const Color(0xFF1D4ED8)
         : isSupervisor
         ? const Color(0xFF0EA5E9)
         : AdminTheme.accent;

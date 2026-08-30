@@ -224,7 +224,7 @@ class _LiveStatusScreenState extends State<LiveStatusScreen> {
           Positioned(
             top: -60,
             right: -80,
-            child: _GlowOrb(color: Color(0xFF6366F1), size: 300),
+            child: _GlowOrb(color: Color(0xFF2563EB), size: 300),
           ),
           Positioned(
             bottom: 120,

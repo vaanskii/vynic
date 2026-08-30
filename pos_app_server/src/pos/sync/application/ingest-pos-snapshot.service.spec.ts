@@ -11,8 +11,11 @@ jest.mock('../../../auth/roles.guard', () => ({ RolesGuard: class {} }));
 
 import { IngestPosSnapshotService } from './ingest-pos-snapshot.service';
 import { PosConnectionRegistry } from '../pos-connection.registry';
+import { BusinessDaySyncService } from '../snapshot/business-day-sync.service';
 import { MenuSyncService } from '../snapshot/menu-sync.service';
 import { OrderSyncService } from '../snapshot/order-sync.service';
+import { StaffSyncService } from '../snapshot/staff-sync.service';
+import { SyncBroadcastService } from '../snapshot/sync-broadcast.service';
 import { TableSyncService } from '../snapshot/table-sync.service';
 import { PosCallbackClient } from '../../pos-callback.client';
 
@@ -106,14 +109,14 @@ function makeIngestService(prisma: any) {
   } as any;
   const posConnection = new PosConnectionRegistry(prisma, posCallback);
   return new IngestPosSnapshotService(
-    prisma,
-    gateway,
     posOutbox,
-    pinVault,
     posConnection,
     new MenuSyncService(prisma),
     new TableSyncService(prisma),
     new OrderSyncService(prisma),
+    new StaffSyncService(prisma, pinVault),
+    new BusinessDaySyncService(prisma),
+    new SyncBroadcastService(prisma, gateway),
   );
 }
 

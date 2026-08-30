@@ -10,8 +10,11 @@ jest.mock('../../../auth/roles.guard', () => ({ RolesGuard: class {} }));
 
 import { IngestPosSnapshotService } from './ingest-pos-snapshot.service';
 import { PosConnectionRegistry } from '../pos-connection.registry';
+import { BusinessDaySyncService } from '../snapshot/business-day-sync.service';
 import { MenuSyncService } from '../snapshot/menu-sync.service';
 import { OrderSyncService } from '../snapshot/order-sync.service';
+import { StaffSyncService } from '../snapshot/staff-sync.service';
+import { SyncBroadcastService } from '../snapshot/sync-broadcast.service';
 import { TableSyncService } from '../snapshot/table-sync.service';
 import { PosCallbackClient } from '../../pos-callback.client';
 import {
@@ -155,18 +158,28 @@ function makeHarness(overrides: Record<string, Override> = {}): Harness {
   const vaultWrite = jest.fn(() => Promise.resolve());
 
   const posConnection = new PosConnectionRegistry(
-    prisma as unknown as CtorArgs[0],
+    prisma as unknown as ConstructorParameters<typeof PosConnectionRegistry>[0],
     new PosCallbackClient(),
   );
+  type Db = ConstructorParameters<typeof MenuSyncService>[0];
+  const db = prisma as unknown as Db;
+  const gateway = { broadcastUpdate } as unknown as ConstructorParameters<
+    typeof SyncBroadcastService
+  >[1];
+  const vault = {
+    read: vaultRead,
+    write: vaultWrite,
+  } as unknown as ConstructorParameters<typeof StaffSyncService>[1];
+
   const service = new IngestPosSnapshotService(
-    prisma as unknown as CtorArgs[0],
-    { broadcastUpdate } as unknown as CtorArgs[1],
-    { kickPending } as unknown as CtorArgs[2],
-    { read: vaultRead, write: vaultWrite } as unknown as CtorArgs[3],
+    { kickPending } as unknown as CtorArgs[0],
     posConnection,
-    new MenuSyncService(prisma as unknown as CtorArgs[0]),
-    new TableSyncService(prisma as unknown as CtorArgs[0]),
-    new OrderSyncService(prisma as unknown as CtorArgs[0]),
+    new MenuSyncService(db),
+    new TableSyncService(db),
+    new OrderSyncService(db),
+    new StaffSyncService(db, vault),
+    new BusinessDaySyncService(db),
+    new SyncBroadcastService(db, gateway),
   );
 
   return {

@@ -122,7 +122,7 @@ describe('SyncController — delegation', () => {
 
     expect(execute).toHaveBeenCalledTimes(1);
     expect(execute).toHaveBeenCalledWith(body);
-    expect(execute.mock.calls[0][0]).toBe(body);
+    expect((execute.mock.calls as unknown[][])[0][0]).toBe(body);
   });
 
   it('returns the use case result unchanged', async () => {

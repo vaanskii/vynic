@@ -51,136 +51,732 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
       (sum, order) => sum + order.totalAmount,
     );
     final openTableOrders = _getTodayOpenTableOrders();
+    final summary = _computeDaySummary();
+    final readiness = _computeReadiness(openTableOrders);
 
-    return SizedBox.expand(
-      child: Align(
-        alignment: Alignment.topLeft,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(22, 18, 22, 12),
-          child: SizedBox(
-            width: double.infinity,
+    return LayoutBuilder(
+      builder: (context, viewport) {
+        final isWide = viewport.maxWidth >= 900;
+
+        final statsCard = Card(
+          margin: EdgeInsets.zero,
+          color: _cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: _borderColor),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'დღის დახურვა',
+                  'დღის სტატისტიკა',
                   style: TextStyle(
                     color: _textPrimary,
-                    fontSize: 22,
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 4),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isWide = constraints.maxWidth >= 900;
-                    final businessDayCard = _buildBusinessDateManagementCard();
-                    final statsCard = Card(
-                      margin: EdgeInsets.zero,
-                      color: _cardColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: const BorderSide(color: _borderColor),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatCard(
+                        icon: Icons.receipt_long,
+                        label: 'დახურული შეკვეთები',
+                        value: '${closedOrders.length}',
+                        color: _primaryColor,
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'დღის სტატისტიკა',
-                              style: TextStyle(
-                                color: _textPrimary,
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildStatCard(
-                                    icon: Icons.receipt_long,
-                                    label: 'დახურული შეკვეთები',
-                                    value: '${closedOrders.length}',
-                                    color: _primaryColor,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildStatCard(
-                                    icon: Icons.attach_money,
-                                    label: 'მთლიანი შემოსავალი',
-                                    value:
-                                        '₾${totalRevenue.toStringAsFixed(2)}',
-                                    color: AdminTones.successText,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildStatCard(
+                        icon: Icons.attach_money,
+                        label: 'მთლიანი შემოსავალი',
+                        value: '₾${totalRevenue.toStringAsFixed(2)}',
+                        color: AdminTones.successText,
                       ),
-                    );
-
-                    if (isWide) {
-                      return IntrinsicHeight(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Expanded(child: businessDayCard),
-                            const SizedBox(width: 16),
-                            Expanded(child: statsCard),
-                          ],
-                        ),
-                      );
-                    }
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        businessDayCard,
-                        const SizedBox(height: 12),
-                        statsCard,
-                      ],
-                    );
-                  },
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                _buildActionsAndOpenTablesSection(openTableOrders),
               ],
             ),
           ),
+        );
+
+        final content = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'დღის დახურვა',
+              style: TextStyle(
+                color: _textPrimary,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            if (isWide)
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: _buildBusinessDateManagementCard()),
+                    const SizedBox(width: 16),
+                    Expanded(child: statsCard),
+                  ],
+                ),
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildBusinessDateManagementCard(),
+                  const SizedBox(height: 12),
+                  statsCard,
+                ],
+              ),
+            const SizedBox(height: 12),
+            if (isWide)
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(flex: 3, child: _buildDaySummaryCard(summary)),
+                    const SizedBox(width: 12),
+                    Expanded(flex: 2, child: _buildReadinessCard(readiness)),
+                  ],
+                ),
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildDaySummaryCard(summary),
+                  const SizedBox(height: 12),
+                  _buildReadinessCard(readiness),
+                ],
+              ),
+            const SizedBox(height: 12),
+            // The last row absorbs whatever height is left, so a wide POS
+            // screen ends on a full card instead of a band of empty page.
+            if (isWide)
+              Expanded(
+                child: _buildActionsAndOpenTablesSection(
+                  openTableOrders,
+                  isWide,
+                ),
+              )
+            else
+              _buildActionsAndOpenTablesSection(openTableOrders, isWide),
+          ],
+        );
+
+        const padding = EdgeInsets.fromLTRB(22, 18, 22, 12);
+
+        if (!isWide) {
+          return SingleChildScrollView(
+            padding: padding,
+            child: SizedBox(width: double.infinity, child: content),
+          );
+        }
+
+        // Fill the viewport when the content is shorter than it, scroll when
+        // it is taller. IntrinsicHeight is what gives the [Expanded] above a
+        // bounded height to divide.
+        return SingleChildScrollView(
+          padding: padding,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: (viewport.maxHeight - padding.vertical).clamp(
+                0.0,
+                double.infinity,
+              ),
+            ),
+            child: IntrinsicHeight(
+              child: SizedBox(width: double.infinity, child: content),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ── Day summary ────────────────────────────────────────────────────────────
+
+  /// The day's takings, split by payment method.
+  ///
+  /// Counts a sale the same way [DatabaseService.getDailySalesTotal] does —
+  /// fiscal, not cancelled, not restored back to an open order — so the split
+  /// adds up to the total shown beside it. Records the total leaves out are
+  /// not dropped silently: they come back as [_DaySummary.nonFiscalTotal] and
+  /// [_DaySummary.excludedCount] and get their own line on the card.
+  _DaySummary _computeDaySummary() {
+    final businessDate = DatabaseService.getCurrentDate();
+    final dateKey = businessDate.toIso8601String().split('T')[0];
+    final rawSales = DatabaseService.getSalesForDate(dateKey);
+
+    var cash = 0.0;
+    var cardTbc = 0.0;
+    var cardBog = 0.0;
+    var other = 0.0;
+    final cashOrders = <int>{};
+    final cardTbcOrders = <int>{};
+    final cardBogOrders = <int>{};
+    final otherOrders = <int>{};
+
+    var discountTotal = 0.0;
+    var advanceTotal = 0.0;
+    var serviceFeeOrders = 0;
+    var nonFiscalTotal = 0.0;
+    var nonFiscalCount = 0;
+    var excludedCount = 0;
+    var activeCount = 0;
+
+    for (final sale in rawSales) {
+      final isCancelled = sale['isCancelled'] == true;
+      final isRestored = sale['restoredToOrder'] == true;
+      if (isCancelled || isRestored) {
+        excludedCount++;
+        continue;
+      }
+
+      if (!_isFiscalSale(sale)) {
+        nonFiscalCount++;
+        nonFiscalTotal += (sale['totalAmount'] as num?)?.toDouble() ?? 0.0;
+        continue;
+      }
+
+      activeCount++;
+      discountTotal += (sale['discountAmount'] as num?)?.toDouble() ?? 0.0;
+      advanceTotal += (sale['advanceAmount'] as num?)?.toDouble() ?? 0.0;
+      if (sale['includeServiceFee'] == true) serviceFeeOrders++;
+
+      final orderId = sale['orderId'] as int?;
+      final breakdown = PaymentUtils.extractBreakdown(sale);
+      breakdown.forEach((methodKey, amount) {
+        switch (PaymentUtils.normalizeMethodKey(methodKey)) {
+          case PaymentUtils.methodCardTbc:
+          case PaymentUtils.methodCardLegacy:
+            cardTbc += amount;
+            if (orderId != null) cardTbcOrders.add(orderId);
+            break;
+          case PaymentUtils.methodCardBog:
+            cardBog += amount;
+            if (orderId != null) cardBogOrders.add(orderId);
+            break;
+          case PaymentUtils.methodCash:
+            cash += amount;
+            if (orderId != null) cashOrders.add(orderId);
+            break;
+          default:
+            other += amount;
+            if (orderId != null) otherOrders.add(orderId);
+            break;
+        }
+      });
+    }
+
+    return _DaySummary(
+      businessDate: businessDate,
+      fiscalTotal: DatabaseService.getDailySalesTotal(),
+      saleCount: activeCount,
+      cash: cash,
+      cardTbc: cardTbc,
+      cardBog: cardBog,
+      other: other,
+      cashCount: cashOrders.length,
+      cardTbcCount: cardTbcOrders.length,
+      cardBogCount: cardBogOrders.length,
+      otherCount: otherOrders.length,
+      discountTotal: discountTotal,
+      advanceTotal: advanceTotal,
+      serviceFeeOrders: serviceFeeOrders,
+      nonFiscalTotal: nonFiscalTotal,
+      nonFiscalCount: nonFiscalCount,
+      excludedCount: excludedCount,
+    );
+  }
+
+  Widget _buildDaySummaryCard(_DaySummary s) {
+    return Card(
+      margin: EdgeInsets.zero,
+      color: _cardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: _borderColor),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.summarize_outlined,
+                  size: 20,
+                  color: _primaryColor,
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'დღის შეჯამება',
+                    style: TextStyle(
+                      color: _textPrimary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Text(
+                  DatabaseService.getGeorgianFormattedDate(s.businessDate),
+                  style: const TextStyle(color: _textMuted, fontSize: 12),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '₾${s.fiscalTotal.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    color: _textPrimary,
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 5),
+                    child: Text(
+                      '${s.saleCount} გაყიდვა · საშუალო ჩეკი '
+                      '₾${s.averageCheck.toStringAsFixed(2)}',
+                      style: const TextStyle(color: _textMuted, fontSize: 12.5),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildPaymentShareBar(s),
+            const SizedBox(height: 14),
+            _buildPaymentRow(
+              'ნაღდი',
+              s.cash,
+              s.cashCount,
+              s.paymentTotal,
+              AdminTones.successText,
+            ),
+            _buildPaymentRow(
+              'ბარათი TBC',
+              s.cardTbc,
+              s.cardTbcCount,
+              s.paymentTotal,
+              _primaryColor,
+            ),
+            _buildPaymentRow(
+              'ბარათი BOG',
+              s.cardBog,
+              s.cardBogCount,
+              s.paymentTotal,
+              AdminTones.warningText,
+            ),
+            if (s.other > 0)
+              _buildPaymentRow(
+                'სხვა',
+                s.other,
+                s.otherCount,
+                s.paymentTotal,
+                _secondaryColor,
+              ),
+            const SizedBox(height: 4),
+            const Divider(height: 18, color: _borderColor),
+            _buildSummaryLine(
+              'ფასდაკლება',
+              '₾${s.discountTotal.toStringAsFixed(2)}',
+            ),
+            _buildSummaryLine(
+              'ავანსი',
+              '₾${s.advanceTotal.toStringAsFixed(2)}',
+            ),
+            _buildSummaryLine(
+              'მომსახურების საფასურით',
+              '${s.serviceFeeOrders} შეკვეთა',
+            ),
+            if (s.nonFiscalCount > 0)
+              _buildSummaryLine(
+                'არაფისკალური (ჯამში არ შედის)',
+                '${s.nonFiscalCount} · ₾${s.nonFiscalTotal.toStringAsFixed(2)}',
+                valueColor: AdminTones.warningText,
+              ),
+            if (s.excludedCount > 0)
+              _buildSummaryLine(
+                'გაუქმებული / დაბრუნებული',
+                '${s.excludedCount} ჩანაწერი',
+                valueColor: AdminTones.dangerText,
+              ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildActionsAndOpenTablesSection(List<Order> openOrders) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWide = constraints.maxWidth >= 900;
-        final actionsCard = _buildActionsCard();
-        final openTablesCard = _buildOpenTablesAccessCard(openOrders);
+  Widget _buildPaymentShareBar(_DaySummary s) {
+    final total = s.paymentTotal;
+    final segments = <(double, Color)>[
+      (s.cash, AdminTones.successText),
+      (s.cardTbc, _primaryColor),
+      (s.cardBog, AdminTones.warningText),
+      (s.other, _secondaryColor),
+    ].where((segment) => segment.$1 > 0).toList();
 
-        if (isWide) {
-          return IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: SizedBox(
+        height: 10,
+        child: total <= 0 || segments.isEmpty
+            ? Container(color: AdminTones.neutralFill)
+            : Row(
+                children: [
+                  for (final segment in segments)
+                    Expanded(
+                      flex: (segment.$1 / total * 1000).round().clamp(1, 1000),
+                      child: Container(color: segment.$2),
+                    ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentRow(
+    String label,
+    double amount,
+    int count,
+    double total,
+    Color color,
+  ) {
+    final share = total > 0 ? amount / total * 100 : 0.0;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: _textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Text(
+            '$count',
+            style: const TextStyle(color: _textMuted, fontSize: 12),
+          ),
+          const SizedBox(width: 14),
+          SizedBox(
+            width: 46,
+            child: Text(
+              '${share.toStringAsFixed(0)}%',
+              textAlign: TextAlign.right,
+              style: const TextStyle(color: _textMuted, fontSize: 12),
+            ),
+          ),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 92,
+            child: Text(
+              '₾${amount.toStringAsFixed(2)}',
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                color: _textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryLine(String label, String value, {Color? valueColor}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(color: _textMuted, fontSize: 12.5),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: valueColor ?? _textPrimary,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Pre-close readiness ────────────────────────────────────────────────────
+
+  /// What would block [_confirmCloseDay], checked live and without changing
+  /// anything.
+  ///
+  /// Mirrors the close flow's own checks (steps 1 and 2) so the answer here is
+  /// the answer you get when you press the button. One deliberate difference:
+  /// the close flow calls `releaseStaleReservedTables()` before counting
+  /// reserved tables and this does not — a read on a rebuild must not mutate
+  /// the floor — so the reserved-table count is an upper bound and its row
+  /// says so.
+  List<_ReadinessItem> _computeReadiness(List<Order> openTableOrders) {
+    final businessDate = DatabaseService.getCurrentDate();
+    final dateKey = businessDate.toIso8601String().split('T')[0];
+
+    final openOrders = DatabaseService.getAllOrders().where((order) {
+      final status = order.status.toLowerCase();
+      if (status == 'closed' || status == 'cancelled') return false;
+      return order.createdAt.toIso8601String().split('T')[0] == dateKey;
+    }).toList();
+    final openOrderIds = openOrders.map((o) => o.orderId).toSet();
+    final openTakeAwayOrders = openOrders.where(_isTakeAwayOrder).toList();
+
+    final openTakeAwayReservations =
+        DatabaseService.getTakeAwayReservationsForDate(businessDate).where((r) {
+          final status = r.status.toLowerCase();
+          return status != 'completed' && status != 'cancelled';
+        }).toList();
+
+    final reservedTables = DatabaseService.getAllTables().where((table) {
+      if (!table.isReserved) return false;
+      final orderId = table.activeOrderId;
+      if (orderId != null && openOrderIds.contains(orderId)) return false;
+      if (orderId == null && table.reservationId == null) return false;
+      return true;
+    }).toList();
+
+    return [
+      _ReadinessItem(
+        icon: Icons.table_restaurant,
+        title: 'ღია მაგიდები',
+        blockingDetail:
+            '${openTableOrders.length} შეკვეთა ჯერ კიდევ აქტიურია — '
+            'დახურეთ ან გააუქმეთ',
+        clearDetail: 'ყველა მაგიდა დახურულია',
+        count: openTableOrders.length,
+        onOpen: openTableOrders.isEmpty
+            ? null
+            : () => _showOpenTablesModal(openTableOrders),
+      ),
+      _ReadinessItem(
+        icon: Icons.shopping_bag_outlined,
+        title: 'გატანის შეკვეთები',
+        blockingDetail: '${openTakeAwayOrders.length} შეკვეთა დაუხურავია',
+        clearDetail: 'გატანის ღია შეკვეთა არ არის',
+        count: openTakeAwayOrders.length,
+      ),
+      _ReadinessItem(
+        icon: Icons.assignment_outlined,
+        title: 'გატანის რეზერვაციები',
+        blockingDetail:
+            '${openTakeAwayReservations.length} რეზერვაცია დასრულებული არ არის',
+        clearDetail: 'ყველა რეზერვაცია დასრულებულია',
+        count: openTakeAwayReservations.length,
+      ),
+      _ReadinessItem(
+        icon: Icons.event_seat,
+        title: 'დარეზერვებული მაგიდები',
+        blockingDetail:
+            '${reservedTables.length} მაგიდა რეზერვაციაშია — '
+            'ვადაგასულები დახურვისას ავტომატურად თავისუფლდება',
+        clearDetail: 'დაკავებული რეზერვაცია არ არის',
+        count: reservedTables.length,
+      ),
+    ];
+  }
+
+  Widget _buildReadinessCard(List<_ReadinessItem> items) {
+    final blocking = items.where((item) => item.count > 0).length;
+    final ready = blocking == 0;
+
+    return Card(
+      margin: EdgeInsets.zero,
+      color: _cardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: _borderColor),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Expanded(child: actionsCard),
-                const SizedBox(width: 12),
-                Expanded(child: openTablesCard),
+                Icon(
+                  ready
+                      ? Icons.check_circle_outline
+                      : Icons.error_outline_rounded,
+                  size: 20,
+                  color: ready
+                      ? AdminTones.successText
+                      : AdminTones.warningText,
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'დახურვის მზადყოფნა',
+                    style: TextStyle(
+                      color: _textPrimary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => setState(() {}),
+                  icon: const Icon(Icons.refresh, size: 18),
+                  color: _textMuted,
+                  tooltip: 'განახლება',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints.tightFor(
+                    width: 30,
+                    height: 30,
+                  ),
+                ),
               ],
             ),
-          );
-        }
+            const SizedBox(height: 6),
+            Text(
+              ready
+                  ? 'ყველა შემოწმება გავლილია — დღის დახურვა შესაძლებელია.'
+                  : '$blocking შემოწმება ხელს უშლის დახურვას.',
+              style: TextStyle(
+                color: ready ? AdminTones.successText : AdminTones.warningText,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            for (final item in items) _buildReadinessRow(item),
+          ],
+        ),
+      ),
+    );
+  }
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [actionsCard, const SizedBox(height: 12), openTablesCard],
-        );
-      },
+  Widget _buildReadinessRow(_ReadinessItem item) {
+    final blocking = item.count > 0;
+    final tone = blocking ? AdminTones.warning : AdminTones.success;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+        decoration: BoxDecoration(
+          color: tone.fill,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: tone.border),
+        ),
+        child: Row(
+          children: [
+            Icon(item.icon, size: 17, color: tone.text),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    style: const TextStyle(
+                      color: _textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    blocking ? item.blockingDetail : item.clearDetail,
+                    style: const TextStyle(color: _textMuted, fontSize: 11.5),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              blocking ? Icons.remove_circle_outline : Icons.check_rounded,
+              size: 16,
+              color: tone.text,
+            ),
+            if (item.onOpen != null) ...[
+              const SizedBox(width: 4),
+              SizedBox(
+                height: 28,
+                child: TextButton(
+                  onPressed: item.onOpen,
+                  style: TextButton.styleFrom(
+                    foregroundColor: _primaryColor,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text(
+                    'ნახვა',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// [isWide] comes from the section's own LayoutBuilder rather than a nested
+  /// one. A LayoutBuilder here would sit inside the [IntrinsicHeight] that
+  /// stretches this row, and intrinsic dimensions cannot be measured through a
+  /// LayoutBuilder — the tab threw on every wide screen when it did.
+  Widget _buildActionsAndOpenTablesSection(
+    List<Order> openOrders,
+    bool isWide,
+  ) {
+    final actionsCard = _buildActionsCard();
+    final openTablesCard = _buildOpenTablesAccessCard(openOrders);
+
+    if (isWide) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: actionsCard),
+          const SizedBox(width: 12),
+          Expanded(child: openTablesCard),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [actionsCard, const SizedBox(height: 12), openTablesCard],
     );
   }
 
@@ -1782,4 +2378,85 @@ class _BlockReason {
   final IconData icon;
   final String title;
   final String detail;
+}
+
+/// One line of the day-summary card's payment split, plus the figures the
+/// total deliberately leaves out.
+class _DaySummary {
+  const _DaySummary({
+    required this.businessDate,
+    required this.fiscalTotal,
+    required this.saleCount,
+    required this.cash,
+    required this.cardTbc,
+    required this.cardBog,
+    required this.other,
+    required this.cashCount,
+    required this.cardTbcCount,
+    required this.cardBogCount,
+    required this.otherCount,
+    required this.discountTotal,
+    required this.advanceTotal,
+    required this.serviceFeeOrders,
+    required this.nonFiscalTotal,
+    required this.nonFiscalCount,
+    required this.excludedCount,
+  });
+
+  final DateTime businessDate;
+
+  /// The stored daily total — fiscal, not cancelled, not restored.
+  final double fiscalTotal;
+  final int saleCount;
+
+  final double cash;
+  final double cardTbc;
+  final double cardBog;
+  final double other;
+
+  final int cashCount;
+  final int cardTbcCount;
+  final int cardBogCount;
+  final int otherCount;
+
+  final double discountTotal;
+  final double advanceTotal;
+  final int serviceFeeOrders;
+
+  /// Non-fiscal takings. Real money, but outside [fiscalTotal] by design.
+  final double nonFiscalTotal;
+  final int nonFiscalCount;
+
+  /// Cancelled or restored-to-order records, excluded from every figure above.
+  final int excludedCount;
+
+  /// The split's own sum. Used for the share bar and the per-method
+  /// percentages, so a rounding gap against [fiscalTotal] cannot push a
+  /// percentage past 100.
+  double get paymentTotal => cash + cardTbc + cardBog + other;
+
+  double get averageCheck => saleCount == 0 ? 0 : fiscalTotal / saleCount;
+}
+
+/// One check on the pre-close readiness card.
+class _ReadinessItem {
+  const _ReadinessItem({
+    required this.icon,
+    required this.title,
+    required this.blockingDetail,
+    required this.clearDetail,
+    required this.count,
+    this.onOpen,
+  });
+
+  final IconData icon;
+  final String title;
+
+  /// Shown when [count] is above zero, i.e. this check would block the close.
+  final String blockingDetail;
+  final String clearDetail;
+  final int count;
+
+  /// Optional jump to wherever the blockage is fixed.
+  final VoidCallback? onOpen;
 }

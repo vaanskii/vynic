@@ -259,6 +259,32 @@ model Setting {
   @@schema("pos")
 }
 
+enum DeviceStatus {
+  ACTIVE
+  DISABLED
+  REVOKED
+
+  @@schema("pos")
+}
+
+/// One concrete Vynic POS installation authenticated for platform sync.
+/// The raw credential secret is issued once; only its Argon2id verifier is
+/// persisted. Tenancy is deliberately absent until the later Venue phase.
+model Device {
+  id             String       @id @default(uuid())
+  installationId String       @unique
+  displayName    String
+  platform       String
+  credentialHash String
+  status         DeviceStatus @default(ACTIVE)
+  lastSeenAt     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([status])
+  @@schema("pos")
+}
+
 model ManagerNotification {
   id        String   @id @default(uuid())
   wsType    String

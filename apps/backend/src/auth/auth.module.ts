@@ -7,6 +7,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { LoginThrottleService } from './login-throttle.service';
 import { StaffPinVault } from './staff-pin-vault.service';
 import { requireEnv } from '../shared/require-env';
+import { DeviceCredentialService } from './device-credential.service';
 
 @Module({
   imports: [
@@ -17,7 +18,13 @@ import { requireEnv } from '../shared/require-env';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LoginThrottleService, StaffPinVault],
-  exports: [JwtModule, AuthService, StaffPinVault],
+  providers: [
+    AuthService,
+    DeviceCredentialService,
+    JwtStrategy,
+    LoginThrottleService,
+    StaffPinVault,
+  ],
+  exports: [JwtModule, AuthService, DeviceCredentialService, StaffPinVault],
 })
 export class AuthModule {}

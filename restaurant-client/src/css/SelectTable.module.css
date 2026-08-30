@@ -1,0 +1,120 @@
+/* SVG Container */
+.svgContainer {
+  display: flex;
+  justify-content: center;
+}
+
+.svgContainer svg {
+  width: 100%;
+  max-width: 900px;
+  max-height: 55vh;
+  height: auto;
+}
+
+/* Default table styling - make them clickable */
+.svgContainer :global(#tablesLayer) * {
+  cursor: pointer !important;
+}
+
+/* Selected table styling */
+.svgContainer :global(.table-selected) {
+  fill: #c0ad7b !important;
+  stroke: #a89763 !important;
+  stroke-width: 3px !important;
+  opacity: 0.9 !important;
+}
+
+/* Apply to all children of selected tables */
+.svgContainer :global(.table-selected) * {
+  fill: #c0ad7b !important;
+  stroke: #4f472c !important;
+  stroke-width: 2px !important;
+}
+
+/* Taken table styling - RED */
+.svgContainer :global(.table-taken) {
+  fill: #dc2626 !important;
+  stroke: #991b1b !important;
+  stroke-width: 3px !important;
+  opacity: 0.9 !important;
+  cursor: not-allowed !important;
+}
+
+/* Apply to all children of taken tables */
+.svgContainer :global(.table-taken) * {
+  fill: #dc2626 !important;
+  stroke: #7f1d1d !important;
+  stroke-width: 2px !important;
+  cursor: not-allowed !important;
+}
+
+/* Override hover for taken tables */
+.svgContainer :global(.table-taken):hover,
+.svgContainer :global(.table-taken):hover * {
+  fill: #dc2626 !important;
+  stroke: #991b1b !important;
+  cursor: not-allowed !important;
+}
+
+/* Hover effect only for tablets/desktops (>=700px) */
+@media screen and (min-width: 700px) {
+  .svgContainer :global(#tablesLayer)>*:hover {
+    fill: #c0ad7b !important;
+    stroke: #4f472c !important;
+    stroke-width: 2px !important;
+    opacity: 0.8 !important;
+  }
+
+  .svgContainer :global(#tablesLayer)>*:hover * {
+    fill: #c0ad7b !important;
+    stroke: #4f472c !important;
+  }
+}
+
+/* Medium screens (700px–1600px → 80%) */
+@media screen and (max-width: 1600px) and (min-width: 1000px) {
+  .svgContainer svg {
+    width: 95%;
+    /* padding-left removed */
+  }
+}
+
+/* Large screens (>1600px → 80%) */
+@media screen and (min-width: 1600px) {
+  .svgContainer svg {
+    width: 100%;
+    max-width: 900px;
+    /* padding-left removed */
+  }
+}
+
+/* Animation classes for calendar modal */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out;
+}

@@ -383,6 +383,22 @@ describe('POST /sync/manager-data — realtimeOnly fast path', () => {
 });
 
 describe('POST /sync/manager-data — table snapshot policy', () => {
+  it('accepts the legacy table payload and identifies the row by floor and number', async () => {
+    const h = makeHarness();
+
+    await h.sync({
+      tables: [{ tableNumber: '3', floor: 'first', isReserved: true }],
+    });
+
+    const upsert = h.calls.find((c) => c.key === 'table.upsert');
+    expect(at(upsert?.arg, 'where', 'tableIdentifier')).toEqual({
+      tableNumber: '3',
+      floor: 'first',
+    });
+    expect(at(upsert?.arg, 'create', 'tableNumber')).toBe('3');
+    expect(at(upsert?.arg, 'create', 'floor')).toBe('first');
+  });
+
   it('ignores an all-free cold-boot snapshot while the server still holds reserved tables', async () => {
     const h = makeHarness({ 'table.count': () => 2 });
 

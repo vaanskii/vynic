@@ -75,6 +75,28 @@ void main() {
       );
     });
 
+    test('keeps table identity when its label and position change', () {
+      final original = RestaurantTableLayouts.floorPlanPreview;
+      final table = original.tables.first;
+      final object = original.objectForTable(table.id)!;
+      final controller = _controllerFor(original, snap: false);
+
+      controller.selectOnly(object.id);
+      controller.updateSelectedLabel('Window table');
+      controller.nudgeSelection(37, 19);
+
+      final rebuilt = controller.toLayout();
+      final changedTable = rebuilt.tableForId(table.id);
+      final changedObject = rebuilt.objectForTable(table.id);
+
+      expect(changedTable, isNotNull);
+      expect(changedTable!.id, table.id);
+      expect(changedTable.label, 'Window table');
+      expect(changedObject, isNotNull);
+      expect(changedObject!.x, object.x + 37);
+      expect(changedObject.y, object.y + 19);
+    });
+
     test('survives a JSON encode/decode cycle, as the settings box does', () {
       final rebuilt = EditorDocument.fromLayout(
         RestaurantTableLayouts.floorPlanPreview,

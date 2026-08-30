@@ -7,11 +7,28 @@
 // CI fails on a stale or hand-edited output.
 
 /**
- * Table identity: the canonical `encodeTableRef` form and the transitional
- * integer `encodeTableCode` encoding shared with apps/operations.
+ * Table identity: immutable UUIDs plus the compatibility `encodeTableRef`
+ * and transitional integer `encodeTableCode` forms shared with apps/operations.
  */
 
-export const TABLE_IDENTITY_CONTRACT_VERSION = 1;
+export const TABLE_IDENTITY_CONTRACT_VERSION = 2;
+
+/** Immutable identity of one physical table. */
+export type CanonicalTableId = string;
+
+/** Transitional reservation-era integer identity. */
+export type LegacyTableCode = number;
+
+/** Lossless floor/number compatibility reference. */
+export type TableRef = string;
+
+const CANONICAL_TABLE_ID_PATTERN =
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
+/** Whether `raw` is a canonical RFC 4122 UUID string. */
+export function isCanonicalTableId(raw: string): raw is CanonicalTableId {
+  return CANONICAL_TABLE_ID_PATTERN.test(raw);
+}
 
 /** Separator between the floor key and the table number in a table ref. */
 export const TABLE_REF_SEPARATOR = '/';
@@ -106,7 +123,7 @@ export function decodeTableCode(code: number): {
   return { floor: 'first', tableNumber: String(code - 0) };
 }
 
-/** The canonical, lossless reference: `floor${TABLE_REF_SEPARATOR}tableNumber`. */
+/** A lossless compatibility reference: `floor${TABLE_REF_SEPARATOR}tableNumber`. */
 export function encodeTableRef(floor: string, tableNumber: string): string {
   return `${floor}${TABLE_REF_SEPARATOR}${tableNumber}`;
 }

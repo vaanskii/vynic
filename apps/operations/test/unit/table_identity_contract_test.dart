@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vynic/core/contracts/table_identity.dart' as contract;
 import 'package:vynic/core/models/table_ref.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
 
@@ -40,7 +41,17 @@ void main() {
   });
 
   test('the fixture is the contract version this build expects', () {
-    expect(vectors['contractVersion'], 1);
+    expect(vectors['contractVersion'], 2);
+  });
+
+  test('canonical table ids are strict UUID strings', () {
+    final ids = vectors['canonicalTableId'] as Map<String, dynamic>;
+    for (final value in ids['valid'] as List) {
+      expect(contract.isCanonicalTableId(value as String), isTrue);
+    }
+    for (final value in ids['invalid'] as List) {
+      expect(contract.isCanonicalTableId(value as String), isFalse);
+    }
   });
 
   group('encodeTableCode', () {

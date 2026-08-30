@@ -115,10 +115,12 @@ represent a third floor, or a first floor with more than ten tables, and the
 POS floor-plan editor can already create both — `canEncodeTableCode` returns
 false for them and pickers hide them.
 
-`encodeTableRef` / `tryDecodeTableRef` (`first/3`, `floor-3/7`) is the
-lossless form and is already what `Reservation.tableRefs` stores in Hive. The
-integer codes survive because they are still the reservation wire format
-between POS and server, and because stored reservations carry them.
+The immutable canonical identity is now a UUID generated once by the offline
+POS and persisted with the table definition. `encodeTableRef` /
+`tryDecodeTableRef` (`first/3`, `floor-3/7`) remains a lossless compatibility
+form and is still what `Reservation.tableRefs` stores in Hive. The integer
+codes survive because they remain the reservation wire format between POS and
+server, and because stored reservations carry them.
 
 Both forms live here so the eventual migration is a change to this package and
 its consumers, not another pair of hand-written implementations.

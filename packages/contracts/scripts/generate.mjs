@@ -59,7 +59,10 @@ const TS_APP_OUT = join(
 );
 
 const contract = JSON.parse(readFileSync(SCHEMA, 'utf8'));
-const { contractVersion, tableRef, legacyTableCode } = contract;
+const { contractVersion, canonicalTableId, tableRef, legacyTableCode } = contract;
+if (canonicalTableId?.format !== 'uuid') {
+  throw new Error('canonicalTableId.format must be "uuid"');
+}
 const { separator } = tableRef;
 const { minTableNumber, floors } = legacyTableCode;
 
@@ -101,11 +104,27 @@ function renderDart() {
 
   return `${banner('//')}
 
-/// Table identity: the canonical [encodeTableRef] form and the transitional
-/// integer [encodeTableCode] encoding shared with apps/backend.
+/// Table identity: immutable UUIDs plus the compatibility [encodeTableRef]
+/// and transitional integer [encodeTableCode] forms shared with apps/backend.
 library;
 
 const int tableIdentityContractVersion = ${contractVersion};
+
+/// Immutable identity of one physical table.
+typedef CanonicalTableId = String;
+
+/// Transitional reservation-era integer identity.
+typedef LegacyTableCode = int;
+
+/// Lossless floor/number compatibility reference.
+typedef TableRef = String;
+
+final RegExp _canonicalTableIdPattern = RegExp(
+  r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\$',
+);
+
+/// Whether [raw] is a canonical RFC 4122 UUID string.
+bool isCanonicalTableId(String raw) => _canonicalTableIdPattern.hasMatch(raw);
 
 /// Separator between the floor key and the table number in a table ref.
 const String tableRefSeparator = '${separator}';
@@ -195,7 +214,7 @@ ${decodeBranches}
     return (floor: '${lowest.key}', tableNumber: '\${code - ${lowest.offset}}');
 }
 
-/// The canonical, lossless reference: \`floor\${tableRefSeparator}tableNumber\`.
+/// A lossless compatibility reference: \`floor\${tableRefSeparator}tableNumber\`.
 String encodeTableRef({required String floor, required String tableNumber}) {
   return '\$floor\$tableRefSeparator\$tableNumber';
 }
@@ -240,11 +259,28 @@ function renderTs() {
   return `${banner('//')}
 
 /**
- * Table identity: the canonical \`encodeTableRef\` form and the transitional
- * integer \`encodeTableCode\` encoding shared with apps/operations.
+ * Table identity: immutable UUIDs plus the compatibility \`encodeTableRef\`
+ * and transitional integer \`encodeTableCode\` forms shared with apps/operations.
  */
 
 export const TABLE_IDENTITY_CONTRACT_VERSION = ${contractVersion};
+
+/** Immutable identity of one physical table. */
+export type CanonicalTableId = string;
+
+/** Transitional reservation-era integer identity. */
+export type LegacyTableCode = number;
+
+/** Lossless floor/number compatibility reference. */
+export type TableRef = string;
+
+const CANONICAL_TABLE_ID_PATTERN =
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
+/** Whether \`raw\` is a canonical RFC 4122 UUID string. */
+export function isCanonicalTableId(raw: string): raw is CanonicalTableId {
+  return CANONICAL_TABLE_ID_PATTERN.test(raw);
+}
 
 /** Separator between the floor key and the table number in a table ref. */
 export const TABLE_REF_SEPARATOR = '${separator}';
@@ -336,7 +372,7 @@ ${decodeBranches}
   return { floor: '${lowest.key}', tableNumber: String(code - ${lowest.offset}) };
 }
 
-/** The canonical, lossless reference: \`floor\${TABLE_REF_SEPARATOR}tableNumber\`. */
+/** A lossless compatibility reference: \`floor\${TABLE_REF_SEPARATOR}tableNumber\`. */
 export function encodeTableRef(floor: string, tableNumber: string): string {
   return \`\${floor}\${TABLE_REF_SEPARATOR}\${tableNumber}\`;
 }

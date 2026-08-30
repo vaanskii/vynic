@@ -1,6 +1,20 @@
 {
   "$comment": "Golden test vectors for the table-identity contract. Consumed by BOTH pos_app_client (Dart) and pos_app_server (TypeScript) so the two implementations are proven equal against one fixture rather than by inspection. Derived from the behaviour of pos_app_client/lib/core/utils/reservation_table_availability.dart at tag pre-vynic-saas-full-baseline, which is the stricter and therefore canonical of the two pre-existing implementations. See legacyDivergence below.",
-  "contractVersion": 1,
+  "contractVersion": 2,
+
+  "canonicalTableId": {
+    "valid": [
+      "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "F47AC10B-58CC-4372-A567-0E02B2C3D479"
+    ],
+    "invalid": [
+      "",
+      "floor1-table1",
+      "f47ac10b58cc4372a5670e02b2c3d479",
+      "f47ac10b-58cc-4372-a567-0e02b2c3d47z",
+      " f47ac10b-58cc-4372-a567-0e02b2c3d479 "
+    ]
+  },
 
   "encode": {
     "$comment": "encodeTableCode(floor, tableNumber) -> legacy int code. Every case here is inside the domain both pre-existing implementations already agreed on.",
@@ -75,7 +89,7 @@
   },
 
   "tableRef": {
-    "$comment": "The canonical, lossless table reference: 'floor/tableNumber'. Existed only in Dart (core/models/table_ref.dart) before this contract; the TypeScript side is new and additive, so nothing changes on the server by adding it.",
+    "$comment": "The lossless compatibility table reference: 'floor/tableNumber'. It remains the current reservation identity but is not the canonical physical-table UUID.",
     "encode": [
       { "floor": "first", "tableNumber": "3", "encoded": "first/3" },
       { "floor": "second", "tableNumber": "1", "encoded": "second/1" },

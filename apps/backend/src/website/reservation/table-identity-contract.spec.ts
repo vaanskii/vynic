@@ -5,6 +5,7 @@ import {
   decodeTableCode,
   encodeTableCode,
 } from './reservation-table-codes';
+import { isCanonicalTableId } from '../../shared/contracts/table-identity';
 
 /**
  * Golden compatibility tests for the table-identity contract.
@@ -41,6 +42,7 @@ const vectors = JSON.parse(
   ),
 ) as {
   contractVersion: number;
+  canonicalTableId: { valid: string[]; invalid: string[] };
   encode: { valid: EncodeCase[]; invalid: InvalidCase[] };
   decode: { cases: DecodeCase[] };
   canEncode: { cases: CanEncodeCase[] };
@@ -49,7 +51,16 @@ const vectors = JSON.parse(
 
 describe('table identity contract', () => {
   it('is the contract version this build expects', () => {
-    expect(vectors.contractVersion).toBe(1);
+    expect(vectors.contractVersion).toBe(2);
+  });
+
+  it('accepts only UUID-shaped canonical table ids', () => {
+    for (const id of vectors.canonicalTableId.valid) {
+      expect(isCanonicalTableId(id)).toBe(true);
+    }
+    for (const id of vectors.canonicalTableId.invalid) {
+      expect(isCanonicalTableId(id)).toBe(false);
+    }
   });
 
   describe('encodeTableCode', () => {

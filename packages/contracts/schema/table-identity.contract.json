@@ -2,10 +2,15 @@
   "$comment": "AUTHORITATIVE SOURCE for table identity. Edit this file, then run `node packages/contracts/scripts/generate.mjs` to regenerate the Dart and TypeScript outputs. Never edit the generated files.",
 
   "name": "table-identity",
-  "contractVersion": 1,
+  "contractVersion": 2,
+
+  "canonicalTableId": {
+    "$comment": "The immutable cross-system identity of one physical table. It is an RFC 4122 UUID generated once by an offline-capable POS and never derived from floor, number, label, website mapping, or geometry.",
+    "format": "uuid"
+  },
 
   "tableRef": {
-    "$comment": "The lossless reference: floor key and table number joined by a separator. Floor keys never contain the separator, so the FIRST occurrence splits the two halves and any later ones belong to the table number.",
+    "$comment": "A lossless compatibility reference: floor key and table number joined by a separator. It is not the canonical physical-table identity. Floor keys never contain the separator, so the FIRST occurrence splits the two halves and any later ones belong to the table number.",
     "separator": "/"
   },
 

@@ -6,11 +6,27 @@
 // Change the schema and regenerate; edits here are overwritten and
 // CI fails on a stale or hand-edited output.
 
-/// Table identity: the canonical [encodeTableRef] form and the transitional
-/// integer [encodeTableCode] encoding shared with apps/backend.
+/// Table identity: immutable UUIDs plus the compatibility [encodeTableRef]
+/// and transitional integer [encodeTableCode] forms shared with apps/backend.
 library;
 
-const int tableIdentityContractVersion = 1;
+const int tableIdentityContractVersion = 2;
+
+/// Immutable identity of one physical table.
+typedef CanonicalTableId = String;
+
+/// Transitional reservation-era integer identity.
+typedef LegacyTableCode = int;
+
+/// Lossless floor/number compatibility reference.
+typedef TableRef = String;
+
+final RegExp _canonicalTableIdPattern = RegExp(
+  r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+);
+
+/// Whether [raw] is a canonical RFC 4122 UUID string.
+bool isCanonicalTableId(String raw) => _canonicalTableIdPattern.hasMatch(raw);
 
 /// Separator between the floor key and the table number in a table ref.
 const String tableRefSeparator = '/';
@@ -103,7 +119,7 @@ int encodeTableCode({required String floor, required String tableNumber}) {
     return (floor: 'first', tableNumber: '${code - 0}');
 }
 
-/// The canonical, lossless reference: `floor${tableRefSeparator}tableNumber`.
+/// A lossless compatibility reference: `floor${tableRefSeparator}tableNumber`.
 String encodeTableRef({required String floor, required String tableNumber}) {
   return '$floor$tableRefSeparator$tableNumber';
 }

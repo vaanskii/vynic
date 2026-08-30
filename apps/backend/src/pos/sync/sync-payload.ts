@@ -9,6 +9,8 @@
  */
 
 export interface TableSync {
+  /** Canonical physical-table UUID. Added in contract v2; absent on old POS builds. */
+  tableId?: string;
   tableNumber: string;
   floor: string;
   isReserved: boolean;
@@ -27,6 +29,8 @@ export interface OrderSync {
   createdBy?: string;
   /** Table numbers for dine-in (POS mirrors local order.tables). */
   tableNumbers?: string[];
+  /** Canonical IDs aligned by index with tableNumbers when every alias resolves. */
+  tableIds?: string[];
   floor?: string;
   businessDate?: string;
   customerName?: string;
@@ -151,6 +155,7 @@ export interface SyncPayload {
   }>;
   /** Table became occupied or free since last POS snapshot (walk-in / close). */
   touchedTableHints?: Array<{
+    tableId?: string;
     tableNumber: string;
     floor: string;
     changeType: 'reserved' | 'freed';

@@ -8,6 +8,7 @@ import {
   isTableEchoSuppressed,
 } from '../../sync-echo-guard';
 import { OrderSync, SyncPayload } from '../sync-payload';
+import { isCanonicalTableId } from '../../../shared/contracts/table-identity';
 
 /** Keep the latest hint per order so rapid service-fee toggles emit one touch. */
 function dedupeOrderHintsByPosOrderId<T extends { posOrderId: number }>(
@@ -19,6 +20,12 @@ function dedupeOrderHintsByPosOrderId<T extends { posOrderId: number }>(
     byId.set(h.posOrderId, h);
   }
   return [...byId.values()];
+}
+
+function canonicalTableIdOf(value: unknown): string | undefined {
+  return typeof value === 'string' && isCanonicalTableId(value)
+    ? value
+    : undefined;
 }
 
 export interface RelayedHints {
@@ -107,6 +114,7 @@ export class SyncBroadcastService {
     const touchedTableHints = Array.isArray(data.touchedTableHints)
       ? data.touchedTableHints
           .map((h: any) => ({
+            tableId: canonicalTableIdOf(h?.tableId),
             tableNumber: String(h?.tableNumber ?? '').trim(),
             floor: String(h?.floor ?? 'first').trim(),
             changeType:
@@ -144,11 +152,15 @@ export class SyncBroadcastService {
       const tableSnapshots: Array<Record<string, unknown>> = [];
       for (const hint of filteredTableHints) {
         const row = await (this.prisma as any).table.findFirst({
-          where: { tableNumber: hint.tableNumber, floor: hint.floor },
+          where: hint.tableId
+            ? { id: hint.tableId }
+            : { tableNumber: hint.tableNumber, floor: hint.floor },
         });
         if (row) {
           const occupied = !!(row.isReserved || row.activeOrderId);
+          const canonicalTableId = canonicalTableIdOf(row.id);
           tableSnapshots.push({
+            ...(canonicalTableId ? { tableId: canonicalTableId } : {}),
             tableNumber: row.tableNumber,
             floor: row.floor,
             isReserved: occupied,

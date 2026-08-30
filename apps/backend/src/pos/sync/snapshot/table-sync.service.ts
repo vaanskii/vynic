@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma.service';
 import { TableSync } from '../sync-payload';
+import { upsertTableRecord } from './table-record-identity';
 
 /**
  * Applies the POS's table snapshot.
@@ -65,30 +66,21 @@ export class TableSyncService {
             );
           }
 
-          await (this.prisma as any).table.upsert({
-            where: {
-              tableIdentifier: {
-                tableNumber: table.tableNumber,
-                floor: table.floor,
-              },
-            },
-            update: {
-              isReserved: isActuallyReserved,
-              activeOrderId: isActuallyReserved
-                ? (table.activeOrderId ?? null)
-                : null,
-              currentBill: isActuallyReserved ? (table.currentBill ?? 0) : 0,
-            },
-            create: {
+          await upsertTableRecord(
+            this.prisma,
+            {
+              tableId: table.tableId,
               tableNumber: table.tableNumber,
               floor: table.floor,
+            },
+            {
               isReserved: isActuallyReserved,
               activeOrderId: isActuallyReserved
                 ? (table.activeOrderId ?? null)
                 : null,
               currentBill: isActuallyReserved ? (table.currentBill ?? 0) : 0,
             },
-          });
+          );
         }
       }
     } else if (tables && tables.length === 0) {

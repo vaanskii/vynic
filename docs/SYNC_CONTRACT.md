@@ -68,6 +68,15 @@ Related: [ARCHITECTURE_REVIEW.md](./ARCHITECTURE_REVIEW.md)
 - **Payload includes:** `posCallbackUrl` (see §4) so the server can reach this POS machine.
 - **Must be authenticated** (device token / API key — see implementation todo `sync-3`).
 
+### 3.1.1 Transitional table identity
+
+Table snapshots retain `tableNumber` and `floor` for old-client compatibility
+and add `tableId`, the immutable physical-table UUID. Order snapshots may add
+`tableIds`, aligned by index with `tableNumbers` when every alias resolves.
+`touchedTableHints` may likewise add `tableId`. Consumers must keep accepting
+payloads without these additive fields; no legacy field or event name is
+removed in Step 3B. See [TABLE_IDENTITY.md](./TABLE_IDENTITY.md).
+
 ### 3.2 Cloud → POS (callbacks) — Option A
 
 When mobile (via backend) changes data that lives on POS, the server calls the Windows POS **local HTTP API** at `posCallbackUrl`.

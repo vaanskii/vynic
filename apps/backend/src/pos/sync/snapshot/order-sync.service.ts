@@ -2,6 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma.service';
 import { posWinsOrderConflict } from '../sync-conflict';
 import { OrderSync } from '../sync-payload';
+import {
+  updateExistingTableRecord,
+  upsertTableRecord,
+} from './table-record-identity';
 
 /**
  * Applies the POS's order snapshot, and reconciles what the snapshot omits.
@@ -170,28 +174,24 @@ export class OrderSyncService {
 
         // Active dine-in orders must reserve tables even when POS table snapshot is stale.
         if (!terminalStatuses.has(status) && !isTakeaway) {
-          for (const rawNum of tableNumbers) {
+          for (const [tableIndex, rawNum] of tableNumbers.entries()) {
             const tableNumber = String(rawNum)
               .replace(/^table\s*/i, '')
               .trim();
             if (!tableNumber) continue;
-            await (this.prisma as any).table.upsert({
-              where: {
-                tableIdentifier: { tableNumber, floor },
-              },
-              update: {
-                isReserved: true,
-                activeOrderId: pOrderId,
-                currentBill: order.totalAmount ?? 0,
-              },
-              create: {
+            await upsertTableRecord(
+              this.prisma,
+              {
+                tableId: order.tableIds?.[tableIndex],
                 tableNumber,
                 floor,
+              },
+              {
                 isReserved: true,
                 activeOrderId: pOrderId,
                 currentBill: order.totalAmount ?? 0,
               },
-            });
+            );
             didSyncTables = true;
             console.log(
               `[Sync] Linked table ${tableNumber}/${floor} → order #${pOrderId} (${status})`,
@@ -201,20 +201,25 @@ export class OrderSyncService {
 
         // When POS closes/pays an order, free linked tables even if table snapshot was skipped.
         if (terminalStatuses.has(status)) {
-          for (const rawNum of tableNumbers) {
+          for (const [tableIndex, rawNum] of tableNumbers.entries()) {
             const tableNumber = String(rawNum)
               .replace(/^table\s*/i, '')
               .trim();
             if (!tableNumber) continue;
-            const result = await (this.prisma as any).table.updateMany({
-              where: { tableNumber, floor },
-              data: {
+            const updatedCount = await updateExistingTableRecord(
+              this.prisma,
+              {
+                tableId: order.tableIds?.[tableIndex],
+                tableNumber,
+                floor,
+              },
+              {
                 isReserved: false,
                 activeOrderId: null,
                 currentBill: 0,
               },
-            });
-            if (result.count > 0) {
+            );
+            if (updatedCount > 0) {
               releasedTables = true;
               console.log(
                 `[Sync] Freed table ${tableNumber}/${floor} (order #${pOrderId} ${status})`,

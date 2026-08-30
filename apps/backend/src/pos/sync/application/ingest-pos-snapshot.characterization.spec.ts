@@ -213,6 +213,7 @@ function events(broadcasts: Broadcast[]): string[] {
 }
 
 const BUSINESS_DATE = '2026-06-27';
+const CANONICAL_TABLE_ID = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
 
 describe('POST /sync/manager-data — response contract', () => {
   it('returns { success, syncedAt } for an empty payload and still kicks the outbox', async () => {
@@ -399,6 +400,102 @@ describe('POST /sync/manager-data — table snapshot policy', () => {
     expect(at(upsert?.arg, 'create', 'floor')).toBe('first');
   });
 
+  it('adopts an existing legacy row when the POS first supplies its canonical UUID', async () => {
+    const h = makeHarness({
+      'table.findUnique': (arg) =>
+        at(arg, 'where', 'tableIdentifier')
+          ? { id: 'server-generated-id', tableNumber: '3', floor: 'first' }
+          : null,
+    });
+
+    await h.sync({
+      tables: [
+        {
+          tableId: CANONICAL_TABLE_ID,
+          tableNumber: '3',
+          floor: 'first',
+          isReserved: true,
+        },
+      ],
+    });
+
+    expect(h.calls.filter((c) => c.key === 'table.findUnique')).toHaveLength(2);
+    const update = h.calls.find((c) => c.key === 'table.update');
+    expect(at(update?.arg, 'where', 'id')).toBe('server-generated-id');
+    expect(at(update?.arg, 'data', 'id')).toBe(CANONICAL_TABLE_ID);
+    expect(at(update?.arg, 'data', 'tableNumber')).toBe('3');
+    expect(at(update?.arg, 'data', 'floor')).toBe('first');
+  });
+
+  it('resolves the same canonical UUID on repeated sync instead of creating another row', async () => {
+    const existing = {
+      id: CANONICAL_TABLE_ID,
+      tableNumber: '3',
+      floor: 'first',
+    };
+    const h = makeHarness({
+      'table.findUnique': () => existing,
+    });
+
+    await h.sync({
+      tables: [
+        {
+          tableId: CANONICAL_TABLE_ID,
+          tableNumber: '3',
+          floor: 'first',
+          isReserved: false,
+        },
+      ],
+    });
+
+    expect(callKeys(h.calls)).not.toContain('table.create');
+    const update = h.calls.find((c) => c.key === 'table.update');
+    expect(at(update?.arg, 'where', 'id')).toBe(CANONICAL_TABLE_ID);
+  });
+
+  it('treats a malformed tableId as an old payload and never persists it', async () => {
+    const h = makeHarness();
+
+    await h.sync({
+      tables: [
+        {
+          tableId: 'floor1-table3',
+          tableNumber: '3',
+          floor: 'first',
+          isReserved: true,
+        },
+      ],
+    });
+
+    expect(callKeys(h.calls)).not.toContain('table.findUnique');
+    const upsert = h.calls.find((c) => c.key === 'table.upsert');
+    expect(at(upsert?.arg, 'create', 'id')).toBeUndefined();
+  });
+
+  it('rejects a UUID/legacy-alias collision instead of inventing a second physical table', async () => {
+    const h = makeHarness({
+      'table.findUnique': (arg) =>
+        at(arg, 'where', 'id')
+          ? { id: CANONICAL_TABLE_ID, tableNumber: '8', floor: 'first' }
+          : { id: 'different-row', tableNumber: '3', floor: 'first' },
+    });
+
+    await expect(
+      h.sync({
+        tables: [
+          {
+            tableId: CANONICAL_TABLE_ID,
+            tableNumber: '3',
+            floor: 'first',
+            isReserved: true,
+          },
+        ],
+      }),
+    ).rejects.toThrow('conflicts with legacy alias');
+    expect(callKeys(h.calls)).not.toContain('table.create');
+    expect(callKeys(h.calls)).not.toContain('table.update');
+  });
+
   it('ignores an all-free cold-boot snapshot while the server still holds reserved tables', async () => {
     const h = makeHarness({ 'table.count': () => 2 });
 
@@ -536,6 +633,37 @@ describe('POST /sync/manager-data — order sync and table linking', () => {
       activeOrderId: 9,
       currentBill: 30,
     });
+  });
+
+  it('uses aligned canonical tableIds for a transitional order payload', async () => {
+    const h = makeHarness({
+      'posCallbackOutbox.findMany': outboxOrderRows([]),
+      'table.findUnique': () => ({
+        id: CANONICAL_TABLE_ID,
+        tableNumber: '6',
+        floor: 'first',
+      }),
+    });
+
+    await h.sync({
+      orders: [
+        {
+          posOrderId: 9,
+          status: 'open',
+          totalAmount: 30,
+          floor: 'first',
+          tableNumbers: ['Table 6'],
+          tableIds: [CANONICAL_TABLE_ID],
+        },
+      ],
+    });
+
+    const link = h.calls.find((c) => c.key === 'table.update');
+    expect(at(link?.arg, 'where', 'id')).toBe(CANONICAL_TABLE_ID);
+    expect(at(link?.arg, 'data', 'id')).toBe(CANONICAL_TABLE_ID);
+    expect(at(link?.arg, 'data', 'isReserved')).toBe(true);
+    expect(at(link?.arg, 'data', 'activeOrderId')).toBe(9);
+    expect(callKeys(h.calls)).not.toContain('table.upsert');
   });
 
   it('does not reserve tables for a takeaway order', async () => {
@@ -951,6 +1079,38 @@ describe('POST /sync/manager-data — realtime hints and echo suppression', () =
         currentBill: 40,
       },
     ]);
+  });
+
+  it('carries canonical table identity through an additive realtime hint', async () => {
+    const h = makeHarness({
+      'table.findFirst': () => ({
+        id: CANONICAL_TABLE_ID,
+        tableNumber: '3',
+        floor: 'first',
+        isReserved: true,
+        activeOrderId: 31,
+        currentBill: 40,
+      }),
+    });
+
+    await h.sync({
+      touchedTableHints: [
+        {
+          tableId: CANONICAL_TABLE_ID,
+          tableNumber: '3',
+          floor: 'first',
+          changeType: 'reserved',
+        },
+      ],
+    });
+
+    const read = h.calls.find((c) => c.key === 'table.findFirst');
+    expect(at(read?.arg, 'where')).toEqual({ id: CANONICAL_TABLE_ID });
+    const touch = h.broadcasts.find((b) => b.event === 'tables_bulk_touch');
+    expect(at(touch?.payload, 'touches', 0, 'tableId')).toBe(
+      CANONICAL_TABLE_ID,
+    );
+    expect(at(touch?.payload, 'tables', 0, 'tableId')).toBe(CANONICAL_TABLE_ID);
   });
 
   it('drops a table hint whose echo is suppressed', async () => {

@@ -11,6 +11,7 @@ import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
 import 'package:vynic/core/utils/payment_utils.dart';
+import 'package:vynic/core/contracts/table_identity.dart' as table_identity;
 
 /// Serializes a manager-data payload to JSON. Runs in a background isolate via
 /// [compute] so the (potentially large) encode never blocks the UI thread —
@@ -383,6 +384,7 @@ class ManagerSyncService {
                     '${rd.day.toString().padLeft(2, '0')}';
               }
             }
+            final tableIds = _canonicalTableIdsForOrder(o);
             return {
               'posOrderId': o.orderId,
               'status': o.status,
@@ -395,6 +397,7 @@ class ManagerSyncService {
                   .toLowerCase(),
               'waiterName': o.createdBy,
               'tableNumbers': o.tableNumbers.map((e) => e.toString()).toList(),
+              if (tableIds != null) 'tableIds': tableIds,
               'floor': o.floor,
               if (orderBusinessDate != null) 'businessDate': orderBusinessDate,
               'customerName': customerName,
@@ -1329,6 +1332,13 @@ class ManagerSyncService {
         table.currentBill = 0.0;
       }
       final json = Map<String, dynamic>.from(table.toJson());
+      final tableId = _canonicalTableIdForAlias(
+        floor: table.floor,
+        tableNumber: table.tableNumber,
+      );
+      if (tableId != null) {
+        json['tableId'] = tableId;
+      }
       byKey[_tableKeyForSync(json)] = json;
     }
 
@@ -1352,6 +1362,13 @@ class ManagerSyncService {
                 'currentBill': 0.0,
               },
         );
+        final tableId = _canonicalTableIdForAlias(
+          floor: order.floor,
+          tableNumber: tableNumber,
+        );
+        if (tableId != null) {
+          merged['tableId'] = tableId;
+        }
         merged['isReserved'] = true;
         merged['activeOrderId'] = order.orderId;
         merged['currentBill'] = order.totalAmount;
@@ -1397,11 +1414,53 @@ class ManagerSyncService {
     return trimmed;
   }
 
+  static String? _canonicalTableIdForAlias({
+    required String floor,
+    required String tableNumber,
+  }) {
+    final definition = DatabaseService.getRestaurantTableLayout()
+        .tableForLegacy(floor: floor, tableNumber: tableNumber);
+    final id = definition?.id;
+    return id != null && table_identity.isCanonicalTableId(id) ? id : null;
+  }
+
+  static List<String>? _canonicalTableIdsForOrder(Order order) {
+    if (order.tableNumbers.isEmpty) {
+      return null;
+    }
+    final ids = <String>[];
+    for (final raw in order.tableNumbers) {
+      final tableNumber = _normalizeTableNumberForSync(raw, order.floor);
+      if (tableNumber == null) {
+        return null;
+      }
+      final id = _canonicalTableIdForAlias(
+        floor: order.floor,
+        tableNumber: tableNumber,
+      );
+      if (id == null) {
+        return null;
+      }
+      ids.add(id);
+    }
+    return ids;
+  }
+
   static List<Map<String, dynamic>> _collectTableHintsForSync(
     List<Map<String, dynamic>> tablesPayload,
   ) {
     final merged = <String, Map<String, dynamic>>{};
     void addHint(Map<String, dynamic> hint) {
+      final matchingTable = tablesPayload
+          .where(
+            (table) =>
+                table['tableNumber'] == hint['tableNumber'] &&
+                table['floor'] == hint['floor'],
+          )
+          .firstOrNull;
+      if (matchingTable?['tableId'] case final String tableId) {
+        hint['tableId'] = tableId;
+      }
       final key =
           '${hint['tableNumber']}_${hint['floor']}_${hint['changeType']}';
       merged[key] = hint;
@@ -1456,6 +1515,7 @@ class ManagerSyncService {
       final wasOccupied = _lastTableOccupiedByKey[key] ?? false;
       if (nowOccupied != wasOccupied) {
         touched.add({
+          if (raw['tableId'] != null) 'tableId': raw['tableId'],
           'tableNumber': raw['tableNumber'],
           'floor': raw['floor'],
           'changeType': nowOccupied ? 'reserved' : 'freed',

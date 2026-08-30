@@ -18,7 +18,9 @@ import { PosCallbackModule } from './pos/pos-callback.module';
 import { PosOutboxService } from './pos/pos-outbox.service';
 import { PrismaModule } from './shared/prisma/prisma.module';
 import { BootstrapModule } from './shared/bootstrap/bootstrap.module';
-import { SyncController } from './pos/sync.controller';
+import { SyncController } from './pos/sync/sync.controller';
+import { IngestPosSnapshotService } from './pos/sync/application/ingest-pos-snapshot.service';
+import { PosConnectionRegistry } from './pos/sync/pos-connection.registry';
 import { RealtimeModule } from './realtime/realtime.module';
 import { WebsiteModule } from './website/website.module';
 
@@ -38,6 +40,8 @@ import { WebsiteModule } from './website/website.module';
     AppService,
     PosSyncGuard,
     PosOutboxService,
+    PosConnectionRegistry,
+    IngestPosSnapshotService,
     MobileUsersService,
     MobileReportsService,
     MobileDevicesService,

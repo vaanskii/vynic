@@ -1,23 +1,24 @@
 // Stub heavy transitive modules so importing the controller doesn't pull in the
 // realtime gateway → firebase-admin / uuid (ESM) chain that ts-jest can't load.
 // We inject our own gateway/guard doubles at construction time anyway.
-jest.mock('../realtime/monitoring.gateway', () => ({
+jest.mock('../../../realtime/monitoring.gateway', () => ({
   MonitoringGateway: class {},
 }));
-jest.mock('../auth/auth.service', () => ({ AuthService: class {} }));
-jest.mock('../auth/pos-sync.guard', () => ({ PosSyncGuard: class {} }));
-jest.mock('../auth/jwt-auth.guard', () => ({ JwtAuthGuard: class {} }));
-jest.mock('../auth/roles.guard', () => ({ RolesGuard: class {} }));
+jest.mock('../../../auth/auth.service', () => ({ AuthService: class {} }));
+jest.mock('../../../auth/pos-sync.guard', () => ({ PosSyncGuard: class {} }));
+jest.mock('../../../auth/jwt-auth.guard', () => ({ JwtAuthGuard: class {} }));
+jest.mock('../../../auth/roles.guard', () => ({ RolesGuard: class {} }));
 
-import { SyncController } from './sync.controller';
-import { PosCallbackClient } from './pos-callback.client';
+import { IngestPosSnapshotService } from './ingest-pos-snapshot.service';
+import { PosConnectionRegistry } from '../pos-connection.registry';
+import { PosCallbackClient } from '../../pos-callback.client';
 
 /**
- * Controller-level tests for the same-order last-write-wins resolution and the
- * staff reconcile protection inside `POST /sync/manager-data`.
+ * Use-case tests for the same-order last-write-wins resolution and the staff
+ * reconcile protection inside `POST /sync/manager-data`.
  *
  * Prisma is replaced with a Proxy mock that records every `<model>.<method>`
- * call and returns sensible defaults, so the test drives the *real* controller
+ * call and returns sensible defaults, so the test drives the *real* ingestion
  * logic (order loop + staff reconcile) without a database.
  */
 
@@ -92,7 +93,7 @@ function makeMockPrisma(overrides: Record<string, (arg: any) => any> = {}): {
   return { prisma, calls };
 }
 
-function makeController(prisma: any) {
+function makeIngestService(prisma: any) {
   const gateway = { broadcastUpdate: jest.fn() } as any;
   const posOutbox = { kickPending: jest.fn() } as any;
   const posCallback = new PosCallbackClient();
@@ -100,7 +101,14 @@ function makeController(prisma: any) {
     read: jest.fn(async () => ({})),
     write: jest.fn(async () => {}),
   } as any;
-  return new SyncController(prisma, gateway, posOutbox, posCallback, pinVault);
+  const posConnection = new PosConnectionRegistry(prisma, posCallback);
+  return new IngestPosSnapshotService(
+    prisma,
+    gateway,
+    posOutbox,
+    pinVault,
+    posConnection,
+  );
 }
 
 const T1 = '2026-06-27T10:00:00.000Z'; // older
@@ -116,16 +124,16 @@ function orderQueryRows(rows: any[]) {
   };
 }
 
-describe('SyncController /sync/manager-data — order last-write-wins', () => {
+describe('IngestPosSnapshotService /sync/manager-data — order last-write-wins', () => {
   it('POS wins and the queued mobile change is superseded when the POS edit is newer', async () => {
     const { prisma, calls } = makeMockPrisma({
       'posCallbackOutbox.findMany': orderQueryRows([
         { posOrderId: 5, createdAt: new Date(T1) },
       ]),
     });
-    const controller = makeController(prisma);
+    const ingest = makeIngestService(prisma);
 
-    await controller.syncManagerData({
+    await ingest.execute({
       businessDate: BUSINESS_DATE,
       orders: [
         {
@@ -160,9 +168,9 @@ describe('SyncController /sync/manager-data — order last-write-wins', () => {
         { posOrderId: 5, createdAt: new Date(T2) }, // queued change is newer
       ]),
     });
-    const controller = makeController(prisma);
+    const ingest = makeIngestService(prisma);
 
-    await controller.syncManagerData({
+    await ingest.execute({
       businessDate: BUSINESS_DATE,
       orders: [
         {
@@ -196,9 +204,9 @@ describe('SyncController /sync/manager-data — order last-write-wins', () => {
         { posOrderId: 5, createdAt: new Date(T1) },
       ]),
     });
-    const controller = makeController(prisma);
+    const ingest = makeIngestService(prisma);
 
-    await controller.syncManagerData({
+    await ingest.execute({
       businessDate: BUSINESS_DATE,
       orders: [
         {
@@ -220,7 +228,7 @@ describe('SyncController /sync/manager-data — order last-write-wins', () => {
   });
 });
 
-describe('SyncController /sync/manager-data — staff reconcile protection', () => {
+describe('IngestPosSnapshotService /sync/manager-data — staff reconcile protection', () => {
   it('keeps a server user that has a queued mobile create, deletes a genuinely-stale one', async () => {
     const { prisma, calls } = makeMockPrisma({
       'posCallbackOutbox.findMany': (arg: any) => {
@@ -239,9 +247,9 @@ describe('SyncController /sync/manager-data — staff reconcile protection', () 
         { username: 'bob' },
       ],
     });
-    const controller = makeController(prisma);
+    const ingest = makeIngestService(prisma);
 
-    await controller.syncManagerData({
+    await ingest.execute({
       businessDate: BUSINESS_DATE,
       // POS snapshot only knows about mary.
       staff: [{ username: 'mary', role: 'WAITER', pin: '1234' }],

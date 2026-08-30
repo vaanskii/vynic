@@ -1,200 +1,23 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Get,
-  Query,
-  UseGuards,
-  OnModuleInit,
-  Inject,
-  forwardRef,
-} from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
-import { PosOutboxService } from './pos-outbox.service';
-import { PosCallbackClient } from './pos-callback.client';
-import { isAllowedPosCallbackUrl } from './pos-callback-url';
-import { MonitoringGateway } from '../realtime/monitoring.gateway';
-import { AuthService } from '../auth/auth.service';
-import { PosSyncGuard } from '../auth/pos-sync.guard';
-import { StaffPinVault } from '../auth/staff-pin-vault.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
-import { normalizeAuditEventType } from './audit/audit-event-type';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import { PrismaService } from '../../../prisma.service';
+import { MonitoringGateway } from '../../../realtime/monitoring.gateway';
+import { StaffPinVault } from '../../../auth/staff-pin-vault.service';
+import { normalizeStaffRole } from '../../../staff/staff-role';
+import { PosOutboxService } from '../../pos-outbox.service';
 import {
   filterSuppressedOrderIds,
-  isPosAuditBroadcastSuppressed,
   isPosEchoSuppressed,
   isReservationEchoSuppressed,
   isTableEchoSuppressed,
-} from './sync-echo-guard';
-import * as bcrypt from 'bcrypt';
-import { normalizeStaffRole, StaffRole } from '../staff/staff-role';
-import { posWinsOrderConflict, pendingStaffUsernames } from './sync-conflict';
+} from '../../sync-echo-guard';
+import { pendingStaffUsernames, posWinsOrderConflict } from '../sync-conflict';
+import { PosConnectionRegistry } from '../pos-connection.registry';
+import { SyncPayload } from '../sync-payload';
 
-interface TableSync {
-  tableNumber: string;
-  floor: string;
-  isReserved: boolean;
-  activeOrderId?: number;
-  currentBill?: number;
-}
-
-interface OrderSync {
-  posOrderId: number;
-  orderId?: number;
-  status: string;
-  totalAmount: number;
-  paymentType?: string;
-  guestCount?: number;
-  waiterName?: string;
-  createdBy?: string;
-  /** Table numbers for dine-in (POS mirrors local order.tables). */
-  tableNumbers?: string[];
-  floor?: string;
-  businessDate?: string;
-  customerName?: string;
-  customerPhone?: string;
-  pickupTime?: string;
-  items?: any[];
-  includeServiceFee?: boolean;
-  discountAmount?: number;
-  serviceFeePercent?: number;
-  customServiceFeePercentage?: number;
-  /** ISO timestamp of the order's last local edit on the POS (LWW conflict resolution). */
-  updatedAt?: string;
-}
-
-interface ExpenseSync {
-  description: string;
-  amount: number;
-  category: string;
-  paymentType?: string;
-  createdAt?: string;
-}
-
-interface StaffSync {
-  username: string;
-  /** Optional — routine POS sync must not send PINs; only explicit provisioning. */
-  pin?: string;
-  role: 'ADMIN' | 'MANAGER' | 'SUPERVISOR' | 'WAITER';
-}
-
-interface AuditEventLogSync {
-  id: string;
-  action: string;
-  userId: string;
-  data: any;
-  deviceType: string;
-  createdAt: string;
-}
-
-interface SyncPayload {
-  tables?: TableSync[];
-  orders?: OrderSync[];
-  expenses?: ExpenseSync[];
-  menu?: any[];
-  staff?: StaffSync[];
-  syncedAt?: string;
-  posCallbackUrl?: string;
-  posConnectionKey?: string;
-  /** Fast path: tables/orders only — skip menu, staff, sales history DB work. */
-  realtimeOnly?: boolean;
-  quickOrders?: any[];
-  /** ISO date string (YYYY-MM-DD) for the current POS business day */
-  businessDate?: string;
-  /** Exact Windows X-report დღიური გაყიდვები for current business date */
-  dailySalesTotal?: number;
-  salesSummary?: {
-    date: string;
-    totalRevenue: number;
-    orderCount: number;
-    cashRevenue: number;
-    cardRevenue: number;
-    paymentBreakdown: Record<string, number>;
-    totalExpenses?: number;
-    profit?: number;
-  };
-  salesAllTimeSummary?: {
-    totalRevenue: number;
-    orderCount: number;
-    cashRevenue: number;
-    cardRevenue: number;
-    paymentBreakdown: Record<string, number>;
-    topItems?: Array<{ name: string; qty: number; revenue: number }>;
-  };
-  salesHistoryByDate?: Record<
-    string,
-    {
-      date: string;
-      totalRevenue: number;
-      orderCount: number;
-      totalOrders: number;
-      cancelledOrders: number;
-      cashRevenue: number;
-      cardRevenue: number;
-      paymentBreakdown: Record<string, number>;
-      totalExpenses?: number;
-      profit?: number;
-      topItems?: Array<{ name: string; qty: number; revenue: number }>;
-      closedTables?: Array<{
-        orderId?: number;
-        tableLabel?: string;
-        tableNumbers?: string[];
-        floor?: string;
-        isFiscal?: boolean;
-        totalAmount?: number;
-        closedAt?: string;
-        paymentBreakdown?: Record<string, number>;
-        items?: Array<{
-          name: string;
-          qty: number;
-          unitPrice: number;
-          total: number;
-        }>;
-      }>;
-    }
-  >;
-  openTablesPayable?: number;
-  settings?: {
-    serviceFeePercent?: number;
-    serviceFeeEnabled?: boolean;
-  };
-  /**
-   * POS sends hints when item lines were removed or quantities decreased (sync snapshot diff).
-   * Each hint carries manager-notification context: business-app time and table label.
-   */
-  touchedOrderHints?: Array<{
-    posOrderId: number;
-    occurredAt?: string;
-    tableLabel?: string;
-    floor?: string;
-    waiterName?: string;
-    highlightItemKeys?: string[];
-    changeSummary?: string;
-  }>;
-  /** Table became occupied or free since last POS snapshot (walk-in / close). */
-  touchedTableHints?: Array<{
-    tableNumber: string;
-    floor: string;
-    changeType: 'reserved' | 'freed';
-    activeOrderId?: number;
-    currentBill?: number;
-    occurredAt?: string;
-  }>;
-  /** Reservation created/updated/deleted on the POS — relays to mobile. */
-  touchedReservationHints?: Array<{
-    reservationId: string;
-    action?: string;
-    customerName?: string;
-    reservationDate?: string;
-    reservationTime?: string;
-    tableNumbers?: number[];
-    linkedOrderId?: number;
-    notes?: string;
-    walkIn?: boolean;
-    occurredAt?: string;
-  }>;
+export interface SnapshotIngestResult {
+  success: boolean;
+  syncedAt: string;
 }
 
 /** Keep the latest hint per order so rapid service-fee toggles emit one touch. */
@@ -209,125 +32,31 @@ function dedupeOrderHintsByPosOrderId<T extends { posOrderId: number }>(
   return [...byId.values()];
 }
 
-@Controller('sync')
-export class SyncController implements OnModuleInit {
-  private static readonly POS_CALLBACK_URL_KEY = 'pos:callback_url';
-  private static readonly POS_CONNECTION_KEY_KEY = 'pos:connection_key';
-
+/**
+ * Applies one POS snapshot to the server.
+ *
+ * This is the whole of what `POST /sync/manager-data` used to do inline in the
+ * controller. It is deliberately still one ordered method: the POS relies on
+ * this exact sequence — tables before orders, every write before the aggregate
+ * broadcasts, the business-day rollover after the table snapshot — and the
+ * sequence is easier to protect while it reads top to bottom.
+ *
+ * There is no enclosing transaction, and adding one would change failure
+ * behaviour: today a throw part-way leaves earlier sections applied and skips
+ * the rest. See `sync-manager-data.characterization.spec.ts`.
+ */
+@Injectable()
+export class IngestPosSnapshotService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly gateway: MonitoringGateway,
     @Inject(forwardRef(() => PosOutboxService))
     private readonly posOutbox: PosOutboxService,
-    private readonly posCallback: PosCallbackClient,
     private readonly pinVault: StaffPinVault,
+    private readonly posConnection: PosConnectionRegistry,
   ) {}
 
-  async onModuleInit(): Promise<void> {
-    await this.loadPosCallbackFromDb();
-  }
-
-  @Get('ping')
-  ping() {
-    return {
-      ok: true,
-      serverTime: new Date().toISOString(),
-    };
-  }
-
-  private async loadPosCallbackFromDb(): Promise<void> {
-    const [urlSetting, keySetting] = await Promise.all([
-      (this.prisma as any).setting.findUnique({
-        where: { key: SyncController.POS_CALLBACK_URL_KEY },
-      }),
-      (this.prisma as any).setting.findUnique({
-        where: { key: SyncController.POS_CONNECTION_KEY_KEY },
-      }),
-    ]);
-    if (urlSetting?.value) {
-      const url = String(urlSetting.value);
-      this.posCallback.setCallbackUrl(url);
-      console.log(`[Sync] Restored POS callback URL: ${url}`);
-    }
-    if (keySetting?.value) {
-      this.posCallback.setConnectionKey(String(keySetting.value));
-    }
-  }
-
-  private async persistPosCallback(url?: string, key?: string): Promise<void> {
-    if (url && url.trim().length > 0) {
-      const trimmedUrl = url.trim();
-      // SSRF guard: only accept a private/LAN POS address; never persist others.
-      if (!isAllowedPosCallbackUrl(trimmedUrl)) {
-        console.warn(
-          `[Sync] Ignoring POS callback URL (not a private/LAN address): ${trimmedUrl}`,
-        );
-      } else {
-        this.posCallback.setCallbackUrl(trimmedUrl);
-        await (this.prisma as any).setting.upsert({
-          where: { key: SyncController.POS_CALLBACK_URL_KEY },
-          update: { value: trimmedUrl },
-          create: {
-            key: SyncController.POS_CALLBACK_URL_KEY,
-            value: trimmedUrl,
-          },
-        });
-        console.log(`[Sync] POS callback URL registered: ${trimmedUrl}`);
-      }
-    }
-    if (key && key.trim().length > 0) {
-      const trimmedKey = key.trim();
-      this.posCallback.setConnectionKey(trimmedKey);
-      await (this.prisma as any).setting.upsert({
-        where: { key: SyncController.POS_CONNECTION_KEY_KEY },
-        update: { value: trimmedKey },
-        create: {
-          key: SyncController.POS_CONNECTION_KEY_KEY,
-          value: trimmedKey,
-        },
-      });
-    }
-  }
-
-  /**
-   * GET /sync/diff?since=2024-01-01T00:00:00.000Z
-   * Returns only records updated after `since`.
-   * Mobile clients call this after reconnection instead of full reload.
-   * Manager-only (mobile JWT) — exposes live table/order deltas, so it must
-   * not be reachable unauthenticated.
-   */
-  @Get('diff')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(StaffRole.MANAGER)
-  async getDiff(@Query('since') since?: string) {
-    const sinceDate = since ? new Date(since) : new Date(0);
-
-    const [tables, orders] = await Promise.all([
-      (this.prisma as any).table.findMany({
-        where: { updatedAt: { gt: sinceDate } },
-      }),
-      this.prisma.order.findMany({
-        where: { updatedAt: { gt: sinceDate } },
-        select: {
-          posOrderId: true,
-          status: true,
-          totalAmount: true,
-          waiterName: true,
-          updatedAt: true,
-        },
-      }),
-    ]);
-
-    return {
-      tables,
-      orders,
-      serverTime: new Date().toISOString(),
-    };
-  }
-
-  @Post('manager-data')
-  @UseGuards(PosSyncGuard)
-  async syncManagerData(@Body() data: SyncPayload) {
+  async execute(data: SyncPayload): Promise<SnapshotIngestResult> {
     const {
       tables,
       orders,
@@ -348,8 +77,11 @@ export class SyncController implements OnModuleInit {
     }
 
     // Store POS callback URL for reverse-push (mobile → POS)
-    await this.persistPosCallback(data.posCallbackUrl, data.posConnectionKey);
-    if (!this.posCallback.hasCallbackUrl()) {
+    await this.posConnection.register(
+      data.posCallbackUrl,
+      data.posConnectionKey,
+    );
+    if (!this.posConnection.hasCallbackUrl()) {
       console.warn(
         '[Sync] manager-data received without posCallbackUrl — start Windows POS (ingest on :8081) so mobile edits reach Hive.',
       );
@@ -1343,164 +1075,5 @@ export class SyncController implements OnModuleInit {
     void this.posOutbox.kickPending();
 
     return { success: true, syncedAt: new Date().toISOString() };
-  }
-
-  /**
-   * POST /sync/audit-reports
-   * Windows POS pushes full AuditReport list (with events) here on every change.
-   * Uses upsert-by-reportId so re-pushes are idempotent.
-   */
-  @Post('audit-reports')
-  @UseGuards(PosSyncGuard)
-  async syncAuditReports(
-    @Body() body: { reports?: any[]; fullSync?: boolean },
-  ) {
-    const reports = body?.reports;
-    const fullSync = body?.fullSync === true;
-    if (!Array.isArray(reports)) {
-      console.log('[SyncAudit] Invalid reports payload');
-      return { success: true, upserted: 0 };
-    }
-
-    console.log(`[SyncAudit] Processing batch of ${reports.length} reports...`);
-
-    let upserted = 0;
-    for (const r of reports) {
-      const reportId = r.reportId as string | undefined;
-      if (!reportId) continue;
-
-      const syncedUpdatedAt = r.updatedAt ? new Date(r.updatedAt) : new Date();
-
-      // Upsert the AuditReport row
-      const dbReport = await (this.prisma as any).auditReport.upsert({
-        where: { reportId },
-        update: {
-          posOrderId: r.orderId ?? 0,
-          tableNumbers: Array.isArray(r.tableNumbers) ? r.tableNumbers : [],
-          floor: r.floor ?? 'first',
-          openedById: r.openedById ?? '',
-          openedByName: r.openedByName ?? '',
-          openedAt: r.openedAt ? new Date(r.openedAt) : new Date(),
-          status: (r.status ?? 'OPEN').toUpperCase(),
-          closedAt: r.closedAt ? new Date(r.closedAt) : null,
-          closedById: r.closedById ?? null,
-          closedByName: r.closedByName ?? null,
-          locked: r.locked ?? false,
-          updatedAt: syncedUpdatedAt,
-        },
-        create: {
-          reportId,
-          posOrderId: r.orderId ?? 0,
-          tableNumbers: Array.isArray(r.tableNumbers) ? r.tableNumbers : [],
-          floor: r.floor ?? 'first',
-          openedById: r.openedById ?? '',
-          openedByName: r.openedByName ?? '',
-          openedAt: r.openedAt ? new Date(r.openedAt) : new Date(),
-          status: (r.status ?? 'OPEN').toUpperCase(),
-          closedAt: r.closedAt ? new Date(r.closedAt) : null,
-          closedById: r.closedById ?? null,
-          closedByName: r.closedByName ?? null,
-          locked: r.locked ?? false,
-          updatedAt: syncedUpdatedAt,
-        },
-      });
-
-      // Optimized event sync: Delete and createMany
-      await (this.prisma as any).auditEvent.deleteMany({
-        where: { reportId: dbReport.id },
-      });
-
-      const events: any[] = Array.isArray(r.events) ? r.events : [];
-      if (events.length > 0) {
-        console.log(`  Report ${reportId}: syncing ${events.length} events...`);
-        await (this.prisma as any).auditEvent.createMany({
-          data: events.map((ev, seq) => ({
-            reportId: dbReport.id,
-            type: normalizeAuditEventType(ev.type, ev.previousQty, ev.newQty),
-            itemName: ev.itemName ?? '',
-            previousQty: ev.previousQty ?? 0,
-            newQty: ev.newQty ?? 0,
-            waiterId: ev.waiterId ?? '',
-            waiterName: ev.waiterName ?? '',
-            eventTime: ev.timestamp ? new Date(ev.timestamp) : new Date(),
-            note: ev.note ?? null,
-            seq,
-          })),
-        });
-      }
-      upserted++;
-    }
-
-    // Full reconciliation mode: remove stale backend reports not present in
-    // current Windows snapshot (important after backup restore/import).
-    if (fullSync) {
-      const incomingReportIds = reports
-        .map((r) => r?.reportId as string | undefined)
-        .filter((id): id is string => !!id);
-
-      const staleReports = await (this.prisma as any).auditReport.findMany({
-        where:
-          incomingReportIds.length > 0
-            ? { reportId: { notIn: incomingReportIds } }
-            : {},
-        select: { id: true },
-      });
-
-      if (staleReports.length > 0) {
-        const staleIds = staleReports.map((r: any) => r.id as string);
-        await (this.prisma as any).auditEvent.deleteMany({
-          where: { reportId: { in: staleIds } },
-        });
-        await (this.prisma as any).auditReport.deleteMany({
-          where: { id: { in: staleIds } },
-        });
-      }
-    }
-
-    if (upserted > 0 && !isPosAuditBroadcastSuppressed()) {
-      this.gateway.broadcastUpdate('audit_updated', { count: upserted });
-    }
-    return { success: true, upserted };
-  }
-
-  /**
-   * POST /sync/audit-logs
-   * Syncs generic audit event logs (append-only).
-   * Idempotent based on UUID.
-   */
-  @Post('audit-logs')
-  @UseGuards(PosSyncGuard)
-  async syncAuditEventLogs(@Body() body: { logs?: AuditEventLogSync[] }) {
-    const logs = body?.logs;
-    if (!Array.isArray(logs) || logs.length === 0) {
-      return { success: true, count: 0 };
-    }
-
-    let count = 0;
-    for (const log of logs) {
-      try {
-        await (this.prisma as any).auditEventLog.upsert({
-          where: { id: log.id },
-          update: {}, // Immutable: do nothing if exists
-          create: {
-            id: log.id,
-            action: log.action,
-            userId: log.userId,
-            data: log.data ?? {},
-            deviceType: log.deviceType,
-            createdAt: log.createdAt ? new Date(log.createdAt) : new Date(),
-          },
-        });
-        count++;
-      } catch (e) {
-        // Log error but continue with other logs
-        console.warn(
-          `[Sync] Error upserting audit log ${log.id}:`,
-          (e as Error).message,
-        );
-      }
-    }
-
-    return { success: true, count };
   }
 }

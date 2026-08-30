@@ -1,20 +1,21 @@
 // Stub heavy transitive modules so importing the controller doesn't pull in the
 // realtime gateway → firebase-admin / uuid (ESM) chain that ts-jest can't load.
-jest.mock('../realtime/monitoring.gateway', () => ({
+jest.mock('../../../realtime/monitoring.gateway', () => ({
   MonitoringGateway: class {},
 }));
-jest.mock('../auth/auth.service', () => ({ AuthService: class {} }));
-jest.mock('../auth/pos-sync.guard', () => ({ PosSyncGuard: class {} }));
-jest.mock('../auth/jwt-auth.guard', () => ({ JwtAuthGuard: class {} }));
-jest.mock('../auth/roles.guard', () => ({ RolesGuard: class {} }));
+jest.mock('../../../auth/auth.service', () => ({ AuthService: class {} }));
+jest.mock('../../../auth/pos-sync.guard', () => ({ PosSyncGuard: class {} }));
+jest.mock('../../../auth/jwt-auth.guard', () => ({ JwtAuthGuard: class {} }));
+jest.mock('../../../auth/roles.guard', () => ({ RolesGuard: class {} }));
 
-import { SyncController } from './sync.controller';
-import { PosCallbackClient } from './pos-callback.client';
+import { IngestPosSnapshotService } from './ingest-pos-snapshot.service';
+import { PosConnectionRegistry } from '../pos-connection.registry';
+import { PosCallbackClient } from '../../pos-callback.client';
 import {
   suppressPosEchoForOrder,
   suppressPosEchoForTable,
   suppressPosEchoForReservation,
-} from './sync-echo-guard';
+} from '../../sync-echo-guard';
 
 /**
  * Characterization tests for `POST /sync/manager-data`.
@@ -31,7 +32,7 @@ import {
  * so the real controller logic runs without a database.
  */
 
-type CtorArgs = ConstructorParameters<typeof SyncController>;
+type CtorArgs = ConstructorParameters<typeof IngestPosSnapshotService>;
 type Snapshot = Record<string, unknown>;
 type Override = (arg: unknown) => unknown;
 type PrismaMethod = (arg?: unknown) => Promise<unknown>;
@@ -94,7 +95,7 @@ interface Broadcast {
 }
 
 interface Harness {
-  controller: SyncController;
+  service: IngestPosSnapshotService;
   calls: Call[];
   /** Prisma calls and WS broadcasts interleaved, in the order they happened. */
   trace: string[];
@@ -150,22 +151,26 @@ function makeHarness(overrides: Record<string, Override> = {}): Harness {
   const vaultRead = jest.fn(() => Promise.resolve({}));
   const vaultWrite = jest.fn(() => Promise.resolve());
 
-  const controller = new SyncController(
+  const posConnection = new PosConnectionRegistry(
+    prisma as unknown as CtorArgs[0],
+    new PosCallbackClient(),
+  );
+  const service = new IngestPosSnapshotService(
     prisma as unknown as CtorArgs[0],
     { broadcastUpdate } as unknown as CtorArgs[1],
     { kickPending } as unknown as CtorArgs[2],
-    new PosCallbackClient(),
-    { read: vaultRead, write: vaultWrite } as unknown as CtorArgs[4],
+    { read: vaultRead, write: vaultWrite } as unknown as CtorArgs[3],
+    posConnection,
   );
 
   return {
-    controller,
+    service,
     calls,
     trace,
     broadcasts,
     kickPending,
     vaultWrite,
-    sync: (payload: Snapshot) => controller.syncManagerData(payload),
+    sync: (payload: Snapshot) => service.execute(payload),
   };
 }
 

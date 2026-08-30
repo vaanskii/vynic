@@ -100,23 +100,30 @@ function makeMockPrisma(overrides: Record<string, (arg: any) => any> = {}): {
 }
 
 function makeIngestService(prisma: any) {
-  const gateway = { broadcastUpdate: jest.fn() } as any;
-  const posOutbox = { kickPending: jest.fn() } as any;
+  // Assert the collaborator types once so the doubles reach each constructor
+  // as the type it declares rather than as `any`.
+  const db = prisma as ConstructorParameters<typeof MenuSyncService>[0];
+  const gateway = {
+    broadcastUpdate: jest.fn(),
+  } as unknown as ConstructorParameters<typeof SyncBroadcastService>[1];
+  const posOutbox = {
+    kickPending: jest.fn(),
+  } as unknown as ConstructorParameters<typeof IngestPosSnapshotService>[0];
   const posCallback = new PosCallbackClient();
   const pinVault = {
     read: jest.fn(async () => ({})),
     write: jest.fn(async () => {}),
-  } as any;
-  const posConnection = new PosConnectionRegistry(prisma, posCallback);
+  } as unknown as ConstructorParameters<typeof StaffSyncService>[1];
+  const posConnection = new PosConnectionRegistry(db, posCallback);
   return new IngestPosSnapshotService(
     posOutbox,
     posConnection,
-    new MenuSyncService(prisma),
-    new TableSyncService(prisma),
-    new OrderSyncService(prisma),
-    new StaffSyncService(prisma, pinVault),
-    new BusinessDaySyncService(prisma),
-    new SyncBroadcastService(prisma, gateway),
+    new MenuSyncService(db),
+    new TableSyncService(db),
+    new OrderSyncService(db),
+    new StaffSyncService(db, pinVault),
+    new BusinessDaySyncService(db),
+    new SyncBroadcastService(db, gateway),
   );
 }
 

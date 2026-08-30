@@ -21,6 +21,9 @@ import { BootstrapModule } from './shared/bootstrap/bootstrap.module';
 import { SyncController } from './pos/sync/sync.controller';
 import { IngestPosSnapshotService } from './pos/sync/application/ingest-pos-snapshot.service';
 import { PosConnectionRegistry } from './pos/sync/pos-connection.registry';
+import { MenuSyncService } from './pos/sync/snapshot/menu-sync.service';
+import { OrderSyncService } from './pos/sync/snapshot/order-sync.service';
+import { TableSyncService } from './pos/sync/snapshot/table-sync.service';
 import { RealtimeModule } from './realtime/realtime.module';
 import { WebsiteModule } from './website/website.module';
 
@@ -42,6 +45,9 @@ import { WebsiteModule } from './website/website.module';
     PosOutboxService,
     PosConnectionRegistry,
     IngestPosSnapshotService,
+    MenuSyncService,
+    TableSyncService,
+    OrderSyncService,
     MobileUsersService,
     MobileReportsService,
     MobileDevicesService,

@@ -10,6 +10,9 @@ jest.mock('../../../auth/roles.guard', () => ({ RolesGuard: class {} }));
 
 import { IngestPosSnapshotService } from './ingest-pos-snapshot.service';
 import { PosConnectionRegistry } from '../pos-connection.registry';
+import { MenuSyncService } from '../snapshot/menu-sync.service';
+import { OrderSyncService } from '../snapshot/order-sync.service';
+import { TableSyncService } from '../snapshot/table-sync.service';
 import { PosCallbackClient } from '../../pos-callback.client';
 import {
   suppressPosEchoForOrder,
@@ -161,6 +164,9 @@ function makeHarness(overrides: Record<string, Override> = {}): Harness {
     { kickPending } as unknown as CtorArgs[2],
     { read: vaultRead, write: vaultWrite } as unknown as CtorArgs[3],
     posConnection,
+    new MenuSyncService(prisma as unknown as CtorArgs[0]),
+    new TableSyncService(prisma as unknown as CtorArgs[0]),
+    new OrderSyncService(prisma as unknown as CtorArgs[0]),
   );
 
   return {

@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/contracts/table_identity.dart' as contract;
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/table_layout.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
+import 'package:uuid/uuid.dart';
 
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'business_day_repository.dart';
@@ -20,6 +22,7 @@ class TableRepository {
   TableRepository._();
 
   static bool _reportedCorruptLayout = false;
+  static const Uuid _uuid = Uuid();
 
   static RestaurantTableLayout getRestaurantTableLayout() {
     try {
@@ -73,7 +76,19 @@ class TableRepository {
   static Future<void> saveActiveRestaurantTableLayout(
     RestaurantTableLayout layout,
   ) async {
-    final occupied = occupiedTablesMissingFromLayout(layout);
+    final currentLayout = getRestaurantTableLayout();
+    final canonicalLayout = layout.withCanonicalTableIds(
+      generateId: (table) {
+        final existing = currentLayout.tableForLegacy(
+          floor: table.legacyFloor,
+          tableNumber: table.legacyTableNumber,
+        );
+        return existing != null && contract.isCanonicalTableId(existing.id)
+            ? existing.id
+            : _uuid.v4();
+      },
+    );
+    final occupied = occupiedTablesMissingFromLayout(canonicalLayout);
     if (occupied.isNotEmpty) {
       final labels = occupied
           .map((table) => '${table.floor}/${table.tableNumber}')
@@ -83,7 +98,7 @@ class TableRepository {
         'Close or move their orders first.',
       );
     }
-    await SettingsRepository.saveActiveTableLayout(layout);
+    await SettingsRepository.saveActiveTableLayout(canonicalLayout);
     await ensureTableLayoutConsistency();
     SyncHub.notify(
       SyncEvent(
@@ -94,8 +109,38 @@ class TableRepository {
     );
   }
 
+  /// Persists UUIDs for every existing physical table exactly once.
+  ///
+  /// The active layout already owns stable table definitions and visual
+  /// objects refer to those definitions by ID. Upgrading that existing ID is
+  /// therefore additive: Hive table state, orders and reservations keep using
+  /// their floor/number aliases while sync gains an immutable UUID.
+  static Future<void> ensureCanonicalTableIdentity() async {
+    final layout = getRestaurantTableLayout();
+    final canonicalLayout = layout.withCanonicalTableIds(
+      generateId: (_) => _uuid.v4(),
+    );
+    if (identical(layout, canonicalLayout)) {
+      return;
+    }
+    await SettingsRepository.saveActiveTableLayout(canonicalLayout);
+  }
+
   static Future<void> clearActiveRestaurantTableLayout() async {
+    final previous = getRestaurantTableLayout();
     await SettingsRepository.clearActiveTableLayout();
+    final reset = getRestaurantTableLayout().withCanonicalTableIds(
+      generateId: (table) {
+        final existing = previous.tableForLegacy(
+          floor: table.legacyFloor,
+          tableNumber: table.legacyTableNumber,
+        );
+        return existing != null && contract.isCanonicalTableId(existing.id)
+            ? existing.id
+            : _uuid.v4();
+      },
+    );
+    await SettingsRepository.saveActiveTableLayout(reset);
     await ensureTableLayoutConsistency();
     final layout = getRestaurantTableLayout();
     SyncHub.notify(

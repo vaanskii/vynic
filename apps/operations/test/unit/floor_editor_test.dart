@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/table_layouts/floor_editor/floor_editor_controller.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/table_layouts/floor_editor/floor_editor_model.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/table_layouts/floor_editor/floor_editor_presets.dart';
+import 'package:vynic/core/contracts/table_identity.dart' as contract;
 import 'package:vynic/core/models/table_layout.dart';
 
 /// The editor is a view over the legacy layout model, so these tests are
@@ -97,6 +98,46 @@ void main() {
       expect(changedObject.y, object.y + 19);
     });
 
+    test('upgrades old IDs once and preserves every visual link', () {
+      var sequence = 0;
+      String nextId() {
+        sequence++;
+        return '00000000-0000-4000-8000-${sequence.toString().padLeft(12, '0')}';
+      }
+
+      final old = RestaurantTableLayouts.floorPlanPreview;
+      final upgraded = old.withCanonicalTableIds(generateId: (_) => nextId());
+
+      expect(upgraded.tables, hasLength(old.tables.length));
+      expect(
+        upgraded.tables.every((table) => contract.isCanonicalTableId(table.id)),
+        isTrue,
+      );
+      expect(
+        upgraded.tables.map((table) => table.legacyFloor),
+        old.tables.map((table) => table.legacyFloor),
+      );
+      expect(
+        upgraded.tables.map((table) => table.legacyTableNumber),
+        old.tables.map((table) => table.legacyTableNumber),
+      );
+      for (final table in upgraded.tables) {
+        expect(upgraded.objectForTable(table.id), isNotNull);
+      }
+
+      final reopened = RestaurantTableLayout.fromJson(
+        jsonDecode(jsonEncode(upgraded)) as Map<String, dynamic>,
+      );
+      final repeated = reopened.withCanonicalTableIds(
+        generateId: (_) => throw StateError('must not regenerate'),
+      );
+      expect(identical(reopened, repeated), isTrue);
+      expect(
+        repeated.tables.map((table) => table.id),
+        upgraded.tables.map((table) => table.id),
+      );
+    });
+
     test('survives a JSON encode/decode cycle, as the settings box does', () {
       final rebuilt = EditorDocument.fromLayout(
         RestaurantTableLayouts.floorPlanPreview,
@@ -148,6 +189,7 @@ void main() {
       expect(placed.isTable, isTrue);
       expect(existing.contains(placed.legacyTableNumber), isFalse);
       expect(placed.capacity, greaterThan(0));
+      expect(contract.isCanonicalTableId(placed.tableDefinitionId!), isTrue);
     });
 
     test(

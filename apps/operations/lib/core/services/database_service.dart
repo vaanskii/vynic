@@ -260,6 +260,7 @@ class DatabaseService {
       await SettingsRepository.markSetupComplete();
     }
 
+    await TableRepository.ensureCanonicalTableIdentity();
     await TableRepository.ensureTableLayoutConsistency();
 
     await MenuRepository.ensureKitchenRoutingDefaults();

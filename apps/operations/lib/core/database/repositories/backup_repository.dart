@@ -886,6 +886,7 @@ class BackupRepository {
       );
     }
 
+    await TableRepository.ensureCanonicalTableIdentity();
     await TableRepository.ensureTableLayoutConsistency();
 
     // Force in-app consumers to refresh immediately after restore.

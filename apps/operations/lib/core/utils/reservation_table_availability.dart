@@ -8,9 +8,10 @@ import 'package:vynic/core/models/table_ref.dart';
 /// Table blocking is based only on existing **reservation records** for the
 /// chosen calendar day (not live walk-in / order occupancy on tables).
 ///
-/// [TableRef] is the canonical table identity; the legacy int encoding
-/// (`encodeTableCode` / `decodeTableCode`) survives only for stored
-/// `Reservation.tableNumbers` backfill and the server wire format.
+/// [TableRef] is the lossless reservation identity; the legacy int encoding
+/// (`encodeTableCode` / `decodeTableCode`) survives for stored
+/// `Reservation.tableNumbers` backfill and the server wire format. The
+/// physical table's canonical identity is the UUID on its layout definition.
 class ReservationTableAvailability {
   ReservationTableAvailability._();
 
@@ -22,7 +23,7 @@ class ReservationTableAvailability {
   static bool isSameCalendarDate(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
 
-  /// Canonical tables of a reservation: stored [Reservation.tableRefs] when
+  /// Lossless table aliases of a reservation: stored [Reservation.tableRefs] when
   /// present, otherwise decoded from the legacy int codes.
   static List<TableRef> tableRefsOf(Reservation reservation) {
     final stored = reservation.tableRefs;

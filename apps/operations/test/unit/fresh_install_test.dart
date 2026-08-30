@@ -8,6 +8,7 @@ import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/database/repositories/settings_repository.dart';
 import 'package:vynic/core/database/repositories/table_repository.dart';
 import 'package:vynic/core/database/repositories/user_repository.dart';
+import 'package:vynic/core/contracts/table_identity.dart' as contract;
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation.dart';
@@ -190,6 +191,30 @@ void main() {
       expect(DatabaseCore.tableBox!.values.single.tableNumber, '7');
       expect(TableRepository.getRestaurantTableLayout().tables, isNotEmpty);
     });
+
+    test(
+      'backfills table UUIDs once and persists them across restart reads',
+      () async {
+        await TableRepository.ensureCanonicalTableIdentity();
+        final firstRead = TableRepository.getRestaurantTableLayout();
+        final firstIds = firstRead.tables.map((table) => table.id).toList();
+
+        expect(firstIds, isNotEmpty);
+        expect(firstIds.every(contract.isCanonicalTableId), isTrue);
+        expect(
+          firstRead.tables.map((table) => table.legacyTableNumber),
+          RestaurantTableLayouts.current.tables.map(
+            (table) => table.legacyTableNumber,
+          ),
+        );
+
+        await TableRepository.ensureCanonicalTableIdentity();
+        final secondIds = TableRepository.getRestaurantTableLayout().tables
+            .map((table) => table.id)
+            .toList();
+        expect(secondIds, firstIds);
+      },
+    );
 
     test(
       'a venue that customised its plan keeps that, not the empty one',

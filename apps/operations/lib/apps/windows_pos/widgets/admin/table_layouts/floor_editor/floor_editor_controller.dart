@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
+import 'package:uuid/uuid.dart';
 
 import 'package:vynic/core/models/table_layout.dart';
 import 'floor_editor_model.dart';
@@ -53,6 +54,8 @@ class _HistoryEntry {
 /// Persistence is deliberately *not* here — the screen calls [toLayout] on an
 /// explicit Save. Dragging never touches Hive.
 class FloorEditorController extends ChangeNotifier {
+  static const Uuid _uuid = Uuid();
+
   FloorEditorController({
     required RestaurantTableLayout layout,
     required String initialFloorId,
@@ -446,9 +449,7 @@ class FloorEditorController extends ChangeNotifier {
       tableShape: spec.tableShape,
       capacity: spec.capacity,
       legacyTableNumber: legacyNumber,
-      tableDefinitionId: legacyNumber == null
-          ? null
-          : '${floor.legacyFloor}-table-$legacyNumber',
+      tableDefinitionId: legacyNumber == null ? null : _uuid.v4(),
     );
 
     // Zones go to the bottom so they never cover the tables inside them.
@@ -1021,7 +1022,7 @@ class FloorEditorController extends ChangeNotifier {
         }
         usedNumbers.add(candidate);
         legacyNumber = '$candidate';
-        definitionId = '${floor.legacyFloor}-table-$legacyNumber';
+        definitionId = _uuid.v4();
         label = _duplicateLabel(object.label, legacyNumber);
       }
 

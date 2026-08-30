@@ -143,7 +143,8 @@ class TableSelectionWidgetState extends State<TableSelectionWidget> {
   ///
   /// This used to synthesise 'Second Floor Table N' for the upstairs zone,
   /// which threw away the name the admin had set. The layout owns the name for
-  /// every floor now; identity still travels as (floor, tableNumber).
+  /// every floor now; operational lookup still accepts (floor, tableNumber)
+  /// while the definition carries the canonical UUID for sync.
   String _displayNameForTableId(String tableId) {
     final tableDefinition = _layout.tableForId(tableId);
     if (tableDefinition == null) {

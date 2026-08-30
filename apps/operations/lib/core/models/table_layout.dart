@@ -1,3 +1,5 @@
+import 'package:vynic/core/contracts/table_identity.dart' as contract;
+
 /// How a zone is drawn.
 ///
 /// `svgMap` used to be a third value here, pointing at a bundled SVG drawing of
@@ -75,6 +77,82 @@ class RestaurantTableLayout {
       'tables': tables.map((table) => table.toJson()).toList(),
       'objects': objects.map((object) => object.toJson()).toList(),
     };
+  }
+
+  /// Upgrades presentation-era table keys (for example `floor1-table1`) to
+  /// immutable UUIDs without changing any legacy aliases or geometry.
+  ///
+  /// Existing UUIDs are retained. A changed layout is returned only when an
+  /// upgrade is needed, so persisting the result once makes the migration
+  /// stable across restarts and repeated syncs.
+  RestaurantTableLayout withCanonicalTableIds({
+    required String Function(RestaurantTableDefinition table) generateId,
+  }) {
+    final seen = <String>{};
+    final replacements = <String, String>{};
+    var changed = false;
+
+    for (final table in tables) {
+      if (!seen.add(table.id)) {
+        throw StateError('Duplicate table identity in layout: ${table.id}');
+      }
+      if (contract.isCanonicalTableId(table.id)) {
+        continue;
+      }
+
+      String generated;
+      do {
+        generated = generateId(table);
+        if (!contract.isCanonicalTableId(generated)) {
+          throw StateError('Canonical table ID generator returned a non-UUID');
+        }
+      } while (seen.contains(generated));
+      seen.add(generated);
+      replacements[table.id] = generated;
+      changed = true;
+    }
+
+    if (!changed) {
+      return this;
+    }
+
+    return RestaurantTableLayout(
+      id: id,
+      name: name,
+      zones: zones,
+      tables: [
+        for (final table in tables)
+          RestaurantTableDefinition(
+            id: replacements[table.id] ?? table.id,
+            zoneId: table.zoneId,
+            legacyFloor: table.legacyFloor,
+            legacyTableNumber: table.legacyTableNumber,
+            label: table.label,
+            capacity: table.capacity,
+            sortOrder: table.sortOrder,
+          ),
+      ],
+      objects: [
+        for (final object in objects)
+          RestaurantLayoutObject(
+            id: object.id,
+            zoneId: object.zoneId,
+            type: object.type,
+            label: object.label,
+            x: object.x,
+            y: object.y,
+            width: object.width,
+            height: object.height,
+            rotation: object.rotation,
+            sortOrder: object.sortOrder,
+            tableId: object.tableId == null
+                ? null
+                : replacements[object.tableId] ?? object.tableId,
+            tableShape: object.tableShape,
+            colorHex: object.colorHex,
+          ),
+      ],
+    );
   }
 
   RestaurantZone? zoneForLegacyFloor(String floor) {

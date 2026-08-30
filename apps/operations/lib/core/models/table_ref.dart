@@ -1,11 +1,12 @@
 import 'package:vynic/core/contracts/table_identity.dart' as contract;
 
-/// Stable reference to a table: floor key + table number, e.g. `first/3`.
+/// Lossless reservation compatibility reference: floor key + table number,
+/// e.g. `first/3`.
 ///
-/// This is the canonical way reservations refer to tables. It can represent
-/// any floor/table the layout editor can create, unlike the legacy int
-/// encoding (see `ReservationTableAvailability.encodeTableCode`), which is
-/// kept only for storage backfill and the server wire format.
+/// Reservations currently use this form, and it can represent any floor/table
+/// the layout editor can create. It is not the immutable physical-table UUID;
+/// that is `RestaurantTableDefinition.id`. The legacy int encoding remains for
+/// storage backfill and the server reservation wire format.
 class TableRef {
   const TableRef({required this.floor, required this.tableNumber});
 

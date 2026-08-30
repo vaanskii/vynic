@@ -13,7 +13,7 @@ This document describes the new Hive migration workflow that protects existing P
 - **V2** — settings defaults (`serviceFeePercent`, `serviceFeeEnabled`),
   order amount normalization, reservation status backfill.
 - **V3** — backfills `Reservation.tableRefs` (`floor/tableNumber` strings,
-  the canonical table identity) from the legacy encoded int codes in
+  the lossless reservation compatibility identity) from the legacy encoded int codes in
   `tableNumbers` (`> 10` = second floor). New writes keep both fields in
   sync via `ReservationRepository`; the int codes remain only for backups
   and the server wire format.
@@ -25,6 +25,13 @@ This document describes the new Hive migration workflow that protects existing P
   maps and the future typed conversion agree on shape. No order or sale data
   is restructured; rollback is safe because old builds ignore the extra
   field/keys.
+
+Canonical physical-table UUIDs do not add a `TableModel` Hive field or change
+an adapter, so they do not bump `db_version`. After first-run/legacy seeding,
+`DatabaseService.init()` upgrades the already-persisted
+`activeTableLayoutJson`: every old table-definition key receives a UUIDv4 and
+all visual `tableId` links are rewritten in the same saved document. The pass
+is idempotent and existing UUIDs are never regenerated.
 
 ## Startup Flow
 

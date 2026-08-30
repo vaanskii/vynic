@@ -3,10 +3,11 @@ import 'package:vynic/core/models/table_layout.dart';
 /// Name a table is shown under, as typed into the floor editor's
 /// „მაგიდის სახელი" field.
 ///
-/// The layout is the single source of truth for what a table is *called*;
-/// `(floor, tableNumber)` stays the single source of truth for which table it
-/// *is*. Keeping those apart is what lets a table be renamed to „ფანჯარასთან"
-/// without orders, reservations or live table rows losing track of it.
+/// The layout is the single source of truth for what a table is *called* and
+/// its definition UUID is the canonical physical identity. The
+/// `(floor, tableNumber)` pair remains the operational compatibility lookup.
+/// Keeping those apart lets a table be renamed without orders, reservations,
+/// or live table rows losing track of it.
 ///
 /// Returns null when the runtime row has no layout entry — a legacy table that
 /// was deleted from the plan but still carries an order. Callers supply their

@@ -13,15 +13,10 @@ import 'package:vynic/core/models/table_layout.dart';
 /// [EditorObject] per thing-on-the-canvas and re-splits on save.
 ///
 /// Nothing here is persisted directly: [EditorDocument.toLayout] rebuilds the
-/// exact same model the POS already reads, so old saved layouts keep working
-/// and this pass needs no migration.
-///
-/// FUTURE (stable-UUID migration): [EditorObject.legacyTableNumber] and
-/// [EditorObject.tableDefinitionId] exist only to preserve the current
-/// `(legacyFloor, legacyTableNumber)` identity that orders, reservations and
-/// the Hive table box key on. Once tables carry immutable UUIDs, both fields
-/// collapse into a single `tableId` and [EditorFloor.nextLegacyTableNumber]
-/// can be deleted outright.
+/// exact same model the POS already reads, so old saved layouts keep working.
+/// [EditorObject.tableDefinitionId] is the immutable physical-table UUID;
+/// [EditorObject.legacyTableNumber] remains separately because orders,
+/// reservations and the Hive live-state box still use floor/number aliases.
 @immutable
 class EditorObject {
   const EditorObject({

@@ -59,8 +59,12 @@ class EscposReportRenderer {
       const double width = 576;
       double currentY = 28;
 
-      final bgPaint = Paint()..color = Colors.white;
-      canvas.drawRect(Rect.fromLTWH(0, 0, width, 3600), bgPaint);
+      // Painted last (BlendMode.dstOver, below the content) at the exact
+      // height, so a long report can never outgrow the background and leave
+      // unpainted rows that print as a black block.
+      final bgPaint = Paint()
+        ..color = Colors.white
+        ..blendMode = BlendMode.dstOver;
 
       final reportTypeKa = _resolveReportTypeKa(reportType);
 
@@ -221,18 +225,32 @@ class EscposReportRenderer {
         currentY += fontSize + (isSectionHeader ? 12 : 10);
       }
 
+      final double finalHeight = currentY + 52;
+      canvas.drawRect(Rect.fromLTWH(0, 0, width, finalHeight), bgPaint);
+
       final picture = recorder.endRecording();
-      final img = await picture.toImage(width.toInt(), (currentY + 52).toInt());
+      final img = await picture.toImage(width.toInt(), finalHeight.toInt());
       final byteData = await img.toByteData(format: ui.ImageByteFormat.rawRgba);
 
       if (byteData == null) {
         return null;
       }
 
+      // Any pixel that stayed fully transparent must print as paper, not ink.
+      final buffer = byteData.buffer.asUint8List();
+      for (int i = 0; i < buffer.length; i += 4) {
+        if (buffer[i + 3] == 0) {
+          buffer[i] = 0xFF;
+          buffer[i + 1] = 0xFF;
+          buffer[i + 2] = 0xFF;
+          buffer[i + 3] = 0xFF;
+        }
+      }
+
       final decodedImage = imglib.Image.fromBytes(
         width: img.width,
         height: img.height,
-        bytes: byteData.buffer,
+        bytes: buffer.buffer,
         format: imglib.Format.uint8,
         numChannels: 4,
       );

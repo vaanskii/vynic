@@ -90,9 +90,12 @@ class EscposKitchenRenderer {
       // Start with top margin for better appearance
       double currentY = 20; // Top margin (increased from 10)
 
-      // Background - white (with extra height for margins)
-      final bgPaint = Paint()..color = Colors.white;
-      canvas.drawRect(Rect.fromLTWH(0, 0, width, 2000), bgPaint);
+      // The white background is painted last (BlendMode.dstOver, below the
+      // content) once the real height is known, so a long check can never
+      // outgrow it and leave unpainted rows that print as a black block.
+      final bgPaint = Paint()
+        ..color = Colors.white
+        ..blendMode = BlendMode.dstOver;
 
       // Disable antialiasing for sharper text on thermal printers
       final paint = Paint()
@@ -323,6 +326,9 @@ class EscposKitchenRenderer {
       // Restore canvas layer
       canvas.restore();
 
+      // Paint the white background behind everything at the exact height.
+      canvas.drawRect(Rect.fromLTWH(0, 0, width, finalHeight), bgPaint);
+
       // Finish the picture with proper height
       final picture = recorder.endRecording();
       final img = await picture.toImage(width.toInt(), finalHeight.toInt());
@@ -334,6 +340,16 @@ class EscposKitchenRenderer {
 
       // Convert raw RGBA bytes to imglib.Image (2-3x faster than PNG roundtrip)
       final buffer = byteData.buffer.asUint8List();
+
+      // Any pixel that stayed fully transparent must print as paper, not ink.
+      for (int i = 0; i < buffer.length; i += 4) {
+        if (buffer[i + 3] == 0) {
+          buffer[i] = 0xFF;
+          buffer[i + 1] = 0xFF;
+          buffer[i + 2] = 0xFF;
+          buffer[i + 3] = 0xFF;
+        }
+      }
       final decodedImage = imglib.Image.fromBytes(
         width: img.width,
         height: img.height,

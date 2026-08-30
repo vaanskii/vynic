@@ -219,25 +219,12 @@ class EscposReceiptRenderer {
       final bool isCloseTableReceipt = resolvedReceiptType == 'close_table';
       final bool isMenuCountReceipt = resolvedReceiptType == 'menu_count';
       final bool isTakeAwayReceipt = _isTakeAwayTableLabel(tableNumber);
-      final bool hasPaymentMethod =
-          isCloseTableReceipt &&
-          _resolvePaymentMethodLabel(
-                paymentMethod: paymentMethod,
-                items: items,
-                isEnglish: isEnglish,
-              ) !=
-              null;
-
-      final double estimatedHeight =
-          560 + (parsedRows.length * 42) + (hasPaymentMethod ? 40 : 0) + 170;
-
-      final double backgroundHeight = estimatedHeight < 2000
-          ? 2000
-          : estimatedHeight + 120;
-
-      // Background - white
-      final bgPaint = Paint()..color = Colors.white;
-      canvas.drawRect(Rect.fromLTWH(0, 0, width, backgroundHeight), bgPaint);
+      // Background - white. Painted last (BlendMode.dstOver, below the content)
+      // at the exact height, so a receipt with many items can never outgrow the
+      // background and leave unpainted rows that print as a black block.
+      final bgPaint = Paint()
+        ..color = Colors.white
+        ..blendMode = BlendMode.dstOver;
 
       // Text painter helper
       void drawText(
@@ -789,6 +776,8 @@ class EscposReceiptRenderer {
       // Minimum height
       const double minHeight = 300;
       final double finalHeight = currentY < minHeight ? minHeight : currentY;
+
+      canvas.drawRect(Rect.fromLTWH(0, 0, width, finalHeight), bgPaint);
 
       // Finish the picture
       final picture = recorder.endRecording();

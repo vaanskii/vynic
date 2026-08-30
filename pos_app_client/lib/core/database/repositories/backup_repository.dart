@@ -42,7 +42,7 @@ class BackupRepository {
         ? File(targetFilePath)
         : () {
             final backupDirectory = Directory(
-              '$DatabaseCore.dataDirectoryPath/backups',
+              '${DatabaseCore.dataDirectoryPath}/backups',
             );
             if (!backupDirectory.existsSync()) {
               backupDirectory.createSync(recursive: true);

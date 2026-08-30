@@ -82,6 +82,7 @@ void main() {
     // The curated settings block reads printer defaults through dotenv.
     dotenv.loadFromString(envString: 'POS_ENV=test');
     _tempDir = await Directory.systemTemp.createTemp('vynic_backup');
+    DatabaseCore.dataDirectoryPath = _tempDir.path;
     Hive.init(_tempDir.path);
     _registerAdapters();
     await _openBoxes();
@@ -126,6 +127,17 @@ void main() {
     ]) {
       expect(payload.containsKey(section), isTrue, reason: section);
     }
+  });
+
+  test('default backup path uses the resolved database directory', () async {
+    final backup = await BackupRepository.createDataBackup();
+
+    expect(
+      backup.path,
+      startsWith('${DatabaseCore.dataDirectoryPath}${Platform.pathSeparator}'),
+    );
+    expect(backup.path, contains('${Platform.pathSeparator}backups'));
+    expect(backup.path, isNot(contains('DatabaseCore.dataDirectoryPath')));
   });
 
   test(

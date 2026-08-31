@@ -5,6 +5,7 @@ control-plane API it unlocks.
 
 Companion documents: [PLATFORM_CONTROL_PLANE.md](PLATFORM_CONTROL_PLANE.md)
 (the roadmap this closes the first item of),
+[PLATFORM_ADMIN_PANEL.md](PLATFORM_ADMIN_PANEL.md) (the Step 7B consumer),
 [PRODUCT_ENTITLEMENTS.md](PRODUCT_ENTITLEMENTS.md),
 [PUBLIC_TENANCY.md](PUBLIC_TENANCY.md),
 [CLOUD_EDGE_TRANSPORT.md](CLOUD_EDGE_TRANSPORT.md),
@@ -126,7 +127,7 @@ Everything below requires a platform token.
 | `PUT /platform/venues/:venueId/devices/:deviceId/status` | ACTIVE / DISABLED / REVOKED |
 | `POST /platform/venues/:venueId/devices/:deviceId/credential` | rotate |
 | `POST /platform/venues/:venueId/test-command` | NOOP only |
-| `GET /platform/audit` | the platform's own trail |
+| `GET /platform/audit` | the platform's own trail; `limit`, `offset`, optional `targetId` |
 
 Controllers validate and delegate; the rules live in the services next to the
 invariants they protect. Nothing untyped reaches Prisma: UUIDs, enums, feature
@@ -275,4 +276,5 @@ Deliberately absent, with reasons already recorded:
   Restaurants must never log in as a `PlatformUser`.
 - **Restaurant custom roles.** Vynic-controlled permission catalogue plus
   Venue-owned role names, after a Venue administration boundary exists.
-- **Admin Panel UI.** 7B.
+- **Admin Panel UI.** Built in Step 7B; see
+  [PLATFORM_ADMIN_PANEL.md](PLATFORM_ADMIN_PANEL.md).

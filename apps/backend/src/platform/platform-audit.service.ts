@@ -68,7 +68,7 @@ export class PlatformAuditService {
     }
   }
 
-  /** Most recent first, for a future admin panel. */
+  /** Most recent first, with bounded offset pagination for the admin panel. */
   async recent(limit: number, offset: number, targetId?: string) {
     return this.prisma.platformAuditEvent.findMany({
       where: targetId ? { targetId } : undefined,

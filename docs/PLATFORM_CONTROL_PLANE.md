@@ -1,8 +1,10 @@
 # Platform control plane
 
-**Item 1 is built (Step 7A) — see
-[PLATFORM_CONTROL_PLANE_API.md](PLATFORM_CONTROL_PLANE_API.md). Items 2 and 3
-remain roadmap only.**
+**The administrator boundary and API are built (Step 7A), and the authenticated
+operator UI is built (Step 7B). See
+[PLATFORM_CONTROL_PLANE_API.md](PLATFORM_CONTROL_PLANE_API.md) and
+[PLATFORM_ADMIN_PANEL.md](PLATFORM_ADMIN_PANEL.md). Items 2 and 3 remain roadmap
+only.**
 
 Three related things are recorded here because the architecture keeps arriving at
 them and then correctly declining to build them early: a trusted platform
@@ -120,7 +122,7 @@ control-plane writes                       ← Step 7A, done
 (plans, feature overrides, website mode,
  domains, devices, device credentials)
         ↓
-Vynic Admin Panel                          ← Step 7B, next
+Vynic Admin Panel                          ← Step 7B, done
         ↓
 Venue administration boundary
         ↓

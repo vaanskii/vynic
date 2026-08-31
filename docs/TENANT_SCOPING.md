@@ -71,8 +71,16 @@ All existing rows are backfilled to the deterministic Step 4A bootstrap Venue. T
 - **Step 6B — complete.** The POS now claims, executes, journals and acknowledges Cloud work with its own Device credential, over generated Dart contracts, without ever depending on Cloud to operate. `NOOP` only; the legacy LAN callback path still carries every real command. See [CLOUD_EDGE_TRANSPORT.md](CLOUD_EDGE_TRANSPORT.md).
 - **Step 6C — optional, and not a prerequisite.** Migrating the 18 legacy POS callback commands onto the Edge queue. It gates a *Cloud deployment*, not the control plane, so it can be staged behind 7A.
 - **Step 7A — complete.** `PlatformUser` is a principal above every tenant, with its own authentication and an authenticated control-plane API for organizations, venues, plans, feature overrides, website mode, domains, devices and device credentials — all audited. See [PLATFORM_CONTROL_PLANE_API.md](PLATFORM_CONTROL_PLANE_API.md).
-- **Step 7B — next.** The Vynic Admin Panel, consuming that API.
+- **Step 7B — complete.** The authenticated Vynic Admin Panel now consumes that
+  API for organization, Venue, product, website, domain, Device and platform
+  audit operations. See [PLATFORM_ADMIN_PANEL.md](PLATFORM_ADMIN_PANEL.md).
 
-Then: Manager App Cloud networking, and the rest of the control plane — see [PLATFORM_CONTROL_PLANE.md](PLATFORM_CONTROL_PLANE.md) for why platform-admin identity gates the Backoffice, custom roles, and per-Venue payment credentials ([PAYMENT_INTEGRATIONS.md](PAYMENT_INTEGRATIONS.md)).
+Recommended next: production Cloud deployment foundation. The control-plane
+boundary and its operator UI now exist, but separate production origins, HTTPS,
+runtime secrets, hosting and deployment verification are not yet established.
+See [PLATFORM_CONTROL_PLANE.md](PLATFORM_CONTROL_PLANE.md) for why the completed
+platform-admin boundary still remains distinct from the Backoffice, custom
+roles, and per-Venue payment credentials
+([PAYMENT_INTEGRATIONS.md](PAYMENT_INTEGRATIONS.md)).
 
 Still owned by later phases: venue-discriminating Manager login, the generic SaaS website frontend and the custom website runtime, domain-management UI, Zone, the reservation race / `TableHold`, cloud deployment, Vynic SaaS billing, onboarding and device activation, signed offline commercial licences, retiring the legacy `POS_SYNC_API_KEY`, and the previously recorded sync-correctness findings.

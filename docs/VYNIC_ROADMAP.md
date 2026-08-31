@@ -1,6 +1,6 @@
 # Vynic Roadmap
 
-**Date:** 2026-07-21. Strict priority order, minimal parallel work. No time estimates by design.
+**Updated:** 2026-08-31. Strict priority order, minimal parallel work. No time estimates by design.
 P0 = production blockers · P1 = core Vankisi launch · P2 = high-value operations · P3 = growth.
 Designs referenced: [VYNIC_ARCHITECTURE_PLAN.md](VYNIC_ARCHITECTURE_PLAN.md) (§n). Findings: [VYNIC_PRODUCTION_GAPS.md](VYNIC_PRODUCTION_GAPS.md) / [VYNIC_SECURITY_AUDIT.md](VYNIC_SECURITY_AUDIT.md).
 
@@ -158,8 +158,19 @@ Still ahead, in no fixed order:
 
 - **Generic SaaS restaurant website** — one codebase serving many Venues from configuration, separate from the Vankisi custom site ([FUTURE_SAAS_WEBSITE.md](FUTURE_SAAS_WEBSITE.md)).
 - **Custom website runtime and deployment** — deliberately an open decision, not an implementation ([CUSTOM_WEBSITE_RUNTIME.md](CUSTOM_WEBSITE_RUNTIME.md)).
-- **Host/domain → Venue resolution** — required by both website products before either touches Venue-owned Cloud data.
-- **Platform control plane** — `apps/platform-web/` as the Vynic admin UI over Organizations, Venues, plans, feature access, website mode, and devices; the backend model supports it, the UI and its mutation APIs do not exist.
+- **Host/domain → Venue resolution** — complete for registered domains; public
+  requests fail closed on unknown hosts.
+- **Step 7A Platform Admin identity/control plane — complete.** A separate
+  `PlatformUser` principal owns authenticated, audited organization, Venue,
+  product, domain, Device and NOOP-control APIs.
+- **Step 7B Vynic Admin Panel — complete.** `apps/platform-web/` now provides the
+  authenticated operator UI over those APIs, including one-time POS credential
+  provisioning. See [PLATFORM_ADMIN_PANEL.md](PLATFORM_ADMIN_PANEL.md).
+- **Recommended next: Production Cloud Deployment Foundation.** The real
+  control plane can now be exercised, but production frontend/backend origins,
+  HTTPS, CORS, hosting, secrets and deployment verification remain the immediate
+  blocker to operating it outside development. This does not include the Step
+  6C legacy command migration.
 - **Manager Cloud tenancy, then Manager feature enforcement** — `MANAGER_APP` is resolvable today but enforced nowhere, and must never gate POS → Cloud sync.
 - **Billing and subscriptions** — no lifecycle, provider, or pricing has been chosen; plan assignment is deliberately not a subscription.
 - **Signed offline commercial entitlements** — distinct from the existing Ed25519 developer licence.

@@ -23,3 +23,5 @@
 
 - `apps/operations/` — Flutter app (Windows POS + Vynic Manager mobile)
 - `apps/backend/` — NestJS API and sync services
+- `apps/platform-web/` — React/Vite Vynic product site and authenticated Platform Admin Panel
+- `apps/venue-web/` — custom Vankisi restaurant website

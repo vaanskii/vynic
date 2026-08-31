@@ -267,11 +267,48 @@ enum DeviceStatus {
   @@schema("pos")
 }
 
+enum VenueStatus {
+  ACTIVE
+  DISABLED
+
+  @@schema("pos")
+}
+
+/// Customer or business account. Billing and entitlements are deliberately
+/// deferred; Step 4A establishes ownership only.
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  venues    Venue[]
+
+  @@schema("pos")
+}
+
+/// One physical restaurant/location owned by an Organization.
+model Venue {
+  id             String       @id @default(uuid())
+  organizationId String
+  name           String
+  status         VenueStatus  @default(ACTIVE)
+  timezone       String
+  currency       String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  devices        Device[]
+
+  @@index([organizationId])
+  @@schema("pos")
+}
+
 /// One concrete Vynic POS installation authenticated for platform sync.
 /// The raw credential secret is issued once; only its Argon2id verifier is
-/// persisted. Tenancy is deliberately absent until the later Venue phase.
+/// persisted. Its Venue is the authoritative tenant boundary for POS auth.
 model Device {
   id             String       @id @default(uuid())
+  venueId        String
   installationId String       @unique
   displayName    String
   platform       String
@@ -280,8 +317,10 @@ model Device {
   lastSeenAt     DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+  venue          Venue        @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
   @@index([status])
+  @@index([venueId])
   @@schema("pos")
 }
 

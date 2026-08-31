@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { timingSafeEqual } from 'node:crypto';
 import { DeviceCredentialService } from './device-credential.service';
+import { LegacyPosTenantService } from './legacy-pos-tenant.service';
 import { PosAuthenticatedRequest } from './pos-auth-context';
 
 /**
@@ -19,7 +20,10 @@ import { PosAuthenticatedRequest } from './pos-auth-context';
 export class PosSyncGuard implements CanActivate {
   private static warnedMissingKey = false;
 
-  constructor(private readonly deviceCredentials: DeviceCredentialService) {}
+  constructor(
+    private readonly deviceCredentials: DeviceCredentialService,
+    private readonly legacyTenant: LegacyPosTenantService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const expected = process.env.POS_SYNC_API_KEY?.trim();
@@ -51,10 +55,7 @@ export class PosSyncGuard implements CanActivate {
         );
         PosSyncGuard.warnedMissingKey = true;
       }
-      req.posAuthContext = {
-        authenticationMode: 'legacy_shared_key',
-        deviceId: null,
-      };
+      req.posAuthContext = await this.requireLegacyContext();
       return true;
     }
 
@@ -63,11 +64,16 @@ export class PosSyncGuard implements CanActivate {
     }
     // Transitional compatibility path. Remove only after every deployed POS
     // has received a Device credential through the future onboarding flow.
-    req.posAuthContext = {
-      authenticationMode: 'legacy_shared_key',
-      deviceId: null,
-    };
+    req.posAuthContext = await this.requireLegacyContext();
     return true;
+  }
+
+  private async requireLegacyContext() {
+    const context = await this.legacyTenant.resolveContext();
+    if (!context) {
+      throw new UnauthorizedException('Legacy POS venue is unavailable');
+    }
+    return context;
   }
 
   private matchesLegacyKey(provided: string, expected: string): boolean {

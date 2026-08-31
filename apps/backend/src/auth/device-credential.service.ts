@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
-import { DeviceStatus } from '@prisma/client';
+import { DeviceStatus, VenueStatus } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../prisma.service';
 import { PosAuthContext } from './pos-auth-context';
@@ -12,6 +12,7 @@ const UUID_PATTERN =
 const SECRET_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 
 export interface IssueDeviceCredentialInput {
+  venueId: string;
   installationId: string;
   displayName: string;
   platform: string;
@@ -40,6 +41,9 @@ export class DeviceCredentialService {
   async issueCredential(
     input: IssueDeviceCredentialInput,
   ): Promise<IssuedDeviceCredential> {
+    if (!UUID_PATTERN.test(input.venueId)) {
+      throw new TypeError('venueId must be a UUID');
+    }
     if (!UUID_PATTERN.test(input.installationId)) {
       throw new TypeError('installationId must be a UUID');
     }
@@ -50,6 +54,7 @@ export class DeviceCredentialService {
     await this.prisma.device.create({
       data: {
         id: deviceId,
+        venueId: input.venueId,
         installationId: input.installationId,
         displayName: input.displayName,
         platform: input.platform,
@@ -76,9 +81,18 @@ export class DeviceCredentialService {
         credentialHash: true,
         status: true,
         lastSeenAt: true,
+        venue: {
+          select: { id: true, organizationId: true, status: true },
+        },
       },
     });
-    if (!device || device.status !== DeviceStatus.ACTIVE) return null;
+    if (
+      !device ||
+      device.status !== DeviceStatus.ACTIVE ||
+      device.venue.status !== VenueStatus.ACTIVE
+    ) {
+      return null;
+    }
 
     const valid = await argon2.verify(device.credentialHash, parsed.secret);
     if (!valid) return null;
@@ -94,7 +108,12 @@ export class DeviceCredentialService {
       });
     }
 
-    return { authenticationMode: 'device', deviceId: device.id };
+    return {
+      authenticationMode: 'device',
+      deviceId: device.id,
+      venueId: device.venue.id,
+      organizationId: device.venue.organizationId,
+    };
   }
 
   private parseCredential(

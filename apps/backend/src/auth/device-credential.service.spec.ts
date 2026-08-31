@@ -1,9 +1,11 @@
-import { DeviceStatus } from '@prisma/client';
+import { DeviceStatus, VenueStatus } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../prisma.service';
 import { DeviceCredentialService } from './device-credential.service';
 
 const DEVICE_ID = '11111111-1111-4111-8111-111111111111';
+const VENUE_ID = '22222222-2222-4222-8222-222222222222';
+const ORGANIZATION_ID = '33333333-3333-4333-8333-333333333333';
 const CORRECT_SECRET = 'A'.repeat(43);
 const WRONG_SECRET = 'B'.repeat(43);
 
@@ -18,7 +20,7 @@ interface DeviceDelegateMock {
 }
 
 interface CreateDeviceCall {
-  data: { credentialHash: string };
+  data: { credentialHash: string; venueId: string };
 }
 
 interface UpdateLastSeenCall {
@@ -45,15 +47,35 @@ async function activeDevice(secret: string, lastSeenAt: Date | null = null) {
     credentialHash: await argon2.hash(secret, { type: argon2.argon2id }),
     status: DeviceStatus.ACTIVE,
     lastSeenAt,
+    venue: {
+      id: VENUE_ID,
+      organizationId: ORGANIZATION_ID,
+      status: VenueStatus.ACTIVE,
+    },
   };
 }
 
 describe('DeviceCredentialService', () => {
+  it('requires a canonical Venue UUID when issuing a credential', async () => {
+    const { service, device } = makeService();
+
+    await expect(
+      service.issueCredential({
+        venueId: 'client-selected-venue',
+        installationId: '22222222-2222-4222-8222-222222222222',
+        displayName: 'Kitchen POS',
+        platform: 'windows',
+      }),
+    ).rejects.toThrow(new TypeError('venueId must be a UUID'));
+    expect(device.create).not.toHaveBeenCalled();
+  });
+
   it('requires a high-entropy UUID installation identity', async () => {
     const { service, device } = makeService();
 
     await expect(
       service.issueCredential({
+        venueId: VENUE_ID,
         installationId: 'KAPRISI-7K3QM',
         displayName: 'Kitchen POS',
         platform: 'windows',
@@ -67,6 +89,7 @@ describe('DeviceCredentialService', () => {
     device.create.mockResolvedValue({});
 
     const issued = await service.issueCredential({
+      venueId: VENUE_ID,
       installationId: '22222222-2222-4222-8222-222222222222',
       displayName: 'Kitchen POS',
       platform: 'windows',
@@ -80,6 +103,7 @@ describe('DeviceCredentialService', () => {
       [CreateDeviceCall],
     ];
     const createData = createCalls[0][0].data;
+    expect(createData).toMatchObject({ venueId: VENUE_ID });
     expect(createData.credentialHash).not.toBe(rawSecret);
     await expect(
       argon2.verify(createData.credentialHash, rawSecret),
@@ -96,6 +120,8 @@ describe('DeviceCredentialService', () => {
     ).resolves.toEqual({
       authenticationMode: 'device',
       deviceId: DEVICE_ID,
+      venueId: VENUE_ID,
+      organizationId: ORGANIZATION_ID,
     });
     const updateCalls = device.update.mock.calls as unknown as [
       [UpdateLastSeenCall],
@@ -140,6 +166,20 @@ describe('DeviceCredentialService', () => {
     },
   );
 
+  it('rejects a Device whose Venue is disabled', async () => {
+    const { service, device } = makeService();
+    const row = await activeDevice(CORRECT_SECRET);
+    device.findUnique.mockResolvedValue({
+      ...row,
+      venue: { ...row.venue, status: VenueStatus.DISABLED },
+    });
+
+    await expect(
+      service.verifyCredential(credential(CORRECT_SECRET)),
+    ).resolves.toBeNull();
+    expect(device.update).not.toHaveBeenCalled();
+  });
+
   it.each([
     '',
     'device-only',
@@ -171,6 +211,8 @@ describe('DeviceCredentialService', () => {
     ).resolves.toEqual({
       authenticationMode: 'device',
       deviceId: DEVICE_ID,
+      venueId: VENUE_ID,
+      organizationId: ORGANIZATION_ID,
     });
     expect(device.update).not.toHaveBeenCalled();
   });

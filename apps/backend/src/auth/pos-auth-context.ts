@@ -5,6 +5,8 @@ export type PosAuthenticationMode = 'device' | 'legacy_shared_key';
 export interface PosAuthContext {
   authenticationMode: PosAuthenticationMode;
   deviceId: string | null;
+  venueId: string;
+  organizationId: string;
 }
 
 export interface PosAuthenticatedRequest {

@@ -129,6 +129,8 @@ describe('SyncController — delegation', () => {
     const authContext = {
       authenticationMode: 'legacy_shared_key' as const,
       deviceId: null,
+      venueId: 'bootstrap-venue',
+      organizationId: 'bootstrap-organization',
     };
 
     await controller.syncManagerData(body, authContext);
@@ -144,7 +146,12 @@ describe('SyncController — delegation', () => {
     await expect(
       controller.syncManagerData(
         {},
-        { authenticationMode: 'device', deviceId: 'device-1' },
+        {
+          authenticationMode: 'device',
+          deviceId: 'device-1',
+          venueId: 'venue-1',
+          organizationId: 'organization-1',
+        },
       ),
     ).resolves.toEqual({ success: true, syncedAt: 'stamped' });
   });
@@ -159,12 +166,18 @@ describe('SyncController — delegation', () => {
     const authContext = {
       authenticationMode: 'device' as const,
       deviceId: 'verified-device',
+      venueId: 'verified-venue',
+      organizationId: 'verified-organization',
     };
 
     await controller.syncManagerData(body, authContext);
 
     expect(execute).toHaveBeenCalledWith(body, authContext);
     expect((execute.mock.calls as unknown[][])[0][1]).not.toBe(body);
+    expect((execute.mock.calls as unknown[][])[0][1]).toMatchObject({
+      venueId: 'verified-venue',
+      organizationId: 'verified-organization',
+    });
   });
 
   it('hands audit reports to the audit use case and returns its result', async () => {

@@ -1,5 +1,6 @@
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { DeviceCredentialService } from './device-credential.service';
+import { LegacyPosTenantService } from './legacy-pos-tenant.service';
 import { PosAuthenticatedRequest, PosAuthContext } from './pos-auth-context';
 import { PosSyncGuard } from './pos-sync.guard';
 
@@ -7,6 +8,13 @@ interface GuardHarness {
   context: ExecutionContext;
   request: PosAuthenticatedRequest;
 }
+
+const LEGACY_CONTEXT: PosAuthContext = {
+  authenticationMode: 'legacy_shared_key',
+  deviceId: null,
+  venueId: 'bootstrap-venue',
+  organizationId: 'bootstrap-organization',
+};
 
 function contextWithHeaders(
   headers: PosAuthenticatedRequest['headers'],
@@ -20,7 +28,10 @@ function contextWithHeaders(
   return { context, request };
 }
 
-function makeGuard(deviceContext: PosAuthContext | null = null): {
+function makeGuard(
+  deviceContext: PosAuthContext | null = null,
+  legacyContext: PosAuthContext | null = LEGACY_CONTEXT,
+): {
   guard: PosSyncGuard;
   verifyCredential: jest.Mock;
 } {
@@ -30,8 +41,11 @@ function makeGuard(deviceContext: PosAuthContext | null = null): {
       value?.startsWith('vynic-device-v1.') === true,
     verifyCredential,
   } as unknown as DeviceCredentialService;
+  const legacyTenant = {
+    resolveContext: jest.fn(() => Promise.resolve(legacyContext)),
+  } as unknown as LegacyPosTenantService;
   return {
-    guard: new PosSyncGuard(deviceCredentials),
+    guard: new PosSyncGuard(deviceCredentials, legacyTenant),
     verifyCredential,
   };
 }
@@ -67,6 +81,8 @@ describe('PosSyncGuard — transitional authentication', () => {
     expect(request.posAuthContext).toEqual({
       authenticationMode: 'legacy_shared_key',
       deviceId: null,
+      venueId: 'bootstrap-venue',
+      organizationId: 'bootstrap-organization',
     });
     expect(verifyCredential).not.toHaveBeenCalled();
   });
@@ -88,6 +104,8 @@ describe('PosSyncGuard — transitional authentication', () => {
     const deviceContext: PosAuthContext = {
       authenticationMode: 'device',
       deviceId: 'device-1',
+      venueId: 'venue-1',
+      organizationId: 'organization-1',
     };
     const { guard, verifyCredential } = makeGuard(deviceContext);
     const credential = 'vynic-device-v1.device-1.redacted-secret';
@@ -127,6 +145,19 @@ describe('PosSyncGuard — transitional authentication', () => {
     );
   });
 
+  it('rejects the shared key when the bootstrap Venue is unavailable', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.POS_SYNC_API_KEY = 'legacy-secret';
+    const { guard } = makeGuard(null, null);
+    const { context } = contextWithHeaders({
+      'x-pos-sync-key': 'legacy-secret',
+    });
+
+    await expect(guard.canActivate(context)).rejects.toThrow(
+      new UnauthorizedException('Legacy POS venue is unavailable'),
+    );
+  });
+
   it('rejects missing authentication when a shared key is configured', async () => {
     process.env.NODE_ENV = 'production';
     process.env.POS_SYNC_API_KEY = 'legacy-secret';
@@ -162,6 +193,8 @@ describe('PosSyncGuard — transitional authentication', () => {
     expect(request.posAuthContext).toEqual({
       authenticationMode: 'legacy_shared_key',
       deviceId: null,
+      venueId: 'bootstrap-venue',
+      organizationId: 'bootstrap-organization',
     });
   });
 });

@@ -27,6 +27,7 @@ const PKG = join(HERE, '..');
 const REPO = join(PKG, '..', '..');
 
 const SCHEMA = join(PKG, 'schema', 'table-identity.contract.json');
+const EDGE_SCHEMA = join(PKG, 'schema', 'edge-command.contract.json');
 
 // The canonical rendered artefacts.
 const DART_OUT = join(PKG, 'generated', 'dart', 'table_identity.dart');
@@ -56,6 +57,22 @@ const TS_APP_OUT = join(
   'shared',
   'contracts',
   'table-identity.ts',
+);
+
+// The Cloud <-> Edge envelope renders TypeScript only. There is no Dart
+// consumer yet: the POS still receives work over the legacy LAN callback path,
+// and emitting an unused Dart file into apps/operations would be dead code
+// pretending to be a contract. Step 6B adds the Dart output alongside the Edge
+// client that reads it.
+const EDGE_TS_OUT = join(PKG, 'generated', 'typescript', 'edge-command.ts');
+const EDGE_TS_APP_OUT = join(
+  REPO,
+  'apps',
+  'backend',
+  'src',
+  'shared',
+  'contracts',
+  'edge-command.ts',
 );
 
 const contract = JSON.parse(readFileSync(SCHEMA, 'utf8'));
@@ -400,16 +417,120 @@ export function tryDecodeTableRef(
 `;
 }
 
+// ── Cloud ↔ Edge command envelope ────────────────────────────────────────────
+
+const edgeContract = JSON.parse(readFileSync(EDGE_SCHEMA, 'utf8'));
+const edgeSchemaRel = relative(REPO, EDGE_SCHEMA).replaceAll('\\', '/');
+
+function edgeBanner() {
+  return [
+    '// GENERATED FILE — DO NOT EDIT.',
+    '//',
+    `// Rendered from ${edgeSchemaRel}`,
+    '// by packages/contracts/scripts/generate.mjs.',
+    '//',
+    '// Change the schema and regenerate; edits here are overwritten and',
+    '// CI fails on a stale or hand-edited output.',
+  ].join('\n');
+}
+
+function renderEdgeTs() {
+  const { contractVersion, limits, resultStatuses, commandTypes } = edgeContract;
+  const typeUnion = commandTypes.map((c) => `'${c.type}'`).join(' | ');
+  const typeConsts = commandTypes
+    .map((c) => `  /** ${c.description} */\n  ${c.type}: '${c.type}',`)
+    .join('\n');
+  const idempotentSet = commandTypes
+    .filter((c) => c.idempotent)
+    .map((c) => `  '${c.type}',`)
+    .join('\n');
+  const resultUnion = resultStatuses.map((r) => `'${r}'`).join(' | ');
+
+  return `${edgeBanner()}
+
+/**
+ * The Cloud → Edge work contract.
+ *
+ * Cloud cannot reach a restaurant's LAN, so the Edge opens the connection with
+ * its Device credential, claims work, executes it locally, and reports the
+ * outcome. Delivery is at-least-once: a claim is a lease, and a lease that
+ * expires unacknowledged is offered again. Every command type must therefore be
+ * safe to execute twice, which is what \`EDGE_IDEMPOTENT_COMMAND_TYPES\` records.
+ *
+ * The version travels on every envelope so an Edge running an older build can
+ * decline work it does not understand rather than guessing at it.
+ */
+export const EDGE_COMMAND_CONTRACT_VERSION = ${contractVersion};
+
+/** Batch size the Edge gets when it asks for none, and the ceiling it cannot exceed. */
+export const EDGE_COMMAND_DEFAULT_BATCH_SIZE = ${limits.defaultBatchSize};
+export const EDGE_COMMAND_MAX_BATCH_SIZE = ${limits.maxBatchSize};
+
+/** How long a claimed command stays leased before it becomes available again. */
+export const EDGE_COMMAND_CLAIM_LEASE_SECONDS = ${limits.claimLeaseSeconds};
+
+/** Redeliveries before a command is given up on and recorded as failed. */
+export const EDGE_COMMAND_MAX_ATTEMPTS = ${limits.maxAttempts};
+
+export const EdgeCommandTypes = {
+${typeConsts}
+} as const;
+
+export type EdgeCommandType = ${typeUnion};
+
+/**
+ * Command types that may be executed more than once without extra effect.
+ *
+ * A type absent from this set must not be enqueued until its Edge handler
+ * carries its own idempotency, because at-least-once delivery will eventually
+ * hand it over twice.
+ */
+export const EDGE_IDEMPOTENT_COMMAND_TYPES: ReadonlySet<string> = new Set([
+${idempotentSet}
+]);
+
+export type EdgeCommandResultStatus = ${resultUnion};
+
+/** One unit of work, as the Edge receives it. */
+export interface EdgeCommandEnvelope {
+  contractVersion: number;
+  commandId: string;
+  type: string;
+  payload: unknown;
+  /** Stable per Venue: the same intent enqueued twice is the same command. */
+  idempotencyKey: string;
+  /** How many times this command has been handed out, this delivery included. */
+  attempt: number;
+  issuedAt: string;
+  /** After this instant the command may be offered to an Edge again. */
+  leaseExpiresAt: string;
+}
+
+/** What the Edge reports back once it has executed — or failed to execute — a command. */
+export interface EdgeCommandResult {
+  contractVersion: number;
+  commandId: string;
+  status: EdgeCommandResultStatus;
+  /** Short machine-readable outcome, e.g. \`printer_offline\`. */
+  code?: string | null;
+  detail?: string | null;
+}
+`;
+}
+
 // ── Emit ─────────────────────────────────────────────────────────────────────
 
 const dart = renderDart();
 const ts = renderTs();
+const edgeTs = renderEdgeTs();
 
 const outputs = [
   { path: DART_OUT, body: dart },
   { path: DART_APP_OUT, body: dart },
   { path: TS_OUT, body: ts },
   { path: TS_APP_OUT, body: ts },
+  { path: EDGE_TS_OUT, body: edgeTs },
+  { path: EDGE_TS_APP_OUT, body: edgeTs },
 ];
 
 const check = process.argv.includes('--check');

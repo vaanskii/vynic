@@ -149,6 +149,24 @@ describe('SyncController — delegation', () => {
     ).resolves.toEqual({ success: true, syncedAt: 'stamped' });
   });
 
+  it('keeps client-supplied venue identity out of the authenticated context', async () => {
+    const { controller, execute } = makeController();
+    const body = {
+      venueId: 'client-selected-venue',
+      businessDate: '2026-06-27',
+      orders: [],
+    };
+    const authContext = {
+      authenticationMode: 'device' as const,
+      deviceId: 'verified-device',
+    };
+
+    await controller.syncManagerData(body, authContext);
+
+    expect(execute).toHaveBeenCalledWith(body, authContext);
+    expect((execute.mock.calls as unknown[][])[0][1]).not.toBe(body);
+  });
+
   it('hands audit reports to the audit use case and returns its result', async () => {
     const { controller, ingestReports } = makeController();
     const body = { reports: [{ reportId: 'r-1' }], fullSync: true };

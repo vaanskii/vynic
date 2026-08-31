@@ -325,6 +325,19 @@ enum VenueDomainStatus {
   @@schema("pos")
 }
 
+/// Where one unit of Cloud-originated work has got to.
+///
+/// CLAIMED is not "done": it means an Edge holds a lease on the command. The
+/// Edge reports the outcome, so only SUCCEEDED and FAILED are terminal.
+enum EdgeCommandStatus {
+  PENDING
+  CLAIMED
+  SUCCEEDED
+  FAILED
+
+  @@schema("pos")
+}
+
 enum PlanStatus {
   ACTIVE
   RETIRED
@@ -396,6 +409,7 @@ model Venue {
   domains          VenueDomain[]
   websiteTables    WebsiteTable[]
   websiteBookings  WebsiteReservation[]
+  edgeCommands     EdgeCommand[]
 
   @@index([organizationId])
   @@schema("pos")
@@ -417,8 +431,59 @@ model Device {
   updatedAt      DateTime     @updatedAt
   venue          Venue        @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  targetedCommands EdgeCommand[] @relation("EdgeCommandTarget")
+  claimedCommands  EdgeCommand[] @relation("EdgeCommandClaim")
+
   @@index([status])
   @@index([venueId])
+  @@schema("pos")
+}
+
+/// One unit of work Cloud has for a restaurant's Edge installation.
+///
+/// The Edge pulls; Cloud never dials a restaurant's LAN. A Cloud deployment
+/// cannot reach 192.168.x.x, so the only durable direction is the one the Edge
+/// opens itself with its Device credential.
+///
+/// `deviceId` null means any Edge Device of the Venue may take the command;
+/// set, it means only that Device may. Both exist because some work belongs to
+/// a specific machine (its printer, its screen) and some belongs to the
+/// installation, and a Venue may eventually run more than one Device.
+///
+/// Delivery is at-least-once: a claim is a lease, and a lease that expires
+/// unacknowledged becomes available again. Execution must therefore be
+/// idempotent, which is what `idempotencyKey` is for — it is unique per Venue,
+/// so enqueueing the same intent twice updates one row instead of creating a
+/// second command.
+model EdgeCommand {
+  id                String            @id @default(uuid())
+  venueId           String
+  deviceId          String?
+  type              String
+  contractVersion   Int               @default(1)
+  payload           Json
+  idempotencyKey    String
+  status            EdgeCommandStatus @default(PENDING)
+  attemptCount      Int               @default(0)
+  maxAttempts       Int               @default(10)
+  availableAt       DateTime          @default(now())
+  claimedAt         DateTime?
+  claimedByDeviceId String?
+  claimExpiresAt    DateTime?
+  acknowledgedAt    DateTime?
+  resultCode        String?
+  resultDetail      String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  venue         Venue   @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  device        Device? @relation("EdgeCommandTarget", fields: [deviceId], references: [id], onDelete: Restrict)
+  claimedBy     Device? @relation("EdgeCommandClaim", fields: [claimedByDeviceId], references: [id], onDelete: Restrict)
+
+  @@unique([venueId, idempotencyKey])
+  @@index([venueId, status, availableAt])
+  @@index([deviceId, status, availableAt])
+  @@index([status, claimExpiresAt])
   @@schema("pos")
 }
 

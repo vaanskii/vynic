@@ -16,14 +16,16 @@ import { VenueEntitlementsService } from './venue-entitlements.service';
 /**
  * Denies a route when the authenticated Venue lacks the required feature.
  *
- * The tenant comes from whichever authentication established one — a POS
- * Device credential or an authenticated Manager staff session. Step 4B2A
- * attaches this to the Manager product API, whose requests now carry an
- * authoritative Venue.
+ * The tenant comes from whichever mechanism established one — a POS Device
+ * credential, an authenticated Manager staff session, or the registered host a
+ * public website request arrived on. Step 4B2A attached this to the Manager
+ * product API and Step 4B2B to the public website product API; both now carry
+ * an authoritative Venue.
  *
  * It has no business being on a sync route: entitlement must never gate
- * POS → Cloud synchronization. Website requests still lack authoritative Venue
- * identity, so it is not attached there either (Step 4B2B).
+ * POS → Cloud synchronization. It is also absent from Device authentication and
+ * from the payment provider's callback, which resolves its Venue from the
+ * booking record rather than from a request header.
  *
  * A route with no @RequiresFeature passes through untouched, so adding the
  * guard to a controller cannot change the behavior of its other handlers.

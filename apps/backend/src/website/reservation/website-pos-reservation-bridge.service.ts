@@ -13,6 +13,7 @@ import {
   reservationDateKey,
   unavailableCodesFromPosReservations,
 } from './reservation-table-codes';
+import type { TenantContext } from '../../tenancy/tenant-context';
 
 type WebsiteTableRow = {
   id: number;
@@ -24,6 +25,7 @@ type WebsiteTableRow = {
 
 type WebsiteReservationWithTables = {
   id: string;
+  venueId: string;
   date: Date;
   timeSlot: string;
   status: string;
@@ -56,6 +58,7 @@ export class WebsitePosReservationBridgeService {
 
   /** Day-level blocking — same rules as mobile manager table picker. */
   async getUnavailableTableCodesForDate(
+    tenant: TenantContext,
     date: string,
     excludeWebsiteReservationId?: string,
   ): Promise<Set<number>> {
@@ -64,6 +67,7 @@ export class WebsitePosReservationBridgeService {
 
     const websiteReservations = await this.prisma.websiteReservation.findMany({
       where: {
+        venueId: tenant.venueId,
         date: { gte: start, lte: end },
         status: { in: ['CONFIRMED', 'PENDING'] },
         ...(excludeWebsiteReservationId
@@ -82,6 +86,9 @@ export class WebsitePosReservationBridgeService {
       }
     }
 
+    // The POS side is still reached over the single legacy LAN connection, so
+    // it is not Venue-addressed yet. Recorded as deferred in
+    // docs/PUBLIC_TENANCY.md; it widens availability, never data visibility.
     try {
       const posRows = await this.posCallback.fetchPosReservations();
       const posUnavailable = unavailableCodesFromPosReservations(
@@ -149,12 +156,14 @@ export class WebsitePosReservationBridgeService {
   }
 
   async areWebsiteTablesAvailable(
+    tenant: TenantContext,
     tables: WebsiteTableRow[],
     date: string,
     excludeWebsiteReservationId?: string,
   ): Promise<boolean> {
     if (tables.length === 0) return false;
     const unavailable = await this.getUnavailableTableCodesForDate(
+      tenant,
       date,
       excludeWebsiteReservationId,
     );
@@ -163,6 +172,7 @@ export class WebsitePosReservationBridgeService {
   }
 
   async pushConfirmedReservationToPos(
+    tenant: TenantContext,
     reservation: WebsiteReservationWithTables,
   ): Promise<string | null> {
     if (reservation.posReservationId) {
@@ -173,6 +183,7 @@ export class WebsitePosReservationBridgeService {
     const serviceDate = reservationDateKey(reservation.date);
 
     const available = await this.areWebsiteTablesAvailable(
+      tenant,
       websiteTables,
       serviceDate,
       reservation.id,
@@ -189,7 +200,10 @@ export class WebsitePosReservationBridgeService {
       websiteTables.reduce((sum, table) => sum + table.capacity, 0) ??
       2;
 
-    const preOrderItems = await this.buildPreOrderItems(reservation.menuItems);
+    const preOrderItems = await this.buildPreOrderItems(
+      tenant,
+      reservation.menuItems,
+    );
     const notes = this.buildPosNotes(reservation);
 
     const posReservation = await this.posCallback.createPosReservation({
@@ -268,6 +282,7 @@ export class WebsitePosReservationBridgeService {
   }
 
   private async buildPreOrderItems(
+    tenant: TenantContext,
     menuItemsJson: string | null,
   ): Promise<Array<Record<string, unknown>>> {
     if (!menuItemsJson) return [];
@@ -288,7 +303,7 @@ export class WebsitePosReservationBridgeService {
       const price = Number(entry.price) || 0;
       let name = String(entry.name ?? '').trim();
       if (!name && id) {
-        const menuItem = await this.menuService.getMenuItemById(id);
+        const menuItem = await this.menuService.getMenuItemById(tenant, id);
         name =
           menuItem?.nameEn ??
           menuItem?.translations?.find((t) => t.language === 'en')?.name ??

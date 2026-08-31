@@ -22,11 +22,23 @@ export class BootstrapService implements OnModuleInit {
     this.logEnvGaps();
   }
 
+  /**
+   * The bootstrap Venue's website table mapping.
+   *
+   * `websiteTableNumber` is unique per Venue, so the upsert is keyed on the
+   * pair. Other Venues get their mapping when they are onboarded; this seeds
+   * only the existing restaurant.
+   */
   private async seedWebsiteTables(): Promise<void> {
     for (const mapping of WEBSITE_TABLE_MAPPINGS) {
       await this.prisma.websiteTable.upsert({
-        where: { websiteTableNumber: mapping.websiteTableNumber },
-        create: mapping,
+        where: {
+          venueId_websiteTableNumber: {
+            venueId: LEGACY_MANAGER_TENANT.venueId,
+            websiteTableNumber: mapping.websiteTableNumber,
+          },
+        },
+        create: { ...mapping, venueId: LEGACY_MANAGER_TENANT.venueId },
         update: {
           posTableNumber: mapping.posTableNumber,
           posFloor: mapping.posFloor,

@@ -7,10 +7,17 @@ import {
   Param,
   Query,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { WebsiteUserRole } from '@prisma/client';
 import type { Request } from 'express';
 import { WebsiteAuthService } from '../auth/auth.service';
+import { FeatureKeys } from '../../entitlements/feature-keys';
+import { FeatureGuard } from '../../entitlements/feature.guard';
+import { RequiresFeature } from '../../entitlements/requires-feature.decorator';
+import type { TenantContext } from '../../tenancy/tenant-context';
+import { WebsiteTenant } from '../tenancy/website-tenant-context';
+import { WebsiteTenantGuard } from '../tenancy/website-tenant.guard';
 import { ReservationService } from './reservation.service';
 
 interface CreateReservationDto {
@@ -27,7 +34,14 @@ interface CreateReservationDto {
   numberOfGuests?: number;
 }
 
+/**
+ * Public tables, availability and bookings for the restaurant that owns the
+ * requested host. Every handler is scoped to that Venue; none of them accepts a
+ * venue identifier from the caller.
+ */
 @Controller('api/tables')
+@UseGuards(WebsiteTenantGuard, FeatureGuard)
+@RequiresFeature(FeatureKeys.WEBSITE)
 export class TableController {
   constructor(
     private readonly reservationService: ReservationService,
@@ -35,18 +49,22 @@ export class TableController {
   ) {}
 
   @Get()
-  async getAllTables() {
-    return this.reservationService.getAllTables();
+  async getAllTables(@WebsiteTenant() tenant: TenantContext) {
+    return this.reservationService.getAllTables(tenant);
   }
 
   @Get('availability')
-  async getTableAvailability(@Query('date') date: string) {
+  async getTableAvailability(
+    @WebsiteTenant() tenant: TenantContext,
+    @Query('date') date: string,
+  ) {
     if (!date) throw new BadRequestException('Date parameter is required');
-    return this.reservationService.getTableAvailability(date);
+    return this.reservationService.getTableAvailability(tenant, date);
   }
 
   @Get('availability/:tableNumber')
   async checkTableAvailability(
+    @WebsiteTenant() tenant: TenantContext,
     @Param('tableNumber') tableNumber: string,
     @Query('date') date: string,
     @Query('timeSlot') timeSlot: string,
@@ -57,6 +75,7 @@ export class TableController {
       );
     }
     const isAvailable = await this.reservationService.isTableAvailable(
+      tenant,
       tableNumber,
       date,
       timeSlot,
@@ -65,8 +84,11 @@ export class TableController {
   }
 
   @Post('reservations')
-  async createReservation(@Body() data: CreateReservationDto) {
-    return this.reservationService.createReservation(data);
+  async createReservation(
+    @WebsiteTenant() tenant: TenantContext,
+    @Body() data: CreateReservationDto,
+  ) {
+    return this.reservationService.createReservation(tenant, data);
   }
 
   /**
@@ -75,6 +97,7 @@ export class TableController {
    */
   @Get('reservations')
   async getReservationsForDate(
+    @WebsiteTenant() tenant: TenantContext,
     @Query('date') date: string,
     @Req() request: Request,
   ) {
@@ -82,9 +105,9 @@ export class TableController {
 
     const user = await this.authService.tryGetUserFromRequest(request);
     if (user?.role === WebsiteUserRole.SUPER_ADMIN) {
-      return this.reservationService.getReservationsForDate(date);
+      return this.reservationService.getReservationsForDate(tenant, date);
     }
 
-    return this.reservationService.getPublicMapReservations(date);
+    return this.reservationService.getPublicMapReservations(tenant, date);
   }
 }

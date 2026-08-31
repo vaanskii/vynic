@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
-import { LEGACY_MANAGER_TENANT } from '../../tenancy/legacy-manager-tenant';
+import type { TenantContext } from '../../tenancy/tenant-context';
 
 type MenuItemRow = {
   id: string;
@@ -42,10 +42,10 @@ type SubcategoryContext = {
 export class MenuService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Full menu tree — categories in POS order. */
-  async getAllCategories() {
+  /** Full menu tree — categories in POS order, for the resolved Venue only. */
+  async getAllCategories(tenant: TenantContext) {
     const categories = await this.prisma.menuCategory.findMany({
-      where: { venueId: LEGACY_MANAGER_TENANT.venueId },
+      where: { venueId: tenant.venueId },
       include: this.menuInclude(),
       orderBy: { sortOrder: 'asc' },
     });
@@ -54,10 +54,10 @@ export class MenuService {
   }
 
   /** Single category — use when user picks e.g. "beer" / "ლუდი". */
-  async getCategoryBySlug(slug: string) {
+  async getCategoryBySlug(tenant: TenantContext, slug: string) {
     const category = await this.prisma.menuCategory.findUnique({
       where: {
-        venueId_slug: { venueId: LEGACY_MANAGER_TENANT.venueId, slug },
+        venueId_slug: { venueId: tenant.venueId, slug },
       },
       include: this.menuInclude(),
     });
@@ -69,9 +69,9 @@ export class MenuService {
     return this.toWebsiteCategory(category);
   }
 
-  async getMenuItemById(itemId: string) {
+  async getMenuItemById(tenant: TenantContext, itemId: string) {
     const item = await this.prisma.menuItem.findFirst({
-      where: { id: itemId, venueId: LEGACY_MANAGER_TENANT.venueId },
+      where: { id: itemId, venueId: tenant.venueId },
       include: { variants: true, category: true, subcategory: true },
     });
     if (!item) return null;

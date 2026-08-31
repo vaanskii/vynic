@@ -394,6 +394,8 @@ model Venue {
   featureOverrides VenueFeatureOverride[]
   websiteConfig    VenueWebsiteConfig?
   domains          VenueDomain[]
+  websiteTables    WebsiteTable[]
+  websiteBookings  WebsiteReservation[]
 
   @@index([organizationId])
   @@schema("pos")
@@ -640,9 +642,14 @@ model WebsiteUser {
 }
 
 /// Bookable tables shown on the public website. Each row maps to a POS table.
+///
+/// Venue-owned because it is queried directly by `websiteTableNumber`, which is
+/// a customer-facing label chosen per restaurant: two Venues may both call a
+/// table `table1`, so the identifier is unique only inside a Venue.
 model WebsiteTable {
   id                 Int      @id @default(autoincrement())
-  websiteTableNumber String   @unique
+  venueId            String
+  websiteTableNumber String
   posTableNumber     String
   posFloor           String
   capacity           Int      @default(4)
@@ -650,14 +657,20 @@ model WebsiteTable {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
+  venue        Venue                     @relation(fields: [venueId], references: [id], onDelete: Restrict)
   reservations WebsiteReservationTable[]
 
+  @@unique([venueId, websiteTableNumber])
+  @@index([venueId])
   @@map("tables")
   @@schema("website")
 }
 
+/// A public-website booking. Venue-owned: it is the root the whole booking
+/// subsystem hangs from, and the tenant a payment callback resolves through.
 model WebsiteReservation {
   id               String                   @id @default(uuid())
+  venueId          String
   userId           String?
   customerName     String?
   customerEmail    String?
@@ -670,14 +683,17 @@ model WebsiteReservation {
   paymentId        String?
   paymentStatus    String?
   notes            String?
-  posReservationId String?                  @unique
+  posReservationId String?
   numberOfGuests   Int?
   createdAt        DateTime                 @default(now())
   updatedAt        DateTime                 @updatedAt
 
+  venue  Venue                     @relation(fields: [venueId], references: [id], onDelete: Restrict)
   user   WebsiteUser?              @relation(fields: [userId], references: [id])
   tables WebsiteReservationTable[]
 
+  @@unique([venueId, posReservationId])
+  @@index([venueId, date])
   @@map("reservations")
   @@schema("website")
 }

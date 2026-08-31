@@ -9,11 +9,28 @@ import {
   HttpException,
   HttpStatus,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { BogService } from './payment.service';
+import { FeatureKeys } from '../../entitlements/feature-keys';
+import { FeatureGuard } from '../../entitlements/feature.guard';
+import { RequiresFeature } from '../../entitlements/requires-feature.decorator';
+import type { TenantContext } from '../../tenancy/tenant-context';
+import { WebsiteTenant } from '../tenancy/website-tenant-context';
+import { WebsiteTenantGuard } from '../tenancy/website-tenant.guard';
 import { ReservationService } from '../reservation/reservation.service';
 
+/**
+ * Payment entry points.
+ *
+ * Only order creation comes from a browser on a restaurant's site, so only it
+ * resolves a Venue from the host. The status checks and the bank's callback
+ * arrive without one — a payment provider has no reason to know the website
+ * hostname — so they take their tenant from the server-owned reservation the
+ * provider reference names. Guarding them on a host would break payments
+ * without adding any authority the reservation row does not already carry.
+ */
 @Controller('api/bog')
 export class BogController {
   constructor(
@@ -22,7 +39,10 @@ export class BogController {
   ) {}
 
   @Post('create-order')
+  @UseGuards(WebsiteTenantGuard, FeatureGuard)
+  @RequiresFeature(FeatureKeys.WEBSITE)
   async createOrder(
+    @WebsiteTenant() tenant: TenantContext,
     @Body()
     body: {
       selectedTables: string[];
@@ -39,12 +59,15 @@ export class BogController {
       numberOfGuests?: number;
     },
   ) {
-    const validatedData = await this.bogService.validateAndCalculateOrder({
-      menuItems: body.menuItems || [],
-      selectedTables: body.selectedTables,
-    });
+    const validatedData = await this.bogService.validateAndCalculateOrder(
+      tenant,
+      {
+        menuItems: body.menuItems || [],
+        selectedTables: body.selectedTables,
+      },
+    );
 
-    const result = await this.reservationService.createReservation({
+    const result = await this.reservationService.createReservation(tenant, {
       selectedTables: body.selectedTables,
       selectedDate: body.selectedDate,
       selectedTime: body.selectedTime,

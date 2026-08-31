@@ -18,6 +18,7 @@ import {
   encodeTableCode,
   isReservationBlocking,
 } from './reservation-table-codes';
+import type { TenantContext } from '../../tenancy/tenant-context';
 
 @Injectable()
 export class ReservationService {
@@ -30,9 +31,9 @@ export class ReservationService {
     private readonly posBridge: WebsitePosReservationBridgeService,
   ) {}
 
-  async getAllTables() {
+  async getAllTables(tenant: TenantContext) {
     const tables = await this.prisma.websiteTable.findMany({
-      where: { isActive: true },
+      where: { venueId: tenant.venueId, isActive: true },
       orderBy: { websiteTableNumber: 'asc' },
     });
     return tables.map((table) => ({
@@ -42,14 +43,17 @@ export class ReservationService {
   }
 
   /** Per-day availability — merges website bookings + live POS reservations. */
-  async getTableAvailability(date: string) {
-    const tables = await this.getAllTables();
+  async getTableAvailability(tenant: TenantContext, date: string) {
+    const tables = await this.getAllTables(tenant);
     const { dateKey, start, end } = dayBounds(date);
-    const unavailable =
-      await this.posBridge.getUnavailableTableCodesForDate(dateKey);
+    const unavailable = await this.posBridge.getUnavailableTableCodesForDate(
+      tenant,
+      dateKey,
+    );
 
     const websiteReservations = await this.prisma.websiteReservation.findMany({
       where: {
+        venueId: tenant.venueId,
         date: { gte: start, lte: end },
         status: { in: ['CONFIRMED', 'PENDING'] },
       },
@@ -80,38 +84,54 @@ export class ReservationService {
   }
 
   async isTableAvailable(
+    tenant: TenantContext,
     tableNumber: string,
     date: string,
     _timeSlot?: string,
   ): Promise<boolean> {
     const table = await this.prisma.websiteTable.findUnique({
-      where: { websiteTableNumber: tableNumber },
+      where: {
+        venueId_websiteTableNumber: {
+          venueId: tenant.venueId,
+          websiteTableNumber: tableNumber,
+        },
+      },
     });
     if (!table) return false;
 
     const { dateKey } = dayBounds(date);
-    const unavailable =
-      await this.posBridge.getUnavailableTableCodesForDate(dateKey);
+    const unavailable = await this.posBridge.getUnavailableTableCodesForDate(
+      tenant,
+      dateKey,
+    );
     const tableCode = encodeTableCode(table.posFloor, table.posTableNumber);
     return !unavailable.has(tableCode);
   }
 
-  async createReservation(data: {
-    selectedTables: string[];
-    selectedDate: string;
-    selectedTime: string;
-    menuItems?: Array<{ id: string; quantity: number; price: number }>;
-    totalAmount?: number;
-    customerName?: string;
-    customerEmail?: string;
-    customerPhone?: string;
-    userId?: string;
-    notes?: string;
-    language?: string;
-    numberOfGuests?: number;
-  }) {
+  async createReservation(
+    tenant: TenantContext,
+    data: {
+      selectedTables: string[];
+      selectedDate: string;
+      selectedTime: string;
+      menuItems?: Array<{ id: string; quantity: number; price: number }>;
+      totalAmount?: number;
+      customerName?: string;
+      customerEmail?: string;
+      customerPhone?: string;
+      userId?: string;
+      notes?: string;
+      language?: string;
+      numberOfGuests?: number;
+    },
+  ) {
+    // Scoped by Venue, so a table belonging to another restaurant simply is not
+    // found — a booking can never reach across the tenant boundary.
     const tables = await this.prisma.websiteTable.findMany({
-      where: { websiteTableNumber: { in: data.selectedTables } },
+      where: {
+        venueId: tenant.venueId,
+        websiteTableNumber: { in: data.selectedTables },
+      },
     });
 
     if (tables.length !== data.selectedTables.length) {
@@ -126,6 +146,7 @@ export class ReservationService {
     }
 
     const available = await this.posBridge.areWebsiteTablesAvailable(
+      tenant,
       tables,
       data.selectedDate,
     );
@@ -141,6 +162,7 @@ export class ReservationService {
 
     const reservation = await this.prisma.websiteReservation.create({
       data: {
+        venueId: tenant.venueId,
         date: new Date(dayBounds(data.selectedDate).start),
         timeSlot: data.selectedTime,
         customerName: data.customerName,
@@ -204,11 +226,11 @@ export class ReservationService {
     };
   }
 
-  async getReservationsForDate(date: string) {
+  async getReservationsForDate(tenant: TenantContext, date: string) {
     const { start, end } = dayBounds(date);
 
     const rows = await this.prisma.websiteReservation.findMany({
-      where: { date: { gte: start, lte: end } },
+      where: { venueId: tenant.venueId, date: { gte: start, lte: end } },
       include: {
         tables: { include: { table: true } },
         user: true,
@@ -223,14 +245,15 @@ export class ReservationService {
    * Legacy shape for the public 3D map — merges website DB + live POS bookings.
    * Frontend expects: [{ id, status, timeSlot, tables: [{ table: { tableNumber } }] }]
    */
-  async getPublicMapReservations(date: string) {
+  async getPublicMapReservations(tenant: TenantContext, date: string) {
     const { dateKey, start, end } = dayBounds(date);
     const websiteTables = await this.prisma.websiteTable.findMany({
-      where: { isActive: true },
+      where: { venueId: tenant.venueId, isActive: true },
     });
 
     const websiteRows = await this.prisma.websiteReservation.findMany({
       where: {
+        venueId: tenant.venueId,
         date: { gte: start, lte: end },
         status: { in: ['CONFIRMED', 'PENDING'] },
       },
@@ -315,6 +338,14 @@ export class ReservationService {
     };
   }
 
+  /**
+   * Applies a payment outcome to a booking.
+   *
+   * Reached from BOG status checks and from the bank's callback, neither of
+   * which carries the website host. The tenant is therefore taken from the
+   * server-owned reservation row itself — the provider names a reservation, and
+   * the reservation names its Venue.
+   */
   async updateReservationPaymentStatus(
     reservationId: string,
     paymentStatus: string,
@@ -336,11 +367,19 @@ export class ReservationService {
 
     const existing = await this.prisma.websiteReservation.findUnique({
       where: { id: reservationId },
-      include: { tables: { include: { table: true } } },
+      include: {
+        tables: { include: { table: true } },
+        venue: { select: { organizationId: true } },
+      },
     });
     if (!existing) {
       throw new BadRequestException(`Reservation ${reservationId} not found`);
     }
+
+    const tenant: TenantContext = {
+      venueId: existing.venueId,
+      organizationId: existing.venue.organizationId,
+    };
 
     const updated = await this.prisma.websiteReservation.update({
       where: { id: reservationId },
@@ -355,7 +394,7 @@ export class ReservationService {
 
     if (status === 'CONFIRMED' && !existing.posReservationId) {
       try {
-        await this.posBridge.pushConfirmedReservationToPos(updated);
+        await this.posBridge.pushConfirmedReservationToPos(tenant, updated);
       } catch (error) {
         this.logger.error(
           `POS push failed for website reservation ${reservationId}: ${(error as Error).message}`,

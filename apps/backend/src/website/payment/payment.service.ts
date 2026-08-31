@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import * as crypto from 'crypto';
 import { MenuService } from '../menu/menu.service';
+import type { TenantContext } from '../../tenancy/tenant-context';
 
 @Injectable()
 export class BogService {
@@ -105,16 +106,28 @@ PwIDAQAB
     }
   }
 
-  async validateAndCalculateOrder(data: {
-    menuItems: Array<{ id: string; quantity: number; price?: number }>;
-    selectedTables: string[];
-  }) {
+  /**
+   * Re-prices a cart from the Venue's own menu, ignoring client prices.
+   *
+   * Venue-scoped: an item id belonging to another restaurant is not found here,
+   * so a cart cannot be priced against a menu the site does not sell.
+   */
+  async validateAndCalculateOrder(
+    tenant: TenantContext,
+    data: {
+      menuItems: Array<{ id: string; quantity: number; price?: number }>;
+      selectedTables: string[];
+    },
+  ) {
     const validatedMenuItems: Array<Record<string, unknown>> = [];
     let totalAmount = 0;
 
     if (data.menuItems?.length) {
       for (const item of data.menuItems) {
-        const menuItem = await this.menuService.getMenuItemById(item.id);
+        const menuItem = await this.menuService.getMenuItemById(
+          tenant,
+          item.id,
+        );
         if (!menuItem) {
           throw new Error(`Menu item with ID ${item.id} not found`);
         }

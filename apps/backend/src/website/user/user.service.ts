@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
-import { LEGACY_MANAGER_TENANT } from '../../tenancy/legacy-manager-tenant';
+import type { TenantContext } from '../../tenancy/tenant-context';
 
 @Injectable()
 export class UserService {
@@ -24,7 +24,13 @@ export class UserService {
     return user;
   }
 
-  async getUserReservations(userId: string) {
+  /**
+   * A customer's bookings at the restaurant whose site they are on.
+   *
+   * WebsiteUser is one global identity, so the account itself is not
+   * Venue-owned — but a booking is, and a restaurant's site shows only its own.
+   */
+  async getUserReservations(tenant: TenantContext, userId: string) {
     const user = await this.prisma.websiteUser.findUnique({
       where: { id: userId },
       select: { email: true },
@@ -33,6 +39,7 @@ export class UserService {
 
     const reservations = await this.prisma.websiteReservation.findMany({
       where: {
+        venueId: tenant.venueId,
         OR: [
           { userId },
           { AND: [{ userId: null }, { customerEmail: { not: null } }] },
@@ -68,7 +75,7 @@ export class UserService {
             if (Array.isArray(menuItemsData) && menuItemsData.length > 0) {
               const menuItems = await this.prisma.menuItem.findMany({
                 where: {
-                  venueId: LEGACY_MANAGER_TENANT.venueId,
+                  venueId: tenant.venueId,
                   id: { in: menuItemsData.map((item) => item.id) },
                 },
               });

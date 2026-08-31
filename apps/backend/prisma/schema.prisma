@@ -316,6 +316,15 @@ enum VenueStatus {
   @@schema("pos")
 }
 
+/// Whether a registered website hostname currently resolves to its Venue.
+/// A DISABLED row keeps the hostname reserved without serving it.
+enum VenueDomainStatus {
+  ACTIVE
+  DISABLED
+
+  @@schema("pos")
+}
+
 enum PlanStatus {
   ACTIVE
   RETIRED
@@ -384,6 +393,7 @@ model Venue {
   planAssignment   VenuePlanAssignment?
   featureOverrides VenueFeatureOverride[]
   websiteConfig    VenueWebsiteConfig?
+  domains          VenueDomain[]
 
   @@index([organizationId])
   @@schema("pos")
@@ -496,6 +506,28 @@ model VenueWebsiteConfig {
   updatedAt DateTime    @updatedAt
   venue     Venue       @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
+  @@schema("pos")
+}
+
+/// A hostname that authoritatively identifies one Venue's public website.
+///
+/// This is the public tenant boundary: an incoming request's host is looked up
+/// here, never taken from a body, query or client-chosen header. `hostname` is
+/// globally unique so a name can never resolve to two Venues, and Venue
+/// deletion is restricted so ownership cannot be silently orphaned.
+///
+/// DNS records and TLS certificates are deployment concerns and deliberately
+/// not modelled here.
+model VenueDomain {
+  id        String            @id @default(uuid())
+  venueId   String
+  hostname  String            @unique
+  status    VenueDomainStatus @default(ACTIVE)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  venue     Venue             @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@index([venueId])
   @@schema("pos")
 }
 

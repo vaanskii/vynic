@@ -17,6 +17,24 @@ describe('requestTenant', () => {
     ).toEqual({ venueId: 'venue-b', organizationId: 'org-2' });
   });
 
+  it('reads the tenant a website host resolved', () => {
+    expect(
+      requestTenant({
+        websiteTenant: { venueId: 'venue-c', organizationId: 'org-3' },
+      }),
+    ).toEqual({ venueId: 'venue-c', organizationId: 'org-3' });
+  });
+
+  it('ignores a website customer principal, which owns no venue', () => {
+    // WebsiteAuthGuard puts a WebsiteUser on `user`; it is a global customer
+    // identity and must never be mistaken for a tenant.
+    expect(
+      requestTenant({
+        user: { id: 'customer-1', email: 'guest@example.com' } as never,
+      }),
+    ).toBeNull();
+  });
+
   it('has no tenant for an unauthenticated request', () => {
     expect(requestTenant({})).toBeNull();
   });

@@ -16,6 +16,7 @@ import { MobileMutationSupport } from './mobile/services/mobile-mutation-support
 import { MobileReservationsService } from './mobile/services/mobile-reservations.service';
 import { MobileDashboardService } from './mobile/services/mobile-dashboard.service';
 import { MobileOrdersService } from './mobile/services/mobile-orders.service';
+import { PlatformModule } from './platform/platform.module';
 import { PosCallbackModule } from './pos/pos-callback.module';
 import { PosOutboxService } from './pos/pos-outbox.service';
 import { PrismaModule } from './shared/prisma/prisma.module';
@@ -42,6 +43,7 @@ import { WebsiteModule } from './website/website.module';
     AuthModule,
     EntitlementsModule,
     EdgeTransportModule,
+    PlatformModule,
     RealtimeModule,
     PosCallbackModule,
     WebsiteModule,

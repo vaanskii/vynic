@@ -26,9 +26,11 @@ export interface IssuedDeviceCredential {
 /**
  * Issues and verifies versioned Device credentials.
  *
- * There is intentionally no public provisioning endpoint in Step 3A. A later
- * onboarding phase can call issueCredential once it can associate a Device
- * with a Venue. The returned raw secret is never persisted or logged.
+ * The raw secret is returned once and never persisted or logged — only its
+ * Argon2id verifier reaches the database, so a lost credential is replaced
+ * rather than recovered. Since Step 7A the callers are the platform control
+ * plane and the operator provisioning script; there is still no unauthenticated
+ * route that issues one.
  */
 @Injectable()
 export class DeviceCredentialService {
@@ -60,6 +62,33 @@ export class DeviceCredentialService {
         platform: input.platform,
         credentialHash,
       },
+    });
+
+    return {
+      deviceId,
+      credential: `${DEVICE_CREDENTIAL_PREFIX}.${deviceId}.${secret}`,
+    };
+  }
+
+  /**
+   * Replaces an existing Device's secret, keeping its identity.
+   *
+   * Rotation rather than recovery: the old verifier is overwritten in the same
+   * write that returns the new secret, so the previous credential stops working
+   * immediately and there is never a window where two are valid. The Device id,
+   * its installation id and its Venue are untouched, so nothing that references
+   * the Device has to change.
+   */
+  async rotateCredential(deviceId: string): Promise<IssuedDeviceCredential> {
+    if (!UUID_PATTERN.test(deviceId)) {
+      throw new TypeError('deviceId must be a UUID');
+    }
+    const secret = randomBytes(32).toString('base64url');
+    const credentialHash = await argon2.hash(secret, { type: argon2.argon2id });
+
+    await this.prisma.device.update({
+      where: { id: deviceId },
+      data: { credentialHash },
     });
 
     return {

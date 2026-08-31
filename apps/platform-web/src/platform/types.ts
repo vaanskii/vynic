@@ -123,3 +123,19 @@ export interface QueuedCommand {
   status: string;
   idempotencyKey: string;
 }
+
+export interface EdgeCommandStatus {
+  commandId: string;
+  type: string;
+  status: "PENDING" | "CLAIMED" | "SUCCEEDED" | "FAILED";
+  attemptCount: number;
+  maxAttempts: number;
+  claimedAt: string | null;
+  acknowledgedAt: string | null;
+  resultCode: string | null;
+  resultDetail: string | null;
+  createdAt: string;
+  updatedAt: string;
+  claimedBy: { id: string; displayName: string } | null;
+  device: { id: string; displayName: string } | null;
+}

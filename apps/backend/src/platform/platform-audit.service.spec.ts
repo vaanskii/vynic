@@ -17,4 +17,43 @@ describe('PlatformAuditService', () => {
       }),
     );
   });
+
+  it('includes device-targeted events for a venue through the device relationship', async () => {
+    const findMany = jest.fn().mockResolvedValue([]);
+    const deviceFindMany = jest
+      .fn()
+      .mockResolvedValue([{ id: '22222222-2222-4222-8222-222222222222' }]);
+    const service = new PlatformAuditService({
+      platformAuditEvent: { findMany },
+      device: { findMany: deviceFindMany },
+    } as never);
+
+    await service.recent(
+      100,
+      0,
+      undefined,
+      '11111111-1111-4111-8111-111111111111',
+    );
+
+    expect(deviceFindMany).toHaveBeenCalledWith({
+      where: { venueId: '11111111-1111-4111-8111-111111111111' },
+      select: { id: true },
+    });
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          OR: [
+            {
+              targetType: 'Venue',
+              targetId: '11111111-1111-4111-8111-111111111111',
+            },
+            {
+              targetType: 'Device',
+              targetId: { in: ['22222222-2222-4222-8222-222222222222'] },
+            },
+          ],
+        },
+      }),
+    );
+  });
 });

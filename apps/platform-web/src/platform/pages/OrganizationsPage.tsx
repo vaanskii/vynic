@@ -35,7 +35,7 @@ export function OrganizationsPage() {
           <EmptyState title="No organizations yet" body="Create the first tenant group before adding a venue." action={<Button tone="primary" onClick={() => setCreateOpen(true)}>Create organization</Button>} />
         ) : (
           <><Table><thead><tr><th>Organization</th><th>Venues</th><th>Updated</th><th aria-label="Actions" /></tr></thead><tbody>{query.data.items.map((organization) => (
-            <tr key={organization.id}><td><div className="platform-table__primary"><strong>{organization.name}</strong><small>{organization.id}</small></div></td><td>{organization._count?.venues ?? 0}</td><td>{formatDateTime(organization.updatedAt)}</td><td><div className="platform-table__actions"><Link className="platform-text-link" to={`/organizations/${organization.id}`}>Open</Link></div></td></tr>
+            <tr key={organization.id}><td><div className="platform-table__primary"><strong>{organization.name}</strong><small>{organization.id}</small></div></td><td>{organization._count?.venues ?? 0}</td><td>{formatDateTime(organization.updatedAt)}</td><td><div className="platform-table__actions"><Link className="platform-text-link" to={`/admin/organizations/${organization.id}`}>Open</Link></div></td></tr>
           ))}</tbody></Table><Pagination total={query.data.total} limit={PAGE_SIZE} offset={offset} onChange={setOffset} /></>
         )}
       </Panel>

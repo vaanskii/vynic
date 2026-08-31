@@ -25,13 +25,20 @@ export class PlatformCatalogController {
 
   @Get('audit')
   async auditTrail(
-    @Query() query: { limit?: string; offset?: string; targetId?: string },
+    @Query()
+    query: {
+      limit?: string;
+      offset?: string;
+      targetId?: string;
+      venueId?: string;
+    },
   ) {
     const page = readPage(query);
     return this.audit.recent(
       page.limit,
       page.offset,
       query.targetId ? requireUuid(query.targetId, 'targetId') : undefined,
+      query.venueId ? requireUuid(query.venueId, 'venueId') : undefined,
     );
   }
 }

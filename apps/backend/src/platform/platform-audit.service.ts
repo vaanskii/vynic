@@ -69,9 +69,34 @@ export class PlatformAuditService {
   }
 
   /** Most recent first, with bounded offset pagination for the admin panel. */
-  async recent(limit: number, offset: number, targetId?: string) {
+  async recent(
+    limit: number,
+    offset: number,
+    targetId?: string,
+    venueId?: string,
+  ) {
+    const deviceIds = venueId
+      ? (
+          await this.prisma.device.findMany({
+            where: { venueId },
+            select: { id: true },
+          })
+        ).map((device) => device.id)
+      : [];
+
     return this.prisma.platformAuditEvent.findMany({
-      where: targetId ? { targetId } : undefined,
+      where: venueId
+        ? {
+            OR: [
+              { targetType: 'Venue', targetId: venueId },
+              ...(deviceIds.length
+                ? [{ targetType: 'Device', targetId: { in: deviceIds } }]
+                : []),
+            ],
+          }
+        : targetId
+          ? { targetId }
+          : undefined,
       orderBy: { createdAt: 'desc' },
       take: limit,
       skip: offset,

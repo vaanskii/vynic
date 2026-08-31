@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { LocaleProvider } from "./lib/i18n";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { LocaleProvider, localeHref, preferredLocale } from "./lib/i18n";
 import { HomePage } from "./pages/HomePage";
 import { AuthProvider } from "./platform/auth";
 import { LoginPage } from "./platform/LoginPage";
@@ -43,11 +43,13 @@ export function App() {
 export function AppRoutes() {
   return (
     <Routes>
+      <Route path="/" element={<PublicHomeRedirect />} />
       <Route path="/product" element={<LocaleProvider><HomePage /></LocaleProvider>} />
       <Route path="/en" element={<LocaleProvider><HomePage /></LocaleProvider>} />
       <Route path="/ka" element={<LocaleProvider><HomePage /></LocaleProvider>} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route element={<ProtectedRoute><Shell /></ProtectedRoute>}>
+      <Route path="/login" element={<Navigate to="/admin/login" replace />} />
+      <Route path="/admin/login" element={<LoginPage />} />
+      <Route path="/admin" element={<ProtectedRoute><Shell /></ProtectedRoute>}>
         <Route index element={<OverviewPage />} />
         <Route path="organizations" element={<OrganizationsPage />} />
         <Route path="organizations/:organizationId" element={<OrganizationDetailPage />} />
@@ -60,6 +62,13 @@ export function AppRoutes() {
         <Route path="audit" element={<AuditPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
+}
+
+function PublicHomeRedirect() {
+  const destination = localeHref(preferredLocale());
+
+  return <Navigate to={destination} replace />;
 }

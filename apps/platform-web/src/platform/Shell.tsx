@@ -18,29 +18,29 @@ import vynicLogo from "../assets/vynic-logo.png";
 import { useAuth } from "./auth";
 
 const navigation = [
-  { label: "Overview", to: "/", icon: SquaresFour, end: true },
-  { label: "Organizations", to: "/organizations", icon: Buildings },
-  { label: "Venues", to: "/venues", icon: Storefront },
+  { label: "Overview", to: "/admin", icon: SquaresFour, end: true },
+  { label: "Organizations", to: "/admin/organizations", icon: Buildings },
+  { label: "Venues", to: "/admin/venues", icon: Storefront },
 ];
 
 const groups = [
   {
     label: "Product",
     items: [
-      { label: "Plans", to: "/plans", icon: ChartDonut },
-      { label: "Features", to: "/features", icon: SlidersHorizontal },
+      { label: "Plans", to: "/admin/plans", icon: ChartDonut },
+      { label: "Features", to: "/admin/features", icon: SlidersHorizontal },
     ],
   },
   {
     label: "Infrastructure",
     items: [
-      { label: "Devices", to: "/devices", icon: DesktopTower },
-      { label: "Domains", to: "/domains", icon: Globe },
+      { label: "Devices", to: "/admin/devices", icon: DesktopTower },
+      { label: "Domains", to: "/admin/domains", icon: Globe },
     ],
   },
   {
     label: "Activity",
-    items: [{ label: "Audit log", to: "/audit", icon: ClockCounterClockwise }],
+    items: [{ label: "Audit log", to: "/admin/audit", icon: ClockCounterClockwise }],
   },
 ];
 
@@ -67,7 +67,7 @@ export function Shell() {
     <div className="platform-shell">
       <aside className={`platform-sidebar${open ? " is-open" : ""}`}>
         <div className="platform-sidebar__top">
-          <NavLink className="platform-brand" to="/" onClick={() => setOpen(false)}>
+          <NavLink className="platform-brand" to="/admin" onClick={() => setOpen(false)}>
             <img src={vynicLogo} alt="" />
             <span>Vynic</span>
             <small>Platform</small>
@@ -85,7 +85,7 @@ export function Shell() {
             </div>
           ))}
         </nav>
-        <a className="platform-sidebar__product-link" href="/product">View product site</a>
+        <a className="platform-sidebar__product-link" href="/">View Vynic site</a>
       </aside>
       {open ? <button className="platform-sidebar__scrim" aria-label="Close navigation" onClick={() => setOpen(false)} /> : null}
 
@@ -124,7 +124,8 @@ export function Shell() {
 }
 
 function routeLabel(pathname: string) {
-  const segment = pathname.split("/").filter(Boolean)[0];
+  const segments = pathname.split("/").filter(Boolean);
+  const segment = segments[0] === "admin" ? segments[1] : segments[0];
   if (!segment) return "Overview";
   return segment.replace(/\b\w/g, (value) => value.toUpperCase());
 }

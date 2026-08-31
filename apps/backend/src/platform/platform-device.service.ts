@@ -208,6 +208,30 @@ export class PlatformDeviceService {
     return { commandId: command.id, status: command.status, idempotencyKey };
   }
 
+  async readTestCommand(venueId: string, commandId: string) {
+    await this.directory.requireVenue(venueId);
+    const command = await this.prisma.edgeCommand.findFirst({
+      where: { id: commandId, venueId, type: EdgeCommandTypes.NOOP },
+      select: {
+        id: true,
+        type: true,
+        status: true,
+        attemptCount: true,
+        maxAttempts: true,
+        claimedAt: true,
+        acknowledgedAt: true,
+        resultCode: true,
+        resultDetail: true,
+        createdAt: true,
+        updatedAt: true,
+        claimedBy: { select: { id: true, displayName: true } },
+        device: { select: { id: true, displayName: true } },
+      },
+    });
+    if (!command) throw new NotFoundException('Test command not found');
+    return command;
+  }
+
   private async requireDevice(venueId: string, deviceId: string) {
     const device = await this.prisma.device.findUnique({
       where: { id: deviceId },

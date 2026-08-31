@@ -740,6 +740,19 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
         organizationId: organizationAId,
       });
       expect(claimedByA.map((c) => c.commandId)).toEqual([queued.commandId]);
+
+      await expect(
+        devices.readTestCommand(venueAId, queued.commandId),
+      ).resolves.toMatchObject({
+        commandId: queued.commandId,
+        type: 'NOOP',
+        status: 'CLAIMED',
+        attemptCount: 1,
+        device: { id: deviceAId },
+      });
+      await expect(
+        devices.readTestCommand(venueBId, queued.commandId),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('will not queue work for another venue device', async () => {

@@ -17,23 +17,25 @@ mutations. Radix Dialog supplies focus-managed modal primitives. Shared
 platform components cover the shell, page headers, tables, statuses,
 loading/empty/error states, forms, and confirmations.
 
-The authenticated routes are:
+The public product site uses `/` as its English entry point and `/en` or `/ka`
+as explicit language routes. The authenticated control-plane routes are kept
+under `/admin`:
 
 ```text
-/                         Overview
-/organizations            Organization directory and creation
-/organizations/:id        Organization details and venues
-/venues                    Venue directory and creation
-/venues/:id                Venue overview
-/venues/:id/product        Plan, features, overrides, effective access
-/venues/:id/website        WebsiteMode and domains
-/venues/:id/devices        Device lifecycle and connection test
-/venues/:id/activity       Venue-filtered platform audit
-/plans                     Read-only plan catalogue
-/features                  Read-only feature catalogue
-/devices                   Cross-Venue device inventory
-/domains                   Cross-Venue domain inventory
-/audit                     Platform audit trail
+/admin                     Overview
+/admin/organizations       Organization directory and creation
+/admin/organizations/:id   Organization details and venues
+/admin/venues              Venue directory and creation
+/admin/venues/:id          Venue overview
+/admin/venues/:id/product  Plan, features, overrides, effective access
+/admin/venues/:id/website  WebsiteMode and domains
+/admin/venues/:id/devices  Device lifecycle and connection test
+/admin/venues/:id/activity Venue-filtered platform audit
+/admin/plans               Read-only plan catalogue
+/admin/features            Read-only feature catalogue
+/admin/devices             Cross-Venue device inventory
+/admin/domains             Cross-Venue domain inventory
+/admin/audit               Platform audit trail
 ```
 
 ## Authentication and session handling
@@ -99,10 +101,12 @@ does not include IDs, JSON, labels, or any other secret.
 ## Edge connection test
 
 “Send connection test” calls `POST /platform/venues/:venueId/test-command` and
-queues the API's fixed `NOOP`. The UI reports **Command queued**. It does not
-claim that the POS connected or executed the command because Step 7A exposes no
-command-result readback route. Arbitrary command types and payloads remain
-unavailable, and the Step 6C command migration remains deferred.
+queues the API's fixed `NOOP`. The UI then reads
+`GET /platform/venues/:venueId/test-command/:commandId` and shows the durable
+queue lifecycle — pending, claimed, succeeded, or failed — together with
+attempts and any acknowledgment result. A queued or claimed command is not
+presented as a successful connection. Arbitrary command types and payloads
+remain unavailable, and the Step 6C command migration remains deferred.
 
 ## Environment and deployment prerequisites
 

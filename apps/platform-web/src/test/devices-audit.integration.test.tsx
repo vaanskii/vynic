@@ -16,7 +16,7 @@ describe("device lifecycle and audit", () => {
       return undefined;
     });
     const user = userEvent.setup();
-    renderPlatform(`/venues/${ids.venue}/devices`);
+    renderPlatform(`/admin/venues/${ids.venue}/devices`);
     expect((await screen.findAllByText("Front POS")).length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole("button", { name: "Add POS device" }));
@@ -45,6 +45,7 @@ describe("device lifecycle and audit", () => {
     await user.click(screen.getByRole("button", { name: "Send connection test" }));
     expect(await screen.findByText("Command queued")).toBeVisible();
     expect(screen.getByText(/Execution is not proven/i)).toBeVisible();
+    await waitFor(() => expect(api.requests.some((request) => request.url.pathname.includes("/test-command/") && request.method === "GET")).toBe(true));
   });
 
   it("downloads the exact one-line POS provisioning file", async () => {
@@ -54,7 +55,7 @@ describe("device lifecycle and audit", () => {
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
     installApi((request) => request.url.pathname.endsWith("/devices") && request.method === "POST" ? { body: { device: { id: ids.device, venueId: ids.venue, installationId: device.installationId }, credential: initialCredential } } : undefined);
     const user = userEvent.setup();
-    renderPlatform(`/venues/${ids.venue}/devices`);
+    renderPlatform(`/admin/venues/${ids.venue}/devices`);
     await screen.findAllByText("Front POS");
     await user.click(screen.getByRole("button", { name: "Add POS device" }));
     const createDialog = await screen.findByRole("dialog", { name: "Add POS device" });
@@ -70,7 +71,7 @@ describe("device lifecycle and audit", () => {
 
   it("loads the platform audit trail", async () => {
     installApi();
-    renderPlatform("/audit");
+    renderPlatform("/admin/audit");
     expect(await screen.findByText("Venue Plan Assigned")).toBeVisible();
     expect(screen.getAllByText("Platform Admin").length).toBeGreaterThan(0);
     expect(screen.getByText(/FULL/)).toBeVisible();

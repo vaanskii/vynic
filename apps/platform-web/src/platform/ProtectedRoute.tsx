@@ -8,7 +8,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   const location = useLocation();
   if (status === "checking") return <div className="platform-bootstrap"><LoadingState label="Verifying session" /></div>;
   if (status === "anonymous") {
-    return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />;
+    return <Navigate to="/admin/login" replace state={{ from: `${location.pathname}${location.search}` }} />;
   }
   return children;
 }

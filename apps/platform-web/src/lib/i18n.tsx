@@ -1,6 +1,9 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
+import { useLocation } from "react-router-dom";
 
 export type Locale = "en" | "ka";
+
+export const LOCALE_STORAGE_KEY = "vynic-site-locale";
 
 export type SiteCopy = {
   nav: { product: string; floorPlan: string; reservations: string; manager: string; contact: string; bookDemo: string; languageLabel: string; serviceReady: string; homeLabel: string; openNav: string; closeNav: string };
@@ -285,6 +288,12 @@ export function localeFromPath(pathname = window.location.pathname): Locale {
   return pathname === "/ka" || pathname.startsWith("/ka/") ? "ka" : "en";
 }
 
+export function preferredLocale(): Locale {
+  if (typeof window === "undefined") return "en";
+  const saved = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+  return saved === "ka" ? "ka" : "en";
+}
+
 export function localeHref(locale: Locale) {
   return locale === "ka" ? "/ka" : "/en";
 }
@@ -292,12 +301,14 @@ export function localeHref(locale: Locale) {
 const LocaleContext = createContext<{ locale: Locale; copy: SiteCopy }>({ locale: "en", copy: en });
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale] = useState<Locale>(() => localeFromPath());
+  const { pathname } = useLocation();
+  const locale = localeFromPath(pathname);
   const value = useMemo(() => ({ locale, copy: getCopy(locale) }), [locale]);
 
   useEffect(() => {
     document.documentElement.lang = locale === "ka" ? "ka" : "en";
     document.title = locale === "ka" ? "Vynic | რესტორნის POS" : "Vynic | Restaurant POS";
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
   }, [locale]);
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;

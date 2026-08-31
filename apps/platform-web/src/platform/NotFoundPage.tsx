@@ -5,7 +5,7 @@ export function NotFoundPage() {
   return (
     <>
       <PageHeader eyebrow="404" title="Page not found" description="This platform route does not exist." />
-      <Panel><Link className="platform-text-link" to="/">Return to overview</Link></Panel>
+      <Panel><Link className="platform-text-link" to="/admin">Return to overview</Link></Panel>
     </>
   );
 }

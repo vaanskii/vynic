@@ -327,4 +327,15 @@ export class PlatformVenuesController {
         : requireUuid(body.deviceId, 'deviceId'),
     );
   }
+
+  @Get(':venueId/test-command/:commandId')
+  async readTestCommand(
+    @Param('venueId') venueId: string,
+    @Param('commandId') commandId: string,
+  ) {
+    return this.devices.readTestCommand(
+      requireUuid(venueId, 'venueId'),
+      requireUuid(commandId, 'commandId'),
+    );
+  }
 }

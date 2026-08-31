@@ -131,6 +131,7 @@ function defaultReply({ url, method }: MockRequest): MockReply {
   if (path === `/platform/venues/${ids.venue}/product`) return { body: product };
   if (path === `/platform/venues/${ids.venue}/domains`) return { body: [] };
   if (path === `/platform/venues/${ids.venue}/devices`) return { body: [device] };
+  if (path.startsWith(`/platform/venues/${ids.venue}/test-command/`)) return { body: { commandId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", type: "NOOP", status: "PENDING", attemptCount: 0, maxAttempts: 10, claimedAt: null, acknowledgedAt: null, resultCode: null, resultDetail: null, createdAt: "2026-08-31T10:00:00.000Z", updatedAt: "2026-08-31T10:00:00.000Z", claimedBy: null, device: null } };
   if (path === "/platform/audit") return { body: audit };
   return { body: {} };
 }

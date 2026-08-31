@@ -230,6 +230,39 @@
 .platform-confirm--danger { border-color: #e4bfbc; background: #fff6f5; }
 .platform-confirm strong { font-size: 12px; }
 .platform-confirm p { margin: 5px 0 0; color: var(--platform-muted); font-size: 11px; line-height: 1.5; }
+.platform-confirm-error { margin-top: 13px; }
+.platform-feedback { margin: 0 0 16px; padding: 11px 13px; border: 1px solid #bfdbcd; border-radius: 9px; background: #f1f8f4; color: var(--platform-green); font-size: 12px; font-weight: 700; }
+.platform-readiness-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 16px; padding: 18px 20px; border: 1px solid var(--platform-border); border-radius: 12px; background: linear-gradient(110deg, #fff, #f8f6f9); }
+.platform-readiness-head h2 { margin: 0; font-size: 22px; letter-spacing: -.025em; }
+.platform-readiness-head p:not(.platform-eyebrow) { margin: 6px 0 0; color: var(--platform-muted); font-size: 12px; }
+.platform-readiness-state { display: inline-flex; align-items: center; gap: 7px; padding: 9px 11px; border: 1px solid; border-radius: 8px; font-size: 11px; font-weight: 750; white-space: nowrap; }
+.platform-readiness-state.is-ready { border-color: #bfdbcd; background: #f1f8f4; color: var(--platform-green); }
+.platform-readiness-state.is-attention { border-color: #ead3ac; background: #fffaf1; color: var(--platform-amber); }
+.platform-attention-list { display: grid; gap: 7px; }
+.platform-attention { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 11px; border: 1px solid var(--platform-border); border-radius: 9px; color: inherit; text-decoration: none; }
+.platform-attention:hover { border-color: var(--platform-border-strong); background: var(--platform-surface-muted); }
+.platform-attention--danger { border-color: #e4bfbc; }
+.platform-attention__icon { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 7px; background: #fff5e6; color: var(--platform-amber); }
+.platform-attention--danger .platform-attention__icon { background: #fff5f4; color: var(--platform-red); }
+.platform-attention > span:nth-child(2) { display: grid; gap: 3px; min-width: 0; }
+.platform-attention strong { font-size: 12px; }
+.platform-attention small { color: var(--platform-muted); font-size: 10px; line-height: 1.35; }
+.platform-clear-state { display: flex; align-items: center; gap: 9px; min-height: 38px; color: var(--platform-muted); font-size: 12px; }
+.platform-overview-attention { margin-top: 16px; }
+.platform-snapshot-list { display: grid; gap: 1px; overflow: hidden; border: 1px solid var(--platform-border); border-radius: 9px; background: var(--platform-border); }
+.platform-snapshot-list a { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px; background: var(--platform-surface); color: inherit; text-decoration: none; }
+.platform-snapshot-list a:hover { background: var(--platform-surface-muted); }
+.platform-snapshot-list a > span:first-child { display: grid; gap: 3px; min-width: 0; }
+.platform-snapshot-list strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.platform-snapshot-list small { color: var(--platform-muted); font-size: 10px; }
+.platform-snapshot-list a > span:last-child { flex: 0 0 auto; font-size: 10px; text-align: right; }
+.platform-snapshot-issue { color: var(--platform-amber); }
+.platform-snapshot-ok { color: var(--platform-green); }
+.platform-device-activity { display: grid; gap: 3px; min-width: 150px; }
+.platform-device-activity strong { font-size: 11px; }
+.platform-device-activity small, .platform-feature-state small { color: var(--platform-muted); font-size: 9px; }
+.platform-feature-state { display: grid; gap: 3px; justify-items: start; }
+.platform-feature-row__copy .platform-input { min-height: 31px; margin-top: 5px; padding: 6px 8px; font-size: 10px; }
 
 @media (max-width: 1050px) {
   .platform-shell { grid-template-columns: 1fr; }
@@ -255,6 +288,12 @@
   .platform-inline-filter { width: 100%; align-items: stretch; flex-direction: column; }
   .platform-inline-filter .platform-input { min-width: 0; }
   .platform-detail-grid { grid-template-columns: 1fr; }
+  .platform-readiness-head { align-items: flex-start; flex-direction: column; }
+  .platform-readiness-state { white-space: normal; }
+  .platform-attention { grid-template-columns: 30px minmax(0, 1fr); }
+  .platform-attention > .platform-text-link { grid-column: 2; }
+  .platform-snapshot-list a { align-items: flex-start; flex-direction: column; }
+  .platform-snapshot-list a > span:last-child { text-align: left; }
   .platform-panel { padding: 16px; }
   .platform-panel__header { align-items: stretch; flex-direction: column; }
   .platform-login { display: block; }

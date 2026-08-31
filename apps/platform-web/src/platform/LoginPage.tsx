@@ -16,7 +16,7 @@ export function LoginPage() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  if (status === "authenticated") return <Navigate to="/" replace />;
+  if (status === "authenticated") return <Navigate to="/admin" replace />;
 
   const destination =
     typeof location.state === "object" &&
@@ -24,12 +24,12 @@ export function LoginPage() {
     "from" in location.state &&
     typeof location.state.from === "string"
       ? location.state.from
-      : "/";
+      : "/admin";
 
   return (
     <main className="platform-login">
       <section className="platform-login__context" aria-label="Vynic platform">
-        <a className="platform-brand platform-brand--login" href="/product">
+        <a className="platform-brand platform-brand--login" href="/">
           <img src={vynicLogo} alt="" />
           <span>Vynic</span>
         </a>
@@ -67,7 +67,7 @@ export function LoginPage() {
           <div>
             <p className="platform-eyebrow">Secure access</p>
             <h2>Sign in to Platform Admin</h2>
-            <p>Use your Vynic PlatformUser credentials.</p>
+            <p>Sign in with your Vynic operator credentials.</p>
           </div>
           <Field label="Email">
             <Input

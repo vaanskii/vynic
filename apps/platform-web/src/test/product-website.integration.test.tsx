@@ -14,7 +14,7 @@ describe("venue product and website controls", () => {
       return undefined;
     });
     const user = userEvent.setup();
-    renderPlatform(`/venues/${ids.venue}/product`);
+    renderPlatform(`/admin/venues/${ids.venue}/product`);
 
     expect((await screen.findAllByText("Included by plan")).length).toBe(2);
     expect(screen.getByText("Explicitly disabled")).toBeVisible();
@@ -35,9 +35,9 @@ describe("venue product and website controls", () => {
 
   it("surfaces a WebsiteMode inconsistency without silently correcting it", async () => {
     installApi((request) => request.url.pathname.endsWith("/product") ? { body: { ...product, effectiveFeatures: ["POS"], website: { entitled: false, configuredMode: "SAAS", effectiveMode: "NONE", consistent: false } } } : undefined);
-    renderPlatform(`/venues/${ids.venue}/website`);
+    renderPlatform(`/admin/venues/${ids.venue}/website`);
     expect(await screen.findByText("Website entitlement and configuration disagree")).toBeVisible();
-    expect(screen.getByText(/frontend is showing the inconsistency/i)).toBeVisible();
+    expect(screen.getByText(/review the two settings before publishing a hostname/i)).toBeVisible();
     expect(screen.getByText("INCONSISTENT")).toBeVisible();
   });
 
@@ -52,7 +52,7 @@ describe("venue product and website controls", () => {
       return undefined;
     });
     const user = userEvent.setup();
-    renderPlatform(`/venues/${ids.venue}/website`);
+    renderPlatform(`/admin/venues/${ids.venue}/website`);
     expect(await screen.findByText("vankisi.example")).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: "Register domain" }));

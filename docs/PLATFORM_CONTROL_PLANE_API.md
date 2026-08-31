@@ -127,6 +127,7 @@ Everything below requires a platform token.
 | `PUT /platform/venues/:venueId/devices/:deviceId/status` | ACTIVE / DISABLED / REVOKED |
 | `POST /platform/venues/:venueId/devices/:deviceId/credential` | rotate |
 | `POST /platform/venues/:venueId/test-command` | NOOP only |
+| `GET /platform/venues/:venueId/test-command/:commandId` | read NOOP lifecycle and Edge result |
 | `GET /platform/audit` | the platform's own trail; `limit`, `offset`, optional `targetId` |
 
 Controllers validate and delegate; the rules live in the services next to the

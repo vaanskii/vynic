@@ -196,9 +196,14 @@ export const platformApi = {
       method: "POST",
       body: json({ deviceId }),
     }),
-  audit: (limit = 50, offset = 0, targetId?: string) => {
+  readTestCommand: (venueId: string, commandId: string) =>
+    request<import("./types").EdgeCommandStatus>(
+      `/platform/venues/${venueId}/test-command/${commandId}`,
+    ),
+  audit: (limit = 50, offset = 0, targetId?: string, venueId?: string) => {
     const search = new URLSearchParams({ limit: String(limit), offset: String(offset) });
     if (targetId) search.set("targetId", targetId);
+    if (venueId) search.set("venueId", venueId);
     return request<AuditEvent[]>(`/platform/audit?${search}`);
   },
 };

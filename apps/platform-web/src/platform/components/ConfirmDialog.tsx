@@ -9,6 +9,7 @@ export function ConfirmDialog({
   confirmLabel,
   danger = false,
   pending = false,
+  error,
   onConfirm,
 }: {
   open: boolean;
@@ -18,6 +19,7 @@ export function ConfirmDialog({
   confirmLabel: string;
   danger?: boolean;
   pending?: boolean;
+  error?: string;
   onConfirm(): void;
 }) {
   return (
@@ -39,6 +41,7 @@ export function ConfirmDialog({
         <strong>Review the impact before continuing.</strong>
         <p>{description}</p>
       </div>
+      {error ? <p className="platform-form-error platform-confirm-error" role="alert">{error}</p> : null}
     </Dialog>
   );
 }

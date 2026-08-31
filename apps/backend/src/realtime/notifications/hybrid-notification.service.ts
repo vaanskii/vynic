@@ -74,9 +74,13 @@ export class HybridNotificationService {
         await this.prisma.managerNotification.create({
           data: {
             id: notificationId,
+            // Deliveries are addressed by staff username, which is only unique
+            // inside a Venue, so the notification itself carries the owner.
+            venueId: LEGACY_MANAGER_TENANT.venueId,
             wsType: type,
             title: pushCopy.title,
             body: pushCopy.body,
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- Prisma's Json input union does not accept the WsEvent type directly.
             envelope: envelope as object,
           },
         });

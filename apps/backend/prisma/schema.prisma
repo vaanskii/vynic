@@ -244,9 +244,12 @@ model DailySnapshot {
   @@schema("pos")
 }
 
+/// Manager-owned counted menus. Read and written only by the Manager product,
+/// so ownership follows the authenticated Manager Venue.
 model QuickOrderDraft {
   id                String                @id @default(uuid())
-  draftId           String                @unique
+  venueId           String
+  draftId           String
   displayName       String?
   subtotal          Float
   serviceFeeAmount  Float
@@ -257,7 +260,10 @@ model QuickOrderDraft {
   createdBy         String
   updatedAt         DateTime              @updatedAt
   items             QuickOrderDraftItem[]
+  venue             Venue                 @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  @@unique([venueId, draftId])
+  @@index([venueId])
   @@schema("pos")
 }
 
@@ -372,6 +378,9 @@ model Venue {
   dailySnapshots   DailySnapshot[]
   settings         Setting[]
   callbackOutbox   PosCallbackOutbox[]
+  quickOrderDrafts QuickOrderDraft[]
+  notifications    ManagerNotification[]
+  pushDevices      PushDevice[]
   planAssignment   VenuePlanAssignment?
   featureOverrides VenueFeatureOverride[]
   websiteConfig    VenueWebsiteConfig?
@@ -490,8 +499,11 @@ model VenueWebsiteConfig {
   @@schema("pos")
 }
 
+/// A Manager push/socket notification. Venue-owned because its deliveries are
+/// addressed by staff username, which is only unique within a Venue.
 model ManagerNotification {
   id        String   @id @default(uuid())
+  venueId   String
   wsType    String
   title     String
   body      String
@@ -499,7 +511,9 @@ model ManagerNotification {
   createdAt DateTime @default(now())
 
   deliveries ManagerNotificationDelivery[]
+  venue      Venue                         @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  @@index([venueId, createdAt])
   @@schema("pos")
 }
 
@@ -517,15 +531,20 @@ model ManagerNotificationDelivery {
   @@schema("pos")
 }
 
+/// An FCM registration for one Manager staff member. The token is globally
+/// unique because a device is, but the staff username it maps to is only
+/// meaningful inside a Venue.
 model PushDevice {
   id            String   @id @default(uuid())
+  venueId       String
   staffUsername String
   fcmToken      String   @unique
   platform      String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  venue         Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
-  @@index([staffUsername])
+  @@index([venueId, staffUsername])
   @@schema("pos")
 }
 

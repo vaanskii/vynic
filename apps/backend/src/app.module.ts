@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { PosSyncGuard } from './auth/pos-sync.guard';
+import { EdgeTransportModule } from './edge/edge-transport.module';
 import { EntitlementsModule } from './entitlements/entitlements.module';
 import { MobileController } from './mobile/mobile.controller';
 import { MobileUsersService } from './mobile/services/mobile-users.service';
@@ -40,6 +41,7 @@ import { WebsiteModule } from './website/website.module';
     BootstrapModule,
     AuthModule,
     EntitlementsModule,
+    EdgeTransportModule,
     RealtimeModule,
     PosCallbackModule,
     WebsiteModule,

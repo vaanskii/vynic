@@ -1,11 +1,13 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
+import type { TenantContext } from '../tenancy/tenant-context';
+
 export type PosAuthenticationMode = 'device' | 'legacy_shared_key';
 
-export interface TenantContext {
-  venueId: string;
-  organizationId: string;
-}
+// Re-exported so existing POS imports keep working. There is one definition of
+// a tenant (src/tenancy/tenant-context.ts) and both authentication mechanisms
+// produce it.
+export type { TenantContext };
 
 export interface PosAuthContext extends TenantContext {
   authenticationMode: PosAuthenticationMode;

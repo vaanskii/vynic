@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 import 'package:firebase_core/firebase_core.dart';
@@ -22,6 +23,8 @@ import 'package:vynic/core/services/auth/auth_token_service.dart';
 import 'package:vynic/core/services/manager_app/mobile_cache_service.dart';
 import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 import 'package:vynic/core/services/sync/manager_sync_service.dart';
+import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
+import 'package:vynic/core/services/edge/edge_transport_service.dart';
 import 'package:vynic/core/services/sync/pos_ingest_server.dart';
 import 'package:vynic/core/services/auth/session_lock.dart';
 import 'package:vynic/firebase_options.dart';
@@ -122,6 +125,9 @@ void main() async {
 
   // Initialize database, run migrations, and prepare app data.
   await DatabaseService.init();
+  // Read this installation's Cloud identity now that the data directory exists.
+  // Never fails the boot: no credential just means no cloud transport.
+  await EdgeDeviceCredentialStore.load();
   await PosDisplaySettingsController.loadFromStorage();
   if (kDebugMode) {}
 
@@ -146,6 +152,11 @@ void main() async {
 
   // Cloud push: audit debounce + periodic manager-data sync (Windows POS only).
   ManagerSyncService.initialize();
+
+  // Cloud pull: claim and execute Cloud-originated work. Deliberately not
+  // awaited — a POS must open its till whether or not Cloud is reachable, and
+  // an installation with no device credential simply never starts polling.
+  unawaited(EdgeTransportService.instance().start());
 
   runApp(const MyApp(isMobile: false));
 }
@@ -190,6 +201,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   Future<void> _cleanupAndExit() async {
     try {
+      await EdgeTransportService.instance().stop();
       await PosIngestServer.stop();
       PrinterService.dispose();
       // Small delay to ensure sockets are closed

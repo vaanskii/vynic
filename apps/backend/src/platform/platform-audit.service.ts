@@ -69,11 +69,12 @@ export class PlatformAuditService {
   }
 
   /** Most recent first, for a future admin panel. */
-  async recent(limit: number, targetId?: string) {
+  async recent(limit: number, offset: number, targetId?: string) {
     return this.prisma.platformAuditEvent.findMany({
       where: targetId ? { targetId } : undefined,
       orderBy: { createdAt: 'desc' },
       take: limit,
+      skip: offset,
       select: {
         id: true,
         action: true,

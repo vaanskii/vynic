@@ -751,7 +751,7 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
 
   describe('audit trail', () => {
     it('records who changed what, and never a secret', async () => {
-      const events = await audit.recent(200);
+      const events = await audit.recent(200, 0);
       const actions = events.map((event) => event.action);
 
       expect(actions).toEqual(

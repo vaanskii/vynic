@@ -30,6 +30,7 @@ export class PlatformCatalogController {
     const page = readPage(query);
     return this.audit.recent(
       page.limit,
+      page.offset,
       query.targetId ? requireUuid(query.targetId, 'targetId') : undefined,
     );
   }

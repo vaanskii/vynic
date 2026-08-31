@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:vynic/core/services/database_service.dart';
+import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
 import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 
 /// Central configuration for the backend API URL.
@@ -180,9 +181,14 @@ class ApiConfig {
   }
 
   /// Headers for authenticated POS push endpoints.
+  ///
+  /// A provisioned Device credential wins over the shared key. Both travel in
+  /// the same header and the server tells them apart by prefix, so a
+  /// provisioned installation gets a snapshot push attributed to its own Device
+  /// and Venue while an unprovisioned one keeps working exactly as before.
   static Map<String, String> get posSyncHeaders {
     final headers = <String, String>{'Content-Type': 'application/json'};
-    final key = posSyncApiKey;
+    final key = EdgeDeviceCredentialStore.credential ?? posSyncApiKey;
     if (key != null && key.isNotEmpty) {
       headers['X-POS-Sync-Key'] = key;
     }

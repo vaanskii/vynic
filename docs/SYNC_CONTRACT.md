@@ -2,7 +2,7 @@
 
 **Status:** Approved  
 **Decision date:** 2026-05-28  
-**Mobile → POS strategy:** **Option A** — secured local HTTP ingest on Windows POS (server pushes callbacks)
+**Mobile → POS strategy:** **Option A** — secured local HTTP ingest on Windows POS (server pushes callbacks). **Transitional since Step 6A:** Option A cannot survive a Cloud deployment, because a hosted backend has no route to a restaurant LAN. Its replacement is the Edge-initiated pull transport in [CLOUD_EDGE_TRANSPORT.md](./CLOUD_EDGE_TRANSPORT.md); Option A stays in production, and stays the only delivery path, until Step 6B migrates command types across.
 
 This document is the single source of truth for how data flows between **Windows POS (Hive)**, **NestJS backend**, and **Mobile Manager App**. Implementation tasks reference this file.
 
@@ -78,6 +78,8 @@ payloads without these additive fields; no legacy field or event name is
 removed in Step 3B. See [TABLE_IDENTITY.md](./TABLE_IDENTITY.md).
 
 ### 3.2 Cloud → POS (callbacks) — Option A
+
+> **Transitional.** This section describes what runs today. A Cloud deployment cannot dial `192.168.x.x`, so the long-term direction is the Edge pulling work over `POST /edge/commands/*` — see [CLOUD_EDGE_TRANSPORT.md](./CLOUD_EDGE_TRANSPORT.md) for the queue, its lifecycle, and the retirement conditions for this path. No new command type may be added here.
 
 When mobile (via backend) changes data that lives on POS, the server calls the Windows POS **local HTTP API** at `posCallbackUrl`.
 

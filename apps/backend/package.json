@@ -20,6 +20,7 @@
     "db:status": "prisma migrate status",
     "check:env": "node scripts/check-env.mjs",
     "device:issue": "ts-node -T scripts/issue-device-credential.ts",
+    "platform-admin:create": "ts-node -T scripts/create-platform-admin.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",

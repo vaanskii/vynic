@@ -9,6 +9,7 @@ import { StaffPinVault } from './staff-pin-vault.service';
 import { requireEnv } from '../shared/require-env';
 import { DeviceCredentialService } from './device-credential.service';
 import { LegacyPosTenantService } from './legacy-pos-tenant.service';
+import { ManagerTenantService } from './manager-tenant.service';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { LegacyPosTenantService } from './legacy-pos-tenant.service';
     AuthService,
     DeviceCredentialService,
     LegacyPosTenantService,
+    ManagerTenantService,
     JwtStrategy,
     LoginThrottleService,
     StaffPinVault,
@@ -32,6 +34,7 @@ import { LegacyPosTenantService } from './legacy-pos-tenant.service';
     AuthService,
     DeviceCredentialService,
     LegacyPosTenantService,
+    ManagerTenantService,
     StaffPinVault,
   ],
 })

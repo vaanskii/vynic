@@ -63,4 +63,9 @@ Global UUID primary keys remain global. `Order.closureId` also remains globally 
 
 All existing rows are backfilled to the deterministic Step 4A bootstrap Venue. The legacy shared POS key resolves only to that Venue. Until Manager Cloud authentication exists, legacy Manager/mobile API paths resolve server-side to the same bootstrap Venue and never accept a client-provided Venue.
 
-Step 4B2 or later still owns Manager Cloud tenant authentication, Host/domain booking resolution, reservation tenancy, structural enforcement beyond the focused sync boundary, Zone, per-Venue callback routing and Cloud-to-Edge work queues, cloud deployment, subscriptions/plans, entitlements, onboarding, and the previously recorded sync-correctness findings.
+## Follow-on steps
+
+- **Step 4B2A — complete.** Manager requests now resolve an authoritative Venue from the authenticated Staff identity, Manager APIs are scoped to it, and `MANAGER_APP` is enforced on the Manager product API. See [MANAGER_TENANT_AUTH.md](MANAGER_TENANT_AUTH.md).
+- **Step 4B2B — next.** Public website tenancy: Host/domain → Venue resolution, booking and reservation tenant scoping, and retiring the website half of `LEGACY_MANAGER_TENANT`. See [CUSTOM_WEBSITE_RUNTIME.md](CUSTOM_WEBSITE_RUNTIME.md) and [FUTURE_SAAS_WEBSITE.md](FUTURE_SAAS_WEBSITE.md).
+
+Still owned by later phases: Manager Cloud transport and networking, venue-discriminating Manager login, Zone, per-Venue callback routing and Cloud-to-Edge work queues, cloud deployment, billing/subscriptions, onboarding and device activation, and the previously recorded sync-correctness findings.

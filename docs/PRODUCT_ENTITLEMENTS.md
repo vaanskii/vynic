@@ -254,13 +254,18 @@ runtime, and nothing in `apps/venue-web/` reads these tables.
 
 ## Enforcement status
 
-`@RequiresFeature(...)` and `FeatureGuard`
-(`apps/backend/src/entitlements/`) are a working, tested primitive. They are
-**applied to no production route**. Deliberately: Manager and website requests
-do not yet carry authoritative Venue identity, so enforcing there would either
-be unsafe or would change live behavior before Manager Cloud tenancy exists.
-The guard fails closed when no authenticated tenant context is present, which
-is why it may only be attached to routes that have one.
+`@RequiresFeature(...)` and `FeatureGuard` (`apps/backend/src/entitlements/`)
+are a working, tested primitive.
+
+Since Step 4B2A they are applied to the Manager product API (`/mobile/*`),
+whose requests now carry an authoritative Venue resolved from the authenticated
+Staff identity — see [MANAGER_TENANT_AUTH.md](MANAGER_TENANT_AUTH.md). They
+remain attached to no POS sync route, no device route, and no website route:
+sync must never be gated on entitlement, and website requests still lack
+authoritative Venue identity (Step 4B2B).
+
+The guard fails closed when no authenticated tenant is present, which is why it
+may only be attached to routes that have one.
 
 There are no product-management mutation APIs. Creating them would require a
 platform-admin authorization boundary that does not exist yet; a

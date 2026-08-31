@@ -86,4 +86,3 @@ Organization/Venue foundation exists after Step 4A, but operational models are
 days, settings, outbox records, website records, and other operational data do
 not receive `venueId` in this step. Full tenant isolation and tenant-aware
 Prisma access arrive in Step 4B.
-

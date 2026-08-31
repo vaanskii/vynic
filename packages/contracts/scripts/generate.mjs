@@ -59,11 +59,8 @@ const TS_APP_OUT = join(
   'table-identity.ts',
 );
 
-// The Cloud <-> Edge envelope renders TypeScript only. There is no Dart
-// consumer yet: the POS still receives work over the legacy LAN callback path,
-// and emitting an unused Dart file into apps/operations would be dead code
-// pretending to be a contract. Step 6B adds the Dart output alongside the Edge
-// client that reads it.
+// The Cloud <-> Edge envelope renders both languages since Step 6B, when the
+// POS gained an Edge client that claims and acknowledges work.
 const EDGE_TS_OUT = join(PKG, 'generated', 'typescript', 'edge-command.ts');
 const EDGE_TS_APP_OUT = join(
   REPO,
@@ -73,6 +70,16 @@ const EDGE_TS_APP_OUT = join(
   'shared',
   'contracts',
   'edge-command.ts',
+);
+const EDGE_DART_OUT = join(PKG, 'generated', 'dart', 'edge_command.dart');
+const EDGE_DART_APP_OUT = join(
+  REPO,
+  'apps',
+  'operations',
+  'lib',
+  'core',
+  'contracts',
+  'edge_command.dart',
 );
 
 const contract = JSON.parse(readFileSync(SCHEMA, 'utf8'));
@@ -518,11 +525,184 @@ export interface EdgeCommandResult {
 `;
 }
 
+function renderEdgeDart() {
+  const { contractVersion, limits, resultStatuses, commandTypes } = edgeContract;
+  const typeConsts = commandTypes
+    .map(
+      (c) =>
+        `  /// ${c.description}\n  static const String ${c.type.toLowerCase()} = '${c.type}';`,
+    )
+    .join('\n\n');
+  const allTypes = commandTypes.map((c) => `'${c.type}'`).join(', ');
+  const idempotent = commandTypes
+    .filter((c) => c.idempotent)
+    .map((c) => `'${c.type}'`)
+    .join(', ');
+  const resultConsts = resultStatuses
+    .map((r) => `  static const String ${r.toLowerCase()} = '${r}';`)
+    .join('\n');
+
+  return `${banner('//')}
+
+/// The Cloud → Edge work contract, as the POS sees it.
+///
+/// Cloud cannot reach a restaurant's LAN, so the Edge opens the connection with
+/// its Device credential, claims work, executes it locally, and reports the
+/// outcome. Delivery is at-least-once: a claim is a lease, and a lease that
+/// expires unacknowledged is offered again, so every command type must be safe
+/// to execute twice.
+library;
+
+/// The envelope version this build speaks. Sent on every claim so Cloud
+/// withholds work this POS would not understand.
+const int edgeCommandContractVersion = ${contractVersion};
+
+/// Batch size requested when none is given, and the ceiling Cloud enforces.
+const int edgeCommandDefaultBatchSize = ${limits.defaultBatchSize};
+const int edgeCommandMaxBatchSize = ${limits.maxBatchSize};
+
+/// How long a claimed command stays leased before Cloud offers it again.
+const int edgeCommandClaimLeaseSeconds = ${limits.claimLeaseSeconds};
+
+/// Redeliveries before Cloud gives up on a command.
+const int edgeCommandMaxAttempts = ${limits.maxAttempts};
+
+/// Every command type this contract version defines.
+class EdgeCommandTypes {
+  EdgeCommandTypes._();
+
+${typeConsts}
+
+  static const Set<String> all = <String>{${allTypes}};
+
+  /// Types safe to execute more than once.
+  ///
+  /// A type absent from this set must not be executed on redelivery without a
+  /// handler-specific idempotency boundary of its own.
+  static const Set<String> idempotent = <String>{${idempotent}};
+}
+
+/// What the Edge may report back about a command.
+class EdgeCommandResultStatus {
+  EdgeCommandResultStatus._();
+
+${resultConsts}
+}
+
+/// One unit of work, as the Edge receives it.
+class EdgeCommandEnvelope {
+  const EdgeCommandEnvelope({
+    required this.contractVersion,
+    required this.commandId,
+    required this.type,
+    required this.payload,
+    required this.idempotencyKey,
+    required this.attempt,
+    required this.issuedAt,
+    required this.leaseExpiresAt,
+  });
+
+  final int contractVersion;
+  final String commandId;
+  final String type;
+  final Object? payload;
+
+  /// Stable per Venue: the same intent enqueued twice is the same command.
+  final String idempotencyKey;
+
+  /// How many times this command has been handed out, this delivery included.
+  final int attempt;
+  final DateTime issuedAt;
+
+  /// After this instant Cloud may offer the command to an Edge again.
+  final DateTime leaseExpiresAt;
+
+  /// Whether this build understands the envelope well enough to execute it.
+  bool get isSupportedVersion => contractVersion <= edgeCommandContractVersion;
+
+  /// Parses one envelope, or throws [FormatException] on a malformed one.
+  ///
+  /// Deliberately strict about the fields the transport depends on: a command
+  /// without an id or a type cannot be acknowledged, and silently defaulting
+  /// either would lose work rather than report it.
+  factory EdgeCommandEnvelope.fromJson(Map<String, dynamic> json) {
+    final commandId = json['commandId'];
+    final type = json['type'];
+    if (commandId is! String || commandId.isEmpty) {
+      throw const FormatException('Edge command is missing commandId');
+    }
+    if (type is! String || type.isEmpty) {
+      throw const FormatException('Edge command is missing type');
+    }
+    return EdgeCommandEnvelope(
+      contractVersion: _asInt(json['contractVersion'], 0),
+      commandId: commandId,
+      type: type,
+      payload: json['payload'],
+      idempotencyKey: json['idempotencyKey'] is String
+          ? json['idempotencyKey'] as String
+          : '',
+      attempt: _asInt(json['attempt'], 1),
+      issuedAt: _asTime(json['issuedAt']),
+      leaseExpiresAt: _asTime(json['leaseExpiresAt']),
+    );
+  }
+}
+
+/// What the Edge sends back once it has executed — or failed to execute — one.
+class EdgeCommandResult {
+  const EdgeCommandResult({
+    required this.commandId,
+    required this.status,
+    this.code,
+    this.detail,
+  });
+
+  const EdgeCommandResult.succeeded(this.commandId, {this.code, this.detail})
+    : status = EdgeCommandResultStatus.succeeded;
+
+  const EdgeCommandResult.failed(this.commandId, {this.code, this.detail})
+    : status = EdgeCommandResultStatus.failed;
+
+  final String commandId;
+  final String status;
+
+  /// Short machine-readable outcome, e.g. \`printer_offline\`.
+  final String? code;
+  final String? detail;
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'contractVersion': edgeCommandContractVersion,
+    'commandId': commandId,
+    'status': status,
+    if (code != null) 'code': code,
+    if (detail != null) 'detail': detail,
+  };
+}
+
+int _asInt(Object? raw, int fallback) {
+  if (raw is int) return raw;
+  if (raw is num) return raw.toInt();
+  if (raw is String) return int.tryParse(raw) ?? fallback;
+  return fallback;
+}
+
+DateTime _asTime(Object? raw) {
+  if (raw is String) {
+    final parsed = DateTime.tryParse(raw);
+    if (parsed != null) return parsed.toUtc();
+  }
+  return DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+}
+`;
+}
+
 // ── Emit ─────────────────────────────────────────────────────────────────────
 
 const dart = renderDart();
 const ts = renderTs();
 const edgeTs = renderEdgeTs();
+const edgeDart = renderEdgeDart();
 
 const outputs = [
   { path: DART_OUT, body: dart },
@@ -531,6 +711,8 @@ const outputs = [
   { path: TS_APP_OUT, body: ts },
   { path: EDGE_TS_OUT, body: edgeTs },
   { path: EDGE_TS_APP_OUT, body: edgeTs },
+  { path: EDGE_DART_OUT, body: edgeDart },
+  { path: EDGE_DART_APP_OUT, body: edgeDart },
 ];
 
 const check = process.argv.includes('--check');

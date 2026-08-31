@@ -310,6 +310,33 @@ enum VenueStatus {
   @@schema("pos")
 }
 
+enum PlanStatus {
+  ACTIVE
+  RETIRED
+
+  @@schema("pos")
+}
+
+/// A Venue override either grants a feature its plan lacks or withholds one
+/// its plan includes. The absence of a row is the third state — defer to the
+/// plan — which is why this is an enum rather than a boolean.
+enum FeatureOverrideEffect {
+  ENABLED
+  DISABLED
+
+  @@schema("pos")
+}
+
+/// Which restaurant website implementation serves a Venue. This configures the
+/// WEBSITE feature; it is not a feature of its own.
+enum WebsiteMode {
+  NONE
+  SAAS
+  CUSTOM
+
+  @@schema("pos")
+}
+
 /// Customer or business account. Billing and entitlements are deliberately
 /// deferred; Step 4A establishes ownership only.
 model Organization {
@@ -324,27 +351,30 @@ model Organization {
 
 /// One physical restaurant/location owned by an Organization.
 model Venue {
-  id             String              @id @default(uuid())
-  organizationId String
-  name           String
-  status         VenueStatus         @default(ACTIVE)
-  timezone       String
-  currency       String
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
-  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  devices        Device[]
-  tables         Table[]
-  orders         Order[]
-  menuCategories MenuCategory[]
-  menuItems      MenuItem[]
-  expenses       Expense[]
-  staff          Staff[]
-  auditReports   AuditReport[]
-  auditEventLogs AuditEventLog[]
-  dailySnapshots DailySnapshot[]
-  settings       Setting[]
-  callbackOutbox PosCallbackOutbox[]
+  id               String                 @id @default(uuid())
+  organizationId   String
+  name             String
+  status           VenueStatus            @default(ACTIVE)
+  timezone         String
+  currency         String
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  organization     Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  devices          Device[]
+  tables           Table[]
+  orders           Order[]
+  menuCategories   MenuCategory[]
+  menuItems        MenuItem[]
+  expenses         Expense[]
+  staff            Staff[]
+  auditReports     AuditReport[]
+  auditEventLogs   AuditEventLog[]
+  dailySnapshots   DailySnapshot[]
+  settings         Setting[]
+  callbackOutbox   PosCallbackOutbox[]
+  planAssignment   VenuePlanAssignment?
+  featureOverrides VenueFeatureOverride[]
+  websiteConfig    VenueWebsiteConfig?
 
   @@index([organizationId])
   @@schema("pos")
@@ -368,6 +398,95 @@ model Device {
 
   @@index([status])
   @@index([venueId])
+  @@schema("pos")
+}
+
+// ─── Product entitlements (commercial layer above tenancy) ───────────────────
+// Plan is packaging, Feature is capability, and neither gates POS -> Cloud
+// synchronization. See docs/PRODUCT_ENTITLEMENTS.md.
+
+/// One capability the product can grant. Rows, not an enum, so a later
+/// capability is a seed insert rather than a schema migration.
+model Feature {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  plans     PlanFeature[]
+  overrides VenueFeatureOverride[]
+
+  @@schema("pos")
+}
+
+/// A commercial package. Carries no application logic: nothing branches on a
+/// plan key, because code asks for features.
+model Plan {
+  id        String     @id @default(uuid())
+  key       String     @unique
+  name      String
+  status    PlanStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  features    PlanFeature[]
+  assignments VenuePlanAssignment[]
+
+  @@schema("pos")
+}
+
+model PlanFeature {
+  planId    String
+  featureId String
+  plan      Plan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  feature   Feature @relation(fields: [featureId], references: [id], onDelete: Restrict)
+
+  @@id([planId, featureId])
+  @@index([featureId])
+  @@schema("pos")
+}
+
+/// Which package a Venue currently has. Deliberately not a Subscription: no
+/// billing lifecycle has been decided, so none is modelled here.
+model VenuePlanAssignment {
+  venueId    String   @id
+  planId     String
+  assignedAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  venue      Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  plan       Plan     @relation(fields: [planId], references: [id], onDelete: Restrict)
+
+  @@index([planId])
+  @@schema("pos")
+}
+
+/// A per-Venue exception to its plan. Always wins over the plan default, so a
+/// special agreement or a beta does not require inventing a new Plan.
+model VenueFeatureOverride {
+  venueId   String
+  featureId String
+  effect    FeatureOverrideEffect
+  note      String?
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  venue     Venue                 @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  feature   Feature               @relation(fields: [featureId], references: [id], onDelete: Restrict)
+
+  @@id([venueId, featureId])
+  @@index([featureId])
+  @@schema("pos")
+}
+
+/// How an entitled Venue's website is served. Separate from the WEBSITE
+/// entitlement, and separate from whether that website is actually deployed.
+model VenueWebsiteConfig {
+  venueId   String      @id
+  mode      WebsiteMode @default(NONE)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  venue     Venue       @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
   @@schema("pos")
 }
 

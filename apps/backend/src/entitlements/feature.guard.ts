@@ -6,20 +6,24 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import type { PosAuthenticatedRequest } from '../auth/pos-auth-context';
+import {
+  requestTenant,
+  type TenantAuthenticatedRequest,
+} from '../tenancy/tenant-context';
 import { REQUIRED_FEATURE_KEY } from './requires-feature.decorator';
 import { VenueEntitlementsService } from './venue-entitlements.service';
 
 /**
  * Denies a route when the authenticated Venue lacks the required feature.
  *
- * Deliberately applied to nothing in Step 5A. Manager and website requests do
- * not yet carry authoritative Venue identity, so enforcing there would either
- * be unsafe or would switch off parts of the live product before Manager Cloud
- * tenancy exists. This is the tested primitive that later phase will attach.
+ * The tenant comes from whichever authentication established one — a POS
+ * Device credential or an authenticated Manager staff session. Step 4B2A
+ * attaches this to the Manager product API, whose requests now carry an
+ * authoritative Venue.
  *
- * It also has no business being on a sync route: entitlement must never gate
- * POS → Cloud synchronization.
+ * It has no business being on a sync route: entitlement must never gate
+ * POS → Cloud synchronization. Website requests still lack authoritative Venue
+ * identity, so it is not attached there either (Step 4B2B).
  *
  * A route with no @RequiresFeature passes through untouched, so adding the
  * guard to a controller cannot change the behavior of its other handlers.
@@ -42,15 +46,17 @@ export class FeatureGuard implements CanActivate {
 
     const request = context
       .switchToHttp()
-      .getRequest<PosAuthenticatedRequest>();
-    const venueId = request.posAuthContext?.venueId;
-    if (!venueId) {
+      .getRequest<TenantAuthenticatedRequest>();
+    const tenant = requestTenant(request);
+    if (!tenant) {
       throw new UnauthorizedException(
         'Feature access requires an authenticated venue',
       );
     }
 
-    if (!(await this.entitlements.hasFeature(venueId, requiredFeature))) {
+    if (
+      !(await this.entitlements.hasFeature(tenant.venueId, requiredFeature))
+    ) {
       throw new ForbiddenException(
         `This venue is not entitled to ${requiredFeature}`,
       );

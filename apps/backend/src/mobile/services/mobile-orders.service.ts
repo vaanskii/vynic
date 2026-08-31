@@ -19,11 +19,8 @@ import {
   readRestaurantServiceFeeSettings,
   todayStart,
 } from '../util/mobile-date.util';
-import {
-  LEGACY_MANAGER_TENANT,
-  legacyOrderIdentity,
-  legacySettingIdentity,
-} from '../../tenancy/legacy-manager-tenant';
+import { orderIdentity, settingIdentity } from '../../tenancy/tenant-identity';
+import type { TenantContext } from '../../tenancy/tenant-context';
 
 export interface PaginatedOrders {
   data: {
@@ -62,6 +59,7 @@ export class MobileOrdersService {
   ) {}
 
   async getOrders(
+    tenant: TenantContext,
     page: number,
     pageSize: number,
     status?: string,
@@ -69,12 +67,12 @@ export class MobileOrdersService {
     const take = Math.min(pageSize, 100);
     const skip = (page - 1) * take;
     const businessDateSetting = await (this.prisma as any).setting.findUnique({
-      where: legacySettingIdentity('currentBusinessDate'),
+      where: settingIdentity(tenant, 'currentBusinessDate'),
     });
     const currentBusinessDate =
       businessDateSetting?.value ?? todayStart().toISOString().split('T')[0];
     const where: any = {
-      venueId: LEGACY_MANAGER_TENANT.venueId,
+      venueId: tenant.venueId,
       ...businessDateWhere(currentBusinessDate),
     };
     if (status) where.status = status;
@@ -117,17 +115,20 @@ export class MobileOrdersService {
     };
   }
 
-  async getOrder(id: string) {
-    const feeSettings = await readRestaurantServiceFeeSettings(this.prisma);
+  async getOrder(tenant: TenantContext, id: string) {
+    const feeSettings = await readRestaurantServiceFeeSettings(
+      this.prisma,
+      tenant,
+    );
     const order = await this.prisma.order.findUnique({
-      where: legacyOrderIdentity(Number(id)),
+      where: orderIdentity(tenant, Number(id)),
       include: { items: true },
     });
     if (!order) return { error: 'Order not found' };
 
     const linkedTables = await (this.prisma as any).table.findMany({
       where: {
-        venueId: LEGACY_MANAGER_TENANT.venueId,
+        venueId: tenant.venueId,
         activeOrderId: Number(id),
       },
       orderBy: [{ floor: 'asc' }, { tableNumber: 'asc' }],
@@ -167,12 +168,13 @@ export class MobileOrdersService {
   }
 
   async updateOrder(
+    tenant: TenantContext,
     id: string,
     monitoringSocketId: string | undefined,
     body: any,
   ) {
     const order = await this.prisma.order.findUnique({
-      where: legacyOrderIdentity(Number(id)),
+      where: orderIdentity(tenant, Number(id)),
     });
     if (!order) return { success: false };
 
@@ -195,7 +197,10 @@ export class MobileOrdersService {
     }
 
     // Mobile can toggle service fee; fall back to stored value if not sent
-    const feeSettings = await readRestaurantServiceFeeSettings(this.prisma);
+    const feeSettings = await readRestaurantServiceFeeSettings(
+      this.prisma,
+      tenant,
+    );
     const requestedInclude =
       typeof body.includeServiceFee === 'boolean'
         ? body.includeServiceFee
@@ -243,7 +248,7 @@ export class MobileOrdersService {
         if (!tableNumber) continue;
         await (this.prisma as any).table.updateMany({
           where: {
-            venueId: LEGACY_MANAGER_TENANT.venueId,
+            venueId: tenant.venueId,
             tableNumber,
             floor,
           },
@@ -271,7 +276,7 @@ export class MobileOrdersService {
       performerName,
     });
     if (auditEvents.length > 0) {
-      await this.appendAuditEventsForPosOrder({
+      await this.appendAuditEventsForPosOrder(tenant, {
         posOrderId,
         tableNumbers: Array.isArray(body.tableNumbers)
           ? body.tableNumbers.map((t: unknown) => String(t))
@@ -359,13 +364,16 @@ export class MobileOrdersService {
   }
 
   /** Append audit line events for a POS order (mobile manager edits). */
-  private async appendAuditEventsForPosOrder(params: {
-    posOrderId: number;
-    tableNumbers: string[];
-    floor: string;
-    openedByName: string;
-    events: AuditEventInput[];
-  }) {
+  private async appendAuditEventsForPosOrder(
+    tenant: TenantContext,
+    params: {
+      posOrderId: number;
+      tableNumbers: string[];
+      floor: string;
+      openedByName: string;
+      events: AuditEventInput[];
+    },
+  ) {
     const { posOrderId, tableNumbers, floor, openedByName, events } = params;
     if (events.length === 0) return;
 
@@ -376,7 +384,7 @@ export class MobileOrdersService {
     let dbReport = await prisma.auditReport.findUnique({
       where: {
         venueId_reportId: {
-          venueId: LEGACY_MANAGER_TENANT.venueId,
+          venueId: tenant.venueId,
           reportId,
         },
       },
@@ -384,7 +392,7 @@ export class MobileOrdersService {
     if (!dbReport) {
       dbReport = await prisma.auditReport.create({
         data: {
-          venueId: LEGACY_MANAGER_TENANT.venueId,
+          venueId: tenant.venueId,
           reportId,
           posOrderId,
           tableNumbers,
@@ -425,10 +433,14 @@ export class MobileOrdersService {
     });
   }
 
-  async cancelOrder(id: string, monitoringSocketId?: string) {
+  async cancelOrder(
+    tenant: TenantContext,
+    id: string,
+    monitoringSocketId?: string,
+  ) {
     const posOrderId = Number(id);
     const order = await this.prisma.order.findUnique({
-      where: legacyOrderIdentity(posOrderId),
+      where: orderIdentity(tenant, posOrderId),
     });
     if (!order) return { success: false, error: 'order_not_found' };
 
@@ -438,7 +450,7 @@ export class MobileOrdersService {
     // cancellation notification can say which table was freed.
     const heldTables = await (this.prisma as any).table.findMany({
       where: {
-        venueId: LEGACY_MANAGER_TENANT.venueId,
+        venueId: tenant.venueId,
         activeOrderId: posOrderId,
       },
       select: { tableNumber: true },
@@ -456,7 +468,7 @@ export class MobileOrdersService {
     // Free the table that was holding this order so it no longer shows as occupied
     await (this.prisma as any).table.updateMany({
       where: {
-        venueId: LEGACY_MANAGER_TENANT.venueId,
+        venueId: tenant.venueId,
         activeOrderId: posOrderId,
       },
       data: { isReserved: false, activeOrderId: null, currentBill: 0 },
@@ -508,6 +520,7 @@ export class MobileOrdersService {
   }
 
   async createTakeawayOrder(
+    tenant: TenantContext,
     monitoringSocketId: string | undefined,
     body: {
       customerName: string;
@@ -518,7 +531,7 @@ export class MobileOrdersService {
   ) {
     // Resolve current business date
     const bdSetting = await (this.prisma as any).setting.findUnique({
-      where: legacySettingIdentity('currentBusinessDate'),
+      where: settingIdentity(tenant, 'currentBusinessDate'),
     });
     const businessDate: string =
       bdSetting?.value ?? new Date().toISOString().slice(0, 10);
@@ -532,12 +545,12 @@ export class MobileOrdersService {
     // where two mobile requests grabbed the same id.
     let order: any;
     for (let attempt = 0; ; attempt++) {
-      const candidateId = await this.allocateMobileOrderId();
+      const candidateId = await this.allocateMobileOrderId(tenant);
       this.mutationSupport.registerMobileMutationEchoGuard(candidateId);
       try {
         order = await this.prisma.order.create({
           data: {
-            venueId: LEGACY_MANAGER_TENANT.venueId,
+            venueId: tenant.venueId,
             posOrderId: candidateId,
             status: 'pending',
             totalAmount: Math.round(totalAmount * 100) / 100,
@@ -608,6 +621,7 @@ export class MobileOrdersService {
   }
 
   async createWalkInOrder(
+    tenant: TenantContext,
     monitoringSocketId: string | undefined,
     body: {
       tableNumbers: (string | number)[];
@@ -635,7 +649,7 @@ export class MobileOrdersService {
     }
 
     const bdSetting = await (this.prisma as any).setting.findUnique({
-      where: legacySettingIdentity('currentBusinessDate'),
+      where: settingIdentity(tenant, 'currentBusinessDate'),
     });
     const businessDate: string =
       bdSetting?.value ?? new Date().toISOString().slice(0, 10);
@@ -650,7 +664,7 @@ export class MobileOrdersService {
     // where two mobile requests grabbed the same id.
     let order: any;
     for (let attempt = 0; ; attempt++) {
-      const candidateId = await this.allocateMobileOrderId();
+      const candidateId = await this.allocateMobileOrderId(tenant);
       // Suppress echo for the order and every reserved table.
       this.mutationSupport.registerMobileMutationEchoGuard(candidateId);
       for (const tableNumber of tableNumbers) {
@@ -662,7 +676,7 @@ export class MobileOrdersService {
       try {
         order = await this.prisma.order.create({
           data: {
-            venueId: LEGACY_MANAGER_TENANT.venueId,
+            venueId: tenant.venueId,
             posOrderId: candidateId,
             status: 'pending',
             totalAmount,
@@ -695,7 +709,7 @@ export class MobileOrdersService {
       await (this.prisma as any).table.upsert({
         where: {
           tableIdentifier: {
-            venueId: LEGACY_MANAGER_TENANT.venueId,
+            venueId: tenant.venueId,
             tableNumber,
             floor,
           },
@@ -706,7 +720,7 @@ export class MobileOrdersService {
           currentBill: totalAmount,
         },
         create: {
-          venueId: LEGACY_MANAGER_TENANT.venueId,
+          venueId: tenant.venueId,
           tableNumber,
           floor,
           isReserved: true,
@@ -765,10 +779,14 @@ export class MobileOrdersService {
     };
   }
 
-  async deleteTakeawayOrder(id: string, monitoringSocketId?: string) {
+  async deleteTakeawayOrder(
+    tenant: TenantContext,
+    id: string,
+    monitoringSocketId?: string,
+  ) {
     const posOrderId = Number(id);
     const order = await this.prisma.order.findUnique({
-      where: legacyOrderIdentity(posOrderId),
+      where: orderIdentity(tenant, posOrderId),
     });
     if (!order) return { success: false, error: 'order_not_found' };
 
@@ -792,16 +810,16 @@ export class MobileOrdersService {
     return { success: true };
   }
 
-  async getTakeawayOrders() {
+  async getTakeawayOrders(tenant: TenantContext) {
     // Use the currentBusinessDate setting — same source Windows POS uses to filter.
     const businessDateSetting = await (this.prisma as any).setting.findUnique({
-      where: legacySettingIdentity('currentBusinessDate'),
+      where: settingIdentity(tenant, 'currentBusinessDate'),
     });
     const currentBD: string = businessDateSetting?.value ?? '';
 
     const orders = await this.prisma.order.findMany({
       where: {
-        venueId: LEGACY_MANAGER_TENANT.venueId,
+        venueId: tenant.venueId,
         floor: 'takeaway',
         // Primary: match by stored businessDate (set during sync).
         // Fallback: if businessDate not yet populated (old orders), match by createdAt calendar day.
@@ -857,14 +875,14 @@ export class MobileOrdersService {
   /// already in the DB (never below 90001), then advances the counter. This
   /// survives counter drift and orders synced up from the POS that already sit
   /// in the mobile id range.
-  private async allocateMobileOrderId(): Promise<number> {
+  private async allocateMobileOrderId(tenant: TenantContext): Promise<number> {
     const counterKey = 'mobileOrderIdCounter';
     const [counterSetting, maxAgg] = await Promise.all([
       (this.prisma as any).setting.findUnique({
-        where: legacySettingIdentity(counterKey),
+        where: settingIdentity(tenant, counterKey),
       }),
       this.prisma.order.aggregate({
-        where: { venueId: LEGACY_MANAGER_TENANT.venueId },
+        where: { venueId: tenant.venueId },
         _max: { posOrderId: true },
       }),
     ]);
@@ -872,10 +890,10 @@ export class MobileOrdersService {
     const maxExisting = Number((maxAgg as any)?._max?.posOrderId ?? 0);
     const nextId = Math.max(counterValue + 1, maxExisting + 1, 90001);
     await (this.prisma as any).setting.upsert({
-      where: legacySettingIdentity(counterKey),
+      where: settingIdentity(tenant, counterKey),
       update: { value: String(nextId) },
       create: {
-        venueId: LEGACY_MANAGER_TENANT.venueId,
+        venueId: tenant.venueId,
         key: counterKey,
         value: String(nextId),
       },

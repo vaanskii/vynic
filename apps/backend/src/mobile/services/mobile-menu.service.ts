@@ -8,7 +8,8 @@ import { PrismaService } from '../../prisma.service';
 import { MonitoringGateway } from '../../realtime/monitoring.gateway';
 import { PosCallbackClient } from '../../pos/pos-callback.client';
 import { readRestaurantServiceFeeSettings } from '../util/mobile-date.util';
-import { LEGACY_MANAGER_TENANT } from '../../tenancy/legacy-manager-tenant';
+import { quickOrderDraftIdentity } from '../../tenancy/tenant-identity';
+import type { TenantContext } from '../../tenancy/tenant-context';
 
 /** WS exclude options for the REST client that initiated a mutation. */
 type BroadcastExclude = { excludeSocketIds: string[] } | undefined;
@@ -31,9 +32,9 @@ export class MobileMenuService {
     private readonly posCallback: PosCallbackClient,
   ) {}
 
-  async getMenu() {
+  async getMenu(tenant: TenantContext) {
     const cats = await (this.prisma as any).menuCategory.findMany({
-      where: { venueId: LEGACY_MANAGER_TENANT.venueId },
+      where: { venueId: tenant.venueId },
       include: {
         items: {
           include: { variants: true },
@@ -84,9 +85,13 @@ export class MobileMenuService {
     }));
   }
 
-  async getCountedMenus() {
-    const feeSettings = await readRestaurantServiceFeeSettings(this.prisma);
+  async getCountedMenus(tenant: TenantContext) {
+    const feeSettings = await readRestaurantServiceFeeSettings(
+      this.prisma,
+      tenant,
+    );
     const drafts = await (this.prisma as any).quickOrderDraft.findMany({
+      where: { venueId: tenant.venueId },
       include: { items: true },
       orderBy: { createdAt: 'desc' },
     });
@@ -144,9 +149,16 @@ export class MobileMenuService {
     return feeSettings.serviceFeePercent / 100;
   }
 
-  async saveCountedMenu(data: any, excludeOpts: BroadcastExclude) {
+  async saveCountedMenu(
+    tenant: TenantContext,
+    data: any,
+    excludeOpts: BroadcastExclude,
+  ) {
     const { displayName, items, subtotal, includeServiceFee, createdBy } = data;
-    const feeSettings = await readRestaurantServiceFeeSettings(this.prisma);
+    const feeSettings = await readRestaurantServiceFeeSettings(
+      this.prisma,
+      tenant,
+    );
     const shouldInclude =
       feeSettings.serviceFeeAvailable && includeServiceFee === true;
     const serviceFeeRate = this.resolveCountedMenuServiceFeeRate(
@@ -158,6 +170,7 @@ export class MobileMenuService {
 
     const dbDraft = await (this.prisma as any).quickOrderDraft.create({
       data: {
+        venueId: tenant.venueId,
         draftId: uuidv4(),
         displayName,
         subtotal,
@@ -186,9 +199,13 @@ export class MobileMenuService {
     return { success: true, id: dbDraft.draftId };
   }
 
-  async deleteCountedMenu(id: string, excludeOpts: BroadcastExclude) {
+  async deleteCountedMenu(
+    tenant: TenantContext,
+    id: string,
+    excludeOpts: BroadcastExclude,
+  ) {
     await (this.prisma as any).quickOrderDraft.delete({
-      where: { draftId: id },
+      where: quickOrderDraftIdentity(tenant, id),
     });
     this.gateway.broadcastUpdate('data_updated', { type: 'all' }, excludeOpts);
     return { success: true };
@@ -201,6 +218,7 @@ export class MobileMenuService {
    * clean 404 if the draft no longer exists.
    */
   async updateCountedMenu(
+    tenant: TenantContext,
     id: string,
     data: any,
     excludeOpts: BroadcastExclude,
@@ -208,13 +226,16 @@ export class MobileMenuService {
     const { displayName, items, subtotal, includeServiceFee } = data;
 
     const existing = await (this.prisma as any).quickOrderDraft.findUnique({
-      where: { draftId: id },
+      where: quickOrderDraftIdentity(tenant, id),
     });
     if (!existing) {
       throw new NotFoundException('Counted menu not found');
     }
 
-    const feeSettings = await readRestaurantServiceFeeSettings(this.prisma);
+    const feeSettings = await readRestaurantServiceFeeSettings(
+      this.prisma,
+      tenant,
+    );
     const shouldInclude =
       feeSettings.serviceFeeAvailable && includeServiceFee === true;
     const serviceFeeRate = this.resolveCountedMenuServiceFeeRate(
@@ -265,10 +286,16 @@ export class MobileMenuService {
    * No realtime broadcast: printing is not a data mutation. Missing draft → 404;
    * unreachable POS → 503.
    */
-  async printCountedMenu(id: string): Promise<{ success: true }> {
-    const feeSettings = await readRestaurantServiceFeeSettings(this.prisma);
+  async printCountedMenu(
+    tenant: TenantContext,
+    id: string,
+  ): Promise<{ success: true }> {
+    const feeSettings = await readRestaurantServiceFeeSettings(
+      this.prisma,
+      tenant,
+    );
     const draft = await (this.prisma as any).quickOrderDraft.findUnique({
-      where: { draftId: id },
+      where: quickOrderDraftIdentity(tenant, id),
       include: { items: true },
     });
     if (!draft) {

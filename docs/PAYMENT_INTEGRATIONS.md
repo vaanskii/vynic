@@ -82,10 +82,10 @@ identifiers the provider requires.
    Backoffice, not masked-but-recoverable. Reads answer "is a credential
    configured", never "what is it".
 4. **Managed by a trusted platform administrator**, from the control plane
-   described in [PLATFORM_CONTROL_PLANE.md](PLATFORM_CONTROL_PLANE.md). This is
-   the blocker: there is no platform-admin identity yet, and an endpoint that
-   writes merchant credentials without one would be worse than the current
-   limitation.
+   described in [PLATFORM_CONTROL_PLANE_API.md](PLATFORM_CONTROL_PLANE_API.md).
+   Step 7A built that administrator and that API, so this is **no longer the
+   blocker** — what remains is the schema, the encryption boundary, and the
+   provider-selection change in the payment path, none of which Step 7A touched.
 5. **Rotation without downtime**, and a disabled integration that fails closed —
    a Venue whose provider is not configured must not fall through to another
    Venue's credentials, which is exactly what would happen today.

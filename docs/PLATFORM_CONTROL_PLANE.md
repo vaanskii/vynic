@@ -1,6 +1,8 @@
 # Platform control plane
 
-**Roadmap only. Step 6A built none of this.**
+**Item 1 is built (Step 7A) — see
+[PLATFORM_CONTROL_PLANE_API.md](PLATFORM_CONTROL_PLANE_API.md). Items 2 and 3
+remain roadmap only.**
 
 Three related things are recorded here because the architecture keeps arriving at
 them and then correctly declining to build them early: a trusted platform
@@ -31,6 +33,11 @@ Every phase so far has hit the same wall and stopped at it deliberately:
 | 6B | issuing Device credentials | same — provisioning is a shell script, not an endpoint |
 | future | payment credentials | worse: it writes merchant secrets |
 
+**All of these are now unblocked** except payment credentials, which are
+deferred on their own merits rather than for want of a boundary. Step 7A built
+the principal, the authentication, and the control-plane API for plans, feature
+overrides, website mode, domains, devices and device credentials.
+
 In each case the read path, the schema and the service exist and are tested; only
 the authenticated write is missing. Step 6B added device provisioning to the
 list: `npm run device:issue` requires shell access to the server, which is a real
@@ -39,15 +46,18 @@ be built out of. That is the deliberate shape — the control
 plane is one boundary to build once, not four half-boundaries scattered across
 phases.
 
-### Requirements when it is built
+### Requirements — all met in Step 7A
 
-- A distinct principal. **Not** a `Staff` row with a bigger role: restaurant
-  staff belong to a Venue, and a platform administrator belongs above all of
-  them. This is the opposite of the Step 4B2A decision, and for the opposite
-  reason — there, `Staff` already correctly modelled a restaurant employee.
-- Auditable: who changed which Venue's plan, domain, or credentials, and when.
-- Strong authentication, since it reaches every tenant.
-- Never reachable from a Manager or website session.
+- ~~A distinct principal.~~ `PlatformUser`: no `venueId`, no `organizationId`, no
+  Staff relation. **Not** a `Staff` row with a bigger role. This is the opposite
+  of the Step 4B2A decision, and for the opposite reason — there, `Staff` already
+  correctly modelled a restaurant employee.
+- ~~Auditable.~~ `PlatformAuditEvent`, deliberately separate from the Venue
+  operational audit log.
+- ~~Strong authentication.~~ Argon2id passwords; tokens separated from Manager and
+  customer tokens by audience, principal type and subject resolution.
+- ~~Never reachable from a Manager or website session.~~ Test-proven, including
+  for tokens signed with the same secret.
 
 ---
 
@@ -104,9 +114,13 @@ may define them would just move the missing authorization one level down.
 ## Order
 
 ```
-Platform administrator identity
+Platform administrator identity            ← Step 7A, done
         ↓
-control-plane writes (plans, domains, devices, payment credentials)
+control-plane writes                       ← Step 7A, done
+(plans, feature overrides, website mode,
+ domains, devices, device credentials)
+        ↓
+Vynic Admin Panel                          ← Step 7B, next
         ↓
 Venue administration boundary
         ↓
@@ -116,4 +130,5 @@ custom roles and permissions
 ```
 
 Each step is the prerequisite for the next, which is why none of them was built
-out of order.
+out of order. Payment credentials sit alongside the control-plane writes and are
+deferred on their own merits, not for want of a boundary.

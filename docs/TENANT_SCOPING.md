@@ -70,7 +70,8 @@ All existing rows are backfilled to the deterministic Step 4A bootstrap Venue. T
 - **Step 6A — complete.** Cloud ↔ Edge transport foundation: a persistent, Device-routed Cloud → Edge work queue the Edge pulls with its Device credential, separate from Edge → Cloud snapshot sync, which is unchanged. The legacy LAN callback path is preserved and classified transitional. See [CLOUD_EDGE_TRANSPORT.md](CLOUD_EDGE_TRANSPORT.md).
 - **Step 6B — complete.** The POS now claims, executes, journals and acknowledges Cloud work with its own Device credential, over generated Dart contracts, without ever depending on Cloud to operate. `NOOP` only; the legacy LAN callback path still carries every real command. See [CLOUD_EDGE_TRANSPORT.md](CLOUD_EDGE_TRANSPORT.md).
 - **Step 6C — optional, and not a prerequisite.** Migrating the 18 legacy POS callback commands onto the Edge queue. It gates a *Cloud deployment*, not the control plane, so it can be staged behind 7A.
-- **Step 7A — next.** Platform Admin identity and control plane, which four phases have now stopped at.
+- **Step 7A — complete.** `PlatformUser` is a principal above every tenant, with its own authentication and an authenticated control-plane API for organizations, venues, plans, feature overrides, website mode, domains, devices and device credentials — all audited. See [PLATFORM_CONTROL_PLANE_API.md](PLATFORM_CONTROL_PLANE_API.md).
+- **Step 7B — next.** The Vynic Admin Panel, consuming that API.
 
 Then: Manager App Cloud networking, and the rest of the control plane — see [PLATFORM_CONTROL_PLANE.md](PLATFORM_CONTROL_PLANE.md) for why platform-admin identity gates the Backoffice, custom roles, and per-Venue payment credentials ([PAYMENT_INTEGRATIONS.md](PAYMENT_INTEGRATIONS.md)).
 

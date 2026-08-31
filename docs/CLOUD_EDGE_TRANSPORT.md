@@ -359,14 +359,15 @@ deferred rather than pretended away.
 
 ### Provisioning
 
-There is no HTTP endpoint that mints a credential. Minting one is a
-control-plane action and the platform-admin boundary that would authorize it does
-not exist yet — see [PLATFORM_CONTROL_PLANE.md](PLATFORM_CONTROL_PLANE.md).
+**Since Step 7A there is an authenticated route:**
+`POST /platform/venues/:venueId/devices` returns the credential once, and
+`POST …/devices/:deviceId/credential` rotates it — see
+[PLATFORM_CONTROL_PLANE_API.md](PLATFORM_CONTROL_PLANE_API.md).
 
-The transitional path requires shell access to the server, which is an
-authorization boundary that already exists and which **cannot quietly become the
-SaaS onboarding model**, because self-service onboarding cannot be built out of
-it:
+The shell path below remains, because it is how a device gets provisioned before
+the first administrator exists, and because it requires shell access to the
+server — an authorization boundary that already exists and one that **cannot
+quietly become the SaaS onboarding model**:
 
 ```bash
 # On the server
@@ -466,8 +467,10 @@ removed.**
 - **Multi-Device contention.** The claim uses an optimistic status guard, which
   is correct but lets a loser claim fewer rows. A Venue with several busy Edges
   would be better served by `SELECT … FOR UPDATE SKIP LOCKED`.
-- **Enqueue authorization.** `EdgeCommandService.enqueue` has no HTTP route on
-  purpose — see [PLATFORM_CONTROL_PLANE.md](PLATFORM_CONTROL_PLANE.md).
+- **Enqueue authorization.** Since Step 7A a platform administrator may queue a
+  `NOOP` to test a device. No route names a type or a payload, so the declared
+  registry and the idempotency rule cannot be routed around — see
+  [PLATFORM_CONTROL_PLANE_API.md](PLATFORM_CONTROL_PLANE_API.md).
 - **Manager App Cloud networking.** Untouched; a later phase.
 - No message broker was introduced. One NestJS monolith and one PostgreSQL
   answer this workload; Kafka, RabbitMQ, Redis Streams and NATS would each be a

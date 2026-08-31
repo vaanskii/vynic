@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { PosSyncGuard } from './auth/pos-sync.guard';
+import { EntitlementsModule } from './entitlements/entitlements.module';
 import { MobileController } from './mobile/mobile.controller';
 import { MobileUsersService } from './mobile/services/mobile-users.service';
 import { MobileReportsService } from './mobile/services/mobile-reports.service';
@@ -38,6 +39,7 @@ import { WebsiteModule } from './website/website.module';
     PrismaModule,
     BootstrapModule,
     AuthModule,
+    EntitlementsModule,
     RealtimeModule,
     PosCallbackModule,
     WebsiteModule,

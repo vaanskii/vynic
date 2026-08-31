@@ -152,6 +152,18 @@ P2-1…P2-8: attendance → inventory MVP → waiter mode → split/merge → mo
 
 Phase 7-9 per project plan: Venue/venueId everywhere, per-venue sync credentials + entitlements, tableRefs wire migration, ka+en l10n, feature-flag gate, billing, second venue pilot. Precondition: V2 stable at Vankisi for a full month of close-days with zero P0-class incidents.
 
+Landed so far: Venue/venueId across the POS operational mirror ([TENANT_SCOPING.md](TENANT_SCOPING.md)) and the commercial Plan/Feature model with Venue-scoped entitlements and website mode ([PRODUCT_ENTITLEMENTS.md](PRODUCT_ENTITLEMENTS.md)).
+
+Still ahead, in no fixed order:
+
+- **Generic SaaS restaurant website** — one codebase serving many Venues from configuration, separate from the Vankisi custom site ([FUTURE_SAAS_WEBSITE.md](FUTURE_SAAS_WEBSITE.md)).
+- **Custom website runtime and deployment** — deliberately an open decision, not an implementation ([CUSTOM_WEBSITE_RUNTIME.md](CUSTOM_WEBSITE_RUNTIME.md)).
+- **Host/domain → Venue resolution** — required by both website products before either touches Venue-owned Cloud data.
+- **Platform control plane** — `apps/platform-web/` as the Vynic admin UI over Organizations, Venues, plans, feature access, website mode, and devices; the backend model supports it, the UI and its mutation APIs do not exist.
+- **Manager Cloud tenancy, then Manager feature enforcement** — `MANAGER_APP` is resolvable today but enforced nowhere, and must never gate POS → Cloud sync.
+- **Billing and subscriptions** — no lifecycle, provider, or pricing has been chosen; plan assignment is deliberately not a subscription.
+- **Signed offline commercial entitlements** — distinct from the existing Ed25519 developer licence.
+
 ---
 
 ## Final production launch checklist

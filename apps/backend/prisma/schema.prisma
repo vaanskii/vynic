@@ -325,6 +325,78 @@ enum VenueDomainStatus {
   @@schema("pos")
 }
 
+// ─── Platform control plane (above every restaurant tenant) ──────────────────
+// A Vynic administrator is not a restaurant employee, a customer, or a machine.
+// See docs/PLATFORM_CONTROL_PLANE.md.
+
+enum PlatformUserStatus {
+  ACTIVE
+  DISABLED
+
+  @@schema("pos")
+}
+
+/// What a platform principal may do.
+///
+/// One value today, deliberately modelled as an enum rather than a boolean:
+/// finer Vynic support/operator roles are expected, and they must not arrive as
+/// a second flag column. This is Vynic's own authorization vocabulary and is
+/// unrelated to restaurant staff roles or to the future Venue-owned custom
+/// roles, which are a different domain entirely.
+enum PlatformRole {
+  SUPER_ADMIN
+
+  @@schema("pos")
+}
+
+/// A Vynic administrator.
+///
+/// Deliberately holds no venueId, no organizationId and no Staff relation. A
+/// platform administrator sits above every tenant, so giving one a restaurant
+/// membership would be inventing an ownership that does not exist and would let
+/// tenant-scoped code mistake an operator for an employee.
+model PlatformUser {
+  id           String             @id @default(uuid())
+  email        String             @unique
+  displayName  String
+  passwordHash String
+  role         PlatformRole       @default(SUPER_ADMIN)
+  status       PlatformUserStatus @default(ACTIVE)
+  lastLoginAt  DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  auditEvents PlatformAuditEvent[]
+
+  @@schema("pos")
+}
+
+/// What a platform administrator did, and to what.
+///
+/// Kept apart from AuditEventLog, which records what restaurant staff did inside
+/// a Venue. Writing a platform action there would claim an employee changed a
+/// plan or revoked a device, which is exactly the wrong answer to "who did
+/// this?".
+///
+/// `metadata` carries only what is safe to keep: never a password, never a
+/// credential, never a hash.
+model PlatformAuditEvent {
+  id             String   @id @default(uuid())
+  platformUserId String
+  action         String
+  targetType     String
+  targetId       String
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  actor PlatformUser @relation(fields: [platformUserId], references: [id], onDelete: Restrict)
+
+  @@index([platformUserId, createdAt])
+  @@index([targetType, targetId, createdAt])
+  @@index([createdAt])
+  @@schema("pos")
+}
+
 /// Where one unit of Cloud-originated work has got to.
 ///
 /// CLAIMED is not "done": it means an Edge holds a lease on the command. The

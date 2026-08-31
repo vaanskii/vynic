@@ -258,11 +258,17 @@ runtime, and nothing in `apps/venue-web/` reads these tables.
 are a working, tested primitive.
 
 Since Step 4B2A they are applied to the Manager product API (`/mobile/*`),
-whose requests now carry an authoritative Venue resolved from the authenticated
-Staff identity — see [MANAGER_TENANT_AUTH.md](MANAGER_TENANT_AUTH.md). They
-remain attached to no POS sync route, no device route, and no website route:
-sync must never be gated on entitlement, and website requests still lack
-authoritative Venue identity (Step 4B2B).
+whose requests carry an authoritative Venue resolved from the authenticated
+Staff identity — see [MANAGER_TENANT_AUTH.md](MANAGER_TENANT_AUTH.md). Since
+Step 4B2B they are also applied to the public website product API (`/api/menu`,
+`/api/tables`, `POST /api/bog/create-order`, `GET /api/user/reservations`),
+whose requests resolve a Venue from a registered hostname — see
+[PUBLIC_TENANCY.md](PUBLIC_TENANCY.md).
+
+They remain attached to no POS sync route and no device route: sync must never
+be gated on entitlement. They are also absent from the payment provider's
+callback, which resolves its Venue from the server-owned booking record rather
+than from a request header.
 
 The guard fails closed when no authenticated tenant is present, which is why it
 may only be attached to routes that have one.

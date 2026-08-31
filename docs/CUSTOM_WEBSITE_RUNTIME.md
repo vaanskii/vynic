@@ -1,6 +1,14 @@
 # ADR: custom restaurant website runtime and deployment
 
-**Status: open. Nothing here is decided, and Step 5A implemented none of it.**
+**Status: open.** Step 4B2B answered exactly one of the questions below —
+**Venue binding** — and deliberately left the rest untouched.
+
+A registered hostname now resolves a Venue authoritatively
+(`VenueDomain` → Venue → Organization → `WEBSITE`), so a running site cannot
+claim a Venue it was not registered for. See
+[PUBLIC_TENANCY.md](PUBLIC_TENANCY.md). Everything about *how a custom site is
+built, hosted, deployed and renewed* remains undecided, and resolving a tenant
+did not require deciding it.
 
 This document exists so that the *distinction* between a custom and a SaaS
 website survives until the runtime question is answered properly, rather than
@@ -38,8 +46,9 @@ answer at least:
   or are they served from shared infrastructure?
 - **Build registration** — how does a specific custom build become known to
   Vynic as *the* site for a Venue?
-- **Venue binding** — what ties a running custom website to a Venue ID, and
-  what stops it claiming a different one?
+- ~~**Venue binding**~~ — *answered in Step 4B2B:* the host a request arrives on
+  is looked up in `VenueDomain`, which is server-owned. A site cannot name its
+  own Venue, because no public endpoint reads a caller-supplied one.
 - **Domain binding** — how are customer domains connected, verified, and
   renewed?
 - **API authentication** — how does a custom website authenticate to Cloud, and

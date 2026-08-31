@@ -42,10 +42,10 @@ Payload, query, and arbitrary header values are not tenant authority. Canonical 
 | `ManagerNotification` | UUID | Realtime notification persistence | Deferred | No | Manager tenancy/authentication and delivery routing are later work. |
 | `ManagerNotificationDelivery` | UUID; notification + username | Manager notification reads | Deferred child | No | Belongs to the deferred notification root. |
 | `PushDevice` | UUID; global FCM token | Manager push registration | Deferred | No | Needs Manager identity and Venue-aware notification routing. |
-| `WebsiteUser` | UUID; email/phone | Customer auth | Global/shared | No | Customer identity is not POS operational ownership. |
-| `WebsiteTable` | integer; website table number | Public booking | Deferred | No | Host/domain Venue resolution and booking tenancy are explicitly later. |
-| `WebsiteReservation` | UUID; POS reservation bridge ID | Public booking/payment/POS bridge | Deferred | No | Reservation semantics are not redesigned in 4B1. |
-| `WebsiteReservationTable` | integer; reservation + table | Public booking | Deferred child | No | Inherits from deferred website booking records. |
+| `WebsiteUser` | UUID; email/phone | Customer auth | Global/shared | No | Customer identity is not POS operational ownership. Re-confirmed in 4B2B. |
+| `WebsiteTable` | integer; website table number | Public booking | Deferred | No | Host/domain Venue resolution and booking tenancy are explicitly later. **Venue-owned since 4B2B.** |
+| `WebsiteReservation` | UUID; POS reservation bridge ID | Public booking/payment/POS bridge | Deferred | No | Reservation semantics are not redesigned in 4B1. **Venue-owned since 4B2B.** |
+| `WebsiteReservationTable` | integer; reservation + table | Public booking | Deferred child | No | Inherits from deferred website booking records. Still a child in 4B2B. |
 
 ## Scoped uniqueness changes
 
@@ -66,6 +66,6 @@ All existing rows are backfilled to the deterministic Step 4A bootstrap Venue. T
 ## Follow-on steps
 
 - **Step 4B2A — complete.** Manager requests now resolve an authoritative Venue from the authenticated Staff identity, Manager APIs are scoped to it, and `MANAGER_APP` is enforced on the Manager product API. See [MANAGER_TENANT_AUTH.md](MANAGER_TENANT_AUTH.md).
-- **Step 4B2B — next.** Public website tenancy: Host/domain → Venue resolution, booking and reservation tenant scoping, and retiring the website half of `LEGACY_MANAGER_TENANT`. See [CUSTOM_WEBSITE_RUNTIME.md](CUSTOM_WEBSITE_RUNTIME.md) and [FUTURE_SAAS_WEBSITE.md](FUTURE_SAAS_WEBSITE.md).
+- **Step 4B2B — complete.** A registered hostname now resolves a Venue authoritatively, public menu/table/booking reads are scoped to it, `WebsiteTable` and `WebsiteReservation` are Venue-owned, and `WEBSITE` is enforced on the public website product API. The website half of `LEGACY_MANAGER_TENANT` is gone. See [PUBLIC_TENANCY.md](PUBLIC_TENANCY.md).
 
-Still owned by later phases: Manager Cloud transport and networking, venue-discriminating Manager login, Zone, per-Venue callback routing and Cloud-to-Edge work queues, cloud deployment, billing/subscriptions, onboarding and device activation, and the previously recorded sync-correctness findings.
+Still owned by later phases: Manager Cloud transport and networking, venue-discriminating Manager login, per-Venue POS callback routing and Cloud-to-Edge work queues, the generic SaaS website frontend and the custom website runtime, platform control-plane and domain-management UI, Zone, the reservation race / `TableHold`, cloud deployment, billing/subscriptions, onboarding and device activation, and the previously recorded sync-correctness findings.

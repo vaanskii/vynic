@@ -3,6 +3,11 @@
 **Status: not built. Recorded so it is not confused with the existing custom
 site.**
 
+Step 4B2B built the backend half it will need and nothing more: a registered
+hostname resolves a Venue, and the public APIs are scoped to that Venue. The
+generic frontend still does not exist, and the boundary it will use is the same
+one the custom site already uses — see [PUBLIC_TENANCY.md](PUBLIC_TENANCY.md).
+
 ## The requirement
 
 Vynic will later have a *second*, separate website product: one codebase that

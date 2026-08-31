@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
+import {
+  BOOTSTRAP_ORGANIZATION_ID,
+  BOOTSTRAP_VENUE_ID,
+} from '../../auth/legacy-pos-tenant.service';
+import type { TenantContext } from '../../auth/pos-auth-context';
 import { PosCallbackClient } from '../pos-callback.client';
 import { isAllowedPosCallbackUrl } from '../pos-callback-url';
 
@@ -26,12 +31,26 @@ export class PosConnectionRegistry {
   ) {}
 
   async restore(): Promise<void> {
+    const tenant: TenantContext = {
+      venueId: BOOTSTRAP_VENUE_ID,
+      organizationId: BOOTSTRAP_ORGANIZATION_ID,
+    };
     const [urlSetting, keySetting] = await Promise.all([
       (this.prisma as any).setting.findUnique({
-        where: { key: PosConnectionRegistry.POS_CALLBACK_URL_KEY },
+        where: {
+          venueId_key: {
+            venueId: tenant.venueId,
+            key: PosConnectionRegistry.POS_CALLBACK_URL_KEY,
+          },
+        },
       }),
       (this.prisma as any).setting.findUnique({
-        where: { key: PosConnectionRegistry.POS_CONNECTION_KEY_KEY },
+        where: {
+          venueId_key: {
+            venueId: tenant.venueId,
+            key: PosConnectionRegistry.POS_CONNECTION_KEY_KEY,
+          },
+        },
       }),
     ]);
     if (urlSetting?.value) {
@@ -44,7 +63,11 @@ export class PosConnectionRegistry {
     }
   }
 
-  async register(url?: string, key?: string): Promise<void> {
+  async register(
+    tenant: TenantContext,
+    url?: string,
+    key?: string,
+  ): Promise<void> {
     if (url && url.trim().length > 0) {
       const trimmedUrl = url.trim();
       // SSRF guard: only accept a private/LAN POS address; never persist others.
@@ -55,9 +78,15 @@ export class PosConnectionRegistry {
       } else {
         this.posCallback.setCallbackUrl(trimmedUrl);
         await (this.prisma as any).setting.upsert({
-          where: { key: PosConnectionRegistry.POS_CALLBACK_URL_KEY },
+          where: {
+            venueId_key: {
+              venueId: tenant.venueId,
+              key: PosConnectionRegistry.POS_CALLBACK_URL_KEY,
+            },
+          },
           update: { value: trimmedUrl },
           create: {
+            venueId: tenant.venueId,
             key: PosConnectionRegistry.POS_CALLBACK_URL_KEY,
             value: trimmedUrl,
           },
@@ -69,9 +98,15 @@ export class PosConnectionRegistry {
       const trimmedKey = key.trim();
       this.posCallback.setConnectionKey(trimmedKey);
       await (this.prisma as any).setting.upsert({
-        where: { key: PosConnectionRegistry.POS_CONNECTION_KEY_KEY },
+        where: {
+          venueId_key: {
+            venueId: tenant.venueId,
+            key: PosConnectionRegistry.POS_CONNECTION_KEY_KEY,
+          },
+        },
         update: { value: trimmedKey },
         create: {
+          venueId: tenant.venueId,
           key: PosConnectionRegistry.POS_CONNECTION_KEY_KEY,
           value: trimmedKey,
         },

@@ -8,6 +8,7 @@ import { PrismaService } from '../../prisma.service';
 import { MonitoringGateway } from '../../realtime/monitoring.gateway';
 import { PosCallbackClient } from '../../pos/pos-callback.client';
 import { readRestaurantServiceFeeSettings } from '../util/mobile-date.util';
+import { LEGACY_MANAGER_TENANT } from '../../tenancy/legacy-manager-tenant';
 
 /** WS exclude options for the REST client that initiated a mutation. */
 type BroadcastExclude = { excludeSocketIds: string[] } | undefined;
@@ -32,6 +33,7 @@ export class MobileMenuService {
 
   async getMenu() {
     const cats = await (this.prisma as any).menuCategory.findMany({
+      where: { venueId: LEGACY_MANAGER_TENANT.venueId },
       include: {
         items: {
           include: { variants: true },

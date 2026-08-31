@@ -7,6 +7,8 @@ import {
 import { PrismaService } from '../prisma.service';
 import { PosCallbackClient } from './pos-callback.client';
 import { suppressPosEchoForOrder } from './sync-echo-guard';
+import { BOOTSTRAP_VENUE_ID } from '../auth/legacy-pos-tenant.service';
+import type { TenantContext } from '../auth/pos-auth-context';
 
 export interface EnqueuePosCallback {
   endpoint: string;
@@ -32,6 +34,7 @@ const BACKOFF_BASE_MS = 5_000;
 const BACKOFF_CAP_MS = 60_000;
 // Delivered rows are kept briefly for observability, then pruned.
 const DELIVERED_RETENTION_MS = 10 * 60_000;
+const BOOTSTRAP_TENANT = { venueId: BOOTSTRAP_VENUE_ID };
 
 /**
  * Durable cloud → Windows POS callback queue with a retry worker (sync-7).
@@ -72,7 +75,10 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
    * Persist a callback then attempt immediate delivery. Returns immediately if
    * the immediate attempt is fired (non-blocking for the caller's request).
    */
-  async enqueue(item: EnqueuePosCallback): Promise<void> {
+  async enqueue(
+    item: EnqueuePosCallback,
+    tenant: Pick<TenantContext, 'venueId'> = BOOTSTRAP_TENANT,
+  ): Promise<void> {
     const dedupeKey =
       item.collapse !== false && item.posOrderId !== undefined
         ? `${item.endpoint}:${item.posOrderId}`
@@ -82,13 +88,18 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
       if (dedupeKey) {
         const existing = await (this.prisma as any).posCallbackOutbox.findFirst(
           {
-            where: { dedupeKey, status: 'pending' },
+            where: {
+              venueId: tenant.venueId,
+              dedupeKey,
+              status: 'pending',
+            },
           },
         );
         if (existing) {
           await (this.prisma as any).posCallbackOutbox.update({
             where: { id: existing.id },
             data: {
+              venueId: tenant.venueId,
               payload: item.payload as object,
               attempts: 0,
               lastError: null,
@@ -98,6 +109,7 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
         } else {
           await (this.prisma as any).posCallbackOutbox.create({
             data: {
+              venueId: tenant.venueId,
               endpoint: item.endpoint,
               payload: item.payload as object,
               posOrderId: item.posOrderId ?? null,
@@ -108,6 +120,7 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
       } else {
         await (this.prisma as any).posCallbackOutbox.create({
           data: {
+            venueId: tenant.venueId,
             endpoint: item.endpoint,
             payload: item.payload as object,
             posOrderId: item.posOrderId ?? null,
@@ -122,23 +135,29 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
     }
 
     // Fire an immediate delivery pass without blocking the HTTP response.
-    void this.processDue();
+    void this.processDue(tenant);
   }
 
   /** Process all due pending rows once. Safe against overlapping invocations. */
-  async processDue(): Promise<void> {
+  async processDue(
+    tenant: Pick<TenantContext, 'venueId'> = BOOTSTRAP_TENANT,
+  ): Promise<void> {
     if (this.running) return;
     this.running = true;
     try {
       const now = new Date();
       const due = await (this.prisma as any).posCallbackOutbox.findMany({
-        where: { status: 'pending', nextAttemptAt: { lte: now } },
+        where: {
+          venueId: tenant.venueId,
+          status: 'pending',
+          nextAttemptAt: { lte: now },
+        },
         orderBy: { createdAt: 'asc' },
         take: BATCH_SIZE,
       });
 
       if (due.length === 0) {
-        await this.pruneDelivered();
+        await this.pruneDelivered(tenant);
         return;
       }
 
@@ -150,7 +169,7 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
       for (const row of due) {
         await this.attemptRow(row);
       }
-      await this.pruneDelivered();
+      await this.pruneDelivered(tenant);
     } catch (e) {
       this.logger.error(`Outbox processDue failed: ${(e as Error).message}`);
     } finally {
@@ -236,13 +255,16 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  private async pruneDelivered(): Promise<void> {
+  private async pruneDelivered(
+    tenant: Pick<TenantContext, 'venueId'>,
+  ): Promise<void> {
     const cutoff = new Date(Date.now() - DELIVERED_RETENTION_MS);
     try {
       // 'superseded' rows are terminal too (a newer POS edit won the LWW
       // conflict), so prune them on the same retention as delivered rows.
       await (this.prisma as any).posCallbackOutbox.deleteMany({
         where: {
+          venueId: tenant.venueId,
           status: { in: ['delivered', 'superseded'] },
           updatedAt: { lt: cutoff },
         },
@@ -256,18 +278,21 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
   async getStats(): Promise<PosOutboxStats> {
     const [pending, failed, oldest, lastErrored] = await Promise.all([
       (this.prisma as any).posCallbackOutbox.count({
-        where: { status: 'pending' },
+        where: { venueId: BOOTSTRAP_VENUE_ID, status: 'pending' },
       }),
       (this.prisma as any).posCallbackOutbox.count({
-        where: { status: 'failed' },
+        where: { venueId: BOOTSTRAP_VENUE_ID, status: 'failed' },
       }),
       (this.prisma as any).posCallbackOutbox.findFirst({
-        where: { status: 'pending' },
+        where: { venueId: BOOTSTRAP_VENUE_ID, status: 'pending' },
         orderBy: { createdAt: 'asc' },
         select: { createdAt: true },
       }),
       (this.prisma as any).posCallbackOutbox.findFirst({
-        where: { lastError: { not: null } },
+        where: {
+          venueId: BOOTSTRAP_VENUE_ID,
+          lastError: { not: null },
+        },
         orderBy: { updatedAt: 'desc' },
         select: { lastError: true },
       }),
@@ -287,24 +312,30 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
    * (manager-data push) so a held mobile change reaches Hive without waiting
    * out the backoff window. Resets pending rows to due, then delivers.
    */
-  async kickPending(): Promise<void> {
+  async kickPending(
+    tenant: Pick<TenantContext, 'venueId'> = BOOTSTRAP_TENANT,
+  ): Promise<void> {
     try {
       // Revive rows that exhausted their attempts while the POS was offline:
       // the POS is back now, so give them a clean retry budget. Without this a
       // long outage would strand changes as `failed` until a manual admin sync.
       await (this.prisma as any).posCallbackOutbox.updateMany({
-        where: { status: 'failed' },
+        where: { venueId: tenant.venueId, status: 'failed' },
         data: { status: 'pending', attempts: 0, nextAttemptAt: new Date() },
       });
       const pending = await (this.prisma as any).posCallbackOutbox.count({
-        where: { status: 'pending' },
+        where: { venueId: tenant.venueId, status: 'pending' },
       });
       if (pending === 0) return;
       await (this.prisma as any).posCallbackOutbox.updateMany({
-        where: { status: 'pending', nextAttemptAt: { gt: new Date() } },
+        where: {
+          venueId: tenant.venueId,
+          status: 'pending',
+          nextAttemptAt: { gt: new Date() },
+        },
         data: { nextAttemptAt: new Date() },
       });
-      void this.processDue();
+      void this.processDue(tenant);
     } catch (e) {
       this.logger.warn(`kickPending failed: ${(e as Error).message}`);
     }
@@ -330,7 +361,7 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
   /** Force a retry of all failed rows (admin "Sync now" — sync-4). */
   async retryFailed(): Promise<number> {
     const result = await (this.prisma as any).posCallbackOutbox.updateMany({
-      where: { status: 'failed' },
+      where: { venueId: BOOTSTRAP_VENUE_ID, status: 'failed' },
       data: { status: 'pending', attempts: 0, nextAttemptAt: new Date() },
     });
     void this.processDue();

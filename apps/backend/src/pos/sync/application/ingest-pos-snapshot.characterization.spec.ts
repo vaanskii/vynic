@@ -111,6 +111,13 @@ interface Harness {
   sync: (payload: Snapshot) => Promise<{ success: boolean; syncedAt: string }>;
 }
 
+const AUTH_CONTEXT = {
+  authenticationMode: 'device' as const,
+  deviceId: 'device-a',
+  venueId: 'venue-a',
+  organizationId: 'organization-a',
+};
+
 function makeHarness(overrides: Record<string, Override> = {}): Harness {
   const calls: Call[] = [];
   const trace: string[] = [];
@@ -189,7 +196,7 @@ function makeHarness(overrides: Record<string, Override> = {}): Harness {
     broadcasts,
     kickPending,
     vaultWrite,
-    sync: (payload: Snapshot) => service.execute(payload),
+    sync: (payload: Snapshot) => service.execute(payload, AUTH_CONTEXT),
   };
 }
 
@@ -201,7 +208,7 @@ function outboxOrderRows(rows: unknown[]): Override {
 function settingKeys(calls: Call[]): unknown[] {
   return calls
     .filter((c) => c.key === 'setting.upsert')
-    .map((c) => at(c.arg, 'where', 'key'));
+    .map((c) => at(c.arg, 'where', 'venueId_key', 'key'));
 }
 
 function callKeys(calls: Call[]): string[] {
@@ -233,6 +240,81 @@ describe('POST /sync/manager-data — response contract', () => {
     await h.sync({});
 
     expect(h.trace).toEqual([]);
+  });
+});
+
+describe('POST /sync/manager-data — authenticated Venue authority', () => {
+  it('scopes every migrated root to auth context and ignores a payload Venue claim', async () => {
+    const h = makeHarness({
+      'posCallbackOutbox.findMany': outboxOrderRows([]),
+    });
+
+    await h.sync({
+      venueId: 'venue-b-from-payload',
+      businessDate: BUSINESS_DATE,
+      tables: [{ tableNumber: '1', floor: 'first', isReserved: true }],
+      orders: [
+        {
+          posOrderId: 7,
+          status: 'open',
+          totalAmount: 10,
+          floor: 'takeaway',
+          tableNumbers: [],
+        },
+      ],
+      expenses: [{ description: 'Milk', amount: 2, category: 'supplies' }],
+      menu: [
+        {
+          slug: 'drinks',
+          nameKa: 'სასმელები',
+          nameEn: 'Drinks',
+          items: [
+            {
+              nameKa: 'წყალი',
+              nameEn: 'Water',
+              price: 2,
+              sendToKitchen: false,
+            },
+          ],
+        },
+      ],
+      staff: [{ username: 'mary', role: 'MANAGER', pin: '1234' }],
+    });
+
+    const tableUpsert = h.calls.find((c) => c.key === 'table.upsert');
+    const orderUpsert = h.calls.find((c) => c.key === 'order.upsert');
+    const categoryUpsert = h.calls.find((c) => c.key === 'menuCategory.upsert');
+    const itemCreate = h.calls.find((c) => c.key === 'menuItem.create');
+    const staffUpsert = h.calls.find((c) => c.key === 'staff.upsert');
+    const expenseCreate = h.calls.find((c) => c.key === 'expense.create');
+    const outboxRead = h.calls.find(
+      (c) => c.key === 'posCallbackOutbox.findMany',
+    );
+
+    expect(at(tableUpsert?.arg, 'create', 'venueId')).toBe('venue-a');
+    expect(at(orderUpsert?.arg, 'where', 'venueId_posOrderId', 'venueId')).toBe(
+      'venue-a',
+    );
+    expect(at(orderUpsert?.arg, 'create', 'venueId')).toBe('venue-a');
+    expect(at(categoryUpsert?.arg, 'where', 'venueId_slug', 'venueId')).toBe(
+      'venue-a',
+    );
+    expect(at(itemCreate?.arg, 'data', 'venueId')).toBe('venue-a');
+    expect(at(staffUpsert?.arg, 'where', 'venueId_username', 'venueId')).toBe(
+      'venue-a',
+    );
+    expect(at(expenseCreate?.arg, 'data', 'venueId')).toBe('venue-a');
+    expect(at(outboxRead?.arg, 'where', 'venueId')).toBe('venue-a');
+    expect(
+      h.calls
+        .filter((c) => c.key === 'setting.upsert')
+        .every(
+          (c) =>
+            at(c.arg, 'where', 'venueId_key', 'venueId') === 'venue-a' &&
+            at(c.arg, 'create', 'venueId') === 'venue-a',
+        ),
+    ).toBe(true);
+    expect(JSON.stringify(h.calls)).not.toContain('venue-b-from-payload');
   });
 });
 
@@ -393,6 +475,7 @@ describe('POST /sync/manager-data — table snapshot policy', () => {
 
     const upsert = h.calls.find((c) => c.key === 'table.upsert');
     expect(at(upsert?.arg, 'where', 'tableIdentifier')).toEqual({
+      venueId: 'venue-a',
       tableNumber: '3',
       floor: 'first',
     });
@@ -625,6 +708,7 @@ describe('POST /sync/manager-data — order sync and table linking', () => {
 
     const link = h.calls.find((c) => c.key === 'table.upsert');
     expect(at(link?.arg, 'where', 'tableIdentifier')).toEqual({
+      venueId: 'venue-a',
       tableNumber: '6',
       floor: 'first',
     });
@@ -708,6 +792,7 @@ describe('POST /sync/manager-data — order sync and table linking', () => {
 
       const free = h.calls.find((c) => c.key === 'table.updateMany');
       expect(at(free?.arg, 'where')).toEqual({
+        venueId: 'venue-a',
         tableNumber: '6',
         floor: 'first',
       });
@@ -762,7 +847,9 @@ describe('POST /sync/manager-data — order sync and table linking', () => {
 
     const upserts = h.calls.filter((c) => c.key === 'order.upsert');
     expect(upserts).toHaveLength(1);
-    expect(at(upserts[0].arg, 'where', 'posOrderId')).toBe(42);
+    expect(
+      at(upserts[0].arg, 'where', 'venueId_posOrderId', 'posOrderId'),
+    ).toBe(42);
   });
 
   it('applies the documented field defaults when the POS omits them', async () => {
@@ -956,7 +1043,10 @@ describe('POST /sync/manager-data — staff sync', () => {
     expect(typeof pinHash).toBe('string');
     expect(pinHash).not.toBe('1234');
     expect(at(upsert?.arg, 'update', 'isActive')).toBe(true);
-    expect(h.vaultWrite).toHaveBeenCalledWith({ mary: '1234' });
+    expect(h.vaultWrite).toHaveBeenCalledWith(
+      { mary: '1234' },
+      expect.objectContaining({ venueId: 'venue-a' }),
+    );
   });
 
   it('updates role only for an existing member sent without a pin, and never writes the vault', async () => {
@@ -1105,7 +1195,10 @@ describe('POST /sync/manager-data — realtime hints and echo suppression', () =
     });
 
     const read = h.calls.find((c) => c.key === 'table.findFirst');
-    expect(at(read?.arg, 'where')).toEqual({ id: CANONICAL_TABLE_ID });
+    expect(at(read?.arg, 'where')).toEqual({
+      id: CANONICAL_TABLE_ID,
+      venueId: 'venue-a',
+    });
     const touch = h.broadcasts.find((b) => b.event === 'tables_bulk_touch');
     expect(at(touch?.payload, 'touches', 0, 'tableId')).toBe(
       CANONICAL_TABLE_ID,
@@ -1163,7 +1256,7 @@ describe('POST /sync/manager-data — business day rollover', () => {
   it('clears every table and announces day_closed only after the table sync has run', async () => {
     const h = makeHarness({
       'setting.findUnique': (arg) =>
-        at(arg, 'where', 'key') === 'currentBusinessDate'
+        at(arg, 'where', 'venueId_key', 'key') === 'currentBusinessDate'
           ? { value: '2026-06-26' }
           : null,
     });
@@ -1191,6 +1284,7 @@ describe('POST /sync/manager-data — business day rollover', () => {
 
     const wipe = h.calls.find((c) => c.key === 'table.updateMany');
     expect(wipe?.arg).toEqual({
+      where: { venueId: 'venue-a' },
       data: { isReserved: false, activeOrderId: null, currentBill: 0 },
     });
   });
@@ -1207,7 +1301,7 @@ describe('POST /sync/manager-data — business day rollover', () => {
   it('stamps businessDayOpenedAt once and leaves it alone on later pushes', async () => {
     const h = makeHarness({
       'setting.findUnique': (arg) =>
-        at(arg, 'where', 'key') === 'currentBusinessDate'
+        at(arg, 'where', 'venueId_key', 'key') === 'currentBusinessDate'
           ? { value: BUSINESS_DATE }
           : { value: '2026-06-27T06:00:00.000Z' },
     });
@@ -1276,7 +1370,8 @@ describe('POST /sync/manager-data — reporting values', () => {
       at(
         h.calls.find(
           (c) =>
-            c.key === 'setting.upsert' && at(c.arg, 'where', 'key') === key,
+            c.key === 'setting.upsert' &&
+            at(c.arg, 'where', 'venueId_key', 'key') === key,
         )?.arg,
         'update',
         'value',
@@ -1312,7 +1407,8 @@ describe('POST /sync/manager-data — reporting values', () => {
     const payable = h.calls.find(
       (c) =>
         c.key === 'setting.upsert' &&
-        at(c.arg, 'where', 'key') === `openTablesPayable:${BUSINESS_DATE}`,
+        at(c.arg, 'where', 'venueId_key', 'key') ===
+          `openTablesPayable:${BUSINESS_DATE}`,
     );
     expect(at(payable?.arg, 'update', 'value')).toBe('42');
   });

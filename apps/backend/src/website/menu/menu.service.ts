@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
+import { LEGACY_MANAGER_TENANT } from '../../tenancy/legacy-manager-tenant';
 
 type MenuItemRow = {
   id: string;
@@ -44,6 +45,7 @@ export class MenuService {
   /** Full menu tree — categories in POS order. */
   async getAllCategories() {
     const categories = await this.prisma.menuCategory.findMany({
+      where: { venueId: LEGACY_MANAGER_TENANT.venueId },
       include: this.menuInclude(),
       orderBy: { sortOrder: 'asc' },
     });
@@ -54,7 +56,9 @@ export class MenuService {
   /** Single category — use when user picks e.g. "beer" / "ლუდი". */
   async getCategoryBySlug(slug: string) {
     const category = await this.prisma.menuCategory.findUnique({
-      where: { slug },
+      where: {
+        venueId_slug: { venueId: LEGACY_MANAGER_TENANT.venueId, slug },
+      },
       include: this.menuInclude(),
     });
 
@@ -66,8 +70,8 @@ export class MenuService {
   }
 
   async getMenuItemById(itemId: string) {
-    const item = await this.prisma.menuItem.findUnique({
-      where: { id: itemId },
+    const item = await this.prisma.menuItem.findFirst({
+      where: { id: itemId, venueId: LEGACY_MANAGER_TENANT.venueId },
       include: { variants: true, category: true, subcategory: true },
     });
     if (!item) return null;

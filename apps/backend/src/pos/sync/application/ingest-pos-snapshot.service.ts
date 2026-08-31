@@ -9,6 +9,7 @@ import { SyncBroadcastService } from '../snapshot/sync-broadcast.service';
 import { TableSyncService } from '../snapshot/table-sync.service';
 import { SyncPayload } from '../sync-payload';
 import { PosAuthContext } from '../../../auth/pos-auth-context';
+import type { TenantContext } from '../../../auth/pos-auth-context';
 
 export interface SnapshotIngestResult {
   success: boolean;
@@ -48,12 +49,12 @@ export class IngestPosSnapshotService {
 
   async execute(
     data: SyncPayload,
-    authContext?: PosAuthContext,
+    authContext: PosAuthContext,
   ): Promise<SnapshotIngestResult> {
-    // Authentication is established at the transport boundary. The context is
-    // intentionally available here for future ownership/audit work, while the
-    // snapshot services below remain independent of HTTP and credentials.
-    void authContext;
+    const tenant: TenantContext = {
+      venueId: authContext.venueId,
+      organizationId: authContext.organizationId,
+    };
     // `quickOrders` is part of the wire format but has never been read here;
     // see the Step 2A report. It is deliberately left unconsumed.
     const { tables, orders, expenses, menu, staff } = data;
@@ -67,6 +68,7 @@ export class IngestPosSnapshotService {
 
     // Store POS callback URL for reverse-push (mobile → POS)
     await this.posConnection.register(
+      tenant,
       data.posCallbackUrl,
       data.posConnectionKey,
     );
@@ -78,7 +80,7 @@ export class IngestPosSnapshotService {
 
     // Sync Menu
     if (menu && !realtimeOnly) {
-      await this.menu.sync(menu);
+      await this.menu.sync(tenant, menu);
     }
 
     console.log(
@@ -93,28 +95,32 @@ export class IngestPosSnapshotService {
 
     // Sync Tables — the POS is the source of truth, except for the cold-boot
     // all-free snapshot the service guards against.
-    let didSyncTables = await this.tables.sync(tables, realtimeOnly);
+    let didSyncTables = await this.tables.sync(tenant, tables, realtimeOnly);
 
     // Sync Orders — last-write-wins against the outbox, table linking, and
     // reconciliation of orders the snapshot no longer carries.
-    const orderResult = await this.orders.sync(orders, data.businessDate);
+    const orderResult = await this.orders.sync(
+      tenant,
+      orders,
+      data.businessDate,
+    );
     didSyncTables = didSyncTables || orderResult.didSyncTables;
     const releasedTablesFromClosedOrders = orderResult.releasedTables;
 
     // Sync Expenses
     if (expenses) {
-      await this.businessDay.recordExpenses(expenses);
+      await this.businessDay.recordExpenses(tenant, expenses);
     }
 
     // Sync Staff — username/role only unless pin explicitly provided (legacy).
     if (staff && staff.length > 0 && !realtimeOnly) {
-      await this.staff.sync(staff);
+      await this.staff.sync(tenant, staff);
     }
 
     // Realtime side effects. Per-record hints first, then the coarse
     // notifications — every write above has already landed.
     const { hadOrderLineTouch, hadTableTouch } =
-      await this.broadcasts.relayPosHints(data);
+      await this.broadcasts.relayPosHints(tenant, data);
 
     const changed =
       didSyncTables || !!orders || !!expenses || !!menu || !!staff;
@@ -132,17 +138,18 @@ export class IngestPosSnapshotService {
     // Order matters: the rollover wipes the floor after the table snapshot was
     // applied, and `openTablesPayable` is stored after that.
     const rollover = await this.businessDay.trackBusinessDate(
+      tenant,
       data.businessDate,
     );
     if (rollover) {
       this.broadcasts.announceDayClosed(rollover.date, rollover.prevDate);
     }
-    await this.businessDay.persistReportingSnapshot(data, realtimeOnly);
+    await this.businessDay.persistReportingSnapshot(tenant, data, realtimeOnly);
 
     // POS just pushed (so it's online): flush any held mobile changes to Hive
     // now instead of waiting out the retry backoff. Runs after order sync so
     // this push's stale snapshot is already held, not overwritten.
-    void this.posOutbox.kickPending();
+    void this.posOutbox.kickPending(tenant);
 
     return { success: true, syncedAt: new Date().toISOString() };
   }

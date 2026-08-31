@@ -7,6 +7,8 @@ import {
 } from 'crypto';
 import { PrismaService } from '../prisma.service';
 import { requireEnv } from '../shared/require-env';
+import { BOOTSTRAP_VENUE_ID } from './legacy-pos-tenant.service';
+import type { TenantContext } from './pos-auth-context';
 
 type PinMap = Record<string, string>;
 
@@ -38,9 +40,12 @@ export class StaffPinVault {
   }
 
   /** Decrypt + parse the stored PIN map (handles legacy cleartext rows). */
-  async read(): Promise<PinMap> {
+  async read(tenant?: Pick<TenantContext, 'venueId'>): Promise<PinMap> {
+    const venueId = tenant?.venueId ?? BOOTSTRAP_VENUE_ID;
     const row = await (this.prisma as any).setting.findUnique({
-      where: { key: StaffPinVault.SETTING_KEY },
+      where: {
+        venueId_key: { venueId, key: StaffPinVault.SETTING_KEY },
+      },
       select: { value: true },
     });
     const stored: unknown = row?.value;
@@ -57,12 +62,18 @@ export class StaffPinVault {
   }
 
   /** Encrypt + persist the PIN map. */
-  async write(map: PinMap): Promise<void> {
+  async write(
+    map: PinMap,
+    tenant?: Pick<TenantContext, 'venueId'>,
+  ): Promise<void> {
+    const venueId = tenant?.venueId ?? BOOTSTRAP_VENUE_ID;
     const value = this.encrypt(JSON.stringify(map));
     await (this.prisma as any).setting.upsert({
-      where: { key: StaffPinVault.SETTING_KEY },
+      where: {
+        venueId_key: { venueId, key: StaffPinVault.SETTING_KEY },
+      },
       update: { value },
-      create: { key: StaffPinVault.SETTING_KEY, value },
+      create: { venueId, key: StaffPinVault.SETTING_KEY, value },
     });
   }
 

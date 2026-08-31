@@ -14,6 +14,10 @@ import {
   StaffRole,
   toClientRole,
 } from '../../staff/staff-role';
+import {
+  LEGACY_MANAGER_TENANT,
+  legacyStaffIdentity,
+} from '../../tenancy/legacy-manager-tenant';
 
 /**
  * Staff/user management for the mobile manager app (`/mobile/users*`).
@@ -55,6 +59,7 @@ export class MobileUsersService {
   async getUsers() {
     const pinsMap = await this.pinVault.read();
     const staff = await this.prisma.staff.findMany({
+      where: { venueId: LEGACY_MANAGER_TENANT.venueId },
       orderBy: [{ role: 'asc' }, { username: 'asc' }],
       select: {
         id: true,
@@ -88,7 +93,7 @@ export class MobileUsersService {
       );
     }
     const existing = await (this.prisma as any).staff.findUnique({
-      where: { username },
+      where: legacyStaffIdentity(username),
       select: { id: true },
     });
     if (existing) {
@@ -96,7 +101,13 @@ export class MobileUsersService {
     }
     const pinHash = await bcrypt.hash(pinCode, 12);
     const created = await (this.prisma as any).staff.create({
-      data: { username, pinHash, role, isActive: true },
+      data: {
+        venueId: LEGACY_MANAGER_TENANT.venueId,
+        username,
+        pinHash,
+        role,
+        isActive: true,
+      },
       select: {
         id: true,
         username: true,
@@ -130,7 +141,7 @@ export class MobileUsersService {
       throw new BadRequestException('username and pinCode are required');
     }
     const existing = await (this.prisma as any).staff.findUnique({
-      where: { username },
+      where: legacyStaffIdentity(username),
       select: {
         id: true,
         role: true,
@@ -144,7 +155,7 @@ export class MobileUsersService {
     }
     const pinHash = await bcrypt.hash(pinCode, 12);
     await (this.prisma as any).staff.update({
-      where: { username },
+      where: legacyStaffIdentity(username),
       data: { pinHash },
     });
     const pinsMap = await this.pinVault.read();
@@ -181,7 +192,7 @@ export class MobileUsersService {
     }
 
     const existing = await (this.prisma as any).staff.findUnique({
-      where: { username },
+      where: legacyStaffIdentity(username),
       select: { id: true, role: true, isActive: true },
     });
     if (!existing) {
@@ -193,7 +204,11 @@ export class MobileUsersService {
       role !== StaffRole.MANAGER
     ) {
       const managerCount = await (this.prisma as any).staff.count({
-        where: { role: { in: ['ADMIN', 'MANAGER'] }, isActive: true },
+        where: {
+          venueId: LEGACY_MANAGER_TENANT.venueId,
+          role: { in: ['ADMIN', 'MANAGER'] },
+          isActive: true,
+        },
       });
       if (managerCount <= 1) {
         throw new BadRequestException('Cannot change the last manager role');
@@ -201,7 +216,7 @@ export class MobileUsersService {
     }
 
     const updated = await (this.prisma as any).staff.update({
-      where: { username },
+      where: legacyStaffIdentity(username),
       data: { role },
       select: {
         id: true,
@@ -238,7 +253,7 @@ export class MobileUsersService {
       return { username: newUsername };
     }
     const existing = await (this.prisma as any).staff.findUnique({
-      where: { username: oldUsername },
+      where: legacyStaffIdentity(oldUsername),
       select: {
         id: true,
         role: true,
@@ -251,14 +266,14 @@ export class MobileUsersService {
       throw new NotFoundException('User not found');
     }
     const conflict = await (this.prisma as any).staff.findUnique({
-      where: { username: newUsername },
+      where: legacyStaffIdentity(newUsername),
       select: { id: true },
     });
     if (conflict) {
       throw new BadRequestException('username already exists');
     }
     const updated = await (this.prisma as any).staff.update({
-      where: { username: oldUsername },
+      where: legacyStaffIdentity(oldUsername),
       data: { username: newUsername },
       select: {
         id: true,
@@ -295,7 +310,7 @@ export class MobileUsersService {
   async deleteUser(usernameParam: string) {
     const username = (usernameParam ?? '').trim();
     const existing = await (this.prisma as any).staff.findUnique({
-      where: { username },
+      where: legacyStaffIdentity(username),
       select: { id: true, role: true },
     });
     if (!existing) {
@@ -303,13 +318,19 @@ export class MobileUsersService {
     }
     if (normalizeStaffRole(existing.role) === StaffRole.MANAGER) {
       const managerCount = await (this.prisma as any).staff.count({
-        where: { role: { in: ['ADMIN', 'MANAGER'] }, isActive: true },
+        where: {
+          venueId: LEGACY_MANAGER_TENANT.venueId,
+          role: { in: ['ADMIN', 'MANAGER'] },
+          isActive: true,
+        },
       });
       if (managerCount <= 1) {
         throw new BadRequestException('Cannot delete the last manager');
       }
     }
-    await (this.prisma as any).staff.delete({ where: { username } });
+    await (this.prisma as any).staff.delete({
+      where: legacyStaffIdentity(username),
+    });
     const pinsMap = await this.pinVault.read();
     delete pinsMap[username];
     await this.pinVault.write(pinsMap);

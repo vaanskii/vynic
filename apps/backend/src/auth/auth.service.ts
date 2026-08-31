@@ -7,6 +7,7 @@ import {
   MOBILE_APP_STAFF_ROLES,
   normalizeStaffRole,
 } from '../staff/staff-role';
+import { LEGACY_MANAGER_TENANT } from '../tenancy/legacy-manager-tenant';
 
 export interface MobileLoginResult {
   access_token: string;
@@ -31,7 +32,11 @@ export class AuthService {
     }
 
     const candidates = await (this.prisma as any).staff.findMany({
-      where: { role: { in: MOBILE_APP_STAFF_ROLES }, isActive: true },
+      where: {
+        venueId: LEGACY_MANAGER_TENANT.venueId,
+        role: { in: MOBILE_APP_STAFF_ROLES },
+        isActive: true,
+      },
     });
 
     for (const staff of candidates) {

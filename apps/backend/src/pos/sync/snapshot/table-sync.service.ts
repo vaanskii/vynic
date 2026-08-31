@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma.service';
 import { TableSync } from '../sync-payload';
 import { upsertTableRecord } from './table-record-identity';
+import type { TenantContext } from '../../../auth/pos-auth-context';
 
 /**
  * Applies the POS's table snapshot.
@@ -18,6 +19,7 @@ export class TableSyncService {
 
   /** Returns whether the snapshot was actually applied. */
   async sync(
+    tenant: TenantContext,
     tables: TableSync[] | undefined,
     realtimeOnly: boolean,
   ): Promise<boolean> {
@@ -36,7 +38,7 @@ export class TableSyncService {
 
       // Get existing reserved count in DB to detect if POS data seems stale
       const existingReservedCount = await (this.prisma as any).table.count({
-        where: { isReserved: true },
+        where: { venueId: tenant.venueId, isReserved: true },
       });
 
       // If the DB has reserved tables but POS is saying all are free, it's
@@ -68,6 +70,7 @@ export class TableSyncService {
 
           await upsertTableRecord(
             this.prisma,
+            tenant,
             {
               tableId: table.tableId,
               tableNumber: table.tableNumber,

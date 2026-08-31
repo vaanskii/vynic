@@ -4,6 +4,7 @@ import { MonitoringGateway } from '../../../realtime/monitoring.gateway';
 import { normalizeAuditEventType } from '../../audit/audit-event-type';
 import { isPosAuditBroadcastSuppressed } from '../../sync-echo-guard';
 import { AuditEventLogSync } from '../sync-payload';
+import type { TenantContext } from '../../../auth/pos-auth-context';
 
 /**
  * Ingests the two audit streams the POS pushes.
@@ -29,7 +30,10 @@ export class IngestAuditReportsService {
     private readonly gateway: MonitoringGateway,
   ) {}
 
-  async ingestReports(body: { reports?: any[]; fullSync?: boolean }) {
+  async ingestReports(
+    body: { reports?: any[]; fullSync?: boolean },
+    tenant: TenantContext,
+  ) {
     const reports = body?.reports;
     const fullSync = body?.fullSync === true;
     if (!Array.isArray(reports)) {
@@ -48,7 +52,9 @@ export class IngestAuditReportsService {
 
       // Upsert the AuditReport row
       const dbReport = await (this.prisma as any).auditReport.upsert({
-        where: { reportId },
+        where: {
+          venueId_reportId: { venueId: tenant.venueId, reportId },
+        },
         update: {
           posOrderId: r.orderId ?? 0,
           tableNumbers: Array.isArray(r.tableNumbers) ? r.tableNumbers : [],
@@ -64,6 +70,7 @@ export class IngestAuditReportsService {
           updatedAt: syncedUpdatedAt,
         },
         create: {
+          venueId: tenant.venueId,
           reportId,
           posOrderId: r.orderId ?? 0,
           tableNumbers: Array.isArray(r.tableNumbers) ? r.tableNumbers : [],
@@ -114,10 +121,12 @@ export class IngestAuditReportsService {
         .filter((id): id is string => !!id);
 
       const staleReports = await (this.prisma as any).auditReport.findMany({
-        where:
-          incomingReportIds.length > 0
+        where: {
+          venueId: tenant.venueId,
+          ...(incomingReportIds.length > 0
             ? { reportId: { notIn: incomingReportIds } }
-            : {},
+            : {}),
+        },
         select: { id: true },
       });
 
@@ -138,7 +147,10 @@ export class IngestAuditReportsService {
     return { success: true, upserted };
   }
 
-  async ingestEventLogs(body: { logs?: AuditEventLogSync[] }) {
+  async ingestEventLogs(
+    body: { logs?: AuditEventLogSync[] },
+    tenant: TenantContext,
+  ) {
     const logs = body?.logs;
     if (!Array.isArray(logs) || logs.length === 0) {
       return { success: true, count: 0 };
@@ -147,18 +159,23 @@ export class IngestAuditReportsService {
     let count = 0;
     for (const log of logs) {
       try {
-        await (this.prisma as any).auditEventLog.upsert({
-          where: { id: log.id },
-          update: {}, // Immutable: do nothing if exists
-          create: {
-            id: log.id,
-            action: log.action,
-            userId: log.userId,
-            data: log.data ?? {},
-            deviceType: log.deviceType,
-            createdAt: log.createdAt ? new Date(log.createdAt) : new Date(),
-          },
+        const existing = await (this.prisma as any).auditEventLog.findFirst({
+          where: { id: log.id, venueId: tenant.venueId },
+          select: { id: true },
         });
+        if (!existing) {
+          await (this.prisma as any).auditEventLog.create({
+            data: {
+              id: log.id,
+              venueId: tenant.venueId,
+              action: log.action,
+              userId: log.userId,
+              data: log.data ?? {},
+              deviceType: log.deviceType,
+              createdAt: log.createdAt ? new Date(log.createdAt) : new Date(),
+            },
+          });
+        }
         count++;
       } catch (e) {
         // Log error but continue with other logs

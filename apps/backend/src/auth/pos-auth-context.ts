@@ -2,11 +2,14 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
 export type PosAuthenticationMode = 'device' | 'legacy_shared_key';
 
-export interface PosAuthContext {
-  authenticationMode: PosAuthenticationMode;
-  deviceId: string | null;
+export interface TenantContext {
   venueId: string;
   organizationId: string;
+}
+
+export interface PosAuthContext extends TenantContext {
+  authenticationMode: PosAuthenticationMode;
+  deviceId: string | null;
 }
 
 export interface PosAuthenticatedRequest {

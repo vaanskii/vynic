@@ -3,6 +3,7 @@
 // Extracted verbatim from MobileController so controller-split services
 // (reports, dashboard, orders, …) can share them without importing the
 // controller (which would create a circular dependency). Behavior unchanged.
+import { legacySettingIdentity } from '../../tenancy/legacy-manager-tenant';
 
 export function todayStart(): Date {
   const d = new Date();
@@ -63,10 +64,10 @@ export function pctChange(today: number, yesterday: number): number {
 export async function readRestaurantServiceFeeSettings(prisma: any) {
   const [percentRow, enabledRow] = await Promise.all([
     prisma.setting.findUnique({
-      where: { key: 'restaurant:serviceFeePercent' },
+      where: legacySettingIdentity('restaurant:serviceFeePercent'),
     }),
     prisma.setting.findUnique({
-      where: { key: 'restaurant:serviceFeeEnabled' },
+      where: legacySettingIdentity('restaurant:serviceFeeEnabled'),
     }),
   ]);
   const serviceFeePercent = percentRow ? Number(percentRow.value) : 10;

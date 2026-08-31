@@ -39,6 +39,13 @@ interface Stubs {
   restore: jest.Mock;
 }
 
+const AUTH_CONTEXT = {
+  authenticationMode: 'device' as const,
+  deviceId: 'device-a',
+  venueId: 'venue-a',
+  organizationId: 'organization-a',
+};
+
 function makeController(): Stubs {
   const execute = jest.fn(() =>
     Promise.resolve({ success: true, syncedAt: 'stamped' }),
@@ -184,22 +191,26 @@ describe('SyncController — delegation', () => {
     const { controller, ingestReports } = makeController();
     const body = { reports: [{ reportId: 'r-1' }], fullSync: true };
 
-    await expect(controller.syncAuditReports(body)).resolves.toEqual({
+    await expect(
+      controller.syncAuditReports(body, AUTH_CONTEXT),
+    ).resolves.toEqual({
       success: true,
       upserted: 3,
     });
-    expect(ingestReports).toHaveBeenCalledWith(body);
+    expect(ingestReports).toHaveBeenCalledWith(body, AUTH_CONTEXT);
   });
 
   it('hands audit event logs to the audit use case and returns its result', async () => {
     const { controller, ingestEventLogs } = makeController();
     const body = { logs: [] };
 
-    await expect(controller.syncAuditEventLogs(body)).resolves.toEqual({
+    await expect(
+      controller.syncAuditEventLogs(body, AUTH_CONTEXT),
+    ).resolves.toEqual({
       success: true,
       count: 2,
     });
-    expect(ingestEventLogs).toHaveBeenCalledWith(body);
+    expect(ingestEventLogs).toHaveBeenCalledWith(body, AUTH_CONTEXT);
   });
 
   it('restores the POS callback registration on module init', async () => {

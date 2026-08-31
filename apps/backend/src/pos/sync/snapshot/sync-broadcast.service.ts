@@ -9,6 +9,7 @@ import {
 } from '../../sync-echo-guard';
 import { OrderSync, SyncPayload } from '../sync-payload';
 import { isCanonicalTableId } from '../../../shared/contracts/table-identity';
+import type { TenantContext } from '../../../auth/pos-auth-context';
 
 /** Keep the latest hint per order so rapid service-fee toggles emit one touch. */
 function dedupeOrderHintsByPosOrderId<T extends { posOrderId: number }>(
@@ -62,7 +63,10 @@ export class SyncBroadcastService {
   ) {}
 
   /** Relays the POS's per-record change hints. */
-  async relayPosHints(data: SyncPayload): Promise<RelayedHints> {
+  async relayPosHints(
+    tenant: TenantContext,
+    data: SyncPayload,
+  ): Promise<RelayedHints> {
     const touchedOrderHints = Array.isArray(data.touchedOrderHints)
       ? data.touchedOrderHints
           .map((h: any) => ({
@@ -153,8 +157,12 @@ export class SyncBroadcastService {
       for (const hint of filteredTableHints) {
         const row = await (this.prisma as any).table.findFirst({
           where: hint.tableId
-            ? { id: hint.tableId }
-            : { tableNumber: hint.tableNumber, floor: hint.floor },
+            ? { id: hint.tableId, venueId: tenant.venueId }
+            : {
+                venueId: tenant.venueId,
+                tableNumber: hint.tableNumber,
+                floor: hint.floor,
+              },
         });
         if (row) {
           const occupied = !!(row.isReserved || row.activeOrderId);

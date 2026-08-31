@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
+import { LEGACY_MANAGER_TENANT } from '../../tenancy/legacy-manager-tenant';
 
 @Injectable()
 export class UserService {
@@ -66,7 +67,10 @@ export class UserService {
 
             if (Array.isArray(menuItemsData) && menuItemsData.length > 0) {
               const menuItems = await this.prisma.menuItem.findMany({
-                where: { id: { in: menuItemsData.map((item) => item.id) } },
+                where: {
+                  venueId: LEGACY_MANAGER_TENANT.venueId,
+                  id: { in: menuItemsData.map((item) => item.id) },
+                },
               });
 
               parsedMenuItems = menuItemsData.map((reservationItem) => {

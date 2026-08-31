@@ -19,6 +19,11 @@ import {
   readRestaurantServiceFeeSettings,
   todayStart,
 } from '../util/mobile-date.util';
+import {
+  LEGACY_MANAGER_TENANT,
+  legacyOrderIdentity,
+  legacySettingIdentity,
+} from '../../tenancy/legacy-manager-tenant';
 
 export interface PaginatedOrders {
   data: {
@@ -64,11 +69,14 @@ export class MobileOrdersService {
     const take = Math.min(pageSize, 100);
     const skip = (page - 1) * take;
     const businessDateSetting = await (this.prisma as any).setting.findUnique({
-      where: { key: 'currentBusinessDate' },
+      where: legacySettingIdentity('currentBusinessDate'),
     });
     const currentBusinessDate =
       businessDateSetting?.value ?? todayStart().toISOString().split('T')[0];
-    const where: any = businessDateWhere(currentBusinessDate);
+    const where: any = {
+      venueId: LEGACY_MANAGER_TENANT.venueId,
+      ...businessDateWhere(currentBusinessDate),
+    };
     if (status) where.status = status;
 
     const [data, total] = await Promise.all([
@@ -112,13 +120,16 @@ export class MobileOrdersService {
   async getOrder(id: string) {
     const feeSettings = await readRestaurantServiceFeeSettings(this.prisma);
     const order = await this.prisma.order.findUnique({
-      where: { posOrderId: Number(id) },
+      where: legacyOrderIdentity(Number(id)),
       include: { items: true },
     });
     if (!order) return { error: 'Order not found' };
 
     const linkedTables = await (this.prisma as any).table.findMany({
-      where: { activeOrderId: Number(id) },
+      where: {
+        venueId: LEGACY_MANAGER_TENANT.venueId,
+        activeOrderId: Number(id),
+      },
       orderBy: [{ floor: 'asc' }, { tableNumber: 'asc' }],
     });
     const tableNumbers = linkedTables
@@ -161,7 +172,7 @@ export class MobileOrdersService {
     body: any,
   ) {
     const order = await this.prisma.order.findUnique({
-      where: { posOrderId: Number(id) },
+      where: legacyOrderIdentity(Number(id)),
     });
     if (!order) return { success: false };
 
@@ -231,7 +242,11 @@ export class MobileOrdersService {
           .trim();
         if (!tableNumber) continue;
         await (this.prisma as any).table.updateMany({
-          where: { tableNumber, floor },
+          where: {
+            venueId: LEGACY_MANAGER_TENANT.venueId,
+            tableNumber,
+            floor,
+          },
           data: { currentBill: newTotal > 0 ? newTotal : 0 },
         });
       }
@@ -358,10 +373,18 @@ export class MobileOrdersService {
     const now = new Date();
     const prisma = this.prisma as any;
 
-    let dbReport = await prisma.auditReport.findUnique({ where: { reportId } });
+    let dbReport = await prisma.auditReport.findUnique({
+      where: {
+        venueId_reportId: {
+          venueId: LEGACY_MANAGER_TENANT.venueId,
+          reportId,
+        },
+      },
+    });
     if (!dbReport) {
       dbReport = await prisma.auditReport.create({
         data: {
+          venueId: LEGACY_MANAGER_TENANT.venueId,
           reportId,
           posOrderId,
           tableNumbers,
@@ -405,7 +428,7 @@ export class MobileOrdersService {
   async cancelOrder(id: string, monitoringSocketId?: string) {
     const posOrderId = Number(id);
     const order = await this.prisma.order.findUnique({
-      where: { posOrderId },
+      where: legacyOrderIdentity(posOrderId),
     });
     if (!order) return { success: false, error: 'order_not_found' };
 
@@ -414,7 +437,10 @@ export class MobileOrdersService {
     // Capture which tables this order held before we release them, so the
     // cancellation notification can say which table was freed.
     const heldTables = await (this.prisma as any).table.findMany({
-      where: { activeOrderId: posOrderId },
+      where: {
+        venueId: LEGACY_MANAGER_TENANT.venueId,
+        activeOrderId: posOrderId,
+      },
       select: { tableNumber: true },
     });
     const tableLabel = heldTables
@@ -429,7 +455,10 @@ export class MobileOrdersService {
 
     // Free the table that was holding this order so it no longer shows as occupied
     await (this.prisma as any).table.updateMany({
-      where: { activeOrderId: posOrderId },
+      where: {
+        venueId: LEGACY_MANAGER_TENANT.venueId,
+        activeOrderId: posOrderId,
+      },
       data: { isReserved: false, activeOrderId: null, currentBill: 0 },
     });
 
@@ -489,7 +518,7 @@ export class MobileOrdersService {
   ) {
     // Resolve current business date
     const bdSetting = await (this.prisma as any).setting.findUnique({
-      where: { key: 'currentBusinessDate' },
+      where: legacySettingIdentity('currentBusinessDate'),
     });
     const businessDate: string =
       bdSetting?.value ?? new Date().toISOString().slice(0, 10);
@@ -508,6 +537,7 @@ export class MobileOrdersService {
       try {
         order = await this.prisma.order.create({
           data: {
+            venueId: LEGACY_MANAGER_TENANT.venueId,
             posOrderId: candidateId,
             status: 'pending',
             totalAmount: Math.round(totalAmount * 100) / 100,
@@ -605,7 +635,7 @@ export class MobileOrdersService {
     }
 
     const bdSetting = await (this.prisma as any).setting.findUnique({
-      where: { key: 'currentBusinessDate' },
+      where: legacySettingIdentity('currentBusinessDate'),
     });
     const businessDate: string =
       bdSetting?.value ?? new Date().toISOString().slice(0, 10);
@@ -632,6 +662,7 @@ export class MobileOrdersService {
       try {
         order = await this.prisma.order.create({
           data: {
+            venueId: LEGACY_MANAGER_TENANT.venueId,
             posOrderId: candidateId,
             status: 'pending',
             totalAmount,
@@ -662,13 +693,20 @@ export class MobileOrdersService {
     // Reserve the tables in the server DB so mobile live-status reflects it.
     for (const tableNumber of tableNumbers) {
       await (this.prisma as any).table.upsert({
-        where: { tableIdentifier: { tableNumber, floor } },
+        where: {
+          tableIdentifier: {
+            venueId: LEGACY_MANAGER_TENANT.venueId,
+            tableNumber,
+            floor,
+          },
+        },
         update: {
           isReserved: true,
           activeOrderId: nextId,
           currentBill: totalAmount,
         },
         create: {
+          venueId: LEGACY_MANAGER_TENANT.venueId,
           tableNumber,
           floor,
           isReserved: true,
@@ -730,7 +768,7 @@ export class MobileOrdersService {
   async deleteTakeawayOrder(id: string, monitoringSocketId?: string) {
     const posOrderId = Number(id);
     const order = await this.prisma.order.findUnique({
-      where: { posOrderId },
+      where: legacyOrderIdentity(posOrderId),
     });
     if (!order) return { success: false, error: 'order_not_found' };
 
@@ -757,12 +795,13 @@ export class MobileOrdersService {
   async getTakeawayOrders() {
     // Use the currentBusinessDate setting — same source Windows POS uses to filter.
     const businessDateSetting = await (this.prisma as any).setting.findUnique({
-      where: { key: 'currentBusinessDate' },
+      where: legacySettingIdentity('currentBusinessDate'),
     });
     const currentBD: string = businessDateSetting?.value ?? '';
 
     const orders = await this.prisma.order.findMany({
       where: {
+        venueId: LEGACY_MANAGER_TENANT.venueId,
         floor: 'takeaway',
         // Primary: match by stored businessDate (set during sync).
         // Fallback: if businessDate not yet populated (old orders), match by createdAt calendar day.
@@ -821,16 +860,25 @@ export class MobileOrdersService {
   private async allocateMobileOrderId(): Promise<number> {
     const counterKey = 'mobileOrderIdCounter';
     const [counterSetting, maxAgg] = await Promise.all([
-      (this.prisma as any).setting.findUnique({ where: { key: counterKey } }),
-      this.prisma.order.aggregate({ _max: { posOrderId: true } }),
+      (this.prisma as any).setting.findUnique({
+        where: legacySettingIdentity(counterKey),
+      }),
+      this.prisma.order.aggregate({
+        where: { venueId: LEGACY_MANAGER_TENANT.venueId },
+        _max: { posOrderId: true },
+      }),
     ]);
     const counterValue = counterSetting ? Number(counterSetting.value) : 0;
     const maxExisting = Number((maxAgg as any)?._max?.posOrderId ?? 0);
     const nextId = Math.max(counterValue + 1, maxExisting + 1, 90001);
     await (this.prisma as any).setting.upsert({
-      where: { key: counterKey },
+      where: legacySettingIdentity(counterKey),
       update: { value: String(nextId) },
-      create: { key: counterKey, value: String(nextId) },
+      create: {
+        venueId: LEGACY_MANAGER_TENANT.venueId,
+        key: counterKey,
+        value: String(nextId),
+      },
     });
     return nextId;
   }

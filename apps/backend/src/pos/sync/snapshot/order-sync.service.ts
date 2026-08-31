@@ -6,6 +6,7 @@ import {
   updateExistingTableRecord,
   upsertTableRecord,
 } from './table-record-identity';
+import type { TenantContext } from '../../../auth/pos-auth-context';
 
 /**
  * Applies the POS's order snapshot, and reconciles what the snapshot omits.
@@ -30,6 +31,7 @@ export class OrderSyncService {
   constructor(private readonly prisma: PrismaService) {}
 
   async sync(
+    tenant: TenantContext,
     orders: OrderSync[] | undefined,
     businessDate?: string,
   ): Promise<{ didSyncTables: boolean; releasedTables: boolean }> {
@@ -46,7 +48,11 @@ export class OrderSyncService {
       const pendingOutboxRows = await (
         this.prisma as any
       ).posCallbackOutbox.findMany({
-        where: { status: 'pending', posOrderId: { not: null } },
+        where: {
+          venueId: tenant.venueId,
+          status: 'pending',
+          posOrderId: { not: null },
+        },
         select: { posOrderId: true, createdAt: true },
       });
       const pendingOutboxOrderIds = new Set<number>(
@@ -99,14 +105,23 @@ export class OrderSyncService {
             `[Sync] Order #${pOrderId}: POS edit newer than queued mobile change — POS wins, discarding queued change.`,
           );
           await (this.prisma as any).posCallbackOutbox.updateMany({
-            where: { status: 'pending', posOrderId: pOrderId },
+            where: {
+              venueId: tenant.venueId,
+              status: 'pending',
+              posOrderId: pOrderId,
+            },
             data: { status: 'superseded', lastError: 'pos_newer_edit_won' },
           });
           pendingOutboxOrderIds.delete(pOrderId);
         }
 
         const dbOrder = await this.prisma.order.upsert({
-          where: { posOrderId: pOrderId },
+          where: {
+            venueId_posOrderId: {
+              venueId: tenant.venueId,
+              posOrderId: pOrderId,
+            },
+          },
           update: {
             status: order.status,
             totalAmount: order.totalAmount,
@@ -124,6 +139,7 @@ export class OrderSyncService {
               order.serviceFeePercent ?? order.customServiceFeePercentage ?? 10,
           },
           create: {
+            venueId: tenant.venueId,
             posOrderId: pOrderId,
             status: order.status,
             totalAmount: order.totalAmount,
@@ -181,6 +197,7 @@ export class OrderSyncService {
             if (!tableNumber) continue;
             await upsertTableRecord(
               this.prisma,
+              tenant,
               {
                 tableId: order.tableIds?.[tableIndex],
                 tableNumber,
@@ -208,6 +225,7 @@ export class OrderSyncService {
             if (!tableNumber) continue;
             const updatedCount = await updateExistingTableRecord(
               this.prisma,
+              tenant,
               {
                 tableId: order.tableIds?.[tableIndex],
                 tableNumber,
@@ -243,6 +261,7 @@ export class OrderSyncService {
         // pre-restore rows can remain and dashboard open-payable gets doubled.
         const staleDineInOrders = await this.prisma.order.findMany({
           where: {
+            venueId: tenant.venueId,
             businessDate: currentBusinessDate,
             NOT: {
               OR: [
@@ -268,6 +287,7 @@ export class OrderSyncService {
 
         await (this.prisma as any).order.deleteMany({
           where: {
+            venueId: tenant.venueId,
             floor: 'takeaway',
             businessDate: currentBusinessDate,
             ...(protectedPosOrderIds.length > 0

@@ -115,7 +115,7 @@ function makeIngestService(prisma: any) {
     write: jest.fn(async () => {}),
   } as unknown as ConstructorParameters<typeof StaffSyncService>[1];
   const posConnection = new PosConnectionRegistry(db, posCallback);
-  return new IngestPosSnapshotService(
+  const service = new IngestPosSnapshotService(
     posOutbox,
     posConnection,
     new MenuSyncService(db),
@@ -125,6 +125,15 @@ function makeIngestService(prisma: any) {
     new BusinessDaySyncService(db),
     new SyncBroadcastService(db, gateway),
   );
+  return {
+    execute: (payload: Parameters<IngestPosSnapshotService['execute']>[0]) =>
+      service.execute(payload, {
+        authenticationMode: 'device',
+        deviceId: 'device-a',
+        venueId: 'venue-a',
+        organizationId: 'organization-a',
+      }),
+  };
 }
 
 const T1 = '2026-06-27T10:00:00.000Z'; // older
@@ -173,7 +182,9 @@ describe('IngestPosSnapshotService /sync/manager-data — order last-write-wins'
     expect(superseded).toBeDefined();
 
     const upsertedOrder5 = calls.find(
-      (c) => c.key === 'order.upsert' && c.arg?.where?.posOrderId === 5,
+      (c) =>
+        c.key === 'order.upsert' &&
+        c.arg?.where?.venueId_posOrderId?.posOrderId === 5,
     );
     expect(upsertedOrder5).toBeDefined(); // POS snapshot applied
   });
@@ -202,7 +213,9 @@ describe('IngestPosSnapshotService /sync/manager-data — order last-write-wins'
     });
 
     const upsertedOrder5 = calls.find(
-      (c) => c.key === 'order.upsert' && c.arg?.where?.posOrderId === 5,
+      (c) =>
+        c.key === 'order.upsert' &&
+        c.arg?.where?.venueId_posOrderId?.posOrderId === 5,
     );
     expect(upsertedOrder5).toBeUndefined(); // held — POS snapshot ignored
 
@@ -238,7 +251,9 @@ describe('IngestPosSnapshotService /sync/manager-data — order last-write-wins'
     });
 
     const upsertedOrder5 = calls.find(
-      (c) => c.key === 'order.upsert' && c.arg?.where?.posOrderId === 5,
+      (c) =>
+        c.key === 'order.upsert' &&
+        c.arg?.where?.venueId_posOrderId?.posOrderId === 5,
     );
     expect(upsertedOrder5).toBeUndefined();
   });

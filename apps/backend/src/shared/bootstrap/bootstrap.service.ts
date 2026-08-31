@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { WebsiteUserRole } from '@prisma/client';
 import * as argon from 'argon2';
 import { PrismaService } from '../prisma/prisma.service';
+import { LEGACY_MANAGER_TENANT } from '../../tenancy/legacy-manager-tenant';
 import { WEBSITE_TABLE_MAPPINGS } from './website-table-mappings';
 
 @Injectable()
@@ -93,7 +94,9 @@ export class BootstrapService implements OnModuleInit {
   }
 
   private async reportMenuStatus(): Promise<void> {
-    const menuItems = await this.prisma.menuItem.count();
+    const menuItems = await this.prisma.menuItem.count({
+      where: { venueId: LEGACY_MANAGER_TENANT.venueId },
+    });
     if (menuItems === 0) {
       this.logger.warn(
         'Menu is empty — sync from Windows POS (/sync/manager-data). Website /api/menu stays empty until then.',

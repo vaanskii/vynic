@@ -5,6 +5,7 @@ import { StaffPinVault } from '../../../auth/staff-pin-vault.service';
 import { normalizeStaffRole } from '../../../staff/staff-role';
 import { pendingStaffUsernames } from '../sync-conflict';
 import { StaffSync } from '../sync-payload';
+import type { TenantContext } from '../../../auth/pos-auth-context';
 
 /**
  * Mirrors the POS staff list, and reconciles the members it no longer names.
@@ -25,8 +26,8 @@ export class StaffSyncService {
     private readonly pinVault: StaffPinVault,
   ) {}
 
-  async sync(staff: StaffSync[]): Promise<void> {
-    const plainPinsByUsername = await this.pinVault.read();
+  async sync(tenant: TenantContext, staff: StaffSync[]): Promise<void> {
+    const plainPinsByUsername = await this.pinVault.read(tenant);
     let pinsMapChanged = false;
     const incomingUsernames = new Set<string>();
     for (const member of staff) {
@@ -37,13 +38,19 @@ export class StaffSyncService {
       if (hasPin) {
         const pinHash = await bcrypt.hash(pin, 12);
         await (this.prisma as any).staff.upsert({
-          where: { username: member.username },
+          where: {
+            venueId_username: {
+              venueId: tenant.venueId,
+              username: member.username,
+            },
+          },
           update: {
             pinHash,
             role: normalizeStaffRole(member.role),
             isActive: true,
           },
           create: {
+            venueId: tenant.venueId,
             username: member.username,
             pinHash,
             role: normalizeStaffRole(member.role),
@@ -54,11 +61,21 @@ export class StaffSyncService {
         pinsMapChanged = true;
       } else {
         const existing = await (this.prisma as any).staff.findUnique({
-          where: { username: member.username },
+          where: {
+            venueId_username: {
+              venueId: tenant.venueId,
+              username: member.username,
+            },
+          },
         });
         if (existing) {
           await (this.prisma as any).staff.update({
-            where: { username: member.username },
+            where: {
+              venueId_username: {
+                venueId: tenant.venueId,
+                username: member.username,
+              },
+            },
             data: { role: normalizeStaffRole(member.role), isActive: true },
           });
         } else {
@@ -69,7 +86,7 @@ export class StaffSyncService {
       }
     }
     if (pinsMapChanged) {
-      await this.pinVault.write(plainPinsByUsername);
+      await this.pinVault.write(plainPinsByUsername, tenant);
     }
 
     // Reconcile deletions: if user disappeared from Windows POS list,
@@ -82,11 +99,16 @@ export class StaffSyncService {
     const pendingUserRows = await (
       this.prisma as any
     ).posCallbackOutbox.findMany({
-      where: { status: 'pending', endpoint: { startsWith: '/mobile-user-' } },
+      where: {
+        venueId: tenant.venueId,
+        status: 'pending',
+        endpoint: { startsWith: '/mobile-user-' },
+      },
       select: { endpoint: true, payload: true },
     });
     const protectedUsernames = pendingStaffUsernames(pendingUserRows);
     const existing = await (this.prisma as any).staff.findMany({
+      where: { venueId: tenant.venueId },
       select: { username: true },
     });
     const stale = existing
@@ -99,7 +121,7 @@ export class StaffSyncService {
       );
     if (stale.length > 0) {
       await (this.prisma as any).staff.deleteMany({
-        where: { username: { in: stale } },
+        where: { venueId: tenant.venueId, username: { in: stale } },
       });
     }
   }

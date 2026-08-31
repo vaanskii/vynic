@@ -16,6 +16,10 @@ import {
   previousDay,
   todayStart,
 } from '../util/mobile-date.util';
+import {
+  LEGACY_MANAGER_TENANT,
+  legacySettingIdentity,
+} from '../../tenancy/legacy-manager-tenant';
 
 const MANAGER_TABLE_LAYOUT: Record<string, Set<string>> = {
   first: new Set(['1', '2', '3', '4', '5', '6', '7', '8', '9']),
@@ -156,7 +160,7 @@ export class MobileDashboardService {
     // Use the business date set by the POS (stored in Setting).
     // Falls back to calendar today if not yet set (first-run / no POS connected).
     const businessDateSetting = await (this.prisma as any).setting.findUnique({
-      where: { key: 'currentBusinessDate' },
+      where: legacySettingIdentity('currentBusinessDate'),
     });
 
     let todayDateKey: string;
@@ -184,14 +188,21 @@ export class MobileDashboardService {
       businessDayOpenedAtSetting,
     ] = await Promise.all([
       this.prisma.order.findMany({
-        where: businessDateWhere(todayDateKey),
+        where: {
+          venueId: LEGACY_MANAGER_TENANT.venueId,
+          ...businessDateWhere(todayDateKey),
+        },
         select: { totalAmount: true },
       }),
       this.prisma.order.findMany({
-        where: businessDateWhere(yesterdayDateKey),
+        where: {
+          venueId: LEGACY_MANAGER_TENANT.venueId,
+          ...businessDateWhere(yesterdayDateKey),
+        },
         select: { totalAmount: true },
       }),
       (this.prisma as any).table.findMany({
+        where: { venueId: LEGACY_MANAGER_TENANT.venueId },
         select: {
           id: true,
           tableNumber: true,
@@ -203,6 +214,7 @@ export class MobileDashboardService {
       }),
       this.prisma.order.findMany({
         where: {
+          venueId: LEGACY_MANAGER_TENANT.venueId,
           ...businessDateWhere(todayDateKey),
           status: { notIn: ['closed', 'cancelled', 'paid'] },
           NOT: {
@@ -215,16 +227,16 @@ export class MobileDashboardService {
         select: { posOrderId: true, totalAmount: true, businessDate: true },
       }),
       (this.prisma as any).setting.findUnique({
-        where: { key: `salesSummary:${todayDateKey}` },
+        where: legacySettingIdentity(`salesSummary:${todayDateKey}`),
       }),
       (this.prisma as any).setting.findUnique({
-        where: { key: `openTablesPayable:${todayDateKey}` },
+        where: legacySettingIdentity(`openTablesPayable:${todayDateKey}`),
       }),
       (this.prisma as any).setting.findUnique({
-        where: { key: `dailySalesTotal:${todayDateKey}` },
+        where: legacySettingIdentity(`dailySalesTotal:${todayDateKey}`),
       }),
       (this.prisma as any).setting.findUnique({
-        where: { key: openedAtKey },
+        where: legacySettingIdentity(openedAtKey),
       }),
     ]);
 
@@ -391,6 +403,7 @@ export class MobileDashboardService {
 
   async getTables() {
     const tables = await (this.prisma as any).table.findMany({
+      where: { venueId: LEGACY_MANAGER_TENANT.venueId },
       orderBy: [{ floor: 'asc' }, { tableNumber: 'asc' }],
     });
     return tables
@@ -417,7 +430,11 @@ export class MobileDashboardService {
     monitoringSocketId?: string,
   ) {
     const updated = await (this.prisma as any).table.updateMany({
-      where: { tableNumber, floor },
+      where: {
+        venueId: LEGACY_MANAGER_TENANT.venueId,
+        tableNumber,
+        floor,
+      },
       data: { isReserved: false, activeOrderId: null, currentBill: 0 },
     });
     if (updated.count === 0)
@@ -441,13 +458,16 @@ export class MobileDashboardService {
 
   async getStaffPerformance(): Promise<StaffRankEntry[]> {
     const businessDateSetting = await (this.prisma as any).setting.findUnique({
-      where: { key: 'currentBusinessDate' },
+      where: legacySettingIdentity('currentBusinessDate'),
     });
     const currentBusinessDate =
       businessDateSetting?.value ?? todayStart().toISOString().split('T')[0];
 
     const orders = await this.prisma.order.findMany({
-      where: businessDateWhere(currentBusinessDate),
+      where: {
+        venueId: LEGACY_MANAGER_TENANT.venueId,
+        ...businessDateWhere(currentBusinessDate),
+      },
       select: { waiterName: true, totalAmount: true },
     });
 
@@ -477,11 +497,14 @@ export class MobileDashboardService {
 
   async getFinancials(): Promise<FinancialsResponse> {
     const businessDateSetting = await (this.prisma as any).setting.findUnique({
-      where: { key: 'currentBusinessDate' },
+      where: legacySettingIdentity('currentBusinessDate'),
     });
     const currentBusinessDate =
       businessDateSetting?.value ?? todayStart().toISOString().split('T')[0];
-    const range = businessDateWhere(currentBusinessDate);
+    const range = {
+      venueId: LEGACY_MANAGER_TENANT.venueId,
+      ...businessDateWhere(currentBusinessDate),
+    };
     const r = (n: number) => Math.round(n * 100) / 100;
 
     const start = parseBusinessDateStart(currentBusinessDate);
@@ -492,7 +515,10 @@ export class MobileDashboardService {
         select: { totalAmount: true, paymentType: true },
       }),
       this.prisma.expense.findMany({
-        where: { createdAt: { gte: start, lt: end } },
+        where: {
+          venueId: LEGACY_MANAGER_TENANT.venueId,
+          createdAt: { gte: start, lt: end },
+        },
         select: {
           id: true,
           description: true,
@@ -572,7 +598,7 @@ export class MobileDashboardService {
       throw new BadRequestException('amount must be greater than zero');
     }
     const businessDateSetting = await (this.prisma as any).setting.findUnique({
-      where: { key: 'currentBusinessDate' },
+      where: legacySettingIdentity('currentBusinessDate'),
     });
     const currentBusinessDate =
       businessDateSetting?.value ?? todayStart().toISOString().split('T')[0];
@@ -588,6 +614,7 @@ export class MobileDashboardService {
     );
     const created = await this.prisma.expense.create({
       data: {
+        venueId: LEGACY_MANAGER_TENANT.venueId,
         description,
         amount,
         category,
@@ -630,9 +657,10 @@ export class MobileDashboardService {
   }
 
   async deleteExpense(id: string): Promise<{ success: true }> {
-    try {
-      await this.prisma.expense.delete({ where: { id } });
-    } catch {
+    const deleted = await this.prisma.expense.deleteMany({
+      where: { id, venueId: LEGACY_MANAGER_TENANT.venueId },
+    });
+    if (deleted.count === 0) {
       throw new NotFoundException('Expense not found');
     }
     return { success: true };

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma.service';
+import type { TenantContext } from '../../../auth/pos-auth-context';
 
 /**
  * Mirrors the POS menu tree onto the server.
@@ -15,12 +16,14 @@ import { PrismaService } from '../../../prisma.service';
 export class MenuSyncService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async sync(menu: any[]): Promise<void> {
+  async sync(tenant: TenantContext, menu: any[]): Promise<void> {
     console.log(`[SYNC] Syncing ${menu.length} categories...`);
     for (let catIndex = 0; catIndex < menu.length; catIndex++) {
       const cat = menu[catIndex];
       const category = await (this.prisma as any).menuCategory.upsert({
-        where: { slug: cat.slug },
+        where: {
+          venueId_slug: { venueId: tenant.venueId, slug: cat.slug },
+        },
         update: {
           nameKa: cat.nameKa,
           nameEn: cat.nameEn,
@@ -28,6 +31,7 @@ export class MenuSyncService {
           sortOrder: catIndex,
         },
         create: {
+          venueId: tenant.venueId,
           slug: cat.slug,
           nameKa: cat.nameKa,
           nameEn: cat.nameEn,
@@ -68,12 +72,17 @@ export class MenuSyncService {
             for (let itemIndex = 0; itemIndex < sub.items.length; itemIndex++) {
               const it = sub.items[itemIndex];
               let existingItem = await (this.prisma as any).menuItem.findFirst({
-                where: { nameEn: it.nameEn, subcategoryId: subcategory.id },
+                where: {
+                  venueId: tenant.venueId,
+                  nameEn: it.nameEn,
+                  subcategoryId: subcategory.id,
+                },
               });
               if (existingItem) {
                 existingItem = await (this.prisma as any).menuItem.update({
                   where: { id: existingItem.id },
                   data: {
+                    venueId: tenant.venueId,
                     nameKa: it.nameKa,
                     price: it.price,
                     sendToKitchen: it.sendToKitchen,
@@ -83,6 +92,7 @@ export class MenuSyncService {
               } else {
                 existingItem = await (this.prisma as any).menuItem.create({
                   data: {
+                    venueId: tenant.venueId,
                     subcategoryId: subcategory.id,
                     nameKa: it.nameKa,
                     nameEn: it.nameEn,
@@ -118,6 +128,7 @@ export class MenuSyncService {
           const it = cat.items[itemIndex];
           let existingItem = await (this.prisma as any).menuItem.findFirst({
             where: {
+              venueId: tenant.venueId,
               nameEn: it.nameEn,
               categoryId: category.id,
               subcategoryId: null,
@@ -128,6 +139,7 @@ export class MenuSyncService {
             existingItem = await (this.prisma as any).menuItem.update({
               where: { id: existingItem.id },
               data: {
+                venueId: tenant.venueId,
                 nameKa: it.nameKa,
                 price: it.price,
                 sendToKitchen: it.sendToKitchen,
@@ -137,6 +149,7 @@ export class MenuSyncService {
           } else {
             existingItem = await (this.prisma as any).menuItem.create({
               data: {
+                venueId: tenant.venueId,
                 categoryId: category.id,
                 nameKa: it.nameKa,
                 nameEn: it.nameEn,

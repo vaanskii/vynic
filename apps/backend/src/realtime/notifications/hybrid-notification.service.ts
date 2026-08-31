@@ -13,6 +13,7 @@ import {
   ServiceFeeNotificationCoalescer,
 } from './manager-notification-coalesce';
 import type { BroadcastOptions, WsEvent, WsEventType } from '../ws-events';
+import { LEGACY_MANAGER_TENANT } from '../../tenancy/legacy-manager-tenant';
 
 @Injectable()
 export class HybridNotificationService {
@@ -82,6 +83,7 @@ export class HybridNotificationService {
 
         const managers = await this.prisma.staff.findMany({
           where: {
+            venueId: LEGACY_MANAGER_TENANT.venueId,
             isActive: true,
             role: {
               in: [StaffRole.ADMIN, StaffRole.MANAGER, StaffRole.SUPERVISOR],

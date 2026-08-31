@@ -8,6 +8,10 @@ import {
   parseBusinessDateStart,
   todayStart,
 } from '../util/mobile-date.util';
+import {
+  LEGACY_MANAGER_TENANT,
+  legacySettingIdentity,
+} from '../../tenancy/legacy-manager-tenant';
 
 /**
  * Read-only reporting for the mobile manager app: audit log, sales report,
@@ -27,7 +31,7 @@ export class MobileReportsService {
     status?: string,
     allStr?: string,
   ) {
-    const where: any = {};
+    const where: any = { venueId: LEGACY_MANAGER_TENANT.venueId };
     const includeAllHistory = allStr === '1' || allStr === 'true';
 
     if (yearStr && monthStr) {
@@ -120,7 +124,7 @@ export class MobileReportsService {
       // today = current business date
       const businessDateSetting = await (this.prisma as any).setting.findUnique(
         {
-          where: { key: 'currentBusinessDate' },
+          where: legacySettingIdentity('currentBusinessDate'),
         },
       );
       const resolvedBusinessDate =
@@ -128,10 +132,13 @@ export class MobileReportsService {
       currentBusinessDate = resolvedBusinessDate;
       from = parseBusinessDateStart(resolvedBusinessDate);
       where = {
+        venueId: LEGACY_MANAGER_TENANT.venueId,
         ...businessDateWhere(resolvedBusinessDate),
         status: { not: 'cancelled' },
       };
     }
+
+    where.venueId = LEGACY_MANAGER_TENANT.venueId;
 
     const [orders, byWaiter, expenses] = await Promise.all([
       this.prisma.order.findMany({
@@ -148,12 +155,16 @@ export class MobileReportsService {
         where:
           period === 'today' && currentBusinessDate
             ? {
+                venueId: LEGACY_MANAGER_TENANT.venueId,
                 createdAt: {
                   gte: parseBusinessDateStart(currentBusinessDate),
                   lt: nextDay(parseBusinessDateStart(currentBusinessDate)),
                 },
               }
-            : { createdAt: { gte: from } },
+            : {
+                venueId: LEGACY_MANAGER_TENANT.venueId,
+                createdAt: { gte: from },
+              },
         select: { amount: true, category: true },
       }),
     ]);
@@ -201,7 +212,7 @@ export class MobileReportsService {
     // when available, so mobile payment-method analytics match Windows exactly.
     if (period === 'today' && currentBusinessDate) {
       const summarySetting = await (this.prisma as any).setting.findUnique({
-        where: { key: `salesSummary:${currentBusinessDate}` },
+        where: legacySettingIdentity(`salesSummary:${currentBusinessDate}`),
       });
       if (summarySetting?.value) {
         try {
@@ -236,7 +247,7 @@ export class MobileReportsService {
 
     if (period === 'all') {
       const allTimeSetting = await (this.prisma as any).setting.findUnique({
-        where: { key: 'salesSummary:all_time' },
+        where: legacySettingIdentity('salesSummary:all_time'),
       });
       if (allTimeSetting?.value) {
         try {
@@ -275,7 +286,10 @@ export class MobileReportsService {
 
     if (period === 'month' && month && /^\d{4}-\d{2}$/.test(month)) {
       const summaryRows = await (this.prisma as any).setting.findMany({
-        where: { key: { startsWith: 'salesSummary:' } },
+        where: {
+          venueId: LEGACY_MANAGER_TENANT.venueId,
+          key: { startsWith: 'salesSummary:' },
+        },
         select: { key: true, value: true },
       });
       const monthRows = summaryRows
@@ -357,6 +371,7 @@ export class MobileReportsService {
 
     // Build category mapping so mobile report can expand sold items by categories.
     const menuItems = await (this.prisma as any).menuItem.findMany({
+      where: { venueId: LEGACY_MANAGER_TENANT.venueId },
       select: {
         nameKa: true,
         nameEn: true,
@@ -455,6 +470,7 @@ export class MobileReportsService {
 
   async getSalesDaily(month?: string) {
     const expenses = await this.prisma.expense.findMany({
+      where: { venueId: LEGACY_MANAGER_TENANT.venueId },
       select: { amount: true, createdAt: true },
     });
     const expensesByDate = new Map<string, number>();
@@ -474,11 +490,14 @@ export class MobileReportsService {
       );
     }
     const historyIndexSetting = await (this.prisma as any).setting.findUnique({
-      where: { key: 'salesSummary:history_index' },
+      where: legacySettingIdentity('salesSummary:history_index'),
       select: { value: true },
     });
     const summaries = await (this.prisma as any).setting.findMany({
-      where: { key: { startsWith: 'salesSummary:' } },
+      where: {
+        venueId: LEGACY_MANAGER_TENANT.venueId,
+        key: { startsWith: 'salesSummary:' },
+      },
       select: { key: true, value: true },
     });
     const summaryByDate = new Map<string, any>();
@@ -494,6 +513,7 @@ export class MobileReportsService {
     }
 
     const orders = await this.prisma.order.findMany({
+      where: { venueId: LEGACY_MANAGER_TENANT.venueId },
       select: {
         businessDate: true,
         status: true,
@@ -596,7 +616,12 @@ export class MobileReportsService {
   async getTopItems(limit: number) {
     const today = todayStart();
     const items = await (this.prisma as any).orderItem.findMany({
-      where: { order: { createdAt: { gte: today } } },
+      where: {
+        order: {
+          venueId: LEGACY_MANAGER_TENANT.venueId,
+          createdAt: { gte: today },
+        },
+      },
       select: { name: true, quantity: true, price: true },
     });
 

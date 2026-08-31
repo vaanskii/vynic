@@ -12,20 +12,24 @@ datasource db {
 
 model Table {
   id            String   @id @default(uuid())
+  venueId       String
   tableNumber   String
   floor         String
   isReserved    Boolean  @default(false)
   activeOrderId Int?
   currentBill   Float    @default(0)
   updatedAt     DateTime @updatedAt
+  venue         Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
-  @@unique([tableNumber, floor], name: "tableIdentifier")
+  @@unique([venueId, tableNumber, floor], name: "tableIdentifier")
+  @@index([venueId])
   @@schema("pos")
 }
 
 model Order {
   id                String      @id @default(uuid())
-  posOrderId        Int         @unique
+  venueId           String
+  posOrderId        Int
   /// Idempotency key written by the POS atomic table-close flow
   /// (docs/VYNIC_ARCHITECTURE_PLAN.md §1). Null for every order closed
   /// before that flow exists; schema-only until roadmap Task 2.
@@ -46,7 +50,10 @@ model Order {
   includeServiceFee Boolean     @default(false)
   serviceFeePercent Float       @default(10)
   items             OrderItem[]
+  venue             Venue       @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  @@unique([venueId, posOrderId])
+  @@index([venueId, businessDate])
   @@schema("pos")
 }
 
@@ -64,7 +71,8 @@ model OrderItem {
 
 model MenuCategory {
   id            String            @id @default(uuid())
-  slug          String            @unique
+  venueId       String
+  slug          String
   nameKa        String
   nameEn        String
   sendToKitchen Boolean           @default(true)
@@ -72,7 +80,10 @@ model MenuCategory {
   updatedAt     DateTime          @updatedAt
   items         MenuItem[]
   subcategories MenuSubcategory[]
+  venue         Venue             @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  @@unique([venueId, slug])
+  @@index([venueId])
   @@schema("pos")
 }
 
@@ -93,6 +104,7 @@ model MenuSubcategory {
 
 model MenuItem {
   id            String            @id @default(uuid())
+  venueId       String
   categoryId    String?
   nameKa        String
   nameEn        String
@@ -104,7 +116,9 @@ model MenuItem {
   category      MenuCategory?     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   subcategory   MenuSubcategory?  @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
   variants      MenuItemVariant[]
+  venue         Venue             @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  @@index([venueId])
   @@index([categoryId])
   @@index([subcategoryId])
   @@schema("pos")
@@ -123,30 +137,38 @@ model MenuItemVariant {
 
 model Expense {
   id          String   @id @default(uuid())
+  venueId     String
   description String
   amount      Float
   category    String
   createdAt   DateTime @default(now())
   paymentType String   @default("cash")
+  venue       Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  @@index([venueId, createdAt])
   @@schema("pos")
 }
 
 model Staff {
   id        String    @id @default(uuid())
-  username  String    @unique
+  venueId   String
+  username  String
   pinHash   String
   role      StaffRole @default(WAITER)
   isActive  Boolean   @default(true)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  venue     Venue     @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  @@unique([venueId, username])
+  @@index([venueId])
   @@schema("pos")
 }
 
 model AuditReport {
   id           String       @id @default(uuid())
-  reportId     String       @unique
+  venueId      String
+  reportId     String
   posOrderId   Int
   tableNumbers String[]
   floor        String       @default("first")
@@ -160,7 +182,10 @@ model AuditReport {
   locked       Boolean      @default(false)
   updatedAt    DateTime     @updatedAt
   events       AuditEvent[]
+  venue        Venue        @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  @@unique([venueId, reportId])
+  @@index([venueId])
   @@index([posOrderId])
   @@index([status])
   @@schema("pos")
@@ -186,12 +211,15 @@ model AuditEvent {
 
 model AuditEventLog {
   id         String   @id @default(uuid())
+  venueId    String
   action     String
   userId     String
   data       Json
   deviceType String
   createdAt  DateTime @default(now())
+  venue      Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  @@index([venueId, createdAt])
   @@index([createdAt])
   @@index([action])
   @@schema("pos")
@@ -199,7 +227,8 @@ model AuditEventLog {
 
 model DailySnapshot {
   id            String   @id @default(uuid())
-  date          String   @unique
+  venueId       String
+  date          String
   totalRevenue  Float    @default(0)
   orderCount    Int      @default(0)
   avgOrderValue Float    @default(0)
@@ -208,7 +237,10 @@ model DailySnapshot {
   totalExpenses Float    @default(0)
   topItemsJson  String   @default("[]")
   updatedAt     DateTime @updatedAt
+  venue         Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  @@unique([venueId, date])
+  @@index([venueId])
   @@schema("pos")
 }
 
@@ -252,10 +284,14 @@ enum StaffRole {
 }
 
 model Setting {
-  key       String   @id
+  venueId   String
+  key       String
   value     String
   updatedAt DateTime @updatedAt
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  @@id([venueId, key])
+  @@index([venueId])
   @@schema("pos")
 }
 
@@ -288,16 +324,27 @@ model Organization {
 
 /// One physical restaurant/location owned by an Organization.
 model Venue {
-  id             String       @id @default(uuid())
+  id             String              @id @default(uuid())
   organizationId String
   name           String
-  status         VenueStatus  @default(ACTIVE)
+  status         VenueStatus         @default(ACTIVE)
   timezone       String
   currency       String
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   devices        Device[]
+  tables         Table[]
+  orders         Order[]
+  menuCategories MenuCategory[]
+  menuItems      MenuItem[]
+  expenses       Expense[]
+  staff          Staff[]
+  auditReports   AuditReport[]
+  auditEventLogs AuditEventLog[]
+  dailySnapshots DailySnapshot[]
+  settings       Setting[]
+  callbackOutbox PosCallbackOutbox[]
 
   @@index([organizationId])
   @@schema("pos")
@@ -365,6 +412,7 @@ model PushDevice {
 
 model PosCallbackOutbox {
   id            String   @id @default(uuid())
+  venueId       String
   endpoint      String
   payload       Json
   posOrderId    Int?
@@ -376,7 +424,9 @@ model PosCallbackOutbox {
   nextAttemptAt DateTime @default(now())
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  venue         Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  @@index([venueId, status, nextAttemptAt])
   @@index([status, nextAttemptAt])
   @@index([posOrderId])
   @@index([dedupeKey])
@@ -415,8 +465,8 @@ model WebsiteUser {
   hashedRefreshToken String?
   reservations       WebsiteReservation[]
 
-  @@schema("website")
   @@map("users")
+  @@schema("website")
 }
 
 /// Bookable tables shown on the public website. Each row maps to a POS table.
@@ -432,34 +482,34 @@ model WebsiteTable {
 
   reservations WebsiteReservationTable[]
 
-  @@schema("website")
   @@map("tables")
+  @@schema("website")
 }
 
 model WebsiteReservation {
-  id            String                   @id @default(uuid())
-  userId        String?
-  customerName  String?
-  customerEmail String?
-  customerPhone String?
-  date          DateTime
-  timeSlot      String
-  status        WebsiteReservationStatus @default(PENDING)
-  totalAmount   Float?
-  menuItems     String?
-  paymentId     String?
-  paymentStatus String?
-  notes         String?
-  posReservationId String? @unique
+  id               String                   @id @default(uuid())
+  userId           String?
+  customerName     String?
+  customerEmail    String?
+  customerPhone    String?
+  date             DateTime
+  timeSlot         String
+  status           WebsiteReservationStatus @default(PENDING)
+  totalAmount      Float?
+  menuItems        String?
+  paymentId        String?
+  paymentStatus    String?
+  notes            String?
+  posReservationId String?                  @unique
   numberOfGuests   Int?
-  createdAt     DateTime                 @default(now())
-  updatedAt     DateTime                 @updatedAt
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
 
   user   WebsiteUser?              @relation(fields: [userId], references: [id])
   tables WebsiteReservationTable[]
 
-  @@schema("website")
   @@map("reservations")
+  @@schema("website")
 }
 
 model WebsiteReservationTable {
@@ -472,6 +522,6 @@ model WebsiteReservationTable {
   table       WebsiteTable       @relation(fields: [tableId], references: [id])
 
   @@unique([reservationId, tableId])
-  @@schema("website")
   @@map("reservation_tables")
+  @@schema("website")
 }

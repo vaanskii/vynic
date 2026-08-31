@@ -21,6 +21,7 @@ import { PosConnectionRegistry } from './pos-connection.registry';
 // `import type`: interfaces named in a decorated signature must not be value
 // imports while isolatedModules + emitDecoratorMetadata are both on.
 import type { AuditEventLogSync, SyncPayload } from './sync-payload';
+import { LEGACY_MANAGER_TENANT } from '../../tenancy/legacy-manager-tenant';
 
 /**
  * HTTP surface of POS → server synchronization.
@@ -70,10 +71,16 @@ export class SyncController implements OnModuleInit {
 
     const [tables, orders] = await Promise.all([
       (this.prisma as any).table.findMany({
-        where: { updatedAt: { gt: sinceDate } },
+        where: {
+          venueId: LEGACY_MANAGER_TENANT.venueId,
+          updatedAt: { gt: sinceDate },
+        },
       }),
       this.prisma.order.findMany({
-        where: { updatedAt: { gt: sinceDate } },
+        where: {
+          venueId: LEGACY_MANAGER_TENANT.venueId,
+          updatedAt: { gt: sinceDate },
+        },
         select: {
           posOrderId: true,
           status: true,
@@ -109,8 +116,9 @@ export class SyncController implements OnModuleInit {
   @UseGuards(PosSyncGuard)
   async syncAuditReports(
     @Body() body: { reports?: any[]; fullSync?: boolean },
+    @PosAuth() authContext: PosAuthContext,
   ) {
-    return this.ingestAudit.ingestReports(body);
+    return this.ingestAudit.ingestReports(body, authContext);
   }
 
   /**
@@ -120,7 +128,10 @@ export class SyncController implements OnModuleInit {
    */
   @Post('audit-logs')
   @UseGuards(PosSyncGuard)
-  async syncAuditEventLogs(@Body() body: { logs?: AuditEventLogSync[] }) {
-    return this.ingestAudit.ingestEventLogs(body);
+  async syncAuditEventLogs(
+    @Body() body: { logs?: AuditEventLogSync[] },
+    @PosAuth() authContext: PosAuthContext,
+  ) {
+    return this.ingestAudit.ingestEventLogs(body, authContext);
   }
 }

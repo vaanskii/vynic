@@ -28,10 +28,14 @@ Every phase so far has hit the same wall and stopped at it deliberately:
 | 5A | plan assignment, feature overrides | `POST /venue/:id/enable-manager` without an admin boundary is a hole |
 | 4B2B | domain registration and disabling | same |
 | 6A | enqueueing Edge commands | same — `EdgeCommandService.enqueue` has no HTTP route |
+| 6B | issuing Device credentials | same — provisioning is a shell script, not an endpoint |
 | future | payment credentials | worse: it writes merchant secrets |
 
 In each case the read path, the schema and the service exist and are tested; only
-the authenticated write is missing. That is the deliberate shape — the control
+the authenticated write is missing. Step 6B added device provisioning to the
+list: `npm run device:issue` requires shell access to the server, which is a real
+authorization boundary and deliberately one that self-service onboarding cannot
+be built out of. That is the deliberate shape — the control
 plane is one boundary to build once, not four half-boundaries scattered across
 phases.
 

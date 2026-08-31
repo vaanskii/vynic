@@ -1,7 +1,8 @@
 # Cloud ↔ Edge transport
 
-**Step 6A.** How a future Vynic Cloud and a restaurant's POS talk to each other,
-and why the direction had to change before anything else could.
+**Step 6A** established the backend side. **Step 6B** put the POS on it. This is
+how a future Vynic Cloud and a restaurant's POS talk to each other, and why the
+direction had to change before anything else could.
 
 Companion documents: [SYNC_CONTRACT.md](SYNC_CONTRACT.md) (snapshot payload),
 [DEVICE_IDENTITY.md](DEVICE_IDENTITY.md) (Device credentials),
@@ -85,7 +86,7 @@ These are different problems and are kept apart deliberately.
 | Shape | a snapshot of what is true | an instruction to do something |
 | Repeating it | converges — same snapshot, same result | must be made safe deliberately |
 | Ordering | last write wins | per-command lifecycle |
-| Today | `POST /sync/manager-data` → `IngestPosSnapshotService` — **unchanged** | `POST /edge/commands/*` — new in 6A |
+| Today | `POST /sync/manager-data` → `IngestPosSnapshotService` — **unchanged** | `POST /edge/commands/*`, claimed by the POS since 6B |
 
 Collapsing them would mean one version number, one retry policy and one failure
 mode for two things that need three different answers each. Step 6A leaves the
@@ -246,10 +247,10 @@ the version, batch limits, lease duration, attempt ceiling, and the command-type
 catalogue with its idempotency classification. `--check` covers the rendered
 output like every other contract.
 
-**TypeScript only, for now.** There is no Dart consumer yet — the POS still
-receives work over the legacy callback path — and emitting an unused Dart file
-into `apps/operations/` would be dead code dressed as a contract. Step 6B adds
-the Dart rendering alongside the Edge client that reads it.
+**Both languages since Step 6B**, when the POS gained a consumer. The Dart
+rendering carries the envelope, the result, the limits and the type catalogue,
+and `--check` covers all four generated copies — there are no hand-maintained
+Dart DTOs for this contract.
 
 The version travels three ways: on the row, on every envelope, and on the claim
 request (`acceptedContractVersions`), so an Edge is only handed work it
@@ -301,27 +302,164 @@ exactly as it did.
 | `PosCallbackClient`, `PosConnectionRegistry`, `pos-callback-url` SSRF guard | **Transitional.** Still the only delivery mechanism in production. |
 | `PosOutboxService` / `PosCallbackOutbox` | **Transitional.** Frozen: no new command types. |
 | `POST /sync/*` snapshot ingestion | **Keeps.** Edge → Cloud state is the right direction already. |
-| `POST /edge/commands/*` | **New foundation.** Unused by production POS until Step 6B. |
+| `POST /edge/commands/*` | **In use by the POS since Step 6B**, carrying `NOOP` only. |
 
 **Retirement conditions for the legacy callback path** — all of them, not any:
 
-1. A Flutter Edge client claims and acknowledges commands (Step 6B).
+1. ~~A Flutter Edge client claims and acknowledges commands.~~ **Done in 6B.**
 2. Every command type currently sent through `PosCallbackClient` has an
-   idempotent Edge handler and a declared type in the contract.
+   idempotent Edge handler and a declared type in the contract. *(Step 6C — 18
+   endpoints, none migrated.)*
 3. Reservation reads (`fetchPosReservations`) have a Cloud-side answer, since a
    pull queue delivers work but does not answer a synchronous question.
 4. Every deployed POS has a Device credential — the legacy shared
    `POS_SYNC_API_KEY` path resolves no Device and cannot use this transport.
 
-Until then a Cloud deployment is not possible, and that is the honest status:
-6A makes the *transport* Cloud-compatible, not the product.
+Until all four hold, a Cloud deployment is not possible, and that is the honest
+status: 6A made the transport Cloud-compatible and 6B put the POS on it, but the
+work that actually flows to a restaurant today still flows over the LAN.
+
+---
+
+---
+
+## The POS Edge client (Step 6B)
+
+`apps/operations/lib/core/services/edge/`.
+
+```
+main() → DatabaseService.init()
+       → EdgeDeviceCredentialStore.load()
+       → ManagerSyncService.initialize()
+       → EdgeTransportService.start()      ← not awaited
+```
+
+### Device credential
+
+The POS had none. It authenticated `POST /sync/*` with the shared
+`POS_SYNC_API_KEY` alone, and the Edge endpoints refuse that key because it
+names a Venue but no machine. So 6B gave the installation a real identity.
+
+- **`installationId`** — a UUID generated on first run and kept.
+- **The credential** — issued per installation. Never hardcoded, never one
+  global secret for the fleet, never committed.
+- **Where it lives** — `<data directory>/edge_device.json`, owner-only where the
+  platform has POSIX permissions.
+
+**Not the Hive settings box, deliberately.** `BackupRepository.createDataBackup`
+serializes that box wholesale into an exportable JSON file, so a credential
+stored there would land in every backup an operator copies off the machine. A
+separate file keeps it out of backups entirely.
+
+**The boundary, stated plainly:** this is file protection inside a per-user
+application-data directory. It is not an OS keychain, and anything running as
+the same user can read it. Windows DPAPI / macOS Keychain would need a platform
+plugin and a change to both desktop build configurations; that is recorded as
+deferred rather than pretended away.
+
+### Provisioning
+
+There is no HTTP endpoint that mints a credential. Minting one is a
+control-plane action and the platform-admin boundary that would authorize it does
+not exist yet — see [PLATFORM_CONTROL_PLANE.md](PLATFORM_CONTROL_PLANE.md).
+
+The transitional path requires shell access to the server, which is an
+authorization boundary that already exists and which **cannot quietly become the
+SaaS onboarding model**, because self-service onboarding cannot be built out of
+it:
+
+```bash
+# On the server
+npm run device:issue -- --venue <venueId> --name "Bar terminal" --platform windows
+```
+
+The secret is printed once — only its Argon2id verifier reaches the database, so
+there is no recovering it later; issue a new credential and revoke the old
+Device instead. To install it, write that one line to
+`<POS data directory>/edge_device_provision.txt` and restart the POS. It is
+absorbed into `edge_device.json` and the drop file is deleted, so the secret does
+not sit on disk as a second copy.
+
+### Poll lifecycle
+
+One timer, one owner. Screens do not poll.
+
+| Situation | Next poll |
+|---|---|
+| work claimed | 2s — drain the queue |
+| nothing waiting | 30s |
+| Cloud unreachable or erroring | exponential from 30s, capped at 5min, ±20% jitter |
+| credential rejected | loop stands down; re-provisioning resumes it |
+| no credential | never starts |
+
+Re-entrant polls are refused rather than queued: two claims in flight would take
+two leases on the same work for no benefit.
+
+**Offline is the normal state, not a failure.** `EdgeTransportService.start()` is
+not awaited, so it cannot delay startup. Every transport failure is an outcome
+rather than a throw. Nothing on the path of taking an order, opening a table or
+printing a check consults it. A POS with no credential — which is every
+installation until one is provisioned — starts and runs exactly as it always did.
+
+### Handler registry
+
+The transport does not know printer, menu or table logic. It resolves a type to
+an `EdgeCommandHandler` and calls it; a handler that throws produces a failed
+result with a reason, not a crash.
+
+Step 6B ships **one** handler, `NOOP`, which does nothing. That is the point: it
+proves claim → execute → journal → acknowledge on a real install without
+performing restaurant work.
+
+### Local execution journal
+
+Cloud acknowledgment alone cannot cover the sequence that actually happens:
+
+```
+POS receives a command → executes it → the connection dies
+→ the acknowledgment never lands → the lease expires
+→ Cloud offers the same command again
+```
+
+Without a local record the side effect happens twice. So the Edge keeps its own
+durable answer in a Hive box (`edge_command_journal`): command id, idempotency
+key, type, first-seen time, and outcome. **No payloads** — enough to decide
+whether to run something, without holding whatever a future command type carries.
+
+- A command that already **succeeded** here is acknowledged again, with
+  `already_executed`, and is not re-run.
+- A command that already **failed** keeps that outcome. Step 6A's semantics
+  apply: an explicit failure is terminal, and re-issuing it is a deliberate
+  control-plane act.
+- **Crash policy.** An entry left mid-execution by a process that never returned
+  is marked `interrupted` on the next start, not guessed at in either direction.
+  It is non-terminal, so a redelivered command is executed again — which is safe
+  precisely because only idempotent types may be queued. `NOOP` makes this
+  harmless today; every future handler inherits the rule.
+- **Retention** — terminal entries are pruned after 7 days, comfortably longer
+  than any lease or redelivery window, with a 5000-row ceiling as a backstop.
+  Non-terminal entries are never pruned: they are exactly the ones a redelivery
+  needs to be judged against. The journal is not included in backups, so a
+  restore starts it empty; for idempotent command types that is harmless.
+
+### Snapshot sync
+
+Unchanged in shape. The one adjustment: `ApiConfig.posSyncHeaders` now prefers a
+provisioned Device credential over the shared key. Both travel in the same
+header and the server tells them apart by prefix, so a provisioned installation
+gets its snapshot push attributed to its own Device and Venue while an
+unprovisioned one behaves exactly as before. **The shared-key path is not
+removed.**
 
 ---
 
 ## Deferred
 
-- **Step 6B — POS Edge client.** The Flutter side, the Dart contract rendering,
-  and migrating command types across.
+- **Step 6C — legacy business-command migration.** The 18 command endpoints on
+  `PosIngestServer` still arrive over the LAN callback path. Each needs a
+  declared contract type and an idempotent Edge handler before it can move.
+- **OS keychain credential storage.** Windows DPAPI / macOS Keychain instead of
+  an owner-only file.
 - **Synchronous Edge reads.** `fetchPosReservations()` is a request-response the
   website makes into POS Hive. A work queue does not answer it; that needs either
   a Cloud-side mirror or a different mechanism.

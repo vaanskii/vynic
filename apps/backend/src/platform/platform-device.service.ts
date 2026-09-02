@@ -3,6 +3,10 @@ import { randomUUID } from 'node:crypto';
 import { DeviceStatus } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { DeviceCredentialService } from '../auth/device-credential.service';
+import {
+  DeviceEnrollmentService,
+  type CreateEnrollmentInput,
+} from '../edge/device-enrollment.service';
 import { EdgeCommandService } from '../edge/edge-command.service';
 import { EdgeCommandTypes } from '../shared/contracts/edge-command';
 import type { PlatformPrincipal } from './platform-auth-context';
@@ -42,11 +46,12 @@ export interface IssuedDeviceResponse {
 }
 
 /**
- * Device provisioning and lifecycle, from the control plane.
+ * Device enrollment and lifecycle, from the control plane.
  *
  * Step 6B needed a shell on the server to issue a credential because no trusted
  * write boundary existed. It does now, and the script stays as the way to
- * bootstrap before the first administrator exists.
+ * bootstrap before the first administrator exists. Since Phase 1C the normal
+ * path is an enrollment code rather than a credential copied by hand.
  */
 @Injectable()
 export class PlatformDeviceService {
@@ -54,9 +59,43 @@ export class PlatformDeviceService {
     private readonly prisma: PrismaService,
     private readonly credentials: DeviceCredentialService,
     private readonly edgeCommands: EdgeCommandService,
+    private readonly enrollments: DeviceEnrollmentService,
     private readonly directory: PlatformDirectoryService,
     private readonly audit: PlatformAuditService,
   ) {}
+
+  // ── Enrollment ────────────────────────────────────────────────────────────
+
+  /**
+   * Mints the one-time code an operator types into a new terminal.
+   *
+   * This is the onboarding path. `createDevice` below remains for the case it
+   * was built for — an administrator provisioning a machine they are sitting at
+   * — but it hands a long-lived secret to a human, which is what enrollment
+   * exists to stop doing.
+   */
+  async createEnrollment(
+    actor: PlatformPrincipal,
+    venueId: string,
+    input: CreateEnrollmentInput,
+  ) {
+    await this.directory.requireVenue(venueId);
+    return this.enrollments.create(actor, venueId, input);
+  }
+
+  async listEnrollments(venueId: string) {
+    await this.directory.requireVenue(venueId);
+    return this.enrollments.list(venueId);
+  }
+
+  async cancelEnrollment(
+    actor: PlatformPrincipal,
+    venueId: string,
+    enrollmentId: string,
+  ) {
+    await this.directory.requireVenue(venueId);
+    return this.enrollments.cancel(actor, venueId, enrollmentId);
+  }
 
   async listDevices(venueId: string) {
     await this.directory.requireVenue(venueId);
@@ -229,7 +268,10 @@ export class PlatformDeviceService {
       },
     });
     if (!command) throw new NotFoundException('Test command not found');
-    return command;
+    // Named `commandId` to match what enqueueTestCommand returned, so the
+    // caller polls with the field it was handed back.
+    const { id, ...rest } = command;
+    return { commandId: id, ...rest };
   }
 
   private async requireDevice(venueId: string, deviceId: string) {

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -49,6 +50,15 @@ const OVERRIDE_EFFECTS = [
   FeatureOverrideEffect.ENABLED,
   FeatureOverrideEffect.DISABLED,
 ] as const;
+
+function readTtlMinutes(value: unknown): number | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  const minutes = Number(value);
+  if (!Number.isFinite(minutes) || minutes < 5 || minutes > 24 * 60) {
+    throw new BadRequestException('ttlMinutes must be between 5 and 1440');
+  }
+  return Math.round(minutes);
+}
 
 /**
  * Venues and everything configured on them.
@@ -240,6 +250,46 @@ export class PlatformVenuesController {
       actor,
       requireUuid(venueId, 'venueId'),
       requireUuid(domainId, 'domainId'),
+    );
+  }
+
+  // ── Device enrollment ─────────────────────────────────────────────────────
+
+  @Get(':venueId/enrollments')
+  async listEnrollments(@Param('venueId') venueId: string) {
+    return this.devices.listEnrollments(requireUuid(venueId, 'venueId'));
+  }
+
+  /** The response carries the code. It is the only time it exists. */
+  @Post(':venueId/enrollments')
+  async createEnrollment(
+    @PlatformActor() actor: PlatformPrincipal,
+    @Param('venueId') venueId: string,
+    @Body()
+    body: { displayName?: unknown; platform?: unknown; ttlMinutes?: unknown },
+  ) {
+    return this.devices.createEnrollment(
+      actor,
+      requireUuid(venueId, 'venueId'),
+      {
+        displayName: requireText(body.displayName, 'displayName'),
+        platform: requireText(body.platform, 'platform', { max: 32 }),
+        ttlMinutes: readTtlMinutes(body.ttlMinutes),
+      },
+    );
+  }
+
+  /** Ends an unredeemed invitation now, rather than waiting for its TTL. */
+  @Delete(':venueId/enrollments/:enrollmentId')
+  async cancelEnrollment(
+    @PlatformActor() actor: PlatformPrincipal,
+    @Param('venueId') venueId: string,
+    @Param('enrollmentId') enrollmentId: string,
+  ) {
+    return this.devices.cancelEnrollment(
+      actor,
+      requireUuid(venueId, 'venueId'),
+      requireUuid(enrollmentId, 'enrollmentId'),
     );
   }
 

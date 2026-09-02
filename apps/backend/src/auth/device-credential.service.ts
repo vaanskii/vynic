@@ -40,6 +40,30 @@ export class DeviceCredentialService {
     return value?.startsWith(`${DEVICE_CREDENTIAL_PREFIX}.`) === true;
   }
 
+  /**
+   * A secret and its verifier, with no database write.
+   *
+   * Exists so a caller that must create the Device inside its own transaction —
+   * enrollment redemption, which claims a one-time code in the same commit —
+   * can do the expensive Argon2 hashing *before* the transaction opens rather
+   * than holding a row lock across it.
+   */
+  async mintCredentialMaterial(): Promise<{
+    secret: string;
+    credentialHash: string;
+  }> {
+    const secret = randomBytes(32).toString('base64url');
+    return {
+      secret,
+      credentialHash: await argon2.hash(secret, { type: argon2.argon2id }),
+    };
+  }
+
+  /** The wire form of a credential. One definition, so no caller re-spells it. */
+  formatCredential(deviceId: string, secret: string): string {
+    return `${DEVICE_CREDENTIAL_PREFIX}.${deviceId}.${secret}`;
+  }
+
   async issueCredential(
     input: IssueDeviceCredentialInput,
   ): Promise<IssuedDeviceCredential> {
@@ -50,8 +74,7 @@ export class DeviceCredentialService {
       throw new TypeError('installationId must be a UUID');
     }
     const deviceId = randomUUID();
-    const secret = randomBytes(32).toString('base64url');
-    const credentialHash = await argon2.hash(secret, { type: argon2.argon2id });
+    const { secret, credentialHash } = await this.mintCredentialMaterial();
 
     await this.prisma.device.create({
       data: {
@@ -66,7 +89,7 @@ export class DeviceCredentialService {
 
     return {
       deviceId,
-      credential: `${DEVICE_CREDENTIAL_PREFIX}.${deviceId}.${secret}`,
+      credential: this.formatCredential(deviceId, secret),
     };
   }
 
@@ -83,8 +106,7 @@ export class DeviceCredentialService {
     if (!UUID_PATTERN.test(deviceId)) {
       throw new TypeError('deviceId must be a UUID');
     }
-    const secret = randomBytes(32).toString('base64url');
-    const credentialHash = await argon2.hash(secret, { type: argon2.argon2id });
+    const { secret, credentialHash } = await this.mintCredentialMaterial();
 
     await this.prisma.device.update({
       where: { id: deviceId },
@@ -93,7 +115,7 @@ export class DeviceCredentialService {
 
     return {
       deviceId,
-      credential: `${DEVICE_CREDENTIAL_PREFIX}.${deviceId}.${secret}`,
+      credential: this.formatCredential(deviceId, secret),
     };
   }
 

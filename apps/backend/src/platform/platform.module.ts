@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { EdgeTransportModule } from '../edge/edge-transport.module';
 import { EntitlementsModule } from '../entitlements/entitlements.module';
-import { PlatformAuditService } from './platform-audit.service';
+import { PlatformAuditModule } from './platform-audit.module';
 import { PlatformAuthController } from './platform-auth.controller';
 import { PlatformAuthGuard } from './platform-auth.guard';
 import { PlatformAuthService } from './platform-auth.service';
@@ -22,7 +22,12 @@ import { PlatformVenuesController } from './platform-venues.controller';
  * queue. Everything that decides *who may do this* is its own.
  */
 @Module({
-  imports: [AuthModule, EntitlementsModule, EdgeTransportModule],
+  imports: [
+    AuthModule,
+    EntitlementsModule,
+    EdgeTransportModule,
+    PlatformAuditModule,
+  ],
   controllers: [
     PlatformAuthController,
     PlatformOrganizationsController,
@@ -32,7 +37,6 @@ import { PlatformVenuesController } from './platform-venues.controller';
   providers: [
     PlatformAuthService,
     PlatformAuthGuard,
-    PlatformAuditService,
     PlatformDirectoryService,
     PlatformVenueConfigService,
     PlatformDeviceService,

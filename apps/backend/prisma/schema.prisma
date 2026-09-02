@@ -27,35 +27,35 @@ model Table {
 }
 
 model Order {
-  id                String      @id @default(uuid())
-  venueId           String
-  posOrderId        Int
+  id                     String      @id @default(uuid())
+  venueId                String
+  posOrderId             Int
   /// Idempotency key written by the POS atomic table-close flow
   /// (docs/VYNIC_ARCHITECTURE_PLAN.md §1). Null for every order closed
   /// before that flow exists; schema-only until roadmap Task 2.
-  closureId         String?     @unique
-  status            String
-  totalAmount       Float
-  guestCount        Int         @default(0)
-  waiterName        String
-  floor             String      @default("")
-  businessDate      String      @default("")
-  customerName      String      @default("")
-  customerPhone     String      @default("")
-  pickupTime        String      @default("")
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
-  paymentType       String      @default("cash")
-  discountAmount    Float       @default(0)
+  closureId              String?     @unique
+  status                 String
+  totalAmount            Float
+  guestCount             Int         @default(0)
+  waiterName             String
+  floor                  String      @default("")
+  businessDate           String      @default("")
+  customerName           String      @default("")
+  customerPhone          String      @default("")
+  pickupTime             String      @default("")
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+  paymentType            String      @default("cash")
+  discountAmount         Float       @default(0)
   /// Signed operator override applied to the bill total on the POS. Sent by
   /// the POS snapshot so `totalAmount` can be reconciled against the order's
   /// own item lines, discount and service fee. Zero on every order synced by
   /// a POS build that predates the field.
-  manualAdjustmentAmount Float  @default(0)
-  includeServiceFee Boolean     @default(false)
-  serviceFeePercent Float       @default(10)
-  items             OrderItem[]
-  venue             Venue       @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  manualAdjustmentAmount Float       @default(0)
+  includeServiceFee      Boolean     @default(false)
+  serviceFeePercent      Float       @default(10)
+  items                  OrderItem[]
+  venue                  Venue       @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
   @@unique([venueId, posOrderId])
   @@index([venueId, businessDate])
@@ -141,22 +141,22 @@ model MenuItemVariant {
 }
 
 model Expense {
-  id          String   @id @default(uuid())
-  venueId     String
+  id           String   @id @default(uuid())
+  venueId      String
   /// The record's own id on the POS, which owns expense identity. Ingestion
   /// upserts on it so re-sending the same snapshot updates the row instead of
   /// adding a second one. Null only for rows written before the POS sent
   /// expense records at all.
   posExpenseId String?
-  description String
-  amount      Float
-  category    String
+  description  String
+  amount       Float
+  category     String
   /// POS business day (`YYYY-MM-DD`), which is not the calendar day of
   /// [createdAt] — the POS decides when its day ends.
-  businessDate String  @default("")
-  createdAt   DateTime @default(now())
-  paymentType String   @default("cash")
-  venue       Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  businessDate String   @default("")
+  createdAt    DateTime @default(now())
+  paymentType  String   @default("cash")
+  venue        Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
   @@unique([venueId, posExpenseId])
   @@index([venueId, createdAt])
@@ -381,7 +381,8 @@ model PlatformUser {
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
 
-  auditEvents PlatformAuditEvent[]
+  auditEvents       PlatformAuditEvent[]
+  deviceEnrollments DeviceEnrollment[]
 
   @@schema("pos")
 }
@@ -466,37 +467,38 @@ model Organization {
 
 /// One physical restaurant/location owned by an Organization.
 model Venue {
-  id               String                 @id @default(uuid())
-  organizationId   String
-  name             String
-  status           VenueStatus            @default(ACTIVE)
-  timezone         String
-  currency         String
-  createdAt        DateTime               @default(now())
-  updatedAt        DateTime               @updatedAt
-  organization     Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  devices          Device[]
-  tables           Table[]
-  orders           Order[]
-  menuCategories   MenuCategory[]
-  menuItems        MenuItem[]
-  expenses         Expense[]
-  staff            Staff[]
-  auditReports     AuditReport[]
-  auditEventLogs   AuditEventLog[]
-  dailySnapshots   DailySnapshot[]
-  settings         Setting[]
-  callbackOutbox   PosCallbackOutbox[]
-  quickOrderDrafts QuickOrderDraft[]
-  notifications    ManagerNotification[]
-  pushDevices      PushDevice[]
-  planAssignment   VenuePlanAssignment?
-  featureOverrides VenueFeatureOverride[]
-  websiteConfig    VenueWebsiteConfig?
-  domains          VenueDomain[]
-  websiteTables    WebsiteTable[]
-  websiteBookings  WebsiteReservation[]
-  edgeCommands     EdgeCommand[]
+  id                String                 @id @default(uuid())
+  organizationId    String
+  name              String
+  status            VenueStatus            @default(ACTIVE)
+  timezone          String
+  currency          String
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  organization      Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  devices           Device[]
+  tables            Table[]
+  orders            Order[]
+  menuCategories    MenuCategory[]
+  menuItems         MenuItem[]
+  expenses          Expense[]
+  staff             Staff[]
+  auditReports      AuditReport[]
+  auditEventLogs    AuditEventLog[]
+  dailySnapshots    DailySnapshot[]
+  settings          Setting[]
+  callbackOutbox    PosCallbackOutbox[]
+  quickOrderDrafts  QuickOrderDraft[]
+  notifications     ManagerNotification[]
+  pushDevices       PushDevice[]
+  planAssignment    VenuePlanAssignment?
+  featureOverrides  VenueFeatureOverride[]
+  websiteConfig     VenueWebsiteConfig?
+  domains           VenueDomain[]
+  websiteTables     WebsiteTable[]
+  websiteBookings   WebsiteReservation[]
+  edgeCommands      EdgeCommand[]
+  deviceEnrollments DeviceEnrollment[]
 
   @@index([organizationId])
   @@schema("pos")
@@ -518,11 +520,63 @@ model Device {
   updatedAt      DateTime     @updatedAt
   venue          Venue        @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
-  targetedCommands EdgeCommand[] @relation("EdgeCommandTarget")
-  claimedCommands  EdgeCommand[] @relation("EdgeCommandClaim")
+  targetedCommands EdgeCommand[]      @relation("EdgeCommandTarget")
+  claimedCommands  EdgeCommand[]      @relation("EdgeCommandClaim")
+  enrollments      DeviceEnrollment[]
 
   @@index([status])
   @@index([venueId])
+  @@schema("pos")
+}
+
+/// One invitation for a POS terminal to join a Venue.
+///
+/// The operator handles a short code, never the Device secret. The code is
+/// bound to one Venue by the administrator who created it, so the POS never
+/// supplies a venueId — the enrollment is where tenant authority comes from.
+///
+/// Stored like every other secret here: `codeSelector` is the public half used
+/// to find the row, `codeHash` is the Argon2id verifier of the secret half. A
+/// leaked database therefore yields no usable code, and there is nothing to
+/// read back to an operator who lost one — issue another.
+///
+/// No placeholder Device is created up front. The Device is created (or, for a
+/// reinstall on the same installationId, reused and rotated) at redemption, so
+/// an unredeemed enrollment never leaves a terminal in the list that does not
+/// exist.
+///
+/// Status is derived from the timestamps rather than stored, so there is no
+/// second answer to drift from: cancelled, then redeemed, then expired, else
+/// pending.
+model DeviceEnrollment {
+  id                      String    @id @default(uuid())
+  venueId                 String
+  /// Public half of the one-time code. Indexed lookup, never a credential.
+  codeSelector            String    @unique
+  /// Argon2id verifier of the code's secret half.
+  codeHash                String
+  displayName             String
+  platform                String
+  expiresAt               DateTime
+  /// Failed redemptions against this code. A ceiling fails it closed.
+  attemptCount            Int       @default(0)
+  lastAttemptAt           DateTime?
+  redeemedAt              DateTime?
+  /// Which POS installation redeemed it; the same one may retry until expiry.
+  redeemedInstallationId  String?
+  deviceId                String?
+  cancelledAt             DateTime?
+  createdByPlatformUserId String
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  venue     Venue        @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  device    Device?      @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  createdBy PlatformUser @relation(fields: [createdByPlatformUserId], references: [id], onDelete: Restrict)
+
+  @@index([venueId, createdAt])
+  @@index([expiresAt])
+  @@index([deviceId])
   @@schema("pos")
 }
 
@@ -563,9 +617,9 @@ model EdgeCommand {
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
-  venue         Venue   @relation(fields: [venueId], references: [id], onDelete: Restrict)
-  device        Device? @relation("EdgeCommandTarget", fields: [deviceId], references: [id], onDelete: Restrict)
-  claimedBy     Device? @relation("EdgeCommandClaim", fields: [claimedByDeviceId], references: [id], onDelete: Restrict)
+  venue     Venue   @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  device    Device? @relation("EdgeCommandTarget", fields: [deviceId], references: [id], onDelete: Restrict)
+  claimedBy Device? @relation("EdgeCommandClaim", fields: [claimedByDeviceId], references: [id], onDelete: Restrict)
 
   @@unique([venueId, idempotencyKey])
   @@index([venueId, status, availableAt])

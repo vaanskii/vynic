@@ -20,6 +20,10 @@ export const PlatformAuditAction = {
   DEVICE_CREATED: 'device.created',
   DEVICE_STATUS_CHANGED: 'device.status_changed',
   DEVICE_CREDENTIAL_ISSUED: 'device.credential_issued',
+  DEVICE_ENROLLMENT_CREATED: 'device.enrollment_created',
+  DEVICE_ENROLLMENT_CANCELLED: 'device.enrollment_cancelled',
+  DEVICE_ENROLLMENT_REDEEMED: 'device.enrollment_redeemed',
+  DEVICE_ENROLLMENT_FAILED: 'device.enrollment_failed',
   EDGE_TEST_COMMAND_ENQUEUED: 'device.edge_test_command_enqueued',
 } as const;
 
@@ -36,6 +40,12 @@ export type PlatformAuditActionValue =
  * Recording never blocks the action it describes. A control-plane mutation that
  * succeeded must not be reported as failed because its audit row could not be
  * written; the failure is logged loudly instead.
+ *
+ * The actor is a `PlatformUser` because every action here was authorized by
+ * one. Enrollment redemption is performed by a terminal rather than a person,
+ * and is attributed to the administrator whose enrollment code authorized it —
+ * with the metadata saying so, so nobody reads it as an administrator having
+ * created a device by hand.
  */
 @Injectable()
 export class PlatformAuditService {
@@ -44,7 +54,7 @@ export class PlatformAuditService {
   constructor(private readonly prisma: PrismaService) {}
 
   async record(
-    actor: PlatformPrincipal,
+    actor: Pick<PlatformPrincipal, 'platformUserId'>,
     action: PlatformAuditActionValue,
     target: { type: string; id: string },
     metadata?: Record<string, unknown>,

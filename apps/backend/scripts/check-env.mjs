@@ -14,6 +14,8 @@ const CHECKS = [
   { key: 'BOG_CLIENT_SECRET', required: false },
   { key: 'FRONTEND_URL', required: false },
   { key: 'API_URL', required: false },
+  // Optional. Unset means an enrolling POS keeps the address it reached.
+  { key: 'DEVICE_API_BASE_URL', required: false },
   // Website SUPER_ADMIN seed (optional).
   { key: 'SUPER_ADMIN_PHONE', required: false },
   { key: 'SUPER_ADMIN_PASSWORD', required: false },

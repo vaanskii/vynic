@@ -20,7 +20,9 @@ import {
 import * as argon2 from 'argon2';
 import { PrismaService } from '../prisma.service';
 import { DeviceCredentialService } from '../auth/device-credential.service';
+import { DeviceEnrollmentService } from '../edge/device-enrollment.service';
 import { EdgeCommandService } from '../edge/edge-command.service';
+import { EnrollmentRateLimiter } from '../edge/enrollment-rate-limiter';
 import { FeatureKeys } from '../entitlements/feature-keys';
 import { FeatureGuard } from '../entitlements/feature.guard';
 import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
@@ -116,6 +118,12 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
       prisma,
       credentials,
       edgeCommands,
+      new DeviceEnrollmentService(
+        prisma,
+        credentials,
+        audit,
+        new EnrollmentRateLimiter(),
+      ),
       directory,
       audit,
     );
@@ -151,6 +159,9 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
 
   afterAll(async () => {
     const venueIds = created.venues;
+    await prisma.deviceEnrollment.deleteMany({
+      where: { venueId: { in: venueIds } },
+    });
     await prisma.edgeCommand.deleteMany({
       where: { venueId: { in: venueIds } },
     });
@@ -764,7 +775,12 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
 
   describe('audit trail', () => {
     it('records who changed what, and never a secret', async () => {
-      const events = await audit.recent(200, 0);
+      // Scoped to this suite's own administrator: the integration database is
+      // shared with the other specs, which write platform audit events of
+      // their own, and a global read would assert over theirs too.
+      const events = (await audit.recent(500, 0)).filter(
+        (event) => event.actor.id === adminId,
+      );
       const actions = events.map((event) => event.action);
 
       expect(actions).toEqual(

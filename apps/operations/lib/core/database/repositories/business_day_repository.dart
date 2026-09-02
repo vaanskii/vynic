@@ -1,6 +1,25 @@
+import 'package:vynic/core/services/audit/money_audit.dart';
+
 import '../database_core.dart';
 import 'sales_repository.dart';
 import 'table_repository.dart';
+
+/// Why a business-date change was refused.
+enum BusinessDateChangeOutcome {
+  changed,
+
+  /// Target is the date already being operated — nothing to do, nothing
+  /// recorded.
+  unchanged,
+
+  /// Moving off the operating date without saying why.
+  reasonRequired,
+
+  /// The target is earlier than the date being operated, which re-opens a
+  /// period the restaurant has already closed and reported. Support work,
+  /// gated on the `backdate` developer scope.
+  backdateNotPermitted,
+}
 
 /// Business-date handling for the POS.
 ///
@@ -34,8 +53,44 @@ class BusinessDayRepository {
     );
   }
 
-  static Future<void> setCurrentDate(DateTime newDate) async {
+  static String dateKey(DateTime date) =>
+      DateTime(date.year, date.month, date.day).toIso8601String().split('T')[0];
+
+  /// Moves the POS onto a different operating date.
+  ///
+  /// This is not a display setting. Every order, sale and expense recorded
+  /// afterwards is filed under [newDate], so moving the date rewrites which
+  /// day the restaurant's next hour of trading belongs to. It therefore takes
+  /// a named actor and a stated [reason], and writes both to the audit log.
+  ///
+  /// Moving *backwards* — onto a day already closed and reported — additionally
+  /// needs [allowBackdate], which only a caller holding the support scope may
+  /// pass. Close-day does not come through here: it advances `currentDate`
+  /// directly as part of its own transaction.
+  static Future<BusinessDateChangeOutcome> setCurrentDate(
+    DateTime newDate, {
+    required String actorId,
+    String reason = '',
+    bool allowBackdate = false,
+  }) async {
     final previousDate = getCurrentDate();
+    final previousKey = dateKey(previousDate);
+    final newKey = dateKey(newDate);
+    if (previousKey == newKey) {
+      return BusinessDateChangeOutcome.unchanged;
+    }
+
+    final trimmedReason = reason.trim();
+    final actor = actorId.trim();
+    if (trimmedReason.isEmpty || actor.isEmpty) {
+      return BusinessDateChangeOutcome.reasonRequired;
+    }
+
+    final isBackdate = newKey.compareTo(previousKey) < 0;
+    if (isBackdate && !allowBackdate) {
+      return BusinessDateChangeOutcome.backdateNotPermitted;
+    }
+
     await rememberOperatedBusinessDate(previousDate);
     await rememberOperatedBusinessDate(newDate);
     await DatabaseCore.settingsBox!.put(
@@ -44,6 +99,16 @@ class BusinessDayRepository {
     );
     await TableRepository.syncTableReservationsForCurrentDate();
     await refreshDailySalesTotalForDate(newDate);
+
+    await MoneyAudit.businessDateChanged(
+      actorId: actor,
+      previousDate: previousKey,
+      newDate: newKey,
+      reason: trimmedReason,
+      backdated: isBackdate,
+    );
+
+    return BusinessDateChangeOutcome.changed;
   }
 
   static List<String> getOperatedBusinessDateKeys() {
@@ -73,26 +138,66 @@ class BusinessDayRepository {
     }
   }
 
+  /// The one author of `dailySalesTotal`.
+  ///
+  /// It used to have two: `saveSaleRecord` incremented it and this recomputed
+  /// it, so the stored figure was whichever ran last and could drift from the
+  /// records it claimed to summarize. The increment is gone; this derives the
+  /// total from the sales box every time, using the same
+  /// `SalesRepository.countsAsRevenue` predicate every other revenue figure
+  /// uses.
+  ///
+  /// The figure is *gross* sales — an order settled partly by a deposit is
+  /// worth what the guest consumed, not what was handed over at the table.
+  /// Money actually taken today is a different question, answered by
+  /// [collectedTotalForDate].
   static Future<void> refreshDailySalesTotalForDate(DateTime date) async {
-    final dateString = date.toIso8601String().split('T')[0];
-    final sales = SalesRepository.getSalesForDate(dateString);
-    final total = sales
-        .where(
-          (sale) =>
-              sale['isCancelled'] != true &&
-              sale['restoredToOrder'] != true &&
-              sale['isFiscal'] != false,
-        )
-        .fold<double>(
-          0,
-          (sum, sale) =>
-              sum + ((sale['totalAmount'] as num?)?.toDouble() ?? 0.0),
-        );
-    final currentDateString = getCurrentDate().toIso8601String().split('T')[0];
+    final dateString = dateKey(date);
+    final total = grossSalesTotalForDate(dateString);
+    final currentDateString = dateKey(getCurrentDate());
     if (currentDateString == dateString) {
       await DatabaseCore.settingsBox!.put('dailySalesTotal', total);
     }
   }
+
+  /// Gross sales recorded against [dateString], derived from the records.
+  static double grossSalesTotalForDate(String dateString) {
+    final sales = SalesRepository.getSalesForDate(dateString);
+    return _round(
+      sales
+          .where(SalesRepository.countsAsRevenue)
+          .fold<double>(0, (sum, sale) => sum + SalesRepository.grossOf(sale)),
+    );
+  }
+
+  /// Money that actually changed hands on [dateString].
+  ///
+  /// Tender lines on the day's sales, plus advances collected on the day, and
+  /// deliberately *not* the advance applied to a sale closed today — that
+  /// money was taken on some earlier day and counted there.
+  static double collectedTotalForDate(String dateString) {
+    final sales = SalesRepository.getSalesForDate(dateString);
+    var collected = 0.0;
+    for (final sale in sales) {
+      if (sale['isCancelled'] == true) continue;
+      if (sale['restoredToOrder'] == true) continue;
+      if (SalesRepository.isAdvanceReceipt(sale)) {
+        collected += (sale['totalAmount'] as num?)?.toDouble() ?? 0.0;
+        continue;
+      }
+      if (!SalesRepository.isSaleRecord(sale)) continue;
+      if (sale['isFiscal'] == false) continue;
+      final stored = (sale['collectedNow'] as num?)?.toDouble();
+      collected +=
+          stored ??
+          ((sale['totalAmount'] as num?)?.toDouble() ??
+              (sale['total'] as num?)?.toDouble() ??
+              0.0);
+    }
+    return _round(collected);
+  }
+
+  static double _round(double value) => (value * 100).roundToDouble() / 100;
 
   static List<DateTime> getOperatedBusinessDates() {
     final dates = <String>{

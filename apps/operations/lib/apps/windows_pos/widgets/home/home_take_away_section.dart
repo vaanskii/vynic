@@ -393,6 +393,8 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
     final selection = await TablePaymentService(
       context: context,
       total: order.totalAmount,
+      grossTotal: order.grossAmount,
+      advanceApplied: order.effectiveAdvanceAmount,
     ).collect();
     if (!mounted || selection == null) {
       return;
@@ -414,43 +416,36 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
       isFiscal: true,
     );
 
-    final closeSuccess = await DatabaseService.closeOrderWithPayment(
+    // Same idempotent closure path as a dine-in table. A take-away order
+    // used to write its sale here directly, which meant it kept none of the
+    // gross/advance split and a retry could book it twice.
+    final money = ClosureMoney.fromOrder(order, collectedNow: selection.total);
+    final result = await DatabaseService.closeTable(
       orderId: order.orderId,
+      money: money,
       paymentMethod: paymentMethodKey,
+      tenderBreakdown: saleBreakdown ?? const {},
       closedById: widget.user.username,
       closedByName: widget.user.username,
-      paymentBreakdown: saleBreakdown,
+      isFiscal: true,
+      saleItems: saleItems,
+      subtotalAmount: subtotal,
+      finalTransaction: finalTransaction,
     );
     if (!mounted) {
       return;
     }
-    if (!closeSuccess) {
-      unawaited(showErrorToast(context, 'შეკვეთის დახურვა ვერ მოხერხდა'));
+    if (!result.isSuccess) {
+      unawaited(
+        showErrorToast(
+          context,
+          result.outcome == ClosureOutcome.moneyMismatch
+              ? 'გადახდის ჯამი არ ემთხვევა შეკვეთის თანხას — დახურვა შეჩერდა'
+              : 'შეკვეთის დახურვა ვერ მოხერხდა',
+        ),
+      );
       return;
     }
-
-    await DatabaseService.saveSaleRecord(
-      orderId: order.orderId,
-      tableNumbers: order.tableNumbers,
-      floor: order.floor,
-      items: saleItems,
-      totalAmount: order.totalAmount,
-      paymentMethod: paymentMethodKey,
-      paymentBreakdown: saleBreakdown,
-      createdBy: order.createdBy,
-      createdAt: order.createdAt,
-      closedAt: closedAt,
-      includeServiceFee: false,
-      discountAmount: order.discountAmount,
-      advanceAmount: 0,
-      subtotalAmount: subtotal,
-      manualAdjustmentAmount: order.manualAdjustmentAmount,
-      finalTransaction: finalTransaction,
-      isFiscal: true,
-    );
-    await DatabaseService.refreshDailySalesTotalForDate(
-      DatabaseService.getCurrentDate(),
-    );
 
     final receiptLines = _buildTakeAwayFinalReceiptLines(
       order,

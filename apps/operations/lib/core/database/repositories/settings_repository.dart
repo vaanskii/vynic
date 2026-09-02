@@ -23,6 +23,7 @@ class SettingsRepository {
   static const String _venueNameSetting = 'venueName';
   static const String _venueAddressSetting = 'venueAddress';
   static const String _venuePhoneSetting = 'venuePhone';
+  static const String _venueLegalIdSetting = 'venueLegalId';
   static const String _venueLogoSetting = 'venueLogoPng';
   static const String _venueLogoAlignSetting = 'venueLogoAlign';
   static const String _venueTextAlignSetting = 'venueTextAlign';
@@ -57,7 +58,11 @@ class SettingsRepository {
       'monthlyReportStaffDailyCost';
   static const String _monthlyReportFoodProfitRatioSetting =
       'monthlyReportFoodProfitRatio';
-  static const String _monthlyReportManualSalesByMonthSetting =
+
+  /// Removed in the Money Integrity pass. Kept only as the name the v5
+  /// migration deletes: the setting drove a report figure with no record
+  /// behind it, and synthesized transaction rows to match.
+  static const String removedMonthlyReportManualSalesByMonthSetting =
       'monthlyReportManualSalesByMonth';
   static const String _monthlyReportLeaseCostByMonthSetting =
       'monthlyReportLeaseCostByMonth';
@@ -98,12 +103,6 @@ class SettingsRepository {
     }
     if (!_settingsBox!.containsKey(_monthlyReportFoodProfitRatioSetting)) {
       await _settingsBox!.put(_monthlyReportFoodProfitRatioSetting, 0.5);
-    }
-    if (!_settingsBox!.containsKey(_monthlyReportManualSalesByMonthSetting)) {
-      await _settingsBox!.put(
-        _monthlyReportManualSalesByMonthSetting,
-        <String, double>{},
-      );
     }
     if (!_settingsBox!.containsKey(_monthlyReportLeaseCostByMonthSetting)) {
       await _settingsBox!.put(
@@ -237,42 +236,6 @@ class SettingsRepository {
   static Future<void> setMonthlyReportFoodProfitRatio(double ratio) async {
     final normalized = ratio.clamp(0.0, 1.0);
     await _settingsBox!.put(_monthlyReportFoodProfitRatioSetting, normalized);
-  }
-
-  static double getMonthlyReportManualSalesForMonth(int year, int month) {
-    final key = '$year-${month.toString().padLeft(2, '0')}';
-    final raw = _settingsBox!.get(_monthlyReportManualSalesByMonthSetting);
-    if (raw is Map) {
-      final value = raw[key];
-      if (value is num) return value.toDouble();
-      if (value is String) return double.tryParse(value) ?? 0.0;
-    }
-    return 0.0;
-  }
-
-  static Future<void> setMonthlyReportManualSalesForMonth(
-    int year,
-    int month,
-    double value,
-  ) async {
-    final key = '$year-${month.toString().padLeft(2, '0')}';
-    final raw = _settingsBox!.get(_monthlyReportManualSalesByMonthSetting);
-    final map = <String, double>{};
-    if (raw is Map) {
-      raw.forEach((k, v) {
-        final parsed = v is num ? v.toDouble() : double.tryParse(v.toString());
-        if (parsed != null && parsed > 0) {
-          map[k.toString()] = parsed;
-        }
-      });
-    }
-    final normalized = value.isNaN || value.isInfinite ? 0.0 : value;
-    if (normalized <= 0) {
-      map.remove(key);
-    } else {
-      map[key] = normalized;
-    }
-    await _settingsBox!.put(_monthlyReportManualSalesByMonthSetting, map);
   }
 
   static double? getMonthlyReportLeaseCostOverrideForMonth(
@@ -797,6 +760,22 @@ class SettingsRepository {
 
   static Future<void> setVenueName(String name) async {
     await _settingsBox?.put(_venueNameSetting, name.trim());
+  }
+
+  /// The venue's own legal/registration identifier, as it should appear on
+  /// financial reports.
+  ///
+  /// Empty until someone enters it. Reports say so rather than printing
+  /// somebody else's number: this used to be a constant in the report
+  /// generator, which meant every venue's export carried the first customer's
+  /// identification code.
+  static String getVenueLegalId() {
+    final raw = _settingsBox?.get(_venueLegalIdSetting);
+    return raw is String ? raw.trim() : '';
+  }
+
+  static Future<void> setVenueLegalId(String legalId) async {
+    await _settingsBox?.put(_venueLegalIdSetting, legalId.trim());
   }
 
   /// The street line under the name on a receipt.

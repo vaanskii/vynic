@@ -22,6 +22,7 @@ import 'package:vynic/core/database/repositories/audit_repository.dart';
 import 'package:vynic/core/database/transactions/activate_reservation_transaction.dart';
 import 'package:vynic/core/database/transactions/close_day_transaction.dart';
 import 'package:vynic/core/database/transactions/close_table_transaction.dart';
+import 'package:vynic/core/models/closure_money.dart';
 import 'package:vynic/core/database/repositories/backup_repository.dart';
 import 'package:vynic/core/database/repositories/business_day_repository.dart';
 import 'package:vynic/core/database/database_core.dart';
@@ -36,9 +37,17 @@ import 'package:vynic/core/database/repositories/settings_repository.dart';
 import 'package:vynic/core/database/repositories/table_repository.dart';
 import 'package:vynic/core/database/repositories/user_repository.dart';
 import 'package:vynic/core/services/audit/audit_event_service.dart';
+import 'package:vynic/core/services/pos/closure_recovery_service.dart';
 
+export 'package:vynic/core/database/repositories/business_day_repository.dart'
+    show BusinessDateChangeOutcome;
+export 'package:vynic/core/database/transactions/close_table_transaction.dart'
+    show ClosureOutcome, ClosureResult;
+export 'package:vynic/core/models/closure_money.dart' show ClosureMoney;
 export 'package:vynic/core/database/repositories/reservation_repository.dart'
     show ReservationActivationResult;
+export 'package:vynic/core/database/repositories/sales_repository.dart'
+    show SaleCancellationOutcome;
 
 class DatabaseService {
   // Boxes live in DatabaseCore; these private getters keep the (not yet
@@ -274,6 +283,16 @@ class DatabaseService {
     // One-time cleanup: older data may contain multiple OPEN reports
     // for the same floor + table set. Keep newest open, close the rest.
     await AuditRepository.runAuditDuplicateOpenCleanupOnce();
+
+    // Cloud expense ingestion keys on the record's own id. Anything restored
+    // from an older backup without one gets one now, so the first sync after
+    // an upgrade cannot duplicate it.
+    await SalesRepository.ensureExpenseIdentities();
+
+    // A closure the previous run was killed part-way through is a known state,
+    // not wreckage. Finish it — or abandon it and leave the table open —
+    // before anyone can start a second close of the same order.
+    await ClosureRecoveryService.recoverPending();
   }
 
   /// Shared secret for server → POS HTTP callbacks (`x-connection-key`).
@@ -418,6 +437,11 @@ class DatabaseService {
   static Future<void> setVenueName(String name) =>
       SettingsRepository.setVenueName(name);
 
+  static String getVenueLegalId() => SettingsRepository.getVenueLegalId();
+
+  static Future<void> setVenueLegalId(String legalId) =>
+      SettingsRepository.setVenueLegalId(legalId);
+
   static String getVenueAddress() => SettingsRepository.getVenueAddress();
 
   static Future<void> setVenueAddress(String address) =>
@@ -459,6 +483,13 @@ class DatabaseService {
     }
     if (SettingsRepository.getVenuePhone().isEmpty) {
       await SettingsRepository.setVenuePhone('+995 599 98 93 76');
+    }
+    // Same reasoning for the identification code the monthly report used to
+    // hardcode. A terminal that already existed keeps printing what it
+    // printed; a fresh install gets nothing and says so on the report until
+    // its own code is entered.
+    if (SettingsRepository.getVenueLegalId().isEmpty) {
+      await SettingsRepository.setVenueLegalId('436687168');
     }
     if (SettingsRepository.getVenueLogoPng() == null) {
       try {
@@ -838,19 +869,6 @@ class DatabaseService {
   static Future<void> setMonthlyReportFoodProfitRatio(double ratio) =>
       SettingsRepository.setMonthlyReportFoodProfitRatio(ratio);
 
-  static double getMonthlyReportManualSalesForMonth(int year, int month) =>
-      SettingsRepository.getMonthlyReportManualSalesForMonth(year, month);
-
-  static Future<void> setMonthlyReportManualSalesForMonth(
-    int year,
-    int month,
-    double value,
-  ) => SettingsRepository.setMonthlyReportManualSalesForMonth(
-    year,
-    month,
-    value,
-  );
-
   static double? getMonthlyReportLeaseCostOverrideForMonth(
     int year,
     int month,
@@ -887,8 +905,17 @@ class DatabaseService {
 
   static String getDataDirectoryPath() => _dataDirectoryPath;
 
-  static Future<void> setCurrentDate(DateTime newDate) =>
-      BusinessDayRepository.setCurrentDate(newDate);
+  static Future<BusinessDateChangeOutcome> setCurrentDate(
+    DateTime newDate, {
+    required String actorId,
+    String reason = '',
+    bool allowBackdate = false,
+  }) => BusinessDayRepository.setCurrentDate(
+    newDate,
+    actorId: actorId,
+    reason: reason,
+    allowBackdate: allowBackdate,
+  );
 
   static Future<void> refreshDailySalesTotalForDate(DateTime date) =>
       BusinessDayRepository.refreshDailySalesTotalForDate(date);
@@ -1106,33 +1133,39 @@ class DatabaseService {
 
   // ==================== SALES TRACKING METHODS ====================
 
-  static Future<bool> closeOrderWithPayment({
+  /// Closes a table once, idempotently. See [CloseTableTransaction.run].
+  static Future<ClosureResult> closeTable({
     required int orderId,
+    required ClosureMoney money,
     required String paymentMethod,
+    required Map<String, double> tenderBreakdown,
     required String closedById,
+    required bool isFiscal,
     String? closedByName,
-    Map<String, double>? paymentBreakdown,
     String? customPaymentLabel,
-  }) => CloseTableTransaction.withPayment(
+    List<OrderItem>? saleItems,
+    double? subtotalAmount,
+    Map<String, dynamic>? finalTransaction,
+  }) => CloseTableTransaction.run(
     orderId: orderId,
+    money: money,
     paymentMethod: paymentMethod,
+    tenderBreakdown: tenderBreakdown,
     closedById: closedById,
+    isFiscal: isFiscal,
     closedByName: closedByName,
-    paymentBreakdown: paymentBreakdown,
     customPaymentLabel: customPaymentLabel,
+    saleItems: saleItems,
+    subtotalAmount: subtotalAmount,
+    finalTransaction: finalTransaction,
   );
 
-  static Future<bool> closeOrderNonFiscal({
-    required int orderId,
-    required String closedById,
-    String? closedByName,
-  }) => CloseTableTransaction.nonFiscal(
-    orderId: orderId,
-    closedById: closedById,
-    closedByName: closedByName,
-  );
-
-  static Future<bool> saveSaleRecord({
+  /// Writes a sale record directly.
+  ///
+  /// The closure path no longer comes through here — it goes through
+  /// [closeTable], which owns closure identity. This remains for the records
+  /// that are not closures: a cancelled order's history entry.
+  static Future<Object?> saveSaleRecord({
     required int orderId,
     required List<String> tableNumbers,
     required String floor,
@@ -1153,6 +1186,9 @@ class DatabaseService {
     bool isFiscal = true,
     bool isCancelled = false,
     DateTime? cancelledAt,
+    double? grossSaleAmount,
+    double advanceApplied = 0.0,
+    double? collectedNow,
   }) => SalesRepository.saveSaleRecord(
     orderId: orderId,
     tableNumbers: tableNumbers,
@@ -1174,7 +1210,47 @@ class DatabaseService {
     isFiscal: isFiscal,
     isCancelled: isCancelled,
     cancelledAt: cancelledAt,
+    grossSaleAmount: grossSaleAmount,
+    advanceApplied: advanceApplied,
+    collectedNow: collectedNow,
   );
+
+  /// Records or updates the advance held against an order.
+  static Future<String?> recordAdvanceReceipt({
+    required int orderId,
+    required double amount,
+    required String collectedBy,
+    String? receiptId,
+    String? businessDate,
+  }) => SalesRepository.recordAdvanceReceipt(
+    orderId: orderId,
+    amount: amount,
+    collectedBy: collectedBy,
+    receiptId: receiptId,
+    businessDate: businessDate,
+  );
+
+  /// Whether a stored sales-box record counts toward revenue. One predicate,
+  /// shared by every total, so no report can quietly disagree with the daily
+  /// figure about what a sale is.
+  static bool saleCountsAsRevenue(Map<dynamic, dynamic> sale) =>
+      SalesRepository.countsAsRevenue(sale);
+
+  /// Whether a record is an advance receipt rather than a closed order.
+  static bool saleIsAdvanceReceipt(Map<dynamic, dynamic> sale) =>
+      SalesRepository.isAdvanceReceipt(sale);
+
+  /// The value of a sale: gross where recorded, the stored total otherwise.
+  static double saleGrossOf(Map<dynamic, dynamic> sale) =>
+      SalesRepository.grossOf(sale);
+
+  /// Gross sales recorded against a business date, derived from the records.
+  static double grossSalesTotalForDate(String dateString) =>
+      BusinessDayRepository.grossSalesTotalForDate(dateString);
+
+  /// Money that actually changed hands on a business date.
+  static double collectedTotalForDate(String dateString) =>
+      BusinessDayRepository.collectedTotalForDate(dateString);
 
   static double getDailySalesTotal() => SalesRepository.getDailySalesTotal();
 
@@ -1211,8 +1287,17 @@ class DatabaseService {
   static List<Map<String, dynamic>> getAllSales() =>
       SalesRepository.getAllSales();
 
-  static Future<bool> cancelSaleRecord(dynamic recordKey) =>
-      SalesRepository.cancelSaleRecord(recordKey);
+  static Future<SaleCancellationOutcome> cancelSaleRecord({
+    required dynamic recordKey,
+    required String cancelledBy,
+    required String reason,
+    bool allowHistorical = false,
+  }) => SalesRepository.cancelSaleRecord(
+    recordKey: recordKey,
+    cancelledBy: cancelledBy,
+    reason: reason,
+    allowHistorical: allowHistorical,
+  );
 
   static Future<bool> restoreClosedOrderFromSale({
     required dynamic recordKey,

@@ -40,6 +40,13 @@ abstract final class DeveloperScope {
   /// Resetting a locked-out venue's admin PIN.
   static const recovery = 'recovery';
 
+  /// Moving the POS onto a business date earlier than the one it is
+  /// operating — reopening a period the restaurant has already closed.
+  static const backdate = 'backdate';
+
+  /// Voiding a sale from a business day other than today.
+  static const salesRepair = 'salesRepair';
+
   static const all = <String>[
     diagnostics,
     connection,
@@ -49,12 +56,21 @@ abstract final class DeveloperScope {
     restore,
     wipe,
     recovery,
+    backdate,
+    salesRepair,
   ];
 
-  /// The tools that destroy data or hand over an account. Nothing special
-  /// gates them beyond the token's own scope list — they are named so the UI
-  /// can warn about them, and so a narrow token has an obvious thing to omit.
-  static const destructive = <String>[restore, wipe, recovery];
+  /// The tools that destroy data, hand over an account, or rewrite recorded
+  /// money. Nothing special gates them beyond the token's own scope list —
+  /// they are named so the UI can warn about them, and so a narrow token has
+  /// an obvious thing to omit.
+  static const destructive = <String>[
+    restore,
+    wipe,
+    recovery,
+    backdate,
+    salesRepair,
+  ];
 }
 
 /// Why an unlock attempt failed, in the developer's language rather than the

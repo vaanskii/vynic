@@ -15,6 +15,7 @@ import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
 import 'package:vynic/core/services/sync/pos_live_refresh.dart';
 import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/core/services/audit/audit_order_diff_service.dart';
+import 'package:vynic/core/services/audit/money_audit.dart';
 import 'package:vynic/core/utils/home_reservations_helper.dart';
 
 /// Minimal HTTP server on Windows POS for cloud → Hive callbacks (Option A).
@@ -35,7 +36,14 @@ class PosIngestServer {
     if (kIsWeb) return;
     if (!(Platform.isWindows || Platform.isMacOS || Platform.isLinux)) return;
 
-    final key = DatabaseService.ensurePosIngestConnectionKey();
+    final key = DatabaseService.ensurePosIngestConnectionKey().trim();
+    if (key.isEmpty) {
+      // Every route behind this server is now closed without a key, so a
+      // listener without one could only ever return 403. Do not open it.
+      debugPrint('[PosIngest] No connection key available; not listening.');
+      PosCallbackConfig.baseUrl = null;
+      return;
+    }
     PosCallbackConfig.connectionKey = key;
     _callbackHost = await _resolveCallbackHost();
 
@@ -147,9 +155,32 @@ class PosIngestServer {
   }
 
   static bool _isAuthorized(HttpRequest request) {
-    final expected = DatabaseService.getPosIngestConnectionKey();
-    if (expected == null || expected.isEmpty) return true;
-    final provided = request.headers.value('x-connection-key')?.trim();
+    return isRequestAuthorized(
+      expectedKey: DatabaseService.getPosIngestConnectionKey(),
+      providedKey: request.headers.value('x-connection-key'),
+    );
+  }
+
+  /// Whether a callback request may be served.
+  ///
+  /// This used to return true when the terminal held no connection key —
+  /// intended as a convenience for an unprovisioned install, but the effect
+  /// was that a POS which had somehow lost its key accepted every caller on
+  /// the LAN, on routes that create orders, delete users and print. Missing
+  /// configuration is now a refusal, not an exemption: no key means no access,
+  /// and the key is provisioned by `start()` before the socket is bound.
+  ///
+  /// Split out as a pure function so the closed-by-default property is
+  /// testable without a socket.
+  @visibleForTesting
+  static bool isRequestAuthorized({
+    required String? expectedKey,
+    required String? providedKey,
+  }) {
+    final expected = expectedKey?.trim();
+    if (expected == null || expected.isEmpty) return false;
+    final provided = providedKey?.trim();
+    if (provided == null || provided.isEmpty) return false;
     return provided == expected;
   }
 
@@ -220,6 +251,18 @@ class PosIngestServer {
     order.updatedAt = ts;
     order.recalculateTotal();
     await DatabaseService.updateOrder(order);
+
+    // The Manager app reaches the order through here, so this is where a
+    // manager-side service-fee change becomes a fact. The actor is the name
+    // the mobile client identified itself with.
+    await MoneyAudit.orderServiceFeeChanged(
+      actorId: performerName,
+      orderId: posOrderId,
+      previousIncluded: prevServiceFee,
+      newIncluded: order.includeServiceFee,
+      previousTotal: prevTotal,
+      newTotal: order.totalAmount,
+    );
 
     final message = _orderChangeMessage(
       posOrderId: posOrderId,

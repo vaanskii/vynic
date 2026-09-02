@@ -404,6 +404,10 @@ class ManagerSyncService {
               'pickupTime': pickupTime,
               'includeServiceFee': o.includeServiceFee,
               'discountAmount': o.discountAmount,
+              // Signed operator override of the bill total. Without it the
+              // Cloud's totalAmount cannot be reconciled against its own item
+              // lines, discount and service fee.
+              'manualAdjustmentAmount': o.manualAdjustmentAmount,
               'serviceFeePercent': (o.customServiceFeePercentage ?? 10.0),
               'items': o.items
                   .map(
@@ -499,7 +503,9 @@ class ManagerSyncService {
       // This is the authoritative source for payment-method analytics.
       final todaysSales = DatabaseService.getSalesForDate(businessDateString);
       final paymentBreakdown = <String, double>{};
-      final totalRevenue = DatabaseService.getDailySalesTotal();
+      final totalRevenue = DatabaseService.grossSalesTotalForDate(
+        businessDateString,
+      );
       int fiscalOrderCount = 0;
       for (final sale in todaysSales) {
         final isCancelled = sale['isCancelled'] == true;
@@ -507,10 +513,17 @@ class ManagerSyncService {
         if (isCancelled || restoredToOrder) {
           continue;
         }
-        final totalAmount =
-            (sale['totalAmount'] as num?)?.toDouble() ??
-            (sale['total'] as num?)?.toDouble() ??
-            0.0;
+        // A deposit taken today against an order that has not closed yet is
+        // its own thing: cash in the drawer, not revenue and not an internal
+        // closure. It used to fall into the `non-fiscal` bucket, which made
+        // the manager app read deposits as internal closures.
+        if (DatabaseService.saleIsAdvanceReceipt(sale)) {
+          final amount = (sale['totalAmount'] as num?)?.toDouble() ?? 0.0;
+          paymentBreakdown['advance-received'] =
+              (paymentBreakdown['advance-received'] ?? 0) + amount;
+          continue;
+        }
+        final totalAmount = DatabaseService.saleGrossOf(sale);
         final isFiscal = sale['isFiscal'] != false;
         if (!isFiscal) {
           paymentBreakdown['non-fiscal'] =
@@ -562,18 +575,24 @@ class ManagerSyncService {
         if (isCancelled || restoredToOrder) {
           continue;
         }
-        final totalAmount =
-            (sale['totalAmount'] as num?)?.toDouble() ??
-            (sale['total'] as num?)?.toDouble() ??
-            0.0;
-        allTimeTotalRevenue += totalAmount;
-        allTimeOrderCount += 1;
+        if (DatabaseService.saleIsAdvanceReceipt(sale)) {
+          final amount = (sale['totalAmount'] as num?)?.toDouble() ?? 0.0;
+          allTimeBreakdown['advance-received'] =
+              (allTimeBreakdown['advance-received'] ?? 0) + amount;
+          continue;
+        }
+        final totalAmount = DatabaseService.saleGrossOf(sale);
         final isFiscal = sale['isFiscal'] != false;
         if (!isFiscal) {
+          // Internal closures get their own bucket and stay out of revenue —
+          // they used to be added to the all-time total, which is exactly the
+          // leak the daily and Z figures were careful to avoid.
           allTimeBreakdown['non-fiscal'] =
               (allTimeBreakdown['non-fiscal'] ?? 0) + totalAmount;
           continue;
         }
+        allTimeTotalRevenue += totalAmount;
+        allTimeOrderCount += 1;
         final breakdown = PaymentUtils.extractBreakdown(sale);
         breakdown.forEach((key, amount) {
           allTimeBreakdown[key] = (allTimeBreakdown[key] ?? 0) + amount;
@@ -585,9 +604,7 @@ class ManagerSyncService {
       });
       final allTimeItems = <String, Map<String, double>>{};
       for (final sale in allSales) {
-        final isCancelled = sale['isCancelled'] == true;
-        final restoredToOrder = sale['restoredToOrder'] == true;
-        if (isCancelled || restoredToOrder) continue;
+        if (!DatabaseService.saleCountsAsRevenue(sale)) continue;
         final rawItems = (sale['items'] as List?) ?? const [];
         for (final rawItem in rawItems) {
           if (rawItem is! Map) continue;
@@ -659,8 +676,18 @@ class ManagerSyncService {
             'paymentBreakdown': <String, double>{},
             'topItems': <Map<String, dynamic>>[],
             'closedTables': <Map<String, dynamic>>[],
+            'advanceReceived': 0.0,
           },
         );
+        // A deposit receipt is not an order and must not be counted as one,
+        // in the order count or the revenue.
+        if (DatabaseService.saleIsAdvanceReceipt(sale)) {
+          final amount = (sale['totalAmount'] as num?)?.toDouble() ?? 0.0;
+          bucket['advanceReceived'] =
+              ((bucket['advanceReceived'] as num?)?.toDouble() ?? 0.0) + amount;
+          continue;
+        }
+
         bucket['totalOrders'] = (bucket['totalOrders'] as int) + 1;
 
         final isCancelled = sale['isCancelled'] == true;
@@ -673,10 +700,10 @@ class ManagerSyncService {
           continue;
         }
 
-        final totalAmount =
-            (sale['totalAmount'] as num?)?.toDouble() ??
-            (sale['total'] as num?)?.toDouble() ??
-            0.0;
+        // Gross: an order settled partly by a deposit is worth what the guest
+        // consumed, and the deposit rides in its payment breakdown so the
+        // split still adds up.
+        final totalAmount = DatabaseService.saleGrossOf(sale);
         bucket['totalRevenue'] =
             (bucket['totalRevenue'] as double) + totalAmount;
         bucket['orderCount'] = (bucket['orderCount'] as int) + 1;
@@ -934,7 +961,23 @@ class ManagerSyncService {
         if (touchedReservationHints.isNotEmpty)
           'touchedReservationHints': touchedReservationHints,
         'menu': menu,
-        'expenses': [],
+        // Real expense records, not an empty list beside a derived profit
+        // figure. Each carries its POS-side id so re-sending the same record
+        // updates it instead of adding a second one.
+        'expenses': DatabaseService.getAllExpenseRecords()
+            .where((e) => (e['id'] as String?)?.trim().isNotEmpty == true)
+            .map(
+              (e) => {
+                'id': (e['id'] as String).trim(),
+                'description': (e['description'] as String?) ?? '',
+                'amount': (e['amount'] as num?)?.toDouble() ?? 0.0,
+                'category': (e['category'] as String?) ?? '',
+                'paymentType': (e['paymentType'] as String?) ?? 'cash',
+                if (e['createdAt'] != null) 'createdAt': e['createdAt'],
+                if (e['date'] != null) 'businessDate': e['date'],
+              },
+            )
+            .toList(),
         'staff': staffList,
         'quickOrders': quickOrders,
         'syncedAt': DateTime.now().toIso8601String(),

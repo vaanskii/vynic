@@ -240,7 +240,7 @@ class _TotalsCard extends StatelessWidget {
     final packageSubtotal = order.getPackageSubtotal();
     final serviceFee = order.includeServiceFee ? order.getServiceFee() : 0.0;
     final serviceFeeEnabled = DatabaseService.isServiceFeeAvailable();
-    final advance = order.discountAmount;
+    final advance = order.effectiveAdvanceAmount;
     final adjustment = order.manualAdjustmentAmount;
 
     return Container(

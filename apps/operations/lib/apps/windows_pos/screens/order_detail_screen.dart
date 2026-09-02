@@ -8,6 +8,7 @@ import 'package:vynic/core/models/pos_permission.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/table_ref.dart';
 import 'package:vynic/core/models/audit_report.dart';
+import 'package:vynic/core/services/audit/money_audit.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
@@ -581,8 +582,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
     final packageSubtotal = _order!.getPackageSubtotal();
     final additionalSubtotal = _order!.getAdditionalItemsSubtotal();
-    final discountAmount = _order!.discountAmount > 0
-        ? _order!.discountAmount
+    final discountAmount = _order!.effectiveAdvanceAmount > 0
+        ? _order!.effectiveAdvanceAmount
         : null;
     final manualAdjustment = _order!.manualAdjustmentAmount.abs() >= 0.01
         ? _order!.manualAdjustmentAmount
@@ -762,8 +763,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       globalDefaultPercentage: defaultPercent,
     );
 
+    final prevInclude = order.includeServiceFee;
+    final prevTotal = order.totalAmount;
     setState(() {
-      final prevInclude = order.includeServiceFee;
       order.includeServiceFee = !prevInclude;
       order.recalculateTotal(serviceFeeRate: effectivePercent / 100);
       order.updatedAt = DatabaseService.getCurrentDateTime();
@@ -774,6 +776,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         ),
       );
     });
+    unawaited(
+      MoneyAudit.orderServiceFeeChanged(
+        actorId: widget.user.username,
+        orderId: order.orderId,
+        previousIncluded: prevInclude,
+        newIncluded: order.includeServiceFee,
+        previousPercent: effectivePercent,
+        newPercent: effectivePercent,
+        previousTotal: prevTotal,
+        newTotal: order.totalAmount,
+      ),
+    );
   }
 
   /// Flips the admin's „ჩეკზე ასახვა" setting from the order screen.
@@ -824,6 +838,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final useGlobalDefault = (normalizedPercent - defaultPercent).abs() < 0.01;
 
     final prevInclude = order.includeServiceFee;
+    final prevTotal = order.totalAmount;
     setState(() {
       order
         ..includeServiceFee = result.includeServiceFee
@@ -838,6 +853,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       DatabaseService.updateOrder(
         order,
         previousIncludeServiceFee: prevInclude,
+      ),
+    );
+    unawaited(
+      MoneyAudit.orderServiceFeeChanged(
+        actorId: widget.user.username,
+        orderId: order.orderId,
+        previousIncluded: prevInclude,
+        newIncluded: order.includeServiceFee,
+        previousPercent: initialPercent,
+        newPercent: normalizedPercent,
+        previousTotal: prevTotal,
+        newTotal: order.totalAmount,
       ),
     );
   }
@@ -868,8 +895,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         (manualAdjustment > 0 ? manualAdjustment : 0.0);
 
     final TextEditingController controller = TextEditingController(
-      text: _order!.discountAmount > 0
-          ? _order!.discountAmount.toStringAsFixed(2)
+      text: _order!.effectiveAdvanceAmount > 0
+          ? _order!.effectiveAdvanceAmount.toStringAsFixed(2)
           : '',
     );
 
@@ -971,7 +998,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        if (_order!.discountAmount > 0)
+                        if (_order!.effectiveAdvanceAmount > 0)
                           TextButton(
                             onPressed: () => Navigator.pop(dialogContext, 0.0),
                             style: TextButton.styleFrom(
@@ -1029,9 +1056,54 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
 
     if (discount != null) {
+      final order = _order!;
+      final previousAdvance = order.effectiveAdvanceAmount;
+      final previousTotal = order.totalAmount;
+      final collectedOn = DatabaseService.getCurrentDate()
+          .toIso8601String()
+          .split('T')[0];
+
+      // The receipt is written when the money is taken, dated today — not at
+      // close, dated the closing day. A deposit collected on Monday and spent
+      // on Friday belongs to Monday's cash, and the closure only applies it.
+      final receiptId = await DatabaseService.recordAdvanceReceipt(
+        orderId: order.orderId,
+        amount: discount,
+        collectedBy: widget.user.username,
+        receiptId: order.advanceReceiptId,
+        businessDate: order.advanceCollectedOn ?? collectedOn,
+      );
+
+      if (!mounted) {
+        controller.dispose();
+        return;
+      }
       setState(() {
-        _order!.setDiscount(discount);
+        order.setAdvance(
+          discount,
+          collectedOn: order.advanceCollectedOn ?? collectedOn,
+          receiptId: receiptId,
+        );
       });
+      await DatabaseService.refreshDailySalesTotalForDate(
+        DatabaseService.getCurrentDate(),
+      );
+      unawaited(
+        MoneyAudit.advanceRecorded(
+          actorId: widget.user.username,
+          orderId: order.orderId,
+          previousAmount: previousAdvance,
+          newAmount: order.effectiveAdvanceAmount,
+          businessDate: order.advanceCollectedOn ?? collectedOn,
+          receiptId: receiptId,
+        ),
+      );
+      developer.log(
+        'Advance on order #${order.orderId}: '
+        '$previousAdvance → ${order.effectiveAdvanceAmount}, '
+        'balance was $previousTotal now ${order.totalAmount}',
+        name: 'order_advance',
+      );
     }
 
     controller.dispose();
@@ -1213,9 +1285,22 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
 
     if (adjustment != null) {
+      final order = _order!;
+      final previousAdjustment = order.manualAdjustmentAmount;
+      final previousTotal = order.totalAmount;
       setState(() {
-        _order!.setManualAdjustment(adjustment);
+        order.setManualAdjustment(adjustment);
       });
+      unawaited(
+        MoneyAudit.orderManualAdjustmentChanged(
+          actorId: widget.user.username,
+          orderId: order.orderId,
+          previousAdjustment: previousAdjustment,
+          newAdjustment: order.manualAdjustmentAmount,
+          previousTotal: previousTotal,
+          newTotal: order.totalAmount,
+        ),
+      );
     }
 
     controller.dispose();
@@ -2491,6 +2576,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         closedAt: cancelledClosedAt,
         includeServiceFee: cancelledOrder.includeServiceFee,
         discountAmount: cancelledOrder.discountAmount,
+        advanceApplied: cancelledOrder.effectiveAdvanceAmount,
+        grossSaleAmount: cancelledOrder.grossAmount,
+        collectedNow: 0.0,
         advanceAmount: 0.0,
         subtotalAmount: cancelledSubtotal,
         manualAdjustmentAmount: cancelledOrder.manualAdjustmentAmount,
@@ -2550,6 +2638,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final paymentService = TablePaymentService(
       context: context,
       total: currentOrder.totalAmount,
+      grossTotal: currentOrder.grossAmount,
+      advanceApplied: currentOrder.effectiveAdvanceAmount,
     );
     final selection = await paymentService.collect();
     if (selection == null) {
@@ -2736,42 +2826,39 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       isFiscal: false,
     );
 
-    final closeSuccess = await DatabaseService.closeOrderNonFiscal(
+    // An internal closure moves through the same idempotent machinery as a
+    // paid one — same closure identity, same journal, same recovery — and is
+    // kept out of revenue by `isFiscal: false` rather than by taking a
+    // different code path.
+    final money = ClosureMoney.fromOrder(
+      order,
+      collectedNow: order.totalAmount,
+    );
+    final result = await DatabaseService.closeTable(
       orderId: order.orderId,
+      money: money,
+      paymentMethod: 'non-fiscal',
+      tenderBreakdown: saleBreakdown ?? const {},
       closedById: widget.user.username,
       closedByName: widget.user.username,
+      isFiscal: false,
+      saleItems: saleItems,
+      subtotalAmount: subtotal,
+      finalTransaction: finalTransaction,
     );
 
-    if (!closeSuccess) {
+    if (!result.isSuccess) {
       if (!mounted) {
         return;
       }
-      await showErrorToast(context, 'არაფისკალური დახურვა ვერ შესრულდა');
+      await showErrorToast(
+        context,
+        result.outcome == ClosureOutcome.moneyMismatch
+            ? 'გადახდის ჯამი არ ემთხვევა შეკვეთის თანხას — დახურვა შეჩერდა'
+            : 'არაფისკალური დახურვა ვერ შესრულდა',
+      );
       return;
     }
-
-    await DatabaseService.saveSaleRecord(
-      orderId: order.orderId,
-      tableNumbers: order.tableNumbers,
-      floor: order.floor,
-      items: saleItems,
-      totalAmount: order.totalAmount,
-      paymentMethod: 'non-fiscal',
-      paymentBreakdown: saleBreakdown,
-      createdBy: order.createdBy,
-      createdAt: order.createdAt,
-      closedAt: closedAt,
-      includeServiceFee: order.includeServiceFee,
-      discountAmount: order.discountAmount,
-      subtotalAmount: subtotal,
-      manualAdjustmentAmount: order.manualAdjustmentAmount,
-      finalTransaction: finalTransaction,
-      isFiscal: false,
-    );
-
-    await DatabaseService.refreshDailySalesTotalForDate(
-      DatabaseService.getCurrentDate(),
-    );
 
     final message = TableClosureHelper.buildNonFiscalSuccessMessage();
     if (!mounted) {
@@ -2798,39 +2885,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final subtotal = _calculateOrderSubtotal(order);
     final serviceFee = order.getServiceFee();
     final closedAt = DatabaseService.getCurrentDateTime();
-    final advanceAmount = order.discountAmount > 0 ? order.discountAmount : 0.0;
-    // Record exactly what the guest was charged. `order.totalAmount` is the
-    // number the payment dialog collected against (both come from the same
-    // recalculateTotal above), so the sale can no longer disagree with the
-    // tender. The non-fiscal, take-away and cancelled paths already record
-    // this field; re-deriving it here is what let a per-order service fee
-    // book a different total than the one presented to the guest.
-    final remainingFiscalTotal = order.totalAmount;
 
     final saleBreakdown = TableClosureHelper.buildSaleBreakdown(selection);
     final paymentMethodKey = TableClosureHelper.resolvePaymentMethod(selection);
 
-    // Money-integrity gate: never persist a sale whose tender doesn't add up
-    // to its recorded total. Block the close and say why instead of silently
-    // storing two different numbers.
-    final breakdownMismatch = TableClosureHelper.describeBreakdownMismatch(
-      breakdown: saleBreakdown,
-      total: remainingFiscalTotal,
-    );
-    if (breakdownMismatch != null) {
-      developer.log(
-        'Table closure blocked for order #${order.orderId}: $breakdownMismatch',
-        name: 'order_close',
-      );
-      if (!mounted) {
-        return;
-      }
-      await showErrorToast(
-        context,
-        'გადახდის ჯამი არ ემთხვევა შეკვეთის თანხას — დახურვა შეჩერდა',
-      );
-      return;
-    }
+    // `order.totalAmount` is the balance the payment dialog collected
+    // against — already net of any advance. The sale is worth that balance
+    // plus the advance back on: money taken on Monday does not make a
+    // Friday order smaller.
+    final money = ClosureMoney.fromOrder(order, collectedNow: selection.total);
+    final remainingFiscalTotal = money.amountDueNow;
+
     final finalTransaction = TableClosureHelper.buildFinalTransactionRecord(
       order: order,
       selection: selection,
@@ -2841,73 +2906,36 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       isFiscal: true,
     );
 
-    final closeSuccess = await DatabaseService.closeOrderWithPayment(
+    final result = await DatabaseService.closeTable(
       orderId: order.orderId,
+      money: money,
       paymentMethod: paymentMethodKey,
+      tenderBreakdown: saleBreakdown ?? const {},
       closedById: widget.user.username,
       closedByName: widget.user.username,
-      paymentBreakdown: saleBreakdown,
+      isFiscal: true,
+      saleItems: <OrderItem>[...order.packageItems, ...order.items],
+      subtotalAmount: subtotal,
+      finalTransaction: finalTransaction,
     );
 
-    if (!closeSuccess) {
+    if (!result.isSuccess) {
+      developer.log(
+        'Table closure refused for order #${order.orderId}: '
+        '${result.detail ?? result.outcome.name}',
+        name: 'order_close',
+      );
       if (!mounted) {
         return;
       }
-      await showErrorToast(context, 'შეკვეთის დახურვა ვერ მოხერხდა');
+      await showErrorToast(
+        context,
+        result.outcome == ClosureOutcome.moneyMismatch
+            ? 'გადახდის ჯამი არ ემთხვევა შეკვეთის თანხას — დახურვა შეჩერდა'
+            : 'შეკვეთის დახურვა ვერ მოხერხდა',
+      );
       return;
     }
-
-    await DatabaseService.saveSaleRecord(
-      orderId: order.orderId,
-      tableNumbers: order.tableNumbers,
-      floor: order.floor,
-      items: order.items,
-      totalAmount: remainingFiscalTotal,
-      paymentMethod: paymentMethodKey,
-      paymentBreakdown: saleBreakdown,
-      createdBy: order.createdBy,
-      createdAt: order.createdAt,
-      closedAt: closedAt,
-      includeServiceFee: order.includeServiceFee,
-      discountAmount: 0.0,
-      advanceAmount: 0.0,
-      subtotalAmount: subtotal,
-      manualAdjustmentAmount: order.manualAdjustmentAmount,
-      finalTransaction: finalTransaction,
-      isFiscal: true,
-    );
-
-    if (advanceAmount > 0) {
-      await DatabaseService.saveSaleRecord(
-        orderId: order.orderId,
-        tableNumbers: order.tableNumbers,
-        floor: order.floor,
-        items: const <OrderItem>[],
-        totalAmount: advanceAmount,
-        paymentMethod: 'advance',
-        paymentBreakdown: {'advance': advanceAmount},
-        createdBy: order.createdBy,
-        createdAt: order.createdAt,
-        closedAt: closedAt,
-        includeServiceFee: false,
-        discountAmount: 0.0,
-        advanceAmount: advanceAmount,
-        subtotalAmount: advanceAmount,
-        manualAdjustmentAmount: 0.0,
-        finalTransaction: {
-          'type': 'advance_payment',
-          'orderId': order.orderId,
-          'amount': double.parse(advanceAmount.toStringAsFixed(2)),
-          'source': 'reservation_prepayment',
-          'isFiscal': false,
-        },
-        isFiscal: false,
-      );
-    }
-
-    await DatabaseService.refreshDailySalesTotalForDate(
-      DatabaseService.getCurrentDate(),
-    );
     const receiptLanguage = 'ka';
 
     final receiptLines = _buildFinalReceiptLines(order, selection, closedAt);

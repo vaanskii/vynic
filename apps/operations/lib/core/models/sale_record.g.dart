@@ -90,13 +90,21 @@ class SaleRecordAdapter extends TypeAdapter<SaleRecord> {
       restoredBy: fields[24] as String?,
       tipAmount: fields[25] as double,
       closedById: fields[26] as String?,
+      cancelledBy: fields[27] as String?,
+      cancellationReason: fields[28] as String?,
+      recordType: (fields[29] as String?) ?? SaleRecord.recordTypeSale,
+      grossSaleAmount: fields[30] as double?,
+      advanceApplied: (fields[31] as double?) ?? 0.0,
+      collectedNow: fields[32] as double?,
+      appliedToClosureId: fields[33] as String?,
+      advanceReceiptId: fields[34] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, SaleRecord obj) {
     writer
-      ..writeByte(27)
+      ..writeByte(35)
       ..writeByte(0)
       ..write(obj.closureId)
       ..writeByte(1)
@@ -150,7 +158,23 @@ class SaleRecordAdapter extends TypeAdapter<SaleRecord> {
       ..writeByte(25)
       ..write(obj.tipAmount)
       ..writeByte(26)
-      ..write(obj.closedById);
+      ..write(obj.closedById)
+      ..writeByte(27)
+      ..write(obj.cancelledBy)
+      ..writeByte(28)
+      ..write(obj.cancellationReason)
+      ..writeByte(29)
+      ..write(obj.recordType)
+      ..writeByte(30)
+      ..write(obj.grossSaleAmount)
+      ..writeByte(31)
+      ..write(obj.advanceApplied)
+      ..writeByte(32)
+      ..write(obj.collectedNow)
+      ..writeByte(33)
+      ..write(obj.appliedToClosureId)
+      ..writeByte(34)
+      ..write(obj.advanceReceiptId);
   }
 
   @override

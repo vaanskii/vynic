@@ -117,13 +117,13 @@ class OrderDetailActionHelpers {
             label: 'ავანსი',
             icon: Icons.percent,
             onTap: onShowDiscountDialog,
-            accent: order.discountAmount > 0
+            accent: order.effectiveAdvanceAmount > 0
                 ? const Color(0xFF16A34A)
                 : const Color(0xFFC0AD7B),
-            subtitle: order.discountAmount > 0
-                ? 'აქტიური ავანსი -${order.discountAmount.toStringAsFixed(2)} GEL.'
+            subtitle: order.effectiveAdvanceAmount > 0
+                ? 'აქტიური ავანსი -${order.effectiveAdvanceAmount.toStringAsFixed(2)} GEL.'
                 : 'დაამატე ან შეცვალე ავანსი.',
-            emphasize: order.discountAmount > 0,
+            emphasize: order.effectiveAdvanceAmount > 0,
           ),
         );
 

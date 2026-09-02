@@ -24,12 +24,14 @@ class VenueIdentityDraft extends ChangeNotifier {
   late String _name;
   late String _address;
   late String _phone;
+  late String _legalId;
   late Uint8List? _logo;
   late ReceiptHeaderLayout _layout;
 
   String _savedName = '';
   String _savedAddress = '';
   String _savedPhone = '';
+  String _savedLegalId = '';
   Uint8List? _savedLogo;
   ReceiptHeaderLayout _savedLayout = const ReceiptHeaderLayout();
 
@@ -42,12 +44,14 @@ class VenueIdentityDraft extends ChangeNotifier {
     _savedName = DatabaseService.getVenueName();
     _savedAddress = DatabaseService.getVenueAddress();
     _savedPhone = DatabaseService.getVenuePhone();
+    _savedLegalId = DatabaseService.getVenueLegalId();
     _savedLogo = DatabaseService.getVenueLogoPng();
     _savedLayout = DatabaseService.getReceiptHeaderLayout();
 
     _name = _savedName;
     _address = _savedAddress;
     _phone = _savedPhone;
+    _legalId = _savedLegalId;
     _logo = _savedLogo;
     _layout = _savedLayout;
   }
@@ -55,6 +59,11 @@ class VenueIdentityDraft extends ChangeNotifier {
   String get name => _name;
   String get address => _address;
   String get phone => _phone;
+
+  /// The venue's legal/registration identifier, printed on financial reports.
+  /// Empty is a valid state — the report says the field is unconfigured
+  /// rather than borrowing another venue's number.
+  String get legalId => _legalId;
   Uint8List? get logo => _logo;
   ReceiptHeaderLayout get layout => _layout;
 
@@ -64,6 +73,7 @@ class VenueIdentityDraft extends ChangeNotifier {
     return _name != _savedName ||
         _address != _savedAddress ||
         _phone != _savedPhone ||
+        _legalId != _savedLegalId ||
         _layout != _savedLayout ||
         !_sameBytes(_logo, _savedLogo);
   }
@@ -71,6 +81,7 @@ class VenueIdentityDraft extends ChangeNotifier {
   set name(String value) => _set(() => _name = value.trim());
   set address(String value) => _set(() => _address = value.trim());
   set phone(String value) => _set(() => _phone = value.trim());
+  set legalId(String value) => _set(() => _legalId = value.trim());
   set layout(ReceiptHeaderLayout value) => _set(() => _layout = value);
 
   void setLogo(Uint8List? png, {Uint8List? source}) {
@@ -97,6 +108,7 @@ class VenueIdentityDraft extends ChangeNotifier {
     await DatabaseService.setVenueName(_name);
     await DatabaseService.setVenueAddress(_address);
     await DatabaseService.setVenuePhone(_phone);
+    await DatabaseService.setVenueLegalId(_legalId);
     await DatabaseService.saveReceiptHeaderLayout(_layout);
     if (logoChanged) {
       await DatabaseService.setVenueLogoPng(_logo);
@@ -106,6 +118,7 @@ class VenueIdentityDraft extends ChangeNotifier {
     _savedName = _name;
     _savedAddress = _address;
     _savedPhone = _phone;
+    _savedLegalId = _legalId;
     _savedLogo = _logo;
     _savedLayout = _layout;
     notifyListeners();
@@ -117,6 +130,7 @@ class VenueIdentityDraft extends ChangeNotifier {
       _name = _savedName;
       _address = _savedAddress;
       _phone = _savedPhone;
+      _legalId = _savedLegalId;
       _logo = _savedLogo;
       _layout = _savedLayout;
       sourceImage = null;

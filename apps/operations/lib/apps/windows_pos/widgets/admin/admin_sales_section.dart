@@ -16,12 +16,19 @@ class AdminSalesSection extends StatefulWidget {
     required this.onReprintSaleReceipt,
     required this.onReprintFullSaleReceipt,
     required this.onConfirmCancelSale,
+    this.canCancelHistoricalSale = false,
     required this.onRestoreClosedSale,
   });
 
   final SalesActionCallback onReprintSaleReceipt;
   final SalesActionCallback onReprintFullSaleReceipt;
   final SalesActionCallback onConfirmCancelSale;
+
+  /// Whether this operator may void a sale from a business day other than
+  /// today. False for ordinary Manager use — reaching into a closed period is
+  /// support work, and the button is not offered rather than being offered
+  /// and then refused.
+  final bool canCancelHistoricalSale;
   final SalesActionCallback onRestoreClosedSale;
 
   @override
@@ -1639,6 +1646,10 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                   sale['restoredToOrder'] == true;
                               final bool canRestore =
                                   !isRestored && sale['date'] == todayDate;
+                              final bool canCancel =
+                                  !isCancelled &&
+                                  (sale['date'] == todayDate ||
+                                      widget.canCancelHistoricalSale);
                               final bool isNonFiscal =
                                   !isCancelled && !_isFiscalSale(sale);
 
@@ -1921,16 +1932,16 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                           ),
                                           const Spacer(),
                                           TextButton.icon(
-                                            onPressed: isCancelled
-                                                ? null
-                                                : () {
+                                            onPressed: canCancel
+                                                ? () {
                                                     unawaited(
                                                       widget
                                                           .onConfirmCancelSale(
                                                             sale,
                                                           ),
                                                     );
-                                                  },
+                                                  }
+                                                : null,
                                             style: TextButton.styleFrom(
                                               foregroundColor:
                                                   AdminDesign.danger,

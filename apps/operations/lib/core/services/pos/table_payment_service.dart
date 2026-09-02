@@ -1,3 +1,5 @@
+import 'dart:ui' show FontFeature;
+
 import 'package:flutter/material.dart';
 
 import 'package:vynic/core/widgets/pin_button.dart';
@@ -28,10 +30,24 @@ class TablePaymentSelection {
 }
 
 class TablePaymentService {
-  TablePaymentService({required this.context, required this.total});
+  TablePaymentService({
+    required this.context,
+    required this.total,
+    this.grossTotal,
+    this.advanceApplied = 0.0,
+  });
 
   final BuildContext context;
+
+  /// What is left to collect at the table.
   final double total;
+
+  /// The full value of the order, advance included. Null when there is no
+  /// advance, in which case it equals [total].
+  final double? grossTotal;
+
+  /// Money the guest already handed over before this closure.
+  final double advanceApplied;
 
   static const double _amountTolerance = 0.01;
 
@@ -104,6 +120,80 @@ class TablePaymentService {
     }
   }
 
+  /// What the guest owes, and why it is not the order total.
+  ///
+  /// With a deposit already taken, the number to collect at the table is the
+  /// balance — but showing only the balance leaves the cashier no way to see
+  /// that the order was for more, or to notice a wrong deposit before the
+  /// money is booked. So all three are on screen: the order, what came off
+  /// it, and what is left.
+  Widget _buildAmountSummary() {
+    final gross = grossTotal ?? total;
+    final hasAdvance = advanceApplied > 0.005;
+
+    Widget line(
+      String label,
+      double amount, {
+      bool strong = false,
+      Color? color,
+    }) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: strong ? _text : _muted,
+                  fontSize: strong ? 15 : 13,
+                  fontWeight: strong ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ),
+            Text(
+              '₾${amount.toStringAsFixed(2)}',
+              style: TextStyle(
+                color: color ?? (strong ? _text : _muted),
+                fontSize: strong ? 18 : 13,
+                fontWeight: strong ? FontWeight.w800 : FontWeight.w600,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: _surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (hasAdvance) ...[
+            line('შეკვეთის ჯამი', gross),
+            line('ავანსი', -advanceApplied, color: _accent),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 6),
+              child: Divider(height: 1, color: _border),
+            ),
+          ],
+          line(
+            hasAdvance ? 'დარჩენილი გადასახდელი' : 'გადასახდელი',
+            total,
+            strong: true,
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<TablePaymentMethod?> _showMethodDialog() {
     return showDialog<TablePaymentMethod>(
       context: context,
@@ -150,6 +240,8 @@ class TablePaymentService {
                   'Select payment method',
                   style: TextStyle(color: _muted, fontSize: 13),
                 ),
+                const SizedBox(height: 16),
+                _buildAmountSummary(),
                 const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

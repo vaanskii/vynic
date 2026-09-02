@@ -228,6 +228,17 @@ class _VenueIdentityPanelState extends State<VenueIdentityPanel> {
               apply: (value) => _draft.phone = value,
             ),
           ),
+          const SizedBox(height: 10),
+          _VenueField(
+            label: 'საიდენტიფიკაციო კოდი',
+            value: _draft.legalId,
+            hint: 'ფინანსურ ანგარიშებში დაიბეჭდება',
+            onTap: () => _editText(
+              title: 'საიდენტიფიკაციო კოდი',
+              current: _draft.legalId,
+              apply: (value) => _draft.legalId = value,
+            ),
+          ),
         ],
         const SizedBox(height: 16),
         const PosSectionLabel('ჩეკის ლოგო'),

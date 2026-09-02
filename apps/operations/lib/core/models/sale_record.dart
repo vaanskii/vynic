@@ -136,6 +136,15 @@ class SaleRecord extends HiveObject {
   @HiveField(20)
   DateTime? cancelledAt;
 
+  /// Who voided the sale, and why. Both are required by
+  /// `SalesRepository.cancelSaleRecord`, so they are absent only on records
+  /// voided before that flow existed.
+  @HiveField(27)
+  String? cancelledBy;
+
+  @HiveField(28)
+  String? cancellationReason;
+
   @HiveField(21)
   bool isFiscal;
 
@@ -155,6 +164,39 @@ class SaleRecord extends HiveObject {
   /// Who performed the closure — reserved for atomic close (Task 2).
   @HiveField(26)
   String? closedById;
+
+  /// What kind of record this is. `sale` for a closed order — the default,
+  /// and what every record written before Phase 1B is. `advance_receipt` for
+  /// money taken against a future closure, which is collected cash but not
+  /// revenue and must never be summed as either twice.
+  @HiveField(29)
+  String recordType;
+
+  /// The value of the completed sale, advance included.
+  ///
+  /// Before Phase 1B a closure with a deposit booked only the balance, so
+  /// `totalAmount` on those records is the balance and this is null. Readers
+  /// fall back to `totalAmount`, which is what those records meant.
+  @HiveField(30)
+  double? grossSaleAmount;
+
+  /// Money collected before this closure and spent against it.
+  @HiveField(31)
+  double advanceApplied;
+
+  /// What the tender at the table actually came to.
+  @HiveField(32)
+  double? collectedNow;
+
+  /// Set on an advance receipt once its closure consumed it, so the receipt
+  /// can be told apart from an outstanding deposit.
+  @HiveField(33)
+  String? appliedToClosureId;
+
+  /// The advance receipt's own identity, stable across edits so changing the
+  /// amount updates the receipt instead of writing a second one.
+  @HiveField(34)
+  String? advanceReceiptId;
 
   SaleRecord({
     this.closureId,
@@ -178,13 +220,27 @@ class SaleRecord extends HiveObject {
     required this.businessDate,
     this.isCancelled = false,
     this.cancelledAt,
+    this.cancelledBy,
+    this.cancellationReason,
     this.isFiscal = true,
     this.restoredToOrder = false,
     this.restoredAt,
     this.restoredBy,
     this.tipAmount = 0.0,
     this.closedById,
+    this.recordType = recordTypeSale,
+    this.grossSaleAmount,
+    this.advanceApplied = 0.0,
+    this.collectedNow,
+    this.appliedToClosureId,
+    this.advanceReceiptId,
   });
+
+  /// A closed order.
+  static const String recordTypeSale = 'sale';
+
+  /// Money taken against a future closure. Cash in the drawer, not revenue.
+  static const String recordTypeAdvanceReceipt = 'advance_receipt';
 
   static DateTime? _tryParseDate(Object? value) {
     if (value is DateTime) return value;
@@ -244,12 +300,20 @@ class SaleRecord extends HiveObject {
       businessDate: (map['date'] as String?) ?? '',
       isCancelled: map['isCancelled'] == true,
       cancelledAt: _tryParseDate(map['cancelledAt']),
+      cancelledBy: map['cancelledBy']?.toString(),
+      cancellationReason: map['cancellationReason']?.toString(),
       isFiscal: map['isFiscal'] != false,
       restoredToOrder: map['restoredToOrder'] == true,
       restoredAt: _tryParseDate(map['restoredAt']),
       restoredBy: map['restoredBy']?.toString(),
       tipAmount: (map['tipAmount'] as num?)?.toDouble() ?? 0.0,
       closedById: map['closedById']?.toString(),
+      recordType: (map['recordType'] as String?) ?? recordTypeSale,
+      grossSaleAmount: (map['grossSaleAmount'] as num?)?.toDouble(),
+      advanceApplied: (map['advanceApplied'] as num?)?.toDouble() ?? 0.0,
+      collectedNow: (map['collectedNow'] as num?)?.toDouble(),
+      appliedToClosureId: map['appliedToClosureId']?.toString(),
+      advanceReceiptId: map['advanceReceiptId']?.toString(),
     );
   }
 
@@ -259,7 +323,9 @@ class SaleRecord extends HiveObject {
   /// legacy writer only adds conditionally (`cancelledAt`, `restoredAt`,
   /// `restoredBy`) — and the new schema-only fields (`closureId`,
   /// `tipAmount`, `closedById`) — are likewise emitted only when set, so a
-  /// legacy record round-trips byte-for-byte.
+  /// legacy record round-trips byte-for-byte. `cancelledBy` and
+  /// `cancellationReason` follow the same rule — emitted only when the void
+  /// carried them.
   Map<String, dynamic> toMap() {
     return {
       'orderId': orderId,
@@ -283,11 +349,21 @@ class SaleRecord extends HiveObject {
       'date': businessDate,
       'isCancelled': isCancelled,
       if (cancelledAt != null) 'cancelledAt': cancelledAt!.toIso8601String(),
+      if (cancelledBy != null) 'cancelledBy': cancelledBy,
+      if (cancellationReason != null) 'cancellationReason': cancellationReason,
       'isFiscal': isFiscal,
       'restoredToOrder': restoredToOrder,
       if (restoredAt != null) 'restoredAt': restoredAt!.toIso8601String(),
       if (restoredBy != null) 'restoredBy': restoredBy,
       if (closureId != null) 'closureId': closureId,
+      // Emitted only when they carry information, so a record written before
+      // Phase 1B still round-trips byte-for-byte through this model.
+      if (recordType != recordTypeSale) 'recordType': recordType,
+      if (grossSaleAmount != null) 'grossSaleAmount': grossSaleAmount,
+      if (advanceApplied != 0.0) 'advanceApplied': advanceApplied,
+      if (collectedNow != null) 'collectedNow': collectedNow,
+      if (appliedToClosureId != null) 'appliedToClosureId': appliedToClosureId,
+      if (advanceReceiptId != null) 'advanceReceiptId': advanceReceiptId,
       if (tipAmount != 0.0) 'tipAmount': tipAmount,
       if (closedById != null) 'closedById': closedById,
     };

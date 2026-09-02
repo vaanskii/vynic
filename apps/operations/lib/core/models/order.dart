@@ -142,6 +142,27 @@ class Order extends HiveObject {
   @HiveField(22)
   String? closureId;
 
+  /// Money the guest paid before this order was closed — a reservation
+  /// deposit, typically.
+  ///
+  /// Held separately from [discountAmount] because the two are opposite
+  /// things that happened to share a field: a discount reduces what the guest
+  /// owes, an advance reduces only what is left to *collect*. Both subtract
+  /// from [totalAmount], but only the discount reduces the value of the sale.
+  /// Migration v6 moved every stored advance out of `discountAmount`.
+  @HiveField(23)
+  double advanceAmount;
+
+  /// The business date (`YYYY-MM-DD`) the advance was taken on, which is not
+  /// necessarily the date the order closes on.
+  @HiveField(24)
+  String? advanceCollectedOn;
+
+  /// Links to the advance receipt in the sales box, so the receipt can be
+  /// updated in place rather than duplicated when the amount is edited.
+  @HiveField(25)
+  String? advanceReceiptId;
+
   // Not persisted in Hive — populated from server for takeaway orders
   String customerName;
   String customerPhone;
@@ -173,6 +194,9 @@ class Order extends HiveObject {
     this.openedByUserId,
     this.customServiceFeePercentage,
     this.closureId,
+    this.advanceAmount = 0.0,
+    this.advanceCollectedOn,
+    this.advanceReceiptId,
     this.customerPhone = '',
     this.pickupTime = '',
     this.customerName = '',
@@ -203,6 +227,9 @@ class Order extends HiveObject {
       openedByUserId: openedByUserId,
       customServiceFeePercentage: customServiceFeePercentage,
       closureId: closureId,
+      advanceAmount: advanceAmount,
+      advanceCollectedOn: advanceCollectedOn,
+      advanceReceiptId: advanceReceiptId,
       customerPhone: customerPhone,
       pickupTime: pickupTime,
       customerName: customerName,
@@ -284,6 +311,9 @@ class Order extends HiveObject {
       'openedByUserId': openedByUserId,
       'customServiceFeePercentage': customServiceFeePercentage,
       'closureId': closureId,
+      'advanceAmount': advanceAmount,
+      'advanceCollectedOn': advanceCollectedOn,
+      'advanceReceiptId': advanceReceiptId,
     };
   }
 
@@ -303,8 +333,14 @@ class Order extends HiveObject {
     final serviceFee = includeServiceFee ? additionalItemsTotal * rate : 0.0;
 
     final beforeDiscount = packageTotal + additionalItemsTotal + serviceFee;
+    // The advance comes off the same way a discount does — it is money the
+    // guest no longer has to hand over — but it is subtracted from a separate
+    // field so the closure can put it back to reach the gross sale value.
     final adjustedTotal =
-        beforeDiscount - discountAmount + manualAdjustmentAmount;
+        beforeDiscount -
+        discountAmount -
+        effectiveAdvanceAmount +
+        manualAdjustmentAmount;
     totalAmount = double.parse(adjustedTotal.toStringAsFixed(2));
     if (totalAmount < 0) totalAmount = 0;
     packagePrice = double.parse(packageTotal.toStringAsFixed(2));
@@ -348,6 +384,21 @@ class Order extends HiveObject {
     return packagePrice;
   }
 
+  /// The advance on this order.
+  ///
+  /// Before v6 an advance was stored in `discountAmount` — the POS's advance
+  /// dialog was the only writer of that field, so every stored value was one.
+  /// The v6 migration moved them all across before any order is read, which
+  /// is why this does not fall back: a `discountAmount` surviving that
+  /// migration is a genuine discount and must not be added back to gross.
+  double get effectiveAdvanceAmount => advanceAmount;
+
+  /// What the guest consumed: the balance still due plus the advance already
+  /// taken. This is the value of the sale, and it does not move when a
+  /// deposit is collected earlier.
+  double get grossAmount =>
+      double.parse((totalAmount + effectiveAdvanceAmount).toStringAsFixed(2));
+
   // Toggle service fee
   void toggleServiceFee({double? serviceFeeRate}) {
     includeServiceFee = !includeServiceFee;
@@ -359,6 +410,30 @@ class Order extends HiveObject {
   // Set discount amount
   void setDiscount(double amount, {double? serviceFeeRate}) {
     discountAmount = amount;
+    recalculateTotal(serviceFeeRate: serviceFeeRate);
+    updatedAt = _resolveTimestamp();
+    save();
+  }
+
+  /// Sets the advance already collected against this order.
+  ///
+  /// [collectedOn] is the business date the money was taken, which the
+  /// closure needs because it is often not the date the order closes on.
+  void setAdvance(
+    double amount, {
+    required String collectedOn,
+    String? receiptId,
+    double? serviceFeeRate,
+  }) {
+    advanceAmount = double.parse(amount.toStringAsFixed(2));
+    if (advanceAmount <= 0) {
+      advanceAmount = 0.0;
+      advanceCollectedOn = null;
+      advanceReceiptId = null;
+    } else {
+      advanceCollectedOn = collectedOn;
+      advanceReceiptId = receiptId ?? advanceReceiptId;
+    }
     recalculateTotal(serviceFeeRate: serviceFeeRate);
     updatedAt = _resolveTimestamp();
     save();

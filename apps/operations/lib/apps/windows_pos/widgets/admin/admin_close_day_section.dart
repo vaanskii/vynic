@@ -228,6 +228,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
 
     var discountTotal = 0.0;
     var advanceTotal = 0.0;
+    var advanceReceivedTotal = 0.0;
     var serviceFeeOrders = 0;
     var nonFiscalTotal = 0.0;
     var nonFiscalCount = 0;
@@ -242,20 +243,33 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
         continue;
       }
 
+      // An advance receipt is money taken today against an order that has
+      // not closed yet. It is neither revenue nor an internal closure, so it
+      // gets its own line rather than being lumped in with either.
+      if (DatabaseService.saleIsAdvanceReceipt(sale)) {
+        advanceReceivedTotal +=
+            (sale['totalAmount'] as num?)?.toDouble() ?? 0.0;
+        continue;
+      }
+
       if (!_isFiscalSale(sale)) {
         nonFiscalCount++;
-        nonFiscalTotal += (sale['totalAmount'] as num?)?.toDouble() ?? 0.0;
+        nonFiscalTotal += DatabaseService.saleGrossOf(sale);
         continue;
       }
 
       activeCount++;
       discountTotal += (sale['discountAmount'] as num?)?.toDouble() ?? 0.0;
-      advanceTotal += (sale['advanceAmount'] as num?)?.toDouble() ?? 0.0;
+      advanceTotal += (sale['advanceApplied'] as num?)?.toDouble() ?? 0.0;
       if (sale['includeServiceFee'] == true) serviceFeeOrders++;
 
       final orderId = sale['orderId'] as int?;
       final breakdown = PaymentUtils.extractBreakdown(sale);
       breakdown.forEach((methodKey, amount) {
+        if (PaymentUtils.normalizeMethodKey(methodKey) ==
+            PaymentUtils.methodAdvance) {
+          return;
+        }
         switch (PaymentUtils.normalizeMethodKey(methodKey)) {
           case PaymentUtils.methodCardTbc:
           case PaymentUtils.methodCardLegacy:
@@ -280,7 +294,9 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
 
     return _DaySummary(
       businessDate: businessDate,
-      fiscalTotal: DatabaseService.getDailySalesTotal(),
+      fiscalTotal: DatabaseService.grossSalesTotalForDate(dateKey),
+      collectedTotal: DatabaseService.collectedTotalForDate(dateKey),
+      advanceReceivedTotal: advanceReceivedTotal,
       saleCount: activeCount,
       cash: cash,
       cardTbc: cardTbc,
@@ -400,8 +416,28 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
               '₾${s.discountTotal.toStringAsFixed(2)}',
             ),
             _buildSummaryLine(
-              'ავანსი',
+              'ავანსით დაფარული',
               '₾${s.advanceTotal.toStringAsFixed(2)}',
+            ),
+            if (s.advanceReceivedTotal > 0)
+              _buildSummaryLine(
+                'დღეს მიღებული ავანსი',
+                '₾${s.advanceReceivedTotal.toStringAsFixed(2)}',
+              ),
+            _buildSummaryLine(
+              'დღეს ინკასირებული',
+              '₾${s.collectedTotal.toStringAsFixed(2)}',
+            ),
+            // The identity the whole card rests on: what was tendered plus
+            // what an earlier deposit already covered equals the day's sales.
+            _buildSummaryLine(
+              'კონტროლი (ინკასო + ავანსი = გაყიდვები)',
+              (s.reconciledTotal - s.fiscalTotal).abs() <= 0.01
+                  ? 'OK · ₾${s.reconciledTotal.toStringAsFixed(2)}'
+                  : 'შეამოწმეთ · ₾${s.reconciledTotal.toStringAsFixed(2)}',
+              valueColor: (s.reconciledTotal - s.fiscalTotal).abs() <= 0.01
+                  ? AdminTones.successText
+                  : AdminTones.dangerText,
             ),
             _buildSummaryLine(
               'მომსახურების საფასურით',
@@ -1339,10 +1375,42 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
       final georgianDate = DatabaseService.getGeorgianFormattedDate(
         currentDate,
       );
-      final dailyTotal = DatabaseService.getDailySalesTotal();
       final dateString = currentDate.toIso8601String().split('T')[0];
       final rawSales = DatabaseService.getSalesForDate(dateString);
-      final sales = rawSales.where(_isFiscalSale).toList();
+      // This filtered on `isFiscal` alone, which let a voided sale and a sale
+      // restored back to an open table into the payment split and the order
+      // count while the headline total — which excludes both — did not move.
+      // That is the Z figure that read higher than the day's takings. It is
+      // now the same predicate the total uses.
+      final sales = rawSales
+          .where(DatabaseService.saleCountsAsRevenue)
+          .toList();
+      final dailyTotal = DatabaseService.grossSalesTotalForDate(dateString);
+      final collected = DatabaseService.collectedTotalForDate(dateString);
+      final advanceApplied = sales.fold<double>(
+        0,
+        (sum, sale) =>
+            sum + ((sale['advanceApplied'] as num?)?.toDouble() ?? 0.0),
+      );
+      final advancesTakenToday = rawSales
+          .where(DatabaseService.saleIsAdvanceReceipt)
+          .fold<double>(
+            0,
+            (sum, sale) =>
+                sum + ((sale['totalAmount'] as num?)?.toDouble() ?? 0.0),
+          );
+      final nonFiscalTotal = rawSales
+          .where(
+            (sale) =>
+                sale['isCancelled'] != true &&
+                sale['restoredToOrder'] != true &&
+                !DatabaseService.saleIsAdvanceReceipt(sale) &&
+                sale['isFiscal'] == false,
+          )
+          .fold<double>(
+            0,
+            (sum, sale) => sum + DatabaseService.saleGrossOf(sale),
+          );
       final allOrders = DatabaseService.getAllOrders();
       final closedOrders = allOrders
           .where((o) => o.status == 'closed')
@@ -1366,6 +1434,18 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
       report.writeln('შეკვეთების რაოდენობა: ${sales.length}');
       report.writeln('დახურული შეკვეთები: ${closedOrders.length}');
       report.writeln();
+      report.writeln('შეჯერება');
+      report.writeln('-----------------------------------');
+      report.writeln('ავანსით დაფარული: ₾${advanceApplied.toStringAsFixed(2)}');
+      report.writeln(
+        'დღეს მიღებული ავანსი: ₾${advancesTakenToday.toStringAsFixed(2)}',
+      );
+      report.writeln('დღეს ინკასირებული: ₾${collected.toStringAsFixed(2)}');
+      report.writeln(
+        'არაფისკალური დახურვები (ჯამში არ შედის): '
+        '₾${nonFiscalTotal.toStringAsFixed(2)}',
+      );
+      report.writeln();
 
       double cardTbcTotal = 0;
       double cardBogTotal = 0;
@@ -1383,6 +1463,9 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
 
         breakdown.forEach((methodKey, amount) {
           final normalized = PaymentUtils.normalizeMethodKey(methodKey);
+          // The applied advance is in the breakdown so it sums to gross, but
+          // it is not money taken at this table today.
+          if (normalized == PaymentUtils.methodAdvance) return;
           switch (normalized) {
             case PaymentUtils.methodCardTbc:
               cardTbcTotal += amount;
@@ -1445,6 +1528,10 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
       }
       report.writeln('===================================');
       report.writeln('სრული ჯამი: ₾${dailyTotal.toStringAsFixed(2)}');
+      report.writeln(
+        'კონტროლი: ნაღდი+ბარათი+სხვა+ავანსი = '
+        '₾${(cashTotal + totalCardAmount + otherTotal + advanceApplied).toStringAsFixed(2)}',
+      );
       report.writeln('===================================');
       report.writeln();
 
@@ -2401,6 +2488,8 @@ class _DaySummary {
     required this.nonFiscalTotal,
     required this.nonFiscalCount,
     required this.excludedCount,
+    required this.collectedTotal,
+    required this.advanceReceivedTotal,
   });
 
   final DateTime businessDate;
@@ -2430,10 +2519,23 @@ class _DaySummary {
   /// Cancelled or restored-to-order records, excluded from every figure above.
   final int excludedCount;
 
+  /// Money that actually changed hands today: the day's tenders plus advances
+  /// taken today, and not the advance applied to a sale closed today — that
+  /// was collected on an earlier day and counted there.
+  final double collectedTotal;
+
+  /// Deposits taken today against orders that have not closed yet.
+  final double advanceReceivedTotal;
+
   /// The split's own sum. Used for the share bar and the per-method
   /// percentages, so a rounding gap against [fiscalTotal] cannot push a
   /// percentage past 100.
   double get paymentTotal => cash + cardTbc + cardBog + other;
+
+  /// What the split has to add up to. Tender plus the advances already spent
+  /// against today's sales equals gross revenue — the identity the card's
+  /// reconciliation line states.
+  double get reconciledTotal => paymentTotal + advanceTotal;
 
   double get averageCheck => saleCount == 0 ? 0 : fiscalTotal / saleCount;
 }

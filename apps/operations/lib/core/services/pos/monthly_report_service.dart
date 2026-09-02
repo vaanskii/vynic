@@ -1,10 +1,10 @@
 import 'dart:io';
-import 'dart:math';
 import 'dart:typed_data';
 import 'package:excel/excel.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:vynic/core/utils/payment_utils.dart';
 
@@ -54,7 +54,7 @@ class MonthlyReportSummary {
     required this.averageTicket,
     required this.dailyAverageSales,
     required this.profitMarginPercent,
-    required this.manualSalesAdjustment,
+    required this.advanceApplied,
     required this.cashRevenue,
     required this.cardTbcRevenue,
     required this.cardBogRevenue,
@@ -78,7 +78,10 @@ class MonthlyReportSummary {
   final double averageTicket;
   final double dailyAverageSales;
   final double profitMarginPercent;
-  final double manualSalesAdjustment;
+
+  /// Part of [totalSales] that an earlier deposit already covered, so the
+  /// payment lines below plus this equal the total.
+  final double advanceApplied;
   final double cashRevenue;
   final double cardTbcRevenue;
   final double cardBogRevenue;
@@ -88,7 +91,35 @@ class MonthlyReportService {
   MonthlyReportService._();
 
   static const _currencySymbol = '₾';
-  static const _officialRestaurantName = 'რესტორანი ვანკისი';
+
+  /// Printed where a report has a field the venue has not filled in.
+  ///
+  /// The alternative — a plausible-looking placeholder — is worse: a report is
+  /// read as a statement about a specific business, and an invented value
+  /// makes a false one.
+  static const _unconfigured = 'არ არის კონფიგურირებული';
+
+  /// Whose report this is. Resolved from the venue's own settings, not a
+  /// constant: these were literals naming the first customer, so any second
+  /// venue's export carried that restaurant's name and identification code.
+  @visibleForTesting
+  static String Function() venueNameResolver = () =>
+      DatabaseService.getVenueName();
+
+  @visibleForTesting
+  static String Function() venueLegalIdResolver = () =>
+      DatabaseService.getVenueLegalId();
+
+  static String get _reportVenueName {
+    final name = venueNameResolver().trim();
+    return name.isEmpty ? _unconfigured : name;
+  }
+
+  static String get _reportLegalId {
+    final legalId = venueLegalIdResolver().trim();
+    return legalId.isEmpty ? _unconfigured : legalId;
+  }
+
   static pw.Font? _pdfFontCache;
   static final _currencyFormat = NumberFormat.currency(
     locale: 'ka_GE',
@@ -141,7 +172,6 @@ class MonthlyReportService {
     MonthlyReportConfig? overrideConfig,
     DateTime? periodStart,
     DateTime? periodEnd,
-    double manualSalesAdjustment = 0.0,
   }) {
     final config = overrideConfig ?? getConfig();
 
@@ -181,23 +211,26 @@ class MonthlyReportService {
       periodEnd: endBoundary,
     );
 
-    final calculatedSales = _roundCurrency(
-      relevantSales.fold<double>(0.0, (sum, sale) {
-        final totalAmount = _parseAmount(sale['totalAmount'] ?? sale['total']);
-        return sum + totalAmount;
-      }),
+    final totalSales = _roundCurrency(
+      relevantSales.fold<double>(
+        0.0,
+        (sum, sale) => sum + DatabaseService.saleGrossOf(sale),
+      ),
     );
-    final manualSales = _roundCurrency(
-      manualSalesAdjustment < 0 ? 0 : manualSalesAdjustment,
-    );
-    final totalSales = _roundCurrency(calculatedSales + manualSales);
     double cashRevenue = 0.0;
     double cardTbcRevenue = 0.0;
     double cardBogRevenue = 0.0;
+    double advanceApplied = 0.0;
     for (final sale in relevantSales) {
       final breakdown = PaymentUtils.extractBreakdown(sale);
       breakdown.forEach((rawKey, amount) {
         final key = PaymentUtils.normalizeMethodKey(rawKey);
+        if (key == PaymentUtils.methodAdvance) {
+          // Covered by a deposit taken on some earlier day. Part of the sale,
+          // not of this period's takings.
+          advanceApplied += amount;
+          return;
+        }
         if (key == PaymentUtils.methodCash) {
           cashRevenue += amount;
         } else if (key == PaymentUtils.methodCardTbc) {
@@ -207,7 +240,8 @@ class MonthlyReportService {
         }
       });
     }
-    cashRevenue = _roundCurrency(cashRevenue + manualSales);
+    cashRevenue = _roundCurrency(cashRevenue);
+    advanceApplied = _roundCurrency(advanceApplied);
     cardTbcRevenue = _roundCurrency(cardTbcRevenue);
     cardBogRevenue = _roundCurrency(cardBogRevenue);
 
@@ -218,20 +252,11 @@ class MonthlyReportService {
     final leaseCost = _roundCurrency(config.leaseCost);
     final operatingCost = _roundCurrency(foodCost + staffCost + leaseCost);
     final netProfit = _roundCurrency(foodProfit - leaseCost - staffCost);
-    final manualEntries = _generateManualSalesEntries(
-      year: year,
-      month: month,
-      periodStart: startBoundary,
-      periodEnd: endBoundary,
-      manualSalesAmount: manualSales,
-    );
-    final realTransactionCount = relevantSales.length;
-    final effectiveTransactionCount =
-        realTransactionCount + manualEntries.length;
+    final transactionCount = relevantSales.length;
 
-    final averageTicket = effectiveTransactionCount <= 0
+    final averageTicket = transactionCount <= 0
         ? 0.0
-        : _roundCurrency(totalSales / effectiveTransactionCount);
+        : _roundCurrency(totalSales / transactionCount);
     final dailyAverageSales = daysInPeriod <= 0
         ? 0.0
         : _roundCurrency(totalSales / daysInPeriod);
@@ -252,13 +277,13 @@ class MonthlyReportService {
       staffCost: staffCost,
       leaseCost: leaseCost,
       netProfit: netProfit,
-      transactionCount: effectiveTransactionCount,
+      transactionCount: transactionCount,
       profitRatio: profitRatio,
       operatingCost: operatingCost,
       averageTicket: averageTicket,
       dailyAverageSales: dailyAverageSales,
       profitMarginPercent: profitMarginPercent,
-      manualSalesAdjustment: manualSales,
+      advanceApplied: advanceApplied,
       cashRevenue: cashRevenue,
       cardTbcRevenue: cardTbcRevenue,
       cardBogRevenue: cardBogRevenue,
@@ -271,7 +296,6 @@ class MonthlyReportService {
     MonthlyReportConfig? overrideConfig,
     DateTime? periodStart,
     DateTime? periodEnd,
-    double manualSalesAdjustment = 0.0,
   }) async {
     final reportsDir = Directory(
       '${DatabaseService.getDataDirectoryPath()}/reports',
@@ -286,7 +310,6 @@ class MonthlyReportService {
       overrideConfig: overrideConfig,
       periodStart: periodStart,
       periodEnd: periodEnd,
-      manualSalesAdjustment: manualSalesAdjustment,
     );
 
     final fileName =
@@ -298,7 +321,6 @@ class MonthlyReportService {
       overrideConfig: overrideConfig,
       periodStart: periodStart,
       periodEnd: periodEnd,
-      manualSalesAdjustment: manualSalesAdjustment,
     );
     await file.writeAsBytes(bytes, flush: true);
     return file;
@@ -310,7 +332,6 @@ class MonthlyReportService {
     MonthlyReportConfig? overrideConfig,
     DateTime? periodStart,
     DateTime? periodEnd,
-    double manualSalesAdjustment = 0.0,
   }) {
     final summary = calculateSummary(
       year: year,
@@ -318,7 +339,6 @@ class MonthlyReportService {
       overrideConfig: overrideConfig,
       periodStart: periodStart,
       periodEnd: periodEnd,
-      manualSalesAdjustment: manualSalesAdjustment,
     );
 
     final excel = Excel.createExcel();
@@ -332,31 +352,25 @@ class MonthlyReportService {
     }
 
     final generatedAt = DateTime.now();
-    final legalId = '436687168';
+    final legalId = _reportLegalId;
     final details = _collectRelevantSales(
       year: summary.year,
       month: summary.month,
       periodStart: summary.periodStart,
       periodEnd: summary.periodEnd,
     );
-    final manualDetails = _generateManualSalesEntries(
-      year: summary.year,
-      month: summary.month,
-      periodStart: summary.periodStart,
-      periodEnd: summary.periodEnd,
-      manualSalesAmount: summary.manualSalesAdjustment,
-    );
     final paymentReconciliationDiff = _roundCurrency(
       summary.totalSales -
           (summary.cashRevenue +
               summary.cardTbcRevenue +
-              summary.cardBogRevenue),
+              summary.cardBogRevenue +
+              summary.advanceApplied),
     );
     final paymentReconciliationStatus = paymentReconciliationDiff.abs() <= 0.01
         ? 'OK'
         : 'CHECK';
 
-    addRow([_officialRestaurantName, '']);
+    addRow([_reportVenueName, '']);
     addRow([
       'ოფიციალური თვიური ფინანსური ანგარიში',
       _formatMonthLabel(summary.year, summary.month),
@@ -374,9 +388,13 @@ class MonthlyReportService {
     addRow(['ნაღდი (Cash)', _currencyFormat.format(summary.cashRevenue)]);
     addRow(['ბარათი (TBC)', _currencyFormat.format(summary.cardTbcRevenue)]);
     addRow(['ბარათი (BOG)', _currencyFormat.format(summary.cardBogRevenue)]);
+    addRow([
+      'ავანსით დაფარული',
+      _currencyFormat.format(summary.advanceApplied),
+    ]);
     addRow(['ჯამი (Total)', _currencyFormat.format(summary.totalSales)]);
     addRow([
-      'კონტროლი (Cash+Card = Total)',
+      'კონტროლი (Cash+Card+ავანსი = Total)',
       '$paymentReconciliationStatus (${_currencyFormat.format(paymentReconciliationDiff)})',
     ]);
     addRow(['']);
@@ -412,7 +430,7 @@ class MonthlyReportService {
     _setBasicStyles(sheet: sheet, headerRows: const {1, 7, 17, 29});
     _buildTransactionsSheet(
       detailsSheet: detailsSheet,
-      details: <Map<String, dynamic>>[...details, ...manualDetails],
+      details: details,
       title: 'ტრანზაქციების დეტალი (თვიური)',
     );
 
@@ -426,7 +444,6 @@ class MonthlyReportService {
   static Uint8List buildFullReportXlsxBytes({
     required List<DateTime> months,
     required MonthlyReportConfig config,
-    required Map<String, double> manualSalesByMonth,
     required Map<String, double> leaseByMonth,
     required Map<String, double> staffDailyByMonth,
     Map<String, DateTime>? periodEndByMonth,
@@ -445,9 +462,9 @@ class MonthlyReportService {
     }
 
     final generatedAt = DateTime.now();
-    final legalId = '436687168';
+    final legalId = _reportLegalId;
     final allDetailSales = <Map<String, dynamic>>[];
-    addRow([_officialRestaurantName, '']);
+    addRow([_reportVenueName, '']);
     addRow(['ოფიციალური სრული ფინანსური ანგარიში', '']);
     addRow(['რეპორტის თარიღი', _formatDateLabel(generatedAt)]);
     addRow(['გენერაციის დრო', DateFormat('HH:mm').format(generatedAt)]);
@@ -488,7 +505,6 @@ class MonthlyReportService {
 
     for (final m in normalizedMonths) {
       final key = '${m.year}-${m.month.toString().padLeft(2, '0')}';
-      final manual = manualSalesByMonth[key] ?? 0.0;
       final monthConfig = config.copyWith(
         leaseCost: leaseByMonth[key] ?? config.leaseCost,
         staffDailyCost: staffDailyByMonth[key] ?? config.staffDailyCost,
@@ -507,22 +523,13 @@ class MonthlyReportService {
         overrideConfig: monthConfig,
         periodStart: periodStart,
         periodEnd: periodEnd,
-        manualSalesAdjustment: manual,
       );
-      final details = _collectRelevantSales(
-        year: m.year,
-        month: m.month,
-        periodStart: periodStart,
-        periodEnd: periodEnd,
-      );
-      allDetailSales.addAll(details);
       allDetailSales.addAll(
-        _generateManualSalesEntries(
+        _collectRelevantSales(
           year: m.year,
           month: m.month,
           periodStart: periodStart,
           periodEnd: periodEnd,
-          manualSalesAmount: manual,
         ),
       );
 
@@ -619,7 +626,13 @@ class MonthlyReportService {
   }) {
     final allSales = DatabaseService.getAllSales();
     return allSales.where((sale) {
-      if (sale['isCancelled'] == true) return false;
+      // This filtered on `isCancelled` alone, so an internal (non-fiscal)
+      // closure, a sale restored to an open table, and — once advances got
+      // their own records — a deposit receipt all counted as revenue in the
+      // "official" monthly report, while the daily and Z figures excluded
+      // them. Money explicitly kept out of revenue must not walk back in
+      // through a different summary.
+      if (!DatabaseService.saleCountsAsRevenue(sale)) return false;
       final closedAtRaw = sale['closedAt'] as String?;
       final dateRaw = sale['date'] as String?;
       DateTime? closedAt = closedAtRaw != null
@@ -635,105 +648,6 @@ class MonthlyReportService {
       if (closedDate.isAfter(periodEnd)) return false;
       return true;
     }).toList();
-  }
-
-  static List<Map<String, dynamic>> _generateManualSalesEntries({
-    required int year,
-    required int month,
-    required DateTime periodStart,
-    required DateTime periodEnd,
-    required double manualSalesAmount,
-  }) {
-    final total = _roundCurrency(manualSalesAmount);
-    if (total <= 0) return <Map<String, dynamic>>[];
-
-    final existingSales = _collectRelevantSales(
-      year: year,
-      month: month,
-      periodStart: periodStart,
-      periodEnd: periodEnd,
-    );
-    final existingNumericIds = existingSales
-        .map((e) => int.tryParse((e['orderId'] ?? e['id'] ?? '').toString()))
-        .whereType<int>()
-        .toList();
-    final baseOrderId = existingNumericIds.isEmpty
-        ? (year % 100) * 10000 + month * 100
-        : existingNumericIds.reduce(max);
-
-    const minChunk = 1750.0;
-    final chunks = <double>[];
-    if (total <= minChunk) {
-      chunks.add(total);
-    } else {
-      double remaining = total;
-      int index = 0;
-      while (remaining > 0.009) {
-        index++;
-        if (remaining <= minChunk) {
-          chunks.add(_roundCurrency(remaining));
-          break;
-        }
-        if (remaining <= minChunk * 2) {
-          final seed =
-              year * 100000 + month * 1000 + index * 113 + total.round();
-          final rng = Random(seed);
-          final ratio = 0.42 + (rng.nextDouble() * 0.16); // 42%..58%
-          final first = _roundCurrency(remaining * ratio);
-          final second = _roundCurrency(remaining - first);
-          chunks.add(first);
-          chunks.add(second);
-          break;
-        }
-
-        final seed = year * 100000 + month * 1000 + index * 97 + total.round();
-        final rng = Random(seed);
-        final upper = min(remaining - minChunk, minChunk * 2.4);
-        var next = _roundCurrency(
-          minChunk + rng.nextDouble() * (upper - minChunk),
-        );
-        // Avoid suspicious round numbers like 2000.00/3000.00.
-        if (next % 1000 == 0 || next % 500 == 0) {
-          next = _roundCurrency(next + 0.37);
-        }
-        chunks.add(next);
-        remaining = _roundCurrency(remaining - next);
-      }
-    }
-
-    final rows = <Map<String, dynamic>>[];
-    final span = max(1, periodEnd.difference(periodStart).inDays + 1);
-    for (int i = 0; i < chunks.length; i++) {
-      final amount = chunks[i];
-      final dt = DateTime(
-        periodStart.year,
-        periodStart.month,
-        periodStart.day,
-      ).add(Duration(days: i % span, hours: 12, minutes: 10 + (i % 40)));
-      final id = (baseOrderId + i + 1).toString();
-      rows.add({
-        'orderId': id,
-        'closedAt': dt.toIso8601String(),
-        'totalAmount': amount,
-        'paymentBreakdown': {'cash': amount},
-      });
-    }
-
-    final sum = _roundCurrency(
-      rows.fold<double>(
-        0.0,
-        (acc, row) => acc + _parseAmount(row['totalAmount']),
-      ),
-    );
-    final diff = _roundCurrency(total - sum);
-    if (rows.isNotEmpty && diff.abs() > 0) {
-      final last = rows.last;
-      final adjusted = _roundCurrency(_parseAmount(last['totalAmount']) + diff);
-      last['totalAmount'] = adjusted;
-      last['paymentBreakdown'] = {'cash': adjusted};
-    }
-
-    return rows;
   }
 
   static void _setBasicStyles({
@@ -888,7 +802,6 @@ class MonthlyReportService {
     MonthlyReportConfig? overrideConfig,
     DateTime? periodStart,
     DateTime? periodEnd,
-    double manualSalesAdjustment = 0.0,
   }) async {
     final summary = calculateSummary(
       year: year,
@@ -896,20 +809,12 @@ class MonthlyReportService {
       overrideConfig: overrideConfig,
       periodStart: periodStart,
       periodEnd: periodEnd,
-      manualSalesAdjustment: manualSalesAdjustment,
     );
     final details = _collectRelevantSales(
       year: summary.year,
       month: summary.month,
       periodStart: summary.periodStart,
       periodEnd: summary.periodEnd,
-    );
-    final manualDetails = _generateManualSalesEntries(
-      year: summary.year,
-      month: summary.month,
-      periodStart: summary.periodStart,
-      periodEnd: summary.periodEnd,
-      manualSalesAmount: summary.manualSalesAdjustment,
     );
     final pdfFont = await _loadPdfFont();
     final doc = pw.Document();
@@ -925,7 +830,7 @@ class MonthlyReportService {
         ),
         build: (context) => [
           pw.Text(
-            _officialRestaurantName,
+            _reportVenueName,
             style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 4),
@@ -934,7 +839,7 @@ class MonthlyReportService {
             style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 8),
-          _pdfKeyValue('საიდენტიფიკაციო კოდი', '436687168'),
+          _pdfKeyValue('საიდენტიფიკაციო კოდი', _reportLegalId),
           _pdfKeyValue(
             'პერიოდი',
             '${_formatDateLabel(summary.periodStart)} - ${_formatDateLabel(summary.periodEnd)}',
@@ -981,28 +886,19 @@ class MonthlyReportService {
           pw.SizedBox(height: 6),
           pw.TableHelper.fromTextArray(
             headers: const ['შეკვეთის/ინვოისის ID', 'თარიღი', 'ჯამი'],
-            data:
-                _sortSalesByClosedAtDesc(<Map<String, dynamic>>[
-                  ...details,
-                  ...manualDetails,
-                ]).map((sale) {
-                  final orderId = _formatDisplayInvoiceId(sale);
-                  final raw = (sale['closedAt'] ?? sale['date'] ?? '')
-                      .toString();
-                  final dt = DateTime.tryParse(
-                    raw.contains('T') ? raw : '${raw}T00:00:00',
-                  );
-                  final total = _parseAmount(
-                    sale['totalAmount'] ?? sale['total'],
-                  );
-                  return [
-                    orderId,
-                    dt == null
-                        ? '-'
-                        : DateFormat('yyyy-MM-dd HH:mm').format(dt),
-                    _currencyFormat.format(_roundCurrency(total)),
-                  ];
-                }).toList(),
+            data: _sortSalesByClosedAtDesc(details).map((sale) {
+              final orderId = _formatDisplayInvoiceId(sale);
+              final raw = (sale['closedAt'] ?? sale['date'] ?? '').toString();
+              final dt = DateTime.tryParse(
+                raw.contains('T') ? raw : '${raw}T00:00:00',
+              );
+              final total = _parseAmount(sale['totalAmount'] ?? sale['total']);
+              return [
+                orderId,
+                dt == null ? '-' : DateFormat('yyyy-MM-dd HH:mm').format(dt),
+                _currencyFormat.format(_roundCurrency(total)),
+              ];
+            }).toList(),
           ),
         ],
       ),
@@ -1013,7 +909,6 @@ class MonthlyReportService {
   static Future<Uint8List> buildFullReportPdfBytes({
     required List<DateTime> months,
     required MonthlyReportConfig config,
-    required Map<String, double> manualSalesByMonth,
     required Map<String, double> leaseByMonth,
     required Map<String, double> staffDailyByMonth,
     Map<String, DateTime>? periodEndByMonth,
@@ -1044,7 +939,6 @@ class MonthlyReportService {
         overrideConfig: monthConfig,
         periodStart: periodStart,
         periodEnd: periodEnd,
-        manualSalesAdjustment: manualSalesByMonth[key] ?? 0.0,
       );
       if (summary.totalSales <= 0) continue;
       rows.add([
@@ -1064,15 +958,6 @@ class MonthlyReportService {
           periodEnd: periodEnd,
         ),
       );
-      details.addAll(
-        _generateManualSalesEntries(
-          year: m.year,
-          month: m.month,
-          periodStart: periodStart,
-          periodEnd: periodEnd,
-          manualSalesAmount: manualSalesByMonth[key] ?? 0.0,
-        ),
-      );
     }
 
     final pdfFont = await _loadPdfFont();
@@ -1089,7 +974,7 @@ class MonthlyReportService {
         ),
         build: (context) => [
           pw.Text(
-            _officialRestaurantName,
+            _reportVenueName,
             style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 4),
@@ -1098,7 +983,7 @@ class MonthlyReportService {
             style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 8),
-          _pdfKeyValue('საიდენტიფიკაციო კოდი', '436687168'),
+          _pdfKeyValue('საიდენტიფიკაციო კოდი', _reportLegalId),
           _pdfKeyValue(
             'პერიოდი',
             normalizedMonths.isEmpty

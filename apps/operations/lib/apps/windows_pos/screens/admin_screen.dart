@@ -37,6 +37,7 @@ import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/core/services/pos/pos_display_settings_controller.dart';
 import 'package:vynic/core/services/pos/monthly_report_service.dart';
 import 'package:vynic/core/services/sync/manager_sync_service.dart';
+import 'package:vynic/core/services/audit/money_audit.dart';
 import 'package:vynic/core/services/security/developer_access.dart';
 
 class AdminScreen extends StatefulWidget {
@@ -122,8 +123,6 @@ class _AdminScreenState extends State<AdminScreen> {
   final TextEditingController _monthlyReportLeaseController =
       TextEditingController();
   final TextEditingController _monthlyReportStaffDailyController =
-      TextEditingController();
-  final TextEditingController _monthlyReportManualSalesController =
       TextEditingController();
 
   bool _serviceFeeEnabledByDefault = false;
@@ -253,7 +252,6 @@ class _AdminScreenState extends State<AdminScreen> {
     _cancellationPasswordHintController.dispose();
     _monthlyReportLeaseController.dispose();
     _monthlyReportStaffDailyController.dispose();
-    _monthlyReportManualSalesController.dispose();
     super.dispose();
   }
 
@@ -306,13 +304,12 @@ class _AdminScreenState extends State<AdminScreen> {
       _selectedMonthlyReportMonth,
       12,
     );
-    _syncMonthlyManualSalesField();
     _refreshMonthlyReportPreview();
     _initializeFullReportState();
   }
 
   void _initializeFullReportState() {
-    // Build month options from sales history + manual adjustments.
+    // Build month options from sales history + cost overrides.
     final months = <DateTime>{};
     for (final sale in DatabaseService.getAllSales()) {
       final closedAtRaw = sale['closedAt'] as String?;
@@ -324,13 +321,9 @@ class _AdminScreenState extends State<AdminScreen> {
         months.add(DateTime(dt.year, dt.month));
       }
     }
-    // Also include months with manual sales even if there are no sales.
+    // Also include months carrying a cost override even if they have no sales.
     for (var y = DateTime.now().year - 3; y <= DateTime.now().year + 1; y++) {
       for (var m = 1; m <= 12; m++) {
-        final manual = DatabaseService.getMonthlyReportManualSalesForMonth(
-          y,
-          m,
-        );
         final leaseOverride =
             DatabaseService.getMonthlyReportLeaseCostOverrideForMonth(y, m);
         final staffOverride =
@@ -338,7 +331,7 @@ class _AdminScreenState extends State<AdminScreen> {
               y,
               m,
             );
-        if (manual > 0 || leaseOverride != null || staffOverride != null) {
+        if (leaseOverride != null || staffOverride != null) {
           months.add(DateTime(y, m));
         }
       }
@@ -397,10 +390,6 @@ class _AdminScreenState extends State<AdminScreen> {
     final previews = <MonthlyReportSummary>[];
     double totalAll = 0;
     for (final m in rangeMonths) {
-      final manual = DatabaseService.getMonthlyReportManualSalesForMonth(
-        m.year,
-        m.month,
-      );
       final leaseOverride =
           DatabaseService.getMonthlyReportLeaseCostOverrideForMonth(
             m.year,
@@ -421,7 +410,6 @@ class _AdminScreenState extends State<AdminScreen> {
         overrideConfig: monthConfig,
         periodStart: _monthPeriodStart(m),
         periodEnd: _monthPeriodEnd(m),
-        manualSalesAdjustment: manual,
       );
       if (summary.totalSales <= 0) continue; // hide 0 months
       previews.add(summary);
@@ -432,19 +420,19 @@ class _AdminScreenState extends State<AdminScreen> {
     if (mounted) setState(() {});
   }
 
-  Future<Map<String, Map<String, double>>?> _promptManualSalesForMonths(
+  /// Per-month lease and staff-cost assumptions for the full report.
+  ///
+  /// These are the operator's estimates, not measured cost, and the report's
+  /// whole expense side derives from them — so every change is written to the
+  /// audit log with what the value was before.
+  Future<Map<String, Map<String, double>>?> _promptMonthlyCostOverrides(
     List<DateTime> months,
     MonthlyReportConfig config,
   ) async {
-    final manualControllers = <String, TextEditingController>{};
     final leaseControllers = <String, TextEditingController>{};
     final staffControllers = <String, TextEditingController>{};
     for (final m in months) {
       final key = '${m.year}-${m.month.toString().padLeft(2, '0')}';
-      final existing = DatabaseService.getMonthlyReportManualSalesForMonth(
-        m.year,
-        m.month,
-      );
       final leaseOverride =
           DatabaseService.getMonthlyReportLeaseCostOverrideForMonth(
             m.year,
@@ -455,9 +443,6 @@ class _AdminScreenState extends State<AdminScreen> {
             m.year,
             m.month,
           );
-      manualControllers[key] = TextEditingController(
-        text: _formatMoneyField(existing),
-      );
       leaseControllers[key] = TextEditingController(
         text: _formatMoneyField(leaseOverride ?? config.leaseCost),
       );
@@ -482,11 +467,6 @@ class _AdminScreenState extends State<AdminScreen> {
                       ...months.map((m) {
                         final key =
                             '${m.year}-${m.month.toString().padLeft(2, '0')}';
-                        final manual =
-                            _tryParseMoney(
-                              manualControllers[key]?.text ?? '',
-                            ) ??
-                            0.0;
                         final lease =
                             _tryParseMoney(leaseControllers[key]?.text ?? '') ??
                             config.leaseCost;
@@ -503,7 +483,6 @@ class _AdminScreenState extends State<AdminScreen> {
                           overrideConfig: monthConfig,
                           periodStart: _monthPeriodStart(m),
                           periodEnd: _monthPeriodEnd(m),
-                          manualSalesAdjustment: manual,
                         );
                         final isProfit = summary.netProfit >= 0;
                         return Padding(
@@ -511,17 +490,10 @@ class _AdminScreenState extends State<AdminScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              TextField(
-                                controller: manualControllers[key],
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                      decimal: true,
-                                    ),
-                                onChanged: (_) => setLocalState(() {}),
-                                decoration: InputDecoration(
-                                  labelText:
-                                      '${_getGeorgianMonthName(m.month)} ${m.year} (Cash-ში დაემატება)',
-                                  border: const OutlineInputBorder(),
+                              Text(
+                                '${_getGeorgianMonthName(m.month)} ${m.year}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                               const SizedBox(height: 6),
@@ -584,15 +556,11 @@ class _AdminScreenState extends State<AdminScreen> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    final manualMap = <String, double>{};
                     final leaseMap = <String, double>{};
                     final staffMap = <String, double>{};
                     for (final m in months) {
                       final key =
                           '${m.year}-${m.month.toString().padLeft(2, '0')}';
-                      manualMap[key] =
-                          _tryParseMoney(manualControllers[key]?.text ?? '') ??
-                          0.0;
                       leaseMap[key] =
                           _tryParseMoney(leaseControllers[key]?.text ?? '') ??
                           config.leaseCost;
@@ -600,11 +568,7 @@ class _AdminScreenState extends State<AdminScreen> {
                           _tryParseMoney(staffControllers[key]?.text ?? '') ??
                           config.staffDailyCost;
                     }
-                    Navigator.pop(ctx, {
-                      'manual': manualMap,
-                      'lease': leaseMap,
-                      'staff': staffMap,
-                    });
+                    Navigator.pop(ctx, {'lease': leaseMap, 'staff': staffMap});
                   },
                   child: const Text('შენახვა'),
                 ),
@@ -614,9 +578,6 @@ class _AdminScreenState extends State<AdminScreen> {
         );
       },
     );
-    for (final c in manualControllers.values) {
-      c.dispose();
-    }
     for (final c in leaseControllers.values) {
       c.dispose();
     }
@@ -624,6 +585,52 @@ class _AdminScreenState extends State<AdminScreen> {
       c.dispose();
     }
     return result;
+  }
+
+  /// Writes the per-month cost overrides and records what changed.
+  Future<void> _persistMonthlyCostOverrides(
+    List<DateTime> rangeMonths,
+    Map<String, Map<String, double>> payload,
+  ) async {
+    final leaseMap = payload['lease'] ?? <String, double>{};
+    final staffMap = payload['staff'] ?? <String, double>{};
+    for (final m in rangeMonths) {
+      final key = '${m.year}-${m.month.toString().padLeft(2, '0')}';
+      final previousLease =
+          DatabaseService.getMonthlyReportLeaseCostOverrideForMonth(
+            m.year,
+            m.month,
+          );
+      final previousStaff =
+          DatabaseService.getMonthlyReportStaffDailyCostOverrideForMonth(
+            m.year,
+            m.month,
+          );
+      await DatabaseService.setMonthlyReportLeaseCostOverrideForMonth(
+        m.year,
+        m.month,
+        leaseMap[key],
+      );
+      await DatabaseService.setMonthlyReportStaffDailyCostOverrideForMonth(
+        m.year,
+        m.month,
+        staffMap[key],
+      );
+      await MoneyAudit.reportCostAssumptionChanged(
+        actorId: widget.user.username,
+        field: 'leaseCost',
+        scope: key,
+        previousValue: previousLease,
+        newValue: leaseMap[key],
+      );
+      await MoneyAudit.reportCostAssumptionChanged(
+        actorId: widget.user.username,
+        field: 'staffDailyCost',
+        scope: key,
+        previousValue: previousStaff,
+        newValue: staffMap[key],
+      );
+    }
   }
 
   Future<void> _generateFullReportXlsx() async {
@@ -647,31 +654,9 @@ class _AdminScreenState extends State<AdminScreen> {
       setState(() => _isGeneratingFullReport = true);
     }
     try {
-      final payload = await _promptManualSalesForMonths(rangeMonths, config);
+      final payload = await _promptMonthlyCostOverrides(rangeMonths, config);
       if (payload == null) return;
-      final manualMap = payload['manual'] ?? <String, double>{};
-      final leaseMap = payload['lease'] ?? <String, double>{};
-      final staffMap = payload['staff'] ?? <String, double>{};
-
-      // Persist manual per month.
-      for (final m in rangeMonths) {
-        final key = '${m.year}-${m.month.toString().padLeft(2, '0')}';
-        await DatabaseService.setMonthlyReportManualSalesForMonth(
-          m.year,
-          m.month,
-          manualMap[key] ?? 0.0,
-        );
-        await DatabaseService.setMonthlyReportLeaseCostOverrideForMonth(
-          m.year,
-          m.month,
-          leaseMap[key],
-        );
-        await DatabaseService.setMonthlyReportStaffDailyCostOverrideForMonth(
-          m.year,
-          m.month,
-          staffMap[key],
-        );
-      }
+      await _persistMonthlyCostOverrides(rangeMonths, payload);
 
       final String? outputPath = await FilePicker.platform.saveFile(
         dialogTitle: 'შეინახეთ სრული ანგარიში (XLSX)',
@@ -682,17 +667,11 @@ class _AdminScreenState extends State<AdminScreen> {
       );
       if (outputPath == null) return;
 
-      final manualByMonth = <String, double>{};
       final leaseByMonth = <String, double>{};
       final staffByMonth = <String, double>{};
       final periodEndByMonth = <String, DateTime>{};
       for (final m in rangeMonths) {
         final key = '${m.year}-${m.month.toString().padLeft(2, '0')}';
-        manualByMonth[key] =
-            DatabaseService.getMonthlyReportManualSalesForMonth(
-              m.year,
-              m.month,
-            );
         leaseByMonth[key] =
             DatabaseService.getMonthlyReportLeaseCostOverrideForMonth(
               m.year,
@@ -710,7 +689,6 @@ class _AdminScreenState extends State<AdminScreen> {
       final bytes = MonthlyReportService.buildFullReportXlsxBytes(
         months: rangeMonths,
         config: config,
-        manualSalesByMonth: manualByMonth,
         leaseByMonth: leaseByMonth,
         staffDailyByMonth: staffByMonth,
         periodEndByMonth: periodEndByMonth,
@@ -753,30 +731,9 @@ class _AdminScreenState extends State<AdminScreen> {
       setState(() => _isGeneratingFullReport = true);
     }
     try {
-      final payload = await _promptManualSalesForMonths(rangeMonths, config);
+      final payload = await _promptMonthlyCostOverrides(rangeMonths, config);
       if (payload == null) return;
-      final manualMap = payload['manual'] ?? <String, double>{};
-      final leaseMap = payload['lease'] ?? <String, double>{};
-      final staffMap = payload['staff'] ?? <String, double>{};
-
-      for (final m in rangeMonths) {
-        final key = '${m.year}-${m.month.toString().padLeft(2, '0')}';
-        await DatabaseService.setMonthlyReportManualSalesForMonth(
-          m.year,
-          m.month,
-          manualMap[key] ?? 0.0,
-        );
-        await DatabaseService.setMonthlyReportLeaseCostOverrideForMonth(
-          m.year,
-          m.month,
-          leaseMap[key],
-        );
-        await DatabaseService.setMonthlyReportStaffDailyCostOverrideForMonth(
-          m.year,
-          m.month,
-          staffMap[key],
-        );
-      }
+      await _persistMonthlyCostOverrides(rangeMonths, payload);
 
       final String? outputPath = await FilePicker.platform.saveFile(
         dialogTitle: 'შეინახეთ სრული ანგარიში (PDF)',
@@ -787,17 +744,11 @@ class _AdminScreenState extends State<AdminScreen> {
       );
       if (outputPath == null) return;
 
-      final manualByMonth = <String, double>{};
       final leaseByMonth = <String, double>{};
       final staffByMonth = <String, double>{};
       final periodEndByMonth = <String, DateTime>{};
       for (final m in rangeMonths) {
         final key = '${m.year}-${m.month.toString().padLeft(2, '0')}';
-        manualByMonth[key] =
-            DatabaseService.getMonthlyReportManualSalesForMonth(
-              m.year,
-              m.month,
-            );
         leaseByMonth[key] =
             DatabaseService.getMonthlyReportLeaseCostOverrideForMonth(
               m.year,
@@ -816,7 +767,6 @@ class _AdminScreenState extends State<AdminScreen> {
       final bytes = await MonthlyReportService.buildFullReportPdfBytes(
         months: rangeMonths,
         config: config,
-        manualSalesByMonth: manualByMonth,
         leaseByMonth: leaseByMonth,
         staffDailyByMonth: staffByMonth,
         periodEndByMonth: periodEndByMonth,
@@ -836,15 +786,6 @@ class _AdminScreenState extends State<AdminScreen> {
         setState(() => _isGeneratingFullReport = false);
       }
     }
-  }
-
-  void _syncMonthlyManualSalesField() {
-    final month = _selectedMonthlyReportMonth;
-    final amount = DatabaseService.getMonthlyReportManualSalesForMonth(
-      month.year,
-      month.month,
-    );
-    _monthlyReportManualSalesController.text = _formatMoneyField(amount);
   }
 
   String _formatRelativeTime(DateTime timestamp) {
@@ -926,9 +867,6 @@ class _AdminScreenState extends State<AdminScreen> {
     MonthlyReportSummary? summary;
     String? error;
     final selectedMonth = _selectedMonthlyReportMonth;
-    final manualSales = _tryParseMoney(
-      _monthlyReportManualSalesController.text,
-    );
     final daysInMonth = _getDaysInMonth(selectedMonth);
     final maxEndDay = _maxReportEndDayForMonth(selectedMonth, daysInMonth);
     final int startDay = _monthlyReportStartDay.clamp(1, daysInMonth).toInt();
@@ -942,8 +880,6 @@ class _AdminScreenState extends State<AdminScreen> {
 
     if (config == null) {
       error = 'გთხოვთ შეიყვანოთ მხოლოდ დადებითი რიცხვები ორივე ველში.';
-    } else if (manualSales == null) {
-      error = 'ხელით დამატებული გაყიდვების ველში მიუთითეთ სწორი რიცხვი.';
     } else {
       try {
         summary = MonthlyReportService.calculateSummary(
@@ -952,7 +888,6 @@ class _AdminScreenState extends State<AdminScreen> {
           overrideConfig: config,
           periodStart: periodStart,
           periodEnd: periodEnd,
-          manualSalesAdjustment: manualSales,
         );
       } catch (_) {
         error = 'ანგარიშის გამოთვლა ვერ მოხერხდა. სცადეთ კვლავ.';
@@ -996,24 +931,40 @@ class _AdminScreenState extends State<AdminScreen> {
     }
 
     try {
+      final previous = MonthlyReportService.getConfig();
       await MonthlyReportService.updateConfig(
         leaseCost: config.leaseCost,
         staffDailyCost: config.staffDailyCost,
         foodProfitRatio: config.foodProfitRatio,
       );
-      final selectedMonth = _selectedMonthlyReportMonth;
-      final manualSales =
-          _tryParseMoney(_monthlyReportManualSalesController.text) ?? 0.0;
-      await DatabaseService.setMonthlyReportManualSalesForMonth(
-        selectedMonth.year,
-        selectedMonth.month,
-        manualSales,
+      // The report's entire expense side is derived from these three numbers.
+      // Changing one silently rewrites every profit figure the report has
+      // ever shown, so record who moved it and from what.
+      await MoneyAudit.reportCostAssumptionChanged(
+        actorId: widget.user.username,
+        field: 'leaseCost',
+        scope: 'default',
+        previousValue: previous.leaseCost,
+        newValue: config.leaseCost,
+      );
+      await MoneyAudit.reportCostAssumptionChanged(
+        actorId: widget.user.username,
+        field: 'staffDailyCost',
+        scope: 'default',
+        previousValue: previous.staffDailyCost,
+        newValue: config.staffDailyCost,
+      );
+      await MoneyAudit.reportCostAssumptionChanged(
+        actorId: widget.user.username,
+        field: 'foodProfitRatio',
+        scope: 'default',
+        previousValue: previous.foodProfitRatio,
+        newValue: config.foodProfitRatio,
       );
       _monthlyReportLeaseController.text = _formatMoneyField(config.leaseCost);
       _monthlyReportStaffDailyController.text = _formatMoneyField(
         config.staffDailyCost,
       );
-      _syncMonthlyManualSalesField();
       _refreshMonthlyReportPreview();
 
       if (!mounted) {
@@ -1063,19 +1014,6 @@ class _AdminScreenState extends State<AdminScreen> {
     }
 
     final selectedMonth = _selectedMonthlyReportMonth;
-    final manualSales = _tryParseMoney(
-      _monthlyReportManualSalesController.text,
-    );
-    if (manualSales == null) {
-      unawaited(
-        showPosToast(
-          context: context,
-          message: 'ხელით დამატებული გაყიდვების ველში მიუთითეთ სწორი რიცხვი.',
-          style: PosToastStyle.error,
-        ),
-      );
-      return;
-    }
     final daysInMonth = _getDaysInMonth(selectedMonth);
     final maxEndDay = _maxReportEndDayForMonth(selectedMonth, daysInMonth);
     final int startDay = _monthlyReportStartDay.clamp(1, daysInMonth).toInt();
@@ -1113,7 +1051,6 @@ class _AdminScreenState extends State<AdminScreen> {
         overrideConfig: config,
         periodStart: periodStart,
         periodEnd: periodEnd,
-        manualSalesAdjustment: manualSales,
       );
 
       final outFile = File(outputPath);
@@ -1166,19 +1103,6 @@ class _AdminScreenState extends State<AdminScreen> {
     }
 
     final selectedMonth = _selectedMonthlyReportMonth;
-    final manualSales = _tryParseMoney(
-      _monthlyReportManualSalesController.text,
-    );
-    if (manualSales == null) {
-      unawaited(
-        showPosToast(
-          context: context,
-          message: 'ხელით დამატებული გაყიდვების ველში მიუთითეთ სწორი რიცხვი.',
-          style: PosToastStyle.error,
-        ),
-      );
-      return;
-    }
     final daysInMonth = _getDaysInMonth(selectedMonth);
     final maxEndDay = _maxReportEndDayForMonth(selectedMonth, daysInMonth);
     final int startDay = _monthlyReportStartDay.clamp(1, daysInMonth).toInt();
@@ -1214,7 +1138,6 @@ class _AdminScreenState extends State<AdminScreen> {
         overrideConfig: config,
         periodStart: periodStart,
         periodEnd: periodEnd,
-        manualSalesAdjustment: manualSales,
       );
 
       await File(outputPath).writeAsBytes(pdfBytes, flush: true);
@@ -1788,7 +1711,6 @@ class _AdminScreenState extends State<AdminScreen> {
       getDaysInMonth: _getDaysInMonth,
       monthlyReportLeaseController: _monthlyReportLeaseController,
       monthlyReportStaffDailyController: _monthlyReportStaffDailyController,
-      monthlyReportManualSalesController: _monthlyReportManualSalesController,
       currencyFormatter: _currencyFormatter,
       monthlyReportProfitRatio: _monthlyReportProfitRatio,
       onMonthlyReportProfitRatioChanged: (value) {
@@ -1821,7 +1743,6 @@ class _AdminScreenState extends State<AdminScreen> {
           _monthlyReportStartDay = newStart;
           _monthlyReportEndDay = newEnd;
         });
-        _syncMonthlyManualSalesField();
         _refreshMonthlyReportPreview();
       },
       monthlyReportStartDay: _monthlyReportStartDay,
@@ -2083,12 +2004,24 @@ class _AdminScreenState extends State<AdminScreen> {
         enabledByDefault: _serviceFeeEnabledByDefault,
       );
       // Receipt display preference is saved by the same action: it lives in
-      // the same card and never affects totals.
+      // the same card and never affects totals. It does change what a printed
+      // document shows the customer, so the change is recorded.
+      final previousReceiptLine =
+          DatabaseService.isReceiptServiceFeeLineVisible();
+      final previousCloseReceiptLine =
+          DatabaseService.isCloseReceiptServiceFeeLineVisible();
       await DatabaseService.setReceiptServiceFeeLineVisible(
         _receiptServiceFeeLineVisible,
       );
       await DatabaseService.setCloseReceiptServiceFeeLineVisible(
         _closeReceiptServiceFeeLineVisible,
+      );
+      await MoneyAudit.receiptServiceFeePolicyChanged(
+        actorId: widget.user.username,
+        previousReceiptLineVisible: previousReceiptLine,
+        newReceiptLineVisible: _receiptServiceFeeLineVisible,
+        previousCloseReceiptLineVisible: previousCloseReceiptLine,
+        newCloseReceiptLineVisible: _closeReceiptServiceFeeLineVisible,
       );
       _serviceFeePercent = parsedPercent;
       _serviceFeeController.text = _formatServiceFeeField(parsedPercent);
@@ -2946,9 +2879,9 @@ class _AdminScreenState extends State<AdminScreen> {
                                       Navigator.of(dialogContext).pop();
                                     }
                                     try {
-                                      await DatabaseService.setCurrentDate(
-                                        date,
-                                      );
+                                      final moved =
+                                          await _applyBusinessDateChange(date);
+                                      if (!moved) return;
                                       await DatabaseService.activateTodaysReservations();
                                       if (!mounted) return;
                                       setState(() {});
@@ -3283,7 +3216,8 @@ class _AdminScreenState extends State<AdminScreen> {
 
     if (confirmed == true) {
       try {
-        await DatabaseService.setCurrentDate(targetDate);
+        final moved = await _applyBusinessDateChange(targetDate);
+        if (!moved) return;
         await DatabaseService.activateTodaysReservations();
         if (!mounted) return;
         setState(() {});
@@ -3476,6 +3410,85 @@ class _AdminScreenState extends State<AdminScreen> {
     );
   }
 
+  /// Voiding a sale takes a reason, and today's sales only.
+  ///
+  /// The old flow was a yes/no box: one tap removed a sale from every revenue
+  /// figure, on any date, leaving nothing behind saying who did it or why.
+  /// Reaching into a closed business day is now support work — it needs the
+  /// `salesRepair` developer scope — and either way the void is written to the
+  /// audit log with the operator's name and their stated reason.
+  /// Moves the POS onto another business date, with a reason on the record.
+  ///
+  /// Everything recorded after this belongs to the new date, so the change is
+  /// audited like any other money mutation. Moving *backwards* reopens a
+  /// period the restaurant has already closed and reported; that is support
+  /// work and needs the `backdate` developer scope.
+  ///
+  /// Returns true when the date actually moved.
+  Future<bool> _applyBusinessDateChange(DateTime targetDate) async {
+    final current = DatabaseService.getCurrentDate();
+    final currentKey = current.toIso8601String().split('T')[0];
+    final targetKey = DateTime(
+      targetDate.year,
+      targetDate.month,
+      targetDate.day,
+    ).toIso8601String().split('T')[0];
+    if (currentKey == targetKey) return false;
+
+    final isBackdate = targetKey.compareTo(currentKey) < 0;
+    final canBackdate = DeveloperAccess.can(DeveloperScope.backdate);
+    if (isBackdate && !canBackdate) {
+      if (!mounted) return false;
+      unawaited(
+        showErrorToast(
+          context,
+          'დახურულ ბიზნეს პერიოდზე დაბრუნება ჩვეულებრივი მენეჯერის უფლებით '
+          'არ ხდება. საჭიროა მხარდაჭერის წვდომა.',
+        ),
+      );
+      return false;
+    }
+
+    final reason = await _promptForReason(
+      title: 'ბიზნეს თარიღის შეცვლა',
+      description: isBackdate
+          ? '$currentKey → $targetKey. ეს ხსნის უკვე დახურულ პერიოდს. '
+                'მიუთითეთ მიზეზი.'
+          : '$currentKey → $targetKey. მიუთითეთ მიზეზი.',
+      confirmLabel: 'დადასტურება',
+      destructive: isBackdate,
+    );
+    if (reason == null) return false;
+
+    final outcome = await DatabaseService.setCurrentDate(
+      targetDate,
+      actorId: widget.user.username,
+      reason: reason,
+      allowBackdate: canBackdate,
+    );
+    if (!mounted) return false;
+
+    switch (outcome) {
+      case BusinessDateChangeOutcome.changed:
+        return true;
+      case BusinessDateChangeOutcome.unchanged:
+        return false;
+      case BusinessDateChangeOutcome.reasonRequired:
+        unawaited(
+          showErrorToast(context, 'თარიღის შეცვლის მიზეზი აუცილებელია.'),
+        );
+        return false;
+      case BusinessDateChangeOutcome.backdateNotPermitted:
+        unawaited(
+          showErrorToast(
+            context,
+            'დახურულ ბიზნეს პერიოდზე დაბრუნება არ არის ნებადართული.',
+          ),
+        );
+        return false;
+    }
+  }
+
   Future<void> _confirmCancelSale(Map<String, dynamic> sale) async {
     final isCancelled = sale['isCancelled'] == true;
     if (isCancelled) {
@@ -3483,59 +3496,150 @@ class _AdminScreenState extends State<AdminScreen> {
     }
 
     final orderId = sale['orderId'];
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AdminDesign.text,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Cancel Sale Record',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: Text(
-          'Are you sure you want to cancel Order #$orderId in sales history?',
-          style: const TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text(
-              'გაუქმება',
-              style: TextStyle(color: AdminDesign.muted),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AdminDesign.danger,
-            ),
-            child: const Text('გაუქმება / Cancel'),
-          ),
-        ],
-      ),
-    );
+    final saleDate = (sale['date'] as String?) ?? '';
+    final todayDate = DatabaseService.getCurrentDate().toIso8601String().split(
+      'T',
+    )[0];
+    final isHistorical = saleDate.isNotEmpty && saleDate != todayDate;
+    final canRepairHistory = DeveloperAccess.can(DeveloperScope.salesRepair);
 
-    if (confirmed == true) {
-      final success = await DatabaseService.cancelSaleRecord(sale['recordKey']);
-      if (success) {
+    if (isHistorical && !canRepairHistory) {
+      unawaited(
+        showErrorToast(
+          context,
+          'დახურული ბიზნეს დღის გაყიდვის გაუქმება ჩვეულებრივი მენეჯერის '
+          'უფლებით არ ხდება. საჭიროა მხარდაჭერის წვდომა.',
+        ),
+      );
+      return;
+    }
+
+    final reason = await _promptForReason(
+      title: 'გაყიდვის გაუქმება',
+      description: isHistorical
+          ? 'შეკვეთა #$orderId ეკუთვნის $saleDate-ს. მიუთითეთ მიზეზი — '
+                'ჩანაწერი შენარჩუნდება და გაუქმება აღირიცხება.'
+          : 'შეკვეთა #$orderId. მიუთითეთ გაუქმების მიზეზი.',
+      confirmLabel: 'გაუქმება',
+      destructive: true,
+    );
+    if (reason == null) return;
+
+    final outcome = await DatabaseService.cancelSaleRecord(
+      recordKey: sale['recordKey'],
+      cancelledBy: widget.user.username,
+      reason: reason,
+      allowHistorical: canRepairHistory,
+    );
+    if (!mounted) return;
+
+    switch (outcome) {
+      case SaleCancellationOutcome.cancelled:
         final reservationCancelled =
             await DatabaseService.cancelReservationByOrderId(orderId as int);
         if (!mounted) return;
         setState(() {});
-        final message = reservationCancelled
-            ? 'Order #$orderId cancelled. Linked reservation updated.'
-            : 'Order #$orderId cancelled.';
         unawaited(
           showPosToast(
             context: context,
-            message: message,
+            message: reservationCancelled
+                ? 'Order #$orderId cancelled. Linked reservation updated.'
+                : 'Order #$orderId cancelled.',
             style: PosToastStyle.info,
           ),
         );
-      } else if (mounted) {
+      case SaleCancellationOutcome.alreadyCancelled:
+        setState(() {});
+        unawaited(showErrorToast(context, 'ეს გაყიდვა უკვე გაუქმებულია.'));
+      case SaleCancellationOutcome.historicalNotPermitted:
+        unawaited(
+          showErrorToast(
+            context,
+            'დახურული ბიზნეს დღის გაყიდვის გაუქმება არ არის ნებადართული.',
+          ),
+        );
+      case SaleCancellationOutcome.reasonRequired:
+        unawaited(showErrorToast(context, 'გაუქმების მიზეზი აუცილებელია.'));
+      case SaleCancellationOutcome.notFound:
+      case SaleCancellationOutcome.failed:
         unawaited(showErrorToast(context, 'Could not cancel sale record.'));
-      }
     }
+  }
+
+  /// A modal that will not confirm until something is typed into it.
+  ///
+  /// Used by the flows that rewrite recorded money — a void, a business-date
+  /// move — where the reason is part of the record, not a formality.
+  Future<String?> _promptForReason({
+    required String title,
+    required String description,
+    required String confirmLabel,
+    bool destructive = false,
+  }) async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setLocalState) {
+            final reason = controller.text.trim();
+            return AlertDialog(
+              backgroundColor: AdminDesign.text,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Text(title, style: const TextStyle(color: Colors.white)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    description,
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: controller,
+                    autofocus: true,
+                    minLines: 2,
+                    maxLines: 3,
+                    style: const TextStyle(color: Colors.white),
+                    onChanged: (_) => setLocalState(() {}),
+                    decoration: const InputDecoration(
+                      labelText: 'მიზეზი',
+                      labelStyle: TextStyle(color: AdminDesign.muted),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text(
+                    'დახურვა',
+                    style: TextStyle(color: AdminDesign.muted),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: reason.isEmpty
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(reason),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: destructive
+                        ? AdminDesign.danger
+                        : AdminDesign.accentDark,
+                  ),
+                  child: Text(confirmLabel),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    controller.dispose();
+    return result;
   }
 
   Future<void> _restoreClosedSale(Map<String, dynamic> sale) async {
@@ -3669,6 +3773,9 @@ class _AdminScreenState extends State<AdminScreen> {
           onReprintSaleReceipt: _reprintSaleReceipt,
           onReprintFullSaleReceipt: _reprintSaleFullReceipt,
           onConfirmCancelSale: _confirmCancelSale,
+          canCancelHistoricalSale: DeveloperAccess.can(
+            DeveloperScope.salesRepair,
+          ),
           onRestoreClosedSale: _restoreClosedSale,
         );
       case 'salesReport':

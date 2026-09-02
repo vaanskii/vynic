@@ -89,13 +89,16 @@ class OrderAdapter extends TypeAdapter<Order> {
       openedByUserId: fields[20] as String?,
       customServiceFeePercentage: fields[21] as double?,
       closureId: fields[22] as String?,
+      advanceAmount: (fields[23] as double?) ?? 0.0,
+      advanceCollectedOn: fields[24] as String?,
+      advanceReceiptId: fields[25] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Order obj) {
     writer
-      ..writeByte(23)
+      ..writeByte(26)
       ..writeByte(0)
       ..write(obj.orderId)
       ..writeByte(1)
@@ -141,7 +144,13 @@ class OrderAdapter extends TypeAdapter<Order> {
       ..writeByte(21)
       ..write(obj.customServiceFeePercentage)
       ..writeByte(22)
-      ..write(obj.closureId);
+      ..write(obj.closureId)
+      ..writeByte(23)
+      ..write(obj.advanceAmount)
+      ..writeByte(24)
+      ..write(obj.advanceCollectedOn)
+      ..writeByte(25)
+      ..write(obj.advanceReceiptId);
   }
 
   @override

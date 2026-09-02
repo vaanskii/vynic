@@ -23,7 +23,6 @@ class AdminFinancialReportsPanel extends StatelessWidget {
     required this.getDaysInMonth,
     required this.monthlyReportLeaseController,
     required this.monthlyReportStaffDailyController,
-    required this.monthlyReportManualSalesController,
     required this.currencyFormatter,
     required this.monthlyReportProfitRatio,
     required this.onMonthlyReportProfitRatioChanged,
@@ -60,7 +59,6 @@ class AdminFinancialReportsPanel extends StatelessWidget {
 
   final TextEditingController monthlyReportLeaseController;
   final TextEditingController monthlyReportStaffDailyController;
-  final TextEditingController monthlyReportManualSalesController;
   final NumberFormat currencyFormatter;
 
   final double monthlyReportProfitRatio;
@@ -113,7 +111,7 @@ class AdminFinancialReportsPanel extends StatelessWidget {
           icon: Icons.summarize,
           title: 'სრული ანგარიში',
           subtitle:
-              'აირჩიეთ თვეების დიაპაზონი, დაამატეთ საჭირო კორექციები და მიიღეთ ერთიანი XLSX ანგარიში.',
+              'აირჩიეთ თვეების დიაპაზონი, დააზუსტეთ ხარჯების დაშვებები და მიიღეთ ერთიანი XLSX ანგარიში.',
         ),
         const SizedBox(height: 12),
         _buildFullReportCard(),
@@ -402,16 +400,6 @@ class AdminFinancialReportsPanel extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            AdminPosTextField(
-              controller: monthlyReportManualSalesController,
-              label: 'ხელით დამატებული გაყიდვები (მხოლოდ ანგარიშისთვის, ₾)',
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              enabled: !isBusy,
-              onChanged: (_) => onRefreshMonthlyReportPreview(),
-            ),
-            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(

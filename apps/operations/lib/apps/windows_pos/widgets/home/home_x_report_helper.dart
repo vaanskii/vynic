@@ -202,9 +202,26 @@ class HomeXReportHelper {
       final georgianDate = DatabaseService.getGeorgianFormattedDate(
         currentDate,
       );
-      final dailyTotal = DatabaseService.getDailySalesTotal();
       final dateString = currentDate.toIso8601String().split('T')[0];
-      final sales = DatabaseService.getSalesForDate(dateString);
+      final allRecords = DatabaseService.getSalesForDate(dateString);
+      // The payment split used to iterate every record for the date with no
+      // filter at all, so a voided sale, a sale restored to an open table and
+      // an internal closure all added to the cash and card lines while the
+      // headline total — which excludes them — did not move. The split was
+      // reliably higher than the total it sat under. It now counts exactly
+      // what the total counts.
+      final sales = allRecords
+          .where(DatabaseService.saleCountsAsRevenue)
+          .toList();
+      final dailyTotal = DatabaseService.grossSalesTotalForDate(dateString);
+      final collected = DatabaseService.collectedTotalForDate(dateString);
+      final advanceApplied = allRecords
+          .where(DatabaseService.saleCountsAsRevenue)
+          .fold<double>(
+            0,
+            (sum, sale) =>
+                sum + ((sale['advanceApplied'] as num?)?.toDouble() ?? 0.0),
+          );
       final waiterSummaries = buildWaiterSummaries(sales);
 
       final StringBuffer report = StringBuffer();
@@ -222,6 +239,12 @@ class HomeXReportHelper {
       report.writeln('-----------------------------------');
       report.writeln('ჯამური გაყიდვები: ₾${dailyTotal.toStringAsFixed(2)}');
       report.writeln('შეკვეთების რაოდენობა: ${sales.length}');
+      if (advanceApplied > 0) {
+        report.writeln(
+          'მათ შორის ავანსით დაფარული: ₾${advanceApplied.toStringAsFixed(2)}',
+        );
+      }
+      report.writeln('დღეს ინკასირებული: ₾${collected.toStringAsFixed(2)}');
       report.writeln();
 
       double cardTbcTotal = 0;
@@ -242,6 +265,12 @@ class HomeXReportHelper {
 
         breakdown.forEach((methodKey, amount) {
           final normalized = PaymentUtils.normalizeMethodKey(methodKey);
+          // An applied advance rides in the breakdown so it sums to the gross
+          // sale, but nothing was handed over at the table for it. It gets its
+          // own line below rather than inflating a tender.
+          if (normalized == PaymentUtils.methodAdvance) {
+            return;
+          }
           switch (normalized) {
             case PaymentUtils.methodCardTbc:
               cardTbcTotal += amount;
@@ -328,6 +357,10 @@ class HomeXReportHelper {
 
       report.writeln('===================================');
       report.writeln('საერთო ჯამი: ₾${dailyTotal.toStringAsFixed(2)}');
+      report.writeln(
+        'კონტროლი: ნაღდი+ბარათი+სხვა+ავანსი = '
+        '₾${(cashTotal + totalCardAmount + otherTotal + advanceApplied).toStringAsFixed(2)}',
+      );
       report.writeln('===================================');
       report.writeln();
       report.writeln('* ეს არის X ანგარიში');

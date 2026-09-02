@@ -1,17 +1,26 @@
 # POS registration and device lifecycle
 
-**Status:** analysis only. Nothing here is built.
+> **Superseded by [POS_ENROLLMENT.md](./POS_ENROLLMENT.md).** Section 3 below
+> was the recommendation; Phase 1C built it, with two deliberate departures —
+> no placeholder Device is created at invitation time, and the canonical backend
+> URL is returned only when the deployment declares one, because a server's own
+> idea of its address is loopback in local development. Sections 1 and 2 remain
+> accurate as a description of the **file-drop path**, which still works and is
+> now the support path rather than the onboarding path.
 
-What it takes to put a new Vynic POS on a venue's counter today, and the
-smallest self-service flow that could replace it.
+**Status:** the analysis that Phase 1C was built from.
 
-Related: [DEVICE_IDENTITY.md](./DEVICE_IDENTITY.md),
+What it took to put a new Vynic POS on a venue's counter before enrollment
+existed, and the smallest self-service flow that could replace it.
+
+Related: [POS_ENROLLMENT.md](./POS_ENROLLMENT.md),
+[DEVICE_IDENTITY.md](./DEVICE_IDENTITY.md),
 [CLOUD_EDGE_TRANSPORT.md](./CLOUD_EDGE_TRANSPORT.md),
 [PLATFORM_CONTROL_PLANE.md](./PLATFORM_CONTROL_PLANE.md)
 
 ---
 
-## 1. How a brand-new POS is registered today
+## 1. How a brand-new POS was registered before Phase 1C
 
 ```text
 Platform Admin ──► POST /platform/venues/:venueId/devices        (creates the Device row)

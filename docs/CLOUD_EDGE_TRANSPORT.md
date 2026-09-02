@@ -314,6 +314,9 @@ exactly as it did.
    pull queue delivers work but does not answer a synchronous question.
 4. Every deployed POS has a Device credential — the legacy shared
    `POS_SYNC_API_KEY` path resolves no Device and cannot use this transport.
+   *(Phase 1C gave this a path that scales past a hand-written file, but a path
+   is not a fleet: this is satisfied when every installation has actually
+   enrolled, not when it becomes possible for them to.)*
 
 Until all four hold, a Cloud deployment is not possible, and that is the honest
 status: 6A made the transport Cloud-compatible and 6B put the POS on it, but the
@@ -358,6 +361,12 @@ plugin and a change to both desktop build configurations; that is recorded as
 deferred rather than pretended away.
 
 ### Provisioning
+
+**Since Phase 1C the normal path is enrollment.** An administrator mints a
+one-time, Venue-bound code in Platform Admin; the terminal redeems it at
+`POST /edge/enroll` and receives its credential and its Venue in one step. The
+two paths below both remain, as the support and bootstrap paths respectively.
+See [POS_ENROLLMENT.md](./POS_ENROLLMENT.md).
 
 **Since Step 7A there is an authenticated route:**
 `POST /platform/venues/:venueId/devices` returns the credential once, and

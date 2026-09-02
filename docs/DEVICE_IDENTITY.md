@@ -65,3 +65,11 @@ it deliberately adds no public provisioning endpoint or device-management UI.
 Production provisioning must be designed with Venue onboarding in a later
 phase. The raw secret is returned once at issuance and cannot be recovered from
 the stored verifier.
+
+**Resolved in Phase 1C.** Onboarding is now a one-time, Venue-bound enrollment
+code redeemed at `POST /edge/enroll`; the raw credential is minted by the server
+and never passes through a person. `installationId` gained its purpose there: it
+is what makes a reinstall rotate an existing Device rather than create a second
+one. Everything above about the credential itself is unchanged — one issuance,
+verifier only, rotate rather than recover. See
+[POS_ENROLLMENT.md](./POS_ENROLLMENT.md).

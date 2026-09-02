@@ -40,9 +40,19 @@ class ApiConfig {
     return resolved;
   }
 
+  /// Turns what someone typed into a backend origin, or `null` if it cannot be
+  /// one.
+  ///
+  /// `10.10.10.3` becomes `http://10.10.10.3:3000`, which is the shape a LAN
+  /// server is reached at and the reason the helper exists. An explicit
+  /// `https://` host keeps its own default port — appending `:3000` to a public
+  /// API origin would produce an address nothing is listening on.
   static String? normalizeEditableBackendUrl(String raw) {
     var value = raw.trim();
     if (value.isEmpty) return null;
+    // A host cannot contain whitespace, and Uri.parse would silently
+    // percent-encode it into something that looks like a valid address.
+    if (RegExp(r'\s').hasMatch(value)) return null;
     if (!value.contains('://')) {
       value = 'http://$value';
     }
@@ -55,7 +65,11 @@ class ApiConfig {
     if (uri.hasQuery || uri.hasFragment) return null;
     if (uri.path.isNotEmpty && uri.path != '/') return null;
 
-    final port = uri.hasPort ? uri.port : 3000;
+    final port = uri.hasPort
+        ? uri.port
+        : scheme == 'https'
+        ? 443
+        : 3000;
     if (port <= 0 || port > 65535) return null;
 
     return uri
@@ -73,21 +87,29 @@ class ApiConfig {
     _loggedResolvedUrl = false;
   }
 
+  /// `.env` is optional, so every read of it has to be.
+  ///
+  /// `main()` already treats a missing `.env` as survivable and carries on, but
+  /// `dotenv.env` throws when it was never initialized — so a terminal shipped
+  /// without one would have failed on the first resolution of its backend URL.
+  /// That is exactly the install self-enrollment exists for.
+  static String? _env(String key) {
+    if (!dotenv.isInitialized) return null;
+    final value = dotenv.env[key]?.trim();
+    return value == null || value.isEmpty ? null : value;
+  }
+
   static String get _defaultBaseUrl {
-    final fallback = dotenv.env['BACKEND_URL_FALLBACK']?.trim();
-    if (fallback != null && fallback.isNotEmpty) return fallback;
+    final fallback = _env('BACKEND_URL_FALLBACK');
+    if (fallback != null) return fallback;
     return 'http://localhost:3000';
   }
 
   static String? get _explicitBackendUrl {
-    final envPlatformUrl = dotenv.env[_platformBackendKey]?.trim();
-    if (envPlatformUrl != null && envPlatformUrl.isNotEmpty) {
-      return envPlatformUrl;
-    }
-    final envUrl = dotenv.env['BACKEND_URL']?.trim();
-    if (envUrl != null && envUrl.isNotEmpty) {
-      return envUrl;
-    }
+    final envPlatformUrl = _env(_platformBackendKey);
+    if (envPlatformUrl != null) return envPlatformUrl;
+    final envUrl = _env('BACKEND_URL');
+    if (envUrl != null) return envUrl;
     const defineAndroid = String.fromEnvironment('BACKEND_URL_ANDROID');
     const defineIos = String.fromEnvironment('BACKEND_URL_IOS');
     const defineMacos = String.fromEnvironment('BACKEND_URL_MACOS');
@@ -173,8 +195,8 @@ class ApiConfig {
 
   /// Shared secret for POS → cloud push (`POST /sync/*`). Must match server POS_SYNC_API_KEY.
   static String? get posSyncApiKey {
-    final envKey = dotenv.env['POS_SYNC_API_KEY']?.trim();
-    if (envKey != null && envKey.isNotEmpty) return envKey;
+    final envKey = _env('POS_SYNC_API_KEY');
+    if (envKey != null) return envKey;
     const dartDefine = String.fromEnvironment('POS_SYNC_API_KEY');
     if (dartDefine.isNotEmpty) return dartDefine;
     return null;

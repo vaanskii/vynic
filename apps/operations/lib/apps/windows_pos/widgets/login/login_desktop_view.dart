@@ -31,6 +31,7 @@ class LoginDesktopView extends StatelessWidget {
     this.showCompanionApp = false,
     this.onCompanionAppPressed,
     this.onBrandLongPress,
+    this.onConnectToVynicPressed,
   });
 
   /// Listenable so a keystroke only rebuilds the PIN dots + login button,
@@ -45,6 +46,13 @@ class LoginDesktopView extends StatelessWidget {
   final VoidCallback? onLoginPressed;
   final bool showCompanionApp;
   final VoidCallback? onCompanionAppPressed;
+
+  /// Offered only on a terminal that has no Vynic identity yet.
+  ///
+  /// The login screen is where a brand-new POS is looked at first, and the
+  /// alternative was asking whoever unpacked it to find a settings tab behind a
+  /// manager PIN. It disappears the moment the terminal is enrolled.
+  final VoidCallback? onConnectToVynicPressed;
 
   /// Long press on the top-bar wordmark. The hidden way into the developer
   /// tools, deliberately unlabelled — see [DeveloperScreen].
@@ -470,6 +478,14 @@ class LoginDesktopView extends StatelessWidget {
             onPressed: isLoading ? null : onCompanionAppPressed,
             icon: const Icon(Icons.admin_panel_settings_outlined),
             label: const Text('მენეჯერის აპი'),
+          ),
+        ],
+        if (onConnectToVynicPressed != null) ...[
+          const SizedBox(height: 10),
+          TextButton.icon(
+            onPressed: isLoading ? null : onConnectToVynicPressed,
+            icon: const Icon(Icons.link, size: 18),
+            label: const Text('Connect this POS to Vynic'),
           ),
         ],
       ],

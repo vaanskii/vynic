@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_pos_enrollment_panel.dart';
 import 'package:vynic/apps/windows_pos/widgets/login/login_desktop_view.dart';
 import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/auth/mobile_auth_service.dart';
+import 'package:vynic/core/services/edge/pos_enrollment_service.dart';
 import 'package:vynic/core/services/sync/manager_sync_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'developer_screen.dart';
@@ -275,6 +277,41 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Future<void> _openEnrollment() async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: SingleChildScrollView(
+            child: Material(
+              color: Colors.transparent,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const AdminPosEnrollmentPanel(),
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        child: const Text('დახურვა'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    if (mounted) setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
@@ -296,6 +333,13 @@ class _LoginScreenState extends State<LoginScreen> {
         // admin PIN is the case the recovery tool exists for, and routing it
         // through the admin panel would put it behind the thing that is lost.
         onBrandLongPress: () => DeveloperScreen.unlockAndOpen(context),
+        // A terminal with no Cloud identity has nothing to hide behind a
+        // manager PIN: it cannot sync, and the person standing in front of it
+        // is the person setting it up. Once enrolled, this is gone and
+        // re-enrolment lives in Settings → Connection where it belongs.
+        onConnectToVynicPressed: PosEnrollmentService.needsEnrollment
+            ? _openEnrollment
+            : null,
       ),
     );
   }

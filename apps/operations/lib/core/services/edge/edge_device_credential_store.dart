@@ -41,6 +41,9 @@ class EdgeDeviceCredentialStore {
   static String? _credential;
   static String? _installationId;
   static String? _deviceId;
+  static String? _venueId;
+  static String? _venueName;
+  static DateTime? _enrolledAt;
   static bool _loaded = false;
 
   /// Reads the stored identity, creating an installation id on first run.
@@ -57,6 +60,11 @@ class EdgeDeviceCredentialStore {
         final raw = json.decode(await file.readAsString());
         if (raw is Map<String, dynamic>) {
           _installationId = _asNonEmptyString(raw['installationId']);
+          _venueId = _asNonEmptyString(raw['venueId']);
+          _venueName = _asNonEmptyString(raw['venueName']);
+          _enrolledAt = DateTime.tryParse(
+            _asNonEmptyString(raw['enrolledAt']) ?? '',
+          );
           final stored = _asNonEmptyString(raw['credential']);
           if (stored != null && _isWellFormed(stored)) {
             _credential = stored;
@@ -87,6 +95,15 @@ class EdgeDeviceCredentialStore {
 
   static bool get hasCredential => _credential != null;
 
+  /// The Venue this terminal enrolled into, when it was enrolled rather than
+  /// provisioned from a file. Display only — Cloud derives tenancy from the
+  /// credential, never from anything this installation stores.
+  static String? get venueId => _venueId;
+
+  static String? get venueName => _venueName;
+
+  static DateTime? get enrolledAt => _enrolledAt;
+
   /// The raw credential, for the `X-POS-Sync-Key` header only.
   static String? get credential => _credential;
 
@@ -105,11 +122,78 @@ class EdgeDeviceCredentialStore {
     return true;
   }
 
+  /// Stores everything one enrollment produced, and proves it survived.
+  ///
+  /// The reason this reads the file back rather than trusting the write: the
+  /// credential is issued exactly once, and a terminal that reported success
+  /// while the disk write silently failed would come up unenrolled with a code
+  /// already spent. Confirming persistence here is what lets the caller either
+  /// declare the terminal connected or retry the redemption, which the backend
+  /// allows for the same installation until the code expires.
+  static Future<bool> saveEnrollment({
+    required String rawCredential,
+    required String venueId,
+    required String venueName,
+    DateTime? enrolledAt,
+  }) async {
+    final trimmed = rawCredential.trim();
+    if (!_isWellFormed(trimmed)) return false;
+
+    final previous = _snapshot();
+    _credential = trimmed;
+    _deviceId = trimmed.split('.')[1];
+    _venueId = venueId;
+    _venueName = venueName;
+    _enrolledAt = enrolledAt ?? DateTime.now().toUtc();
+    _installationId ??= _uuid.v4();
+    await _write();
+
+    if (await _persistedCredential() == trimmed) return true;
+
+    // The write did not land. Leave nothing half-applied in memory, so the
+    // next start and this process agree about what this terminal is.
+    _restore(previous);
+    return false;
+  }
+
   /// Forgets this installation's credential, keeping its installation id.
   static Future<void> clear() async {
     _credential = null;
     _deviceId = null;
+    _venueId = null;
+    _venueName = null;
+    _enrolledAt = null;
     await _write();
+  }
+
+  static Map<String, Object?> _snapshot() => <String, Object?>{
+    'credential': _credential,
+    'deviceId': _deviceId,
+    'venueId': _venueId,
+    'venueName': _venueName,
+    'enrolledAt': _enrolledAt,
+  };
+
+  static void _restore(Map<String, Object?> snapshot) {
+    _credential = snapshot['credential'] as String?;
+    _deviceId = snapshot['deviceId'] as String?;
+    _venueId = snapshot['venueId'] as String?;
+    _venueName = snapshot['venueName'] as String?;
+    _enrolledAt = snapshot['enrolledAt'] as DateTime?;
+  }
+
+  /// What is actually on disk right now, not what this process believes.
+  static Future<String?> _persistedCredential() async {
+    try {
+      final file = _file();
+      if (file == null || !await file.exists()) return null;
+      final raw = json.decode(await file.readAsString());
+      if (raw is! Map<String, dynamic>) return null;
+      return _asNonEmptyString(raw['credential']);
+    } catch (error) {
+      debugPrint('[Edge] Could not confirm the stored credential: $error');
+      return null;
+    }
   }
 
   @visibleForTesting
@@ -117,6 +201,9 @@ class EdgeDeviceCredentialStore {
     _credential = null;
     _installationId = null;
     _deviceId = null;
+    _venueId = null;
+    _venueName = null;
+    _enrolledAt = null;
     _loaded = false;
   }
 
@@ -163,6 +250,10 @@ class EdgeDeviceCredentialStore {
         json.encode(<String, dynamic>{
           'installationId': _installationId,
           if (_credential != null) 'credential': _credential,
+          if (_venueId != null) 'venueId': _venueId,
+          if (_venueName != null) 'venueName': _venueName,
+          if (_enrolledAt != null)
+            'enrolledAt': _enrolledAt!.toUtc().toIso8601String(),
           'updatedAt': DateTime.now().toUtc().toIso8601String(),
         }),
         flush: true,

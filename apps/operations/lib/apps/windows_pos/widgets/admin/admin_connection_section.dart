@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_pos_enrollment_panel.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
@@ -65,6 +66,8 @@ class _AdminConnectionSectionState extends State<AdminConnectionSection> {
                     badge: _StatusBadge(state: state),
                   ),
                   const SizedBox(height: 16),
+                  const AdminPosEnrollmentPanel(),
+                  const SizedBox(height: 14),
                   _buildActionPanel(),
                   const SizedBox(height: 14),
                   LayoutBuilder(

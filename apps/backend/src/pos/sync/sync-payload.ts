@@ -39,6 +39,12 @@ export interface OrderSync {
   items?: any[];
   includeServiceFee?: boolean;
   discountAmount?: number;
+  /**
+   * Signed operator override of the bill total, applied on the POS after the
+   * discount and service fee. Added after the initial contract; absent on old
+   * POS builds, where it is treated as 0 — which is what those builds meant.
+   */
+  manualAdjustmentAmount?: number;
   serviceFeePercent?: number;
   customServiceFeePercentage?: number;
   /** ISO timestamp of the order's last local edit on the POS (LWW conflict resolution). */
@@ -46,11 +52,20 @@ export interface OrderSync {
 }
 
 export interface ExpenseSync {
+  /**
+   * The record's id on the POS, which owns expense identity. Ingestion upserts
+   * on it, so the POS can resend the same record every sync without creating a
+   * second row. Optional in the type only because an old POS build sending an
+   * expense without one must still be accepted; those are inserted, as before.
+   */
+  id?: string;
   description: string;
   amount: number;
   category: string;
   paymentType?: string;
   createdAt?: string;
+  /** POS business day (`YYYY-MM-DD`) the expense belongs to. */
+  businessDate?: string;
 }
 
 export interface StaffSync {

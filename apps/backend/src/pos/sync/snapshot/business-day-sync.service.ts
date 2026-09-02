@@ -40,22 +40,50 @@ export class BusinessDaySyncService {
     });
   }
 
+  /**
+   * Writes the POS's expense records.
+   *
+   * The POS resends every expense it holds on each full sync, so this has to
+   * be idempotent or a month of expenses would multiply on every cycle. It is
+   * keyed on the record's own POS id: same id, same row, updated in place.
+   *
+   * A record arriving without an id can only come from a POS build that
+   * predates expense identity. It is inserted, exactly as before — there is no
+   * key to deduplicate on, and guessing one from the content would silently
+   * merge two genuinely separate expenses. Current POS builds always send an
+   * id, and backfill one into any record restored from an older backup.
+   */
   async recordExpenses(
     tenant: TenantContext,
     expenses: ExpenseSync[],
   ): Promise<void> {
     for (const expense of expenses) {
-      await (this.prisma.expense.create as any)({
-        data: {
-          venueId: tenant.venueId,
-          description: expense.description,
-          amount: expense.amount,
-          category: expense.category,
-          paymentType: expense.paymentType ?? 'cash',
-          createdAt: expense.createdAt
-            ? new Date(expense.createdAt)
-            : new Date(),
+      const data = {
+        description: expense.description,
+        amount: expense.amount,
+        category: expense.category,
+        paymentType: expense.paymentType ?? 'cash',
+        businessDate: expense.businessDate ?? '',
+        createdAt: expense.createdAt ? new Date(expense.createdAt) : new Date(),
+      };
+
+      const posExpenseId = expense.id?.trim();
+      if (!posExpenseId) {
+        await (this.prisma.expense.create as any)({
+          data: { venueId: tenant.venueId, ...data },
+        });
+        continue;
+      }
+
+      await (this.prisma as any).expense.upsert({
+        where: {
+          venueId_posExpenseId: {
+            venueId: tenant.venueId,
+            posExpenseId,
+          },
         },
+        update: data,
+        create: { venueId: tenant.venueId, posExpenseId, ...data },
       });
     }
   }

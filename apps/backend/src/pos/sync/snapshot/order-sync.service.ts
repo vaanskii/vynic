@@ -135,6 +135,9 @@ export class OrderSyncService {
             pickupTime: order.pickupTime ?? '',
             includeServiceFee: order.includeServiceFee ?? false,
             discountAmount: order.discountAmount ?? 0,
+            // Absent on a POS build that predates the field. Those builds
+            // applied no adjustment, so 0 is the value they meant.
+            manualAdjustmentAmount: order.manualAdjustmentAmount ?? 0,
             serviceFeePercent:
               order.serviceFeePercent ?? order.customServiceFeePercentage ?? 10,
           },
@@ -153,6 +156,9 @@ export class OrderSyncService {
             pickupTime: order.pickupTime ?? '',
             includeServiceFee: order.includeServiceFee ?? false,
             discountAmount: order.discountAmount ?? 0,
+            // Absent on a POS build that predates the field. Those builds
+            // applied no adjustment, so 0 is the value they meant.
+            manualAdjustmentAmount: order.manualAdjustmentAmount ?? 0,
             serviceFeePercent:
               order.serviceFeePercent ?? order.customServiceFeePercentage ?? 10,
           },

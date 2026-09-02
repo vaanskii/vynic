@@ -47,6 +47,11 @@ model Order {
   updatedAt         DateTime    @updatedAt
   paymentType       String      @default("cash")
   discountAmount    Float       @default(0)
+  /// Signed operator override applied to the bill total on the POS. Sent by
+  /// the POS snapshot so `totalAmount` can be reconciled against the order's
+  /// own item lines, discount and service fee. Zero on every order synced by
+  /// a POS build that predates the field.
+  manualAdjustmentAmount Float  @default(0)
   includeServiceFee Boolean     @default(false)
   serviceFeePercent Float       @default(10)
   items             OrderItem[]
@@ -138,14 +143,24 @@ model MenuItemVariant {
 model Expense {
   id          String   @id @default(uuid())
   venueId     String
+  /// The record's own id on the POS, which owns expense identity. Ingestion
+  /// upserts on it so re-sending the same snapshot updates the row instead of
+  /// adding a second one. Null only for rows written before the POS sent
+  /// expense records at all.
+  posExpenseId String?
   description String
   amount      Float
   category    String
+  /// POS business day (`YYYY-MM-DD`), which is not the calendar day of
+  /// [createdAt] — the POS decides when its day ends.
+  businessDate String  @default("")
   createdAt   DateTime @default(now())
   paymentType String   @default("cash")
   venue       Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  @@unique([venueId, posExpenseId])
   @@index([venueId, createdAt])
+  @@index([venueId, businessDate])
   @@schema("pos")
 }
 

@@ -90,7 +90,10 @@ Future<void> _seed() async {
     createdAt: now.subtract(const Duration(hours: 1, minutes: 33)),
   )..status = 'served';
   // An advance already taken, so the totals card carries its extra line.
-  _order.discountAmount = 100;
+  // It lives in `advanceAmount` since Phase 1B: an advance reduces what is
+  // left to collect, a discount reduces what the meal was worth, and they
+  // used to share one field.
+  _order.advanceAmount = 100;
   _order.includeServiceFee = true;
   _order.recalculateTotal();
   await DatabaseCore.orderBox!.put(1, _order);

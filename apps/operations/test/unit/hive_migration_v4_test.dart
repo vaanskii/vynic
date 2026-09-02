@@ -145,17 +145,20 @@ void main() {
       expect(second, equals(first));
     });
 
-    test('runPendingMigrations advances 3 → 4 exactly once', () async {
+    test('runPendingMigrations advances from 3 to the target once', () async {
       await context.metaBox.put(HiveMigrationService.dbVersionKey, 3);
       await context.salesBox.add(legacySale());
 
       final version = await HiveMigrationService.runPendingMigrations(context);
       expect(version, HiveMigrationService.targetVersion);
-      expect(context.metaBox.get(HiveMigrationService.dbVersionKey), 4);
+      expect(
+        context.metaBox.get(HiveMigrationService.dbVersionKey),
+        HiveMigrationService.targetVersion,
+      );
 
       // Second run is a no-op at the current version.
       final again = await HiveMigrationService.runPendingMigrations(context);
-      expect(again, 4);
+      expect(again, HiveMigrationService.targetVersion);
     });
   });
 

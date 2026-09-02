@@ -216,8 +216,12 @@ void main() {
       await _pumpAt(tester, const Size(1440, 900));
 
       expect(find.text('დღის შეჯამება'), findsOneWidget);
-      // dailySalesTotal, not the sum of every record in the box.
-      expect(find.text('₾260.00'), findsOneWidget);
+      // Gross sales derived from the records, not the sum of every record in
+      // the box. Twice: once as the headline, once as the day's takings —
+      // with no deposits in this fixture the two are the same number.
+      expect(find.text('₾260.00'), findsNWidgets(2));
+      expect(find.text('დღეს ინკასირებული'), findsOneWidget);
+      expect(find.text('OK · ₾260.00'), findsOneWidget);
       expect(find.text('ნაღდი'), findsOneWidget);
       expect(find.text('ბარათი TBC'), findsOneWidget);
       expect(find.text('ბარათი BOG'), findsOneWidget);

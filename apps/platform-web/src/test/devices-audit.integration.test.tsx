@@ -7,7 +7,7 @@ const initialCredential = `vynic-device-v1.${ids.device}.${"a".repeat(40)}`;
 const rotatedCredential = `vynic-device-v1.${ids.device}.${"b".repeat(40)}`;
 
 describe("device lifecycle and audit", () => {
-  it("handles create, one-time dismissal, rotation, revoke, and NOOP queueing", async () => {
+  it("handles manual credential issuance, one-time dismissal, rotation, revoke, and NOOP queueing", async () => {
     const api = installApi((request) => {
       if (request.url.pathname.endsWith("/devices") && request.method === "POST") return { body: { device: { id: ids.device, venueId: ids.venue, installationId: device.installationId }, credential: initialCredential } };
       if (request.url.pathname.endsWith(`/devices/${ids.device}/credential`)) return { body: { device: { id: ids.device, venueId: ids.venue, installationId: device.installationId }, credential: rotatedCredential } };
@@ -19,10 +19,10 @@ describe("device lifecycle and audit", () => {
     renderPlatform(`/admin/venues/${ids.venue}/devices`);
     expect((await screen.findAllByText("Front POS")).length).toBeGreaterThan(0);
 
-    await user.click(screen.getByRole("button", { name: "Add POS device" }));
-    const createDialog = await screen.findByRole("dialog", { name: "Add POS device" });
+    await user.click(screen.getByRole("button", { name: "Issue credential manually" }));
+    const createDialog = await screen.findByRole("dialog", { name: "Issue a credential manually" });
     await user.type(within(createDialog).getAllByRole("textbox")[0], "Bar POS");
-    await user.click(screen.getByRole("button", { name: "Create device" }));
+    await user.click(screen.getByRole("button", { name: "Issue credential" }));
     expect(await screen.findByRole("heading", { name: "Device credential issued" })).toBeVisible();
     await user.click(screen.getByRole("button", { name: "Reveal credential" }));
     expect(screen.getByText(initialCredential)).toBeVisible();
@@ -38,7 +38,7 @@ describe("device lifecycle and audit", () => {
     await user.click(screen.getByRole("button", { name: "I saved the credential" }));
 
     await user.click(screen.getByRole("button", { name: "Revoke" }));
-    expect((await screen.findAllByText(/credential will stop authenticating immediately/i)).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText(/This is not a delete/i)).length).toBeGreaterThan(0);
     await user.click(screen.getByRole("button", { name: "Change device status" }));
     await waitFor(() => expect(api.requests.some((request) => request.url.pathname.endsWith("/status") && request.body?.status === "REVOKED")).toBe(true));
 
@@ -57,10 +57,10 @@ describe("device lifecycle and audit", () => {
     const user = userEvent.setup();
     renderPlatform(`/admin/venues/${ids.venue}/devices`);
     await screen.findAllByText("Front POS");
-    await user.click(screen.getByRole("button", { name: "Add POS device" }));
-    const createDialog = await screen.findByRole("dialog", { name: "Add POS device" });
+    await user.click(screen.getByRole("button", { name: "Issue credential manually" }));
+    const createDialog = await screen.findByRole("dialog", { name: "Issue a credential manually" });
     await user.type(within(createDialog).getAllByRole("textbox")[0], "Bar POS");
-    await user.click(screen.getByRole("button", { name: "Create device" }));
+    await user.click(screen.getByRole("button", { name: "Issue credential" }));
     await user.click(await screen.findByRole("button", { name: "Download provisioning file" }));
     expect(createObjectURL).toHaveBeenCalledTimes(1);
     const blob = createObjectURL.mock.calls[0][0] as Blob;

@@ -1,10 +1,12 @@
 import type {
   AuditEvent,
   Device,
+  DeviceEnrollment,
   DeviceStatus,
   DomainStatus,
   Feature,
   IssuedCredential,
+  IssuedEnrollment,
   LoginResult,
   Organization,
   OverrideEffect,
@@ -171,6 +173,21 @@ export const platformApi = {
     request<{ released: string }>(`/platform/venues/${venueId}/domains/${domainId}`, {
       method: "DELETE",
     }),
+  enrollments: (venueId: string) =>
+    request<DeviceEnrollment[]>(`/platform/venues/${venueId}/enrollments`),
+  createEnrollment: (
+    venueId: string,
+    input: { displayName: string; platform: string; ttlMinutes?: number },
+  ) =>
+    request<IssuedEnrollment>(`/platform/venues/${venueId}/enrollments`, {
+      method: "POST",
+      body: json(input),
+    }),
+  cancelEnrollment: (venueId: string, enrollmentId: string) =>
+    request<DeviceEnrollment>(
+      `/platform/venues/${venueId}/enrollments/${enrollmentId}`,
+      { method: "DELETE" },
+    ),
   devices: (venueId: string) =>
     request<Device[]>(`/platform/venues/${venueId}/devices`),
   createDevice: (

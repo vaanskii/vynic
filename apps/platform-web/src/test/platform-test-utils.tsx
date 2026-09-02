@@ -80,6 +80,23 @@ export const device = {
   updatedAt: "2026-08-31T10:00:00.000Z",
 };
 
+export const enrollment = {
+  id: "aaaa1111-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  venueId: ids.venue,
+  codeSelector: "7K2Q",
+  displayName: "Bar POS",
+  platform: "WINDOWS",
+  expiresAt: "2026-08-31T10:30:00.000Z",
+  attemptCount: 0,
+  redeemedAt: null,
+  redeemedInstallationId: null,
+  deviceId: null,
+  cancelledAt: null,
+  createdAt: "2026-08-31T10:00:00.000Z",
+  updatedAt: "2026-08-31T10:00:00.000Z",
+  status: "PENDING",
+};
+
 export const audit = [{
   id: "99999999-9999-4999-8999-999999999999",
   action: "venue.plan_assigned",
@@ -131,6 +148,7 @@ function defaultReply({ url, method }: MockRequest): MockReply {
   if (path === `/platform/venues/${ids.venue}/product`) return { body: product };
   if (path === `/platform/venues/${ids.venue}/domains`) return { body: [] };
   if (path === `/platform/venues/${ids.venue}/devices`) return { body: [device] };
+  if (path === `/platform/venues/${ids.venue}/enrollments`) return { body: [] };
   if (path.startsWith(`/platform/venues/${ids.venue}/test-command/`)) return { body: { commandId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", type: "NOOP", status: "PENDING", attemptCount: 0, maxAttempts: 10, claimedAt: null, acknowledgedAt: null, resultCode: null, resultDetail: null, createdAt: "2026-08-31T10:00:00.000Z", updatedAt: "2026-08-31T10:00:00.000Z", claimedBy: null, device: null } };
   if (path === "/platform/audit") return { body: audit };
   return { body: {} };

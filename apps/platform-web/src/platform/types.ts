@@ -103,6 +103,42 @@ export interface Device {
   updatedAt: string;
 }
 
+/**
+ * What happened to one invitation. Derived on the backend from its timestamps,
+ * so there is no second answer here to drift from — and deliberately not an
+ * online/offline state, which nothing can honestly report.
+ */
+export type EnrollmentStatus = "PENDING" | "ENROLLED" | "EXPIRED" | "CANCELLED";
+
+export interface DeviceEnrollment {
+  id: string;
+  venueId: string;
+  /** Half a code. Safe to show; it cannot enroll anything on its own. */
+  codeSelector: string;
+  displayName: string;
+  platform: string;
+  expiresAt: string;
+  attemptCount: number;
+  redeemedAt: string | null;
+  redeemedInstallationId: string | null;
+  deviceId: string | null;
+  cancelledAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  status: EnrollmentStatus;
+}
+
+export interface IssuedEnrollment {
+  id: string;
+  venueId: string;
+  displayName: string;
+  platform: string;
+  expiresAt: string;
+  status: EnrollmentStatus;
+  /** Shown once. Only a verifier is stored, so it cannot be read back. */
+  code: string;
+}
+
 export interface IssuedCredential {
   device: Pick<Device, "id" | "venueId" | "installationId">;
   credential: string;

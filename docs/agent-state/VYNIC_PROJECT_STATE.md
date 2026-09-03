@@ -139,13 +139,23 @@ current transport status.
   instead of duplicating them. Keyless older backups still restore.
 - Tables, orders, menu, staff, and `salesHistoryByDate` still use broad snapshot
   payloads; further sync windowing/scaling is deferred.
+- The home takeaway panel is Order-backed. `TakeawayTickets.forBusinessDate`
+  builds the queue from takeaway orders (`isTakeawayOrder`, the one definition
+  of the floor/`TA-` rule), and list, counts, items, totals, status and actions
+  all come from `Order`. A takeaway order with no reservation row renders
+  completely. The one thing still read from the legacy row is display text the
+  POS `Order` has no field for — guest name, phone and pickup time — looked up
+  in `DatabaseService.getTakeawayTicketsForDate` and nowhere else; a ticket
+  without it falls back and is simply never marked late. Moving those three
+  onto `Order` (Cloud's `Order` already carries them) is what retires the row.
 - Every order-creation path writes a `Reservation` row, not only takeaway:
   `OrderRepository.createOrder` defaults `createReservationRecord: true` and
   writes a `Walk-in` row (`notes: 'Order #N'`), takeaway writes an `isTakeAway`
   row, and `createOrderForPackage` inherits the walk-in default. Only
   `ActivateReservationTransaction` passes `false`, because a real booking
   already exists. So the reservation box holds roughly one row per order ever
-  placed, plus real bookings.
+  placed, plus real bookings. Those rows are still written and still kept for
+  compatibility; no historical row has been changed or removed.
 - Reservations are only status-transitioned, never purged, so local reservation
   storage stays deliberately mixed: bookings alongside the walk-in, takeaway and
   package bookkeeping rows the POS still needs. Nothing narrows it, and

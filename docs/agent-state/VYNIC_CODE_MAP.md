@@ -101,7 +101,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
   `upsertMobileDineInOrder`, `createOrderForPackage`)
 - Order mode is not a field: takeaway is `floor == 'takeaway'` with a `TA-<id>` table
 - Package model/repository/admin: `apps/operations/lib/core/models/package.dart`, `apps/operations/lib/core/database/repositories/package_repository.dart`, `apps/operations/lib/apps/windows_pos/widgets/admin/admin_packages_section.dart`
-- Takeaway home panel (reads `Reservation`, not `Order`): `apps/operations/lib/apps/windows_pos/widgets/home/home_take_away_section.dart`
+- Takeaway detection, tickets and the home panel's source: `apps/operations/lib/core/models/takeaway_order.dart`, `apps/operations/lib/apps/windows_pos/widgets/home/home_take_away_section.dart`, proof in `apps/operations/test/unit/takeaway_order_source_test.dart`
 - Booking-vs-bookkeeping predicates: `apps/operations/lib/core/utils/reservation_table_availability.dart`, `apps/operations/lib/core/utils/home_reservations_helper.dart`, `apps/backend/src/website/reservation/reservation-table-codes.ts`
 
 ## Reservations

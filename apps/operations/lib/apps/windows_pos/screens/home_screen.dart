@@ -404,11 +404,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   int _countActiveTakeAways(DateTime date) {
-    final reservations = DatabaseService.getTakeAwayReservationsForDate(date);
-    return reservations.where((reservation) {
-      final status = reservation.status.toLowerCase();
-      return status != 'completed' && status != 'cancelled';
-    }).length;
+    return DatabaseService.getTakeawayTicketsForDate(
+      date,
+    ).where((ticket) => ticket.isActive).length;
   }
 
   double _calculateOpenedTablesAmount(DateTime date) {
@@ -620,12 +618,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildTodayTakeAwayPage() {
     final today = DatabaseService.getCurrentDate();
-    final takeAwayReservations = DatabaseService.getTakeAwayReservationsForDate(
-      today,
-    );
     return HomeTakeAwaySection(
       user: _user,
-      takeAwayReservations: takeAwayReservations,
+      tickets: DatabaseService.getTakeawayTicketsForDate(today),
       onRefreshRequested: _refreshTables,
       primaryColor: _primaryColor,
       secondaryColor: _secondaryColor,

@@ -32,6 +32,10 @@ current transport status.
   identity -> Venue for payment callbacks.
 - `PlatformUser` is a separate cross-tenant principal. It is not Staff and has
   no Venue membership.
+- The staff plain-PIN vault (`staff:plain_pins`) is one encrypted `setting` row
+  per Venue, and every read/write requires a resolved tenant. There is no
+  bootstrap-Venue default: an unestablished Venue raises rather than being
+  served the bootstrap Venue's credentials.
 - Cloud-originated POS work uses a persistent pull queue. The Edge initiates the
   connection, executes locally, journals the outcome, and acknowledges it.
 

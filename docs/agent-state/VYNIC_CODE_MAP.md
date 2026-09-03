@@ -54,8 +54,11 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - POS snapshot assembly: `apps/operations/lib/core/services/sync/manager_sync_service.dart`
 - Backend mirror/reconcile: `apps/backend/src/pos/sync/snapshot/staff-sync.service.ts`
 - Plain-PIN store: `apps/backend/src/auth/staff-pin-vault.service.ts`
+- Manager-side staff CRUD: `apps/backend/src/mobile/services/mobile-users.service.ts`
 - Proofs: `apps/operations/test/unit/staff_credential_sync_test.dart`,
-  `apps/backend/src/pos/sync/snapshot/staff-sync.service.spec.ts`
+  `apps/backend/src/pos/sync/snapshot/staff-sync.service.spec.ts`,
+  `apps/backend/src/auth/staff-pin-vault.service.spec.ts`,
+  `apps/backend/src/mobile/services/mobile-users.service.spec.ts`
 
 ## Edge Transport — Backend
 

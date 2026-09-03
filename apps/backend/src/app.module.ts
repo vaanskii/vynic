@@ -18,9 +18,7 @@ import { MobileDashboardService } from './mobile/services/mobile-dashboard.servi
 import { MobileOrdersService } from './mobile/services/mobile-orders.service';
 import { PlatformModule } from './platform/platform.module';
 import { PosCallbackModule } from './pos/pos-callback.module';
-import { PosCommandDispatcher } from './pos/pos-command-dispatcher.service';
-import { PosReservationMirrorService } from './pos/pos-reservation-mirror.service';
-import { PosOutboxService } from './pos/pos-outbox.service';
+import { PosCommandModule } from './pos/pos-command.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
 import { BootstrapModule } from './shared/bootstrap/bootstrap.module';
 import { SyncController } from './pos/sync/sync.controller';
@@ -49,15 +47,13 @@ import { WebsiteModule } from './website/website.module';
     PlatformModule,
     RealtimeModule,
     PosCallbackModule,
+    PosCommandModule,
     WebsiteModule,
   ],
   controllers: [AppController, MobileController, SyncController],
   providers: [
     AppService,
     PosSyncGuard,
-    PosOutboxService,
-    PosCommandDispatcher,
-    PosReservationMirrorService,
     PosConnectionRegistry,
     IngestPosSnapshotService,
     IngestAuditReportsService,

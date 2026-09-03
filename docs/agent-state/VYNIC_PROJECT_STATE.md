@@ -139,14 +139,30 @@ current transport status.
   instead of duplicating them. Keyless older backups still restore.
 - Tables, orders, menu, staff, and `salesHistoryByDate` still use broad snapshot
   payloads; further sync windowing/scaling is deferred.
-- Every takeaway order creates a permanent `Reservation` row (`isTakeAway`,
-  `linkedOrderId`, `preOrderItems`). Reservations are only status-transitioned,
-  never purged, so the box grows with trading volume, and a full snapshot sends
-  all of them. `ReservationSyncService` then issues one `posReservation.upsert`
-  per record sequentially plus one reconciling `deleteMany`. Measured at
-  Vankisi: 2004 records, 617-685ms, of which under 10ms is enumeration and
-  mapping; the rest is per-record round-trips. `preOrderItems` is sent and
-  never read by the backend (~27% of that section's bytes).
+- Every order-creation path writes a `Reservation` row, not only takeaway:
+  `OrderRepository.createOrder` defaults `createReservationRecord: true` and
+  writes a `Walk-in` row (`notes: 'Order #N'`), takeaway writes an `isTakeAway`
+  row, and `createOrderForPackage` inherits the walk-in default. Only
+  `ActivateReservationTransaction` passes `false`, because a real booking
+  already exists. So the reservation box holds roughly one row per order ever
+  placed, plus real bookings.
+- Reservations are only status-transitioned, never purged, so the box grows
+  with trading volume and a full snapshot sends all of it.
+  `ReservationSyncService` issues one `posReservation.upsert` per record
+  sequentially plus one reconciling `deleteMany`. Measured at Vankisi: 2004
+  records, 617-685ms, of which under 10ms is enumeration and mapping; the rest
+  is per-record round-trips. `preOrderItems` is on the wire and unread by the
+  backend (~27% of that section's bytes); the POS itself does need it, because
+  the home takeaway panel renders and totals from those rows.
+- Order bookkeeping rows are already separable from real bookings by a
+  three-clause predicate on `isTakeAway`, `linkedOrderId` and a
+  `notes` prefix of `Order #`. It exists in `isRealTableBooking`,
+  `isRealPosTableBooking` and the Manager `getReservations` filter, and every
+  Cloud consumer — Manager list and website availability — already applies it,
+  so nothing downstream reads the bookkeeping rows. `getAdminPanelReservations`
+  deliberately omits the `linkedOrderId` clause so an activated real booking
+  still shows; close-day nulls `linkedOrderId` on past rows, so for historical
+  data only `isTakeAway` and the notes prefix remain reliable.
 - `salesHistoryByDate` and `MenuSyncService` have the same shape: one
   sequential upsert per business day and per menu node.
 - A POS edit only marks pending. The single automatic push is a 30-second

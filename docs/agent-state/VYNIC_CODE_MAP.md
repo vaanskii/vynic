@@ -94,6 +94,16 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Auth and tenant resolution: `apps/backend/src/auth/auth.service.ts`, `apps/backend/src/auth/manager-tenant.service.ts`
 - Tenant rules: `docs/MANAGER_TENANT_AUTH.md`
 
+## Orders / Walk-In / Takeaway / Packages
+
+- Order model and every creation path: `apps/operations/lib/core/models/order.dart`, `apps/operations/lib/core/database/repositories/order_repository.dart`
+  (`createOrder`, `createTakeAwayOrder`, `upsertMobileTakeawayOrder`,
+  `upsertMobileDineInOrder`, `createOrderForPackage`)
+- Order mode is not a field: takeaway is `floor == 'takeaway'` with a `TA-<id>` table
+- Package model/repository/admin: `apps/operations/lib/core/models/package.dart`, `apps/operations/lib/core/database/repositories/package_repository.dart`, `apps/operations/lib/apps/windows_pos/widgets/admin/admin_packages_section.dart`
+- Takeaway home panel (reads `Reservation`, not `Order`): `apps/operations/lib/apps/windows_pos/widgets/home/home_take_away_section.dart`
+- Booking-vs-bookkeeping predicates: `apps/operations/lib/core/utils/reservation_table_availability.dart`, `apps/operations/lib/core/utils/home_reservations_helper.dart`, `apps/backend/src/website/reservation/reservation-table-codes.ts`
+
 ## Reservations
 
 - POS model/repository/transaction: `apps/operations/lib/core/models/reservation.dart`, `apps/operations/lib/core/database/repositories/reservation_repository.dart`, `apps/operations/lib/core/database/transactions/activate_reservation_transaction.dart`

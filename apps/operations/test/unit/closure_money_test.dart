@@ -181,6 +181,31 @@ void main() {
   });
 
   group('normal close', () {
+    test('an Order-only Takeaway closes without a Reservation row', () async {
+      final order = await seedOrder(orderId: 44, itemTotal: 25);
+      order.floor = 'takeaway';
+      order.tableNumbers = const ['TA-44'];
+      order.customerName = 'Takeaway Guest';
+      order.customerPhone = '+995555111222';
+      order.pickupTime = '18:30';
+      await order.save();
+
+      expect(DatabaseCore.reservationBox!.values, isEmpty);
+      final result = await CloseTableTransaction.run(
+        orderId: order.orderId,
+        money: ClosureMoney.fromOrder(order, collectedNow: 25),
+        paymentMethod: 'cash',
+        tenderBreakdown: const {'cash': 25},
+        closedById: 'manager',
+        isFiscal: true,
+      );
+
+      expect(result.outcome, ClosureOutcome.closed);
+      expect(DatabaseCore.orderBox!.values.single.status, 'closed');
+      expect(closedSales(today), hasLength(1));
+      expect(DatabaseCore.reservationBox!.values, isEmpty);
+    });
+
     test('a 900 order books exactly one 900 sale', () async {
       final order = await seedOrder(itemTotal: 900);
 

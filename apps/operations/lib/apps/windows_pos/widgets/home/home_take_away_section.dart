@@ -344,9 +344,6 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
       orderId: orderId,
       status: 'cancelled',
     );
-    // The legacy bookkeeping row is still written elsewhere, so it is still
-    // finalized here; the panel no longer reads it either way.
-    await DatabaseService.cancelReservationByOrderId(orderId);
     await widget.onRefreshRequested();
 
     if (!mounted) {

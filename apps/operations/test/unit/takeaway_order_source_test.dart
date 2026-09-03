@@ -14,6 +14,7 @@ import 'package:vynic/core/models/package.dart';
 import 'package:vynic/core/models/quick_order_draft.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/table.dart';
+import 'package:vynic/core/models/table_ref.dart';
 import 'package:vynic/core/models/takeaway_order.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
@@ -153,7 +154,7 @@ Order packageOrder({int orderId = 1767}) {
   return order;
 }
 
-/// The bookkeeping row `createTakeAwayOrder` still writes beside the order.
+/// A historical bookkeeping row written beside a Takeaway Order by old builds.
 Reservation legacyTakeawayRow({
   int orderId = 1766,
   String id = 'legacy-takeaway',
@@ -215,6 +216,7 @@ void main() {
     await DatabaseCore.settingsBox!.put('serviceFeePercent', 10.0);
     await DatabaseCore.orderBox!.clear();
     await DatabaseCore.reservationBox!.clear();
+    await DatabaseCore.tableBox!.clear();
   });
 
   group('a takeaway order with no reservation at all', () {
@@ -292,6 +294,8 @@ void main() {
 
       await DatabaseService.updateOrderStatus(orderId: 41, status: 'closed');
       await DatabaseService.updateOrderStatus(orderId: 42, status: 'cancelled');
+      expect(await DatabaseService.cancelReservationByOrderId(42), isFalse);
+      expect(await DatabaseService.completeReservationForOrder(41), isFalse);
 
       final tickets = DatabaseService.getTakeawayTicketsForDate(_businessDate);
       expect(
@@ -573,7 +577,7 @@ void main() {
         items: [item('ლობიანი')],
         createdBy: 'Nino',
       );
-      await _seedReservations([]);
+      expect(DatabaseCore.reservationBox!.values, isEmpty);
 
       final ticket = DatabaseService.getTakeawayTicketsForDate(
         _businessDate,
@@ -600,7 +604,7 @@ void main() {
         waiterName: 'Nino',
         items: [item('ხაჭაპური', quantity: 2)],
       );
-      await _seedReservations([]);
+      expect(DatabaseCore.reservationBox!.values, isEmpty);
 
       final ticket = DatabaseService.getTakeawayTicketsForDate(
         _businessDate,
@@ -623,7 +627,7 @@ void main() {
           {'itemName': 'მწვადი', 'unitPrice': 25.0, 'quantity': 1},
         ],
       );
-      await _seedReservations([]);
+      expect(DatabaseCore.reservationBox!.values, isEmpty);
 
       final ticket = DatabaseService.getTakeawayTicketsForDate(
         _businessDate,
@@ -691,6 +695,26 @@ void main() {
         expect(tickets.single.customerName(_guestFallback), 'Giorgi');
         expect(tickets.single.customerPhone, '+995555111222');
         expect(tickets.single.pickupTime, '13:30');
+
+        final historicalRows = DatabaseCore.reservationBox!.length;
+        final newOrder = await DatabaseService.createTakeAwayOrder(
+          customerName: 'New Guest',
+          customerPhone: '+995555777888',
+          pickupTime: '22:00',
+          items: [item('ლობიანი')],
+          createdBy: 'Nino',
+        );
+
+        expect(DatabaseCore.reservationBox!.length, historicalRows);
+        final afterCreation = DatabaseService.getTakeawayTicketsForDate(
+          _businessDate,
+        );
+        final newTicket = afterCreation.firstWhere(
+          (ticket) => ticket.orderId == newOrder.orderId,
+        );
+        expect(newTicket.customerName(_guestFallback), 'New Guest');
+        expect(newTicket.customerPhone, '+995555777888');
+        expect(newTicket.pickupTime, '22:00');
       },
     );
 
@@ -725,5 +749,42 @@ void main() {
         expect(tickets.single.pickupTime, '21:00');
       },
     );
+  });
+
+  test('real Reservation activation keeps and links the booking', () async {
+    const reservationId = 'real-booking';
+    await DatabaseCore.tableBox!.add(
+      TableModel(tableNumber: '7', floor: 'first'),
+    );
+    await DatabaseCore.reservationBox!.add(
+      Reservation(
+        id: reservationId,
+        customerName: 'Booked Guest',
+        customerPhone: '+995555123123',
+        tableNumbers: const [7],
+        tableRefs: const [
+          TableRef(floor: 'first', tableNumber: '7'),
+        ].map((ref) => ref.encode()).toList(),
+        reservationDate: _businessDate,
+        reservationTime: '19:00',
+        numberOfGuests: 2,
+        createdAt: DateTime(2026, 9, 2),
+        createdBy: 'Nino',
+        status: 'confirmed',
+      ),
+    );
+
+    final result = await DatabaseService.activateReservation(
+      reservationId: reservationId,
+      activatedBy: 'Nino',
+    );
+
+    expect(result.isSuccess, isTrue);
+    expect(DatabaseCore.orderBox!.values, hasLength(1));
+    expect(DatabaseCore.reservationBox!.values, hasLength(1));
+    final booking = DatabaseCore.reservationBox!.values.single;
+    expect(booking.id, reservationId);
+    expect(booking.linkedOrderId, result.orderId);
+    expect(booking.status, 'in-progress');
   });
 }

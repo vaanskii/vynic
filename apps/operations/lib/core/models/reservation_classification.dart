@@ -2,23 +2,21 @@ import 'reservation.dart';
 
 /// What a row in the reservation box actually is.
 ///
-/// The box has never held only bookings. Every order-creation path writes one:
-/// `OrderRepository.createOrder` defaults `createReservationRecord` to true and
-/// writes a `Walk-in` row noted `Order #N`, takeaway writes an `isTakeAway`
-/// row, and `createOrderForPackage` inherits the walk-in default. Only
-/// [ActivateReservationTransaction] opts out, because there a real booking
-/// already exists. So the box is roughly one row per order ever placed, plus
-/// the actual bookings.
+/// The box has never held only bookings. `OrderRepository.createOrder` defaults
+/// `createReservationRecord` to true and writes a `Walk-in` row noted `Order
+/// #N`; `createOrderForPackage` inherits that default. Older Takeaway creation
+/// paths also wrote `isTakeAway` rows, but new Takeaways are Order-only. Real
+/// Reservation activation opts out because the booking already exists.
 ///
-/// The POS still needs those rows — the home takeaway panel renders and totals
-/// from them — so they stay. What they are not is *bookings*, and this names
-/// the difference in one place instead of the three near-copies of the same
-/// string check that grew up around it.
+/// Historical bookkeeping rows remain supported. What they are not is
+/// *bookings*, and this names the difference in one place instead of the three
+/// near-copies of the same string check that grew up around it.
 enum ReservationRecordKind {
   /// A genuine advance booking, activated or not.
   advanceBooking,
 
-  /// Written alongside a takeaway order so the home panel can show it.
+  /// Written alongside a takeaway order by builds predating Order-only
+  /// Takeaway creation.
   takeawayBookkeeping,
 
   /// Written alongside a walk-in or package order. Nothing reads it.

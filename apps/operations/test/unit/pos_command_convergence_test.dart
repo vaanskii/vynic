@@ -374,6 +374,7 @@ void main() {
       // The Edge contract does not carry a phone, so compatibility is an
       // empty value rather than fabricated data.
       expect(stored.customerPhone, isEmpty);
+      expect(DatabaseCore.reservationBox!.values, isEmpty);
     });
 
     test('a cancel delivered twice reports done, not missing', () async {

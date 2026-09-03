@@ -145,7 +145,9 @@ class ReservationRepository {
   /// booking `confirmed` against a closed order is what blocks the day close.
   static Future<bool> completeReservationByOrderId(int orderId) async {
     try {
-      for (final reservation in DatabaseCore.reservationBox!.values) {
+      final reservationBox = DatabaseCore.reservationBox;
+      if (reservationBox == null) return false;
+      for (final reservation in reservationBox.values) {
         final matchesLinked = reservation.linkedOrderId == orderId;
         final matchesNote =
             reservation.notes != null &&
@@ -169,7 +171,9 @@ class ReservationRepository {
 
   static Future<bool> cancelReservationByOrderId(int orderId) async {
     try {
-      for (final reservation in DatabaseCore.reservationBox!.values) {
+      final reservationBox = DatabaseCore.reservationBox;
+      if (reservationBox == null) return false;
+      for (final reservation in reservationBox.values) {
         final matchesLinked = reservation.linkedOrderId == orderId;
         final matchesNote =
             reservation.notes != null &&

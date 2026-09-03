@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:hive/hive.dart';
-import 'package:uuid/uuid.dart';
 import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/order.dart';
@@ -11,7 +10,6 @@ import 'package:vynic/core/models/order_status.dart';
 import 'package:vynic/core/models/package.dart';
 import 'package:vynic/core/models/quick_order_draft.dart';
 import 'package:vynic/core/models/reservation.dart';
-import 'package:vynic/core/models/reservation_status.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/table_ref.dart';
 import 'package:vynic/core/models/user.dart';
@@ -410,7 +408,7 @@ class BackupRepository {
     required String waiterName,
     required List<Map<String, dynamic>> items,
   }) async {
-    if (DatabaseCore.orderBox == null || DatabaseCore.reservationBox == null) {
+    if (DatabaseCore.orderBox == null) {
       return null;
     }
     // Idempotent — skip if already exists
@@ -454,25 +452,6 @@ class BackupRepository {
     if (orderId > stored) {
       await DatabaseCore.settingsBox?.put('lastOrderId', orderId);
     }
-
-    // Keep writing the compatibility bookkeeping row until Phase 3. Home and
-    // Close Day no longer need it.
-    final reservationId = const Uuid().v4();
-    final reservation = Reservation(
-      id: reservationId,
-      customerName: customerName,
-      customerPhone: '-',
-      tableNumbers: [],
-      reservationDate: now,
-      reservationTime: pickupTime,
-      numberOfGuests: 1,
-      createdAt: now,
-      createdBy: waiterName,
-      status: ReservationStatus.confirmed.storageValue,
-      isTakeAway: true,
-      linkedOrderId: orderId,
-    );
-    await DatabaseCore.reservationBox!.add(reservation);
 
     SyncHub.notify(
       SyncEvent(

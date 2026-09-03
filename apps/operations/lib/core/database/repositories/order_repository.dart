@@ -214,26 +214,6 @@ class OrderRepository {
 
     await DatabaseCore.orderBox!.add(order);
 
-    final today = BusinessDayRepository.getCurrentDate();
-    final totalGuests = items.fold<int>(0, (sum, item) => sum + item.quantity);
-
-    await ReservationRepository.createReservation(
-      customerName: customerName,
-      customerPhone: customerPhone,
-      tableNumbers: const [],
-      reservationDate: today,
-      reservationTime: pickupTime,
-      numberOfGuests: totalGuests,
-      notes: notes?.isNotEmpty == true
-          ? '${notes!.trim()} (Order #$orderId)'
-          : 'Take-away Order #$orderId',
-      createdBy: createdBy,
-      preOrderItems: items,
-      isTakeAway: true,
-      linkedOrderId: orderId,
-      status: ReservationStatus.confirmed.storageValue,
-    );
-
     SyncHub.notify(
       SyncEvent(
         type: SyncEventType.orders,
@@ -305,22 +285,6 @@ class OrderRepository {
     if (posOrderId > lastId) {
       await DatabaseCore.settingsBox?.put('lastOrderId', posOrderId);
     }
-
-    final guestCount = items.fold<int>(0, (sum, item) => sum + item.quantity);
-    await ReservationRepository.createReservation(
-      customerName: customerName.isNotEmpty ? customerName : 'Takeaway',
-      customerPhone: '-',
-      tableNumbers: const [],
-      reservationDate: BusinessDayRepository.getCurrentDate(),
-      reservationTime: pickupTime,
-      numberOfGuests: guestCount > 0 ? guestCount : 1,
-      notes: 'Take-away Order #$posOrderId (mobile)',
-      createdBy: waiterName,
-      preOrderItems: items,
-      isTakeAway: true,
-      linkedOrderId: posOrderId,
-      status: ReservationStatus.confirmed.storageValue,
-    );
 
     SyncHub.notify(
       SyncEvent(

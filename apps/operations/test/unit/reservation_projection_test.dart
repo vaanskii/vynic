@@ -19,13 +19,13 @@ import 'package:vynic/core/models/user.dart';
 
 /// What Cloud is told a reservation is, and what the terminal keeps.
 ///
-/// The reservation box has never held only bookings: every order-creation path
-/// writes a row into it, so a restaurant's box is roughly one row per order it
-/// has ever taken. Cloud's consumers already throw those away on read, so the
-/// snapshot was carrying two thousand rows to have nearly all of them
-/// discarded. These state the two properties that replace that — Cloud gets
-/// bookings, and the terminal keeps everything — and the one that keeps them
-/// from being the same statement: a backup is local history, not a projection.
+/// The reservation box has never held only bookings: older Takeaway creation
+/// and current Walk-In/Package creation leave rows in it. Cloud's consumers
+/// already throw those away on read, so the snapshot was carrying two thousand
+/// rows to have nearly all of them discarded. These state the two properties
+/// that replace that — Cloud gets bookings, and the terminal keeps everything
+/// — and the one that keeps them from being the same statement: a backup is
+/// local history, not a projection.
 late Directory _tempDir;
 
 void _registerAdapters() {

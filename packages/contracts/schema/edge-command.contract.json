@@ -1,6 +1,7 @@
 {
-  "contractVersion": 1,
+  "contractVersion": 2,
   "description": "Cloud -> Edge work envelope and result. The Edge pulls with its Device credential; Cloud never dials a restaurant LAN.",
+  "compatibleContractVersions": [2, 1],
   "limits": {
     "defaultBatchSize": 20,
     "maxBatchSize": 50,
@@ -12,7 +13,205 @@
     {
       "type": "NOOP",
       "idempotent": true,
-      "description": "Does nothing on the Edge. Exists so the transport can be exercised end to end without performing restaurant work."
+      "repeatAfterInterruption": true,
+      "description": "Does nothing on the Edge. Exists so the transport can be exercised end to end without performing restaurant work.",
+      "idempotency": "Nothing happens, so nothing can happen twice.",
+      "payload": {}
+    },
+
+    {
+      "type": "ORDER_UPDATE",
+      "idempotent": true,
+      "repeatAfterInterruption": true,
+      "description": "Replace an existing order's lines, total and service-fee flag.",
+      "idempotency": "Assignment, not adjustment: the payload is the order's new content, so a second delivery writes the same values. The audit diff is computed against what is stored, so a replay produces no events, and MoneyAudit already skips a service-fee entry when the flag did not move.",
+      "payload": {
+        "posOrderId": "int, the order's POS identity",
+        "updatedBy": "string?, who the Manager identified itself as",
+        "items": "array of {itemName, quantity, unitPrice, itemKey?, comment?}",
+        "totalAmount": "number?",
+        "includeServiceFee": "bool?"
+      },
+      "failure": "order_not_found when no such order exists locally."
+    },
+    {
+      "type": "ORDER_CANCEL",
+      "idempotent": true,
+      "repeatAfterInterruption": true,
+      "description": "Remove an order from the POS and release the tables it held.",
+      "idempotency": "The goal state is 'this order is gone'. An order already absent satisfies it, so a redelivery succeeds rather than reporting a missing order.",
+      "payload": { "posOrderId": "int" }
+    },
+    {
+      "type": "ORDER_STATUS_UPDATE",
+      "idempotent": true,
+      "repeatAfterInterruption": true,
+      "description": "Set an order's status.",
+      "idempotency": "Assignment. The same status written twice is the same status.",
+      "payload": { "posOrderId": "int", "status": "string" }
+    },
+    {
+      "type": "TAKEAWAY_ORDER_UPSERT",
+      "idempotent": true,
+      "repeatAfterInterruption": true,
+      "description": "Create or update a takeaway order the Manager originated.",
+      "idempotency": "Keyed on the Cloud-allocated posOrderId and written as an upsert, so a redelivery updates the one order. The kitchen check is sent only when the order did not already exist, so a replay does not reprint it.",
+      "payload": {
+        "posOrderId": "int, allocated by Cloud",
+        "customerName": "string",
+        "pickupTime": "string",
+        "waiterName": "string",
+        "businessDate": "string?, YYYY-MM-DD",
+        "items": "array of {itemName, quantity, unitPrice, comment?}",
+        "totalAmount": "number"
+      }
+    },
+    {
+      "type": "DINE_IN_ORDER_UPSERT",
+      "idempotent": true,
+      "repeatAfterInterruption": true,
+      "description": "Create or update a walk-in dine-in order on one or more tables.",
+      "idempotency": "Same as TAKEAWAY_ORDER_UPSERT: upsert on the Cloud-allocated posOrderId, kitchen check only on first arrival.",
+      "payload": {
+        "posOrderId": "int, allocated by Cloud",
+        "tableNumbers": "string[]",
+        "floor": "string",
+        "waiterName": "string",
+        "guestCount": "int",
+        "businessDate": "string?, YYYY-MM-DD",
+        "items": "array of {itemName, quantity, unitPrice, comment?}",
+        "totalAmount": "number"
+      }
+    },
+    {
+      "type": "ORDER_CHECK_PRINT",
+      "idempotent": true,
+      "repeatAfterInterruption": false,
+      "description": "Print an order's customer pre-bill on the POS receipt printer.",
+      "idempotency": "Not naturally idempotent — paper is a side effect the world keeps. Safety comes from the local execution journal: a command already recorded as succeeded is acknowledged again without printing. A command interrupted mid-execution is NOT reprinted automatically, because the honest answer to 'did the paper come out' is unknown and a silent second check is worse than a reported failure.",
+      "payload": { "posOrderId": "int" },
+      "failure": "order_not_found; printer failures surface from the local print service."
+    },
+
+    {
+      "type": "RESERVATION_CREATE",
+      "idempotent": true,
+      "repeatAfterInterruption": true,
+      "description": "Create a reservation the Manager or the public website originated.",
+      "idempotency": "Cloud allocates reservationId, so the POS creates it only if that id is absent and returns the existing one otherwise. This is why the id moved to Cloud: a POS-generated id made a redelivery a second booking.",
+      "payload": {
+        "reservationId": "string, allocated by Cloud",
+        "customerName": "string",
+        "customerPhone": "string",
+        "tableNumbers": "int[], legacy reservation table codes",
+        "reservationDate": "string, ISO date",
+        "reservationTime": "string, HH:mm",
+        "numberOfGuests": "int",
+        "notes": "string?",
+        "createdBy": "string",
+        "status": "string",
+        "isTakeAway": "bool",
+        "preOrderItems": "array of order items"
+      }
+    },
+    {
+      "type": "RESERVATION_STATUS_UPDATE",
+      "idempotent": true,
+      "repeatAfterInterruption": true,
+      "description": "Set a reservation's status.",
+      "idempotency": "Assignment.",
+      "payload": { "reservationId": "string", "status": "string" }
+    },
+    {
+      "type": "RESERVATION_DELETE",
+      "idempotent": true,
+      "repeatAfterInterruption": true,
+      "description": "Remove a reservation from the POS.",
+      "idempotency": "The goal state is 'this reservation is gone'; already absent satisfies it.",
+      "payload": { "reservationId": "string" }
+    },
+    {
+      "type": "RESERVATION_CHECK_PRINT",
+      "idempotent": true,
+      "repeatAfterInterruption": false,
+      "description": "Print a reservation's kitchen check on the POS kitchen printer.",
+      "idempotency": "Journal-guarded, exactly as ORDER_CHECK_PRINT. An interrupted print is not repeated automatically.",
+      "payload": { "reservationId": "string", "requestedBy": "string?" },
+      "failure": "reservation_not_found."
+    },
+    {
+      "type": "COUNTED_MENU_PRINT",
+      "idempotent": true,
+      "repeatAfterInterruption": false,
+      "description": "Print a counted-menu draft on the POS receipt printer from the payload itself.",
+      "idempotency": "Journal-guarded, exactly as ORDER_CHECK_PRINT. The draft lives in Cloud rather than POS Hive, which is why the whole thing travels in the payload.",
+      "payload": {
+        "displayName": "string?",
+        "items": "array of {itemName, quantity, unitPrice, total?, comment?}",
+        "subtotal": "number",
+        "serviceFeeAmount": "number",
+        "total": "number",
+        "includeServiceFee": "bool",
+        "language": "string?, ka|en"
+      }
+    },
+
+    {
+      "type": "EXPENSE_CREATE",
+      "idempotent": true,
+      "repeatAfterInterruption": true,
+      "description": "Record an expense the Manager entered.",
+      "idempotency": "Cloud allocates the expense id and the POS upserts on it, so a redelivery updates the one record instead of adding a second.",
+      "payload": {
+        "id": "string, allocated by Cloud",
+        "description": "string",
+        "amount": "number",
+        "category": "string",
+        "paymentType": "string",
+        "createdAt": "string?, ISO",
+        "businessDate": "string?, YYYY-MM-DD"
+      }
+    },
+
+    {
+      "type": "STAFF_CREATE",
+      "idempotent": true,
+      "repeatAfterInterruption": true,
+      "description": "Add a staff user to the POS.",
+      "idempotency": "The goal state is 'this username exists with this role and PIN'. Cloud has already refused a duplicate username before enqueueing, so a username that exists locally means the command has landed before; the handler reconciles the role and PIN and succeeds.",
+      "payload": { "username": "string", "pinCode": "string", "role": "string" }
+    },
+    {
+      "type": "STAFF_PIN_UPDATE",
+      "idempotent": true,
+      "repeatAfterInterruption": true,
+      "description": "Set a staff user's PIN.",
+      "idempotency": "Assignment. The same PIN written twice is the same PIN.",
+      "payload": { "username": "string", "pinCode": "string" }
+    },
+    {
+      "type": "STAFF_ROLE_UPDATE",
+      "idempotent": true,
+      "repeatAfterInterruption": true,
+      "description": "Set a staff user's role.",
+      "idempotency": "Assignment.",
+      "payload": { "username": "string", "role": "string" }
+    },
+    {
+      "type": "STAFF_RENAME",
+      "idempotent": true,
+      "repeatAfterInterruption": true,
+      "description": "Rename a staff user.",
+      "idempotency": "The goal state is 'newUsername exists and oldUsername does not'. A redelivery finds exactly that and succeeds without touching anything.",
+      "payload": { "oldUsername": "string", "newUsername": "string" }
+    },
+    {
+      "type": "STAFF_DELETE",
+      "idempotent": true,
+      "repeatAfterInterruption": true,
+      "description": "Remove a staff user from the POS.",
+      "idempotency": "The goal state is 'this username is gone'; already absent satisfies it.",
+      "payload": { "username": "string" }
     }
   ]
 }

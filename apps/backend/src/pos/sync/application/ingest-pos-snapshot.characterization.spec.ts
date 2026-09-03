@@ -13,6 +13,7 @@ import { PosConnectionRegistry } from '../pos-connection.registry';
 import { BusinessDaySyncService } from '../snapshot/business-day-sync.service';
 import { MenuSyncService } from '../snapshot/menu-sync.service';
 import { OrderSyncService } from '../snapshot/order-sync.service';
+import { ReservationSyncService } from '../snapshot/reservation-sync.service';
 import { StaffSyncService } from '../snapshot/staff-sync.service';
 import { SyncBroadcastService } from '../snapshot/sync-broadcast.service';
 import { TableSyncService } from '../snapshot/table-sync.service';
@@ -184,6 +185,7 @@ function makeHarness(overrides: Record<string, Override> = {}): Harness {
     new MenuSyncService(db),
     new TableSyncService(db),
     new OrderSyncService(db),
+    new ReservationSyncService(db),
     new StaffSyncService(db, vault),
     new BusinessDaySyncService(db),
     new SyncBroadcastService(db, gateway),

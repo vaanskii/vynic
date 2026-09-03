@@ -4,11 +4,17 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { PosCallbackClient } from '../../pos/pos-callback.client';
-import { PosOutboxService } from '../../pos/pos-outbox.service';
+import {
+  PosCommandDispatcher,
+  type PosDelivery,
+} from '../../pos/pos-command-dispatcher.service';
+import { EdgeCommandTypes } from '../../shared/contracts/edge-command';
+import { allocatePosReservationId } from '../../pos/pos-reservation-id';
+import { PosReservationMirrorService } from '../../pos/pos-reservation-mirror.service';
 import { MonitoringGateway } from '../../realtime/monitoring.gateway';
 import { suppressPosEchoForReservation } from '../../pos/sync-echo-guard';
 import { MobileMutationSupport } from './mobile-mutation-support.service';
+import type { TenantContext } from '../../tenancy/tenant-context';
 
 export interface ReservationResponseItem {
   id: string;
@@ -34,24 +40,26 @@ export interface ReservationResponseItem {
 @Injectable()
 export class MobileReservationsService {
   constructor(
-    private readonly posCallback: PosCallbackClient,
-    private readonly posOutbox: PosOutboxService,
+    private readonly posReservations: PosReservationMirrorService,
+    private readonly posCommands: PosCommandDispatcher,
     private readonly gateway: MonitoringGateway,
     private readonly mutationSupport: MobileMutationSupport,
   ) {}
 
-  async getReservations(date?: string): Promise<ReservationResponseItem[]> {
-    let rows: any[] = [];
-    try {
-      rows = await this.posCallback.fetchPosReservations();
-    } catch (e) {
-      console.warn(
-        '[Mobile][Reservations] fetch failed:',
-        (e as Error).message,
-      );
-      // Keep mobile UI functional even before POS callback URL is synced.
-      return [];
-    }
+  /**
+   * The Venue's reservations, read from the Cloud mirror.
+   *
+   * This used to be an HTTP request from here into the restaurant's LAN, which
+   * meant a manager could not see a reservation list unless the POS PC was
+   * awake and reachable — and which a hosted Vynic could not do at all. The POS
+   * still owns these; it pushes them with every snapshot and Cloud reads its own
+   * copy. See `PosReservationMirrorService` for what that costs in freshness.
+   */
+  async getReservations(
+    tenant: TenantContext,
+    date?: string,
+  ): Promise<ReservationResponseItem[]> {
+    const rows = await this.posReservations.listAll(tenant);
     const normalized = rows
       .filter((r) => r && typeof r === 'object')
       // Exclude walk-ins and takeaways: those are order-linked records the POS
@@ -91,6 +99,7 @@ export class MobileReservationsService {
   }
 
   async createReservation(
+    tenant: TenantContext,
     monitoringSocketId: string | undefined,
     payload: {
       customerName?: string;
@@ -104,7 +113,7 @@ export class MobileReservationsService {
       status?: string;
       preOrderItems?: Array<Record<string, unknown>>;
     },
-  ): Promise<ReservationResponseItem> {
+  ): Promise<ReservationResponseItem & { posDelivery: PosDelivery }> {
     const customerName = (payload.customerName ?? '').trim();
     const customerPhone = (payload.customerPhone ?? '').trim();
     const reservationDate = (payload.reservationDate ?? '').trim();
@@ -146,27 +155,20 @@ export class MobileReservationsService {
       preOrderItems,
     };
 
-    let reservation: any;
-    try {
-      reservation =
-        await this.posCallback.createPosReservation(reservationPayload);
-    } catch (e) {
-      if (!this.posOutbox.isPosUnreachableError(e)) throw e;
-      // POS offline — queue for durable delivery so the reservation isn't lost.
-      // The POS assigns the real id on delivery; the mobile UI shows it after
-      // the POS reconnects (it round-trips back via /sync/manager-data).
-      await this.posOutbox.enqueue({
-        endpoint: '/mobile-reservation-create',
-        payload: reservationPayload,
-      });
-      reservation = null;
-    }
+    // The reservation's identity is allocated here rather than by the POS.
+    // It used to come back from a synchronous LAN call, which meant the id did
+    // not exist until the restaurant answered — and meant a redelivered create
+    // produced a second booking. Cloud naming it makes the command convergent
+    // and lets this request answer immediately.
+    const reservationId = allocatePosReservationId();
+    const posDelivery = await this.posCommands.dispatch(tenant, {
+      type: EdgeCommandTypes.RESERVATION_CREATE,
+      payload: { ...reservationPayload, reservationId },
+    });
+
     // Suppress the POS round-trip echo so the device that created this
     // reservation isn't re-notified when the POS syncs it back.
-    const newReservationId = String(reservation?.id ?? '').trim();
-    if (newReservationId.length > 0) {
-      suppressPosEchoForReservation(newReservationId);
-    }
+    suppressPosEchoForReservation(reservationId);
     this.gateway.broadcastUpdate(
       'data_updated',
       {
@@ -180,30 +182,26 @@ export class MobileReservationsService {
       this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
     return {
-      id: String(reservation?.id ?? ''),
-      customerName: String(reservation?.customerName ?? customerName),
-      customerPhone: String(reservation?.customerPhone ?? customerPhone),
-      tableNumbers: Array.isArray(reservation?.tableNumbers)
-        ? reservation.tableNumbers
-            .map((x: any) => Number(x))
-            .filter((x: number) => Number.isFinite(x))
-        : tableNumbers,
-      reservationDate: String(reservation?.reservationDate ?? reservationDate),
-      reservationTime: String(reservation?.reservationTime ?? reservationTime),
-      numberOfGuests: Number(reservation?.numberOfGuests ?? numberOfGuests),
-      notes: reservation?.notes ? String(reservation.notes) : undefined,
-      status: String(reservation?.status ?? 'confirmed'),
-      createdBy: reservation?.createdBy
-        ? String(reservation.createdBy)
-        : undefined,
+      id: reservationId,
+      customerName,
+      customerPhone,
+      tableNumbers,
+      reservationDate,
+      reservationTime,
+      numberOfGuests,
+      notes: reservationPayload.notes || undefined,
+      status: reservationPayload.status,
+      createdBy: reservationPayload.createdBy,
+      posDelivery,
     };
   }
 
   async updateReservationStatus(
+    tenant: TenantContext,
     id: string,
     monitoringSocketId: string | undefined,
     payload: { status?: string },
-  ): Promise<{ success: true }> {
+  ) {
     const status = (payload.status ?? '').trim().toLowerCase();
     if (status.length === 0) {
       throw new BadRequestException('status is required');
@@ -217,15 +215,10 @@ export class MobileReservationsService {
         'Moving reservation to table is not allowed from mobile',
       );
     }
-    try {
-      await this.posCallback.updatePosReservationStatus(id, status);
-    } catch (e) {
-      if (!this.posOutbox.isPosUnreachableError(e)) throw e;
-      await this.posOutbox.enqueue({
-        endpoint: '/mobile-reservation-status',
-        payload: { reservationId: id, status },
-      });
-    }
+    const posDelivery = await this.posCommands.dispatch(tenant, {
+      type: EdgeCommandTypes.RESERVATION_STATUS_UPDATE,
+      payload: { reservationId: id, status },
+    });
     this.gateway.broadcastUpdate(
       'data_updated',
       {
@@ -235,22 +228,18 @@ export class MobileReservationsService {
       },
       this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
-    return { success: true };
+    return { success: true, posDelivery };
   }
 
   async deleteReservation(
+    tenant: TenantContext,
     id: string,
     monitoringSocketId?: string,
-  ): Promise<{ success: true }> {
-    try {
-      await this.posCallback.deletePosReservation(id);
-    } catch (e) {
-      if (!this.posOutbox.isPosUnreachableError(e)) throw e;
-      await this.posOutbox.enqueue({
-        endpoint: '/mobile-reservation-delete',
-        payload: { reservationId: id },
-      });
-    }
+  ) {
+    const posDelivery = await this.posCommands.dispatch(tenant, {
+      type: EdgeCommandTypes.RESERVATION_DELETE,
+      payload: { reservationId: id },
+    });
     this.gateway.broadcastUpdate(
       'data_updated',
       {
@@ -260,7 +249,7 @@ export class MobileReservationsService {
       },
       this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
-    return { success: true };
+    return { success: true, posDelivery };
   }
 
   /**
@@ -270,25 +259,29 @@ export class MobileReservationsService {
    * failures (unreachable POS, reservation missing in Hive) are surfaced as
    * clean HTTP errors instead of a raw 500.
    */
-  async printReservationCheck(id: string): Promise<{ success: true }> {
+  async printReservationCheck(tenant: TenantContext, id: string) {
     const reservationId = (id ?? '').trim();
     if (reservationId.length === 0) {
       throw new BadRequestException('reservation id is required');
     }
-    try {
-      await this.posCallback.printPosReservationCheck(reservationId);
-    } catch (e) {
-      const message = (e as Error).message ?? '';
-      if (
-        message.includes('reservation_not_found') ||
-        message.includes('404')
-      ) {
+    const posDelivery = await this.posCommands.dispatchAndAwait(tenant, {
+      type: EdgeCommandTypes.RESERVATION_CHECK_PRINT,
+      payload: { reservationId },
+    });
+
+    if (posDelivery.status === 'FAILED') {
+      if (posDelivery.code === 'reservation_not_found') {
         throw new NotFoundException('Reservation not found on POS');
       }
       throw new ServiceUnavailableException(
-        `Could not print reservation check — is the Windows POS running? (${message})`,
+        `The POS could not print this check (${posDelivery.code ?? 'unknown'})`,
       );
     }
-    return { success: true };
+    if (posDelivery.status === 'UNAVAILABLE') {
+      throw new ServiceUnavailableException(
+        'Could not reach the POS to print this check — is it running?',
+      );
+    }
+    return { success: true, posDelivery };
   }
 }

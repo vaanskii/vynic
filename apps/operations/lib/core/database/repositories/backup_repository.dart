@@ -547,6 +547,9 @@ class BackupRepository {
       isTakeAway: json['isTakeAway'] as bool? ?? false,
       linkedOrderId: (json['linkedOrderId'] as num?)?.toInt(),
       status: json['status'] as String? ?? 'pending',
+      // Present when Cloud originated the booking and allocated its identity,
+      // which is what makes a redelivered create converge instead of duplicate.
+      id: json['id'] as String?,
     );
   }
 

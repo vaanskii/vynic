@@ -272,6 +272,7 @@ export class ReservationService {
       .map((row) => this.serializeWebsiteReservationForMap(row));
 
     const posRows = await this.posBridge.fetchPosBookingsForDate(
+      tenant,
       dateKey,
       linkedPosIds,
     );
@@ -396,15 +397,29 @@ export class ReservationService {
       try {
         await this.posBridge.pushConfirmedReservationToPos(tenant, updated);
       } catch (error) {
+        // The booking and its payment are already persisted above, and this is
+        // a payment-provider callback: throwing here fails a callback about
+        // money that has already moved, which unbooks nothing and only makes
+        // the provider retry into the same failure.
+        //
+        // Reaching the POS is no longer part of it either — the reservation is
+        // recorded as an Edge command the terminal claims when it is next
+        // online, so an offline restaurant is not a failed booking. What can
+        // still land here is a genuine conflict, such as the tables having been
+        // taken between the booking and the payment clearing, and that is a
+        // situation for a person rather than for a retry.
         this.logger.error(
-          `POS push failed for website reservation ${reservationId}: ${(error as Error).message}`,
+          `Website reservation ${reservationId} was paid and confirmed but ` +
+            `could not be handed to the POS: ${(error as Error).message}`,
         );
-        throw error;
       }
     }
 
     if (status === 'FAILED' && existing.posReservationId) {
-      await this.posBridge.cancelPosReservation(existing.posReservationId);
+      await this.posBridge.cancelPosReservation(
+        tenant,
+        existing.posReservationId,
+      );
     }
 
     return updated;

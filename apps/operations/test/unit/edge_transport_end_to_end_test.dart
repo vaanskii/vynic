@@ -23,7 +23,8 @@ void main() {
   late _FakeCloud cloud;
   late EdgeTransportService service;
 
-  const credential = 'vynic-device-v1.11111111-1111-4111-8111-111111111111.'
+  const credential =
+      'vynic-device-v1.11111111-1111-4111-8111-111111111111.'
       'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
   const foreignCredential =
       'vynic-device-v1.22222222-2222-4222-8222-222222222222.'
@@ -71,8 +72,10 @@ void main() {
     expect(summary.executed, 1);
     expect(summary.acknowledged, 1);
     expect(executions, 1);
-    expect(EdgeCommandJournal.entryFor('cmd-1')!.status,
-        EdgeExecutionStatus.succeeded);
+    expect(
+      EdgeCommandJournal.entryFor('cmd-1')!.status,
+      EdgeExecutionStatus.succeeded,
+    );
     expect(cloud.statusOf('cmd-1'), 'SUCCEEDED');
     expect(cloud.attemptsOf('cmd-1'), 1);
   });
@@ -100,19 +103,21 @@ void main() {
     expect(cloud.attemptsOf('cmd-1'), 2, reason: 'cloud did redeliver');
   });
 
-  test('a redelivery after a clean acknowledgment still does not re-execute',
-      () async {
-    cloud.enqueue('cmd-1');
-    await service.pollOnce();
+  test(
+    'a redelivery after a clean acknowledgment still does not re-execute',
+    () async {
+      cloud.enqueue('cmd-1');
+      await service.pollOnce();
 
-    // Cloud would not normally offer a SUCCEEDED command again; if anything
-    // ever did, the journal is the thing that refuses to run it twice.
-    cloud.reopen('cmd-1');
-    final summary = await service.pollOnce();
+      // Cloud would not normally offer a SUCCEEDED command again; if anything
+      // ever did, the journal is the thing that refuses to run it twice.
+      cloud.reopen('cmd-1');
+      final summary = await service.pollOnce();
 
-    expect(summary.skippedAlreadyDone, 1);
-    expect(executions, 1);
-  });
+      expect(summary.skippedAlreadyDone, 1);
+      expect(executions, 1);
+    },
+  );
 
   test('the journal outlives a restart of the POS', () async {
     cloud.enqueue('cmd-1');
@@ -153,19 +158,21 @@ void main() {
     expect(cloud.acknowledgedOrder, <String>['cmd-1', 'cmd-2', 'cmd-3']);
   });
 
-  test('a credential cloud does not accept stops the loop, not the POS',
-      () async {
-    // What a revoked device, a disabled venue, or another venue's credential
-    // all look like from here.
-    await EdgeDeviceCredentialStore.save(foreignCredential);
-    cloud.enqueue('cmd-1');
+  test(
+    'a credential cloud does not accept stops the loop, not the POS',
+    () async {
+      // What a revoked device, a disabled venue, or another venue's credential
+      // all look like from here.
+      await EdgeDeviceCredentialStore.save(foreignCredential);
+      cloud.enqueue('cmd-1');
 
-    final summary = await service.pollOnce();
+      final summary = await service.pollOnce();
 
-    expect(summary.outcome, EdgeTransportOutcome.unauthorized);
-    expect(executions, 0);
-    expect(cloud.statusOf('cmd-1'), 'PENDING');
-  });
+      expect(summary.outcome, EdgeTransportOutcome.unauthorized);
+      expect(executions, 0);
+      expect(cloud.statusOf('cmd-1'), 'PENDING');
+    },
+  );
 
   test('an unreachable cloud leaves the POS alone', () async {
     cloud.enqueue('cmd-1');
@@ -177,6 +184,99 @@ void main() {
     expect(service.isRunning, isTrue);
     expect(executions, 0);
   });
+
+  group('an execution the POS never finished', () {
+    /// Leaves behind what a crash mid-command leaves behind: a journal entry
+    /// this process started and no outcome. The next start marks it
+    /// `interrupted`, which is what the redelivery is then judged against.
+    Future<void> crashDuring(String commandId, String type) async {
+      cloud.enqueue(commandId, type: type);
+      await service.stop();
+
+      // Reopen the journal and record a start with no completion, from a run
+      // that is not the current one.
+      await EdgeCommandJournal.open();
+      await EdgeCommandJournal.beginExecution(
+        EdgeCommandEnvelope(
+          contractVersion: edgeCommandContractVersion,
+          commandId: commandId,
+          type: type,
+          payload: null,
+          idempotencyKey: 'key-\$commandId',
+          attempt: 1,
+          issuedAt: DateTime.now().toUtc(),
+          leaseExpiresAt: DateTime.now().toUtc().add(
+            const Duration(minutes: 2),
+          ),
+        ),
+      );
+      await EdgeCommandJournal.close();
+    }
+
+    test('is repeated when repeating it lands on the same state', () async {
+      // A convergent command. Nobody knows whether it ran, and running it again
+      // costs nothing — so it runs, rather than stranding work the restaurant
+      // is waiting for.
+      await crashDuring('cmd-noop', EdgeCommandTypes.noop);
+
+      final restarted = EdgeTransportService(
+        client: EdgeTransportClient(
+          baseUrl: () => cloud.baseUrl,
+          credential: () => EdgeDeviceCredentialStore.credential,
+        ),
+        registry: EdgeCommandRegistry(<EdgeCommandHandler>[
+          _CountingNoopHandler(() => executions += 1),
+        ]),
+      );
+      await restarted.start();
+      final summary = await restarted.pollOnce();
+      await restarted.stop();
+
+      expect(summary.executed, 1);
+      expect(executions, 1);
+      expect(cloud.statusOf('cmd-noop'), 'SUCCEEDED');
+    });
+
+    test('is not repeated when its side effect leaves the machine', () async {
+      // A print. The paper may or may not have come out, and nobody can tell —
+      // so a second kitchen check appearing silently is refused in favour of a
+      // failure an operator can see and act on.
+      await crashDuring('cmd-print', EdgeCommandTypes.orderCheckPrint);
+
+      var prints = 0;
+      final restarted = EdgeTransportService(
+        client: EdgeTransportClient(
+          baseUrl: () => cloud.baseUrl,
+          credential: () => EdgeDeviceCredentialStore.credential,
+        ),
+        registry: EdgeCommandRegistry(<EdgeCommandHandler>[
+          _CountingPrintHandler(() => prints += 1),
+        ]),
+      );
+      await restarted.start();
+      final summary = await restarted.pollOnce();
+      await restarted.stop();
+
+      expect(prints, 0, reason: 'no second check was printed');
+      expect(summary.skippedAlreadyDone, 1);
+      expect(cloud.statusOf('cmd-print'), 'FAILED');
+      expect(cloud.resultCodeOf('cmd-print'), 'interrupted_not_repeated');
+    });
+  });
+}
+
+class _CountingPrintHandler implements EdgeCommandHandler {
+  _CountingPrintHandler(this._onExecute);
+  final void Function() _onExecute;
+
+  @override
+  String get type => EdgeCommandTypes.orderCheckPrint;
+
+  @override
+  Future<EdgeCommandResult> execute(EdgeCommandEnvelope command) async {
+    _onExecute();
+    return EdgeCommandResult.succeeded(command.commandId);
+  }
 }
 
 class _CountingNoopHandler implements EdgeCommandHandler {
@@ -211,7 +311,8 @@ class _FakeCloud {
 
   final HttpServer _server;
   final String _acceptedCredential;
-  final Map<String, Map<String, Object?>> _commands = <String, Map<String, Object?>>{};
+  final Map<String, Map<String, Object?>> _commands =
+      <String, Map<String, Object?>>{};
   final List<String> acknowledgedOrder = <String>[];
 
   /// Makes the next acknowledgment fail, as a dying connection would.
@@ -221,15 +322,21 @@ class _FakeCloud {
 
   Future<void> stop() => _server.close(force: true);
 
-  void enqueue(String commandId) {
+  void enqueue(String commandId, {String type = EdgeCommandTypes.noop}) {
     _commands[commandId] = <String, Object?>{
       'status': 'PENDING',
       'attempt': 0,
       'leaseExpired': false,
+      'type': type,
     };
   }
 
-  String statusOf(String commandId) => _commands[commandId]!['status'] as String;
+  String statusOf(String commandId) =>
+      _commands[commandId]!['status'] as String;
+
+  /// The outcome code the Edge reported, if any.
+  String? resultCodeOf(String commandId) =>
+      _commands[commandId]!['resultCode'] as String?;
 
   int attemptsOf(String commandId) => _commands[commandId]!['attempt'] as int;
 
@@ -292,7 +399,7 @@ class _FakeCloud {
       issued.add(<String, dynamic>{
         'contractVersion': edgeCommandContractVersion,
         'commandId': entry.key,
-        'type': EdgeCommandTypes.noop,
+        'type': entry.value['type'] as String,
         'payload': null,
         'idempotencyKey': 'key-${entry.key}',
         'attempt': entry.value['attempt'],
@@ -335,6 +442,7 @@ class _FakeCloud {
     // Idempotent: a terminal command keeps the outcome it ended with.
     if (command['status'] != 'SUCCEEDED' && command['status'] != 'FAILED') {
       command['status'] = decoded['status'];
+      command['resultCode'] = decoded['code'];
     }
 
     request.response.statusCode = HttpStatus.created;

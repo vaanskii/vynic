@@ -54,8 +54,7 @@ describeDatabase('Manager tenant isolation (PostgreSQL)', () => {
     // collaborators are never reached by them.
     users = new MobileUsersService(
       prisma,
-      {} as never, // posCallback — not reached by the tenant-scoped reads here
-      {} as never, // posOutbox
+      {} as never, // posCommands — not reached by the tenant-scoped reads here
       {
         read: jest.fn(() => Promise.resolve({})),
         write: jest.fn(() => Promise.resolve(undefined)),

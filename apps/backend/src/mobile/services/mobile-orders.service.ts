@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { MonitoringGateway } from '../../realtime/monitoring.gateway';
-import { PosOutboxService } from '../../pos/pos-outbox.service';
-import { PosCallbackClient } from '../../pos/pos-callback.client';
+import { PosCommandDispatcher } from '../../pos/pos-command-dispatcher.service';
+import { EdgeCommandTypes } from '../../shared/contracts/edge-command';
 import {
   buildAuditEventsForOrderDiff,
   AuditEventInput,
@@ -53,9 +53,8 @@ export class MobileOrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly gateway: MonitoringGateway,
-    private readonly posOutbox: PosOutboxService,
+    private readonly posCommands: PosCommandDispatcher,
     private readonly mutationSupport: MobileMutationSupport,
-    private readonly posCallback: PosCallbackClient,
   ) {}
 
   async getOrders(
@@ -339,10 +338,11 @@ export class MobileOrdersService {
       );
     }
 
-    // Push change back to the Windows POS (durable outbox — retried until delivered)
-    void this.posOutbox.enqueue({
-      endpoint: '/mobile-order-update',
-      posOrderId,
+    // Record the change for the POS to claim. Cloud does not deliver it: a
+    // hosted Vynic has no route to a restaurant LAN, so the work waits here
+    // until the terminal asks for it.
+    const posDelivery = await this.posCommands.dispatch(tenant, {
+      type: EdgeCommandTypes.ORDER_UPDATE,
       payload: {
         posOrderId,
         updatedBy: performerName,
@@ -360,7 +360,11 @@ export class MobileOrdersService {
       },
     });
 
-    return { success: true };
+    // `success` is about the Cloud record, which is written. Whether the POS
+    // has applied it is a separate fact and is reported as one: a queued
+    // command has not run yet, and saying otherwise would be a lie the manager
+    // acts on.
+    return { success: true, posDelivery };
   }
 
   /** Append audit line events for a POS order (mobile manager edits). */
@@ -484,14 +488,14 @@ export class MobileOrdersService {
       this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
 
-    // Tell the Windows POS to mark this order as cancelled in Hive (NOT delete — cancel shows on both sides)
-    void this.posOutbox.enqueue({
-      endpoint: '/mobile-order-status',
-      posOrderId,
+    // Cancel on the POS shows on both sides, so this is a status change rather
+    // than a delete.
+    const posDelivery = await this.posCommands.dispatch(tenant, {
+      type: EdgeCommandTypes.ORDER_STATUS_UPDATE,
       payload: { posOrderId, status: 'cancelled' },
     });
 
-    return { success: true };
+    return { success: true, posDelivery };
   }
 
   /**
@@ -500,23 +504,33 @@ export class MobileOrdersService {
    * broadcast: printing is not a data mutation. POS-side failures (unreachable
    * POS, order missing in Hive) surface as clean HTTP errors instead of a 500.
    */
-  async printOrderCheck(id: string): Promise<{ success: true }> {
+  async printOrderCheck(tenant: TenantContext, id: string) {
     const posOrderId = Number(id);
     if (!Number.isFinite(posOrderId)) {
       throw new BadRequestException('order id must be a number');
     }
-    try {
-      await this.posCallback.printPosOrderCheck(posOrderId);
-    } catch (e) {
-      const message = (e as Error).message ?? '';
-      if (message.includes('order_not_found') || message.includes('404')) {
+    const posDelivery = await this.posCommands.dispatchAndAwait(tenant, {
+      type: EdgeCommandTypes.ORDER_CHECK_PRINT,
+      payload: { posOrderId },
+    });
+
+    if (posDelivery.status === 'FAILED') {
+      if (posDelivery.code === 'order_not_found') {
         throw new NotFoundException('Order not found on POS');
       }
       throw new ServiceUnavailableException(
-        `Could not print order check — is the Windows POS running? (${message})`,
+        `The POS could not print this check (${posDelivery.code ?? 'unknown'})`,
       );
     }
-    return { success: true };
+    if (posDelivery.status === 'UNAVAILABLE') {
+      throw new ServiceUnavailableException(
+        'Could not reach the POS to print this check — is it running?',
+      );
+    }
+    // SUCCEEDED means the POS printed it. QUEUED / CLAIMED mean the request is
+    // recorded and the terminal has not reported back inside the wait, which is
+    // what an offline or busy POS looks like. The caller is told which.
+    return { success: true, posDelivery };
   }
 
   async createTakeawayOrder(
@@ -589,10 +603,10 @@ export class MobileOrdersService {
       this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
 
-    // Push to Windows POS in real-time so it appears immediately (durable outbox)
-    void this.posOutbox.enqueue({
-      endpoint: '/mobile-order-create',
-      posOrderId: nextId,
+    // `posOrderId` is allocated here, which is what makes the command safe to
+    // deliver twice: the POS upserts on it rather than creating a second order.
+    const posDelivery = await this.posCommands.dispatch(tenant, {
+      type: EdgeCommandTypes.TAKEAWAY_ORDER_UPSERT,
       payload: {
         posOrderId: nextId,
         customerName: body.customerName,
@@ -605,6 +619,7 @@ export class MobileOrdersService {
     });
 
     return {
+      posDelivery,
       posOrderId: order.posOrderId,
       status: order.status,
       totalAmount: order.totalAmount,
@@ -747,10 +762,10 @@ export class MobileOrdersService {
       this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
 
-    // Deliver to the Windows POS (durable outbox) so it appears on a table.
-    void this.posOutbox.enqueue({
-      endpoint: '/mobile-walk-in-order-create',
-      posOrderId: nextId,
+    // Same identity story as takeaway: Cloud allocates `posOrderId` so the POS
+    // can upsert on it instead of creating a second walk-in.
+    const posDelivery = await this.posCommands.dispatch(tenant, {
+      type: EdgeCommandTypes.DINE_IN_ORDER_UPSERT,
       payload: {
         posOrderId: nextId,
         tableNumbers,
@@ -764,6 +779,7 @@ export class MobileOrdersService {
     });
 
     return {
+      posDelivery,
       posOrderId: order.posOrderId,
       status: order.status,
       totalAmount: order.totalAmount,
@@ -800,14 +816,13 @@ export class MobileOrdersService {
       this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
 
-    // Tell POS to fully delete this order from Hive (durable outbox)
-    void this.posOutbox.enqueue({
-      endpoint: '/mobile-order-cancel',
-      posOrderId,
+    // A takeaway order is removed outright rather than left cancelled.
+    const posDelivery = await this.posCommands.dispatch(tenant, {
+      type: EdgeCommandTypes.ORDER_CANCEL,
       payload: { posOrderId },
     });
 
-    return { success: true };
+    return { success: true, posDelivery };
   }
 
   async getTakeawayOrders(tenant: TenantContext) {

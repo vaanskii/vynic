@@ -980,6 +980,16 @@ class ManagerSyncService {
             )
             .toList(),
         'staff': staffList,
+        // Every reservation this POS holds.
+        //
+        // Cloud used to ask for these over the LAN, one request at a time, from
+        // whichever backend needed them — which meant a manager's reservation
+        // list and the public website's availability page both waited on this
+        // machine being awake. Since Step 6C they read a Cloud mirror instead,
+        // and this is what fills it. The POS is still the one that owns them.
+        'reservations': DatabaseService.getAllReservations()
+            .map(DatabaseService.serializeReservationForSync)
+            .toList(),
         'quickOrders': quickOrders,
         'syncedAt': DateTime.now().toIso8601String(),
         // Send current business date so the backend knows which calendar day

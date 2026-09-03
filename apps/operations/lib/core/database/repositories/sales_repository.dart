@@ -372,8 +372,9 @@ class SalesRepository {
     final date =
         businessDate ??
         BusinessDayRepository.getCurrentDate().toIso8601String().split('T')[0];
+    final id = sourceId?.trim();
     final record = <String, dynamic>{
-      'id': sourceId ?? _uuid.v4(),
+      'id': (id != null && id.isNotEmpty) ? id : _uuid.v4(),
       'description': description.trim(),
       'amount': double.parse(amount.toStringAsFixed(2)),
       'category': category.trim().isEmpty ? 'სხვა' : category.trim(),
@@ -381,8 +382,30 @@ class SalesRepository {
       'createdAt': now.toIso8601String(),
       'date': date,
     };
+
+    // A record whose id we have already stored is the same expense arriving
+    // again — a retried delivery from Cloud, most often. Overwrite it in place.
+    // Appending was the old behaviour, and it meant one redelivery showed up as
+    // two expenses in a restaurant's day, silently, in the figures it reports.
+    final existingKey = _expenseKeyForId(record['id'] as String);
+    if (existingKey != null) {
+      await DatabaseCore.expenseBox!.put(existingKey, record);
+      return record;
+    }
     await DatabaseCore.expenseBox!.add(record);
     return record;
+  }
+
+  /// The Hive key of the stored expense carrying [id], or null.
+  static dynamic _expenseKeyForId(String id) {
+    final box = DatabaseCore.expenseBox;
+    if (box == null) return null;
+    for (final key in box.keys) {
+      final raw = box.get(key);
+      if (raw is! Map) continue;
+      if (raw['id'] == id) return key;
+    }
+    return null;
   }
 
   /// Gives every stored expense a stable id.

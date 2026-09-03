@@ -5,7 +5,11 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { MonitoringGateway } from '../../realtime/monitoring.gateway';
-import { PosCallbackClient } from '../../pos/pos-callback.client';
+import {
+  PosCommandDispatcher,
+  type PosDelivery,
+} from '../../pos/pos-command-dispatcher.service';
+import { EdgeCommandTypes } from '../../shared/contracts/edge-command';
 import { MobileMutationSupport } from './mobile-mutation-support.service';
 import {
   businessDateWhere,
@@ -93,7 +97,7 @@ export class MobileDashboardService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly gateway: MonitoringGateway,
-    private readonly posCallback: PosCallbackClient,
+    private readonly posCommands: PosCommandDispatcher,
     private readonly mutationSupport: MobileMutationSupport,
   ) {}
 
@@ -588,6 +592,7 @@ export class MobileDashboardService {
     amount: number;
     paymentType: string;
     createdAt: string;
+    posDelivery: PosDelivery;
   }> {
     const description = (payload.description ?? '').trim();
     const category = (payload.category ?? 'სხვა').trim() || 'სხვა';
@@ -632,8 +637,12 @@ export class MobileDashboardService {
         createdAt: true,
       },
     });
-    try {
-      await this.posCallback.createPosExpense({
+    // Cloud allocates the expense id, and the POS upserts on it — so a
+    // redelivered command updates the one record instead of adding a second
+    // expense to a restaurant's day.
+    const posDelivery = await this.posCommands.dispatch(tenant, {
+      type: EdgeCommandTypes.EXPENSE_CREATE,
+      payload: {
         id: created.id,
         description: created.description,
         category: created.category,
@@ -641,14 +650,10 @@ export class MobileDashboardService {
         paymentType: created.paymentType,
         createdAt: created.createdAt.toISOString(),
         businessDate: currentBusinessDate,
-      });
-    } catch (e) {
-      console.warn(
-        '[Mobile][Expenses] POS expense callback failed:',
-        (e as Error).message,
-      );
-    }
+      },
+    });
     return {
+      posDelivery,
       id: created.id,
       description: created.description,
       category: created.category,

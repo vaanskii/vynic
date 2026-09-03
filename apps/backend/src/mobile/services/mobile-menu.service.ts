@@ -6,7 +6,8 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaService } from '../../prisma.service';
 import { MonitoringGateway } from '../../realtime/monitoring.gateway';
-import { PosCallbackClient } from '../../pos/pos-callback.client';
+import { PosCommandDispatcher } from '../../pos/pos-command-dispatcher.service';
+import { EdgeCommandTypes } from '../../shared/contracts/edge-command';
 import { readRestaurantServiceFeeSettings } from '../util/mobile-date.util';
 import { quickOrderDraftIdentity } from '../../tenancy/tenant-identity';
 import type { TenantContext } from '../../tenancy/tenant-context';
@@ -29,7 +30,7 @@ export class MobileMenuService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly gateway: MonitoringGateway,
-    private readonly posCallback: PosCallbackClient,
+    private readonly posCommands: PosCommandDispatcher,
   ) {}
 
   async getMenu(tenant: TenantContext) {
@@ -286,10 +287,7 @@ export class MobileMenuService {
    * No realtime broadcast: printing is not a data mutation. Missing draft → 404;
    * unreachable POS → 503.
    */
-  async printCountedMenu(
-    tenant: TenantContext,
-    id: string,
-  ): Promise<{ success: true }> {
+  async printCountedMenu(tenant: TenantContext, id: string) {
     const feeSettings = await readRestaurantServiceFeeSettings(
       this.prisma,
       tenant,
@@ -331,13 +329,21 @@ export class MobileMenuService {
       })),
     };
 
-    try {
-      await this.posCallback.printPosCountedMenu(payload);
-    } catch (e) {
+    const posDelivery = await this.posCommands.dispatchAndAwait(tenant, {
+      type: EdgeCommandTypes.COUNTED_MENU_PRINT,
+      payload,
+    });
+
+    if (posDelivery.status === 'FAILED') {
       throw new ServiceUnavailableException(
-        `Could not print counted menu — is the Windows POS running? (${(e as Error).message})`,
+        `The POS could not print this counted menu (${posDelivery.code ?? 'unknown'})`,
       );
     }
-    return { success: true };
+    if (posDelivery.status === 'UNAVAILABLE') {
+      throw new ServiceUnavailableException(
+        'Could not reach the POS to print this counted menu — is it running?',
+      );
+    }
+    return { success: true, posDelivery };
   }
 }

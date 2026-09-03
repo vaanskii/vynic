@@ -75,6 +75,33 @@ export interface StaffSync {
   role: 'ADMIN' | 'MANAGER' | 'SUPERVISOR' | 'WAITER';
 }
 
+/**
+ * One reservation as the POS holds it.
+ *
+ * Added in Step 6C, when reservation reads stopped being a synchronous call
+ * into the restaurant's LAN. Optional on the payload: a POS build that predates
+ * it sends nothing, and ingestion treats that silence as "no information" rather
+ * than "no reservations".
+ */
+export interface ReservationSync {
+  id: string;
+  customerName?: string;
+  customerPhone?: string;
+  /** Legacy integer table codes. */
+  tableNumbers?: number[];
+  /** Lossless floor/number references, where this build sends them. */
+  tableRefs?: string[];
+  reservationDate?: string;
+  reservationTime?: string;
+  numberOfGuests?: number;
+  notes?: string | null;
+  createdAt?: string;
+  createdBy?: string | null;
+  status?: string;
+  isTakeAway?: boolean;
+  linkedOrderId?: number | null;
+}
+
 export interface AuditEventLogSync {
   id: string;
   action: string;
@@ -90,6 +117,11 @@ export interface SyncPayload {
   expenses?: ExpenseSync[];
   menu?: any[];
   staff?: StaffSync[];
+  /**
+   * Every reservation the POS holds. Absent on builds predating Step 6C, and
+   * absent from the `realtimeOnly` fast path.
+   */
+  reservations?: ReservationSync[];
   syncedAt?: string;
   posCallbackUrl?: string;
   posConnectionKey?: string;

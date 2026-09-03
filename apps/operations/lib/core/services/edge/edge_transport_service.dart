@@ -8,6 +8,7 @@ import 'package:vynic/core/services/edge/edge_command_journal.dart';
 import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
 import 'package:vynic/core/services/edge/edge_transport_client.dart';
 import 'package:vynic/core/services/edge/noop_edge_command_handler.dart';
+import 'package:vynic/core/services/edge/pos_edge_command_handlers.dart';
 
 /// What one poll did. Returned so tests can assert on it without timers.
 class EdgePollSummary {
@@ -49,7 +50,7 @@ class EdgeTransportService {
   EdgeTransportService({
     EdgeTransportClient? client,
     EdgeCommandRegistry? registry,
-    this.idleInterval = const Duration(seconds: 30),
+    this.idleInterval = const Duration(seconds: 10),
     this.drainInterval = const Duration(seconds: 2),
     this.maxBackoff = const Duration(minutes: 5),
     Random? random,
@@ -58,6 +59,7 @@ class EdgeTransportService {
            registry ??
            EdgeCommandRegistry(const <EdgeCommandHandler>[
              NoopEdgeCommandHandler(),
+             ...posEdgeCommandHandlers,
            ]),
        _random = random ?? Random();
 
@@ -77,6 +79,12 @@ class EdgeTransportService {
   final Random _random;
 
   /// How long to wait when the last poll found nothing.
+  ///
+  /// Ten seconds rather than thirty since Step 6C, because what rides this
+  /// transport stopped being a NOOP. A manager pressing "print check" is
+  /// waiting for paper, and the interval is the floor on how long that takes.
+  /// It is also the base of the backoff, so an offline restaurant still stops
+  /// asking quickly — the cap is unchanged.
   final Duration idleInterval;
 
   /// How long to wait when the last poll found work — drain the queue promptly.
@@ -238,6 +246,31 @@ class EdgeTransportService {
                 command.commandId,
                 code: previous.code ?? 'already_failed',
               ),
+      );
+    }
+
+    // An execution this POS started and never finished. For a convergent
+    // command, running it again is the right answer and the default. For one
+    // whose side effect left the machine — a check that may or may not have
+    // reached the printer — it is not: nobody knows what happened, and a second
+    // check appearing silently is worse than a failure somebody can see.
+    if (previous != null &&
+        previous.status == EdgeExecutionStatus.interrupted &&
+        EdgeCommandTypes.noRepeatAfterInterruption.contains(command.type)) {
+      await EdgeCommandJournal.completeExecution(
+        command.commandId,
+        succeeded: false,
+        code: 'interrupted_not_repeated',
+      );
+      return _Handled(
+        _HandledKind.alreadyDone,
+        EdgeCommandResult.failed(
+          command.commandId,
+          code: 'interrupted_not_repeated',
+          detail:
+              'This POS stopped while running ${command.type} and cannot tell '
+              'whether it completed. Re-issue it deliberately if it did not.',
+        ),
       );
     }
 

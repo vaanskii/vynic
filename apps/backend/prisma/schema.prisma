@@ -180,6 +180,49 @@ model Staff {
   @@schema("pos")
 }
 
+/// The Cloud mirror of the reservations a POS holds.
+///
+/// The POS remains authoritative for operational reservations; this is the copy
+/// Cloud reads. It exists because the alternative was a synchronous HTTP call
+/// from a backend request into a restaurant's LAN — which a hosted Vynic cannot
+/// make at all, and which made a public website's table-availability page
+/// depend on one restaurant PC being awake.
+///
+/// Reconciled wholesale from each snapshot the POS pushes: reservations the
+/// snapshot no longer carries are removed, exactly as orders and tables are.
+/// A snapshot that omits the field entirely changes nothing, so a POS build
+/// that does not send reservations yet leaves the mirror alone rather than
+/// emptying it.
+model PosReservation {
+  id               String   @id @default(uuid())
+  venueId          String
+  /// The reservation's identity on the POS, which owns it.
+  posReservationId String
+  customerName     String
+  customerPhone    String   @default("")
+  /// Legacy integer table codes, the form the website availability rules use.
+  tableNumbers     Int[]
+  /// Lossless floor/number references, where the POS build sends them.
+  tableRefs        String[]
+  reservationDate  DateTime
+  reservationTime  String
+  numberOfGuests   Int      @default(0)
+  notes            String?
+  status           String
+  createdBy        String?
+  isTakeAway       Boolean  @default(false)
+  /// Set when this record is the POS's bookkeeping for a walk-in or takeaway
+  /// order rather than a real booking.
+  linkedOrderId    Int?
+  posCreatedAt     DateTime?
+  syncedAt         DateTime @updatedAt
+  venue            Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@unique([venueId, posReservationId])
+  @@index([venueId, reservationDate])
+  @@schema("pos")
+}
+
 model AuditReport {
   id           String       @id @default(uuid())
   venueId      String
@@ -490,6 +533,7 @@ model Venue {
   expenses          Expense[]
   staff             Staff[]
   auditReports      AuditReport[]
+  posReservations   PosReservation[]
   auditEventLogs    AuditEventLog[]
   dailySnapshots    DailySnapshot[]
   settings          Setting[]

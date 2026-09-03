@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
-import { PosCallbackClient } from '../../pos/pos-callback.client';
+import { PosCommandDispatcher } from '../../pos/pos-command-dispatcher.service';
+import { PosReservationMirrorService } from '../../pos/pos-reservation-mirror.service';
+import { allocatePosReservationId } from '../../pos/pos-reservation-id';
+import { EdgeCommandTypes } from '../../shared/contracts/edge-command';
 import { MonitoringGateway } from '../../realtime/monitoring.gateway';
 import { suppressPosEchoForReservation } from '../../pos/sync-echo-guard';
 import { MenuService } from '../menu/menu.service';
@@ -47,7 +50,8 @@ export class WebsitePosReservationBridgeService {
     private readonly prisma: PrismaService,
     private readonly gateway: MonitoringGateway,
     private readonly menuService: MenuService,
-    private readonly posCallback: PosCallbackClient,
+    private readonly posReservations: PosReservationMirrorService,
+    private readonly posCommands: PosCommandDispatcher,
   ) {}
 
   encodeWebsiteTables(tables: WebsiteTableRow[]): number[] {
@@ -86,21 +90,29 @@ export class WebsitePosReservationBridgeService {
       }
     }
 
-    // The POS side is still reached over the single legacy LAN connection, so
-    // it is not Venue-addressed yet. Recorded as deferred in
-    // docs/PUBLIC_TENANCY.md; it widens availability, never data visibility.
-    try {
-      const posRows = await this.posCallback.fetchPosReservations();
-      const posUnavailable = unavailableCodesFromPosReservations(
-        posRows as Array<Record<string, unknown>>,
-        dateKey,
-      );
-      for (const code of posUnavailable) {
-        unavailable.add(code);
-      }
-    } catch (error) {
+    // Tables the POS itself has booked. This used to be an HTTP request from
+    // here into the restaurant's LAN — a public availability page waiting on one
+    // PC — and is now a read of the Cloud mirror the POS pushes into.
+    //
+    // The mirror lags, and the direction of the lag is the whole risk: a
+    // booking taken at the till since the last snapshot is not in here, so this
+    // set can be too small. Staleness is therefore reported rather than
+    // swallowed, so the caller knows it is answering from an old picture.
+    const posRows = await this.posReservations.listForDate(tenant, dateKey);
+    const posUnavailable = unavailableCodesFromPosReservations(
+      posRows as unknown as Array<Record<string, unknown>>,
+      dateKey,
+    );
+    for (const code of posUnavailable) {
+      unavailable.add(code);
+    }
+
+    const freshness = await this.posReservations.freshness(tenant);
+    if (!freshness.fresh) {
       this.logger.warn(
-        `POS reservations unavailable for ${dateKey}: ${(error as Error).message}`,
+        `Venue ${tenant.venueId}: reservation mirror last updated ` +
+          `${freshness.syncedAt?.toISOString() ?? 'never'} — availability for ` +
+          `${dateKey} is answered from a stale picture of the POS.`,
       );
     }
 
@@ -108,28 +120,31 @@ export class WebsitePosReservationBridgeService {
   }
 
   async fetchPosBookingsForDate(
+    tenant: TenantContext,
     dateKey: string,
     linkedPosIds: Set<string>,
   ): Promise<Array<Record<string, unknown>>> {
     try {
-      const posRows = await this.posCallback.fetchPosReservations();
-      return (posRows as Array<Record<string, unknown>>).filter((row) => {
-        const id = String(row.id ?? '').trim();
-        if (!id || linkedPosIds.has(id)) return false;
+      const posRows = await this.posReservations.listForDate(tenant, dateKey);
+      return (posRows as unknown as Array<Record<string, unknown>>).filter(
+        (row) => {
+          const id = String(row.id ?? '').trim();
+          if (!id || linkedPosIds.has(id)) return false;
 
-        const reservationDate = String(row.reservationDate ?? '');
-        const normalizedDate =
-          reservationDate.length >= 10
-            ? reservationDate.slice(0, 10)
-            : reservationDate;
-        if (normalizedDate !== dateKey) return false;
+          const reservationDate = String(row.reservationDate ?? '');
+          const normalizedDate =
+            reservationDate.length >= 10
+              ? reservationDate.slice(0, 10)
+              : reservationDate;
+          if (normalizedDate !== dateKey) return false;
 
-        if (!isReservationBlocking(String(row.status ?? ''))) return false;
-        return isRealPosTableBooking(row);
-      });
+          if (!isReservationBlocking(String(row.status ?? ''))) return false;
+          return isRealPosTableBooking(row);
+        },
+      );
     } catch (error) {
       this.logger.warn(
-        `POS reservations fetch failed for ${dateKey}: ${(error as Error).message}`,
+        `POS reservation mirror read failed for ${dateKey}: ${(error as Error).message}`,
       );
       return [];
     }
@@ -206,28 +221,37 @@ export class WebsitePosReservationBridgeService {
     );
     const notes = this.buildPosNotes(reservation);
 
-    const posReservation = await this.posCallback.createPosReservation({
-      customerName: reservation.customerName ?? 'Website Guest',
-      customerPhone: reservation.customerPhone ?? '-',
-      tableNumbers,
-      reservationDate: serviceDate,
-      reservationTime: reservation.timeSlot,
-      numberOfGuests,
-      notes,
-      createdBy: 'website',
-      status: 'confirmed',
-      isTakeAway: false,
-      preOrderItems,
-    });
-
-    const posReservationId = String(posReservation?.id ?? '').trim();
-    if (!posReservationId) {
-      throw new Error('POS did not return a reservation id');
-    }
+    // Cloud names the reservation. The booking used to have no POS identity
+    // until the restaurant answered a synchronous LAN call, which meant a paid
+    // booking could not be linked while the POS was asleep — and meant a retry
+    // of that call created a second reservation. Allocating it here makes the
+    // link durable immediately and the delivery safe to repeat.
+    const posReservationId = allocatePosReservationId();
 
     await this.prisma.websiteReservation.update({
       where: { id: reservation.id },
       data: { posReservationId },
+    });
+
+    await this.posCommands.dispatch(tenant, {
+      type: EdgeCommandTypes.RESERVATION_CREATE,
+      payload: {
+        reservationId: posReservationId,
+        customerName: reservation.customerName ?? 'Website Guest',
+        customerPhone: reservation.customerPhone ?? '-',
+        tableNumbers,
+        reservationDate: serviceDate,
+        reservationTime: reservation.timeSlot,
+        numberOfGuests,
+        notes,
+        createdBy: 'website',
+        status: 'confirmed',
+        isTakeAway: false,
+        preOrderItems,
+      },
+      // Stable per booking: a second attempt to push the same website
+      // reservation is the same intent, not a second booking.
+      idempotencyKey: `RESERVATION_CREATE:website:${reservation.id}`,
     });
 
     suppressPosEchoForReservation(posReservationId);
@@ -251,11 +275,18 @@ export class WebsitePosReservationBridgeService {
     return posReservationId;
   }
 
-  async cancelPosReservation(posReservationId: string): Promise<void> {
+  async cancelPosReservation(
+    tenant: TenantContext,
+    posReservationId: string,
+  ): Promise<void> {
     const id = posReservationId.trim();
     if (!id) return;
     try {
-      await this.posCallback.updatePosReservationStatus(id, 'cancelled');
+      await this.posCommands.dispatch(tenant, {
+        type: EdgeCommandTypes.RESERVATION_STATUS_UPDATE,
+        payload: { reservationId: id, status: 'cancelled' },
+        idempotencyKey: `RESERVATION_STATUS_UPDATE:website-cancel:${id}`,
+      });
       this.gateway.broadcastUpdate('data_updated', {
         type: 'reservations',
         action: 'cancelled',
@@ -264,7 +295,7 @@ export class WebsitePosReservationBridgeService {
       });
     } catch (error) {
       this.logger.warn(
-        `Failed to cancel POS reservation ${id}: ${(error as Error).message}`,
+        `Failed to record cancellation of POS reservation ${id}: ${(error as Error).message}`,
       );
     }
   }

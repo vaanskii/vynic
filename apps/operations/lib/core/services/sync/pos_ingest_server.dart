@@ -4,19 +4,9 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:vynic/core/models/order.dart';
-import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/services/database_service.dart';
-import 'package:vynic/core/services/sync/manager_sync_service.dart';
-import 'package:vynic/core/utils/reservation_table_availability.dart';
-import 'package:vynic/core/services/notifications/manager_notification_inbox.dart';
+import 'package:vynic/core/services/pos/pos_command_applier.dart';
 import 'package:vynic/core/services/sync/pos_callback_config.dart';
-import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
-import 'package:vynic/core/services/sync/pos_live_refresh.dart';
-import 'package:vynic/core/services/printing/printer_service.dart';
-import 'package:vynic/core/services/audit/audit_order_diff_service.dart';
-import 'package:vynic/core/services/audit/money_audit.dart';
-import 'package:vynic/core/utils/home_reservations_helper.dart';
 
 /// Minimal HTTP server on Windows POS for cloud → Hive callbacks (Option A).
 class PosIngestServer {
@@ -92,58 +82,79 @@ class PosIngestServer {
       final body = await _readJsonBody(request);
       switch ('${request.method} $path') {
         case 'POST /mobile-order-update':
-          await _handleOrderUpdate(request, body);
+          await _apply(request, () => PosCommandApplier.updateOrder(body));
           return;
         case 'POST /mobile-order-cancel':
-          await _handleOrderCancel(request, body);
+          await _apply(request, () => PosCommandApplier.cancelOrder(body));
           return;
         case 'POST /mobile-order-status':
-          await _handleOrderStatus(request, body);
+          await _apply(
+            request,
+            () => PosCommandApplier.updateOrderStatus(body),
+          );
           return;
         case 'POST /mobile-order-create':
-          await _handleOrderCreate(request, body);
+          await _apply(
+            request,
+            () => PosCommandApplier.upsertTakeawayOrder(body),
+          );
           return;
         case 'POST /mobile-walk-in-order-create':
-          await _handleWalkInOrderCreate(request, body);
+          await _apply(
+            request,
+            () => PosCommandApplier.upsertDineInOrder(body),
+          );
           return;
         case 'POST /mobile-order-print-check':
-          await _handleOrderPrintCheck(request, body);
+          await _apply(request, () => PosCommandApplier.printOrderCheck(body));
           return;
         case 'GET /mobile-reservations':
           await _handleReservationsList(request);
           return;
         case 'POST /mobile-reservation-create':
-          await _handleReservationCreate(request, body);
+          await _apply(
+            request,
+            () => PosCommandApplier.createReservation(body),
+          );
           return;
         case 'POST /mobile-reservation-status':
-          await _handleReservationStatus(request, body);
+          await _apply(
+            request,
+            () => PosCommandApplier.updateReservationStatus(body),
+          );
           return;
         case 'POST /mobile-reservation-delete':
-          await _handleReservationDelete(request, body);
+          await _apply(
+            request,
+            () => PosCommandApplier.deleteReservation(body),
+          );
           return;
         case 'POST /mobile-reservation-print-check':
-          await _handleReservationPrintCheck(request, body);
+          await _apply(
+            request,
+            () => PosCommandApplier.printReservationCheck(body),
+          );
           return;
         case 'POST /mobile-counted-menu-print':
-          await _handleCountedMenuPrint(request, body);
+          await _apply(request, () => PosCommandApplier.printCountedMenu(body));
           return;
         case 'POST /mobile-expense-create':
-          await _handleExpenseCreate(request, body);
+          await _apply(request, () => PosCommandApplier.createExpense(body));
           return;
         case 'POST /mobile-user-create':
-          await _handleUserCreate(request, body);
+          await _apply(request, () => PosCommandApplier.createStaff(body));
           return;
         case 'POST /mobile-user-update-pin':
-          await _handleUserPinUpdate(request, body);
+          await _apply(request, () => PosCommandApplier.updateStaffPin(body));
           return;
         case 'POST /mobile-user-update-role':
-          await _handleUserRoleUpdate(request, body);
+          await _apply(request, () => PosCommandApplier.updateStaffRole(body));
           return;
         case 'POST /mobile-user-rename':
-          await _handleUserRename(request, body);
+          await _apply(request, () => PosCommandApplier.renameStaff(body));
           return;
         case 'POST /mobile-user-delete':
-          await _handleUserDelete(request, body);
+          await _apply(request, () => PosCommandApplier.deleteStaff(body));
           return;
         default:
           await _json(request, 404, {'error': 'not_found'});
@@ -193,442 +204,30 @@ class PosIngestServer {
     return {};
   }
 
-  static Future<void> _handleOrderUpdate(
+  /// Applies one operation and answers with the outcome's status code.
+  ///
+  /// The behaviour itself lives in [PosCommandApplier], because the Edge
+  /// command transport reaches the same operations by a different route and the
+  /// two must not drift. This server's remaining job is the one it always had:
+  /// read a request, apply it, write a status.
+  ///
+  /// The `treat*AsDone` reconciliations the Edge handlers use are deliberately
+  /// NOT enabled here. This transport reports delivery, not execution — the
+  /// backend outbox marks a row delivered on a 2xx — so a 404 for an order that
+  /// is already gone stays a 404, exactly as it was before.
+  static Future<void> _apply(
     HttpRequest request,
-    Map<String, dynamic> body,
+    Future<PosCommandOutcome> Function() operation,
   ) async {
-    final posOrderId = (body['posOrderId'] as num?)?.toInt();
-    if (posOrderId == null) {
-      await _json(request, 400, {'error': 'posOrderId_required'});
+    final outcome = await operation();
+    if (outcome.ok) {
+      await _json(request, 200, {'success': true, ...outcome.data});
       return;
     }
-    final order = DatabaseService.getOrder(posOrderId);
-    if (order == null) {
-      await _json(request, 404, {'error': 'order_not_found'});
-      return;
-    }
-
-    final beforeItems = order.items.map((i) => i.clone()).toList();
-    final newItems = _parseOrderItemsFromBody(body['items']);
-
-    final diff = PosChangeHighlightService.computeOrderItemChanges(
-      before: beforeItems,
-      after: newItems,
-    );
-
-    final prevTotal = order.totalAmount;
-    final prevServiceFee = order.includeServiceFee;
-
-    final performer =
-        (body['updatedBy'] ?? body['waiterName'] ?? 'მობილური მენეჯერი')
-            .toString()
-            .trim();
-    final performerName = performer.isNotEmpty
-        ? performer
-        : 'მობილური მენეჯერი';
-    final ts = DatabaseService.getCurrentDateTime();
-    final auditEvents = AuditOrderDiffService.buildEvents(
-      previousItems: beforeItems,
-      updatedItems: newItems,
-      performerId: performerName,
-      performerName: performerName,
-      timestamp: ts,
-    );
-    if (auditEvents.isNotEmpty) {
-      await DatabaseService.appendOrderAuditEvents(
-        orderId: posOrderId,
-        events: auditEvents,
-      );
-    }
-
-    order.items = newItems;
-    if (body['totalAmount'] != null) {
-      order.totalAmount = (body['totalAmount'] as num).toDouble();
-    }
-    if (body['includeServiceFee'] is bool) {
-      order.includeServiceFee = body['includeServiceFee'] as bool;
-    }
-    order.updatedAt = ts;
-    order.recalculateTotal();
-    await DatabaseService.updateOrder(order);
-
-    // The Manager app reaches the order through here, so this is where a
-    // manager-side service-fee change becomes a fact. The actor is the name
-    // the mobile client identified itself with.
-    await MoneyAudit.orderServiceFeeChanged(
-      actorId: performerName,
-      orderId: posOrderId,
-      previousIncluded: prevServiceFee,
-      newIncluded: order.includeServiceFee,
-      previousTotal: prevTotal,
-      newTotal: order.totalAmount,
-    );
-
-    final message = _orderChangeMessage(
-      posOrderId: posOrderId,
-      diff: diff,
-      totalChanged: (order.totalAmount - prevTotal).abs() > 0.009,
-      serviceFeeToggled:
-          body['includeServiceFee'] is bool &&
-          order.includeServiceFee != prevServiceFee,
-      tableNumbers: order.tableNumbers,
-      floor: order.floor,
-    );
-    final tableLabel = order.tableNumbers.isNotEmpty
-        ? order.tableNumbers.join(', ')
-        : null;
-    _notifySystemChange(
-      message: message,
-      meta: {
-        'posOrderId': posOrderId,
-        if (tableLabel != null) 'tableLabel': tableLabel,
-        if (order.floor.isNotEmpty) 'floor': order.floor,
-        if (diff.highlightKeys.isNotEmpty)
-          'highlightItemKeys': diff.highlightKeys.toList(),
-      },
-    );
-    _scheduleCloudSync();
-    await _json(request, 200, {'success': true});
-  }
-
-  static Future<void> _handleOrderCancel(
-    HttpRequest request,
-    Map<String, dynamic> body,
-  ) async {
-    final posOrderId = (body['posOrderId'] as num?)?.toInt();
-    if (posOrderId == null) {
-      await _json(request, 400, {'error': 'posOrderId_required'});
-      return;
-    }
-    // Capture the tables before the order (and its cleanup) removes them.
-    final existing = DatabaseService.getOrder(posOrderId);
-    final tableSeg = existing != null
-        ? _formatTablesSegment(existing.tableNumbers, existing.floor)
-        : '';
-    final ok = await DatabaseService.deleteOrderAndCleanup(
-      orderId: posOrderId,
-      deletedBy: 'mobile_manager',
-    );
-    if (!ok) {
-      await _json(request, 404, {'error': 'order_not_found'});
-      return;
-    }
-    _notifySystemChange(
-      message: tableSeg.isNotEmpty
-          ? 'შეკვეთა #$posOrderId გაუქმდა — $tableSeg'
-          : 'შეკვეთა #$posOrderId წაიშალა',
-      meta: {
-        'posOrderId': posOrderId,
-        if (tableSeg.isNotEmpty)
-          'tableLabel': existing!.tableNumbers.join(', '),
-      },
-    );
-    _scheduleCloudSync();
-    await _json(request, 200, {'success': true});
-  }
-
-  static Future<void> _handleOrderStatus(
-    HttpRequest request,
-    Map<String, dynamic> body,
-  ) async {
-    final posOrderId = (body['posOrderId'] as num?)?.toInt();
-    final status = (body['status'] as String?)?.trim();
-    if (posOrderId == null || status == null || status.isEmpty) {
-      await _json(request, 400, {'error': 'posOrderId_and_status_required'});
-      return;
-    }
-    // Capture tables before the status change frees them (paid/cancelled).
-    final existing = DatabaseService.getOrder(posOrderId);
-    final tableSeg = existing != null
-        ? _formatTablesSegment(existing.tableNumbers, existing.floor)
-        : '';
-    await DatabaseService.updateOrderStatus(
-      orderId: posOrderId,
-      status: status,
-    );
-    final isCancelled = status.toLowerCase() == 'cancelled';
-    final String message;
-    if (isCancelled) {
-      message = tableSeg.isNotEmpty
-          ? 'შეკვეთა #$posOrderId გაუქმდა — $tableSeg'
-          : 'შეკვეთა #$posOrderId გაუქმდა';
-    } else {
-      message = tableSeg.isNotEmpty
-          ? 'შეკვეთა #$posOrderId — სტატუსი: $status ($tableSeg)'
-          : 'შეკვეთა #$posOrderId — სტატუსი: $status';
-    }
-    _notifySystemChange(
-      message: message,
-      meta: {
-        'posOrderId': posOrderId,
-        'status': status,
-        if (tableSeg.isNotEmpty)
-          'tableLabel': existing!.tableNumbers.join(', '),
-      },
-    );
-    _scheduleCloudSync();
-    await _json(request, 200, {'success': true});
-  }
-
-  static Future<void> _handleOrderCreate(
-    HttpRequest request,
-    Map<String, dynamic> body,
-  ) async {
-    final posOrderId = (body['posOrderId'] as num?)?.toInt();
-    if (posOrderId == null) {
-      await _json(request, 400, {'error': 'posOrderId_required'});
-      return;
-    }
-
-    final items = _parseOrderItemsFromBody(body['items']);
-    final isNew = DatabaseService.getOrder(posOrderId) == null;
-    final waiterName = (body['waiterName'] ?? 'mobile_manager').toString();
-
-    final order = await DatabaseService.upsertMobileTakeawayOrder(
-      posOrderId: posOrderId,
-      customerName: (body['customerName'] ?? '').toString(),
-      pickupTime: (body['pickupTime'] ?? '').toString(),
-      waiterName: waiterName,
-      items: items,
-      totalAmount: (body['totalAmount'] as num?)?.toDouble(),
-    );
-    if (order == null) {
-      await _json(request, 500, {'error': 'create_failed'});
-      return;
-    }
-    // Auto-send the kitchen check once, on first arrival from mobile.
-    if (isNew) {
-      _sendKitchenCheckForMobileOrder(
-        items: items,
-        orderLabel: 'გატანა #${order.orderId}',
-        waiterName: waiterName,
-      );
-    }
-    final highlightKeys = items
-        .expand((i) => [i.itemKey, i.itemName])
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toSet();
-    final customer = (body['customerName'] ?? '').toString().trim();
-    final pickup = (body['pickupTime'] ?? '').toString().trim();
-    final detailSeg = [
-      if (customer.isNotEmpty) customer,
-      if (pickup.isNotEmpty) 'აღება: $pickup',
-    ].join(' • ');
-    _notifySystemChange(
-      message: detailSeg.isNotEmpty
-          ? 'ახალი გატანა #${order.orderId} — $detailSeg'
-          : 'ახალი გატანა #${order.orderId}',
-      meta: {
-        'posOrderId': order.orderId,
-        if (highlightKeys.isNotEmpty)
-          'highlightItemKeys': highlightKeys.toList(),
-      },
-    );
-    _scheduleCloudSync();
-    await _json(request, 200, {'success': true, 'posOrderId': order.orderId});
-  }
-
-  /// Fire-and-forget kitchen check for a mobile-originated walk-in / takeaway.
-  /// Drinks-only orders and missing-printer setups are handled gracefully by
-  /// PrinterService (no-op). Non-kitchen items are filtered downstream.
-  static void _sendKitchenCheckForMobileOrder({
-    required List<OrderItem> items,
-    required String orderLabel,
-    required String waiterName,
-    String? tableLabel,
-  }) {
-    final lines = <String>[];
-    for (final item in items) {
-      var line = '${item.quantity}x ${item.itemName}';
-      final comment = item.comment?.trim();
-      if (comment != null && comment.isNotEmpty) {
-        line += '\n  ⮑ $comment';
-      }
-      lines.add(line);
-    }
-    if (lines.isEmpty) return;
-    PrinterService.printKitchenCheckInBackground(
-      items: lines,
-      tableNumber: tableLabel,
-      orderNumber: orderLabel,
-      waiterName: waiterName,
-      createdAt: DateTime.now(),
-    );
-  }
-
-  static Future<void> _handleWalkInOrderCreate(
-    HttpRequest request,
-    Map<String, dynamic> body,
-  ) async {
-    final posOrderId = (body['posOrderId'] as num?)?.toInt();
-    if (posOrderId == null) {
-      await _json(request, 400, {'error': 'posOrderId_required'});
-      return;
-    }
-
-    final tableNumbers = ((body['tableNumbers'] as List?) ?? const [])
-        .map((e) => e.toString().trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
-    if (tableNumbers.isEmpty) {
-      await _json(request, 400, {'error': 'tableNumbers_required'});
-      return;
-    }
-
-    final floor = (body['floor'] ?? 'first').toString();
-    final items = _parseOrderItemsFromBody(body['items']);
-    final isNew = DatabaseService.getOrder(posOrderId) == null;
-    final waiterName = (body['waiterName'] ?? 'mobile_manager').toString();
-
-    final order = await DatabaseService.upsertMobileDineInOrder(
-      posOrderId: posOrderId,
-      tableNumbers: tableNumbers,
-      floor: floor,
-      waiterName: waiterName,
-      items: items,
-      guestCount: (body['guestCount'] as num?)?.toInt() ?? 0,
-      totalAmount: (body['totalAmount'] as num?)?.toDouble(),
-    );
-    if (order == null) {
-      await _json(request, 500, {'error': 'create_failed'});
-      return;
-    }
-    // Auto-send the kitchen check once, on first arrival from mobile.
-    if (isNew) {
-      _sendKitchenCheckForMobileOrder(
-        items: items,
-        orderLabel: 'Walk-in #${order.orderId}',
-        waiterName: waiterName,
-        tableLabel: tableNumbers.join(', '),
-      );
-    }
-
-    final highlightKeys = items
-        .expand((i) => [i.itemKey, i.itemName])
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toSet();
-    final tableSeg = _formatTablesSegment(tableNumbers, floor);
-    _notifySystemChange(
-      message: tableSeg.isNotEmpty
-          ? 'ახალი walk-in #${order.orderId} — $tableSeg'
-          : 'ახალი walk-in #${order.orderId}',
-      meta: {
-        'posOrderId': order.orderId,
-        'walkIn': true,
-        if (tableSeg.isNotEmpty) 'tableLabel': tableNumbers.join(', '),
-        if (order.floor.isNotEmpty) 'floor': order.floor,
-        if (highlightKeys.isNotEmpty)
-          'highlightItemKeys': highlightKeys.toList(),
-      },
-    );
-    _scheduleCloudSync();
-    await _json(request, 200, {'success': true, 'posOrderId': order.orderId});
-  }
-
-  /// Manager-triggered table/order check print (Mac / iOS / Android → backend →
-  /// POS callback). The Windows POS remains the only print host: the manager
-  /// client never prints directly. We look the order up in local Hive (the
-  /// source of truth) and print a customer pre-bill receipt on the receipt
-  /// printer, mirroring the POS order-detail "print receipt" (receiptType
-  /// 'client'). Georgian only; raw item names (menu localization lives in the
-  /// POS UI layer and is not reused here).
-  static Future<void> _handleOrderPrintCheck(
-    HttpRequest request,
-    Map<String, dynamic> body,
-  ) async {
-    final posOrderId = (body['posOrderId'] as num?)?.toInt();
-    if (posOrderId == null) {
-      await _json(request, 400, {'error': 'posOrderId_required'});
-      return;
-    }
-
-    final order = DatabaseService.getOrder(posOrderId);
-    if (order == null) {
-      await _json(request, 404, {'error': 'order_not_found'});
-      return;
-    }
-
-    final isTakeAway = order.floor.toLowerCase().contains('takeaway');
-    final receiptLines = <String>[];
-
-    if (order.packageItems.isNotEmpty) {
-      final packageLabel =
-          (order.packageName != null && order.packageName!.trim().isNotEmpty)
-          ? order.packageName!.trim()
-          : 'პაკეტი';
-      final packageTotalRaw = order.getPackageSubtotal();
-      final packageTotal = packageTotalRaw > 0
-          ? packageTotalRaw
-          : order.packagePrice;
-
-      receiptLines.add('[$packageLabel]');
-      final summary = StringBuffer();
-      if (order.packageGuestCount > 0) {
-        summary.write('${order.packageGuestCount}x ');
-      }
-      summary.write(packageLabel);
-      if (packageTotal > 0) {
-        summary.write(' - ${packageTotal.toStringAsFixed(2)} GEL');
-      }
-      receiptLines.add(summary.toString());
-
-      for (final packageItem in order.packageItems) {
-        receiptLines.add(
-          '  ⮑ ${packageItem.quantity}x ${packageItem.itemName}',
-        );
-      }
-      if (order.items.isNotEmpty) {
-        receiptLines.add('---');
-      }
-    }
-
-    if (order.items.isNotEmpty) {
-      if (order.packageItems.isNotEmpty) {
-        receiptLines.add('[დამატებითი]');
-      }
-      receiptLines.addAll(
-        order.items.map(
-          (item) =>
-              '${item.quantity}x ${item.itemName} - '
-              '${item.total.toStringAsFixed(2)} GEL',
-        ),
-      );
-    }
-
-    final itemsWithWaiter = <String>[
-      'ოფიციანტი: ${order.createdBy}',
-      '---',
-      ...receiptLines,
-    ];
-
-    final packageSubtotal = order.getPackageSubtotal();
-    final additionalSubtotal = order.getAdditionalItemsSubtotal();
-    final discountAmount = order.discountAmount > 0
-        ? order.discountAmount
-        : null;
-    final manualAdjustment = order.manualAdjustmentAmount.abs() >= 0.01
-        ? order.manualAdjustmentAmount
-        : null;
-
-    PrinterService.printReceiptInBackground(
-      items: itemsWithWaiter,
-      total: order.totalAmount,
-      subtotal: order.getItemsSubtotal(),
-      serviceFee: order.getServiceFee(),
-      includeServiceFee: order.includeServiceFee,
-      tableNumber: isTakeAway ? null : order.tableNumbers.join(', '),
-      orderNumber: order.orderId.toString(),
-      language: 'ka',
-      packageSubtotal: packageSubtotal > 0 ? packageSubtotal : null,
-      additionalSubtotal: additionalSubtotal > 0 ? additionalSubtotal : null,
-      discountAmount: discountAmount,
-      manualAdjustment: manualAdjustment,
-      receiptType: isTakeAway ? 'take_away' : 'client',
-    );
-
-    await _json(request, 200, {'success': true});
+    await _json(request, outcome.httpStatus, {
+      'error': outcome.code,
+      if (outcome.detail != null) 'detail': outcome.detail,
+    });
   }
 
   static Future<void> _handleReservationsList(HttpRequest request) async {
@@ -636,438 +235,6 @@ class PosIngestServer {
         .map(DatabaseService.serializeReservationForSync)
         .toList();
     await _json(request, 200, {'data': data});
-  }
-
-  static Future<void> _handleReservationCreate(
-    HttpRequest request,
-    Map<String, dynamic> body,
-  ) async {
-    try {
-      final id = await DatabaseService.createReservationFromJson(body);
-      final reservation = DatabaseService.getReservationById(id);
-      final customerName =
-          (reservation?['customerName'] ?? body['customerName'] ?? '')
-              .toString()
-              .trim();
-      final isTakeAway = body['isTakeAway'] == true;
-      final resTables = ((body['tableNumbers'] as List?) ?? const [])
-          .map((e) => e.toString())
-          .toList();
-      final resTime = (body['reservationTime'] ?? '').toString().trim();
-      final tableSeg = isTakeAway
-          ? 'გატანა'
-          : _formatTablesSegment(resTables, 'first');
-      final detailSeg = [
-        if (customerName.isNotEmpty) customerName,
-        if (tableSeg.isNotEmpty) tableSeg,
-        if (resTime.isNotEmpty) 'დრო: $resTime',
-      ].join(' • ');
-      _notifySystemChange(
-        message: detailSeg.isEmpty
-            ? 'ახალი რეზერვაცია'
-            : 'ახალი რეზერვაცია — $detailSeg',
-        meta: {
-          'reservationId': id,
-          if (tableSeg.isNotEmpty && !isTakeAway)
-            'tableLabel': resTables.join(', '),
-        },
-      );
-      _scheduleCloudSync();
-      await _json(request, 200, {
-        'success': true,
-        'reservation': reservation ?? {'id': id},
-      });
-    } catch (e) {
-      await _json(request, 400, {'error': e.toString()});
-    }
-  }
-
-  static Future<void> _handleReservationStatus(
-    HttpRequest request,
-    Map<String, dynamic> body,
-  ) async {
-    final reservationId = (body['reservationId'] ?? '').toString();
-    final status = (body['status'] ?? '').toString();
-    if (reservationId.isEmpty || status.isEmpty) {
-      await _json(request, 400, {'error': 'reservationId_and_status_required'});
-      return;
-    }
-    await DatabaseService.updateReservationStatus(reservationId, status);
-    _notifySystemChange(
-      message: 'რეზერვაცია — სტატუსი: $status',
-      meta: {'reservationId': reservationId, 'status': status},
-    );
-    _scheduleCloudSync();
-    await _json(request, 200, {'success': true});
-  }
-
-  static Future<void> _handleReservationDelete(
-    HttpRequest request,
-    Map<String, dynamic> body,
-  ) async {
-    final reservationId = (body['reservationId'] ?? '').toString();
-    if (reservationId.isEmpty) {
-      await _json(request, 400, {'error': 'reservationId_required'});
-      return;
-    }
-    await DatabaseService.deleteReservation(reservationId);
-    _scheduleCloudSync();
-    await _json(request, 200, {'success': true});
-  }
-
-  /// Manager-triggered reservation check print (Mac / iOS / Android → backend →
-  /// POS callback). The Windows POS remains the only print host: the manager
-  /// client never touches a printer. We look the reservation up in local Hive
-  /// (the source of truth) and reuse the exact kitchen-check formatting the POS
-  /// uses when a reservation is created locally.
-  static Future<void> _handleReservationPrintCheck(
-    HttpRequest request,
-    Map<String, dynamic> body,
-  ) async {
-    final reservationId = (body['reservationId'] ?? '').toString().trim();
-    if (reservationId.isEmpty) {
-      await _json(request, 400, {'error': 'reservationId_required'});
-      return;
-    }
-
-    final reservation = DatabaseService.findReservationById(reservationId);
-    if (reservation == null) {
-      await _json(request, 404, {'error': 'reservation_not_found'});
-      return;
-    }
-
-    final kitchenItems = HomeReservationsHelper.buildKitchenCheckLines(
-      reservation,
-    );
-    if (kitchenItems.isEmpty) {
-      // No kitchen-bound items (e.g. no pre-order) — nothing to print.
-      await _json(request, 200, {'success': true, 'printed': false});
-      return;
-    }
-
-    final requestedBy = (body['requestedBy'] ?? reservation.createdBy)
-        .toString()
-        .trim();
-    final reservationTables = ReservationTableAvailability.tableRefsOf(
-      reservation,
-    );
-    PrinterService.printKitchenCheckInBackground(
-      items: kitchenItems,
-      tableNumber: reservationTables.isNotEmpty
-          ? reservationTables.map((ref) => ref.tableNumber).join(', ')
-          : null,
-      orderNumber: HomeReservationsHelper.buildKitchenOrderLabel(reservation),
-      waiterName: requestedBy.isNotEmpty ? requestedBy : 'mobile_manager',
-      createdAt: HomeReservationsHelper.buildKitchenTime(reservation),
-    );
-
-    await _json(request, 200, {'success': true, 'printed': true});
-  }
-
-  /// Manager-triggered counted-menu (quick-order draft) print. Mac / iOS /
-  /// Android → backend → POS callback. The Windows POS is the only print host.
-  /// Counted menus don't reliably exist in POS Hive (mobile-created ones live
-  /// only in the backend), so this prints from the request payload directly,
-  /// mirroring the POS counted-menu receipt (receiptType 'menu_count') on the
-  /// receipt printer.
-  static Future<void> _handleCountedMenuPrint(
-    HttpRequest request,
-    Map<String, dynamic> body,
-  ) async {
-    final rawItems = (body['items'] as List?) ?? const [];
-    if (rawItems.isEmpty) {
-      await _json(request, 400, {'error': 'items_required'});
-      return;
-    }
-
-    final lines = <String>['---'];
-    for (final raw in rawItems) {
-      if (raw is! Map) continue;
-      final map = Map<String, dynamic>.from(raw);
-      final name = (map['itemName'] ?? map['name'] ?? '').toString().trim();
-      final qty = (map['quantity'] as num?)?.toInt() ?? 1;
-      final unitPrice =
-          ((map['unitPrice'] ?? map['price']) as num?)?.toDouble() ?? 0.0;
-      final total = (map['total'] as num?)?.toDouble() ?? unitPrice * qty;
-      lines.add('${qty}x $name - ${total.toStringAsFixed(2)} GEL');
-      final comment = (map['comment'] as String?)?.trim();
-      if (comment != null && comment.isNotEmpty) {
-        lines.add('  ⮑ $comment');
-      }
-    }
-
-    final subtotal = (body['subtotal'] as num?)?.toDouble() ?? 0.0;
-    final serviceFeeAmount =
-        (body['serviceFeeAmount'] as num?)?.toDouble() ?? 0.0;
-    final total = (body['total'] as num?)?.toDouble() ?? subtotal;
-    final includeServiceFee =
-        body['includeServiceFee'] == true && serviceFeeAmount > 0;
-    final receiptTotal = includeServiceFee ? total : subtotal;
-    final language = (body['language'] ?? 'ka').toString() == 'en'
-        ? 'en'
-        : 'ka';
-
-    PrinterService.printReceiptInBackground(
-      items: lines,
-      total: receiptTotal,
-      subtotal: subtotal,
-      serviceFee: includeServiceFee ? serviceFeeAmount : null,
-      includeServiceFee: includeServiceFee,
-      language: language,
-      receiptType: 'menu_count',
-    );
-
-    await _json(request, 200, {'success': true});
-  }
-
-  static Future<void> _handleExpenseCreate(
-    HttpRequest request,
-    Map<String, dynamic> body,
-  ) async {
-    final description = (body['description'] ?? '').toString().trim();
-    final amount = (body['amount'] as num?)?.toDouble() ?? 0;
-    if (description.isEmpty || amount <= 0) {
-      await _json(request, 400, {'error': 'invalid_expense'});
-      return;
-    }
-    final expense = await DatabaseService.saveExpenseRecord(
-      description: description,
-      amount: amount,
-      category: (body['category'] ?? 'სხვა').toString(),
-      paymentType: (body['paymentType'] ?? 'cash').toString(),
-      createdAt: body['createdAt'] != null
-          ? DateTime.tryParse(body['createdAt'].toString())
-          : null,
-      businessDate: body['businessDate'] as String?,
-      sourceId: body['id'] as String?,
-    );
-    _scheduleCloudSync();
-    await _json(request, 200, {'success': true, 'expense': expense});
-  }
-
-  static Future<void> _handleUserCreate(
-    HttpRequest request,
-    Map<String, dynamic> body,
-  ) async {
-    final username = (body['username'] ?? '').toString().trim();
-    final pinCode = (body['pinCode'] ?? body['pin'] ?? '').toString().trim();
-    final roleRaw = (body['role'] ?? 'waiter').toString();
-    if (username.isEmpty || pinCode.isEmpty) {
-      await _json(request, 400, {'error': 'username_and_pin_required'});
-      return;
-    }
-    final role = StaffRole.normalizeClient(roleRaw);
-    final ok = await DatabaseService.addUser(
-      username: username,
-      pinCode: pinCode,
-      role: role,
-    );
-    if (!ok) {
-      await _json(request, 409, {'error': 'user_exists_or_pin_taken'});
-      return;
-    }
-    _scheduleCloudSync();
-    await _json(request, 200, {
-      'success': true,
-      'user': {'username': username, 'role': role},
-    });
-  }
-
-  static Future<void> _handleUserPinUpdate(
-    HttpRequest request,
-    Map<String, dynamic> body,
-  ) async {
-    final username = (body['username'] ?? '').toString().trim();
-    final pinCode = (body['pinCode'] ?? body['pin'] ?? '').toString().trim();
-    if (username.isEmpty || pinCode.isEmpty) {
-      await _json(request, 400, {'error': 'username_and_pin_required'});
-      return;
-    }
-    final ok = await DatabaseService.updateUserPinByUsername(
-      username: username,
-      pinCode: pinCode,
-    );
-    if (!ok) {
-      await _json(request, 404, {'error': 'update_failed'});
-      return;
-    }
-    _scheduleCloudSync();
-    await _json(request, 200, {'success': true});
-  }
-
-  static Future<void> _handleUserRoleUpdate(
-    HttpRequest request,
-    Map<String, dynamic> body,
-  ) async {
-    final username = (body['username'] ?? '').toString().trim();
-    final roleRaw = (body['role'] ?? '').toString().trim();
-    if (username.isEmpty || roleRaw.isEmpty) {
-      await _json(request, 400, {'error': 'username_and_role_required'});
-      return;
-    }
-    final role = StaffRole.normalizeClient(roleRaw);
-    final ok = await DatabaseService.updateUserRoleByUsername(
-      username: username,
-      role: role,
-    );
-    if (!ok) {
-      await _json(request, 409, {'error': 'role_update_failed'});
-      return;
-    }
-    _scheduleCloudSync();
-    await _json(request, 200, {
-      'success': true,
-      'user': {'username': username, 'role': role},
-    });
-  }
-
-  static Future<void> _handleUserRename(
-    HttpRequest request,
-    Map<String, dynamic> body,
-  ) async {
-    final oldUsername = (body['oldUsername'] ?? '').toString().trim();
-    final newUsername = (body['newUsername'] ?? body['username'] ?? '')
-        .toString()
-        .trim();
-    if (oldUsername.isEmpty || newUsername.isEmpty) {
-      await _json(request, 400, {'error': 'old_and_new_username_required'});
-      return;
-    }
-    final ok = await DatabaseService.renameUserByUsername(
-      oldUsername: oldUsername,
-      newUsername: newUsername,
-    );
-    if (!ok) {
-      await _json(request, 409, {'error': 'rename_failed'});
-      return;
-    }
-    _scheduleCloudSync();
-    await _json(request, 200, {
-      'success': true,
-      'user': {'username': newUsername},
-    });
-  }
-
-  static Future<void> _handleUserDelete(
-    HttpRequest request,
-    Map<String, dynamic> body,
-  ) async {
-    final username = (body['username'] ?? '').toString().trim();
-    if (username.isEmpty) {
-      await _json(request, 400, {'error': 'username_required'});
-      return;
-    }
-    final ok = await DatabaseService.deleteUserByUsername(username);
-    if (!ok) {
-      await _json(request, 409, {'error': 'delete_failed'});
-      return;
-    }
-    _scheduleCloudSync();
-    await _json(request, 200, {'success': true});
-  }
-
-  static void _scheduleCloudSync() {
-    ManagerSyncService.syncToManagerAppDebounced();
-  }
-
-  static List<OrderItem> _parseOrderItemsFromBody(dynamic itemsRaw) {
-    final list = (itemsRaw as List?) ?? const [];
-    final items = <OrderItem>[];
-    for (final raw in list) {
-      if (raw is! Map) continue;
-      final map = Map<String, dynamic>.from(raw);
-      final name = (map['itemName'] ?? map['name'] ?? '').toString().trim();
-      final unitPrice =
-          (map['unitPrice'] ?? map['price'] as num?)?.toDouble() ?? 0.0;
-      final qty = (map['quantity'] as num?)?.toInt() ?? 1;
-      final itemKey = (map['itemKey'] ?? name).toString().trim();
-      items.add(
-        OrderItem(
-          itemKey: itemKey.isNotEmpty ? itemKey : name,
-          itemName: name,
-          unitPrice: unitPrice,
-          quantity: qty,
-          total: unitPrice * qty,
-          comment: map['comment'] as String?,
-        ),
-      );
-    }
-    return items;
-  }
-
-  static String _orderChangeMessage({
-    required int posOrderId,
-    required OrderItemChangeDiff diff,
-    required bool totalChanged,
-    required bool serviceFeeToggled,
-    List<String> tableNumbers = const [],
-    String floor = '',
-  }) {
-    if (diff.summaryLines.isNotEmpty) {
-      final detail = diff.summaryLines.take(4).join('; ');
-      final more = diff.summaryLines.length > 4
-          ? ' (+${diff.summaryLines.length - 4})'
-          : '';
-      return 'შეკვეთა #$posOrderId — $detail$more';
-    }
-    if (serviceFeeToggled) {
-      final tableSeg = _formatTablesSegment(tableNumbers, floor);
-      if (tableSeg.isNotEmpty) {
-        return '$tableSeg — სერვისის საფასური განახლდა';
-      }
-      return 'შეკვეთა #$posOrderId — სერვისის საფასური განახლდა';
-    }
-    if (totalChanged) {
-      return 'შეკვეთა #$posOrderId — თანხა განახლდა';
-    }
-    return 'შეკვეთა #$posOrderId განახლდა';
-  }
-
-  /// The word in front of a list of table numbers in a notification.
-  ///
-  /// „კუპე" used to be hardcoded for the second floor. Where a table has a
-  /// name of its own the caller uses [TableNaming] instead of this; this is
-  /// only the generic prefix for a bare list.
-  static String _tableWordForFloor(String floor) {
-    switch (floor.toLowerCase()) {
-      case 'takeaway':
-        return 'გატანა';
-      default:
-        return 'მაგიდა';
-    }
-  }
-
-  /// Builds a "მაგიდა 5, 6" style segment from a list of table identifiers.
-  /// Accepts raw numbers ("5") or POS-prefixed names ("Table 5", "VIP Zone 1").
-  /// Takeaway pseudo-tables ("TA-90013") are skipped. Returns an empty string
-  /// when there are no usable tables.
-  static String _formatTablesSegment(List<String> tables, String floor) {
-    final clean = tables
-        .map(
-          (e) => e
-              .toString()
-              .trim()
-              .replaceAll('Table ', '')
-              .replaceAll('VIP Zone ', '')
-              .trim(),
-        )
-        .where((e) => e.isNotEmpty && e != '0' && !e.startsWith('TA-'))
-        .toList();
-    if (clean.isEmpty) return '';
-    return '${_tableWordForFloor(floor)} ${clean.join(', ')}';
-  }
-
-  static void _notifySystemChange({
-    required String message,
-    Map<String, dynamic>? meta,
-  }) {
-    PosLiveRefresh.bump();
-    ManagerNotificationInbox.ingestLocal(
-      title: 'სისტემა:',
-      message: message,
-      source: 'system',
-      meta: meta,
-    );
   }
 
   static Future<void> _json(

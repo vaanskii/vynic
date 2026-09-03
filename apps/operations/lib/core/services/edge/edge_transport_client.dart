@@ -48,8 +48,7 @@ class EdgeTransportClient {
     Duration timeout = const Duration(seconds: 20),
   }) : _http = httpClient ?? http.Client(),
        _baseUrl = baseUrl ?? (() => ApiConfig.baseUrl),
-       _credential =
-           credential ?? (() => EdgeDeviceCredentialStore.credential),
+       _credential = credential ?? (() => EdgeDeviceCredentialStore.credential),
        _timeout = timeout;
 
   final http.Client _http;
@@ -73,7 +72,10 @@ class EdgeTransportClient {
               'limit': limit ?? edgeCommandDefaultBatchSize,
               // Only work this build understands. Cloud withholds the rest
               // rather than handing over an envelope we would have to guess at.
-              'acceptedContractVersions': <int>[edgeCommandContractVersion],
+              // The list includes the previous version as well as this one: a
+              // fleet upgrades gradually, and work enqueued under the older
+              // envelope must still reach a terminal that has moved on.
+              'acceptedContractVersions': edgeCommandCompatibleVersions,
             }),
           )
           .timeout(_timeout);

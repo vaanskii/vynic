@@ -441,14 +441,55 @@ function edgeBanner() {
   ].join('\n');
 }
 
+/** Renders one command type's schema entry as a doc comment. */
+function edgeTypeDoc(c, indent) {
+  const lines = [c.description];
+  if (c.idempotency) lines.push('', `Idempotency: ${c.idempotency}`);
+  const fields = Object.entries(c.payload ?? {});
+  if (fields.length > 0) {
+    lines.push('', 'Payload:');
+    for (const [name, shape] of fields) lines.push(`- \`${name}\`: ${shape}`);
+  } else {
+    lines.push('', 'Payload: none.');
+  }
+  if (c.failure) lines.push('', `Failure: ${c.failure}`);
+  if (c.repeatAfterInterruption === false) {
+    lines.push(
+      '',
+      'Not repeated after an interrupted execution: the outcome is unknown and',
+      'repeating it would be worse than reporting it.',
+    );
+  }
+  const pad = ' '.repeat(indent);
+  return [
+    `${pad}/**`,
+    ...lines.map((l) => (l ? `${pad} * ${l}` : `${pad} *`)),
+    `${pad} */`,
+  ].join('\n');
+}
+
 function renderEdgeTs() {
-  const { contractVersion, limits, resultStatuses, commandTypes } = edgeContract;
-  const typeUnion = commandTypes.map((c) => `'${c.type}'`).join(' | ');
+  const {
+    contractVersion,
+    compatibleContractVersions,
+    limits,
+    resultStatuses,
+    commandTypes,
+  } = edgeContract;
+  const compatible = compatibleContractVersions ?? [contractVersion];
+  // One member per line, prettier's own shape for a union this long, so the
+  // generated file is not something the formatter wants to rewrite.
+  const typeUnion =
+    '\n  | ' + commandTypes.map((c) => `'${c.type}'`).join('\n  | ');
   const typeConsts = commandTypes
-    .map((c) => `  /** ${c.description} */\n  ${c.type}: '${c.type}',`)
-    .join('\n');
+    .map((c) => `${edgeTypeDoc(c, 2)}\n  ${c.type}: '${c.type}',`)
+    .join('\n\n');
   const idempotentSet = commandTypes
     .filter((c) => c.idempotent)
+    .map((c) => `  '${c.type}',`)
+    .join('\n');
+  const noRepeatSet = commandTypes
+    .filter((c) => c.repeatAfterInterruption === false)
     .map((c) => `  '${c.type}',`)
     .join('\n');
   const resultUnion = resultStatuses.map((r) => `'${r}'`).join(' | ');
@@ -479,11 +520,20 @@ export const EDGE_COMMAND_CLAIM_LEASE_SECONDS = ${limits.claimLeaseSeconds};
 /** Redeliveries before a command is given up on and recorded as failed. */
 export const EDGE_COMMAND_MAX_ATTEMPTS = ${limits.maxAttempts};
 
+/**
+ * Every envelope version an up-to-date Edge understands, newest first.
+ *
+ * A fleet does not upgrade all at once, so Cloud has to be able to serve the
+ * version before this one while builds catch up. An Edge sends this list on
+ * every claim and Cloud withholds anything outside it.
+ */
+export const EDGE_COMMAND_COMPATIBLE_VERSIONS: readonly number[] = [${compatible.join(', ')}];
+
 export const EdgeCommandTypes = {
 ${typeConsts}
 } as const;
 
-export type EdgeCommandType = ${typeUnion};
+export type EdgeCommandType =${typeUnion};
 
 /**
  * Command types that may be executed more than once without extra effect.
@@ -494,6 +544,17 @@ export type EdgeCommandType = ${typeUnion};
  */
 export const EDGE_IDEMPOTENT_COMMAND_TYPES: ReadonlySet<string> = new Set([
 ${idempotentSet}
+]);
+
+/**
+ * Types whose Edge handler must NOT re-run after an interrupted execution.
+ *
+ * These are the ones whose side effect leaves the machine — paper, mostly. A
+ * command the POS started and never finished has an unknown outcome, and
+ * quietly doing it again is worse than reporting that nobody knows.
+ */
+export const EDGE_NO_REPEAT_AFTER_INTERRUPTION: ReadonlySet<string> = new Set([
+${noRepeatSet}
 ]);
 
 export type EdgeCommandResultStatus = ${resultUnion};
@@ -525,24 +586,65 @@ export interface EdgeCommandResult {
 `;
 }
 
+/** Renders one command type's schema entry as a Dart doc comment. */
+function edgeTypeDartDoc(c, indent) {
+  const lines = [c.description];
+  if (c.idempotency) lines.push('', `Idempotency: ${c.idempotency}`);
+  const fields = Object.entries(c.payload ?? {});
+  if (fields.length > 0) {
+    lines.push('', 'Payload:');
+    for (const [name, shape] of fields) lines.push(`- \`${name}\`: ${shape}`);
+  } else {
+    lines.push('', 'Payload: none.');
+  }
+  if (c.failure) lines.push('', `Failure: ${c.failure}`);
+  if (c.repeatAfterInterruption === false) {
+    lines.push(
+      '',
+      'Not repeated after an interrupted execution: the outcome is unknown and',
+      'repeating it would be worse than reporting it.',
+    );
+  }
+  const pad = ' '.repeat(indent);
+  return lines.map((l) => (l ? `${pad}/// ${l}` : `${pad}///`)).join('\n');
+}
+
+/** camelCase Dart identifier for a SCREAMING_SNAKE contract type. */
+function dartTypeName(type) {
+  const [head, ...rest] = type.toLowerCase().split('_');
+  return head + rest.map((w) => w[0].toUpperCase() + w.slice(1)).join('');
+}
+
 function renderEdgeDart() {
-  const { contractVersion, limits, resultStatuses, commandTypes } = edgeContract;
+  const {
+    contractVersion,
+    compatibleContractVersions,
+    limits,
+    resultStatuses,
+    commandTypes,
+  } = edgeContract;
+  const compatible = compatibleContractVersions ?? [contractVersion];
   const typeConsts = commandTypes
     .map(
       (c) =>
-        `  /// ${c.description}\n  static const String ${c.type.toLowerCase()} = '${c.type}';`,
+        `${edgeTypeDartDoc(c, 2)}\n  static const String ${dartTypeName(c.type)} = '${c.type}';`,
     )
     .join('\n\n');
-  const allTypes = commandTypes.map((c) => `'${c.type}'`).join(', ');
-  const idempotent = commandTypes
-    .filter((c) => c.idempotent)
-    .map((c) => `'${c.type}'`)
-    .join(', ');
+  // Rendered one per line: dart format would otherwise rewrite a long set
+  // literal, and a generated file that the formatter wants to change is a
+  // generated file --check reports as stale on every developer's machine.
+  const dartSet = (types) =>
+    types.map((c) => `    '${c.type}',`).join('\n');
+  const allTypes = dartSet(commandTypes);
+  const idempotent = dartSet(commandTypes.filter((c) => c.idempotent));
+  const noRepeat = dartSet(
+    commandTypes.filter((c) => c.repeatAfterInterruption === false),
+  );
   const resultConsts = resultStatuses
     .map((r) => `  static const String ${r.toLowerCase()} = '${r}';`)
     .join('\n');
 
-  return `${banner('//')}
+  return `${edgeBanner()}
 
 /// The Cloud → Edge work contract, as the POS sees it.
 ///
@@ -567,19 +669,39 @@ const int edgeCommandClaimLeaseSeconds = ${limits.claimLeaseSeconds};
 /// Redeliveries before Cloud gives up on a command.
 const int edgeCommandMaxAttempts = ${limits.maxAttempts};
 
+/// Every envelope version this build understands, newest first.
+///
+/// A fleet does not upgrade all at once, so an Edge has to keep accepting the
+/// version before its own while Cloud still holds work enqueued under it. Sent
+/// on every claim; Cloud withholds anything outside this list.
+const List<int> edgeCommandCompatibleVersions = <int>[${compatible.join(', ')}];
+
 /// Every command type this contract version defines.
 class EdgeCommandTypes {
   EdgeCommandTypes._();
 
 ${typeConsts}
 
-  static const Set<String> all = <String>{${allTypes}};
+  static const Set<String> all = <String>{
+${allTypes}
+  };
 
   /// Types safe to execute more than once.
   ///
   /// A type absent from this set must not be executed on redelivery without a
   /// handler-specific idempotency boundary of its own.
-  static const Set<String> idempotent = <String>{${idempotent}};
+  static const Set<String> idempotent = <String>{
+${idempotent}
+  };
+
+  /// Types that must NOT be re-run after an interrupted execution.
+  ///
+  /// These are the ones whose side effect leaves the machine — paper, mostly.
+  /// A command the POS started and never finished has an unknown outcome, and
+  /// quietly doing it again is worse than reporting that nobody knows.
+  static const Set<String> noRepeatAfterInterruption = <String>{
+${noRepeat}
+  };
 }
 
 /// What the Edge may report back about a command.
@@ -618,7 +740,8 @@ class EdgeCommandEnvelope {
   final DateTime leaseExpiresAt;
 
   /// Whether this build understands the envelope well enough to execute it.
-  bool get isSupportedVersion => contractVersion <= edgeCommandContractVersion;
+  bool get isSupportedVersion =>
+      edgeCommandCompatibleVersions.contains(contractVersion);
 
   /// Parses one envelope, or throws [FormatException] on a malformed one.
   ///

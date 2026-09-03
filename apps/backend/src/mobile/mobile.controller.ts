@@ -169,7 +169,7 @@ export class MobileController {
     @ManagerTenant() tenant: TenantContext,
     @Query('date') date?: string,
   ) {
-    return this.reservations.getReservations(date);
+    return this.reservations.getReservations(tenant, date);
   }
 
   // POST /mobile/reservations
@@ -191,7 +191,11 @@ export class MobileController {
       preOrderItems?: Array<Record<string, unknown>>;
     },
   ) {
-    return this.reservations.createReservation(monitoringSocketId, payload);
+    return this.reservations.createReservation(
+      tenant,
+      monitoringSocketId,
+      payload,
+    );
   }
 
   // POST /mobile/reservations/:id/status
@@ -203,6 +207,7 @@ export class MobileController {
     @Body() payload: { status?: string },
   ) {
     return this.reservations.updateReservationStatus(
+      tenant,
       id,
       monitoringSocketId,
       payload,
@@ -216,7 +221,7 @@ export class MobileController {
     @Param('id') id: string,
     @Headers('x-monitoring-socket-id') monitoringSocketId?: string,
   ) {
-    return this.reservations.deleteReservation(id, monitoringSocketId);
+    return this.reservations.deleteReservation(tenant, id, monitoringSocketId);
   }
 
   // POST /mobile/reservations/:id/print-check
@@ -227,7 +232,7 @@ export class MobileController {
     @ManagerTenant() tenant: TenantContext,
     @Param('id') id: string,
   ) {
-    return this.reservations.printReservationCheck(id);
+    return this.reservations.printReservationCheck(tenant, id);
   }
 
   // GET /mobile/order/:id
@@ -264,8 +269,11 @@ export class MobileController {
   // Manager-triggered: relays a table/order pre-bill print to the Windows POS,
   // the only print host. No realtime broadcast — printing is not a data mutation.
   @Post('order/:id/print-check')
-  async printOrderCheck(@Param('id') id: string) {
-    return this.orders.printOrderCheck(id);
+  async printOrderCheck(
+    @ManagerTenant() tenant: TenantContext,
+    @Param('id') id: string,
+  ) {
+    return this.orders.printOrderCheck(tenant, id);
   }
 
   // POST /mobile/takeaway-orders — create a new takeaway order from the mobile app

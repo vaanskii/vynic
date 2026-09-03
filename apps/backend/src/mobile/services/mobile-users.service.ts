@@ -5,8 +5,8 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma.service';
-import { PosCallbackClient } from '../../pos/pos-callback.client';
-import { PosOutboxService } from '../../pos/pos-outbox.service';
+import { PosCommandDispatcher } from '../../pos/pos-command-dispatcher.service';
+import { EdgeCommandTypes } from '../../shared/contracts/edge-command';
 import { StaffPinVault } from '../../auth/staff-pin-vault.service';
 import {
   ASSIGNABLE_STAFF_ROLES,
@@ -28,30 +28,27 @@ import type { TenantContext } from '../../tenancy/tenant-context';
 export class MobileUsersService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly posCallback: PosCallbackClient,
-    private readonly posOutbox: PosOutboxService,
+    private readonly posCommands: PosCommandDispatcher,
     private readonly pinVault: StaffPinVault,
   ) {}
 
   /**
-   * Shared handler for a failed direct POS-callback push. The cloud DB is
-   * already updated (source of truth here), so we always log; and when the
-   * failure means the POS was simply offline, we queue the change for durable
-   * delivery so it reaches POS Hive once the POS reconnects.
+   * Record a staff change for this Venue's POS to apply.
+   *
+   * Every one of these is convergent: the payload states what the record should
+   * look like, so a redelivery lands on the same user rather than a second one.
+   * That is what lets them ride an at-least-once transport at all.
+   *
+   * The cloud row is already written when this runs — Cloud owns staff identity
+   * and the POS holds a cache of it — so a POS that is offline delays the change
+   * reaching the terminal rather than failing the request.
    */
-  private async queueIfPosUnreachable(
-    context: string,
-    endpoint: string,
+  private dispatchStaffCommand(
+    tenant: TenantContext,
+    type: Parameters<PosCommandDispatcher['dispatch']>[1]['type'],
     payload: Record<string, unknown>,
-    error: unknown,
-  ): Promise<void> {
-    console.warn(
-      `[Mobile][Users] POS ${context} failed:`,
-      (error as Error).message,
-    );
-    if (this.posOutbox.isPosUnreachableError(error)) {
-      await this.posOutbox.enqueue({ endpoint, payload });
-    }
+  ) {
+    return this.posCommands.dispatch(tenant, { type, payload });
   }
 
   async getUsers(tenant: TenantContext) {
@@ -121,18 +118,12 @@ export class MobileUsersService {
     const pinsMap = await this.pinVault.read();
     pinsMap[username] = pinCode;
     await this.pinVault.write(pinsMap);
-    const posUserPayload = { username, pinCode, role: toClientRole(role) };
-    try {
-      await this.posCallback.createPosUser(posUserPayload);
-    } catch (e) {
-      await this.queueIfPosUnreachable(
-        'create user',
-        '/mobile-user-create',
-        posUserPayload,
-        e,
-      );
-    }
-    return { ...created, pinCode };
+    const posDelivery = await this.dispatchStaffCommand(
+      tenant,
+      EdgeCommandTypes.STAFF_CREATE,
+      { username, pinCode, role: toClientRole(role) },
+    );
+    return { ...created, pinCode, posDelivery };
   }
 
   async updateUserPin(
@@ -166,21 +157,17 @@ export class MobileUsersService {
     const pinsMap = await this.pinVault.read();
     pinsMap[username] = pinCode;
     await this.pinVault.write(pinsMap);
-    try {
-      await this.posCallback.updatePosUserPin({ username, pinCode });
-    } catch (e) {
-      await this.queueIfPosUnreachable(
-        'update pin',
-        '/mobile-user-update-pin',
-        { username, pinCode },
-        e,
-      );
-    }
+    const posDelivery = await this.dispatchStaffCommand(
+      tenant,
+      EdgeCommandTypes.STAFF_PIN_UPDATE,
+      { username, pinCode },
+    );
     return {
       username,
       role: existing.role,
       isActive: existing.isActive,
       pinCode,
+      posDelivery,
     };
   }
 
@@ -236,20 +223,12 @@ export class MobileUsersService {
         updatedAt: true,
       },
     });
-    try {
-      await this.posCallback.updatePosUserRole({
-        username,
-        role: toClientRole(role),
-      });
-    } catch (e) {
-      await this.queueIfPosUnreachable(
-        'update role',
-        '/mobile-user-update-role',
-        { username, role: toClientRole(role) },
-        e,
-      );
-    }
-    return updated;
+    const posDelivery = await this.dispatchStaffCommand(
+      tenant,
+      EdgeCommandTypes.STAFF_ROLE_UPDATE,
+      { username, role: toClientRole(role) },
+    );
+    return { ...updated, posDelivery };
   }
 
   async renameUser(
@@ -304,20 +283,12 @@ export class MobileUsersService {
       pinsMap[newUsername] = pinCode;
       await this.pinVault.write(pinsMap);
     }
-    try {
-      await this.posCallback.renamePosUser({
-        oldUsername,
-        newUsername,
-      });
-    } catch (e) {
-      await this.queueIfPosUnreachable(
-        'rename user',
-        '/mobile-user-rename',
-        { oldUsername, newUsername },
-        e,
-      );
-    }
-    return { ...updated, pinCode };
+    const posDelivery = await this.dispatchStaffCommand(
+      tenant,
+      EdgeCommandTypes.STAFF_RENAME,
+      { oldUsername, newUsername },
+    );
+    return { ...updated, pinCode, posDelivery };
   }
 
   async deleteUser(tenant: TenantContext, usernameParam: string) {
@@ -347,16 +318,11 @@ export class MobileUsersService {
     const pinsMap = await this.pinVault.read();
     delete pinsMap[username];
     await this.pinVault.write(pinsMap);
-    try {
-      await this.posCallback.deletePosUser({ username });
-    } catch (e) {
-      await this.queueIfPosUnreachable(
-        'delete user',
-        '/mobile-user-delete',
-        { username },
-        e,
-      );
-    }
-    return { success: true };
+    const posDelivery = await this.dispatchStaffCommand(
+      tenant,
+      EdgeCommandTypes.STAFF_DELETE,
+      { username },
+    );
+    return { success: true, posDelivery };
   }
 }

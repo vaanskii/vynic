@@ -4,6 +4,7 @@ import { PosConnectionRegistry } from '../pos-connection.registry';
 import { BusinessDaySyncService } from '../snapshot/business-day-sync.service';
 import { MenuSyncService } from '../snapshot/menu-sync.service';
 import { OrderSyncService } from '../snapshot/order-sync.service';
+import { ReservationSyncService } from '../snapshot/reservation-sync.service';
 import { StaffSyncService } from '../snapshot/staff-sync.service';
 import { SyncBroadcastService } from '../snapshot/sync-broadcast.service';
 import { TableSyncService } from '../snapshot/table-sync.service';
@@ -42,6 +43,7 @@ export class IngestPosSnapshotService {
     private readonly menu: MenuSyncService,
     private readonly tables: TableSyncService,
     private readonly orders: OrderSyncService,
+    private readonly reservations: ReservationSyncService,
     private readonly staff: StaffSyncService,
     private readonly businessDay: BusinessDaySyncService,
     private readonly broadcasts: SyncBroadcastService,
@@ -57,7 +59,7 @@ export class IngestPosSnapshotService {
     };
     // `quickOrders` is part of the wire format but has never been read here;
     // see the Step 2A report. It is deliberately left unconsumed.
-    const { tables, orders, expenses, menu, staff } = data;
+    const { tables, orders, expenses, menu, staff, reservations } = data;
 
     const realtimeOnly = data.realtimeOnly === true;
     if (realtimeOnly) {
@@ -115,6 +117,14 @@ export class IngestPosSnapshotService {
     // Sync Staff — username/role only unless pin explicitly provided (legacy).
     if (staff && staff.length > 0 && !realtimeOnly) {
       await this.staff.sync(tenant, staff);
+    }
+
+    // Sync Reservations — the Cloud mirror the manager list and the public
+    // website read, so neither has to dial the restaurant to ask. Not on the
+    // realtime fast path: that one exists to move tables and orders quickly,
+    // and a reservation change already brings a full snapshot with it.
+    if (!realtimeOnly) {
+      await this.reservations.sync(tenant, reservations);
     }
 
     // Realtime side effects. Per-record hints first, then the coarse

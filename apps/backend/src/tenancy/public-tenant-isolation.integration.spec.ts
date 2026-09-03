@@ -10,6 +10,7 @@ import { FeatureKeys } from '../entitlements/feature-keys';
 import { FeatureGuard } from '../entitlements/feature.guard';
 import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
 import { MenuService } from '../website/menu/menu.service';
+import { PosReservationMirrorService } from '../pos/pos-reservation-mirror.service';
 import { ReservationService } from '../website/reservation/reservation.service';
 import { WebsitePosReservationBridgeService } from '../website/reservation/website-pos-reservation-bridge.service';
 import { UserService } from '../website/user/user.service';
@@ -59,16 +60,15 @@ describeDatabase('Public website tenant isolation (PostgreSQL)', () => {
       get: (key: string) => (key === 'NODE_ENV' ? 'production' : undefined),
     } as never);
     menu = new MenuService(prisma);
-    // The POS side is never reachable from a test process; the bridge treats a
-    // failed fetch as "no POS bookings", which is the behaviour being relied on.
-    const posCallback = {
-      fetchPosReservations: () => Promise.reject(new Error('no POS in tests')),
-    } as never;
+    // Reservation reads come from the Cloud mirror since Step 6C, so this is a
+    // real service over the same PostgreSQL — an empty mirror means "no POS
+    // bookings", which is the behaviour being relied on here.
     const bridge = new WebsitePosReservationBridgeService(
       prisma,
       {} as never, // gateway — only reached when pushing to POS
       menu,
-      posCallback,
+      new PosReservationMirrorService(prisma),
+      {} as never, // posCommands — only reached when pushing to POS
     );
     reservations = new ReservationService(
       prisma,

@@ -18,6 +18,8 @@ import { MobileDashboardService } from './mobile/services/mobile-dashboard.servi
 import { MobileOrdersService } from './mobile/services/mobile-orders.service';
 import { PlatformModule } from './platform/platform.module';
 import { PosCallbackModule } from './pos/pos-callback.module';
+import { PosCommandDispatcher } from './pos/pos-command-dispatcher.service';
+import { PosReservationMirrorService } from './pos/pos-reservation-mirror.service';
 import { PosOutboxService } from './pos/pos-outbox.service';
 import { PrismaModule } from './shared/prisma/prisma.module';
 import { BootstrapModule } from './shared/bootstrap/bootstrap.module';
@@ -28,6 +30,7 @@ import { PosConnectionRegistry } from './pos/sync/pos-connection.registry';
 import { BusinessDaySyncService } from './pos/sync/snapshot/business-day-sync.service';
 import { MenuSyncService } from './pos/sync/snapshot/menu-sync.service';
 import { OrderSyncService } from './pos/sync/snapshot/order-sync.service';
+import { ReservationSyncService } from './pos/sync/snapshot/reservation-sync.service';
 import { StaffSyncService } from './pos/sync/snapshot/staff-sync.service';
 import { SyncBroadcastService } from './pos/sync/snapshot/sync-broadcast.service';
 import { TableSyncService } from './pos/sync/snapshot/table-sync.service';
@@ -53,12 +56,15 @@ import { WebsiteModule } from './website/website.module';
     AppService,
     PosSyncGuard,
     PosOutboxService,
+    PosCommandDispatcher,
+    PosReservationMirrorService,
     PosConnectionRegistry,
     IngestPosSnapshotService,
     IngestAuditReportsService,
     MenuSyncService,
     TableSyncService,
     OrderSyncService,
+    ReservationSyncService,
     StaffSyncService,
     BusinessDaySyncService,
     SyncBroadcastService,

@@ -59,9 +59,11 @@ void main() {
       // its own venue could name someone else's.
       expect(body.containsKey('venueId'), isFalse);
       expect(body.containsKey('deviceId'), isFalse);
-      expect(body['acceptedContractVersions'], <int>[
-        edgeCommandContractVersion,
-      ]);
+      // This version and the one before it: a fleet upgrades gradually, and
+      // work enqueued under the older envelope must still reach a POS that has
+      // moved on.
+      expect(body['acceptedContractVersions'], edgeCommandCompatibleVersions);
+      expect(edgeCommandCompatibleVersions.first, edgeCommandContractVersion);
       expect(body['limit'], edgeCommandDefaultBatchSize);
     });
 
@@ -74,10 +76,7 @@ void main() {
       final response = await client.claim();
 
       expect(response.isOk, isTrue);
-      expect(
-        response.commands.map((c) => c.commandId),
-        <String>['c1', 'c2'],
-      );
+      expect(response.commands.map((c) => c.commandId), <String>['c1', 'c2']);
     });
 
     test('keeps the usable half of a batch with one broken envelope', () async {
@@ -117,11 +116,17 @@ void main() {
       expect((await broken.claim()).outcome, EdgeTransportOutcome.serverError);
     });
 
-    test('treats a malformed body as a server problem, not as no work', () async {
-      final client = clientFor((_) async => http.Response('not json', 200));
+    test(
+      'treats a malformed body as a server problem, not as no work',
+      () async {
+        final client = clientFor((_) async => http.Response('not json', 200));
 
-      expect((await client.claim()).outcome, EdgeTransportOutcome.serverError);
-    });
+        expect(
+          (await client.claim()).outcome,
+          EdgeTransportOutcome.serverError,
+        );
+      },
+    );
 
     test('does not call cloud at all without a credential', () async {
       var called = false;

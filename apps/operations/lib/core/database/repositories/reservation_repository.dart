@@ -45,8 +45,14 @@ class ReservationRepository {
     bool isTakeAway = false,
     int? linkedOrderId,
     String status = 'pending',
+    String? id,
   }) async {
-    final id = DateTime.now().millisecondsSinceEpoch.toString();
+    // Cloud supplies the id for a reservation it originated, because a POS that
+    // invents one turns an at-least-once redelivery into a second booking. A
+    // reservation taken on this terminal still gets a local one.
+    final reservationId = (id != null && id.trim().isNotEmpty)
+        ? id.trim()
+        : DateTime.now().millisecondsSinceEpoch.toString();
 
     // Refs are canonical; the legacy int codes are kept in sync for backups
     // and the server wire format (unrepresentable tables are omitted there).
@@ -61,7 +67,7 @@ class ReservationRepository {
 
     // All new reservations start as pending (will be confirmed manually when date arrives)
     final reservation = Reservation(
-      id: id,
+      id: reservationId,
       customerName: customerName,
       customerPhone: customerPhone,
       tableNumbers: legacyCodes,
@@ -83,10 +89,10 @@ class ReservationRepository {
       SyncEvent(
         type: SyncEventType.reservations,
         action: 'created',
-        payload: {'reservationId': id},
+        payload: {'reservationId': reservationId},
       ),
     );
-    return id;
+    return reservationId;
   }
 
   // Get all reservations

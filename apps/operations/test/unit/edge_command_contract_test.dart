@@ -115,10 +115,32 @@ void main() {
     });
   });
 
-  test('NOOP is the only type this build ships, and it is idempotent', () {
-    // Guards the rule the queue enforces on the other side: a type that cannot
-    // absorb being delivered twice must not be executable here either.
-    expect(EdgeCommandTypes.all, <String>{EdgeCommandTypes.noop});
-    expect(EdgeCommandTypes.idempotent, contains(EdgeCommandTypes.noop));
+  group('the type catalogue', () {
+    test('every declared type is safe to deliver twice', () {
+      // The rule the queue enforces on the other side: `enqueue()` refuses a
+      // type that is not declared idempotent, because at-least-once delivery
+      // will eventually hand it over again. A type in `all` but not in
+      // `idempotent` could never be queued, so it would be a dead entry.
+      expect(EdgeCommandTypes.idempotent, EdgeCommandTypes.all);
+    });
+
+    test('printing is the work that must not be repeated blindly', () {
+      // Convergent commands land on the same state when re-run. Paper does not:
+      // an interrupted print has an unknown outcome, and a second check
+      // appearing silently is worse than a failure somebody can see.
+      expect(EdgeCommandTypes.noRepeatAfterInterruption, <String>{
+        EdgeCommandTypes.orderCheckPrint,
+        EdgeCommandTypes.reservationCheckPrint,
+        EdgeCommandTypes.countedMenuPrint,
+      });
+      for (final type in EdgeCommandTypes.noRepeatAfterInterruption) {
+        expect(EdgeCommandTypes.all, contains(type));
+      }
+    });
+
+    test('carries the real restaurant work, not just the probe', () {
+      expect(EdgeCommandTypes.all, contains(EdgeCommandTypes.noop));
+      expect(EdgeCommandTypes.all.length, greaterThan(1));
+    });
   });
 }

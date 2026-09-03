@@ -429,9 +429,15 @@ class _MobileOrderDetailScreenState extends State<MobileOrderDetailScreen> {
     if (order == null || _printingCheck) return;
     setState(() => _printingCheck = true);
     try {
-      await MobileApiService.printOrderCheck(order.orderId);
+      final delivery = await MobileApiService.printOrderCheck(order.orderId);
       if (!mounted) return;
-      ManagerToast.show(context, 'ჩეკი დაიბეჭდა');
+      // Only the POS can say a check printed. A queued request means the
+      // terminal has not asked for it yet, and saying "printed" then would send
+      // somebody to an empty printer.
+      ManagerToast.show(
+        context,
+        delivery.isPending ? 'ბეჭდვა გაიგზავნა POS-ზე' : 'ჩეკი დაიბეჭდა',
+      );
     } catch (e) {
       if (!mounted) return;
       final message = e.toString();

@@ -1,10 +1,13 @@
 # Cloud ↔ Edge transport
 
-**Step 6A** established the backend side. **Step 6B** put the POS on it. This is
-how a future Vynic Cloud and a restaurant's POS talk to each other, and why the
-direction had to change before anything else could.
+**Step 6A** established the backend side. **Step 6B** put the POS on it.
+**Step 6C** moved the real restaurant work onto it — see
+[EDGE_COMMAND_MIGRATION.md](EDGE_COMMAND_MIGRATION.md) for the endpoint
+inventory, the per-command idempotency arguments, and the current status of every
+legacy component. This document is the transport itself.
 
-Companion documents: [SYNC_CONTRACT.md](SYNC_CONTRACT.md) (snapshot payload),
+Companion documents: [EDGE_COMMAND_MIGRATION.md](EDGE_COMMAND_MIGRATION.md),
+[AUDIT_SYNC.md](AUDIT_SYNC.md), [SYNC_CONTRACT.md](SYNC_CONTRACT.md) (snapshot payload),
 [DEVICE_IDENTITY.md](DEVICE_IDENTITY.md) (Device credentials),
 [TENANT_SCOPING.md](TENANT_SCOPING.md) (Venue ownership),
 [PLATFORM_CONTROL_PLANE.md](PLATFORM_CONTROL_PLANE.md) (who may enqueue work,
@@ -22,7 +25,8 @@ Nothing in this document may become a runtime dependency of those operations.
 
 ## The problem
 
-Today the server reaches the POS by dialling it:
+The server used to reach the POS by dialling it — and still does, for a Venue
+with no enrolled Device:
 
 ```
 Server ──HTTP──▶ http://192.168.1.50:8080/mobile-order-update
@@ -166,11 +170,21 @@ the duplicate somewhere less visible.
 
 `EDGE_IDEMPOTENT_COMMAND_TYPES` in the generated contract is the enforcement, not
 the documentation: `enqueue()` **refuses** a type that is not declared idempotent.
-It is deliberately not true that today's POS actions are all safe to repeat —
-printing a check twice prints two checks — so those types stay out of the queue
-until Step 6B gives them Edge-side idempotency. Step 6A ships exactly one type,
-`NOOP`, which does nothing and exists so the transport can be exercised end to
-end without performing restaurant work.
+
+**Since Step 6C the catalogue is the real one** — eighteen types at contract
+version 2, covering orders, walk-ins, reservations, expenses, staff and the three
+prints. Each declares its payload, its idempotency argument and its failure codes
+in the schema, and the generator renders all three into both languages.
+
+It was deliberately not true that every POS action is naturally safe to repeat.
+Two needed identity to move to Cloud before they could be queued at all — a
+reservation whose id the POS used to invent, an expense that used to be appended
+— and printing needed a second mechanism, because paper is a side effect the
+world keeps. `EDGE_NO_REPEAT_AFTER_INTERRUPTION` is that mechanism: a print whose
+execution was interrupted is not repeated, because nobody can say whether the
+check came out and a silent second one is worse than a reported failure. The full
+argument for each type is in
+[EDGE_COMMAND_MIGRATION.md](EDGE_COMMAND_MIGRATION.md).
 
 ### Idempotency
 
@@ -254,8 +268,10 @@ Dart DTOs for this contract.
 
 The version travels three ways: on the row, on every envelope, and on the claim
 request (`acceptedContractVersions`), so an Edge is only handed work it
-understands. **N/N-1 compatibility is a documented future requirement**: once a
-second version exists, Cloud must be able to serve both while a fleet upgrades.
+understands. **N/N-1 compatibility exists since Step 6C**, when a second version
+appeared: `compatibleContractVersions` is `[2, 1]`, an Edge sends both on every
+claim, and work enqueued under the older envelope still reaches a terminal that
+has moved on.
 
 Existing sync DTOs were deliberately **not** moved into the package. The
 envelope needed a shared definition; `SyncPayload` does not, and moving it would
@@ -294,33 +310,37 @@ to deliver a configuration change over.
 
 ## Legacy compatibility
 
-Nothing was removed and nothing changed behaviour. The Vankisi installation runs
-exactly as it did.
+Step 6C migrated every business operation. What survives is a fallback with one
+purpose, and the per-component status table lives in
+[EDGE_COMMAND_MIGRATION.md](EDGE_COMMAND_MIGRATION.md#legacy-status). In summary:
 
 | Path | Status |
 |---|---|
-| `PosCallbackClient`, `PosConnectionRegistry`, `pos-callback-url` SSRF guard | **Transitional.** Still the only delivery mechanism in production. |
-| `PosOutboxService` / `PosCallbackOutbox` | **Transitional.** Frozen: no new command types. |
-| `POST /sync/*` snapshot ingestion | **Keeps.** Edge → Cloud state is the right direction already. |
-| `POST /edge/commands/*` | **In use by the POS since Step 6B**, carrying `NOOP` only. |
+| `PosCallbackClient` per-operation and synchronous-read methods | **Removed.** All migrated; the synchronous LAN read has no replacement by design. |
+| `PosCallbackClient.deliverToPos`, `PosConnectionRegistry`, the SSRF guard | **Frozen fallback.** Reached only for a Venue with no enrolled Device. |
+| `PosOutboxService` / `PosCallbackOutbox` | **Frozen fallback.** Same single caller. |
+| `PosIngestServer` | **Frozen fallback.** Serves that path, and an older backend during a rollout. |
+| `POST /sync/*` snapshot ingestion | **Keeps.** Edge → Cloud state is the right direction already, and since 6C it also carries reservations. |
+| `POST /edge/commands/*` | **The transport.** Carries every migrated operation. |
 
 **Retirement conditions for the legacy callback path** — all of them, not any:
 
 1. ~~A Flutter Edge client claims and acknowledges commands.~~ **Done in 6B.**
-2. Every command type currently sent through `PosCallbackClient` has an
-   idempotent Edge handler and a declared type in the contract. *(Step 6C — 18
-   endpoints, none migrated.)*
-3. Reservation reads (`fetchPosReservations`) have a Cloud-side answer, since a
-   pull queue delivers work but does not answer a synchronous question.
+2. ~~Every command type sent through `PosCallbackClient` has an idempotent Edge
+   handler and a declared type in the contract.~~ **Done in 6C — 17 operations,
+   all migrated.**
+3. ~~Reservation reads have a Cloud-side answer, since a pull queue delivers work
+   but does not answer a synchronous question.~~ **Done in 6C — `PosReservation`,
+   filled from the snapshot.**
 4. Every deployed POS has a Device credential — the legacy shared
    `POS_SYNC_API_KEY` path resolves no Device and cannot use this transport.
    *(Phase 1C gave this a path that scales past a hand-written file, but a path
    is not a fleet: this is satisfied when every installation has actually
    enrolled, not when it becomes possible for them to.)*
 
-Until all four hold, a Cloud deployment is not possible, and that is the honest
-status: 6A made the transport Cloud-compatible and 6B put the POS on it, but the
-work that actually flows to a restaurant today still flows over the LAN.
+Three of four hold. The honest status is therefore narrower than "Cloud never
+needs a private POS address": **an enrolled Venue's migrated operations need
+none**, and the fallback exists precisely because condition 4 does not hold yet.
 
 ---
 
@@ -397,7 +417,7 @@ One timer, one owner. Screens do not poll.
 | Situation | Next poll |
 |---|---|
 | work claimed | 2s — drain the queue |
-| nothing waiting | 30s |
+| nothing waiting | 10s (was 30s before real work rode this transport) |
 | Cloud unreachable or erroring | exponential from 30s, capped at 5min, ±20% jitter |
 | credential rejected | loop stands down; re-provisioning resumes it |
 | no credential | never starts |
@@ -417,9 +437,11 @@ The transport does not know printer, menu or table logic. It resolves a type to
 an `EdgeCommandHandler` and calls it; a handler that throws produces a failed
 result with a reason, not a crash.
 
-Step 6B ships **one** handler, `NOOP`, which does nothing. That is the point: it
-proves claim → execute → journal → acknowledge on a real install without
-performing restaurant work.
+Step 6B shipped **one** handler, `NOOP`. Step 6C added seventeen, all of them
+thin adapters over `PosCommandApplier` — the one place the restaurant work
+actually happens, shared with the legacy LAN server so the two transports cannot
+drift. A test asserts that every type the contract declares has a handler: one
+without would be claimed, refused and redelivered until its attempts ran out.
 
 ### Local execution journal
 
@@ -444,8 +466,13 @@ whether to run something, without holding whatever a future command type carries
 - **Crash policy.** An entry left mid-execution by a process that never returned
   is marked `interrupted` on the next start, not guessed at in either direction.
   It is non-terminal, so a redelivered command is executed again — which is safe
-  precisely because only idempotent types may be queued. `NOOP` makes this
-  harmless today; every future handler inherits the rule.
+  precisely because only idempotent types may be queued.
+
+  **Since Step 6C there is one exception, and it is the honest one.** A type in
+  `EDGE_NO_REPEAT_AFTER_INTERRUPTION` — the three prints — is *not* re-executed
+  from an interrupted entry. Nobody can say whether the paper came out, and a
+  second kitchen check appearing silently is worse than an
+  `interrupted_not_repeated` failure somebody can see and act on.
 - **Retention** — terminal entries are pruned after 7 days, comfortably longer
   than any lease or redelivery window, with a 5000-row ceiling as a backstop.
   Non-terminal entries are never pruned: they are exactly the ones a redelivery
@@ -465,14 +492,23 @@ removed.**
 
 ## Deferred
 
-- **Step 6C — legacy business-command migration.** The 18 command endpoints on
-  `PosIngestServer` still arrive over the LAN callback path. Each needs a
-  declared contract type and an idempotent Edge handler before it can move.
+- ~~**Step 6C — legacy business-command migration.**~~ **Done.** See
+  [EDGE_COMMAND_MIGRATION.md](EDGE_COMMAND_MIGRATION.md).
+- ~~**Synchronous Edge reads.**~~ **Done** — `PosReservation`, a Cloud mirror
+  filled from the snapshot, rather than a fake command.
+- **Device-addressed printing.** Every command is Venue-addressed
+  (`deviceId: null`), which is right for a one-terminal restaurant and wrong for
+  a venue where the bar and the kitchen each have a till. `EdgeCommand.deviceId`
+  already exists; nothing chooses a value for it yet.
+- **Print latency.** A queued print waits up to one idle poll — ten seconds —
+  before a terminal claims it. A long-poll on the claim endpoint would make it
+  immediate while keeping the Edge as the side that opens the connection. Not
+  needed for correctness; recorded as the obvious next improvement.
+- **Reservation double-allocation.** No `ReservationHold` exists, so two
+  simultaneous website bookings for one table can both pass the availability
+  check. Unchanged by the mirror, and not solved by it.
 - **OS keychain credential storage.** Windows DPAPI / macOS Keychain instead of
   an owner-only file.
-- **Synchronous Edge reads.** `fetchPosReservations()` is a request-response the
-  website makes into POS Hive. A work queue does not answer it; that needs either
-  a Cloud-side mirror or a different mechanism.
 - **Multi-Device contention.** The claim uses an optimistic status guard, which
   is correct but lets a loser claim fewer rows. A Venue with several busy Edges
   would be better served by `SELECT … FOR UPDATE SKIP LOCKED`.

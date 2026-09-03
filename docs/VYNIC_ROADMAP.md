@@ -166,11 +166,25 @@ Still ahead, in no fixed order:
 - **Step 7B Vynic Admin Panel — complete.** `apps/platform-web/` now provides the
   authenticated operator UI over those APIs, including one-time POS credential
   provisioning. See [PLATFORM_ADMIN_PANEL.md](PLATFORM_ADMIN_PANEL.md).
+- **Step 6C Cloud → POS command migration — complete.** All seventeen business
+  operations that reached a restaurant over the LAN callback path are now
+  `EdgeCommand` types the terminal claims, reservation reads are answered from a
+  Cloud mirror rather than by dialling the POS, and audit reports sync
+  incrementally instead of resending a restaurant's whole history on every
+  change. See [EDGE_COMMAND_MIGRATION.md](EDGE_COMMAND_MIGRATION.md) and
+  [AUDIT_SYNC.md](AUDIT_SYNC.md).
+
+  The legacy callback path survives as a **frozen fallback for a Venue with no
+  enrolled Device**, because those installations still exist. So the true claim
+  is that an *enrolled* Venue's operations need no private POS address — not
+  that Cloud never needs one. That narrows to the stronger statement when the
+  fleet has finished enrolling.
+
 - **Recommended next: Production Cloud Deployment Foundation.** The real
-  control plane can now be exercised, but production frontend/backend origins,
+  control plane can now be exercised and the transport no longer requires LAN
+  reachability for an enrolled Venue, but production frontend/backend origins,
   HTTPS, CORS, hosting, secrets and deployment verification remain the immediate
-  blocker to operating it outside development. This does not include the Step
-  6C legacy command migration.
+  blocker to operating it outside development.
 - **Manager Cloud tenancy, then Manager feature enforcement** — `MANAGER_APP` is resolvable today but enforced nowhere, and must never gate POS → Cloud sync.
 - **Billing and subscriptions** — no lifecycle, provider, or pricing has been chosen; plan assignment is deliberately not a subscription.
 - **Signed offline commercial entitlements** — distinct from the existing Ed25519 developer licence.

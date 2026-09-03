@@ -37,11 +37,17 @@ const DELIVERED_RETENTION_MS = 10 * 60_000;
 const BOOTSTRAP_TENANT = { venueId: BOOTSTRAP_VENUE_ID };
 
 /**
- * Durable cloud → Windows POS callback queue with a retry worker (sync-7).
+ * Durable cloud → Windows POS callback queue with a retry worker. **Frozen.**
  *
- * Mobile mutations that must reach Hive are enqueued here. A background worker
- * retries each row with exponential backoff until the POS confirms delivery,
- * so a temporarily offline/unreachable POS no longer loses the change.
+ * Since Step 6C the only thing that puts a row in here is `PosCommandDispatcher`
+ * falling back for a Venue with no enrolled Device, because such a Venue cannot
+ * use the Edge command queue at all — its POS authenticates with the legacy
+ * shared key, which names a Venue but no machine. Every other path enqueues an
+ * `EdgeCommand` and the terminal comes and claims it.
+ *
+ * No new endpoint may be added here, and the classifier that used to sort
+ * "the POS refused this" from "the POS is not there" went with the synchronous
+ * request path it described. This retires when the last installation enrols.
  */
 @Injectable()
 export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
@@ -339,23 +345,6 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
     } catch (e) {
       this.logger.warn(`kickPending failed: ${(e as Error).message}`);
     }
-  }
-
-  /**
-   * Classify an error thrown by the *direct* POS path (`PosCallbackClient`
-   * `requestPos`) so callers can fall back to the durable outbox only when the
-   * POS was unreachable — never when the POS actively rejected the request.
-   *
-   * - "callback URL is not available" → POS never registered (offline) → queue.
-   * - "POS request failed <status>: …" → an HTTP response came back, so the POS
-   *   is reachable and rejected it (validation, conflict, …) → do NOT queue.
-   * - anything else (network error, timeout/abort) → unreachable → queue.
-   */
-  isPosUnreachableError(error: unknown): boolean {
-    const message = (error as Error)?.message ?? '';
-    if (message.includes('callback URL is not available')) return true;
-    if (/POS request failed \d+/.test(message)) return false;
-    return true;
   }
 
   /** Force a retry of all failed rows (admin "Sync now" — sync-4). */

@@ -8,6 +8,7 @@ import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/monitoring.dart';
 import 'package:vynic/core/services/sync/api_config.dart';
 import 'package:vynic/core/services/auth/auth_token_service.dart';
+import 'package:vynic/core/services/manager_app/pos_command_delivery.dart';
 import 'package:vynic/core/services/manager_app/mobile_cache_service.dart';
 import 'package:vynic/core/services/sync/mobile_edit_echo_guard.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
@@ -373,9 +374,14 @@ class MobileApiService {
   }
 
   /// Ask the backend to print the reservation check on the Windows POS.
-  /// The manager client never prints directly: the backend relays this to the
-  /// POS callback path, and the Windows POS (the only print host) prints it.
-  static Future<void> printReservationCheck(String reservationId) async {
+  ///
+  /// The manager client never prints directly, and Cloud does not print either:
+  /// it records the request and the terminal claims it. The returned delivery
+  /// says whether the POS has actually reported back — see
+  /// [PosCommandDelivery] for why a 2xx alone stopped meaning "printed".
+  static Future<PosCommandDelivery> printReservationCheck(
+    String reservationId,
+  ) async {
     final response = await _post(
       '/mobile/reservations/$reservationId/print-check',
       const {},
@@ -383,6 +389,7 @@ class MobileApiService {
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception('printReservationCheck failed: ${response.statusCode}');
     }
+    return _deliveryOf(response);
   }
 
   // ── Financials ─────────────────────────────────────────────────────────────
@@ -487,10 +494,12 @@ class MobileApiService {
   // ── Print order/table check (manager-only) ─────────────────────────────────
 
   /// Ask the backend to print the order/table check (customer pre-bill) on the
-  /// Windows POS. The manager client never prints directly: the backend relays
-  /// this to the POS callback path, and the Windows POS (the only print host)
-  /// prints it on the receipt printer. Not a mutation — no echo-guard marking.
-  static Future<void> printOrderCheck(int orderId) async {
+  /// Windows POS, the only print host. Not a mutation — no echo-guard marking.
+  ///
+  /// The returned delivery says whether the POS reported back inside the
+  /// backend's bounded wait, or whether the request is still queued for a
+  /// terminal that has not asked for it yet.
+  static Future<PosCommandDelivery> printOrderCheck(int orderId) async {
     final response = await _post(
       '/mobile/order/$orderId/print-check',
       const {},
@@ -498,6 +507,7 @@ class MobileApiService {
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception('printOrderCheck failed: ${response.statusCode}');
     }
+    return _deliveryOf(response);
   }
 
   // ── Menu ───────────────────────────────────────────────────────────────────
@@ -571,13 +581,27 @@ class MobileApiService {
   /// client never prints directly: the backend loads the draft and relays it to
   /// the POS callback path, and the Windows POS (the only print host) prints it
   /// on the receipt printer.
-  static Future<void> printCountedMenu(String draftId) async {
+  static Future<PosCommandDelivery> printCountedMenu(String draftId) async {
     final response = await _post(
       '/mobile/counted-menu/$draftId/print',
       const {},
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception('printCountedMenu failed: ${response.statusCode}');
+    }
+    return _deliveryOf(response);
+  }
+
+  /// Reads the delivery block off a response body, tolerating anything.
+  ///
+  /// A malformed or absent body is [PosCommandDelivery.unknown], never an
+  /// exception: the operation was accepted, and only the report on it is
+  /// missing.
+  static PosCommandDelivery _deliveryOf(http.Response response) {
+    try {
+      return PosCommandDelivery.fromResponse(json.decode(response.body));
+    } catch (_) {
+      return PosCommandDelivery.unknown;
     }
   }
 

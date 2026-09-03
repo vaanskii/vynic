@@ -2,16 +2,28 @@ import { Injectable } from '@nestjs/common';
 import { isAllowedPosCallbackUrl } from './pos-callback-url';
 
 /**
- * Transport client for cloud → POS callbacks (Option A in SYNC_CONTRACT.md).
+ * The LAN transport Cloud used to reach a POS with. **Frozen.**
  *
- * Extracted verbatim from `SyncController` so the POS-callback transport is a
- * plain injectable concern instead of static methods on an HTTP controller.
- * Behavior is unchanged: these are thin `fetch()` wrappers that reach the
- * Windows POS machine's local ingest server at the registered callback URL.
+ * Every business operation moved to the Edge command queue in Step 6C, and the
+ * per-operation methods that used to live here — create an order, cancel a
+ * reservation, print a check, rename a user — went with them. What is left is
+ * the raw sender and the address it sends to, kept for exactly one situation:
+ * a Venue with no enrolled Device cannot use the Edge transport at all, because
+ * the Edge endpoints refuse the legacy shared sync key. See
+ * `PosCommandDispatcher`, which is the only thing that decides to use this.
  *
- * State ownership: the in-memory callback URL / connection key live here (used
- * for every request). `SyncController` still owns DB persistence/restore and
- * pushes the current values in via {@link setCallbackUrl} / {@link setConnectionKey}.
+ * The synchronous request/response half is **gone**, deliberately. It was how a
+ * backend request read a restaurant's reservations over the LAN, and there is
+ * no version of that a hosted Vynic can perform: the SSRF guard accepts only
+ * private addresses, which are precisely the ones Cloud cannot route to.
+ * Reservation reads are answered from `PosReservationMirrorService` now, and
+ * removing the method is what stops a future caller reaching for the old shape.
+ *
+ * No method may be added here. A new Cloud → POS operation is a command type.
+ *
+ * State ownership: the in-memory callback URL and connection key live here.
+ * `PosConnectionRegistry` owns the durable half and pushes the current values
+ * in via {@link setCallbackUrl} / {@link setConnectionKey}.
  */
 @Injectable()
 export class PosCallbackClient {
@@ -85,191 +97,5 @@ export class PosCallbackClient {
     } catch (e) {
       return { ok: false, error: (e as Error).message };
     }
-  }
-
-  /** Push a changed order back to the Windows POS via HTTP */
-  async notifyPos(posOrderId: number, orderData: any): Promise<void> {
-    const result = await this.deliverToPos('/mobile-order-update', {
-      posOrderId,
-      ...orderData,
-    });
-    if (!result.ok) {
-      console.warn(
-        `[Sync] POS callback failed for order ${posOrderId}:`,
-        result.error,
-      );
-    }
-  }
-
-  /** Tell the Windows POS to cancel (delete) an order from Hive */
-  async notifyPosCancel(posOrderId: number): Promise<void> {
-    const result = await this.deliverToPos('/mobile-order-cancel', {
-      posOrderId,
-    });
-    if (!result.ok) {
-      console.warn('[Sync] POS cancel callback failed:', result.error);
-    }
-  }
-
-  /** Tell the Windows POS to update the status of an order in Hive (without deleting) */
-  async notifyPosStatusUpdate(
-    posOrderId: number,
-    status: string,
-  ): Promise<void> {
-    const result = await this.deliverToPos('/mobile-order-status', {
-      posOrderId,
-      status,
-    });
-    if (!result.ok) {
-      console.warn('[Sync] POS status update callback failed:', result.error);
-    }
-  }
-
-  /** Tell the Windows POS to create a new mobile-originated takeaway order in Hive */
-  async notifyPosCreate(orderData: any): Promise<void> {
-    const result = await this.deliverToPos('/mobile-order-create', orderData);
-    if (!result.ok) {
-      console.warn('[Sync] POS create callback failed:', result.error);
-    }
-  }
-
-  private async requestPos(path: string, init: RequestInit = {}): Promise<any> {
-    const url = this.callbackUrl;
-    if (!url) {
-      throw new Error(
-        'POS callback URL is not available — open Windows POS and wait for ManagerSync OK (posCallbackUrl).',
-      );
-    }
-    const res = await fetch(`${url}${path}`, {
-      ...init,
-      headers: {
-        ...this.headers(),
-        ...(init.headers ?? {}),
-      },
-      signal: AbortSignal.timeout(7000),
-    });
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`POS request failed ${res.status}: ${body}`);
-    }
-    const text = await res.text();
-    return text ? JSON.parse(text) : null;
-  }
-
-  async fetchPosReservations(): Promise<any[]> {
-    const response = await this.requestPos('/mobile-reservations', {
-      method: 'GET',
-    });
-    return Array.isArray(response?.data) ? response.data : [];
-  }
-
-  async createPosReservation(payload: Record<string, unknown>): Promise<any> {
-    const response = await this.requestPos('/mobile-reservation-create', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    return response?.reservation ?? null;
-  }
-
-  async updatePosReservationStatus(
-    reservationId: string,
-    status: string,
-  ): Promise<void> {
-    await this.requestPos('/mobile-reservation-status', {
-      method: 'POST',
-      body: JSON.stringify({ reservationId, status }),
-    });
-  }
-
-  async deletePosReservation(reservationId: string): Promise<void> {
-    await this.requestPos('/mobile-reservation-delete', {
-      method: 'POST',
-      body: JSON.stringify({ reservationId }),
-    });
-  }
-
-  /**
-   * Ask the Windows POS to print the reservation check on its kitchen printer.
-   * Uses the direct (non-outbox) request path: a print is time-sensitive and
-   * non-idempotent, so it must "print now or report failure" rather than be
-   * queued for delivery when the POS later reconnects.
-   */
-  async printPosReservationCheck(reservationId: string): Promise<void> {
-    await this.requestPos('/mobile-reservation-print-check', {
-      method: 'POST',
-      body: JSON.stringify({ reservationId }),
-    });
-  }
-
-  /**
-   * Ask the Windows POS to print the order/table check (customer pre-bill) on
-   * its receipt printer. Direct (non-outbox) path for the same reason as the
-   * reservation print: "print now or report failure", never queue a stale print.
-   */
-  async printPosOrderCheck(posOrderId: number): Promise<void> {
-    await this.requestPos('/mobile-order-print-check', {
-      method: 'POST',
-      body: JSON.stringify({ posOrderId }),
-    });
-  }
-
-  /**
-   * Ask the Windows POS to print a counted menu (quick-order draft) on its
-   * receipt printer. Counted menus aren't reliably present in POS Hive, so the
-   * full draft payload (items/totals/service fee) is sent and the POS prints it
-   * directly. Direct (non-outbox) path — print now or report failure.
-   */
-  async printPosCountedMenu(payload: Record<string, unknown>): Promise<void> {
-    await this.requestPos('/mobile-counted-menu-print', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-  }
-
-  async createPosExpense(payload: Record<string, unknown>): Promise<any> {
-    const response = await this.requestPos('/mobile-expense-create', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    return response?.expense ?? null;
-  }
-
-  async createPosUser(payload: Record<string, unknown>): Promise<any> {
-    const response = await this.requestPos('/mobile-user-create', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    return response?.user ?? null;
-  }
-
-  async updatePosUserPin(payload: Record<string, unknown>): Promise<any> {
-    const response = await this.requestPos('/mobile-user-update-pin', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    return response?.user ?? null;
-  }
-
-  async updatePosUserRole(payload: Record<string, unknown>): Promise<any> {
-    const response = await this.requestPos('/mobile-user-update-role', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    return response?.user ?? null;
-  }
-
-  async renamePosUser(payload: Record<string, unknown>): Promise<any> {
-    const response = await this.requestPos('/mobile-user-rename', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    return response?.user ?? null;
-  }
-
-  async deletePosUser(payload: Record<string, unknown>): Promise<void> {
-    await this.requestPos('/mobile-user-delete', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
   }
 }

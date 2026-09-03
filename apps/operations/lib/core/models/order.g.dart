@@ -78,27 +78,30 @@ class OrderAdapter extends TypeAdapter<Order> {
       includeServiceFee: fields[9] as bool,
       paymentMethod: fields[10] as String?,
       closedAt: fields[11] as DateTime?,
-      discountAmount: (fields[12] as double?) ?? 0.0,
+      discountAmount: fields[12] == null ? 0.0 : fields[12] as double,
       packageId: fields[13] as String?,
       packageName: fields[14] as String?,
-      packagePrice: (fields[15] as double?) ?? 0.0,
+      packagePrice: fields[15] == null ? 0.0 : fields[15] as double,
       packageItems: (fields[16] as List?)?.cast<OrderItem>(),
-      packageUnitPrice: (fields[17] as double?) ?? 0.0,
-      packageGuestCount: (fields[18] as int?) ?? 0,
-      manualAdjustmentAmount: (fields[19] as double?) ?? 0.0,
+      packageUnitPrice: fields[17] == null ? 0.0 : fields[17] as double,
+      packageGuestCount: fields[18] == null ? 0 : fields[18] as int,
+      manualAdjustmentAmount: fields[19] == null ? 0.0 : fields[19] as double,
       openedByUserId: fields[20] as String?,
       customServiceFeePercentage: fields[21] as double?,
       closureId: fields[22] as String?,
-      advanceAmount: (fields[23] as double?) ?? 0.0,
+      advanceAmount: fields[23] == null ? 0.0 : fields[23] as double,
       advanceCollectedOn: fields[24] as String?,
       advanceReceiptId: fields[25] as String?,
+      customerPhone: fields[27] == null ? '' : fields[27] as String,
+      pickupTime: fields[28] == null ? '' : fields[28] as String,
+      customerName: fields[26] == null ? '' : fields[26] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, Order obj) {
     writer
-      ..writeByte(26)
+      ..writeByte(29)
       ..writeByte(0)
       ..write(obj.orderId)
       ..writeByte(1)
@@ -150,7 +153,13 @@ class OrderAdapter extends TypeAdapter<Order> {
       ..writeByte(24)
       ..write(obj.advanceCollectedOn)
       ..writeByte(25)
-      ..write(obj.advanceReceiptId);
+      ..write(obj.advanceReceiptId)
+      ..writeByte(26)
+      ..write(obj.customerName)
+      ..writeByte(27)
+      ..write(obj.customerPhone)
+      ..writeByte(28)
+      ..write(obj.pickupTime);
   }
 
   @override

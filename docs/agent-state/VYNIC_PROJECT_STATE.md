@@ -143,11 +143,15 @@ current transport status.
   builds the queue from takeaway orders (`isTakeawayOrder`, the one definition
   of the floor/`TA-` rule), and list, counts, items, totals, status and actions
   all come from `Order`. A takeaway order with no reservation row renders
-  completely. The one thing still read from the legacy row is display text the
-  POS `Order` has no field for — guest name, phone and pickup time — looked up
-  in `DatabaseService.getTakeawayTicketsForDate` and nowhere else; a ticket
-  without it falls back and is simply never marked late. Moving those three
-  onto `Order` (Cloud's `Order` already carries them) is what retires the row.
+  completely, including guest name, phone and pickup time when supplied. Those
+  three are additive Hive fields on `Order`; local, mobile, remote and Edge
+  Takeaway creation/upsert paths populate the values they carry. A legacy
+  Reservation lookup remains only as a display fallback when an old Order's
+  new fields are empty.
+- Routine Order sync sends Takeaway guest/pickup metadata directly from
+  `Order`; it does not join the bookkeeping Reservation. Close Day likewise
+  derives pending Takeaways from the centralized Order-backed source, excluding
+  completed, cancelled, Walk-In and Package Orders.
 - Every order-creation path writes a `Reservation` row, not only takeaway:
   `OrderRepository.createOrder` defaults `createReservationRecord: true` and
   writes a `Walk-in` row (`notes: 'Order #N'`), takeaway writes an `isTakeAway`

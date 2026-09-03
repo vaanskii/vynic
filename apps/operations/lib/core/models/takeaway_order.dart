@@ -10,15 +10,9 @@
 /// row anywhere renders exactly the same, which is the property this file is
 /// for.
 ///
-/// ## What still comes from elsewhere
-///
-/// Customer name, phone and pickup time are not on `Order` — the POS model has
-/// no field for them, and the takeaway creation paths put them only on the
-/// reservation. They are display text, so this takes them as an optional
-/// [TakeawayContact] supplied by the caller and falls back cleanly when there
-/// is none: nothing in the list, the money, the status or the actions depends
-/// on it. Moving those three onto `Order` (Cloud's `Order` already carries
-/// them) is what finally retires the row, and is a later phase.
+/// Customer name, phone and pickup time now come from `Order`. An optional
+/// [TakeawayContact] remains only as a compatibility fallback for orders
+/// written by old builds, whose additive Hive fields read as empty.
 library;
 
 import 'order.dart';
@@ -31,8 +25,11 @@ import 'order_status.dart';
 /// `TA-` synthetic table a takeaway order is given instead of a real one. New
 /// call sites should use this rather than adding a sixteenth substring test.
 bool isTakeawayOrder(Order order) {
+  if (order.packageId?.trim().isNotEmpty == true) return false;
   final floor = order.floor.trim().toLowerCase();
-  if (floor == 'takeaway' || floor == 'take-away' || floor.contains('take away')) {
+  if (floor == 'takeaway' ||
+      floor == 'take-away' ||
+      floor.contains('take away')) {
     return true;
   }
   if (floor.contains('takeaway')) return true;
@@ -47,9 +44,7 @@ bool isTakeawayOrder(Order order) {
 
 /// The guest details a takeaway order was taken with.
 ///
-/// Display only. Held apart from [TakeawayTicket] so the ticket can be built
-/// without any of it, and so the legacy row it currently comes from is named at
-/// exactly one call site instead of throughout a screen.
+/// Display-only compatibility data from a legacy bookkeeping reservation.
 class TakeawayContact {
   const TakeawayContact({
     this.customerName,
@@ -90,8 +85,7 @@ class TakeawayTicket {
     ...order.items,
   ];
 
-  int get itemCount =>
-      items.fold<int>(0, (sum, item) => sum + item.quantity);
+  int get itemCount => items.fold<int>(0, (sum, item) => sum + item.quantity);
 
   /// The order's own total. There is one money rule and this is not a second
   /// one: no re-summing of lines, no service fee (takeaway never charges it),
@@ -120,12 +114,14 @@ class TakeawayTicket {
   bool get isActive => !isFinalized;
 
   String? get pickupTime {
-    final value = contact?.pickupTime?.trim();
-    return (value == null || value.isEmpty) ? null : value;
+    final owned = order.pickupTime.trim();
+    if (owned.isNotEmpty) return owned;
+    return _nonEmpty(contact?.pickupTime);
   }
 
   String? get customerPhone {
-    final value = contact?.customerPhone?.trim();
+    final owned = order.customerPhone.trim();
+    final value = owned.isNotEmpty ? owned : _nonEmpty(contact?.customerPhone);
     return (value == null || value.isEmpty || value == '-') ? null : value;
   }
 
@@ -136,11 +132,18 @@ class TakeawayTicket {
 
   /// What to call the guest, falling back the way the panel always has.
   String customerName(String fallback) {
+    final owned = order.customerName.trim();
+    if (owned.isNotEmpty) return owned;
     final name = contact?.customerName?.trim();
     if (name != null && name.isNotEmpty) return name;
     final note = contact?.notes?.trim();
     if (note != null && note.isNotEmpty) return note;
     return fallback;
+  }
+
+  static String? _nonEmpty(String? raw) {
+    final value = raw?.trim();
+    return (value == null || value.isEmpty) ? null : value;
   }
 
   /// Past its pickup time and still in the queue.
@@ -180,10 +183,11 @@ class TakeawayTickets {
   /// The takeaway orders of [businessDate], newest first.
   ///
   /// Keyed by order, so a takeaway that also has a legacy reservation row
-  /// appears once — the row is looked up for its guest details, never listed.
+  /// appears once. The row may supply missing guest details for old orders,
+  /// but it never controls membership, money or status.
   ///
-  /// [contactFor] is optional. Without it every ticket still lists, totals and
-  /// closes correctly; it only loses the guest's name, phone and pickup time.
+  /// [contactFor] is optional. New orders remain complete without it; an old
+  /// order whose additive fields are empty loses only the legacy display text.
   static List<TakeawayTicket> forBusinessDate({
     required Iterable<Order> orders,
     required DateTime businessDate,
@@ -216,6 +220,15 @@ class TakeawayTickets {
     orders: orders,
     businessDate: businessDate,
   ).where((ticket) => ticket.isActive).length;
+
+  /// The authoritative open-takeaway source used by Close Day.
+  static List<TakeawayTicket> activeForBusinessDate({
+    required Iterable<Order> orders,
+    required DateTime businessDate,
+  }) => forBusinessDate(
+    orders: orders,
+    businessDate: businessDate,
+  ).where((ticket) => ticket.isActive).toList();
 
   static String _dateKey(DateTime value) =>
       '${value.year.toString().padLeft(4, '0')}-'

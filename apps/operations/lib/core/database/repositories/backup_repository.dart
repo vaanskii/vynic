@@ -224,6 +224,9 @@ class BackupRepository {
       'discountAmount': order.discountAmount,
       'openedByUserId': order.openedByUserId,
       'closureId': order.closureId,
+      'customerName': order.customerName,
+      'customerPhone': order.customerPhone,
+      'pickupTime': order.pickupTime,
     };
   }
 
@@ -440,6 +443,8 @@ class BackupRepository {
       createdBy: waiterName,
       status: OrderStatus.confirmed.storageValue,
       includeServiceFee: false,
+      customerName: customerName,
+      pickupTime: pickupTime,
     );
     order.recalculateTotal();
     await DatabaseCore.orderBox!.add(order);
@@ -450,7 +455,8 @@ class BackupRepository {
       await DatabaseCore.settingsBox?.put('lastOrderId', orderId);
     }
 
-    // Create linked takeaway reservation so POS home screen shows it
+    // Keep writing the compatibility bookkeeping row until Phase 3. Home and
+    // Close Day no longer need it.
     final reservationId = const Uuid().v4();
     final reservation = Reservation(
       id: reservationId,
@@ -1075,6 +1081,9 @@ class BackupRepository {
       discountAmount: (json['discountAmount'] as num?)?.toDouble() ?? 0.0,
       openedByUserId: json['openedByUserId'] as String?,
       closureId: json['closureId'] as String?,
+      customerName: json['customerName'] as String? ?? '',
+      customerPhone: json['customerPhone'] as String? ?? '',
+      pickupTime: json['pickupTime'] as String? ?? '',
     );
 
     order.recalculateTotal();

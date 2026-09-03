@@ -104,7 +104,7 @@ class Order extends HiveObject {
   @HiveField(11)
   DateTime? closedAt; // When the order was closed/paid
 
-  @HiveField(12)
+  @HiveField(12, defaultValue: 0.0)
   double discountAmount; // Discount in GEL
 
   @HiveField(13)
@@ -113,20 +113,20 @@ class Order extends HiveObject {
   @HiveField(14)
   String? packageName; // Cached package name
 
-  @HiveField(15)
+  @HiveField(15, defaultValue: 0.0)
   double packagePrice; // Fixed package price (no service fee applied)
 
   @HiveField(16)
   List<OrderItem> packageItems; // Items from package (read-only for waiters)
 
-  @HiveField(17)
+  @HiveField(17, defaultValue: 0.0)
   double packageUnitPrice; // Price per guest for the package
 
-  @HiveField(18)
+  @HiveField(18, defaultValue: 0)
   int packageGuestCount; // Number of guests covered by the package
 
   static DateTime Function()? timestampResolver;
-  @HiveField(19)
+  @HiveField(19, defaultValue: 0.0)
   double manualAdjustmentAmount; // Manual adjustments applied to the order total
 
   @HiveField(20)
@@ -150,7 +150,7 @@ class Order extends HiveObject {
   /// owes, an advance reduces only what is left to *collect*. Both subtract
   /// from [totalAmount], but only the discount reduces the value of the sale.
   /// Migration v6 moved every stored advance out of `discountAmount`.
-  @HiveField(23)
+  @HiveField(23, defaultValue: 0.0)
   double advanceAmount;
 
   /// The business date (`YYYY-MM-DD`) the advance was taken on, which is not
@@ -163,9 +163,19 @@ class Order extends HiveObject {
   @HiveField(25)
   String? advanceReceiptId;
 
-  // Not persisted in Hive — populated from server for takeaway orders
+  /// Guest details owned by a takeaway order.
+  ///
+  /// These are additive fields: orders written by older builds read them as
+  /// empty strings, allowing the UI to fall back to the legacy bookkeeping
+  /// reservation when one exists.
+  @HiveField(26, defaultValue: '')
   String customerName;
+
+  @HiveField(27, defaultValue: '')
   String customerPhone;
+
+  /// `HH:mm`, when the guest said they would collect the takeaway.
+  @HiveField(28, defaultValue: '')
   String pickupTime;
 
   static double Function()? serviceFeeRateResolver;
@@ -314,6 +324,9 @@ class Order extends HiveObject {
       'advanceAmount': advanceAmount,
       'advanceCollectedOn': advanceCollectedOn,
       'advanceReceiptId': advanceReceiptId,
+      'customerName': customerName,
+      'customerPhone': customerPhone,
+      'pickupTime': pickupTime,
     };
   }
 

@@ -17,6 +17,7 @@ import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/takeaway_order.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
+import 'package:vynic/core/services/sync/manager_sync_service.dart';
 
 /// Where the home takeaway panel gets its takeaways.
 ///
@@ -69,6 +70,9 @@ OrderItem item(String name, {int quantity = 2, double unitPrice = 3.5}) =>
 Order takeawayOrder({
   int orderId = 1766,
   String status = 'pending',
+  String customerName = '',
+  String customerPhone = '',
+  String pickupTime = '',
   List<OrderItem>? items,
   DateTime? createdAt,
   double? totalAmount,
@@ -83,6 +87,9 @@ Order takeawayOrder({
     createdBy: 'Nino',
     status: status,
     includeServiceFee: false,
+    customerName: customerName,
+    customerPhone: customerPhone,
+    pickupTime: pickupTime,
   );
   if (totalAmount == null) {
     order.recalculateTotal();
@@ -90,6 +97,30 @@ Order takeawayOrder({
     order.totalAmount = totalAmount;
   }
   return order;
+}
+
+/// Feeds a generated adapter the 26-field shape written before Takeaway guest
+/// metadata became additive Order fields.
+class _LegacyOrderReader implements BinaryReader {
+  _LegacyOrderReader(this.fields);
+
+  final Map<int, dynamic> fields;
+  late final List<MapEntry<int, dynamic>> _entries = fields.entries.toList();
+  var _byteIndex = -1;
+  var _valueIndex = 0;
+
+  @override
+  int readByte() {
+    _byteIndex++;
+    if (_byteIndex == 0) return _entries.length;
+    return _entries[_byteIndex - 1].key;
+  }
+
+  @override
+  dynamic read([int? typeId]) => _entries[_valueIndex++].value;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 /// A seated order, as `createOrder` writes one.
@@ -187,8 +218,13 @@ void main() {
   });
 
   group('a takeaway order with no reservation at all', () {
-    test('still lists, with its items, total and status', () {
-      final order = takeawayOrder(items: [item('ხინკალი', quantity: 5)]);
+    test('renders its Order-owned guest details, items, total and status', () {
+      final order = takeawayOrder(
+        items: [item('ხინკალი', quantity: 5)],
+        customerName: 'Giorgi',
+        customerPhone: '+995555111222',
+        pickupTime: '13:30',
+      );
 
       final tickets = TakeawayTickets.forBusinessDate(
         orders: [order],
@@ -205,6 +241,9 @@ void main() {
       expect(ticket.status, 'pending');
       expect(ticket.isActive, isTrue);
       expect(ticket.isFinalized, isFalse);
+      expect(ticket.customerName(_guestFallback), 'Giorgi');
+      expect(ticket.customerPhone, '+995555111222');
+      expect(ticket.pickupTime, '13:30');
     });
 
     test('falls back for the guest details the order cannot carry', () {
@@ -244,6 +283,63 @@ void main() {
       ).single;
       expect(paid.isCompleted, isTrue);
     });
+
+    test('repository status changes need no bookkeeping reservation', () async {
+      final toClose = takeawayOrder(orderId: 41);
+      final toCancel = takeawayOrder(orderId: 42);
+      await _seedOrders([toClose, toCancel]);
+      await _seedReservations([]);
+
+      await DatabaseService.updateOrderStatus(orderId: 41, status: 'closed');
+      await DatabaseService.updateOrderStatus(orderId: 42, status: 'cancelled');
+
+      final tickets = DatabaseService.getTakeawayTicketsForDate(_businessDate);
+      expect(
+        tickets.firstWhere((ticket) => ticket.orderId == 41).isCompleted,
+        isTrue,
+      );
+      expect(
+        tickets.firstWhere((ticket) => ticket.orderId == 42).isCancelled,
+        isTrue,
+      );
+    });
+  });
+
+  test('the pre-metadata Hive shape reads with safe empty defaults', () {
+    final restored = OrderAdapter().read(
+      _LegacyOrderReader({
+        0: 99,
+        1: <String>['TA-99'],
+        2: 'takeaway',
+        3: <OrderItem>[item('ხინკალი')],
+        4: 7.0,
+        5: DateTime(2026, 9, 3, 12),
+        6: 'Nino',
+        7: 'pending',
+        8: null,
+        9: false,
+        10: null,
+        11: null,
+        12: 0.0,
+        13: null,
+        14: null,
+        15: 0.0,
+        16: <OrderItem>[],
+        17: 0.0,
+        18: 0,
+        19: 0.0,
+        20: null,
+        21: null,
+        22: null,
+        23: 0.0,
+        24: null,
+        25: null,
+      }),
+    );
+
+    expect(restored.customerName, isEmpty);
+    expect(restored.customerPhone, isEmpty);
+    expect(restored.pickupTime, isEmpty);
   });
 
   group('the order is the money', () {
@@ -276,18 +372,22 @@ void main() {
       expect(ticket.itemCount, 5);
     });
 
-    test('a package order contributes its package lines when it is takeaway', () {
-      final order = packageOrder();
-      order.floor = 'takeaway';
+    test(
+      'a Package order is excluded even if legacy labels resemble takeaway',
+      () {
+        final order = packageOrder();
+        order.floor = 'takeaway';
+        order.tableNumbers = ['TA-${order.orderId}'];
 
-      final ticket = TakeawayTickets.forBusinessDate(
-        orders: [order],
-        businessDate: _businessDate,
-      ).single;
+        final tickets = TakeawayTickets.forBusinessDate(
+          orders: [order],
+          businessDate: _businessDate,
+        );
 
-      expect(ticket.items.first.itemName, 'სალათი');
-      expect(ticket.total, order.totalAmount);
-    });
+        expect(tickets, isEmpty);
+        expect(isTakeawayOrder(order), isFalse);
+      },
+    );
   });
 
   group('which orders are takeaway', () {
@@ -310,7 +410,11 @@ void main() {
       ];
 
       for (final order in orders) {
-        expect(isTakeawayOrder(order), isTrue, reason: 'order ${order.orderId}');
+        expect(
+          isTakeawayOrder(order),
+          isTrue,
+          reason: 'order ${order.orderId}',
+        );
       }
     });
 
@@ -329,10 +433,7 @@ void main() {
       final tickets = TakeawayTickets.forBusinessDate(
         orders: [
           takeawayOrder(orderId: 10),
-          takeawayOrder(
-            orderId: 11,
-            createdAt: DateTime(2026, 9, 2, 19, 0),
-          ),
+          takeawayOrder(orderId: 11, createdAt: DateTime(2026, 9, 2, 19, 0)),
         ],
         businessDate: _businessDate,
       );
@@ -353,21 +454,47 @@ void main() {
       expect(tickets.map((t) => t.orderId), [30, 21, 12]);
     });
 
-    test('active counts exclude both settled and cancelled', () {
-      final count = TakeawayTickets.activeCount(
+    test('Close Day source blocks only active Takeaway orders', () {
+      final disguisedPackage = packageOrder(orderId: 4)
+        ..floor = 'takeaway'
+        ..tableNumbers = ['TA-4'];
+      final active = TakeawayTickets.activeForBusinessDate(
         orders: [
           takeawayOrder(orderId: 1),
           takeawayOrder(orderId: 2, status: 'closed'),
           takeawayOrder(orderId: 3, status: 'cancelled'),
+          walkInOrder(orderId: 5),
+          disguisedPackage,
         ],
         businessDate: _businessDate,
       );
 
-      expect(count, 1);
+      expect(active.map((ticket) => ticket.orderId), [1]);
     });
   });
 
-  group('guest details, where they still come from', () {
+  group('Order-owned guest details with legacy fallback', () {
+    test('Order values win over a stale bookkeeping row', () async {
+      await _seedOrders([
+        takeawayOrder(
+          customerName: 'Order Guest',
+          customerPhone: '+995555999888',
+          pickupTime: '14:45',
+        ),
+      ]);
+      await _seedReservations([
+        legacyTakeawayRow(customerName: 'Legacy Guest', pickupTime: '13:30'),
+      ]);
+
+      final ticket = DatabaseService.getTakeawayTicketsForDate(
+        _businessDate,
+      ).single;
+
+      expect(ticket.customerName(_guestFallback), 'Order Guest');
+      expect(ticket.customerPhone, '+995555999888');
+      expect(ticket.pickupTime, '14:45');
+    });
+
     test('a legacy row supplies the name, phone and pickup time', () async {
       await _seedOrders([takeawayOrder()]);
       await _seedReservations([legacyTakeawayRow()]);
@@ -438,73 +565,165 @@ void main() {
   });
 
   group('the remote and mobile paths', () {
-    test('a takeaway order created remotely lists like a local one', () async {
-      // What createTakeawayOrderFromRemote / upsertMobileTakeawayOrder leave:
-      // the same floor and TA- table, status confirmed.
-      final remote = takeawayOrder(orderId: 4321, status: 'confirmed');
-      await _seedOrders([remote]);
-      await _seedReservations([
-        legacyTakeawayRow(orderId: 4321, id: 'remote-row'),
-      ]);
+    test('local creation stores a self-sufficient Takeaway Order', () async {
+      final created = await DatabaseService.createTakeAwayOrder(
+        customerName: 'Local Guest',
+        customerPhone: '+995555000111',
+        pickupTime: '18:30',
+        items: [item('ლობიანი')],
+        createdBy: 'Nino',
+      );
+      await _seedReservations([]);
 
       final ticket = DatabaseService.getTakeawayTicketsForDate(
         _businessDate,
       ).single;
 
-      expect(ticket.orderId, 4321);
+      expect(ticket.orderId, created.orderId);
+      expect(ticket.customerName(_guestFallback), 'Local Guest');
+      expect(ticket.customerPhone, '+995555000111');
+      expect(ticket.pickupTime, '18:30');
+    });
+
+    test('mobile upsert stores and updates every supplied field', () async {
+      await DatabaseService.upsertMobileTakeawayOrder(
+        posOrderId: 4321,
+        customerName: 'Mobile Guest',
+        pickupTime: '19:00',
+        waiterName: 'Nino',
+        items: [item('ხაჭაპური')],
+      );
+      await DatabaseService.upsertMobileTakeawayOrder(
+        posOrderId: 4321,
+        customerName: 'Updated Guest',
+        pickupTime: '19:15',
+        waiterName: 'Nino',
+        items: [item('ხაჭაპური', quantity: 2)],
+      );
+      await _seedReservations([]);
+
+      final ticket = DatabaseService.getTakeawayTicketsForDate(
+        _businessDate,
+      ).single;
+
       expect(ticket.orderNumber, '#TA-4321');
       expect(ticket.status, OrderStatus.confirmed.storageValue);
-      expect(ticket.isActive, isTrue);
+      expect(ticket.customerName(_guestFallback), 'Updated Guest');
+      expect(ticket.pickupTime, '19:15');
+      expect(ticket.customerPhone, isNull);
+    });
+
+    test('remote creation stores the metadata its contract carries', () async {
+      await DatabaseService.createTakeawayOrderFromRemote(
+        orderId: 5432,
+        customerName: 'Remote Guest',
+        pickupTime: '20:00',
+        waiterName: 'Nino',
+        items: [
+          {'itemName': 'მწვადი', 'unitPrice': 25.0, 'quantity': 1},
+        ],
+      );
+      await _seedReservations([]);
+
+      final ticket = DatabaseService.getTakeawayTicketsForDate(
+        _businessDate,
+      ).single;
+
+      expect(ticket.customerName(_guestFallback), 'Remote Guest');
+      expect(ticket.pickupTime, '20:00');
+      expect(ticket.customerPhone, isNull);
+    });
+
+    test('sync serializes metadata without a Reservation lookup', () {
+      final order = takeawayOrder(
+        customerName: 'Sync Guest',
+        customerPhone: '+995555222333',
+        pickupTime: '20:30',
+      );
+
+      final payload = ManagerSyncService.buildOrdersSyncPayload(
+        orders: [order],
+        businessDate: _businessDate,
+      ).single;
+
+      expect(payload['customerName'], 'Sync Guest');
+      expect(payload['customerPhone'], '+995555222333');
+      expect(payload['pickupTime'], '20:30');
     });
   });
 
   group('backup and restore', () {
-    test('an old backup restores both records and the panel reads the order',
-        () async {
-      await _seedOrders([takeawayOrder(), walkInOrder()]);
-      await _seedReservations([legacyTakeawayRow()]);
+    test(
+      'an old backup restores both records and falls back to its legacy row',
+      () async {
+        await _seedOrders([takeawayOrder(), walkInOrder()]);
+        await _seedReservations([legacyTakeawayRow()]);
 
-      final file = File('${_tempDir.path}/takeaway_backup.json');
-      await BackupRepository.createDataBackup(targetFilePath: file.path);
-      final payload =
-          jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+        final file = File('${_tempDir.path}/takeaway_backup.json');
+        await BackupRepository.createDataBackup(targetFilePath: file.path);
+        final payload =
+            jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+        for (final raw in payload['orders'] as List) {
+          final order = raw as Map<String, dynamic>;
+          order.remove('customerName');
+          order.remove('customerPhone');
+          order.remove('pickupTime');
+        }
 
-      await DatabaseCore.orderBox!.clear();
-      await DatabaseCore.reservationBox!.clear();
-      await BackupRepository.replaceOrdersFromJson(payload['orders'] as List);
-      await BackupRepository.replaceReservationsFromJson(
-        payload['reservations'] as List,
-      );
+        await DatabaseCore.orderBox!.clear();
+        await DatabaseCore.reservationBox!.clear();
+        await BackupRepository.replaceOrdersFromJson(payload['orders'] as List);
+        await BackupRepository.replaceReservationsFromJson(
+          payload['reservations'] as List,
+        );
 
-      // Both historical records came back.
-      expect(DatabaseCore.orderBox!.length, 2);
-      expect(DatabaseCore.reservationBox!.length, 1);
+        // Both historical records came back.
+        expect(DatabaseCore.orderBox!.length, 2);
+        expect(DatabaseCore.reservationBox!.length, 1);
 
-      // And the panel reads the order, once.
-      final tickets = DatabaseService.getTakeawayTicketsForDate(_businessDate);
-      expect(tickets, hasLength(1));
-      expect(tickets.single.orderId, 1766);
-      expect(tickets.single.items.map((i) => i.itemName), ['ხინკალი']);
-    });
+        // And the panel reads the order, once.
+        final tickets = DatabaseService.getTakeawayTicketsForDate(
+          _businessDate,
+        );
+        expect(tickets, hasLength(1));
+        expect(tickets.single.orderId, 1766);
+        expect(tickets.single.items.map((i) => i.itemName), ['ხინკალი']);
+        expect(tickets.single.customerName(_guestFallback), 'Giorgi');
+        expect(tickets.single.customerPhone, '+995555111222');
+        expect(tickets.single.pickupTime, '13:30');
+      },
+    );
 
-    test('a backup with no takeaway reservation at all still restores a working panel',
-        () async {
-      // A future backup, taken once the bookkeeping row is gone.
-      await _seedOrders([takeawayOrder()]);
-      await _seedReservations([]);
+    test(
+      'a backup with no takeaway reservation at all still restores a working panel',
+      () async {
+        // A future backup, taken once the bookkeeping row is gone.
+        await _seedOrders([
+          takeawayOrder(
+            customerName: 'Backed-up Guest',
+            customerPhone: '+995555444555',
+            pickupTime: '21:00',
+          ),
+        ]);
+        await _seedReservations([]);
 
-      final file = File('${_tempDir.path}/no_row_backup.json');
-      await BackupRepository.createDataBackup(targetFilePath: file.path);
-      final payload =
-          jsonDecode(await file.readAsString()) as Map<String, dynamic>;
-      await DatabaseCore.orderBox!.clear();
-      await BackupRepository.replaceOrdersFromJson(payload['orders'] as List);
+        final file = File('${_tempDir.path}/no_row_backup.json');
+        await BackupRepository.createDataBackup(targetFilePath: file.path);
+        final payload =
+            jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+        await DatabaseCore.orderBox!.clear();
+        await BackupRepository.replaceOrdersFromJson(payload['orders'] as List);
 
-      final tickets = DatabaseService.getTakeawayTicketsForDate(_businessDate);
+        final tickets = DatabaseService.getTakeawayTicketsForDate(
+          _businessDate,
+        );
 
-      expect(tickets, hasLength(1));
-      expect(tickets.single.total, greaterThan(0));
-      expect(tickets.single.customerName(_guestFallback), _guestFallback);
-    });
+        expect(tickets, hasLength(1));
+        expect(tickets.single.total, greaterThan(0));
+        expect(tickets.single.customerName(_guestFallback), 'Backed-up Guest');
+        expect(tickets.single.customerPhone, '+995555444555');
+        expect(tickets.single.pickupTime, '21:00');
+      },
+    );
   });
 }

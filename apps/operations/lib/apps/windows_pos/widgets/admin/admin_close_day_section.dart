@@ -5,6 +5,7 @@ import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/models/takeaway_order.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/sync/manager_sync_service.dart';
@@ -593,13 +594,10 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
       return order.createdAt.toIso8601String().split('T')[0] == dateKey;
     }).toList();
     final openOrderIds = openOrders.map((o) => o.orderId).toSet();
-    final openTakeAwayOrders = openOrders.where(_isTakeAwayOrder).toList();
-
-    final openTakeAwayReservations =
-        DatabaseService.getTakeAwayReservationsForDate(businessDate).where((r) {
-          final status = r.status.toLowerCase();
-          return status != 'completed' && status != 'cancelled';
-        }).toList();
+    final openTakeAwayOrders = TakeawayTickets.activeForBusinessDate(
+      orders: openOrders,
+      businessDate: businessDate,
+    );
 
     final reservedTables = DatabaseService.getAllTables().where((table) {
       if (!table.isReserved) return false;
@@ -628,14 +626,6 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
         blockingDetail: '${openTakeAwayOrders.length} შეკვეთა დაუხურავია',
         clearDetail: 'გატანის ღია შეკვეთა არ არის',
         count: openTakeAwayOrders.length,
-      ),
-      _ReadinessItem(
-        icon: Icons.assignment_outlined,
-        title: 'გატანის რეზერვაციები',
-        blockingDetail:
-            '${openTakeAwayReservations.length} რეზერვაცია დასრულებული არ არის',
-        clearDetail: 'ყველა რეზერვაცია დასრულებულია',
-        count: openTakeAwayReservations.length,
       ),
       _ReadinessItem(
         icon: Icons.event_seat,
@@ -1005,19 +995,6 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
     );
   }
 
-  bool _isTakeAwayOrder(Order order) {
-    final floorLabel = order.floor.toLowerCase();
-    if (floorLabel == 'takeaway' ||
-        floorLabel == 'take-away' ||
-        floorLabel.contains('take away')) {
-      return true;
-    }
-    return order.tableNumbers.any((table) {
-      final normalized = table.toLowerCase();
-      return normalized.startsWith('ta-') || normalized.contains('take away');
-    });
-  }
-
   bool _isFiscalSale(Map<String, dynamic> sale) {
     final isFiscal = sale['isFiscal'];
     if (isFiscal is bool) {
@@ -1043,7 +1020,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
         return false;
       }
 
-      if (_isTakeAwayOrder(order)) {
+      if (isTakeawayOrder(order)) {
         return false;
       }
 
@@ -1649,12 +1626,14 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                 await Future.delayed(const Duration(milliseconds: 450));
 
                 final openTableOrders = openOrders.where((order) {
-                  if (_isTakeAwayOrder(order)) return false;
+                  if (isTakeawayOrder(order)) return false;
                   return order.tableNumbers.any((t) => t.trim().isNotEmpty);
                 }).toList();
-                final openTakeAwayOrders = openOrders
-                    .where(_isTakeAwayOrder)
-                    .toList();
+                final openTakeAwayOrders =
+                    TakeawayTickets.activeForBusinessDate(
+                      orders: openOrders,
+                      businessDate: currentDate,
+                    );
 
                 if (openTableOrders.isNotEmpty ||
                     openTakeAwayOrders.isNotEmpty) {
@@ -1693,13 +1672,6 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
 
                 await DatabaseService.releaseStaleReservedTables();
 
-                final openTakeAwayReservations =
-                    DatabaseService.getTakeAwayReservationsForDate(
-                      currentDate,
-                    ).where((r) {
-                      final s = r.status.toLowerCase();
-                      return s != 'completed' && s != 'cancelled';
-                    }).toList();
                 final reservedTables = DatabaseService.getAllTables().where((
                   table,
                 ) {
@@ -1710,19 +1682,9 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                   return true;
                 }).toList();
 
-                if (openTakeAwayReservations.isNotEmpty ||
-                    reservedTables.isNotEmpty) {
+                if (reservedTables.isNotEmpty) {
                   await Future.delayed(const Duration(milliseconds: 300));
                   final reasons = <_BlockReason>[];
-                  if (openTakeAwayReservations.isNotEmpty) {
-                    reasons.add(
-                      _BlockReason(
-                        Icons.assignment_outlined,
-                        'გატანის რეზერვაციები',
-                        '${openTakeAwayReservations.length} რეზერვაცია დასრულებული არ არის',
-                      ),
-                    );
-                  }
                   if (reservedTables.isNotEmpty) {
                     reasons.add(
                       _BlockReason(

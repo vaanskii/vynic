@@ -1734,10 +1734,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   /// What an order is called on screen.
   ///
-  /// A take-away's customer lives on its linked reservation, not on the order —
-  /// `Order.customerName` is populated from the server and is empty for one
-  /// opened here. Reading it alone made every take-away in the picker read
-  /// „გატანა", so there was no way to tell which one you were choosing.
+  /// New takeaways own the customer name on Order. The Reservation lookup is
+  /// retained only for historical orders written before that Hive field.
   static String _moveLabel(Order order) {
     if (!OrderDetailCommonHelpers.isTakeAway(order)) {
       return TableNaming.orderTables(order);

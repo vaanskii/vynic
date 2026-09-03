@@ -360,6 +360,62 @@ class ManagerSyncService {
     });
   }
 
+  /// Builds the Order portion of a POS snapshot without consulting
+  /// Reservation storage. Takeaway guest and pickup metadata is Order-owned.
+  @visibleForTesting
+  static List<Map<String, dynamic>> buildOrdersSyncPayload({
+    required Iterable<Order> orders,
+    required DateTime businessDate,
+  }) {
+    return orders
+        .where(
+          (order) =>
+              order.createdAt.year == businessDate.year &&
+              order.createdAt.month == businessDate.month &&
+              order.createdAt.day == businessDate.day,
+        )
+        .map((order) {
+          final tableIds = _canonicalTableIdsForOrder(order);
+          return <String, dynamic>{
+            'posOrderId': order.orderId,
+            'status': order.status,
+            // Last local-edit time — lets the server resolve same-order
+            // conflicts by last-write-wins against a queued mobile change.
+            'updatedAt': (order.updatedAt ?? order.createdAt).toIso8601String(),
+            'totalAmount': order.totalAmount,
+            'paymentType': (order.paymentMethod ?? 'cash')
+                .toString()
+                .toLowerCase(),
+            'waiterName': order.createdBy,
+            'tableNumbers': order.tableNumbers
+                .map((table) => table.toString())
+                .toList(),
+            if (tableIds != null) 'tableIds': tableIds,
+            'floor': order.floor,
+            'customerName': order.customerName,
+            'customerPhone': order.customerPhone,
+            'pickupTime': order.pickupTime,
+            'includeServiceFee': order.includeServiceFee,
+            'discountAmount': order.discountAmount,
+            // Signed operator override of the bill total. Without it the
+            // Cloud's totalAmount cannot be reconciled against its own item
+            // lines, discount and service fee.
+            'manualAdjustmentAmount': order.manualAdjustmentAmount,
+            'serviceFeePercent': (order.customServiceFeePercentage ?? 10.0),
+            'items': order.items
+                .map(
+                  (item) => {
+                    'name': item.itemName,
+                    'quantity': item.quantity,
+                    'price': item.unitPrice,
+                  },
+                )
+                .toList(),
+          };
+        })
+        .toList();
+  }
+
   static Future<void> _syncToManagerApp() async {
     // Measurement starts where the work does, carrying how long the oldest
     // unpushed change waited to get here.
@@ -375,70 +431,10 @@ class ManagerSyncService {
           '${businessDate.month.toString().padLeft(2, '0')}-'
           '${businessDate.day.toString().padLeft(2, '0')}';
       final allReservations = DatabaseService.getAllReservations();
-      final todayOrders = allOrders
-          .where((o) {
-            return o.createdAt.year == businessDate.year &&
-                o.createdAt.month == businessDate.month &&
-                o.createdAt.day == businessDate.day;
-          })
-          .map((o) {
-            // For takeaway orders, join the linked reservation for customer details
-            String customerName = '';
-            String pickupTime = '';
-            String? orderBusinessDate;
-            if (o.floor == 'takeaway') {
-              final reservation = allReservations
-                  .where((r) => r.isTakeAway && r.linkedOrderId == o.orderId)
-                  .firstOrNull;
-              customerName = reservation?.customerName ?? '';
-              pickupTime = reservation?.reservationTime ?? '';
-              // Use reservation date as the authoritative business date for this order.
-              // This matches exactly what Windows POS uses to filter takeaways.
-              if (reservation != null) {
-                final rd = reservation.reservationDate;
-                orderBusinessDate =
-                    '${rd.year.toString().padLeft(4, '0')}-'
-                    '${rd.month.toString().padLeft(2, '0')}-'
-                    '${rd.day.toString().padLeft(2, '0')}';
-              }
-            }
-            final tableIds = _canonicalTableIdsForOrder(o);
-            return {
-              'posOrderId': o.orderId,
-              'status': o.status,
-              // Last local-edit time — lets the server resolve same-order
-              // conflicts by last-write-wins against a queued mobile change.
-              'updatedAt': (o.updatedAt ?? o.createdAt).toIso8601String(),
-              'totalAmount': o.totalAmount,
-              'paymentType': (o.paymentMethod ?? 'cash')
-                  .toString()
-                  .toLowerCase(),
-              'waiterName': o.createdBy,
-              'tableNumbers': o.tableNumbers.map((e) => e.toString()).toList(),
-              if (tableIds != null) 'tableIds': tableIds,
-              'floor': o.floor,
-              if (orderBusinessDate != null) 'businessDate': orderBusinessDate,
-              'customerName': customerName,
-              'pickupTime': pickupTime,
-              'includeServiceFee': o.includeServiceFee,
-              'discountAmount': o.discountAmount,
-              // Signed operator override of the bill total. Without it the
-              // Cloud's totalAmount cannot be reconciled against its own item
-              // lines, discount and service fee.
-              'manualAdjustmentAmount': o.manualAdjustmentAmount,
-              'serviceFeePercent': (o.customServiceFeePercentage ?? 10.0),
-              'items': o.items
-                  .map(
-                    (it) => {
-                      'name': it.itemName,
-                      'quantity': it.quantity,
-                      'price': it.unitPrice,
-                    },
-                  )
-                  .toList(),
-            };
-          })
-          .toList();
+      final todayOrders = buildOrdersSyncPayload(
+        orders: allOrders,
+        businessDate: businessDate,
+      );
       timing.mark('orders');
 
       final tables = _buildTablesSyncPayload(allOrders, businessDate);

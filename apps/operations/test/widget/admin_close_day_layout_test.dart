@@ -103,6 +103,21 @@ Future<void> _seed() async {
   )..status = 'served';
   await DatabaseCore.orderBox!.put(9, open);
 
+  // Close Day must read active takeaway work from Order, even when no
+  // bookkeeping Reservation row exists.
+  final takeaway = Order(
+    orderId: 10,
+    tableNumbers: ['TA-10'],
+    floor: 'takeaway',
+    items: [],
+    totalAmount: 18,
+    createdBy: 'giorgi',
+    createdAt: now,
+    customerName: 'Nino',
+    pickupTime: '20:00',
+  )..status = 'confirmed';
+  await DatabaseCore.orderBox!.put(10, takeaway);
+
   for (var i = 1; i <= 6; i++) {
     final table = TableModel(tableNumber: '$i', floor: 'first');
     if (i == 3) table.reserveForReservation('giorgi', 'res-1');
@@ -252,11 +267,10 @@ void main() {
       expect(find.text('დახურვის მზადყოფნა'), findsOneWidget);
       expect(find.text('ღია მაგიდები'), findsWidgets);
       expect(find.text('დარეზერვებული მაგიდები'), findsOneWidget);
-      expect(find.text('2 შემოწმება ხელს უშლის დახურვას.'), findsOneWidget);
+      expect(find.text('3 შემოწმება ხელს უშლის დახურვას.'), findsOneWidget);
 
-      // The checks that pass say so rather than disappearing.
-      expect(find.text('გატანის ღია შეკვეთა არ არის'), findsOneWidget);
-      expect(find.text('ყველა რეზერვაცია დასრულებულია'), findsOneWidget);
+      // The Takeaway check is Order-backed; no Reservation was seeded.
+      expect(find.text('1 შეკვეთა დაუხურავია'), findsOneWidget);
     });
 
     testWidgets('reading readiness does not release reserved tables', (

@@ -348,6 +348,34 @@ void main() {
   });
 
   group('orders', () {
+    test('Takeaway command stores and updates Order-owned metadata', () async {
+      final first =
+          await PosCommandApplier.upsertTakeawayOrder(<String, dynamic>{
+            'posOrderId': 4300,
+            'customerName': 'Edge Guest',
+            'pickupTime': '18:30',
+            'waiterName': 'Nino',
+            'items': <Map<String, dynamic>>[],
+          });
+      final second =
+          await PosCommandApplier.upsertTakeawayOrder(<String, dynamic>{
+            'posOrderId': 4300,
+            'customerName': 'Updated Edge Guest',
+            'pickupTime': '18:45',
+            'waiterName': 'Nino',
+            'items': <Map<String, dynamic>>[],
+          });
+
+      final stored = DatabaseCore.orderBox!.values.single;
+      expect(first.ok, isTrue);
+      expect(second.ok, isTrue);
+      expect(stored.customerName, 'Updated Edge Guest');
+      expect(stored.pickupTime, '18:45');
+      // The Edge contract does not carry a phone, so compatibility is an
+      // empty value rather than fabricated data.
+      expect(stored.customerPhone, isEmpty);
+    });
+
     test('a cancel delivered twice reports done, not missing', () async {
       // The order does not exist here at all, which is what a redelivery finds
       // after the first one removed it. A 404 would turn a duplicate into a

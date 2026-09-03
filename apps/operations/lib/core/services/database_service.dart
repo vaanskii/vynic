@@ -1436,29 +1436,41 @@ class DatabaseService {
 
   /// The day's takeaway orders, as the home panel shows them.
   ///
-  /// Built from orders. The legacy bookkeeping reservation each takeaway order
-  /// still writes is consulted for one thing — the guest's name, phone and
-  /// pickup time, which `Order` has no field for — and never for the list, the
-  /// money or the status. This is the only place that lookup happens, and it
-  /// is what a later phase deletes once those three move onto the order.
+  /// Built from orders, including their guest and pickup fields. Legacy
+  /// bookkeeping reservations are consulted only to fill fields missing from
+  /// an order written by an older build; they never control the list, money,
+  /// status or actions.
   static List<TakeawayTicket> getTakeawayTicketsForDate(DateTime date) {
+    final orders = OrderRepository.getAllOrders();
+    final legacyOrderIds = orders
+        .where(isTakeawayOrder)
+        .where(
+          (order) =>
+              order.customerName.trim().isEmpty &&
+              order.customerPhone.trim().isEmpty &&
+              order.pickupTime.trim().isEmpty,
+        )
+        .map((order) => order.orderId)
+        .toSet();
     final contacts = <int, TakeawayContact>{};
-    for (final reservation
-        in ReservationRepository.getTakeAwayReservationsForDate(date)) {
-      final orderId = reservation.linkedOrderId;
-      if (orderId == null) continue;
-      contacts.putIfAbsent(
-        orderId,
-        () => TakeawayContact(
-          customerName: reservation.customerName,
-          customerPhone: reservation.customerPhone,
-          pickupTime: reservation.reservationTime,
-          notes: reservation.notes,
-        ),
-      );
+    if (legacyOrderIds.isNotEmpty) {
+      for (final reservation
+          in ReservationRepository.getTakeAwayReservationsForDate(date)) {
+        final orderId = reservation.linkedOrderId;
+        if (orderId == null || !legacyOrderIds.contains(orderId)) continue;
+        contacts.putIfAbsent(
+          orderId,
+          () => TakeawayContact(
+            customerName: reservation.customerName,
+            customerPhone: reservation.customerPhone,
+            pickupTime: reservation.reservationTime,
+            notes: reservation.notes,
+          ),
+        );
+      }
     }
     return TakeawayTickets.forBusinessDate(
-      orders: OrderRepository.getAllOrders(),
+      orders: orders,
       businessDate: date,
       contactFor: (orderId) => contacts[orderId],
     );

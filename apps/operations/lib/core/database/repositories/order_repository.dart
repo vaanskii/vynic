@@ -206,6 +206,9 @@ class OrderRepository {
       createdBy: createdBy,
       status: OrderStatus.pending.storageValue,
       includeServiceFee: false,
+      customerName: customerName,
+      customerPhone: customerPhone,
+      pickupTime: pickupTime,
     );
     order.recalculateTotal();
 
@@ -266,6 +269,8 @@ class OrderRepository {
     final existing = getOrder(posOrderId);
     if (existing != null) {
       existing.items = items;
+      existing.customerName = customerName;
+      existing.pickupTime = pickupTime;
       if (totalAmount != null) {
         existing.totalAmount = totalAmount;
       } else {
@@ -288,6 +293,8 @@ class OrderRepository {
       // "შეკვეთის დადასტურება" step on POS) so the kitchen check fires immediately.
       status: OrderStatus.confirmed.storageValue,
       includeServiceFee: false,
+      customerName: customerName,
+      pickupTime: pickupTime,
     );
     if (totalAmount == null) {
       order.recalculateTotal();

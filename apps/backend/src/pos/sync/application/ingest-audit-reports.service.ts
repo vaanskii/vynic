@@ -6,6 +6,7 @@ import { normalizeAuditEventType } from '../../audit/audit-event-type';
 import { isPosAuditBroadcastSuppressed } from '../../sync-echo-guard';
 import { AuditEventLogSync } from '../sync-payload';
 import type { TenantContext } from '../../../auth/pos-auth-context';
+import { SyncTimer } from '../sync-timing';
 
 /** One line of an audit report's history, as the POS records it. */
 export interface AuditEventSync {
@@ -103,6 +104,7 @@ export class IngestAuditReportsService {
   ) {}
 
   async ingestReports(body: IngestAuditReportsBody, tenant: TenantContext) {
+    const timing = new SyncTimer();
     const reports = Array.isArray(body?.reports) ? body.reports : [];
     const acknowledged: AuditReportAcknowledgement[] = [];
 
@@ -120,43 +122,50 @@ export class IngestAuditReportsService {
 
     let upserted = 0;
     let unchanged = 0;
-    for (const report of reports) {
-      const reportId =
-        typeof report?.reportId === 'string' ? report.reportId.trim() : '';
-      if (!reportId) continue;
+    await timing.phase('persist', async () => {
+      for (const report of reports) {
+        const reportId =
+          typeof report?.reportId === 'string' ? report.reportId.trim() : '';
+        if (!reportId) continue;
 
-      const revision =
-        typeof report.revision === 'string' && report.revision.length > 0
-          ? report.revision
-          : null;
+        const revision =
+          typeof report.revision === 'string' && report.revision.length > 0
+            ? report.revision
+            : null;
 
-      try {
-        const skipped = await this.persistReport(
-          tenant.venueId,
-          reportId,
-          revision,
-          report,
-        );
-        if (skipped) {
-          unchanged += 1;
-        } else {
-          upserted += 1;
+        try {
+          const skipped = await this.persistReport(
+            tenant.venueId,
+            reportId,
+            revision,
+            report,
+          );
+          if (skipped) {
+            unchanged += 1;
+          } else {
+            upserted += 1;
+          }
+          // Acknowledged means persisted. A report that threw is deliberately
+          // absent, so the POS keeps it dirty and offers it again.
+          acknowledged.push({ reportId, revision });
+        } catch (error) {
+          console.warn(
+            `[SyncAudit] Report ${reportId} failed: ${(error as Error).message}`,
+          );
         }
-        // Acknowledged means persisted. A report that threw is deliberately
-        // absent, so the POS keeps it dirty and offers it again.
-        acknowledged.push({ reportId, revision });
-      } catch (error) {
-        console.warn(
-          `[SyncAudit] Report ${reportId} failed: ${(error as Error).message}`,
-        );
       }
-    }
+    });
 
-    await this.reconcile(tenant, body, reports);
+    await timing.phase('reconcile', () =>
+      this.reconcile(tenant, body, reports),
+    );
 
     if (upserted > 0 && !isPosAuditBroadcastSuppressed()) {
       this.gateway.broadcastUpdate('audit_updated', { count: upserted });
     }
+
+    timing.note(`written=${upserted} unchanged=${unchanged}`);
+    timing.log('Backend/audit');
 
     return {
       success: true,

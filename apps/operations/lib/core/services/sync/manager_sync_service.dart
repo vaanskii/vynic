@@ -6,6 +6,7 @@ import 'package:vynic/core/services/sync/connection_status_service.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/sync/api_config.dart';
 import 'package:vynic/core/services/sync/audit_sync_state.dart';
+import 'package:vynic/core/services/sync/sync_timing.dart';
 import 'package:vynic/core/services/sync/pos_callback_config.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'package:vynic/core/models/order.dart';
@@ -63,6 +64,21 @@ class ManagerSyncService {
 
   static const Duration _pendingFlushInterval = Duration(seconds: 30);
 
+  /// Monotonic reading of when the oldest currently-unpushed local change
+  /// arrived, or null when everything local has been pushed.
+  ///
+  /// This is what makes the wait before a sync measurable. A POS edit does not
+  /// push: it marks pending and the periodic flush picks it up, so the delay
+  /// between the two is real time a manager is looking at stale data, and it
+  /// belongs in the timing summary rather than being invisible.
+  static int? _pendingSinceMicros;
+
+  /// Records a local change as unpushed, and when it happened.
+  static void _markPendingLocalChange() {
+    _pendingSinceMicros ??= SyncTiming.nowMicros();
+    ConnectionStatusService.markPendingLocalChange();
+  }
+
   static void initialize() {
     ConnectionStatusService.initialize();
 
@@ -73,12 +89,8 @@ class ManagerSyncService {
         _previousOnLocalChange?.call(event);
         _onLocalHiveChange(event);
       };
-      DatabaseService.registerAuditChangedCallback(
-        ConnectionStatusService.markPendingLocalChange,
-      );
-      DatabaseService.registerUsersChangedCallback(() {
-        ConnectionStatusService.markPendingLocalChange();
-      });
+      DatabaseService.registerAuditChangedCallback(_markPendingLocalChange);
+      DatabaseService.registerUsersChangedCallback(_markPendingLocalChange);
       _hooksRegistered = true;
     }
 
@@ -112,7 +124,7 @@ class ManagerSyncService {
   }
 
   static void _onLocalHiveChange(SyncEvent event) {
-    ConnectionStatusService.markPendingLocalChange();
+    _markPendingLocalChange();
 
     if (event.type == SyncEventType.tables) {
       final payload = event.payload;
@@ -264,6 +276,7 @@ class ManagerSyncService {
 
   static void dispose() {
     _startupSyncScheduled = false;
+    _pendingSinceMicros = null;
     _pendingFlushTimer?.cancel();
     _pendingFlushTimer = null;
     _pendingFlushInFlight = false;
@@ -271,7 +284,7 @@ class ManagerSyncService {
 
   /// Marks that local POS data should be pushed on the next manual sync.
   static void syncToManagerAppDebounced() {
-    ConnectionStatusService.markPendingLocalChange();
+    _markPendingLocalChange();
   }
 
   static Future<bool> testBackendConnection({
@@ -308,12 +321,12 @@ class ManagerSyncService {
 
   /// Manual-first mode: local changes mark pending instead of auto-pushing.
   static void syncRealtimeToManagerAppDebounced() {
-    ConnectionStatusService.markPendingLocalChange();
+    _markPendingLocalChange();
   }
 
   /// Manual-first mode: service-fee changes mark pending instead of auto-pushing.
   static void _syncServiceFeeToManagerDebounced() {
-    ConnectionStatusService.markPendingLocalChange();
+    _markPendingLocalChange();
   }
 
   static Future<void> syncRealtimeToManagerApp() async {
@@ -347,6 +360,9 @@ class ManagerSyncService {
   }
 
   static Future<void> _syncToManagerApp() async {
+    // Measurement starts where the work does, carrying how long the oldest
+    // unpushed change waited to get here.
+    final timing = SyncTiming.begin(pendingSinceMicros: _pendingSinceMicros);
     try {
       // 1. Prepare Today's Orders (needed to enrich table occupancy)
       final allOrders = DatabaseService.getAllOrders();
@@ -422,6 +438,7 @@ class ManagerSyncService {
             };
           })
           .toList();
+      timing.mark('orders');
 
       final tables = _buildTablesSyncPayload(allOrders, businessDate);
       final orderMaps = todayOrders
@@ -436,6 +453,7 @@ class ManagerSyncService {
       );
       final touchedReservationHints = _drainReservationHints();
       final reservedInPayload = tables.where(_isTableOccupiedRaw).length;
+      timing.mark('tables');
 
       // Only sum bills on tables that are actually occupied right now.
       final openTablesPayable = tables
@@ -479,14 +497,20 @@ class ManagerSyncService {
           '($reservedInPayload reserved), ${todayOrders.length} orders, '
           'tableHints=${touchedTableHints.length}.',
         );
+        timing.mark('payload');
         ConnectionStatusService.markAttempt();
+        final body = await compute(_encodeManagerPayload, payload);
+        timing.payloadBytes = body.length;
+        timing.mark('encode');
         final response = await http.post(
           Uri.parse('$serverUrl/sync/manager-data'),
           headers: ApiConfig.posSyncHeaders,
-          body: await compute(_encodeManagerPayload, payload),
+          body: body,
         );
+        timing.mark('http');
         if (response.statusCode == 200 || response.statusCode == 201) {
           debugPrint('[ManagerSync] Realtime OK (${response.statusCode})');
+          _pendingSinceMicros = null;
           await ConnectionStatusService.markSuccess();
         } else {
           debugPrint(
@@ -496,7 +520,7 @@ class ManagerSyncService {
             'Realtime sync failed (${response.statusCode}): ${response.body}',
           );
         }
-        unawaited(_syncAuditReports());
+        _runAuditSyncTimed(timing, 'POS/realtime');
         return;
       }
 
@@ -658,6 +682,8 @@ class ManagerSyncService {
         'paymentBreakdown': roundedAllTimeBreakdown,
         'topItems': topItems.take(20).toList(),
       };
+
+      timing.mark('sales');
 
       // 2.3 Prepare per-day sales history (source of truth for mobile month filters).
       final salesHistoryByDate = <String, Map<String, dynamic>>{};
@@ -849,6 +875,8 @@ class ManagerSyncService {
         );
       }
 
+      timing.mark('reports');
+
       // 3. Sync Menu
       final menu = DatabaseService.getAllMenuCategories()
           .map(
@@ -911,6 +939,8 @@ class ManagerSyncService {
           )
           .toList();
 
+      timing.mark('menu');
+
       // 4. Sync Staff — PIN + role required for mobile login (server stores bcrypt hash).
       final allUsers = DatabaseService.getAllUsers();
       final staffList = allUsers
@@ -922,6 +952,8 @@ class ManagerSyncService {
             },
           )
           .toList();
+
+      timing.mark('staff');
 
       // 5. Sync QuickOrderDrafts (Counted Menus)
       final quickOrders = DatabaseService.getQuickOrderDrafts()
@@ -950,7 +982,33 @@ class ManagerSyncService {
           )
           .toList();
 
+      timing.mark('quick');
+
       // 6. Prepare Payload
+      //
+      // Expenses and reservations are built here rather than inside the map
+      // literal so each has a measurable cost of its own; the values and the
+      // order they are read in are unchanged.
+      final expenseRecords = DatabaseService.getAllExpenseRecords()
+          .where((e) => (e['id'] as String?)?.trim().isNotEmpty == true)
+          .map(
+            (e) => {
+              'id': (e['id'] as String).trim(),
+              'description': (e['description'] as String?) ?? '',
+              'amount': (e['amount'] as num?)?.toDouble() ?? 0.0,
+              'category': (e['category'] as String?) ?? '',
+              'paymentType': (e['paymentType'] as String?) ?? 'cash',
+              if (e['createdAt'] != null) 'createdAt': e['createdAt'],
+              if (e['date'] != null) 'businessDate': e['date'],
+            },
+          )
+          .toList();
+      timing.mark('expenses');
+
+      final reservationPayload = DatabaseService.getAllReservations()
+          .map(DatabaseService.serializeReservationForSync)
+          .toList();
+      timing.mark('reservations');
 
       final payload = {
         'tables': tables,
@@ -965,20 +1023,7 @@ class ManagerSyncService {
         // Real expense records, not an empty list beside a derived profit
         // figure. Each carries its POS-side id so re-sending the same record
         // updates it instead of adding a second one.
-        'expenses': DatabaseService.getAllExpenseRecords()
-            .where((e) => (e['id'] as String?)?.trim().isNotEmpty == true)
-            .map(
-              (e) => {
-                'id': (e['id'] as String).trim(),
-                'description': (e['description'] as String?) ?? '',
-                'amount': (e['amount'] as num?)?.toDouble() ?? 0.0,
-                'category': (e['category'] as String?) ?? '',
-                'paymentType': (e['paymentType'] as String?) ?? 'cash',
-                if (e['createdAt'] != null) 'createdAt': e['createdAt'],
-                if (e['date'] != null) 'businessDate': e['date'],
-              },
-            )
-            .toList(),
+        'expenses': expenseRecords,
         'staff': staffList,
         // Every reservation this POS holds.
         //
@@ -987,9 +1032,7 @@ class ManagerSyncService {
         // list and the public website's availability page both waited on this
         // machine being awake. Since Step 6C they read a Cloud mirror instead,
         // and this is what fills it. The POS is still the one that owns them.
-        'reservations': DatabaseService.getAllReservations()
-            .map(DatabaseService.serializeReservationForSync)
-            .toList(),
+        'reservations': reservationPayload,
         'quickOrders': quickOrders,
         'syncedAt': DateTime.now().toIso8601String(),
         // Send current business date so the backend knows which calendar day
@@ -1034,13 +1077,19 @@ class ManagerSyncService {
         );
       }
 
+      timing.mark('payload');
+
       // 5. Send to NestJS
       ConnectionStatusService.markAttempt();
+      final body = await compute(_encodeManagerPayload, payload);
+      timing.payloadBytes = body.length;
+      timing.mark('encode');
       final response = await http.post(
         Uri.parse('$serverUrl/sync/manager-data'),
         headers: ApiConfig.posSyncHeaders,
-        body: await compute(_encodeManagerPayload, payload),
+        body: body,
       );
+      timing.mark('http');
 
       if (response.statusCode != 201 && response.statusCode != 200) {
         debugPrint(
@@ -1054,17 +1103,35 @@ class ManagerSyncService {
           '[ManagerSync] OK → $serverUrl '
           'callback=${payload['posCallbackUrl'] ?? "missing"}',
         );
+        _pendingSinceMicros = null;
         await ConnectionStatusService.markSuccess();
       }
 
       // 6. Sync Audit Reports (fire-and-forget — best effort)
-      unawaited(_syncAuditReports());
+      _runAuditSyncTimed(timing, 'POS');
     } catch (e) {
       debugPrint(
         'Manager Sync Error (cannot reach $serverUrl — is NestJS running on port 3000?): $e',
       );
       ConnectionStatusService.markFailure(e);
+      timing.log('POS/failed');
     }
+  }
+
+  /// Starts the audit push without waiting for it, and prints the one-line
+  /// timing summary once it lands.
+  ///
+  /// The audit push has always been fire-and-forget — the snapshot does not
+  /// depend on it and a slow audit must not hold the sync open — so this keeps
+  /// it unawaited. Attaching the summary to its completion is only so the line
+  /// can carry an audit figure; the caller still returns immediately.
+  static void _runAuditSyncTimed(SyncTiming timing, String source) {
+    unawaited(
+      _syncAuditReports().whenComplete(() {
+        timing.mark('audit');
+        timing.log(source);
+      }),
+    );
   }
 
   /// How many audit reports one request may carry.

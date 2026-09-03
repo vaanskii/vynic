@@ -135,6 +135,14 @@ current transport status.
   instead of duplicating them. Keyless older backups still restore.
 - Tables, orders, menu, staff, and `salesHistoryByDate` still use broad snapshot
   payloads; further sync windowing/scaling is deferred.
+- A POS edit only marks pending. The single automatic push is a 30-second
+  periodic flush, and it sends the full snapshot rather than the realtime fast
+  path, so an ordinary edit waits 0-30s and then re-sends menu and history.
+- Snapshot ingest re-hashes every staff PIN with bcrypt cost 12 on every push
+  (~195ms per member, sequential), which dominates backend ingest time. The POS
+  sends `pin` for every member on every snapshot.
+- Both POS and backend print one `[SyncTiming]` line per sync, from monotonic
+  timers, splitting trigger wait / build / encode / network / ingest / audit.
 
 ## Known Blockers
 

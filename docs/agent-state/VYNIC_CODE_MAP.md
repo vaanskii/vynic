@@ -107,6 +107,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 ## Reservations
 
 - POS model/repository/transaction: `apps/operations/lib/core/models/reservation.dart`, `apps/operations/lib/core/database/repositories/reservation_repository.dart`, `apps/operations/lib/core/database/transactions/activate_reservation_transaction.dart`
+- Booking-vs-bookkeeping rule and Cloud projection: `apps/operations/lib/core/models/reservation_classification.dart`, proof in `apps/operations/test/unit/reservation_projection_test.dart`
 - Manager backend: `apps/backend/src/mobile/services/mobile-reservations.service.ts`
 - Website booking: `apps/backend/src/website/reservation/`
 - Cloud POS mirror: `apps/backend/src/pos/pos-reservation-mirror.service.ts`, `apps/backend/src/pos/sync/snapshot/reservation-sync.service.ts`

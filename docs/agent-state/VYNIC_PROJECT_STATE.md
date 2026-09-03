@@ -146,23 +146,29 @@ current transport status.
   `ActivateReservationTransaction` passes `false`, because a real booking
   already exists. So the reservation box holds roughly one row per order ever
   placed, plus real bookings.
-- Reservations are only status-transitioned, never purged, so the box grows
-  with trading volume and a full snapshot sends all of it.
-  `ReservationSyncService` issues one `posReservation.upsert` per record
-  sequentially plus one reconciling `deleteMany`. Measured at Vankisi: 2004
-  records, 617-685ms, of which under 10ms is enumeration and mapping; the rest
-  is per-record round-trips. `preOrderItems` is on the wire and unread by the
-  backend (~27% of that section's bytes); the POS itself does need it, because
-  the home takeaway panel renders and totals from those rows.
-- Order bookkeeping rows are already separable from real bookings by a
-  three-clause predicate on `isTakeAway`, `linkedOrderId` and a
-  `notes` prefix of `Order #`. It exists in `isRealTableBooking`,
-  `isRealPosTableBooking` and the Manager `getReservations` filter, and every
-  Cloud consumer — Manager list and website availability — already applies it,
-  so nothing downstream reads the bookkeeping rows. `getAdminPanelReservations`
-  deliberately omits the `linkedOrderId` clause so an activated real booking
-  still shows; close-day nulls `linkedOrderId` on past rows, so for historical
-  data only `isTakeAway` and the notes prefix remain reliable.
+- Reservations are only status-transitioned, never purged, so local reservation
+  storage stays deliberately mixed: bookings alongside the walk-in, takeaway and
+  package bookkeeping rows the POS still needs. Nothing narrows it, and
+  backup/restore preserves all of it verbatim.
+- Cloud `PosReservation` is real-advance-bookings-only. The POS projects its box
+  through `ReservationClassification.projectForCloud` when it builds a full
+  snapshot, and the mirror's existing "the list is the authoritative set"
+  contract reconciles previously mirrored bookkeeping rows away. The canonical
+  rule is `isTakeAway` or a `notes` prefix of `Order #`; `linkedOrderId` is
+  deliberately not part of it, because an activated booking is still a booking
+  and close-day nulls that field on past rows. An unclassifiable legacy shape is
+  sent, not dropped. Each full snapshot logs a `[ReservationProjection]` count
+  line carrying no reservation content.
+- The narrower three-clause predicates that do consult `linkedOrderId`
+  (`isRealTableBooking`, `isRealPosTableBooking`, the Manager `getReservations`
+  filter) answer "is this an un-activated table booking" and are unchanged;
+  Cloud consumers now receive an already-clean mirror.
+- `ReservationSyncService` still issues one `posReservation.upsert` per record
+  sequentially plus one reconciling `deleteMany`, so its cost tracks the number
+  of rows sent. Measured before the projection at Vankisi: 2004 records,
+  617-685ms, under 10ms of which is enumeration and mapping. `preOrderItems`
+  stays on the wire unread by the backend; the POS needs it because the home
+  takeaway panel renders and totals from those rows.
 - `salesHistoryByDate` and `MenuSyncService` have the same shape: one
   sequential upsert per business day and per menu node.
 - A POS edit only marks pending. The single automatic push is a 30-second

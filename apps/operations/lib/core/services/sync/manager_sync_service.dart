@@ -11,6 +11,7 @@ import 'package:vynic/core/services/sync/sync_timing.dart';
 import 'package:vynic/core/services/sync/pos_callback_config.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/models/reservation_classification.dart';
 import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
 import 'package:vynic/core/utils/payment_utils.dart';
 import 'package:vynic/core/contracts/table_identity.dart' as table_identity;
@@ -1006,9 +1007,22 @@ class ManagerSyncService {
           .toList();
       timing.mark('expenses');
 
-      final reservationPayload = DatabaseService.getAllReservations()
+      // Cloud holds bookings, not the reservation box. Every order-creation
+      // path also writes a row here — walk-in, takeaway, and package through
+      // the walk-in default — and none of Cloud's consumers want them: the
+      // Manager list and the website availability rules both discard them on
+      // read today. Sending them only to have them filtered is what makes this
+      // the most expensive phase of a sync that changed no booking at all.
+      //
+      // The rows stay in Hive untouched; this narrows the projection, not the
+      // history.
+      final reservationProjection = ReservationClassification.projectForCloud(
+        allReservations,
+      );
+      final reservationPayload = reservationProjection.bookings
           .map(DatabaseService.serializeReservationForSync)
           .toList();
+      debugPrint(reservationProjection.summaryLine);
       timing.mark('reservations');
 
       final payload = {
@@ -1026,7 +1040,8 @@ class ManagerSyncService {
         // updates it instead of adding a second one.
         'expenses': expenseRecords,
         'staff': staffList,
-        // Every reservation this POS holds.
+        // Every advance booking this POS holds — not every row in its
+        // reservation box; see the projection above.
         //
         // Cloud used to ask for these over the LAN, one request at a time, from
         // whichever backend needed them — which meant a manager's reservation

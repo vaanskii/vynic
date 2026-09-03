@@ -1,0 +1,13 @@
+-- Incremental AuditReport synchronization (Step 6C).
+--
+-- The POS used to push its entire audit history on every change because there
+-- was no way to tell a report the server already holds from one it does not.
+-- `syncRevision` is that answer: the POS sends a content revision with each
+-- report, the server stores what it persisted, and echoes it back as the
+-- acknowledgment the POS records.
+--
+-- Additive and nullable on purpose. Every existing row keeps its data and gets
+-- NULL, which reads as "revision unknown" — the next push from that POS
+-- rewrites the row instead of skipping it, so no history is lost and no report
+-- is wrongly assumed to be current.
+ALTER TABLE "pos"."AuditReport" ADD COLUMN "syncRevision" TEXT;

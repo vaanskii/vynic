@@ -195,6 +195,12 @@ model AuditReport {
   closedById   String?
   closedByName String?
   locked       Boolean      @default(false)
+  /// Content revision of the POS record this row was written from, echoed back
+  /// as the acknowledgment the POS marks synced. Null for every report ingested
+  /// before incremental audit sync existed, and for any POS build that does not
+  /// send one — both are treated as "revision unknown", which makes the next
+  /// push rewrite the row rather than skip it.
+  syncRevision String?
   updatedAt    DateTime     @updatedAt
   events       AuditEvent[]
   venue        Venue        @relation(fields: [venueId], references: [id], onDelete: Restrict)

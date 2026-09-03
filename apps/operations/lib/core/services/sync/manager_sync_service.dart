@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:vynic/core/services/sync/connection_status_service.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/sync/api_config.dart';
+import 'package:vynic/core/services/sync/audit_sync_state.dart';
 import 'package:vynic/core/services/sync/pos_callback_config.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'package:vynic/core/models/order.dart';
@@ -1056,44 +1057,223 @@ class ManagerSyncService {
     }
   }
 
-  /// Push Hive audit reports to the server.
-  /// Windows POS is the source of truth, so we always push the full report set.
-  /// This guarantees mobile month/history views exactly match Windows, even for
-  /// older closed reports that were previously excluded by time-window filtering.
+  /// How many audit reports one request may carry.
+  ///
+  /// A report carries its whole event list, so the bound that matters is the
+  /// serialized size rather than the row count; 100 keeps a batch in the same
+  /// order of magnitude as a manager-data push instead of building one request
+  /// out of a restaurant's entire history.
+  static const int auditSyncBatchSize = 100;
+
+  /// The ceiling on an id-only reconciliation payload.
+  ///
+  /// Reconciliation is cheap because it carries ids and no contents, but it is
+  /// still one list, so a POS holding more reports than this skips it rather
+  /// than assembling a megabyte to answer a question nobody asked.
+  static const int auditReconcileMaxReports = 20000;
+
+  /// Guards audit sync against overlapping itself.
+  ///
+  /// It is started fire-and-forget from every manager-data push, and two passes
+  /// in flight could acknowledge revisions out of order — an older ack landing
+  /// last would mark a newer local edit as synced.
+  static bool _auditSyncInFlight = false;
+
+  /// Reconciliation runs once per process, after the backlog has drained.
+  static bool _auditReconciledThisRun = false;
+
+  /// Push audit reports the backend has not acknowledged.
+  ///
+  /// The POS used to send its entire audit history on every change, which meant
+  /// one new order re-uploaded a thousand unchanged reports. What was missing
+  /// was not a filter but a durable answer to "which of these does the server
+  /// already have" — [AuditSyncState] is that answer, keyed by a content
+  /// revision rather than a clock.
+  ///
+  /// A report is clean only once the backend has acknowledged the exact
+  /// revision that was sent. A report edited while its previous revision was in
+  /// flight therefore stays dirty and goes again, which is the race this has to
+  /// get right.
+  ///
+  /// On the first run after upgrading, nothing is acknowledged yet, so the whole
+  /// history is dirty and is uploaded once in bounded batches, checkpointing
+  /// after each. That is deliberate: it reconciles against what the backend
+  /// actually holds instead of assuming it. After it drains, only changed
+  /// reports are sent.
   static Future<void> _syncAuditReports() async {
+    if (_auditSyncInFlight) return;
+    _auditSyncInFlight = true;
     try {
-      final allReports = DatabaseService.getAuditReports();
+      await AuditSyncState.open();
 
-      debugPrint(
-        '[ManagerSync] Syncing ${allReports.length} / ${allReports.length} audit reports.',
+      final selection = AuditSyncState.selectDirty(
+        DatabaseService.getAuditReports(),
       );
+      final dirty = selection.dirty;
+      final knownReportIds = selection.knownReportIds;
 
-      final payload = {
-        'fullSync': true,
-        'reports': allReports.map((r) => r.toMap()).toList(),
-      };
-      debugPrint(
-        '[ManagerSync] Sending payload with ${allReports.length} reports to server...',
-      );
+      if (dirty.isEmpty) {
+        await _reconcileAuditReportsOnce(knownReportIds);
+        return;
+      }
 
-      final response = await http.post(
-        Uri.parse('$serverUrl/sync/audit-reports'),
-        headers: ApiConfig.posSyncHeaders,
-        body: await compute(_encodeManagerPayload, payload),
-      );
+      final isBackfill = dirty.length > auditSyncBatchSize;
+      var sent = 0;
+      var acked = 0;
+      var interrupted = false;
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = json.decode(response.body);
-        debugPrint(
-          '[ManagerSync] Audit sync success: ${data['upserted']} reports updated.',
+      for (
+        var offset = 0;
+        offset < dirty.length;
+        offset += auditSyncBatchSize
+      ) {
+        final end = offset + auditSyncBatchSize;
+        final batch = dirty.sublist(
+          offset,
+          end < dirty.length ? end : dirty.length,
         );
-      } else {
+        final batchAcked = await _pushAuditBatch(batch);
+        if (batchAcked == null) {
+          // The backend is unavailable or rejected the batch. Everything not
+          // acknowledged stays dirty, so the next push resumes here.
+          interrupted = true;
+          break;
+        }
+        sent += batch.length;
+        acked += batchAcked;
+        if (isBackfill) {
+          debugPrint(
+            '[ManagerSync] Audit backfill: acked=$acked remaining=${dirty.length - acked}',
+          );
+        }
+      }
+
+      final remaining = dirty.length - acked;
+      if (!isBackfill) {
         debugPrint(
-          '[ManagerSync] Audit sync failed: ${response.statusCode} ${response.body}',
+          '[ManagerSync] Audit sync: dirty=${dirty.length} sending=$sent '
+          'acked=$acked remaining=$remaining'
+          '${interrupted ? " (backend unavailable)" : ""}',
         );
+      }
+
+      if (remaining == 0) {
+        await _reconcileAuditReportsOnce(knownReportIds);
       }
     } catch (e) {
       debugPrint('[ManagerSync] Audit sync error: $e');
+    } finally {
+      _auditSyncInFlight = false;
+    }
+  }
+
+  /// Sends one batch and records what the backend acknowledged.
+  ///
+  /// Returns the number of reports marked synced, or null when the request
+  /// itself failed — the caller stops there rather than burning through the
+  /// rest of the backlog against a backend that is not answering.
+  static Future<int?> _pushAuditBatch(List<DirtyAuditReport> batch) async {
+    final http.Response response;
+    try {
+      response = await http.post(
+        Uri.parse('$serverUrl/sync/audit-reports'),
+        headers: ApiConfig.posSyncHeaders,
+        body: await compute(_encodeManagerPayload, <String, dynamic>{
+          'reports': batch.map((entry) => entry.toPayload()).toList(),
+        }),
+      );
+    } catch (e) {
+      debugPrint('[ManagerSync] Audit sync transport error: $e');
+      return null;
+    }
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      debugPrint(
+        '[ManagerSync] Audit sync failed: ${response.statusCode} ${response.body}',
+      );
+      return null;
+    }
+
+    Object? decoded;
+    try {
+      decoded = json.decode(response.body);
+    } catch (_) {
+      decoded = null;
+    }
+    final acknowledged = decoded is Map ? decoded['acknowledged'] : null;
+
+    // A backend that predates revision acknowledgment answers 2xx with no
+    // `acknowledged` list. Under the old contract a 2xx *was* the acknowledgment
+    // for everything sent, so honour that rather than resending forever.
+    if (acknowledged is! List) {
+      for (final entry in batch) {
+        await AuditSyncState.markAcknowledged(entry.reportId, entry.revision);
+      }
+      return batch.length;
+    }
+
+    final sentRevisions = <String, String>{
+      for (final entry in batch) entry.reportId: entry.revision,
+    };
+
+    var count = 0;
+    for (final raw in acknowledged) {
+      if (raw is! Map) continue;
+      final reportId = raw['reportId']?.toString().trim() ?? '';
+      if (reportId.isEmpty) continue;
+      final sentRevision = sentRevisions[reportId];
+      // Not something this batch offered.
+      if (sentRevision == null) continue;
+      final ackedRevision = raw['revision']?.toString();
+      // An acknowledgment of some other revision is not an acknowledgment of
+      // this one. Recording the sent revision here — never the report's current
+      // content — is what stops an ack for N marking N+1 clean.
+      if (ackedRevision != null &&
+          ackedRevision.isNotEmpty &&
+          ackedRevision != sentRevision) {
+        continue;
+      }
+      await AuditSyncState.markAcknowledged(reportId, sentRevision);
+      count += 1;
+    }
+    return count;
+  }
+
+  /// Tell the backend which reports this POS still holds, so it can drop the
+  /// ones it no longer should have.
+  ///
+  /// Carries ids and no contents, and runs once per process once the upload
+  /// backlog is empty — the case it exists for is a restored backup, not an
+  /// ordinary evening. An empty set is never sent: a POS whose audit box failed
+  /// to open would otherwise ask the backend to delete a restaurant's history.
+  static Future<void> _reconcileAuditReportsOnce(
+    Set<String> knownReportIds,
+  ) async {
+    if (_auditReconciledThisRun) return;
+    if (knownReportIds.isEmpty) return;
+    if (knownReportIds.length > auditReconcileMaxReports) {
+      debugPrint(
+        '[ManagerSync] Audit reconcile skipped: ${knownReportIds.length} reports '
+        'exceeds the $auditReconcileMaxReports id-list bound.',
+      );
+      _auditReconciledThisRun = true;
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('$serverUrl/sync/audit-reports'),
+        headers: ApiConfig.posSyncHeaders,
+        body: await compute(_encodeManagerPayload, <String, dynamic>{
+          'knownReportIds': knownReportIds.toList(),
+        }),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _auditReconciledThisRun = true;
+        await AuditSyncState.pruneUnknown(knownReportIds);
+      }
+    } catch (e) {
+      debugPrint('[ManagerSync] Audit reconcile error: $e');
     }
   }
 

@@ -7,13 +7,40 @@ import { pendingStaffUsernames } from '../sync-conflict';
 import { StaffSync } from '../sync-payload';
 import type { TenantContext } from '../../../auth/pos-auth-context';
 
+/** What one staff snapshot cost, and what it left the server still missing. */
+export interface StaffSyncResult {
+  /** How many credentials were actually hashed. Zero on a routine snapshot. */
+  pinsHashed: number;
+  /**
+   * Members the snapshot named that the server holds no credential for, so it
+   * could not create them. The POS re-sends their PINs on the next snapshot.
+   */
+  needsPin: string[];
+}
+
 /**
  * Mirrors the POS staff list, and reconciles the members it no longer names.
  *
  * A routine snapshot carries usernames and roles but no PINs, so a member the
- * server has never seen cannot be created from one — it is skipped rather than
- * given an empty credential. A PIN only arrives during explicit provisioning,
- * and is hashed for the database and kept in the vault for the manager app.
+ * server has never seen cannot be created from one — it is named in
+ * [StaffSyncResult.needsPin] rather than given an empty credential. A PIN only
+ * arrives for a member the POS has no acknowledgment for, and is hashed for the
+ * database and kept in the vault for the manager app.
+ *
+ * ## Why a supplied PIN is not always hashed
+ *
+ * bcrypt at cost 12 is deliberately about 200ms, and hashing every supplied PIN
+ * in turn made a fourteen-member snapshot spend roughly 2.7 seconds re-deriving
+ * hashes the database already held. A PIN equal to the vault entry for a member
+ * the server holds cannot change `pinHash`, because every write of `pinHash` in
+ * this codebase writes that same plain PIN into the vault — so the derivation is
+ * skipped and only role and activity are applied. Anything else — no vault
+ * entry, a different PIN, a member with no row — is hashed as before. The
+ * comparison decides whether work is redundant, never whether a login succeeds:
+ * authentication still verifies the stored hash.
+ *
+ * This also keeps an older POS build, which sends every PIN on every snapshot,
+ * as cheap as a current one instead of holding ingest open for seconds.
  *
  * The reconcile deletes members missing from the snapshot, except those with an
  * in-flight queued mobile change implying they should exist: the POS simply has
@@ -26,24 +53,40 @@ export class StaffSyncService {
     private readonly pinVault: StaffPinVault,
   ) {}
 
-  async sync(tenant: TenantContext, staff: StaffSync[]): Promise<void> {
+  async sync(
+    tenant: TenantContext,
+    staff: StaffSync[],
+  ): Promise<StaffSyncResult> {
     const plainPinsByUsername = await this.pinVault.read(tenant);
     let pinsMapChanged = false;
+    let pinsHashed = 0;
+    const needsPin: string[] = [];
     const incomingUsernames = new Set<string>();
     for (const member of staff) {
       incomingUsernames.add(member.username);
+      const identity = {
+        venueId_username: {
+          venueId: tenant.venueId,
+          username: member.username,
+        },
+      };
       const pin = typeof member.pin === 'string' ? member.pin.trim() : '';
-      const hasPin = pin.length > 0;
+      const existingMember = await (this.prisma as any).staff.findUnique({
+        where: identity,
+      });
+      // A PIN that already matches the vault entry for a member the server
+      // holds would hash to the credential it already has. Skip the
+      // derivation, not the record.
+      const credentialUnchanged =
+        !!existingMember &&
+        pin.length > 0 &&
+        plainPinsByUsername[member.username] === pin;
 
-      if (hasPin) {
+      if (pin.length > 0 && !credentialUnchanged) {
         const pinHash = await bcrypt.hash(pin, 12);
+        pinsHashed += 1;
         await (this.prisma as any).staff.upsert({
-          where: {
-            venueId_username: {
-              venueId: tenant.venueId,
-              username: member.username,
-            },
-          },
+          where: identity,
           update: {
             pinHash,
             role: normalizeStaffRole(member.role),
@@ -59,30 +102,16 @@ export class StaffSyncService {
         });
         plainPinsByUsername[member.username] = pin;
         pinsMapChanged = true;
-      } else {
-        const existing = await (this.prisma as any).staff.findUnique({
-          where: {
-            venueId_username: {
-              venueId: tenant.venueId,
-              username: member.username,
-            },
-          },
+      } else if (existingMember) {
+        await (this.prisma as any).staff.update({
+          where: identity,
+          data: { role: normalizeStaffRole(member.role), isActive: true },
         });
-        if (existing) {
-          await (this.prisma as any).staff.update({
-            where: {
-              venueId_username: {
-                venueId: tenant.venueId,
-                username: member.username,
-              },
-            },
-            data: { role: normalizeStaffRole(member.role), isActive: true },
-          });
-        } else {
-          console.warn(
-            `[SYNC] Skipping new staff "${member.username}" without PIN (use mobile user create).`,
-          );
-        }
+      } else {
+        needsPin.push(member.username);
+        console.warn(
+          `[SYNC] Skipping new staff "${member.username}" without PIN (the POS re-sends it next snapshot).`,
+        );
       }
     }
     if (pinsMapChanged) {
@@ -124,5 +153,7 @@ export class StaffSyncService {
         where: { venueId: tenant.venueId, username: { in: stale } },
       });
     }
+
+    return { pinsHashed, needsPin };
   }
 }

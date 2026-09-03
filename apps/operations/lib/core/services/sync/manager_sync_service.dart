@@ -6,11 +6,11 @@ import 'package:vynic/core/services/sync/connection_status_service.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/sync/api_config.dart';
 import 'package:vynic/core/services/sync/audit_sync_state.dart';
+import 'package:vynic/core/services/sync/staff_credential_sync_state.dart';
 import 'package:vynic/core/services/sync/sync_timing.dart';
 import 'package:vynic/core/services/sync/pos_callback_config.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'package:vynic/core/models/order.dart';
-import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
 import 'package:vynic/core/utils/payment_utils.dart';
 import 'package:vynic/core/contracts/table_identity.dart' as table_identity;
@@ -941,17 +941,18 @@ class ManagerSyncService {
 
       timing.mark('menu');
 
-      // 4. Sync Staff — PIN + role required for mobile login (server stores bcrypt hash).
-      final allUsers = DatabaseService.getAllUsers();
-      final staffList = allUsers
-          .map(
-            (u) => {
-              'username': u.username,
-              'pin': u.pinCode,
-              'role': _staffRoleForSync(u.role),
-            },
-          )
-          .toList();
+      // 4. Sync Staff — identity and role every time, a PIN only when the
+      // backend has not acknowledged the one this member currently has.
+      //
+      // Sending every PIN on every snapshot made the server re-run bcrypt cost
+      // 12 over credentials it already held, which dominated ingest. What is
+      // still required is unchanged: a member the server has never seen, and
+      // any PIN that actually changed, arrive with their PIN.
+      await StaffCredentialSyncState.open();
+      final staffSelection = StaffCredentialSyncState.selectStaff(
+        DatabaseService.getAllUsers(),
+      );
+      final staffList = staffSelection.entries;
 
       timing.mark('staff');
 
@@ -1069,7 +1070,7 @@ class ManagerSyncService {
           .where((t) => t['isReserved'] == true || t['activeOrderId'] != null)
           .toList();
       debugPrint(
-        '[ManagerSync] Sending ${tables.length} tables, ${reservedTables.length} reserved, ${todayOrders.length} orders, ${staffList.length} staff.',
+        '[ManagerSync] Sending ${tables.length} tables, ${reservedTables.length} reserved, ${todayOrders.length} orders, ${staffList.length} staff (${staffSelection.pinCount} with a PIN).',
       );
       for (final t in reservedTables) {
         debugPrint(
@@ -1104,6 +1105,7 @@ class ManagerSyncService {
           'callback=${payload['posCallbackUrl'] ?? "missing"}',
         );
         _pendingSinceMicros = null;
+        await _acknowledgeStaffCredentials(staffSelection, response.body);
         await ConnectionStatusService.markSuccess();
       }
 
@@ -1859,8 +1861,45 @@ class ManagerSyncService {
     return touched;
   }
 
-  /// Maps Hive user roles to backend [StaffRole] enum values.
-  static String _staffRoleForSync(String role) {
-    return StaffRole.toApi(role);
+  /// Records which staff credentials the accepted snapshot acknowledged, and
+  /// forgets any the backend says it still has no credential for.
+  ///
+  /// Runs only after the server accepted the push, so a failed sync leaves
+  /// every credential it carried unacknowledged and the next one carries them
+  /// again.
+  static Future<void> _acknowledgeStaffCredentials(
+    StaffSnapshotSelection selection,
+    String responseBody,
+  ) async {
+    await StaffCredentialSyncState.markAccepted(selection.credentialsSent);
+    await StaffCredentialSyncState.pruneUnknown(selection.knownUsernames);
+    final needsPin = _staffNeedingPin(responseBody);
+    if (needsPin.isNotEmpty) {
+      debugPrint(
+        '[ManagerSync] Backend holds no credential for ${needsPin.length} '
+        'staff member(s); the next snapshot will carry their PINs.',
+      );
+      await StaffCredentialSyncState.forget(needsPin);
+    }
+  }
+
+  /// The usernames the backend reported it could not create for want of a PIN.
+  ///
+  /// Absent from an older backend's response, which is silence rather than
+  /// "none" — and silence is what the POS assumed before this existed.
+  static List<String> _staffNeedingPin(String responseBody) {
+    try {
+      final decoded = jsonDecode(responseBody);
+      if (decoded is! Map) return const <String>[];
+      final raw = decoded['staffNeedingPin'];
+      if (raw is! List) return const <String>[];
+      return raw
+          .whereType<String>()
+          .map((username) => username.trim())
+          .where((username) => username.isNotEmpty)
+          .toList();
+    } catch (_) {
+      return const <String>[];
+    }
   }
 }

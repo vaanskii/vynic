@@ -138,9 +138,13 @@ current transport status.
 - A POS edit only marks pending. The single automatic push is a 30-second
   periodic flush, and it sends the full snapshot rather than the realtime fast
   path, so an ordinary edit waits 0-30s and then re-sends menu and history.
-- Snapshot ingest re-hashes every staff PIN with bcrypt cost 12 on every push
-  (~195ms per member, sequential), which dominates backend ingest time. The POS
-  sends `pin` for every member on every snapshot.
+- A routine snapshot carries staff identity and role but no PINs. The POS sends
+  `pin` only for a member whose credential the backend has not acknowledged, and
+  records the acknowledgment in `staff_credential_sync_state`; a server that
+  reports `staffNeedingPin` gets those PINs back on the next snapshot. Ingest
+  additionally skips bcrypt for a supplied PIN that already matches the vault
+  entry of an existing member, so an older POS that still sends every PIN costs
+  no re-hashing either. Only a genuine create or PIN change runs bcrypt now.
 - Both POS and backend print one `[SyncTiming]` line per sync, from monotonic
   timers, splitting trigger wait / build / encode / network / ingest / audit.
 

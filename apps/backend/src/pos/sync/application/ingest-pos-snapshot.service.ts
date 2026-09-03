@@ -16,6 +16,12 @@ import type { TenantContext } from '../../../auth/pos-auth-context';
 export interface SnapshotIngestResult {
   success: boolean;
   syncedAt: string;
+  /**
+   * Staff the snapshot named that the server holds no credential for. Present
+   * only when there are any; the POS answers by carrying their PINs on the next
+   * snapshot, which is how a re-provisioned server recollects what it needs.
+   */
+  staffNeedingPin?: string[];
 }
 
 /**
@@ -118,9 +124,17 @@ export class IngestPosSnapshotService {
       );
     }
 
-    // Sync Staff — username/role only unless pin explicitly provided (legacy).
+    // Sync Staff — identity and role always, a credential only for a member
+    // whose PIN the POS has not had acknowledged (and, from an older POS, one
+    // whose PIN is already the stored one and so needs no re-derivation).
+    let staffNeedingPin: string[] = [];
+    let staffPinsHashed = 0;
     if (staff && staff.length > 0 && !realtimeOnly) {
-      await timing.phase('staff', () => this.staff.sync(tenant, staff));
+      const staffResult = await timing.phase('staff', () =>
+        this.staff.sync(tenant, staff),
+      );
+      staffNeedingPin = staffResult.needsPin;
+      staffPinsHashed = staffResult.pinsHashed;
     }
 
     // Sync Reservations — the Cloud mirror the manager list and the public
@@ -175,8 +189,17 @@ export class IngestPosSnapshotService {
         `${menu?.length ?? 0}c/${reservations?.length ?? 0}r/` +
         `${expenses?.length ?? 0}e`,
     );
+    // The staff phase is bcrypt or it is nothing, so the hash count is what
+    // that phase's duration means. A routine snapshot reports zero.
+    if (staff && staff.length > 0 && !realtimeOnly) {
+      timing.note(`staff=${staff.length}/${staffPinsHashed}hashed`);
+    }
     timing.log(realtimeOnly ? 'Backend/realtime' : 'Backend');
 
-    return { success: true, syncedAt: new Date().toISOString() };
+    return {
+      success: true,
+      syncedAt: new Date().toISOString(),
+      ...(staffNeedingPin.length > 0 ? { staffNeedingPin } : {}),
+    };
   }
 }

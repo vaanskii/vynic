@@ -48,6 +48,15 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Integration proof: `apps/backend/src/pos/sync/application/audit-incremental-sync.integration.spec.ts`
 - Contract notes: `docs/AUDIT_SYNC.md`
 
+## Staff Sync
+
+- POS credential acknowledgments/selection: `apps/operations/lib/core/services/sync/staff_credential_sync_state.dart`
+- POS snapshot assembly: `apps/operations/lib/core/services/sync/manager_sync_service.dart`
+- Backend mirror/reconcile: `apps/backend/src/pos/sync/snapshot/staff-sync.service.ts`
+- Plain-PIN store: `apps/backend/src/auth/staff-pin-vault.service.ts`
+- Proofs: `apps/operations/test/unit/staff_credential_sync_test.dart`,
+  `apps/backend/src/pos/sync/snapshot/staff-sync.service.spec.ts`
+
 ## Edge Transport — Backend
 
 - Module/routes/guard: `apps/backend/src/edge/`

@@ -8,7 +8,10 @@ jest.mock('../../../auth/pos-sync.guard', () => ({ PosSyncGuard: class {} }));
 jest.mock('../../../auth/jwt-auth.guard', () => ({ JwtAuthGuard: class {} }));
 jest.mock('../../../auth/roles.guard', () => ({ RolesGuard: class {} }));
 
-import { IngestPosSnapshotService } from './ingest-pos-snapshot.service';
+import {
+  IngestPosSnapshotService,
+  type SnapshotIngestResult,
+} from './ingest-pos-snapshot.service';
 import { PosConnectionRegistry } from '../pos-connection.registry';
 import { BusinessDaySyncService } from '../snapshot/business-day-sync.service';
 import { MenuSyncService } from '../snapshot/menu-sync.service';
@@ -109,7 +112,7 @@ interface Harness {
   broadcasts: Broadcast[];
   kickPending: jest.Mock;
   vaultWrite: jest.Mock;
-  sync: (payload: Snapshot) => Promise<{ success: boolean; syncedAt: string }>;
+  sync: (payload: Snapshot) => Promise<SnapshotIngestResult>;
 }
 
 const AUTH_CONTEXT = {
@@ -1068,17 +1071,35 @@ describe('POST /sync/manager-data — staff sync', () => {
     expect(h.vaultWrite).not.toHaveBeenCalled();
   });
 
-  it('refuses to create an unknown member that arrives without a pin', async () => {
+  it('refuses to create an unknown member that arrives without a pin, and asks for its PIN back', async () => {
     const h = makeHarness({
       'staff.findUnique': () => null,
       'staff.findMany': () => [],
     });
 
-    await h.sync({ staff: [{ username: 'ghost', role: 'WAITER' }] });
+    const result = await h.sync({
+      staff: [{ username: 'ghost', role: 'WAITER' }],
+    });
 
     const keys = callKeys(h.calls);
     expect(keys).not.toContain('staff.upsert');
     expect(keys).not.toContain('staff.update');
+    // The POS answers this by carrying that member's PIN next snapshot, which
+    // is how a re-provisioned server recollects the credentials it lost.
+    expect(result.staffNeedingPin).toEqual(['ghost']);
+  });
+
+  it('leaves staffNeedingPin off the response when nothing is missing', async () => {
+    const h = makeHarness({
+      'staff.findUnique': () => ({ username: 'mary' }),
+      'staff.findMany': () => [{ username: 'mary' }],
+    });
+
+    const result = await h.sync({
+      staff: [{ username: 'mary', role: 'WAITER' }],
+    });
+
+    expect(result.staffNeedingPin).toBeUndefined();
   });
 
   it('does not issue a delete when every server member is still present', async () => {

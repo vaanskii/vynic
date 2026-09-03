@@ -1,112 +1,32 @@
-# POS System Architecture
+# Backend Claude Adapter
 
-## System Overview
+This directory is the modular NestJS/Prisma/PostgreSQL backend.
 
-Backend (NestJS + Prisma + PostgreSQL) is the central hub between:
+Before backend work, follow the root `CLAUDE.md`, read the current project state,
+and use only the relevant backend section of
+`docs/agent-state/VYNIC_CODE_MAP.md`.
 
-- POS Windows app (offline-first, operational truth)
-- Mobile Manager app (realtime monitoring + limited mutations)
-- Restaurant Website (customer reservations + menu)
-- Kitchen / external devices (via POS callbacks)
+## Local Boundaries
 
----
+- Application wiring starts at `src/app.module.ts`; persistence starts at
+  `prisma/schema.prisma` and `prisma/migrations/`.
+- Resolve tenant context from a server-owned relationship: Device for POS,
+  Staff for Manager, Host/VenueDomain for website, or booking identity for
+  payment callbacks. Client-supplied tenant IDs are never authority.
+- `PlatformUser` uses the separate `/platform/*` authentication and audit
+  boundary.
+- POS -> Cloud snapshots and Cloud -> Edge commands are different flows. The
+  legacy callback client/outbox is a frozen fallback for unenrolled Venues.
+- Controllers validate/authenticate and delegate; domain and tenant rules belong
+  in the existing authoritative service.
+- Keep errors explicit. Do not turn failures into `null`, false success, or
+  empty catches.
 
-## Core Principle
+Consult relevant sections of
+`docs/agent-skills/VYNIC_FULLSTACK_ENGINEERING.md` for schema, security,
+compatibility, or migration rules. Read the full document only for a genuinely
+cross-stack architecture/audit task.
 
-POS is the source of operational truth during service.
-
-- POS can create / modify / close orders and tables
-- All other clients must go through backend rules
-- Backend ensures consistency and synchronization
-
----
-
-## 1. POS Sync Layer (src/pos/)
-
-Purpose: keep POS and server state aligned.
-
-- Receives POS snapshots via `/sync/manager-data`
-- Stores POS callback URL per device
-- Writes snapshot into PostgreSQL
-
-### Reverse sync (server → POS)
-
-- `pos-callback.client` sends changes back to POS
-- `pos-outbox.service` guarantees delivery with retries
-- Works even if POS is temporarily offline
-
----
-
-## 2. Mobile Manager API (src/mobile/)
-
-Purpose: manager app control layer.
-
-- JWT + MANAGER role protected
-- Reads from PostgreSQL only
-- Writes:
-  - update DB
-  - enqueue POS callback (never direct POS calls)
-
-Modules:
-- dashboard / financials
-- reports
-- orders (dine-in / takeaway / walk-in)
-- reservations
-- users
-- menu
-- devices
-
----
-
-## 3. Realtime Layer (src/realtime/)
-
-- Socket.IO gateway broadcasts:
-  - order_updated
-  - table_updated
-  - data_updated (reservations: { type: 'reservations', action: 'created' | 'updated' | 'cancelled' })
-
-- FCM push notifications for background users
-
-Rules:
-- echo-guard prevents self-notifications
-- no business logic inside gateway
-
----
-
-## 4. Website API (src/website/)
-
-Purpose: customer-facing system.
-
-- public menu
-- authentication (cookie + CSRF)
-- reservations
-- payment integration (BOG)
-
-Bridge:
-- confirmed reservations → sent to POS via callback system
-
----
-
-## Cross-cutting (src/auth/, src/shared/)
-
-- JWT authentication (mobile + manager)
-- API-key auth (POS sync)
-- Prisma service layer
-- shared utilities only (no business logic)
-
----
-
-## Data Flow Rules
-
-- POS → Server → PostgreSQL → Mobile/Web
-- Mobile/Web writes → Server → DB → POS (via outbox)
-- All realtime updates come from server only
-
----
-
-## System Guarantees
-
-- No direct Mobile → POS communication
-- All POS updates are durable (outbox retry)
-- Server is always source of truth outside live POS session
-- Realtime is secondary, DB is primary
+Validate only the backend surfaces changed. Schema work additionally requires
+Prisma validation and migration evidence against a disposable database when
+existing data or constraints matter.

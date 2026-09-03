@@ -304,27 +304,29 @@ Device determines which Venue and Device can claim work. Do not widen queue
 filters from request fields. `CLAIMED` means leased, not completed;
 `SUCCEEDED`/`FAILED` require an Edge-reported outcome.
 
-The persistent transport and POS client currently prove claim→execute→journal→
-acknowledge for the safe `NOOP` command. Do not infer that every historical
-callback operation has migrated.
+The v2 contract currently contains `NOOP` plus seventeen real business command
+types. All have POS handlers; mutations converge through `PosCommandApplier`,
+and interrupted physical prints use the explicit no-repeat boundary. See
+`docs/EDGE_COMMAND_MIGRATION.md` for the catalogue and rollout state.
 
 ## 11. Legacy callback infrastructure
 
-Direct Cloud/server→POS LAN callback code and `PosCallbackOutbox` still exist
-during migration. They are transitional compatibility, not the long-term Cloud
+Direct Cloud/server→POS LAN callback code and `PosCallbackOutbox` still exist as
+a frozen fallback for Venues without an enrolled Device and for compatible
+rollout. They are transitional compatibility, not the long-term Cloud
 architecture.
 
 - Preserve them until explicit retirement conditions are met.
 - Do not add new command types to the legacy mechanism.
 - Do not remove or rewrite them opportunistically.
-- Migrate real operations only in an explicit phase with compatible deployed
-  POS handlers, idempotency, and rollout evidence.
+- Route new operations only through the Edge command catalogue and its
+  idempotency boundary.
 - Keep POS→Cloud snapshot ingestion; it already follows the correct
   Edge-initiated direction and is separate from command delivery.
 
-Legacy removal also requires an answer for synchronous reservation reads and a
-Device credential on every deployed POS. The existence of an Edge queue alone
-does not satisfy those conditions.
+Synchronous reservation reads now use the Cloud-side `PosReservation` mirror.
+Legacy removal still requires a Device credential on every deployed POS; the
+existence of enrollment code does not prove the fleet has enrolled.
 
 ## 12. Synchronous Edge reads
 

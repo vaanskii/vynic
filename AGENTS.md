@@ -1,51 +1,68 @@
 # AGENTS.md — Vynic
 
-Root instructions for all AI agents (Claude / Fable / Codex). Keep this file short.
+Codex entry point for the Vynic monorepo. Keep startup context targeted.
 
-## What Vynic is
+## Normal Startup
 
-Restaurant POS system. Two parts:
-- `apps/operations/` — Flutter app (Windows POS is the operational source of truth;
-  mobile manager app; shared `core/`). Local-first on Hive.
-- `apps/backend/` — NestJS + Prisma + PostgreSQL. Mirrors POS data for the
-  manager app and the customer website. See `apps/backend/CLAUDE.md`.
+1. Run `git status --short`; treat existing changes and stashes as user-owned.
+2. Read `docs/agent-state/VYNIC_PROJECT_STATE.md`.
+3. Read only the task's section(s) in
+   `docs/agent-state/VYNIC_CODE_MAP.md`.
+4. Inspect the task-specific implementation and nearby tests.
+5. Read `docs/agent-state/VYNIC_DECISIONS.md` only when an architectural
+   boundary is implicated.
+6. Consult only the relevant section of
+   `docs/agent-skills/VYNIC_FULLSTACK_ENGINEERING.md` when governing detail is
+   needed.
 
-Currently single-restaurant. A modernization + SaaS effort is planned but **not
-started**.
+Use this sequence by default:
 
-## Before you touch anything
+```text
+state -> map -> targeted code -> tests
+```
 
-1. Run `git status --short`. Know what was already dirty.
-2. If the task is Vynic modernization (bug fix, refactor, SaaS, UI), **read
-   `docs/VYNIC_PROJECT_PLAN.md` first** — it has the phases, constraints, and the
-   known reservation/close-day bug. Do not re-derive it.
-3. Confirm which phase your task belongs to. Do only that phase.
+Do not re-audit completed architecture unless current code contradicts project
+state, the task explicitly requests an audit, or correctness requires it.
+Repository code, schema, migrations, contracts, and tests are authoritative.
 
-## Hard rules
+## Context Budget
 
-- **One phase at a time.** No broad, unrelated refactors. If you notice other
-  problems, note them — don't fix them in the same change.
-- **Small changes, small commits.** Never a giant multi-concern commit.
-- **Do not change app behavior** unless the task explicitly is a behavior change.
-  Refactors (e.g. splitting `database_service.dart`) must be behavior-preserving.
-- **Never hide errors behind `null` returns or empty `catch`.** Return a typed
-  result or rethrow, and log the real error. This is the exact cause of the live
-  reservation bug — do not reproduce the pattern.
-- **Do not start the SaaS migration or the UI redesign now.** They are late
-  phases. See the plan.
-- Never delete or overwrite secrets, `.env*`, Prisma migrations, generated
-  `*.g.dart`, or app assets. When unsure whether to remove a file, archive it
-  under `docs/archive/` instead.
+For a normal focused task, do not automatically read all docs, the full Prisma
+schema, unrelated app roots, broad git history, every large file in a subsystem,
+or the complete canonical engineering protocol. Do not regenerate an
+architecture inventory or repeat an established audit.
 
-## After you finish
+Broader inspection is appropriate for an explicit architecture review,
+cross-product refactor, tenant/security audit, modernization plan, or when
+targeted evidence proves a dependency.
 
-1. Run `git status --short` again and confirm only intended files changed.
-2. Run the phase's verification (analyzer / build / tests — see the plan).
-3. Do **not** commit unless the user explicitly says to.
+## Critical Invariants
 
-## Detailed plans
+- POS operation remains offline-first; Hive and the POS own live restaurant
+  operation.
+- Tenant authority is Device -> Venue, Staff -> Venue, Host -> VenueDomain ->
+  Venue, or server-owned payment identity -> Venue. Never trust a client tenant
+  ID as authority.
+- `PlatformUser` is separate from restaurant Staff.
+- Cloud-originated POS work is pulled by Edge. Do not add Cloud -> LAN calls or
+  new operations to the frozen legacy callback fallback.
+- Never hide errors behind ambiguous `null`, false success, or an empty catch.
 
-- `docs/VYNIC_PROJECT_PLAN.md` — master plan, phases, constraints, the bug.
-- `docs/UI_PLAN.md` — detailed UI/design system sub-plan (used by Phases 5–6 only).
-- `.claude/skills/vynic-pos-modernization/SKILL.md` — compact per-task checklist.
-- `prompts/` — ready-to-run, single-focus task prompts.
+## Scope and Safety
+
+- Keep one requested phase/task and classify adjacent findings as blocker,
+  in-scope, or deferred.
+- Do not change behavior in a refactor unless explicitly requested.
+- Do not manipulate an existing stash, overwrite `.env*` or secrets, rewrite
+  migrations, hand-edit generated contract/model output, or push unless asked.
+- Do not commit unless the user explicitly requests it.
+
+## Finish and Maintenance
+
+- Run validation proportional to the files changed, then `git diff --check` and
+  `git status --short`.
+- Update `VYNIC_PROJECT_STATE.md` only when a represented fact changed; replace
+  obsolete state rather than appending a session log.
+- Update `VYNIC_CODE_MAP.md` only when a high-value entry point moves, appears,
+  or disappears.
+- Add a decision only when it prevents repeated architectural debate.

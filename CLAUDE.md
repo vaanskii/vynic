@@ -1,105 +1,43 @@
 # CLAUDE.md — Vynic
 
-Instructions for Claude Code when working in the Vynic repository.
+Claude Code entry point. Use the shared current-state system rather than
+rediscovering the monorepo.
 
-## Required Engineering Protocol
+## Route Every Normal Task
 
-Before any non-trivial Vynic engineering task, read and follow:
+1. Inspect `git status --short`; do not touch existing changes or stashes.
+2. Read `docs/agent-state/VYNIC_PROJECT_STATE.md`.
+3. Use only the relevant section of
+   `docs/agent-state/VYNIC_CODE_MAP.md`.
+4. Open the task-specific code and nearby tests.
+5. Consult `docs/agent-state/VYNIC_DECISIONS.md` only for an implicated boundary.
+6. Read only the relevant governing section of
+   `docs/agent-skills/VYNIC_FULLSTACK_ENGINEERING.md` when needed.
 
-`docs/agent-skills/VYNIC_FULLSTACK_ENGINEERING.md`
+The lightweight reusable version of this flow is
+`.claude/skills/vynic-task-router/SKILL.md`.
 
-This is the canonical repository-wide engineering policy for Vynic.
-
-Do not duplicate or reinterpret its architecture rules here.
-
-Repository code, current Prisma schema, migrations, tests, generated contracts, and current architecture documentation are the source of truth.
-
----
-
-## Before Editing
-
-Run:
-
-```bash
-git status --short
-git stash list
-git log --oneline --decorate -50
+```text
+PROJECT_STATE -> relevant CODE_MAP -> targeted code/tests
+              -> implicated DECISION -> relevant canonical rule
 ```
 
-Do not manipulate any pre-existing stash.
+Do not automatically read all documentation, all application roots, the full
+Prisma schema, broad history, or the entire canonical protocol. Broaden scope
+only for an explicit audit/architecture task or when repository evidence proves
+a dependency. If state conflicts with code, trust code and update state before
+finishing.
 
-Inspect the actual implementation relevant to the task before editing.
+## Safety
 
-For substantial work, establish:
+- Preserve offline-first POS/Hive operation and server-owned tenant authority.
+- Keep `PlatformUser`, Staff, WebsiteUser, and Device principals separate.
+- Do not add Cloud-to-LAN dependencies or new legacy callback operations.
+- Keep work to the requested task; report unrelated findings instead of fixing
+  them opportunistically.
+- Do not manipulate stashes, secrets, `.env*`, migrations, generated files, or
+  unrelated changes. Do not push or commit unless requested.
+- Run focused validation, `git diff --check`, and final `git status --short`.
 
-- current state;
-- target state;
-- affected applications/layers;
-- authentication and tenant authority;
-- persistence/migration impact;
-- compatibility requirements;
-- validation plan;
-- explicit non-goals.
-
----
-
-## Scope Discipline
-
-Work on one requested task or migration phase at a time.
-
-Classify discoveries as:
-
-- `BLOCKER`
-- `IN-SCOPE`
-- `DEFERRED`
-
-Do not opportunistically fix unrelated findings.
-
-If a prompt conflicts with repository reality, investigate the repository and report the conflict rather than blindly implementing the prompt.
-
----
-
-## Task-Specific Documentation
-
-Read the relevant documents under `docs/` for the subsystem being changed.
-
-Examples:
-
-- Cloud / Edge → `docs/CLOUD_EDGE_TRANSPORT.md`
-- Platform Control Plane → `docs/PLATFORM_CONTROL_PLANE.md`
-- Platform API → `docs/PLATFORM_CONTROL_PLANE_API.md`
-- Product / entitlements → `docs/PRODUCT_ENTITLEMENTS.md`
-- tenancy → relevant tenancy documents under `docs/`
-- payment integrations → `docs/PAYMENT_INTEGRATIONS.md`
-- Vynic roadmap → `docs/VYNIC_ROADMAP.md`
-
-Do not assume every older document is current. Verify important claims against code, migrations, and tests.
-
----
-
-## Git
-
-Use focused commits when the task requests or benefits from checkpointed work.
-
-Do not amend unrelated history.
-
-Do not push unless explicitly requested.
-
-Never overwrite the user's `.env`, secrets, unrelated work, or pre-existing migrations.
-
----
-
-## Validation
-
-Run the validation required by every stack actually touched.
-
-Do not claim a platform, integration, migration, or deployment was verified unless it actually was.
-
-At completion run:
-
-```bash
-git status --short
-git diff --check
-```
-
-and report any manual actions or environment changes the user still needs to perform.
+Maintain shared state as current facts, not history. Keep the code map
+navigational and the decision index limited to durable architectural choices.

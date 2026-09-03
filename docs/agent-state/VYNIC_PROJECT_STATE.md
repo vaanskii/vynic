@@ -86,16 +86,21 @@ current transport status.
 
 - Phase 1A and 1B are implemented: material money mutations are locally audited,
   expense and adjustment data reaches Cloud, and legacy POS ingest fails closed.
-- All table-close variants use `CloseTableTransaction` with a durable
-  `closureId` and Hive closure journal. Startup recovery completes recorded
-  sales or abandons attempts that collected nothing without duplicating revenue.
+- Supported fiscal and internal payment closes use `CloseTableTransaction` with
+  a durable `closureId` and Hive closure journal. Cancellation, hard-delete,
+  emptied-by-transfer, and Close Day paths are separate. Startup recovery
+  preserves sale idempotency, but currently does not complete the linked
+  reservation or typed closure audit after a post-sale crash.
 - Advances are receipts on the collection day and are applied at close; they do
   not reduce the sale's gross value.
-- Gross sales and money collected are separate derived figures. X/Z/monthly and
-  Manager summaries share `SalesRepository.countsAsRevenue` and exclude voided,
-  restored, and internal closures as documented.
-- Cloud mirrors closure/money reconciliation fields. PostgreSQL money columns
-  still use `Float`; a Decimal migration remains deferred.
+- Gross sales and money collected are separate derived figures. POS X/Z/monthly
+  and Manager current-day/all-time snapshots use the revenue predicate, but the
+  Manager per-day/month history builder and raw-Order fallbacks do not yet apply
+  equivalent filtering and can include internal or non-terminal orders.
+- Cloud mirrors the POS Order and derived sales summaries, but the Order payload
+  does not currently carry `closureId`, gross, advance-applied, collected-now,
+  or fiscal classification as independent reconciliation fields. PostgreSQL
+  money columns still use `Float`; a Decimal migration remains deferred.
 
 ## Platform / Admin State
 

@@ -139,9 +139,24 @@ current transport status.
   instead of duplicating them. Keyless older backups still restore.
 - Tables, orders, menu, staff, and `salesHistoryByDate` still use broad snapshot
   payloads; further sync windowing/scaling is deferred.
+- Every takeaway order creates a permanent `Reservation` row (`isTakeAway`,
+  `linkedOrderId`, `preOrderItems`). Reservations are only status-transitioned,
+  never purged, so the box grows with trading volume, and a full snapshot sends
+  all of them. `ReservationSyncService` then issues one `posReservation.upsert`
+  per record sequentially plus one reconciling `deleteMany`. Measured at
+  Vankisi: 2004 records, 617-685ms, of which under 10ms is enumeration and
+  mapping; the rest is per-record round-trips. `preOrderItems` is sent and
+  never read by the backend (~27% of that section's bytes).
+- `salesHistoryByDate` and `MenuSyncService` have the same shape: one
+  sequential upsert per business day and per menu node.
 - A POS edit only marks pending. The single automatic push is a 30-second
   periodic flush, and it sends the full snapshot rather than the realtime fast
   path, so an ordinary edit waits 0-30s and then re-sends menu and history.
+- The realtime path is built but unreached: `syncRealtimeToManagerApp()` has no
+  caller in `apps/operations`, and the `...Debounced()` helpers that edits do
+  call are deliberate no-ops that only mark pending ("manual-first mode"). The
+  backend already honours `realtimeOnly`, skipping menu, staff, reservations,
+  all-time and per-day history.
 - A routine snapshot carries staff identity and role but no PINs. The POS sends
   `pin` only for a member whose credential the backend has not acknowledged, and
   records the acknowledgment in `staff_credential_sync_state`; a server that

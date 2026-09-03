@@ -15,6 +15,7 @@ import 'package:vynic/core/models/sale_record.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/pos/closure_recovery_service.dart';
+import 'package:vynic/core/services/sync/sync_events.dart';
 
 /// Money Integrity 1B: what a table closure is worth, how many times it can
 /// happen, and what survives a crash in the middle of one.
@@ -181,6 +182,37 @@ void main() {
   });
 
   group('normal close', () {
+    test(
+      'an Order-only Walk-In closes, frees its table and publishes locally',
+      () async {
+        final order = await seedOrder(orderId: 43, itemTotal: 25);
+        final table = TableModel(tableNumber: '1', floor: 'first')
+          ..reserve('waiter', order.orderId);
+        await DatabaseCore.tableBox!.put('first-1', table);
+        final completedEvent = SyncHub.events.firstWhere(
+          (event) =>
+              event.type == SyncEventType.orders &&
+              event.action == 'closed' &&
+              event.payload?['orderId'] == order.orderId,
+        );
+
+        final result = await CloseTableTransaction.run(
+          orderId: order.orderId,
+          money: ClosureMoney.fromOrder(order, collectedNow: 25),
+          paymentMethod: 'cash',
+          tenderBreakdown: const {'cash': 25},
+          closedById: 'manager',
+          isFiscal: true,
+        );
+
+        expect(result.outcome, ClosureOutcome.closed);
+        expect((await completedEvent).payload?['status'], 'closed');
+        expect(DatabaseCore.tableBox!.values.single.activeOrderId, isNull);
+        expect(DatabaseCore.tableBox!.values.single.isReserved, isFalse);
+        expect(DatabaseCore.reservationBox!.values, isEmpty);
+      },
+    );
+
     test('an Order-only Takeaway closes without a Reservation row', () async {
       final order = await seedOrder(orderId: 44, itemTotal: 25);
       order.floor = 'takeaway';
@@ -205,6 +237,46 @@ void main() {
       expect(closedSales(today), hasLength(1));
       expect(DatabaseCore.reservationBox!.values, isEmpty);
     });
+
+    test(
+      'an Order-only Package preserves its fields through payment',
+      () async {
+        final order = await seedOrder(orderId: 45, itemTotal: 1);
+        order.items = const [];
+        order.packageId = 'pkg-1';
+        order.packageName = 'ბანკეტი';
+        order.packageGuestCount = 10;
+        order.packageUnitPrice = 40;
+        order.packagePrice = 400;
+        order.packageItems = [
+          OrderItem(
+            itemKey: 'salad',
+            itemName: 'სალათი',
+            unitPrice: 4,
+            quantity: 2,
+            total: 8,
+          ),
+        ];
+        order.recalculateTotal(serviceFeeRate: 0);
+        await order.save();
+
+        final result = await CloseTableTransaction.run(
+          orderId: order.orderId,
+          money: ClosureMoney.fromOrder(order, collectedNow: 400),
+          paymentMethod: 'cash',
+          tenderBreakdown: const {'cash': 400},
+          closedById: 'manager',
+          isFiscal: true,
+        );
+
+        expect(result.outcome, ClosureOutcome.closed);
+        expect(order.packageId, 'pkg-1');
+        expect(order.packagePrice, 400);
+        expect(order.packageGuestCount, 10);
+        expect(closedSales(today).single['totalAmount'], 400);
+        expect(DatabaseCore.reservationBox!.values, isEmpty);
+      },
+    );
 
     test('a 900 order books exactly one 900 sale', () async {
       final order = await seedOrder(itemTotal: 900);

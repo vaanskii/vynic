@@ -4,7 +4,9 @@ import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/closure_money.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/order_status.dart';
+import 'package:vynic/core/models/reservation_classification.dart';
 import 'package:vynic/core/models/reservation_status.dart';
+import 'package:vynic/core/services/sync/sync_events.dart';
 
 import '../database_core.dart';
 import '../repositories/audit_repository.dart';
@@ -351,6 +353,13 @@ class CloseTableTransaction {
         phase: ClosurePhase.completed,
         completedAt: DateTime.now(),
       );
+      SyncHub.notify(
+        SyncEvent(
+          type: SyncEventType.orders,
+          action: 'closed',
+          payload: {'orderId': order.orderId, 'status': 'closed'},
+        ),
+      );
       return true;
     } catch (e, stack) {
       developer.log(
@@ -385,14 +394,14 @@ class CloseTableTransaction {
       BusinessDayRepository.getCurrentDate(),
     );
     for (final reservation in DatabaseCore.reservationBox!.values) {
+      if (!ReservationClassification.isRealAdvanceBooking(reservation)) {
+        continue;
+      }
       final resDateString = BusinessDayRepository.dateKey(
         reservation.reservationDate,
       );
       final matchesLinked = reservation.linkedOrderId == orderId;
-      final matchesLegacyNote =
-          reservation.notes != null &&
-          reservation.notes!.contains('Order #$orderId');
-      if (resDateString == dateString && (matchesLinked || matchesLegacyNote)) {
+      if (resDateString == dateString && matchesLinked) {
         if (reservation.statusEnum != ReservationStatus.completed) {
           reservation.statusEnum = ReservationStatus.completed;
           await reservation.save();

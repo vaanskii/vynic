@@ -155,14 +155,19 @@ current transport status.
 - New Takeaway Orders no longer create Reservation bookkeeping rows; local,
   mobile, remote and Edge paths are Order-only. Historical `isTakeAway` rows
   remain supported and backup/restore preserves them unchanged.
-- Walk-In creation still defaults `createReservationRecord: true` and writes an
-  `Order #N` row; Package inherits that default. Real Reservation activation
-  passes `false`, because the legitimate booking already exists and remains
-  linked to its activated Order.
+- New Walk-In and Package Orders likewise no longer create Reservation
+  bookkeeping rows. Walk-In remains Order + Table, Package remains package data
+  applied to an Order, and only genuine advance-booking flows create new
+  Reservation records. Real Reservation activation creates the operational
+  Order while preserving and linking the existing booking.
 - Reservations are only status-transitioned, never purged, so local reservation
   storage stays deliberately mixed: bookings alongside Walk-In, Package and
   historical Takeaway bookkeeping rows. Nothing rewrites old history, and
   backup/restore preserves all of it verbatim.
+- Home refreshes counts, table state and Order-backed cards immediately from
+  completed local POS mutations. Close publishes an Order lifecycle event only
+  after the local transaction completes; this UI refresh is independent of
+  Cloud acknowledgement and the periodic sync scheduler.
 - Cloud `PosReservation` is real-advance-bookings-only. The POS projects its box
   through `ReservationClassification.projectForCloud` when it builds a full
   snapshot, and the mirror's existing "the list is the authoritative set"

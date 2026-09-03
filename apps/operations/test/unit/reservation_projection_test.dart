@@ -19,8 +19,8 @@ import 'package:vynic/core/models/user.dart';
 
 /// What Cloud is told a reservation is, and what the terminal keeps.
 ///
-/// The reservation box has never held only bookings: older Takeaway creation
-/// and current Walk-In/Package creation leave rows in it. Cloud's consumers
+/// The reservation box has never held only bookings: older Takeaway, Walk-In
+/// and Package creation left rows in it. Cloud's consumers
 /// already throw those away on read, so the snapshot was carrying two thousand
 /// rows to have nearly all of them discarded. These state the two properties
 /// that replace that — Cloud gets bookings, and the terminal keeps everything
@@ -126,8 +126,8 @@ Reservation takeawayBookkeeping({
   ],
 );
 
-/// What `createOrderForPackage` writes — it goes through `createOrder`, so the
-/// row it leaves behind is a walk-in row and nothing marks it as a package.
+/// What historical `createOrderForPackage` wrote through `createOrder`: a
+/// walk-in row with nothing that marks it as a package.
 Reservation packageBookkeeping({String id = 'res-package', int orderId = 1767}) =>
     walkInBookkeeping(id: id, orderId: orderId);
 
@@ -546,9 +546,9 @@ void main() {
       expect(DatabaseCore.reservationBox!.length, 5);
     });
 
-    test('the takeaway rows the home panel reads are still there', () async {
-      // Phase 2 moves that panel onto orders. Until it does, these rows and
-      // their pre-order items have to stay exactly where the panel looks.
+    test('historical takeaway rows remain in the local box', () async {
+      // The Order-backed panel no longer needs them, but local history and
+      // backup compatibility keep the old rows untouched.
       await _seedMixedBox();
 
       ReservationClassification.projectForCloud(

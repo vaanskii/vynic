@@ -5,8 +5,6 @@ import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/order_status.dart';
 import 'package:vynic/core/models/package.dart';
-import 'package:vynic/core/models/reservation_status.dart';
-import 'package:vynic/core/models/table_ref.dart';
 
 import 'package:vynic/core/services/audit/audit_event_service.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
@@ -42,7 +40,6 @@ class OrderRepository {
     required String createdBy,
     required List<OrderItem> items,
     bool? includeServiceFee,
-    bool createReservationRecord = true,
   }) async {
     final normalizedTables = <String>[];
     final seenTables = <String>{};
@@ -104,27 +101,6 @@ class OrderRepository {
         username: createdBy,
         orderId: orderId,
         reservationId: null,
-      );
-    }
-
-    if (createReservationRecord) {
-      final tableRefs = _walkInTableRefs(orderTableNumbers, floor);
-
-      final currentDate = BusinessDayRepository.getCurrentDate();
-      final currentTime = BusinessDayRepository.getCurrentDateTime();
-      final timeString =
-          '${currentTime.hour.toString().padLeft(2, '0')}:${currentTime.minute.toString().padLeft(2, '0')}';
-
-      await ReservationRepository.createReservation(
-        customerName: 'Walk-in',
-        customerPhone: '-',
-        tableRefs: tableRefs,
-        reservationDate: currentDate,
-        reservationTime: timeString,
-        numberOfGuests: 0,
-        notes: 'Order #$orderId',
-        createdBy: createdBy,
-        linkedOrderId: orderId,
       );
     }
 
@@ -297,9 +273,8 @@ class OrderRepository {
     return order;
   }
 
-  /// Mobile/cloud dine-in (walk-in) order with a fixed `posOrderId`. Reserves
-  /// the chosen tables and records a walk-in reservation, mirroring a POS
-  /// walk-in created locally.
+  /// Mobile/cloud dine-in (walk-in) order with a fixed `posOrderId`.
+  /// Reserves the chosen tables without manufacturing a Reservation record.
   static Future<Order?> upsertMobileDineInOrder({
     required int posOrderId,
     required List<String> tableNumbers,
@@ -368,24 +343,6 @@ class OrderRepository {
         reservationId: null,
       );
     }
-
-    final tableRefs = _walkInTableRefs(normalizedTables, floor);
-    final currentTime = BusinessDayRepository.getCurrentDateTime();
-    final timeString =
-        '${currentTime.hour.toString().padLeft(2, '0')}:${currentTime.minute.toString().padLeft(2, '0')}';
-    await ReservationRepository.createReservation(
-      customerName: 'Walk-in',
-      customerPhone: '-',
-      tableRefs: tableRefs,
-      reservationDate: BusinessDayRepository.getCurrentDate(),
-      reservationTime: timeString,
-      numberOfGuests: guestCount,
-      notes: 'Order #$posOrderId',
-      createdBy: waiterName,
-      preOrderItems: items,
-      linkedOrderId: posOrderId,
-      status: ReservationStatus.confirmed.storageValue,
-    );
 
     SyncHub.notify(
       SyncEvent(
@@ -753,35 +710,5 @@ class OrderRepository {
       order.updateItemQuantity(itemKey, quantity);
       await updateOrder(order);
     }
-  }
-
-  /// Table refs for a walk-in's linked reservation record. Order table
-  /// entries are either display labels ('Table N' = first floor,
-  /// 'VIP Zone N' = second floor) or bare numbers on [floor]; non-numeric
-  /// entries (e.g. takeaway 'TA-...') carry no table.
-  static List<TableRef> _walkInTableRefs(
-    List<String> tableNames,
-    String floor,
-  ) {
-    final refs = <TableRef>[];
-    for (final tableName in tableNames) {
-      if (tableName.startsWith('Table ')) {
-        final number = tableName.replaceAll('Table ', '').trim();
-        if (int.tryParse(number) != null) {
-          refs.add(TableRef(floor: 'first', tableNumber: number));
-        }
-      } else if (tableName.startsWith('VIP Zone ')) {
-        final number = tableName.replaceAll('VIP Zone ', '').trim();
-        if (int.tryParse(number) != null) {
-          refs.add(TableRef(floor: 'second', tableNumber: number));
-        }
-      } else {
-        final number = tableName.trim();
-        if (int.tryParse(number) != null) {
-          refs.add(TableRef(floor: floor, tableNumber: number));
-        }
-      }
-    }
-    return refs;
   }
 }

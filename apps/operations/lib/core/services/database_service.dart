@@ -543,14 +543,12 @@ class DatabaseService {
     required String createdBy,
     required List<OrderItem> items,
     bool? includeServiceFee,
-    bool createReservationRecord = true,
   }) => OrderRepository.createOrder(
     tableNumbers: tableNumbers,
     floor: floor,
     createdBy: createdBy,
     items: items,
     includeServiceFee: includeServiceFee,
-    createReservationRecord: createReservationRecord,
   );
 
   static Future<Order> createTakeAwayOrder({

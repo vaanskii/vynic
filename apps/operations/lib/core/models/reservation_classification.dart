@@ -2,11 +2,10 @@ import 'reservation.dart';
 
 /// What a row in the reservation box actually is.
 ///
-/// The box has never held only bookings. `OrderRepository.createOrder` defaults
-/// `createReservationRecord` to true and writes a `Walk-in` row noted `Order
-/// #N`; `createOrderForPackage` inherits that default. Older Takeaway creation
-/// paths also wrote `isTakeAway` rows, but new Takeaways are Order-only. Real
-/// Reservation activation opts out because the booking already exists.
+/// The box has never held only bookings. Older Walk-In and Package creation
+/// wrote rows noted `Order #N`, and older Takeaway creation wrote `isTakeAway`
+/// rows. New Orders do not manufacture Reservation records; real Reservation
+/// activation keeps and links the booking that already exists.
 ///
 /// Historical bookkeeping rows remain supported. What they are not is
 /// *bookings*, and this names the difference in one place instead of the three

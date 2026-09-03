@@ -105,7 +105,6 @@ class ActivateReservationTransaction {
       floor: floor,
       createdBy: activatedBy,
       items: reservation.preOrderItems ?? const <OrderItem>[],
-      createReservationRecord: false,
     );
 
     // Set openedByUserId to track who activated this reservation
@@ -251,7 +250,6 @@ class ActivateReservationTransaction {
           items:
               reservation.preOrderItems ??
               [], // Use pre-order items or empty list
-          createReservationRecord: false,
         );
 
         // If there are pre-order items, mark order as confirmed (already sent to kitchen)

@@ -75,12 +75,14 @@ class HomeTablesDashboardSection extends StatelessWidget {
         iconColor: VynicColors.neutral,
         label: 'თავისუფალი',
         value: '$freeCount',
+        valueKey: homeFreeCountKey,
       ),
       _FloorMetricData(
         icon: Icons.receipt_long_outlined,
         iconColor: VynicColors.info,
         label: 'დაკავებული',
         value: '$occupiedCount',
+        valueKey: homeOccupiedCountKey,
       ),
       _FloorMetricData(
         icon: Icons.event_outlined,
@@ -950,6 +952,8 @@ class _SelectionRailSlot extends StatelessWidget {
 /// the tabs read as sitting too high.
 const Key floorSwitchKey = Key('home-tables-floor-switch');
 const Key planPanelKey = Key('home-tables-plan-panel');
+const Key homeFreeCountKey = Key('home-tables-free-count');
+const Key homeOccupiedCountKey = Key('home-tables-occupied-count');
 
 /// Vertical space a [_RailMetric] needs: a 1px border and 8px padding top and
 /// bottom, an 11px label, a 3px gap and an 18px value. Georgian glyphs sit
@@ -1002,6 +1006,7 @@ class _RailMetric extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               metric.value,
+              key: metric.valueKey,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
@@ -1268,10 +1273,12 @@ class _FloorMetricData {
     required this.iconColor,
     required this.label,
     required this.value,
+    this.valueKey,
   });
 
   final IconData icon;
   final Color iconColor;
   final String label;
   final String value;
+  final Key? valueKey;
 }

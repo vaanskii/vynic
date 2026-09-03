@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation.dart';
+import 'package:vynic/core/models/reservation_classification.dart';
 import 'package:vynic/core/models/reservation_status.dart';
 import 'package:vynic/core/models/table_ref.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
@@ -148,11 +149,8 @@ class ReservationRepository {
       final reservationBox = DatabaseCore.reservationBox;
       if (reservationBox == null) return false;
       for (final reservation in reservationBox.values) {
-        final matchesLinked = reservation.linkedOrderId == orderId;
-        final matchesNote =
-            reservation.notes != null &&
-            reservation.notes!.contains('Order #$orderId');
-        if (matchesLinked || matchesNote) {
+        if (reservation.linkedOrderId == orderId &&
+            ReservationClassification.isRealAdvanceBooking(reservation)) {
           reservation.statusEnum = ReservationStatus.completed;
           await reservation.save();
           return true;
@@ -174,11 +172,8 @@ class ReservationRepository {
       final reservationBox = DatabaseCore.reservationBox;
       if (reservationBox == null) return false;
       for (final reservation in reservationBox.values) {
-        final matchesLinked = reservation.linkedOrderId == orderId;
-        final matchesNote =
-            reservation.notes != null &&
-            reservation.notes!.contains('Order #$orderId');
-        if (matchesLinked || matchesNote) {
+        if (reservation.linkedOrderId == orderId &&
+            ReservationClassification.isRealAdvanceBooking(reservation)) {
           reservation.statusEnum = ReservationStatus.cancelled;
           await reservation.save();
           return true;

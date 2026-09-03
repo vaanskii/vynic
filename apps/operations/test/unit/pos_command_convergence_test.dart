@@ -377,6 +377,42 @@ void main() {
       expect(DatabaseCore.reservationBox!.values, isEmpty);
     });
 
+    test(
+      'Edge Walk-In command occupies a table without a Reservation',
+      () async {
+        await DatabaseCore.tableBox!.add(
+          TableModel(tableNumber: '7', floor: 'first'),
+        );
+
+        final first = await PosCommandApplier.upsertDineInOrder(
+          <String, dynamic>{
+            'posOrderId': 4301,
+            'tableNumbers': <String>['7'],
+            'floor': 'first',
+            'waiterName': 'Nino',
+            'guestCount': 3,
+            'items': <Map<String, dynamic>>[],
+          },
+        );
+        final second = await PosCommandApplier.upsertDineInOrder(
+          <String, dynamic>{
+            'posOrderId': 4301,
+            'tableNumbers': <String>['7'],
+            'floor': 'first',
+            'waiterName': 'Nino',
+            'guestCount': 3,
+            'items': <Map<String, dynamic>>[],
+          },
+        );
+
+        expect(first.ok, isTrue);
+        expect(second.ok, isTrue);
+        expect(DatabaseCore.orderBox!.values, hasLength(1));
+        expect(DatabaseCore.tableBox!.values.single.activeOrderId, 4301);
+        expect(DatabaseCore.reservationBox!.values, isEmpty);
+      },
+    );
+
     test('a cancel delivered twice reports done, not missing', () async {
       // The order does not exist here at all, which is what a redelivery finds
       // after the first one removed it. A 404 would turn a duplicate into a

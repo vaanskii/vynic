@@ -9,7 +9,6 @@ import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/reservation_context.dart';
 import 'package:vynic/core/services/database_service.dart';
-import 'package:vynic/core/services/sync/sync_events.dart';
 import 'package:vynic/core/services/sync/pos_live_refresh.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 import 'package:vynic/core/services/sync/connection_status_service.dart';
@@ -82,7 +81,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final FocusNode _shortcutFocusNode = FocusNode(debugLabel: 'home-shortcuts');
   String? _lastToastNotificationId;
   bool _notificationsPanelOpen = false;
-  StreamSubscription<SyncEvent>? _syncEventsSub;
   Timer? _syncRefreshDebounce;
   Timer? _syncRefreshFollowUp;
   Timer? _syncRefreshFinalFollowUp;
@@ -94,7 +92,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onLiveDataChanged() {
     if (!mounted) return;
-    _scheduleLiveRefresh();
+    // SyncHub events are emitted after the local Hive write they describe, so
+    // the offline-first UI can read the committed state immediately. Delayed
+    // retries are reserved for remote signals that may race local ingest.
+    unawaited(_refreshTables());
   }
 
   /// Locks the terminal full-screen until a PIN is entered (manual, from the
@@ -132,9 +133,6 @@ class _HomeScreenState extends State<HomeScreen> {
     AppNotificationHistoryStore.instance.entries.addListener(
       _onNotificationEntriesChanged,
     );
-    // Live-refresh the floor plan / reservations when data changes locally
-    // (e.g. mobile walk-in, cancellation, or reservation arriving via ingest).
-    _syncEventsSub = SyncHub.events.listen(_onSyncEvent);
     // The WebSocket push (which also drives the toast notification) is the most
     // reliable cross-device signal: it bumps on every server-side change, even
     // when the local ingest write races behind it. Refresh on it too.
@@ -151,26 +149,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     MonitoringSocketService.updateCounter.removeListener(_onRemoteUpdateSignal);
     SessionLock.resetToLanding.removeListener(_onSwitchResetToLanding);
-    _syncEventsSub?.cancel();
     _syncRefreshDebounce?.cancel();
     _syncRefreshFollowUp?.cancel();
     _syncRefreshFinalFollowUp?.cancel();
     _shortcutFocusNode.dispose();
     super.dispose();
-  }
-
-  void _onSyncEvent(SyncEvent event) {
-    if (!mounted) return;
-    switch (event.type) {
-      case SyncEventType.tables:
-      case SyncEventType.orders:
-      case SyncEventType.reservations:
-        break;
-      case SyncEventType.menu:
-      case SyncEventType.connection:
-        return;
-    }
-    _scheduleLiveRefresh();
   }
 
   void _onRemoteUpdateSignal() {
@@ -1288,6 +1271,7 @@ class _HomeNavigationTab extends StatelessWidget {
                 ),
                 child: Text(
                   badgeCount! > 9 ? '9+' : '$badgeCount',
+                  key: label == 'გატანები' ? homeTakeawayCountKey : null,
                   style: const TextStyle(
                     color: VynicFloorTokens.text,
                     fontSize: 11,
@@ -1302,6 +1286,8 @@ class _HomeNavigationTab extends StatelessWidget {
     );
   }
 }
+
+const Key homeTakeawayCountKey = Key('home-takeaway-count');
 
 class _TopAdminButton extends StatelessWidget {
   const _TopAdminButton({

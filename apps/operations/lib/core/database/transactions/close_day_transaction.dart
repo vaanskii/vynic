@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 
+import 'package:vynic/core/models/reservation_classification.dart';
 import 'package:vynic/core/models/reservation_status.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
 
@@ -11,7 +12,7 @@ import '../repositories/table_repository.dart';
 /// Closes the business day.
 ///
 /// Multi-step flow (all-or-nothing from the operator's point of view):
-/// guards (no active orders, no pending takeaways, no live table locks) →
+/// guards (no active orders or live table locks) →
 /// finalize reservations → remember the operated date → advance the business
 /// date → reset the daily sales total → purge closed orders → free tables.
 class CloseDayTransaction {
@@ -83,36 +84,6 @@ class CloseDayTransaction {
         return false;
       }
 
-      final pendingTakeAwayReservations = DatabaseCore.reservationBox!.values
-          .where((reservation) {
-            if (!reservation.isTakeAway) {
-              return false;
-            }
-            final reservationDateString = reservation.reservationDate
-                .toIso8601String()
-                .split('T')[0];
-            if (reservationDateString != currentDateString) {
-              return false;
-            }
-            final status = reservation.status.toLowerCase();
-            return status != 'completed' && status != 'cancelled';
-          })
-          .toList();
-
-      if (pendingTakeAwayReservations.isNotEmpty) {
-        developer.log(
-          '❌ CANNOT CLOSE DAY - Pending takeaway reservations found:',
-        );
-        for (final reservation in pendingTakeAwayReservations) {
-          developer.log(
-            '  - ${reservation.customerName} (${reservation.status})',
-          );
-          developer.log('    Time: ${reservation.reservationTime}');
-          developer.log('    Created by: ${reservation.createdBy}');
-        }
-        return false;
-      }
-
       final cleanupResults = await TableRepository.releaseStaleReservedTables();
       if (cleanupResults.isNotEmpty) {
         developer.log(
@@ -148,16 +119,16 @@ class CloseDayTransaction {
 
       developer.log('✅ No active orders found - proceeding with day closure');
 
-      // Finalize dine-in reservations for the closed day (and any earlier
+      // Finalize genuine reservations for the closed day (and any earlier
       // stragglers) so nothing stays 'in-progress' with a linkedOrderId
-      // pointing at an order deleted below. Activated bookings become
-      // 'completed'; never-activated past bookings become 'no-show'.
+      // pointing at an order deleted below. Historical bookkeeping rows are
+      // local history, not bookings, and remain untouched.
       // See docs/VYNIC_PROJECT_PLAN.md §2 (root cause 3).
       var completedReservations = 0;
       var noShowReservations = 0;
       for (final reservation in DatabaseCore.reservationBox!.values) {
-        if (reservation.isTakeAway) {
-          continue; // today's pending takeaways already blocked closing above
+        if (!ReservationClassification.isRealAdvanceBooking(reservation)) {
+          continue;
         }
         final resDateString = reservation.reservationDate
             .toIso8601String()

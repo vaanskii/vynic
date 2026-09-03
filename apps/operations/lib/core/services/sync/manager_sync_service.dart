@@ -1165,6 +1165,7 @@ class ManagerSyncService {
           'acked=$acked remaining=$remaining'
           '${interrupted ? " (backend unavailable)" : ""}',
         );
+        _debugAuditDirtyBreakdown(dirty);
       }
 
       if (remaining == 0) {
@@ -1175,6 +1176,32 @@ class ManagerSyncService {
     } finally {
       _auditSyncInFlight = false;
     }
+  }
+
+  /// How many dirty report ids one debug line will name.
+  static const int _auditDirtyIdLogLimit = 12;
+
+  /// Names what is dirty and why, in debug builds only.
+  ///
+  /// Counts alone cannot tell a busy evening from a report whose content will
+  /// not settle: both show a steady `dirty=16`. Splitting new from changed and
+  /// naming the ids does — the same ids reported as `changed` pass after pass
+  /// means the producer is rewriting them, not the restaurant. Ids and nothing
+  /// else: no customer names, staff names, items or amounts.
+  static void _debugAuditDirtyBreakdown(List<DirtyAuditReport> dirty) {
+    if (!kDebugMode || dirty.isEmpty) return;
+    final fresh = dirty.where((entry) => entry.isNew).length;
+    final ids = dirty
+        .take(_auditDirtyIdLogLimit)
+        .map((entry) {
+          return '${entry.reportId}(${entry.isNew ? 'new' : 'changed'})';
+        })
+        .join(' ');
+    final overflow = dirty.length - _auditDirtyIdLogLimit;
+    debugPrint(
+      '[ManagerSync] Audit dirty: new=$fresh changed=${dirty.length - fresh} '
+      '$ids${overflow > 0 ? ' +$overflow more' : ''}',
+    );
   }
 
   /// Sends one batch and records what the backend acknowledged.

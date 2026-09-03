@@ -83,6 +83,28 @@ String auditEventTypeToString(AuditEventType type) {
   }
 }
 
+/// The time a record carries when it carries none.
+///
+/// Deserialization used to substitute `DateTime.now()` for a missing or
+/// unparseable timestamp. That made the report's serialized content different
+/// on every read, so its sync revision changed every time it was looked at and
+/// the backend could never acknowledge it — a report in that state was pushed
+/// again on every single sync, forever. A fixed value is a visibly unknown
+/// time; a moving one is a silently wrong one.
+final DateTime unknownAuditTimestamp = DateTime.fromMillisecondsSinceEpoch(
+  0,
+  isUtc: true,
+);
+
+/// Reads a stored timestamp, or null when there is nothing usable to read.
+DateTime? parseAuditTimestamp(Object? raw) {
+  if (raw is DateTime) return raw;
+  if (raw is! String) return null;
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty) return null;
+  return DateTime.tryParse(trimmed);
+}
+
 class AuditEvent {
   const AuditEvent({
     required this.type,
@@ -139,7 +161,13 @@ class AuditEvent {
     };
   }
 
-  static AuditEvent fromMap(Map<String, dynamic> map) {
+  /// [fallbackTimestamp] is used when the stored event has no usable time of
+  /// its own. It must be a stable value derived from the record — never `now`,
+  /// which would change the event's content on every read.
+  static AuditEvent fromMap(
+    Map<String, dynamic> map, {
+    DateTime? fallbackTimestamp,
+  }) {
     final previousQty = (map['previousQty'] as num?)?.toInt() ?? 0;
     final newQty = (map['newQty'] as num?)?.toInt() ?? 0;
     final type = inferAuditEventType(
@@ -150,10 +178,10 @@ class AuditEvent {
     final itemName = (map['itemName'] as String?) ?? '';
     final waiterId = (map['waiterId'] as String?) ?? '';
     final waiterName = (map['waiterName'] as String?) ?? waiterId;
-    final timestampRaw = map['timestamp'] as String?;
-    final timestamp = timestampRaw != null
-        ? DateTime.tryParse(timestampRaw) ?? DateTime.now()
-        : DateTime.now();
+    final timestamp =
+        parseAuditTimestamp(map['timestamp']) ??
+        fallbackTimestamp ??
+        unknownAuditTimestamp;
     final note = (map['note'] as String?)?.trim();
 
     return AuditEvent(
@@ -270,25 +298,46 @@ class AuditReport {
     final floor = (map['floor'] as String?) ?? 'first';
     final openedById = (map['openedById'] as String?) ?? '';
     final openedByName = (map['openedByName'] as String?) ?? openedById;
-    final openedAtRaw = map['openedAt'] as String?;
-    final openedAt = openedAtRaw != null
-        ? DateTime.tryParse(openedAtRaw) ?? DateTime.now()
-        : DateTime.now();
     final status = _statusFromString(map['status'] as String?);
-    final events =
-        ((map['events'] as List?) ?? const [])
-            .whereType<Map>()
-            .map((entry) => AuditEvent.fromMap(entry.cast<String, dynamic>()))
-            .toList()
-          ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
-    final updatedAtRaw = map['updatedAt'] as String?;
-    final updatedAt = updatedAtRaw != null
-        ? DateTime.tryParse(updatedAtRaw) ?? DateTime.now()
-        : DateTime.now();
-    final closedAtRaw = map['closedAt'] as String?;
-    final closedAt = closedAtRaw != null
-        ? DateTime.tryParse(closedAtRaw)
-        : null;
+
+    // Times are resolved from the record itself and nothing else. Every
+    // fallback below is another field of this same report, so reading it twice
+    // produces the same report — which is what lets its sync revision settle.
+    final storedOpenedAt = parseAuditTimestamp(map['openedAt']);
+    final storedUpdatedAt = parseAuditTimestamp(map['updatedAt']);
+    final closedAt = parseAuditTimestamp(map['closedAt']);
+    final rawEvents = ((map['events'] as List?) ?? const [])
+        .whereType<Map>()
+        .toList();
+    final eventTimes = rawEvents
+        .map((entry) => parseAuditTimestamp(entry['timestamp']))
+        .toList();
+    DateTime? earliestEvent;
+    for (final time in eventTimes) {
+      if (time == null) continue;
+      if (earliestEvent == null || time.isBefore(earliestEvent)) {
+        earliestEvent = time;
+      }
+    }
+    final anchor =
+        storedOpenedAt ??
+        earliestEvent ??
+        storedUpdatedAt ??
+        closedAt ??
+        unknownAuditTimestamp;
+
+    final events = <AuditEvent>[
+      for (var i = 0; i < rawEvents.length; i++)
+        AuditEvent.fromMap(
+          rawEvents[i].cast<String, dynamic>(),
+          fallbackTimestamp: anchor,
+        ),
+    ]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
+    final openedAt = storedOpenedAt ?? anchor;
+    final updatedAt =
+        storedUpdatedAt ??
+        (events.isNotEmpty ? events.last.timestamp : openedAt);
     final closedById = (map['closedById'] as String?)?.trim();
     final closedByName = (map['closedByName'] as String?)?.trim();
     final locked = map['locked'] == true;

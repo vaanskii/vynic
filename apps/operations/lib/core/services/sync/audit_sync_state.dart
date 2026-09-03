@@ -122,10 +122,21 @@ class AuditSyncState {
     for (final report in reports) {
       final reportId = report.reportId.trim();
       if (reportId.isEmpty) continue;
-      knownReportIds.add(reportId);
+      // A repeated id would be sent as two conflicting versions of one report
+      // in the same batch, and only one of them could ever be acknowledged —
+      // so the other would come back dirty on every sync forever. The producer
+      // already collapses duplicates; this makes the invariant local.
+      if (!knownReportIds.add(reportId)) continue;
       final revision = revisionOf(report);
-      if (acknowledgedRevision(reportId) != revision) {
-        dirty.add(DirtyAuditReport(report: report, revision: revision));
+      final acknowledged = acknowledgedRevision(reportId);
+      if (acknowledged != revision) {
+        dirty.add(
+          DirtyAuditReport(
+            report: report,
+            revision: revision,
+            isNew: acknowledged == null,
+          ),
+        );
       }
     }
     return AuditSyncSelection(dirty: dirty, knownReportIds: knownReportIds);
@@ -176,10 +187,21 @@ class AuditSyncState {
 /// One report the POS intends to send, with the revision it is sending.
 @immutable
 class DirtyAuditReport {
-  const DirtyAuditReport({required this.report, required this.revision});
+  const DirtyAuditReport({
+    required this.report,
+    required this.revision,
+    this.isNew = true,
+  });
 
   final AuditReport report;
   final String revision;
+
+  /// True when the backend has never acknowledged this report at all, false
+  /// when it acknowledged an earlier revision. Diagnostics only: the same ids
+  /// arriving as `changed` on pass after pass is the signature of a report
+  /// whose content is not settling, which is a producer bug rather than a
+  /// restaurant that keeps editing it.
+  final bool isNew;
 
   String get reportId => report.reportId;
 

@@ -18,6 +18,10 @@ class AuditRepository {
   static const String _auditReportKeyPrefix = 'audit_report_order_';
   static const String _auditLegacyPrefix = 'legacy_event_';
 
+  /// Where [_buildLegacyAuditReports] stashes a log's own box key so the
+  /// timestamp fallback can derive a time from it. Never stored.
+  static const String _legacyKeyField = '__legacyKey';
+
   /// Injected by ManagerSyncService so audit changes trigger a server push.
   static void Function()? _onAuditChanged;
   static void registerAuditChangedCallback(void Function() cb) {
@@ -102,15 +106,27 @@ class AuditRepository {
       return const [];
     }
 
-    final actualReports = <AuditReport>[];
+    // One row per report id. A report can end up stored under two keys — a
+    // restore re-adds audit rows under fresh integer keys while later writes
+    // go to `audit_report_order_<id>` — and both copies would then be listed,
+    // shown twice in the admin log, and pushed as two conflicting versions of
+    // the same report that could never both be acknowledged. The later record
+    // wins; nothing is deleted here.
+    final byReportId = <String, AuditReport>{};
     for (final key in DatabaseCore.auditLogBox!.keys) {
       final value = DatabaseCore.auditLogBox!.get(key);
       final report = _parseAuditReport(value);
       if (report == null) {
         continue;
       }
-      actualReports.add(report);
+      final existing = byReportId[report.reportId];
+      if (existing != null &&
+          _reportLastActivity(existing).isAfter(_reportLastActivity(report))) {
+        continue;
+      }
+      byReportId[report.reportId] = report;
     }
+    final actualReports = byReportId.values.toList();
 
     final legacyReports = _buildLegacyAuditReports(
       actualReports.map((report) => report.orderId).toSet(),
@@ -294,6 +310,7 @@ class AuditRepository {
         continue;
       }
 
+      log[_legacyKeyField] = key;
       groupedLogs
           .putIfAbsent(orderId, () => <Map<String, dynamic>>[])
           .add(Map<String, dynamic>.from(log));
@@ -321,6 +338,7 @@ class AuditRepository {
         final timestamp = _resolveLegacyTimestamp(
           log['timestamp'] as String?,
           log['date'] as String?,
+          log[_legacyKeyField] as String?,
         );
 
         final waiterName = (log['performedBy'] as String?)?.trim();
@@ -405,25 +423,36 @@ class AuditRepository {
     return null;
   }
 
+  /// When a legacy log carries no usable time, fall back to its own key.
+  ///
+  /// The key is `legacy_event_<microsecondsSinceEpoch>` — written at the moment
+  /// the action happened, so it is a real time rather than an invented one, and
+  /// it is a property of the stored record rather than of when it was read.
+  /// This used to return the current time, which meant the derived report's
+  /// content changed on every read and its sync revision never settled.
   static DateTime _resolveLegacyTimestamp(
     String? timestampIso,
     String? dateIso,
+    String? logKey,
   ) {
-    final parsedTimestamp = timestampIso != null
-        ? DateTime.tryParse(timestampIso)
-        : null;
+    final parsedTimestamp = parseAuditTimestamp(timestampIso);
     if (parsedTimestamp != null) {
       return parsedTimestamp;
     }
 
-    if (dateIso != null && dateIso.isNotEmpty) {
-      final parsedDate = DateTime.tryParse(dateIso);
-      if (parsedDate != null) {
-        return DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
+    final parsedDate = parseAuditTimestamp(dateIso);
+    if (parsedDate != null) {
+      return DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
+    }
+
+    if (logKey != null && logKey.startsWith(_auditLegacyPrefix)) {
+      final micros = int.tryParse(logKey.substring(_auditLegacyPrefix.length));
+      if (micros != null && micros > 0) {
+        return DateTime.fromMicrosecondsSinceEpoch(micros);
       }
     }
 
-    return BusinessDayRepository.getCurrentDateTime();
+    return unknownAuditTimestamp;
   }
 
   static List<String> _stringifyTableNumbers(dynamic raw) {

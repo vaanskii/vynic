@@ -768,9 +768,13 @@ class AuditRepository {
           .toList();
     }
 
-    filtered.sort(
-      (a, b) => (b['timestamp'] as String).compareTo(a['timestamp'] as String),
-    );
+    // A legacy row restored from an older backup can carry no timestamp at
+    // all. Sort it last rather than throwing and losing the whole listing.
+    filtered.sort((a, b) {
+      final left = (a['timestamp'] as String?) ?? '';
+      final right = (b['timestamp'] as String?) ?? '';
+      return right.compareTo(left);
+    });
 
     return filtered;
   }

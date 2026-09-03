@@ -130,6 +130,9 @@ current transport status.
 - Audit report deserialization resolves missing times from the record itself,
   never from the clock, and reports are listed once per id. Both are required
   for a revision to settle; without them a report is dirty on every sync.
+- Backups carry the audit box's keys (`auditLogKeys`, additive) and restore
+  files each row under its canonical key, so a repeated restore updates rows
+  instead of duplicating them. Keyless older backups still restore.
 - Tables, orders, menu, staff, and `salesHistoryByDate` still use broad snapshot
   payloads; further sync windowing/scaling is deferred.
 

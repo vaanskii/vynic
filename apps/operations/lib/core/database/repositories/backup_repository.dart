@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
+import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
+import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/order_status.dart';
@@ -56,6 +59,11 @@ class BackupRepository {
             );
           }();
 
+    // Read once so the keys and the values cannot disagree about their order.
+    final auditLogEntries = DatabaseCore.auditLogBox!.toMap().entries.toList(
+      growable: false,
+    );
+
     final backupPayload = {
       'generatedAt': timestamp.toIso8601String(),
       'currentDate': BusinessDayRepository.getCurrentDate().toIso8601String(),
@@ -105,9 +113,20 @@ class BackupRepository {
       'expenses': DatabaseCore.expenseBox!.values
           .map(_serializeDynamicMap)
           .toList(),
-      'auditLog': DatabaseCore.auditLogBox!.values
-          .map(_serializeDynamicMap)
+      'auditLog': auditLogEntries
+          .map((entry) => _serializeDynamicMap(entry.value))
           .toList(),
+      // The keys the audit box actually used, index-aligned with `auditLog`.
+      //
+      // A restore has to put each row back where it belongs: an audit report
+      // lives under `audit_report_order_<id>` and a legacy action log under
+      // `legacy_event_<micros>`, and code reads both by that key rather than by
+      // scanning contents. The old backup carried values only, so a restore had
+      // nowhere to put them and appended — which stored a report under a fresh
+      // integer key, hid legacy logs from the audit screen, and duplicated
+      // everything again on the next restore. `auditLog` keeps its old shape so
+      // a backup taken now still restores on a build that ignores this field.
+      'auditLogKeys': auditLogEntries.map((entry) => entry.key).toList(),
       'errorLog': DatabaseCore.errorLogBox!.values
           .map(_serializeDynamicMap)
           .toList(),
@@ -698,6 +717,121 @@ class BackupRepository {
     return safetyBackupPath;
   }
 
+  /// Restores the audit box, each row under the key it belongs at.
+  ///
+  /// The key is not decoration: `AuditRepository` reads a report by
+  /// `audit_report_order_<orderId>`, derives its legacy reports only from keys
+  /// prefixed `legacy_event_`, and `AuditEventService` writes its own rows
+  /// under the event's uuid. Appending instead — which is what this used to do
+  /// — put a report somewhere nothing looks for it, so the next write created a
+  /// second copy under the canonical key and the report was then offered to
+  /// Cloud as two conflicting versions of itself, only one of which could ever
+  /// be acknowledged. It also dropped legacy action logs out of the audit
+  /// screen entirely, since a row under an integer key has no prefix to match.
+  ///
+  /// Every key below is derived from the row's own content, so restoring the
+  /// same backup twice writes the same rows twice rather than doubling them.
+  static Future<void> _restoreAuditLog(
+    List<dynamic> auditLogJson,
+    List<dynamic>? recordedKeys,
+  ) async {
+    final box = DatabaseCore.auditLogBox;
+    if (box == null) return;
+
+    for (var index = 0; index < auditLogJson.length; index++) {
+      final raw = auditLogJson[index];
+      if (raw is! Map) continue;
+      final entry = Map<String, dynamic>.from(raw);
+      final recorded = recordedKeys != null && index < recordedKeys.length
+          ? recordedKeys[index]
+          : null;
+      await box.put(_auditLogKeyFor(entry, recorded, box), entry);
+    }
+  }
+
+  /// Where one audit row goes.
+  ///
+  /// Identity carried by the row wins over the key the backup recorded: a
+  /// report's canonical home is its own `reportId`, so a backup taken from a
+  /// store that had already been damaged by the old append restore is repaired
+  /// rather than reproduced.
+  static Object _auditLogKeyFor(
+    Map<String, dynamic> entry,
+    Object? recordedKey,
+    Box<dynamic> box,
+  ) {
+    // An audit report. `reportId` is exactly what AuditRepository writes under.
+    final reportId = (entry['reportId'] as String?)?.trim();
+    if (reportId != null && reportId.isNotEmpty) return reportId;
+
+    // An AuditEventLog row, keyed by its own uuid by AuditEventService.
+    final eventId = (entry['id'] as String?)?.trim();
+    if (eventId != null && eventId.isNotEmpty) return eventId;
+
+    // A legacy action log from a backup that recorded its key.
+    if (recordedKey is String && recordedKey.isNotEmpty) return recordedKey;
+    if (recordedKey is int) return recordedKey;
+
+    // A legacy action log from an older backup, which carried no keys. The key
+    // the POS minted was the moment of the action, so rebuild that from the
+    // log's own timestamp and keep the prefix the audit screen looks for.
+    final timestamp = parseAuditTimestamp(entry['timestamp']);
+    if (timestamp == null) {
+      // Nothing in the row says when it happened, and inventing a number here
+      // would read back as a fabricated time. A content address instead: not
+      // parseable as micros, so it resolves as an unknown time.
+      return 'legacy_event_undated_${_contentDigest(entry)}';
+    }
+
+    // Two distinct logs can share a microsecond. Step past an occupied slot
+    // rather than overwrite it, and stop as soon as the row already there is
+    // this same row — which is what makes a repeated restore a no-op.
+    final base = timestamp.microsecondsSinceEpoch;
+    for (var offset = 0; offset < _auditLogKeyProbeLimit; offset++) {
+      final candidate = 'legacy_event_${base + offset}';
+      final occupant = box.get(candidate);
+      if (occupant == null) return candidate;
+      if (occupant is Map &&
+          _contentDigest(occupant) == _contentDigest(entry)) {
+        return candidate;
+      }
+    }
+    return 'legacy_event_undated_${_contentDigest(entry)}';
+  }
+
+  /// How far [_auditLogKeyFor] will probe past a taken microsecond.
+  static const int _auditLogKeyProbeLimit = 64;
+
+  /// A short stable fingerprint of a row's content, order-independent.
+  static String _contentDigest(Map<dynamic, dynamic> entry) {
+    final keys = entry.keys.map((key) => key.toString()).toList()..sort();
+    final buffer = StringBuffer();
+    for (final key in keys) {
+      buffer
+        ..write(json.encode(key))
+        ..write(':')
+        ..write(json.encode(_canonicalForDigest(entry[key])))
+        ..write(',');
+    }
+    return sha256
+        .convert(utf8.encode(buffer.toString()))
+        .toString()
+        .substring(0, 16);
+  }
+
+  /// Nested content in a form whose encoding cannot depend on map ordering —
+  /// a row read from Hive and the same row decoded from JSON must fingerprint
+  /// alike, or a repeated restore would stop recognising its own work.
+  static Object? _canonicalForDigest(Object? value) {
+    if (value is Map) {
+      final keys = value.keys.map((key) => key.toString()).toList()..sort();
+      return {for (final key in keys) key: _canonicalForDigest(value[key])};
+    }
+    if (value is List) return value.map(_canonicalForDigest).toList();
+    if (value is DateTime) return value.toIso8601String();
+    return value;
+  }
+
   static Future<void> _applyBackupPayload(
     Map<String, dynamic> payload, {
     required bool clearExisting,
@@ -805,11 +939,7 @@ class BackupRepository {
       }
     }
 
-    for (final auditEntry in auditLogJson) {
-      if (auditEntry is Map) {
-        DatabaseCore.auditLogBox!.add(Map<String, dynamic>.from(auditEntry));
-      }
-    }
+    await _restoreAuditLog(auditLogJson, payload['auditLogKeys'] as List?);
 
     for (final errorEntry in errorLogJson) {
       if (errorEntry is Map) {

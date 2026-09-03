@@ -105,6 +105,40 @@ void main() {
     await DatabaseCore.settingsBox!.put('serviceFeePercent', 10.0);
   });
 
+  test('the backup records the key each audit row was stored under', () async {
+    // Restore has to put an audit row back where the code reads it from: a
+    // report under `audit_report_order_<id>`, a legacy action log under
+    // `legacy_event_<micros>`. The old payload carried values only, so a
+    // restore had nowhere to put them and appended instead — filing a report
+    // where nothing looks for it and hiding legacy logs from the audit screen.
+    await DatabaseCore.auditLogBox!.clear();
+    await DatabaseCore.auditLogBox!.put('audit_report_order_7', {
+      'reportId': 'audit_report_order_7',
+      'orderId': 7,
+      'status': 'CLOSED',
+      'events': const <Map<String, dynamic>>[],
+    });
+    await DatabaseCore.auditLogBox!.put('legacy_event_1756000000111000', {
+      'actionType': 'add_item',
+      'performedBy': 'Nino',
+      'timestamp': '2026-08-01T10:00:00.000',
+      'details': const {'orderId': 7},
+    });
+
+    final payload = await _backupPayload();
+    final rows = payload['auditLog'] as List;
+    final keys = payload['auditLogKeys'] as List;
+
+    expect(keys, hasLength(rows.length));
+    expect(keys, contains('audit_report_order_7'));
+    expect(keys, contains('legacy_event_1756000000111000'));
+    // Index-aligned, so row i belongs at key i.
+    final index = keys.indexOf('audit_report_order_7');
+    expect((rows[index] as Map)['reportId'], 'audit_report_order_7');
+
+    await DatabaseCore.auditLogBox!.clear();
+  });
+
   test('every box in the database has a slot in the backup', () async {
     final payload = await _backupPayload();
 

@@ -1,0 +1,56 @@
+/* Loading bar animation */
+@keyframes loading-bar {
+  0% { 
+    width: 0%; 
+  }
+  50% { 
+    width: 70%; 
+  }
+  100% { 
+    width: 100%; 
+  }
+}
+
+/* Loading dots animation */
+@keyframes loading-dots {
+  0%, 20% { 
+    opacity: 0; 
+  }
+  50% { 
+    opacity: 1; 
+  }
+  100% { 
+    opacity: 0; 
+  }
+}
+
+.animate-loading-bar {
+  animation: loading-bar 2s ease-in-out;
+}
+
+.loading-dots {
+  position: relative;
+}
+
+.loading-dots::after {
+  content: '';
+  position: absolute;
+  right: -20px;
+  animation: loading-dots 1.5s infinite;
+}
+
+/* Pulsing glow effect */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.1);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}

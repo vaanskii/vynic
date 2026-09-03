@@ -1,0 +1,3924 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
+import 'package:intl/intl.dart';
+import 'package:vynic/core/services/pos/backup_file_picker.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_menu_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_packages_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_close_day_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_sales_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_sales_report_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_audit_log_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_error_log_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_connection_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_data_backup_panel.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_financial_reports_panel.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_settings_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_developer_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/developer_unlock_dialog.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/printers/admin_printers_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_reservations_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_staff_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_display_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/table_layouts/admin_table_layouts_section.dart';
+import 'package:vynic/core/utils/payment_utils.dart';
+import 'package:vynic/core/utils/pos_feedback.dart';
+import 'package:vynic/apps/windows_pos/screens/login_screen.dart';
+import 'package:vynic/core/models/pos_display_settings.dart';
+import 'package:vynic/core/models/user.dart';
+import 'package:vynic/core/services/database_service.dart';
+import 'package:vynic/core/services/printing/printer_service.dart';
+import 'package:vynic/core/services/pos/pos_display_settings_controller.dart';
+import 'package:vynic/core/services/pos/monthly_report_service.dart';
+import 'package:vynic/core/services/sync/manager_sync_service.dart';
+import 'package:vynic/core/services/audit/money_audit.dart';
+import 'package:vynic/core/services/security/developer_access.dart';
+
+class AdminScreen extends StatefulWidget {
+  /// Sections a venue's own manager reaches with their admin PIN.
+  static const List<String> managerSections = [
+    'staff',
+    'menu',
+    'packages',
+    'reservations',
+    'tableLayouts',
+    'display',
+    'closeday',
+    'sales',
+    'salesReport',
+    'financialReports',
+    'audit',
+    'settings',
+  ];
+
+  /// Destinations that need a signed developer token.
+  ///
+  /// These are the tools a venue cannot be trusted with once the app is sold:
+  /// the backend URL and printer plumbing brick sync and printing when they
+  /// are guessed at, the error log is a support tool rather than a business
+  /// one, and „developer" itself holds restore, wipe and PIN recovery.
+  static const List<String> developerSections = [
+    'errors',
+    'printers',
+    'connection',
+    'developer',
+  ];
+
+  /// Every section the management centre can navigate to, whoever is looking.
+  ///
+  /// Kept beside the title map so a tool cannot be added to one and forgotten
+  /// in the other — which is how backup ended up buried inside „კავშირი".
+  static const List<String> navigableSections = [
+    ...managerSections,
+    ...developerSections,
+  ];
+
+  /// Georgian title for a section, for tests and for the content header.
+  static String sectionTitle(String section) {
+    return _AdminScreenState._titleFor(section);
+  }
+
+  const AdminScreen({super.key, required this.user});
+
+  final User user;
+
+  @override
+  State<AdminScreen> createState() => _AdminScreenState();
+}
+
+class _AdminScreenState extends State<AdminScreen> {
+  String _selectedSection = 'staff'; // Default section
+
+  // The admin chrome is the same rail the floor screen uses: a light panel on
+  // a warm page, with the lavender accent marking the one selected thing. It
+  // used to be a dark navy rail with a teal accent — a second product's
+  // colours bolted onto the side of this one.
+  static const Color _surfaceColor = VynicFloorTokens.page;
+  static const Color _sidebarColor = VynicFloorTokens.panel;
+  static const Color _sidebarMuted = VynicFloorTokens.textMuted;
+  static const Color _sidebarSelected = VynicFloorTokens.accentSoft;
+  static const Color _adminAccent = VynicFloorTokens.accentStrong;
+
+  final TextEditingController _kitchenPrinterController =
+      TextEditingController();
+  final TextEditingController _receiptPrinterController =
+      TextEditingController();
+  final TextEditingController _printerPortController = TextEditingController();
+
+  final TextEditingController _serviceFeeController = TextEditingController();
+  final TextEditingController _currentCancellationPasswordController =
+      TextEditingController();
+  final TextEditingController _newCancellationPasswordController =
+      TextEditingController();
+  final TextEditingController _confirmCancellationPasswordController =
+      TextEditingController();
+  final TextEditingController _cancellationPasswordHintController =
+      TextEditingController();
+  final TextEditingController _monthlyReportLeaseController =
+      TextEditingController();
+  final TextEditingController _monthlyReportStaffDailyController =
+      TextEditingController();
+
+  bool _serviceFeeEnabledByDefault = false;
+  bool _receiptServiceFeeLineVisible = true;
+  bool _closeReceiptServiceFeeLineVisible = false;
+  double _serviceFeePercent = 10.0;
+  String _defaultLanguageSetting = 'ka';
+  String? _lastBackupPath;
+  String? _lastRestorePath;
+  bool _isCancellationPasswordSet = false;
+  bool _isSavingCancellationPassword = false;
+  DateTime? _cancellationPasswordUpdatedAt;
+  String _lastSavedCancellationHint = '';
+  bool _restrictTableCloseToOwner = false;
+  bool _isSavingTableOwnershipSettings = false;
+  PosDisplaySettings _displaySettings = PosDisplaySettings.defaults;
+  bool _isSavingDisplaySettings = false;
+
+  late int _selectedSalesYear;
+  late int _selectedSalesMonth;
+  late int _selectedAuditYear;
+  late int _selectedAuditMonth;
+
+  bool _isSavingPrinterSettings = false;
+  bool _isTestingPrinters = false;
+  bool _isSavingServiceFee = false;
+  bool _isSavingLocalization = false;
+  bool _isCreatingBackup = false;
+  bool _isRestoringBackup = false;
+  double _monthlyReportProfitRatio = 0.5;
+  bool _isSavingMonthlyReportConfig = false;
+  bool _isGeneratingMonthlyReport = false;
+  bool _isGeneratingFullReport = false;
+  DateTime _selectedMonthlyReportMonth = DateTime.now();
+  int _monthlyReportStartDay = 1;
+  int _monthlyReportEndDay = 1;
+  List<DateTime> _monthlyReportMonthOptions = <DateTime>[];
+  MonthlyReportSummary? _monthlyReportPreview;
+  String? _monthlyReportInputError;
+  DateTime _fullReportStartMonth = DateTime.now();
+  DateTime _fullReportEndMonth = DateTime.now();
+  List<DateTime> _fullReportMonthOptions = <DateTime>[];
+  List<MonthlyReportSummary> _fullReportPreviewMonths =
+      <MonthlyReportSummary>[];
+  double _fullReportTotalSalesAllTime = 0.0;
+  final NumberFormat _currencyFormatter = NumberFormat.currency(
+    locale: 'ka_GE',
+    symbol: '₾',
+    decimalDigits: 2,
+  );
+
+  bool get _isMobile => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+  late bool _isSidebarExpanded;
+
+  /// Supervisor: only პერსონალი (waiters) + დღის დახურვა.
+  bool get _isLimitedAdmin => widget.user.isSupervisor;
+
+  static const _limitedAdminSections = {
+    'staff',
+    'waiters',
+    'users',
+    'closeday',
+    'reservations',
+  };
+
+  /// Whether a signed developer token is currently active on this terminal.
+  ///
+  /// Supervisors never see the developer half regardless: the token unlocks
+  /// tools, it does not promote whoever happens to be signed in.
+  bool get _isDeveloperUnlocked =>
+      !_isLimitedAdmin && DeveloperAccess.isUnlocked;
+
+  void _onDeveloperAccessChanged() {
+    if (!mounted) return;
+    setState(() {
+      // Locking while standing in a developer section would otherwise leave
+      // the manager looking at the backend URL field with no way back.
+      if (!_isDeveloperUnlocked &&
+          AdminScreen.developerSections.contains(_selectedSection)) {
+        _selectedSection = 'settings';
+      }
+    });
+  }
+
+  /// The hidden entry point: a long press on the sidebar wordmark.
+  ///
+  /// Not a menu item, not a gesture anyone finds by accident, and not security
+  /// on its own — the signed token behind it is. This only keeps the door out
+  /// of a curious manager's way.
+  Future<void> _openDeveloperUnlock() async {
+    if (_isLimitedAdmin) return;
+    if (DeveloperAccess.isUnlocked) {
+      setState(() => _selectedSection = 'developer');
+      return;
+    }
+    final unlocked = await DeveloperUnlockDialog.show(context);
+    if (!mounted || !unlocked) return;
+    setState(() => _selectedSection = 'developer');
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _isSidebarExpanded = !_isMobile;
+    DeveloperAccess.unlocked.addListener(_onDeveloperAccessChanged);
+    if (_isLimitedAdmin) {
+      _selectedSection = 'staff';
+    }
+    final currentBusinessDate = DatabaseService.getCurrentDate();
+    _selectedSalesYear = currentBusinessDate.year;
+    _selectedSalesMonth = currentBusinessDate.month;
+    _selectedAuditYear = currentBusinessDate.year;
+    _selectedAuditMonth = currentBusinessDate.month;
+    _initializeSettingsState();
+  }
+
+  @override
+  void dispose() {
+    DeveloperAccess.unlocked.removeListener(_onDeveloperAccessChanged);
+    _kitchenPrinterController.dispose();
+    _receiptPrinterController.dispose();
+    _printerPortController.dispose();
+    _serviceFeeController.dispose();
+    _currentCancellationPasswordController.dispose();
+    _newCancellationPasswordController.dispose();
+    _confirmCancellationPasswordController.dispose();
+    _cancellationPasswordHintController.dispose();
+    _monthlyReportLeaseController.dispose();
+    _monthlyReportStaffDailyController.dispose();
+    super.dispose();
+  }
+
+  void _initializeSettingsState() {
+    final currentBusinessDate = DatabaseService.getCurrentDate();
+    _kitchenPrinterController.text = DatabaseService.getKitchenPrinterIp();
+    _receiptPrinterController.text = DatabaseService.getReceiptPrinterIp();
+    _printerPortController.text = DatabaseService.getPrinterPort().toString();
+
+    _serviceFeePercent = DatabaseService.getServiceFeePercentage();
+    _serviceFeeEnabledByDefault =
+        DatabaseService.isServiceFeeEnabledByDefault();
+    _receiptServiceFeeLineVisible =
+        DatabaseService.isReceiptServiceFeeLineVisible();
+    _closeReceiptServiceFeeLineVisible =
+        DatabaseService.isCloseReceiptServiceFeeLineVisible();
+    _serviceFeeController.text = _formatServiceFeeField(_serviceFeePercent);
+
+    _defaultLanguageSetting = DatabaseService.getDefaultLanguage();
+    _isCancellationPasswordSet = DatabaseService.hasDestructiveActionPassword();
+    _cancellationPasswordUpdatedAt =
+        DatabaseService.getDestructiveActionPasswordUpdatedAt();
+    _restrictTableCloseToOwner =
+        DatabaseService.isTableCloseRestrictedToOwner();
+    _displaySettings = DatabaseService.getPosDisplaySettings();
+    _lastSavedCancellationHint =
+        DatabaseService.getDestructiveActionPasswordHint();
+    _cancellationPasswordHintController.text = _lastSavedCancellationHint;
+
+    final monthlyConfig = MonthlyReportService.getConfig();
+    _monthlyReportLeaseController.text = _formatMoneyField(
+      monthlyConfig.leaseCost,
+    );
+    _monthlyReportStaffDailyController.text = _formatMoneyField(
+      monthlyConfig.staffDailyCost,
+    );
+    _monthlyReportProfitRatio = monthlyConfig.foodProfitRatio.clamp(0.0, 1.0);
+
+    _selectedMonthlyReportMonth = DateTime(
+      currentBusinessDate.year,
+      currentBusinessDate.month,
+    );
+    final daysInSelectedMonth = _getDaysInMonth(_selectedMonthlyReportMonth);
+    _monthlyReportStartDay = 1;
+    _monthlyReportEndDay = _maxReportEndDayForMonth(
+      _selectedMonthlyReportMonth,
+      daysInSelectedMonth,
+    );
+    _monthlyReportMonthOptions = _buildRecentMonths(
+      _selectedMonthlyReportMonth,
+      12,
+    );
+    _refreshMonthlyReportPreview();
+    _initializeFullReportState();
+  }
+
+  void _initializeFullReportState() {
+    // Build month options from sales history + cost overrides.
+    final months = <DateTime>{};
+    for (final sale in DatabaseService.getAllSales()) {
+      final closedAtRaw = sale['closedAt'] as String?;
+      final dateRaw = sale['date'] as String?;
+      final dt = closedAtRaw != null
+          ? DateTime.tryParse(closedAtRaw)
+          : (dateRaw != null ? DateTime.tryParse('${dateRaw}T00:00:00') : null);
+      if (dt != null) {
+        months.add(DateTime(dt.year, dt.month));
+      }
+    }
+    // Also include months carrying a cost override even if they have no sales.
+    for (var y = DateTime.now().year - 3; y <= DateTime.now().year + 1; y++) {
+      for (var m = 1; m <= 12; m++) {
+        final leaseOverride =
+            DatabaseService.getMonthlyReportLeaseCostOverrideForMonth(y, m);
+        final staffOverride =
+            DatabaseService.getMonthlyReportStaffDailyCostOverrideForMonth(
+              y,
+              m,
+            );
+        if (leaseOverride != null || staffOverride != null) {
+          months.add(DateTime(y, m));
+        }
+      }
+    }
+    final list = months.toList()..sort((a, b) => a.compareTo(b));
+    final nowMonth = DateTime(DateTime.now().year, DateTime.now().month);
+    if (!list.any(
+      (m) => m.year == nowMonth.year && m.month == nowMonth.month,
+    )) {
+      list.add(nowMonth);
+      list.sort((a, b) => a.compareTo(b));
+    }
+    _fullReportMonthOptions = list.isEmpty ? [DateTime.now()] : list;
+    _fullReportStartMonth = _fullReportMonthOptions.first;
+    _fullReportEndMonth = _fullReportMonthOptions.last;
+    _refreshFullReportPreview();
+  }
+
+  List<DateTime> _monthsBetween(DateTime start, DateTime end) {
+    final a = DateTime(start.year, start.month);
+    final b = DateTime(end.year, end.month);
+    if (a.isAfter(b)) return _monthsBetween(b, a);
+    final months = <DateTime>[];
+    var cur = a;
+    while (!cur.isAfter(b)) {
+      months.add(cur);
+      cur = DateTime(cur.year, cur.month + 1);
+    }
+    return months;
+  }
+
+  DateTime _monthPeriodStart(DateTime month) =>
+      DateTime(month.year, month.month, 1);
+
+  DateTime _monthPeriodEnd(DateTime month) {
+    final monthEnd = DateTime(month.year, month.month + 1, 0);
+    final now = DateTime.now();
+    if (month.year == now.year && month.month == now.month) {
+      final today = DateTime(now.year, now.month, now.day);
+      if (today.isBefore(monthEnd)) return today;
+    }
+    return monthEnd;
+  }
+
+  void _refreshFullReportPreview() {
+    final config = _tryBuildMonthlyReportConfig();
+    if (config == null) {
+      _fullReportPreviewMonths = <MonthlyReportSummary>[];
+      _fullReportTotalSalesAllTime = 0.0;
+      return;
+    }
+    final rangeMonths = _monthsBetween(
+      _fullReportStartMonth,
+      _fullReportEndMonth,
+    );
+    final previews = <MonthlyReportSummary>[];
+    double totalAll = 0;
+    for (final m in rangeMonths) {
+      final leaseOverride =
+          DatabaseService.getMonthlyReportLeaseCostOverrideForMonth(
+            m.year,
+            m.month,
+          );
+      final staffOverride =
+          DatabaseService.getMonthlyReportStaffDailyCostOverrideForMonth(
+            m.year,
+            m.month,
+          );
+      final monthConfig = config.copyWith(
+        leaseCost: leaseOverride ?? config.leaseCost,
+        staffDailyCost: staffOverride ?? config.staffDailyCost,
+      );
+      final summary = MonthlyReportService.calculateSummary(
+        year: m.year,
+        month: m.month,
+        overrideConfig: monthConfig,
+        periodStart: _monthPeriodStart(m),
+        periodEnd: _monthPeriodEnd(m),
+      );
+      if (summary.totalSales <= 0) continue; // hide 0 months
+      previews.add(summary);
+      totalAll += summary.totalSales;
+    }
+    _fullReportPreviewMonths = previews;
+    _fullReportTotalSalesAllTime = double.parse(totalAll.toStringAsFixed(2));
+    if (mounted) setState(() {});
+  }
+
+  /// Per-month lease and staff-cost assumptions for the full report.
+  ///
+  /// These are the operator's estimates, not measured cost, and the report's
+  /// whole expense side derives from them — so every change is written to the
+  /// audit log with what the value was before.
+  Future<Map<String, Map<String, double>>?> _promptMonthlyCostOverrides(
+    List<DateTime> months,
+    MonthlyReportConfig config,
+  ) async {
+    final leaseControllers = <String, TextEditingController>{};
+    final staffControllers = <String, TextEditingController>{};
+    for (final m in months) {
+      final key = '${m.year}-${m.month.toString().padLeft(2, '0')}';
+      final leaseOverride =
+          DatabaseService.getMonthlyReportLeaseCostOverrideForMonth(
+            m.year,
+            m.month,
+          );
+      final staffOverride =
+          DatabaseService.getMonthlyReportStaffDailyCostOverrideForMonth(
+            m.year,
+            m.month,
+          );
+      leaseControllers[key] = TextEditingController(
+        text: _formatMoneyField(leaseOverride ?? config.leaseCost),
+      );
+      staffControllers[key] = TextEditingController(
+        text: _formatMoneyField(staffOverride ?? config.staffDailyCost),
+      );
+    }
+    final result = await showDialog<Map<String, Map<String, double>>>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setLocalState) {
+            return AlertDialog(
+              title: const Text('თვეების კორექცია'),
+              content: SizedBox(
+                width: 560,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ...months.map((m) {
+                        final key =
+                            '${m.year}-${m.month.toString().padLeft(2, '0')}';
+                        final lease =
+                            _tryParseMoney(leaseControllers[key]?.text ?? '') ??
+                            config.leaseCost;
+                        final staffDaily =
+                            _tryParseMoney(staffControllers[key]?.text ?? '') ??
+                            config.staffDailyCost;
+                        final monthConfig = config.copyWith(
+                          leaseCost: lease,
+                          staffDailyCost: staffDaily,
+                        );
+                        final summary = MonthlyReportService.calculateSummary(
+                          year: m.year,
+                          month: m.month,
+                          overrideConfig: monthConfig,
+                          periodStart: _monthPeriodStart(m),
+                          periodEnd: _monthPeriodEnd(m),
+                        );
+                        final isProfit = summary.netProfit >= 0;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${_getGeorgianMonthName(m.month)} ${m.year}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: leaseControllers[key],
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                            decimal: true,
+                                          ),
+                                      onChanged: (_) => setLocalState(() {}),
+                                      decoration: const InputDecoration(
+                                        labelText: 'ქირის ხარჯი',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: TextField(
+                                      controller: staffControllers[key],
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                            decimal: true,
+                                          ),
+                                      onChanged: (_) => setLocalState(() {}),
+                                      decoration: const InputDecoration(
+                                        labelText: 'თანამშრომლების ხარჯი',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                '${isProfit ? 'წმინდა მოგება' : 'წმინდა ზარალი'}: ${_currencyFormatter.format(summary.netProfit)}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                  color: isProfit
+                                      ? AdminTones.successText
+                                      : AdminDesign.danger,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('გაუქმება'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final leaseMap = <String, double>{};
+                    final staffMap = <String, double>{};
+                    for (final m in months) {
+                      final key =
+                          '${m.year}-${m.month.toString().padLeft(2, '0')}';
+                      leaseMap[key] =
+                          _tryParseMoney(leaseControllers[key]?.text ?? '') ??
+                          config.leaseCost;
+                      staffMap[key] =
+                          _tryParseMoney(staffControllers[key]?.text ?? '') ??
+                          config.staffDailyCost;
+                    }
+                    Navigator.pop(ctx, {'lease': leaseMap, 'staff': staffMap});
+                  },
+                  child: const Text('შენახვა'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    for (final c in leaseControllers.values) {
+      c.dispose();
+    }
+    for (final c in staffControllers.values) {
+      c.dispose();
+    }
+    return result;
+  }
+
+  /// Writes the per-month cost overrides and records what changed.
+  Future<void> _persistMonthlyCostOverrides(
+    List<DateTime> rangeMonths,
+    Map<String, Map<String, double>> payload,
+  ) async {
+    final leaseMap = payload['lease'] ?? <String, double>{};
+    final staffMap = payload['staff'] ?? <String, double>{};
+    for (final m in rangeMonths) {
+      final key = '${m.year}-${m.month.toString().padLeft(2, '0')}';
+      final previousLease =
+          DatabaseService.getMonthlyReportLeaseCostOverrideForMonth(
+            m.year,
+            m.month,
+          );
+      final previousStaff =
+          DatabaseService.getMonthlyReportStaffDailyCostOverrideForMonth(
+            m.year,
+            m.month,
+          );
+      await DatabaseService.setMonthlyReportLeaseCostOverrideForMonth(
+        m.year,
+        m.month,
+        leaseMap[key],
+      );
+      await DatabaseService.setMonthlyReportStaffDailyCostOverrideForMonth(
+        m.year,
+        m.month,
+        staffMap[key],
+      );
+      await MoneyAudit.reportCostAssumptionChanged(
+        actorId: widget.user.username,
+        field: 'leaseCost',
+        scope: key,
+        previousValue: previousLease,
+        newValue: leaseMap[key],
+      );
+      await MoneyAudit.reportCostAssumptionChanged(
+        actorId: widget.user.username,
+        field: 'staffDailyCost',
+        scope: key,
+        previousValue: previousStaff,
+        newValue: staffMap[key],
+      );
+    }
+  }
+
+  Future<void> _generateFullReportXlsx() async {
+    if (_isGeneratingFullReport) return;
+    final config = _tryBuildMonthlyReportConfig();
+    if (config == null) {
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'ჯერ შეავსეთ თვიური ანგარიშის კონფიგურაცია სწორად.',
+          style: PosToastStyle.error,
+        ),
+      );
+      return;
+    }
+    final rangeMonths = _monthsBetween(
+      _fullReportStartMonth,
+      _fullReportEndMonth,
+    );
+    if (mounted) {
+      setState(() => _isGeneratingFullReport = true);
+    }
+    try {
+      final payload = await _promptMonthlyCostOverrides(rangeMonths, config);
+      if (payload == null) return;
+      await _persistMonthlyCostOverrides(rangeMonths, payload);
+
+      final String? outputPath = await FilePicker.platform.saveFile(
+        dialogTitle: 'შეინახეთ სრული ანგარიში (XLSX)',
+        fileName:
+            'full_report_${_fullReportStartMonth.year}_${_fullReportStartMonth.month.toString().padLeft(2, '0')}_to_${_fullReportEndMonth.year}_${_fullReportEndMonth.month.toString().padLeft(2, '0')}.xlsx',
+        type: FileType.custom,
+        allowedExtensions: ['xlsx'],
+      );
+      if (outputPath == null) return;
+
+      final leaseByMonth = <String, double>{};
+      final staffByMonth = <String, double>{};
+      final periodEndByMonth = <String, DateTime>{};
+      for (final m in rangeMonths) {
+        final key = '${m.year}-${m.month.toString().padLeft(2, '0')}';
+        leaseByMonth[key] =
+            DatabaseService.getMonthlyReportLeaseCostOverrideForMonth(
+              m.year,
+              m.month,
+            ) ??
+            config.leaseCost;
+        staffByMonth[key] =
+            DatabaseService.getMonthlyReportStaffDailyCostOverrideForMonth(
+              m.year,
+              m.month,
+            ) ??
+            config.staffDailyCost;
+        periodEndByMonth[key] = _monthPeriodEnd(m);
+      }
+      final bytes = MonthlyReportService.buildFullReportXlsxBytes(
+        months: rangeMonths,
+        config: config,
+        leaseByMonth: leaseByMonth,
+        staffDailyByMonth: staffByMonth,
+        periodEndByMonth: periodEndByMonth,
+      );
+      await File(outputPath).writeAsBytes(bytes, flush: true);
+      _refreshFullReportPreview();
+      if (!mounted) return;
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'ფაილი წარმატებით შეინახა: $outputPath',
+          style: PosToastStyle.success,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isGeneratingFullReport = false);
+      }
+    }
+  }
+
+  Future<void> _generateFullReportPdf() async {
+    if (_isGeneratingFullReport) return;
+    final config = _tryBuildMonthlyReportConfig();
+    if (config == null) {
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'ჯერ შეავსეთ თვიური ანგარიშის კონფიგურაცია სწორად.',
+          style: PosToastStyle.error,
+        ),
+      );
+      return;
+    }
+    final rangeMonths = _monthsBetween(
+      _fullReportStartMonth,
+      _fullReportEndMonth,
+    );
+    if (mounted) {
+      setState(() => _isGeneratingFullReport = true);
+    }
+    try {
+      final payload = await _promptMonthlyCostOverrides(rangeMonths, config);
+      if (payload == null) return;
+      await _persistMonthlyCostOverrides(rangeMonths, payload);
+
+      final String? outputPath = await FilePicker.platform.saveFile(
+        dialogTitle: 'შეინახეთ სრული ანგარიში (PDF)',
+        fileName:
+            'full_report_${_fullReportStartMonth.year}_${_fullReportStartMonth.month.toString().padLeft(2, '0')}_to_${_fullReportEndMonth.year}_${_fullReportEndMonth.month.toString().padLeft(2, '0')}.pdf',
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+      if (outputPath == null) return;
+
+      final leaseByMonth = <String, double>{};
+      final staffByMonth = <String, double>{};
+      final periodEndByMonth = <String, DateTime>{};
+      for (final m in rangeMonths) {
+        final key = '${m.year}-${m.month.toString().padLeft(2, '0')}';
+        leaseByMonth[key] =
+            DatabaseService.getMonthlyReportLeaseCostOverrideForMonth(
+              m.year,
+              m.month,
+            ) ??
+            config.leaseCost;
+        staffByMonth[key] =
+            DatabaseService.getMonthlyReportStaffDailyCostOverrideForMonth(
+              m.year,
+              m.month,
+            ) ??
+            config.staffDailyCost;
+        periodEndByMonth[key] = _monthPeriodEnd(m);
+      }
+
+      final bytes = await MonthlyReportService.buildFullReportPdfBytes(
+        months: rangeMonths,
+        config: config,
+        leaseByMonth: leaseByMonth,
+        staffDailyByMonth: staffByMonth,
+        periodEndByMonth: periodEndByMonth,
+      );
+      await File(outputPath).writeAsBytes(bytes, flush: true);
+      _refreshFullReportPreview();
+      if (!mounted) return;
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'PDF ფაილი წარმატებით შეინახა: $outputPath',
+          style: PosToastStyle.success,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isGeneratingFullReport = false);
+      }
+    }
+  }
+
+  String _formatRelativeTime(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+    if (difference.inMinutes < 1) {
+      return 'moments ago';
+    }
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} min ago';
+    }
+    if (difference.inHours < 24) {
+      return '${difference.inHours} hr ago';
+    }
+    return '${difference.inDays} d ago';
+  }
+
+  String _formatServiceFeeField(double value) {
+    if (value == value.roundToDouble()) {
+      return value.toStringAsFixed(0);
+    }
+    return value < 1 ? value.toStringAsFixed(2) : value.toStringAsFixed(1);
+  }
+
+  String _formatMoneyField(double value) {
+    return value.toStringAsFixed(2);
+  }
+
+  double? _tryParseMoney(String raw) {
+    final normalized = raw.trim().replaceAll(',', '.');
+    if (normalized.isEmpty) {
+      return null;
+    }
+    final parsed = double.tryParse(normalized);
+    if (parsed == null || parsed.isNaN || parsed.isInfinite || parsed < 0) {
+      return null;
+    }
+    return parsed;
+  }
+
+  int _getDaysInMonth(DateTime date) {
+    final firstOfNextMonth = DateTime(date.year, date.month + 1, 1);
+    return firstOfNextMonth.subtract(const Duration(days: 1)).day;
+  }
+
+  int _maxReportEndDayForMonth(DateTime month, int fallbackDaysInMonth) {
+    final now = DateTime.now();
+    final daysInMonth = _getDaysInMonth(month);
+    if (month.year == now.year && month.month == now.month) {
+      return now.day.clamp(1, daysInMonth).toInt();
+    }
+    return fallbackDaysInMonth.clamp(1, daysInMonth).toInt();
+  }
+
+  List<DateTime> _buildRecentMonths(DateTime anchor, int count) {
+    final firstOfMonth = DateTime(anchor.year, anchor.month);
+    return List<DateTime>.generate(
+      count,
+      (index) => DateTime(firstOfMonth.year, firstOfMonth.month - index),
+    );
+  }
+
+  MonthlyReportConfig? _tryBuildMonthlyReportConfig() {
+    final lease = _tryParseMoney(_monthlyReportLeaseController.text);
+    final staff = _tryParseMoney(_monthlyReportStaffDailyController.text);
+    if (lease == null || staff == null) {
+      return null;
+    }
+    final ratio = _monthlyReportProfitRatio.clamp(0.0, 1.0);
+    return MonthlyReportConfig(
+      leaseCost: lease,
+      staffDailyCost: staff,
+      foodProfitRatio: ratio,
+    );
+  }
+
+  void _refreshMonthlyReportPreview() {
+    final config = _tryBuildMonthlyReportConfig();
+    MonthlyReportSummary? summary;
+    String? error;
+    final selectedMonth = _selectedMonthlyReportMonth;
+    final daysInMonth = _getDaysInMonth(selectedMonth);
+    final maxEndDay = _maxReportEndDayForMonth(selectedMonth, daysInMonth);
+    final int startDay = _monthlyReportStartDay.clamp(1, daysInMonth).toInt();
+    final int endDay = _monthlyReportEndDay.clamp(startDay, maxEndDay).toInt();
+    final periodStart = DateTime(
+      selectedMonth.year,
+      selectedMonth.month,
+      startDay,
+    );
+    final periodEnd = DateTime(selectedMonth.year, selectedMonth.month, endDay);
+
+    if (config == null) {
+      error = 'გთხოვთ შეიყვანოთ მხოლოდ დადებითი რიცხვები ორივე ველში.';
+    } else {
+      try {
+        summary = MonthlyReportService.calculateSummary(
+          year: selectedMonth.year,
+          month: selectedMonth.month,
+          overrideConfig: config,
+          periodStart: periodStart,
+          periodEnd: periodEnd,
+        );
+      } catch (_) {
+        error = 'ანგარიშის გამოთვლა ვერ მოხერხდა. სცადეთ კვლავ.';
+      }
+    }
+
+    if (!mounted) {
+      _monthlyReportStartDay = startDay;
+      _monthlyReportEndDay = endDay;
+      _monthlyReportPreview = summary;
+      _monthlyReportInputError = error;
+      return;
+    }
+
+    setState(() {
+      _monthlyReportStartDay = startDay;
+      _monthlyReportEndDay = endDay;
+      _monthlyReportPreview = summary;
+      _monthlyReportInputError = error;
+    });
+  }
+
+  Future<void> _saveMonthlyReportConfig() async {
+    final config = _tryBuildMonthlyReportConfig();
+    if (config == null) {
+      _refreshMonthlyReportPreview();
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'გთხოვთ შეავსოთ ყველა ველი სწორი რიცხვებით.',
+          style: PosToastStyle.error,
+        ),
+      );
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _isSavingMonthlyReportConfig = true;
+      });
+    }
+
+    try {
+      final previous = MonthlyReportService.getConfig();
+      await MonthlyReportService.updateConfig(
+        leaseCost: config.leaseCost,
+        staffDailyCost: config.staffDailyCost,
+        foodProfitRatio: config.foodProfitRatio,
+      );
+      // The report's entire expense side is derived from these three numbers.
+      // Changing one silently rewrites every profit figure the report has
+      // ever shown, so record who moved it and from what.
+      await MoneyAudit.reportCostAssumptionChanged(
+        actorId: widget.user.username,
+        field: 'leaseCost',
+        scope: 'default',
+        previousValue: previous.leaseCost,
+        newValue: config.leaseCost,
+      );
+      await MoneyAudit.reportCostAssumptionChanged(
+        actorId: widget.user.username,
+        field: 'staffDailyCost',
+        scope: 'default',
+        previousValue: previous.staffDailyCost,
+        newValue: config.staffDailyCost,
+      );
+      await MoneyAudit.reportCostAssumptionChanged(
+        actorId: widget.user.username,
+        field: 'foodProfitRatio',
+        scope: 'default',
+        previousValue: previous.foodProfitRatio,
+        newValue: config.foodProfitRatio,
+      );
+      _monthlyReportLeaseController.text = _formatMoneyField(config.leaseCost);
+      _monthlyReportStaffDailyController.text = _formatMoneyField(
+        config.staffDailyCost,
+      );
+      _refreshMonthlyReportPreview();
+
+      if (!mounted) {
+        return;
+      }
+
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'კონფიგურაცია შენახულია.',
+          style: PosToastStyle.success,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'შენახვა ვერ მოხერხდა: $error',
+          style: PosToastStyle.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingMonthlyReportConfig = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _generateMonthlyReportExcel() async {
+    final config = _tryBuildMonthlyReportConfig();
+    if (config == null) {
+      _refreshMonthlyReportPreview();
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'გთხოვთ შეავსოთ ყველა ველი სწორი რიცხვებით.',
+          style: PosToastStyle.error,
+        ),
+      );
+      return;
+    }
+
+    final selectedMonth = _selectedMonthlyReportMonth;
+    final daysInMonth = _getDaysInMonth(selectedMonth);
+    final maxEndDay = _maxReportEndDayForMonth(selectedMonth, daysInMonth);
+    final int startDay = _monthlyReportStartDay.clamp(1, daysInMonth).toInt();
+    final int endDay = _monthlyReportEndDay.clamp(startDay, maxEndDay).toInt();
+    final periodStart = DateTime(
+      selectedMonth.year,
+      selectedMonth.month,
+      startDay,
+    );
+    final periodEnd = DateTime(selectedMonth.year, selectedMonth.month, endDay);
+
+    if (mounted) {
+      setState(() {
+        _isGeneratingMonthlyReport = true;
+      });
+    }
+
+    try {
+      final defaultFileName =
+          'monthly_full_report_${selectedMonth.year}_${selectedMonth.month.toString().padLeft(2, '0')}.xlsx';
+
+      // Let the user pick where to save the CSV.
+      final String? outputPath = await FilePicker.platform.saveFile(
+        dialogTitle: 'შეინახეთ თვიური ანგარიში (XLSX)',
+        fileName: defaultFileName,
+        type: FileType.custom,
+        allowedExtensions: ['xlsx'],
+      );
+
+      if (outputPath == null) return;
+
+      final excelBytes = MonthlyReportService.buildExcelXlsxBytes(
+        year: selectedMonth.year,
+        month: selectedMonth.month,
+        overrideConfig: config,
+        periodStart: periodStart,
+        periodEnd: periodEnd,
+      );
+
+      final outFile = File(outputPath);
+      await outFile.writeAsBytes(excelBytes, flush: true);
+
+      if (!mounted) {
+        return;
+      }
+
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'ფაილი წარმატებით შეინახა: ${outFile.path}',
+          style: PosToastStyle.success,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'Excel (XLSX) ფაილის შექმნა ვერ მოხერხდა: $error',
+          style: PosToastStyle.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGeneratingMonthlyReport = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _generateMonthlyReportPdf() async {
+    final config = _tryBuildMonthlyReportConfig();
+    if (config == null) {
+      _refreshMonthlyReportPreview();
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'გთხოვთ შეავსოთ ყველა ველი სწორი რიცხვებით.',
+          style: PosToastStyle.error,
+        ),
+      );
+      return;
+    }
+
+    final selectedMonth = _selectedMonthlyReportMonth;
+    final daysInMonth = _getDaysInMonth(selectedMonth);
+    final maxEndDay = _maxReportEndDayForMonth(selectedMonth, daysInMonth);
+    final int startDay = _monthlyReportStartDay.clamp(1, daysInMonth).toInt();
+    final int endDay = _monthlyReportEndDay.clamp(startDay, maxEndDay).toInt();
+    final periodStart = DateTime(
+      selectedMonth.year,
+      selectedMonth.month,
+      startDay,
+    );
+    final periodEnd = DateTime(selectedMonth.year, selectedMonth.month, endDay);
+
+    if (mounted) {
+      setState(() {
+        _isGeneratingMonthlyReport = true;
+      });
+    }
+
+    try {
+      final defaultFileName =
+          'monthly_full_report_${selectedMonth.year}_${selectedMonth.month.toString().padLeft(2, '0')}.pdf';
+      final String? outputPath = await FilePicker.platform.saveFile(
+        dialogTitle: 'შეინახეთ თვიური ანგარიში (PDF)',
+        fileName: defaultFileName,
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+
+      if (outputPath == null) return;
+
+      final pdfBytes = await MonthlyReportService.buildMonthlyPdfBytes(
+        year: selectedMonth.year,
+        month: selectedMonth.month,
+        overrideConfig: config,
+        periodStart: periodStart,
+        periodEnd: periodEnd,
+      );
+
+      await File(outputPath).writeAsBytes(pdfBytes, flush: true);
+
+      if (!mounted) {
+        return;
+      }
+
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'PDF ფაილი წარმატებით შეინახა: $outputPath',
+          style: PosToastStyle.success,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'PDF ფაილის შექმნა ვერ მოხერხდა: $error',
+          style: PosToastStyle.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGeneratingMonthlyReport = false;
+        });
+      }
+    }
+  }
+
+  String _formatDateNumeric(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year.toString();
+    return '$day.$month.$year';
+  }
+
+  String _formatDateTimeDisplay(DateTime date) {
+    final datePart = _formatDateNumeric(date);
+    final hour = date.hour.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+    return '$datePart $hour:$minute';
+  }
+
+  String _getGeorgianMonthName(int month) {
+    const months = [
+      'იანვარი',
+      'თებერვალი',
+      'მარტი',
+      'აპრილი',
+      'მაისი',
+      'ივნისი',
+      'ივლისი',
+      'აგვისტო',
+      'სექტემბერი',
+      'ოქტომბერი',
+      'ნოემბერი',
+      'დეკემბერი',
+    ];
+    if (month < 1 || month > 12) {
+      return 'უცნობი';
+    }
+    return months[month - 1];
+  }
+
+  void _changeSalesMonth(int delta) {
+    final selected = DateTime(_selectedSalesYear, _selectedSalesMonth, 1);
+    final updated = DateTime(selected.year, selected.month + delta, 1);
+    final currentDate = DatabaseService.getCurrentDate();
+    final currentMonth = DateTime(currentDate.year, currentDate.month, 1);
+    if (delta > 0 && updated.isAfter(currentMonth)) {
+      return;
+    }
+
+    setState(() {
+      _selectedSalesYear = updated.year;
+      _selectedSalesMonth = updated.month;
+    });
+  }
+
+  void _setSelectedSalesMonth(DateTime month) {
+    final sanitized = DateTime(month.year, month.month, 1);
+    final currentDate = DatabaseService.getCurrentDate();
+    final currentMonth = DateTime(currentDate.year, currentDate.month, 1);
+    if (sanitized.isAfter(currentMonth)) {
+      return;
+    }
+
+    setState(() {
+      _selectedSalesYear = sanitized.year;
+      _selectedSalesMonth = sanitized.month;
+    });
+  }
+
+  void _changeAuditMonth(int delta) {
+    final selected = DateTime(_selectedAuditYear, _selectedAuditMonth, 1);
+    final updated = DateTime(selected.year, selected.month + delta, 1);
+    final currentDate = DatabaseService.getCurrentDate();
+    final currentMonth = DateTime(currentDate.year, currentDate.month, 1);
+    if (delta > 0 && updated.isAfter(currentMonth)) {
+      return;
+    }
+
+    setState(() {
+      _selectedAuditYear = updated.year;
+      _selectedAuditMonth = updated.month;
+    });
+  }
+
+  void _setSelectedAuditMonth(DateTime month) {
+    final sanitized = DateTime(month.year, month.month, 1);
+    final currentDate = DatabaseService.getCurrentDate();
+    final currentMonth = DateTime(currentDate.year, currentDate.month, 1);
+    if (sanitized.isAfter(currentMonth)) {
+      return;
+    }
+
+    setState(() {
+      _selectedAuditYear = sanitized.year;
+      _selectedAuditMonth = sanitized.month;
+    });
+  }
+
+  static String _titleFor(String section) {
+    switch (section) {
+      case 'staff':
+      case 'waiters':
+      case 'users':
+        return 'პერსონალი';
+      case 'menu':
+        return 'მენიუ';
+      case 'packages':
+        return 'პაკეტები';
+      case 'reservations':
+        return 'რეზერვაციები';
+      case 'tableLayouts':
+        return 'მაგიდების განლაგება';
+      case 'display':
+        return 'ეკრანი და ინტერფეისი';
+      case 'closeday':
+        return 'დღის დახურვა';
+      case 'sales':
+        return 'გაყიდვები';
+      case 'salesReport':
+        return 'გაყიდვების რეპორტი';
+      case 'financialReports':
+        return 'ფინანსური რეპორტები';
+      case 'audit':
+        return 'აუდიტი';
+      case 'errors':
+        return 'შეცდომები';
+      case 'printers':
+        return 'პრინტერები';
+      case 'connection':
+        return 'კავშირი';
+      case 'developer':
+        return 'დეველოპერი';
+      case 'settings':
+        return 'პარამეტრები';
+      default:
+        return 'მართვის ცენტრი';
+    }
+  }
+
+  Widget _buildSidebar() {
+    final mobileWidth = MediaQuery.of(context).size.width * 0.85;
+    final width = _isMobile
+        ? (_isSidebarExpanded ? mobileWidth : 0.0)
+        : (_isSidebarExpanded ? 236.0 : 236.0);
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeInOut,
+      width: width,
+      height: double.infinity,
+      decoration: const BoxDecoration(
+        color: _sidebarColor,
+        border: Border(right: BorderSide(color: VynicFloorTokens.panelBorder)),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const NeverScrollableScrollPhysics(),
+        child: SizedBox(
+          width: _isMobile ? mobileWidth : 236.0,
+          child: Column(
+            children: [
+              _buildSidebarHeader(),
+              Expanded(
+                child: ListView(
+                  padding: EdgeInsets.fromLTRB(10, 8, 10, _isMobile ? 32 : 12),
+                  children: _buildSidebarMenuItems(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildSidebarMenuItems() {
+    if (_isLimitedAdmin) {
+      return [
+        _buildMenuItem(
+          icon: Icons.groups_rounded,
+          title: 'პერსონალი',
+          section: 'staff',
+        ),
+        _buildMenuItem(
+          icon: Icons.event_available,
+          title: 'რეზერვაციები',
+          section: 'reservations',
+        ),
+        _buildMenuItem(
+          icon: Icons.calendar_today,
+          title: 'დღის დახურვა',
+          section: 'closeday',
+        ),
+      ];
+    }
+
+    return [
+      _buildMenuItem(
+        icon: Icons.groups_rounded,
+        title: 'პერსონალი',
+        section: 'staff',
+      ),
+      _buildMenuItem(
+        icon: Icons.restaurant_menu,
+        title: 'მენიუ',
+        section: 'menu',
+      ),
+      _buildMenuItem(
+        icon: Icons.inventory_2,
+        title: 'პაკეტები',
+        section: 'packages',
+      ),
+      _buildMenuItem(
+        icon: Icons.event_available,
+        title: 'რეზერვაციები',
+        section: 'reservations',
+      ),
+      _buildMenuItem(
+        icon: Icons.table_restaurant_outlined,
+        title: 'მაგიდები',
+        section: 'tableLayouts',
+      ),
+      if (!_isMobile)
+        _buildMenuItem(
+          icon: Icons.desktop_windows_outlined,
+          title: 'ეკრანი',
+          section: 'display',
+        ),
+      if (!_isMobile)
+        _buildMenuItem(
+          icon: Icons.calendar_today,
+          title: 'დღის დახურვა',
+          section: 'closeday',
+        ),
+      _buildMenuItem(icon: Icons.history, title: 'გაყიდვები', section: 'sales'),
+      _buildMenuItem(
+        icon: Icons.insights,
+        title: 'გაყიდვების რეპორტი',
+        section: 'salesReport',
+      ),
+      _buildMenuItem(
+        icon: Icons.summarize_outlined,
+        title: 'ფინანსური რეპორტები',
+        section: 'financialReports',
+      ),
+      _buildMenuItem(
+        icon: Icons.report_problem,
+        title: 'აუდიტი',
+        section: 'audit',
+      ),
+      _buildMenuItem(
+        icon: Icons.settings,
+        title: 'პარამეტრები',
+        section: 'settings',
+      ),
+      // Terminal plumbing and the developer tools, only while a signed token
+      // is active. They are absent rather than disabled: a greyed-out
+      // „კავშირი" is an invitation to ask what it does.
+      if (_isDeveloperUnlocked) ...[
+        const SizedBox(height: 10),
+        _buildSidebarGroupLabel('DEVELOPER'),
+        if (!_isMobile)
+          _buildMenuItem(
+            icon: Icons.bug_report,
+            title: 'შეცდომები',
+            section: 'errors',
+          ),
+        _buildMenuItem(
+          icon: Icons.print,
+          title: 'პრინტერები',
+          section: 'printers',
+        ),
+        _buildMenuItem(
+          icon: Icons.lan_outlined,
+          title: 'კავშირი',
+          section: 'connection',
+        ),
+        _buildMenuItem(
+          icon: Icons.engineering_outlined,
+          title: 'დეველოპერი',
+          section: 'developer',
+        ),
+      ],
+    ];
+  }
+
+  Widget _buildSidebarGroupLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: _sidebarMuted,
+              fontSize: 9.5,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.1,
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Expanded(child: Divider(color: VynicFloorTokens.divider)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSidebarHeader() {
+    return Container(
+      height: 76,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: VynicFloorTokens.divider, width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () => Navigator.of(context).pop(),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: VynicFloorTokens.metricFill,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: VynicFloorTokens.panelBorder),
+              ),
+              child: const Icon(
+                Icons.arrow_back,
+                color: VynicFloorTokens.text,
+                size: 18,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onLongPress: _openDeveloperUnlock,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Vynic',
+                    style: TextStyle(
+                      color: VynicFloorTokens.text,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      const Text(
+                        'მართვის ცენტრი',
+                        style: TextStyle(
+                          color: _sidebarMuted,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                        ),
+                      ),
+                      // The only outward sign the developer half exists, and
+                      // it appears only once a token has already opened it.
+                      if (_isDeveloperUnlocked) ...[
+                        const SizedBox(width: 6),
+                        const Icon(
+                          Icons.engineering_outlined,
+                          size: 12,
+                          color: _adminAccent,
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String title,
+    required String section,
+  }) {
+    final isSelected = _selectedSection == section;
+    final iconColor = isSelected ? _adminAccent : _sidebarMuted;
+    final textStyle = TextStyle(
+      color: isSelected
+          ? VynicFloorTokens.accentText
+          : VynicFloorTokens.textMuted,
+      fontSize: 13,
+      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+    );
+
+    Widget content = AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      margin: const EdgeInsets.symmetric(vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: isSelected ? _sidebarSelected : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isSelected ? const Color(0xFFE2DCF2) : Colors.transparent,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: 3,
+            height: 28,
+            decoration: BoxDecoration(
+              color: isSelected ? _adminAccent : Colors.transparent,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? VynicFloorTokens.panel
+                  : VynicFloorTokens.metricFill,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: iconColor, size: 18),
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: Text(title, style: textStyle)),
+        ],
+      ),
+    );
+
+    content = Tooltip(
+      message: title,
+      waitDuration: const Duration(milliseconds: 350),
+      child: content,
+    );
+
+    return Semantics(
+      button: true,
+      label: title,
+      selected: isSelected,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () {
+          setState(() {
+            _selectedSection = section;
+            if (_isMobile) {
+              _isSidebarExpanded = false;
+            }
+          });
+        },
+        child: content,
+      ),
+    );
+  }
+
+  Widget _buildSettingsSection() {
+    return AdminSettingsSection(
+      dataBackup: AdminDataBackupPanel(
+        lastBackupPath: _lastBackupPath,
+        lastRestorePath: _lastRestorePath,
+        isCreatingBackup: _isCreatingBackup,
+        isRestoringBackup: _isRestoringBackup,
+        onCreateBackupFile: _createBackupFile,
+        onRestoreBackupFromFile: _restoreBackupFromFile,
+        // Managers take copies; only the developer section puts one back.
+        allowRestore: false,
+      ),
+      formatDateTimeDisplay: _formatDateTimeDisplay,
+      formatRelativeTime: _formatRelativeTime,
+      serviceFeeController: _serviceFeeController,
+      currentCancellationPasswordController:
+          _currentCancellationPasswordController,
+      newCancellationPasswordController: _newCancellationPasswordController,
+      confirmCancellationPasswordController:
+          _confirmCancellationPasswordController,
+      cancellationPasswordHintController: _cancellationPasswordHintController,
+      serviceFeeEnabledByDefault: _serviceFeeEnabledByDefault,
+      onServiceFeeEnabledByDefaultChanged: (value) {
+        setState(() {
+          _serviceFeeEnabledByDefault = value;
+        });
+      },
+      receiptServiceFeeLineVisible: _receiptServiceFeeLineVisible,
+      onReceiptServiceFeeLineVisibleChanged: (value) {
+        setState(() {
+          _receiptServiceFeeLineVisible = value;
+        });
+      },
+      closeReceiptServiceFeeLineVisible: _closeReceiptServiceFeeLineVisible,
+      onCloseReceiptServiceFeeLineVisibleChanged: (value) {
+        setState(() {
+          _closeReceiptServiceFeeLineVisible = value;
+        });
+      },
+      serviceFeePercentDisplay:
+          DatabaseService.getFormattedServiceFeePercentage(),
+      isSavingServiceFee: _isSavingServiceFee,
+      defaultLanguageSetting: _defaultLanguageSetting,
+      onDefaultLanguageSettingChanged: (value) {
+        setState(() {
+          _defaultLanguageSetting = value;
+        });
+      },
+      isSavingLocalization: _isSavingLocalization,
+      isCancellationPasswordSet: _isCancellationPasswordSet,
+      isSavingCancellationPassword: _isSavingCancellationPassword,
+      cancellationPasswordUpdatedAt: _cancellationPasswordUpdatedAt,
+      restrictTableCloseToOwner: _restrictTableCloseToOwner,
+      onRestrictTableCloseToOwnerChanged: (value) {
+        setState(() {
+          _restrictTableCloseToOwner = value;
+        });
+      },
+      isSavingTableOwnershipSettings: _isSavingTableOwnershipSettings,
+      onSaveServiceFeeSettings: _saveServiceFeeSettings,
+      onSaveCancellationPassword: _saveCancellationPassword,
+      onSaveTableOwnershipSettings: _saveTableOwnershipSettings,
+      onSaveLocalizationSettings: _saveLocalizationSettings,
+    );
+  }
+
+  /// Monthly + full report tooling. Rendered inside the sales report section;
+  /// the state, controllers and callbacks stay owned by this screen, exactly
+  /// as they were when the settings tab hosted these cards.
+  AdminFinancialReportsPanel _buildFinancialReportsPanel() {
+    return AdminFinancialReportsPanel(
+      getGeorgianMonthName: _getGeorgianMonthName,
+      getDaysInMonth: _getDaysInMonth,
+      monthlyReportLeaseController: _monthlyReportLeaseController,
+      monthlyReportStaffDailyController: _monthlyReportStaffDailyController,
+      currencyFormatter: _currencyFormatter,
+      monthlyReportProfitRatio: _monthlyReportProfitRatio,
+      onMonthlyReportProfitRatioChanged: (value) {
+        setState(() {
+          final normalized = value.clamp(0.0, 1.0);
+          _monthlyReportProfitRatio = double.parse(
+            normalized.toStringAsFixed(2),
+          );
+        });
+        _refreshMonthlyReportPreview();
+      },
+      isSavingMonthlyReportConfig: _isSavingMonthlyReportConfig,
+      isGeneratingMonthlyReport: _isGeneratingMonthlyReport,
+      selectedMonthlyReportMonth: _selectedMonthlyReportMonth,
+      onSelectedMonthlyReportMonthChanged: (value) {
+        setState(() {
+          final normalized = DateTime(value.year, value.month);
+          final newDaysInMonth = _getDaysInMonth(normalized);
+          final maxEndDay = _maxReportEndDayForMonth(
+            normalized,
+            newDaysInMonth,
+          );
+          final int newStart = _monthlyReportStartDay
+              .clamp(1, newDaysInMonth)
+              .toInt();
+          final int newEnd = _monthlyReportEndDay
+              .clamp(newStart, maxEndDay)
+              .toInt();
+          _selectedMonthlyReportMonth = normalized;
+          _monthlyReportStartDay = newStart;
+          _monthlyReportEndDay = newEnd;
+        });
+        _refreshMonthlyReportPreview();
+      },
+      monthlyReportStartDay: _monthlyReportStartDay,
+      onMonthlyReportStartDayChanged: (value) {
+        setState(() {
+          _monthlyReportStartDay = value;
+          if (_monthlyReportEndDay < value) {
+            _monthlyReportEndDay = value;
+          }
+        });
+        _refreshMonthlyReportPreview();
+      },
+      monthlyReportEndDay: _monthlyReportEndDay,
+      onMonthlyReportEndDayChanged: (value) {
+        setState(() {
+          _monthlyReportEndDay = value;
+          if (_monthlyReportStartDay > value) {
+            _monthlyReportStartDay = value;
+          }
+        });
+        _refreshMonthlyReportPreview();
+      },
+      monthlyReportMonthOptions: _monthlyReportMonthOptions,
+      monthlyReportPreview: _monthlyReportPreview,
+      monthlyReportInputError: _monthlyReportInputError,
+      fullReportStartMonth: _fullReportStartMonth,
+      fullReportEndMonth: _fullReportEndMonth,
+      fullReportMonthOptions: _fullReportMonthOptions,
+      fullReportPreviewMonths: _fullReportPreviewMonths,
+      fullReportTotalSalesAllTime: _fullReportTotalSalesAllTime,
+      isGeneratingFullReport: _isGeneratingFullReport,
+      onFullReportStartMonthChanged: (value) {
+        setState(() {
+          _fullReportStartMonth = DateTime(value.year, value.month);
+          if (_fullReportStartMonth.isAfter(_fullReportEndMonth)) {
+            _fullReportEndMonth = _fullReportStartMonth;
+          }
+        });
+        _refreshFullReportPreview();
+      },
+      onFullReportEndMonthChanged: (value) {
+        setState(() {
+          _fullReportEndMonth = DateTime(value.year, value.month);
+          if (_fullReportEndMonth.isBefore(_fullReportStartMonth)) {
+            _fullReportStartMonth = _fullReportEndMonth;
+          }
+        });
+        _refreshFullReportPreview();
+      },
+      onGenerateFullReportXlsx: _generateFullReportXlsx,
+      onGenerateFullReportPdf: _generateFullReportPdf,
+      onRefreshFullReportPreview: _refreshFullReportPreview,
+      onRefreshMonthlyReportPreview: _refreshMonthlyReportPreview,
+      onSaveMonthlyReportConfig: _saveMonthlyReportConfig,
+      onGenerateMonthlyReportExcel: _generateMonthlyReportExcel,
+      onGenerateMonthlyReportPdf: _generateMonthlyReportPdf,
+    );
+  }
+
+  Widget _buildPrintersSection() {
+    return AdminPrintersSection(
+      kitchenPrinterController: _kitchenPrinterController,
+      receiptPrinterController: _receiptPrinterController,
+      printerPortController: _printerPortController,
+      isSavingPrinterSettings: _isSavingPrinterSettings,
+      isTestingPrinters: _isTestingPrinters,
+      onSavePrinterSettings: _savePrinterSettings,
+      onTestPrinterConnections: _testPrinterConnections,
+    );
+  }
+
+  VoidCallback? _buildSetBusinessDateToLastClosedAction() {
+    final dates = DatabaseService.getOperatedBusinessDates();
+    if (dates.isEmpty) {
+      return null;
+    }
+
+    final current = DatabaseService.getCurrentDate();
+    final currentOnly = DateTime(current.year, current.month, current.day);
+    final lastClosed = dates.last;
+    final lastClosedOnly = DateTime(
+      lastClosed.year,
+      lastClosed.month,
+      lastClosed.day,
+    );
+
+    if (lastClosedOnly == currentOnly) {
+      return null;
+    }
+
+    return () {
+      unawaited(_confirmBusinessDateChange(lastClosed));
+    };
+  }
+
+  Future<void> _savePrinterSettings() async {
+    final kitchenIp = _kitchenPrinterController.text.trim();
+    final receiptIp = _receiptPrinterController.text.trim();
+    const port = 9100;
+
+    if (kitchenIp.isNotEmpty && !_isValidIpv4(kitchenIp)) {
+      unawaited(showErrorToast(context, 'Kitchen printer IP is invalid.'));
+      return;
+    }
+    if (receiptIp.isNotEmpty && !_isValidIpv4(receiptIp)) {
+      unawaited(showErrorToast(context, 'Receipt printer IP is invalid.'));
+      return;
+    }
+
+    setState(() {
+      _isSavingPrinterSettings = true;
+    });
+
+    try {
+      await DatabaseService.savePrintersList(const <Map<String, dynamic>>[]);
+      await DatabaseService.savePrinterConfiguration(
+        kitchenIp: kitchenIp,
+        receiptIp: receiptIp,
+        port: port,
+      );
+      _printerPortController.text = '9100';
+      await PrinterService.initialize(forceReconnect: true);
+
+      if (!mounted) return;
+      unawaited(
+        showSuccessToast(context, 'Printer settings saved successfully.'),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      unawaited(showErrorToast(context, 'Could not save printer settings: $e'));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingPrinterSettings = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _testPrinterConnections() async {
+    final kitchenIp = _kitchenPrinterController.text.trim();
+    final receiptIp = _receiptPrinterController.text.trim();
+    const port = 9100;
+
+    if (kitchenIp.isNotEmpty && !_isValidIpv4(kitchenIp)) {
+      unawaited(showErrorToast(context, 'Kitchen printer IP is invalid.'));
+      return;
+    }
+    if (receiptIp.isNotEmpty && !_isValidIpv4(receiptIp)) {
+      unawaited(showErrorToast(context, 'Receipt printer IP is invalid.'));
+      return;
+    }
+
+    if (kitchenIp.isEmpty && receiptIp.isEmpty) {
+      unawaited(
+        showErrorToast(context, 'Configure at least one printer IP to test.'),
+      );
+      return;
+    }
+
+    setState(() {
+      _isTestingPrinters = true;
+    });
+
+    try {
+      final results = await PrinterService.testConnections(
+        kitchenIp: kitchenIp,
+        receiptIp: receiptIp,
+        port: port,
+      );
+
+      if (!mounted) return;
+
+      final kitchenConfigured = kitchenIp.isNotEmpty;
+      final receiptConfigured = receiptIp.isNotEmpty;
+      final kitchenOk = !kitchenConfigured || results['kitchen'] == true;
+      final receiptOk = !receiptConfigured || results['receipt'] == true;
+
+      final message = StringBuffer();
+      message.write(
+        kitchenConfigured
+            ? (kitchenOk
+                  ? 'Kitchen printer reachable ($kitchenIp:$port).'
+                  : 'Kitchen printer unreachable ($kitchenIp:$port).')
+            : 'Kitchen printer not configured.',
+      );
+      message.write(' ');
+      message.write(
+        receiptConfigured
+            ? (receiptOk
+                  ? 'Receipt printer reachable ($receiptIp:$port).'
+                  : 'Receipt printer unreachable ($receiptIp:$port).')
+            : 'Receipt printer not configured.',
+      );
+
+      final style = (kitchenOk && receiptOk)
+          ? PosToastStyle.success
+          : (kitchenConfigured || receiptConfigured)
+          ? PosToastStyle.info
+          : PosToastStyle.info;
+
+      unawaited(
+        showPosToast(
+          context: context,
+          message: message.toString(),
+          style: style,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      unawaited(showErrorToast(context, 'Connection test failed: $e'));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isTestingPrinters = false;
+        });
+      }
+    }
+  }
+
+  bool _isValidIpv4(String ip) {
+    final parts = ip.split('.');
+    if (parts.length != 4) {
+      return false;
+    }
+    for (final part in parts) {
+      if (part.isEmpty) {
+        return false;
+      }
+      final value = int.tryParse(part);
+      if (value == null || value < 0 || value > 255) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  Future<void> _saveServiceFeeSettings() async {
+    final rawValue = _serviceFeeController.text.trim().replaceAll(',', '.');
+    final parsedPercent = double.tryParse(rawValue);
+
+    if (parsedPercent == null || parsedPercent < 0 || parsedPercent > 100) {
+      unawaited(
+        showErrorToast(
+          context,
+          'Enter a valid service fee percentage between 0 and 100.',
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSavingServiceFee = true;
+    });
+
+    try {
+      await DatabaseService.updateServiceFeeSettings(
+        percentage: parsedPercent,
+        enabledByDefault: _serviceFeeEnabledByDefault,
+      );
+      // Receipt display preference is saved by the same action: it lives in
+      // the same card and never affects totals. It does change what a printed
+      // document shows the customer, so the change is recorded.
+      final previousReceiptLine =
+          DatabaseService.isReceiptServiceFeeLineVisible();
+      final previousCloseReceiptLine =
+          DatabaseService.isCloseReceiptServiceFeeLineVisible();
+      await DatabaseService.setReceiptServiceFeeLineVisible(
+        _receiptServiceFeeLineVisible,
+      );
+      await DatabaseService.setCloseReceiptServiceFeeLineVisible(
+        _closeReceiptServiceFeeLineVisible,
+      );
+      await MoneyAudit.receiptServiceFeePolicyChanged(
+        actorId: widget.user.username,
+        previousReceiptLineVisible: previousReceiptLine,
+        newReceiptLineVisible: _receiptServiceFeeLineVisible,
+        previousCloseReceiptLineVisible: previousCloseReceiptLine,
+        newCloseReceiptLineVisible: _closeReceiptServiceFeeLineVisible,
+      );
+      _serviceFeePercent = parsedPercent;
+      _serviceFeeController.text = _formatServiceFeeField(parsedPercent);
+
+      if (!mounted) return;
+      unawaited(
+        showSuccessToast(
+          context,
+          'Service fee updated to ${_formatServiceFeeField(parsedPercent)}%.',
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      unawaited(showErrorToast(context, 'Failed to update service fee: $e'));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingServiceFee = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _saveCancellationPassword() async {
+    final newCode = _newCancellationPasswordController.text.trim();
+    final confirmCode = _confirmCancellationPasswordController.text.trim();
+    final currentCode = _currentCancellationPasswordController.text.trim();
+    final hintText = _cancellationPasswordHintController.text.trim();
+    final hintChanged = hintText != _lastSavedCancellationHint;
+    final codePattern = RegExp(r'^\d{6}$');
+
+    final wantsPasswordChange = newCode.isNotEmpty || confirmCode.isNotEmpty;
+
+    if (!wantsPasswordChange && !hintChanged) {
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'Nothing to update yet. Adjust the password or hint.',
+          style: PosToastStyle.info,
+        ),
+      );
+      return;
+    }
+
+    if (wantsPasswordChange) {
+      if (!codePattern.hasMatch(newCode) ||
+          !codePattern.hasMatch(confirmCode)) {
+        unawaited(
+          showErrorToast(
+            context,
+            'Enter a 6-digit numeric code for the new password.',
+          ),
+        );
+        return;
+      }
+
+      if (newCode != confirmCode) {
+        unawaited(
+          showErrorToast(
+            context,
+            'New password and confirmation do not match.',
+          ),
+        );
+        return;
+      }
+
+      if (_isCancellationPasswordSet &&
+          !DatabaseService.verifyDestructiveActionPassword(currentCode)) {
+        unawaited(
+          showErrorToast(
+            context,
+            'Current cancellation password is incorrect.',
+          ),
+        );
+        return;
+      }
+    } else {
+      // Hint-only update still requires verifying the current code
+      if (!_isCancellationPasswordSet) {
+        unawaited(
+          showErrorToast(
+            context,
+            'Set a cancellation password before adding a hint.',
+          ),
+        );
+        return;
+      }
+
+      if (currentCode.isEmpty ||
+          !DatabaseService.verifyDestructiveActionPassword(currentCode)) {
+        unawaited(
+          showErrorToast(
+            context,
+            'Enter the current cancellation password to update the hint.',
+          ),
+        );
+        return;
+      }
+    }
+
+    final wasSet = _isCancellationPasswordSet;
+
+    setState(() {
+      _isSavingCancellationPassword = true;
+    });
+
+    try {
+      if (wantsPasswordChange) {
+        await DatabaseService.setDestructiveActionPassword(
+          newCode,
+          hint: hintText,
+        );
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          _isCancellationPasswordSet = true;
+          _cancellationPasswordUpdatedAt =
+              DatabaseService.getDestructiveActionPasswordUpdatedAt();
+          _lastSavedCancellationHint = hintText;
+          _currentCancellationPasswordController.clear();
+          _newCancellationPasswordController.clear();
+          _confirmCancellationPasswordController.clear();
+        });
+
+        unawaited(
+          showSuccessToast(
+            context,
+            wasSet
+                ? 'Cancellation password updated successfully.'
+                : 'Cancellation password saved successfully.',
+          ),
+        );
+      } else {
+        await DatabaseService.setDestructiveActionPasswordHint(hintText);
+        if (!mounted) {
+          return;
+        }
+
+        setState(() {
+          _cancellationPasswordUpdatedAt =
+              DatabaseService.getDestructiveActionPasswordUpdatedAt();
+          _lastSavedCancellationHint = hintText;
+          _currentCancellationPasswordController.clear();
+        });
+
+        unawaited(
+          showSuccessToast(context, 'Cancellation password hint updated.'),
+        );
+      }
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+      unawaited(
+        showErrorToast(context, 'Unable to save cancellation password: $e'),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingCancellationPassword = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _saveTableOwnershipSettings() async {
+    setState(() {
+      _isSavingTableOwnershipSettings = true;
+    });
+
+    try {
+      await DatabaseService.setTableCloseRestrictedToOwner(
+        _restrictTableCloseToOwner,
+      );
+
+      if (mounted) {
+        await showSuccessToast(
+          context,
+          'მაგიდის დახურვის პარამეტრები შენახულია',
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        await showErrorToast(context, 'შენახვა ვერ მოხერხდა: $error');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingTableOwnershipSettings = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _saveDisplaySettings() async {
+    setState(() {
+      _isSavingDisplaySettings = true;
+    });
+
+    try {
+      await PosDisplaySettingsController.save(_displaySettings);
+      if (mounted) {
+        await showSuccessToast(context, 'Display settings saved');
+      }
+    } catch (error) {
+      if (mounted) {
+        await showErrorToast(
+          context,
+          'Display settings could not be saved: $error',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingDisplaySettings = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _saveLocalizationSettings() async {
+    setState(() {
+      _isSavingLocalization = true;
+    });
+
+    try {
+      await DatabaseService.setDefaultLanguage(_defaultLanguageSetting);
+      if (!mounted) return;
+      unawaited(
+        showSuccessToast(
+          context,
+          _defaultLanguageSetting == 'ka'
+              ? 'Default language set to Georgian.'
+              : 'Default language set to English.',
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      unawaited(
+        showErrorToast(context, 'Unable to save language preference: $e'),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingLocalization = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _restoreBackupFromFile() async {
+    debugPrint('[BackupFlow] _restoreBackupFromFile called');
+    if (kIsWeb) {
+      debugPrint('[BackupFlow] Restore blocked on web');
+      unawaited(
+        showPosToast(
+          context: context,
+          message: 'Backup restore is not available on web builds.',
+          style: PosToastStyle.info,
+        ),
+      );
+      return;
+    }
+
+    if (_isRestoringBackup) {
+      debugPrint('[BackupFlow] Restore ignored: already restoring');
+      return;
+    }
+
+    final resolvedPath = await BackupFilePicker.pickRestoreFile();
+    debugPrint('[BackupFlow] Restore selected path: $resolvedPath');
+    if (resolvedPath == null || resolvedPath.isEmpty) {
+      debugPrint('[BackupFlow] Restore cancelled or empty path');
+      return;
+    }
+
+    try {
+      final backupFile = File(resolvedPath);
+      debugPrint('[BackupFlow] Checking backup file exists: $resolvedPath');
+      if (!await backupFile.exists()) {
+        debugPrint('[BackupFlow] Backup file missing at: $resolvedPath');
+        unawaited(
+          showErrorToast(context, 'Backup file not found at $resolvedPath'),
+        );
+        return;
+      }
+
+      setState(() {
+        _isRestoringBackup = true;
+      });
+      debugPrint('[BackupFlow] Restore started');
+
+      await DatabaseService.restoreDataBackupFromFile(backupFile);
+      debugPrint('[BackupFlow] Restore completed in DatabaseService');
+
+      if (!mounted) {
+        debugPrint('[BackupFlow] Widget unmounted after restore');
+        return;
+      }
+
+      setState(() {
+        _lastRestorePath = resolvedPath;
+        _initializeSettingsState();
+        final currentDate = DatabaseService.getCurrentDate();
+        _selectedSalesYear = currentDate.year;
+        _selectedSalesMonth = currentDate.month;
+        _selectedAuditYear = currentDate.year;
+        _selectedAuditMonth = currentDate.month;
+      });
+
+      // Push restored business date + state immediately so mobile reflects
+      // close-day/current-date correctly right after backup import.
+      debugPrint(
+        '[BackupFlow] Triggering ManagerSyncService.syncToManagerApp()',
+      );
+      unawaited(ManagerSyncService.syncToManagerApp());
+
+      final acknowledged = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          return Dialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            elevation: 8,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFF1E3A8A,
+                            ).withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.cloud_done_outlined,
+                            color: AdminDesign.accentDark,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            'აღდგენა დასრულდა',
+                            style: TextStyle(
+                              color: AdminDesign.text,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AdminDesign.panelSoft,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AdminDesign.border),
+                      ),
+                      child: Text(
+                        'სარეზერვო ასლი აღდგენილია (DB v${DatabaseService.dbVersion}). მონაცემების სრულად განახლებისთვის აპი გადაიყვანება ავტორიზაციაზე.',
+                        style: const TextStyle(
+                          color: AdminDesign.muted,
+                          fontSize: 14,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AdminDesign.accentDark,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(52),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        child: const Text('გაგრძელება'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+
+      if (acknowledged == true && mounted) {
+        debugPrint(
+          '[BackupFlow] User acknowledged restore dialog, navigating to login',
+        );
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      debugPrint('[BackupFlow] Restore failed: $e');
+      if (mounted) {
+        unawaited(showErrorToast(context, 'Restore failed: $e'));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRestoringBackup = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _createBackupFile() async {
+    debugPrint('[BackupFlow] _createBackupFile called');
+    final selectedPath = await BackupFilePicker.pickSaveFile();
+    debugPrint('[BackupFlow] Save selected path: $selectedPath');
+
+    if (selectedPath == null || selectedPath.isEmpty) {
+      debugPrint('[BackupFlow] Save cancelled by user');
+      return;
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _isCreatingBackup = true;
+    });
+
+    try {
+      debugPrint('[BackupFlow] Creating backup at: $selectedPath');
+      final backupFile = await DatabaseService.createDataBackup(
+        targetFilePath: selectedPath,
+      );
+      debugPrint('[BackupFlow] Backup file created: ${backupFile.path}');
+      if (!mounted) return;
+      setState(() {
+        _lastBackupPath = backupFile.path;
+      });
+      unawaited(
+        showSuccessToast(context, 'Backup saved to ${backupFile.path}'),
+      );
+    } catch (e) {
+      debugPrint('[BackupFlow] Backup failed: $e');
+      if (!mounted) return;
+      unawaited(showErrorToast(context, 'Backup failed: $e'));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCreatingBackup = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _showBusinessDateSelector() async {
+    final currentBusinessDate = DatabaseService.getCurrentDate();
+    final currentDateOnly = DateTime(
+      currentBusinessDate.year,
+      currentBusinessDate.month,
+      currentBusinessDate.day,
+    );
+    final dates = DatabaseService.getOperatedBusinessDates();
+    if (dates.isEmpty) {
+      if (mounted) {
+        unawaited(showErrorToast(context, 'No historical dates available'));
+      }
+      return;
+    }
+
+    await showDialog<void>(
+      context: context,
+      barrierColor: Colors.black54,
+      builder: (dialogContext) {
+        return Dialog.fullscreen(
+          backgroundColor: AdminDesign.panelSoft,
+          child: SafeArea(
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 14,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    border: Border(
+                      bottom: BorderSide(color: AdminDesign.border),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.history_rounded,
+                        color: AdminDesign.accentDark,
+                      ),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          'აირჩიე ბიზნეს თარიღი',
+                          style: TextStyle(
+                            color: AdminDesign.text,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        icon: const Icon(Icons.close_rounded),
+                        color: AdminDesign.muted,
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                    itemCount: dates.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (context, index) {
+                      final date = dates[dates.length - 1 - index];
+                      final georgianLabel =
+                          DatabaseService.getGeorgianFormattedDate(date);
+                      final technicalLabel =
+                          '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
+                      final isCurrentDate =
+                          DateTime(date.year, date.month, date.day) ==
+                          currentDateOnly;
+
+                      return Material(
+                        color: isCurrentDate
+                            ? AdminTones.infoFill
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(14),
+                          onTap: isCurrentDate
+                              ? null
+                              : () async {
+                                  final curDate =
+                                      DatabaseService.getCurrentDate();
+                                  final georgianCur =
+                                      DatabaseService.getGeorgianFormattedDate(
+                                        curDate,
+                                      );
+                                  final georgianTgt =
+                                      DatabaseService.getGeorgianFormattedDate(
+                                        date,
+                                      );
+                                  final confirmed = await showDialog<bool>(
+                                    context: dialogContext,
+                                    barrierColor: Colors.black26,
+                                    builder: (confirmCtx) {
+                                      return Dialog(
+                                        backgroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            18,
+                                          ),
+                                        ),
+                                        elevation: 8,
+                                        insetPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 32,
+                                              vertical: 24,
+                                            ),
+                                        child: ConstrainedBox(
+                                          constraints: const BoxConstraints(
+                                            maxWidth: 420,
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(24),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Container(
+                                                      width: 40,
+                                                      height: 40,
+                                                      decoration: BoxDecoration(
+                                                        color:
+                                                            const Color(
+                                                              0xFF1E3A8A,
+                                                            ).withValues(
+                                                              alpha: 0.1,
+                                                            ),
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              10,
+                                                            ),
+                                                      ),
+                                                      child: const Icon(
+                                                        Icons
+                                                            .event_repeat_rounded,
+                                                        color: Color(
+                                                          0xFF1E3A8A,
+                                                        ),
+                                                        size: 20,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 12),
+                                                    const Expanded(
+                                                      child: Text(
+                                                        'თარიღის დადასტურება',
+                                                        style: TextStyle(
+                                                          color: Color(
+                                                            0xFF0F172A,
+                                                          ),
+                                                          fontSize: 17,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    IconButton(
+                                                      onPressed: () =>
+                                                          Navigator.of(
+                                                            confirmCtx,
+                                                          ).pop(false),
+                                                      icon: const Icon(
+                                                        Icons.close_rounded,
+                                                      ),
+                                                      color: const Color(
+                                                        0xFF94A3B8,
+                                                      ),
+                                                      iconSize: 20,
+                                                      padding: EdgeInsets.zero,
+                                                      constraints:
+                                                          const BoxConstraints(),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 20),
+                                                Container(
+                                                  width: double.infinity,
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 16,
+                                                        vertical: 14,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(
+                                                      0xFFF8FAFC,
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
+                                                    border: Border.all(
+                                                      color: const Color(
+                                                        0xFFE2E8F0,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  child: Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Text(
+                                                              'მიმდინარე',
+                                                              style: TextStyle(
+                                                                color: Colors
+                                                                    .blueGrey
+                                                                    .shade600,
+                                                                fontSize: 11,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
+                                                            ),
+                                                            const SizedBox(
+                                                              height: 2,
+                                                            ),
+                                                            Text(
+                                                              georgianCur,
+                                                              style: const TextStyle(
+                                                                color: Color(
+                                                                  0xFF374151,
+                                                                ),
+                                                                fontSize: 14,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      const Icon(
+                                                        Icons
+                                                            .arrow_forward_rounded,
+                                                        color: Color(
+                                                          0xFF94A3B8,
+                                                        ),
+                                                        size: 18,
+                                                      ),
+                                                      Expanded(
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .end,
+                                                          children: [
+                                                            Text(
+                                                              'გადასვლა',
+                                                              style: TextStyle(
+                                                                color: Colors
+                                                                    .blueGrey
+                                                                    .shade600,
+                                                                fontSize: 11,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
+                                                            ),
+                                                            const SizedBox(
+                                                              height: 2,
+                                                            ),
+                                                            Text(
+                                                              georgianTgt,
+                                                              style: const TextStyle(
+                                                                color: Color(
+                                                                  0xFF1E3A8A,
+                                                                ),
+                                                                fontSize: 14,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w800,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 12),
+                                                const Text(
+                                                  'ეს ქმედება გახსნის არჩეულ ბიზნეს დღეს, რათა შეძლო შეკვეთების და ჯავშნების კორექტირება.',
+                                                  style: TextStyle(
+                                                    color: AdminDesign.muted,
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w400,
+                                                    height: 1.5,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 24),
+                                                Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: OutlinedButton(
+                                                        onPressed: () =>
+                                                            Navigator.of(
+                                                              confirmCtx,
+                                                            ).pop(false),
+                                                        style: OutlinedButton.styleFrom(
+                                                          foregroundColor:
+                                                              const Color(
+                                                                0xFF334155,
+                                                              ),
+                                                          side:
+                                                              const BorderSide(
+                                                                color: Color(
+                                                                  0xFFCBD5E1,
+                                                                ),
+                                                              ),
+                                                          minimumSize:
+                                                              const Size.fromHeight(
+                                                                44,
+                                                              ),
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  10,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                        child: const Text(
+                                                          'გაუქმება',
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 10),
+                                                    Expanded(
+                                                      child: ElevatedButton(
+                                                        onPressed: () =>
+                                                            Navigator.of(
+                                                              confirmCtx,
+                                                            ).pop(true),
+                                                        style: ElevatedButton.styleFrom(
+                                                          backgroundColor:
+                                                              const Color(
+                                                                0xFF1E3A8A,
+                                                              ),
+                                                          foregroundColor:
+                                                              Colors.white,
+                                                          minimumSize:
+                                                              const Size.fromHeight(
+                                                                44,
+                                                              ),
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  10,
+                                                                ),
+                                                          ),
+                                                          elevation: 0,
+                                                        ),
+                                                        child: const Text(
+                                                          'დადასტურება',
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                  if (confirmed == true) {
+                                    if (dialogContext.mounted) {
+                                      Navigator.of(dialogContext).pop();
+                                    }
+                                    try {
+                                      final moved =
+                                          await _applyBusinessDateChange(date);
+                                      if (!moved) return;
+                                      await DatabaseService.activateTodaysReservations();
+                                      if (!mounted) return;
+                                      setState(() {});
+                                      unawaited(
+                                        showSuccessToast(
+                                          context,
+                                          'Business date switched to $georgianTgt',
+                                        ),
+                                      );
+                                    } catch (e) {
+                                      if (!mounted) return;
+                                      unawaited(
+                                        showErrorToast(
+                                          context,
+                                          'Error changing date: $e',
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 14,
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: isCurrentDate
+                                        ? const Color(
+                                            0xFF1E3A8A,
+                                          ).withValues(alpha: 0.2)
+                                        : const Color(
+                                            0xFF1E3A8A,
+                                          ).withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(
+                                    isCurrentDate
+                                        ? Icons.event_available
+                                        : Icons.event,
+                                    color: AdminDesign.accentDark,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        georgianLabel,
+                                        style: TextStyle(
+                                          color: isCurrentDate
+                                              ? AdminDesign.accentDark
+                                              : AdminDesign.text,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        technicalLabel,
+                                        style: const TextStyle(
+                                          color: AdminDesign.muted,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (isCurrentDate)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AdminDesign.accentDark,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Text(
+                                      'მიმდინარე',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  const Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: VynicFloorTokens.textFaint,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    border: Border(top: BorderSide(color: AdminDesign.border)),
+                  ),
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AdminDesign.muted,
+                      side: const BorderSide(color: VynicFloorTokens.textFaint),
+                      minimumSize: const Size.fromHeight(48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('გაუქმება'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmBusinessDateChange(DateTime targetDate) async {
+    final currentDate = DatabaseService.getCurrentDate();
+    if (currentDate == targetDate) {
+      return;
+    }
+
+    final georgianCurrent = DatabaseService.getGeorgianFormattedDate(
+      currentDate,
+    );
+    final georgianTarget = DatabaseService.getGeorgianFormattedDate(targetDate);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black26,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          elevation: 8,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 32,
+            vertical: 24,
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: AdminDesign.accentDark.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.event_repeat_rounded,
+                          color: AdminDesign.accentDark,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'თარიღის დადასტურება',
+                          style: TextStyle(
+                            color: AdminDesign.text,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(false),
+                        icon: const Icon(Icons.close_rounded),
+                        color: VynicFloorTokens.textFaint,
+                        iconSize: 20,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AdminDesign.panelSoft,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AdminDesign.border),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'მიმდინარე',
+                                style: TextStyle(
+                                  color: AdminDesign.muted,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                georgianCurrent,
+                                style: const TextStyle(
+                                  color: AdminDesign.muted,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.arrow_forward_rounded,
+                          color: VynicFloorTokens.textFaint,
+                          size: 18,
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                'გადასვლა',
+                                style: TextStyle(
+                                  color: AdminDesign.muted,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                georgianTarget,
+                                style: const TextStyle(
+                                  color: AdminDesign.accentDark,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'ეს ქმედება გახსნის არჩეულ ბიზნეს დღეს, რათა შეძლო შეკვეთების და ჯავშნების კორექტირება.',
+                    style: TextStyle(
+                      color: AdminDesign.muted,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () =>
+                              Navigator.of(dialogContext).pop(false),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AdminDesign.muted,
+                            side: const BorderSide(
+                              color: VynicFloorTokens.textFaint,
+                            ),
+                            minimumSize: const Size.fromHeight(44),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text('გაუქმება'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () =>
+                              Navigator.of(dialogContext).pop(true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AdminDesign.accentDark,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size.fromHeight(44),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text('დადასტურება'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      try {
+        final moved = await _applyBusinessDateChange(targetDate);
+        if (!moved) return;
+        await DatabaseService.activateTodaysReservations();
+        if (!mounted) return;
+        setState(() {});
+        unawaited(
+          showSuccessToast(
+            context,
+            'Business date switched to ${DatabaseService.getGeorgianFormattedDate(targetDate)}',
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        unawaited(showErrorToast(context, 'Error changing date: $e'));
+      }
+    }
+  }
+
+  Future<void> _reprintSaleReceipt(Map<String, dynamic> sale) async {
+    final itemMaps = _resolveSaleItemsForPrint(sale);
+    final items = itemMaps.map((item) {
+      final qty = item['quantity'] ?? 0;
+      final name = item['itemName'] ?? '';
+      final total = (item['total'] as num?)?.toDouble() ?? 0.0;
+      return '${qty}x $name - ₾${total.toStringAsFixed(2)}';
+    }).toList();
+
+    final subtotal = itemMaps.fold<double>(
+      0,
+      (sum, item) => sum + ((item['total'] as num?)?.toDouble() ?? 0.0),
+    );
+    final includeServiceFee = sale['includeServiceFee'] == true;
+    final serviceFee = includeServiceFee ? subtotal * 0.10 : 0.0;
+    final totalAmount =
+        (sale['totalAmount'] as num?)?.toDouble() ?? subtotal + serviceFee;
+    final tableNumbers = ((sale['tableNumbers'] as List?)?.cast<String>() ?? [])
+        .join(', ');
+    final paymentLabel = PaymentUtils.formatPaymentDisplay(sale);
+
+    PrinterService.printReceiptInBackground(
+      items: items,
+      subtotal: subtotal,
+      serviceFee: includeServiceFee ? serviceFee : null,
+      includeServiceFee: includeServiceFee,
+      total: totalAmount,
+      tableNumber: tableNumbers.isEmpty ? null : tableNumbers,
+      orderNumber: sale['orderId'].toString(),
+      paymentMethod: paymentLabel,
+      onComplete: (success) {
+        if (!mounted) return;
+        unawaited(
+          showPosToast(
+            context: context,
+            message: success
+                ? 'Receipt sent to printer'
+                : 'Printer unavailable. Please check connection.',
+            style: success ? PosToastStyle.success : PosToastStyle.error,
+          ),
+        );
+      },
+    );
+  }
+
+  List<Map<String, dynamic>> _resolveSaleItemsForPrint(
+    Map<String, dynamic> sale,
+  ) {
+    List<Map<String, dynamic>> parseItems(dynamic rawItems) {
+      if (rawItems is! List) {
+        return const [];
+      }
+
+      return rawItems.whereType<Map>().map((raw) {
+        return {
+          'itemName': raw['itemName'] ?? raw['name'] ?? 'უცნობი პოზიცია',
+          'quantity': (raw['quantity'] as num?)?.toInt() ?? 0,
+          'total': (raw['total'] as num?)?.toDouble() ?? 0.0,
+        };
+      }).toList();
+    }
+
+    final directItems = parseItems(sale['items']);
+    if (directItems.isNotEmpty) {
+      return directItems;
+    }
+
+    final finalTransaction = sale['finalTransaction'];
+    if (finalTransaction is Map) {
+      return parseItems(finalTransaction['items']);
+    }
+
+    return const [];
+  }
+
+  double _resolveLinkedAdvanceForSale(Map<String, dynamic> sale) {
+    final saleAdvance =
+        (sale['advanceAmount'] as num?)?.toDouble() ??
+        (sale['discountAmount'] as num?)?.toDouble() ??
+        0.0;
+    if (saleAdvance > 0) {
+      return saleAdvance;
+    }
+
+    final orderId = sale['orderId'];
+    final saleDate = sale['date']?.toString();
+    final allSales = DatabaseService.getAllSales();
+    final linkedAdvance = allSales
+        .where((record) {
+          if (record['orderId'] != orderId) {
+            return false;
+          }
+          if (saleDate != null &&
+              saleDate.isNotEmpty &&
+              record['date'] != saleDate) {
+            return false;
+          }
+          if (record['isCancelled'] == true ||
+              record['restoredToOrder'] == true) {
+            return false;
+          }
+          final paymentMethod = (record['paymentMethod'] as String? ?? '')
+              .trim()
+              .toLowerCase();
+          return paymentMethod == PaymentUtils.methodAdvance;
+        })
+        .fold<double>(0.0, (sum, record) {
+          return sum + ((record['totalAmount'] as num?)?.toDouble() ?? 0.0);
+        });
+
+    return linkedAdvance;
+  }
+
+  Future<void> _reprintSaleFullReceipt(Map<String, dynamic> sale) async {
+    final itemMaps = _resolveSaleItemsForPrint(sale);
+    final items = itemMaps.map((item) {
+      final qty = item['quantity'] ?? 0;
+      final name = item['itemName'] ?? '';
+      final total = (item['total'] as num?)?.toDouble() ?? 0.0;
+      return '${qty}x $name - ₾${total.toStringAsFixed(2)}';
+    }).toList();
+
+    final subtotalFromSale = (sale['subtotalAmount'] as num?)?.toDouble();
+    final subtotalFromItems = itemMaps.fold<double>(
+      0,
+      (sum, item) => sum + ((item['total'] as num?)?.toDouble() ?? 0.0),
+    );
+    final subtotal = subtotalFromSale ?? subtotalFromItems;
+
+    final finalTransaction = sale['finalTransaction'];
+    final includeServiceFee = sale['includeServiceFee'] == true;
+    final serviceFeeFromFinal = finalTransaction is Map
+        ? (finalTransaction['serviceFee'] as num?)?.toDouble()
+        : null;
+    final serviceFee =
+        serviceFeeFromFinal ?? (includeServiceFee ? subtotal * 0.10 : 0.0);
+    final manualAdjustment =
+        (sale['manualAdjustmentAmount'] as num?)?.toDouble() ??
+        (finalTransaction is Map
+            ? (finalTransaction['manualAdjustment'] as num?)?.toDouble() ?? 0.0
+            : 0.0);
+    final linkedAdvance = _resolveLinkedAdvanceForSale(sale);
+
+    final totalAmount =
+        (sale['totalAmount'] as num?)?.toDouble() ?? subtotal + serviceFee;
+    final tableNumbers = ((sale['tableNumbers'] as List?)?.cast<String>() ?? [])
+        .join(', ');
+    final paymentLabel = PaymentUtils.formatPaymentDisplay(sale);
+
+    PrinterService.printReceiptInBackground(
+      items: items,
+      subtotal: subtotal,
+      serviceFee: includeServiceFee ? serviceFee : null,
+      includeServiceFee: includeServiceFee,
+      total: totalAmount,
+      tableNumber: tableNumbers.isEmpty ? null : tableNumbers,
+      orderNumber: sale['orderId'].toString(),
+      paymentMethod: paymentLabel,
+      discountAmount: linkedAdvance > 0 ? linkedAdvance : null,
+      manualAdjustment: manualAdjustment != 0 ? manualAdjustment : null,
+      receiptType: 'client',
+      onComplete: (success) {
+        if (!mounted) return;
+        unawaited(
+          showPosToast(
+            context: context,
+            message: success
+                ? 'Full receipt sent to printer'
+                : 'Printer unavailable. Please check connection.',
+            style: success ? PosToastStyle.success : PosToastStyle.error,
+          ),
+        );
+      },
+    );
+  }
+
+  /// Voiding a sale takes a reason, and today's sales only.
+  ///
+  /// The old flow was a yes/no box: one tap removed a sale from every revenue
+  /// figure, on any date, leaving nothing behind saying who did it or why.
+  /// Reaching into a closed business day is now support work — it needs the
+  /// `salesRepair` developer scope — and either way the void is written to the
+  /// audit log with the operator's name and their stated reason.
+  /// Moves the POS onto another business date, with a reason on the record.
+  ///
+  /// Everything recorded after this belongs to the new date, so the change is
+  /// audited like any other money mutation. Moving *backwards* reopens a
+  /// period the restaurant has already closed and reported; that is support
+  /// work and needs the `backdate` developer scope.
+  ///
+  /// Returns true when the date actually moved.
+  Future<bool> _applyBusinessDateChange(DateTime targetDate) async {
+    final current = DatabaseService.getCurrentDate();
+    final currentKey = current.toIso8601String().split('T')[0];
+    final targetKey = DateTime(
+      targetDate.year,
+      targetDate.month,
+      targetDate.day,
+    ).toIso8601String().split('T')[0];
+    if (currentKey == targetKey) return false;
+
+    final isBackdate = targetKey.compareTo(currentKey) < 0;
+    final canBackdate = DeveloperAccess.can(DeveloperScope.backdate);
+    if (isBackdate && !canBackdate) {
+      if (!mounted) return false;
+      unawaited(
+        showErrorToast(
+          context,
+          'დახურულ ბიზნეს პერიოდზე დაბრუნება ჩვეულებრივი მენეჯერის უფლებით '
+          'არ ხდება. საჭიროა მხარდაჭერის წვდომა.',
+        ),
+      );
+      return false;
+    }
+
+    final reason = await _promptForReason(
+      title: 'ბიზნეს თარიღის შეცვლა',
+      description: isBackdate
+          ? '$currentKey → $targetKey. ეს ხსნის უკვე დახურულ პერიოდს. '
+                'მიუთითეთ მიზეზი.'
+          : '$currentKey → $targetKey. მიუთითეთ მიზეზი.',
+      confirmLabel: 'დადასტურება',
+      destructive: isBackdate,
+    );
+    if (reason == null) return false;
+
+    final outcome = await DatabaseService.setCurrentDate(
+      targetDate,
+      actorId: widget.user.username,
+      reason: reason,
+      allowBackdate: canBackdate,
+    );
+    if (!mounted) return false;
+
+    switch (outcome) {
+      case BusinessDateChangeOutcome.changed:
+        return true;
+      case BusinessDateChangeOutcome.unchanged:
+        return false;
+      case BusinessDateChangeOutcome.reasonRequired:
+        unawaited(
+          showErrorToast(context, 'თარიღის შეცვლის მიზეზი აუცილებელია.'),
+        );
+        return false;
+      case BusinessDateChangeOutcome.backdateNotPermitted:
+        unawaited(
+          showErrorToast(
+            context,
+            'დახურულ ბიზნეს პერიოდზე დაბრუნება არ არის ნებადართული.',
+          ),
+        );
+        return false;
+    }
+  }
+
+  Future<void> _confirmCancelSale(Map<String, dynamic> sale) async {
+    final isCancelled = sale['isCancelled'] == true;
+    if (isCancelled) {
+      return;
+    }
+
+    final orderId = sale['orderId'];
+    final saleDate = (sale['date'] as String?) ?? '';
+    final todayDate = DatabaseService.getCurrentDate().toIso8601String().split(
+      'T',
+    )[0];
+    final isHistorical = saleDate.isNotEmpty && saleDate != todayDate;
+    final canRepairHistory = DeveloperAccess.can(DeveloperScope.salesRepair);
+
+    if (isHistorical && !canRepairHistory) {
+      unawaited(
+        showErrorToast(
+          context,
+          'დახურული ბიზნეს დღის გაყიდვის გაუქმება ჩვეულებრივი მენეჯერის '
+          'უფლებით არ ხდება. საჭიროა მხარდაჭერის წვდომა.',
+        ),
+      );
+      return;
+    }
+
+    final reason = await _promptForReason(
+      title: 'გაყიდვის გაუქმება',
+      description: isHistorical
+          ? 'შეკვეთა #$orderId ეკუთვნის $saleDate-ს. მიუთითეთ მიზეზი — '
+                'ჩანაწერი შენარჩუნდება და გაუქმება აღირიცხება.'
+          : 'შეკვეთა #$orderId. მიუთითეთ გაუქმების მიზეზი.',
+      confirmLabel: 'გაუქმება',
+      destructive: true,
+    );
+    if (reason == null) return;
+
+    final outcome = await DatabaseService.cancelSaleRecord(
+      recordKey: sale['recordKey'],
+      cancelledBy: widget.user.username,
+      reason: reason,
+      allowHistorical: canRepairHistory,
+    );
+    if (!mounted) return;
+
+    switch (outcome) {
+      case SaleCancellationOutcome.cancelled:
+        final reservationCancelled =
+            await DatabaseService.cancelReservationByOrderId(orderId as int);
+        if (!mounted) return;
+        setState(() {});
+        unawaited(
+          showPosToast(
+            context: context,
+            message: reservationCancelled
+                ? 'Order #$orderId cancelled. Linked reservation updated.'
+                : 'Order #$orderId cancelled.',
+            style: PosToastStyle.info,
+          ),
+        );
+      case SaleCancellationOutcome.alreadyCancelled:
+        setState(() {});
+        unawaited(showErrorToast(context, 'ეს გაყიდვა უკვე გაუქმებულია.'));
+      case SaleCancellationOutcome.historicalNotPermitted:
+        unawaited(
+          showErrorToast(
+            context,
+            'დახურული ბიზნეს დღის გაყიდვის გაუქმება არ არის ნებადართული.',
+          ),
+        );
+      case SaleCancellationOutcome.reasonRequired:
+        unawaited(showErrorToast(context, 'გაუქმების მიზეზი აუცილებელია.'));
+      case SaleCancellationOutcome.notFound:
+      case SaleCancellationOutcome.failed:
+        unawaited(showErrorToast(context, 'Could not cancel sale record.'));
+    }
+  }
+
+  /// A modal that will not confirm until something is typed into it.
+  ///
+  /// Used by the flows that rewrite recorded money — a void, a business-date
+  /// move — where the reason is part of the record, not a formality.
+  Future<String?> _promptForReason({
+    required String title,
+    required String description,
+    required String confirmLabel,
+    bool destructive = false,
+  }) async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setLocalState) {
+            final reason = controller.text.trim();
+            return AlertDialog(
+              backgroundColor: AdminDesign.text,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Text(title, style: const TextStyle(color: Colors.white)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    description,
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: controller,
+                    autofocus: true,
+                    minLines: 2,
+                    maxLines: 3,
+                    style: const TextStyle(color: Colors.white),
+                    onChanged: (_) => setLocalState(() {}),
+                    decoration: const InputDecoration(
+                      labelText: 'მიზეზი',
+                      labelStyle: TextStyle(color: AdminDesign.muted),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text(
+                    'დახურვა',
+                    style: TextStyle(color: AdminDesign.muted),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: reason.isEmpty
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(reason),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: destructive
+                        ? AdminDesign.danger
+                        : AdminDesign.accentDark,
+                  ),
+                  child: Text(confirmLabel),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    controller.dispose();
+    return result;
+  }
+
+  Future<void> _restoreClosedSale(Map<String, dynamic> sale) async {
+    final isRestored = sale['restoredToOrder'] == true;
+    if (isRestored) {
+      if (!mounted) return;
+      unawaited(showErrorToast(context, 'ეს გაყიდვა უკვე დაბრუნებულია.'));
+      return;
+    }
+
+    final saleDate = (sale['date'] as String?) ?? '';
+    final todayDate = DatabaseService.getCurrentDate().toIso8601String().split(
+      'T',
+    )[0];
+    if (saleDate != todayDate) {
+      if (!mounted) return;
+      unawaited(
+        showErrorToast(
+          context,
+          'დაბრუნება შესაძლებელია მხოლოდ მიმდინარე ბიზნეს თარიღისთვის.',
+        ),
+      );
+      return;
+    }
+
+    final orderId = sale['orderId'];
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AdminDesign.text,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'მაგიდაზე დაბრუნება',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          'დარწმუნებული ხართ, რომ გსურთ შეკვეთის (#$orderId) დაბრუნება აქტიურ მაგიდაზე?',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text(
+              'გაუქმება',
+              style: TextStyle(color: AdminDesign.muted),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AdminDesign.accentDark,
+            ),
+            child: const Text('დაბრუნება'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    final success = await DatabaseService.restoreClosedOrderFromSale(
+      recordKey: sale['recordKey'],
+      restoredBy: widget.user.username,
+    );
+    if (!mounted) return;
+
+    if (success) {
+      setState(() {});
+      unawaited(showSuccessToast(context, 'შეკვეთა დაბრუნდა აქტიურ მაგიდაზე.'));
+    } else {
+      unawaited(
+        showErrorToast(
+          context,
+          'დაბრუნება ვერ შესრულდა. შესაძლოა თარიღი არასწორია ან მაგიდა დაკავებულია.',
+        ),
+      );
+    }
+  }
+
+  Widget _buildContent() {
+    if (_isLimitedAdmin && !_limitedAdminSections.contains(_selectedSection)) {
+      return AdminStaffSection(user: widget.user);
+    }
+
+    // The routing check, not just the menu. Hiding an entry is presentation;
+    // this is what makes a developer section unreachable when the token has
+    // expired mid-session or was never presented.
+    if (AdminScreen.developerSections.contains(_selectedSection) &&
+        !_isDeveloperUnlocked) {
+      return _buildSettingsSection();
+    }
+
+    switch (_selectedSection) {
+      case 'staff':
+      case 'waiters':
+      case 'users':
+        return AdminStaffSection(user: widget.user);
+      case 'menu':
+        return AdminMenuSection(user: widget.user);
+      case 'packages':
+        return AdminPackagesSection(user: widget.user);
+      case 'reservations':
+        return AdminReservationsSection(user: widget.user);
+      case 'tableLayouts':
+        return const AdminTableLayoutsSection();
+      case 'display':
+        return AdminDisplaySection(
+          displaySettings: _displaySettings,
+          onDisplaySettingsChanged: (value) {
+            setState(() {
+              _displaySettings = value;
+            });
+            // Preview immediately so the effect is visible while choosing;
+            // Save persists it to this terminal.
+            unawaited(PosDisplaySettingsController.preview(value));
+          },
+          isSaving: _isSavingDisplaySettings,
+          onSave: _saveDisplaySettings,
+        );
+      case 'closeday':
+        return AdminCloseDaySection(
+          user: widget.user,
+          onShowBusinessDateSelector: _showBusinessDateSelector,
+          onSetBusinessDateToToday: _buildSetBusinessDateToLastClosedAction(),
+          formatDateTimeDisplay: _formatDateTimeDisplay,
+        );
+      case 'sales':
+        return AdminSalesSection(
+          onReprintSaleReceipt: _reprintSaleReceipt,
+          onReprintFullSaleReceipt: _reprintSaleFullReceipt,
+          onConfirmCancelSale: _confirmCancelSale,
+          canCancelHistoricalSale: DeveloperAccess.can(
+            DeveloperScope.salesRepair,
+          ),
+          onRestoreClosedSale: _restoreClosedSale,
+        );
+      case 'salesReport':
+        return AdminSalesReportSection(
+          selectedSalesYear: _selectedSalesYear,
+          selectedSalesMonth: _selectedSalesMonth,
+          onChangeSalesMonth: _changeSalesMonth,
+          onSetSelectedSalesMonth: _setSelectedSalesMonth,
+        );
+      case 'financialReports':
+        // Its own destination. These two exports were at the foot of the
+        // Settings tab, then at the foot of the sales report — both times
+        // below a screenful of other content, which is why they read as
+        // deleted.
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(18),
+          child: _buildFinancialReportsPanel(),
+        );
+      case 'audit':
+        return AdminAuditLogSection(
+          selectedAuditYear: _selectedAuditYear,
+          selectedAuditMonth: _selectedAuditMonth,
+          onChangeAuditMonth: _changeAuditMonth,
+          onSetSelectedAuditMonth: _setSelectedAuditMonth,
+        );
+      case 'errors':
+        return const AdminErrorLogSection();
+      case 'printers':
+        return _buildPrintersSection();
+      case 'connection':
+        return const AdminConnectionSection();
+      case 'developer':
+        return AdminDeveloperSection(
+          onCreateBackupFile: _createBackupFile,
+          onRestoreBackupFromFile: _restoreBackupFromFile,
+          isCreatingBackup: _isCreatingBackup,
+          isRestoringBackup: _isRestoringBackup,
+          lastBackupPath: _lastBackupPath,
+          lastRestorePath: _lastRestorePath,
+        );
+      case 'settings':
+        return _buildSettingsSection();
+      default:
+        return const SizedBox();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // One theme for the whole panel. The admin has roughly two hundred stock
+    // Material buttons, fields and switches; restyling them individually would
+    // have been both enormous and unstable, because the next one anybody added
+    // would come out in the old navy again. Setting them here means a plain
+    // `ElevatedButton` already looks like the rest of the product.
+    //
+    // The Builder matters: it puts the sections' build contexts *below* the
+    // Theme, so `Theme.of(context)` inside them resolves to this one.
+    return Theme(
+      data: AdminTheme.of(context),
+      child: Builder(builder: _buildScaffold),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
+    final mainContent = Expanded(child: ClipRect(child: _buildContent()));
+
+    return Scaffold(
+      backgroundColor: _surfaceColor,
+      appBar: _isMobile
+          ? AppBar(
+              backgroundColor: _sidebarColor,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              shape: const Border(
+                bottom: BorderSide(color: VynicFloorTokens.panelBorder),
+              ),
+              iconTheme: const IconThemeData(color: VynicFloorTokens.text),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              title: Text(
+                _titleFor(_selectedSection),
+                style: const TextStyle(
+                  color: VynicFloorTokens.text,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              actions: [
+                IconButton(
+                  icon: Icon(_isSidebarExpanded ? Icons.close : Icons.menu),
+                  onPressed: () {
+                    setState(() {
+                      _isSidebarExpanded = !_isSidebarExpanded;
+                    });
+                  },
+                ),
+              ],
+            )
+          : null,
+      body: Stack(
+        children: [
+          // Main content and sidebar
+          _isMobile
+              ? Stack(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [mainContent],
+                    ),
+                    if (_isSidebarExpanded)
+                      Positioned.fill(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _isSidebarExpanded = false;
+                            });
+                          },
+                          child: Container(
+                            color: Colors.black.withValues(alpha: 0.42),
+                          ),
+                        ),
+                      ),
+                    _buildSidebar(),
+                  ],
+                )
+              : Row(
+                  // Stretch, not the default centre: a section whose content
+                  // is shorter than the window would otherwise be handed a
+                  // loose height and float in the middle of the page instead
+                  // of starting at the top.
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Sidebar
+                    _buildSidebar(),
+
+                    // Main content
+                    mainContent,
+                  ],
+                ),
+        ],
+      ),
+    );
+  }
+}

@@ -1,6 +1,6 @@
 # Vynic Roadmap
 
-**Date:** 2026-07-21. Strict priority order, minimal parallel work. No time estimates by design.
+**Updated:** 2026-08-31. Strict priority order, minimal parallel work. No time estimates by design.
 P0 = production blockers · P1 = core Vankisi launch · P2 = high-value operations · P3 = growth.
 Designs referenced: [VYNIC_ARCHITECTURE_PLAN.md](VYNIC_ARCHITECTURE_PLAN.md) (§n). Findings: [VYNIC_PRODUCTION_GAPS.md](VYNIC_PRODUCTION_GAPS.md) / [VYNIC_SECURITY_AUDIT.md](VYNIC_SECURITY_AUDIT.md).
 
@@ -151,6 +151,43 @@ P2-1…P2-8: attendance → inventory MVP → waiter mode → split/merge → mo
 ## Future SaaS scope
 
 Phase 7-9 per project plan: Venue/venueId everywhere, per-venue sync credentials + entitlements, tableRefs wire migration, ka+en l10n, feature-flag gate, billing, second venue pilot. Precondition: V2 stable at Vankisi for a full month of close-days with zero P0-class incidents.
+
+Landed so far: Venue/venueId across the POS operational mirror ([TENANT_SCOPING.md](TENANT_SCOPING.md)) and the commercial Plan/Feature model with Venue-scoped entitlements and website mode ([PRODUCT_ENTITLEMENTS.md](PRODUCT_ENTITLEMENTS.md)).
+
+Still ahead, in no fixed order:
+
+- **Generic SaaS restaurant website** — one codebase serving many Venues from configuration, separate from the Vankisi custom site ([FUTURE_SAAS_WEBSITE.md](FUTURE_SAAS_WEBSITE.md)).
+- **Custom website runtime and deployment** — deliberately an open decision, not an implementation ([CUSTOM_WEBSITE_RUNTIME.md](CUSTOM_WEBSITE_RUNTIME.md)).
+- **Host/domain → Venue resolution** — complete for registered domains; public
+  requests fail closed on unknown hosts.
+- **Step 7A Platform Admin identity/control plane — complete.** A separate
+  `PlatformUser` principal owns authenticated, audited organization, Venue,
+  product, domain, Device and NOOP-control APIs.
+- **Step 7B Vynic Admin Panel — complete.** `apps/platform-web/` now provides the
+  authenticated operator UI over those APIs, including one-time POS credential
+  provisioning. See [PLATFORM_ADMIN_PANEL.md](PLATFORM_ADMIN_PANEL.md).
+- **Step 6C Cloud → POS command migration — complete.** All seventeen business
+  operations that reached a restaurant over the LAN callback path are now
+  `EdgeCommand` types the terminal claims, reservation reads are answered from a
+  Cloud mirror rather than by dialling the POS, and audit reports sync
+  incrementally instead of resending a restaurant's whole history on every
+  change. See [EDGE_COMMAND_MIGRATION.md](EDGE_COMMAND_MIGRATION.md) and
+  [AUDIT_SYNC.md](AUDIT_SYNC.md).
+
+  The legacy callback path survives as a **frozen fallback for a Venue with no
+  enrolled Device**, because those installations still exist. So the true claim
+  is that an *enrolled* Venue's operations need no private POS address — not
+  that Cloud never needs one. That narrows to the stronger statement when the
+  fleet has finished enrolling.
+
+- **Recommended next: Production Cloud Deployment Foundation.** The real
+  control plane can now be exercised and the transport no longer requires LAN
+  reachability for an enrolled Venue, but production frontend/backend origins,
+  HTTPS, CORS, hosting, secrets and deployment verification remain the immediate
+  blocker to operating it outside development.
+- **Manager Cloud tenancy, then Manager feature enforcement** — `MANAGER_APP` is resolvable today but enforced nowhere, and must never gate POS → Cloud sync.
+- **Billing and subscriptions** — no lifecycle, provider, or pricing has been chosen; plan assignment is deliberately not a subscription.
+- **Signed offline commercial entitlements** — distinct from the existing Ed25519 developer licence.
 
 ---
 

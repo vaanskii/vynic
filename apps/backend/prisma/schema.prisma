@@ -1,0 +1,969 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["pos", "website"]
+}
+
+// ─── POS schema (synced from Windows POS + manager mobile) ───────────────────
+
+model Table {
+  id            String   @id @default(uuid())
+  venueId       String
+  tableNumber   String
+  floor         String
+  isReserved    Boolean  @default(false)
+  activeOrderId Int?
+  currentBill   Float    @default(0)
+  updatedAt     DateTime @updatedAt
+  venue         Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@unique([venueId, tableNumber, floor], name: "tableIdentifier")
+  @@index([venueId])
+  @@schema("pos")
+}
+
+model Order {
+  id                     String      @id @default(uuid())
+  venueId                String
+  posOrderId             Int
+  /// Idempotency key written by the POS atomic table-close flow
+  /// (docs/VYNIC_ARCHITECTURE_PLAN.md §1). Null for every order closed
+  /// before that flow exists; schema-only until roadmap Task 2.
+  closureId              String?     @unique
+  status                 String
+  totalAmount            Float
+  guestCount             Int         @default(0)
+  waiterName             String
+  floor                  String      @default("")
+  businessDate           String      @default("")
+  customerName           String      @default("")
+  customerPhone          String      @default("")
+  pickupTime             String      @default("")
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+  paymentType            String      @default("cash")
+  discountAmount         Float       @default(0)
+  /// Signed operator override applied to the bill total on the POS. Sent by
+  /// the POS snapshot so `totalAmount` can be reconciled against the order's
+  /// own item lines, discount and service fee. Zero on every order synced by
+  /// a POS build that predates the field.
+  manualAdjustmentAmount Float       @default(0)
+  includeServiceFee      Boolean     @default(false)
+  serviceFeePercent      Float       @default(10)
+  items                  OrderItem[]
+  venue                  Venue       @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@unique([venueId, posOrderId])
+  @@index([venueId, businessDate])
+  @@schema("pos")
+}
+
+model OrderItem {
+  id       String @id @default(uuid())
+  orderId  String
+  name     String
+  quantity Int
+  price    Float
+  order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@schema("pos")
+}
+
+model MenuCategory {
+  id            String            @id @default(uuid())
+  venueId       String
+  slug          String
+  nameKa        String
+  nameEn        String
+  sendToKitchen Boolean           @default(true)
+  sortOrder     Int               @default(0)
+  updatedAt     DateTime          @updatedAt
+  items         MenuItem[]
+  subcategories MenuSubcategory[]
+  venue         Venue             @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@unique([venueId, slug])
+  @@index([venueId])
+  @@schema("pos")
+}
+
+model MenuSubcategory {
+  id         String       @id @default(uuid())
+  slug       String
+  nameKa     String
+  nameEn     String
+  categoryId String
+  sortOrder  Int          @default(0)
+  updatedAt  DateTime     @updatedAt
+  items      MenuItem[]
+  category   MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([slug, categoryId])
+  @@schema("pos")
+}
+
+model MenuItem {
+  id            String            @id @default(uuid())
+  venueId       String
+  categoryId    String?
+  nameKa        String
+  nameEn        String
+  price         Float
+  sendToKitchen Boolean           @default(true)
+  sortOrder     Int               @default(0)
+  updatedAt     DateTime          @updatedAt
+  subcategoryId String?
+  category      MenuCategory?     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  subcategory   MenuSubcategory?  @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
+  variants      MenuItemVariant[]
+  venue         Venue             @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@index([venueId])
+  @@index([categoryId])
+  @@index([subcategoryId])
+  @@schema("pos")
+}
+
+model MenuItemVariant {
+  id         String   @id @default(uuid())
+  menuItemId String
+  size       Float
+  price      Float
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@index([menuItemId])
+  @@schema("pos")
+}
+
+model Expense {
+  id           String   @id @default(uuid())
+  venueId      String
+  /// The record's own id on the POS, which owns expense identity. Ingestion
+  /// upserts on it so re-sending the same snapshot updates the row instead of
+  /// adding a second one. Null only for rows written before the POS sent
+  /// expense records at all.
+  posExpenseId String?
+  description  String
+  amount       Float
+  category     String
+  /// POS business day (`YYYY-MM-DD`), which is not the calendar day of
+  /// [createdAt] — the POS decides when its day ends.
+  businessDate String   @default("")
+  createdAt    DateTime @default(now())
+  paymentType  String   @default("cash")
+  venue        Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@unique([venueId, posExpenseId])
+  @@index([venueId, createdAt])
+  @@index([venueId, businessDate])
+  @@schema("pos")
+}
+
+model Staff {
+  id        String    @id @default(uuid())
+  venueId   String
+  username  String
+  pinHash   String
+  role      StaffRole @default(WAITER)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  venue     Venue     @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@unique([venueId, username])
+  @@index([venueId])
+  @@schema("pos")
+}
+
+/// The Cloud mirror of the reservations a POS holds.
+///
+/// The POS remains authoritative for operational reservations; this is the copy
+/// Cloud reads. It exists because the alternative was a synchronous HTTP call
+/// from a backend request into a restaurant's LAN — which a hosted Vynic cannot
+/// make at all, and which made a public website's table-availability page
+/// depend on one restaurant PC being awake.
+///
+/// Reconciled wholesale from each snapshot the POS pushes: reservations the
+/// snapshot no longer carries are removed, exactly as orders and tables are.
+/// A snapshot that omits the field entirely changes nothing, so a POS build
+/// that does not send reservations yet leaves the mirror alone rather than
+/// emptying it.
+model PosReservation {
+  id               String   @id @default(uuid())
+  venueId          String
+  /// The reservation's identity on the POS, which owns it.
+  posReservationId String
+  customerName     String
+  customerPhone    String   @default("")
+  /// Legacy integer table codes, the form the website availability rules use.
+  tableNumbers     Int[]
+  /// Lossless floor/number references, where the POS build sends them.
+  tableRefs        String[]
+  reservationDate  DateTime
+  reservationTime  String
+  numberOfGuests   Int      @default(0)
+  notes            String?
+  status           String
+  createdBy        String?
+  isTakeAway       Boolean  @default(false)
+  /// Set when this record is the POS's bookkeeping for a walk-in or takeaway
+  /// order rather than a real booking.
+  linkedOrderId    Int?
+  posCreatedAt     DateTime?
+  syncedAt         DateTime @updatedAt
+  venue            Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@unique([venueId, posReservationId])
+  @@index([venueId, reservationDate])
+  @@schema("pos")
+}
+
+model AuditReport {
+  id           String       @id @default(uuid())
+  venueId      String
+  reportId     String
+  posOrderId   Int
+  tableNumbers String[]
+  floor        String       @default("first")
+  openedById   String
+  openedByName String
+  openedAt     DateTime
+  status       String
+  closedAt     DateTime?
+  closedById   String?
+  closedByName String?
+  locked       Boolean      @default(false)
+  /// Content revision of the POS record this row was written from, echoed back
+  /// as the acknowledgment the POS marks synced. Null for every report ingested
+  /// before incremental audit sync existed, and for any POS build that does not
+  /// send one — both are treated as "revision unknown", which makes the next
+  /// push rewrite the row rather than skip it.
+  syncRevision String?
+  updatedAt    DateTime     @updatedAt
+  events       AuditEvent[]
+  venue        Venue        @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@unique([venueId, reportId])
+  @@index([venueId])
+  @@index([posOrderId])
+  @@index([status])
+  @@schema("pos")
+}
+
+model AuditEvent {
+  id          String      @id @default(uuid())
+  reportId    String
+  type        String
+  itemName    String
+  previousQty Int
+  newQty      Int
+  waiterId    String
+  waiterName  String
+  eventTime   DateTime
+  note        String?
+  seq         Int         @default(0)
+  report      AuditReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+  @@schema("pos")
+}
+
+model AuditEventLog {
+  id         String   @id @default(uuid())
+  venueId    String
+  action     String
+  userId     String
+  data       Json
+  deviceType String
+  createdAt  DateTime @default(now())
+  venue      Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@index([venueId, createdAt])
+  @@index([createdAt])
+  @@index([action])
+  @@schema("pos")
+}
+
+model DailySnapshot {
+  id            String   @id @default(uuid())
+  venueId       String
+  date          String
+  totalRevenue  Float    @default(0)
+  orderCount    Int      @default(0)
+  avgOrderValue Float    @default(0)
+  cashRevenue   Float    @default(0)
+  cardRevenue   Float    @default(0)
+  totalExpenses Float    @default(0)
+  topItemsJson  String   @default("[]")
+  updatedAt     DateTime @updatedAt
+  venue         Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@unique([venueId, date])
+  @@index([venueId])
+  @@schema("pos")
+}
+
+/// Manager-owned counted menus. Read and written only by the Manager product,
+/// so ownership follows the authenticated Manager Venue.
+model QuickOrderDraft {
+  id                String                @id @default(uuid())
+  venueId           String
+  draftId           String
+  displayName       String?
+  subtotal          Float
+  serviceFeeAmount  Float
+  total             Float
+  includeServiceFee Boolean               @default(false)
+  serviceFeeRate    Float                 @default(0.1)
+  createdAt         DateTime              @default(now())
+  createdBy         String
+  updatedAt         DateTime              @updatedAt
+  items             QuickOrderDraftItem[]
+  venue             Venue                 @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@unique([venueId, draftId])
+  @@index([venueId])
+  @@schema("pos")
+}
+
+model QuickOrderDraftItem {
+  id       String          @id @default(uuid())
+  draftId  String
+  name     String
+  quantity Int
+  price    Float
+  comment  String?
+  draft    QuickOrderDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  @@index([draftId])
+  @@schema("pos")
+}
+
+enum StaffRole {
+  MANAGER
+  SUPERVISOR
+  WAITER
+  ADMIN
+
+  @@schema("pos")
+}
+
+model Setting {
+  venueId   String
+  key       String
+  value     String
+  updatedAt DateTime @updatedAt
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@id([venueId, key])
+  @@index([venueId])
+  @@schema("pos")
+}
+
+enum DeviceStatus {
+  ACTIVE
+  DISABLED
+  REVOKED
+
+  @@schema("pos")
+}
+
+enum VenueStatus {
+  ACTIVE
+  DISABLED
+
+  @@schema("pos")
+}
+
+/// Whether a registered website hostname currently resolves to its Venue.
+/// A DISABLED row keeps the hostname reserved without serving it.
+enum VenueDomainStatus {
+  ACTIVE
+  DISABLED
+
+  @@schema("pos")
+}
+
+// ─── Platform control plane (above every restaurant tenant) ──────────────────
+// A Vynic administrator is not a restaurant employee, a customer, or a machine.
+// See docs/PLATFORM_CONTROL_PLANE.md.
+
+enum PlatformUserStatus {
+  ACTIVE
+  DISABLED
+
+  @@schema("pos")
+}
+
+/// What a platform principal may do.
+///
+/// One value today, deliberately modelled as an enum rather than a boolean:
+/// finer Vynic support/operator roles are expected, and they must not arrive as
+/// a second flag column. This is Vynic's own authorization vocabulary and is
+/// unrelated to restaurant staff roles or to the future Venue-owned custom
+/// roles, which are a different domain entirely.
+enum PlatformRole {
+  SUPER_ADMIN
+
+  @@schema("pos")
+}
+
+/// A Vynic administrator.
+///
+/// Deliberately holds no venueId, no organizationId and no Staff relation. A
+/// platform administrator sits above every tenant, so giving one a restaurant
+/// membership would be inventing an ownership that does not exist and would let
+/// tenant-scoped code mistake an operator for an employee.
+model PlatformUser {
+  id           String             @id @default(uuid())
+  email        String             @unique
+  displayName  String
+  passwordHash String
+  role         PlatformRole       @default(SUPER_ADMIN)
+  status       PlatformUserStatus @default(ACTIVE)
+  lastLoginAt  DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  auditEvents       PlatformAuditEvent[]
+  deviceEnrollments DeviceEnrollment[]
+
+  @@schema("pos")
+}
+
+/// What a platform administrator did, and to what.
+///
+/// Kept apart from AuditEventLog, which records what restaurant staff did inside
+/// a Venue. Writing a platform action there would claim an employee changed a
+/// plan or revoked a device, which is exactly the wrong answer to "who did
+/// this?".
+///
+/// `metadata` carries only what is safe to keep: never a password, never a
+/// credential, never a hash.
+model PlatformAuditEvent {
+  id             String   @id @default(uuid())
+  platformUserId String
+  action         String
+  targetType     String
+  targetId       String
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  actor PlatformUser @relation(fields: [platformUserId], references: [id], onDelete: Restrict)
+
+  @@index([platformUserId, createdAt])
+  @@index([targetType, targetId, createdAt])
+  @@index([createdAt])
+  @@schema("pos")
+}
+
+/// Where one unit of Cloud-originated work has got to.
+///
+/// CLAIMED is not "done": it means an Edge holds a lease on the command. The
+/// Edge reports the outcome, so only SUCCEEDED and FAILED are terminal.
+enum EdgeCommandStatus {
+  PENDING
+  CLAIMED
+  SUCCEEDED
+  FAILED
+
+  @@schema("pos")
+}
+
+enum PlanStatus {
+  ACTIVE
+  RETIRED
+
+  @@schema("pos")
+}
+
+/// A Venue override either grants a feature its plan lacks or withholds one
+/// its plan includes. The absence of a row is the third state — defer to the
+/// plan — which is why this is an enum rather than a boolean.
+enum FeatureOverrideEffect {
+  ENABLED
+  DISABLED
+
+  @@schema("pos")
+}
+
+/// Which restaurant website implementation serves a Venue. This configures the
+/// WEBSITE feature; it is not a feature of its own.
+enum WebsiteMode {
+  NONE
+  SAAS
+  CUSTOM
+
+  @@schema("pos")
+}
+
+/// Customer or business account. Billing and entitlements are deliberately
+/// deferred; Step 4A establishes ownership only.
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  venues    Venue[]
+
+  @@schema("pos")
+}
+
+/// One physical restaurant/location owned by an Organization.
+model Venue {
+  id                String                 @id @default(uuid())
+  organizationId    String
+  name              String
+  status            VenueStatus            @default(ACTIVE)
+  timezone          String
+  currency          String
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  organization      Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  devices           Device[]
+  tables            Table[]
+  orders            Order[]
+  menuCategories    MenuCategory[]
+  menuItems         MenuItem[]
+  expenses          Expense[]
+  staff             Staff[]
+  auditReports      AuditReport[]
+  posReservations   PosReservation[]
+  auditEventLogs    AuditEventLog[]
+  dailySnapshots    DailySnapshot[]
+  settings          Setting[]
+  callbackOutbox    PosCallbackOutbox[]
+  quickOrderDrafts  QuickOrderDraft[]
+  notifications     ManagerNotification[]
+  pushDevices       PushDevice[]
+  planAssignment    VenuePlanAssignment?
+  featureOverrides  VenueFeatureOverride[]
+  websiteConfig     VenueWebsiteConfig?
+  domains           VenueDomain[]
+  websiteTables     WebsiteTable[]
+  websiteBookings   WebsiteReservation[]
+  edgeCommands      EdgeCommand[]
+  deviceEnrollments DeviceEnrollment[]
+
+  @@index([organizationId])
+  @@schema("pos")
+}
+
+/// One concrete Vynic POS installation authenticated for platform sync.
+/// The raw credential secret is issued once; only its Argon2id verifier is
+/// persisted. Its Venue is the authoritative tenant boundary for POS auth.
+model Device {
+  id             String       @id @default(uuid())
+  venueId        String
+  installationId String       @unique
+  displayName    String
+  platform       String
+  credentialHash String
+  status         DeviceStatus @default(ACTIVE)
+  lastSeenAt     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  venue          Venue        @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  targetedCommands EdgeCommand[]      @relation("EdgeCommandTarget")
+  claimedCommands  EdgeCommand[]      @relation("EdgeCommandClaim")
+  enrollments      DeviceEnrollment[]
+
+  @@index([status])
+  @@index([venueId])
+  @@schema("pos")
+}
+
+/// One invitation for a POS terminal to join a Venue.
+///
+/// The operator handles a short code, never the Device secret. The code is
+/// bound to one Venue by the administrator who created it, so the POS never
+/// supplies a venueId — the enrollment is where tenant authority comes from.
+///
+/// Stored like every other secret here: `codeSelector` is the public half used
+/// to find the row, `codeHash` is the Argon2id verifier of the secret half. A
+/// leaked database therefore yields no usable code, and there is nothing to
+/// read back to an operator who lost one — issue another.
+///
+/// No placeholder Device is created up front. The Device is created (or, for a
+/// reinstall on the same installationId, reused and rotated) at redemption, so
+/// an unredeemed enrollment never leaves a terminal in the list that does not
+/// exist.
+///
+/// Status is derived from the timestamps rather than stored, so there is no
+/// second answer to drift from: cancelled, then redeemed, then expired, else
+/// pending.
+model DeviceEnrollment {
+  id                      String    @id @default(uuid())
+  venueId                 String
+  /// Public half of the one-time code. Indexed lookup, never a credential.
+  codeSelector            String    @unique
+  /// Argon2id verifier of the code's secret half.
+  codeHash                String
+  displayName             String
+  platform                String
+  expiresAt               DateTime
+  /// Failed redemptions against this code. A ceiling fails it closed.
+  attemptCount            Int       @default(0)
+  lastAttemptAt           DateTime?
+  redeemedAt              DateTime?
+  /// Which POS installation redeemed it; the same one may retry until expiry.
+  redeemedInstallationId  String?
+  deviceId                String?
+  cancelledAt             DateTime?
+  createdByPlatformUserId String
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  venue     Venue        @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  device    Device?      @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  createdBy PlatformUser @relation(fields: [createdByPlatformUserId], references: [id], onDelete: Restrict)
+
+  @@index([venueId, createdAt])
+  @@index([expiresAt])
+  @@index([deviceId])
+  @@schema("pos")
+}
+
+/// One unit of work Cloud has for a restaurant's Edge installation.
+///
+/// The Edge pulls; Cloud never dials a restaurant's LAN. A Cloud deployment
+/// cannot reach 192.168.x.x, so the only durable direction is the one the Edge
+/// opens itself with its Device credential.
+///
+/// `deviceId` null means any Edge Device of the Venue may take the command;
+/// set, it means only that Device may. Both exist because some work belongs to
+/// a specific machine (its printer, its screen) and some belongs to the
+/// installation, and a Venue may eventually run more than one Device.
+///
+/// Delivery is at-least-once: a claim is a lease, and a lease that expires
+/// unacknowledged becomes available again. Execution must therefore be
+/// idempotent, which is what `idempotencyKey` is for — it is unique per Venue,
+/// so enqueueing the same intent twice updates one row instead of creating a
+/// second command.
+model EdgeCommand {
+  id                String            @id @default(uuid())
+  venueId           String
+  deviceId          String?
+  type              String
+  contractVersion   Int               @default(1)
+  payload           Json
+  idempotencyKey    String
+  status            EdgeCommandStatus @default(PENDING)
+  attemptCount      Int               @default(0)
+  maxAttempts       Int               @default(10)
+  availableAt       DateTime          @default(now())
+  claimedAt         DateTime?
+  claimedByDeviceId String?
+  claimExpiresAt    DateTime?
+  acknowledgedAt    DateTime?
+  resultCode        String?
+  resultDetail      String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  venue     Venue   @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  device    Device? @relation("EdgeCommandTarget", fields: [deviceId], references: [id], onDelete: Restrict)
+  claimedBy Device? @relation("EdgeCommandClaim", fields: [claimedByDeviceId], references: [id], onDelete: Restrict)
+
+  @@unique([venueId, idempotencyKey])
+  @@index([venueId, status, availableAt])
+  @@index([deviceId, status, availableAt])
+  @@index([status, claimExpiresAt])
+  @@schema("pos")
+}
+
+// ─── Product entitlements (commercial layer above tenancy) ───────────────────
+// Plan is packaging, Feature is capability, and neither gates POS -> Cloud
+// synchronization. See docs/PRODUCT_ENTITLEMENTS.md.
+
+/// One capability the product can grant. Rows, not an enum, so a later
+/// capability is a seed insert rather than a schema migration.
+model Feature {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  plans     PlanFeature[]
+  overrides VenueFeatureOverride[]
+
+  @@schema("pos")
+}
+
+/// A commercial package. Carries no application logic: nothing branches on a
+/// plan key, because code asks for features.
+model Plan {
+  id        String     @id @default(uuid())
+  key       String     @unique
+  name      String
+  status    PlanStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  features    PlanFeature[]
+  assignments VenuePlanAssignment[]
+
+  @@schema("pos")
+}
+
+model PlanFeature {
+  planId    String
+  featureId String
+  plan      Plan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  feature   Feature @relation(fields: [featureId], references: [id], onDelete: Restrict)
+
+  @@id([planId, featureId])
+  @@index([featureId])
+  @@schema("pos")
+}
+
+/// Which package a Venue currently has. Deliberately not a Subscription: no
+/// billing lifecycle has been decided, so none is modelled here.
+model VenuePlanAssignment {
+  venueId    String   @id
+  planId     String
+  assignedAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  venue      Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  plan       Plan     @relation(fields: [planId], references: [id], onDelete: Restrict)
+
+  @@index([planId])
+  @@schema("pos")
+}
+
+/// A per-Venue exception to its plan. Always wins over the plan default, so a
+/// special agreement or a beta does not require inventing a new Plan.
+model VenueFeatureOverride {
+  venueId   String
+  featureId String
+  effect    FeatureOverrideEffect
+  note      String?
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  venue     Venue                 @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  feature   Feature               @relation(fields: [featureId], references: [id], onDelete: Restrict)
+
+  @@id([venueId, featureId])
+  @@index([featureId])
+  @@schema("pos")
+}
+
+/// How an entitled Venue's website is served. Separate from the WEBSITE
+/// entitlement, and separate from whether that website is actually deployed.
+model VenueWebsiteConfig {
+  venueId   String      @id
+  mode      WebsiteMode @default(NONE)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  venue     Venue       @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@schema("pos")
+}
+
+/// A hostname that authoritatively identifies one Venue's public website.
+///
+/// This is the public tenant boundary: an incoming request's host is looked up
+/// here, never taken from a body, query or client-chosen header. `hostname` is
+/// globally unique so a name can never resolve to two Venues, and Venue
+/// deletion is restricted so ownership cannot be silently orphaned.
+///
+/// DNS records and TLS certificates are deployment concerns and deliberately
+/// not modelled here.
+model VenueDomain {
+  id        String            @id @default(uuid())
+  venueId   String
+  hostname  String            @unique
+  status    VenueDomainStatus @default(ACTIVE)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  venue     Venue             @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@index([venueId])
+  @@schema("pos")
+}
+
+/// A Manager push/socket notification. Venue-owned because its deliveries are
+/// addressed by staff username, which is only unique within a Venue.
+model ManagerNotification {
+  id        String   @id @default(uuid())
+  venueId   String
+  wsType    String
+  title     String
+  body      String
+  envelope  Json
+  createdAt DateTime @default(now())
+
+  deliveries ManagerNotificationDelivery[]
+  venue      Venue                         @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@index([venueId, createdAt])
+  @@schema("pos")
+}
+
+model ManagerNotificationDelivery {
+  id             String   @id @default(uuid())
+  notificationId String
+  staffUsername  String
+  channel        String
+  createdAt      DateTime @default(now())
+
+  notification ManagerNotification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@unique([notificationId, staffUsername])
+  @@index([staffUsername])
+  @@schema("pos")
+}
+
+/// An FCM registration for one Manager staff member. The token is globally
+/// unique because a device is, but the staff username it maps to is only
+/// meaningful inside a Venue.
+model PushDevice {
+  id            String   @id @default(uuid())
+  venueId       String
+  staffUsername String
+  fcmToken      String   @unique
+  platform      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  venue         Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@index([venueId, staffUsername])
+  @@schema("pos")
+}
+
+model PosCallbackOutbox {
+  id            String   @id @default(uuid())
+  venueId       String
+  endpoint      String
+  payload       Json
+  posOrderId    Int?
+  dedupeKey     String?
+  status        String   @default("pending")
+  attempts      Int      @default(0)
+  maxAttempts   Int      @default(20)
+  lastError     String?
+  nextAttemptAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  venue         Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@index([venueId, status, nextAttemptAt])
+  @@index([status, nextAttemptAt])
+  @@index([posOrderId])
+  @@index([dedupeKey])
+  @@schema("pos")
+}
+
+// ─── Website schema (public bookings + customer accounts) ────────────────────
+
+enum WebsiteUserRole {
+  USER
+  SUPER_ADMIN
+
+  @@schema("website")
+}
+
+enum WebsiteReservationStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  COMPLETED
+
+  @@schema("website")
+}
+
+model WebsiteUser {
+  id        String          @id @default(uuid())
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  email     String?         @unique
+  password  String
+  firstName String?
+  lastName  String?
+  phone     String          @unique
+  role      WebsiteUserRole @default(USER)
+
+  hashedRefreshToken String?
+  reservations       WebsiteReservation[]
+
+  @@map("users")
+  @@schema("website")
+}
+
+/// Bookable tables shown on the public website. Each row maps to a POS table.
+///
+/// Venue-owned because it is queried directly by `websiteTableNumber`, which is
+/// a customer-facing label chosen per restaurant: two Venues may both call a
+/// table `table1`, so the identifier is unique only inside a Venue.
+model WebsiteTable {
+  id                 Int      @id @default(autoincrement())
+  venueId            String
+  websiteTableNumber String
+  posTableNumber     String
+  posFloor           String
+  capacity           Int      @default(4)
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  venue        Venue                     @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  reservations WebsiteReservationTable[]
+
+  @@unique([venueId, websiteTableNumber])
+  @@index([venueId])
+  @@map("tables")
+  @@schema("website")
+}
+
+/// A public-website booking. Venue-owned: it is the root the whole booking
+/// subsystem hangs from, and the tenant a payment callback resolves through.
+model WebsiteReservation {
+  id               String                   @id @default(uuid())
+  venueId          String
+  userId           String?
+  customerName     String?
+  customerEmail    String?
+  customerPhone    String?
+  date             DateTime
+  timeSlot         String
+  status           WebsiteReservationStatus @default(PENDING)
+  totalAmount      Float?
+  menuItems        String?
+  paymentId        String?
+  paymentStatus    String?
+  notes            String?
+  posReservationId String?
+  numberOfGuests   Int?
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  venue  Venue                     @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  user   WebsiteUser?              @relation(fields: [userId], references: [id])
+  tables WebsiteReservationTable[]
+
+  @@unique([venueId, posReservationId])
+  @@index([venueId, date])
+  @@map("reservations")
+  @@schema("website")
+}
+
+model WebsiteReservationTable {
+  id            Int      @id @default(autoincrement())
+  reservationId String
+  tableId       Int
+  createdAt     DateTime @default(now())
+
+  reservation WebsiteReservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  table       WebsiteTable       @relation(fields: [tableId], references: [id])
+
+  @@unique([reservationId, tableId])
+  @@map("reservation_tables")
+  @@schema("website")
+}

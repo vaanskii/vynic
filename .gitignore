@@ -1,4 +1,25 @@
 .idea
 .vscode
 secrets/
-.DS_Store 
+.DS_Store
+# Build output (SwiftPM caches land here when building desktop targets).
+build/
+
+# ── Local environment files ───────────────────────────────────────────────────
+# Never commit real credentials. Per-app .gitignore files already cover their
+# own variants (apps/backend/.env.server, apps/operations/.env.windows, …);
+# this is the repo-wide net so a new app cannot leak one by forgetting.
+# Placeholder templates stay tracked.
+.env
+.env.*
+!.env.example
+
+# ── JS/TS tooling output (apps/venue-web, apps/platform-web) ──────────────────
+node_modules/
+dist/
+.vite/
+coverage/
+*.log
+
+# ── OS artifacts ──────────────────────────────────────────────────────────────
+Thumbs.db

@@ -4,8 +4,8 @@ Use this at the beginning of any Vynic work session to orient the agent safely.
 
 ---
 
-You are working on **Vynic**, a restaurant POS (`pos_app_client/` Flutter +
-`pos_app_server/` NestJS). Currently single-restaurant; a phased modernization is
+You are working on **Vynic**, a restaurant POS (`apps/operations/` Flutter +
+`apps/backend/` NestJS). Currently single-restaurant; a phased modernization is
 planned but mostly not started.
 
 Do this before proposing any change:

@@ -9,7 +9,7 @@ Lay Vynic's SaaS foundation. Read `docs/VYNIC_PROJECT_PLAN.md` §4 and §6 (Phas
 7–8) first. Confirm with me that Phases 1–6 are complete before starting.
 
 **Phase 7 — tenancy (server-first):**
-1. Add a `Venue` (tenant) model in `pos_app_server/prisma/schema.prisma` via a proper
+1. Add a `Venue` (tenant) model in `apps/backend/prisma/schema.prisma` via a proper
    Prisma migration. Do not hand-edit existing migrations.
 2. Add `venueId` to every POS/website row that needs isolation. Fix globally-unique
    keys that break per-venue (e.g. `posOrderId` — scope it per venue).

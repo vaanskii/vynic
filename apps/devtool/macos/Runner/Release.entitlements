@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- The sandbox is deliberately off.
+
+	     This tool's entire job is to read a private key from wherever the
+	     developer keeps it — secrets/developer_signing_key.json inside a
+	     checkout, typically. A sandboxed app cannot see outside its own
+	     container, so auto-discovery finds nothing and even the file picker
+	     comes back empty-handed.
+
+	     Sandboxing costs nothing to keep only when an app has no business
+	     touching arbitrary paths. This one does, it never leaves the
+	     developer's machine, and it is not distributed through the App
+	     Store. -->
+	<key>com.apple.security.app-sandbox</key>
+	<false/>
+</dict>
+</plist>

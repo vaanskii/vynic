@@ -1,0 +1,33 @@
+/* MenuCard specific styles */
+.menuCard {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.menuCard:hover {
+  transform: translateY(-4px);
+}
+
+.cardImage {
+  transition: transform 0.3s ease;
+}
+
+.cardImage:hover {
+  transform: scale(1.05);
+}
+
+.priceTag {
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.addButton {
+  transition: all 0.2s ease;
+}
+
+.addButton:active {
+  transform: scale(0.95);
+}
+
+.addButton:hover {
+  box-shadow: 0 4px 12px rgba(233, 202, 162, 0.3);
+}

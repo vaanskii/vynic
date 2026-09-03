@@ -14,11 +14,11 @@ Work in small, independently verifiable steps. Suggested order (confirm with me
 before each step that changes behavior):
 
 1. **Stop hiding the error.** In
-   `pos_app_client/lib/core/services/database_service.dart`, make
+   `apps/operations/lib/core/services/database_service.dart`, make
    `activateReservation` return a typed result (success with orderId / failure with a
    reason) or rethrow — and log the real error via the existing `logError` path.
    Update the caller in
-   `pos_app_client/lib/apps/windows_pos/screens/home_screen.dart` to show the real
+   `apps/operations/lib/apps/windows_pos/screens/home_screen.dart` to show the real
    reason. **Do not** introduce new `null`-swallowing.
 2. **Make the picker respect live table state.** In
    `home_reservation_table_assignment_dialog.dart`, mark a table unavailable when

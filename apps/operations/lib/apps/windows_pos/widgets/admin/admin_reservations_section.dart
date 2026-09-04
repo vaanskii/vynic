@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation_context.dart';
@@ -1276,11 +1277,7 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
         notes: (notesRaw == null || notesRaw.isEmpty) ? null : notesRaw,
         createdBy: widget.user.username,
         status: 'confirmed',
-      );
-
-      await DatabaseService.updateReservationPreOrderItems(
-        reservationId,
-        selectedItems,
+        preOrderItems: selectedItems.isEmpty ? null : selectedItems,
       );
 
       final createdReservation = Reservation(
@@ -1371,32 +1368,18 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
       return;
     }
 
-    final previousStatus = reservation.status;
-    await DatabaseService.updateReservationStatus(reservation.id, newStatus);
-
-    if (newStatus == 'cancelled') {
-      await DatabaseService.logAdminAction(
-        actionType: 'reservation_cancelled',
-        performedBy: widget.user.username,
-        comment: 'Reservation cancelled via Admin panel',
-        details: {
-          'reservationId': reservation.id,
-          'customerName': reservation.customerName,
-          'reservationDate': reservation.reservationDate.toIso8601String(),
-          'reservationTime': reservation.reservationTime,
-          'tableNumbers': reservation.tableNumbers,
-          'tableRefs': ReservationTableAvailability.tableRefsOf(
-            reservation,
-          ).map((ref) => ref.encode()).toList(),
-          'previousStatus': previousStatus,
-          'newStatus': newStatus,
-          'isTakeAway': reservation.isTakeAway,
-          'linkedOrderId': reservation.linkedOrderId,
-          'notes': reservation.notes,
-          'performedByRole': widget.user.role,
-        },
-      );
-    }
+    // The repository writes the timeline entry (CANCEL_RESERVATION,
+    // CONFIRM_RESERVATION, ...) with the operator as actor; the lowercase
+    // `reservation_cancelled` admin-log row is no longer written.
+    await DatabaseService.updateReservationStatus(
+      reservation.id,
+      newStatus,
+      actorId: widget.user.username,
+      source: AuditSource.pos,
+      reason: newStatus == 'cancelled'
+          ? 'Reservation cancelled via Admin panel'
+          : null,
+    );
 
     if (mounted) {
       unawaited(showSuccessToast(context, 'Reservation $newStatus'));
@@ -1408,7 +1391,11 @@ class _AdminReservationsSectionState extends State<AdminReservationsSection> {
   Future<void> _deleteReservation(Reservation reservation) async {
     // Confirmation is already handled by the reservations management section
     // before this callback fires, so we delete directly (no second dialog).
-    await DatabaseService.deleteReservation(reservation.id);
+    await DatabaseService.deleteReservation(
+      reservation.id,
+      actorId: widget.user.username,
+      source: AuditSource.pos,
+    );
     if (!mounted) return;
     setState(() {});
     unawaited(showSuccessToast(context, 'Reservation deleted'));

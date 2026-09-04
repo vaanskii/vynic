@@ -516,8 +516,19 @@ class DatabaseService {
   static Future<void> markSetupComplete() =>
       SettingsRepository.markSetupComplete();
 
-  static Future<bool> completeReservationForOrder(int orderId) =>
-      ReservationRepository.completeReservationByOrderId(orderId);
+  static Future<bool> completeReservationForOrder(
+    int orderId, {
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+    String? reason,
+  }) => ReservationRepository.completeReservationByOrderId(
+    orderId,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+    reason: reason,
+  );
 
   static Future<void> freeTable({
     required String tableNumber,
@@ -1092,8 +1103,10 @@ class DatabaseService {
   static Future<void> replaceReservationsFromJson(List<dynamic> payload) =>
       BackupRepository.replaceReservationsFromJson(payload);
 
-  static Future<String> createReservationFromJson(Map<String, dynamic> json) =>
-      BackupRepository.createReservationFromJson(json);
+  static Future<String> createReservationFromJson(
+    Map<String, dynamic> json, {
+    AuditSource source = AuditSource.manager,
+  }) => BackupRepository.createReservationFromJson(json, source: source);
 
   static Map<String, dynamic>? getReservationById(String reservationId) =>
       BackupRepository.getReservationById(reservationId);
@@ -1399,6 +1412,7 @@ class DatabaseService {
     bool isTakeAway = false,
     int? linkedOrderId,
     String status = 'pending',
+    AuditSource source = AuditSource.pos,
   }) => ReservationRepository.createReservation(
     customerName: customerName,
     customerPhone: customerPhone,
@@ -1413,6 +1427,7 @@ class DatabaseService {
     isTakeAway: isTakeAway,
     linkedOrderId: linkedOrderId,
     status: status,
+    source: source,
   );
 
   static List<Reservation> getAllReservations() =>
@@ -1428,8 +1443,19 @@ class DatabaseService {
   static List<Reservation> getTableBlockingReservationsForDate(DateTime date) =>
       ReservationRepository.getTableBlockingReservationsForDate(date);
 
-  static Future<bool> cancelReservationByOrderId(int orderId) =>
-      ReservationRepository.cancelReservationByOrderId(orderId);
+  static Future<bool> cancelReservationByOrderId(
+    int orderId, {
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+    String? reason,
+  }) => ReservationRepository.cancelReservationByOrderId(
+    orderId,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+    reason: reason,
+  );
 
   static Reservation? findReservationForOrder(Order order) =>
       ReservationRepository.findReservationForOrder(order);
@@ -1490,25 +1516,74 @@ class DatabaseService {
 
   static Future<void> updateReservationStatus(
     String reservationId,
-    String newStatus,
-  ) => ReservationRepository.updateReservationStatus(reservationId, newStatus);
+    String newStatus, {
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+    String? reason,
+  }) => ReservationRepository.updateReservationStatus(
+    reservationId,
+    newStatus,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+    reason: reason,
+  );
+
+  static Future<bool> updateReservationDetails(
+    String reservationId, {
+    String? customerName,
+    String? customerPhone,
+    String? notes,
+    bool clearNotes = false,
+    DateTime? reservationDate,
+    String? reservationTime,
+    int? numberOfGuests,
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) => ReservationRepository.updateReservationDetails(
+    reservationId,
+    customerName: customerName,
+    customerPhone: customerPhone,
+    notes: notes,
+    clearNotes: clearNotes,
+    reservationDate: reservationDate,
+    reservationTime: reservationTime,
+    numberOfGuests: numberOfGuests,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+  );
 
   static Future<void> updateReservationPreOrderItems(
     String reservationId,
-    List<OrderItem> updatedItems,
-  ) => ReservationRepository.updateReservationPreOrderItems(
+    List<OrderItem> updatedItems, {
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) => ReservationRepository.updateReservationPreOrderItems(
     reservationId,
     updatedItems,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
   );
 
   static Future<void> updateReservationTables(
     String reservationId,
     List<int> tableNumbers, {
     List<TableRef>? tableRefs,
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) => ReservationRepository.updateReservationTables(
     reservationId,
     tableNumbers,
     tableRefs: tableRefs,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
   );
 
   /// Activates a reservation by creating (or re-linking) its order and
@@ -1521,8 +1596,19 @@ class DatabaseService {
     activatedBy: activatedBy,
   );
 
-  static Future<void> deleteReservation(String reservationId) =>
-      ReservationRepository.deleteReservation(reservationId);
+  static Future<void> deleteReservation(
+    String reservationId, {
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+    String? reason,
+  }) => ReservationRepository.deleteReservation(
+    reservationId,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+    reason: reason,
+  );
 
   static bool areTablesAvailableForReservation({
     required List<int> tableNumbers,

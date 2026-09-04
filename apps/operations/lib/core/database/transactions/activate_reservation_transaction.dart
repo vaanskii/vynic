@@ -3,8 +3,10 @@ import 'dart:developer' as developer;
 import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/order_status.dart';
+import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/reservation_status.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
+import 'package:vynic/core/services/audit/reservation_audit.dart';
 
 import '../database_core.dart';
 import '../repositories/error_log_repository.dart';
@@ -95,8 +97,12 @@ class ActivateReservationTransaction {
           existingOrder.statusEnum = OrderStatus.confirmed;
           await existingOrder.save();
         }
-        reservation.statusEnum = ReservationStatus.inProgress;
-        await reservation.save();
+        await _markInProgress(
+          reservation,
+          orderId: existingOrderId,
+          actorId: activatedBy,
+          source: source,
+        );
         return ReservationActivationResult.success(existingOrderId);
       }
       reservation.linkedOrderId = null;
@@ -124,9 +130,13 @@ class ActivateReservationTransaction {
     await order.save();
 
     // linkedOrderId is the activation marker; notes stay user-owned.
-    reservation.statusEnum = ReservationStatus.inProgress;
     reservation.linkedOrderId = order.orderId;
-    await reservation.save();
+    await _markInProgress(
+      reservation,
+      orderId: order.orderId,
+      actorId: activatedBy,
+      source: source,
+    );
 
     SyncHub.notify(
       SyncEvent(
@@ -137,6 +147,34 @@ class ActivateReservationTransaction {
     );
 
     return ReservationActivationResult.success(order.orderId);
+  }
+
+  /// The booking's own timeline entry for being seated. The Order report
+  /// carries `ACTIVATE_RESERVATION`; this is the status transition on the
+  /// Reservation side, and it says nothing when the status already was
+  /// `in-progress`.
+  static Future<void> _markInProgress(
+    Reservation reservation, {
+    required int orderId,
+    required String actorId,
+    required AuditSource source,
+  }) async {
+    final previous = reservation.status;
+    final alreadyInProgress =
+        reservation.statusEnum == ReservationStatus.inProgress;
+    reservation.statusEnum = ReservationStatus.inProgress;
+    await reservation.save();
+    if (alreadyInProgress) return;
+    await ReservationAudit.log(
+      action: ReservationAuditAction.update,
+      reservation: reservation,
+      actorId: actorId,
+      source: source,
+      previousStatus: previous,
+      newStatus: reservation.status,
+      reason: 'Activated',
+      extra: {'orderId': orderId},
+    );
   }
 
   // Activate today's confirmed reservations (called when app starts or day opens)
@@ -280,9 +318,13 @@ class ActivateReservationTransaction {
 
         // Update reservation status to 'in-progress' and link to order.
         // linkedOrderId is the activation marker; notes stay user-owned.
-        reservation.statusEnum = ReservationStatus.inProgress;
         reservation.linkedOrderId = order.orderId;
-        await reservation.save();
+        await _markInProgress(
+          reservation,
+          orderId: order.orderId,
+          actorId: 'System (Reservation)',
+          source: AuditSource.system,
+        );
 
         developer.log(
           '  ✅ Activated successfully - Reservation ID: ${reservation.key}, Order ID: ${order.orderId}',

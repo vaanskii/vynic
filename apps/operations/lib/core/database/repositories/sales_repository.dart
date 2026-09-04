@@ -6,6 +6,8 @@ import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/order_status.dart';
 import 'package:vynic/core/models/reservation_classification.dart';
 import 'package:vynic/core/models/reservation_status.dart';
+import 'package:vynic/core/models/audit_source.dart';
+import 'package:vynic/core/services/audit/reservation_audit.dart';
 import 'package:vynic/core/models/sale_record.dart';
 import 'package:vynic/core/models/takeaway_order.dart';
 
@@ -581,6 +583,8 @@ class SalesRepository {
             0.0,
         reason: trimmedReason,
         historical: isHistorical,
+        saleId: recordKey.toString(),
+        closureId: updated['closureId']?.toString(),
       );
 
       return SaleCancellationOutcome.cancelled;
@@ -829,8 +833,19 @@ class SalesRepository {
 
       if (linkedReservation != null &&
           linkedReservation.statusEnum == ReservationStatus.completed) {
+        final previousReservationStatus = linkedReservation.status;
         linkedReservation.statusEnum = ReservationStatus.inProgress;
         await linkedReservation.save();
+        await ReservationAudit.log(
+          action: ReservationAuditAction.update,
+          reservation: linkedReservation,
+          actorId: restoredBy,
+          source: AuditSource.pos,
+          previousStatus: previousReservationStatus,
+          newStatus: linkedReservation.status,
+          reason: 'Order restored',
+          extra: {'orderId': orderId},
+        );
         SyncHub.notify(
           SyncEvent(
             type: SyncEventType.reservations,

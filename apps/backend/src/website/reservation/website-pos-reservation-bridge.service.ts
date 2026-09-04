@@ -248,6 +248,9 @@ export class WebsitePosReservationBridgeService {
         status: 'confirmed',
         isTakeAway: false,
         preOrderItems,
+        // Provenance for the POS audit trail; additive and ignored by
+        // builds that predate it.
+        source: 'website',
       },
       // Stable per booking: a second attempt to push the same website
       // reservation is the same intent, not a second booking.
@@ -284,7 +287,13 @@ export class WebsitePosReservationBridgeService {
     try {
       await this.posCommands.dispatch(tenant, {
         type: EdgeCommandTypes.RESERVATION_STATUS_UPDATE,
-        payload: { reservationId: id, status: 'cancelled' },
+        payload: {
+          reservationId: id,
+          status: 'cancelled',
+          updatedBy: 'website',
+          source: 'website',
+          reason: 'Cancelled on the website',
+        },
         idempotencyKey: `RESERVATION_STATUS_UPDATE:website-cancel:${id}`,
       });
       this.gateway.broadcastUpdate('data_updated', {

@@ -3536,7 +3536,11 @@ class _AdminScreenState extends State<AdminScreen> {
     switch (outcome) {
       case SaleCancellationOutcome.cancelled:
         final reservationCancelled =
-            await DatabaseService.cancelReservationByOrderId(orderId as int);
+            await DatabaseService.cancelReservationByOrderId(
+              orderId as int,
+              actorId: widget.user.username,
+              reason: 'Sale voided: $reason',
+            );
         if (!mounted) return;
         setState(() {});
         unawaited(

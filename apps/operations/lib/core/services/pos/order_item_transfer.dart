@@ -351,7 +351,12 @@ abstract final class OrderItemTransfer {
 
     // A booking whose party moved is finished, not cancelled — and a booking
     // left `confirmed` against a closed order is what stops the day closing.
-    await DatabaseService.completeReservationForOrder(order.orderId);
+    await DatabaseService.completeReservationForOrder(
+      order.orderId,
+      actorId: user.username,
+      source: auditSource,
+      reason: 'Order emptied by transfer',
+    );
 
     await _appendTransferClose(
       order: order,

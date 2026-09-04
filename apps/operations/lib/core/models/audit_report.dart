@@ -31,6 +31,18 @@ enum AuditEventType {
   /// The Order closed because a transfer took every item off it. No Sale was
   /// written: the food is on the other Order's bill.
   transferClose,
+
+  /// An advance was taken against the Order or its amount changed. The
+  /// receipt is the durable money record; this is its visible trail.
+  recordAdvance,
+
+  /// A money field on the open Order changed: `details.field` names it
+  /// (`manualAdjustment`, `serviceFee`) with `previousValue` / `newValue`.
+  adjustOrder,
+
+  /// A written Sale was voided after the close. Distinct from a cancelled
+  /// Order: the Sale existed.
+  voidSale,
   custom,
 }
 
@@ -101,6 +113,19 @@ AuditEventType auditEventTypeFromString(String? raw) {
     case 'TRANSFERCLOSE':
     case 'EMPTIED_BY_TRANSFER':
       return AuditEventType.transferClose;
+    case 'RECORD_ADVANCE':
+    case 'RECORDADVANCE':
+    case 'ADVANCE_RECORDED':
+      return AuditEventType.recordAdvance;
+    case 'ADJUST_ORDER':
+    case 'ADJUSTORDER':
+    case 'ORDER_ADJUSTED':
+      return AuditEventType.adjustOrder;
+    case 'VOID_SALE':
+    case 'VOIDSALE':
+    case 'SALE_VOIDED':
+    case 'SALE_CANCELLED':
+      return AuditEventType.voidSale;
     default:
       break;
   }
@@ -174,6 +199,12 @@ String auditEventTypeToString(AuditEventType type) {
       return 'MOVE_ITEMS';
     case AuditEventType.transferClose:
       return 'TRANSFER_CLOSE';
+    case AuditEventType.recordAdvance:
+      return 'RECORD_ADVANCE';
+    case AuditEventType.adjustOrder:
+      return 'ADJUST_ORDER';
+    case AuditEventType.voidSale:
+      return 'VOID_SALE';
     case AuditEventType.custom:
       return 'CUSTOM';
   }

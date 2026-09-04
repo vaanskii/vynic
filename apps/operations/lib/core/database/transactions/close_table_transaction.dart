@@ -491,6 +491,10 @@ class CloseTableTransaction {
     await ReservationRepository.completeReservationByOrderId(
       order.orderId,
       failOnError: true,
+      actorId: effectiveActorId,
+      actorName: effectiveActorName,
+      source: source,
+      reason: 'Order closed',
     );
 
     final closingEvent = AuditEvent(
@@ -578,6 +582,12 @@ class CloseTableTransaction {
         'recoveryAction': recoveryAction,
       'businessDate': money.businessDate,
       'closureId': money.closureId,
+      // Names the genuine booking this close settles, so the reservation
+      // timeline and the Order report point at each other.
+      if (ReservationRepository.findLinkedBooking(order.orderId) != null)
+        'reservationId': ReservationRepository.findLinkedBooking(
+          order.orderId,
+        )!.id,
       'isFiscal': money.isFiscal,
       'grossAmount': money.grossSaleAmount,
       'paymentMethod': money.isFiscal

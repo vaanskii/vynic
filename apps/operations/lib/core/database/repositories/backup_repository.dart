@@ -6,6 +6,7 @@ import 'package:hive/hive.dart';
 import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/order_status.dart';
 import 'package:vynic/core/models/package.dart';
 import 'package:vynic/core/models/quick_order_draft.dart';
@@ -516,8 +517,9 @@ class BackupRepository {
   }
 
   static Future<String> createReservationFromJson(
-    Map<String, dynamic> json,
-  ) async {
+    Map<String, dynamic> json, {
+    AuditSource source = AuditSource.manager,
+  }) async {
     final tableNumbers = ((json['tableNumbers'] as List?) ?? const [])
         .map((e) => _coerceToInt(e) ?? 0)
         .where((value) => value > 0)
@@ -554,6 +556,7 @@ class BackupRepository {
       // Present when Cloud originated the booking and allocated its identity,
       // which is what makes a redelivered create converge instead of duplicate.
       id: json['id'] as String?,
+      source: source,
     );
   }
 

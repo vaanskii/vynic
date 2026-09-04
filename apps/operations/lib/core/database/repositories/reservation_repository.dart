@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/reservation_classification.dart';
@@ -10,6 +11,7 @@ import 'package:vynic/core/utils/reservation_table_availability.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'business_day_repository.dart';
 import '../database_core.dart';
+import 'package:vynic/core/services/audit/reservation_audit.dart';
 
 /// Reservations: CRUD, table-blocking queries, activation (creating the real
 /// order when guests are seated), and day-open auto-activation.
@@ -47,6 +49,7 @@ class ReservationRepository {
     int? linkedOrderId,
     String status = 'pending',
     String? id,
+    AuditSource source = AuditSource.pos,
   }) async {
     // Cloud supplies the id for a reservation it originated, because a POS that
     // invents one turns an at-least-once redelivery into a second booking. A
@@ -93,7 +96,28 @@ class ReservationRepository {
         payload: {'reservationId': reservationId},
       ),
     );
+    await ReservationAudit.log(
+      action: ReservationAuditAction.create,
+      reservation: reservation,
+      actorId: createdBy,
+      source: source,
+      newStatus: reservation.status,
+    );
     return reservationId;
+  }
+
+  /// The genuine advance booking seated on [orderId], if any. Bookkeeping
+  /// rows written by older builds are not bookings and never match.
+  static Reservation? findLinkedBooking(int orderId) {
+    final box = DatabaseCore.reservationBox;
+    if (box == null) return null;
+    for (final reservation in box.values) {
+      if (reservation.linkedOrderId == orderId &&
+          ReservationClassification.isRealAdvanceBooking(reservation)) {
+        return reservation;
+      }
+    }
+    return null;
   }
 
   // Get all reservations
@@ -147,6 +171,10 @@ class ReservationRepository {
   static Future<bool> completeReservationByOrderId(
     int orderId, {
     bool failOnError = false,
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+    String? reason,
   }) async {
     try {
       final reservationBox = DatabaseCore.reservationBox;
@@ -154,9 +182,22 @@ class ReservationRepository {
       for (final reservation in reservationBox.values) {
         if (reservation.linkedOrderId == orderId &&
             ReservationClassification.isRealAdvanceBooking(reservation)) {
+          // Already completed: a retry, and the timeline says nothing twice.
           if (reservation.statusEnum != ReservationStatus.completed) {
+            final previous = reservation.status;
             reservation.statusEnum = ReservationStatus.completed;
             await reservation.save();
+            await ReservationAudit.log(
+              action: ReservationAuditAction.complete,
+              reservation: reservation,
+              actorId: actorId,
+              actorName: actorName,
+              source: source,
+              previousStatus: previous,
+              newStatus: reservation.status,
+              reason: reason,
+              extra: {'orderId': orderId},
+            );
           }
           return true;
         }
@@ -173,7 +214,13 @@ class ReservationRepository {
     }
   }
 
-  static Future<bool> cancelReservationByOrderId(int orderId) async {
+  static Future<bool> cancelReservationByOrderId(
+    int orderId, {
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+    String? reason,
+  }) async {
     try {
       final reservationBox = DatabaseCore.reservationBox;
       if (reservationBox == null) return false;
@@ -182,8 +229,20 @@ class ReservationRepository {
             ReservationClassification.isRealAdvanceBooking(reservation)) {
           // Identity and the Order link are kept; a repeat is a no-op.
           if (reservation.statusEnum != ReservationStatus.cancelled) {
+            final previous = reservation.status;
             reservation.statusEnum = ReservationStatus.cancelled;
             await reservation.save();
+            await ReservationAudit.log(
+              action: ReservationAuditAction.cancel,
+              reservation: reservation,
+              actorId: actorId,
+              actorName: actorName,
+              source: source,
+              previousStatus: previous,
+              newStatus: reservation.status,
+              reason: reason,
+              extra: {'orderId': orderId},
+            );
           }
           return true;
         }
@@ -326,13 +385,32 @@ class ReservationRepository {
   /// Returns only dates that were real operated business days (have sales records)
   /// plus the current business date. Excludes reservation-only future dates.
   // Update reservation status
+  /// Sets a booking's status.
+  ///
+  /// The timeline entry is named by the transition (`CONFIRM_RESERVATION`,
+  /// `CANCEL_RESERVATION`, `NO_SHOW_RESERVATION`, `COMPLETE_RESERVATION`,
+  /// otherwise `UPDATE_RESERVATION`). A status already in force is a
+  /// redelivery and writes nothing — the entity is convergent by assignment
+  /// and so is its history.
   static Future<void> updateReservationStatus(
     String reservationId,
-    String newStatus,
-  ) async {
+    String newStatus, {
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+    String? reason,
+  }) async {
     final reservation = DatabaseCore.reservationBox!.values.firstWhere(
       (r) => r.id == reservationId,
     );
+    final previous = reservation.status;
+    final previousEnum = reservation.statusEnum;
+    final nextEnum = ReservationStatus.fromStorage(newStatus);
+    final unchanged = nextEnum != ReservationStatus.unknown
+        ? previousEnum == nextEnum
+        : previous.trim().toLowerCase() == newStatus.trim().toLowerCase();
+    if (unchanged) return;
+
     reservation.status = newStatus;
     await reservation.save();
     SyncHub.notify(
@@ -342,15 +420,122 @@ class ReservationRepository {
         payload: {'reservationId': reservationId},
       ),
     );
+    await ReservationAudit.log(
+      action: ReservationAuditAction.forTransition(
+        previousEnum,
+        reservation.statusEnum,
+      ),
+      reservation: reservation,
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+      previousStatus: previous,
+      newStatus: reservation.status,
+      reason: reason,
+    );
+  }
+
+  /// Edits the guest-facing details of a booking in one write, with one
+  /// `UPDATE_RESERVATION` naming the fields that changed. Fields left null
+  /// are untouched. Nothing is written when nothing changed.
+  static Future<bool> updateReservationDetails(
+    String reservationId, {
+    String? customerName,
+    String? customerPhone,
+    String? notes,
+    bool clearNotes = false,
+    DateTime? reservationDate,
+    String? reservationTime,
+    int? numberOfGuests,
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) async {
+    final reservation = findReservationById(reservationId);
+    if (reservation == null) return false;
+
+    final changed = <String>[];
+    final previous = <String, dynamic>{};
+    final next = <String, dynamic>{};
+
+    void track(String field, Object? before, Object? after) {
+      if (before == after) return;
+      changed.add(field);
+      previous[field] = before;
+      next[field] = after;
+    }
+
+    if (customerName != null) {
+      final value = customerName.trim();
+      track('customerName', reservation.customerName, value);
+      reservation.customerName = value;
+    }
+    if (customerPhone != null) {
+      final value = customerPhone.trim();
+      track('customerPhone', reservation.customerPhone, value);
+      reservation.customerPhone = value;
+    }
+    if (clearNotes || notes != null) {
+      final value = clearNotes
+          ? null
+          : (notes!.trim().isEmpty ? null : notes.trim());
+      track('notes', reservation.notes, value);
+      reservation.notes = value;
+    }
+    if (reservationDate != null) {
+      final before = reservation.reservationDate.toIso8601String().split(
+        'T',
+      )[0];
+      final after = reservationDate.toIso8601String().split('T')[0];
+      track('date', before, after);
+      reservation.reservationDate = reservationDate;
+    }
+    if (reservationTime != null) {
+      track('time', reservation.reservationTime, reservationTime);
+      reservation.reservationTime = reservationTime;
+    }
+    if (numberOfGuests != null && numberOfGuests > 0) {
+      track('guestCount', reservation.numberOfGuests, numberOfGuests);
+      reservation.numberOfGuests = numberOfGuests;
+    }
+
+    if (changed.isEmpty) return false;
+
+    await reservation.save();
+    SyncHub.notify(
+      SyncEvent(
+        type: SyncEventType.reservations,
+        action: 'updated',
+        payload: {'reservationId': reservationId},
+      ),
+    );
+    await ReservationAudit.log(
+      action: ReservationAuditAction.update,
+      reservation: reservation,
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+      extra: {
+        'changedFields': changed,
+        'previousValues': previous,
+        'newValues': next,
+      },
+    );
+    return true;
   }
 
   static Future<void> updateReservationPreOrderItems(
     String reservationId,
-    List<OrderItem> updatedItems,
-  ) async {
+    List<OrderItem> updatedItems, {
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) async {
     final reservation = DatabaseCore.reservationBox!.values.firstWhere(
       (r) => r.id == reservationId,
     );
+    final previousStatus = reservation.status;
+    final previousLines = _preOrderSummary(reservation.preOrderItems);
 
     final clonedItems = updatedItems
         .map(
@@ -385,12 +570,44 @@ class ReservationRepository {
         payload: {'reservationId': reservationId},
       ),
     );
+
+    final newLines = _preOrderSummary(reservation.preOrderItems);
+    if (newLines.toString() != previousLines.toString() ||
+        previousStatus != reservation.status) {
+      await ReservationAudit.log(
+        action: ReservationAuditAction.update,
+        reservation: reservation,
+        actorId: actorId,
+        actorName: actorName,
+        source: source,
+        previousStatus: previousStatus,
+        newStatus: reservation.status,
+        extra: {
+          'changedFields': const ['preOrderItems'],
+          'previousValues': {'preOrderItems': previousLines},
+          'newValues': {'preOrderItems': newLines},
+        },
+      );
+    }
   }
+
+  static List<Map<String, dynamic>> _preOrderSummary(List<OrderItem>? items) =>
+      [
+        for (final item in items ?? const <OrderItem>[])
+          <String, dynamic>{
+            'itemName': item.itemName,
+            'quantity': item.quantity,
+            'unitPrice': item.unitPrice,
+          },
+      ];
 
   static Future<void> updateReservationTables(
     String reservationId,
     List<int> tableNumbers, {
     List<TableRef>? tableRefs,
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) async {
     final reservations = DatabaseCore.reservationBox!.values.where(
       (r) => r.id == reservationId,
@@ -402,6 +619,11 @@ class ReservationRepository {
       return;
     }
     final reservation = reservations.first;
+    final previousStatus = reservation.status;
+    final previousEnum = reservation.statusEnum;
+    final previousRefs = ReservationTableAvailability.tableRefsOf(
+      reservation,
+    ).map((ref) => ref.encode()).toList();
 
     final refs =
         tableRefs ??
@@ -423,13 +645,56 @@ class ReservationRepository {
         payload: {'reservationId': reservationId},
       ),
     );
+
+    final newRefs = [for (final ref in refs) ref.encode()];
+    final tablesChanged = newRefs.join(',') != previousRefs.join(',');
+    final statusChanged = previousStatus != reservation.status;
+    if (tablesChanged || statusChanged) {
+      // Assigning tables to a pending booking is how the POS confirms it, so
+      // the transition names the event and the tables ride along.
+      await ReservationAudit.log(
+        action: ReservationAuditAction.forTransition(
+          previousEnum,
+          reservation.statusEnum,
+        ),
+        reservation: reservation,
+        actorId: actorId,
+        actorName: actorName,
+        source: source,
+        previousStatus: previousStatus,
+        newStatus: reservation.status,
+        extra: {
+          if (tablesChanged) 'changedFields': const ['tableRefs'],
+          if (tablesChanged) 'previousValues': {'tableRefs': previousRefs},
+          if (tablesChanged) 'newValues': {'tableRefs': newRefs},
+        },
+      );
+    }
   }
 
-  // Delete reservation
-  static Future<void> deleteReservation(String reservationId) async {
+  /// Removes the row. The timeline keeps the booking's last snapshot, so a
+  /// deleted Reservation is still accountable for; an already-absent one is a
+  /// redelivery and writes nothing.
+  static Future<void> deleteReservation(
+    String reservationId, {
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+    String? reason,
+  }) async {
     try {
-      final reservation = DatabaseCore.reservationBox!.values.firstWhere(
-        (r) => r.id == reservationId,
+      final reservation = findReservationById(reservationId);
+      if (reservation == null) return;
+      // Written before the row goes, so the history exists even if the
+      // delete itself fails half-way.
+      await ReservationAudit.log(
+        action: ReservationAuditAction.delete,
+        reservation: reservation,
+        actorId: actorId,
+        actorName: actorName,
+        source: source,
+        previousStatus: reservation.status,
+        reason: reason,
       );
       await reservation.delete();
       SyncHub.notify(

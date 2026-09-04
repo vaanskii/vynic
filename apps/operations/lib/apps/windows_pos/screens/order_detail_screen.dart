@@ -399,17 +399,19 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         ? guestCountRaw
         : reservation.numberOfGuests;
 
-    reservation.customerName = (result['customerName'] as String? ?? '').trim();
-    reservation.customerPhone = (result['customerPhone'] as String? ?? '')
-        .trim();
     final notes = (result['notes'] as String?)?.trim();
-    reservation.notes = notes != null && notes.isNotEmpty ? notes : null;
-    reservation.reservationDate = selectedDate;
-    reservation.reservationTime =
-        '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}';
-    reservation.numberOfGuests = guestCount;
-
-    await reservation.save();
+    await DatabaseService.updateReservationDetails(
+      reservation.id,
+      customerName: (result['customerName'] as String? ?? '').trim(),
+      customerPhone: (result['customerPhone'] as String? ?? '').trim(),
+      notes: notes,
+      clearNotes: notes == null || notes.isEmpty,
+      reservationDate: selectedDate,
+      reservationTime:
+          '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}',
+      numberOfGuests: guestCount,
+      actorId: widget.user.username,
+    );
 
     if (!mounted) {
       return;
@@ -2074,6 +2076,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             _linkedReservation!.id,
             const [],
             tableRefs: tableRefs,
+            actorId: widget.user.username,
           );
         } catch (e) {
           debugPrint('Note: Linked reservation table update failed: $e');
@@ -3188,8 +3191,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     if (reservation == null || guests < 1) {
       return;
     }
-    reservation.numberOfGuests = guests;
-    await reservation.save();
+    await DatabaseService.updateReservationDetails(
+      reservation.id,
+      numberOfGuests: guests,
+      actorId: widget.user.username,
+    );
     if (!mounted) {
       return;
     }

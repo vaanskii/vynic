@@ -84,6 +84,9 @@ export class MobileReportsService {
         waiterName: ev.waiterName,
         timestamp: (ev.eventTime as Date).toISOString(),
         note: ev.note ?? null,
+        // Structured close/creation details; the Manager renders payment
+        // semantics from these rather than from the note.
+        details: ev.details ?? null,
       })),
     }));
   }

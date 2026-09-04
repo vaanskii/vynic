@@ -172,6 +172,7 @@ class PosCommandApplier {
       newIncluded: order.includeServiceFee,
       previousTotal: prevTotal,
       newTotal: order.totalAmount,
+      source: AuditSource.manager,
     );
 
     final message = orderChangeMessage(
@@ -237,9 +238,7 @@ class PosCommandApplier {
     final tableSeg = existing != null
         ? formatTablesSegment(existing.tableNumbers, existing.floor)
         : '';
-    final actor = _actor(
-      p['cancelledBy'] ?? p['updatedBy'] ?? p['waiterName'],
-    );
+    final actor = _actor(p['cancelledBy'] ?? p['updatedBy'] ?? p['waiterName']);
     final reason = _string(p['reason'] ?? p['comment']);
 
     final outcome = await DatabaseService.cancelOrder(
@@ -295,7 +294,8 @@ class PosCommandApplier {
     }
     // A cancellation is not a status assignment: it has to leave the same
     // durable history the POS leaves, whichever command carried it.
-    if (status.toLowerCase() == 'cancelled' || status.toLowerCase() == 'canceled') {
+    if (status.toLowerCase() == 'cancelled' ||
+        status.toLowerCase() == 'canceled') {
       return _cancelThroughTransaction(
         p,
         posOrderId: posOrderId,
@@ -677,6 +677,7 @@ class PosCommandApplier {
 
       final id = await DatabaseService.createReservationFromJson(
         <String, dynamic>{...p, if (requestedId.isNotEmpty) 'id': requestedId},
+        source: _reservationSource(p),
       );
       final reservation = DatabaseService.getReservationById(id);
       final customerName = _string(
@@ -728,7 +729,13 @@ class PosCommandApplier {
         'reservationId_and_status_required',
       );
     }
-    await DatabaseService.updateReservationStatus(reservationId, status);
+    await DatabaseService.updateReservationStatus(
+      reservationId,
+      status,
+      actorId: _actor(p['updatedBy'] ?? p['cancelledBy'] ?? p['waiterName']),
+      source: _reservationSource(p),
+      reason: _string(p['reason']),
+    );
     _notify(
       message: 'რეზერვაცია — სტატუსი: $status',
       meta: {'reservationId': reservationId, 'status': status},
@@ -748,9 +755,26 @@ class PosCommandApplier {
     if (reservationId.isEmpty) {
       return const PosCommandOutcome.invalid('reservationId_required');
     }
-    await DatabaseService.deleteReservation(reservationId);
+    await DatabaseService.deleteReservation(
+      reservationId,
+      actorId: _actor(p['deletedBy'] ?? p['updatedBy']),
+      source: _reservationSource(p),
+      reason: _string(p['reason']),
+    );
     scheduleCloudSync();
     return const PosCommandOutcome.success();
+  }
+
+  /// Which channel a Cloud-relayed reservation command came from. The
+  /// website bridge marks its commands; everything else through this path is
+  /// the Manager app, whichever transport delivered it.
+  static AuditSource _reservationSource(Map<String, dynamic> p) {
+    final source = _string(p['source']).toLowerCase();
+    final createdBy = _string(p['createdBy']).toLowerCase();
+    if (source == 'website' || createdBy == 'website') {
+      return AuditSource.website;
+    }
+    return AuditSource.manager;
   }
 
   // ── Expenses ───────────────────────────────────────────────────────────────

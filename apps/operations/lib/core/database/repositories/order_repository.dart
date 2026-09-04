@@ -802,7 +802,12 @@ class OrderRepository {
 
       // Cancel any linked reservation so it does not block day-close
       if (cancelLinkedReservation) {
-        await ReservationRepository.cancelReservationByOrderId(orderId);
+        await ReservationRepository.cancelReservationByOrderId(
+          orderId,
+          actorId: deletedBy,
+          source: AuditSource.developer,
+          reason: 'Order hard-deleted for repair',
+        );
       }
 
       final snapshot = <String, dynamic>{

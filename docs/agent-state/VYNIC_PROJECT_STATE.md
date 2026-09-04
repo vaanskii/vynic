@@ -137,6 +137,38 @@ current transport status.
   deployed before a POS build that emits them. Manager `DELETE
   /mobile/takeaway-orders/:id` now marks the Cloud row cancelled instead of
   deleting it before dispatching `ORDER_CANCEL`.
+- Close payment semantics are structured, not textual: `CLOSE` /
+  `INTERNAL_CLOSE` stay the only closure types and `details.paymentMethod`,
+  `paymentBreakdown`, `cashAmount`, `cardAmount`, `advanceApplied`,
+  `collectedNow`, `isFiscal`, `closureId` are the truth; a close of a genuine
+  linked booking also carries `details.reservationId`. Both audit UIs render
+  payment chips (`Cash`, `Card — TBC`, `Cash 40.00 + TBC 60.00`, advance
+  shown separately, provider derived from the method) through
+  `CloseEventPresentation` and fall back to the historical `note` only when
+  an event has no structured details. The Manager endpoint returns `details`.
+- Reservations have their own append-only timeline written by the repository
+  (`ReservationAuditAction`: `CREATE_RESERVATION`, `UPDATE_RESERVATION`,
+  `CONFIRM_RESERVATION`, `CANCEL_RESERVATION`, `NO_SHOW_RESERVATION`,
+  `COMPLETE_RESERVATION`, `DELETE_RESERVATION`) with `reservationId`,
+  customer, date/time, `guestCount`, `tableRefs`, `previousStatus`,
+  `newStatus`, `source` (`POS`, `MANAGER`, `WEBSITE`, `SYSTEM`), actor,
+  `businessDate`, `reason`. Every POS, Admin, Manager, website-bridge, Close
+  Day, activation, close, cancel, restore, delete path goes through it; a
+  status already in force, an existing id, or an absent row writes nothing.
+  Seating writes `UPDATE_RESERVATION` (to `in-progress`) beside the Order's
+  `ACTIVATE_RESERVATION`; a delete writes the booking's last snapshot first.
+  Legacy `reservation_cancelled` rows are read as `CANCEL_RESERVATION` and
+  never written again.
+- Money mutations on an open Order are mirrored into its visible report:
+  `RECORD_ADVANCE` (`previousAmount`, `newAmount`, `receiptId`,
+  `collectedOn`), `ADJUST_ORDER` (`field` `manualAdjustment` or `serviceFee`,
+  `previousValue`, `newValue`, totals). A Sale void appends `VOID_SALE`
+  (`saleId`, `closureId`, `grossAmount`, `reason`) to the closed, locked
+  report without changing its status or lock; it is not `CANCEL_TABLE`. The
+  write-only log rows (`ADVANCE_RECORDED`, `ORDER_MANUAL_ADJUSTMENT_CHANGED`,
+  `ORDER_SERVICE_FEE_CHANGED`, `SALE_CANCELLED`) are still written as
+  compatibility duplicates. Cancellation stores `approvedById` /
+  `approvedByName` beside the note.
 - Restore-to-order keeps the original close and Sale as history, marks closure
   A reversed, clears the Order closure identity, and emits `RESTORE` in the same
   unlocked audit report; re-close creates closure B and appends a new `CLOSE`.

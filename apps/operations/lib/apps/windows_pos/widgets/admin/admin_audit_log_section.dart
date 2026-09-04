@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:vynic/core/models/audit_report.dart';
+import 'package:vynic/core/services/audit/close_event_presentation.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 
@@ -934,9 +935,13 @@ class AdminAuditLogSection extends StatelessWidget {
             children: [
               _metaChip('Operator', '${event.waiterName} (${event.waiterId})'),
               _metaChip('Qty', '${event.previousQty} → ${event.newQty}'),
+              // Payment semantics come from the structured close details,
+              // never from the free-text note.
+              for (final chip in CloseEventPresentation.chips(event))
+                _metaChip(chip.label, chip.value),
             ],
           ),
-          if (event.note != null && event.note!.isNotEmpty) ...[
+          if (CloseEventPresentation.displayNote(event) != null) ...[
             const SizedBox(height: 6),
             Container(
               width: double.infinity,
@@ -947,7 +952,7 @@ class AdminAuditLogSection extends StatelessWidget {
                 border: Border.all(color: _border),
               ),
               child: Text(
-                event.note!,
+                CloseEventPresentation.displayNote(event)!,
                 style: const TextStyle(color: _muted, fontSize: 12),
               ),
             ),
@@ -1007,6 +1012,12 @@ class AdminAuditLogSection extends StatelessWidget {
         return Icons.swap_horiz;
       case AuditEventType.transferClose:
         return Icons.output_outlined;
+      case AuditEventType.recordAdvance:
+        return Icons.savings_outlined;
+      case AuditEventType.adjustOrder:
+        return Icons.tune;
+      case AuditEventType.voidSale:
+        return Icons.money_off_csred_outlined;
       case AuditEventType.custom:
         return Icons.info_outline;
     }
@@ -1038,6 +1049,12 @@ class AdminAuditLogSection extends StatelessWidget {
         return AdminTones.infoText;
       case AuditEventType.transferClose:
         return AdminDesign.muted;
+      case AuditEventType.recordAdvance:
+        return AdminTones.infoText;
+      case AuditEventType.adjustOrder:
+        return AdminTones.warningText;
+      case AuditEventType.voidSale:
+        return AdminDesign.danger;
       case AuditEventType.custom:
         return AdminDesign.muted;
     }
@@ -1071,6 +1088,12 @@ class AdminAuditLogSection extends StatelessWidget {
         return 'პოზიციების გადატანა';
       case AuditEventType.transferClose:
         return 'დახურვა გადატანით';
+      case AuditEventType.recordAdvance:
+        return 'ავანსის აღრიცხვა';
+      case AuditEventType.adjustOrder:
+        return 'შეკვეთის კორექცია';
+      case AuditEventType.voidSale:
+        return 'გაყიდვის გაუქმება';
       case AuditEventType.custom:
         return 'ჩანაწერი';
     }

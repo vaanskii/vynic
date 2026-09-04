@@ -729,6 +729,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await DatabaseService.updateReservationPreOrderItems(
       reservation.id,
       selectedItems,
+      actorId: _user.username,
     );
 
     if (!mounted) {
@@ -769,18 +770,18 @@ class _HomeScreenState extends State<HomeScreen> {
         '${selectedTime.hour.toString().padLeft(2, '0')}:'
         '${selectedTime.minute.toString().padLeft(2, '0')}';
 
-    reservation.customerName = (result['customerName'] as String? ?? '').trim();
-    reservation.customerPhone = (result['customerPhone'] as String? ?? '')
-        .trim();
     final notes = (result['notes'] as String?)?.trim();
-    reservation.notes = notes != null && notes.isNotEmpty ? notes : null;
-    reservation.reservationDate = selectedDate;
-    reservation.reservationTime = timeString;
-    reservation.numberOfGuests = HomeReservationsHelper.extractGuestCount(
-      result,
+    await DatabaseService.updateReservationDetails(
+      reservation.id,
+      customerName: (result['customerName'] as String? ?? '').trim(),
+      customerPhone: (result['customerPhone'] as String? ?? '').trim(),
+      notes: notes,
+      clearNotes: notes == null || notes.isEmpty,
+      reservationDate: selectedDate,
+      reservationTime: timeString,
+      numberOfGuests: HomeReservationsHelper.extractGuestCount(result),
+      actorId: _user.username,
     );
-
-    await reservation.save();
 
     if (!mounted) {
       return;
@@ -834,6 +835,7 @@ class _HomeScreenState extends State<HomeScreen> {
         reservation.id,
         const [],
         tableRefs: selected,
+        actorId: _user.username,
       );
       final result = await DatabaseService.activateReservation(
         reservationId: reservation.id,

@@ -18,6 +18,9 @@ describe('normalizeAuditEventType', () => {
     ['ACTIVATE_RESERVATION', 'ACTIVATE_RESERVATION'],
     ['MOVE_ITEMS', 'MOVE_ITEMS'],
     ['TRANSFER_CLOSE', 'TRANSFER_CLOSE'],
+    ['RECORD_ADVANCE', 'RECORD_ADVANCE'],
+    ['ADJUST_ORDER', 'ADJUST_ORDER'],
+    ['VOID_SALE', 'VOID_SALE'],
   ])(
     'normalizes %s without conflating closure and cancellation',
     (raw, expected) => {

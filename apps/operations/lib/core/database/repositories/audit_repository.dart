@@ -439,6 +439,12 @@ class AuditRepository {
         return AuditEventType.moveItems;
       case 'transfer_close':
         return AuditEventType.transferClose;
+      case 'record_advance':
+        return AuditEventType.recordAdvance;
+      case 'adjust_order':
+        return AuditEventType.adjustOrder;
+      case 'void_sale':
+        return AuditEventType.voidSale;
       case 'custom':
         return AuditEventType.custom;
     }
@@ -498,6 +504,12 @@ class AuditRepository {
     return const [];
   }
 
+  /// Appends [events] to the Order's report.
+  ///
+  /// A locked report refuses new events, because a settled or cancelled Order
+  /// is history. [allowLocked] is the one exception, for accountability
+  /// events that by definition happen after the close — a Sale void — and
+  /// it never changes the report's status or lock.
   static Future<void> appendOrderAuditEvents({
     required int orderId,
     required List<AuditEvent> events,
@@ -505,6 +517,7 @@ class AuditRepository {
     bool lockReport = false,
     String? closedById,
     String? closedByName,
+    bool allowLocked = false,
   }) async {
     if (events.isEmpty && !lockReport) {
       return;
@@ -516,7 +529,7 @@ class AuditRepository {
       orderSnapshot: orderSnapshot,
     );
 
-    if (report.locked) {
+    if (report.locked && !allowLocked) {
       throw StateError('Audit report for order $orderId is locked');
     }
 
@@ -728,6 +741,12 @@ class AuditRepository {
         return 'move_items';
       case AuditEventType.transferClose:
         return 'transfer_close';
+      case AuditEventType.recordAdvance:
+        return 'record_advance';
+      case AuditEventType.adjustOrder:
+        return 'adjust_order';
+      case AuditEventType.voidSale:
+        return 'void_sale';
       case AuditEventType.custom:
         return 'custom';
     }

@@ -13,6 +13,9 @@ export type CanonicalAuditEventType =
   | 'ACTIVATE_RESERVATION'
   | 'MOVE_ITEMS'
   | 'TRANSFER_CLOSE'
+  | 'RECORD_ADVANCE'
+  | 'ADJUST_ORDER'
+  | 'VOID_SALE'
   | 'CUSTOM';
 
 export function normalizeAuditEventType(
@@ -72,6 +75,13 @@ export function normalizeAuditEventType(
   if (u === 'MOVE_ITEMS' || u === 'MOVE_ITEM') return 'MOVE_ITEMS';
   if (u === 'TRANSFER_CLOSE' || u === 'EMPTIED_BY_TRANSFER') {
     return 'TRANSFER_CLOSE';
+  }
+  if (u === 'RECORD_ADVANCE' || u === 'ADVANCE_RECORDED') {
+    return 'RECORD_ADVANCE';
+  }
+  if (u === 'ADJUST_ORDER' || u === 'ORDER_ADJUSTED') return 'ADJUST_ORDER';
+  if (u === 'VOID_SALE' || u === 'SALE_VOIDED' || u === 'SALE_CANCELLED') {
+    return 'VOID_SALE';
   }
 
   const prev = Number(previousQty ?? 0);

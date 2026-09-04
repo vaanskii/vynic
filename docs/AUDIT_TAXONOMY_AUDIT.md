@@ -523,9 +523,19 @@ for Takeaway and Manager upserts), `MOVE_ITEMS` on both transfer reports, and
 the emptied-by-transfer source closed with a locked `TRANSFER_CLOSE` (chosen
 over `CLOSE_EMPTY`: it is a distinct business event, not a tender). The
 backend normalizer knows all six. `DELETE /mobile/takeaway-orders/:id` marks
-the Cloud row cancelled rather than deleting it. Still open: reservation
-lifecycle log constants, the `AuditEventLog` reader, staff/expense/menu
-events, Manager item-replacement audit on upsert, and labels (P3).
+the Cloud row cancelled rather than deleting it. Phase 3 landed the
+Reservation timeline (`ReservationAuditAction`, every write path, sources
+POS/MANAGER/WEBSITE/SYSTEM), `reservationId` on `CLOSE.details`,
+`RECORD_ADVANCE` / `ADJUST_ORDER` / `VOID_SALE` mirrored into the Order
+report, structured `approvedById`/`approvedByName`, and close payment
+rendering from `details` (Option B in section S) in both audit UIs with the
+Manager endpoint now returning `details`. Compatibility duplicates kept for a
+later cleanup: `ADVANCE_RECORDED`, `ORDER_MANUAL_ADJUSTMENT_CHANGED`,
+`ORDER_SERVICE_FEE_CHANGED`, `SALE_CANCELLED`, `SALE_RESTORED_TO_ORDER`,
+`ORDER_CREATED`, `TAKEAWAY_ORDER_CREATED`. Still open (Phase 4): the
+`AuditEventLog` reader, staff/expense/menu/package-config events, Close Day
+and backup-restore log events, Manager item-replacement audit on upsert,
+labels (P3), multi-provider split.
 
 | P | Change | Call sites | Scope |
 | --- | --- | --- | --- |

@@ -83,7 +83,9 @@ class CancelOrderTransaction {
         break;
     }
 
-    final effectiveActorId = actorId.trim().isEmpty ? 'unknown' : actorId.trim();
+    final effectiveActorId = actorId.trim().isEmpty
+        ? 'unknown'
+        : actorId.trim();
     final effectiveActorName = actorName?.trim().isNotEmpty == true
         ? actorName!.trim()
         : effectiveActorId;
@@ -110,7 +112,13 @@ class CancelOrderTransaction {
 
       // A genuine advance booking whose party was seated and then cancelled
       // keeps its identity and its Order link; only its status moves.
-      await ReservationRepository.cancelReservationByOrderId(order.orderId);
+      await ReservationRepository.cancelReservationByOrderId(
+        order.orderId,
+        actorId: effectiveActorId,
+        actorName: effectiveActorName,
+        source: source,
+        reason: trimmedReason ?? 'Order cancelled',
+      );
 
       order.statusEnum = OrderStatus.cancelled;
       order.updatedAt = now;
@@ -193,7 +201,8 @@ class CancelOrderTransaction {
     );
     final noteParts = <String>[
       if (reason != null && reason.isNotEmpty) reason,
-      if (approvedBy != null && approvedBy.isNotEmpty) 'Approved by $approvedBy',
+      if (approvedBy != null && approvedBy.isNotEmpty)
+        'Approved by $approvedBy',
     ];
     final closerId = approvedBy != null && approvedBy.isNotEmpty
         ? approvedBy
@@ -222,8 +231,11 @@ class CancelOrderTransaction {
         AuditSource.detailsKey: source.wireValue,
         'actorId': actorId,
         'actorName': actorName,
-        if (approvedBy != null && approvedBy.isNotEmpty)
+        if (approvedBy != null && approvedBy.isNotEmpty) ...{
           'approvedBy': approvedBy,
+          'approvedById': approvedBy,
+          'approvedByName': approvedBy,
+        },
         if (reason != null && reason.isNotEmpty) 'reason': reason,
         'businessDate': BusinessDayRepository.getCurrentDate()
             .toIso8601String()
@@ -322,7 +334,9 @@ class CancelOrderTransaction {
       cancelledAt: cancelledAt,
     );
     if (key == null) {
-      throw StateError('Cancelled Sale record for order ${order.orderId} was not written');
+      throw StateError(
+        'Cancelled Sale record for order ${order.orderId} was not written',
+      );
     }
   }
 }

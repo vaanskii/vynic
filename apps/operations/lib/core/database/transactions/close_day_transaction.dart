@@ -1,3 +1,5 @@
+import 'package:vynic/core/services/audit/reservation_audit.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'dart:developer' as developer;
 
 import 'package:vynic/core/models/reservation_classification.dart';
@@ -17,6 +19,67 @@ import '../repositories/table_repository.dart';
 /// date → reset the daily sales total → purge closed orders → free tables.
 class CloseDayTransaction {
   CloseDayTransaction._();
+
+  /// Moves every genuine booking dated on or before [currentDateString] to
+  /// its terminal state: `completed` when it was seated, `no-show` otherwise.
+  ///
+  /// Each transition is written to the Reservation timeline as the system's
+  /// own action — nobody pressed a button on a specific booking, Close Day
+  /// did — so the actor is `system` and the source `SYSTEM`. Bookings already
+  /// final only lose a dangling Order link and write nothing.
+  static Future<({int completed, int noShow})> finalizeReservationsForDay(
+    String currentDateString,
+  ) async {
+    var completedReservations = 0;
+    var noShowReservations = 0;
+    for (final reservation in DatabaseCore.reservationBox!.values) {
+      if (!ReservationClassification.isRealAdvanceBooking(reservation)) {
+        continue;
+      }
+      final resDateString = reservation.reservationDate.toIso8601String().split(
+        'T',
+      )[0];
+      if (resDateString.compareTo(currentDateString) > 0) {
+        continue; // future booking — leave untouched
+      }
+      if (reservation.statusEnum.isFinal) {
+        if (reservation.linkedOrderId != null) {
+          // Its order is deleted below — do not keep a dangling id.
+          reservation.linkedOrderId = null;
+          await reservation.save();
+        }
+        continue;
+      }
+      final wasActivated =
+          reservation.linkedOrderId != null ||
+          reservation.statusEnum == ReservationStatus.inProgress;
+      final previousStatus = reservation.status;
+      final linkedOrderId = reservation.linkedOrderId;
+      reservation.statusEnum = wasActivated
+          ? ReservationStatus.completed
+          : ReservationStatus.noShow;
+      reservation.linkedOrderId = null;
+      await reservation.save();
+      await ReservationAudit.log(
+        action: wasActivated
+            ? ReservationAuditAction.complete
+            : ReservationAuditAction.noShow,
+        reservation: reservation,
+        actorId: 'system',
+        source: AuditSource.system,
+        previousStatus: previousStatus,
+        newStatus: reservation.status,
+        reason: 'Close Day',
+        extra: {if (linkedOrderId != null) 'orderId': linkedOrderId},
+      );
+      if (wasActivated) {
+        completedReservations++;
+      } else {
+        noShowReservations++;
+      }
+    }
+    return (completed: completedReservations, noShow: noShowReservations);
+  }
 
   static Future<bool> run() async {
     try {
@@ -124,43 +187,10 @@ class CloseDayTransaction {
       // pointing at an order deleted below. Historical bookkeeping rows are
       // local history, not bookings, and remain untouched.
       // See docs/VYNIC_PROJECT_PLAN.md §2 (root cause 3).
-      var completedReservations = 0;
-      var noShowReservations = 0;
-      for (final reservation in DatabaseCore.reservationBox!.values) {
-        if (!ReservationClassification.isRealAdvanceBooking(reservation)) {
-          continue;
-        }
-        final resDateString = reservation.reservationDate
-            .toIso8601String()
-            .split('T')[0];
-        if (resDateString.compareTo(currentDateString) > 0) {
-          continue; // future booking — leave untouched
-        }
-        if (reservation.statusEnum.isFinal) {
-          if (reservation.linkedOrderId != null) {
-            // Its order is deleted below — do not keep a dangling id.
-            reservation.linkedOrderId = null;
-            await reservation.save();
-          }
-          continue;
-        }
-        final wasActivated =
-            reservation.linkedOrderId != null ||
-            reservation.statusEnum == ReservationStatus.inProgress;
-        reservation.statusEnum = wasActivated
-            ? ReservationStatus.completed
-            : ReservationStatus.noShow;
-        reservation.linkedOrderId = null;
-        await reservation.save();
-        if (wasActivated) {
-          completedReservations++;
-        } else {
-          noShowReservations++;
-        }
-      }
+      final finalized = await finalizeReservationsForDay(currentDateString);
       developer.log(
-        'Finalized reservations: $completedReservations completed, '
-        '$noShowReservations no-show',
+        'Finalized reservations: ${finalized.completed} completed, '
+        '${finalized.noShow} no-show',
       );
 
       // Persist the day being closed so empty days (without sales) are still

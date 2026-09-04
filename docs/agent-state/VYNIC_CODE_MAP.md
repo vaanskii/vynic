@@ -28,6 +28,8 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Audit provenance values: `apps/operations/lib/core/models/audit_source.dart`
 - Order-level audit details builder: `apps/operations/lib/core/services/audit/order_audit_details.dart`; creation/transfer proof in `apps/operations/test/unit/order_creation_audit_test.dart`
 - Item transfer (`MOVE_ITEMS`, `TRANSFER_CLOSE`): `apps/operations/lib/core/services/pos/order_item_transfer.dart`
+- Close payment rendering from details: `apps/operations/lib/core/services/audit/close_event_presentation.dart`, proof in `apps/operations/test/unit/close_event_presentation_test.dart`
+- Money mirrors (`RECORD_ADVANCE`, `ADJUST_ORDER`, `VOID_SALE`): `apps/operations/lib/core/services/audit/money_audit.dart`, proof in `apps/operations/test/unit/money_audit_mirror_test.dart`
 - Backend audit type normalizer (deploy before POS emits a new type): `apps/backend/src/pos/audit/audit-event-type.ts`
 - Close-day transaction: `apps/operations/lib/core/database/transactions/close_day_transaction.dart`
 - Closure journal: `apps/operations/lib/core/database/repositories/closure_journal_repository.dart`
@@ -113,6 +115,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 ## Reservations
 
 - POS model/repository/transaction: `apps/operations/lib/core/models/reservation.dart`, `apps/operations/lib/core/database/repositories/reservation_repository.dart`, `apps/operations/lib/core/database/transactions/activate_reservation_transaction.dart`
+- Reservation timeline registry and writer: `apps/operations/lib/core/services/audit/reservation_audit.dart`, proof in `apps/operations/test/unit/reservation_audit_test.dart`
 - Booking-vs-bookkeeping rule and Cloud projection: `apps/operations/lib/core/models/reservation_classification.dart`, proof in `apps/operations/test/unit/reservation_projection_test.dart`
 - Manager backend: `apps/backend/src/mobile/services/mobile-reservations.service.ts`
 - Website booking: `apps/backend/src/website/reservation/`

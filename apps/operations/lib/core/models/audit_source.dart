@@ -15,6 +15,9 @@ enum AuditSource {
   /// A Cloud-originated command with no Manager identity of its own.
   edge,
 
+  /// The public venue website, relayed through Cloud.
+  website,
+
   /// An automatic POS process such as Close Day or reservation activation.
   system,
 
@@ -33,6 +36,8 @@ enum AuditSource {
         return 'MANAGER';
       case AuditSource.edge:
         return 'EDGE';
+      case AuditSource.website:
+        return 'WEBSITE';
       case AuditSource.system:
         return 'SYSTEM';
       case AuditSource.systemRecovery:

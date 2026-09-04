@@ -725,6 +725,12 @@ class _AuditReportCard extends StatelessWidget {
         return 'პოზიციების გადატანა';
       case AuditEventType.transferClose:
         return 'დახურვა გადატანით';
+      case AuditEventType.recordAdvance:
+        return 'ავანსის აღრიცხვა';
+      case AuditEventType.adjustOrder:
+        return 'შეკვეთის კორექცია';
+      case AuditEventType.voidSale:
+        return 'გაყიდვის გაუქმება';
       case AuditEventType.custom:
         return 'ჩანაწერი';
     }
@@ -931,6 +937,12 @@ class _EventTile extends StatelessWidget {
         return const Color(0xFF0891B2);
       case AuditEventType.transferClose:
         return const Color(0xFF475569);
+      case AuditEventType.recordAdvance:
+        return const Color(0xFF0891B2);
+      case AuditEventType.adjustOrder:
+        return const Color(0xFFD97706);
+      case AuditEventType.voidSale:
+        return const Color(0xFFB91C1C);
       case AuditEventType.custom:
         return const Color(0xFF475569);
     }
@@ -964,6 +976,12 @@ class _EventTile extends StatelessWidget {
         return Icons.swap_horiz;
       case AuditEventType.transferClose:
         return Icons.output_outlined;
+      case AuditEventType.recordAdvance:
+        return Icons.savings_outlined;
+      case AuditEventType.adjustOrder:
+        return Icons.tune;
+      case AuditEventType.voidSale:
+        return Icons.money_off_csred_outlined;
       case AuditEventType.custom:
         return Icons.info_outline;
     }
@@ -997,6 +1015,12 @@ class _EventTile extends StatelessWidget {
         return 'პოზიციების გადატანა';
       case AuditEventType.transferClose:
         return 'დახურვა გადატანით';
+      case AuditEventType.recordAdvance:
+        return 'ავანსის აღრიცხვა';
+      case AuditEventType.adjustOrder:
+        return 'შეკვეთის კორექცია';
+      case AuditEventType.voidSale:
+        return 'გაყიდვის გაუქმება';
       case AuditEventType.custom:
         return 'ჩანაწერი';
     }
@@ -1055,9 +1079,13 @@ class _EventTile extends StatelessWidget {
             children: [
               _metaChip('Operator', '${event.waiterName} (${event.waiterId})'),
               _metaChip('Qty', '${event.previousQty} → ${event.newQty}'),
+              // Payment semantics come from the structured close details,
+              // never from the free-text note.
+              for (final chip in CloseEventPresentation.chips(event))
+                _metaChip(chip.label, chip.value),
             ],
           ),
-          if (event.note != null && event.note!.isNotEmpty) ...[
+          if (CloseEventPresentation.displayNote(event) != null) ...[
             SizedBox(height: 6),
             Container(
               width: double.infinity,
@@ -1068,7 +1096,7 @@ class _EventTile extends StatelessWidget {
                 border: Border.all(color: AdminTheme.border),
               ),
               child: Text(
-                event.note!,
+                CloseEventPresentation.displayNote(event)!,
                 style: TextStyle(color: AdminTheme.textMuted, fontSize: 12),
               ),
             ),

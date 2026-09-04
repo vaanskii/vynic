@@ -15,8 +15,15 @@ enum ClosurePhase {
   /// authoritative step — past here, the money is recorded.
   saleWritten,
 
-  /// Order closed, tables freed, reservation completed, audit appended,
-  /// daily total recomputed. Nothing left to do.
+  /// Order closed, tables freed, a genuine linked reservation completed, and
+  /// the typed closure audit appended and locked.
+  ///
+  /// A crash before this phase is durable causes the whole post-sale step to
+  /// be retried. Each constituent write is idempotent.
+  postSaleEffectsCompleted,
+
+  /// Post-sale effects are durable and the derived daily total was refreshed.
+  /// Nothing remains to do.
   completed;
 
   static ClosurePhase fromName(Object? raw) {
@@ -45,6 +52,7 @@ class ClosureJournalEntry {
     required this.paymentBreakdown,
     required this.actorId,
     required this.startedAt,
+    this.actorName,
     this.completedAt,
     this.saleRecordKey,
     this.advanceReceiptId,
@@ -63,6 +71,7 @@ class ClosureJournalEntry {
   final String paymentMethod;
   final Map<String, double> paymentBreakdown;
   final String actorId;
+  final String? actorName;
   final DateTime startedAt;
   final DateTime? completedAt;
 
@@ -114,6 +123,7 @@ class ClosureJournalEntry {
       paymentMethod: paymentMethod,
       paymentBreakdown: paymentBreakdown,
       actorId: actorId,
+      actorName: actorName,
       startedAt: startedAt,
       completedAt: completedAt ?? this.completedAt,
       saleRecordKey: saleRecordKey ?? this.saleRecordKey,
@@ -135,6 +145,7 @@ class ClosureJournalEntry {
     'paymentMethod': paymentMethod,
     'paymentBreakdown': paymentBreakdown,
     'actorId': actorId,
+    if (actorName != null && actorName!.isNotEmpty) 'actorName': actorName,
     'startedAt': startedAt.toIso8601String(),
     if (completedAt != null) 'completedAt': completedAt!.toIso8601String(),
     if (saleRecordKey != null) 'saleRecordKey': saleRecordKey,
@@ -162,6 +173,7 @@ class ClosureJournalEntry {
             )
           : <String, double>{},
       actorId: (map['actorId'] as String?) ?? '',
+      actorName: (map['actorName'] as String?)?.trim(),
       startedAt:
           DateTime.tryParse((map['startedAt'] as String?) ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),

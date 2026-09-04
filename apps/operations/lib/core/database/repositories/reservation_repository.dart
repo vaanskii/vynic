@@ -144,15 +144,20 @@ class ReservationRepository {
   /// was served and the order is being closed for a reason that is not a
   /// cancellation — items moved to another table, for instance. Leaving the
   /// booking `confirmed` against a closed order is what blocks the day close.
-  static Future<bool> completeReservationByOrderId(int orderId) async {
+  static Future<bool> completeReservationByOrderId(
+    int orderId, {
+    bool failOnError = false,
+  }) async {
     try {
       final reservationBox = DatabaseCore.reservationBox;
       if (reservationBox == null) return false;
       for (final reservation in reservationBox.values) {
         if (reservation.linkedOrderId == orderId &&
             ReservationClassification.isRealAdvanceBooking(reservation)) {
-          reservation.statusEnum = ReservationStatus.completed;
-          await reservation.save();
+          if (reservation.statusEnum != ReservationStatus.completed) {
+            reservation.statusEnum = ReservationStatus.completed;
+            await reservation.save();
+          }
           return true;
         }
       }
@@ -163,6 +168,7 @@ class ReservationRepository {
         error: error,
         stackTrace: stackTrace,
       );
+      if (failOnError) rethrow;
       return false;
     }
   }

@@ -89,8 +89,11 @@ current transport status.
 - Supported fiscal and internal payment closes use `CloseTableTransaction` with
   a durable `closureId` and Hive closure journal. Cancellation, hard-delete,
   emptied-by-transfer, and Close Day paths are separate. Startup recovery
-  preserves sale idempotency, but currently does not complete the linked
-  reservation or typed closure audit after a post-sale crash.
+  treats the Sale as the financial boundary and never recreates it. A shared,
+  journaled post-Sale step idempotently completes the Order, physical Table
+  where applicable, genuine linked Reservation, and typed/locked closure audit
+  before the journal becomes complete; crash-before-Sale recovery still
+  abandons the attempt without revenue or closure effects.
 - Successful fiscal closes emit the typed `CLOSE` audit event, while internal
   closes emit `INTERNAL_CLOSE`; `CANCEL_TABLE` remains cancellation-only. Close
   events carry structured closure identity and money details locally and in the

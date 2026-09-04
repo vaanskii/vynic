@@ -1,12 +1,10 @@
 import 'dart:developer' as developer;
 
 import 'package:vynic/core/database/database_core.dart';
-import 'package:vynic/core/database/repositories/business_day_repository.dart';
 import 'package:vynic/core/database/repositories/closure_journal_repository.dart';
 import 'package:vynic/core/database/repositories/sales_repository.dart';
-import 'package:vynic/core/database/repositories/table_repository.dart';
+import 'package:vynic/core/database/transactions/close_table_transaction.dart';
 import 'package:vynic/core/models/order.dart';
-import 'package:vynic/core/models/order_status.dart';
 import 'package:vynic/core/services/audit/money_audit.dart';
 
 /// What recovery did to one interrupted closure.
@@ -21,6 +19,10 @@ enum ClosureRecoveryAction {
   /// The journal entry refers to an order that no longer exists and no sale
   /// was written. Nothing to do but close the entry out.
   orphaned,
+
+  /// The Sale exists, but required Order data was unavailable or a post-Sale
+  /// effect failed. The journal stays pending for the next startup retry.
+  deferred,
 }
 
 class ClosureRecoveryOutcome {
@@ -72,10 +74,6 @@ class ClosureRecoveryService {
       outcomes.add(await _recoverOne(entry));
     }
 
-    // One recompute at the end rather than per entry.
-    await BusinessDayRepository.refreshDailySalesTotalForDate(
-      BusinessDayRepository.getCurrentDate(),
-    );
     return outcomes;
   }
 
@@ -127,37 +125,42 @@ class ClosureRecoveryService {
       );
     }
 
-    // The sale is recorded. Finish the rest; every step below is idempotent.
-    if (entry.advanceReceiptId != null && entry.advanceApplied > 0) {
-      await SalesRepository.markAdvanceReceiptApplied(
-        receiptId: entry.advanceReceiptId!,
+    // The Sale is recorded, but without the Order the typed report, physical
+    // floor, and genuine linked Reservation cannot be completed honestly.
+    // Keep the journal pending rather than claiming success.
+    if (order == null) {
+      developer.log(
+        'Closure ${entry.closureId}: Sale exists but Order ${entry.orderId} '
+        'is unavailable; post-Sale completion deferred',
+        name: 'closure_recovery',
+      );
+      return ClosureRecoveryOutcome(
         closureId: entry.closureId,
+        orderId: entry.orderId,
+        action: ClosureRecoveryAction.deferred,
       );
     }
 
-    if (order != null) {
-      order.statusEnum = OrderStatus.closed;
-      order.paymentMethod = entry.isFiscal ? entry.paymentMethod : 'non-fiscal';
-      order.closedAt ??= BusinessDayRepository.getCurrentDateTime();
-      order.closureId = entry.closureId;
-      await order.save();
-
-      for (final tableNumber in order.tableNumbers) {
-        await TableRepository.freeTable(
-          tableNumber: tableNumber,
-          floor: order.floor,
-        );
-      }
+    // This is the same journaled routine used by a normal close after its Sale
+    // write. It never creates or rewrites the Sale.
+    final completed = await CloseTableTransaction.completeExistingSale(
+      entry: entry,
+      order: order,
+      saleRecordKey: saleKey,
+      closedByName: entry.actorName,
+    );
+    if (!completed) {
+      return ClosureRecoveryOutcome(
+        closureId: entry.closureId,
+        orderId: entry.orderId,
+        action: ClosureRecoveryAction.deferred,
+      );
     }
 
-    await ClosureJournalRepository.write(
-      entry.copyWith(
-        phase: ClosurePhase.completed,
-        saleRecordKey: saleKey,
-        completedAt: DateTime.now(),
-      ),
+    await _audit(
+      ClosureJournalRepository.find(entry.closureId) ?? entry,
+      ClosureRecoveryAction.finished,
     );
-    await _audit(entry, ClosureRecoveryAction.finished);
 
     return ClosureRecoveryOutcome(
       closureId: entry.closureId,

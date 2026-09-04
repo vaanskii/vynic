@@ -13,6 +13,7 @@ import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/closure_money.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/models/order_status.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/reservation_status.dart';
 import 'package:vynic/core/models/sale_record.dart';
@@ -25,8 +26,7 @@ import 'package:vynic/core/services/pos/closure_recovery_service.dart';
 /// These tests intentionally state the correct domain contract. They are not
 /// changed to bless known-bad current behaviour. In particular, a successful
 /// close must never be represented by the cancellation-only `CANCEL_TABLE`
-/// event, and restore must leave a complete lifecycle trail. The separate
-/// post-Sale crash-recovery characterization remains skipped by design.
+/// event, and restore must leave a complete lifecycle trail.
 void main() {
   late Directory tempDir;
 
@@ -126,6 +126,144 @@ void main() {
       SalesRepository.getSalesForDate(businessDate).firstWhere(
         (sale) => sale['recordType'] == 'sale' && sale['orderId'] == orderId,
       );
+
+  Map<String, dynamic>? saleForOrNull(int orderId) {
+    for (final sale in SalesRepository.getSalesForDate(businessDate)) {
+      if (sale['recordType'] == 'sale' && sale['orderId'] == orderId) {
+        return sale;
+      }
+    }
+    return null;
+  }
+
+  Future<
+    ({
+      Order order,
+      String closureId,
+      Object saleKey,
+      String? receiptId,
+      Reservation? reservation,
+    })
+  >
+  seedPostSaleCrash({
+    required int orderId,
+    required String paymentMethod,
+    required Map<String, double> tender,
+    double advance = 0,
+    bool isFiscal = true,
+    String floor = 'first',
+    bool package = false,
+    bool reservationLinked = false,
+  }) async {
+    final order = await seedOrder(
+      orderId: orderId,
+      advance: advance,
+      floor: floor,
+      package: package,
+    );
+    final closureId = ClosureJournalRepository.newClosureId();
+    order.closureId = closureId;
+
+    String? receiptId;
+    if (advance > 0) {
+      receiptId = await SalesRepository.recordAdvanceReceipt(
+        orderId: orderId,
+        amount: advance,
+        collectedBy: 'manager',
+      );
+      order.advanceReceiptId = receiptId;
+    }
+    await order.save();
+
+    Reservation? reservation;
+    if (reservationLinked) {
+      reservation = Reservation(
+        id: 'reservation-$orderId',
+        customerName: 'Guest',
+        customerPhone: '+995555000000',
+        tableNumbers: [orderId],
+        tableRefs: ['first/$orderId'],
+        reservationDate: DateTime.parse('${businessDate}T00:00:00'),
+        reservationTime: '12:00',
+        numberOfGuests: 2,
+        createdAt: DateTime.parse('${businessDate}T10:00:00'),
+        createdBy: 'manager',
+        status: ReservationStatus.inProgress.storageValue,
+        linkedOrderId: orderId,
+      );
+      await DatabaseCore.reservationBox!.add(reservation);
+    }
+    if (floor != 'takeaway') {
+      await seedOccupiedTable(order, reservationId: reservation?.id);
+    }
+    await AuditRepository.ensureAuditReport(
+      orderId: order.orderId,
+      orderSnapshot: order,
+    );
+
+    final paymentBreakdown = <String, double>{
+      ...tender,
+      if (advance > 0) 'advance': advance,
+    };
+    final collectedNow = tender.values.fold<double>(
+      0,
+      (sum, amount) => sum + amount,
+    );
+    final saleKey = await SalesRepository.saveSaleRecord(
+      orderId: order.orderId,
+      tableNumbers: order.tableNumbers,
+      floor: order.floor,
+      items: [...order.packageItems, ...order.items],
+      totalAmount: 100,
+      paymentMethod: paymentMethod,
+      paymentBreakdown: paymentBreakdown,
+      createdBy: order.createdBy,
+      createdAt: order.createdAt,
+      closedAt: DateTime.parse('${businessDate}T13:00:00'),
+      includeServiceFee: order.includeServiceFee,
+      discountAmount: order.discountAmount,
+      advanceAmount: advance,
+      subtotalAmount: 100,
+      manualAdjustmentAmount: order.manualAdjustmentAmount,
+      isFiscal: isFiscal,
+      closureId: closureId,
+      closedById: 'manager',
+      grossSaleAmount: 100,
+      advanceApplied: advance,
+      collectedNow: collectedNow,
+      businessDate: businessDate,
+      advanceReceiptId: receiptId,
+    );
+    if (saleKey == null) {
+      throw StateError('Failed to seed interrupted Sale for $orderId');
+    }
+    await ClosureJournalRepository.write(
+      ClosureJournalEntry(
+        closureId: closureId,
+        orderId: order.orderId,
+        phase: ClosurePhase.started,
+        businessDate: businessDate,
+        isFiscal: isFiscal,
+        grossSaleAmount: 100,
+        advanceApplied: advance,
+        collectedNow: collectedNow,
+        paymentMethod: paymentMethod,
+        paymentBreakdown: paymentBreakdown,
+        actorId: 'manager',
+        actorName: 'Recovery Manager',
+        startedAt: DateTime.parse('${businessDate}T13:00:00'),
+        advanceReceiptId: receiptId,
+      ),
+    );
+
+    return (
+      order: order,
+      closureId: closureId,
+      saleKey: saleKey,
+      receiptId: receiptId,
+      reservation: reservation,
+    );
+  }
 
   double breakdownTotal(Map<String, dynamic> breakdown) => breakdown.values
       .fold<double>(0, (sum, value) => sum + (value as num).toDouble());
@@ -1118,9 +1256,542 @@ void main() {
       }
       expect(violations, isEmpty);
     },
-    skip:
-        'Known next task: post-Sale recovery audit/reservation lifecycle is '
-        'intentionally outside this production fix.',
+  );
+
+  test(
+    'post-Sale recovery preserves every payment and order mode exactly once',
+    () async {
+      final scenarios =
+          <
+            ({
+              String name,
+              String method,
+              Map<String, double> tender,
+              double advance,
+              bool isFiscal,
+              String floor,
+              bool package,
+              bool reservation,
+            })
+          >[
+            (
+              name: 'cash Walk-In',
+              method: 'cash',
+              tender: const {'cash': 100},
+              advance: 0,
+              isFiscal: true,
+              floor: 'first',
+              package: false,
+              reservation: false,
+            ),
+            (
+              name: 'card',
+              method: 'card-tbc',
+              tender: const {'card-tbc': 100},
+              advance: 0,
+              isFiscal: true,
+              floor: 'first',
+              package: false,
+              reservation: false,
+            ),
+            (
+              name: 'split',
+              method: 'split',
+              tender: const {'cash': 40, 'card-bog': 60},
+              advance: 0,
+              isFiscal: true,
+              floor: 'first',
+              package: false,
+              reservation: false,
+            ),
+            (
+              name: 'advance plus cash',
+              method: 'cash',
+              tender: const {'cash': 80},
+              advance: 20,
+              isFiscal: true,
+              floor: 'first',
+              package: false,
+              reservation: false,
+            ),
+            (
+              name: 'advance plus card',
+              method: 'card-bog',
+              tender: const {'card-bog': 80},
+              advance: 20,
+              isFiscal: true,
+              floor: 'first',
+              package: false,
+              reservation: false,
+            ),
+            (
+              name: 'advance plus split',
+              method: 'split',
+              tender: const {'cash': 30, 'card-tbc': 50},
+              advance: 20,
+              isFiscal: true,
+              floor: 'first',
+              package: false,
+              reservation: false,
+            ),
+            (
+              name: 'internal',
+              method: 'non-fiscal',
+              tender: const {},
+              advance: 0,
+              isFiscal: false,
+              floor: 'first',
+              package: false,
+              reservation: false,
+            ),
+            (
+              name: 'Reservation linked',
+              method: 'cash',
+              tender: const {'cash': 100},
+              advance: 0,
+              isFiscal: true,
+              floor: 'first',
+              package: false,
+              reservation: true,
+            ),
+            (
+              name: 'Takeaway',
+              method: 'cash',
+              tender: const {'cash': 100},
+              advance: 0,
+              isFiscal: true,
+              floor: 'takeaway',
+              package: false,
+              reservation: false,
+            ),
+            (
+              name: 'Package',
+              method: 'split',
+              tender: const {'cash': 25, 'card-tbc': 75},
+              advance: 0,
+              isFiscal: true,
+              floor: 'first',
+              package: true,
+              reservation: false,
+            ),
+          ];
+
+      for (var index = 0; index < scenarios.length; index++) {
+        final scenario = scenarios[index];
+        final tableCountBefore = DatabaseCore.tableBox!.length;
+        final reservationCountBefore = DatabaseCore.reservationBox!.length;
+        final interrupted = await seedPostSaleCrash(
+          orderId: 700 + index,
+          paymentMethod: scenario.method,
+          tender: scenario.tender,
+          advance: scenario.advance,
+          isFiscal: scenario.isFiscal,
+          floor: scenario.floor,
+          package: scenario.package,
+          reservationLinked: scenario.reservation,
+        );
+        final saleBefore = Map<dynamic, dynamic>.from(
+          DatabaseCore.salesBox!.get(interrupted.saleKey) as Map,
+        );
+
+        final outcomes = await ClosureRecoveryService.recoverPending();
+
+        expect(outcomes, hasLength(1), reason: scenario.name);
+        expect(
+          outcomes.single.action,
+          ClosureRecoveryAction.finished,
+          reason: scenario.name,
+        );
+        final saleAfter = Map<dynamic, dynamic>.from(
+          DatabaseCore.salesBox!.get(interrupted.saleKey) as Map,
+        );
+        expect(saleAfter, equals(saleBefore), reason: scenario.name);
+        expect(
+          DatabaseCore.salesBox!.values.where(
+            (raw) => raw is Map && raw['closureId'] == interrupted.closureId,
+          ),
+          hasLength(1),
+          reason: scenario.name,
+        );
+
+        final order = OrderRepository.getOrder(interrupted.order.orderId)!;
+        expect(order.statusEnum, OrderStatus.closed, reason: scenario.name);
+        expect(order.closureId, interrupted.closureId, reason: scenario.name);
+        expect(order.paymentMethod, scenario.method, reason: scenario.name);
+
+        final journal = ClosureJournalRepository.find(interrupted.closureId)!;
+        expect(journal.phase, ClosurePhase.completed, reason: scenario.name);
+        expect(
+          journal.saleRecordKey,
+          interrupted.saleKey,
+          reason: scenario.name,
+        );
+
+        final report = AuditRepository.getAuditReport(order.orderId)!;
+        expect(report.status, AuditReportStatus.closed, reason: scenario.name);
+        expect(report.locked, isTrue, reason: scenario.name);
+        final matchingEvents = report.events.where(
+          (event) => event.details?['closureId'] == interrupted.closureId,
+        );
+        expect(matchingEvents, hasLength(1), reason: scenario.name);
+        final closeEvent = matchingEvents.single;
+        expect(
+          closeEvent.type,
+          scenario.isFiscal
+              ? AuditEventType.close
+              : AuditEventType.internalClose,
+          reason: scenario.name,
+        );
+        expect(
+          report.events.where(
+            (event) => event.type == AuditEventType.cancelTable,
+          ),
+          isEmpty,
+          reason: scenario.name,
+        );
+        final details = closeEvent.details!;
+        expect(details['orderId'], order.orderId, reason: scenario.name);
+        expect(
+          details['closureId'],
+          interrupted.closureId,
+          reason: scenario.name,
+        );
+        expect(details['businessDate'], businessDate, reason: scenario.name);
+        expect(details['actorId'], 'manager', reason: scenario.name);
+        expect(details['actorName'], 'Recovery Manager', reason: scenario.name);
+        expect(details['floor'], scenario.floor, reason: scenario.name);
+        expect(
+          details['tableNumbers'],
+          order.tableNumbers,
+          reason: scenario.name,
+        );
+        expect(
+          details['tableRefs'],
+          order.tableNumbers.map((table) => '${order.floor}/$table').toList(),
+          reason: scenario.name,
+        );
+        expect(details['grossAmount'], 100, reason: scenario.name);
+        expect(details['isFiscal'], scenario.isFiscal, reason: scenario.name);
+        expect(
+          details['paymentMethod'],
+          scenario.method,
+          reason: scenario.name,
+        );
+        expect(
+          details['paymentBreakdown'],
+          saleBefore['paymentBreakdown'],
+          reason: scenario.name,
+        );
+        expect(
+          details['cashAmount'],
+          scenario.isFiscal ? scenario.tender['cash'] ?? 0 : 0,
+          reason: scenario.name,
+        );
+        expect(
+          details['cardAmount'],
+          scenario.isFiscal
+              ? scenario.tender.entries
+                    .where((entry) => entry.key.startsWith('card'))
+                    .fold<double>(0, (sum, entry) => sum + entry.value)
+              : 0,
+          reason: scenario.name,
+        );
+        expect(
+          details['advanceApplied'],
+          scenario.advance,
+          reason: scenario.name,
+        );
+        expect(
+          details['collectedNow'],
+          scenario.tender.values.fold<double>(0, (sum, amount) => sum + amount),
+          reason: scenario.name,
+        );
+        if (!scenario.isFiscal) {
+          expect(saleAfter['isFiscal'], isFalse, reason: scenario.name);
+          expect(saleAfter['collectedNow'], 0, reason: scenario.name);
+          expect(saleAfter['paymentBreakdown'], isEmpty, reason: scenario.name);
+          expect(
+            SalesRepository.countsAsRevenue(saleAfter),
+            isFalse,
+            reason: scenario.name,
+          );
+          expect(details['cashAmount'], 0, reason: scenario.name);
+          expect(details['cardAmount'], 0, reason: scenario.name);
+        }
+
+        if (scenario.floor == 'takeaway') {
+          expect(
+            DatabaseCore.tableBox!.length,
+            tableCountBefore,
+            reason: scenario.name,
+          );
+          expect(
+            DatabaseCore.reservationBox!.length,
+            reservationCountBefore,
+            reason: scenario.name,
+          );
+        } else {
+          final table = DatabaseCore.tableBox!.values.firstWhere(
+            (candidate) => candidate.tableNumber == order.tableNumbers.single,
+          );
+          expect(table.isReserved, isFalse, reason: scenario.name);
+          expect(table.activeOrderId, isNull, reason: scenario.name);
+        }
+        if (interrupted.reservation != null) {
+          expect(
+            interrupted.reservation!.statusEnum,
+            ReservationStatus.completed,
+            reason: scenario.name,
+          );
+          expect(
+            interrupted.reservation!.linkedOrderId,
+            order.orderId,
+            reason: scenario.name,
+          );
+          expect(DatabaseCore.reservationBox!.values, hasLength(1));
+        }
+        Map<String, dynamic>? receiptAfterFirstRecovery;
+        if (interrupted.receiptId != null) {
+          receiptAfterFirstRecovery = SalesRepository.findAdvanceReceipt(
+            interrupted.receiptId!,
+          )!;
+          expect(
+            receiptAfterFirstRecovery['appliedToClosureId'],
+            interrupted.closureId,
+            reason: scenario.name,
+          );
+        }
+        if (scenario.package) {
+          expect(order.packageId, interrupted.order.packageId);
+          expect(order.packageName, interrupted.order.packageName);
+          expect(order.packageGuestCount, interrupted.order.packageGuestCount);
+          expect(order.packageUnitPrice, interrupted.order.packageUnitPrice);
+          expect(order.packagePrice, interrupted.order.packagePrice);
+          expect(order.packageItems.single.itemName, 'Package item 709');
+        }
+
+        final reportAfterFirstRecovery = report.toMap();
+        final journalAfterFirstRecovery = Map<dynamic, dynamic>.from(
+          DatabaseCore.closureJournalBox!.get(interrupted.closureId) as Map,
+        );
+        expect(await ClosureRecoveryService.recoverPending(), isEmpty);
+        expect(
+          AuditRepository.getAuditReport(order.orderId)!.toMap(),
+          equals(reportAfterFirstRecovery),
+          reason: '${scenario.name} audit changed on second recovery',
+        );
+        expect(
+          DatabaseCore.closureJournalBox!.get(interrupted.closureId),
+          equals(journalAfterFirstRecovery),
+          reason: '${scenario.name} journal changed on second recovery',
+        );
+        expect(
+          DatabaseCore.salesBox!.get(interrupted.saleKey),
+          equals(saleBefore),
+          reason: '${scenario.name} Sale changed on second recovery',
+        );
+        if (interrupted.receiptId != null) {
+          expect(
+            SalesRepository.findAdvanceReceipt(interrupted.receiptId!),
+            equals(receiptAfterFirstRecovery),
+            reason: '${scenario.name} advance changed on second recovery',
+          );
+        }
+      }
+    },
+  );
+
+  test('retry after audit write keeps one typed closure event', () async {
+    final interrupted = await seedPostSaleCrash(
+      orderId: 820,
+      paymentMethod: 'cash',
+      tender: const {'cash': 100},
+      reservationLinked: true,
+    );
+    expect(
+      (await ClosureRecoveryService.recoverPending()).single.action,
+      ClosureRecoveryAction.finished,
+    );
+
+    final completed = ClosureJournalRepository.find(interrupted.closureId)!;
+    await ClosureJournalRepository.write(
+      completed.copyWith(phase: ClosurePhase.saleWritten),
+    );
+    final auditBeforeRetry = AuditRepository.getAuditReport(
+      interrupted.order.orderId,
+    )!.toMap();
+
+    expect(
+      (await ClosureRecoveryService.recoverPending()).single.action,
+      ClosureRecoveryAction.finished,
+    );
+    final report = AuditRepository.getAuditReport(interrupted.order.orderId)!;
+    expect(
+      report.events.where(
+        (event) => event.details?['closureId'] == interrupted.closureId,
+      ),
+      hasLength(1),
+    );
+    expect(report.toMap(), equals(auditBeforeRetry));
+    expect(interrupted.reservation!.statusEnum, ReservationStatus.completed);
+    expect(DatabaseCore.reservationBox!.values, hasLength(1));
+    expect(
+      DatabaseCore.salesBox!.values.where(
+        (raw) => raw is Map && raw['closureId'] == interrupted.closureId,
+      ),
+      hasLength(1),
+    );
+    expect(
+      ClosureJournalRepository.find(interrupted.closureId)!.phase,
+      ClosurePhase.completed,
+    );
+  });
+
+  test(
+    'crash before Sale abandons without close audit or Reservation completion',
+    () async {
+      final order = await seedOrder(orderId: 830);
+      final reservation = Reservation(
+        id: 'reservation-830',
+        customerName: 'Guest',
+        customerPhone: '+995555000000',
+        tableNumbers: const [830],
+        tableRefs: const ['first/830'],
+        reservationDate: DateTime.parse('${businessDate}T00:00:00'),
+        reservationTime: '12:00',
+        numberOfGuests: 2,
+        createdAt: DateTime.parse('${businessDate}T10:00:00'),
+        createdBy: 'manager',
+        status: ReservationStatus.inProgress.storageValue,
+        linkedOrderId: order.orderId,
+      );
+      await DatabaseCore.reservationBox!.add(reservation);
+      await seedOccupiedTable(order, reservationId: reservation.id);
+      final closureId = ClosureJournalRepository.newClosureId();
+      order.closureId = closureId;
+      await order.save();
+      await AuditRepository.ensureAuditReport(
+        orderId: order.orderId,
+        orderSnapshot: order,
+      );
+      await ClosureJournalRepository.write(
+        ClosureJournalEntry(
+          closureId: closureId,
+          orderId: order.orderId,
+          phase: ClosurePhase.started,
+          businessDate: businessDate,
+          isFiscal: true,
+          grossSaleAmount: 100,
+          advanceApplied: 0,
+          collectedNow: 100,
+          paymentMethod: 'cash',
+          paymentBreakdown: const {'cash': 100},
+          actorId: 'manager',
+          startedAt: DateTime.parse('${businessDate}T13:00:00'),
+        ),
+      );
+
+      final outcome = (await ClosureRecoveryService.recoverPending()).single;
+
+      expect(outcome.action, ClosureRecoveryAction.abandoned);
+      expect(saleForOrNull(order.orderId), isNull);
+      expect(
+        OrderRepository.getOrder(order.orderId)!.statusEnum,
+        OrderStatus.served,
+      );
+      expect(OrderRepository.getOrder(order.orderId)!.closureId, isNull);
+      expect(reservation.statusEnum, ReservationStatus.inProgress);
+      final table = DatabaseCore.tableBox!.values.single;
+      expect(table.isReserved, isTrue);
+      expect(table.activeOrderId, order.orderId);
+      final report = AuditRepository.getAuditReport(order.orderId)!;
+      expect(report.status, AuditReportStatus.open);
+      expect(report.locked, isFalse);
+      expect(
+        report.events.where(
+          (event) =>
+              event.type == AuditEventType.close ||
+              event.type == AuditEventType.internalClose,
+        ),
+        isEmpty,
+      );
+      final journal = ClosureJournalRepository.find(closureId)!;
+      expect(journal.isAbandoned, isTrue);
+      expect(journal.phase, ClosurePhase.completed);
+    },
+  );
+
+  test(
+    'post-Sale recovery ignores historical bookkeeping Reservations',
+    () async {
+      final interrupted = await seedPostSaleCrash(
+        orderId: 835,
+        paymentMethod: 'cash',
+        tender: const {'cash': 100},
+      );
+      final bookkeeping = Reservation(
+        id: 'bookkeeping-835',
+        customerName: 'walk-in',
+        customerPhone: '-',
+        tableNumbers: const [835],
+        tableRefs: const ['first/835'],
+        reservationDate: DateTime.parse('${businessDate}T00:00:00'),
+        reservationTime: '12:00',
+        numberOfGuests: 1,
+        notes: 'Order #835',
+        createdAt: DateTime.parse('${businessDate}T10:00:00'),
+        createdBy: 'waiter',
+        status: ReservationStatus.inProgress.storageValue,
+        linkedOrderId: interrupted.order.orderId,
+      );
+      await DatabaseCore.reservationBox!.add(bookkeeping);
+
+      await ClosureRecoveryService.recoverPending();
+
+      expect(bookkeeping.statusEnum, ReservationStatus.inProgress);
+      expect(bookkeeping.linkedOrderId, interrupted.order.orderId);
+      expect(DatabaseCore.reservationBox!.values, hasLength(1));
+    },
+  );
+
+  test(
+    'a recovered close still restores and re-closes as CLOSE RESTORE CLOSE',
+    () async {
+      final interrupted = await seedPostSaleCrash(
+        orderId: 840,
+        paymentMethod: 'cash',
+        tender: const {'cash': 100},
+        floor: 'takeaway',
+      );
+      await ClosureRecoveryService.recoverPending();
+      final recoveredSale = saleFor(interrupted.order.orderId);
+
+      expect(
+        await SalesRepository.restoreClosedOrderFromSale(
+          recordKey: recoveredSale['recordKey'],
+          restoredBy: 'manager',
+        ),
+        isTrue,
+      );
+      final reopened = OrderRepository.getOrder(interrupted.order.orderId)!;
+      final reclose = await CloseTableTransaction.run(
+        orderId: reopened.orderId,
+        money: ClosureMoney.fromOrder(reopened, collectedNow: 100),
+        paymentMethod: 'cash',
+        tenderBreakdown: const {'cash': 100},
+        closedById: 'manager',
+        isFiscal: true,
+      );
+
+      expect(reclose.outcome, ClosureOutcome.closed);
+      expect(reclose.closureId, isNot(interrupted.closureId));
+      expect(
+        AuditRepository.getAuditReport(
+          reopened.orderId,
+        )!.events.map((event) => event.type).toList(),
+        [AuditEventType.close, AuditEventType.restore, AuditEventType.close],
+      );
+    },
   );
 
   test('close audit types and structured details round-trip', () {

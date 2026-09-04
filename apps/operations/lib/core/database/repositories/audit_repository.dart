@@ -538,6 +538,86 @@ class AuditRepository {
     _onAuditChanged?.call();
   }
 
+  /// Appends and locks one typed closure event, or proves that exact closure
+  /// was already finalized.
+  ///
+  /// The closure journal can be replayed after any post-Sale write. In
+  /// particular, a process may die after this method's single report write but
+  /// before the journal advances. Matching by the durable closure id makes
+  /// that retry a no-op instead of a second `CLOSE`/`INTERNAL_CLOSE` event.
+  static Future<void> finalizeOrderClosureAudit({
+    required int orderId,
+    required AuditEvent closingEvent,
+    required String closedById,
+    required String closedByName,
+  }) async {
+    if (closingEvent.type != AuditEventType.close &&
+        closingEvent.type != AuditEventType.internalClose) {
+      throw ArgumentError.value(
+        closingEvent.type,
+        'closingEvent.type',
+        'must be CLOSE or INTERNAL_CLOSE',
+      );
+    }
+
+    final closureId = closingEvent.details?['closureId']?.toString().trim();
+    if (closureId == null || closureId.isEmpty) {
+      throw ArgumentError.value(
+        closureId,
+        'closingEvent.details.closureId',
+        'must identify the closure being finalized',
+      );
+    }
+
+    final orderSnapshot = OrderRepository.getOrder(orderId);
+    final report = await ensureAuditReport(
+      orderId: orderId,
+      orderSnapshot: orderSnapshot,
+    );
+    final closureEvents = report.events
+        .where((event) {
+          if (event.type != AuditEventType.close &&
+              event.type != AuditEventType.internalClose) {
+            return false;
+          }
+          return event.details?['closureId']?.toString() == closureId;
+        })
+        .toList(growable: false);
+
+    if (closureEvents.any((event) => event.type != closingEvent.type)) {
+      throw StateError(
+        'Audit report for order $orderId already records closure $closureId '
+        'with a different closure type',
+      );
+    }
+    if (closureEvents.length > 1) {
+      throw StateError(
+        'Audit report for order $orderId already contains duplicate events '
+        'for closure $closureId',
+      );
+    }
+
+    if (report.locked) {
+      if (closureEvents.length == 1 &&
+          report.status == AuditReportStatus.closed) {
+        return;
+      }
+      throw StateError(
+        'Audit report for order $orderId is locked without exactly one '
+        'matching closure $closureId event',
+      );
+    }
+
+    await appendOrderAuditEvents(
+      orderId: orderId,
+      events: closureEvents.isEmpty ? [closingEvent] : const [],
+      statusOverride: AuditReportStatus.closed,
+      lockReport: true,
+      closedById: closedById,
+      closedByName: closedByName,
+    );
+  }
+
   /// Reopens a completed order's report and records the restore in the same
   /// lifecycle that holds its original close.
   ///

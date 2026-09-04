@@ -8,6 +8,7 @@ import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/database/repositories/backup_repository.dart';
 import 'package:vynic/core/database/repositories/user_repository.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/services/security/developer_access.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 
@@ -372,6 +373,8 @@ class _AdminDeveloperSectionState extends State<AdminDeveloperSection> {
     final ok = await UserRepository.updateUserPinByUsername(
       username: username,
       pinCode: newPin,
+      actorId: 'developer',
+      source: AuditSource.developer,
     );
     if (!mounted) return;
 

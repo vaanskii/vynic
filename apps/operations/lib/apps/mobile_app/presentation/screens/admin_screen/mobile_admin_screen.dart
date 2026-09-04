@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/services/audit/close_event_presentation.dart';
 import 'package:vynic/core/models/audit_report.dart';
+import 'package:vynic/core/models/global_audit_entry.dart';
+import 'package:vynic/core/services/audit/global_audit.dart';
 import 'package:vynic/core/models/monitoring.dart';
 import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/models/user.dart';
@@ -19,6 +21,7 @@ part 'tabs/mobile_admin_users_tab.dart';
 part 'tabs/mobile_admin_sales_tab.dart';
 part 'tabs/mobile_admin_report_tab.dart';
 part 'tabs/mobile_admin_audit_tab.dart';
+part 'tabs/mobile_admin_activity_tab.dart';
 part 'tabs/mobile_admin_settings_tab.dart';
 part 'shared/mobile_admin_shared_widgets.dart';
 
@@ -93,6 +96,7 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
     (label: 'ანგარიში', icon: Icons.analytics_outlined),
     (label: 'გაყიდვები', icon: Icons.receipt_long_outlined),
     (label: 'აუდიტი', icon: Icons.fact_check_outlined),
+    (label: 'აქტივობა', icon: Icons.history_outlined),
     (label: 'გუნდი', icon: Icons.people_outline),
     (label: 'პარამეტრები', icon: Icons.settings_outlined),
   ];
@@ -203,6 +207,7 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
                   _ReportTab(),
                   _SalesTab(),
                   _AuditTab(),
+                  _ActivityTab(),
                   _UsersTab(currentUser: widget.user),
                   _SettingsTab(user: widget.user, onLogout: widget.onLogout),
                 ],

@@ -74,6 +74,21 @@ void main() {
     );
   }
 
+  /// The rows the restore put back, without the one it writes about itself.
+  ///
+  /// A restore is auditable, so it appends one `BACKUP_RESTORED` row of its
+  /// own — deliberately after the payload, since `clearExisting` would
+  /// otherwise erase it. That row is not a restored row, and counting it here
+  /// would make these assertions about the audit feature rather than about
+  /// where restored rows land.
+  Iterable<Object> restoredKeys() {
+    final box = DatabaseCore.auditLogBox!;
+    return box.keys.cast<Object>().where((key) {
+      final row = box.get(key);
+      return !(row is Map && row['action'] == 'BACKUP_RESTORED');
+    });
+  }
+
   setUp(() async {
     directory = await Directory.systemTemp.createTemp('backup-audit-keys-');
     Hive.init(directory.path);
@@ -97,9 +112,8 @@ void main() {
       backupWithKeys({AuditRepository.buildAuditReportKey(1): report(1)}),
     );
 
-    final box = DatabaseCore.auditLogBox!;
-    expect(box.length, 1);
-    expect(box.keys.single, AuditRepository.buildAuditReportKey(1));
+    expect(restoredKeys(), hasLength(1));
+    expect(restoredKeys().single, AuditRepository.buildAuditReportKey(1));
     // And so the normal read path finds it, rather than creating a second one.
     expect(AuditRepository.getAuditReport(1), isNotNull);
   });
@@ -115,10 +129,10 @@ void main() {
     });
 
     await restore(payload);
-    final afterFirst = DatabaseCore.auditLogBox!.length;
+    final afterFirst = restoredKeys().length;
     await restore(payload);
 
-    expect(DatabaseCore.auditLogBox!.length, afterFirst);
+    expect(restoredKeys(), hasLength(afterFirst));
     expect(
       AuditRepository.getAuditReports().map((r) => r.reportId),
       containsAll(<String>[
@@ -142,7 +156,7 @@ void main() {
       }),
     );
 
-    expect(DatabaseCore.auditLogBox!.length, 1);
+    expect(restoredKeys(), hasLength(1));
     expect(
       AuditRepository.getAuditReport(1)!.updatedAt,
       DateTime.parse('2026-09-01T19:30:00.000'),
@@ -186,7 +200,7 @@ void main() {
     await restore(payload);
 
     final box = DatabaseCore.auditLogBox!;
-    expect(box.length, 5);
+    expect(restoredKeys(), hasLength(5));
     // Reports and event logs land on their own identity.
     expect(box.containsKey(AuditRepository.buildAuditReportKey(1)), isTrue);
     expect(box.containsKey('e7f1c0de-0000-4000-8000-000000000001'), isTrue);
@@ -207,7 +221,7 @@ void main() {
 
     // Restoring the same keyless backup again changes nothing.
     await restore(payload);
-    expect(box.length, 5);
+    expect(restoredKeys(), hasLength(5));
     expect(
       AuditRepository.getAuditReports()
           .firstWhere((report) => report.reportId == 'legacy_report_order_90')

@@ -1,10 +1,15 @@
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/package.dart';
+import 'package:vynic/core/services/audit/global_audit.dart';
 
 import '../database_core.dart';
 
 /// Banquet/event packages (fixed menus priced per person).
 class PackageRepository {
   PackageRepository._();
+
+  /// Attribution for a package change whose caller did not say who made it.
+  static const String _unknownActor = 'unknown';
 
   static PackageItem clonePackageItem(PackageItem item) {
     return PackageItem(
@@ -61,6 +66,8 @@ class PackageRepository {
     required int servingSize,
     required String createdBy,
     List<String>? allowedTables,
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) async {
     if (DatabaseCore.packageBox == null) {
       throw StateError('Package storage is not initialized');
@@ -102,6 +109,16 @@ class PackageRepository {
       allowedTables: normalizedAllowedTables,
     );
     await DatabaseCore.packageBox!.put(package.packageId, package);
+    await GlobalAudit.packageChanged(
+      action: GlobalAuditAction.packageCreated,
+      packageId: package.packageId,
+      name: package.name,
+      pricePerPerson: package.pricePerPerson,
+      isActive: package.isActive,
+      actorId: createdBy,
+      actorName: actorName,
+      source: source,
+    );
     return _clonePackage(package);
   }
 
@@ -114,6 +131,9 @@ class PackageRepository {
     required int servingSize,
     bool? isActive,
     List<String>? allowedTables,
+    String actorId = _unknownActor,
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) async {
     if (DatabaseCore.packageBox == null) {
       throw StateError('Package storage is not initialized');
@@ -148,6 +168,14 @@ class PackageRepository {
               .toList()
             ..sort());
 
+    final previousName = existing.name;
+    final previousPrice = existing.pricePerPerson;
+    final previousServingSize = existing.servingSize;
+    final previousActive = existing.isActive;
+    final previousItemCount = existing.items.length;
+    final previousDescription = existing.description;
+    final previousAllowedTables = List<String>.from(existing.allowedTables);
+
     existing
       ..name = trimmedName
       ..description = normalizedDescription?.isEmpty == true
@@ -159,19 +187,98 @@ class PackageRepository {
       ..isActive = isActive ?? existing.isActive
       ..allowedTables = normalizedAllowedTables;
     await existing.save();
+    final changes = <Map<String, dynamic>>[
+      if (previousName != existing.name)
+        GlobalAudit.change(
+          field: 'name',
+          previousValue: previousName,
+          newValue: existing.name,
+        ),
+      if (previousPrice != existing.pricePerPerson)
+        GlobalAudit.change(
+          field: 'pricePerPerson',
+          previousValue: previousPrice,
+          newValue: existing.pricePerPerson,
+        ),
+      if (previousServingSize != existing.servingSize)
+        GlobalAudit.change(
+          field: 'servingSize',
+          previousValue: previousServingSize,
+          newValue: existing.servingSize,
+        ),
+      if (previousActive != existing.isActive)
+        GlobalAudit.change(
+          field: 'isActive',
+          previousValue: previousActive,
+          newValue: existing.isActive,
+        ),
+      if (previousItemCount != existing.items.length)
+        GlobalAudit.change(
+          field: 'itemCount',
+          previousValue: previousItemCount,
+          newValue: existing.items.length,
+        ),
+      if (previousDescription != existing.description)
+        GlobalAudit.change(
+          field: 'description',
+          previousValue: previousDescription,
+          newValue: existing.description,
+        ),
+      if (!_sameTables(previousAllowedTables, existing.allowedTables))
+        GlobalAudit.change(
+          field: 'allowedTables',
+          previousValue: previousAllowedTables,
+          newValue: List<String>.from(existing.allowedTables),
+        ),
+    ];
+    // Re-saving a form that changed nothing is not a configuration change.
+    if (changes.isNotEmpty) {
+      await GlobalAudit.packageChanged(
+        action: GlobalAuditAction.packageUpdated,
+        packageId: existing.packageId,
+        name: existing.name,
+        pricePerPerson: existing.pricePerPerson,
+        isActive: existing.isActive,
+        changes: changes,
+        actorId: actorId,
+        actorName: actorName,
+        source: source,
+      );
+    }
     return _clonePackage(existing);
   }
 
-  static Future<void> deletePackage(String packageId) async {
+  static Future<void> deletePackage(
+    String packageId, {
+    String actorId = _unknownActor,
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) async {
     if (DatabaseCore.packageBox == null) {
       return;
     }
+    final existing = DatabaseCore.packageBox!.get(packageId);
     await DatabaseCore.packageBox!.delete(packageId);
+    // A delete of a package that was not there changed nothing.
+    if (existing == null) return;
+    await GlobalAudit.packageChanged(
+      action: GlobalAuditAction.packageDeleted,
+      packageId: packageId,
+      name: existing.name,
+      pricePerPerson: existing.pricePerPerson,
+      isActive: existing.isActive,
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+    );
   }
 
   static Future<void> setPackageActive({
     required String packageId,
     required bool isActive,
+    String actorId = _unknownActor,
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) async {
     if (DatabaseCore.packageBox == null) {
       return;
@@ -180,7 +287,38 @@ class PackageRepository {
     if (existing == null) {
       return;
     }
+    final previousActive = existing.isActive;
     existing.isActive = isActive;
     await existing.save();
+    if (previousActive == isActive) return;
+    // Enabling and disabling are the same kind of configuration change, told
+    // apart by the field that moved rather than by a second action name.
+    await GlobalAudit.packageChanged(
+      action: GlobalAuditAction.packageUpdated,
+      packageId: packageId,
+      name: existing.name,
+      pricePerPerson: existing.pricePerPerson,
+      isActive: isActive,
+      changes: <Map<String, dynamic>>[
+        GlobalAudit.change(
+          field: 'isActive',
+          previousValue: previousActive,
+          newValue: isActive,
+        ),
+      ],
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+    );
+  }
+
+  /// Whether two allowed-table lists name the same tables. Both are stored
+  /// sorted and de-duplicated, so order is content, not noise.
+  static bool _sameTables(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 }

@@ -1733,7 +1733,10 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
 
                 // ── Step 3: save sales / close ──
                 if (ctx.mounted) setS(() => step = 3);
-                final closeFuture = DatabaseService.closeDay();
+                final closeFuture = DatabaseService.closeDay(
+                  actorId: widget.user.username,
+                  actorName: widget.user.username,
+                );
                 await Future.delayed(const Duration(milliseconds: 500));
 
                 // ── Step 4: advance day ──

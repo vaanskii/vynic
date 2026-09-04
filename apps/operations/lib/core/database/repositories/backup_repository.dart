@@ -17,6 +17,7 @@ import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
 
 import 'package:vynic/core/database/hive_migration_service.dart';
+import 'package:vynic/core/services/audit/global_audit.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'business_day_repository.dart';
 import '../database_core.dart';
@@ -617,6 +618,9 @@ class BackupRepository {
     File backupFile, {
     bool clearExisting = true,
     bool backupBeforeRestore = true,
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) async {
     if (!await backupFile.exists()) {
       throw ArgumentError('Backup file not found: ${backupFile.path}');
@@ -626,6 +630,9 @@ class BackupRepository {
       jsonString,
       clearExisting: clearExisting,
       backupBeforeRestore: backupBeforeRestore,
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
     );
   }
 
@@ -633,9 +640,13 @@ class BackupRepository {
     String jsonString, {
     bool clearExisting = true,
     bool backupBeforeRestore = true,
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) async {
+    String? safetyBackupPath;
     if (backupBeforeRestore) {
-      await createDataBackup();
+      safetyBackupPath = (await createDataBackup()).path;
     }
 
     final dynamic decoded = json.decode(jsonString);
@@ -645,6 +656,33 @@ class BackupRepository {
 
     final payload = Map<String, dynamic>.from(decoded);
     await _applyBackupPayload(payload, clearExisting: clearExisting);
+
+    // Written after the restore, never before: `clearExisting` empties the
+    // audit box and refills it from the backup, so a row written first would
+    // be erased by the very operation it records. Its own restore is the one
+    // event that is not in the file.
+    final meta = payload['meta'];
+    await GlobalAudit.backupRestored(
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+      backupCreatedAt: (payload['generatedAt'] as String?)?.trim(),
+      backupVersion: meta is Map ? meta['db_version']?.toString() : null,
+      safetyBackupPath: safetyBackupPath,
+      clearedExisting: clearExisting,
+      restoredCounts: <String, dynamic>{
+        'users': (payload['users'] as List?)?.length ?? 0,
+        'tables': (payload['tables'] as List?)?.length ?? 0,
+        'orders': (payload['orders'] as List?)?.length ?? 0,
+        'reservations':
+            (payload['reservations'] as List?)?.length ??
+            (payload['reservation'] as List?)?.length ??
+            0,
+        'sales': (payload['sales'] as List?)?.length ?? 0,
+        'expenses': (payload['expenses'] as List?)?.length ?? 0,
+        'auditLog': (payload['auditLog'] as List?)?.length ?? 0,
+      },
+    );
   }
 
   /// Erases every box on this terminal and leaves it as if freshly installed.

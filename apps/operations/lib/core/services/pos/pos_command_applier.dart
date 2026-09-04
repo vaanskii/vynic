@@ -801,6 +801,8 @@ class PosCommandApplier {
           : null,
       businessDate: p['businessDate'] as String?,
       sourceId: p['id'] as String?,
+      actorId: _actor(p['performedBy'] ?? p['createdBy']),
+      source: AuditSource.manager,
     );
     scheduleCloudSync();
     return PosCommandOutcome.success(
@@ -828,10 +830,13 @@ class PosCommandApplier {
     final role = StaffRole.normalizeClient(
       _string(p['role'], fallback: 'waiter'),
     );
+    final actor = _staffActor(p);
     final ok = await DatabaseService.addUser(
       username: username,
       pinCode: pinCode,
       role: role,
+      actorId: actor,
+      source: AuditSource.manager,
     );
     if (ok) {
       scheduleCloudSync();
@@ -855,10 +860,14 @@ class PosCommandApplier {
     await DatabaseService.updateUserPinByUsername(
       username: username,
       pinCode: pinCode,
+      actorId: actor,
+      source: AuditSource.manager,
     );
     await DatabaseService.updateUserRoleByUsername(
       username: username,
       role: role,
+      actorId: actor,
+      source: AuditSource.manager,
     );
     scheduleCloudSync();
     return PosCommandOutcome.success(
@@ -881,6 +890,8 @@ class PosCommandApplier {
     final ok = await DatabaseService.updateUserPinByUsername(
       username: username,
       pinCode: pinCode,
+      actorId: _staffActor(p),
+      source: AuditSource.manager,
     );
     if (!ok) return const PosCommandOutcome.missing('update_failed');
     scheduleCloudSync();
@@ -900,6 +911,8 @@ class PosCommandApplier {
     final ok = await DatabaseService.updateUserRoleByUsername(
       username: username,
       role: role,
+      actorId: _staffActor(p),
+      source: AuditSource.manager,
     );
     if (!ok) return const PosCommandOutcome.conflicting('role_update_failed');
     scheduleCloudSync();
@@ -937,6 +950,8 @@ class PosCommandApplier {
     final ok = await DatabaseService.renameUserByUsername(
       oldUsername: oldUsername,
       newUsername: newUsername,
+      actorId: _staffActor(p),
+      source: AuditSource.manager,
     );
     if (!ok) return const PosCommandOutcome.conflicting('rename_failed');
     scheduleCloudSync();
@@ -963,7 +978,11 @@ class PosCommandApplier {
         DatabaseService.getUserByUsername(username) == null) {
       return const PosCommandOutcome.success(code: 'already_absent');
     }
-    final ok = await DatabaseService.deleteUserByUsername(username);
+    final ok = await DatabaseService.deleteUserByUsername(
+      username,
+      actorId: _staffActor(p),
+      source: AuditSource.manager,
+    );
     if (!ok) return const PosCommandOutcome.conflicting('delete_failed');
     scheduleCloudSync();
     return const PosCommandOutcome.success();
@@ -1129,6 +1148,15 @@ class PosCommandApplier {
   }
 
   static String _actor(Object? raw) => _string(raw, fallback: defaultActor);
+
+  /// Who a Cloud-originated staff change is attributed to.
+  ///
+  /// The staff commands carry no operator identity in the contract, so there
+  /// is usually nobody to name. [defaultActor] says "a Manager app request"
+  /// rather than inventing a person; a payload that does identify one is
+  /// honoured. The channel is recorded separately as `source=MANAGER`.
+  static String _staffActor(Map<String, dynamic> p) =>
+      _actor(p['performedBy'] ?? p['actorName'] ?? p['updatedBy']);
 
   static List<String> _stringList(Object? raw) {
     if (raw is! List) return const [];

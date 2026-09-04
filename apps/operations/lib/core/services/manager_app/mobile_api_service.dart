@@ -12,6 +12,7 @@ import 'package:vynic/core/services/manager_app/pos_command_delivery.dart';
 import 'package:vynic/core/services/manager_app/mobile_cache_service.dart';
 import 'package:vynic/core/services/sync/mobile_edit_echo_guard.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
+import 'package:vynic/core/models/global_audit_entry.dart';
 
 /// Production-grade mobile API service.
 ///
@@ -752,6 +753,75 @@ class MobileApiService {
       return jsonDecode(response.body) as List<dynamic>;
     }
     throw Exception('Status ${response.statusCode}');
+  }
+
+  /// The venue-wide audit feed: staff, menu, packages, expenses, close day,
+  /// backups, settings and the business date.
+  ///
+  /// Newest first and keyset-paginated — pass the previous response's
+  /// `nextCursor` to continue rather than an offset, so a row written while
+  /// the manager scrolls cannot shift the window.
+  static Future<({List<GlobalAuditEntry> items, String? nextCursor})>
+  getGlobalAuditLog({
+    String? from,
+    String? to,
+    String? action,
+    String? entityType,
+    String? entityId,
+    String? actor,
+    int limit = 50,
+    String? cursor,
+  }) async {
+    final params = <String, String>{
+      'limit': '$limit',
+      if (from != null && from.isNotEmpty) 'from': from,
+      if (to != null && to.isNotEmpty) 'to': to,
+      if (action != null && action.isNotEmpty) 'action': action,
+      if (entityType != null && entityType.isNotEmpty) 'entityType': entityType,
+      if (entityId != null && entityId.isNotEmpty) 'entityId': entityId,
+      if (actor != null && actor.isNotEmpty) 'actor': actor,
+      if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+    };
+    final query = params.entries
+        .map(
+          (e) =>
+              '${Uri.encodeQueryComponent(e.key)}='
+              '${Uri.encodeQueryComponent(e.value)}',
+        )
+        .join('&');
+    final response = await _get('/mobile/audit-log?$query');
+    if (response.statusCode != 200) {
+      throw Exception('Status ${response.statusCode}');
+    }
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final items = (body['items'] as List? ?? const [])
+        .whereType<Map>()
+        .map((row) => GlobalAuditEntry.fromCloud(Map<String, dynamic>.from(row)))
+        .toList(growable: false);
+    return (items: items, nextCursor: body['nextCursor'] as String?);
+  }
+
+  /// The actions and entity types this Venue has actually recorded, for the
+  /// filter chips. Offering a filter that can only ever return nothing is
+  /// worse than offering none.
+  static Future<({List<String> actions, List<String> entityTypes})>
+  getGlobalAuditLogFacets() async {
+    final response = await _get('/mobile/audit-log/facets');
+    if (response.statusCode != 200) {
+      throw Exception('Status ${response.statusCode}');
+    }
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    return (
+      actions: (body['actions'] as List? ?? const [])
+          .whereType<Map>()
+          .map((row) => (row['action'] ?? '').toString())
+          .where((action) => action.isNotEmpty)
+          .toList(growable: false),
+      entityTypes: (body['entityTypes'] as List? ?? const [])
+          .map((value) => value.toString())
+          .where((value) => value.isNotEmpty)
+          .toList(growable: false),
+    );
   }
 
   // ── Sales report ──────────────────────────────────────────────────────────

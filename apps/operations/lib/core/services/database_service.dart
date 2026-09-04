@@ -188,6 +188,7 @@ class DatabaseService {
     required int servingSize,
     bool? isActive,
     List<String>? allowedTables,
+    String actorId = 'unknown',
   }) => PackageRepository.updatePackage(
     packageId: packageId,
     name: name,
@@ -197,17 +198,22 @@ class DatabaseService {
     servingSize: servingSize,
     isActive: isActive,
     allowedTables: allowedTables,
+    actorId: actorId,
   );
 
-  static Future<void> deletePackage(String packageId) =>
-      PackageRepository.deletePackage(packageId);
+  static Future<void> deletePackage(
+    String packageId, {
+    String actorId = 'unknown',
+  }) => PackageRepository.deletePackage(packageId, actorId: actorId);
 
   static Future<void> setPackageActive({
     required String packageId,
     required bool isActive,
+    String actorId = 'unknown',
   }) => PackageRepository.setPackageActive(
     packageId: packageId,
     isActive: isActive,
+    actorId: actorId,
   );
 
   static bool shouldCategorySendToKitchenByDefault(
@@ -337,8 +343,17 @@ class DatabaseService {
     required String username,
     required String pinCode,
     required String role,
-  }) =>
-      UserRepository.addUser(username: username, pinCode: pinCode, role: role);
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) => UserRepository.addUser(
+    username: username,
+    pinCode: pinCode,
+    role: role,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+  );
 
   // Check if a PIN code already exists
   static bool isPinCodeExists(String pinCode) =>
@@ -366,29 +381,59 @@ class DatabaseService {
   static Future<bool> renameUserByUsername({
     required String oldUsername,
     required String newUsername,
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) => UserRepository.renameUserByUsername(
     oldUsername: oldUsername,
     newUsername: newUsername,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
   );
 
   static Future<bool> updateUserPinByUsername({
     required String username,
     required String pinCode,
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) => UserRepository.updateUserPinByUsername(
     username: username,
     pinCode: pinCode,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
   );
 
   static Future<bool> updateUserRoleByUsername({
     required String username,
     required String role,
-  }) => UserRepository.updateUserRoleByUsername(username: username, role: role);
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) => UserRepository.updateUserRoleByUsername(
+    username: username,
+    role: role,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+  );
 
   // Delete user
   static Future<void> deleteUser(User user) => UserRepository.deleteUser(user);
 
-  static Future<bool> deleteUserByUsername(String username) =>
-      UserRepository.deleteUserByUsername(username);
+  static Future<bool> deleteUserByUsername(
+    String username, {
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) => UserRepository.deleteUserByUsername(
+    username,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+  );
 
   // Get users box
   static Box<User>? get userBox => _userBox;
@@ -710,11 +755,13 @@ class DatabaseService {
     required String nameEn,
     required String nameKa,
     bool? sendToKitchen,
+    String actorId = 'unknown',
   }) => MenuRepository.addCategory(
     slug: slug,
     nameEn: nameEn,
     nameKa: nameKa,
     sendToKitchen: sendToKitchen,
+    actorId: actorId,
   );
 
   static Future<bool> updateCategory({
@@ -723,16 +770,18 @@ class DatabaseService {
     required String nameEn,
     required String nameKa,
     bool? sendToKitchen,
+    String actorId = 'unknown',
   }) => MenuRepository.updateCategory(
     index: index,
     slug: slug,
     nameEn: nameEn,
     nameKa: nameKa,
     sendToKitchen: sendToKitchen,
+    actorId: actorId,
   );
 
-  static Future<bool> deleteCategory(int index) =>
-      MenuRepository.deleteCategory(index);
+  static Future<bool> deleteCategory(int index, {String actorId = 'unknown'}) =>
+      MenuRepository.deleteCategory(index, actorId: actorId);
 
   static Future<bool> addItemToCategory({
     required int categoryIndex,
@@ -741,6 +790,7 @@ class DatabaseService {
     double? price,
     List<MenuVariantDB>? variants,
     bool? sendToKitchen,
+    String actorId = 'unknown',
   }) => MenuRepository.addItemToCategory(
     categoryIndex: categoryIndex,
     nameEn: nameEn,
@@ -748,6 +798,7 @@ class DatabaseService {
     price: price,
     variants: variants,
     sendToKitchen: sendToKitchen,
+    actorId: actorId,
   );
 
   static Future<bool> updateItemInCategory({
@@ -758,6 +809,7 @@ class DatabaseService {
     double? price,
     List<MenuVariantDB>? variants,
     bool? sendToKitchen,
+    String actorId = 'unknown',
   }) => MenuRepository.updateItemInCategory(
     categoryIndex: categoryIndex,
     itemIndex: itemIndex,
@@ -766,14 +818,17 @@ class DatabaseService {
     price: price,
     variants: variants,
     sendToKitchen: sendToKitchen,
+    actorId: actorId,
   );
 
   static Future<bool> deleteItemFromCategory({
     required int categoryIndex,
     required int itemIndex,
+    String actorId = 'unknown',
   }) => MenuRepository.deleteItemFromCategory(
     categoryIndex: categoryIndex,
     itemIndex: itemIndex,
+    actorId: actorId,
   );
 
   static Future<bool> addSubcategory({
@@ -781,11 +836,13 @@ class DatabaseService {
     required String slug,
     required String nameEn,
     required String nameKa,
+    String actorId = 'unknown',
   }) => MenuRepository.addSubcategory(
     categoryIndex: categoryIndex,
     slug: slug,
     nameEn: nameEn,
     nameKa: nameKa,
+    actorId: actorId,
   );
 
   static Future<bool> updateSubcategory({
@@ -794,20 +851,24 @@ class DatabaseService {
     required String slug,
     required String nameEn,
     required String nameKa,
+    String actorId = 'unknown',
   }) => MenuRepository.updateSubcategory(
     categoryIndex: categoryIndex,
     subcategoryIndex: subcategoryIndex,
     slug: slug,
     nameEn: nameEn,
     nameKa: nameKa,
+    actorId: actorId,
   );
 
   static Future<bool> deleteSubcategory({
     required int categoryIndex,
     required int subcategoryIndex,
+    String actorId = 'unknown',
   }) => MenuRepository.deleteSubcategory(
     categoryIndex: categoryIndex,
     subcategoryIndex: subcategoryIndex,
+    actorId: actorId,
   );
 
   static Future<bool> addItemToSubcategory({
@@ -818,6 +879,7 @@ class DatabaseService {
     double? price,
     List<MenuVariantDB>? variants,
     bool? sendToKitchen,
+    String actorId = 'unknown',
   }) => MenuRepository.addItemToSubcategory(
     categoryIndex: categoryIndex,
     subcategoryIndex: subcategoryIndex,
@@ -826,6 +888,7 @@ class DatabaseService {
     price: price,
     variants: variants,
     sendToKitchen: sendToKitchen,
+    actorId: actorId,
   );
 
   static Future<bool> updateItemInSubcategory({
@@ -837,6 +900,7 @@ class DatabaseService {
     double? price,
     List<MenuVariantDB>? variants,
     bool? sendToKitchen,
+    String actorId = 'unknown',
   }) => MenuRepository.updateItemInSubcategory(
     categoryIndex: categoryIndex,
     subcategoryIndex: subcategoryIndex,
@@ -846,16 +910,19 @@ class DatabaseService {
     price: price,
     variants: variants,
     sendToKitchen: sendToKitchen,
+    actorId: actorId,
   );
 
   static Future<bool> deleteItemFromSubcategory({
     required int categoryIndex,
     required int subcategoryIndex,
     required int itemIndex,
+    String actorId = 'unknown',
   }) => MenuRepository.deleteItemFromSubcategory(
     categoryIndex: categoryIndex,
     subcategoryIndex: subcategoryIndex,
     itemIndex: itemIndex,
+    actorId: actorId,
   );
 
   // ==================== DATE MANAGEMENT METHODS ====================
@@ -1124,25 +1191,45 @@ class DatabaseService {
     File backupFile, {
     bool clearExisting = true,
     bool backupBeforeRestore = true,
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) => BackupRepository.restoreDataBackupFromFile(
     backupFile,
     clearExisting: clearExisting,
     backupBeforeRestore: backupBeforeRestore,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
   );
 
   static Future<void> restoreDataBackupFromJson(
     String jsonString, {
     bool clearExisting = true,
     bool backupBeforeRestore = true,
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) => BackupRepository.restoreDataBackupFromJson(
     jsonString,
     clearExisting: clearExisting,
     backupBeforeRestore: backupBeforeRestore,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
   );
 
   // Close current day and move to next date
   /// Closes the business day. See [CloseDayTransaction].
-  static Future<bool> closeDay() => CloseDayTransaction.run();
+  static Future<bool> closeDay({
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) => CloseDayTransaction.run(
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+  );
 
   // Get date in Georgian format
   static String getGeorgianFormattedDate(DateTime date) =>
@@ -1279,6 +1366,9 @@ class DatabaseService {
     DateTime? createdAt,
     String? businessDate,
     String? sourceId,
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) => SalesRepository.saveExpenseRecord(
     description: description,
     amount: amount,
@@ -1287,6 +1377,9 @@ class DatabaseService {
     createdAt: createdAt,
     businessDate: businessDate,
     sourceId: sourceId,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
   );
 
   static List<Map<String, dynamic>> getExpensesForDate(String date) =>

@@ -11,6 +11,7 @@ import 'package:vynic/core/services/audit/reservation_audit.dart';
 import 'package:vynic/core/models/sale_record.dart';
 import 'package:vynic/core/models/takeaway_order.dart';
 
+import 'package:vynic/core/services/audit/global_audit.dart';
 import 'package:vynic/core/services/audit/money_audit.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'business_day_repository.dart';
@@ -374,6 +375,9 @@ class SalesRepository {
     DateTime? createdAt,
     String? businessDate,
     String? sourceId,
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) async {
     final now = createdAt ?? BusinessDayRepository.getCurrentDateTime();
     final date =
@@ -397,9 +401,22 @@ class SalesRepository {
     final existingKey = _expenseKeyForId(record['id'] as String);
     if (existingKey != null) {
       await DatabaseCore.expenseBox!.put(existingKey, record);
+      // The same expense arriving twice is one expense. Auditing the
+      // redelivery would claim a second one was created.
       return record;
     }
     await DatabaseCore.expenseBox!.add(record);
+    await GlobalAudit.expenseCreated(
+      expenseId: record['id'] as String,
+      amount: record['amount'] as double,
+      category: record['category'] as String,
+      description: record['description'] as String,
+      paymentType: record['paymentType'] as String,
+      businessDate: date,
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+    );
     return record;
   }
 

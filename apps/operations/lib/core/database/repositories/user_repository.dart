@@ -1,11 +1,19 @@
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/models/user.dart';
+import 'package:vynic/core/services/audit/global_audit.dart';
 
 import '../database_core.dart';
 
 /// Staff accounts: PIN authentication, roles, and user CRUD.
 class UserRepository {
   UserRepository._();
+
+  /// Attribution for a staff mutation whose caller did not say who made it.
+  /// A real name is always preferred; this exists so the audit row is written
+  /// even when a path has not been taught to pass one, rather than silently
+  /// skipped.
+  static const String _unknownActor = 'unknown';
 
   /// Injected by ManagerSyncService so user/PIN changes sync to the backend.
   static void Function()? _onUsersChanged;
@@ -51,6 +59,9 @@ class UserRepository {
     required String username,
     required String pinCode,
     required String role,
+    String actorId = _unknownActor,
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) async {
     // Check if PIN code already exists
     if (isPinCodeExists(pinCode)) {
@@ -61,6 +72,13 @@ class UserRepository {
 
     await DatabaseCore.userBox!.add(user);
     _notifyUsersChanged();
+    await GlobalAudit.staffCreated(
+      username: username,
+      role: user.role,
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+    );
     return true;
   }
 
@@ -132,6 +150,9 @@ class UserRepository {
   static Future<bool> renameUserByUsername({
     required String oldUsername,
     required String newUsername,
+    String actorId = _unknownActor,
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) async {
     final trimmed = newUsername.trim();
     if (trimmed.isEmpty) return false;
@@ -146,12 +167,26 @@ class UserRepository {
     user.username = trimmed;
     await user.save();
     _notifyUsersChanged();
+    // A rename that renamed nothing is not a change; recording one would
+    // assert an edit that never happened.
+    if (trimmed != oldUsername) {
+      await GlobalAudit.staffRenamed(
+        previousUsername: oldUsername,
+        newUsername: trimmed,
+        actorId: actorId,
+        actorName: actorName,
+        source: source,
+      );
+    }
     return true;
   }
 
   static Future<bool> updateUserPinByUsername({
     required String username,
     required String pinCode,
+    String actorId = _unknownActor,
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) async {
     final user = getUserByUsername(username);
     if (user == null) return false;
@@ -159,15 +194,29 @@ class UserRepository {
       (u) => u.username != username && u.pinCode == pinCode,
     );
     if (pinUsedByAnother) return false;
+    final changed = user.pinCode != pinCode;
     user.pinCode = pinCode;
     await user.save();
     _notifyUsersChanged();
+    if (changed) {
+      // The audit records that the credential moved. It never records the
+      // credential — see GlobalAudit.staffPinChanged.
+      await GlobalAudit.staffPinChanged(
+        username: user.username,
+        actorId: actorId,
+        actorName: actorName,
+        source: source,
+      );
+    }
     return true;
   }
 
   static Future<bool> updateUserRoleByUsername({
     required String username,
     required String role,
+    String actorId = _unknownActor,
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) async {
     final user = getUserByUsername(username);
     if (user == null) return false;
@@ -180,9 +229,20 @@ class UserRepository {
       if (managerCount <= 1) return false;
     }
 
+    final previousRole = user.role;
     user.role = normalizedRole;
     await user.save();
     _notifyUsersChanged();
+    if (previousRole != normalizedRole) {
+      await GlobalAudit.staffRoleChanged(
+        username: user.username,
+        previousRole: previousRole,
+        newRole: normalizedRole,
+        actorId: actorId,
+        actorName: actorName,
+        source: source,
+      );
+    }
     return true;
   }
 
@@ -192,7 +252,12 @@ class UserRepository {
     _notifyUsersChanged();
   }
 
-  static Future<bool> deleteUserByUsername(String username) async {
+  static Future<bool> deleteUserByUsername(
+    String username, {
+    String actorId = _unknownActor,
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) async {
     final user = getUserByUsername(username);
     if (user == null) return false;
     if (user.isManager) {
@@ -203,8 +268,17 @@ class UserRepository {
         return false;
       }
     }
+    final role = user.role;
+    final storedName = user.username;
     await user.delete();
     _notifyUsersChanged();
+    await GlobalAudit.staffDeleted(
+      username: storedName,
+      role: role,
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+    );
     return true;
   }
 }

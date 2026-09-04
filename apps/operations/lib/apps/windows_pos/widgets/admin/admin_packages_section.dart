@@ -460,6 +460,7 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
           pricePerPerson: result.pricePerPerson,
           servingSize: result.servingSize,
           allowedTables: result.allowedTables,
+          actorId: widget.user.username,
         );
       }
       _refreshPackages();
@@ -897,7 +898,10 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
     });
 
     try {
-      await DatabaseService.deletePackage(pkg.packageId);
+      await DatabaseService.deletePackage(
+        pkg.packageId,
+        actorId: widget.user.username,
+      );
       _refreshPackages();
       if (!mounted) {
         return;

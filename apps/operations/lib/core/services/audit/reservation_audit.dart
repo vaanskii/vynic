@@ -3,6 +3,7 @@ import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/reservation_status.dart';
 import 'package:vynic/core/services/audit/audit_event_service.dart';
+import 'package:vynic/core/services/audit/global_audit.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
 
 /// The action names of the Reservation timeline in the append-only log.
@@ -97,6 +98,8 @@ abstract final class ReservationAudit {
     await AuditEventService.logEvent(
       action: action,
       userId: actor,
+      entityType: GlobalAuditEntity.reservation,
+      entityId: reservation.id,
       data: <String, dynamic>{
         ...snapshot(reservation),
         if (previousStatus != null) 'previousStatus': previousStatus,

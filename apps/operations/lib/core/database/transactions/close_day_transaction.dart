@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/audit/global_audit.dart';
 import 'package:vynic/core/services/audit/reservation_audit.dart';
 import 'package:vynic/core/models/audit_source.dart';
 import 'dart:developer' as developer;
@@ -81,7 +82,15 @@ class CloseDayTransaction {
     return (completed: completedReservations, noShow: noShowReservations);
   }
 
-  static Future<bool> run() async {
+  /// [actorId] is the operator who pressed Close Day. The transaction itself
+  /// is an automatic process — it finalizes bookings nobody touched — so the
+  /// reservation transitions inside it stay `system`/`SYSTEM`, while the day
+  /// closing is attributed to the person who asked for it.
+  static Future<bool> run({
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) async {
     try {
       developer.log('========================================');
       developer.log('CLOSE DAY - Starting checks');
@@ -144,6 +153,23 @@ class CloseDayTransaction {
           developer.log('    Notes: ${reservation.notes ?? "none"}');
         }
 
+        await GlobalAudit.closeDayBlocked(
+          businessDate: currentDateString,
+          blockedBy: 'ACTIVE_ORDERS',
+          blockers: [
+            for (final order in activeOrders)
+              <String, dynamic>{
+                'orderId': order.orderId,
+                'tableNumbers': order.tableNumbers,
+                'floor': order.floor,
+                'status': order.status,
+                'createdBy': order.createdBy,
+              },
+          ],
+          actorId: actorId,
+          actorName: actorName,
+          source: source,
+        );
         return false;
       }
 
@@ -177,6 +203,25 @@ class CloseDayTransaction {
             developer.log('    Reservation ID: ${table.reservationId}');
           }
         }
+        await GlobalAudit.closeDayBlocked(
+          businessDate: currentDateString,
+          blockedBy: 'RESERVED_TABLES',
+          blockers: [
+            for (final table in reservedTables)
+              <String, dynamic>{
+                'tableNumber': table.tableNumber,
+                'floor': table.floor,
+                if (table.reservedBy != null) 'reservedBy': table.reservedBy,
+                if (table.activeOrderId != null)
+                  'activeOrderId': table.activeOrderId,
+                if (table.reservationId != null)
+                  'reservationId': table.reservationId,
+              },
+          ],
+          actorId: actorId,
+          actorName: actorName,
+          source: source,
+        );
         return false;
       }
 
@@ -210,12 +255,15 @@ class CloseDayTransaction {
       // Reset daily sales total for new day
       await SalesRepository.resetDailySalesTotal();
 
-      // Clear all closed orders from active orders
+      // Clear all closed orders from active orders. Their Sale is the durable
+      // record; the Order row is operational state for the day that just ended.
+      var archivedOrders = 0;
       final orderKeys = DatabaseCore.orderBox!.keys.toList();
       for (final key in orderKeys) {
         final order = DatabaseCore.orderBox!.get(key);
         if (order?.status == 'closed') {
           await DatabaseCore.orderBox!.delete(key);
+          archivedOrders++;
         }
       }
 
@@ -234,6 +282,18 @@ class CloseDayTransaction {
       }
 
       developer.log('Freed $freedTables tables');
+
+      await GlobalAudit.closeDayCompleted(
+        businessDateClosed: currentDateString,
+        nextBusinessDate: nextDate.toIso8601String().split('T')[0],
+        reservationsCompleted: finalized.completed,
+        reservationsNoShow: finalized.noShow,
+        ordersArchived: archivedOrders,
+        tablesFreed: freedTables,
+        actorId: actorId,
+        actorName: actorName,
+        source: source,
+      );
 
       developer.log('✅ Day closed successfully');
       developer.log('========================================');

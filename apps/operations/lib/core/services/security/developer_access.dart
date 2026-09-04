@@ -5,6 +5,7 @@ import 'package:cryptography/cryptography.dart';
 import 'package:flutter/foundation.dart';
 import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/services/audit/audit_event_service.dart';
+import 'package:vynic/core/services/audit/global_audit.dart';
 import 'package:vynic/core/services/security/developer_code_format.dart';
 import 'package:vynic/core/services/security/developer_otp.dart';
 import 'package:vynic/core/services/security/developer_otp_chain.dart';
@@ -426,6 +427,8 @@ class DeveloperAccess {
     await AuditEventService.logEvent(
       action: 'developer.$action',
       userId: 'developer:${_tokenId ?? 'none'}',
+      entityType: GlobalAuditEntity.developer,
+      entityId: _tokenId,
       data: {...data, 'terminal': terminalIdShort},
     );
   }

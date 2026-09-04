@@ -109,7 +109,10 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
   Future<void> _openAddStaffDialog() async {
     final created = await showDialog<bool>(
       context: context,
-      builder: (context) => _AddStaffDialog(waiterOnly: _waitersOnlyAdmin),
+      builder: (context) => _AddStaffDialog(
+        actorId: widget.user.username,
+        waiterOnly: _waitersOnlyAdmin,
+      ),
     );
     if (created == true && mounted) _refreshList();
   }
@@ -746,6 +749,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
     final ok = await DatabaseService.renameUserByUsername(
       oldUsername: user.username,
       newUsername: newName,
+      actorId: widget.user.username,
     );
     if (!ok) {
       unawaited(
@@ -769,6 +773,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
     final ok = await DatabaseService.updateUserPinByUsername(
       username: user.username,
       pinCode: newPin,
+      actorId: widget.user.username,
     );
     if (!ok) {
       unawaited(showErrorToast(context, 'PIN-ის შენახვა ვერ მოხერხდა'));
@@ -795,6 +800,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
     final ok = await DatabaseService.updateUserRoleByUsername(
       username: user.username,
       role: role,
+      actorId: widget.user.username,
     );
     if (!mounted) return;
     if (!ok) {
@@ -841,7 +847,10 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
     );
     if (confirmed != true || !mounted) return;
 
-    final deleted = await DatabaseService.deleteUserByUsername(user.username);
+    final deleted = await DatabaseService.deleteUserByUsername(
+      user.username,
+      actorId: widget.user.username,
+    );
     if (!deleted) {
       unawaited(showErrorToast(context, 'ბოლო მენეჯერის წაშლა არ შეიძლება'));
       return;
@@ -858,7 +867,10 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
 }
 
 class _AddStaffDialog extends StatefulWidget {
-  const _AddStaffDialog({this.waiterOnly = false});
+  const _AddStaffDialog({required this.actorId, this.waiterOnly = false});
+
+  /// The operator who opened this dialog; the audit row's actor.
+  final String actorId;
 
   final bool waiterOnly;
 
@@ -1007,6 +1019,7 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
       username: username,
       pinCode: _pinCode,
       role: role,
+      actorId: widget.actorId,
     );
     if (!mounted) return;
 

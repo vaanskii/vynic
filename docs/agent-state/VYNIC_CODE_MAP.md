@@ -28,6 +28,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Audit provenance values: `apps/operations/lib/core/models/audit_source.dart`
 - Order-level audit details builder: `apps/operations/lib/core/services/audit/order_audit_details.dart`; creation/transfer proof in `apps/operations/test/unit/order_creation_audit_test.dart`
 - Item transfer (`MOVE_ITEMS`, `TRANSFER_CLOSE`): `apps/operations/lib/core/services/pos/order_item_transfer.dart`
+- The one Order item diff, shared by Manager upserts and `ORDER_UPDATE`: `apps/operations/lib/core/services/audit/audit_order_diff_service.dart`, proof in `apps/operations/test/unit/manager_item_replacement_audit_test.dart`
 - Close payment rendering from details: `apps/operations/lib/core/services/audit/close_event_presentation.dart`, proof in `apps/operations/test/unit/close_event_presentation_test.dart`
 - Money mirrors (`RECORD_ADVANCE`, `ADJUST_ORDER`, `VOID_SALE`): `apps/operations/lib/core/services/audit/money_audit.dart`, proof in `apps/operations/test/unit/money_audit_mirror_test.dart`
 - Backend audit type normalizer (deploy before POS emits a new type): `apps/backend/src/pos/audit/audit-event-type.ts`
@@ -60,6 +61,15 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Contract notes: `docs/AUDIT_SYNC.md`
 - Event/action/status taxonomy audit: `docs/AUDIT_TAXONOMY_AUDIT.md`
 - Storage/relation integrity investigation: `docs/AUDIT_STORAGE_RELATIONS.md`
+
+## Venue-Wide Audit (non-Order)
+
+- POS writers and action/entity registry: `apps/operations/lib/core/services/audit/global_audit.dart`, `apps/operations/lib/core/services/audit/global_audit_registry.dart`
+- Shared feed row and its display rules: `apps/operations/lib/core/models/global_audit_entry.dart`
+- Backend entity derivation (also covers rows written before the columns existed): `apps/backend/src/pos/audit/audit-log-entity.ts`
+- Manager reader endpoint: `apps/backend/src/mobile/services/mobile-audit-log.service.ts` (`GET /mobile/audit-log`)
+- Reader UI: `apps/operations/lib/apps/windows_pos/widgets/admin/admin_activity_log_section.dart` (POS), `apps/operations/lib/apps/mobile_app/presentation/screens/admin_screen/tabs/mobile_admin_activity_tab.dart` (Manager)
+- Proofs: `apps/operations/test/unit/global_audit_test.dart`, `apps/backend/src/pos/audit/audit-log-entity.spec.ts`, `apps/backend/src/mobile/services/mobile-audit-log.integration.spec.ts`
 
 ## Staff Sync
 
@@ -121,6 +131,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 - POS model/repository/transaction: `apps/operations/lib/core/models/reservation.dart`, `apps/operations/lib/core/database/repositories/reservation_repository.dart`, `apps/operations/lib/core/database/transactions/activate_reservation_transaction.dart`
 - Reservation timeline registry and writer: `apps/operations/lib/core/services/audit/reservation_audit.dart`, proof in `apps/operations/test/unit/reservation_audit_test.dart`
+- Reservation id generation (uuid, collision-safe): `apps/operations/lib/core/database/repositories/reservation_repository.dart` (`createReservation`), proof in `apps/operations/test/unit/reservation_id_uniqueness_test.dart`
 - Booking-vs-bookkeeping rule and Cloud projection: `apps/operations/lib/core/models/reservation_classification.dart`, proof in `apps/operations/test/unit/reservation_projection_test.dart`
 - Manager backend: `apps/backend/src/mobile/services/mobile-reservations.service.ts`
 - Website booking: `apps/backend/src/website/reservation/`

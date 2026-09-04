@@ -768,7 +768,11 @@ class AdminAuditLogSection extends StatelessWidget {
       barrierColor: Colors.black45,
       builder: (context) {
         final isMobile = MediaQuery.of(context).size.width < 600;
-        final events = report.sortedEvents;
+        // One Order's report reads as the story of that Order: opened, then
+        // what happened to it, then closed. Chronological by the POS-assigned
+        // sequence, never by timestamp — a creation event and the lines
+        // written with it share one instant on purpose.
+        final events = report.orderedEvents;
         return Dialog(
           insetPadding: isMobile
               ? const EdgeInsets.symmetric(horizontal: 10, vertical: 20)
@@ -874,13 +878,12 @@ class AdminAuditLogSection extends StatelessWidget {
                             itemBuilder: (context, index) =>
                                 _buildAuditEventTile(
                                   events[index],
-                                  // Its place in the timeline, not its place
-                                  // in this list — the list is newest first,
-                                  // so counting rows numbers the report
-                                  // backwards and calls the creation event
-                                  // last.
-                                  events[index].sequence ??
-                                      (events.length - 1 - index),
+                                  // The event's own ordinal. The list order
+                                  // already matches it; the index is the
+                                  // fallback only for a report written before
+                                  // sequences existed, which
+                                  // `orderedEvents` has already numbered.
+                                  events[index].sequence ?? index,
                                 ),
                           ),
                   ),

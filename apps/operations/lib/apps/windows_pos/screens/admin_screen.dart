@@ -14,6 +14,7 @@ import 'package:vynic/apps/windows_pos/widgets/admin/admin_packages_section.dart
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_close_day_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_sales_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_sales_report_section.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_activity_log_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_audit_log_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_error_log_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_connection_section.dart';
@@ -54,6 +55,7 @@ class AdminScreen extends StatefulWidget {
     'salesReport',
     'financialReports',
     'audit',
+    'activity',
     'settings',
   ];
 
@@ -1293,6 +1295,8 @@ class _AdminScreenState extends State<AdminScreen> {
         return 'ფინანსური რეპორტები';
       case 'audit':
         return 'აუდიტი';
+      case 'activity':
+        return 'აქტივობა';
       case 'errors':
         return 'შეცდომები';
       case 'printers':
@@ -1418,6 +1422,11 @@ class _AdminScreenState extends State<AdminScreen> {
         icon: Icons.report_problem,
         title: 'აუდიტი',
         section: 'audit',
+      ),
+      _buildMenuItem(
+        icon: Icons.history,
+        title: 'აქტივობა',
+        section: 'activity',
       ),
       _buildMenuItem(
         icon: Icons.settings,
@@ -2316,7 +2325,11 @@ class _AdminScreenState extends State<AdminScreen> {
       });
       debugPrint('[BackupFlow] Restore started');
 
-      await DatabaseService.restoreDataBackupFromFile(backupFile);
+      await DatabaseService.restoreDataBackupFromFile(
+        backupFile,
+        actorId: widget.user.username,
+        actorName: widget.user.username,
+      );
       debugPrint('[BackupFlow] Restore completed in DatabaseService');
 
       if (!mounted) {
@@ -3805,6 +3818,8 @@ class _AdminScreenState extends State<AdminScreen> {
           onChangeAuditMonth: _changeAuditMonth,
           onSetSelectedAuditMonth: _setSelectedAuditMonth,
         );
+      case 'activity':
+        return const AdminActivityLogSection();
       case 'errors':
         return const AdminErrorLogSection();
       case 'printers':

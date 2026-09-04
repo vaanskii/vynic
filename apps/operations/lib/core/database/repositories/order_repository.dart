@@ -8,6 +8,8 @@ import 'package:vynic/core/models/order_status.dart';
 import 'package:vynic/core/models/package.dart';
 
 import 'package:vynic/core/services/audit/audit_event_service.dart';
+import 'package:vynic/core/services/audit/audit_order_diff_service.dart';
+import 'package:vynic/core/services/audit/global_audit.dart';
 import 'package:vynic/core/services/audit/order_audit_details.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'audit_repository.dart';
@@ -129,6 +131,8 @@ class OrderRepository {
       AuditEventService.logEvent(
         action: 'ORDER_CREATED',
         userId: createdBy,
+        entityType: GlobalAuditEntity.order,
+        entityId: '$orderId',
         data: {
           'orderId': orderId,
           'tableNumbers': tableNumbers,
@@ -225,6 +229,8 @@ class OrderRepository {
       AuditEventService.logEvent(
         action: 'TAKEAWAY_ORDER_CREATED',
         userId: createdBy,
+        entityType: GlobalAuditEntity.order,
+        entityId: '$orderId',
         data: {
           'orderId': orderId,
           'customerName': customerName,
@@ -259,6 +265,12 @@ class OrderRepository {
   }) async {
     final existing = getOrder(posOrderId);
     if (existing != null) {
+      await _auditManagerItemReplacement(
+        order: existing,
+        updatedItems: items,
+        actor: waiterName,
+        source: source,
+      );
       existing.items = items;
       existing.customerName = customerName;
       existing.pickupTime = pickupTime;
@@ -332,6 +344,12 @@ class OrderRepository {
   }) async {
     final existing = getOrder(posOrderId);
     if (existing != null) {
+      await _auditManagerItemReplacement(
+        order: existing,
+        updatedItems: items,
+        actor: waiterName,
+        source: source,
+      );
       existing.items = items;
       if (totalAmount != null) {
         existing.totalAmount = totalAmount;
@@ -649,6 +667,60 @@ class OrderRepository {
     }
   }
 
+  /// The item audit for a Manager upsert that lands on an Order that already
+  /// exists.
+  ///
+  /// A Manager upsert replaces the Order's whole item collection, so what the
+  /// operator actually did — added a line, cut a quantity, removed a line —
+  /// is only visible as the difference against what is stored. Without this,
+  /// a Manager edit changed the check and left nothing on the report, while
+  /// the same edit made at the POS wrote `ADD_ITEM` / `REDUCE_QTY` /
+  /// `DELETE_ITEM`.
+  ///
+  /// Diffed against storage, so a redelivered identical payload produces no
+  /// events at all — which is what makes at-least-once delivery safe here.
+  /// Reuses [AuditOrderDiffService], the same diff `ORDER_UPDATE` already
+  /// uses; there is deliberately no second implementation of these rules.
+  static Future<void> _auditManagerItemReplacement({
+    required Order order,
+    required List<OrderItem> updatedItems,
+    required String actor,
+    required AuditSource source,
+  }) async {
+    final events = AuditOrderDiffService.buildEvents(
+      previousItems: order.items,
+      updatedItems: updatedItems,
+      performerId: actor,
+      performerName: actor,
+      timestamp: BusinessDayRepository.getCurrentDateTime(),
+    );
+    if (events.isEmpty) return;
+    try {
+      await AuditRepository.appendOrderAuditEvents(
+        orderId: order.orderId,
+        events: [
+          for (final event in events)
+            event.copyWith(
+              details: <String, dynamic>{
+                ...?event.details,
+                AuditSource.detailsKey: source.wireValue,
+                'actorId': actor,
+                'actorName': actor,
+              },
+            ),
+        ],
+      );
+    } on StateError catch (e) {
+      // A closed Order's report is locked. The Order itself is not rolled
+      // back over an event that cannot be filed.
+      if (!e.toString().toLowerCase().contains('locked')) rethrow;
+      debugPrint(
+        '[Audit] Report for order ${order.orderId} is locked; '
+        'Manager item changes not recorded',
+      );
+    }
+  }
+
   // Get order by ID
   static Order? getOrder(int orderId) {
     try {
@@ -827,6 +899,8 @@ class OrderRepository {
         AuditEventService.logEvent(
           action: 'ORDER_HARD_DELETED',
           userId: deletedBy,
+          entityType: GlobalAuditEntity.order,
+          entityId: '$orderId',
           data: snapshot,
         ),
       );

@@ -1975,6 +1975,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                     nameEn: nameEnController.text,
                     nameKa: nameKaController.text,
                     sendToKitchen: sendToKitchen,
+                    actorId: widget.user.username,
                   );
                   if (!mounted) return;
                   Navigator.of(context).pop();
@@ -2081,6 +2082,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                     nameEn: nameEnController.text,
                     nameKa: nameKaController.text,
                     sendToKitchen: sendToKitchen,
+                    actorId: widget.user.username,
                   );
                   if (!mounted) return;
                   Navigator.of(context).pop();
@@ -2136,7 +2138,10 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     );
 
     if (confirmed == true) {
-      final success = await DatabaseService.deleteCategory(index);
+      final success = await DatabaseService.deleteCategory(
+        index,
+        actorId: widget.user.username,
+      );
       if (!mounted) return;
       if (success) {
         setState(() {});
@@ -2197,6 +2202,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                     slug: slugController.text,
                     nameEn: nameEnController.text,
                     nameKa: nameKaController.text,
+                    actorId: widget.user.username,
                   );
                   if (!mounted) return;
                   Navigator.of(context).pop();
@@ -2285,6 +2291,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                     slug: slugController.text,
                     nameEn: nameEnController.text,
                     nameKa: nameKaController.text,
+                    actorId: widget.user.username,
                   );
                   if (!mounted) return;
                   Navigator.of(context).pop();
@@ -2349,6 +2356,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       final success = await DatabaseService.deleteSubcategory(
         categoryIndex: categoryIndex,
         subcategoryIndex: subcategoryIndex,
+        actorId: widget.user.username,
       );
       if (!mounted) return;
       if (success) {
@@ -2506,6 +2514,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                         ? variants
                         : null,
                     sendToKitchen: sendToKitchen,
+                    actorId: widget.user.username,
                   );
                   if (!mounted) return;
                   Navigator.of(context).pop();
@@ -2683,6 +2692,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                         ? variants
                         : null,
                     sendToKitchen: sendToKitchen,
+                    actorId: widget.user.username,
                   );
                   if (!mounted) return;
                   Navigator.of(context).pop();
@@ -2863,6 +2873,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                         ? variants
                         : null,
                     sendToKitchen: sendToKitchen,
+                    actorId: widget.user.username,
                   );
                   if (!mounted) return;
                   Navigator.of(context).pop();
@@ -2927,6 +2938,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
         categoryIndex: categoryIndex,
         subcategoryIndex: subcategoryIndex,
         itemIndex: itemIndex,
+        actorId: widget.user.username,
       );
       if (!mounted) return;
       if (success) {
@@ -3089,6 +3101,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                         ? variants
                         : null,
                     sendToKitchen: sendToKitchen,
+                    actorId: widget.user.username,
                   );
                   if (!mounted) return;
                   Navigator.of(context).pop();
@@ -3151,6 +3164,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       final success = await DatabaseService.deleteItemFromCategory(
         categoryIndex: categoryIndex,
         itemIndex: itemIndex,
+        actorId: widget.user.username,
       );
       if (!mounted) return;
       if (success) {

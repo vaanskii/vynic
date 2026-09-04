@@ -1,5 +1,7 @@
 import 'dart:developer' as developer;
 
+import 'package:uuid/uuid.dart';
+
 import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation.dart';
@@ -17,6 +19,8 @@ import 'package:vynic/core/services/audit/reservation_audit.dart';
 /// order when guests are seated), and day-open auto-activation.
 class ReservationRepository {
   ReservationRepository._();
+
+  static const Uuid _uuid = Uuid();
 
   /// Fetch a reservation by its business id (used by UI overlays and the
   /// table stale-lock analysis).
@@ -54,9 +58,14 @@ class ReservationRepository {
     // Cloud supplies the id for a reservation it originated, because a POS that
     // invents one turns an at-least-once redelivery into a second booking. A
     // reservation taken on this terminal still gets a local one.
+    //
+    // A uuid, not a clock reading: two bookings taken in the same millisecond
+    // used to be handed the same id, which silently made them one booking.
+    // Historical numeric ids stay exactly as they are — nothing parses an id,
+    // so old and new coexist.
     final reservationId = (id != null && id.trim().isNotEmpty)
         ? id.trim()
-        : DateTime.now().millisecondsSinceEpoch.toString();
+        : _uuid.v4();
 
     // Refs are canonical; the legacy int codes are kept in sync for backups
     // and the server wire format (unrepresentable tables are omitted there).
@@ -125,12 +134,20 @@ class ReservationRepository {
     return DatabaseCore.reservationBox!.values.toList();
   }
 
-  // Get a reservation by its key (ID)
+  /// A reservation by its business id.
+  ///
+  /// The id and the Hive key are different things — rows are appended, so keys
+  /// are auto-increment integers — and this resolves the id first. The numeric
+  /// key lookup is kept behind it for the callers that historically passed one;
+  /// a uuid id simply never matches that branch.
   static Reservation? getReservation(String reservationId) {
+    final byId = findReservationById(reservationId);
+    if (byId != null) return byId;
+    final key = int.tryParse(reservationId);
+    if (key == null) return null;
     try {
-      final key = int.parse(reservationId);
       return DatabaseCore.reservationBox!.get(key);
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }

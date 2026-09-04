@@ -748,7 +748,9 @@ class _AuditDetailDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final events = report.sortedEvents;
+    // Chronological, matching the POS: an Order's report is that Order's
+    // story, ordered by the sequence the POS assigned.
+    final events = report.orderedEvents;
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 24),
       backgroundColor: AdminTheme.surfaceElevated,
@@ -860,10 +862,8 @@ class _AuditDetailDialog extends StatelessWidget {
                         itemBuilder: (_, i) => _EventTile(
                           event: events[i],
                           // The event's own place in the timeline, shown
-                          // one-based. Derived from the list only when a
-                          // report predates POS-assigned sequences.
-                          seq: (events[i].sequence ?? (events.length - 1 - i)) +
-                              1,
+                          // one-based. The list is already in that order.
+                          seq: (events[i].sequence ?? i) + 1,
                         ),
                       ),
               ),

@@ -118,6 +118,22 @@ void main() {
     total: qty.toDouble(),
   );
 
+  /// The rows both Admin audit screens render, in their order and with the
+  /// number each prints beside them.
+  ///
+  /// This is the widgets' own expression: the list is `orderedEvents`
+  /// (sequence ascending) and the label is the event's own ordinal shown
+  /// one-based, with the list index standing in only for a report that
+  /// predates sequences — which `orderedEvents` has already numbered.
+  List<String> labelsOf(AuditReport report) {
+    final shown = report.orderedEvents;
+    return <String>[
+      for (var i = 0; i < shown.length; i++)
+        '${(shown[i].sequence ?? i) + 1}. '
+            '${auditEventTypeToString(shown[i].type)}',
+    ];
+  }
+
   AuditReport reportOf(int orderId) {
     final report = AuditRepository.getAuditReport(orderId);
     expect(report, isNotNull, reason: 'order $orderId has no audit report');
@@ -191,26 +207,82 @@ void main() {
       },
     );
 
-    test('the audit screens number the creation event as step 1', () async {
+    test('both audit screens read an Order as a chronological story', () async {
       await seedTable('15');
       final order = await OrderRepository.createOrder(
         tableNumbers: const ['15'],
         floor: 'first',
         createdBy: 'Nino',
-        items: [line('Khinkali', 3)],
+        items: [line('Khinkali', 3), line('Lobio', 1)],
+      );
+      await AuditRepository.appendOrderAuditEvents(
+        orderId: order.orderId,
+        events: [
+          AuditEvent(
+            type: AuditEventType.recordAdvance,
+            itemName: 'ORDER',
+            previousQty: 0,
+            newQty: 0,
+            waiterId: 'Nino',
+            waiterName: 'Nino',
+            timestamp: order.createdAt,
+          ),
+          AuditEvent(
+            type: AuditEventType.close,
+            itemName: 'ORDER',
+            previousQty: 0,
+            newQty: 0,
+            waiterId: 'Nino',
+            waiterName: 'Nino',
+            timestamp: order.createdAt,
+          ),
+        ],
       );
 
-      // Both audit screens list a report newest-first and label each row with
-      // the event's own ordinal, shown one-based. Numbering the rows instead
-      // counts the timeline backwards and prints the creation event last.
-      final shown = reportOf(order.orderId).sortedEvents;
-      String labelOf(int index) {
-        final ordinal = shown[index].sequence ?? (shown.length - 1 - index);
-        return '${ordinal + 1}. ${auditEventTypeToString(shown[index].type)}';
-      }
+      expect(labelsOf(reportOf(order.orderId)), [
+        '1. CREATE_WALKIN',
+        '2. ADD_ITEM',
+        '3. ADD_ITEM',
+        '4. RECORD_ADVANCE',
+        '5. CLOSE',
+      ]);
+    });
 
-      expect(labelOf(0), '2. ADD_ITEM');
-      expect(labelOf(shown.length - 1), '1. CREATE_WALKIN');
+    test('a report written before sequences existed reads the same way', () {
+      // No `sequence` on any event, and every one of them at the same instant
+      // — the shape history holds. `orderedEvents` numbers it from its stored
+      // array order, so the screens render it exactly like a new report.
+      const instant = '2026-09-05T18:00:00.000';
+      final legacy = AuditReport.fromMap(<String, dynamic>{
+        'reportId': AuditRepository.buildAuditReportKey(900),
+        'orderId': 900,
+        'tableNumbers': <String>['15'],
+        'floor': 'first',
+        'openedById': 'Nino',
+        'openedByName': 'Nino',
+        'openedAt': instant,
+        'status': 'CLOSED',
+        'updatedAt': instant,
+        'locked': true,
+        'events': <Map<String, dynamic>>[
+          for (final type in <String>['CREATE_WALKIN', 'ADD_ITEM', 'CLOSE'])
+            <String, dynamic>{
+              'type': type,
+              'itemName': 'ORDER',
+              'previousQty': 0,
+              'newQty': 0,
+              'waiterId': 'Nino',
+              'waiterName': 'Nino',
+              'timestamp': instant,
+            },
+        ],
+      });
+
+      expect(labelsOf(legacy), [
+        '1. CREATE_WALKIN',
+        '2. ADD_ITEM',
+        '3. CLOSE',
+      ]);
     });
 
     test('a settled report keeps one revision across reads', () async {

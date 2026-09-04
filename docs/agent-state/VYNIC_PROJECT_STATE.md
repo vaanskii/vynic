@@ -159,15 +159,57 @@ current transport status.
   `ACTIVATE_RESERVATION`; a delete writes the booking's last snapshot first.
   Legacy `reservation_cancelled` rows are read as `CANCEL_RESERVATION` and
   never written again.
+- Venue-wide accountability lives in the append-only `AuditEventLog`, which is
+  now readable. Every row carries `entityType`/`entityId`
+  (`STAFF`, `MENU_ITEM`, `MENU_CATEGORY`, `PACKAGE`, `EXPENSE`, `CLOSE_DAY`,
+  `BACKUP`, `RESERVATION`, `ORDER`, `SALE`, `BUSINESS_DATE`, `SETTINGS`,
+  `DEVELOPER`), written by `GlobalAudit` and additive in Hive, on the wire and
+  in Cloud. Rows written before those fields existed are never rewritten: both
+  the backend (`audit-log-entity.ts`) and the POS
+  (`global_audit_registry.dart`) derive the entity from the action name and the
+  row's own details at read time, and an action outside the registry stays
+  unclassified rather than being guessed at.
+- Audited venue-wide actions: `STAFF_CREATED` / `STAFF_UPDATED` /
+  `STAFF_ROLE_CHANGED` / `STAFF_PIN_CHANGED` / `STAFF_DELETED` (a PIN change
+  records only that it happened — never a PIN value), `MENU_ITEM_*` and
+  `MENU_CATEGORY_*` (a subcategory is a category node with
+  `details.nodeKind=SUBCATEGORY`; price, availability and kitchen routing come
+  through as `changes` field deltas, never a menu snapshot), `PACKAGE_CREATED` /
+  `PACKAGE_UPDATED` / `PACKAGE_DELETED` (definitions only — applying one to an
+  Order stays `APPLY_PACKAGE` on that Order's report), `EXPENSE_CREATED`,
+  `CLOSE_DAY_COMPLETED` / `CLOSE_DAY_BLOCKED`, and `BACKUP_RESTORED`. Each
+  writer is a no-op when nothing moved, and a redelivered Manager command
+  produces no second row. `BACKUP_RESTORED` is written after the payload is
+  applied, because `clearExisting` empties the box it lives in.
+- The Manager reads that feed at `GET /mobile/audit-log` (filters: date range,
+  action, `entityType`, `entityId`, actor; keyset pagination by
+  `createdAt desc, id desc`) with `GET /mobile/audit-log/facets` for the
+  actions a Venue has actually recorded. Both are Staff -> Venue scoped; an
+  entity filter also matches the actions that mean that entity, so history with
+  no `entityType` is still found. The POS reads the same rows locally in the
+  Admin "აქტივობა" section. A single Order's lifecycle is deliberately not in
+  this feed — it has its own report.
+- Both Admin audit screens render one Order's report chronologically: ordered
+  by `sequence` ascending and numbered `sequence + 1`, so the creation event
+  reads as step 1 and the close as the last step. The venue-wide feed stays
+  newest-first.
+- A Manager upsert that lands on an existing Order now diffs its items against
+  storage and writes the same `ADD_ITEM` / `REDUCE_QTY` / `DELETE_ITEM` events a
+  POS edit would, with `source=MANAGER`, through the one
+  `AuditOrderDiffService`. A redelivered identical payload writes nothing.
+- New Reservation ids are uuids. Two bookings taken in the same millisecond used
+  to collide on a clock-derived id. Cloud-supplied ids are still used verbatim
+  and historical numeric ids are untouched; nothing parses a reservation id.
 - Money mutations on an open Order are mirrored into its visible report:
   `RECORD_ADVANCE` (`previousAmount`, `newAmount`, `receiptId`,
   `collectedOn`), `ADJUST_ORDER` (`field` `manualAdjustment` or `serviceFee`,
   `previousValue`, `newValue`, totals). A Sale void appends `VOID_SALE`
   (`saleId`, `closureId`, `grossAmount`, `reason`) to the closed, locked
   report without changing its status or lock; it is not `CANCEL_TABLE`. The
-  write-only log rows (`ADVANCE_RECORDED`, `ORDER_MANUAL_ADJUSTMENT_CHANGED`,
-  `ORDER_SERVICE_FEE_CHANGED`, `SALE_CANCELLED`) are still written as
-  compatibility duplicates. Cancellation stores `approvedById` /
+  log rows (`ADVANCE_RECORDED`, `ORDER_MANUAL_ADJUSTMENT_CHANGED`,
+  `ORDER_SERVICE_FEE_CHANGED`, `SALE_CANCELLED`) are still written; they are no
+  longer write-only duplicates but the Order-entity content of the venue-wide
+  feed, which the per-Order report cannot serve. Cancellation stores `approvedById` /
   `approvedByName` beside the note.
 - Restore-to-order keeps the original close and Sale as history, marks closure
   A reversed, clears the Order closure identity, and emits `RESTORE` in the same
@@ -332,6 +374,12 @@ current transport status.
 - Both POS and backend print one `[SyncTiming]` line per sync, from monotonic
   timers, splitting trigger wait / build / encode / network / ingest / audit.
 
+- The Order statuses this system writes are `pending`, `confirmed`, `closed`
+  and `cancelled`. `preparing`, `served` and `paid` have no writer and are
+  read-only: they stay parseable because historical rows carry them and the
+  Cloud `ORDER_STATUS_UPDATE` command forwards whatever status string it is
+  given.
+
 ## Known Blockers
 
 - Website reservation availability has no transactional hold; simultaneous
@@ -358,8 +406,9 @@ current transport status.
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260905090000_audit_event_sequence_tenancy`.
+  `20260905140000_audit_event_log_entity`.
 - Immediately preceding state migrations:
+  `20260905090000_audit_event_sequence_tenancy`,
   `20260904120000_audit_closure_semantics`,
   `20260903140000_pos_reservation_mirror`, and
   `20260903120000_audit_report_sync_revision`.

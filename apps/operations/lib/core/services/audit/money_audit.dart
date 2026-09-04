@@ -6,6 +6,7 @@ import 'package:vynic/core/database/repositories/order_repository.dart';
 import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/services/audit/audit_event_service.dart';
+import 'package:vynic/core/services/audit/global_audit.dart';
 import 'package:vynic/core/services/audit/order_audit_details.dart';
 
 /// The action names written to the append-only audit log for money mutations.
@@ -57,6 +58,8 @@ class MoneyAudit {
     await AuditEventService.logEvent(
       action: MoneyAuditAction.orderDiscountChanged,
       userId: actorId,
+      entityType: GlobalAuditEntity.order,
+      entityId: '$orderId',
       data: {
         'orderId': orderId,
         'previousDiscount': previousDiscount,
@@ -81,6 +84,8 @@ class MoneyAudit {
     await AuditEventService.logEvent(
       action: MoneyAuditAction.orderManualAdjustmentChanged,
       userId: actorId,
+      entityType: GlobalAuditEntity.order,
+      entityId: '$orderId',
       data: {
         'orderId': orderId,
         'previousAdjustment': previousAdjustment,
@@ -128,6 +133,8 @@ class MoneyAudit {
     await AuditEventService.logEvent(
       action: MoneyAuditAction.orderServiceFeeChanged,
       userId: actorId,
+      entityType: GlobalAuditEntity.order,
+      entityId: '$orderId',
       data: {
         'orderId': orderId,
         'previousIncluded': previousIncluded,
@@ -260,6 +267,8 @@ class MoneyAudit {
     await AuditEventService.logEvent(
       action: MoneyAuditAction.saleCancelled,
       userId: actorId,
+      entityType: GlobalAuditEntity.sale,
+      entityId: saleId ?? closureId ?? orderId?.toString(),
       data: {
         'orderId': orderId,
         'businessDate': businessDate,
@@ -304,6 +313,8 @@ class MoneyAudit {
     await AuditEventService.logEvent(
       action: MoneyAuditAction.saleRestoredToOrder,
       userId: actorId,
+      entityType: GlobalAuditEntity.order,
+      entityId: orderId?.toString(),
       data: {
         'orderId': orderId,
         'businessDate': businessDate,
@@ -325,6 +336,8 @@ class MoneyAudit {
     await AuditEventService.logEvent(
       action: MoneyAuditAction.businessDateChanged,
       userId: actorId,
+      entityType: GlobalAuditEntity.businessDate,
+      entityId: newDate,
       data: {
         'previousDate': previousDate,
         'newDate': newDate,
@@ -350,6 +363,8 @@ class MoneyAudit {
     await AuditEventService.logEvent(
       action: MoneyAuditAction.receiptServiceFeePolicyChanged,
       userId: actorId,
+      entityType: GlobalAuditEntity.settings,
+      entityId: 'receiptServiceFeePolicy',
       data: {
         'previousReceiptLineVisible': previousReceiptLineVisible,
         'newReceiptLineVisible': newReceiptLineVisible,
@@ -377,6 +392,8 @@ class MoneyAudit {
     await AuditEventService.logEvent(
       action: MoneyAuditAction.advanceRecorded,
       userId: actorId,
+      entityType: GlobalAuditEntity.order,
+      entityId: '$orderId',
       data: {
         'orderId': orderId,
         'previousAmount': previousAmount,
@@ -416,6 +433,8 @@ class MoneyAudit {
     await AuditEventService.logEvent(
       action: MoneyAuditAction.closureRecovered,
       userId: actorId,
+      entityType: GlobalAuditEntity.sale,
+      entityId: closureId,
       data: {
         'closureId': closureId,
         'orderId': orderId,
@@ -450,6 +469,8 @@ class MoneyAudit {
     await AuditEventService.logEvent(
       action: MoneyAuditAction.reportCostAssumptionChanged,
       userId: actorId,
+      entityType: GlobalAuditEntity.settings,
+      entityId: field,
       data: {
         'field': field,
         'scope': scope,

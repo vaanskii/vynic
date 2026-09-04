@@ -74,9 +74,13 @@ export class MobileReportsService {
       closedById: r.closedById ?? null,
       closedByName: r.closedByName ?? null,
       locked: r.locked,
+      orderKind: r.orderKind ?? null,
       updatedAt: (r.updatedAt as Date).toISOString(),
       events: (r.events ?? []).map((ev: any) => ({
         type: normalizeAuditEventType(ev.type, ev.previousQty, ev.newQty),
+        // The POS's own ordinal. Sent so the Manager orders the timeline by
+        // the sequence the POS assigned rather than by a timestamp that ties.
+        sequence: ev.seq,
         itemName: ev.itemName,
         previousQty: ev.previousQty,
         newQty: ev.newQty,

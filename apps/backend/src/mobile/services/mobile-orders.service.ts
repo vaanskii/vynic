@@ -410,15 +410,22 @@ export class MobileOrdersService {
       });
     }
 
-    const existing = await prisma.auditEvent.findMany({
+    // Continue from the highest ordinal in use, not from the row count. `seq`
+    // is the POS's own sequence now, so counting rows would collide with it the
+    // moment a report's numbering is not a gapless 0..n-1.
+    const highest = await prisma.auditEvent.findFirst({
       where: { reportId: dbReport.id },
-      orderBy: { seq: 'asc' },
+      orderBy: { seq: 'desc' },
+      select: { seq: true },
     });
-    const startSeq = existing.length;
+    const startSeq = highest ? (highest.seq as number) + 1 : 0;
 
     await prisma.auditEvent.createMany({
       data: events.map((ev, seq) => ({
         reportId: dbReport.id,
+        // From the authenticated Staff's Venue, the same context the report
+        // above was resolved with. Never from the request body.
+        venueId: tenant.venueId,
         type: normalizeAuditEventType(ev.type, ev.previousQty, ev.newQty),
         itemName: ev.itemName,
         previousQty: ev.previousQty,

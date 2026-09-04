@@ -232,6 +232,45 @@ DateTime? parseAuditTimestamp(Object? raw) {
   return DateTime.tryParse(trimmed);
 }
 
+/// Puts a report's events into the one order the timeline actually has.
+///
+/// `sequence` is the authority. When every event carries one the list is
+/// merge-sorted by it and the stored numbers are kept, so reading a report
+/// twice produces byte-identical content and its sync revision can settle.
+///
+/// A report written before sequences existed has none. Its stored array is
+/// already the order the writer produced, so that array is the best available
+/// reconstruction: it is merge-sorted by timestamp (stable, so events that tie
+/// keep the order they were stored in) and numbered from zero in memory. The
+/// numbers are persisted the next time the report is legitimately written or
+/// pushed; nothing rewrites history eagerly.
+///
+/// What this cannot recover: a legacy report whose tied events were *already*
+/// permuted by the unstable timestamp sort this replaces. Their stored order is
+/// now the only evidence of their order, so it is preserved as found rather
+/// than guessed at.
+List<AuditEvent> orderReportEvents(List<AuditEvent> events) {
+  if (events.isEmpty) return const <AuditEvent>[];
+
+  final ordered = List<AuditEvent>.of(events);
+  if (ordered.every((event) => event.sequence != null)) {
+    mergeSort<AuditEvent>(
+      ordered,
+      compare: (a, b) => a.sequence!.compareTo(b.sequence!),
+    );
+    return List<AuditEvent>.unmodifiable(ordered);
+  }
+
+  mergeSort<AuditEvent>(
+    ordered,
+    compare: (a, b) => a.timestamp.compareTo(b.timestamp),
+  );
+  return List<AuditEvent>.unmodifiable([
+    for (var i = 0; i < ordered.length; i++)
+      ordered[i].copyWith(sequence: i),
+  ]);
+}
+
 class AuditEvent {
   const AuditEvent({
     required this.type,
@@ -243,6 +282,7 @@ class AuditEvent {
     required this.timestamp,
     this.note,
     this.details,
+    this.sequence,
   });
 
   final AuditEventType type;
@@ -255,6 +295,20 @@ class AuditEvent {
   final String? note;
   final Map<String, dynamic>? details;
 
+  /// This event's place in its report's timeline, assigned once when the event
+  /// is appended and never recomputed.
+  ///
+  /// [timestamp] cannot carry the order. A creation event and the initial
+  /// `ADD_ITEM` rows that follow it are written at the same instant on
+  /// purpose, so ordering by time leaves them tied — and resolving a tie by
+  /// sorting is not an ordering at all, it is whatever the sort happens to do.
+  ///
+  /// Null means "not placed in a report yet": an event a caller has just
+  /// constructed, or one decoded from a row written before sequences existed.
+  /// [AuditReport.fromMap] resolves the second case in memory, so every event
+  /// reachable through a report carries one.
+  final int? sequence;
+
   AuditEvent copyWith({
     AuditEventType? type,
     String? itemName,
@@ -265,6 +319,7 @@ class AuditEvent {
     DateTime? timestamp,
     String? note,
     Map<String, dynamic>? details,
+    int? sequence,
   }) {
     return AuditEvent(
       type: type ?? this.type,
@@ -276,6 +331,7 @@ class AuditEvent {
       timestamp: timestamp ?? this.timestamp,
       note: note ?? this.note,
       details: details ?? this.details,
+      sequence: sequence ?? this.sequence,
     );
   }
 
@@ -288,6 +344,7 @@ class AuditEvent {
       'waiterId': waiterId,
       'waiterName': waiterName,
       'timestamp': timestamp.toIso8601String(),
+      if (sequence != null) 'sequence': sequence,
       if (note != null && note!.isNotEmpty) 'note': note,
       if (details != null && details!.isNotEmpty) 'details': details,
     };
@@ -318,6 +375,7 @@ class AuditEvent {
     final details = map['details'] is Map
         ? Map<String, dynamic>.from(map['details'] as Map)
         : null;
+    final storedSequence = (map['sequence'] as num?)?.toInt();
 
     return AuditEvent(
       type: type,
@@ -329,6 +387,11 @@ class AuditEvent {
       timestamp: timestamp,
       note: note?.isEmpty == true ? null : note,
       details: details,
+      // A negative value is not an ordinal; treat it as absent so the report
+      // falls back to the legacy reconstruction rather than trusting it.
+      sequence: (storedSequence != null && storedSequence >= 0)
+          ? storedSequence
+          : null,
     );
   }
 }
@@ -400,9 +463,16 @@ class AuditReport {
     );
   }
 
-  List<AuditEvent> get sortedEvents {
-    return events.sorted((a, b) => b.timestamp.compareTo(a.timestamp));
-  }
+  /// The timeline in report order: oldest first, `sequence` ascending.
+  List<AuditEvent> get orderedEvents => orderReportEvents(events);
+
+  /// The timeline newest first, for the audit screens.
+  ///
+  /// This is the canonical order reversed, not an independent sort. Sorting
+  /// descending by timestamp is what let two events written in the same
+  /// instant swap places on screen.
+  List<AuditEvent> get sortedEvents =>
+      orderedEvents.reversed.toList(growable: false);
 
   Map<String, dynamic> toMap() {
     return {
@@ -462,13 +532,16 @@ class AuditReport {
         closedAt ??
         unknownAuditTimestamp;
 
-    final events = <AuditEvent>[
+    // Decode in stored order, then let `sequence` decide the timeline.
+    // Sorting by timestamp here is what allowed a creation event and the
+    // initial lines written at the same instant to change places.
+    final events = orderReportEvents(<AuditEvent>[
       for (var i = 0; i < rawEvents.length; i++)
         AuditEvent.fromMap(
           rawEvents[i].cast<String, dynamic>(),
           fallbackTimestamp: anchor,
         ),
-    ]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    ]);
 
     final openedAt = storedOpenedAt ?? anchor;
     final updatedAt =

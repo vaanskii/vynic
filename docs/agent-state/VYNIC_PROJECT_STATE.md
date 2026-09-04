@@ -127,8 +127,8 @@ current transport status.
   `details`), `ACTIVATE_RESERVATION` for a seated genuine booking
   (`reservationId`, `customerName`; `source=SYSTEM` at day-open), followed by
   `APPLY_PACKAGE` (package fields and lines) for a Package Order. Initial
-  `ADD_ITEM` rows follow the creation event at the same instant; report event
-  merging is a stable sort. Moving items between open Orders writes
+  `ADD_ITEM` rows follow the creation event at the same instant and are ordered
+  by the report's `sequence`, not by that instant. Moving items between open Orders writes
   `MOVE_ITEMS` on both reports (`direction`, `fromOrderId`, `toOrderId`,
   quantities still set so older readers degrade to add/remove). An Order
   emptied by transfer closes its report with a locked `TRANSFER_CLOSE`
@@ -232,6 +232,30 @@ current transport status.
   longer make a synchronous LAN call to the POS.
 - Audit reports sync incrementally in batches using content revisions and
   acknowledgments. Legacy `fullSync` remains accepted for older POS builds.
+- The order of a report's events is a zero-based `sequence` the POS assigns
+  when it appends them, not a sort of `timestamp` — a creation event and the
+  initial `ADD_ITEM` rows share one instant deliberately. Events are appended
+  at the next free sequence and never re-sorted, so a backdated clock, a
+  reopen, or a re-close extends the timeline instead of rewriting it.
+  `sequence` is serialized in Hive, carried on the wire, and included in the
+  revision hash; it survives backup/restore because the backup stores the
+  report row verbatim. Backend ingestion writes it straight into
+  `AuditEvent.seq` when every event in a report carries one, and falls back to
+  array position for an older POS build. `AuditReport.fromMap` numbers a
+  report written before sequences existed from its stored array order (stable
+  by timestamp), deterministically, so its revision still settles; the numbers
+  reach the wire immediately and reach Hive on the report's next write.
+  Historical rows are not rewritten eagerly.
+- Cloud `AuditEvent` carries a denormalized `venueId`, copied from the parent
+  report — that is, from the authenticated Device or Staff — and never from the
+  payload. It is not a relation: the report's own foreign key is the tenant
+  authority. `AuditReport.orderKind` (`WALK_IN`, `TAKEAWAY`, `PACKAGE`,
+  `RESERVATION`) is derived at ingestion from the report's own creation event
+  and is null when no creation event proves one; `floor` is never used as
+  evidence. Both are query metadata; the events remain the semantics.
+- `AuditReport` still has no foreign key to `Order`, deliberately: Close Day
+  deletes the operational Order row and the report, its events and their
+  sequences have to outlive it.
 - Audit report deserialization resolves missing times from the record itself,
   never from the clock, and reports are listed once per id. Both are required
   for a revision to settle; without them a report is dirty on every sync.
@@ -334,11 +358,11 @@ current transport status.
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260904120000_audit_closure_semantics`.
+  `20260905090000_audit_event_sequence_tenancy`.
 - Immediately preceding state migrations:
-  `20260903140000_pos_reservation_mirror`,
-  `20260903120000_audit_report_sync_revision`, and
-  `20260903090000_device_enrollment`.
+  `20260904120000_audit_closure_semantics`,
+  `20260903140000_pos_reservation_mirror`, and
+  `20260903120000_audit_report_sync_revision`.
 - Flutter Hive database target version: `6` in
   `apps/operations/lib/core/database/hive_migration_service.dart`.
 - A migration file in the repository does not prove deployment to any database.

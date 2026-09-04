@@ -244,13 +244,24 @@ model AuditReport {
   /// send one — both are treated as "revision unknown", which makes the next
   /// push rewrite the row rather than skip it.
   syncRevision String?
+  /// What kind of Order this report describes: `WALK_IN`, `TAKEAWAY`,
+  /// `PACKAGE` or `RESERVATION`, derived at ingestion from the report's own
+  /// creation event. Query metadata only — the events remain the semantics.
+  /// Null for a report opened before creation events existed, where nothing
+  /// durable says what kind of Order it was; `floor` is a display string a
+  /// floor-plan edit can change, so it is not used as evidence.
+  orderKind    String?
   updatedAt    DateTime     @updatedAt
   events       AuditEvent[]
   venue        Venue        @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
   @@unique([venueId, reportId])
   @@index([venueId])
-  @@index([posOrderId])
+  /// `posOrderId` only identifies an Order inside a Venue, so the lookup that
+  /// matters — this Venue's report for this POS order — is the composite one.
+  /// It is deliberately not a foreign key to `Order`: Close Day removes the
+  /// operational row and the audit has to outlive it.
+  @@index([venueId, posOrderId])
   @@index([status])
   @@schema("pos")
 }
@@ -258,19 +269,37 @@ model AuditReport {
 model AuditEvent {
   id          String      @id @default(uuid())
   reportId    String
+  /// The owning Venue, copied from `report.venueId` at ingestion — which took
+  /// it from the authenticated Device or Staff, never from the payload.
+  ///
+  /// Denormalized on purpose and deliberately not a relation: tenancy is
+  /// already enforced by the report's own foreign key, and a second constraint
+  /// on the hot ingest path would be checked once per event for no added
+  /// authority. It exists so an event-level query can be Venue-scoped and
+  /// indexed without a join. Null on rows written before this column existed.
+  venueId     String?
   type        String
   itemName    String
   previousQty Int
   newQty      Int
   waiterId    String
   waiterName  String
+  /// When the event happened. Temporal metadata, not the ordering key: a
+  /// creation event and the lines written with it share one instant.
   eventTime   DateTime
   note        String?
   details     Json?
+  /// The report-scoped ordinal the POS assigned when it appended this event.
+  /// This is the timeline's order. Zero-based, and only positional for a POS
+  /// build that predates POS-owned sequences.
   seq         Int         @default(0)
   report      AuditReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
-  @@index([reportId])
+  /// The timeline read: one report's events in order. Also serves lookups by
+  /// `reportId` alone, so no separate single-column index is kept.
+  @@index([reportId, seq])
+  /// Cross-order event queries inside one Venue ("every CLOSE this month").
+  @@index([venueId, type, eventTime])
   @@schema("pos")
 }
 

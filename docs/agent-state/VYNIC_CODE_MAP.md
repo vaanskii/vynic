@@ -49,9 +49,13 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## Audit Sync
 
+- POS event order/sequence: `apps/operations/lib/core/models/audit_report.dart`
+  (`orderReportEvents`), `apps/operations/lib/core/database/repositories/audit_repository.dart`
+  (`_appendedInSequence`), proof in `apps/operations/test/unit/audit_event_sequence_test.dart`
 - POS revisions/ack state: `apps/operations/lib/core/services/sync/audit_sync_state.dart`
 - POS upload orchestration: `apps/operations/lib/core/services/sync/manager_sync_service.dart`
 - Backend ingestion: `apps/backend/src/pos/sync/application/ingest-audit-reports.service.ts`
+- Report Order-kind derivation: `apps/backend/src/pos/audit/audit-order-kind.ts`
 - Integration proof: `apps/backend/src/pos/sync/application/audit-incremental-sync.integration.spec.ts`
 - Contract notes: `docs/AUDIT_SYNC.md`
 - Event/action/status taxonomy audit: `docs/AUDIT_TAXONOMY_AUDIT.md`

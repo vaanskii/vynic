@@ -2,9 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
 
-import 'package:collection/collection.dart' show mergeSort;
-
-import 'package:flutter/foundation.dart' hide mergeSort;
+import 'package:flutter/foundation.dart';
 import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/order.dart';
 
@@ -32,6 +30,35 @@ class AuditRepository {
 
   static String buildAuditReportKey(int orderId) =>
       '$_auditReportKeyPrefix$orderId';
+
+  /// [existing] followed by [appended], with every appended event numbered
+  /// from the next free sequence.
+  ///
+  /// A report's timeline only grows at the end: a `RESTORE` after a `CLOSE`,
+  /// a re-close after that, a `VOID_SALE` on a locked report. Numbering from
+  /// the highest sequence in use rather than from the list length means a
+  /// report that was reopened, appended to and written back keeps climbing
+  /// instead of reusing a number.
+  ///
+  /// [existing] is renumbered only when it is not numbered at all, which is
+  /// the legacy case [AuditReport.fromMap] has usually already resolved.
+  static List<AuditEvent> _appendedInSequence(
+    List<AuditEvent> existing,
+    List<AuditEvent> appended,
+  ) {
+    final base = existing.every((event) => event.sequence != null)
+        ? existing
+        : orderReportEvents(existing);
+    var next = 0;
+    for (final event in base) {
+      final sequence = event.sequence;
+      if (sequence != null && sequence >= next) next = sequence + 1;
+    }
+    return <AuditEvent>[
+      ...base,
+      for (final event in appended) event.copyWith(sequence: next++),
+    ];
+  }
 
   static AuditReport? _parseAuditReport(dynamic raw) {
     if (raw is AuditReport) {
@@ -366,10 +393,13 @@ class AuditRepository {
         continue;
       }
 
-      events.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      // Derived rows have no stored sequence of their own, so they are given
+      // one here: stable by timestamp, then numbered, exactly as a legacy
+      // report is reconstructed.
+      final orderedEvents = orderReportEvents(events);
 
-      final firstEvent = events.first;
-      final lastEvent = events.last;
+      final firstEvent = orderedEvents.first;
+      final lastEvent = orderedEvents.last;
 
       final referenceDetails = logs.lastWhere(
         (log) => log['details'] is Map,
@@ -396,7 +426,7 @@ class AuditRepository {
           openedByName: firstEvent.waiterName,
           openedAt: firstEvent.timestamp,
           status: status,
-          events: List<AuditEvent>.unmodifiable(events),
+          events: orderedEvents,
           updatedAt: lastEvent.timestamp,
           closedAt: isCancelled ? lastEvent.timestamp : null,
           closedById: isCancelled ? lastEvent.waiterId : null,
@@ -533,15 +563,12 @@ class AuditRepository {
       throw StateError('Audit report for order $orderId is locked');
     }
 
-    // Stable: a creation event and its first ADD_ITEM rows share one
-    // timestamp, and the order they were appended in is the order that
-    // happened.
-    final mergedEvents = <AuditEvent>[...report.events, ...events];
-    mergeSort<AuditEvent>(
-      mergedEvents,
-      compare: (a, b) => a.timestamp.compareTo(b.timestamp),
+    // Appended, not merged. A creation event and its first ADD_ITEM rows share
+    // one timestamp on purpose, so the order they arrive in is the only record
+    // of the order they happened in — re-sorting by time would discard it.
+    final updatedEvents = List<AuditEvent>.unmodifiable(
+      _appendedInSequence(report.events, events),
     );
-    final updatedEvents = List<AuditEvent>.unmodifiable(mergedEvents);
     final updatedAt = BusinessDayRepository.getCurrentDateTime();
 
     final updatedReport = report.copyWith(
@@ -690,10 +717,9 @@ class AuditRepository {
       return false;
     });
 
-    final events = <AuditEvent>[
-      ...report.events,
+    final events = _appendedInSequence(report.events, [
       if (!alreadyRecorded) restoreEvent,
-    ]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    ]);
     final updatedAt = BusinessDayRepository.getCurrentDateTime();
     final reopened = AuditReport(
       reportId: report.reportId,

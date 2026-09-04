@@ -419,6 +419,10 @@ class AuditRepository {
         return AuditEventType.close;
       case 'internal_close':
         return AuditEventType.internalClose;
+      case 'restore_table':
+      case 'reopen_table':
+      case 'sale_restored_to_order':
+        return AuditEventType.restore;
       case 'cancel_table':
         return AuditEventType.cancelTable;
       case 'custom':
@@ -534,6 +538,68 @@ class AuditRepository {
     _onAuditChanged?.call();
   }
 
+  /// Reopens a completed order's report and records the restore in the same
+  /// lifecycle that holds its original close.
+  ///
+  /// A report is locked when an order closes, so the normal append path cannot
+  /// represent `CLOSE -> RESTORE -> CLOSE`. Restore is the one operation that
+  /// deliberately unlocks it. The original close event is retained, and the
+  /// restore event is de-duplicated by original closure/sale identity so a
+  /// repeated repository call cannot manufacture a second reversal.
+  static Future<void> reopenOrderAuditReport({
+    required int orderId,
+    required AuditEvent restoreEvent,
+  }) async {
+    if (restoreEvent.type != AuditEventType.restore) {
+      throw ArgumentError.value(
+        restoreEvent.type,
+        'restoreEvent.type',
+        'must be AuditEventType.restore',
+      );
+    }
+
+    final orderSnapshot = OrderRepository.getOrder(orderId);
+    final report = await ensureAuditReport(
+      orderId: orderId,
+      orderSnapshot: orderSnapshot,
+    );
+    final closureId = restoreEvent.details?['originalClosureId']?.toString();
+    final saleId = restoreEvent.details?['originalSaleId']?.toString();
+    final alreadyRecorded = report.events.any((event) {
+      if (event.type != AuditEventType.restore) return false;
+      final details = event.details;
+      if (closureId != null && closureId.isNotEmpty) {
+        return details?['originalClosureId']?.toString() == closureId;
+      }
+      if (saleId != null && saleId.isNotEmpty) {
+        return details?['originalSaleId']?.toString() == saleId;
+      }
+      return false;
+    });
+
+    final events = <AuditEvent>[
+      ...report.events,
+      if (!alreadyRecorded) restoreEvent,
+    ]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    final updatedAt = BusinessDayRepository.getCurrentDateTime();
+    final reopened = AuditReport(
+      reportId: report.reportId,
+      orderId: report.orderId,
+      tableNumbers: report.tableNumbers,
+      floor: report.floor,
+      openedById: report.openedById,
+      openedByName: report.openedByName,
+      openedAt: report.openedAt,
+      status: AuditReportStatus.open,
+      events: List<AuditEvent>.unmodifiable(events),
+      updatedAt: updatedAt,
+      locked: false,
+    );
+
+    await DatabaseCore.auditLogBox!.put(reopened.reportId, reopened.toMap());
+    _onAuditChanged?.call();
+  }
+
   static String _legacyActionForEvent(AuditEventType type) {
     switch (type) {
       case AuditEventType.addItem:
@@ -546,6 +612,8 @@ class AuditRepository {
         return 'close_table';
       case AuditEventType.internalClose:
         return 'internal_close';
+      case AuditEventType.restore:
+        return 'restore_table';
       case AuditEventType.cancelTable:
         return 'cancel_table';
       case AuditEventType.custom:

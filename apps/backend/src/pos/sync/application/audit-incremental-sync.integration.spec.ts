@@ -209,16 +209,53 @@ describeDatabase('Incremental audit sync (PostgreSQL)', () => {
             collectedNow: 100,
           },
         },
+        {
+          type: 'RESTORE',
+          itemName: 'ORDER',
+          previousQty: 0,
+          newQty: 0,
+          waiterId: 'staff-1',
+          waiterName: 'Nino',
+          timestamp: '2026-09-01T18:10:00.000Z',
+          details: {
+            originalClosureId: 'closure-42',
+            originalSaleId: '17',
+            restoredGrossAmount: 100,
+            originalIsFiscal: true,
+          },
+        },
+        {
+          type: 'CLOSE',
+          itemName: 'ORDER',
+          previousQty: 0,
+          newQty: 0,
+          waiterId: 'staff-1',
+          waiterName: 'Nino',
+          timestamp: '2026-09-01T18:15:00.000Z',
+          details: {
+            closureId: 'closure-43',
+            grossAmount: 100,
+            cardAmount: 100,
+            collectedNow: 100,
+          },
+        },
       ],
     };
 
     await ingest.ingestReports({ reports: [closure] }, tenantA);
 
-    const event = await prisma.auditEvent.findFirstOrThrow({
+    const events = await prisma.auditEvent.findMany({
       where: { report: { venueId: venueAId, reportId: closure.reportId } },
+      orderBy: { seq: 'asc' },
     });
-    expect(event.type).toBe('CLOSE');
-    expect(event.details).toEqual(closure.events[0].details);
+    expect(events.map((event) => event.type)).toEqual([
+      'CLOSE',
+      'RESTORE',
+      'CLOSE',
+    ]);
+    expect(events[0].details).toEqual(closure.events[0].details);
+    expect(events[1].details).toEqual(closure.events[1].details);
+    expect(events[2].details).toEqual(closure.events[2].details);
   });
 
   it('keeps the same reportId in two Venues as two separate reports', async () => {

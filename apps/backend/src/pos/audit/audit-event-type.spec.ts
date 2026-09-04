@@ -7,6 +7,9 @@ describe('normalizeAuditEventType', () => {
     ['INTERNAL_CLOSE', 'INTERNAL_CLOSE'],
     ['non fiscal close', 'INTERNAL_CLOSE'],
     ['NONFISCAL_CLOSE', 'INTERNAL_CLOSE'],
+    ['RESTORE', 'RESTORE'],
+    ['reopened', 'RESTORE'],
+    ['SALE_RESTORED_TO_ORDER', 'RESTORE'],
     ['CANCEL_TABLE', 'CANCEL_TABLE'],
   ])(
     'normalizes %s without conflating closure and cancellation',

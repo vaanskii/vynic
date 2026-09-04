@@ -709,6 +709,8 @@ class _AuditReportCard extends StatelessWidget {
         return 'ფისკალური დახურვა';
       case AuditEventType.internalClose:
         return 'არაფისკალური დახურვა';
+      case AuditEventType.restore:
+        return 'შეკვეთის აღდგენა';
       case AuditEventType.cancelTable:
         return 'გაუქმება';
       case AuditEventType.custom:
@@ -903,6 +905,8 @@ class _EventTile extends StatelessWidget {
         return const Color(0xFF16A34A);
       case AuditEventType.internalClose:
         return const Color(0xFF475569);
+      case AuditEventType.restore:
+        return const Color(0xFFD97706);
       case AuditEventType.cancelTable:
         return const Color(0xFFB91C1C);
       case AuditEventType.custom:
@@ -922,6 +926,8 @@ class _EventTile extends StatelessWidget {
         return Icons.point_of_sale_outlined;
       case AuditEventType.internalClose:
         return Icons.do_not_disturb_on_outlined;
+      case AuditEventType.restore:
+        return Icons.settings_backup_restore;
       case AuditEventType.cancelTable:
         return Icons.block;
       case AuditEventType.custom:
@@ -941,6 +947,8 @@ class _EventTile extends StatelessWidget {
         return 'ფისკალური დახურვა';
       case AuditEventType.internalClose:
         return 'არაფისკალური დახურვა';
+      case AuditEventType.restore:
+        return 'შეკვეთის აღდგენა';
       case AuditEventType.cancelTable:
         return 'მაგიდის გაუქმება';
       case AuditEventType.custom:

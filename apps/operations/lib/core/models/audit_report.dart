@@ -8,6 +8,7 @@ enum AuditEventType {
   deleteItem,
   close,
   internalClose,
+  restore,
   cancelTable,
   custom,
 }
@@ -48,6 +49,12 @@ AuditEventType auditEventTypeFromString(String? raw) {
     case 'NON_FISCAL_CLOSE':
     case 'NONFISCAL_CLOSE':
       return AuditEventType.internalClose;
+    case 'RESTORE':
+    case 'RESTORED':
+    case 'REOPEN':
+    case 'REOPENED':
+    case 'SALE_RESTORED_TO_ORDER':
+      return AuditEventType.restore;
     case 'CANCEL_TABLE':
     case 'CANCELTABLE':
       return AuditEventType.cancelTable;
@@ -70,6 +77,12 @@ AuditEventType auditEventTypeFromString(String? raw) {
     case 'non_fiscal_close':
     case 'non-fiscal_close':
       return AuditEventType.internalClose;
+    case 'restore':
+    case 'restored':
+    case 'reopen':
+    case 'reopened':
+    case 'sale_restored_to_order':
+      return AuditEventType.restore;
     case 'cancel_table':
       return AuditEventType.cancelTable;
     default:
@@ -102,6 +115,8 @@ String auditEventTypeToString(AuditEventType type) {
       return 'CLOSE';
     case AuditEventType.internalClose:
       return 'INTERNAL_CLOSE';
+    case AuditEventType.restore:
+      return 'RESTORE';
     case AuditEventType.cancelTable:
       return 'CANCEL_TABLE';
     case AuditEventType.custom:

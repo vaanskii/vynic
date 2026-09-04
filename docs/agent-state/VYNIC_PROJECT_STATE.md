@@ -95,6 +95,17 @@ current transport status.
   closes emit `INTERNAL_CLOSE`; `CANCEL_TABLE` remains cancellation-only. Close
   events carry structured closure identity and money details locally and in the
   Cloud audit mirror.
+- Restore-to-order keeps the original close and Sale as history, marks closure
+  A reversed, clears the Order closure identity, and emits `RESTORE` in the same
+  unlocked audit report; re-close creates closure B and appends a new `CLOSE`.
+  The restored Sale retains its tender detail but is excluded by the existing
+  revenue predicate. A consumed advance is put back on the open Order and is
+  applied to closure B only.
+- Restoring a table Order occupies its tables locally again. Takeaway restore
+  has no physical-table dependency, Package fields remain on the existing
+  Order, and a genuine linked Reservation moves from completed back to
+  in-progress without changing its identity or Order link, then completes on
+  re-close.
 - Internal/non-fiscal close preserves operational gross and advance identity
   while recording `paymentMethod=non-fiscal`, zero cash/card, and
   `collectedNow=0`; the transaction boundary normalizes legacy caller input so

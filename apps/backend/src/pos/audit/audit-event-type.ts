@@ -5,6 +5,7 @@ export type CanonicalAuditEventType =
   | 'DELETE_ITEM'
   | 'CLOSE'
   | 'INTERNAL_CLOSE'
+  | 'RESTORE'
   | 'CANCEL_TABLE'
   | 'CUSTOM';
 
@@ -41,6 +42,15 @@ export function normalizeAuditEventType(
     u === 'NONFISCAL_CLOSE'
   ) {
     return 'INTERNAL_CLOSE';
+  }
+  if (
+    u === 'RESTORE' ||
+    u === 'RESTORED' ||
+    u === 'REOPEN' ||
+    u === 'REOPENED' ||
+    u === 'SALE_RESTORED_TO_ORDER'
+  ) {
+    return 'RESTORE';
   }
   if (u === 'CANCEL_TABLE' || l === 'cancel_table') return 'CANCEL_TABLE';
 

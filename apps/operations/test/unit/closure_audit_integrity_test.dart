@@ -25,7 +25,8 @@ import 'package:vynic/core/services/pos/closure_recovery_service.dart';
 /// These tests intentionally state the correct domain contract. They are not
 /// changed to bless known-bad current behaviour. In particular, a successful
 /// close must never be represented by the cancellation-only `CANCEL_TABLE`
-/// event, and recovery/restore must leave a complete lifecycle trail.
+/// event, and restore must leave a complete lifecycle trail. The separate
+/// post-Sale crash-recovery characterization remains skipped by design.
 void main() {
   late Directory tempDir;
 
@@ -544,7 +545,7 @@ void main() {
   test(
     'internal close records no collection and is not a cancellation',
     () async {
-      final order = await seedOrder(orderId: 400);
+      final order = await seedOrder(orderId: 400, tableNumber: '1');
       await seedOccupiedTable(order);
 
       // This is the current production caller contract. The assertions below
@@ -607,6 +608,34 @@ void main() {
       expect(SalesRepository.countsAsRevenue(sale), isFalse);
       expect(BusinessDayRepository.grossSalesTotalForDate(businessDate), 0);
       expect(BusinessDayRepository.collectedTotalForDate(businessDate), 0);
+
+      expect(
+        await SalesRepository.restoreClosedOrderFromSale(
+          recordKey: sale['recordKey'],
+          restoredBy: 'manager',
+        ),
+        isTrue,
+      );
+      final restoredSale = saleFor(order.orderId);
+      expect(restoredSale['restoredToOrder'], isTrue);
+      expect(restoredSale['isFiscal'], isFalse);
+      expect(restoredSale['collectedNow'], 0);
+      expect(restoredSale['paymentBreakdown'], isEmpty);
+      expect(SalesRepository.countsAsRevenue(restoredSale), isFalse);
+      expect(BusinessDayRepository.grossSalesTotalForDate(businessDate), 0);
+      expect(BusinessDayRepository.collectedTotalForDate(businessDate), 0);
+      expect(
+        AuditRepository.getAuditReport(
+          order.orderId,
+        )!.events.map((event) => event.type),
+        [AuditEventType.internalClose, AuditEventType.restore],
+      );
+      expect(
+        AuditRepository.getAuditReport(
+          order.orderId,
+        )!.events.last.details?['originalIsFiscal'],
+        isFalse,
+      );
       expect(violations, isEmpty);
     },
   );
@@ -620,11 +649,11 @@ void main() {
         tableNumber: '1',
       );
       await seedOccupiedTable(order);
-      final receiptId = await SalesRepository.recordAdvanceReceipt(
+      final receiptId = (await SalesRepository.recordAdvanceReceipt(
         orderId: order.orderId,
         amount: 20,
         collectedBy: 'manager',
-      );
+      ))!;
       order.advanceReceiptId = receiptId;
       await order.save();
 
@@ -665,6 +694,56 @@ void main() {
       if (eventsAfterRestore <= 1) {
         violations.add('restore did not append a restore/reopen event');
       }
+      expect(reportAfterRestore.events.map((event) => event.type), [
+        AuditEventType.close,
+        AuditEventType.restore,
+      ]);
+      final restoreEvent = reportAfterRestore.events.last;
+      expect(
+        restoreEvent.details,
+        containsPair('originalClosureId', first.closureId),
+      );
+      expect(
+        restoreEvent.details,
+        containsPair('originalSaleId', firstSale['recordKey'].toString()),
+      );
+      expect(restoreEvent.details, containsPair('actorId', 'manager'));
+      expect(restoreEvent.details, containsPair('businessDate', businessDate));
+      expect(restoreEvent.details, containsPair('tableNumbers', ['1']));
+      expect(restoreEvent.details, containsPair('tableRefs', ['first/1']));
+      expect(restoreEvent.details, containsPair('restoredGrossAmount', 100.0));
+      expect(restoreEvent.details, containsPair('originalIsFiscal', isTrue));
+      expect(restoreEvent.details, containsPair('advanceAmount', 20.0));
+
+      final reversedAt = ClosureJournalRepository.find(
+        first.closureId!,
+      )!.reversedAt;
+      final restoredAt = saleFor(order.orderId)['restoredAt'];
+      final repeatedRestore = await SalesRepository.restoreClosedOrderFromSale(
+        recordKey: firstSale['recordKey'],
+        restoredBy: 'manager',
+      );
+      expect(repeatedRestore, isFalse);
+      expect(
+        AuditRepository.getAuditReport(order.orderId)!.events,
+        hasLength(eventsAfterRestore),
+      );
+      expect(
+        ClosureJournalRepository.find(first.closureId!)!.reversedAt,
+        reversedAt,
+      );
+      expect(saleFor(order.orderId)['restoredAt'], restoredAt);
+      expect(
+        SalesRepository.getSalesForDate(
+          businessDate,
+        ).where((sale) => sale['recordType'] == 'sale'),
+        hasLength(1),
+      );
+      expect(
+        SalesRepository.findAdvanceReceipt(receiptId)?['appliedToClosureId'],
+        isNull,
+      );
+      expect(DatabaseCore.tableBox!.values.single.activeOrderId, order.orderId);
 
       final second = await CloseTableTransaction.run(
         orderId: reopened.orderId,
@@ -697,11 +776,256 @@ void main() {
       )) {
         violations.add('close/re-close lifecycle contains cancellation');
       }
+      expect(finalReport.events.map((event) => event.type), [
+        AuditEventType.close,
+        AuditEventType.restore,
+        AuditEventType.close,
+      ]);
+      expect(finalReport.events.first.details?['closureId'], first.closureId);
+      expect(finalReport.events.last.details?['closureId'], second.closureId);
+      expect(
+        SalesRepository.findAdvanceReceipt(receiptId)?['appliedToClosureId'],
+        second.closureId,
+      );
+      final sales = SalesRepository.getSalesForDate(
+        businessDate,
+      ).where((sale) => sale['recordType'] == 'sale').toList();
+      expect(sales, hasLength(2));
+      final originalSale = sales.firstWhere(
+        (sale) => sale['closureId'] == first.closureId,
+      );
+      final replacementSale = sales.firstWhere(
+        (sale) => sale['closureId'] == second.closureId,
+      );
+      expect(originalSale['restoredToOrder'], isTrue);
+      expect(originalSale['paymentBreakdown'], {'cash': 80.0, 'advance': 20.0});
+      expect(replacementSale['restoredToOrder'], isFalse);
+      expect(sales.where(SalesRepository.countsAsRevenue), hasLength(1));
+      expect(DatabaseCore.tableBox!.values.single.isReserved, isFalse);
       expect(violations, isEmpty);
     },
-    skip:
-        'Known next task: restore/re-close audit lifecycle is intentionally '
-        'outside this production fix.',
+  );
+
+  test('cash card and split each preserve CLOSE RESTORE CLOSE', () async {
+    final scenarios = <({String method, Map<String, double> tender})>[
+      (method: 'cash', tender: const {'cash': 100}),
+      (method: 'card-bog', tender: const {'card-bog': 100}),
+      (method: 'split', tender: const {'cash': 35, 'card-tbc': 65}),
+    ];
+
+    for (var index = 0; index < scenarios.length; index++) {
+      final scenario = scenarios[index];
+      final order = await seedOrder(orderId: 510 + index, tableNumber: '1');
+      await seedOccupiedTable(order);
+
+      final first = await CloseTableTransaction.run(
+        orderId: order.orderId,
+        money: ClosureMoney.fromOrder(order, collectedNow: 100),
+        paymentMethod: scenario.method,
+        tenderBreakdown: scenario.tender,
+        closedById: 'manager',
+        isFiscal: true,
+      );
+      final firstSale = saleFor(order.orderId);
+      expect(
+        await SalesRepository.restoreClosedOrderFromSale(
+          recordKey: firstSale['recordKey'],
+          restoredBy: 'manager',
+        ),
+        isTrue,
+      );
+      final reopened = OrderRepository.getOrder(order.orderId)!;
+      final second = await CloseTableTransaction.run(
+        orderId: order.orderId,
+        money: ClosureMoney.fromOrder(reopened, collectedNow: 100),
+        paymentMethod: scenario.method,
+        tenderBreakdown: scenario.tender,
+        closedById: 'manager',
+        isFiscal: true,
+      );
+
+      expect(second.closureId, isNot(first.closureId));
+      expect(
+        AuditRepository.getAuditReport(
+          order.orderId,
+        )!.events.map((event) => event.type),
+        [AuditEventType.close, AuditEventType.restore, AuditEventType.close],
+        reason: scenario.method,
+      );
+      final orderSales = SalesRepository.getSalesForDate(businessDate)
+          .where(
+            (sale) =>
+                sale['recordType'] == 'sale' &&
+                sale['orderId'] == order.orderId,
+          )
+          .toList();
+      expect(orderSales, hasLength(2), reason: scenario.method);
+      expect(
+        orderSales.firstWhere(
+          (sale) => sale['closureId'] == first.closureId,
+        )['paymentBreakdown'],
+        scenario.tender,
+        reason: scenario.method,
+      );
+      expect(
+        orderSales.where(SalesRepository.countsAsRevenue),
+        hasLength(1),
+        reason: scenario.method,
+      );
+    }
+  });
+
+  test('takeaway restores and recloses without a table dependency', () async {
+    final order = await seedOrder(orderId: 520, floor: 'takeaway');
+    final first = await CloseTableTransaction.run(
+      orderId: order.orderId,
+      money: ClosureMoney.fromOrder(order, collectedNow: 100),
+      paymentMethod: 'cash',
+      tenderBreakdown: const {'cash': 100},
+      closedById: 'manager',
+      isFiscal: true,
+    );
+    final firstSale = saleFor(order.orderId);
+
+    expect(
+      await SalesRepository.restoreClosedOrderFromSale(
+        recordKey: firstSale['recordKey'],
+        restoredBy: 'manager',
+      ),
+      isTrue,
+    );
+    expect(DatabaseCore.tableBox!.values, isEmpty);
+    final reopened = OrderRepository.getOrder(order.orderId)!;
+    expect(reopened.status, 'confirmed');
+    final second = await CloseTableTransaction.run(
+      orderId: order.orderId,
+      money: ClosureMoney.fromOrder(reopened, collectedNow: 100),
+      paymentMethod: 'card-tbc',
+      tenderBreakdown: const {'card-tbc': 100},
+      closedById: 'manager',
+      isFiscal: true,
+    );
+
+    expect(second.closureId, isNot(first.closureId));
+    expect(
+      AuditRepository.getAuditReport(
+        order.orderId,
+      )!.events.map((event) => event.type),
+      [AuditEventType.close, AuditEventType.restore, AuditEventType.close],
+    );
+  });
+
+  test('package data survives restore and the next closure', () async {
+    final order = await seedOrder(
+      orderId: 530,
+      tableNumber: '1',
+      package: true,
+    );
+    await seedOccupiedTable(order);
+    await CloseTableTransaction.run(
+      orderId: order.orderId,
+      money: ClosureMoney.fromOrder(order, collectedNow: 100),
+      paymentMethod: 'cash',
+      tenderBreakdown: const {'cash': 100},
+      closedById: 'manager',
+      isFiscal: true,
+    );
+    final firstSale = saleFor(order.orderId);
+
+    expect(
+      await SalesRepository.restoreClosedOrderFromSale(
+        recordKey: firstSale['recordKey'],
+        restoredBy: 'manager',
+      ),
+      isTrue,
+    );
+    final reopened = OrderRepository.getOrder(order.orderId)!;
+    expect(reopened.packageId, 'package-530');
+    expect(reopened.packageName, 'Package 530');
+    expect(reopened.packageGuestCount, 10);
+    expect(reopened.packageUnitPrice, 10);
+    expect(reopened.packagePrice, 100);
+    expect(reopened.packageItems.single.itemName, 'Package item 530');
+
+    await CloseTableTransaction.run(
+      orderId: order.orderId,
+      money: ClosureMoney.fromOrder(reopened, collectedNow: 100),
+      paymentMethod: 'cash',
+      tenderBreakdown: const {'cash': 100},
+      closedById: 'manager',
+      isFiscal: true,
+    );
+    final sales = SalesRepository.getSalesForDate(
+      businessDate,
+    ).where((sale) => sale['orderId'] == order.orderId).toList();
+    expect(sales, hasLength(2));
+    final activeSale = sales.singleWhere(SalesRepository.countsAsRevenue);
+    expect(
+      (activeSale['items'] as List).single['itemName'],
+      'Package item 530',
+    );
+    expect(sales.where(SalesRepository.countsAsRevenue), hasLength(1));
+  });
+
+  test(
+    'genuine Reservation returns to IN_PROGRESS and completes again',
+    () async {
+      final order = await seedOrder(orderId: 540, tableNumber: '1');
+      final reservation = Reservation(
+        id: 'reservation-540',
+        customerName: 'Guest',
+        customerPhone: '+995555000000',
+        tableNumbers: const [1],
+        tableRefs: const ['first/1'],
+        reservationDate: DateTime.parse('${businessDate}T00:00:00'),
+        reservationTime: '12:00',
+        numberOfGuests: 2,
+        createdAt: DateTime.parse('${businessDate}T10:00:00'),
+        createdBy: 'manager',
+        status: ReservationStatus.inProgress.storageValue,
+        linkedOrderId: order.orderId,
+      );
+      await DatabaseCore.reservationBox!.add(reservation);
+      await seedOccupiedTable(order, reservationId: reservation.id);
+      await CloseTableTransaction.run(
+        orderId: order.orderId,
+        money: ClosureMoney.fromOrder(order, collectedNow: 100),
+        paymentMethod: 'cash',
+        tenderBreakdown: const {'cash': 100},
+        closedById: 'manager',
+        isFiscal: true,
+      );
+      expect(reservation.statusEnum, ReservationStatus.completed);
+      final firstSale = saleFor(order.orderId);
+
+      expect(
+        await SalesRepository.restoreClosedOrderFromSale(
+          recordKey: firstSale['recordKey'],
+          restoredBy: 'manager',
+        ),
+        isTrue,
+      );
+      expect(DatabaseCore.reservationBox!.values, hasLength(1));
+      expect(reservation.statusEnum, ReservationStatus.inProgress);
+      expect(reservation.linkedOrderId, order.orderId);
+      final table = DatabaseCore.tableBox!.values.single;
+      expect(table.activeOrderId, order.orderId);
+      expect(table.reservationId, reservation.id);
+
+      final reopened = OrderRepository.getOrder(order.orderId)!;
+      await CloseTableTransaction.run(
+        orderId: order.orderId,
+        money: ClosureMoney.fromOrder(reopened, collectedNow: 100),
+        paymentMethod: 'cash',
+        tenderBreakdown: const {'cash': 100},
+        closedById: 'manager',
+        isFiscal: true,
+      );
+      expect(reservation.statusEnum, ReservationStatus.completed);
+      expect(reservation.linkedOrderId, order.orderId);
+      expect(DatabaseCore.reservationBox!.values, hasLength(1));
+      expect(table.isReserved, isFalse);
+    },
   );
 
   test(
@@ -821,10 +1145,16 @@ void main() {
       auditEventTypeToString(AuditEventType.internalClose),
       'INTERNAL_CLOSE',
     );
+    expect(auditEventTypeToString(AuditEventType.restore), 'RESTORE');
     expect(auditEventTypeFromString('CLOSED'), AuditEventType.close);
     expect(
       auditEventTypeFromString('NON_FISCAL_CLOSE'),
       AuditEventType.internalClose,
+    );
+    expect(auditEventTypeFromString('REOPENED'), AuditEventType.restore);
+    expect(
+      auditEventTypeFromString('SALE_RESTORED_TO_ORDER'),
+      AuditEventType.restore,
     );
 
     final restored = AuditEvent.fromMap(event.toMap());

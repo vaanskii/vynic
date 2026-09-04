@@ -1,15 +1,20 @@
 import 'dart:developer' as developer;
 
 import 'package:uuid/uuid.dart';
+import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/order_status.dart';
+import 'package:vynic/core/models/reservation_classification.dart';
+import 'package:vynic/core/models/reservation_status.dart';
 import 'package:vynic/core/models/sale_record.dart';
+import 'package:vynic/core/models/takeaway_order.dart';
 
 import 'package:vynic/core/services/audit/money_audit.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'business_day_repository.dart';
 import 'closure_journal_repository.dart';
 import '../database_core.dart';
+import 'audit_repository.dart';
 import 'order_repository.dart';
 import 'settings_repository.dart';
 import 'table_repository.dart';
@@ -623,14 +628,33 @@ class SalesRepository {
         return false;
       }
 
+      Order? order = OrderRepository.getOrder(orderId);
+
       final saleFloor = (sale['floor'] as String?)?.trim().isNotEmpty == true
           ? (sale['floor'] as String).trim()
           : 'first';
+      final normalizedSaleFloor = saleFloor.toLowerCase();
+      final isTakeaway = order != null
+          ? isTakeawayOrder(order)
+          : normalizedSaleFloor == 'take-away' ||
+                normalizedSaleFloor.contains('takeaway') ||
+                normalizedSaleFloor.contains('take away') ||
+                ((sale['tableNumbers'] as List?) ?? const []).any(
+                  (table) =>
+                      table.toString().trim().toUpperCase().startsWith('TA-'),
+                );
 
       final saleTableNumbers = <String>[];
       final seenSaleTables = <String>{};
       final rawTables = (sale['tableNumbers'] as List?) ?? const [];
       for (final raw in rawTables) {
+        if (isTakeaway) {
+          final tableNumber = raw.toString().trim();
+          if (tableNumber.isNotEmpty && seenSaleTables.add(tableNumber)) {
+            saleTableNumbers.add(tableNumber);
+          }
+          continue;
+        }
         final normalized = TableRepository.normalizeTableIdentifier(
           raw.toString(),
           saleFloor,
@@ -648,11 +672,10 @@ class SalesRepository {
           saleTableNumbers.add(normalized);
         }
       }
-      if (saleTableNumbers.isEmpty) {
+      if (!isTakeaway && saleTableNumbers.isEmpty) {
         return false;
       }
 
-      Order? order = OrderRepository.getOrder(orderId);
       final targetFloor = order?.floor ?? saleFloor;
       final targetTables = order?.tableNumbers.isNotEmpty == true
           ? List<String>.from(order!.tableNumbers)
@@ -666,20 +689,31 @@ class SalesRepository {
         }
       }
 
-      for (final tableNumber in targetTables) {
-        final table = TableRepository.getTable(tableNumber, targetFloor);
-        if (table == null) {
-          continue;
-        }
+      if (!isTakeaway) {
+        for (final tableNumber in targetTables) {
+          final table = TableRepository.getTable(tableNumber, targetFloor);
+          if (table == null) {
+            continue;
+          }
 
-        final occupiedByAnotherOrder =
-            table.isReserved &&
-            table.activeOrderId != null &&
-            table.activeOrderId != orderId;
-        if (occupiedByAnotherOrder) {
-          return false;
+          final occupiedByAnotherOrder =
+              table.isReserved &&
+              table.activeOrderId != null &&
+              table.activeOrderId != orderId;
+          if (occupiedByAnotherOrder) {
+            return false;
+          }
         }
       }
+
+      final linkedReservations = DatabaseCore.reservationBox!.values.where(
+        (reservation) =>
+            reservation.linkedOrderId == orderId &&
+            ReservationClassification.isRealAdvanceBooking(reservation),
+      );
+      final linkedReservation = linkedReservations.isEmpty
+          ? null
+          : linkedReservations.first;
 
       final restoreTimestamp = BusinessDayRepository.getCurrentDateTime();
 
@@ -765,18 +799,21 @@ class SalesRepository {
         }
       }
 
-      for (final tableNumber in targetTables) {
-        final table = TableRepository.getTable(tableNumber, targetFloor);
-        if (table == null) {
-          continue;
-        }
+      if (!isTakeaway) {
+        for (final tableNumber in targetTables) {
+          final table = TableRepository.getTable(tableNumber, targetFloor);
+          if (table == null) {
+            continue;
+          }
 
-        await TableRepository.reserveTable(
-          tableNumber: tableNumber,
-          floor: targetFloor,
-          username: restoredBy,
-          orderId: orderId,
-        );
+          await TableRepository.reserveTable(
+            tableNumber: tableNumber,
+            floor: targetFloor,
+            username: restoredBy,
+            orderId: orderId,
+            reservationId: linkedReservation?.id,
+          );
+        }
       }
 
       order.statusEnum = OrderStatus.confirmed;
@@ -789,6 +826,22 @@ class SalesRepository {
       // it would make the next close look like a retry of the reversed one.
       order.closureId = null;
       await order.save();
+
+      if (linkedReservation != null &&
+          linkedReservation.statusEnum == ReservationStatus.completed) {
+        linkedReservation.statusEnum = ReservationStatus.inProgress;
+        await linkedReservation.save();
+        SyncHub.notify(
+          SyncEvent(
+            type: SyncEventType.reservations,
+            action: 'restored',
+            payload: {
+              'reservationId': linkedReservation.id,
+              'orderId': orderId,
+            },
+          ),
+        );
+      }
 
       SyncHub.notify(
         SyncEvent(
@@ -817,11 +870,47 @@ class SalesRepository {
         BusinessDayRepository.getCurrentDate(),
       );
 
+      final restoredGross =
+          (sale['grossSaleAmount'] as num?)?.toDouble() ??
+          (sale['totalAmount'] as num?)?.toDouble() ??
+          0.0;
+      final restoreEvent = AuditEvent(
+        type: AuditEventType.restore,
+        itemName: 'ORDER',
+        previousQty: 0,
+        newQty: 0,
+        waiterId: restoredBy,
+        waiterName: restoredBy,
+        timestamp: restoreTimestamp,
+        note: 'Order restored and reopened',
+        details: <String, dynamic>{
+          'orderId': orderId,
+          if (closureId != null && closureId.isNotEmpty)
+            'originalClosureId': closureId,
+          'originalSaleId': recordKey.toString(),
+          'actorId': restoredBy,
+          'actorName': restoredBy,
+          'businessDate': saleDate,
+          'tableNumbers': List<String>.from(targetTables),
+          'tableRefs': targetTables
+              .map((tableNumber) => '$targetFloor/$tableNumber')
+              .toList(growable: false),
+          'floor': targetFloor,
+          'restoredGrossAmount': restoredGross,
+          'originalIsFiscal': sale['isFiscal'] != false,
+          'advanceAmount': restoredAdvance,
+        },
+      );
+      await AuditRepository.reopenOrderAuditReport(
+        orderId: orderId,
+        restoreEvent: restoreEvent,
+      );
+
       await MoneyAudit.saleRestoredToOrder(
         actorId: restoredBy,
         orderId: orderId,
         businessDate: saleDate,
-        totalAmount: (sale['totalAmount'] as num?)?.toDouble() ?? 0.0,
+        totalAmount: restoredGross,
       );
       return true;
     } catch (e) {

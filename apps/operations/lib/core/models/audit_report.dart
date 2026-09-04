@@ -2,7 +2,15 @@ import 'package:collection/collection.dart';
 
 enum AuditReportStatus { open, closed, cancelled }
 
-enum AuditEventType { addItem, reduceQty, deleteItem, cancelTable, custom }
+enum AuditEventType {
+  addItem,
+  reduceQty,
+  deleteItem,
+  close,
+  internalClose,
+  cancelTable,
+  custom,
+}
 
 AuditReportStatus _statusFromString(String? raw) {
   switch (raw) {
@@ -33,6 +41,13 @@ AuditEventType auditEventTypeFromString(String? raw) {
     case 'REMOVE_ITEM':
     case 'REMOVEITEM':
       return AuditEventType.deleteItem;
+    case 'CLOSE':
+    case 'CLOSED':
+      return AuditEventType.close;
+    case 'INTERNAL_CLOSE':
+    case 'NON_FISCAL_CLOSE':
+    case 'NONFISCAL_CLOSE':
+      return AuditEventType.internalClose;
     case 'CANCEL_TABLE':
     case 'CANCELTABLE':
       return AuditEventType.cancelTable;
@@ -48,6 +63,13 @@ AuditEventType auditEventTypeFromString(String? raw) {
     case 'remove_item':
     case 'delete_item':
       return AuditEventType.deleteItem;
+    case 'close':
+    case 'closed':
+      return AuditEventType.close;
+    case 'internal_close':
+    case 'non_fiscal_close':
+    case 'non-fiscal_close':
+      return AuditEventType.internalClose;
     case 'cancel_table':
       return AuditEventType.cancelTable;
     default:
@@ -76,6 +98,10 @@ String auditEventTypeToString(AuditEventType type) {
       return 'REDUCE_QTY';
     case AuditEventType.deleteItem:
       return 'DELETE_ITEM';
+    case AuditEventType.close:
+      return 'CLOSE';
+    case AuditEventType.internalClose:
+      return 'INTERNAL_CLOSE';
     case AuditEventType.cancelTable:
       return 'CANCEL_TABLE';
     case AuditEventType.custom:
@@ -115,6 +141,7 @@ class AuditEvent {
     required this.waiterName,
     required this.timestamp,
     this.note,
+    this.details,
   });
 
   final AuditEventType type;
@@ -125,6 +152,7 @@ class AuditEvent {
   final String waiterName;
   final DateTime timestamp;
   final String? note;
+  final Map<String, dynamic>? details;
 
   AuditEvent copyWith({
     AuditEventType? type,
@@ -135,6 +163,7 @@ class AuditEvent {
     String? waiterName,
     DateTime? timestamp,
     String? note,
+    Map<String, dynamic>? details,
   }) {
     return AuditEvent(
       type: type ?? this.type,
@@ -145,6 +174,7 @@ class AuditEvent {
       waiterName: waiterName ?? this.waiterName,
       timestamp: timestamp ?? this.timestamp,
       note: note ?? this.note,
+      details: details ?? this.details,
     );
   }
 
@@ -158,6 +188,7 @@ class AuditEvent {
       'waiterName': waiterName,
       'timestamp': timestamp.toIso8601String(),
       if (note != null && note!.isNotEmpty) 'note': note,
+      if (details != null && details!.isNotEmpty) 'details': details,
     };
   }
 
@@ -183,6 +214,9 @@ class AuditEvent {
         fallbackTimestamp ??
         unknownAuditTimestamp;
     final note = (map['note'] as String?)?.trim();
+    final details = map['details'] is Map
+        ? Map<String, dynamic>.from(map['details'] as Map)
+        : null;
 
     return AuditEvent(
       type: type,
@@ -193,6 +227,7 @@ class AuditEvent {
       waiterName: waiterName,
       timestamp: timestamp,
       note: note?.isEmpty == true ? null : note,
+      details: details,
     );
   }
 }

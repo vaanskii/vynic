@@ -7,6 +7,7 @@ import 'package:vynic/core/models/order_status.dart';
 import 'package:vynic/core/models/reservation_classification.dart';
 import 'package:vynic/core/models/reservation_status.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
+import 'package:vynic/core/utils/payment_utils.dart';
 
 import '../database_core.dart';
 import '../repositories/audit_repository.dart';
@@ -88,10 +89,11 @@ class CloseTableTransaction {
 
   /// Closes [orderId], or reports that it is already closed.
   ///
-  /// [money] must reconcile: gross equals advance plus balance due, and the
-  /// tender settles the balance. A closure that does not reconcile writes
-  /// nothing at all — the guest was charged one number and a different one
-  /// would have been booked.
+  /// [money] must reconcile: gross equals advance plus balance due, and a
+  /// fiscal tender settles the balance. An internal close preserves gross and
+  /// advance but normalizes current collection to zero. A fiscal closure that
+  /// does not reconcile writes nothing at all — the guest was charged one
+  /// number and a different one would have been booked.
   static Future<ClosureResult> run({
     required int orderId,
     required ClosureMoney money,
@@ -134,7 +136,38 @@ class CloseTableTransaction {
       return const ClosureResult(outcome: ClosureOutcome.orderNotFound);
     }
 
-    final mismatch = money.describeMismatch();
+    // Internal closure preserves the order's operational value while making
+    // no claim that money changed hands. Normalize at this authoritative
+    // boundary so an older caller that still supplies an automatic cash
+    // selection cannot persist false collection metadata.
+    final effectiveMoney = isFiscal
+        ? money
+        : ClosureMoney(
+            gross: money.gross,
+            advanceApplied: money.advanceApplied,
+            collectedNow: 0,
+          );
+    final effectivePaymentMethod = isFiscal
+        ? paymentMethod
+        : PaymentUtils.methodNonFiscal;
+    final effectiveTenderBreakdown = isFiscal
+        ? tenderBreakdown
+        : const <String, double>{};
+    final effectiveFinalTransaction = isFiscal
+        ? finalTransaction
+        : <String, dynamic>{
+            ...?finalTransaction,
+            'isFiscal': false,
+            'paymentMethod': PaymentUtils.methodNonFiscal,
+            'paymentBreakdown': const <String, double>{},
+            'cashAmount': 0.0,
+            'cardAmount': 0.0,
+            'collectedNow': 0.0,
+          };
+
+    final mismatch = effectiveMoney.describeMismatch(
+      requireCurrentCollection: isFiscal,
+    );
     if (mismatch != null) {
       developer.log(
         'Closure refused for order #$orderId: $mismatch',
@@ -156,12 +189,12 @@ class CloseTableTransaction {
         customPaymentLabel: customPaymentLabel,
         saleItems: saleItems ?? _defaultSaleItems(order),
         subtotalAmount: subtotalAmount,
-        finalTransaction: finalTransaction,
+        finalTransaction: effectiveFinalTransaction,
       );
       return ClosureResult(
         outcome: resumed ? ClosureOutcome.resumed : ClosureOutcome.failed,
         closureId: existing.closureId,
-        money: money,
+        money: effectiveMoney,
       );
     }
 
@@ -183,11 +216,13 @@ class CloseTableTransaction {
       phase: ClosurePhase.started,
       businessDate: businessDate,
       isFiscal: isFiscal,
-      grossSaleAmount: money.gross,
-      advanceApplied: money.advanceApplied,
-      collectedNow: money.collectedNow,
-      paymentMethod: paymentMethod,
-      paymentBreakdown: money.breakdownWithAdvance(tenderBreakdown),
+      grossSaleAmount: effectiveMoney.gross,
+      advanceApplied: effectiveMoney.advanceApplied,
+      collectedNow: effectiveMoney.collectedNow,
+      paymentMethod: effectivePaymentMethod,
+      paymentBreakdown: effectiveMoney.breakdownWithAdvance(
+        effectiveTenderBreakdown,
+      ),
       actorId: closedById,
       startedAt: DateTime.now(),
       advanceReceiptId: order.advanceReceiptId,
@@ -202,13 +237,13 @@ class CloseTableTransaction {
       customPaymentLabel: customPaymentLabel,
       saleItems: saleItems ?? _defaultSaleItems(order),
       subtotalAmount: subtotalAmount,
-      finalTransaction: finalTransaction,
+      finalTransaction: effectiveFinalTransaction,
     );
 
     return ClosureResult(
       outcome: done ? ClosureOutcome.closed : ClosureOutcome.failed,
       closureId: closureId,
-      money: money,
+      money: effectiveMoney,
     );
   }
 
@@ -314,7 +349,9 @@ class CloseTableTransaction {
       // ── 6. The audit trail. Appending to a locked report throws; that is
       // the second attempt finding the first one's work, not a failure.
       final closingEvent = AuditEvent(
-        type: AuditEventType.cancelTable,
+        type: current.isFiscal
+            ? AuditEventType.close
+            : AuditEventType.internalClose,
         itemName: 'ORDER',
         previousQty: 0,
         newQty: 0,
@@ -326,6 +363,12 @@ class CloseTableTransaction {
           paymentMethod: current.paymentMethod,
           customPaymentLabel: customPaymentLabel,
           money: current,
+        ),
+        details: _closureDetails(
+          order: order,
+          money: current,
+          actorName: closedByName ?? closedById,
+          customPaymentLabel: customPaymentLabel,
         ),
       );
       try {
@@ -387,6 +430,50 @@ class CloseTableTransaction {
     return '$base • gross ${money.grossSaleAmount.toStringAsFixed(2)}, '
         'advance ${money.advanceApplied.toStringAsFixed(2)}, '
         'collected ${money.collectedNow.toStringAsFixed(2)}';
+  }
+
+  static Map<String, dynamic> _closureDetails({
+    required Order order,
+    required ClosureJournalEntry money,
+    required String actorName,
+    String? customPaymentLabel,
+  }) {
+    final cashAmount = money.isFiscal
+        ? (money.paymentBreakdown[PaymentUtils.methodCash] ?? 0.0)
+        : 0.0;
+    final cardAmount = money.isFiscal
+        ? money.paymentBreakdown.entries
+              .where((entry) => entry.key.startsWith('card'))
+              .fold<double>(0, (sum, entry) => sum + entry.value)
+        : 0.0;
+
+    return <String, dynamic>{
+      'orderId': order.orderId,
+      'tableNumbers': List<String>.from(order.tableNumbers),
+      'tableRefs': order.tableNumbers
+          .map((tableNumber) => '${order.floor}/$tableNumber')
+          .toList(growable: false),
+      'floor': order.floor,
+      'actorId': money.actorId,
+      'actorName': actorName,
+      'businessDate': money.businessDate,
+      'closureId': money.closureId,
+      'isFiscal': money.isFiscal,
+      'grossAmount': money.grossSaleAmount,
+      'paymentMethod': money.isFiscal
+          ? money.paymentMethod
+          : PaymentUtils.methodNonFiscal,
+      'paymentBreakdown': Map<String, double>.from(money.paymentBreakdown),
+      'cashAmount': cashAmount,
+      'cardAmount': cardAmount,
+      'advanceApplied': money.advanceApplied,
+      'collectedNow': money.collectedNow,
+      'serviceFee': order.getServiceFee(),
+      'discountAmount': order.discountAmount,
+      'manualAdjustmentAmount': order.manualAdjustmentAmount,
+      if (customPaymentLabel != null && customPaymentLabel.isNotEmpty)
+        'customPaymentLabel': customPaymentLabel,
+    };
   }
 
   static Future<void> _completeLinkedReservation(int orderId) async {

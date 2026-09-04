@@ -636,6 +636,10 @@ void main() {
         today,
       ).firstWhere((s) => s['orderId'] == 2);
       expect(internalSale['isFiscal'], isFalse);
+      expect(internalSale['paymentMethod'], 'non-fiscal');
+      expect(internalSale['grossSaleAmount'], 300);
+      expect(internalSale['collectedNow'], 0);
+      expect(internalSale['paymentBreakdown'], isEmpty);
       expect(SalesRepository.countsAsRevenue(internalSale), isFalse);
     });
 
@@ -662,6 +666,47 @@ void main() {
       expect(second.outcome, ClosureOutcome.alreadyClosed);
       expect(closedSales(today), hasLength(1));
     });
+
+    test(
+      'remains operationally restorable with zero collection metadata',
+      () async {
+        final internal = await seedOrder(orderId: 3, itemTotal: 300);
+        final table = TableModel(tableNumber: '1', floor: 'first')
+          ..reserve('waiter', internal.orderId);
+        await DatabaseCore.tableBox!.put('first-1', table);
+
+        final result = await CloseTableTransaction.run(
+          orderId: internal.orderId,
+          money: ClosureMoney.fromOrder(internal, collectedNow: 300),
+          paymentMethod: 'cash',
+          tenderBreakdown: const {'cash': 300},
+          closedById: 'manager',
+          isFiscal: false,
+        );
+        final sale = closedSales(today).single;
+
+        final restored = await SalesRepository.restoreClosedOrderFromSale(
+          recordKey: sale['recordKey'],
+          restoredBy: 'manager',
+        );
+
+        expect(restored, isTrue);
+        expect(sale['grossSaleAmount'], 300);
+        expect(sale['collectedNow'], 0);
+        expect(sale['paymentBreakdown'], isEmpty);
+        expect(
+          ClosureJournalRepository.find(result.closureId!)!.isReversed,
+          isTrue,
+        );
+        final reopened = DatabaseCore.orderBox!.get(internal.orderId)!;
+        expect(reopened.status, 'confirmed');
+        expect(reopened.closureId, isNull);
+        expect(
+          DatabaseCore.tableBox!.values.single.activeOrderId,
+          internal.orderId,
+        );
+      },
+    );
   });
 
   group('void', () {
@@ -818,7 +863,7 @@ void main() {
         isFiscal: true,
       );
 
-      // An internal closure — money moved, but not into revenue.
+      // An internal closure preserves operational gross, but moves no money.
       final c = await seedOrder(orderId: 3, itemTotal: 300);
       await CloseTableTransaction.run(
         orderId: 3,

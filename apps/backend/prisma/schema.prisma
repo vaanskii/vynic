@@ -266,6 +266,7 @@ model AuditEvent {
   waiterName  String
   eventTime   DateTime
   note        String?
+  details     Json?
   seq         Int         @default(0)
   report      AuditReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
 

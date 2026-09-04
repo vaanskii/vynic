@@ -987,6 +987,10 @@ class AdminAuditLogSection extends StatelessWidget {
         return Icons.remove_circle_outline;
       case AuditEventType.deleteItem:
         return Icons.delete_outline;
+      case AuditEventType.close:
+        return Icons.point_of_sale_outlined;
+      case AuditEventType.internalClose:
+        return Icons.do_not_disturb_on_outlined;
       case AuditEventType.cancelTable:
         return Icons.block;
       case AuditEventType.custom:
@@ -1002,6 +1006,10 @@ class AdminAuditLogSection extends StatelessWidget {
         return AdminTones.warningText;
       case AuditEventType.deleteItem:
         return AdminDesign.danger;
+      case AuditEventType.close:
+        return AdminTones.successText;
+      case AuditEventType.internalClose:
+        return AdminDesign.muted;
       case AuditEventType.cancelTable:
         return AdminDesign.danger;
       case AuditEventType.custom:
@@ -1017,8 +1025,12 @@ class AdminAuditLogSection extends StatelessWidget {
         return 'რაოდენობის შემცირება';
       case AuditEventType.deleteItem:
         return 'პოზიციის წაშლა';
+      case AuditEventType.close:
+        return 'ფისკალური დახურვა';
+      case AuditEventType.internalClose:
+        return 'არაფისკალური დახურვა';
       case AuditEventType.cancelTable:
-        return 'მაგიდის დახურვა';
+        return 'მაგიდის გაუქმება';
       case AuditEventType.custom:
         return 'ჩანაწერი';
     }

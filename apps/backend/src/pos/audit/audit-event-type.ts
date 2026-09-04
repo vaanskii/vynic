@@ -3,6 +3,8 @@ export type CanonicalAuditEventType =
   | 'ADD_ITEM'
   | 'REDUCE_QTY'
   | 'DELETE_ITEM'
+  | 'CLOSE'
+  | 'INTERNAL_CLOSE'
   | 'CANCEL_TABLE'
   | 'CUSTOM';
 
@@ -11,7 +13,7 @@ export function normalizeAuditEventType(
   previousQty?: number,
   newQty?: number,
 ): CanonicalAuditEventType {
-  const s = String(raw ?? '').trim();
+  const s = typeof raw === 'string' ? raw.trim() : '';
   const u = s.toUpperCase().replace(/\s+/g, '_');
   const l = s.toLowerCase();
 
@@ -31,6 +33,14 @@ export function normalizeAuditEventType(
     l === 'remove_item'
   ) {
     return 'DELETE_ITEM';
+  }
+  if (u === 'CLOSE' || u === 'CLOSED') return 'CLOSE';
+  if (
+    u === 'INTERNAL_CLOSE' ||
+    u === 'NON_FISCAL_CLOSE' ||
+    u === 'NONFISCAL_CLOSE'
+  ) {
+    return 'INTERNAL_CLOSE';
   }
   if (u === 'CANCEL_TABLE' || l === 'cancel_table') return 'CANCEL_TABLE';
 

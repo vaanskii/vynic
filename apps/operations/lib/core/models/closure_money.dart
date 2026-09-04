@@ -88,13 +88,18 @@ class ClosureMoney {
   /// Two separate claims are checked, because they fail for different
   /// reasons: the identity is a modelling error, a tender shortfall is an
   /// operator or dialog error.
-  String? describeMismatch({double tolerance = 0.01}) {
+  String? describeMismatch({
+    double tolerance = 0.01,
+    bool requireCurrentCollection = true,
+  }) {
     final identity = _round(gross - (advanceApplied + amountDueNow));
     if (identity.abs() > tolerance) {
       return 'gross ${gross.toStringAsFixed(2)} does not equal advance '
           '${advanceApplied.toStringAsFixed(2)} + due '
           '${amountDueNow.toStringAsFixed(2)}';
     }
+    if (!requireCurrentCollection) return null;
+
     final settled = _round(collectedNow - amountDueNow);
     if (settled.abs() > tolerance) {
       return 'tender ${collectedNow.toStringAsFixed(2)} does not settle the '

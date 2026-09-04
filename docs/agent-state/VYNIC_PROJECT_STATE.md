@@ -91,6 +91,14 @@ current transport status.
   emptied-by-transfer, and Close Day paths are separate. Startup recovery
   preserves sale idempotency, but currently does not complete the linked
   reservation or typed closure audit after a post-sale crash.
+- Successful fiscal closes emit the typed `CLOSE` audit event, while internal
+  closes emit `INTERNAL_CLOSE`; `CANCEL_TABLE` remains cancellation-only. Close
+  events carry structured closure identity and money details locally and in the
+  Cloud audit mirror.
+- Internal/non-fiscal close preserves operational gross and advance identity
+  while recording `paymentMethod=non-fiscal`, zero cash/card, and
+  `collectedNow=0`; the transaction boundary normalizes legacy caller input so
+  it cannot masquerade as collected tender.
 - Advances are receipts on the collection day and are applied at close; they do
   not reduce the sale's gross value.
 - Gross sales and money collected are separate derived figures. POS X/Z/monthly
@@ -241,11 +249,11 @@ current transport status.
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260903140000_pos_reservation_mirror`.
+  `20260904120000_audit_closure_semantics`.
 - Immediately preceding state migrations:
-  `20260903120000_audit_report_sync_revision`,
-  `20260903090000_device_enrollment`, and
-  `20260902090000_money_reconciliation_fields`.
+  `20260903140000_pos_reservation_mirror`,
+  `20260903120000_audit_report_sync_revision`, and
+  `20260903090000_device_enrollment`.
 - Flutter Hive database target version: `6` in
   `apps/operations/lib/core/database/hive_migration_service.dart`.
 - A migration file in the repository does not prove deployment to any database.

@@ -2795,28 +2795,19 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       return;
     }
 
-    final autoCashSelection = TablePaymentSelection(
-      method: TablePaymentMethod.cash,
-      cashAmount: double.parse(currentOrder.totalAmount.toStringAsFixed(2)),
-      bankAmount: 0,
-    );
-
-    await _finalizeNonFiscalClosure(currentOrder, autoCashSelection);
+    await _finalizeNonFiscalClosure(currentOrder);
   }
 
-  Future<void> _finalizeNonFiscalClosure(
-    Order order,
-    TablePaymentSelection? selection,
-  ) async {
+  Future<void> _finalizeNonFiscalClosure(Order order) async {
     final saleItems = <OrderItem>[...order.packageItems, ...order.items];
     final subtotal = _calculateOrderSubtotal(order);
     final serviceFee = order.getServiceFee();
     final closedAt = DatabaseService.getCurrentDateTime();
 
-    final saleBreakdown = TableClosureHelper.buildSaleBreakdown(selection);
+    const saleBreakdown = <String, double>{};
     final finalTransaction = TableClosureHelper.buildFinalTransactionRecord(
       order: order,
-      selection: selection,
+      selection: null,
       paymentBreakdown: saleBreakdown,
       subtotal: subtotal,
       serviceFee: serviceFee,
@@ -2828,15 +2819,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     // paid one — same closure identity, same journal, same recovery — and is
     // kept out of revenue by `isFiscal: false` rather than by taking a
     // different code path.
-    final money = ClosureMoney.fromOrder(
-      order,
-      collectedNow: order.totalAmount,
-    );
+    final money = ClosureMoney.fromOrder(order, collectedNow: 0);
     final result = await DatabaseService.closeTable(
       orderId: order.orderId,
       money: money,
       paymentMethod: 'non-fiscal',
-      tenderBreakdown: saleBreakdown ?? const {},
+      tenderBreakdown: saleBreakdown,
       closedById: widget.user.username,
       closedByName: widget.user.username,
       isFiscal: false,

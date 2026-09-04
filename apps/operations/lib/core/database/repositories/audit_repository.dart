@@ -415,6 +415,10 @@ class AuditRepository {
         return AuditEventType.reduceQty;
       case 'remove_item':
         return AuditEventType.deleteItem;
+      case 'close_table':
+        return AuditEventType.close;
+      case 'internal_close':
+        return AuditEventType.internalClose;
       case 'cancel_table':
         return AuditEventType.cancelTable;
       case 'custom':
@@ -538,6 +542,10 @@ class AuditRepository {
         return 'reduce_quantity';
       case AuditEventType.deleteItem:
         return 'remove_item';
+      case AuditEventType.close:
+        return 'close_table';
+      case AuditEventType.internalClose:
+        return 'internal_close';
       case AuditEventType.cancelTable:
         return 'cancel_table';
       case AuditEventType.custom:

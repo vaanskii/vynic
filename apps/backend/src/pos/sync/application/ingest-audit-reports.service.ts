@@ -18,6 +18,7 @@ export interface AuditEventSync {
   waiterName?: string;
   timestamp?: string;
   note?: string | null;
+  details?: unknown;
 }
 
 /** One report the POS says it holds, and the revision of it being offered. */
@@ -245,6 +246,7 @@ export class IngestAuditReportsService {
           waiterName: ev.waiterName ?? '',
           eventTime: ev.timestamp ? new Date(ev.timestamp) : new Date(),
           note: ev.note ?? null,
+          details: (ev.details ?? undefined) as Prisma.InputJsonValue,
           seq,
         })),
       });

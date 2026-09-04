@@ -187,6 +187,40 @@ describeDatabase('Incremental audit sync (PostgreSQL)', () => {
     expect(rows[0]._count.events).toBe(2);
   });
 
+  it('preserves closure semantics and structured money details', async () => {
+    const closure = {
+      ...report('audit_report_order_close', 'rev-close'),
+      status: 'CLOSED',
+      locked: true,
+      events: [
+        {
+          type: 'CLOSE',
+          itemName: 'ORDER',
+          previousQty: 0,
+          newQty: 0,
+          waiterId: 'staff-1',
+          waiterName: 'Nino',
+          timestamp: '2026-09-01T18:05:00.000Z',
+          details: {
+            closureId: 'closure-42',
+            grossAmount: 100,
+            cashAmount: 40,
+            cardAmount: 60,
+            collectedNow: 100,
+          },
+        },
+      ],
+    };
+
+    await ingest.ingestReports({ reports: [closure] }, tenantA);
+
+    const event = await prisma.auditEvent.findFirstOrThrow({
+      where: { report: { venueId: venueAId, reportId: closure.reportId } },
+    });
+    expect(event.type).toBe('CLOSE');
+    expect(event.details).toEqual(closure.events[0].details);
+  });
+
   it('keeps the same reportId in two Venues as two separate reports', async () => {
     await ingest.ingestReports(
       { reports: [report('audit_report_order_9', 'rev-a')] },

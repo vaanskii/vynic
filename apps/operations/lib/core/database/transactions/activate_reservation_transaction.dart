@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/order_status.dart';
 import 'package:vynic/core/models/reservation_status.dart';
@@ -33,6 +34,7 @@ class ActivateReservationTransaction {
   static Future<ReservationActivationResult> activate({
     required String reservationId,
     required String activatedBy,
+    AuditSource source = AuditSource.pos,
   }) async {
     final reservations = DatabaseCore.reservationBox!.values.where(
       (r) => r.id == reservationId,
@@ -100,11 +102,16 @@ class ActivateReservationTransaction {
       reservation.linkedOrderId = null;
     }
 
+    // The report opens with ACTIVATE_RESERVATION, not CREATE_WALKIN: this
+    // Order exists because a booking was seated, and the trail says which.
     final order = await OrderRepository.createOrder(
       tableNumbers: decodedTables.map((table) => table.tableNumber).toList(),
       floor: floor,
       createdBy: activatedBy,
       items: reservation.preOrderItems ?? const <OrderItem>[],
+      source: source,
+      activatesReservationId: reservation.id,
+      reservationCustomerName: reservation.customerName,
     );
 
     // Set openedByUserId to track who activated this reservation
@@ -243,6 +250,8 @@ class ActivateReservationTransaction {
         );
 
         // Create order with pre-order items (or empty if no pre-order)
+        // The existing system actor name is kept; the event's `source`
+        // is what says this was automatic.
         final order = await OrderRepository.createOrder(
           tableNumbers: tableRefs.map((ref) => ref.tableNumber).toList(),
           floor: floor,
@@ -250,6 +259,9 @@ class ActivateReservationTransaction {
           items:
               reservation.preOrderItems ??
               [], // Use pre-order items or empty list
+          source: AuditSource.system,
+          activatesReservationId: reservation.id,
+          reservationCustomerName: reservation.customerName,
         );
 
         // If there are pre-order items, mark order as confirmed (already sent to kitchen)

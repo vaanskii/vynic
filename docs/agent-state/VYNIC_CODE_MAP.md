@@ -26,6 +26,9 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Atomic close: `apps/operations/lib/core/database/transactions/close_table_transaction.dart`
 - Order cancellation (the one routine): `apps/operations/lib/core/database/transactions/cancel_order_transaction.dart`, proof in `apps/operations/test/unit/cancel_order_transaction_test.dart`
 - Audit provenance values: `apps/operations/lib/core/models/audit_source.dart`
+- Order-level audit details builder: `apps/operations/lib/core/services/audit/order_audit_details.dart`; creation/transfer proof in `apps/operations/test/unit/order_creation_audit_test.dart`
+- Item transfer (`MOVE_ITEMS`, `TRANSFER_CLOSE`): `apps/operations/lib/core/services/pos/order_item_transfer.dart`
+- Backend audit type normalizer (deploy before POS emits a new type): `apps/backend/src/pos/audit/audit-event-type.ts`
 - Close-day transaction: `apps/operations/lib/core/database/transactions/close_day_transaction.dart`
 - Closure journal: `apps/operations/lib/core/database/repositories/closure_journal_repository.dart`
 - Startup recovery: `apps/operations/lib/core/services/pos/closure_recovery_service.dart`

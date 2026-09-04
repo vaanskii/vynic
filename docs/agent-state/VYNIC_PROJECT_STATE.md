@@ -119,6 +119,24 @@ current transport status.
   `OrderRepository.hardDeleteOrderForRepair`, which has no operational caller,
   preserves the audit report, and logs `ORDER_HARD_DELETED`. Close Day still
   deletes already-closed Order rows because their Sale is the durable record.
+- Every Order audit report opens with a typed creation event carrying
+  `orderKind` (`WALK_IN`, `TAKEAWAY`, `PACKAGE`, `RESERVATION`), `tableRefs`,
+  `source`, `actorId`, `actorName`, `businessDate`: `CREATE_WALKIN` for POS
+  and Manager table Orders (and the carrier of a Package), `CREATE_TAKEAWAY`
+  for POS and Manager Takeaway (report exists from creation, guest details in
+  `details`), `ACTIVATE_RESERVATION` for a seated genuine booking
+  (`reservationId`, `customerName`; `source=SYSTEM` at day-open), followed by
+  `APPLY_PACKAGE` (package fields and lines) for a Package Order. Initial
+  `ADD_ITEM` rows follow the creation event at the same instant; report event
+  merging is a stable sort. Moving items between open Orders writes
+  `MOVE_ITEMS` on both reports (`direction`, `fromOrderId`, `toOrderId`,
+  quantities still set so older readers degrade to add/remove). An Order
+  emptied by transfer closes its report with a locked `TRANSFER_CLOSE`
+  (`closeReason=EMPTIED_BY_TRANSFER`, `transferredToOrderId`) and still writes
+  no Sale. The backend normalizer stores all of these as themselves; it must be
+  deployed before a POS build that emits them. Manager `DELETE
+  /mobile/takeaway-orders/:id` now marks the Cloud row cancelled instead of
+  deleting it before dispatching `ORDER_CANCEL`.
 - Restore-to-order keeps the original close and Sale as history, marks closure
   A reversed, clears the Order closure identity, and emits `RESTORE` in the same
   unlocked audit report; re-close creates closure B and appends a new `CLOSE`.

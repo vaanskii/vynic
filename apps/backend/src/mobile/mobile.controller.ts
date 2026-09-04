@@ -309,7 +309,7 @@ export class MobileController {
     return this.orders.createWalkInOrder(tenant, monitoringSocketId, body);
   }
 
-  // DELETE /mobile/takeaway-orders/:id — fully remove a takeaway order from DB and POS
+  // DELETE /mobile/takeaway-orders/:id — cancel a takeaway order on Cloud and POS (kept as history)
   @Delete('takeaway-orders/:id')
   async deleteTakeawayOrder(
     @ManagerTenant() tenant: TenantContext,

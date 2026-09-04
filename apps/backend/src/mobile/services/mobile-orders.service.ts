@@ -808,7 +808,16 @@ export class MobileOrdersService {
 
     this.mutationSupport.registerMobileMutationEchoGuard(posOrderId);
 
-    await this.prisma.order.delete({ where: { id: order.id } });
+    // The Cloud row is the mirror of a POS Order that is about to be
+    // cancelled, not erased: the POS keeps the Order and its audit report and
+    // the next snapshot would re-mirror it as cancelled anyway. Deleting the
+    // row here only made it vanish until then.
+    if (order.status !== 'cancelled') {
+      await this.prisma.order.update({
+        where: { id: order.id },
+        data: { status: 'cancelled' },
+      });
+    }
 
     this.gateway.broadcastUpdate(
       'takeaway_deleted',
@@ -816,7 +825,8 @@ export class MobileOrdersService {
       this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
 
-    // A takeaway order is removed outright rather than left cancelled.
+    // ORDER_CANCEL is a cancellation on the POS: typed CANCEL_TABLE event,
+    // locked report, non-fiscal cancelled Sale, Order kept.
     const posDelivery = await this.posCommands.dispatch(tenant, {
       type: EdgeCommandTypes.ORDER_CANCEL,
       payload: { posOrderId },

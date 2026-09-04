@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
 
-import 'package:flutter/foundation.dart';
+import 'package:collection/collection.dart' show mergeSort;
+
+import 'package:flutter/foundation.dart' hide mergeSort;
 import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/order.dart';
 
@@ -425,6 +427,18 @@ class AuditRepository {
         return AuditEventType.restore;
       case 'cancel_table':
         return AuditEventType.cancelTable;
+      case 'create_walkin':
+        return AuditEventType.createWalkIn;
+      case 'create_takeaway':
+        return AuditEventType.createTakeaway;
+      case 'apply_package':
+        return AuditEventType.applyPackage;
+      case 'activate_reservation':
+        return AuditEventType.activateReservation;
+      case 'move_items':
+        return AuditEventType.moveItems;
+      case 'transfer_close':
+        return AuditEventType.transferClose;
       case 'custom':
         return AuditEventType.custom;
     }
@@ -506,8 +520,14 @@ class AuditRepository {
       throw StateError('Audit report for order $orderId is locked');
     }
 
-    final mergedEvents = <AuditEvent>[...report.events, ...events]
-      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    // Stable: a creation event and its first ADD_ITEM rows share one
+    // timestamp, and the order they were appended in is the order that
+    // happened.
+    final mergedEvents = <AuditEvent>[...report.events, ...events];
+    mergeSort<AuditEvent>(
+      mergedEvents,
+      compare: (a, b) => a.timestamp.compareTo(b.timestamp),
+    );
     final updatedEvents = List<AuditEvent>.unmodifiable(mergedEvents);
     final updatedAt = BusinessDayRepository.getCurrentDateTime();
 
@@ -696,6 +716,18 @@ class AuditRepository {
         return 'restore_table';
       case AuditEventType.cancelTable:
         return 'cancel_table';
+      case AuditEventType.createWalkIn:
+        return 'create_walkin';
+      case AuditEventType.createTakeaway:
+        return 'create_takeaway';
+      case AuditEventType.applyPackage:
+        return 'apply_package';
+      case AuditEventType.activateReservation:
+        return 'activate_reservation';
+      case AuditEventType.moveItems:
+        return 'move_items';
+      case AuditEventType.transferClose:
+        return 'transfer_close';
       case AuditEventType.custom:
         return 'custom';
     }

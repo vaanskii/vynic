@@ -190,7 +190,7 @@ class ManagerNotificationInbox {
           _add(
             dedupeId: nid,
             title: 'გატანა',
-            message: 'შეკვეთა წაიშალა${id != null ? ' #$id' : ''}',
+            message: 'შეკვეთა გაუქმდა${id != null ? ' #$id' : ''}',
             source: source,
             meta: payloadMap,
           );

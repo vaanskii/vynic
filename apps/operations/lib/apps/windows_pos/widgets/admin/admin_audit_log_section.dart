@@ -995,6 +995,18 @@ class AdminAuditLogSection extends StatelessWidget {
         return Icons.settings_backup_restore;
       case AuditEventType.cancelTable:
         return Icons.block;
+      case AuditEventType.createWalkIn:
+        return Icons.table_restaurant_outlined;
+      case AuditEventType.createTakeaway:
+        return Icons.shopping_bag_outlined;
+      case AuditEventType.applyPackage:
+        return Icons.inventory_2_outlined;
+      case AuditEventType.activateReservation:
+        return Icons.event_available_outlined;
+      case AuditEventType.moveItems:
+        return Icons.swap_horiz;
+      case AuditEventType.transferClose:
+        return Icons.output_outlined;
       case AuditEventType.custom:
         return Icons.info_outline;
     }
@@ -1016,6 +1028,16 @@ class AdminAuditLogSection extends StatelessWidget {
         return AdminTones.warningText;
       case AuditEventType.cancelTable:
         return AdminDesign.danger;
+      case AuditEventType.createWalkIn:
+      case AuditEventType.createTakeaway:
+      case AuditEventType.activateReservation:
+        return AdminTones.infoText;
+      case AuditEventType.applyPackage:
+        return AdminTones.accentText;
+      case AuditEventType.moveItems:
+        return AdminTones.infoText;
+      case AuditEventType.transferClose:
+        return AdminDesign.muted;
       case AuditEventType.custom:
         return AdminDesign.muted;
     }
@@ -1037,6 +1059,18 @@ class AdminAuditLogSection extends StatelessWidget {
         return 'შეკვეთის აღდგენა';
       case AuditEventType.cancelTable:
         return 'მაგიდის გაუქმება';
+      case AuditEventType.createWalkIn:
+        return 'მაგიდის გახსნა';
+      case AuditEventType.createTakeaway:
+        return 'გატანის შეკვეთის შექმნა';
+      case AuditEventType.applyPackage:
+        return 'პაკეტის მინიჭება';
+      case AuditEventType.activateReservation:
+        return 'ჯავშნის აქტივაცია';
+      case AuditEventType.moveItems:
+        return 'პოზიციების გადატანა';
+      case AuditEventType.transferClose:
+        return 'დახურვა გადატანით';
       case AuditEventType.custom:
         return 'ჩანაწერი';
     }

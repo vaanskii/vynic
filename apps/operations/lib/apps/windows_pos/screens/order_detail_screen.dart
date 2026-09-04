@@ -1488,7 +1488,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     // see `OrderItemTransfer.releaseEmptiedOrder`.
     var released = false;
     if (result.sourceLeftEmpty) {
-      await OrderItemTransfer.releaseEmptiedOrder(order);
+      await OrderItemTransfer.releaseEmptiedOrder(
+        order,
+        user: widget.user,
+        destination: destination,
+      );
       released = true;
     }
 

@@ -517,7 +517,15 @@ the only blocker is the single `bankProvider` in the payment dialog.
 
 Status: the four P0 rows landed as Phase 1 (`CancelOrderTransaction`,
 repair-only hard delete, `details.source` / `recoveryAction` on close events).
-The emptied-by-transfer closing event is deferred to the `MOVE_ITEMS` phase.
+Phase 2 landed the creation taxonomy: `CREATE_WALKIN`, `CREATE_TAKEAWAY`,
+`APPLY_PACKAGE`, `ACTIVATE_RESERVATION` as first report event (eager report
+for Takeaway and Manager upserts), `MOVE_ITEMS` on both transfer reports, and
+the emptied-by-transfer source closed with a locked `TRANSFER_CLOSE` (chosen
+over `CLOSE_EMPTY`: it is a distinct business event, not a tender). The
+backend normalizer knows all six. `DELETE /mobile/takeaway-orders/:id` marks
+the Cloud row cancelled rather than deleting it. Still open: reservation
+lifecycle log constants, the `AuditEventLog` reader, staff/expense/menu
+events, Manager item-replacement audit on upsert, and labels (P3).
 
 | P | Change | Call sites | Scope |
 | --- | --- | --- | --- |

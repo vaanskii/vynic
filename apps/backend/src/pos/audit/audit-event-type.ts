@@ -7,6 +7,12 @@ export type CanonicalAuditEventType =
   | 'INTERNAL_CLOSE'
   | 'RESTORE'
   | 'CANCEL_TABLE'
+  | 'CREATE_WALKIN'
+  | 'CREATE_TAKEAWAY'
+  | 'APPLY_PACKAGE'
+  | 'ACTIVATE_RESERVATION'
+  | 'MOVE_ITEMS'
+  | 'TRANSFER_CLOSE'
   | 'CUSTOM';
 
 export function normalizeAuditEventType(
@@ -53,6 +59,20 @@ export function normalizeAuditEventType(
     return 'RESTORE';
   }
   if (u === 'CANCEL_TABLE' || l === 'cancel_table') return 'CANCEL_TABLE';
+
+  // Creation and lifecycle types. These must be recognised before the
+  // quantity inference below: an older client that does not know them still
+  // degrades to add/delete by quantity, but a backend that does must not.
+  if (u === 'CREATE_WALKIN' || u === 'CREATE_WALK_IN') return 'CREATE_WALKIN';
+  if (u === 'CREATE_TAKEAWAY' || u === 'CREATE_TAKE_AWAY') {
+    return 'CREATE_TAKEAWAY';
+  }
+  if (u === 'APPLY_PACKAGE') return 'APPLY_PACKAGE';
+  if (u === 'ACTIVATE_RESERVATION') return 'ACTIVATE_RESERVATION';
+  if (u === 'MOVE_ITEMS' || u === 'MOVE_ITEM') return 'MOVE_ITEMS';
+  if (u === 'TRANSFER_CLOSE' || u === 'EMPTIED_BY_TRANSFER') {
+    return 'TRANSFER_CLOSE';
+  }
 
   const prev = Number(previousQty ?? 0);
   const next = Number(newQty ?? 0);

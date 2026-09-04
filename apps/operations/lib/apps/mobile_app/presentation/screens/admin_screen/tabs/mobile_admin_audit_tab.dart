@@ -713,6 +713,18 @@ class _AuditReportCard extends StatelessWidget {
         return 'შეკვეთის აღდგენა';
       case AuditEventType.cancelTable:
         return 'გაუქმება';
+      case AuditEventType.createWalkIn:
+        return 'მაგიდის გახსნა';
+      case AuditEventType.createTakeaway:
+        return 'გატანის შეკვეთის შექმნა';
+      case AuditEventType.applyPackage:
+        return 'პაკეტის მინიჭება';
+      case AuditEventType.activateReservation:
+        return 'ჯავშნის აქტივაცია';
+      case AuditEventType.moveItems:
+        return 'პოზიციების გადატანა';
+      case AuditEventType.transferClose:
+        return 'დახურვა გადატანით';
       case AuditEventType.custom:
         return 'ჩანაწერი';
     }
@@ -909,6 +921,16 @@ class _EventTile extends StatelessWidget {
         return const Color(0xFFD97706);
       case AuditEventType.cancelTable:
         return const Color(0xFFB91C1C);
+      case AuditEventType.createWalkIn:
+      case AuditEventType.createTakeaway:
+      case AuditEventType.activateReservation:
+        return const Color(0xFF2563EB);
+      case AuditEventType.applyPackage:
+        return const Color(0xFF7C3AED);
+      case AuditEventType.moveItems:
+        return const Color(0xFF0891B2);
+      case AuditEventType.transferClose:
+        return const Color(0xFF475569);
       case AuditEventType.custom:
         return const Color(0xFF475569);
     }
@@ -930,6 +952,18 @@ class _EventTile extends StatelessWidget {
         return Icons.settings_backup_restore;
       case AuditEventType.cancelTable:
         return Icons.block;
+      case AuditEventType.createWalkIn:
+        return Icons.table_restaurant_outlined;
+      case AuditEventType.createTakeaway:
+        return Icons.shopping_bag_outlined;
+      case AuditEventType.applyPackage:
+        return Icons.inventory_2_outlined;
+      case AuditEventType.activateReservation:
+        return Icons.event_available_outlined;
+      case AuditEventType.moveItems:
+        return Icons.swap_horiz;
+      case AuditEventType.transferClose:
+        return Icons.output_outlined;
       case AuditEventType.custom:
         return Icons.info_outline;
     }
@@ -951,6 +985,18 @@ class _EventTile extends StatelessWidget {
         return 'შეკვეთის აღდგენა';
       case AuditEventType.cancelTable:
         return 'მაგიდის გაუქმება';
+      case AuditEventType.createWalkIn:
+        return 'მაგიდის გახსნა';
+      case AuditEventType.createTakeaway:
+        return 'გატანის შეკვეთის შექმნა';
+      case AuditEventType.applyPackage:
+        return 'პაკეტის მინიჭება';
+      case AuditEventType.activateReservation:
+        return 'ჯავშნის აქტივაცია';
+      case AuditEventType.moveItems:
+        return 'პოზიციების გადატანა';
+      case AuditEventType.transferClose:
+        return 'დახურვა გადატანით';
       case AuditEventType.custom:
         return 'ჩანაწერი';
     }

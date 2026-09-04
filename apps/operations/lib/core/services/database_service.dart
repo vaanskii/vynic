@@ -545,12 +545,14 @@ class DatabaseService {
     required String createdBy,
     required List<OrderItem> items,
     bool? includeServiceFee,
+    AuditSource source = AuditSource.pos,
   }) => OrderRepository.createOrder(
     tableNumbers: tableNumbers,
     floor: floor,
     createdBy: createdBy,
     items: items,
     includeServiceFee: includeServiceFee,
+    source: source,
   );
 
   static Future<Order> createTakeAwayOrder({
@@ -560,6 +562,7 @@ class DatabaseService {
     String? notes,
     required List<OrderItem> items,
     required String createdBy,
+    AuditSource source = AuditSource.pos,
   }) => OrderRepository.createTakeAwayOrder(
     customerName: customerName,
     customerPhone: customerPhone,
@@ -567,6 +570,7 @@ class DatabaseService {
     notes: notes,
     items: items,
     createdBy: createdBy,
+    source: source,
   );
 
   static Future<Order?> upsertMobileTakeawayOrder({
@@ -609,12 +613,14 @@ class DatabaseService {
     required String floor,
     required int guestCount,
     required String createdBy,
+    AuditSource source = AuditSource.pos,
   }) => OrderRepository.createOrderForPackage(
     package: package,
     tableNumbers: tableNumbers,
     floor: floor,
     guestCount: guestCount,
     createdBy: createdBy,
+    source: source,
   );
 
   static Order? getOrder(int orderId) => OrderRepository.getOrder(orderId);

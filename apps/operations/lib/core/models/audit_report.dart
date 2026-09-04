@@ -10,6 +10,27 @@ enum AuditEventType {
   internalClose,
   restore,
   cancelTable,
+
+  /// The Order was opened as an ordinary table order (Walk-In), or as the
+  /// carrier of a Package (`details.orderKind == 'PACKAGE'`).
+  createWalkIn,
+
+  /// The Order was opened as a Takeaway ticket.
+  createTakeaway,
+
+  /// A Package was applied to the Order; `details` carries the package fields.
+  applyPackage,
+
+  /// The Order was opened by activating a genuine advance booking.
+  activateReservation,
+
+  /// Items moved between two open Orders; one event per line on each report,
+  /// `details.direction` says which side this is.
+  moveItems,
+
+  /// The Order closed because a transfer took every item off it. No Sale was
+  /// written: the food is on the other Order's bill.
+  transferClose,
   custom,
 }
 
@@ -58,6 +79,28 @@ AuditEventType auditEventTypeFromString(String? raw) {
     case 'CANCEL_TABLE':
     case 'CANCELTABLE':
       return AuditEventType.cancelTable;
+    case 'CREATE_WALKIN':
+    case 'CREATE_WALK_IN':
+    case 'CREATEWALKIN':
+      return AuditEventType.createWalkIn;
+    case 'CREATE_TAKEAWAY':
+    case 'CREATE_TAKE_AWAY':
+    case 'CREATETAKEAWAY':
+      return AuditEventType.createTakeaway;
+    case 'APPLY_PACKAGE':
+    case 'APPLYPACKAGE':
+      return AuditEventType.applyPackage;
+    case 'ACTIVATE_RESERVATION':
+    case 'ACTIVATERESERVATION':
+      return AuditEventType.activateReservation;
+    case 'MOVE_ITEMS':
+    case 'MOVE_ITEM':
+    case 'MOVEITEMS':
+      return AuditEventType.moveItems;
+    case 'TRANSFER_CLOSE':
+    case 'TRANSFERCLOSE':
+    case 'EMPTIED_BY_TRANSFER':
+      return AuditEventType.transferClose;
     default:
       break;
   }
@@ -119,6 +162,18 @@ String auditEventTypeToString(AuditEventType type) {
       return 'RESTORE';
     case AuditEventType.cancelTable:
       return 'CANCEL_TABLE';
+    case AuditEventType.createWalkIn:
+      return 'CREATE_WALKIN';
+    case AuditEventType.createTakeaway:
+      return 'CREATE_TAKEAWAY';
+    case AuditEventType.applyPackage:
+      return 'APPLY_PACKAGE';
+    case AuditEventType.activateReservation:
+      return 'ACTIVATE_RESERVATION';
+    case AuditEventType.moveItems:
+      return 'MOVE_ITEMS';
+    case AuditEventType.transferClose:
+      return 'TRANSFER_CLOSE';
     case AuditEventType.custom:
       return 'CUSTOM';
   }

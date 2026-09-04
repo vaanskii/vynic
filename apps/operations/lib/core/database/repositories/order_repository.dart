@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:vynic/core/models/audit_report.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/order_status.dart';
 import 'package:vynic/core/models/package.dart';
 
 import 'package:vynic/core/services/audit/audit_event_service.dart';
+import 'package:vynic/core/services/audit/order_audit_details.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'audit_repository.dart';
 import 'business_day_repository.dart';
@@ -33,13 +35,23 @@ class OrderRepository {
     return base + 1;
   }
 
-  // Create a new order
+  /// Opens a table Order.
+  ///
+  /// The report's first event is the creation itself: `CREATE_WALKIN` for an
+  /// ordinary table (or a Package carrier when [forPackage]), or
+  /// `ACTIVATE_RESERVATION` when [activatesReservationId] names the genuine
+  /// booking being seated. The initial `ADD_ITEM` rows follow it at the same
+  /// instant. [source] says which channel opened it; the actor is [createdBy].
   static Future<Order> createOrder({
     required List<String> tableNumbers,
     required String floor,
     required String createdBy,
     required List<OrderItem> items,
     bool? includeServiceFee,
+    AuditSource source = AuditSource.pos,
+    bool forPackage = false,
+    String? activatesReservationId,
+    String? reservationCustomerName,
   }) async {
     final normalizedTables = <String>[];
     final seenTables = <String>{};
@@ -126,32 +138,42 @@ class OrderRepository {
       ),
     );
 
-    final creationTimestamp = order.createdAt;
-    final initialEvents = order.items
-        .map(
-          (item) => AuditEvent(
-            type: AuditEventType.addItem,
-            itemName: item.itemName,
-            previousQty: 0,
-            newQty: item.quantity,
-            waiterId: order.createdBy,
-            waiterName: order.createdBy,
-            timestamp: creationTimestamp,
-          ),
-        )
-        .toList();
-
-    if (initialEvents.isNotEmpty) {
-      await AuditRepository.appendOrderAuditEvents(
-        orderId: orderId,
-        events: initialEvents,
-      );
-    } else {
-      await AuditRepository.ensureAuditReport(
-        orderId: orderId,
-        orderSnapshot: order,
-      );
-    }
+    final isActivation =
+        activatesReservationId != null && activatesReservationId.isNotEmpty;
+    final creationEvent = AuditEvent(
+      type: isActivation
+          ? AuditEventType.activateReservation
+          : AuditEventType.createWalkIn,
+      itemName: OrderAuditDetails.orderItemName,
+      previousQty: 0,
+      newQty: 0,
+      waiterId: createdBy,
+      waiterName: createdBy,
+      timestamp: order.createdAt,
+      details: <String, dynamic>{
+        ...OrderAuditDetails.base(
+          order: order,
+          orderKind: isActivation
+              ? OrderAuditDetails.reservation
+              : forPackage
+              ? OrderAuditDetails.package
+              : OrderAuditDetails.walkIn,
+          source: source,
+          actorId: createdBy,
+        ),
+        if (isActivation) 'reservationId': activatesReservationId,
+        if (isActivation &&
+            reservationCustomerName != null &&
+            reservationCustomerName.trim().isNotEmpty)
+          'customerName': reservationCustomerName.trim(),
+        'includeServiceFee': shouldIncludeServiceFee,
+      },
+    );
+    await _appendCreationAudit(
+      order: order,
+      creationEvent: creationEvent,
+      actor: createdBy,
+    );
 
     await AuditRepository.finalizeConflictingOpenAuditReports(
       currentOrderId: orderId,
@@ -170,6 +192,7 @@ class OrderRepository {
     String? notes,
     required List<OrderItem> items,
     required String createdBy,
+    AuditSource source = AuditSource.pos,
   }) async {
     final orderId = _getNextOrderId();
     final order = Order(
@@ -210,6 +233,17 @@ class OrderRepository {
       ),
     );
 
+    // The report exists from the first moment, not from the first later edit.
+    await _appendCreationAudit(
+      order: order,
+      creationEvent: _takeawayCreationEvent(
+        order: order,
+        source: source,
+        actor: createdBy,
+      ),
+      actor: createdBy,
+    );
+
     return order;
   }
 
@@ -221,6 +255,7 @@ class OrderRepository {
     required String waiterName,
     required List<OrderItem> items,
     double? totalAmount,
+    AuditSource source = AuditSource.manager,
   }) async {
     final existing = getOrder(posOrderId);
     if (existing != null) {
@@ -270,6 +305,16 @@ class OrderRepository {
       ),
     );
 
+    await _appendCreationAudit(
+      order: order,
+      creationEvent: _takeawayCreationEvent(
+        order: order,
+        source: source,
+        actor: waiterName,
+      ),
+      actor: waiterName,
+    );
+
     return order;
   }
 
@@ -283,6 +328,7 @@ class OrderRepository {
     required List<OrderItem> items,
     int guestCount = 0,
     double? totalAmount,
+    AuditSource source = AuditSource.manager,
   }) async {
     final existing = getOrder(posOrderId);
     if (existing != null) {
@@ -352,6 +398,30 @@ class OrderRepository {
       ),
     );
 
+    await _appendCreationAudit(
+      order: order,
+      creationEvent: AuditEvent(
+        type: AuditEventType.createWalkIn,
+        itemName: OrderAuditDetails.orderItemName,
+        previousQty: 0,
+        newQty: 0,
+        waiterId: waiterName,
+        waiterName: waiterName,
+        timestamp: order.createdAt,
+        details: <String, dynamic>{
+          ...OrderAuditDetails.base(
+            order: order,
+            orderKind: OrderAuditDetails.walkIn,
+            source: source,
+            actorId: waiterName,
+          ),
+          if (guestCount > 0) 'guestCount': guestCount,
+          'includeServiceFee': order.includeServiceFee,
+        },
+      ),
+      actor: waiterName,
+    );
+
     return order;
   }
 
@@ -361,6 +431,7 @@ class OrderRepository {
     required String floor,
     required int guestCount,
     required String createdBy,
+    AuditSource source = AuditSource.pos,
   }) async {
     if (guestCount <= 0) {
       throw ArgumentError('Guest count must be greater than zero');
@@ -429,6 +500,8 @@ class OrderRepository {
       createdBy: createdBy,
       items: <OrderItem>[],
       includeServiceFee: includeServiceForPackage,
+      source: source,
+      forPackage: true,
     );
 
     final packageItems = package.items
@@ -457,12 +530,123 @@ class OrderRepository {
     order.updatedAt = BusinessDayRepository.getCurrentDateTime();
 
     await updateOrder(order);
+
+    // The package is what the guests are being sold; the report says so
+    // rather than showing an empty Order that silently became `confirmed`.
+    await _appendCreationAudit(
+      order: order,
+      creationEvent: AuditEvent(
+        type: AuditEventType.applyPackage,
+        itemName: package.name,
+        previousQty: 0,
+        newQty: 0,
+        waiterId: createdBy,
+        waiterName: createdBy,
+        timestamp: OrderAuditDetails.strictlyAfter(
+          order.createdAt,
+          order.updatedAt ?? order.createdAt,
+        ),
+        details: <String, dynamic>{
+          ...OrderAuditDetails.base(
+            order: order,
+            orderKind: OrderAuditDetails.package,
+            source: source,
+            actorId: createdBy,
+          ),
+          'packageId': package.packageId,
+          'packageName': package.name,
+          'packageGuestCount': guestCount,
+          'packageUnitPrice': package.pricePerPerson,
+          'packagePrice': order.packagePrice,
+          'packageItems': packageItems
+              .map(
+                (item) => <String, dynamic>{
+                  'itemName': item.itemName,
+                  'quantity': item.quantity,
+                  'unitPrice': item.unitPrice,
+                },
+              )
+              .toList(growable: false),
+        },
+      ),
+      actor: createdBy,
+    );
+
     await updateOrderStatus(
       orderId: order.orderId,
       status: OrderStatus.confirmed.storageValue,
     );
 
     return order;
+  }
+
+  static AuditEvent _takeawayCreationEvent({
+    required Order order,
+    required AuditSource source,
+    required String actor,
+  }) {
+    return AuditEvent(
+      type: AuditEventType.createTakeaway,
+      itemName: OrderAuditDetails.orderItemName,
+      previousQty: 0,
+      newQty: 0,
+      waiterId: actor,
+      waiterName: actor,
+      timestamp: order.createdAt,
+      details: <String, dynamic>{
+        ...OrderAuditDetails.base(
+          order: order,
+          orderKind: OrderAuditDetails.takeaway,
+          source: source,
+          actorId: actor,
+        ),
+        if (order.customerName.trim().isNotEmpty)
+          'customerName': order.customerName.trim(),
+        if (order.customerPhone.trim().isNotEmpty &&
+            order.customerPhone.trim() != '-')
+          'customerPhone': order.customerPhone.trim(),
+        if (order.pickupTime.trim().isNotEmpty)
+          'pickupTime': order.pickupTime.trim(),
+      },
+    );
+  }
+
+  /// Writes the creation event followed by one `ADD_ITEM` per initial line,
+  /// all at the Order's own creation time.
+  ///
+  /// A report locked by an earlier life of the same id (a repair delete
+  /// followed by a Manager re-send) cannot take the event; the Order still
+  /// exists and creation is not rolled back over its trail.
+  static Future<void> _appendCreationAudit({
+    required Order order,
+    required AuditEvent creationEvent,
+    required String actor,
+  }) async {
+    final initialEvents = order.items
+        .map(
+          (item) => AuditEvent(
+            type: AuditEventType.addItem,
+            itemName: item.itemName,
+            previousQty: 0,
+            newQty: item.quantity,
+            waiterId: actor,
+            waiterName: actor,
+            timestamp: order.createdAt,
+          ),
+        )
+        .toList();
+    try {
+      await AuditRepository.appendOrderAuditEvents(
+        orderId: order.orderId,
+        events: [creationEvent, ...initialEvents],
+      );
+    } on StateError catch (e) {
+      if (!e.toString().toLowerCase().contains('locked')) rethrow;
+      debugPrint(
+        '[Audit] Report for order ${order.orderId} is locked; '
+        'creation event not recorded',
+      );
+    }
   }
 
   // Get order by ID

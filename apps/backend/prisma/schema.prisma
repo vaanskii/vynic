@@ -111,6 +111,17 @@ model MenuItem {
   id            String            @id @default(uuid())
   venueId       String
   categoryId    String?
+  /// The item's own id on the POS, which owns menu identity. Ingestion matches
+  /// on it first, so a rename or a move updates this row instead of creating a
+  /// second product and orphaning the old one — which is what matching on
+  /// `nameEn` under a parent used to do. Null for rows mirrored before the POS
+  /// sent an id; the first snapshot from a POS that does adopts them in place
+  /// rather than duplicating them.
+  ///
+  /// [id] stays the Cloud row key and the public menu-item identifier the
+  /// website already hands out in pre-order payloads. This is the business
+  /// identity beside it, not a replacement for it.
+  posMenuItemId String?
   nameKa        String
   nameEn        String
   price         Float
@@ -123,6 +134,7 @@ model MenuItem {
   variants      MenuItemVariant[]
   venue         Venue             @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  @@unique([venueId, posMenuItemId])
   @@index([venueId])
   @@index([categoryId])
   @@index([subcategoryId])

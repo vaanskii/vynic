@@ -59,6 +59,10 @@ export class MobileMenuService {
       nameKa: cat.nameKa,
       sendToKitchen: cat.sendToKitchen,
       items: (cat.items ?? []).map((it: any) => ({
+        // The POS's own item identity, so the manager app names the same
+        // product the POS and the audit feed name. Null for a row mirrored
+        // before the POS sent one.
+        id: it.posMenuItemId ?? null,
         nameEn: it.nameEn,
         nameKa: it.nameKa,
         price: Math.round(it.price * 100) / 100,
@@ -73,6 +77,7 @@ export class MobileMenuService {
         nameEn: sub.nameEn,
         nameKa: sub.nameKa,
         items: (sub.items ?? []).map((it: any) => ({
+          id: it.posMenuItemId ?? null,
           nameEn: it.nameEn,
           nameKa: it.nameKa,
           price: Math.round(it.price * 100) / 100,

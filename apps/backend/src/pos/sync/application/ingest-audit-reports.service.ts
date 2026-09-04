@@ -3,6 +3,10 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../prisma.service';
 import { MonitoringGateway } from '../../../realtime/monitoring.gateway';
 import { normalizeAuditEventType } from '../../audit/audit-event-type';
+import {
+  deriveAuditLogEntity,
+  isAuditLogEntityType,
+} from '../../audit/audit-log-entity';
 import { deriveOrderKind } from '../../audit/audit-order-kind';
 import { isPosAuditBroadcastSuppressed } from '../../sync-echo-guard';
 import { AuditEventLogSync } from '../sync-payload';
@@ -349,12 +353,30 @@ export class IngestAuditReportsService {
           select: { id: true },
         });
         if (!existing) {
+          // The POS names the row's subject when it knows it. An older build
+          // does not send the columns at all, so the entity is derived from
+          // the action and the row's own details instead — deterministic, and
+          // null rather than a guess when the action is not one we classify.
+          const declaredType = isAuditLogEntityType(log.entityType)
+            ? log.entityType.toUpperCase()
+            : null;
+          const derived = deriveAuditLogEntity(log.action, log.data);
+          const entityType = declaredType ?? derived.entityType;
+          // The id belongs to whichever type won: pairing a declared type with
+          // a derived id would describe a subject nobody claimed.
+          const entityId =
+            declaredType !== null
+              ? (log.entityId ?? '').toString().trim() || null
+              : derived.entityId;
           await this.prisma.auditEventLog.create({
             data: {
               id: log.id,
+              // From the authenticated Device, never from the payload.
               venueId: tenant.venueId,
               action: log.action,
               userId: log.userId,
+              entityType,
+              entityId,
               data: (log.data ?? {}) as Prisma.InputJsonValue,
               deviceType: log.deviceType,
               createdAt: log.createdAt ? new Date(log.createdAt) : new Date(),

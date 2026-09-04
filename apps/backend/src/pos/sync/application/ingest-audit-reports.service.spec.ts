@@ -96,6 +96,87 @@ describe('IngestAuditReportsService tenant scoping', () => {
       data: { id: 'log-1', venueId: 'venue-a' },
     });
   });
+
+  it('stores the entity a POS names on the row', async () => {
+    const auditEventLog = {
+      findFirst: jest.fn<Promise<null>, [unknown]>(() => Promise.resolve(null)),
+      create: jest.fn<Promise<{ id: string }>, [unknown]>(() =>
+        Promise.resolve({ id: 'log-1' }),
+      ),
+    };
+    const service = new IngestAuditReportsService(
+      { auditEventLog } as never,
+      { broadcastUpdate: jest.fn() } as never,
+    );
+
+    await service.ingestEventLogs(
+      {
+        logs: [
+          {
+            id: 'log-1',
+            action: 'STAFF_ROLE_CHANGED',
+            userId: 'avtandil',
+            entityType: 'STAFF',
+            entityId: 'nika',
+            data: { staffName: 'nika' },
+            deviceType: 'windows',
+            createdAt: '2026-09-05T10:00:00.000Z',
+          },
+        ],
+      },
+      TENANT,
+    );
+
+    expect(auditEventLog.create.mock.calls[0][0]).toMatchObject({
+      data: { entityType: 'STAFF', entityId: 'nika' },
+    });
+  });
+
+  it('derives the entity for an older POS build that sends none', async () => {
+    const auditEventLog = {
+      findFirst: jest.fn<Promise<null>, [unknown]>(() => Promise.resolve(null)),
+      create: jest.fn<Promise<{ id: string }>, [unknown]>(() =>
+        Promise.resolve({ id: 'log-1' }),
+      ),
+    };
+    const service = new IngestAuditReportsService(
+      { auditEventLog } as never,
+      { broadcastUpdate: jest.fn() } as never,
+    );
+
+    await service.ingestEventLogs(
+      {
+        logs: [
+          {
+            id: 'log-1',
+            action: 'ADVANCE_RECORDED',
+            userId: 'nino',
+            data: { orderId: 42, newAmount: 40 },
+            deviceType: 'windows',
+            createdAt: '2026-09-05T10:00:00.000Z',
+          },
+          {
+            id: 'log-2',
+            action: 'SOMETHING_THIS_BUILD_HAS_NEVER_HEARD_OF',
+            userId: 'nino',
+            data: { orderId: 42 },
+            deviceType: 'windows',
+            createdAt: '2026-09-05T10:01:00.000Z',
+          },
+        ],
+      },
+      TENANT,
+    );
+
+    expect(auditEventLog.create.mock.calls[0][0]).toMatchObject({
+      data: { entityType: 'ORDER', entityId: '42' },
+    });
+    // An action outside the registry is stored unclassified rather than filed
+    // under whatever looked closest.
+    expect(auditEventLog.create.mock.calls[1][0]).toMatchObject({
+      data: { entityType: null, entityId: null },
+    });
+  });
 });
 
 describe('IngestAuditReportsService event ordering and tenancy', () => {

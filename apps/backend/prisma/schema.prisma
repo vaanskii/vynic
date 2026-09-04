@@ -308,14 +308,34 @@ model AuditEventLog {
   venueId    String
   action     String
   userId     String
+  /// What kind of thing this row is about: `STAFF`, `MENU_ITEM`,
+  /// `MENU_CATEGORY`, `PACKAGE`, `EXPENSE`, `CLOSE_DAY`, `BACKUP`,
+  /// `RESERVATION`, `ORDER`, `SALE`, `BUSINESS_DATE`, `SETTINGS`,
+  /// `DEVELOPER`.
+  ///
+  /// Null for every row written before entity identity existed, and for an
+  /// action the derivation cannot classify. Historical rows are not rewritten:
+  /// the reader translates an entity filter into the actions that mean it, so
+  /// an old row is still found by what it is.
+  entityType String?
+  /// Which one, inside this Venue: a staff username, a menu path, an expense
+  /// id, a business date. Null when the action names no single subject.
+  entityId   String?
   data       Json
   deviceType String
   createdAt  DateTime @default(now())
   venue      Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  /// The default global feed: this Venue's recent activity, newest first.
   @@index([venueId, createdAt])
   @@index([createdAt])
   @@index([action])
+  /// "What happened to this kind of thing here", and — with `entityId` — the
+  /// history of one staff member or one menu item.
+  @@index([venueId, entityType, entityId, createdAt])
+  /// "Every price change here this month". `action` alone is already indexed
+  /// globally; this is the Venue-scoped, time-ordered form the reader uses.
+  @@index([venueId, action, createdAt])
   @@schema("pos")
 }
 

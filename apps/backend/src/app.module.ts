@@ -9,6 +9,7 @@ import { EdgeTransportModule } from './edge/edge-transport.module';
 import { EntitlementsModule } from './entitlements/entitlements.module';
 import { MobileController } from './mobile/mobile.controller';
 import { MobileUsersService } from './mobile/services/mobile-users.service';
+import { MobileAuditLogService } from './mobile/services/mobile-audit-log.service';
 import { MobileReportsService } from './mobile/services/mobile-reports.service';
 import { MobileDevicesService } from './mobile/services/mobile-devices.service';
 import { MobileMenuService } from './mobile/services/mobile-menu.service';
@@ -65,6 +66,7 @@ import { WebsiteModule } from './website/website.module';
     BusinessDaySyncService,
     SyncBroadcastService,
     MobileUsersService,
+    MobileAuditLogService,
     MobileReportsService,
     MobileDevicesService,
     MobileMenuService,

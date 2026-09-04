@@ -23,6 +23,8 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { StaffRole } from '../staff/staff-role';
 import { MobileUsersService } from './services/mobile-users.service';
+import { MobileAuditLogService } from './services/mobile-audit-log.service';
+import type { AuditLogQuery } from './services/mobile-audit-log.service';
 import { MobileReportsService } from './services/mobile-reports.service';
 import { MobileDevicesService } from './services/mobile-devices.service';
 import { MobileMenuService } from './services/mobile-menu.service';
@@ -41,6 +43,7 @@ export class MobileController {
   constructor(
     private readonly users: MobileUsersService,
     private readonly reports: MobileReportsService,
+    private readonly auditLog: MobileAuditLogService,
     private readonly devices: MobileDevicesService,
     private readonly menu: MobileMenuService,
     private readonly mutationSupport: MobileMutationSupport,
@@ -393,6 +396,32 @@ export class MobileController {
     @Query('all') allStr?: string,
   ) {
     return this.reports.getAuditLog(tenant, yearStr, monthStr, status, allStr);
+  }
+
+  /**
+   * GET /mobile/audit-log
+   *
+   * The venue-wide audit feed: staff, menu, packages, expenses, close day,
+   * backups, settings and the business date — everything that is not the
+   * lifecycle of one Order, which `/mobile/audit` already serves as its own
+   * ordered report.
+   *
+   * Newest first, keyset-paginated through `cursor`. Every filter is applied
+   * inside the authenticated Staff's Venue; there is no way to ask for
+   * another's.
+   */
+  @Get('audit-log')
+  async getGlobalAuditLog(
+    @ManagerTenant() tenant: TenantContext,
+    @Query() query: AuditLogQuery,
+  ) {
+    return this.auditLog.getAuditLog(tenant, query);
+  }
+
+  /** The actions and entity types this Venue has actually recorded. */
+  @Get('audit-log/facets')
+  async getGlobalAuditLogFacets(@ManagerTenant() tenant: TenantContext) {
+    return this.auditLog.getAuditLogFacets(tenant);
   }
 
   // GET /mobile/sales-report?period=today|week|month

@@ -106,6 +106,12 @@ export interface AuditEventLogSync {
   id: string;
   action: string;
   userId: string;
+  /**
+   * What the row is about. Absent on every POS build that predates entity
+   * identity, where the backend derives it from the action instead.
+   */
+  entityType?: string | null;
+  entityId?: string | null;
   data: any;
   deviceType: string;
   createdAt: string;

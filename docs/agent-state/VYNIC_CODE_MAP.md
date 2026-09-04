@@ -47,6 +47,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Backend ingestion: `apps/backend/src/pos/sync/application/ingest-audit-reports.service.ts`
 - Integration proof: `apps/backend/src/pos/sync/application/audit-incremental-sync.integration.spec.ts`
 - Contract notes: `docs/AUDIT_SYNC.md`
+- Event/action/status taxonomy audit: `docs/AUDIT_TAXONOMY_AUDIT.md`
 
 ## Staff Sync
 

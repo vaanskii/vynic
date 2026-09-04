@@ -859,7 +859,11 @@ class _AuditDetailDialog extends StatelessWidget {
                         separatorBuilder: (_, __) => SizedBox(height: 6),
                         itemBuilder: (_, i) => _EventTile(
                           event: events[i],
-                          seq: events.length - i,
+                          // The event's own place in the timeline, shown
+                          // one-based. Derived from the list only when a
+                          // report predates POS-assigned sequences.
+                          seq: (events[i].sequence ?? (events.length - 1 - i)) +
+                              1,
                         ),
                       ),
               ),

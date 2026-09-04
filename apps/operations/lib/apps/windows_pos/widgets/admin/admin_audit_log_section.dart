@@ -872,7 +872,16 @@ class AdminAuditLogSection extends StatelessWidget {
                             separatorBuilder: (_, __) =>
                                 const SizedBox(height: 6),
                             itemBuilder: (context, index) =>
-                                _buildAuditEventTile(events[index], index),
+                                _buildAuditEventTile(
+                                  events[index],
+                                  // Its place in the timeline, not its place
+                                  // in this list — the list is newest first,
+                                  // so counting rows numbers the report
+                                  // backwards and calls the creation event
+                                  // last.
+                                  events[index].sequence ??
+                                      (events.length - 1 - index),
+                                ),
                           ),
                   ),
                 ],
@@ -884,7 +893,9 @@ class AdminAuditLogSection extends StatelessWidget {
     );
   }
 
-  Widget _buildAuditEventTile(AuditEvent event, int sequence) {
+  /// [ordinal] is the event's zero-based place in the report's timeline; it
+  /// is shown one-based, so the event that opened the Order reads as step 1.
+  Widget _buildAuditEventTile(AuditEvent event, int ordinal) {
     final icon = _auditEventIcon(event.type);
     final color = _auditEventColor(event.type);
     final label = _auditEventLabel(event.type);
@@ -914,7 +925,7 @@ class AdminAuditLogSection extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '$sequence. $label • ${event.itemName}',
+                  '${ordinal + 1}. $label • ${event.itemName}',
                   style: const TextStyle(
                     color: _text,
                     fontSize: 13,

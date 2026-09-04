@@ -191,6 +191,28 @@ void main() {
       },
     );
 
+    test('the audit screens number the creation event as step 1', () async {
+      await seedTable('15');
+      final order = await OrderRepository.createOrder(
+        tableNumbers: const ['15'],
+        floor: 'first',
+        createdBy: 'Nino',
+        items: [line('Khinkali', 3)],
+      );
+
+      // Both audit screens list a report newest-first and label each row with
+      // the event's own ordinal, shown one-based. Numbering the rows instead
+      // counts the timeline backwards and prints the creation event last.
+      final shown = reportOf(order.orderId).sortedEvents;
+      String labelOf(int index) {
+        final ordinal = shown[index].sequence ?? (shown.length - 1 - index);
+        return '${ordinal + 1}. ${auditEventTypeToString(shown[index].type)}';
+      }
+
+      expect(labelOf(0), '2. ADD_ITEM');
+      expect(labelOf(shown.length - 1), '1. CREATE_WALKIN');
+    });
+
     test('a settled report keeps one revision across reads', () async {
       await seedTable('8');
       final order = await OrderRepository.createOrder(

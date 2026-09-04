@@ -24,6 +24,8 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 ## Money / Closing
 
 - Atomic close: `apps/operations/lib/core/database/transactions/close_table_transaction.dart`
+- Order cancellation (the one routine): `apps/operations/lib/core/database/transactions/cancel_order_transaction.dart`, proof in `apps/operations/test/unit/cancel_order_transaction_test.dart`
+- Audit provenance values: `apps/operations/lib/core/models/audit_source.dart`
 - Close-day transaction: `apps/operations/lib/core/database/transactions/close_day_transaction.dart`
 - Closure journal: `apps/operations/lib/core/database/repositories/closure_journal_repository.dart`
 - Startup recovery: `apps/operations/lib/core/services/pos/closure_recovery_service.dart`

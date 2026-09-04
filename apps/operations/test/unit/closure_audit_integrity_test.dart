@@ -562,6 +562,13 @@ void main() {
         expect(details['actorName'], 'manager', reason: scenario.name);
         expect(details['businessDate'], businessDate, reason: scenario.name);
         expect(details['closureId'], result.closureId, reason: scenario.name);
+        // A normal close is completed by the POS itself, never by recovery.
+        expect(details['source'], 'POS', reason: scenario.name);
+        expect(
+          details.containsKey('recoveryAction'),
+          isFalse,
+          reason: scenario.name,
+        );
         expect(details['isFiscal'], isTrue, reason: scenario.name);
         expect(details['grossAmount'], 100, reason: scenario.name);
         expect(
@@ -1255,6 +1262,18 @@ void main() {
         violations.add('recovery did not append a closure audit event');
       }
       expect(violations, isEmpty);
+
+      // Same typed event, but its provenance says the system finished what
+      // the operator started: actor is the person, source is the mechanism.
+      final closeEvents = report.events
+          .where((event) => event.type == AuditEventType.close)
+          .toList();
+      expect(closeEvents, hasLength(1));
+      final details = closeEvents.single.details!;
+      expect(details['source'], 'SYSTEM_RECOVERY');
+      expect(details['recoveryAction'], 'finished');
+      expect(details['actorId'], 'manager');
+      expect(closeEvents.single.waiterId, 'manager');
     },
   );
 
@@ -1633,6 +1652,13 @@ void main() {
       hasLength(1),
     );
     expect(report.toMap(), equals(auditBeforeRetry));
+    expect(
+      report.events
+          .where((event) => event.type == AuditEventType.close)
+          .single
+          .details!['source'],
+      'SYSTEM_RECOVERY',
+    );
     expect(interrupted.reservation!.statusEnum, ReservationStatus.completed);
     expect(DatabaseCore.reservationBox!.values, hasLength(1));
     expect(

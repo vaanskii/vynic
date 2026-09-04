@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:vynic/core/database/transactions/cancel_order_transaction.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/services/audit/audit_order_diff_service.dart';
@@ -212,27 +214,68 @@ class PosCommandApplier {
     if (posOrderId == null) {
       return const PosCommandOutcome.invalid('posOrderId_required');
     }
-    // Capture the tables before the order (and its cleanup) removes them.
+    // `ORDER_CANCEL` used to erase the Order and its audit report. A Manager
+    // cancelling an order is a cancellation like any other: the Order stays,
+    // marked cancelled, with its typed audit event and non-revenue record.
+    return _cancelThroughTransaction(
+      p,
+      posOrderId: posOrderId,
+      treatMissingAsDone: treatMissingAsDone,
+    );
+  }
+
+  /// The single cancellation lifecycle, for both command spellings.
+  ///
+  /// Convergent: an Order that is already cancelled is left exactly as it is,
+  /// so a redelivery adds no second event, record or reservation transition.
+  static Future<PosCommandOutcome> _cancelThroughTransaction(
+    Map<String, dynamic> p, {
+    required int posOrderId,
+    required bool treatMissingAsDone,
+  }) async {
     final existing = DatabaseService.getOrder(posOrderId);
     final tableSeg = existing != null
         ? formatTablesSegment(existing.tableNumbers, existing.floor)
         : '';
-    final ok = await DatabaseService.deleteOrderAndCleanup(
-      orderId: posOrderId,
-      deletedBy: defaultActor,
+    final actor = _actor(
+      p['cancelledBy'] ?? p['updatedBy'] ?? p['waiterName'],
     );
-    if (!ok) {
-      if (!treatMissingAsDone) {
-        return const PosCommandOutcome.missing('order_not_found');
-      }
-      return const PosCommandOutcome.success(code: 'already_absent');
+    final reason = _string(p['reason'] ?? p['comment']);
+
+    final outcome = await DatabaseService.cancelOrder(
+      orderId: posOrderId,
+      actorId: actor,
+      actorName: actor,
+      source: AuditSource.manager,
+      reason: reason.isEmpty ? null : reason,
+    );
+
+    switch (outcome) {
+      case CancelOrderOutcome.notFound:
+        if (!treatMissingAsDone) {
+          return const PosCommandOutcome.missing('order_not_found');
+        }
+        return const PosCommandOutcome.success(code: 'already_absent');
+      case CancelOrderOutcome.alreadyCancelled:
+        return const PosCommandOutcome.success(code: 'already_cancelled');
+      case CancelOrderOutcome.notCancellable:
+        return const PosCommandOutcome.conflicting(
+          'order_closed',
+          detail: 'A closed order must be restored before it is cancelled',
+        );
+      case CancelOrderOutcome.failed:
+        return const PosCommandOutcome.failed('cancel_failed');
+      case CancelOrderOutcome.cancelled:
+        break;
     }
+
     _notify(
       message: tableSeg.isNotEmpty
           ? 'შეკვეთა #$posOrderId გაუქმდა — $tableSeg'
-          : 'შეკვეთა #$posOrderId წაიშალა',
+          : 'შეკვეთა #$posOrderId გაუქმდა',
       meta: {
         'posOrderId': posOrderId,
+        'status': 'cancelled',
         if (tableSeg.isNotEmpty)
           'tableLabel': existing!.tableNumbers.join(', '),
       },
@@ -249,6 +292,15 @@ class PosCommandApplier {
     final status = _string(p['status']);
     if (posOrderId == null || status.isEmpty) {
       return const PosCommandOutcome.invalid('posOrderId_and_status_required');
+    }
+    // A cancellation is not a status assignment: it has to leave the same
+    // durable history the POS leaves, whichever command carried it.
+    if (status.toLowerCase() == 'cancelled' || status.toLowerCase() == 'canceled') {
+      return _cancelThroughTransaction(
+        p,
+        posOrderId: posOrderId,
+        treatMissingAsDone: false,
+      );
     }
     // Capture tables before the status change frees them (paid/cancelled).
     final existing = DatabaseService.getOrder(posOrderId);

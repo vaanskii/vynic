@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 
 import 'package:vynic/core/models/audit_report.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/closure_money.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/order_status.dart';
@@ -342,12 +343,20 @@ class CloseTableTransaction {
   /// advance receipt, Order, physical Table, genuine linked Reservation, and
   /// typed audit report are all durable. A retry before that marker safely
   /// replays the same effects; a retry after it skips them.
+  ///
+  /// [source] says which mechanism is finishing the closure. A normal close is
+  /// [AuditSource.pos]; startup recovery passes [AuditSource.systemRecovery]
+  /// with [recoveryAction] so the typed close event records that the operator
+  /// started it and the system completed it. The event type is unchanged
+  /// either way, and a closure already finalized is never re-stamped.
   static Future<bool> completeExistingSale({
     required ClosureJournalEntry entry,
     required Order order,
     Object? saleRecordKey,
     String? closedByName,
     String? customPaymentLabel,
+    AuditSource source = AuditSource.pos,
+    String? recoveryAction,
   }) async {
     try {
       var current = ClosureJournalRepository.find(entry.closureId) ?? entry;
@@ -380,6 +389,8 @@ class CloseTableTransaction {
           saleRecordKey: existingSaleKey,
           closedByName: closedByName,
           customPaymentLabel: customPaymentLabel,
+          source: source,
+          recoveryAction: recoveryAction,
         );
         current = await ClosureJournalRepository.advance(
           current,
@@ -422,6 +433,8 @@ class CloseTableTransaction {
     required Object saleRecordKey,
     String? closedByName,
     String? customPaymentLabel,
+    required AuditSource source,
+    String? recoveryAction,
   }) async {
     final rawSale = DatabaseCore.salesBox?.get(saleRecordKey);
     final sale = rawSale is Map ? rawSale : null;
@@ -502,6 +515,8 @@ class CloseTableTransaction {
         actorId: effectiveActorId,
         actorName: effectiveActorName,
         customPaymentLabel: effectiveCustomPaymentLabel,
+        source: source,
+        recoveryAction: recoveryAction,
       ),
     );
     await AuditRepository.finalizeOrderClosureAudit(
@@ -535,6 +550,8 @@ class CloseTableTransaction {
     required String actorId,
     required String actorName,
     String? customPaymentLabel,
+    required AuditSource source,
+    String? recoveryAction,
   }) {
     final cashAmount = money.isFiscal
         ? (money.paymentBreakdown[PaymentUtils.methodCash] ?? 0.0)
@@ -554,6 +571,11 @@ class CloseTableTransaction {
       'floor': order.floor,
       'actorId': actorId,
       'actorName': actorName,
+      // The actor is who initiated the closure; the source is what completed
+      // it. They differ only when startup recovery finished the job.
+      AuditSource.detailsKey: source.wireValue,
+      if (recoveryAction != null && recoveryAction.isNotEmpty)
+        'recoveryAction': recoveryAction,
       'businessDate': money.businessDate,
       'closureId': money.closureId,
       'isFiscal': money.isFiscal,

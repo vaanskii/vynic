@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 
 import 'package:vynic/apps/windows_pos/widgets/shared/pos_surface.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
+import 'package:vynic/core/database/transactions/cancel_order_transaction.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/takeaway_order.dart';
 import 'package:vynic/core/models/user.dart';
@@ -340,10 +342,32 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
       return;
     }
 
-    await DatabaseService.updateOrderStatus(
+    // Same routine as the detail screen: the Order stays as history with a
+    // typed cancellation event and a non-revenue record. No physical table
+    // is involved for a Takeaway.
+    final outcome = await DatabaseService.cancelOrder(
       orderId: orderId,
-      status: 'cancelled',
+      actorId: widget.user.username,
+      actorName: widget.user.username,
+      source: AuditSource.pos,
+      reason: 'Takeaway cancelled from the home panel',
+      approvedBy: widget.user.username,
     );
+    if (!mounted) return;
+    if (outcome == CancelOrderOutcome.notCancellable) {
+      unawaited(
+        showErrorToast(
+          context,
+          'დახურული შეკვეთის გაუქმება შეუძლებელია — ჯერ აღადგინეთ.',
+        ),
+      );
+      return;
+    }
+    if (outcome == CancelOrderOutcome.failed ||
+        outcome == CancelOrderOutcome.notFound) {
+      unawaited(showErrorToast(context, 'შეკვეთის გაუქმება ვერ მოხერხდა'));
+      return;
+    }
     await widget.onRefreshRequested();
 
     if (!mounted) {

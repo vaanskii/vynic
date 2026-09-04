@@ -4,6 +4,7 @@ import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/database/repositories/closure_journal_repository.dart';
 import 'package:vynic/core/database/repositories/sales_repository.dart';
 import 'package:vynic/core/database/transactions/close_table_transaction.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/services/audit/money_audit.dart';
 
@@ -143,11 +144,15 @@ class ClosureRecoveryService {
 
     // This is the same journaled routine used by a normal close after its Sale
     // write. It never creates or rewrites the Sale.
+    // The operator who started the closure stays its actor; the event records
+    // that startup recovery is what completed it.
     final completed = await CloseTableTransaction.completeExistingSale(
       entry: entry,
       order: order,
       saleRecordKey: saleKey,
       closedByName: entry.actorName,
+      source: AuditSource.systemRecovery,
+      recoveryAction: ClosureRecoveryAction.finished.name,
     );
     if (!completed) {
       return ClosureRecoveryOutcome(

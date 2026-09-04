@@ -515,6 +515,10 @@ the only blocker is the single `bankProvider` in the payment dialog.
 
 ## V. Prioritized implementation sequence
 
+Status: the four P0 rows landed as Phase 1 (`CancelOrderTransaction`,
+repair-only hard delete, `details.source` / `recoveryAction` on close events).
+The emptied-by-transfer closing event is deferred to the `MOVE_ITEMS` phase.
+
 | P | Change | Call sites | Scope |
 | --- | --- | --- | --- |
 | P0 | Emit `CANCEL_TABLE` (+cancelled Sale record where the POS path writes one) for Manager `ORDER_STATUS_UPDATE status=cancelled` and Takeaway home-panel cancel; route both through one cancellation routine | `pos_command_applier.dart:245`, `home_take_away_section.dart:343`, `order_repository.dart:updateOrderStatus`, `order_detail_screen.dart:2520` | MEDIUM |

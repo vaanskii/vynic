@@ -180,8 +180,11 @@ class ReservationRepository {
       for (final reservation in reservationBox.values) {
         if (reservation.linkedOrderId == orderId &&
             ReservationClassification.isRealAdvanceBooking(reservation)) {
-          reservation.statusEnum = ReservationStatus.cancelled;
-          await reservation.save();
+          // Identity and the Order link are kept; a repeat is a no-op.
+          if (reservation.statusEnum != ReservationStatus.cancelled) {
+            reservation.statusEnum = ReservationStatus.cancelled;
+            await reservation.save();
+          }
           return true;
         }
       }

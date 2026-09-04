@@ -20,7 +20,9 @@ import 'package:vynic/core/models/package.dart';
 import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/pos_display_settings.dart';
 import 'package:vynic/core/database/repositories/audit_repository.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/database/transactions/activate_reservation_transaction.dart';
+import 'package:vynic/core/database/transactions/cancel_order_transaction.dart';
 import 'package:vynic/core/database/transactions/close_day_transaction.dart';
 import 'package:vynic/core/database/transactions/close_table_transaction.dart';
 import 'package:vynic/core/models/closure_money.dart';
@@ -634,24 +636,21 @@ class DatabaseService {
     required String status,
   }) => OrderRepository.updateOrderStatus(orderId: orderId, status: status);
 
-  static Future<bool> deleteOrderAndCleanup({
+  /// The one cancellation routine. See [CancelOrderTransaction].
+  static Future<CancelOrderOutcome> cancelOrder({
     required int orderId,
-    required String deletedBy,
-    bool cancelLinkedReservation = true,
-  }) => OrderRepository.deleteOrderAndCleanup(
+    required String actorId,
+    String? actorName,
+    required AuditSource source,
+    String? reason,
+    String? approvedBy,
+  }) => CancelOrderTransaction.run(
     orderId: orderId,
-    deletedBy: deletedBy,
-    cancelLinkedReservation: cancelLinkedReservation,
-  );
-
-  static Future<int> deleteOpenOrdersForDate({
-    required DateTime date,
-    required String deletedBy,
-    bool includeTakeAway = true,
-  }) => OrderRepository.deleteOpenOrdersForDate(
-    date: date,
-    deletedBy: deletedBy,
-    includeTakeAway: includeTakeAway,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+    reason: reason,
+    approvedBy: approvedBy,
   );
 
   static Future<void> addItemToOrder({

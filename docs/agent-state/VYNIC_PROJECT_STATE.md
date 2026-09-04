@@ -97,7 +97,28 @@ current transport status.
 - Successful fiscal closes emit the typed `CLOSE` audit event, while internal
   closes emit `INTERNAL_CLOSE`; `CANCEL_TABLE` remains cancellation-only. Close
   events carry structured closure identity and money details locally and in the
-  Cloud audit mirror.
+  Cloud audit mirror. Every close event also carries `details.source`
+  (`AuditSource` wire values `POS`, `MANAGER`, `EDGE`, `SYSTEM`,
+  `SYSTEM_RECOVERY`, `DEVELOPER`); a close finished by startup recovery keeps
+  its type and operator actor but records `source=SYSTEM_RECOVERY` and
+  `recoveryAction=finished`. A closure already finalized is never re-stamped.
+- Every genuine Order cancellation goes through `CancelOrderTransaction`: the
+  POS detail screen, the Takeaway home panel, the Admin close-day repair list,
+  and the Manager commands `ORDER_CANCEL` and `ORDER_STATUS_UPDATE
+  status=cancelled`. It writes exactly one `CANCEL_TABLE` event (with
+  `orderKind`, `tableRefs`, `source`, `actorId`, `actorName`, `approvedBy`,
+  `reason`, `businessDate`), locks the report as CANCELLED, writes one
+  non-fiscal `isCancelled` record with zero collection, moves a genuine linked
+  Reservation to cancelled without touching its identity or link, frees
+  physical tables (never for Takeaway), and writes the Order status last so a
+  crash retry or a repeated Manager delivery converges on one cancellation. A
+  closed Order is not cancellable until restored.
+- Normal operations no longer hard-delete business Orders or their audit
+  reports. `ORDER_CANCEL` is a cancellation, not a delete. The only physical
+  delete of a live Order is the repair primitive
+  `OrderRepository.hardDeleteOrderForRepair`, which has no operational caller,
+  preserves the audit report, and logs `ORDER_HARD_DELETED`. Close Day still
+  deletes already-closed Order rows because their Sale is the durable record.
 - Restore-to-order keeps the original close and Sale as history, marks closure
   A reversed, clears the Order closure identity, and emits `RESTORE` in the same
   unlocked audit report; re-close creates closure B and appends a new `CLOSE`.

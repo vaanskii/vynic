@@ -552,7 +552,12 @@ class OrderRepository {
     );
   }
 
-  // Update order status
+  /// Low-level status assignment.
+  ///
+  /// Cancellation is not a status write: it is `CancelOrderTransaction.run`,
+  /// which also leaves the typed audit event and the cancelled Sale record.
+  /// Every operational cancel path uses that; this setter remains for kitchen
+  /// confirmation and for callers that already hold the durable history.
   static Future<void> updateOrderStatus({
     required int orderId,
     required String status,
@@ -581,8 +586,18 @@ class OrderRepository {
     );
   }
 
-  // Hard delete an order (admin only) and release all related resources
-  static Future<bool> deleteOrderAndCleanup({
+  /// Physically removes an Order row. Repair only.
+  ///
+  /// This is not cancellation and no operational screen or command reaches
+  /// it: a waiter, manager or administrator cancelling an Order goes through
+  /// `CancelOrderTransaction`, which keeps the Order, its audit report and a
+  /// non-revenue cancelled Sale as history. Close Day deletes already-closed
+  /// rows directly because their Sale is the durable record.
+  ///
+  /// The per-Order audit report is deliberately left in place — deleting the
+  /// row is a repair of corrupt data, not a licence to erase what happened —
+  /// and the removal itself is written to the append-only action log.
+  static Future<bool> hardDeleteOrderForRepair({
     required int orderId,
     required String deletedBy,
     bool cancelLinkedReservation = true,
@@ -606,15 +621,26 @@ class OrderRepository {
         await ReservationRepository.cancelReservationByOrderId(orderId);
       }
 
-      // Remove audit report snapshot if it exists
-      final auditKey = AuditRepository.buildAuditReportKey(orderId);
-      if (DatabaseCore.auditLogBox != null &&
-          DatabaseCore.auditLogBox!.containsKey(auditKey)) {
-        await DatabaseCore.auditLogBox!.delete(auditKey);
-      }
+      final snapshot = <String, dynamic>{
+        'orderId': orderId,
+        'tableNumbers': List<String>.from(order.tableNumbers),
+        'floor': order.floor,
+        'status': order.status,
+        'totalAmount': order.totalAmount,
+        'createdBy': order.createdBy,
+        'createdAt': order.createdAt.toIso8601String(),
+      };
 
       // Delete the order record itself
       await order.delete();
+
+      unawaited(
+        AuditEventService.logEvent(
+          action: 'ORDER_HARD_DELETED',
+          userId: deletedBy,
+          data: snapshot,
+        ),
+      );
 
       SyncHub.notify(
         SyncEvent(
@@ -628,51 +654,6 @@ class OrderRepository {
     } catch (e) {
       return false;
     }
-  }
-
-  // Bulk delete all open orders for a specific date. Used by admin to fix stuck day-close.
-  static Future<int> deleteOpenOrdersForDate({
-    required DateTime date,
-    required String deletedBy,
-    bool includeTakeAway = true,
-  }) async {
-    final targetKey = date.toIso8601String().split('T')[0];
-    final allOrders = getAllOrders();
-
-    int deletedCount = 0;
-
-    for (final order in allOrders) {
-      final status = order.status.toLowerCase();
-      if (status == 'closed' || status == 'cancelled') {
-        continue;
-      }
-
-      final orderKey = order.createdAt.toIso8601String().split('T')[0];
-      if (orderKey != targetKey) {
-        continue;
-      }
-
-      if (!includeTakeAway) {
-        final floor = order.floor.toLowerCase();
-        final isTakeAway =
-            floor == 'takeaway' ||
-            floor == 'take-away' ||
-            floor.contains('take away');
-        if (isTakeAway) {
-          continue;
-        }
-      }
-
-      final success = await deleteOrderAndCleanup(
-        orderId: order.orderId,
-        deletedBy: deletedBy,
-      );
-      if (success) {
-        deletedCount++;
-      }
-    }
-
-    return deletedCount;
   }
 
   // Add item to order

@@ -7,7 +7,8 @@ import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/pos_permission.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/table_ref.dart';
-import 'package:vynic/core/models/audit_report.dart';
+import 'package:vynic/core/database/transactions/cancel_order_transaction.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/services/audit/money_audit.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
@@ -2498,103 +2499,48 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
 
     if (confirmed == true) {
-      final cancelledOrder = _order!;
       final logComment = commentText.isEmpty
           ? 'Order cancelled after cancellation password confirmation.'
           : commentText;
 
-      final totalQuantity = _order!.items.fold<int>(
-        0,
-        (sum, item) => sum + item.quantity,
+      // The cancellation itself — audit event, locked report, non-revenue
+      // record, reservation, Order status and table — is one routine shared
+      // with the Takeaway panel and the Manager commands.
+      final outcome = await DatabaseService.cancelOrder(
+        orderId: _order!.orderId,
+        actorId: waiterName,
+        actorName: waiterName,
+        source: AuditSource.pos,
+        reason: logComment,
+        approvedBy: approvedBy,
       );
-      final noteParts = <String>[];
-      if (logComment.isNotEmpty) {
-        noteParts.add(logComment);
-      }
-      if (approvedBy.trim().isNotEmpty) {
-        noteParts.add('Approved by ${approvedBy.trim()}');
-      }
-      final closerId = (approvedBy.trim().isNotEmpty)
-          ? approvedBy.trim()
-          : waiterName;
-      final cancellationEvent = AuditEvent(
-        type: AuditEventType.cancelTable,
-        itemName: 'ORDER',
-        previousQty: totalQuantity,
-        newQty: 0,
-        waiterId: waiterName,
-        waiterName: waiterName,
-        timestamp: DatabaseService.getCurrentDateTime(),
-        note: noteParts.join(' • '),
-      );
+      if (!mounted) return;
 
-      try {
-        await DatabaseService.appendOrderAuditEvents(
-          orderId: _order!.orderId,
-          events: [cancellationEvent],
-          statusOverride: AuditReportStatus.cancelled,
-          lockReport: true,
-          closedById: closerId,
-          closedByName: closerId,
-        );
-      } catch (e) {
-        final message = e.toString().toLowerCase();
-        if (!message.contains('locked')) {
-          rethrow;
-        }
-        if (mounted) {
-          unawaited(
-            showPosToast(
-              context: context,
-              message: 'აუდიტის ჩანაწერი უკვე დახურულია, გაუქმება გაგრძელდება.',
-              style: PosToastStyle.info,
-            ),
+      switch (outcome) {
+        case CancelOrderOutcome.cancelled:
+        case CancelOrderOutcome.alreadyCancelled:
+          break;
+        case CancelOrderOutcome.notFound:
+          await showErrorToast(context, 'შეკვეთა ვერ მოიძებნა');
+          return;
+        case CancelOrderOutcome.notCancellable:
+          await showErrorToast(
+            context,
+            'დახურული შეკვეთის გაუქმება შეუძლებელია — ჯერ აღადგინეთ.',
           );
-        }
+          return;
+        case CancelOrderOutcome.failed:
+          await showErrorToast(context, 'შეკვეთის გაუქმება ვერ მოხერხდა');
+          return;
       }
 
-      final cancelledSaleItems = <OrderItem>[
-        ...cancelledOrder.packageItems,
-        ...cancelledOrder.items,
-      ];
-      final cancelledSubtotal = _calculateOrderSubtotal(cancelledOrder);
-      final cancelledServiceFee = cancelledOrder.getServiceFee();
-      final cancelledClosedAt = DatabaseService.getCurrentDateTime();
-
-      await DatabaseService.saveSaleRecord(
-        orderId: cancelledOrder.orderId,
-        tableNumbers: cancelledOrder.tableNumbers,
-        floor: cancelledOrder.floor,
-        items: cancelledSaleItems,
-        totalAmount: cancelledOrder.totalAmount,
-        paymentMethod: 'cancelled',
-        paymentBreakdown: null,
-        createdBy: cancelledOrder.createdBy,
-        createdAt: cancelledOrder.createdAt,
-        closedAt: cancelledClosedAt,
-        includeServiceFee: cancelledOrder.includeServiceFee,
-        discountAmount: cancelledOrder.discountAmount,
-        advanceApplied: cancelledOrder.effectiveAdvanceAmount,
-        grossSaleAmount: cancelledOrder.grossAmount,
-        collectedNow: 0.0,
-        advanceAmount: 0.0,
-        subtotalAmount: cancelledSubtotal,
-        manualAdjustmentAmount: cancelledOrder.manualAdjustmentAmount,
-        finalTransaction: {
-          'type': 'cancelled_order',
-          'orderId': cancelledOrder.orderId,
-          'subtotal': double.parse(cancelledSubtotal.toStringAsFixed(2)),
-          'serviceFee': double.parse(cancelledServiceFee.toStringAsFixed(2)),
-          'total': double.parse(cancelledOrder.totalAmount.toStringAsFixed(2)),
-          'comment': commentText,
-          'isFiscal': false,
-        },
-        isFiscal: false,
-        isCancelled: true,
-        cancelledAt: cancelledClosedAt,
-      );
-
-      await _updateStatus('cancelled');
+      _loadOrder();
+      _popToHomeWithResult(<String, dynamic>{
+        'status': 'closed',
+        'orderId': widget.orderId,
+        'message': 'შეკვეთა გაუქმდა',
+        'isFiscal': false,
+      });
     }
   }
 
@@ -3136,12 +3082,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       status: newStatus,
     );
 
-    // A genuine booking remains linked to its operational order. Ordinary
-    // Walk-In, Package and Takeaway orders have no Reservation to maintain.
-    if (newStatus == 'cancelled' && _order != null) {
-      await DatabaseService.cancelReservationByOrderId(widget.orderId);
-    }
-
     // If confirming order, print kitchen check (instant, non-blocking)
     if (newStatus == 'confirmed' && _order != null) {
       final kitchenItems = _buildKitchenCheckLines(_order!);
@@ -3166,19 +3106,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
     _loadOrder();
 
-    // After cancellation, return to previous screen using the same payload
-    // shape as table-close flows so parent screens handle it consistently.
     final normalizedStatus = newStatus.toLowerCase();
-    if (normalizedStatus == 'cancelled') {
-      _popToHomeWithResult(<String, dynamic>{
-        'status': 'closed',
-        'orderId': widget.orderId,
-        'message': 'შეკვეთა გაუქმდა',
-        'isFiscal': false,
-      });
-      return;
-    }
-
     if (normalizedStatus == 'paid') {
       if (mounted) {
         Navigator.of(context).pop();

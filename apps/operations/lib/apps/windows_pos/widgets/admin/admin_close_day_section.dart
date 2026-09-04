@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
+import 'package:vynic/core/database/transactions/cancel_order_transaction.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/takeaway_order.dart';
 import 'package:vynic/core/models/user.dart';
@@ -1031,26 +1033,34 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
     return openOrders;
   }
 
-  Future<bool> _deleteOrderPermanently(int orderId) async {
+  /// Cancels an Order that is keeping the day open.
+  ///
+  /// This used to delete the Order together with its audit report. Repairing
+  /// a stuck Close Day is an ordinary administrative action, and the record
+  /// of what was on the table — and who removed it — has to survive it. The
+  /// Order is cancelled through the same routine as every other cancellation:
+  /// it stays as history with a typed event and a non-revenue record.
+  Future<bool> _cancelOpenOrder(int orderId) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AdminDesign.text,
         title: const Row(
           children: [
-            Icon(Icons.delete_forever, color: AdminDesign.danger, size: 30),
+            Icon(Icons.block, color: AdminDesign.danger, size: 30),
             SizedBox(width: 12),
-            Text('შეკვეთის წაშლა', style: TextStyle(color: Colors.white)),
+            Text('შეკვეთის გაუქმება', style: TextStyle(color: Colors.white)),
           ],
         ),
         content: Text(
-          'შეკვეთა #$orderId წაიშლება და მაგიდები გათავისუფლდება. მოქმედება შეუქცევადია.',
+          'შეკვეთა #$orderId გაუქმდება და მაგიდები გათავისუფლდება. '
+          'შეკვეთის ისტორია შენარჩუნდება.',
           style: const TextStyle(color: Colors.white70, fontSize: 15),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('გაუქმება', style: TextStyle(fontSize: 16)),
+            child: const Text('უკან', style: TextStyle(fontSize: 16)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
@@ -1070,27 +1080,45 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
       return false;
     }
 
-    final success = await DatabaseService.deleteOrderAndCleanup(
+    final outcome = await DatabaseService.cancelOrder(
       orderId: orderId,
-      deletedBy: widget.user.username,
+      actorId: widget.user.username,
+      actorName: widget.user.username,
+      source: AuditSource.pos,
+      reason: 'Close Day repair: open order cancelled by administrator',
+      approvedBy: widget.user.username,
     );
 
     if (!mounted) return false;
 
-    if (success) {
-      unawaited(
-        showSuccessToast(
-          context,
-          'შეკვეთა #$orderId წაიშალა და მაგიდები გათავისუფლდა',
-        ),
-      );
-      setState(() {});
-      return true;
-    } else {
-      unawaited(
-        showErrorToast(context, 'შეკვეთის წაშლა ვერ მოხერხდა. სცადეთ თავიდან.'),
-      );
-      return false;
+    switch (outcome) {
+      case CancelOrderOutcome.cancelled:
+      case CancelOrderOutcome.alreadyCancelled:
+        unawaited(
+          showSuccessToast(
+            context,
+            'შეკვეთა #$orderId გაუქმდა და მაგიდები გათავისუფლდა',
+          ),
+        );
+        setState(() {});
+        return true;
+      case CancelOrderOutcome.notCancellable:
+        unawaited(
+          showErrorToast(
+            context,
+            'შეკვეთა #$orderId უკვე დახურულია და დღის დახურვას არ აფერხებს.',
+          ),
+        );
+        return false;
+      case CancelOrderOutcome.notFound:
+      case CancelOrderOutcome.failed:
+        unawaited(
+          showErrorToast(
+            context,
+            'შეკვეთის გაუქმება ვერ მოხერხდა. სცადეთ თავიდან.',
+          ),
+        );
+        return false;
     }
   }
 
@@ -1233,7 +1261,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                                   order,
                                   onDelete: () async {
                                     final deleted =
-                                        await _deleteOrderPermanently(
+                                        await _cancelOpenOrder(
                                           order.orderId,
                                         );
                                     if (!deleted || !mounted) {
@@ -1336,7 +1364,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                 ),
               ),
               child: const Text(
-                'წაშლა',
+                'გაუქმება',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
               ),
             ),

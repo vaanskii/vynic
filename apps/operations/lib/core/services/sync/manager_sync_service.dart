@@ -7,6 +7,7 @@ import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/sync/api_config.dart';
 import 'package:vynic/core/services/sync/audit_sync_state.dart';
 import 'package:vynic/core/services/sync/staff_credential_sync_state.dart';
+import 'package:vynic/core/services/sync/manager_sales_history_builder.dart';
 import 'package:vynic/core/services/sync/sync_timing.dart';
 import 'package:vynic/core/services/sync/pos_callback_config.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
@@ -532,9 +533,6 @@ class ManagerSyncService {
       for (final sale in todaysSales) {
         final isCancelled = sale['isCancelled'] == true;
         final restoredToOrder = sale['restoredToOrder'] == true;
-        if (isCancelled || restoredToOrder) {
-          continue;
-        }
         // A deposit taken today against an order that has not closed yet is
         // its own thing: cash in the drawer, not revenue and not an internal
         // closure. It used to fall into the `non-fiscal` bucket, which made
@@ -546,10 +544,13 @@ class ManagerSyncService {
           continue;
         }
         final totalAmount = DatabaseService.saleGrossOf(sale);
-        final isFiscal = sale['isFiscal'] != false;
-        if (!isFiscal) {
-          paymentBreakdown['non-fiscal'] =
-              (paymentBreakdown['non-fiscal'] ?? 0) + totalAmount;
+        if (!DatabaseService.saleCountsAsRevenue(sale)) {
+          if (!isCancelled && !restoredToOrder && sale['isFiscal'] == false) {
+            // Kept as a separately labelled operational figure. It is never
+            // added to revenue, fiscal payment totals, or order count.
+            paymentBreakdown['non-fiscal'] =
+                (paymentBreakdown['non-fiscal'] ?? 0) + totalAmount;
+          }
           continue;
         }
         fiscalOrderCount += 1;
@@ -594,9 +595,6 @@ class ManagerSyncService {
       for (final sale in allSales) {
         final isCancelled = sale['isCancelled'] == true;
         final restoredToOrder = sale['restoredToOrder'] == true;
-        if (isCancelled || restoredToOrder) {
-          continue;
-        }
         if (DatabaseService.saleIsAdvanceReceipt(sale)) {
           final amount = (sale['totalAmount'] as num?)?.toDouble() ?? 0.0;
           allTimeBreakdown['advance-received'] =
@@ -604,13 +602,14 @@ class ManagerSyncService {
           continue;
         }
         final totalAmount = DatabaseService.saleGrossOf(sale);
-        final isFiscal = sale['isFiscal'] != false;
-        if (!isFiscal) {
+        if (!DatabaseService.saleCountsAsRevenue(sale)) {
           // Internal closures get their own bucket and stay out of revenue —
           // they used to be added to the all-time total, which is exactly the
           // leak the daily and Z figures were careful to avoid.
-          allTimeBreakdown['non-fiscal'] =
-              (allTimeBreakdown['non-fiscal'] ?? 0) + totalAmount;
+          if (!isCancelled && !restoredToOrder && sale['isFiscal'] == false) {
+            allTimeBreakdown['non-fiscal'] =
+                (allTimeBreakdown['non-fiscal'] ?? 0) + totalAmount;
+          }
           continue;
         }
         allTimeTotalRevenue += totalAmount;
@@ -682,195 +681,12 @@ class ManagerSyncService {
 
       timing.mark('sales');
 
-      // 2.3 Prepare per-day sales history (source of truth for mobile month filters).
-      final salesHistoryByDate = <String, Map<String, dynamic>>{};
-      for (final sale in allSales) {
-        final date = (sale['date'] as String?)?.trim();
-        if (date == null || date.isEmpty) continue;
-        final bucket = salesHistoryByDate.putIfAbsent(
-          date,
-          () => {
-            'date': date,
-            'totalRevenue': 0.0,
-            'orderCount': 0,
-            'totalOrders': 0,
-            'cancelledOrders': 0,
-            'cashRevenue': 0.0,
-            'cardRevenue': 0.0,
-            'paymentBreakdown': <String, double>{},
-            'topItems': <Map<String, dynamic>>[],
-            'closedTables': <Map<String, dynamic>>[],
-            'advanceReceived': 0.0,
-          },
-        );
-        // A deposit receipt is not an order and must not be counted as one,
-        // in the order count or the revenue.
-        if (DatabaseService.saleIsAdvanceReceipt(sale)) {
-          final amount = (sale['totalAmount'] as num?)?.toDouble() ?? 0.0;
-          bucket['advanceReceived'] =
-              ((bucket['advanceReceived'] as num?)?.toDouble() ?? 0.0) + amount;
-          continue;
-        }
-
-        bucket['totalOrders'] = (bucket['totalOrders'] as int) + 1;
-
-        final isCancelled = sale['isCancelled'] == true;
-        final restoredToOrder = sale['restoredToOrder'] == true;
-        if (isCancelled) {
-          bucket['cancelledOrders'] = (bucket['cancelledOrders'] as int) + 1;
-          continue;
-        }
-        if (restoredToOrder) {
-          continue;
-        }
-
-        // Gross: an order settled partly by a deposit is worth what the guest
-        // consumed, and the deposit rides in its payment breakdown so the
-        // split still adds up.
-        final totalAmount = DatabaseService.saleGrossOf(sale);
-        bucket['totalRevenue'] =
-            (bucket['totalRevenue'] as double) + totalAmount;
-        bucket['orderCount'] = (bucket['orderCount'] as int) + 1;
-
-        final rawTableNumbers = (sale['tableNumbers'] as List?) ?? const [];
-        final tableValues = rawTableNumbers
-            .map((e) => e.toString().trim())
-            .where((e) => e.isNotEmpty)
-            .toList();
-        final fallbackTable = (sale['tableNumber'] as String?)?.trim() ?? '';
-        final floor = (sale['floor'] as String?)?.trim() ?? 'first';
-        final orderId = (sale['orderId'] as num?)?.toInt();
-        final closedAt = (sale['closedAt'] as String?)?.trim() ?? '';
-        final closedTables = (bucket['closedTables'] as List)
-            .whereType<Map>()
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList();
-        final label = tableValues.isNotEmpty
-            ? tableValues.join(', ')
-            : (fallbackTable.isNotEmpty ? fallbackTable : '#${orderId ?? 0}');
-        final isFiscal = sale['isFiscal'] != false;
-        final salePaymentBreakdown = <String, double>{};
-        if (!isFiscal) {
-          salePaymentBreakdown['non-fiscal'] = totalAmount;
-        } else {
-          final saleBreakdown = PaymentUtils.extractBreakdown(sale);
-          saleBreakdown.forEach((key, amount) {
-            salePaymentBreakdown[key] =
-                (salePaymentBreakdown[key] ?? 0) + amount;
-          });
-        }
-        final rawClosedItems = (sale['items'] as List?) ?? const [];
-        final normalizedItems = rawClosedItems.whereType<Map>().map((rawItem) {
-          final item = Map<String, dynamic>.from(rawItem);
-          final qty = (item['quantity'] as num?)?.toInt() ?? 0;
-          final unitPrice =
-              (item['unitPrice'] as num?)?.toDouble() ??
-              (item['price'] as num?)?.toDouble() ??
-              0.0;
-          return {
-            'name': (item['itemName'] ?? item['name'] ?? '').toString(),
-            'qty': qty,
-            'unitPrice': double.parse(unitPrice.toStringAsFixed(2)),
-            'total': double.parse((qty * unitPrice).toStringAsFixed(2)),
-          };
-        }).toList();
-        closedTables.add({
-          'orderId': orderId,
-          'tableLabel': label,
-          'tableNumbers': tableValues,
-          'floor': floor,
-          'isFiscal': isFiscal,
-          'totalAmount': double.parse(totalAmount.toStringAsFixed(2)),
-          'closedAt': closedAt,
-          'paymentBreakdown': salePaymentBreakdown.map(
-            (key, value) =>
-                MapEntry(key, double.parse(value.toStringAsFixed(2))),
-          ),
-          'items': normalizedItems,
-        });
-        bucket['closedTables'] = closedTables;
-
-        final paymentBreakdown = (bucket['paymentBreakdown'] as Map)
-            .cast<String, double>();
-        if (!isFiscal) {
-          paymentBreakdown['non-fiscal'] =
-              (paymentBreakdown['non-fiscal'] ?? 0) + totalAmount;
-        } else {
-          final breakdown = PaymentUtils.extractBreakdown(sale);
-          breakdown.forEach((key, amount) {
-            paymentBreakdown[key] = (paymentBreakdown[key] ?? 0) + amount;
-          });
-        }
-
-        final itemAgg = <String, Map<String, double>>{};
-        final existingItems = (bucket['topItems'] as List)
-            .whereType<Map>()
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList();
-        for (final it in existingItems) {
-          final name = (it['name'] as String?) ?? '';
-          if (name.isEmpty) continue;
-          itemAgg[name] = {
-            'qty': (it['qty'] as num?)?.toDouble() ?? 0,
-            'revenue': (it['revenue'] as num?)?.toDouble() ?? 0,
-          };
-        }
-        final rawItems = (sale['items'] as List?) ?? const [];
-        for (final rawItem in rawItems) {
-          if (rawItem is! Map) continue;
-          final item = Map<String, dynamic>.from(rawItem);
-          final name = (item['itemName'] as String?)?.trim();
-          if (name == null || name.isEmpty) continue;
-          final qty = (item['quantity'] as num?)?.toDouble() ?? 0.0;
-          final unitPrice =
-              (item['unitPrice'] as num?)?.toDouble() ??
-              (item['price'] as num?)?.toDouble() ??
-              0.0;
-          final revenue = qty * unitPrice;
-          final cur = itemAgg[name] ?? {'qty': 0, 'revenue': 0};
-          cur['qty'] = (cur['qty'] ?? 0) + qty;
-          cur['revenue'] = (cur['revenue'] ?? 0) + revenue;
-          itemAgg[name] = cur;
-        }
-        final sortedItems =
-            itemAgg.entries
-                .map(
-                  (entry) => {
-                    'name': entry.key,
-                    'qty': (entry.value['qty'] ?? 0).round(),
-                    'revenue': double.parse(
-                      (entry.value['revenue'] ?? 0).toStringAsFixed(2),
-                    ),
-                  },
-                )
-                .toList()
-              ..sort(
-                (a, b) => ((b['revenue'] as num?) ?? 0).compareTo(
-                  (a['revenue'] as num?) ?? 0,
-                ),
-              );
-        bucket['topItems'] = sortedItems.take(300).toList();
-      }
-
-      for (final entry in salesHistoryByDate.entries) {
-        final b = entry.value;
-        final pb = (b['paymentBreakdown'] as Map).cast<String, double>();
-        pb.forEach((k, v) => pb[k] = double.parse(v.toStringAsFixed(2)));
-        b['paymentBreakdown'] = pb;
-        b['cashRevenue'] = pb['cash'] ?? 0.0;
-        b['cardRevenue'] = pb.entries.fold<double>(
-          0,
-          (sum, e) => e.key.startsWith('card') ? sum + e.value : sum,
-        );
-        b['totalRevenue'] = double.parse(
-          (b['totalRevenue'] as double).toStringAsFixed(2),
-        );
-        final expenseTotal = DatabaseService.getExpenseTotalForDate(entry.key);
-        b['totalExpenses'] = double.parse(expenseTotal.toStringAsFixed(2));
-        b['profit'] = double.parse(
-          ((b['totalRevenue'] as double) - expenseTotal).toStringAsFixed(2),
-        );
-      }
+      // 2.3 Prepare per-day sales history from exactly the same Sale predicate
+      // as every other revenue total. Raw Orders are not revenue evidence.
+      final salesHistoryByDate = ManagerSalesHistoryBuilder.build(
+        sales: allSales,
+        expenseTotalForDate: DatabaseService.getExpenseTotalForDate,
+      );
 
       timing.mark('reports');
 

@@ -166,7 +166,6 @@ export class MobileDashboardService {
     });
 
     let todayDateKey: string;
-    let yesterdayDateKey: string;
     let todayStartDate: Date;
 
     if (businessDateSetting?.value) {
@@ -176,33 +175,22 @@ export class MobileDashboardService {
       todayStartDate = todayStart();
       todayDateKey = todayStartDate.toISOString().split('T')[0];
     }
-    yesterdayDateKey = previousDay(todayStartDate).toISOString().split('T')[0];
+    const previousBusinessDay = previousDay(todayStartDate);
+    const yesterdayDateKey = [
+      previousBusinessDay.getFullYear().toString().padStart(4, '0'),
+      (previousBusinessDay.getMonth() + 1).toString().padStart(2, '0'),
+      previousBusinessDay.getDate().toString().padStart(2, '0'),
+    ].join('-');
 
     const openedAtKey = `businessDayOpenedAt:${todayDateKey}`;
     const [
-      todayOrders,
-      yesterdayOrders,
       allTables,
       openTableOrders,
       todaySummarySetting,
-      openTablesPayableSetting,
+      yesterdaySummarySetting,
       dailySalesTotalSetting,
       businessDayOpenedAtSetting,
     ] = await Promise.all([
-      this.prisma.order.findMany({
-        where: {
-          venueId: tenant.venueId,
-          ...businessDateWhere(todayDateKey),
-        },
-        select: { totalAmount: true },
-      }),
-      this.prisma.order.findMany({
-        where: {
-          venueId: tenant.venueId,
-          ...businessDateWhere(yesterdayDateKey),
-        },
-        select: { totalAmount: true },
-      }),
       (this.prisma as any).table.findMany({
         where: { venueId: tenant.venueId },
         select: {
@@ -232,7 +220,7 @@ export class MobileDashboardService {
         where: settingIdentity(tenant, `salesSummary:${todayDateKey}`),
       }),
       (this.prisma as any).setting.findUnique({
-        where: settingIdentity(tenant, `openTablesPayable:${todayDateKey}`),
+        where: settingIdentity(tenant, `salesSummary:${yesterdayDateKey}`),
       }),
       (this.prisma as any).setting.findUnique({
         where: settingIdentity(tenant, `dailySalesTotal:${todayDateKey}`),
@@ -293,21 +281,18 @@ export class MobileDashboardService {
     const activeTables = occupiedTables + reservedTables;
 
     const r = (n: number) => Math.round(n * 100) / 100;
-    const computedTodayRev = todayOrders.reduce(
-      (s: number, o: any) => s + Number(o.totalAmount),
-      0,
-    );
-    let todayRev = computedTodayRev;
-    let closedTablesRevenue = computedTodayRev;
+    // Closed revenue comes only from Sale-derived POS settings. The Cloud
+    // Order mirror cannot prove fiscality, closure completeness, reversal, or
+    // gross value, so absence of a summary fails closed to zero.
+    let todayRev = 0;
+    let closedTablesRevenue = 0;
     let nonFiscalClosedRevenue = 0;
     if (dailySalesTotalSetting?.value !== undefined) {
-      const exactDaily = Number(
-        dailySalesTotalSetting.value ?? computedTodayRev,
-      );
+      const exactDaily = Number(dailySalesTotalSetting.value ?? 0);
       closedTablesRevenue = exactDaily;
       todayRev = exactDaily;
     }
-    let todayOrderCount = todayOrders.length;
+    let todayOrderCount = 0;
     let cashRevenue = 0;
     let cardRevenue = 0;
     let refunds = 0;
@@ -323,11 +308,9 @@ export class MobileDashboardService {
         nonFiscalClosedRevenue = Number(
           summary.paymentBreakdown?.['non-fiscal'] ?? 0,
         );
-        closedTablesRevenue = Number(summary.totalRevenue ?? computedTodayRev);
-        // `summary.totalRevenue` already includes non-fiscal closed tables,
-        // so do not add non-fiscal again (avoids double counting).
+        closedTablesRevenue = Number(summary.totalRevenue ?? 0);
         todayRev = closedTablesRevenue;
-        todayOrderCount = Number(summary.orderCount ?? todayOrders.length);
+        todayOrderCount = Number(summary.orderCount ?? 0);
         cashRevenue = Number(
           summary.cashRevenue ?? summary.paymentBreakdown?.cash ?? 0,
         );
@@ -336,8 +319,11 @@ export class MobileDashboardService {
         );
         const pb = summary.paymentBreakdown ?? {};
         refunds = Number(pb.refund ?? pb.refunds ?? pb['refund'] ?? 0);
-      } catch {
-        // Keep computed fallback values.
+      } catch (error) {
+        console.warn(
+          `[MobileDashboard] Invalid Sale-derived summary for ${todayDateKey}; using only the validated daily Sale total when available.`,
+          error,
+        );
       }
     }
 
@@ -353,11 +339,21 @@ export class MobileDashboardService {
       }
     }
     const computedOpenTablesPayable = openTablesPayable;
-    const shiftTotalRevenue = closedTablesRevenue + openTablesPayable;
-    const yestRev = yesterdayOrders.reduce(
-      (s: number, o: any) => s + Number(o.totalAmount),
-      0,
-    );
+    const shiftTotalRevenue = closedTablesRevenue;
+    let yestRev = 0;
+    if (yesterdaySummarySetting?.value) {
+      try {
+        const summary = JSON.parse(yesterdaySummarySetting.value) as {
+          totalRevenue?: number;
+        };
+        yestRev = Number(summary.totalRevenue ?? 0);
+      } catch (error) {
+        console.warn(
+          `[MobileDashboard] Invalid Sale-derived summary for ${yesterdayDateKey}; revenue unavailable.`,
+          error,
+        );
+      }
+    }
 
     console.log(
       '[MobileDashboard][MoneyDebug] businessDate=%s todayRevenue=%s closedTablesRevenue=%s openTablesPayable=%s sourceDaily=%s computedOpen=%s occupiedTables=%s openOrderCandidates=%s',
@@ -365,7 +361,7 @@ export class MobileDashboardService {
       r(todayRev),
       r(closedTablesRevenue),
       r(openTablesPayable),
-      dailySalesTotalSetting?.value ?? 'fallback',
+      dailySalesTotalSetting?.value ?? 'unavailable',
       r(computedOpenTablesPayable),
       occupiedTables,
       openTableOrders.length,
@@ -460,42 +456,11 @@ export class MobileDashboardService {
   }
 
   async getStaffPerformance(tenant: TenantContext): Promise<StaffRankEntry[]> {
-    const businessDateSetting = await (this.prisma as any).setting.findUnique({
-      where: settingIdentity(tenant, 'currentBusinessDate'),
-    });
-    const currentBusinessDate =
-      businessDateSetting?.value ?? todayStart().toISOString().split('T')[0];
-
-    const orders = await this.prisma.order.findMany({
-      where: {
-        venueId: tenant.venueId,
-        ...businessDateWhere(currentBusinessDate),
-      },
-      select: { waiterName: true, totalAmount: true },
-    });
-
-    const map = new Map<string, { totalSales: number; orderCount: number }>();
-    for (const o of orders) {
-      const name = o.waiterName || 'Unknown';
-      const cur = map.get(name) ?? { totalSales: 0, orderCount: 0 };
-      map.set(name, {
-        totalSales: cur.totalSales + Number(o.totalAmount),
-        orderCount: cur.orderCount + 1,
-      });
-    }
-
-    return Array.from(map.entries())
-      .sort((a, b) => b[1].totalSales - a[1].totalSales)
-      .map(([name, stats], i) => ({
-        rank: i + 1,
-        waiterName: name,
-        totalSales: Math.round(stats.totalSales * 100) / 100,
-        orderCount: stats.orderCount,
-        avgOrderValue:
-          stats.orderCount > 0
-            ? Math.round((stats.totalSales / stats.orderCount) * 100) / 100
-            : 0,
-      }));
+    void tenant;
+    // Per-waiter Sale attribution is not present in the authoritative summary
+    // mirror yet. Raw Orders include open/internal/restored states and net
+    // payable values, so an empty unavailable result is the only honest value.
+    return [];
   }
 
   async getFinancials(tenant: TenantContext): Promise<FinancialsResponse> {
@@ -504,18 +469,13 @@ export class MobileDashboardService {
     });
     const currentBusinessDate =
       businessDateSetting?.value ?? todayStart().toISOString().split('T')[0];
-    const range = {
-      venueId: tenant.venueId,
-      ...businessDateWhere(currentBusinessDate),
-    };
     const r = (n: number) => Math.round(n * 100) / 100;
 
     const start = parseBusinessDateStart(currentBusinessDate);
     const end = nextDay(start);
-    const [orders, expenses] = await Promise.all([
-      (this.prisma.order.findMany as any)({
-        where: range,
-        select: { totalAmount: true, paymentType: true },
+    const [summarySetting, expenses] = await Promise.all([
+      (this.prisma as any).setting.findUnique({
+        where: settingIdentity(tenant, `salesSummary:${currentBusinessDate}`),
       }),
       this.prisma.expense.findMany({
         where: {
@@ -534,14 +494,29 @@ export class MobileDashboardService {
       }),
     ]);
 
-    const revenue = orders.reduce(
-      (s: number, o: any) => s + Number(o.totalAmount),
-      0,
-    );
-    const cashRev = orders.reduce((s: number, o: any) => {
-      const method = normalizePaymentType(o.paymentType);
-      return method === 'cash' ? s + Number(o.totalAmount) : s;
-    }, 0);
+    let revenue = 0;
+    let cashRev = 0;
+    let cardRev = 0;
+    let orderCount = 0;
+    if (summarySetting?.value) {
+      try {
+        const summary = JSON.parse(summarySetting.value) as {
+          totalRevenue?: number;
+          cashRevenue?: number;
+          cardRevenue?: number;
+          orderCount?: number;
+        };
+        revenue = Number(summary.totalRevenue ?? 0);
+        cashRev = Number(summary.cashRevenue ?? 0);
+        cardRev = Number(summary.cardRevenue ?? 0);
+        orderCount = Number(summary.orderCount ?? 0);
+      } catch (error) {
+        console.warn(
+          `[MobileDashboard] Invalid Sale-derived financial summary for ${currentBusinessDate}; revenue unavailable.`,
+          error,
+        );
+      }
+    }
     const totalExp = expenses.reduce(
       (s: number, e: any) => s + Number(e.amount),
       0,
@@ -557,9 +532,9 @@ export class MobileDashboardService {
       expenses: r(totalExp),
       profit: r(revenue - totalExp),
       cashRevenue: r(cashRev),
-      cardRevenue: r(revenue - cashRev),
-      orderCount: orders.length,
-      avgOrderValue: orders.length > 0 ? r(revenue / orders.length) : 0,
+      cardRevenue: r(cardRev),
+      orderCount,
+      avgOrderValue: orderCount > 0 ? r(revenue / orderCount) : 0,
       expenseBreakdown: Array.from(expMap.entries()).map(
         ([category, amount]) => ({
           category,

@@ -94,9 +94,12 @@ current transport status.
 - Advances are receipts on the collection day and are applied at close; they do
   not reduce the sale's gross value.
 - Gross sales and money collected are separate derived figures. POS X/Z/monthly
-  and Manager current-day/all-time snapshots use the revenue predicate, but the
-  Manager per-day/month history builder and raw-Order fallbacks do not yet apply
-  equivalent filtering and can include internal or non-terminal orders.
+  and Manager current-day, all-time, history, dashboard, report, and financial
+  totals use Sale-derived summaries and the revenue predicate. Missing Manager
+  summaries fail closed instead of treating raw, open, cancelled, restored, or
+  internal Orders as revenue; open-table payable remains a separate operational
+  metric. Per-waiter revenue is unavailable until Cloud has authoritative Sale
+  attribution.
 - Cloud mirrors the POS Order and derived sales summaries, but the Order payload
   does not currently carry `closureId`, gross, advance-applied, collected-now,
   or fiscal classification as independent reconciliation fields. PostgreSQL

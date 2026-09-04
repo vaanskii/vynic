@@ -55,6 +55,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Integration proof: `apps/backend/src/pos/sync/application/audit-incremental-sync.integration.spec.ts`
 - Contract notes: `docs/AUDIT_SYNC.md`
 - Event/action/status taxonomy audit: `docs/AUDIT_TAXONOMY_AUDIT.md`
+- Storage/relation integrity investigation: `docs/AUDIT_STORAGE_RELATIONS.md`
 
 ## Staff Sync
 

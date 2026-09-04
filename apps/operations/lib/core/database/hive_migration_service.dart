@@ -6,6 +6,7 @@ import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/reservation_status.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/user.dart';
+import 'package:vynic/core/database/repositories/menu_repository.dart';
 import 'package:vynic/core/database/repositories/settings_repository.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
 
@@ -37,7 +38,7 @@ class HiveMigrationService {
   static const String dbVersionKey = 'db_version';
   static const String lastMigrationKey = 'last_migration_timestamp';
   static const int initialVersion = 1;
-  static const int targetVersion = 6;
+  static const int targetVersion = 7;
 
   static Future<int> readCurrentVersion(Box metaBox) async {
     final stored = metaBox.get(dbVersionKey);
@@ -94,6 +95,16 @@ class HiveMigrationService {
     if (currentVersion < 6) {
       await migrateV5toV6(context);
       currentVersion = 6;
+      await context.metaBox.put(dbVersionKey, currentVersion);
+      await context.metaBox.put(
+        lastMigrationKey,
+        DateTime.now().toIso8601String(),
+      );
+    }
+
+    if (currentVersion < 7) {
+      await migrateV6toV7(context);
+      currentVersion = 7;
       await context.metaBox.put(dbVersionKey, currentVersion);
       await context.metaBox.put(
         lastMigrationKey,
@@ -227,5 +238,18 @@ class HiveMigrationService {
       )[0];
       await order.save();
     }
+  }
+
+  /// V7 gives every existing menu item the stable `MenuItemDB.id` that new
+  /// items are now created with.
+  ///
+  /// This is where an existing Vankisi menu becomes durably identified: the
+  /// ids are minted once, written into the menu box, and from then on survive
+  /// renames, moves, restarts and sync. The version gate is what makes it
+  /// once — but the assignment itself is idempotent too, so restoring an old
+  /// backup on an already-migrated install (which puts id-less rows back) can
+  /// safely run it again without disturbing the items that already have one.
+  static Future<void> migrateV6toV7(HiveMigrationContext context) async {
+    await MenuRepository.ensureStableItemIds(context.menuBox);
   }
 }

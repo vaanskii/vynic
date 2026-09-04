@@ -21,6 +21,7 @@ import 'package:vynic/core/services/audit/global_audit.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'business_day_repository.dart';
 import '../database_core.dart';
+import 'menu_repository.dart';
 import 'order_repository.dart';
 import 'reservation_repository.dart';
 import 'table_repository.dart';
@@ -327,6 +328,11 @@ class BackupRepository {
 
   static Map<String, dynamic> _serializeMenuItem(MenuItemDB item) {
     return {
+      // The item's stable identity travels with the backup, so a restore puts
+      // the same products back rather than fresh ones. Absent in backups taken
+      // before the field existed; `ensureStableItemIds` fills those in on the
+      // way back.
+      if (item.id != null) 'id': item.id,
       'translationsEn': item.translationsEn,
       'translationsKa': item.translationsKa,
       'price': item.price,
@@ -368,6 +374,9 @@ class BackupRepository {
         await DatabaseCore.menuBox!.add(category);
       }
     }
+    // An older backup carries items with no stable id. Give them one now,
+    // once, so the restored menu is identified like every other menu.
+    await MenuRepository.ensureStableItemIds();
     if (!silent) {
       SyncHub.notify(SyncEvent(type: SyncEventType.menu, action: 'updated'));
     }
@@ -952,6 +961,9 @@ class BackupRepository {
         await DatabaseCore.menuBox!.add(category);
       }
     }
+    // Same rule as `importMenuFromJson`: a backup written before menu items
+    // had identities restores id-less rows, and they get one here — once.
+    await MenuRepository.ensureStableItemIds();
 
     for (final saleEntry in salesJson) {
       if (saleEntry is Map) {
@@ -1244,7 +1256,12 @@ class BackupRepository {
   }
 
   static MenuItemDB _deserializeMenuItem(Map<String, dynamic> json) {
+    // Never mints: a backup that carries no id restores id-less items, and
+    // `ensureStableItemIds` gives each of them exactly one afterwards. Minting
+    // here would hand the same product a new identity on every restore.
+    final id = (json['id'] as String?)?.trim();
     return MenuItemDB(
+      id: id == null || id.isEmpty ? null : id,
       translationsEn: _mapToStringMap(json['translationsEn']),
       translationsKa: _mapToStringMap(json['translationsKa']),
       price: (json['price'] as num?)?.toDouble(),

@@ -136,6 +136,9 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
           sendToKitchen: cat['sendToKitchen'] ?? true,
           items: (cat['items'] as List<dynamic>).map((it) {
             return MenuItemDB(
+              // Read-only view of the Cloud mirror; the id comes from the POS
+              // and is carried through rather than invented here.
+              id: it['id'] as String?,
               translationsEn: {'name': it['nameEn']},
               translationsKa: {'name': it['nameKa']},
               price: (it['price'] as num).toDouble(),
@@ -155,6 +158,7 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
               translationsKa: {'name': sub['nameKa']},
               items: (sub['items'] as List<dynamic>).map((it) {
                 return MenuItemDB(
+                  id: it['id'] as String?,
                   translationsEn: {'name': it['nameEn']},
                   translationsKa: {'name': it['nameKa']},
                   price: (it['price'] as num).toDouble(),

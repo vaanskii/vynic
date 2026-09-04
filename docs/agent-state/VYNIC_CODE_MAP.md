@@ -123,9 +123,19 @@ the implementation and nearby tests. Do not treat this as architecture truth.
   (`createOrder`, `createTakeAwayOrder`, `upsertMobileTakeawayOrder`,
   `upsertMobileDineInOrder`, `createOrderForPackage`)
 - Order mode is not a field: takeaway is `floor == 'takeaway'` with a `TA-<id>` table
+- Order status enum, and the one rule for a remote `ORDER_STATUS_UPDATE`: `apps/operations/lib/core/models/order_status.dart` (`OrderStatus`, `RemoteOrderStatusRule`), applied in `apps/operations/lib/core/services/pos/pos_command_applier.dart` (`updateOrderStatus`), proof in `apps/operations/test/unit/remote_order_status_test.dart`
 - Package model/repository/admin: `apps/operations/lib/core/models/package.dart`, `apps/operations/lib/core/database/repositories/package_repository.dart`, `apps/operations/lib/apps/windows_pos/widgets/admin/admin_packages_section.dart`
 - Takeaway detection, tickets and the home panel's source: `apps/operations/lib/core/models/takeaway_order.dart`, `apps/operations/lib/apps/windows_pos/widgets/home/home_take_away_section.dart`, proof in `apps/operations/test/unit/takeaway_order_source_test.dart`
 - Booking-vs-bookkeeping predicates: `apps/operations/lib/core/utils/reservation_table_availability.dart`, `apps/operations/lib/core/utils/home_reservations_helper.dart`, `apps/backend/src/website/reservation/reservation-table-codes.ts`
+
+## Menu
+
+- POS model and stable item identity: `apps/operations/lib/core/models/menu_item_db.dart` (`MenuItemDB.id`, `newMenuItemId`)
+- CRUD, audit and the one-time identity rollout: `apps/operations/lib/core/database/repositories/menu_repository.dart` (`ensureStableItemIds`, called from `HiveMigrationService.migrateV6toV7` and after a backup restore)
+- Cloud mirror and identity matching: `apps/backend/src/pos/sync/snapshot/menu-sync.service.ts` (`posMenuItemId` first, name-under-parent only for an unclaimed row)
+- Manager read: `apps/backend/src/mobile/services/mobile-menu.service.ts`; website read: `apps/backend/src/website/menu/menu.service.ts` (publishes the Cloud `MenuItem.id`, not the POS id)
+- Only writer is the POS Admin: `apps/operations/lib/apps/windows_pos/widgets/admin/admin_menu_section.dart`
+- Proofs: `apps/operations/test/unit/menu_item_identity_test.dart`, `apps/backend/src/pos/sync/snapshot/menu-sync.integration.spec.ts`
 
 ## Reservations
 

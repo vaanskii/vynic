@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:vynic/core/database/transactions/cancel_order_transaction.dart';
 import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/models/order_status.dart';
 import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/services/audit/audit_order_diff_service.dart';
 import 'package:vynic/core/services/audit/money_audit.dart';
@@ -283,7 +284,14 @@ class PosCommandApplier {
     return const PosCommandOutcome.success();
   }
 
-  /// Set an order's status. Convergent by assignment.
+  /// Set an order's status.
+  ///
+  /// Validated before anything is written, through the one
+  /// [RemoteOrderStatusRule] both transports share. A status this system does
+  /// not recognize is refused rather than persisted, a legacy or fiscal status
+  /// is refused rather than assigned, a cancellation is delegated to the
+  /// cancellation transaction, and a request the Order already satisfies is a
+  /// clean no-op — so a redelivery converges without writing twice.
   static Future<PosCommandOutcome> updateOrderStatus(
     Map<String, dynamic> p,
   ) async {
@@ -292,43 +300,76 @@ class PosCommandApplier {
     if (posOrderId == null || status.isEmpty) {
       return const PosCommandOutcome.invalid('posOrderId_and_status_required');
     }
-    // A cancellation is not a status assignment: it has to leave the same
-    // durable history the POS leaves, whichever command carried it.
-    if (status.toLowerCase() == 'cancelled' ||
-        status.toLowerCase() == 'canceled') {
+
+    final existing = DatabaseService.getOrder(posOrderId);
+    final decision = RemoteOrderStatusRule.decide(
+      requested: status,
+      current: existing == null
+          ? OrderStatus.unknown
+          : OrderStatus.fromStorage(existing.status),
+    );
+
+    // Cancellation first: it is the one target that is meaningful even when
+    // the Order is missing, because the transaction decides what that means.
+    if (decision == RemoteOrderStatusDecision.cancelThroughTransaction) {
       return _cancelThroughTransaction(
         p,
         posOrderId: posOrderId,
         treatMissingAsDone: false,
       );
     }
-    // Capture tables before the status change frees them (paid/cancelled).
-    final existing = DatabaseService.getOrder(posOrderId);
-    final tableSeg = existing != null
-        ? formatTablesSegment(existing.tableNumbers, existing.floor)
-        : '';
+
+    switch (decision) {
+      case RemoteOrderStatusDecision.unknownStatus:
+        return PosCommandOutcome.invalid(
+          'unsupported_status',
+          detail:
+              '"$status" is not an order status this POS stores. '
+              'Nothing was changed.',
+        );
+      case RemoteOrderStatusDecision.notRemotelyAssignable:
+        return PosCommandOutcome.invalid(
+          'status_not_remotely_assignable',
+          detail:
+              '"$status" cannot be set remotely. A close is a fiscal '
+              'transaction, and "preparing"/"served" are historical values '
+              'this system no longer writes.',
+        );
+      case RemoteOrderStatusDecision.orderIsTerminal:
+        return const PosCommandOutcome.conflicting(
+          'order_terminal',
+          detail:
+              'A closed or cancelled order is not reopened by a status '
+              'string; restore it first.',
+        );
+      case RemoteOrderStatusDecision.alreadyInState:
+        // Convergent: the goal state already holds, so this is a success with
+        // no second write and no second notification.
+        return const PosCommandOutcome.success(code: 'already_in_state');
+      case RemoteOrderStatusDecision.assign:
+        break;
+      case RemoteOrderStatusDecision.cancelThroughTransaction:
+        // Handled above.
+        break;
+    }
+
+    if (existing == null) {
+      return const PosCommandOutcome.missing('order_not_found');
+    }
+
+    final tableSeg = formatTablesSegment(existing.tableNumbers, existing.floor);
     await DatabaseService.updateOrderStatus(
       orderId: posOrderId,
       status: status,
     );
-    final isCancelled = status.toLowerCase() == 'cancelled';
-    final String message;
-    if (isCancelled) {
-      message = tableSeg.isNotEmpty
-          ? 'შეკვეთა #$posOrderId გაუქმდა — $tableSeg'
-          : 'შეკვეთა #$posOrderId გაუქმდა';
-    } else {
-      message = tableSeg.isNotEmpty
-          ? 'შეკვეთა #$posOrderId — სტატუსი: $status ($tableSeg)'
-          : 'შეკვეთა #$posOrderId — სტატუსი: $status';
-    }
     _notify(
-      message: message,
+      message: tableSeg.isNotEmpty
+          ? 'შეკვეთა #$posOrderId — სტატუსი: $status ($tableSeg)'
+          : 'შეკვეთა #$posOrderId — სტატუსი: $status',
       meta: {
         'posOrderId': posOrderId,
         'status': status,
-        if (tableSeg.isNotEmpty)
-          'tableLabel': existing!.tableNumbers.join(', '),
+        if (tableSeg.isNotEmpty) 'tableLabel': existing.tableNumbers.join(', '),
       },
     );
     scheduleCloudSync();

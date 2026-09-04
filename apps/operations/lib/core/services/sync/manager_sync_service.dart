@@ -702,6 +702,10 @@ class ManagerSyncService {
                   cat.items
                       ?.map(
                         (it) => {
+                          // Identity first: Cloud matches the mirror row on
+                          // this, so a rename updates the product instead of
+                          // creating a second one under the new name.
+                          if (it.id != null) 'id': it.id,
                           'nameKa': it.translationsKa['name'] ?? '',
                           'nameEn': it.translationsEn['name'] ?? '',
                           'price': it.price ?? 0.0,
@@ -727,6 +731,7 @@ class ManagerSyncService {
                           'items': sub.items
                               .map(
                                 (it) => {
+                                  if (it.id != null) 'id': it.id,
                                   'nameKa': it.translationsKa['name'] ?? '',
                                   'nameEn': it.translationsEn['name'] ?? '',
                                   'price': it.price ?? 0.0,

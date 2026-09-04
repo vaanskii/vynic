@@ -301,7 +301,9 @@ void main() {
 
       final item = one(action: GlobalAuditAction.menuItemCreated);
       expect(item.entityType, GlobalAuditEntity.menuItem);
-      expect(item.entityId, 'hot/Khinkali');
+      // Identity is the item's own stable id; the tree path is context.
+      expect(item.entityId, DatabaseCore.menuBox!.getAt(0)!.items!.single.id);
+      expect(item.data['treePath'], 'hot/Khinkali');
       expect(item.entityLabel, 'ხინკალი');
       expect(item.data['price'], 2.0);
     });
@@ -325,7 +327,7 @@ void main() {
       );
 
       final updated = one(action: GlobalAuditAction.menuItemUpdated);
-      expect(updated.entityId, 'hot/Khinkali');
+      expect(updated.entityId, DatabaseCore.menuBox!.getAt(0)!.items!.single.id);
       expect(updated.changes.single.field, 'price');
       expect(
         GlobalAuditPresentation.changeLine(updated.changes.single),
@@ -395,7 +397,8 @@ void main() {
       );
 
       final deleted = one(action: GlobalAuditAction.menuItemDeleted);
-      expect(deleted.entityId, 'hot/Khinkali');
+      expect(deleted.data['treePath'], 'hot/Khinkali');
+      expect(deleted.entityId, isNot('hot/Khinkali'));
       expect(deleted.data['price'], 2.0);
     });
 

@@ -814,17 +814,36 @@ class OrderRepository {
   /// which also leaves the typed audit event and the cancelled Sale record.
   /// Every operational cancel path uses that; this setter remains for kitchen
   /// confirmation and for callers that already hold the durable history.
+  ///
+  /// The last line of defence against an unreadable status reaching storage:
+  /// a value [OrderStatus.fromStorage] cannot parse is refused outright, and
+  /// what is written is the canonical [OrderStatus.storageValue] rather than
+  /// the caller's spelling, so `paid` and `canceled` cannot enter as new rows.
+  /// Remote callers are additionally narrowed by `RemoteOrderStatusRule`
+  /// before they ever reach here.
   static Future<void> updateOrderStatus({
     required int orderId,
     required String status,
   }) async {
+    final parsed = OrderStatus.fromStorage(status);
+    if (parsed == OrderStatus.unknown) {
+      throw ArgumentError.value(
+        status,
+        'status',
+        'not an order status this system stores',
+      );
+    }
+    final canonical = parsed.storageValue;
     final order = getOrder(orderId);
     if (order != null) {
-      order.updateStatus(status);
+      order.updateStatus(canonical);
       await order.save();
 
-      // If order is paid or cancelled, free the tables
-      if (status == 'paid' || status == 'cancelled') {
+      // A settled order no longer holds its tables. Previously spelled
+      // `paid || cancelled`; `paid` now normalizes to `closed`, and no
+      // production caller reaches this with `closed` — closing owns its own
+      // table release inside `CloseTableTransaction`.
+      if (parsed.isTerminal) {
         for (final tableNumber in order.tableNumbers) {
           await TableRepository.freeTable(
             tableNumber: tableNumber,
@@ -837,7 +856,7 @@ class OrderRepository {
       SyncEvent(
         type: SyncEventType.orders,
         action: 'status_changed',
-        payload: {'orderId': orderId, 'status': status},
+        payload: {'orderId': orderId, 'status': canonical},
       ),
     );
   }

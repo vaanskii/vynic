@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 
 import 'package:flutter/services.dart';
+import 'package:hive/hive.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 
 import 'package:vynic/core/services/sync/sync_events.dart';
@@ -224,7 +225,7 @@ class MenuRepository {
 
   // Convert JSON to MenuItemDB
   static MenuItemDB _convertJsonToMenuItem(Map<String, dynamic> json) {
-    return MenuItemDB(
+    return MenuItemDB.create(
       translationsEn: {'name': json['translations']['en']['name'] as String},
       translationsKa: {'name': json['translations']['ka']['name'] as String},
       price: json['price'] != null ? (json['price'] as num).toDouble() : null,
@@ -289,16 +290,67 @@ class MenuRepository {
   /// Attribution for a menu change whose caller did not say who made it.
   static const String _unknownActor = 'unknown';
 
-  /// The durable identity of a menu item.
+  /// Where an item sits in the menu tree.
   ///
-  /// Items are positions in a category's list, not rows with keys, so the only
-  /// identity that survives an edit elsewhere in the list is where the item
-  /// sits in the menu tree. Indexes are not usable: inserting one item above
-  /// renumbers everything below it.
+  /// Human-readable context, not identity — identity is `MenuItemDB.id`. This
+  /// was the audit `entityId` before stable ids existed, which is why a rename
+  /// used to start a new timeline; historical rows still carry a path here and
+  /// are never rewritten.
   static String _itemPath(String categorySlug, String? subSlug, String nameEn) =>
       subSlug == null || subSlug.isEmpty
       ? '$categorySlug/$nameEn'
       : '$categorySlug/$subSlug/$nameEn';
+
+  /// The audit identity of an item: its stable id, or its tree path for a row
+  /// that has somehow not been through [ensureStableItemIds] yet. Never mints
+  /// one — an id invented at audit time would identify nothing.
+  static String _itemEntityId(MenuItemDB item, String path) {
+    final id = item.id?.trim() ?? '';
+    return id.isEmpty ? path : id;
+  }
+
+  /// Assigns a stable [MenuItemDB.id] to every item that has none, exactly
+  /// once, and persists it.
+  ///
+  /// Runs at Hive migration v7 for an existing install, and again after a
+  /// backup restore, because an older backup carries items written before the
+  /// field existed. Idempotent by construction: an item that already has an id
+  /// is never touched, so a second run mints nothing and Cloud sees no new
+  /// products. Returns how many identities it assigned.
+  static Future<int> ensureStableItemIds([Box<MenuCategoryDB>? box]) async {
+    final menuBox = box ?? DatabaseCore.menuBox;
+    if (menuBox == null) return 0;
+    var assigned = 0;
+    for (final category in menuBox.values) {
+      var touched = false;
+      for (final item in category.items ?? const <MenuItemDB>[]) {
+        if ((item.id?.trim() ?? '').isEmpty) {
+          item.id = newMenuItemId();
+          assigned++;
+          touched = true;
+        }
+      }
+      for (final sub in category.subcategories ?? const <MenuSubcategoryDB>[]) {
+        for (final item in sub.items) {
+          if ((item.id?.trim() ?? '').isEmpty) {
+            item.id = newMenuItemId();
+            assigned++;
+            touched = true;
+          }
+        }
+      }
+      // Items are nested values, not their own rows: the category is what
+      // Hive writes, so the save has to happen here.
+      if (touched) await category.save();
+    }
+    if (assigned > 0) {
+      developer.log(
+        '[Menu] assigned $assigned stable menu item id(s)',
+        name: 'MenuRepository',
+      );
+    }
+    return assigned;
+  }
 
   static String _displayName(String nameKa, String nameEn) =>
       nameKa.trim().isNotEmpty ? nameKa.trim() : nameEn.trim();
@@ -556,7 +608,7 @@ class MenuRepository {
     try {
       final category = DatabaseCore.menuBox!.getAt(categoryIndex);
       if (category != null) {
-        final item = MenuItemDB(
+        final item = MenuItemDB.create(
           translationsEn: {'name': nameEn},
           translationsKa: {'name': nameKa},
           price: price,
@@ -575,13 +627,14 @@ class MenuRepository {
         );
         await GlobalAudit.menuItem(
           action: GlobalAuditAction.menuItemCreated,
-          itemId: _itemPath(category.slug, null, nameEn),
+          itemId: item.id!,
           itemName: _displayName(nameKa, nameEn),
           categoryName: category.slug,
           actorId: actorId,
           actorName: actorName,
           source: source,
           extra: <String, dynamic>{
+            'treePath': _itemPath(category.slug, null, nameEn),
             'price': price,
             'sendToKitchen': item.sendToKitchen,
             'variantCount': variants?.length ?? 0,
@@ -654,14 +707,21 @@ class MenuRepository {
         if (changes.isNotEmpty) {
           await GlobalAudit.menuItem(
             action: GlobalAuditAction.menuItemUpdated,
-            // The item's identity after the edit — a rename moves it.
-            itemId: _itemPath(category.slug, null, nameEn),
+            // The item's own id, so a rename extends one timeline instead of
+            // starting a second one under the new name.
+            itemId: _itemEntityId(
+              category.items![itemIndex],
+              _itemPath(category.slug, null, nameEn),
+            ),
             itemName: _displayName(nameKa, nameEn),
             categoryName: category.slug,
             changes: changes,
             actorId: actorId,
             actorName: actorName,
             source: source,
+            extra: <String, dynamic>{
+              'treePath': _itemPath(category.slug, null, nameEn),
+            },
           );
         }
         return true;
@@ -705,13 +765,19 @@ class MenuRepository {
         );
         await GlobalAudit.menuItem(
           action: GlobalAuditAction.menuItemDeleted,
-          itemId: _itemPath(category.slug, null, removedNameEn),
+          itemId: _itemEntityId(
+            removed,
+            _itemPath(category.slug, null, removedNameEn),
+          ),
           itemName: _displayName(removedNameKa, removedNameEn),
           categoryName: category.slug,
           actorId: actorId,
           actorName: actorName,
           source: source,
-          extra: <String, dynamic>{'price': removedPrice},
+          extra: <String, dynamic>{
+            'treePath': _itemPath(category.slug, null, removedNameEn),
+            'price': removedPrice,
+          },
         );
         return true;
       }
@@ -925,7 +991,7 @@ class MenuRepository {
       if (category != null &&
           subcategories != null &&
           subcategoryIndex < subcategories.length) {
-        final item = MenuItemDB(
+        final item = MenuItemDB.create(
           translationsEn: {'name': nameEn},
           translationsKa: {'name': nameKa},
           price: price,
@@ -943,11 +1009,7 @@ class MenuRepository {
         );
         await GlobalAudit.menuItem(
           action: GlobalAuditAction.menuItemCreated,
-          itemId: _itemPath(
-            category.slug,
-            subcategories[subcategoryIndex].slug,
-            nameEn,
-          ),
+          itemId: item.id!,
           itemName: _displayName(nameKa, nameEn),
           categoryName: subcategories[subcategoryIndex].slug,
           actorId: actorId,
@@ -955,6 +1017,11 @@ class MenuRepository {
           source: source,
           extra: <String, dynamic>{
             'parentCategoryName': category.slug,
+            'treePath': _itemPath(
+              category.slug,
+              subcategories[subcategoryIndex].slug,
+              nameEn,
+            ),
             'price': price,
             'sendToKitchen': item.sendToKitchen,
             'variantCount': variants?.length ?? 0,
@@ -1031,10 +1098,13 @@ class MenuRepository {
           if (changes.isNotEmpty) {
             await GlobalAudit.menuItem(
               action: GlobalAuditAction.menuItemUpdated,
-              itemId: _itemPath(
-                category.slug,
-                subcategories[subcategoryIndex].slug,
-                nameEn,
+              itemId: _itemEntityId(
+                item,
+                _itemPath(
+                  category.slug,
+                  subcategories[subcategoryIndex].slug,
+                  nameEn,
+                ),
               ),
               itemName: _displayName(nameKa, nameEn),
               categoryName: subcategories[subcategoryIndex].slug,
@@ -1042,7 +1112,14 @@ class MenuRepository {
               actorId: actorId,
               actorName: actorName,
               source: source,
-              extra: <String, dynamic>{'parentCategoryName': category.slug},
+              extra: <String, dynamic>{
+                'parentCategoryName': category.slug,
+                'treePath': _itemPath(
+                  category.slug,
+                  subcategories[subcategoryIndex].slug,
+                  nameEn,
+                ),
+              },
             );
           }
           return true;
@@ -1089,10 +1166,13 @@ class MenuRepository {
           );
           await GlobalAudit.menuItem(
             action: GlobalAuditAction.menuItemDeleted,
-            itemId: _itemPath(
-              category.slug,
-              subcategories[subcategoryIndex].slug,
-              removedNameEn,
+            itemId: _itemEntityId(
+              removed,
+              _itemPath(
+                category.slug,
+                subcategories[subcategoryIndex].slug,
+                removedNameEn,
+              ),
             ),
             itemName: _displayName(removedNameKa, removedNameEn),
             categoryName: subcategories[subcategoryIndex].slug,
@@ -1101,6 +1181,11 @@ class MenuRepository {
             source: source,
             extra: <String, dynamic>{
               'parentCategoryName': category.slug,
+              'treePath': _itemPath(
+                category.slug,
+                subcategories[subcategoryIndex].slug,
+                removedNameEn,
+              ),
               'price': removedPrice,
             },
           );

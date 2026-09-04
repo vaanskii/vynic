@@ -197,6 +197,21 @@ current transport status.
   storage and writes the same `ADD_ITEM` / `REDUCE_QTY` / `DELETE_ITEM` events a
   POS edit would, with `source=MANAGER`, through the one
   `AuditOrderDiffService`. A redelivered identical payload writes nothing.
+- Menu items have stable business identity: `MenuItemDB.id`, a uuid minted once
+  on the POS, offline, additive as Hive field 5. It survives rename, price,
+  availability and kitchen-routing changes, a category slug rename, restart,
+  backup/restore and sync. Items written before the field get one exactly once
+  through `MenuRepository.ensureStableItemIds` — Hive migration v7, and again
+  after a restore, because an older backup carries id-less rows. It is never
+  minted on decode. New `MENU_ITEM_*` audit rows carry it as `entityId` with
+  the tree path demoted to `details.treePath`; historical rows keep their path
+  `entityId` and are not rewritten.
+- Cloud `MenuItem` carries `posMenuItemId` (additive, nullable, unique per
+  Venue). Ingestion matches on it first and falls back to (`nameEn`, parent)
+  only for a row no POS id has claimed, so an already-mirrored menu adopts
+  identity in place and a rename updates the product instead of creating a
+  second one beside the orphaned original. `MenuItem.id` remains the Cloud row
+  key the website publishes in pre-order payloads.
 - New Reservation ids are uuids. Two bookings taken in the same millisecond used
   to collide on a clock-derived id. Cloud-supplied ids are still used verbatim
   and historical numeric ids are untouched; nothing parses a reservation id.
@@ -376,9 +391,18 @@ current transport status.
 
 - The Order statuses this system writes are `pending`, `confirmed`, `closed`
   and `cancelled`. `preparing`, `served` and `paid` have no writer and are
-  read-only: they stay parseable because historical rows carry them and the
-  Cloud `ORDER_STATUS_UPDATE` command forwards whatever status string it is
-  given.
+  read-only: they stay parseable because historical rows carry them.
+- `ORDER_STATUS_UPDATE` no longer forwards arbitrary strings. One rule,
+  `RemoteOrderStatusRule` in `core/models/order_status.dart`, decides every
+  remote request before anything is written, and both transports share it:
+  only `confirmed` and `cancelled` are remotely assignable, `cancelled` is
+  delegated to `CancelOrderTransaction` rather than assigned, `closed`/`paid`
+  and the legacy `preparing`/`served` are refused (400), a closed or cancelled
+  Order is not reopened by a status string (409), a request the Order already
+  satisfies is a no-op success, and an unrecognized value is refused and never
+  persisted or mapped onto a business state. `OrderRepository.updateOrderStatus`
+  refuses an unparseable status outright and stores the canonical spelling, so
+  no unreadable status reaches Hive from any caller.
 
 ## Known Blockers
 
@@ -406,13 +430,14 @@ current transport status.
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260905140000_audit_event_log_entity`.
+  `20260906120000_menu_item_pos_identity`.
 - Immediately preceding state migrations:
+  `20260905140000_audit_event_log_entity`,
   `20260905090000_audit_event_sequence_tenancy`,
   `20260904120000_audit_closure_semantics`,
   `20260903140000_pos_reservation_mirror`, and
   `20260903120000_audit_report_sync_revision`.
-- Flutter Hive database target version: `6` in
+- Flutter Hive database target version: `7` in
   `apps/operations/lib/core/database/hive_migration_service.dart`.
 - A migration file in the repository does not prove deployment to any database.
 

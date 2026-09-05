@@ -1,6 +1,7 @@
 import { PrismaService } from '../prisma.service';
 import type { ManagerAuthContext } from '../auth/manager-auth-context';
 import { InventoryService } from './inventory.service';
+import { RecipeService } from './recipe.service';
 
 const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
 const describeDatabase = databaseUrl ? describe : describe.skip;
@@ -25,7 +26,7 @@ describeDatabase('Inventory tenancy and constraints (PostgreSQL)', () => {
   beforeAll(async () => {
     prisma = new PrismaService({ datasourceUrl: databaseUrl });
     await prisma.$connect();
-    service = new InventoryService(prisma);
+    service = new InventoryService(prisma, new RecipeService(prisma));
     await prisma.organization.create({
       data: {
         id: organizationId,

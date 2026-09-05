@@ -1,6 +1,7 @@
 import { PrismaService } from '../prisma.service';
 import type { ManagerAuthContext } from '../auth/manager-auth-context';
 import { InventoryService } from './inventory.service';
+import { RecipeService } from './recipe.service';
 import { ReceivingService } from './receiving.service';
 
 const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
@@ -66,7 +67,7 @@ describeDatabase('Receiving and the stock ledger (PostgreSQL)', () => {
   beforeAll(async () => {
     prisma = new PrismaService({ datasourceUrl: databaseUrl });
     await prisma.$connect();
-    inventory = new InventoryService(prisma);
+    inventory = new InventoryService(prisma, new RecipeService(prisma));
     receiving = new ReceivingService(prisma);
     await prisma.organization.create({
       data: {

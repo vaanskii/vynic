@@ -2,6 +2,7 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type { ManagerAuthContext } from '../auth/manager-auth-context';
 import { InventoryService } from './inventory.service';
+import { RecipeService } from './recipe.service';
 
 const ACTOR_A: ManagerAuthContext = {
   staffId: 'staff-a',
@@ -176,7 +177,10 @@ class InventoryFakeDb {
 
 function harness() {
   const db = new InventoryFakeDb();
-  return { db, service: new InventoryService(db as never) };
+  return {
+    db,
+    service: new InventoryService(db as never, new RecipeService(db as never)),
+  };
 }
 
 describe('InventoryService', () => {

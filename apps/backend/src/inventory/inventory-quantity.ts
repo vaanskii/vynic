@@ -177,6 +177,85 @@ export function resolveBaseQuantity(input: {
   };
 }
 
+/** Consumption quantities per sold unit. Matches `Decimal(18, 6)`. */
+export const PER_UNIT_SCALE = 6;
+
+export function perUnitQuantityText(value: unknown): string {
+  return new Prisma.Decimal((value ?? 0) as never).toFixed(PER_UNIT_SCALE);
+}
+
+/**
+ * The natural consumption units for an item held in `baseUnit`.
+ *
+ * A kitchen weighs beef in grams and pours beer in millilitres, so mass and
+ * volume offer both scales. A counted item offers only itself: "1 box of
+ * khinkali" is not a consumption fact, and `box` is procurement packaging.
+ */
+export function recipeUnitsFor(baseUnit: string): InventoryUnit[] {
+  const base = inventoryUnit(baseUnit);
+  switch (inventoryUnitDimension(base)) {
+    case 'MASS':
+      return ['g', 'kg'];
+    case 'VOLUME':
+      return ['ml', 'L'];
+    case 'COUNT':
+      return [base];
+  }
+}
+
+/**
+ * How many base units one sold portion consumes.
+ *
+ * Deliberately narrower than {@link resolveBaseQuantity}: only the base unit
+ * itself and the global mass/volume table convert here. Item packaging is
+ * excluded on purpose — "1 box" is how a venue buys lemonade, never how it
+ * serves it, and letting a purchase ratio through would quietly turn a
+ * data-entry slip into a 24x consumption error.
+ */
+export function resolveRecipeQuantity(input: {
+  quantity: Prisma.Decimal;
+  unit: string;
+  baseUnit: string;
+}): { baseQuantity: Prisma.Decimal } {
+  const entered = inventoryUnit(input.unit);
+  const base = inventoryUnit(input.baseUnit);
+
+  if (entered === base) {
+    return { baseQuantity: quantity(input.quantity) };
+  }
+  if (inventoryUnitDimension(entered) !== inventoryUnitDimension(base)) {
+    throw new BadRequestException(`Cannot convert ${entered} to ${base}`);
+  }
+  if (inventoryUnitDimension(base) === 'COUNT') {
+    throw new BadRequestException(
+      `${entered} is purchase packaging, not a consumption unit; enter this recipe in ${base}`,
+    );
+  }
+  const multiplier = new Prisma.Decimal(
+    convertInventoryQuantity(1, entered, base),
+  );
+  return { baseQuantity: quantity(input.quantity.times(multiplier)) };
+}
+
+/**
+ * Consumption for one sold unit, from a definition written for a batch.
+ *
+ * A kitchen enters "100 khinkali need 3.5 kg beef"; every later step wants
+ * "0.035 kg". Dividing once, here, at a declared scale, is what keeps those
+ * two facts from disagreeing.
+ */
+export function perUnitQuantity(
+  baseQuantity: Prisma.Decimal,
+  yieldQuantity: Prisma.Decimal,
+): Prisma.Decimal {
+  if (yieldQuantity.lessThanOrEqualTo(0)) {
+    throw new BadRequestException('yieldQuantity must be greater than zero');
+  }
+  return baseQuantity
+    .dividedBy(yieldQuantity)
+    .toDecimalPlaces(PER_UNIT_SCALE, ROUND_HALF_UP);
+}
+
 export interface LineMoney {
   lineTotal: Prisma.Decimal;
   effectiveBaseUnitCost: Prisma.Decimal;

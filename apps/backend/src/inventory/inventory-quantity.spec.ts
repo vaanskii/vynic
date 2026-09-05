@@ -5,6 +5,9 @@ import {
   positiveMultiplier,
   positiveQuantity,
   resolveBaseQuantity,
+  perUnitQuantity,
+  recipeUnitsFor,
+  resolveRecipeQuantity,
   sumMoney,
 } from './inventory-quantity';
 
@@ -182,5 +185,73 @@ describe('Receiving money', () => {
     });
     expect(lineTotal.toFixed(2)).toBe('288.00');
     expect(effectiveBaseUnitCost.toFixed(6)).toBe('1.200000');
+  });
+  // ── Recipe consumption (Step 3) ───────────────────────────────────────
+
+  it('normalizes a recipe entry into the item base unit', () => {
+    expect(
+      resolveRecipeQuantity({
+        quantity: decimal('35'),
+        unit: 'g',
+        baseUnit: 'kg',
+      }).baseQuantity.toFixed(3),
+    ).toBe('0.035');
+    expect(
+      resolveRecipeQuantity({
+        quantity: decimal('500'),
+        unit: 'ml',
+        baseUnit: 'L',
+      }).baseQuantity.toFixed(3),
+    ).toBe('0.500');
+    expect(
+      resolveRecipeQuantity({
+        quantity: decimal('1'),
+        unit: 'bottle',
+        baseUnit: 'bottle',
+      }).baseQuantity.toFixed(3),
+    ).toBe('1.000');
+  });
+
+  it('refuses an incompatible dimension in a recipe', () => {
+    expect(() =>
+      resolveRecipeQuantity({
+        quantity: decimal('1'),
+        unit: 'kg',
+        baseUnit: 'L',
+      }),
+    ).toThrow(/Cannot convert/);
+  });
+
+  it('refuses purchase packaging as a consumption unit', () => {
+    // Receiving happily converts "1 box = 24 bottle". Consumption must not:
+    // a box is how the venue buys lemonade, never how it serves it.
+    expect(() =>
+      resolveRecipeQuantity({
+        quantity: decimal('1'),
+        unit: 'box',
+        baseUnit: 'bottle',
+      }),
+    ).toThrow(/not a consumption unit/);
+  });
+
+  it('offers only natural consumption units for a dimension', () => {
+    expect(recipeUnitsFor('kg')).toEqual(['g', 'kg']);
+    expect(recipeUnitsFor('L')).toEqual(['ml', 'L']);
+    expect(recipeUnitsFor('bottle')).toEqual(['bottle']);
+    expect(recipeUnitsFor('piece')).toEqual(['piece']);
+  });
+
+  it('divides a batch definition into per-sale-unit consumption', () => {
+    // 100 khinkali from 3.5 kg of beef is 0.035 kg each.
+    expect(
+      perUnitQuantity(decimal('3.5'), decimal('100')).toFixed(6),
+    ).toBe('0.035000');
+    // A per-unit recipe is the same arithmetic with a yield of one.
+    expect(perUnitQuantity(decimal('0.15'), decimal('1')).toFixed(6)).toBe(
+      '0.150000',
+    );
+    expect(() => perUnitQuantity(decimal('1'), decimal('0'))).toThrow(
+      /greater than zero/,
+    );
   });
 });

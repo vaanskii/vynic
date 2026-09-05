@@ -46,6 +46,10 @@ import {
   ReceivingService,
   type ReceivingInput,
 } from '../inventory/receiving.service';
+import {
+  RecipeService,
+  type RecipeInput,
+} from '../inventory/recipe.service';
 
 // ─── Controller ───────────────────────────────────────────────────────────────
 
@@ -67,6 +71,7 @@ export class MobileController {
     private readonly saleLedger: MobileSaleLedgerService,
     private readonly inventory: InventoryService,
     private readonly receiving: ReceivingService,
+    private readonly recipes: RecipeService,
   ) {}
 
   @Get('inventory/units')
@@ -205,6 +210,46 @@ export class MobileController {
     @Body() payload: { reason?: unknown } = {},
   ) {
     return this.receiving.cancel(actor, id, payload?.reason);
+  }
+
+  // ── Recipes / technological cards ─────────────────────────────────────
+
+  /** Menu-oriented: every Menu Item, marked configured or not. */
+  @Get('inventory/recipes')
+  listRecipeMenuItems(
+    @ManagerTenant() tenant: TenantContext,
+    @Query('q') search?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.recipes.listMenuItems(tenant, { search, status });
+  }
+
+  /** The definition for one Menu Item, or null when none is configured. */
+  @Get('inventory/recipes/menu-item/:menuItemId')
+  getRecipe(
+    @ManagerTenant() tenant: TenantContext,
+    @Param('menuItemId') menuItemId: string,
+    @Query('variantId') variantId?: string,
+  ) {
+    return this.recipes.detail(tenant, menuItemId, variantId);
+  }
+
+  /** Creates or replaces the one definition for this Menu Item + variant. */
+  @Post('inventory/recipes')
+  saveRecipe(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Body() payload: RecipeInput,
+  ) {
+    return this.recipes.save(actor, payload);
+  }
+
+  /** Stops applying a definition without deleting what it said. */
+  @Post('inventory/recipes/:id/disable')
+  disableRecipe(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+  ) {
+    return this.recipes.disable(actor, id);
   }
 
   // GET /mobile/restaurant-settings

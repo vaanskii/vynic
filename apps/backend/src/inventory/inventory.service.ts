@@ -16,6 +16,7 @@ import {
   multiplierText,
   positiveMultiplier,
   quantityText,
+  recipeUnitsFor,
 } from './inventory-quantity';
 import {
   InventoryAuditAction,
@@ -23,6 +24,7 @@ import {
   type InventoryActor,
 } from './inventory-audit';
 import { presentMovement } from './receiving.service';
+import { RecipeService } from './recipe.service';
 
 export { InventoryAuditAction };
 
@@ -63,7 +65,10 @@ type Change = {
 
 @Injectable()
 export class InventoryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly recipes: RecipeService,
+  ) {}
 
   getUnits() {
     return INVENTORY_UNIT_DEFINITIONS;
@@ -103,7 +108,7 @@ export class InventoryService {
       include: { purchaseUnits: { orderBy: { unit: 'asc' } } },
     });
     if (!row) throw new NotFoundException('Stock item not found');
-    const [balances, movements] = await Promise.all([
+    const [balances, movements, usedBy] = await Promise.all([
       this.currentStock(tenant.venueId, [cleanId]),
       this.prisma.stockMovement.findMany({
         where: { venueId: tenant.venueId, stockItemId: cleanId },
@@ -121,9 +126,13 @@ export class InventoryService {
           },
         },
       }),
+      // Which products consume this item. Inventory administration asks this
+      // before disabling or renaming anything.
+      this.recipes.usageForStockItem(tenant, cleanId),
     ]);
     return {
       ...this.presentStockItem(row, balances.get(cleanId)),
+      usedBy,
       recentMovements: movements.map((movement) => ({
         ...presentMovement(movement),
         receiving: movement.receiving
@@ -189,18 +198,21 @@ export class InventoryService {
 
   /** Complete Device-scoped projection for the POS Hive cache. */
   async getCatalog(tenant: TenantContext) {
-    const [stockItems, suppliers] = await Promise.all([
+    const [stockItems, suppliers, recipes] = await Promise.all([
       this.listStockItems(tenant),
       this.listSuppliers(tenant),
+      this.recipes.projection(tenant.venueId),
     ]);
     return {
-      // v2 adds derived current stock and item packaging. An older POS ignores
-      // both and keeps working from the fields it already knows.
-      version: 2,
+      // v2 added derived current stock and item packaging; v3 adds the active
+      // consumption definitions Step 4 will need offline. An older POS ignores
+      // every field it does not know and keeps working from the rest.
+      version: 3,
       generatedAt: new Date().toISOString(),
       units: INVENTORY_UNIT_DEFINITIONS,
       stockItems,
       suppliers,
+      recipes,
     };
   }
 
@@ -507,6 +519,9 @@ export class InventoryService {
         unit: unit.unit,
         baseUnitMultiplier: multiplierText(unit.baseUnitMultiplier),
       })),
+      // What a recipe may legitimately be written in for this item. One
+      // authority for the rule, so the Manager editor cannot offer `box`.
+      recipeUnits: recipeUnitsFor(row.baseUnit),
     };
   }
 

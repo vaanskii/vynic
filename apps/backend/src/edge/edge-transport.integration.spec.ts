@@ -17,6 +17,7 @@ import {
   EdgeCommandTypes,
 } from '../shared/contracts/edge-command';
 import { InventoryService } from '../inventory/inventory.service';
+import { RecipeService } from '../inventory/recipe.service';
 
 const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
 const describeDatabase = databaseUrl ? describe : describe.skip;
@@ -66,7 +67,7 @@ describeDatabase('Cloud → Edge transport (PostgreSQL)', () => {
     commands = new EdgeCommandService(prisma);
     controller = new EdgeTransportController(
       commands,
-      new InventoryService(prisma),
+      new InventoryService(prisma, new RecipeService(prisma)),
     );
     guard = new EdgeDeviceGuard(credentials);
 

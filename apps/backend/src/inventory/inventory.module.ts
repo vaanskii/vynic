@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { ReceivingService } from './receiving.service';
+import { RecipeService } from './recipe.service';
 
 /**
  * The Inventory domain, shared by the two principals that reach it.
@@ -10,7 +11,7 @@ import { ReceivingService } from './receiving.service';
  * the domain services take a resolved Venue and never a client-supplied one.
  */
 @Module({
-  providers: [InventoryService, ReceivingService],
-  exports: [InventoryService, ReceivingService],
+  providers: [InventoryService, ReceivingService, RecipeService],
+  exports: [InventoryService, ReceivingService, RecipeService],
 })
 export class InventoryModule {}

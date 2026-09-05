@@ -114,9 +114,9 @@ model MenuSubcategory {
 }
 
 model MenuItem {
-  id            String            @id @default(uuid())
-  venueId       String
-  categoryId    String?
+  id                 String                  @id @default(uuid())
+  venueId            String
+  categoryId         String?
   /// The item's own id on the POS, which owns menu identity. Ingestion matches
   /// on it first, so a rename or a move updates this row instead of creating a
   /// second product and orphaning the old one — which is what matching on
@@ -127,18 +127,19 @@ model MenuItem {
   /// [id] stays the Cloud row key and the public menu-item identifier the
   /// website already hands out in pre-order payloads. This is the business
   /// identity beside it, not a replacement for it.
-  posMenuItemId String?
-  nameKa        String
-  nameEn        String
-  price         Float
-  sendToKitchen Boolean           @default(true)
-  sortOrder     Int               @default(0)
-  updatedAt     DateTime          @updatedAt
-  subcategoryId String?
-  category      MenuCategory?     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  subcategory   MenuSubcategory?  @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
-  variants      MenuItemVariant[]
-  venue         Venue             @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  posMenuItemId      String?
+  nameKa             String
+  nameEn             String
+  price              Float
+  sendToKitchen      Boolean                 @default(true)
+  sortOrder          Int                     @default(0)
+  updatedAt          DateTime                @updatedAt
+  subcategoryId      String?
+  category           MenuCategory?           @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  subcategory        MenuSubcategory?        @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
+  variants           MenuItemVariant[]
+  venue              Venue                   @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  consumptionRecipes MenuConsumptionRecipe[]
 
   @@unique([venueId, posMenuItemId])
   @@index([venueId])
@@ -148,12 +149,13 @@ model MenuItem {
 }
 
 model MenuItemVariant {
-  id               String   @id @default(uuid())
-  menuItemId       String
-  posMenuVariantId String?
-  size             Float
-  price            Float
-  menuItem         MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  id                 String                  @id @default(uuid())
+  menuItemId         String
+  posMenuVariantId   String?
+  size               Float
+  price              Float
+  menuItem           MenuItem                @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  consumptionRecipes MenuConsumptionRecipe[]
 
   @@unique([menuItemId, posMenuVariantId])
   @@index([menuItemId])
@@ -201,9 +203,10 @@ model StockItem {
   updatedAt    DateTime @updatedAt
   venue        Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
-  purchaseUnits  StockItemPurchaseUnit[]
-  receivingLines ReceivingLine[]
-  movements      StockMovement[]
+  purchaseUnits         StockItemPurchaseUnit[]
+  receivingLines        ReceivingLine[]
+  movements             StockMovement[]
+  consumptionComponents MenuConsumptionComponent[]
 
   @@unique([venueId, sku])
   @@index([venueId, isActive, name])
@@ -388,6 +391,96 @@ model StockMovement {
   @@index([venueId, stockItemId, createdAt, id])
   @@index([venueId, receivingId])
   @@index([venueId, movementType, businessDate])
+  @@schema("pos")
+}
+
+/// What one sold Menu Item is expected to consume from stock.
+///
+/// One generalized definition covers all three shapes a restaurant has: a
+/// bottled product consumes 1 bottle of itself, a draft beer consumes 0.5 L of
+/// a keg-filled tank, and khinkali consume four ingredients. They differ only
+/// in how many components they carry, so they are deliberately not three
+/// systems.
+///
+/// This model defines consumption; it moves no stock. Editing a recipe today
+/// never rewrites what a past sale consumed — Step 4 snapshots [id] and
+/// [revision] at sale time rather than joining this row back later.
+model MenuConsumptionRecipe {
+  id                   String   @id @default(uuid())
+  venueId              String
+  menuItemId           String
+  /// Null when the Menu Item has no meaningful variants.
+  variantId            String?
+  /// `variantId ?? ''`, maintained by the service.
+  ///
+  /// PostgreSQL treats NULLs as distinct, so a unique index over a nullable
+  /// `variantId` would happily allow two definitions for the same unvaried
+  /// Menu Item. This non-null discriminator is what makes "one definition per
+  /// Menu Item + variant" a database rule rather than an application hope.
+  variantKey           String
+  /// Display context frozen at write time; identity stays [menuItemId].
+  menuItemNameSnapshot String
+  variantLabelSnapshot String?
+  /// How many sold units the component quantities describe. 1 is the normal
+  /// per-unit definition; 100 lets a kitchen enter a khinkali batch.
+  yieldQuantity        Decimal  @default(1) @db.Decimal(18, 3)
+  isActive             Boolean  @default(true)
+  notes                String?
+  /// Bumped on every saved change, so a Step 4 consumption snapshot can name
+  /// exactly which definition it used.
+  revision             Int      @default(1)
+  createdById          String
+  createdByName        String
+  updatedById          String
+  updatedByName        String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  venue      Venue                      @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  menuItem   MenuItem                   @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  variant    MenuItemVariant?           @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  components MenuConsumptionComponent[]
+
+  @@unique([menuItemId, variantKey])
+  @@index([venueId, isActive])
+  @@index([venueId, menuItemId])
+  @@schema("pos")
+}
+
+/// One Stock Item a recipe consumes.
+///
+/// The recipe may be entered in any unit compatible with the item's own
+/// dimension ("35 g" of an item held in kg). [baseQuantity] normalizes that to
+/// the item's base unit, and [baseQuantityPerUnit] divides it by the recipe
+/// yield, so a later step reads one authoritative per-sale-unit number and
+/// never re-derives it.
+model MenuConsumptionComponent {
+  id                    String   @id @default(uuid())
+  venueId               String
+  recipeId              String
+  stockItemId           String
+  /// Historical/editor context. The durable identity is [stockItemId].
+  stockItemNameSnapshot String
+  /// As entered, for the whole recipe yield.
+  quantity              Decimal  @db.Decimal(18, 3)
+  unit                  String
+  /// [quantity] in the Stock Item's own base unit, for the whole yield.
+  baseQuantity          Decimal  @db.Decimal(18, 3)
+  baseUnit              String
+  /// baseQuantity / yieldQuantity. Theoretical consumption for one sold unit;
+  /// pour loss and trimming waste are a later step and are not modelled here.
+  baseQuantityPerUnit   Decimal  @db.Decimal(18, 6)
+  sequence              Int
+  notes                 String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  venue     Venue                 @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  recipe    MenuConsumptionRecipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  stockItem StockItem             @relation(fields: [stockItemId], references: [id], onDelete: Restrict)
+
+  @@unique([recipeId, sequence])
+  @@index([venueId, stockItemId])
   @@schema("pos")
 }
 
@@ -922,46 +1015,48 @@ model Organization {
 
 /// One physical restaurant/location owned by an Organization.
 model Venue {
-  id                String                  @id @default(uuid())
-  organizationId    String
-  name              String
-  status            VenueStatus             @default(ACTIVE)
-  timezone          String
-  currency          String
-  createdAt         DateTime                @default(now())
-  updatedAt         DateTime                @updatedAt
-  organization      Organization            @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  devices           Device[]
-  tables            Table[]
-  orders            Order[]
-  menuCategories    MenuCategory[]
-  menuItems         MenuItem[]
-  expenses          Expense[]
-  stockItems        StockItem[]
-  suppliers         Supplier[]
-  cloudSales        CloudSale[]
-  saleLedgerDays    SaleLedgerDay[]
-  staff             Staff[]
-  auditReports      AuditReport[]
-  posReservations   PosReservation[]
-  auditEventLogs    AuditEventLog[]
-  dailySnapshots    DailySnapshot[]
-  settings          Setting[]
-  callbackOutbox    PosCallbackOutbox[]
-  quickOrderDrafts  QuickOrderDraft[]
-  notifications     ManagerNotification[]
-  pushDevices       PushDevice[]
-  planAssignment    VenuePlanAssignment?
-  featureOverrides  VenueFeatureOverride[]
-  websiteConfig     VenueWebsiteConfig?
-  domains           VenueDomain[]
-  websiteTables     WebsiteTable[]
-  websiteBookings   WebsiteReservation[]
-  edgeCommands      EdgeCommand[]
-  deviceEnrollments DeviceEnrollment[]
-  receivings        Receiving[]
-  stockMovements    StockMovement[]
-  purchaseUnits     StockItemPurchaseUnit[]
+  id                    String                     @id @default(uuid())
+  organizationId        String
+  name                  String
+  status                VenueStatus                @default(ACTIVE)
+  timezone              String
+  currency              String
+  createdAt             DateTime                   @default(now())
+  updatedAt             DateTime                   @updatedAt
+  organization          Organization               @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  devices               Device[]
+  tables                Table[]
+  orders                Order[]
+  menuCategories        MenuCategory[]
+  menuItems             MenuItem[]
+  expenses              Expense[]
+  stockItems            StockItem[]
+  suppliers             Supplier[]
+  cloudSales            CloudSale[]
+  saleLedgerDays        SaleLedgerDay[]
+  staff                 Staff[]
+  auditReports          AuditReport[]
+  posReservations       PosReservation[]
+  auditEventLogs        AuditEventLog[]
+  dailySnapshots        DailySnapshot[]
+  settings              Setting[]
+  callbackOutbox        PosCallbackOutbox[]
+  quickOrderDrafts      QuickOrderDraft[]
+  notifications         ManagerNotification[]
+  pushDevices           PushDevice[]
+  planAssignment        VenuePlanAssignment?
+  featureOverrides      VenueFeatureOverride[]
+  websiteConfig         VenueWebsiteConfig?
+  domains               VenueDomain[]
+  websiteTables         WebsiteTable[]
+  websiteBookings       WebsiteReservation[]
+  edgeCommands          EdgeCommand[]
+  deviceEnrollments     DeviceEnrollment[]
+  receivings            Receiving[]
+  stockMovements        StockMovement[]
+  purchaseUnits         StockItemPurchaseUnit[]
+  consumptionRecipes    MenuConsumptionRecipe[]
+  consumptionComponents MenuConsumptionComponent[]
 
   @@index([organizationId])
   @@schema("pos")

@@ -12,9 +12,16 @@ export const InventoryAuditAction = {
   RECEIVING_UPDATED: 'RECEIVING_UPDATED',
   RECEIVING_POSTED: 'RECEIVING_POSTED',
   RECEIVING_CANCELLED: 'RECEIVING_CANCELLED',
+  RECIPE_CREATED: 'RECIPE_CREATED',
+  RECIPE_UPDATED: 'RECIPE_UPDATED',
+  RECIPE_DISABLED: 'RECIPE_DISABLED',
 } as const;
 
-export type InventoryAuditEntityType = 'STOCK_ITEM' | 'SUPPLIER' | 'RECEIVING';
+export type InventoryAuditEntityType =
+  | 'STOCK_ITEM'
+  | 'SUPPLIER'
+  | 'RECEIVING'
+  | 'RECIPE';
 
 export type InventoryActor = Pick<
   ManagerAuthContext,

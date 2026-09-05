@@ -24,6 +24,7 @@ export const AUDIT_LOG_ENTITY_TYPES = [
   'STOCK_ITEM',
   'SUPPLIER',
   'RECEIVING',
+  'RECIPE',
   'PACKAGE',
   'EXPENSE',
   'CLOSE_DAY',
@@ -168,6 +169,12 @@ const ACTION_RULES: Readonly<Record<string, EntityRule>> = {
   RECEIVING_UPDATED: { entityType: 'RECEIVING', idKeys: ['receivingId'] },
   RECEIVING_POSTED: { entityType: 'RECEIVING', idKeys: ['receivingId'] },
   RECEIVING_CANCELLED: { entityType: 'RECEIVING', idKeys: ['receivingId'] },
+
+  // Menu consumption definitions. The row summarises the card rather than
+  // carrying it: the components are readable at the recipe itself.
+  RECIPE_CREATED: { entityType: 'RECIPE', idKeys: ['recipeId'] },
+  RECIPE_UPDATED: { entityType: 'RECIPE', idKeys: ['recipeId'] },
+  RECIPE_DISABLED: { entityType: 'RECIPE', idKeys: ['recipeId'] },
 
   // Package definitions. Applying a package to an Order is `APPLY_PACKAGE` on
   // that Order's report and is deliberately not mirrored here.

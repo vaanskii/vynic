@@ -51,6 +51,12 @@ abstract final class GlobalAuditRegistry {
     GlobalAuditAction.menuCategoryDeleted,
   };
 
+  static const Set<String> _menuVariantActions = {
+    GlobalAuditAction.menuVariantCreated,
+    GlobalAuditAction.menuVariantUpdated,
+    GlobalAuditAction.menuVariantDeleted,
+  };
+
   static const Set<String> _packageActions = {
     GlobalAuditAction.packageCreated,
     GlobalAuditAction.packageUpdated,
@@ -147,6 +153,12 @@ abstract final class GlobalAuditRegistry {
       return GlobalAuditEntityRef(
         GlobalAuditEntity.menuCategory,
         _clean(data['categoryName']?.toString()),
+      );
+    }
+    if (_menuVariantActions.contains(upper)) {
+      return GlobalAuditEntityRef(
+        GlobalAuditEntity.menuVariant,
+        _clean(data['variantId']?.toString()),
       );
     }
     if (_packageActions.contains(upper)) {

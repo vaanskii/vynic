@@ -154,6 +154,172 @@ void main() {
     });
   });
 
+  group('category and variant identity', () {
+    test('200 menu nodes created in one instant have unique ids', () {
+      final ids = <String>{};
+      for (var i = 0; i < 200; i++) {
+        ids.add(newMenuNodeId());
+      }
+      expect(ids, hasLength(200));
+    });
+
+    test('category and subcategory renames preserve their ids', () async {
+      await seedCategory();
+      await MenuRepository.addSubcategory(
+        categoryIndex: 0,
+        slug: 'soups',
+        nameEn: 'Soups',
+        nameKa: 'სუპები',
+        actorId: 'nino',
+      );
+      final category = DatabaseCore.menuBox!.getAt(0)!;
+      final categoryId = category.id;
+      final subcategoryId = category.subcategories!.single.id;
+
+      await MenuRepository.updateCategory(
+        index: 0,
+        slug: 'georgian-cuisine',
+        nameEn: 'Georgian Cuisine',
+        nameKa: 'ქართული სამზარეულო',
+        actorId: 'manager',
+        source: AuditSource.manager,
+      );
+      await MenuRepository.updateSubcategory(
+        categoryIndex: 0,
+        subcategoryIndex: 0,
+        slug: 'traditional-soups',
+        nameEn: 'Traditional Soups',
+        nameKa: 'ტრადიციული სუპები',
+        actorId: 'manager',
+        source: AuditSource.manager,
+      );
+
+      final renamed = DatabaseCore.menuBox!.getAt(0)!;
+      expect(renamed.id, categoryId);
+      expect(renamed.subcategories!.single.id, subcategoryId);
+    });
+
+    test('variant size and price updates preserve its id', () async {
+      await seedCategory();
+      await MenuRepository.addItemToCategory(
+        categoryIndex: 0,
+        nameEn: 'Lemonade',
+        nameKa: 'ლიმონათი',
+        variants: [MenuVariantDB.create(size: 0.5, price: 5)],
+        actorId: 'nino',
+      );
+      final item = itemAt(0, 0);
+      final itemId = item.id;
+      final variantId = item.variants!.single.id;
+
+      await MenuRepository.updateItemInCategory(
+        categoryIndex: 0,
+        itemIndex: 0,
+        nameEn: 'Lemonade',
+        nameKa: 'ლიმონათი',
+        variants: [MenuVariantDB(id: variantId, size: 0.75, price: 7)],
+        actorId: 'manager',
+        source: AuditSource.manager,
+      );
+
+      expect(itemAt(0, 0).id, itemId);
+      expect(itemAt(0, 0).variants!.single.id, variantId);
+      expect(itemAt(0, 0).variants!.single.size, 0.75);
+      expect(itemAt(0, 0).variants!.single.price, 7);
+    });
+
+    test(
+      'backup round trip preserves category, subcategory and variant ids',
+      () async {
+        await seedCategory();
+        await MenuRepository.addSubcategory(
+          categoryIndex: 0,
+          slug: 'drinks',
+          nameEn: 'Drinks',
+          nameKa: 'სასმელები',
+          actorId: 'nino',
+        );
+        await MenuRepository.addItemToSubcategory(
+          categoryIndex: 0,
+          subcategoryIndex: 0,
+          nameEn: 'Water',
+          nameKa: 'წყალი',
+          variants: [MenuVariantDB.create(size: 0.5, price: 2)],
+          actorId: 'nino',
+        );
+        final before = DatabaseCore.menuBox!.getAt(0)!;
+        final categoryId = before.id;
+        final subcategoryId = before.subcategories!.single.id;
+        final variantId =
+            before.subcategories!.single.items.single.variants!.single.id;
+
+        final exported = BackupRepository.exportMenu();
+        await BackupRepository.importMenuFromJson(
+          exported,
+          clearExisting: true,
+          silent: true,
+        );
+
+        final restored = DatabaseCore.menuBox!.getAt(0)!;
+        expect(restored.id, categoryId);
+        expect(restored.subcategories!.single.id, subcategoryId);
+        expect(
+          restored.subcategories!.single.items.single.variants!.single.id,
+          variantId,
+        );
+      },
+    );
+
+    test(
+      'legacy category, subcategory, item and variant get ids once',
+      () async {
+        await DatabaseCore.menuBox!.add(
+          MenuCategoryDB(
+            slug: 'legacy',
+            translationsEn: {'name': 'Legacy'},
+            translationsKa: {'name': 'Legacy'},
+            items: [
+              MenuItemDB(
+                translationsEn: {'name': 'Water'},
+                translationsKa: {'name': 'Water'},
+                variants: [MenuVariantDB(size: 0.5, price: 2)],
+              ),
+            ],
+            subcategories: [
+              MenuSubcategoryDB(
+                slug: 'legacy-sub',
+                translationsEn: {'name': 'Legacy sub'},
+                translationsKa: {'name': 'Legacy sub'},
+                items: [],
+              ),
+            ],
+          ),
+        );
+
+        expect(await MenuRepository.ensureStableMenuIds(), 4);
+        final assigned = DatabaseCore.menuBox!.getAt(0)!;
+        final ids = [
+          assigned.id,
+          assigned.subcategories!.single.id,
+          assigned.items!.single.id,
+          assigned.items!.single.variants!.single.id,
+        ];
+        expect(ids, everyElement(isNotNull));
+        expect(await MenuRepository.ensureStableMenuIds(), 0);
+
+        await DatabaseCore.menuBox!.close();
+        DatabaseCore.menuBox = await Hive.openBox<MenuCategoryDB>('mi_menu');
+        final restarted = DatabaseCore.menuBox!.getAt(0)!;
+        expect([
+          restarted.id,
+          restarted.subcategories!.single.id,
+          restarted.items!.single.id,
+          restarted.items!.single.variants!.single.id,
+        ], ids);
+      },
+    );
+  });
+
   group('the id survives', () {
     test('a rename', () async {
       await seedCategory();
@@ -311,12 +477,15 @@ void main() {
       );
     }
 
-    test('a row written before the field decodes rather than failing', () async {
-      await seedLegacyMenu();
+    test(
+      'a row written before the field decodes rather than failing',
+      () async {
+        await seedLegacyMenu();
 
-      expect(itemAt(0, 0).id, isNull);
-      expect(itemAt(0, 0).translationsEn['name'], 'Khinkali');
-    });
+        expect(itemAt(0, 0).id, isNull);
+        expect(itemAt(0, 0).translationsEn['name'], 'Khinkali');
+      },
+    );
 
     test('the rollout assigns an id once and only once', () async {
       await seedLegacyMenu();
@@ -386,7 +555,11 @@ void main() {
 
       expect(DatabaseCore.menuBox!.length, 1);
       final id = itemAt(0, 0).id;
-      expect(id, isNotNull, reason: 'restore must not leave items unidentified');
+      expect(
+        id,
+        isNotNull,
+        reason: 'restore must not leave items unidentified',
+      );
 
       // And restoring the same file again does not mint a third identity for
       // a product that already has one on this install.
@@ -401,6 +574,48 @@ void main() {
   });
 
   group('audit', () {
+    test('category rename and variant update use stable entity ids', () async {
+      await seedCategory();
+      final categoryId = DatabaseCore.menuBox!.getAt(0)!.id!;
+      await MenuRepository.addItemToCategory(
+        categoryIndex: 0,
+        nameEn: 'Lemonade',
+        nameKa: 'ლიმონათი',
+        variants: [MenuVariantDB.create(size: 0.5, price: 5)],
+        actorId: 'nino',
+      );
+      final item = itemAt(0, 0);
+      final variantId = item.variants!.single.id!;
+
+      await MenuRepository.updateCategory(
+        index: 0,
+        slug: 'cold-drinks',
+        nameEn: 'Cold Drinks',
+        nameKa: 'ცივი სასმელები',
+        actorId: 'nino',
+      );
+      await MenuRepository.updateItemInCategory(
+        categoryIndex: 0,
+        itemIndex: 0,
+        nameEn: 'Lemonade',
+        nameKa: 'ლიმონათი',
+        variants: [MenuVariantDB(id: variantId, size: 0.5, price: 6)],
+        actorId: 'nino',
+      );
+
+      final categoryUpdate = feed(
+        action: GlobalAuditAction.menuCategoryUpdated,
+      ).single;
+      final variantUpdate = feed(
+        action: GlobalAuditAction.menuVariantUpdated,
+      ).single;
+      expect(categoryUpdate.entityType, GlobalAuditEntity.menuCategory);
+      expect(categoryUpdate.entityId, categoryId);
+      expect(variantUpdate.entityType, GlobalAuditEntity.menuVariant);
+      expect(variantUpdate.entityId, variantId);
+      expect(variantUpdate.data['itemId'], item.id);
+    });
+
     test('a rename extends one timeline instead of starting two', () async {
       await seedCategory();
       await addKhinkali();
@@ -464,8 +679,14 @@ void main() {
           .items
           .single
           .id;
-      expect(feed(action: GlobalAuditAction.menuItemCreated).single.entityId, id);
-      expect(feed(action: GlobalAuditAction.menuItemUpdated).single.entityId, id);
+      expect(
+        feed(action: GlobalAuditAction.menuItemCreated).single.entityId,
+        id,
+      );
+      expect(
+        feed(action: GlobalAuditAction.menuItemUpdated).single.entityId,
+        id,
+      );
     });
 
     test('an item with no id yet is still audited, by its path', () async {

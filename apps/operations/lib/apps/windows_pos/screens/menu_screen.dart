@@ -85,6 +85,8 @@ class _CartEntry {
   final double unitPrice;
   int quantity;
   String? comment; // Item-specific comment
+  final String? menuItemId;
+  final String? variantId;
 
   _CartEntry({
     required this.key,
@@ -92,6 +94,8 @@ class _CartEntry {
     required this.unitPrice,
     required this.quantity,
     this.comment,
+    this.menuItemId,
+    this.variantId,
   });
 
   double get total => unitPrice * quantity;
@@ -476,6 +480,12 @@ class _MenuScreenState extends State<MenuScreen> {
           waiterName: username,
           timestamp: timestamp,
           note: noteSegments.isEmpty ? null : noteSegments.join(' • '),
+          details: <String, dynamic>{
+            if ((nextItem?.menuItemId ?? prevItem?.menuItemId) != null)
+              'menuItemId': nextItem?.menuItemId ?? prevItem?.menuItemId,
+            if ((nextItem?.variantId ?? prevItem?.variantId) != null)
+              'variantId': nextItem?.variantId ?? prevItem?.variantId,
+          },
         ),
       );
     }
@@ -543,6 +553,8 @@ class _MenuScreenState extends State<MenuScreen> {
         unitPrice: item.unitPrice,
         quantity: item.quantity,
         comment: item.comment,
+        menuItemId: item.menuItemId,
+        variantId: item.variantId,
       );
     }
     _captureInitialCartSnapshot(force: true);
@@ -568,6 +580,8 @@ class _MenuScreenState extends State<MenuScreen> {
               unitPrice: item.unitPrice,
               quantity: item.quantity,
               comment: item.comment,
+              menuItemId: item.menuItemId,
+              variantId: item.variantId,
             );
           }
         });
@@ -633,9 +647,11 @@ class _MenuScreenState extends State<MenuScreen> {
     String key,
     String name,
     double unitPrice,
-    int qty, [
+    int qty, {
     String? comment,
-  ]) {
+    String? menuItemId,
+    String? variantId,
+  }) {
     setState(() {
       if (_cart.containsKey(key)) {
         _cart[key]!.quantity += qty;
@@ -650,6 +666,8 @@ class _MenuScreenState extends State<MenuScreen> {
           unitPrice: unitPrice,
           quantity: qty,
           comment: comment,
+          menuItemId: menuItemId,
+          variantId: variantId,
         );
       }
     });
@@ -675,6 +693,8 @@ class _MenuScreenState extends State<MenuScreen> {
             quantity: cartEntry.quantity,
             total: cartEntry.total,
             comment: cartEntry.comment,
+            menuItemId: cartEntry.menuItemId,
+            variantId: cartEntry.variantId,
           ),
         )
         .toList();
@@ -690,6 +710,8 @@ class _MenuScreenState extends State<MenuScreen> {
           unitPrice: item.unitPrice,
           quantity: item.quantity,
           comment: item.comment,
+          menuItemId: item.menuItemId,
+          variantId: item.variantId,
         );
       }
       _selectedQuickOrderDraftId = draft.id;
@@ -712,6 +734,8 @@ class _MenuScreenState extends State<MenuScreen> {
           quantity: cartEntry.quantity,
           total: cartEntry.total,
           comment: cartEntry.comment,
+          menuItemId: cartEntry.menuItemId,
+          variantId: cartEntry.variantId,
         );
       }).toList();
 
@@ -731,6 +755,8 @@ class _MenuScreenState extends State<MenuScreen> {
           quantity: cartEntry.quantity,
           total: cartEntry.total,
           comment: cartEntry.comment,
+          menuItemId: cartEntry.menuItemId,
+          variantId: cartEntry.variantId,
         );
       }).toList();
 
@@ -840,6 +866,8 @@ class _MenuScreenState extends State<MenuScreen> {
           quantity: cartEntry.quantity,
           total: cartEntry.total,
           comment: cartEntry.comment,
+          menuItemId: cartEntry.menuItemId,
+          variantId: cartEntry.variantId,
         );
       }).toList();
 
@@ -1895,6 +1923,8 @@ class _MenuScreenState extends State<MenuScreen> {
             '$itemName - $variantLabel',
             selectedVariant.price,
             qty,
+            menuItemId: item.id,
+            variantId: selectedVariant.id,
           );
           _clearSearch();
         }
@@ -1909,7 +1939,13 @@ class _MenuScreenState extends State<MenuScreen> {
       );
 
       if (qty != null && qty > 0 && mounted) {
-        _addToCartEntry(itemName, itemName, item.price ?? 0.0, qty);
+        _addToCartEntry(
+          itemName,
+          itemName,
+          item.price ?? 0.0,
+          qty,
+          menuItemId: item.id,
+        );
         _clearSearch();
       }
     }

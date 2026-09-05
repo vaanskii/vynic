@@ -91,6 +91,8 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
                 (entry.unitPrice * quantity).toStringAsFixed(2),
               ),
               comment: entry.comment,
+              menuItemId: entry.menuItemId,
+              variantId: entry.variantId,
             );
           })
           .toList();

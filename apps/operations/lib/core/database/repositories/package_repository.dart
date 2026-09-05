@@ -17,6 +17,8 @@ class PackageRepository {
       itemName: item.itemName,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
+      menuItemId: item.menuItemId,
+      variantId: item.variantId,
     );
   }
 

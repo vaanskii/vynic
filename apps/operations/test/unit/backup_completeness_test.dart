@@ -52,7 +52,17 @@ void _registerAdapters() {
   if (!Hive.isAdapterRegistered(2)) Hive.registerAdapter(TableModelAdapter());
   if (!Hive.isAdapterRegistered(3)) Hive.registerAdapter(OrderItemAdapter());
   if (!Hive.isAdapterRegistered(4)) Hive.registerAdapter(OrderAdapter());
+  if (!Hive.isAdapterRegistered(5)) {
+    Hive.registerAdapter(MenuCategoryDBAdapter());
+    Hive.registerAdapter(MenuSubcategoryDBAdapter());
+    Hive.registerAdapter(MenuItemDBAdapter());
+    Hive.registerAdapter(MenuVariantDBAdapter());
+  }
   if (!Hive.isAdapterRegistered(9)) Hive.registerAdapter(ReservationAdapter());
+  if (!Hive.isAdapterRegistered(11)) {
+    Hive.registerAdapter(PackageAdapter());
+    Hive.registerAdapter(PackageItemAdapter());
+  }
 }
 
 Future<void> _openBoxes() async {
@@ -219,6 +229,94 @@ void main() {
       );
     }
   });
+
+  test(
+    'order and package line menu identities survive backup restore',
+    () async {
+      await DatabaseCore.orderBox!.clear();
+      await DatabaseCore.packageBox!.clear();
+      final order = Order(
+        orderId: 17,
+        tableNumbers: const ['4'],
+        floor: 'first',
+        items: [
+          OrderItem(
+            itemKey: 'lemonade|0.5',
+            itemName: 'Lemonade 0.5L',
+            unitPrice: 5,
+            quantity: 2,
+            total: 10,
+            menuItemId: 'menu-lemonade',
+            variantId: 'variant-half-litre',
+          ),
+        ],
+        totalAmount: 10,
+        createdAt: DateTime(2026, 8, 22, 12),
+        createdBy: 'Nino',
+        packageId: 'package-banquet',
+        packageItems: [
+          OrderItem(
+            itemKey: 'water|1',
+            itemName: 'Water 1L',
+            unitPrice: 3,
+            quantity: 1,
+            total: 3,
+            menuItemId: 'menu-water',
+            variantId: 'variant-one-litre',
+          ),
+        ],
+      );
+      final package = Package(
+        packageId: 'package-banquet',
+        name: 'Banquet',
+        items: [
+          PackageItem(
+            itemKey: 'water|1',
+            itemName: 'Water 1L',
+            quantity: 1,
+            unitPrice: 3,
+            menuItemId: 'menu-water',
+            variantId: 'variant-one-litre',
+          ),
+        ],
+        pricePerPerson: 40,
+        createdAt: DateTime(2026, 8, 22),
+        createdBy: 'Nino',
+        servingSize: 10,
+      );
+      await DatabaseCore.orderBox!.put(order.orderId, order);
+      await DatabaseCore.packageBox!.put(package.packageId, package);
+
+      final payload = await _backupPayload();
+      final orderJson = (payload['orders'] as List).single as Map;
+      final packageJson = (payload['packages'] as List).single as Map;
+      expect(
+        (orderJson['items'] as List).single['menuItemId'],
+        'menu-lemonade',
+      );
+      expect(
+        (orderJson['packageItems'] as List).single['variantId'],
+        'variant-one-litre',
+      );
+      expect((packageJson['items'] as List).single['menuItemId'], 'menu-water');
+
+      await DatabaseCore.orderBox!.clear();
+      await DatabaseCore.packageBox!.clear();
+      await BackupRepository.restoreDataBackupFromJson(
+        jsonEncode(payload),
+        backupBeforeRestore: false,
+      );
+
+      final restoredOrder = DatabaseCore.orderBox!.values.single;
+      final restoredPackage = DatabaseCore.packageBox!.values.single;
+      expect(restoredOrder.items.single.menuItemId, 'menu-lemonade');
+      expect(restoredOrder.items.single.variantId, 'variant-half-litre');
+      expect(restoredOrder.packageItems.single.menuItemId, 'menu-water');
+      expect(restoredOrder.packageItems.single.variantId, 'variant-one-litre');
+      expect(restoredPackage.items.single.menuItemId, 'menu-water');
+      expect(restoredPackage.items.single.variantId, 'variant-one-litre');
+    },
+  );
 
   test('the payload is plain JSON all the way down', () async {
     // Written with JsonEncoder, so anything unencodable would throw at backup

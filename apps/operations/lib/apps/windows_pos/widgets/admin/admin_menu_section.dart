@@ -3227,7 +3227,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
               final size = double.tryParse(sizeController.text);
               final price = double.tryParse(priceController.text);
               if (size != null && price != null) {
-                onAdd(MenuVariantDB(size: size, price: price));
+                onAdd(MenuVariantDB.create(size: size, price: price));
                 Navigator.of(context).pop();
               }
             },

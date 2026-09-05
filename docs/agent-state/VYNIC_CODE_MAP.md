@@ -58,6 +58,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Backend ingestion: `apps/backend/src/pos/sync/application/ingest-audit-reports.service.ts`
 - Report Order-kind derivation: `apps/backend/src/pos/audit/audit-order-kind.ts`
 - Integration proof: `apps/backend/src/pos/sync/application/audit-incremental-sync.integration.spec.ts`
+- POS Order-audit UI and constrained render proof: `apps/operations/lib/apps/windows_pos/widgets/admin/admin_audit_log_section.dart`, `apps/operations/test/widget/admin_sections_render_test.dart`
 - Contract notes: `docs/AUDIT_SYNC.md`
 - Event/action/status taxonomy audit: `docs/AUDIT_TAXONOMY_AUDIT.md`
 - Storage/relation integrity investigation: `docs/AUDIT_STORAGE_RELATIONS.md`
@@ -125,17 +126,18 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Order mode is not a field: takeaway is `floor == 'takeaway'` with a `TA-<id>` table
 - Order status enum, and the one rule for a remote `ORDER_STATUS_UPDATE`: `apps/operations/lib/core/models/order_status.dart` (`OrderStatus`, `RemoteOrderStatusRule`), applied in `apps/operations/lib/core/services/pos/pos_command_applier.dart` (`updateOrderStatus`), proof in `apps/operations/test/unit/remote_order_status_test.dart`
 - Package model/repository/admin: `apps/operations/lib/core/models/package.dart`, `apps/operations/lib/core/database/repositories/package_repository.dart`, `apps/operations/lib/apps/windows_pos/widgets/admin/admin_packages_section.dart`
+- Stable Menu references on frozen Order/Package lines: `OrderItem.menuItemId` / `variantId`, `PackageItem.menuItemId` / `variantId`; transfer lives in `apps/operations/lib/core/services/pos/order_item_transfer.dart`, wire ingestion in `apps/operations/lib/core/services/pos/pos_command_applier.dart`, and regression proofs in `apps/operations/test/unit/menu_line_identity_test.dart`, `backup_completeness_test.dart`, `reservation_audit_test.dart`, `takeaway_order_source_test.dart`, and `order_item_transfer_test.dart`
 - Takeaway detection, tickets and the home panel's source: `apps/operations/lib/core/models/takeaway_order.dart`, `apps/operations/lib/apps/windows_pos/widgets/home/home_take_away_section.dart`, proof in `apps/operations/test/unit/takeaway_order_source_test.dart`
 - Booking-vs-bookkeeping predicates: `apps/operations/lib/core/utils/reservation_table_availability.dart`, `apps/operations/lib/core/utils/home_reservations_helper.dart`, `apps/backend/src/website/reservation/reservation-table-codes.ts`
 
 ## Menu
 
-- POS model and stable item identity: `apps/operations/lib/core/models/menu_item_db.dart` (`MenuItemDB.id`, `newMenuItemId`)
-- CRUD, audit and the one-time identity rollout: `apps/operations/lib/core/database/repositories/menu_repository.dart` (`ensureStableItemIds`, called from `HiveMigrationService.migrateV6toV7` and after a backup restore)
-- Cloud mirror and identity matching: `apps/backend/src/pos/sync/snapshot/menu-sync.service.ts` (`posMenuItemId` first, name-under-parent only for an unclaimed row)
+- POS model and stable node identity: `apps/operations/lib/core/models/menu_item_db.dart` (`MenuCategoryDB.id`, `MenuSubcategoryDB.id`, `MenuItemDB.id`, `MenuVariantDB.id`)
+- CRUD, stable-ID audit and one-time rollout: `apps/operations/lib/core/database/repositories/menu_repository.dart` (`ensureStableMenuIds`, called from Hive migration v8 and after backup restore)
+- Cloud mirror and authoritative reconciliation: `apps/backend/src/pos/sync/snapshot/menu-sync.service.ts` (stable identity first; legacy adoption only for unclaimed rows; identity-version gate; transactional child-first cleanup of explicitly POS-owned rows)
 - Manager read: `apps/backend/src/mobile/services/mobile-menu.service.ts`; website read: `apps/backend/src/website/menu/menu.service.ts` (publishes the Cloud `MenuItem.id`, not the POS id)
 - Only writer is the POS Admin: `apps/operations/lib/apps/windows_pos/widgets/admin/admin_menu_section.dart`
-- Proofs: `apps/operations/test/unit/menu_item_identity_test.dart`, `apps/backend/src/pos/sync/snapshot/menu-sync.integration.spec.ts`
+- Proofs: `apps/operations/test/unit/menu_item_identity_test.dart`, `apps/backend/src/pos/sync/snapshot/menu-sync.service.spec.ts`, `apps/backend/src/pos/sync/snapshot/menu-sync.integration.spec.ts`
 
 ## Reservations
 
@@ -182,6 +184,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 - Schema: `apps/backend/prisma/schema.prisma`
 - Migrations: `apps/backend/prisma/migrations/`
+- Complete Menu/line identity migration: `apps/backend/prisma/migrations/20260906140000_complete_menu_identity/migration.sql`
 - Prisma module/service: `apps/backend/src/shared/prisma/`, `apps/backend/src/prisma.service.ts`
 - Backend application wiring: `apps/backend/src/app.module.ts`
 

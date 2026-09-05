@@ -185,7 +185,7 @@ class MenuRepository {
   static MenuCategoryDB _convertJsonToMenuCategory(Map<String, dynamic> json) {
     final nameEn = json['translations']['en']['name'] as String;
     final nameKa = json['translations']['ka']['name'] as String;
-    return MenuCategoryDB(
+    return MenuCategoryDB.create(
       slug: json['slug'] as String,
       translationsEn: {'name': nameEn},
       translationsKa: {'name': nameKa},
@@ -213,7 +213,7 @@ class MenuRepository {
   static MenuSubcategoryDB _convertJsonToMenuSubcategory(
     Map<String, dynamic> json,
   ) {
-    return MenuSubcategoryDB(
+    return MenuSubcategoryDB.create(
       slug: json['slug'] as String,
       translationsEn: {'name': json['translations']['en']['name'] as String},
       translationsKa: {'name': json['translations']['ka']['name'] as String},
@@ -240,7 +240,7 @@ class MenuRepository {
 
   // Convert JSON to MenuVariantDB
   static MenuVariantDB _convertJsonToMenuVariant(Map<String, dynamic> json) {
-    return MenuVariantDB(
+    return MenuVariantDB.create(
       size: (json['size'] as num).toDouble(),
       price: (json['price'] as num).toDouble(),
     );
@@ -284,7 +284,6 @@ class MenuRepository {
     }
   }
 
-
   // ==================== MENU AUDIT ====================
 
   /// Attribution for a menu change whose caller did not say who made it.
@@ -296,8 +295,11 @@ class MenuRepository {
   /// was the audit `entityId` before stable ids existed, which is why a rename
   /// used to start a new timeline; historical rows still carry a path here and
   /// are never rewritten.
-  static String _itemPath(String categorySlug, String? subSlug, String nameEn) =>
-      subSlug == null || subSlug.isEmpty
+  static String _itemPath(
+    String categorySlug,
+    String? subSlug,
+    String nameEn,
+  ) => subSlug == null || subSlug.isEmpty
       ? '$categorySlug/$nameEn'
       : '$categorySlug/$subSlug/$nameEn';
 
@@ -350,6 +352,162 @@ class MenuRepository {
       );
     }
     return assigned;
+  }
+
+  /// Assigns identities to every category, subcategory, item and variant that
+  /// predates stable menu-node identity, and persists each containing category
+  /// once. Existing ids are never replaced.
+  static Future<int> ensureStableMenuIds([Box<MenuCategoryDB>? box]) async {
+    final menuBox = box ?? DatabaseCore.menuBox;
+    if (menuBox == null) return 0;
+    var assigned = 0;
+    for (final category in menuBox.values) {
+      var touched = false;
+      if ((category.id?.trim() ?? '').isEmpty) {
+        category.id = newMenuNodeId();
+        assigned++;
+        touched = true;
+      }
+      for (final item in category.items ?? const <MenuItemDB>[]) {
+        if ((item.id?.trim() ?? '').isEmpty) {
+          item.id = newMenuItemId();
+          assigned++;
+          touched = true;
+        }
+        for (final variant in item.variants ?? const <MenuVariantDB>[]) {
+          if ((variant.id?.trim() ?? '').isEmpty) {
+            variant.id = newMenuNodeId();
+            assigned++;
+            touched = true;
+          }
+        }
+      }
+      for (final sub in category.subcategories ?? const <MenuSubcategoryDB>[]) {
+        if ((sub.id?.trim() ?? '').isEmpty) {
+          sub.id = newMenuNodeId();
+          assigned++;
+          touched = true;
+        }
+        for (final item in sub.items) {
+          if ((item.id?.trim() ?? '').isEmpty) {
+            item.id = newMenuItemId();
+            assigned++;
+            touched = true;
+          }
+          for (final variant in item.variants ?? const <MenuVariantDB>[]) {
+            if ((variant.id?.trim() ?? '').isEmpty) {
+              variant.id = newMenuNodeId();
+              assigned++;
+              touched = true;
+            }
+          }
+        }
+      }
+      if (touched) await category.save();
+    }
+    if (assigned > 0) {
+      developer.log(
+        '[Menu] assigned $assigned stable menu node id(s)',
+        name: 'MenuRepository',
+      );
+    }
+    return assigned;
+  }
+
+  static void _ensureVariantIds(List<MenuVariantDB>? variants) {
+    for (final variant in variants ?? const <MenuVariantDB>[]) {
+      if ((variant.id?.trim() ?? '').isEmpty) {
+        variant.id = newMenuNodeId();
+      }
+    }
+  }
+
+  static List<MenuVariantDB> _snapshotVariants(
+    List<MenuVariantDB>? variants,
+  ) => [
+    for (final variant in variants ?? const <MenuVariantDB>[])
+      MenuVariantDB(id: variant.id, size: variant.size, price: variant.price),
+  ];
+
+  static Future<void> _auditVariantChanges({
+    required List<MenuVariantDB> before,
+    required List<MenuVariantDB> after,
+    required MenuItemDB item,
+    required String itemName,
+    required String actorId,
+    required String? actorName,
+    required AuditSource source,
+  }) async {
+    final itemId = item.id?.trim() ?? '';
+    final beforeById = <String, MenuVariantDB>{
+      for (final variant in before)
+        if ((variant.id?.trim() ?? '').isNotEmpty) variant.id!.trim(): variant,
+    };
+    final afterById = <String, MenuVariantDB>{
+      for (final variant in after)
+        if ((variant.id?.trim() ?? '').isNotEmpty) variant.id!.trim(): variant,
+    };
+    for (final entry in afterById.entries) {
+      final previous = beforeById[entry.key];
+      final variant = entry.value;
+      if (previous == null) {
+        await GlobalAudit.menuVariant(
+          action: GlobalAuditAction.menuVariantCreated,
+          variantId: entry.key,
+          itemId: itemId,
+          itemName: itemName,
+          size: variant.size,
+          price: variant.price,
+          actorId: actorId,
+          actorName: actorName,
+          source: source,
+        );
+        continue;
+      }
+      final changes = <Map<String, dynamic>>[
+        if (previous.size != variant.size)
+          GlobalAudit.change(
+            field: 'size',
+            previousValue: previous.size,
+            newValue: variant.size,
+          ),
+        if (previous.price != variant.price)
+          GlobalAudit.change(
+            field: 'price',
+            previousValue: previous.price,
+            newValue: variant.price,
+          ),
+      ];
+      if (changes.isNotEmpty) {
+        await GlobalAudit.menuVariant(
+          action: GlobalAuditAction.menuVariantUpdated,
+          variantId: entry.key,
+          itemId: itemId,
+          itemName: itemName,
+          size: variant.size,
+          price: variant.price,
+          changes: changes,
+          actorId: actorId,
+          actorName: actorName,
+          source: source,
+        );
+      }
+    }
+    for (final entry in beforeById.entries) {
+      if (afterById.containsKey(entry.key)) continue;
+      final variant = entry.value;
+      await GlobalAudit.menuVariant(
+        action: GlobalAuditAction.menuVariantDeleted,
+        variantId: entry.key,
+        itemId: itemId,
+        itemName: itemName,
+        size: variant.size,
+        price: variant.price,
+        actorId: actorId,
+        actorName: actorName,
+        source: source,
+      );
+    }
   }
 
   static String _displayName(String nameKa, String nameEn) =>
@@ -434,7 +592,7 @@ class MenuRepository {
     AuditSource source = AuditSource.pos,
   }) async {
     try {
-      final category = MenuCategoryDB(
+      final category = MenuCategoryDB.create(
         slug: slug,
         translationsEn: {'name': nameEn},
         translationsKa: {'name': nameKa},
@@ -454,6 +612,7 @@ class MenuRepository {
       );
       await GlobalAudit.menuCategory(
         action: GlobalAuditAction.menuCategoryCreated,
+        categoryId: category.id!,
         categoryName: slug,
         actorId: actorId,
         actorName: actorName,
@@ -537,6 +696,7 @@ class MenuRepository {
         if (changes.isNotEmpty) {
           await GlobalAudit.menuCategory(
             action: GlobalAuditAction.menuCategoryUpdated,
+            categoryId: category.id ?? previousSlug,
             categoryName: slug,
             changes: changes,
             actorId: actorId,
@@ -573,6 +733,7 @@ class MenuRepository {
       SyncHub.notify(SyncEvent(type: SyncEventType.menu, action: 'deleted'));
       await GlobalAudit.menuCategory(
         action: GlobalAuditAction.menuCategoryDeleted,
+        categoryId: category?.id ?? slug,
         categoryName: slug,
         actorId: actorId,
         actorName: actorName,
@@ -608,6 +769,7 @@ class MenuRepository {
     try {
       final category = DatabaseCore.menuBox!.getAt(categoryIndex);
       if (category != null) {
+        _ensureVariantIds(variants);
         final item = MenuItemDB.create(
           translationsEn: {'name': nameEn},
           translationsKa: {'name': nameKa},
@@ -639,6 +801,15 @@ class MenuRepository {
             'sendToKitchen': item.sendToKitchen,
             'variantCount': variants?.length ?? 0,
           },
+        );
+        await _auditVariantChanges(
+          before: const <MenuVariantDB>[],
+          after: item.variants ?? const <MenuVariantDB>[],
+          item: item,
+          itemName: _displayName(nameKa, nameEn),
+          actorId: actorId,
+          actorName: actorName,
+          source: source,
         );
         return true;
       }
@@ -677,6 +848,8 @@ class MenuRepository {
         final previousPrice = before.price;
         final previousSendToKitchen = before.sendToKitchen;
         final previousVariantCount = before.variants?.length ?? 0;
+        final previousVariants = _snapshotVariants(before.variants);
+        _ensureVariantIds(variants);
         category.items![itemIndex].translationsEn = {'name': nameEn};
         category.items![itemIndex].translationsKa = {'name': nameKa};
         category.items![itemIndex].price = price;
@@ -724,6 +897,15 @@ class MenuRepository {
             },
           );
         }
+        await _auditVariantChanges(
+          before: previousVariants,
+          after: category.items![itemIndex].variants ?? const <MenuVariantDB>[],
+          item: category.items![itemIndex],
+          itemName: _displayName(nameKa, nameEn),
+          actorId: actorId,
+          actorName: actorName,
+          source: source,
+        );
         return true;
       }
       return false;
@@ -779,6 +961,15 @@ class MenuRepository {
             'price': removedPrice,
           },
         );
+        await _auditVariantChanges(
+          before: _snapshotVariants(removed.variants),
+          after: const <MenuVariantDB>[],
+          item: removed,
+          itemName: _displayName(removedNameKa, removedNameEn),
+          actorId: actorId,
+          actorName: actorName,
+          source: source,
+        );
         return true;
       }
       return false;
@@ -805,7 +996,7 @@ class MenuRepository {
     try {
       final category = DatabaseCore.menuBox!.getAt(categoryIndex);
       if (category != null) {
-        final subcategory = MenuSubcategoryDB(
+        final subcategory = MenuSubcategoryDB.create(
           slug: slug,
           translationsEn: {'name': nameEn},
           translationsKa: {'name': nameKa},
@@ -823,6 +1014,7 @@ class MenuRepository {
         );
         await GlobalAudit.menuCategory(
           action: GlobalAuditAction.menuCategoryCreated,
+          categoryId: subcategory.id!,
           categoryName: slug,
           nodeKind: 'SUBCATEGORY',
           parentCategoryName: category.slug,
@@ -901,6 +1093,7 @@ class MenuRepository {
         if (changes.isNotEmpty) {
           await GlobalAudit.menuCategory(
             action: GlobalAuditAction.menuCategoryUpdated,
+            categoryId: subcategory.id ?? previousSlug,
             categoryName: slug,
             nodeKind: 'SUBCATEGORY',
             parentCategoryName: category.slug,
@@ -951,6 +1144,7 @@ class MenuRepository {
         );
         await GlobalAudit.menuCategory(
           action: GlobalAuditAction.menuCategoryDeleted,
+          categoryId: removed.id ?? removedSlug,
           categoryName: removedSlug,
           nodeKind: 'SUBCATEGORY',
           parentCategoryName: category.slug,
@@ -991,6 +1185,7 @@ class MenuRepository {
       if (category != null &&
           subcategories != null &&
           subcategoryIndex < subcategories.length) {
+        _ensureVariantIds(variants);
         final item = MenuItemDB.create(
           translationsEn: {'name': nameEn},
           translationsKa: {'name': nameKa},
@@ -1026,6 +1221,15 @@ class MenuRepository {
             'sendToKitchen': item.sendToKitchen,
             'variantCount': variants?.length ?? 0,
           },
+        );
+        await _auditVariantChanges(
+          before: const <MenuVariantDB>[],
+          after: item.variants ?? const <MenuVariantDB>[],
+          item: item,
+          itemName: _displayName(nameKa, nameEn),
+          actorId: actorId,
+          actorName: actorName,
+          source: source,
         );
         return true;
       }
@@ -1068,6 +1272,8 @@ class MenuRepository {
           final previousPrice = item.price;
           final previousSendToKitchen = item.sendToKitchen;
           final previousVariantCount = item.variants?.length ?? 0;
+          final previousVariants = _snapshotVariants(item.variants);
+          _ensureVariantIds(variants);
           item.translationsEn = {'name': nameEn};
           item.translationsKa = {'name': nameKa};
           item.price = price;
@@ -1122,6 +1328,15 @@ class MenuRepository {
               },
             );
           }
+          await _auditVariantChanges(
+            before: previousVariants,
+            after: item.variants ?? const <MenuVariantDB>[],
+            item: item,
+            itemName: _displayName(nameKa, nameEn),
+            actorId: actorId,
+            actorName: actorName,
+            source: source,
+          );
           return true;
         }
       }
@@ -1188,6 +1403,15 @@ class MenuRepository {
               ),
               'price': removedPrice,
             },
+          );
+          await _auditVariantChanges(
+            before: _snapshotVariants(removed.variants),
+            after: const <MenuVariantDB>[],
+            item: removed,
+            itemName: _displayName(removedNameKa, removedNameEn),
+            actorId: actorId,
+            actorName: actorName,
+            source: source,
           );
           return true;
         }

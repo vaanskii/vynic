@@ -532,6 +532,8 @@ class OrderRepository {
             total: double.parse(
               (item.unitPrice * item.quantity).toStringAsFixed(2),
             ),
+            menuItemId: item.menuItemId,
+            variantId: item.variantId,
           ),
         )
         .toList();
@@ -582,6 +584,8 @@ class OrderRepository {
                   'itemName': item.itemName,
                   'quantity': item.quantity,
                   'unitPrice': item.unitPrice,
+                  if (item.menuItemId != null) 'menuItemId': item.menuItemId,
+                  if (item.variantId != null) 'variantId': item.variantId,
                 },
               )
               .toList(growable: false),
@@ -650,6 +654,10 @@ class OrderRepository {
             waiterId: actor,
             waiterName: actor,
             timestamp: order.createdAt,
+            details: <String, dynamic>{
+              if (item.menuItemId != null) 'menuItemId': item.menuItemId,
+              if (item.variantId != null) 'variantId': item.variantId,
+            },
           ),
         )
         .toList();

@@ -223,8 +223,19 @@ class BackupRepository {
       'paymentMethod': order.paymentMethod,
       'closedAt': order.closedAt?.toIso8601String(),
       'discountAmount': order.discountAmount,
+      'packageId': order.packageId,
+      'packageName': order.packageName,
+      'packagePrice': order.packagePrice,
+      'packageItems': order.packageItems.map(_serializeOrderItem).toList(),
+      'packageUnitPrice': order.packageUnitPrice,
+      'packageGuestCount': order.packageGuestCount,
+      'manualAdjustmentAmount': order.manualAdjustmentAmount,
       'openedByUserId': order.openedByUserId,
+      'customServiceFeePercentage': order.customServiceFeePercentage,
       'closureId': order.closureId,
+      'advanceAmount': order.advanceAmount,
+      'advanceCollectedOn': order.advanceCollectedOn,
+      'advanceReceiptId': order.advanceReceiptId,
       'customerName': order.customerName,
       'customerPhone': order.customerPhone,
       'pickupTime': order.pickupTime,
@@ -239,6 +250,8 @@ class BackupRepository {
       'quantity': item.quantity,
       'total': item.total,
       'comment': item.comment,
+      if (item.menuItemId != null) 'menuItemId': item.menuItemId,
+      if (item.variantId != null) 'variantId': item.variantId,
     };
   }
 
@@ -285,6 +298,8 @@ class BackupRepository {
       'itemName': item.itemName,
       'quantity': item.quantity,
       'unitPrice': item.unitPrice,
+      if (item.menuItemId != null) 'menuItemId': item.menuItemId,
+      if (item.variantId != null) 'variantId': item.variantId,
     };
   }
 
@@ -304,6 +319,7 @@ class BackupRepository {
 
   static Map<String, dynamic> _serializeMenuCategory(MenuCategoryDB category) {
     return {
+      if (category.id != null) 'id': category.id,
       'slug': category.slug,
       'translationsEn': category.translationsEn,
       'translationsKa': category.translationsKa,
@@ -319,6 +335,7 @@ class BackupRepository {
     MenuSubcategoryDB subcategory,
   ) {
     return {
+      if (subcategory.id != null) 'id': subcategory.id,
       'slug': subcategory.slug,
       'translationsEn': subcategory.translationsEn,
       'translationsKa': subcategory.translationsKa,
@@ -330,7 +347,7 @@ class BackupRepository {
     return {
       // The item's stable identity travels with the backup, so a restore puts
       // the same products back rather than fresh ones. Absent in backups taken
-      // before the field existed; `ensureStableItemIds` fills those in on the
+      // before the field existed; `ensureStableMenuIds` fills those in on the
       // way back.
       if (item.id != null) 'id': item.id,
       'translationsEn': item.translationsEn,
@@ -342,7 +359,11 @@ class BackupRepository {
   }
 
   static Map<String, dynamic> _serializeMenuVariant(MenuVariantDB variant) {
-    return {'size': variant.size, 'price': variant.price};
+    return {
+      if (variant.id != null) 'id': variant.id,
+      'size': variant.size,
+      'price': variant.price,
+    };
   }
 
   static List<Map<String, dynamic>> exportMenu() {
@@ -376,7 +397,7 @@ class BackupRepository {
     }
     // An older backup carries items with no stable id. Give them one now,
     // once, so the restored menu is identified like every other menu.
-    await MenuRepository.ensureStableItemIds();
+    await MenuRepository.ensureStableMenuIds();
     if (!silent) {
       SyncHub.notify(SyncEvent(type: SyncEventType.menu, action: 'updated'));
     }
@@ -438,6 +459,8 @@ class BackupRepository {
                 ((it['total'] as num?)?.toDouble()) ??
                 (it['unitPrice'] as num).toDouble() *
                     (it['quantity'] as num).toInt(),
+            menuItemId: it['menuItemId'] as String?,
+            variantId: it['variantId'] as String?,
           ),
         )
         .toList();
@@ -963,7 +986,7 @@ class BackupRepository {
     }
     // Same rule as `importMenuFromJson`: a backup written before menu items
     // had identities restores id-less rows, and they get one here — once.
-    await MenuRepository.ensureStableItemIds();
+    await MenuRepository.ensureStableMenuIds();
 
     for (final saleEntry in salesJson) {
       if (saleEntry is Map) {
@@ -1094,6 +1117,10 @@ class BackupRepository {
         .whereType<Map>()
         .map((it) => _deserializeOrderItem(Map<String, dynamic>.from(it)))
         .toList();
+    final packageItems = ((json['packageItems'] as List?) ?? const [])
+        .whereType<Map>()
+        .map((it) => _deserializeOrderItem(Map<String, dynamic>.from(it)))
+        .toList();
 
     final order = Order(
       orderId: (json['orderId'] as num?)?.toInt() ?? 0,
@@ -1111,8 +1138,21 @@ class BackupRepository {
       paymentMethod: json['paymentMethod'] as String?,
       closedAt: _tryParseDate(json['closedAt'] as String?),
       discountAmount: (json['discountAmount'] as num?)?.toDouble() ?? 0.0,
+      packageId: json['packageId'] as String?,
+      packageName: json['packageName'] as String?,
+      packagePrice: (json['packagePrice'] as num?)?.toDouble() ?? 0.0,
+      packageItems: packageItems,
+      packageUnitPrice: (json['packageUnitPrice'] as num?)?.toDouble() ?? 0.0,
+      packageGuestCount: (json['packageGuestCount'] as num?)?.toInt() ?? 0,
+      manualAdjustmentAmount:
+          (json['manualAdjustmentAmount'] as num?)?.toDouble() ?? 0.0,
       openedByUserId: json['openedByUserId'] as String?,
+      customServiceFeePercentage: (json['customServiceFeePercentage'] as num?)
+          ?.toDouble(),
       closureId: json['closureId'] as String?,
+      advanceAmount: (json['advanceAmount'] as num?)?.toDouble() ?? 0.0,
+      advanceCollectedOn: json['advanceCollectedOn'] as String?,
+      advanceReceiptId: json['advanceReceiptId'] as String?,
       customerName: json['customerName'] as String? ?? '',
       customerPhone: json['customerPhone'] as String? ?? '',
       pickupTime: json['pickupTime'] as String? ?? '',
@@ -1196,6 +1236,8 @@ class BackupRepository {
       itemName: json['itemName'] as String? ?? '',
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
       unitPrice: (json['unitPrice'] as num?)?.toDouble() ?? 0.0,
+      menuItemId: json['menuItemId'] as String?,
+      variantId: json['variantId'] as String?,
     );
   }
 
@@ -1224,6 +1266,7 @@ class BackupRepository {
 
   static MenuCategoryDB _deserializeMenuCategory(Map<String, dynamic> json) {
     return MenuCategoryDB(
+      id: json['id'] as String?,
       slug: json['slug'] as String? ?? 'unknown-category',
       translationsEn: _mapToStringMap(json['translationsEn']),
       translationsKa: _mapToStringMap(json['translationsKa']),
@@ -1245,6 +1288,7 @@ class BackupRepository {
     Map<String, dynamic> json,
   ) {
     return MenuSubcategoryDB(
+      id: json['id'] as String?,
       slug: json['slug'] as String? ?? 'unknown-subcategory',
       translationsEn: _mapToStringMap(json['translationsEn']),
       translationsKa: _mapToStringMap(json['translationsKa']),
@@ -1257,7 +1301,7 @@ class BackupRepository {
 
   static MenuItemDB _deserializeMenuItem(Map<String, dynamic> json) {
     // Never mints: a backup that carries no id restores id-less items, and
-    // `ensureStableItemIds` gives each of them exactly one afterwards. Minting
+    // `ensureStableMenuIds` gives each of them exactly one afterwards. Minting
     // here would hand the same product a new identity on every restore.
     final id = (json['id'] as String?)?.trim();
     return MenuItemDB(
@@ -1275,6 +1319,7 @@ class BackupRepository {
 
   static MenuVariantDB _deserializeMenuVariant(Map<String, dynamic> json) {
     return MenuVariantDB(
+      id: json['id'] as String?,
       size: (json['size'] as num?)?.toDouble() ?? 0,
       price: (json['price'] as num?)?.toDouble() ?? 0,
     );
@@ -1291,6 +1336,8 @@ class BackupRepository {
       quantity: quantity,
       total: total,
       comment: json['comment'] as String?,
+      menuItemId: json['menuItemId'] as String?,
+      variantId: json['variantId'] as String?,
     );
   }
 

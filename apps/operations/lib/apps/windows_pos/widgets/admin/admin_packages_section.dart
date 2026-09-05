@@ -135,6 +135,8 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
             key: keyBuffer.toString(),
             displayName: displayBuffer.toString(),
             unitPrice: unitPrice,
+            menuItemId: item.id,
+            variantId: variant?.id,
             categoryKey: categorySlug,
             categoryLabel: categoryLabel,
             subcategoryLabel: subcategoryLabel,
@@ -768,6 +770,8 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                 itemName: item.itemName,
                 quantity: item.quantity,
                 unitPrice: item.unitPrice,
+                menuItemId: item.menuItemId,
+                variantId: item.variantId,
               ),
             )
             .toList(),
@@ -1314,6 +1318,8 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                   itemName: item.itemName,
                   quantity: item.quantity,
                   unitPrice: item.unitPrice,
+                  menuItemId: item.menuItemId,
+                  variantId: item.variantId,
                 ),
               )
               .toList()
@@ -1445,6 +1451,8 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                         itemName: option.displayName,
                         quantity: entry.value,
                         unitPrice: option.unitPrice,
+                        menuItemId: option.menuItemId,
+                        variantId: option.variantId,
                       ),
                     );
                   }
@@ -1517,6 +1525,8 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                           itemName: item.itemName,
                           quantity: item.quantity,
                           unitPrice: item.unitPrice,
+                          menuItemId: item.menuItemId,
+                          variantId: item.variantId,
                         ),
                       )
                       .toList(),
@@ -2514,6 +2524,8 @@ class _MenuItemOption {
     required this.categoryLabel,
     required this.subcategoryLabel,
     required this.orderIndex,
+    required this.menuItemId,
+    required this.variantId,
   });
 
   final String key;
@@ -2523,6 +2535,8 @@ class _MenuItemOption {
   final String categoryLabel;
   final String? subcategoryLabel;
   final int orderIndex;
+  final String? menuItemId;
+  final String? variantId;
 }
 
 class _PackageDeploymentResult {

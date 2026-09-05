@@ -43,9 +43,9 @@ current transport status.
 
 - No product implementation phase is marked in progress by current code/docs.
 - The latest completed sequence covers Money Integrity 1A/1B, POS enrollment
-  1C, incremental audit sync, and Edge Step 6C.
-- Production Cloud deployment foundation is the documented recommended next
-  phase; it has not been implemented or deployed by this repository state.
+  1C, incremental audit sync, Edge Step 6C, and Menu Identity Phases 4.5/4.6.
+- The repository is ready for the Cloud Sale Ledger phase. No Cloud Sale or
+  SaleLine model has been implemented yet.
 
 ## Completed Foundations
 
@@ -161,10 +161,11 @@ current transport status.
   never written again.
 - Venue-wide accountability lives in the append-only `AuditEventLog`, which is
   now readable. Every row carries `entityType`/`entityId`
-  (`STAFF`, `MENU_ITEM`, `MENU_CATEGORY`, `PACKAGE`, `EXPENSE`, `CLOSE_DAY`,
-  `BACKUP`, `RESERVATION`, `ORDER`, `SALE`, `BUSINESS_DATE`, `SETTINGS`,
-  `DEVELOPER`), written by `GlobalAudit` and additive in Hive, on the wire and
-  in Cloud. Rows written before those fields existed are never rewritten: both
+  (`STAFF`, `MENU_ITEM`, `MENU_CATEGORY`, `MENU_VARIANT`, `PACKAGE`, `EXPENSE`,
+  `CLOSE_DAY`, `BACKUP`, `RESERVATION`, `ORDER`, `SALE`, `BUSINESS_DATE`,
+  `SETTINGS`, `DEVELOPER`), written by `GlobalAudit` and additive in Hive, on
+  the wire and in Cloud. Rows written before those fields existed are never
+  rewritten: both
   the backend (`audit-log-entity.ts`) and the POS
   (`global_audit_registry.dart`) derive the entity from the action name and the
   row's own details at read time, and an action outside the registry stays
@@ -172,7 +173,7 @@ current transport status.
 - Audited venue-wide actions: `STAFF_CREATED` / `STAFF_UPDATED` /
   `STAFF_ROLE_CHANGED` / `STAFF_PIN_CHANGED` / `STAFF_DELETED` (a PIN change
   records only that it happened — never a PIN value), `MENU_ITEM_*` and
-  `MENU_CATEGORY_*` (a subcategory is a category node with
+  `MENU_CATEGORY_*` and `MENU_VARIANT_*` (a subcategory is a category node with
   `details.nodeKind=SUBCATEGORY`; price, availability and kitchen routing come
   through as `changes` field deltas, never a menu snapshot), `PACKAGE_CREATED` /
   `PACKAGE_UPDATED` / `PACKAGE_DELETED` (definitions only — applying one to an
@@ -197,21 +198,32 @@ current transport status.
   storage and writes the same `ADD_ITEM` / `REDUCE_QTY` / `DELETE_ITEM` events a
   POS edit would, with `source=MANAGER`, through the one
   `AuditOrderDiffService`. A redelivered identical payload writes nothing.
-- Menu items have stable business identity: `MenuItemDB.id`, a uuid minted once
-  on the POS, offline, additive as Hive field 5. It survives rename, price,
-  availability and kitchen-routing changes, a category slug rename, restart,
-  backup/restore and sync. Items written before the field get one exactly once
-  through `MenuRepository.ensureStableItemIds` — Hive migration v7, and again
-  after a restore, because an older backup carries id-less rows. It is never
-  minted on decode. New `MENU_ITEM_*` audit rows carry it as `entityId` with
-  the tree path demoted to `details.treePath`; historical rows keep their path
-  `entityId` and are not rewritten.
-- Cloud `MenuItem` carries `posMenuItemId` (additive, nullable, unique per
-  Venue). Ingestion matches on it first and falls back to (`nameEn`, parent)
-  only for a row no POS id has claimed, so an already-mirrored menu adopts
-  identity in place and a rename updates the product instead of creating a
-  second one beside the orphaned original. `MenuItem.id` remains the Cloud row
-  key the website publishes in pre-order payloads.
+- Every persisted POS Menu node has stable offline identity: category,
+  subcategory and variant IDs are UUID v4 fields alongside `MenuItemDB.id`.
+  Hive migration v8 runs `MenuRepository.ensureStableMenuIds` once for legacy
+  rows; older backups run the same idempotent pass after restore. IDs are never
+  minted while decoding. Renames, slug/size/price edits, Manager edits,
+  restart, backup and repeated sync preserve them. New `MENU_CATEGORY_*`,
+  `MENU_ITEM_*` and `MENU_VARIANT_*` audit rows use the stable ID as
+  `entityId`; mutable paths and labels remain details. Historical audit is not
+  rewritten.
+- Cloud preserves POS identity beside its public row keys as
+  `posMenuCategoryId`, `posMenuSubcategoryId`, `posMenuItemId`, and
+  `posMenuVariantId`. Menu ingestion matches identity first, adopts only an
+  unclaimed legacy row through its prior natural key, and updates only changed
+  fields. Snapshots carrying `menuIdentityVersion >= 1` reconcile absent
+  POS-owned variants/items/subcategories/categories in one child-first
+  transaction; Venue scoping and explicit non-null POS ownership protect
+  foreign, website/custom, and unclaimed legacy content. Older snapshots never
+  trigger deletion. `MenuItem.id` remains the Cloud/public website key.
+- `OrderItem` and `PackageItem` carry additive nullable `menuItemId` and
+  `variantId` references. POS/Manager selection, Edge/LAN commands, reservation
+  activation, Takeaway, Walk-In, package application, quick drafts, transfer,
+  sync and backup preserve them. Manual and legacy lines remain null. Names,
+  prices, quantities, comments and package contents remain frozen transaction
+  snapshots and are never refreshed from the live Menu. Order item audit
+  details carry the IDs when available. This makes future per-product
+  SaleLine attribution ready without name inference.
 - New Reservation ids are uuids. Two bookings taken in the same millisecond used
   to collide on a clock-derived id. Cloud-supplied ids are still used verbatim
   and historical numeric ids are untouched; nothing parses a reservation id.

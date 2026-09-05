@@ -59,6 +59,8 @@ class OrderTransferLine {
     required this.quantity,
     required this.amount,
     this.comment,
+    this.menuItemId,
+    this.variantId,
   });
 
   final String itemName;
@@ -67,6 +69,8 @@ class OrderTransferLine {
   /// The money that moved with it, in GEL.
   final double amount;
   final String? comment;
+  final String? menuItemId;
+  final String? variantId;
 }
 
 /// What a transfer did, or why it did nothing.
@@ -187,6 +191,8 @@ abstract final class OrderItemTransfer {
           quantity: quantity,
           amount: movedAmount,
           comment: line.comment,
+          menuItemId: line.menuItemId,
+          variantId: line.variantId,
         ),
       );
 
@@ -264,6 +270,8 @@ abstract final class OrderItemTransfer {
       'transferAmount': movedAmount,
       if (line.comment != null && line.comment!.trim().isNotEmpty)
         'comment': line.comment!.trim(),
+      if (line.menuItemId != null) 'menuItemId': line.menuItemId,
+      if (line.variantId != null) 'variantId': line.variantId,
     };
 
     // One typed MOVE_ITEMS per line on each side. The quantities still say
@@ -445,6 +453,8 @@ abstract final class OrderItemTransfer {
     final comment = _normalizeComment(line.comment);
     for (final existing in destination.items) {
       if (existing.itemKey == line.itemKey &&
+          existing.menuItemId == line.menuItemId &&
+          existing.variantId == line.variantId &&
           _normalizeComment(existing.comment) == comment) {
         existing.quantity += quantity;
         existing.total = double.parse(
@@ -461,6 +471,8 @@ abstract final class OrderItemTransfer {
         quantity: quantity,
         total: amount,
         comment: line.comment,
+        menuItemId: line.menuItemId,
+        variantId: line.variantId,
       ),
     );
   }

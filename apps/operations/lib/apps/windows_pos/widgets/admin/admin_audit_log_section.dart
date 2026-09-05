@@ -296,6 +296,7 @@ class AdminAuditLogSection extends StatelessWidget {
                                 SizedBox(
                                   width: 210,
                                   child: DropdownButtonFormField<DateTime>(
+                                    isExpanded: true,
                                     value: monthOptions.firstWhere(
                                       (month) =>
                                           month.year ==
@@ -331,7 +332,11 @@ class AdminAuditLogSection extends StatelessWidget {
                                           '${_getGeorgianMonthName(monthDate.month)} ${monthDate.year}';
                                       return DropdownMenuItem<DateTime>(
                                         value: monthDate,
-                                        child: Text(label),
+                                        child: Text(
+                                          label,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       );
                                     }).toList(),
                                     onChanged: (value) {

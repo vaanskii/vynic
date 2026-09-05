@@ -563,6 +563,8 @@ class ReservationRepository {
             quantity: item.quantity,
             total: item.unitPrice * item.quantity,
             comment: item.comment,
+            menuItemId: item.menuItemId,
+            variantId: item.variantId,
           ),
         )
         .toList();

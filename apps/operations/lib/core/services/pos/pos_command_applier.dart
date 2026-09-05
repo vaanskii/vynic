@@ -1084,6 +1084,8 @@ class PosCommandApplier {
           quantity: qty,
           total: unitPrice * qty,
           comment: map['comment'] as String?,
+          menuItemId: map['menuItemId'] as String?,
+          variantId: map['variantId'] as String?,
         ),
       );
     }

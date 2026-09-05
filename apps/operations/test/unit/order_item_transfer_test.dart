@@ -13,6 +13,8 @@ OrderItem _line(
   int quantity, {
   String? comment,
   double? total,
+  String? menuItemId,
+  String? variantId,
 }) {
   return OrderItem(
     // The key is the dish, never the comment: `_addToCartEntry` keys the cart
@@ -25,6 +27,8 @@ OrderItem _line(
     quantity: quantity,
     total: total ?? unitPrice * quantity,
     comment: comment,
+    menuItemId: menuItemId,
+    variantId: variantId,
   );
 }
 
@@ -61,6 +65,35 @@ void main() {
   tearDownAll(() => Order.serviceFeeRateResolver = null);
 
   group('moving part of a line', () {
+    test('preserves menu and variant identity on both halves', () {
+      final source = _order(
+        id: 1,
+        items: [
+          _line(
+            'ლიმონათი 0.5L',
+            5,
+            3,
+            menuItemId: 'menu-lemonade',
+            variantId: 'variant-half-litre',
+          ),
+        ],
+      );
+      final destination = _order(id: 2, items: []);
+
+      final result = OrderItemTransfer.move(
+        source: source,
+        destination: destination,
+        moves: const [(index: 0, quantity: 1)],
+      );
+
+      expect(source.items.single.menuItemId, 'menu-lemonade');
+      expect(source.items.single.variantId, 'variant-half-litre');
+      expect(destination.items.single.menuItemId, 'menu-lemonade');
+      expect(destination.items.single.variantId, 'variant-half-litre');
+      expect(result.moved.single.menuItemId, 'menu-lemonade');
+      expect(result.moved.single.variantId, 'variant-half-litre');
+    });
+
     test('splits the quantity and the money between the two orders', () {
       final source = _order(id: 1, items: [_line('ხინკალი', 2.50, 10)]);
       final destination = _order(id: 2, items: []);

@@ -22,6 +22,8 @@ class QuickOrderRepository {
             quantity: item.quantity,
             total: item.total,
             comment: item.comment,
+            menuItemId: item.menuItemId,
+            variantId: item.variantId,
           ),
         )
         .toList();

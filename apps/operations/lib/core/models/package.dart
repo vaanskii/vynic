@@ -20,7 +20,7 @@ class Package extends HiveObject {
   @HiveField(4)
   double pricePerPerson;
 
-  @HiveField(5)
+  @HiveField(5, defaultValue: true)
   bool isActive;
 
   @HiveField(6)
@@ -29,7 +29,7 @@ class Package extends HiveObject {
   @HiveField(7)
   String createdBy;
 
-  @HiveField(8)
+  @HiveField(8, defaultValue: 1)
   int servingSize;
 
   @HiveField(9)
@@ -89,11 +89,20 @@ class PackageItem extends HiveObject {
   @HiveField(3)
   double unitPrice;
 
+  /// Traceability to the live menu; never used to refresh this frozen line.
+  @HiveField(4)
+  String? menuItemId;
+
+  @HiveField(5)
+  String? variantId;
+
   PackageItem({
     required this.itemKey,
     required this.itemName,
     required this.quantity,
     required this.unitPrice,
+    this.menuItemId,
+    this.variantId,
   });
 
   double get total => unitPrice * quantity;

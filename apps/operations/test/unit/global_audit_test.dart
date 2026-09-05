@@ -297,7 +297,8 @@ void main() {
 
       final category = one(action: GlobalAuditAction.menuCategoryCreated);
       expect(category.entityType, GlobalAuditEntity.menuCategory);
-      expect(category.entityId, 'hot');
+      expect(category.entityId, DatabaseCore.menuBox!.getAt(0)!.id);
+      expect(category.data['categoryName'], 'hot');
 
       final item = one(action: GlobalAuditAction.menuItemCreated);
       expect(item.entityType, GlobalAuditEntity.menuItem);
@@ -327,7 +328,10 @@ void main() {
       );
 
       final updated = one(action: GlobalAuditAction.menuItemUpdated);
-      expect(updated.entityId, DatabaseCore.menuBox!.getAt(0)!.items!.single.id);
+      expect(
+        updated.entityId,
+        DatabaseCore.menuBox!.getAt(0)!.items!.single.id,
+      );
       expect(updated.changes.single.field, 'price');
       expect(
         GlobalAuditPresentation.changeLine(updated.changes.single),
@@ -417,7 +421,10 @@ void main() {
       final created = feed(action: GlobalAuditAction.menuCategoryCreated).last;
       expect(created.data['nodeKind'], 'SUBCATEGORY');
       expect(created.data['parentCategoryName'], 'hot');
-      expect(created.entityId, 'hot/soups');
+      expect(
+        created.entityId,
+        DatabaseCore.menuBox!.getAt(0)!.subcategories!.single.id,
+      );
     });
   });
 

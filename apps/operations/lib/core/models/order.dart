@@ -22,6 +22,15 @@ class OrderItem extends HiveObject {
   @HiveField(5)
   String? comment; // Special instructions (e.g., "No onions", "Extra spicy")
 
+  /// Stable POS menu identity, when this line came from a real menu item.
+  /// Snapshot name/price fields above remain the transactional truth.
+  @HiveField(6)
+  String? menuItemId;
+
+  /// Stable identity of the selected concrete variant, when applicable.
+  @HiveField(7)
+  String? variantId;
+
   OrderItem({
     required this.itemKey,
     required this.itemName,
@@ -29,6 +38,8 @@ class OrderItem extends HiveObject {
     required this.quantity,
     required this.total,
     this.comment,
+    this.menuItemId,
+    this.variantId,
   });
 
   OrderItem clone() {
@@ -39,6 +50,8 @@ class OrderItem extends HiveObject {
       quantity: quantity,
       total: total,
       comment: comment,
+      menuItemId: menuItemId,
+      variantId: variantId,
     );
   }
 
@@ -51,6 +64,8 @@ class OrderItem extends HiveObject {
       total: (json['total'] ?? (json['quantity'] ?? 0) * (json['price'] ?? 0.0))
           .toDouble(),
       comment: json['comment'],
+      menuItemId: json['menuItemId'] as String?,
+      variantId: json['variantId'] as String?,
     );
   }
 
@@ -62,6 +77,8 @@ class OrderItem extends HiveObject {
       'quantity': quantity,
       'total': total,
       'comment': comment,
+      if (menuItemId != null) 'menuItemId': menuItemId,
+      if (variantId != null) 'variantId': variantId,
     };
   }
 }

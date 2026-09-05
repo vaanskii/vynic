@@ -782,6 +782,8 @@ class SalesRepository {
               quantity: quantity,
               total: double.parse(total.toStringAsFixed(2)),
               comment: raw['comment']?.toString(),
+              menuItemId: raw['menuItemId']?.toString(),
+              variantId: raw['variantId']?.toString(),
             ),
           );
         }

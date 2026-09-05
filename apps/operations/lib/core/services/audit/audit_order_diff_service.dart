@@ -59,6 +59,12 @@ class AuditOrderDiffService {
           waiterName: performerName,
           timestamp: timestamp,
           note: noteSegments.isEmpty ? null : noteSegments.join(' • '),
+          details: <String, dynamic>{
+            if ((nextItem?.menuItemId ?? prevItem?.menuItemId) != null)
+              'menuItemId': nextItem?.menuItemId ?? prevItem?.menuItemId,
+            if ((nextItem?.variantId ?? prevItem?.variantId) != null)
+              'variantId': nextItem?.variantId ?? prevItem?.variantId,
+          },
         ),
       );
     }

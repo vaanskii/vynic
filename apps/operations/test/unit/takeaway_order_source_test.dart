@@ -209,6 +209,8 @@ Package packageDefinition({List<String> allowedTables = const ['9']}) =>
           itemName: 'სალათი',
           quantity: 2,
           unitPrice: 4,
+          menuItemId: 'menu-salad',
+          variantId: 'variant-salad-large',
         ),
       ],
       pricePerPerson: 40,
@@ -671,11 +673,19 @@ void main() {
         'floor': 'first',
         'createdBy': 'Remote',
         'items': [
-          {'itemName': 'ლობიანი', 'unitPrice': 8.0, 'quantity': 2},
+          {
+            'itemName': 'ლობიანი',
+            'unitPrice': 8.0,
+            'quantity': 2,
+            'menuItemId': 'menu-lobiani',
+            'variantId': 'variant-large',
+          },
         ],
       });
 
       expect(order.tableNumbers, ['9']);
+      expect(order.items.single.menuItemId, 'menu-lobiani');
+      expect(order.items.single.variantId, 'variant-large');
       expect(
         DatabaseService.getTable('9', 'first')!.activeOrderId,
         order.orderId,
@@ -704,6 +714,8 @@ void main() {
         expect(order.packageUnitPrice, 40);
         expect(order.packagePrice, 400);
         expect(order.packageItems.single.itemName, 'სალათი');
+        expect(order.packageItems.single.menuItemId, 'menu-salad');
+        expect(order.packageItems.single.variantId, 'variant-salad-large');
         expect(order.status, OrderStatus.confirmed.storageValue);
         expect(
           DatabaseService.getTable('9', 'first')!.activeOrderId,
@@ -770,7 +782,13 @@ void main() {
         pickupTime: '20:00',
         waiterName: 'Nino',
         items: [
-          {'itemName': 'მწვადი', 'unitPrice': 25.0, 'quantity': 1},
+          {
+            'itemName': 'მწვადი',
+            'unitPrice': 25.0,
+            'quantity': 1,
+            'menuItemId': 'menu-mtsvadi',
+            'variantId': 'variant-portion',
+          },
         ],
       );
       expect(DatabaseCore.reservationBox!.values, isEmpty);
@@ -782,6 +800,8 @@ void main() {
       expect(ticket.customerName(_guestFallback), 'Remote Guest');
       expect(ticket.pickupTime, '20:00');
       expect(ticket.customerPhone, isNull);
+      expect(ticket.order.items.single.menuItemId, 'menu-mtsvadi');
+      expect(ticket.order.items.single.variantId, 'variant-portion');
     });
 
     test('sync serializes metadata without a Reservation lookup', () {
@@ -790,6 +810,9 @@ void main() {
         customerPhone: '+995555222333',
         pickupTime: '20:30',
       );
+      order.items.single
+        ..menuItemId = 'menu-sync-item'
+        ..variantId = 'variant-sync-item';
 
       final payload = ManagerSyncService.buildOrdersSyncPayload(
         orders: [order],
@@ -799,6 +822,9 @@ void main() {
       expect(payload['customerName'], 'Sync Guest');
       expect(payload['customerPhone'], '+995555222333');
       expect(payload['pickupTime'], '20:30');
+      final line = (payload['items'] as List).single as Map;
+      expect(line['menuItemId'], 'menu-sync-item');
+      expect(line['variantId'], 'variant-sync-item');
     });
   });
 

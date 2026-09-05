@@ -13,6 +13,12 @@ const Uuid _uuid = Uuid();
 /// list position or the clock.
 String newMenuItemId() => _uuid.v4();
 
+/// Mints the stable identity of any POS-owned menu node.
+///
+/// Categories, subcategories, items and variants are separate persisted
+/// models, but their identities share the same collision-safe offline source.
+String newMenuNodeId() => _uuid.v4();
+
 @HiveType(typeId: 5)
 class MenuCategoryDB extends HiveObject {
   @HiveField(0)
@@ -33,6 +39,10 @@ class MenuCategoryDB extends HiveObject {
   @HiveField(5)
   bool sendToKitchen;
 
+  /// Stable identity of this category. Nullable only for pre-v8 rows.
+  @HiveField(6)
+  String? id;
+
   MenuCategoryDB({
     required this.slug,
     required this.translationsEn,
@@ -40,7 +50,25 @@ class MenuCategoryDB extends HiveObject {
     this.items,
     this.subcategories,
     this.sendToKitchen = true,
+    this.id,
   });
+
+  factory MenuCategoryDB.create({
+    required String slug,
+    required Map<String, String> translationsEn,
+    required Map<String, String> translationsKa,
+    List<MenuItemDB>? items,
+    List<MenuSubcategoryDB>? subcategories,
+    bool sendToKitchen = true,
+  }) => MenuCategoryDB(
+    slug: slug,
+    translationsEn: translationsEn,
+    translationsKa: translationsKa,
+    items: items,
+    subcategories: subcategories,
+    sendToKitchen: sendToKitchen,
+    id: newMenuNodeId(),
+  );
 
   String getName(String language) {
     if (language == 'ka') {
@@ -64,12 +92,30 @@ class MenuSubcategoryDB extends HiveObject {
   @HiveField(3)
   List<MenuItemDB> items;
 
+  /// Stable identity of this subcategory node. Nullable for pre-v8 rows.
+  @HiveField(4)
+  String? id;
+
   MenuSubcategoryDB({
     required this.slug,
     required this.translationsEn,
     required this.translationsKa,
     required this.items,
+    this.id,
   });
+
+  factory MenuSubcategoryDB.create({
+    required String slug,
+    required Map<String, String> translationsEn,
+    required Map<String, String> translationsKa,
+    required List<MenuItemDB> items,
+  }) => MenuSubcategoryDB(
+    slug: slug,
+    translationsEn: translationsEn,
+    translationsKa: translationsKa,
+    items: items,
+    id: newMenuNodeId(),
+  );
 
   String getName(String language) {
     if (language == 'ka') {
@@ -162,7 +208,14 @@ class MenuVariantDB {
   @HiveField(1)
   double price;
 
-  MenuVariantDB({required this.size, required this.price});
+  /// Stable identity of this concrete variant. Nullable for pre-v8 rows.
+  @HiveField(2)
+  String? id;
+
+  MenuVariantDB({required this.size, required this.price, this.id});
+
+  factory MenuVariantDB.create({required double size, required double price}) =>
+      MenuVariantDB(size: size, price: price, id: newMenuNodeId());
 
   String getSizeLabel() {
     if (size < 1) {

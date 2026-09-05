@@ -67,12 +67,14 @@ class MenuSubcategory {
 }
 
 class MenuItem {
+  final String? id;
   final Map<String, Translation> translations;
   final double? price;
   final List<MenuVariant>? variants;
   final bool sendToKitchen;
 
   MenuItem({
+    this.id,
     required this.translations,
     this.price,
     this.variants,
@@ -81,6 +83,7 @@ class MenuItem {
 
   factory MenuItem.fromJson(Map<String, dynamic> json) {
     return MenuItem(
+      id: json['id'] as String?,
       translations: (json['translations'] as Map<String, dynamic>).map(
         (key, value) => MapEntry(key, Translation.fromJson(value)),
       ),
@@ -102,13 +105,15 @@ class MenuItem {
 }
 
 class MenuVariant {
+  final String? id;
   final double size;
   final double price;
 
-  MenuVariant({required this.size, required this.price});
+  MenuVariant({this.id, required this.size, required this.price});
 
   factory MenuVariant.fromJson(Map<String, dynamic> json) {
     return MenuVariant(
+      id: json['id'] as String?,
       size: (json['size'] as num).toDouble(),
       price: (json['price'] as num).toDouble(),
     );

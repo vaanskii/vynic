@@ -11,6 +11,7 @@ import 'package:vynic/core/services/sync/manager_sales_history_builder.dart';
 import 'package:vynic/core/services/sync/sync_timing.dart';
 import 'package:vynic/core/services/sync/pos_callback_config.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
+import 'package:vynic/core/database/repositories/menu_repository.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation_classification.dart';
 import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
@@ -409,6 +410,8 @@ class ManagerSyncService {
                     'name': item.itemName,
                     'quantity': item.quantity,
                     'price': item.unitPrice,
+                    if (item.menuItemId != null) 'menuItemId': item.menuItemId,
+                    if (item.variantId != null) 'variantId': item.variantId,
                   },
                 )
                 .toList(),
@@ -691,9 +694,13 @@ class ManagerSyncService {
       timing.mark('reports');
 
       // 3. Sync Menu
+      // The reconciliation flag is safe only when the snapshot is complete.
+      // Repair any legacy/restored id-less nodes before we claim authority.
+      await MenuRepository.ensureStableMenuIds();
       final menu = DatabaseService.getAllMenuCategories()
           .map(
             (cat) => {
+              if (cat.id != null) 'id': cat.id,
               'slug': cat.slug,
               'nameKa': cat.translationsKa['name'] ?? '',
               'nameEn': cat.translationsEn['name'] ?? '',
@@ -713,7 +720,11 @@ class ManagerSyncService {
                           'variants':
                               it.variants
                                   ?.map(
-                                    (v) => {'size': v.size, 'price': v.price},
+                                    (v) => {
+                                      if (v.id != null) 'id': v.id,
+                                      'size': v.size,
+                                      'price': v.price,
+                                    },
                                   )
                                   .toList() ??
                               [],
@@ -725,6 +736,7 @@ class ManagerSyncService {
                   cat.subcategories
                       ?.map(
                         (sub) => {
+                          if (sub.id != null) 'id': sub.id,
                           'slug': sub.slug,
                           'nameKa': sub.translationsKa['name'] ?? '',
                           'nameEn': sub.translationsEn['name'] ?? '',
@@ -740,6 +752,7 @@ class ManagerSyncService {
                                       it.variants
                                           ?.map(
                                             (v) => {
+                                              if (v.id != null) 'id': v.id,
                                               'size': v.size,
                                               'price': v.price,
                                             },
@@ -852,6 +865,9 @@ class ManagerSyncService {
         if (touchedReservationHints.isNotEmpty)
           'touchedReservationHints': touchedReservationHints,
         'menu': menu,
+        // Signals that every persisted menu node has a stable id and this is a
+        // complete authoritative projection, so Cloud may reconcile omissions.
+        'menuIdentityVersion': 1,
         // Real expense records, not an empty list beside a derived profit
         // figure. Each carries its POS-side id so re-sending the same record
         // updates it instead of adding a second one.
@@ -1231,6 +1247,8 @@ class ManagerSyncService {
           unitPrice: price,
           quantity: qty,
           total: price * qty,
+          menuItemId: m['menuItemId'] as String?,
+          variantId: m['variantId'] as String?,
         ),
       );
     }

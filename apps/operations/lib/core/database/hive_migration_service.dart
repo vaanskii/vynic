@@ -38,7 +38,7 @@ class HiveMigrationService {
   static const String dbVersionKey = 'db_version';
   static const String lastMigrationKey = 'last_migration_timestamp';
   static const int initialVersion = 1;
-  static const int targetVersion = 7;
+  static const int targetVersion = 8;
 
   static Future<int> readCurrentVersion(Box metaBox) async {
     final stored = metaBox.get(dbVersionKey);
@@ -105,6 +105,16 @@ class HiveMigrationService {
     if (currentVersion < 7) {
       await migrateV6toV7(context);
       currentVersion = 7;
+      await context.metaBox.put(dbVersionKey, currentVersion);
+      await context.metaBox.put(
+        lastMigrationKey,
+        DateTime.now().toIso8601String(),
+      );
+    }
+
+    if (currentVersion < 8) {
+      await migrateV7toV8(context);
+      currentVersion = 8;
       await context.metaBox.put(dbVersionKey, currentVersion);
       await context.metaBox.put(
         lastMigrationKey,
@@ -251,5 +261,10 @@ class HiveMigrationService {
   /// safely run it again without disturbing the items that already have one.
   static Future<void> migrateV6toV7(HiveMigrationContext context) async {
     await MenuRepository.ensureStableItemIds(context.menuBox);
+  }
+
+  /// V8 completes menu identity for category/subcategory nodes and variants.
+  static Future<void> migrateV7toV8(HiveMigrationContext context) async {
+    await MenuRepository.ensureStableMenuIds(context.menuBox);
   }
 }

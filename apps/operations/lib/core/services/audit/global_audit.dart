@@ -15,6 +15,7 @@ abstract final class GlobalAuditEntity {
   static const String staff = 'STAFF';
   static const String menuItem = 'MENU_ITEM';
   static const String menuCategory = 'MENU_CATEGORY';
+  static const String menuVariant = 'MENU_VARIANT';
   static const String package = 'PACKAGE';
   static const String expense = 'EXPENSE';
   static const String closeDay = 'CLOSE_DAY';
@@ -30,6 +31,7 @@ abstract final class GlobalAuditEntity {
     staff,
     menuItem,
     menuCategory,
+    menuVariant,
     package,
     expense,
     closeDay,
@@ -65,6 +67,9 @@ abstract final class GlobalAuditAction {
   static const String menuCategoryCreated = 'MENU_CATEGORY_CREATED';
   static const String menuCategoryUpdated = 'MENU_CATEGORY_UPDATED';
   static const String menuCategoryDeleted = 'MENU_CATEGORY_DELETED';
+  static const String menuVariantCreated = 'MENU_VARIANT_CREATED';
+  static const String menuVariantUpdated = 'MENU_VARIANT_UPDATED';
+  static const String menuVariantDeleted = 'MENU_VARIANT_DELETED';
 
   // Package definitions. Applying a package to an Order is `APPLY_PACKAGE` on
   // that Order's report and is deliberately not duplicated here.
@@ -276,6 +281,7 @@ abstract final class GlobalAudit {
   /// `CATEGORY` or `SUBCATEGORY`.
   static Future<void> menuCategory({
     required String action,
+    required String categoryId,
     required String categoryName,
     String nodeKind = 'CATEGORY',
     String? parentCategoryName,
@@ -287,9 +293,7 @@ abstract final class GlobalAudit {
   }) => log(
     action: action,
     entityType: GlobalAuditEntity.menuCategory,
-    entityId: parentCategoryName == null || parentCategoryName.trim().isEmpty
-        ? categoryName
-        : '${parentCategoryName.trim()}/$categoryName',
+    entityId: categoryId,
     actorId: actorId,
     actorName: actorName,
     source: source,
@@ -300,6 +304,34 @@ abstract final class GlobalAudit {
         'parentCategoryName': parentCategoryName.trim(),
       if (changes.isNotEmpty) 'changes': changes,
       ...extra,
+    },
+  );
+
+  static Future<void> menuVariant({
+    required String action,
+    required String variantId,
+    required String itemId,
+    required String itemName,
+    required double size,
+    required double price,
+    List<Map<String, dynamic>> changes = const [],
+    required String actorId,
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) => log(
+    action: action,
+    entityType: GlobalAuditEntity.menuVariant,
+    entityId: variantId,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+    data: <String, dynamic>{
+      'variantId': variantId,
+      'itemId': itemId,
+      'itemName': itemName,
+      'size': size,
+      'price': price,
+      if (changes.isNotEmpty) 'changes': changes,
     },
   );
 

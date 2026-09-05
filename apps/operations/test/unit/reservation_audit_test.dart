@@ -152,12 +152,20 @@ void main() {
         TableModel(tableNumber: number, floor: floor),
       );
 
-  OrderItem line(String name, double price, int qty) => OrderItem(
+  OrderItem line(
+    String name,
+    double price,
+    int qty, {
+    String? menuItemId,
+    String? variantId,
+  }) => OrderItem(
     itemKey: name,
     itemName: name,
     unitPrice: price,
     quantity: qty,
     total: price * qty,
+    menuItemId: menuItemId,
+    variantId: variantId,
   );
 
   Future<String> createPosBooking({
@@ -422,7 +430,15 @@ void main() {
       () async {
         await seedTable('5');
         final id = await createPosBooking(
-          preOrder: [line('საფერავი', 42.0, 1)],
+          preOrder: [
+            line(
+              'საფერავი',
+              42.0,
+              1,
+              menuItemId: 'menu-saperavi',
+              variantId: 'variant-bottle',
+            ),
+          ],
         );
 
         final first = await ActivateReservationTransaction.activate(
@@ -436,6 +452,11 @@ void main() {
 
         expect(first.isSuccess, isTrue);
         expect(again.orderId, first.orderId);
+        final activatedOrder = DatabaseCore.orderBox!.values.firstWhere(
+          (order) => order.orderId == first.orderId,
+        );
+        expect(activatedOrder.items.single.menuItemId, 'menu-saperavi');
+        expect(activatedOrder.items.single.variantId, 'variant-bottle');
         final updates = timeline(
           action: ReservationAuditAction.update,
           reservationId: id,

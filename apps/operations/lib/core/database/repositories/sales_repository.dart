@@ -10,6 +10,7 @@ import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/services/audit/reservation_audit.dart';
 import 'package:vynic/core/models/sale_record.dart';
 import 'package:vynic/core/models/takeaway_order.dart';
+import 'package:vynic/core/services/sync/sale_ledger_sync_state.dart';
 
 import 'package:vynic/core/services/audit/global_audit.dart';
 import 'package:vynic/core/services/audit/money_audit.dart';
@@ -110,6 +111,11 @@ class SalesRepository {
       }
 
       final saleRecord = {
+        // POS-owned identity survives restart and backup/restore. The Hive key
+        // does not, and closureId is absent on retained legacy Sales.
+        'posSaleId': _uuid.v4(),
+        'ledgerRevision': 1,
+        'ledgerUpdatedAt': closedAt.toIso8601String(),
         'orderId': orderId,
         'tableNumbers': tableNumbers,
         'floor': floor,
@@ -120,6 +126,9 @@ class SalesRepository {
                 'quantity': item.quantity,
                 'unitPrice': item.unitPrice,
                 'total': item.total,
+                if (item.comment != null) 'comment': item.comment,
+                if (item.menuItemId != null) 'menuItemId': item.menuItemId,
+                if (item.variantId != null) 'variantId': item.variantId,
               },
             )
             .toList(),
@@ -577,11 +586,12 @@ class SalesRepository {
         return SaleCancellationOutcome.historicalNotPermitted;
       }
 
+      final cancelledAt = BusinessDayRepository.getCurrentDateTime();
       updated['isCancelled'] = true;
-      updated['cancelledAt'] = BusinessDayRepository.getCurrentDateTime()
-          .toIso8601String();
+      updated['cancelledAt'] = cancelledAt.toIso8601String();
       updated['cancelledBy'] = actor;
       updated['cancellationReason'] = trimmedReason;
+      SaleLedgerSyncState.markLifecycleChanged(updated, cancelledAt);
       await DatabaseCore.salesBox!.put(recordKey, updated);
 
       if (dateString.isNotEmpty) {
@@ -891,6 +901,7 @@ class SalesRepository {
         ..['restoredToOrder'] = true
         ..['restoredAt'] = restoreTimestamp.toIso8601String()
         ..['restoredBy'] = restoredBy;
+      SaleLedgerSyncState.markLifecycleChanged(updatedSale, restoreTimestamp);
       await DatabaseCore.salesBox!.put(recordKey, updatedSale);
 
       // The deposit is unspent again: it is held against an open order once
@@ -921,7 +932,8 @@ class SalesRepository {
           'orderId': orderId,
           if (closureId != null && closureId.isNotEmpty)
             'originalClosureId': closureId,
-          'originalSaleId': recordKey.toString(),
+          'originalSaleId':
+              sale['posSaleId']?.toString() ?? recordKey.toString(),
           'actorId': restoredBy,
           'actorName': restoredBy,
           'businessDate': saleDate,

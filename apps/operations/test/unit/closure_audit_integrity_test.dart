@@ -850,7 +850,7 @@ void main() {
       );
       expect(
         restoreEvent.details,
-        containsPair('originalSaleId', firstSale['recordKey'].toString()),
+        containsPair('originalSaleId', firstSale['posSaleId']),
       );
       expect(restoreEvent.details, containsPair('actorId', 'manager'));
       expect(restoreEvent.details, containsPair('businessDate', businessDate));

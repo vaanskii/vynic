@@ -7,6 +7,7 @@ import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/sync/api_config.dart';
 import 'package:vynic/core/services/sync/audit_sync_state.dart';
 import 'package:vynic/core/services/sync/staff_credential_sync_state.dart';
+import 'package:vynic/core/services/sync/sale_ledger_sync_state.dart';
 import 'package:vynic/core/services/sync/manager_sales_history_builder.dart';
 import 'package:vynic/core/services/sync/sync_timing.dart';
 import 'package:vynic/core/services/sync/pos_callback_config.dart';
@@ -527,6 +528,7 @@ class ManagerSyncService {
 
       // 2.1 Prepare Sales Summary from local closed-sales records.
       // This is the authoritative source for payment-method analytics.
+      await SaleLedgerSyncState.ensureSaleIdentities();
       final todaysSales = DatabaseService.getSalesForDate(businessDateString);
       final paymentBreakdown = <String, double>{};
       final totalRevenue = DatabaseService.grossSalesTotalForDate(
@@ -592,6 +594,11 @@ class ManagerSyncService {
 
       // 2.2 Prepare all-time sales summary from local sales history.
       final allSales = DatabaseService.getAllSales();
+      final saleLedger = SaleLedgerSyncState.buildBatch(allSales);
+      final saleLedgerDays = SaleLedgerSyncState.buildDayDeclarations(
+        allRecords: allSales,
+        currentBusinessDate: businessDateString,
+      );
       final allTimeBreakdown = <String, double>{};
       double allTimeTotalRevenue = 0;
       int allTimeOrderCount = 0;
@@ -893,6 +900,10 @@ class ManagerSyncService {
         'salesSummary': salesSummary,
         'salesAllTimeSummary': salesAllTimeSummary,
         'salesHistoryByDate': salesHistoryByDate,
+        // Genuine retained Sales only. This bounded, revision-ACKed backlog is
+        // an asynchronous mirror; failure never participates in table close.
+        'saleLedger': saleLedger,
+        'saleLedgerDays': saleLedgerDays,
         'openTablesPayable': double.parse(openTablesPayable.toStringAsFixed(2)),
         'settings': {
           'serviceFeePercent': DatabaseService.getServiceFeePercentage(),
@@ -954,7 +965,14 @@ class ManagerSyncService {
         );
         _pendingSinceMicros = null;
         await _acknowledgeStaffCredentials(staffSelection, response.body);
+        final ledgerAckSupported =
+            await SaleLedgerSyncState.acknowledgeResponse(response.body);
         await ConnectionStatusService.markSuccess();
+        if (ledgerAckSupported && saleLedger.isNotEmpty) {
+          // One follow-up full snapshot advances the next bounded batch and,
+          // after the final ACK, lets closed-day completeness be proven.
+          _markPendingLocalChange();
+        }
       }
 
       // 6. Sync Audit Reports (fire-and-forget — best effort)

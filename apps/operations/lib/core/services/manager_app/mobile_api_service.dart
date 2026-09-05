@@ -412,6 +412,89 @@ class MobileApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> getFinancialSummary({
+    String? from,
+    String? to,
+  }) async {
+    final params = <String, String>{
+      if (from != null) 'from': from,
+      if (to != null) 'to': to,
+    };
+    final suffix = params.isEmpty
+        ? ''
+        : '?${Uri(queryParameters: params).query}';
+    final response = await _get('/mobile/financial-summary$suffix');
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+    }
+    throw Exception('getFinancialSummary failed: ${response.statusCode}');
+  }
+
+  static Future<Map<String, dynamic>> getSales({
+    String? from,
+    String? to,
+    String? cursor,
+    int limit = 30,
+  }) async {
+    final params = <String, String>{
+      'limit': '$limit',
+      if (from != null) 'from': from,
+      if (to != null) 'to': to,
+      if (cursor != null) 'cursor': cursor,
+    };
+    final response = await _get(
+      '/mobile/sales?${Uri(queryParameters: params).query}',
+    );
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+    }
+    throw Exception('getSales failed: ${response.statusCode}');
+  }
+
+  static Future<Map<String, dynamic>> getSale(String id) async {
+    final response = await _get('/mobile/sales/${Uri.encodeComponent(id)}');
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+    }
+    throw Exception('getSale failed: ${response.statusCode}');
+  }
+
+  static Future<Map<String, dynamic>> getProductAnalytics({
+    String? from,
+    String? to,
+  }) async {
+    final params = <String, String>{
+      if (from != null) 'from': from,
+      if (to != null) 'to': to,
+    };
+    final suffix = params.isEmpty
+        ? ''
+        : '?${Uri(queryParameters: params).query}';
+    final response = await _get('/mobile/product-analytics$suffix');
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+    }
+    throw Exception('getProductAnalytics failed: ${response.statusCode}');
+  }
+
+  static Future<Map<String, dynamic>> getSaleStaffAnalytics({
+    String? from,
+    String? to,
+  }) async {
+    final params = <String, String>{
+      if (from != null) 'from': from,
+      if (to != null) 'to': to,
+    };
+    final suffix = params.isEmpty
+        ? ''
+        : '?${Uri(queryParameters: params).query}';
+    final response = await _get('/mobile/sale-staff-analytics$suffix');
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+    }
+    throw Exception('getSaleStaffAnalytics failed: ${response.statusCode}');
+  }
+
   static Future<Map<String, dynamic>> createExpense({
     required String description,
     required double amount,
@@ -796,7 +879,9 @@ class MobileApiService {
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     final items = (body['items'] as List? ?? const [])
         .whereType<Map>()
-        .map((row) => GlobalAuditEntry.fromCloud(Map<String, dynamic>.from(row)))
+        .map(
+          (row) => GlobalAuditEntry.fromCloud(Map<String, dynamic>.from(row)),
+        )
         .toList(growable: false);
     return (items: items, nextCursor: body['nextCursor'] as String?);
   }

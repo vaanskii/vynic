@@ -43,6 +43,10 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 ## Sales / Reports
 
 - POS sales store and revenue predicate: `apps/operations/lib/core/database/repositories/sales_repository.dart`
+- POS Sale identity, bounded selection, exact serialization, ACK state and day completeness declarations: `apps/operations/lib/core/services/sync/sale_ledger_sync_state.dart`; orchestration in `apps/operations/lib/core/services/sync/manager_sync_service.dart`
+- Cloud ledger ingestion, exact-money validation, lifecycle revisions and day reconciliation: `apps/backend/src/pos/sync/snapshot/sale-ledger-sync.service.ts`
+- Manager exact summary, keyset Sale list/detail, product and staff analytics: `apps/backend/src/mobile/services/mobile-sale-ledger.service.ts`; routes in `apps/backend/src/mobile/mobile.controller.ts`
+- Manager ledger UI: `apps/operations/lib/apps/mobile_app/presentation/screens/dashboard_screen.dart`, `apps/operations/lib/apps/mobile_app/presentation/screens/financials_screen.dart`
 - Monthly reports: `apps/operations/lib/core/services/pos/monthly_report_service.dart`
 - POS admin reports: `apps/operations/lib/apps/windows_pos/widgets/admin/admin_financial_reports_panel.dart`
 - Manager backend reports: `apps/backend/src/mobile/services/mobile-reports.service.ts`
@@ -185,6 +189,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Schema: `apps/backend/prisma/schema.prisma`
 - Migrations: `apps/backend/prisma/migrations/`
 - Complete Menu/line identity migration: `apps/backend/prisma/migrations/20260906140000_complete_menu_identity/migration.sql`
+- Cloud Sale Ledger migration: `apps/backend/prisma/migrations/20260907120000_cloud_sale_ledger/migration.sql`
 - Prisma module/service: `apps/backend/src/shared/prisma/`, `apps/backend/src/prisma.service.ts`
 - Backend application wiring: `apps/backend/src/app.module.ts`
 

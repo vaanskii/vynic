@@ -988,6 +988,31 @@ class _PaymentChip extends StatelessWidget {
   }
 }
 
+class _LedgerProviderChip extends StatelessWidget {
+  const _LedgerProviderChip({required this.label, required this.amount});
+
+  final String label;
+  final double amount;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+    decoration: BoxDecoration(
+      color: context.dash.info.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: context.dash.info.withValues(alpha: 0.18)),
+    ),
+    child: Text(
+      '$label ${_gelExact(amount)}',
+      style: TextStyle(
+        color: context.dash.info,
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+  );
+}
+
 class _TablesOverviewStrip extends StatelessWidget {
   final ManagerDashboardMetrics metrics;
   final VoidCallback onTap;
@@ -1180,6 +1205,25 @@ class _HeroRevenueCard extends StatelessWidget {
                         fontSize: 11,
                       ),
                     ),
+                    if (metrics.financialWarning != null) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: context.dash.warn.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          metrics.financialWarning!,
+                          style: TextStyle(
+                            color: context.dash.textSecondary,
+                            fontSize: 11,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
                     SizedBox(height: 14),
                     _RevenueSplitRow(
                       icon: Icons.check_circle_outline_rounded,
@@ -1281,6 +1325,32 @@ class _HeroRevenueCard extends StatelessWidget {
                                 color: context.dash.info,
                                 icon: Icons.credit_card_rounded,
                               ),
+                            ),
+                        ],
+                      ),
+                    ],
+                    if (metrics.tbcRevenue > 0 ||
+                        metrics.bogRevenue > 0 ||
+                        metrics.advanceApplied > 0) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          if (metrics.tbcRevenue > 0)
+                            _LedgerProviderChip(
+                              label: 'TBC',
+                              amount: metrics.tbcRevenue,
+                            ),
+                          if (metrics.bogRevenue > 0)
+                            _LedgerProviderChip(
+                              label: 'BOG',
+                              amount: metrics.bogRevenue,
+                            ),
+                          if (metrics.advanceApplied > 0)
+                            _LedgerProviderChip(
+                              label: 'ავანსი',
+                              amount: metrics.advanceApplied,
                             ),
                         ],
                       ),

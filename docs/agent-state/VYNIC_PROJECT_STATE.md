@@ -43,9 +43,10 @@ current transport status.
 
 - No product implementation phase is marked in progress by current code/docs.
 - The latest completed sequence covers Money Integrity 1A/1B, POS enrollment
-  1C, incremental audit sync, Edge Step 6C, and Menu Identity Phases 4.5/4.6.
-- The repository is ready for the Cloud Sale Ledger phase. No Cloud Sale or
-  SaleLine model has been implemented yet.
+  1C, incremental audit sync, Edge Step 6C, Menu Identity Phases 4.5/4.6, and
+  the Phase 5 Cloud Sale Ledger/Manager financial experience.
+- The repository is ready for the next post-ledger phase; no later phase is in
+  progress.
 
 ## Completed Foundations
 
@@ -256,16 +257,36 @@ current transport status.
 - Advances are receipts on the collection day and are applied at close; they do
   not reduce the sale's gross value.
 - Gross sales and money collected are separate derived figures. POS X/Z/monthly
-  and Manager current-day, all-time, history, dashboard, report, and financial
-  totals use Sale-derived summaries and the revenue predicate. Missing Manager
-  summaries fail closed instead of treating raw, open, cancelled, restored, or
-  internal Orders as revenue; open-table payable remains a separate operational
-  metric. Per-waiter revenue is unavailable until Cloud has authoritative Sale
-  attribution.
-- Cloud mirrors the POS Order and derived sales summaries, but the Order payload
-  does not currently carry `closureId`, gross, advance-applied, collected-now,
-  or fiscal classification as independent reconciliation fields. PostgreSQL
-  money columns still use `Float`; a Decimal migration remains deferred.
+  totals continue to use the local Sale store and its one revenue predicate;
+  open-table payable remains a separate operational metric.
+- Each genuine retained local Sale now has a backup-stable `posSaleId` and
+  monotonic lifecycle revision. Full (never realtime) manager snapshots upload
+  at most 250 unacknowledged Sale revisions at a time and keep retrying until
+  Cloud acknowledges them. Closing remains entirely local/offline: the ledger
+  is an asynchronous mirror and an old backend can ignore the additive payload
+  without losing the Sale.
+- `CloudSale`, `SaleLine`, and `SalePayment` are the durable Venue-scoped Cloud
+  financial mirror. Ledger money is `Decimal(18,2)` and crosses the wire as
+  fixed two-decimal strings. `(venueId,posSaleId)` is the primary idempotency
+  key and `(venueId,closureId)` is the secondary audit/closure link. Frozen
+  line names/prices stay transaction truth; nullable POS `menuItemId` and
+  `variantId` provide attribution without live-Menu joins or name inference.
+  Revision updates mutate only legitimate void/restore lifecycle state, never
+  frozen financial snapshots or child rows.
+- `SaleLedgerDay` records `COMPLETE`, `PARTIAL`, or
+  `LEGACY_SUMMARY_ONLY` provenance and `MATCHED`, `MISMATCH`, `INCOMPLETE`, or
+  `LEGACY_ONLY` reconciliation. Close Day plus a fully acknowledged retained
+  Sale set is the completeness boundary; Cloud independently compares count
+  and revenue before marking a day complete. Aggregate settings never create
+  fake Sales. Manager ranges use complete ledger days, non-overlapping legacy
+  daily fallback where only summaries exist, and an explicit warning for any
+  partial range.
+- Tenant-safe Manager endpoints provide exact financial summary, keyset Sale
+  history/detail, stable-ID product aggregation, and honest closer attribution.
+  Dashboard/Financials use ledger values when complete, preserve operational
+  occupancy from its existing source, and surface stale/legacy/partial status.
+  A disconnected Venue continues operating locally and Manager catches up on
+  the next successful full sync.
 
 ## Platform / Admin State
 

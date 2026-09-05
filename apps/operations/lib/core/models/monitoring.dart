@@ -21,6 +21,11 @@ class ManagerDashboardMetrics {
   final int occupiedTables;
   final int reservedTables;
   final int freeTables;
+  final String? financialProvenance;
+  final String? financialWarning;
+  final double tbcRevenue;
+  final double bogRevenue;
+  final double advanceApplied;
 
   ManagerDashboardMetrics({
     required this.todayRevenue,
@@ -45,6 +50,11 @@ class ManagerDashboardMetrics {
     this.occupiedTables = 0,
     this.reservedTables = 0,
     this.freeTables = 0,
+    this.financialProvenance,
+    this.financialWarning,
+    this.tbcRevenue = 0,
+    this.bogRevenue = 0,
+    this.advanceApplied = 0,
   }) : shiftTotalRevenue =
            shiftTotalRevenue ?? (todayRevenue + openTablesPayable);
 
@@ -79,6 +89,11 @@ class ManagerDashboardMetrics {
       occupiedTables: json['occupiedTables'] ?? 0,
       reservedTables: json['reservedTables'] ?? 0,
       freeTables: json['freeTables'] ?? 0,
+      financialProvenance: json['financialProvenance'] as String?,
+      financialWarning: json['financialWarning'] as String?,
+      tbcRevenue: (json['tbcRevenue'] ?? 0).toDouble(),
+      bogRevenue: (json['bogRevenue'] ?? 0).toDouble(),
+      advanceApplied: (json['advanceApplied'] ?? 0).toDouble(),
     );
   }
 
@@ -105,6 +120,11 @@ class ManagerDashboardMetrics {
     'occupiedTables': occupiedTables,
     'reservedTables': reservedTables,
     'freeTables': freeTables,
+    'financialProvenance': financialProvenance,
+    'financialWarning': financialWarning,
+    'tbcRevenue': tbcRevenue,
+    'bogRevenue': bogRevenue,
+    'advanceApplied': advanceApplied,
   };
 }
 

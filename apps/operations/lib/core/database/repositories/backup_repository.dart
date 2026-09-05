@@ -15,6 +15,7 @@ import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/table_ref.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
+import 'package:vynic/core/database/repositories/inventory_repository.dart';
 
 import 'package:vynic/core/database/hive_migration_service.dart';
 import 'package:vynic/core/services/audit/global_audit.dart';
@@ -110,6 +111,7 @@ class BackupRepository {
           .map(_serializeQuickOrderDraft)
           .toList(),
       'menu': DatabaseCore.menuBox!.values.map(_serializeMenuCategory).toList(),
+      'inventoryCatalog': InventoryRepository.exportCatalog(),
       'sales': DatabaseCore.salesBox!.values.map(_serializeDynamicMap).toList(),
       'expenses': DatabaseCore.expenseBox!.values
           .map(_serializeDynamicMap)
@@ -713,6 +715,14 @@ class BackupRepository {
         'sales': (payload['sales'] as List?)?.length ?? 0,
         'expenses': (payload['expenses'] as List?)?.length ?? 0,
         'auditLog': (payload['auditLog'] as List?)?.length ?? 0,
+        'stockItems':
+            ((payload['inventoryCatalog'] as Map?)?['stockItems'] as List?)
+                ?.length ??
+            0,
+        'suppliers':
+            ((payload['inventoryCatalog'] as Map?)?['suppliers'] as List?)
+                ?.length ??
+            0,
       },
     );
   }
@@ -754,6 +764,8 @@ class BackupRepository {
       DatabaseCore.expenseBox!.clear(),
       DatabaseCore.auditLogBox!.clear(),
       DatabaseCore.errorLogBox!.clear(),
+      if (DatabaseCore.inventoryBox != null)
+        DatabaseCore.inventoryBox!.clear(),
       if (settings != null) settings.clear(),
     ]);
 
@@ -907,6 +919,7 @@ class BackupRepository {
         (payload['quickOrderDrafts'] as List?) ??
         const [];
     final menuJson = (payload['menu'] as List?) ?? const [];
+    final inventoryCatalog = payload['inventoryCatalog'];
     final salesJson = (payload['sales'] as List?) ?? const [];
     final expensesJson = (payload['expenses'] as List?) ?? const [];
     final auditLogJson = (payload['auditLog'] as List?) ?? const [];
@@ -921,6 +934,8 @@ class BackupRepository {
         DatabaseCore.reservationBox!.clear(),
         DatabaseCore.quickOrderBox!.clear(),
         DatabaseCore.menuBox!.clear(),
+        if (DatabaseCore.inventoryBox != null)
+          DatabaseCore.inventoryBox!.clear(),
         DatabaseCore.salesBox!.clear(),
         DatabaseCore.expenseBox!.clear(),
         DatabaseCore.auditLogBox!.clear(),
@@ -987,6 +1002,9 @@ class BackupRepository {
     // Same rule as `importMenuFromJson`: a backup written before menu items
     // had identities restores id-less rows, and they get one here — once.
     await MenuRepository.ensureStableMenuIds();
+    if (DatabaseCore.inventoryBox != null) {
+      await InventoryRepository.restoreCatalog(inventoryCatalog);
+    }
 
     for (final saleEntry in salesJson) {
       if (saleEntry is Map) {

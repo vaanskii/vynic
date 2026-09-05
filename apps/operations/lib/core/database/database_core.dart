@@ -35,6 +35,7 @@ class DatabaseCore {
   static const String reservationBoxName = 'reservations';
   static const String quickOrderBoxName = 'quickOrders';
   static const String closureJournalBoxName = 'closureJournal';
+  static const String inventoryBoxName = 'inventoryCatalog';
 
   static Box<User>? userBox;
   static Box<TableModel>? tableBox;
@@ -53,6 +54,7 @@ class DatabaseCore {
   /// `ClosureJournalRepository` — Hive has no cross-box transaction, so this
   /// is what makes an interrupted close a known state instead of wreckage.
   static Box? closureJournalBox;
+  static Box? inventoryBox;
   static Box? metaBox;
 
   static late String dataDirectoryPath;
@@ -149,6 +151,7 @@ class DatabaseCore {
     reservationBox = await Hive.openBox<Reservation>(reservationBoxName);
     quickOrderBox = await Hive.openBox<QuickOrderDraft>(quickOrderBoxName);
     closureJournalBox = await Hive.openBox(closureJournalBoxName);
+    inventoryBox = await Hive.openBox(inventoryBoxName);
 
     // Run schema migrations before seeding defaults.
     final migrationContext = HiveMigrationContext(

@@ -7,6 +7,7 @@ import 'package:hive/hive.dart';
 
 import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/database/repositories/backup_repository.dart';
+import 'package:vynic/core/database/repositories/inventory_repository.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/package.dart';
@@ -79,6 +80,7 @@ Future<void> _openBoxes() async {
   DatabaseCore.auditLogBox = await Hive.openBox('bk_audit');
   DatabaseCore.errorLogBox = await Hive.openBox('bk_errors');
   DatabaseCore.metaBox = await Hive.openBox('bk_meta');
+  DatabaseCore.inventoryBox = await Hive.openBox('bk_inventory');
 }
 
 Future<Map<String, dynamic>> _backupPayload() async {
@@ -163,6 +165,7 @@ void main() {
       'reservations',
       'quickOrders',
       'menu',
+      'inventoryCatalog',
       'sales',
       'expenses',
       'auditLog',
@@ -171,6 +174,36 @@ void main() {
     ]) {
       expect(payload.containsKey(section), isTrue, reason: section);
     }
+  });
+
+  test('Inventory projection keeps stable identities through backup restore', () async {
+    await InventoryRepository.replaceCatalog({
+      'generatedAt': '2026-09-05T10:00:00Z',
+      'stockItems': [
+        {
+          'id': 'stock-stable-1',
+          'name': 'Flour',
+          'baseUnit': 'kg',
+          'createdAt': '2026-09-05T10:00:00Z',
+          'updatedAt': '2026-09-05T10:00:00Z',
+        },
+      ],
+      'suppliers': [
+        {
+          'id': 'supplier-stable-1',
+          'name': 'Mill',
+          'createdAt': '2026-09-05T10:00:00Z',
+          'updatedAt': '2026-09-05T10:00:00Z',
+        },
+      ],
+    });
+    final payload = await _backupPayload();
+    await DatabaseCore.inventoryBox!.clear();
+
+    await BackupRepository.restoreDataBackupFromJson(jsonEncode(payload));
+
+    expect(InventoryRepository.getStockItems().single.id, 'stock-stable-1');
+    expect(InventoryRepository.getSuppliers().single.id, 'supplier-stable-1');
   });
 
   test('default backup path uses the resolved database directory', () async {

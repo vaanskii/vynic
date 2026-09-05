@@ -25,6 +25,7 @@ import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 import 'package:vynic/core/services/sync/manager_sync_service.dart';
 import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
 import 'package:vynic/core/services/edge/edge_transport_service.dart';
+import 'package:vynic/core/services/edge/inventory_projection_sync_service.dart';
 import 'package:vynic/core/services/sync/pos_ingest_server.dart';
 import 'package:vynic/core/services/auth/session_lock.dart';
 import 'package:vynic/firebase_options.dart';
@@ -157,6 +158,7 @@ void main() async {
   // awaited — a POS must open its till whether or not Cloud is reachable, and
   // an installation with no device credential simply never starts polling.
   unawaited(EdgeTransportService.instance().start());
+  unawaited(InventoryProjectionSyncService.instance().start());
 
   runApp(const MyApp(isMobile: false));
 }
@@ -202,6 +204,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Future<void> _cleanupAndExit() async {
     try {
       await EdgeTransportService.instance().stop();
+      await InventoryProjectionSyncService.instance().stop();
       await PosIngestServer.stop();
       PrinterService.dispose();
       // Small delay to ensure sockets are closed

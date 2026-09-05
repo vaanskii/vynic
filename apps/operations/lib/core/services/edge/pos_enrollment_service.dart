@@ -6,6 +6,7 @@ import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
 import 'package:vynic/core/services/edge/edge_enrollment_client.dart';
 import 'package:vynic/core/services/edge/edge_transport_service.dart';
+import 'package:vynic/core/services/edge/inventory_projection_sync_service.dart';
 import 'package:vynic/core/services/sync/api_config.dart';
 
 /// How far an enrollment attempt got.
@@ -146,6 +147,7 @@ class PosEnrollmentService {
     // Not awaited for its result: an unreachable Cloud is not a failed
     // enrollment, and the credential is already safely on disk.
     unawaited(EdgeTransportService.instance().start());
+    unawaited(InventoryProjectionSyncService.instance().start());
 
     return PosEnrollmentResult(
       PosEnrollmentStatus.connected,

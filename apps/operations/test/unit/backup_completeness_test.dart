@@ -90,6 +90,51 @@ Future<Map<String, dynamic>> _backupPayload() async {
 }
 
 void main() {
+  test(
+    'pending consumption snapshot and reversal survive backup restore without Cloud movements',
+    () async {
+      final snapshot = {
+        'version': 1,
+        'policy': 'FISCAL_CLOSE',
+        'lines': [
+          {
+            'lineSeq': 0,
+            'recipeId': 'recipe-1',
+            'recipeRevision': 3,
+            'components': [
+              {
+                'stockItemId': 'beef',
+                'baseQuantityPerUnit': '0.035000',
+                'totalBaseQuantity': '0.350000',
+              },
+            ],
+          },
+        ],
+      };
+      await DatabaseCore.salesBox!.add({
+        'posSaleId': 'offline-sale',
+        'orderId': 1,
+        'recordType': 'sale',
+        'closureId': 'offline-close',
+        'inventoryConsumption': snapshot,
+        'inventoryConsumptionAck': 1,
+        'restoredToOrder': true,
+        'restoredAt': '2026-09-05T12:00:00Z',
+      });
+      final payload = await _backupPayload();
+      expect(payload.containsKey('stockMovements'), false);
+      await BackupRepository.restoreDataBackupFromJson(
+        jsonEncode(payload),
+        backupBeforeRestore: false,
+        clearExisting: true,
+      );
+      final restored = DatabaseCore.salesBox!.values.whereType<Map>().single;
+      expect(restored['inventoryConsumption'], snapshot);
+      expect(restored['inventoryConsumptionAck'], 1);
+      expect(restored['restoredToOrder'], true);
+    },
+  );
+
   setUpAll(() async {
     // The curated settings block reads printer defaults through dotenv.
     dotenv.loadFromString(envString: 'POS_ENV=test');
@@ -202,9 +247,10 @@ void main() {
 
     await BackupRepository.restoreDataBackupFromJson(jsonEncode(payload));
 
-    expect(InventoryRepository.getStockItems().single.id, 'stock-stable-1');
-    expect(InventoryRepository.getSuppliers().single.id, 'supplier-stable-1');
-  });
+      expect(InventoryRepository.getStockItems().single.id, 'stock-stable-1');
+      expect(InventoryRepository.getSuppliers().single.id, 'supplier-stable-1');
+    },
+  );
 
   test('default backup path uses the resolved database directory', () async {
     final backup = await BackupRepository.createDataBackup();

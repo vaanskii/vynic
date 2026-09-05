@@ -276,6 +276,7 @@ class CloseTableTransaction {
       if (!current.phase.isAtLeast(ClosurePhase.saleWritten)) {
         final closedAt = BusinessDayRepository.getCurrentDateTime();
         final key = await SalesRepository.saveSaleRecord(
+          captureConsumption: true,
           orderId: order.orderId,
           tableNumbers: order.tableNumbers,
           floor: order.floor,

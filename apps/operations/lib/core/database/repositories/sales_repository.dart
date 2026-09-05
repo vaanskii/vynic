@@ -1,5 +1,7 @@
 import 'dart:developer' as developer;
 
+import 'package:vynic/core/services/pos/sale_consumption_snapshot.dart';
+
 import 'package:uuid/uuid.dart';
 import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/order.dart';
@@ -101,6 +103,7 @@ class SalesRepository {
     double? collectedNow,
     String? businessDate,
     String? advanceReceiptId,
+    bool captureConsumption = false,
   }) async {
     try {
       if (closureId != null) {
@@ -159,6 +162,11 @@ class SalesRepository {
         'isFiscal': isFiscal,
         'restoredToOrder': false,
         'recordType': SaleRecord.recordTypeSale,
+        if (captureConsumption && !isCancelled)
+          'inventoryConsumption': SaleConsumptionSnapshot.capture(
+            items,
+            isFiscal,
+          ),
         // The value of the sale, advance included. Records written before
         // Phase 1B have no such field and their `totalAmount` was the balance
         // — readers fall back, which is what those records meant.
@@ -900,6 +908,9 @@ class SalesRepository {
         ..remove('cancelledAt')
         ..['restoredToOrder'] = true
         ..['restoredAt'] = restoreTimestamp.toIso8601String()
+        ..['inventoryRestoreBusinessDate'] = BusinessDayRepository.dateKey(
+          BusinessDayRepository.getCurrentDate(),
+        )
         ..['restoredBy'] = restoredBy;
       SaleLedgerSyncState.markLifecycleChanged(updatedSale, restoreTimestamp);
       await DatabaseCore.salesBox!.put(recordKey, updatedSale);

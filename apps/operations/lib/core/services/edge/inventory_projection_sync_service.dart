@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:vynic/core/services/edge/sale_consumption_sync_service.dart';
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:vynic/core/database/repositories/inventory_repository.dart';
@@ -80,6 +82,7 @@ class InventoryProjectionSyncService {
   }
 
   final InventoryProjectionClient _client;
+  final SaleConsumptionSyncService _effects = SaleConsumptionSyncService();
   final Duration refreshInterval;
   Timer? _timer;
   bool _running = false;
@@ -113,6 +116,7 @@ class InventoryProjectionSyncService {
       return EdgeTransportOutcome.serverError;
     } finally {
       _syncing = false;
+      await _effects.syncOnce();
     }
   }
 

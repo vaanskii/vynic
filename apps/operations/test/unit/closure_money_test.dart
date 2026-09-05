@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:vynic/core/services/edge/sale_consumption_sync_service.dart';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:vynic/core/database/database_core.dart';
@@ -740,6 +742,56 @@ void main() {
       },
     );
   });
+
+  test(
+    'offline close atomically freezes inventory intent; recovery, restore and re-close preserve it',
+    () async {
+      final order = await seedOrder(itemTotal: 100);
+      final close = await CloseTableTransaction.run(
+        orderId: order.orderId,
+        money: ClosureMoney.fromOrder(order, collectedNow: 100),
+        paymentMethod: 'cash',
+        tenderBreakdown: const {'cash': 100},
+        closedById: 'manager',
+        isFiscal: true,
+      );
+      expect(close.isSuccess, true);
+      final key = SalesRepository.findSaleKeyByClosureId(close.closureId!)!;
+      final original = Map<String, dynamic>.from(
+        DatabaseCore.salesBox!.get(key) as Map,
+      );
+      final snapshot = original['inventoryConsumption'];
+      expect(snapshot, isNotNull);
+      expect(SaleConsumptionSyncService.pending(), hasLength(1));
+      // No Cloud request took part in completing the Sale or freeing the table.
+      expect(DatabaseCore.orderBox!.get(order.orderId)!.status, 'closed');
+      await ClosureRecoveryService.recoverPending();
+      expect(DatabaseCore.salesBox!.get(key)['inventoryConsumption'], snapshot);
+      expect(
+        await SalesRepository.restoreClosedOrderFromSale(
+          recordKey: key,
+          restoredBy: 'manager',
+        ),
+        true,
+      );
+      final restored = DatabaseCore.salesBox!.get(key) as Map;
+      expect(restored['inventoryConsumption'], snapshot);
+      expect(SaleConsumptionSyncService.revision(restored), 2);
+      final reopened = DatabaseCore.orderBox!.get(order.orderId)!;
+      final reclose = await CloseTableTransaction.run(
+        orderId: reopened.orderId,
+        money: ClosureMoney.fromOrder(reopened, collectedNow: 100),
+        paymentMethod: 'cash',
+        tenderBreakdown: const {'cash': 100},
+        closedById: 'manager',
+        isFiscal: true,
+      );
+      expect(reclose.isSuccess, true);
+      expect(reclose.closureId, isNot(close.closureId));
+      expect(SaleConsumptionSyncService.pending(), hasLength(2));
+      expect(DatabaseCore.salesBox!.get(key)['inventoryConsumption'], snapshot);
+    },
+  );
 
   group('restore then re-close', () {
     test('books one sale, not two, and keeps the advance once', () async {

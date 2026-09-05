@@ -143,6 +143,16 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Only writer is the POS Admin: `apps/operations/lib/apps/windows_pos/widgets/admin/admin_menu_section.dart`
 - Proofs: `apps/operations/test/unit/menu_item_identity_test.dart`, `apps/backend/src/pos/sync/snapshot/menu-sync.service.spec.ts`, `apps/backend/src/pos/sync/snapshot/menu-sync.integration.spec.ts`
 
+## Inventory
+
+- Boundary and authority: `docs/INVENTORY_STEP1.md`
+- Cloud schema/migration: `apps/backend/prisma/schema.prisma` (`StockItem`, `Supplier`), `apps/backend/prisma/migrations/20260908120000_inventory_step1_core/`
+- Tenant-safe domain CRUD, units, derived zero and global audit: `apps/backend/src/inventory/inventory.service.ts`, `apps/backend/src/inventory/inventory-unit.ts`; Manager routes in `apps/backend/src/mobile/mobile.controller.ts`
+- Device -> Venue complete projection: `GET /edge/inventory/catalog` in `apps/backend/src/edge/edge-transport.controller.ts`
+- POS offline model/store/pull: `apps/operations/lib/core/models/inventory.dart`, `apps/operations/lib/core/database/repositories/inventory_repository.dart`, `apps/operations/lib/core/services/edge/inventory_projection_sync_service.dart`
+- Manager UI: `apps/operations/lib/apps/mobile_app/presentation/screens/admin_screen/tabs/mobile_admin_inventory_tab.dart`
+- Proofs: `apps/backend/src/inventory/*.spec.ts`, `apps/backend/src/edge/edge-transport.integration.spec.ts`, `apps/operations/test/unit/inventory_*_test.dart`, `apps/operations/test/widget/manager_inventory_test.dart`
+
 ## Reservations
 
 - POS model/repository/transaction: `apps/operations/lib/core/models/reservation.dart`, `apps/operations/lib/core/database/repositories/reservation_repository.dart`, `apps/operations/lib/core/database/transactions/activate_reservation_transaction.dart`

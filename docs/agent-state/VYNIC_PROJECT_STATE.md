@@ -45,8 +45,10 @@ current transport status.
 - The latest completed sequence covers Money Integrity 1A/1B, POS enrollment
   1C, incremental audit sync, Edge Step 6C, Menu Identity Phases 4.5/4.6, and
   the Phase 5 Cloud Sale Ledger/Manager financial experience.
-- The repository is ready for the next post-ledger phase; no later phase is in
-  progress.
+- Inventory Step 1 is implemented after the Cloud Sale Ledger. The durable
+  Stock Item, unit, Supplier, Manager CRUD, global audit, and offline POS
+  projection foundations are present; Receiving/Waybills and all quantity or
+  costing flows remain later steps.
 
 ## Completed Foundations
 
@@ -63,6 +65,10 @@ current transport status.
 - Platform principal/API and the authenticated Platform Admin UI are implemented
   (Steps 7A-7B).
 - One-time, Venue-bound POS self-enrollment is implemented (Phase 1C).
+- Inventory Step 1 is implemented: Venue-owned Stock Items and Suppliers use
+  immutable UUIDs, optional Venue-unique normalized SKUs, soft activation, and
+  exact minimum-stock thresholds. Current stock remains an explicit derived
+  zero until StockMovement exists.
 
 ## POS / Edge State
 
@@ -164,7 +170,8 @@ current transport status.
   now readable. Every row carries `entityType`/`entityId`
   (`STAFF`, `MENU_ITEM`, `MENU_CATEGORY`, `MENU_VARIANT`, `PACKAGE`, `EXPENSE`,
   `CLOSE_DAY`, `BACKUP`, `RESERVATION`, `ORDER`, `SALE`, `BUSINESS_DATE`,
-  `SETTINGS`, `DEVELOPER`), written by `GlobalAudit` and additive in Hive, on
+  `SETTINGS`, `DEVELOPER`, `STOCK_ITEM`, `SUPPLIER`), written by `GlobalAudit`
+  and additive in Hive, on
   the wire and in Cloud. Rows written before those fields existed are never
   rewritten: both
   the backend (`audit-log-entity.ts`) and the POS
@@ -318,6 +325,11 @@ current transport status.
 
 - POS -> Cloud snapshot ingestion remains Edge-initiated and is not gated by a
   commercial feature.
+- Inventory administrative configuration is Cloud-authoritative. An enrolled
+  POS pulls a complete Device -> Venue catalog through
+  `GET /edge/inventory/catalog` into one atomically replaced Hive value at
+  startup, after enrollment, and periodically. Failure leaves the last good
+  offline projection intact and never blocks POS startup.
 - Reservations now sync into `PosReservation`; Manager and website reads no
   longer make a synchronous LAN call to the POS.
 - Audit reports sync incrementally in batches using content revisions and
@@ -453,9 +465,10 @@ current transport status.
 
 ## Deferred Work
 
-- Restaurant Backoffice, Venue Policy, custom roles/RBAC, inventory, cash
-  management, reservation holds, generic SaaS venue web, SaaS billing, and
-  per-Venue payment credentials.
+- Restaurant Backoffice, Venue Policy, custom roles/RBAC, Inventory Receiving /
+  Recipes / StockMovement / Costing / Waste / Stocktake, cash management,
+  reservation holds, generic SaaS venue web, SaaS billing, and per-Venue
+  payment credentials.
 - Device-addressed printer selection, lower-latency Edge long polling, OS
   keychain credential storage, and multi-Device queue contention optimization.
 - Legacy shared sync key/callback removal after rollout evidence permits it.
@@ -463,14 +476,17 @@ current transport status.
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260906120000_menu_item_pos_identity`.
+  `20260908120000_inventory_step1_core`.
 - Immediately preceding state migrations:
+  `20260907120000_cloud_sale_ledger`,
+  `20260906140000_complete_menu_identity`,
+  `20260906120000_menu_item_pos_identity`,
   `20260905140000_audit_event_log_entity`,
   `20260905090000_audit_event_sequence_tenancy`,
   `20260904120000_audit_closure_semantics`,
   `20260903140000_pos_reservation_mirror`, and
   `20260903120000_audit_report_sync_revision`.
-- Flutter Hive database target version: `7` in
+- Flutter Hive database target version: `8` in
   `apps/operations/lib/core/database/hive_migration_service.dart`.
 - A migration file in the repository does not prove deployment to any database.
 

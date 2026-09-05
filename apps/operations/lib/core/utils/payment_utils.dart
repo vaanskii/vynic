@@ -7,6 +7,29 @@ class PaymentUtils {
   static const String methodNonFiscal = 'non-fiscal';
   static const String methodAdvance = 'advance';
 
+  /// What a cancelled Order's Sale record carries as its `paymentMethod`.
+  ///
+  /// The same literal `CancelOrderTransaction.cancelledPaymentMethod` writes;
+  /// a test asserts the two agree, so the vocabulary cannot drift.
+  static const String methodCancelled = 'cancelled';
+
+  /// The `paymentMethod` a split close records instead of naming a tender.
+  static const String methodSplit = 'split';
+
+  /// Values that say what a Sale *is*, not how it was paid.
+  ///
+  /// `cancelled` and `non-fiscal` mark records that collected nothing at all,
+  /// and `split` means "there are parts" without naming any of them. None is a
+  /// tender, so none may ever become a payment line in the Cloud ledger.
+  static const Set<String> nonTenderSentinels = <String>{
+    methodCancelled,
+    methodNonFiscal,
+    methodSplit,
+  };
+
+  static bool isNonTenderSentinel(String? key) =>
+      key != null && nonTenderSentinels.contains(key);
+
   static Map<String, double> extractBreakdown(Map<dynamic, dynamic> sale) {
     final breakdown = <String, double>{};
     final raw = sale['paymentBreakdown'];

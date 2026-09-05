@@ -155,7 +155,14 @@ class SaleLedgerSyncState {
     final serviceFee =
         storedServiceFee ??
         _round(split.gross - subtotal + discount - adjustment);
-    final rawBreakdown = PaymentUtils.extractBreakdown(sale);
+    // `extractBreakdown` falls back to `{paymentMethod: total}` when a record
+    // stored no breakdown, which is right for a legacy cash or card Sale and
+    // wrong for a sentinel: `cancelled` names what the record is, not what was
+    // tendered. Sentinels are dropped here rather than inside PaymentUtils so
+    // the Admin display of a historical row keeps saying what it always said.
+    final rawBreakdown = Map<String, double>.of(
+      PaymentUtils.extractBreakdown(sale),
+    )..removeWhere((key, _) => PaymentUtils.isNonTenderSentinel(key));
     final tenderTotal = rawBreakdown.entries
         .where((entry) => entry.key != ClosureMoney.advanceKey)
         .fold<double>(0, (sum, entry) => sum + entry.value);
@@ -247,6 +254,12 @@ class SaleLedgerSyncState {
     };
   }
 
+  /// The tender key for money a record says it collected but did not itemise.
+  ///
+  /// Only reached when there is tender to attribute. A sentinel is not a
+  /// tender name, so it resolves to `other` rather than travelling to Cloud as
+  /// itself — `split` and `non-fiscal` already did, and `cancelled` is the
+  /// third of the same kind.
   static String _paymentKey(Map<String, dynamic> sale) {
     final method =
         sale['paymentMethod']?.toString() ?? PaymentUtils.methodOther;
@@ -254,7 +267,7 @@ class SaleLedgerSyncState {
       final label = sale['customPaymentLabel']?.toString().trim() ?? '';
       if (label.isNotEmpty) return 'other:$label';
     }
-    if (method == 'split' || method == PaymentUtils.methodNonFiscal) {
+    if (PaymentUtils.isNonTenderSentinel(method)) {
       return PaymentUtils.methodOther;
     }
     return method;

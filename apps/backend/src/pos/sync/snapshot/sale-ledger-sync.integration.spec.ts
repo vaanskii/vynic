@@ -319,6 +319,99 @@ describeDatabase('Cloud Sale ledger (PostgreSQL)', () => {
     expect(summary.voidedCount).toBe(1);
   });
 
+  /**
+   * A cancelled Order's Sale as the POS now sends it after the legacy
+   * normalization fix: durable history with no tender at all.
+   */
+  const cancelledSale = (id: string) =>
+    sale(id, {
+      // The sentinel the POS records instead of a tender name. It is header
+      // context, not a payment, and Cloud stores it as written.
+      paymentMethod: 'cancelled',
+      isFiscal: false,
+      isCancelled: true,
+      cancelledAt: '2026-09-04T10:30:00.000Z',
+      cancellationReason: 'guest left',
+      collectedNow: '0.00',
+      payments: [],
+    });
+
+  it('refuses a sentinel offered as a Sale payment method', async () => {
+    // `cancelled` is not a tender and must never become one. This is the
+    // guard that made the POS regression visible instead of silently booking
+    // an untrue collection, and it stays strict on purpose.
+    // The same document is accepted with no tender...
+    await sync.sync(venueA, [cancelledSale('sale-sentinel-ok')], []);
+    expect(
+      await prisma.cloudSale.count({
+        where: { venueId: venueA.venueId, posSaleId: 'sale-sentinel-ok' },
+      }),
+    ).toBe(1);
+
+    // ...and refused the moment the sentinel is offered as one.
+    await expect(
+      sync.sync(
+        venueA,
+        [
+          {
+            ...cancelledSale('sale-sentinel-tender'),
+            collectedNow: '100.00',
+            payments: [{ method: 'cancelled', amount: '100.00' }],
+          },
+        ],
+        [],
+      ),
+    ).rejects.toThrow(/Unsupported Sale payment method cancelled/);
+    expect(
+      await prisma.cloudSale.count({
+        where: { venueId: venueA.venueId, posSaleId: 'sale-sentinel-tender' },
+      }),
+    ).toBe(0);
+  });
+
+  it('accepts a snapshot mixing ordinary Sales with a legacy cancellation', async () => {
+    // The reproduced failure: one cancelled Order from an older POS build made
+    // the whole snapshot 400, so orders, tables, menu and staff stopped
+    // syncing too. The batch has to go through whole.
+    await sync.sync(
+      venueA,
+      [
+        sale('snapshot-cash'),
+        cancelledSale('snapshot-legacy-cancelled'),
+        sale('snapshot-card', {
+          paymentMethod: 'card-tbc',
+          payments: [{ method: 'card-tbc', amount: '100.00' }],
+        }),
+      ],
+      [],
+    );
+
+    expect(
+      await prisma.cloudSale.count({ where: { venueId: venueA.venueId } }),
+    ).toBe(3);
+    const stored = await prisma.cloudSale.findFirstOrThrow({
+      where: {
+        venueId: venueA.venueId,
+        posSaleId: 'snapshot-legacy-cancelled',
+      },
+      include: { payments: true },
+    });
+    // Durable history, not revenue, and not a fabricated tender.
+    expect(stored.gross.toFixed(2)).toBe('100.00');
+    expect(stored.collectedNow.toFixed(2)).toBe('0.00');
+    expect(stored.isFiscal).toBe(false);
+    expect(stored.isCancelled).toBe(true);
+    expect(stored.paymentMethod).toBe('cancelled');
+    expect(stored.payments).toEqual([]);
+
+    const summary = await queries.getSummary(venueA, {
+      from: '2026-09-04',
+      to: '2026-09-04',
+    });
+    // Only the two fiscal Sales are revenue; the cancellation is excluded.
+    expect(summary.revenue).toBe('200.00');
+  });
+
   it('uses authenticated Venue authority and isolates list/detail/filters', async () => {
     await sync.sync(venueA, [sale('shared', { venueId: venueB.venueId })], []);
     await sync.sync(

@@ -1,4 +1,5 @@
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/utils/payment_utils.dart';
 
 /// What a table closure is worth, split four ways.
 ///
@@ -71,15 +72,41 @@ class ClosureMoney {
   /// `grossSaleAmount`, and their `totalAmount` *was* the balance, so gross
   /// falls back to it and the advance to zero. That is what those records
   /// meant, and it keeps historical rows readable.
+  ///
+  /// The `collectedNow` fallback is narrower than the other two. `gross -
+  /// advance` is what a *fiscal* close collected, and it is the right answer
+  /// for a legacy row that genuinely took tender. It is the wrong answer — and
+  /// an untrue one — for a row that collected nothing by definition: a
+  /// cancelled Order and an internal close both book a Sale whose whole point
+  /// is that no money changed hands. Those read as zero, which is what they
+  /// always meant.
   factory ClosureMoney.fromSaleMap(Map<dynamic, dynamic> sale) {
     final advance =
         _num(sale['advanceApplied']) ?? _num(sale['advanceAmount']) ?? 0.0;
     final total = _num(sale['totalAmount']) ?? _num(sale['total']) ?? 0.0;
     final gross = _num(sale['grossSaleAmount']) ?? total;
+    final stored = _num(sale['collectedNow']);
+    final collected =
+        stored ?? (collectedNothing(sale) ? 0.0 : gross - advance);
     return ClosureMoney(
       gross: _round(gross),
       advanceApplied: _round(advance),
-      collectedNow: _round(_num(sale['collectedNow']) ?? (gross - advance)),
+      collectedNow: _round(collected),
+    );
+  }
+
+  /// Whether a stored Sale record took no tender at all, by definition.
+  ///
+  /// Three independent markers, because a record written before one of them
+  /// existed may still carry another: a cancellation flag, a non-fiscal flag,
+  /// and the sentinel `paymentMethod` those paths write instead of a tender
+  /// name. Only consulted when the durable `collectedNow` field is absent — a
+  /// record that states what it collected is always believed.
+  static bool collectedNothing(Map<dynamic, dynamic> sale) {
+    if (sale['isCancelled'] == true) return true;
+    if (sale['isFiscal'] == false) return true;
+    return PaymentUtils.isNonTenderSentinel(
+      sale['paymentMethod']?.toString(),
     );
   }
 

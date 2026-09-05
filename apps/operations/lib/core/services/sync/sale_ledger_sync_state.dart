@@ -145,6 +145,12 @@ class SaleLedgerSyncState {
 
   static Map<String, dynamic> _salePayload(Map<String, dynamic> sale) {
     final split = ClosureMoney.fromSaleMap(sale);
+    final isCancelled = sale['isCancelled'] == true;
+    final isFiscal = sale['isFiscal'] != false && !isCancelled;
+    // Stored collection wins only when lifecycle semantics permit tender.
+    // Retained internal/cancelled rows can contain stale cash/card fields.
+    // Normalize only the wire snapshot; never rewrite their Hive history.
+    final collectedNow = isFiscal ? split.collectedNow : 0.0;
     final subtotal = _number(sale['subtotalAmount'], split.gross);
     final discount = _number(sale['discountAmount'], 0);
     final adjustment = _number(sale['manualAdjustmentAmount'], 0);
@@ -160,9 +166,10 @@ class SaleLedgerSyncState {
     // wrong for a sentinel: `cancelled` names what the record is, not what was
     // tendered. Sentinels are dropped here rather than inside PaymentUtils so
     // the Admin display of a historical row keeps saying what it always said.
-    final rawBreakdown = Map<String, double>.of(
-      PaymentUtils.extractBreakdown(sale),
-    )..removeWhere((key, _) => PaymentUtils.isNonTenderSentinel(key));
+    final rawBreakdown = isFiscal
+        ? (Map<String, double>.of(PaymentUtils.extractBreakdown(sale))
+            ..removeWhere((key, _) => PaymentUtils.isNonTenderSentinel(key)))
+        : <String, double>{};
     final tenderTotal = rawBreakdown.entries
         .where((entry) => entry.key != ClosureMoney.advanceKey)
         .fold<double>(0, (sum, entry) => sum + entry.value);
@@ -170,7 +177,9 @@ class SaleLedgerSyncState {
         _round(tenderTotal) == _round(split.collectedNow) &&
         _round(rawBreakdown[ClosureMoney.advanceKey] ?? 0) ==
             _round(split.advanceApplied);
-    final breakdown = validBreakdown
+    final breakdown = !isFiscal
+        ? <String, double>{}
+        : validBreakdown
         ? rawBreakdown
         : <String, double>{
             if (split.collectedNow > 0) _paymentKey(sale): split.collectedNow,
@@ -195,12 +204,12 @@ class SaleLedgerSyncState {
       'manualAdjustment': _money(adjustment),
       'advanceApplied': _money(split.advanceApplied),
       'amountDueNow': _money(split.amountDueNow),
-      'collectedNow': _money(split.collectedNow),
+      'collectedNow': _money(collectedNow),
       'paymentMethod': sale['paymentMethod']?.toString() ?? 'other',
       if ((sale['customPaymentLabel']?.toString() ?? '').isNotEmpty)
         'customPaymentLabel': sale['customPaymentLabel'],
-      'isFiscal': sale['isFiscal'] != false,
-      'isCancelled': sale['isCancelled'] == true,
+      'isFiscal': isFiscal,
+      'isCancelled': isCancelled,
       if (sale['cancelledAt'] != null) 'cancelledAt': sale['cancelledAt'],
       if (sale['cancelledBy'] != null) 'cancelledBy': sale['cancelledBy'],
       if (sale['cancellationReason'] != null)

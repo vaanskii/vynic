@@ -1,0 +1,238 @@
+[
+  {
+    "posSaleId": "legacy-cash",
+    "posOrderId": 7,
+    "businessDate": "2026-09-04",
+    "createdAt": "2026-09-04T09:00:00.000Z",
+    "closedAt": "2026-09-04T10:30:00.000Z",
+    "gross": "12.00",
+    "subtotal": "12.00",
+    "serviceFee": "0.00",
+    "discount": "0.00",
+    "manualAdjustment": "0.00",
+    "advanceApplied": "0.00",
+    "amountDueNow": "12.00",
+    "collectedNow": "12.00",
+    "paymentMethod": "cash",
+    "isFiscal": true,
+    "isCancelled": false,
+    "restoredToOrder": false,
+    "createdBy": "waiter",
+    "tableNumbers": [
+      "3"
+    ],
+    "floor": "first",
+    "revision": 1,
+    "sourceUpdatedAt": "2026-09-04T10:30:00.000Z",
+    "lines": [
+      {
+        "lineSeq": 0,
+        "itemName": "Khinkali",
+        "quantity": 10,
+        "unitPrice": "1.20",
+        "lineTotal": "12.00"
+      }
+    ],
+    "payments": [
+      {
+        "method": "cash",
+        "amount": "12.00"
+      }
+    ]
+  },
+  {
+    "posSaleId": "legacy-cancelled",
+    "posOrderId": 7,
+    "businessDate": "2026-09-04",
+    "createdAt": "2026-09-04T09:00:00.000Z",
+    "closedAt": "2026-09-04T10:30:00.000Z",
+    "gross": "12.00",
+    "subtotal": "12.00",
+    "serviceFee": "0.00",
+    "discount": "0.00",
+    "manualAdjustment": "0.00",
+    "advanceApplied": "0.00",
+    "amountDueNow": "12.00",
+    "collectedNow": "0.00",
+    "paymentMethod": "cancelled",
+    "isFiscal": false,
+    "isCancelled": true,
+    "cancelledAt": "2026-09-04T10:30:00.000Z",
+    "restoredToOrder": false,
+    "createdBy": "waiter",
+    "tableNumbers": [
+      "3"
+    ],
+    "floor": "first",
+    "revision": 1,
+    "sourceUpdatedAt": "2026-09-04T10:30:00.000Z",
+    "lines": [
+      {
+        "lineSeq": 0,
+        "itemName": "Khinkali",
+        "quantity": 10,
+        "unitPrice": "1.20",
+        "lineTotal": "12.00"
+      }
+    ],
+    "payments": []
+  },
+  {
+    "posSaleId": "legacy-card",
+    "posOrderId": 7,
+    "businessDate": "2026-09-04",
+    "createdAt": "2026-09-04T09:00:00.000Z",
+    "closedAt": "2026-09-04T10:30:00.000Z",
+    "gross": "12.00",
+    "subtotal": "12.00",
+    "serviceFee": "0.00",
+    "discount": "0.00",
+    "manualAdjustment": "0.00",
+    "advanceApplied": "0.00",
+    "amountDueNow": "12.00",
+    "collectedNow": "12.00",
+    "paymentMethod": "card-tbc",
+    "isFiscal": true,
+    "isCancelled": false,
+    "restoredToOrder": false,
+    "createdBy": "waiter",
+    "tableNumbers": [
+      "3"
+    ],
+    "floor": "first",
+    "revision": 1,
+    "sourceUpdatedAt": "2026-09-04T10:30:00.000Z",
+    "lines": [
+      {
+        "lineSeq": 0,
+        "itemName": "Khinkali",
+        "quantity": 10,
+        "unitPrice": "1.20",
+        "lineTotal": "12.00"
+      }
+    ],
+    "payments": [
+      {
+        "method": "card-tbc",
+        "amount": "12.00"
+      }
+    ]
+  },
+  {
+    "posSaleId": "legacy-non-fiscal",
+    "posOrderId": 7,
+    "businessDate": "2026-09-04",
+    "createdAt": "2026-09-04T09:00:00.000Z",
+    "closedAt": "2026-09-04T10:30:00.000Z",
+    "gross": "12.00",
+    "subtotal": "12.00",
+    "serviceFee": "0.00",
+    "discount": "0.00",
+    "manualAdjustment": "0.00",
+    "advanceApplied": "0.00",
+    "amountDueNow": "12.00",
+    "collectedNow": "0.00",
+    "paymentMethod": "non-fiscal",
+    "isFiscal": false,
+    "isCancelled": false,
+    "restoredToOrder": false,
+    "createdBy": "waiter",
+    "tableNumbers": [
+      "3"
+    ],
+    "floor": "first",
+    "revision": 1,
+    "sourceUpdatedAt": "2026-09-04T10:30:00.000Z",
+    "lines": [
+      {
+        "lineSeq": 0,
+        "itemName": "Khinkali",
+        "quantity": 10,
+        "unitPrice": "1.20",
+        "lineTotal": "12.00"
+      }
+    ],
+    "payments": []
+  },
+  {
+    "posSaleId": "current-cancelled",
+    "posOrderId": 7,
+    "businessDate": "2026-09-04",
+    "createdAt": "2026-09-04T09:00:00.000Z",
+    "closedAt": "2026-09-04T10:30:00.000Z",
+    "gross": "12.00",
+    "subtotal": "12.00",
+    "serviceFee": "0.00",
+    "discount": "0.00",
+    "manualAdjustment": "0.00",
+    "advanceApplied": "0.00",
+    "amountDueNow": "12.00",
+    "collectedNow": "0.00",
+    "paymentMethod": "cancelled",
+    "isFiscal": false,
+    "isCancelled": true,
+    "restoredToOrder": false,
+    "createdBy": "waiter",
+    "tableNumbers": [
+      "3"
+    ],
+    "floor": "first",
+    "revision": 1,
+    "sourceUpdatedAt": "2026-09-04T10:30:00.000Z",
+    "lines": [
+      {
+        "lineSeq": 0,
+        "itemName": "Khinkali",
+        "quantity": 10,
+        "unitPrice": "1.20",
+        "lineTotal": "12.00"
+      }
+    ],
+    "payments": []
+  },
+  {
+    "posSaleId": "normal-split",
+    "posOrderId": 7,
+    "businessDate": "2026-09-04",
+    "createdAt": "2026-09-04T09:00:00.000Z",
+    "closedAt": "2026-09-04T10:30:00.000Z",
+    "gross": "12.00",
+    "subtotal": "12.00",
+    "serviceFee": "0.00",
+    "discount": "0.00",
+    "manualAdjustment": "0.00",
+    "advanceApplied": "0.00",
+    "amountDueNow": "12.00",
+    "collectedNow": "12.00",
+    "paymentMethod": "split",
+    "isFiscal": true,
+    "isCancelled": false,
+    "restoredToOrder": false,
+    "createdBy": "waiter",
+    "tableNumbers": [
+      "3"
+    ],
+    "floor": "first",
+    "revision": 1,
+    "sourceUpdatedAt": "2026-09-04T10:30:00.000Z",
+    "lines": [
+      {
+        "lineSeq": 0,
+        "itemName": "Khinkali",
+        "quantity": 10,
+        "unitPrice": "1.20",
+        "lineTotal": "12.00"
+      }
+    ],
+    "payments": [
+      {
+        "method": "cash",
+        "amount": "5.00"
+      },
+      {
+        "method": "card-bog",
+        "amount": "7.00"
+      }
+    ]
+  }
+]

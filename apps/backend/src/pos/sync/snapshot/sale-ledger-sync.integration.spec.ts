@@ -1,3 +1,8 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { Body, Controller, Post } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import request from 'supertest';
 import { PrismaService } from '../../../prisma.service';
 import type { TenantContext } from '../../../tenancy/tenant-context';
 import type { SaleLedgerSync } from '../sync-payload';
@@ -410,6 +415,117 @@ describeDatabase('Cloud Sale ledger (PostgreSQL)', () => {
     });
     // Only the two fiscal Sales are revenue; the cancellation is excluded.
     expect(summary.revenue).toBe('200.00');
+  });
+
+  it('rejects captured stale tender and ingests Dart-normalized mixed history over HTTP', async () => {
+    const fixture = (name: string) =>
+      JSON.parse(
+        readFileSync(
+          resolve(__dirname, '../../../../../operations/test/fixtures', name),
+          'utf8',
+        ),
+      );
+    const normalized = fixture(
+      'retained_non_fiscal_wire.json',
+    ) as SaleLedgerSync;
+    const mixed = fixture('mixed_sale_ledger_wire.json') as SaleLedgerSync[];
+    // HTTP harness around the real service and disposable PostgreSQL.
+    // Tenant is fixed by the harness, never supplied by the request body.
+    @Controller('snapshot')
+    class SnapshotHarness {
+      @Post()
+      ingest(@Body() body: { sales: SaleLedgerSync[] }) {
+        return sync.sync(venueA, body.sales, []);
+      }
+    }
+    const module = await Test.createTestingModule({
+      controllers: [SnapshotHarness],
+    }).compile();
+    const app = module.createNestApplication();
+    await app.init();
+    try {
+      // Preserve the existing strict advance contract too: suppressing payments
+      // cannot silently erase a historical advance or make this shape valid.
+      const advanceConflict = await request(app.getHttpServer())
+        .post('/snapshot')
+        .send({
+          sales: [
+            { ...normalized, advanceApplied: '4.00', amountDueNow: '172.00' },
+          ],
+        })
+        .expect(400);
+      expect(advanceConflict.body.message).toBe(
+        'Advance payment part must equal advanceApplied',
+      );
+      const before = {
+        ...normalized,
+        collectedNow: '176.00',
+        payments: [{ method: 'cash', amount: '176.00' }],
+      };
+      const rejected = await request(app.getHttpServer())
+        .post('/snapshot')
+        .send({ sales: [before] })
+        .expect(400);
+      expect(rejected.body.message).toBe(
+        'Non-fiscal Sales cannot collect tender',
+      );
+      await request(app.getHttpServer())
+        .post('/snapshot')
+        .send({
+          sales: [
+            {
+              ...normalized,
+              posSaleId: 'malformed-direct',
+              collectedNow: '10.00',
+              payments: [{ method: 'cash', amount: '10.00' }],
+            },
+          ],
+        })
+        .expect(400);
+      expect(
+        await prisma.cloudSale.count({ where: { venueId: venueA.venueId } }),
+      ).toBe(0);
+      await request(app.getHttpServer())
+        .post('/snapshot')
+        .send({ sales: [normalized, ...mixed] })
+        .expect(201);
+      const stored = await prisma.cloudSale.findFirstOrThrow({
+        where: { venueId: venueA.venueId, posSaleId: normalized.posSaleId },
+        include: { payments: true, lines: true },
+      });
+      expect(stored.gross.toFixed(2)).toBe('176.00');
+      expect(stored.collectedNow.toFixed(2)).toBe('0.00');
+      expect(stored.payments).toEqual([]);
+      expect(stored.lines).toHaveLength(2);
+      expect(stored.isFiscal).toBe(false);
+      expect(stored.isCancelled).toBe(false);
+      expect(stored.restoredToOrder).toBe(false);
+      expect(stored.closureId).toBe(normalized.closureId);
+      expect(stored.paymentMethod).toBe('non-fiscal');
+      const history = await prisma.cloudSale.findMany({
+        where: { venueId: venueA.venueId },
+        include: { payments: true },
+      });
+      expect(history).toHaveLength(7);
+      for (const row of history.filter(
+        (row) => !row.isFiscal || row.isCancelled,
+      )) {
+        expect(row.collectedNow.toFixed(2)).toBe('0.00');
+        expect(row.payments).toEqual([]);
+      }
+      const internalSummary = await queries.getSummary(venueA, {
+        from: '2026-06-22',
+        to: '2026-06-22',
+      });
+      expect(internalSummary.revenue).toBe('0.00');
+      const mixedSummary = await queries.getSummary(venueA, {
+        from: '2026-09-04',
+        to: '2026-09-04',
+      });
+      expect(mixedSummary.revenue).toBe('36.00');
+    } finally {
+      await app.close();
+    }
   });
 
   it('uses authenticated Venue authority and isolates list/detail/filters', async () => {

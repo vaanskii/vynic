@@ -324,6 +324,14 @@ current transport status.
   Cloud acknowledges them. Closing remains entirely local/offline: the ledger
   is an asynchronous mirror and an old backend can ignore the additive payload
   without losing the Sale.
+- Sale Ledger wire normalization gives non-fiscal/cancelled lifecycle semantics
+  precedence over stale retained `collectedNow` and `paymentBreakdown`: it sends
+  zero collection and no payments, preserving operational gross and history
+  without rewriting Hive. Cancelled wire rows are non-fiscal. Stored collection
+  wins only for fiscal, non-cancelled Sales; restored fiscal snapshots retain
+  tender while the revenue predicate excludes them. Historical non-fiscal rows
+  with nonzero advances still conflict with strict Cloud advance-part validation;
+  see `docs/SALE_LEDGER_NON_FISCAL_COMPATIBILITY.md`.
 - `CloudSale`, `SaleLine`, and `SalePayment` are the durable Venue-scoped Cloud
   financial mirror. Ledger money is `Decimal(18,2)` and crosses the wire as
   fixed two-decimal strings. `(venueId,posSaleId)` is the primary idempotency

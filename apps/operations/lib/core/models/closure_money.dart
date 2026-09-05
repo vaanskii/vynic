@@ -101,13 +101,12 @@ class ClosureMoney {
   /// existed may still carry another: a cancellation flag, a non-fiscal flag,
   /// and the sentinel `paymentMethod` those paths write instead of a tender
   /// name. Only consulted when the durable `collectedNow` field is absent — a
-  /// record that states what it collected is always believed.
+  /// raw reader preserves a stated value. Sale Ledger wire normalization then
+  /// overrides it with semantic zero for non-fiscal/cancelled Sales.
   static bool collectedNothing(Map<dynamic, dynamic> sale) {
     if (sale['isCancelled'] == true) return true;
     if (sale['isFiscal'] == false) return true;
-    return PaymentUtils.isNonTenderSentinel(
-      sale['paymentMethod']?.toString(),
-    );
+    return PaymentUtils.isNonTenderSentinel(sale['paymentMethod']?.toString());
   }
 
   /// `null` when the split is internally consistent, otherwise why it is not.

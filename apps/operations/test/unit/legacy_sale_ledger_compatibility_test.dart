@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
@@ -191,6 +192,128 @@ void main() {
     });
   });
 
+  test(
+    'captured retained internal close preserves history without collection',
+    () {
+      final retained = Map<String, dynamic>.from(
+        jsonDecode(
+              File(
+                'test/fixtures/retained_non_fiscal_sale.json',
+              ).readAsStringSync(),
+            )
+            as Map,
+      );
+      final before = jsonEncode(retained);
+      final wire = payload(retained);
+      expect(retained['collectedNow'], 176.0);
+      expect(retained['paymentBreakdown'], {'cash': 176.0});
+      expect(wire['posSaleId'], retained['posSaleId']);
+      expect(wire['closureId'], retained['closureId']);
+      expect(wire['gross'], '176.00');
+      expect(wire['subtotal'], '160.00');
+      expect(wire['serviceFee'], '16.00');
+      expect(wire['advanceApplied'], '0.00');
+      expect(wire['amountDueNow'], '176.00');
+      expect(wire['collectedNow'], '0.00');
+      expect(wire['payments'], isEmpty);
+      expect(wire['isFiscal'], isFalse);
+      expect(wire['isCancelled'], isFalse);
+      expect(wire['restoredToOrder'], isFalse);
+      expect(wire['lines'], hasLength(2));
+      expect(jsonEncode(retained), before);
+      expect(
+        wire,
+        jsonDecode(
+          File(
+            'test/fixtures/retained_non_fiscal_wire.json',
+          ).readAsStringSync(),
+        ),
+      );
+      // This exact Dart output is consumed by the PostgreSQL integration test.
+      final output =
+          Platform.environment['SALE_LEDGER_CHARACTERIZATION_OUTPUT'];
+      if (output != null) File(output).writeAsStringSync(jsonEncode(wire));
+    },
+  );
+
+  group('semantic zero overrides stale retained collection', () {
+    for (final method in [
+      'cash',
+      'card',
+      'card-tbc',
+      'card-bog',
+      'non-fiscal',
+    ]) {
+      for (final cancelled in [false, true]) {
+        test('$method non-fiscal cancelled=$cancelled', () {
+          // Synthetic compatibility shape, not a captured production row.
+          final retained = {
+            ...base(id: 'stale-$method-$cancelled', total: 12, method: method),
+            'closureId': 'historical-closure',
+            'isFiscal': false,
+            'isCancelled': cancelled,
+            'collectedNow': 12.0,
+            'paymentBreakdown': {'cash': 5.0, 'card-tbc': 7.0},
+          };
+          final before = Map<String, dynamic>.from(retained);
+          final wire = payload(retained);
+          expect(wire['collectedNow'], '0.00');
+          expect(wire['payments'], isEmpty);
+          expect(wire['gross'], '12.00');
+          expect(wire['closureId'], retained['closureId']);
+          expect(wire['paymentMethod'], method);
+          expect(wire['posOrderId'], retained['orderId']);
+          expect(wire['createdBy'], retained['createdBy']);
+          expect(wire['businessDate'], retained['date']);
+          expect(retained, before);
+        });
+      }
+    }
+
+    test('non-fiscal advance context is preserved without payment rows', () {
+      final wire = payload({
+        ...legacyNonFiscal(),
+        'grossSaleAmount': 16.0,
+        'advanceApplied': 4.0,
+        'collectedNow': 12.0,
+        'paymentBreakdown': {'cash': 12.0, 'advance': 4.0},
+      });
+      expect(wire['gross'], '16.00');
+      expect(wire['advanceApplied'], '4.00');
+      expect(wire['amountDueNow'], '12.00');
+      expect(wire['collectedNow'], '0.00');
+      expect(wire['payments'], isEmpty);
+    });
+
+    test('cancelled fiscal marker also forbids collection', () {
+      final wire = payload({
+        ...legacyCash(),
+        'isCancelled': true,
+        'collectedNow': 12.0,
+        'paymentBreakdown': {'cash': 12.0},
+      });
+      expect(wire['isFiscal'], isFalse);
+      expect(wire['collectedNow'], '0.00');
+      expect(wire['payments'], isEmpty);
+    });
+
+    for (final method in ['cash', 'card', 'card-tbc', 'card-bog']) {
+      test('fiscal $method preserves legacy and stored collection', () {
+        for (final stored in [false, true]) {
+          final wire = payload({
+            ...legacyCash(),
+            'paymentMethod': method,
+            if (stored) 'collectedNow': 12.0,
+          });
+          expect(wire['collectedNow'], '12.00');
+          expect(wire['payments'], [
+            {'method': method, 'amount': '12.00'},
+          ]);
+        }
+      });
+    }
+  });
+
   group('valid legacy Sales are untouched', () {
     test('a legacy cash Sale still collects its total', () {
       final wire = payload(legacyCash());
@@ -298,15 +421,18 @@ void main() {
       expect(wire['isCancelled'], isTrue);
     });
 
-    test('a record that states what it collected is always believed', () {
-      // The fix reads a stored `collectedNow` first and only falls back for a
-      // record that has none. A durable value is never second-guessed.
-      final split = ClosureMoney.fromSaleMap({
-        ...legacyCancelled(),
-        'collectedNow': 3.0,
-      });
-      expect(split.collectedNow, 3.0);
-    });
+    test(
+      'raw money reader preserves history; wire semantics take precedence',
+      () {
+        // The raw reader remains lossless. Only the ledger wire boundary suppresses
+        // stale collection for non-fiscal/cancelled history.
+        final split = ClosureMoney.fromSaleMap({
+          ...legacyCancelled(),
+          'collectedNow': 3.0,
+        });
+        expect(split.collectedNow, 3.0);
+      },
+    );
   });
 
   group('a mixed snapshot', () {
@@ -315,7 +441,26 @@ void main() {
         legacyCash(),
         legacyCancelled(),
         legacyCard(),
-        legacyNonFiscal(),
+        {
+          ...legacyNonFiscal(),
+          'collectedNow': 12.0,
+          'paymentBreakdown': {'cash': 12.0},
+        },
+        {
+          ...legacyCash(),
+          'posSaleId': 'current-cancelled',
+          'isFiscal': false,
+          'isCancelled': true,
+          'collectedNow': 0.0,
+          'paymentMethod': 'cancelled',
+        },
+        {
+          ...legacyCash(),
+          'posSaleId': 'normal-split',
+          'paymentMethod': 'split',
+          'collectedNow': 12.0,
+          'paymentBreakdown': {'cash': 5.0, 'card-bog': 7.0},
+        },
       ]) {
         await DatabaseCore.salesBox!.add(sale);
       }
@@ -325,15 +470,25 @@ void main() {
           .toList();
 
       final batch = SaleLedgerSyncState.buildBatch(all);
-      expect(batch, hasLength(4));
+      expect(batch, hasLength(6));
+      expect(
+        batch,
+        jsonDecode(
+          File('test/fixtures/mixed_sale_ledger_wire.json').readAsStringSync(),
+        ),
+      );
+      final output = Platform.environment['SALE_LEDGER_MIXED_OUTPUT'];
+      if (output != null) File(output).writeAsStringSync(jsonEncode(batch));
+      for (final wire in batch.where((row) => row['isFiscal'] == false)) {
+        expect(wire['collectedNow'], '0.00');
+        expect(wire['payments'], isEmpty);
+      }
       // No row in the batch names a sentinel as a tender, so nothing in it can
       // fail Cloud validation and take the whole snapshot down with it.
       for (final wire in batch) {
         for (final part in wire['payments'] as List) {
           expect(
-            PaymentUtils.isNonTenderSentinel(
-              (part as Map)['method'] as String,
-            ),
+            PaymentUtils.isNonTenderSentinel((part as Map)['method'] as String),
             isFalse,
           );
         }
@@ -344,8 +499,8 @@ void main() {
         allRecords: all,
         currentBusinessDate: '2026-09-05',
       ).single;
-      expect(declaration['expectedSaleCount'], 4);
-      expect(declaration['expectedRevenue'], '24.00');
+      expect(declaration['expectedSaleCount'], 6);
+      expect(declaration['expectedRevenue'], '36.00');
     });
   });
 }

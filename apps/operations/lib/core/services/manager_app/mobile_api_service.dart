@@ -13,6 +13,7 @@ import 'package:vynic/core/services/manager_app/mobile_cache_service.dart';
 import 'package:vynic/core/services/sync/mobile_edit_echo_guard.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 import 'package:vynic/core/models/global_audit_entry.dart';
+import 'package:vynic/core/models/inventory.dart';
 
 /// Production-grade mobile API service.
 ///
@@ -737,6 +738,107 @@ class MobileApiService {
     }
     // Refresh local cache after successful update
     await getCountedMenus();
+  }
+
+  // ── Users (admin panel) ───────────────────────────────────────────────────
+
+  static Future<List<StockItem>> getStockItems({String? search}) async {
+    final query = search == null || search.trim().isEmpty
+        ? ''
+        : '?q=${Uri.encodeQueryComponent(search.trim())}';
+    final response = await _get('/mobile/inventory/stock-items$query');
+    if (response.statusCode != 200) {
+      throw Exception(_apiError('Stock items', response));
+    }
+    return (jsonDecode(response.body) as List)
+        .whereType<Map>()
+        .map((row) => StockItem.fromJson(Map<String, dynamic>.from(row)))
+        .toList(growable: false);
+  }
+
+  static Future<StockItem> saveStockItem({
+    String? id,
+    required String name,
+    String? sku,
+    required InventoryUnit baseUnit,
+    double? minimumStock,
+    String? notes,
+    required bool isActive,
+  }) async {
+    final payload = <String, dynamic>{
+      'name': name,
+      'sku': sku,
+      'baseUnit': baseUnit.wireValue,
+      'minimumStock': minimumStock,
+      'notes': notes,
+      'isActive': isActive,
+    };
+    final response = id == null
+        ? await _post('/mobile/inventory/stock-items', payload)
+        : await _patch('/mobile/inventory/stock-items/$id', payload);
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(_apiError('Stock item', response));
+    }
+    return StockItem.fromJson(
+      Map<String, dynamic>.from(jsonDecode(response.body) as Map),
+    );
+  }
+
+  static Future<List<Supplier>> getSuppliers({String? search}) async {
+    final query = search == null || search.trim().isEmpty
+        ? ''
+        : '?q=${Uri.encodeQueryComponent(search.trim())}';
+    final response = await _get('/mobile/inventory/suppliers$query');
+    if (response.statusCode != 200) {
+      throw Exception(_apiError('Suppliers', response));
+    }
+    return (jsonDecode(response.body) as List)
+        .whereType<Map>()
+        .map((row) => Supplier.fromJson(Map<String, dynamic>.from(row)))
+        .toList(growable: false);
+  }
+
+  static Future<Supplier> saveSupplier({
+    String? id,
+    required String name,
+    String? taxId,
+    String? phone,
+    String? email,
+    String? address,
+    String? notes,
+    required bool isActive,
+  }) async {
+    final payload = <String, dynamic>{
+      'name': name,
+      'taxId': taxId,
+      'phone': phone,
+      'email': email,
+      'address': address,
+      'notes': notes,
+      'isActive': isActive,
+    };
+    final response = id == null
+        ? await _post('/mobile/inventory/suppliers', payload)
+        : await _patch('/mobile/inventory/suppliers/$id', payload);
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(_apiError('Supplier', response));
+    }
+    return Supplier.fromJson(
+      Map<String, dynamic>.from(jsonDecode(response.body) as Map),
+    );
+  }
+
+  static String _apiError(String fallback, http.Response response) {
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map && decoded['message'] != null) {
+        final message = decoded['message'];
+        return message is List ? message.join(', ') : message.toString();
+      }
+    } catch (error) {
+      debugPrint('[Manager API] Could not decode error response: $error');
+    }
+    return '$fallback request failed (${response.statusCode})';
   }
 
   // ── Users (admin panel) ───────────────────────────────────────────────────

@@ -57,6 +57,18 @@ abstract final class GlobalAuditRegistry {
     GlobalAuditAction.menuVariantDeleted,
   };
 
+  static const Set<String> _stockItemActions = {
+    GlobalAuditAction.stockItemCreated,
+    GlobalAuditAction.stockItemUpdated,
+    GlobalAuditAction.stockItemDisabled,
+  };
+
+  static const Set<String> _supplierActions = {
+    GlobalAuditAction.supplierCreated,
+    GlobalAuditAction.supplierUpdated,
+    GlobalAuditAction.supplierDisabled,
+  };
+
   static const Set<String> _packageActions = {
     GlobalAuditAction.packageCreated,
     GlobalAuditAction.packageUpdated,
@@ -80,7 +92,8 @@ abstract final class GlobalAuditRegistry {
     String? storedId,
   }) {
     final declared = _clean(storedType);
-    if (declared != null) return GlobalAuditEntityRef(declared, _clean(storedId));
+    if (declared != null)
+      return GlobalAuditEntityRef(declared, _clean(storedId));
 
     final trimmed = action.trim();
     if (trimmed.isEmpty) return null;
@@ -159,6 +172,18 @@ abstract final class GlobalAuditRegistry {
       return GlobalAuditEntityRef(
         GlobalAuditEntity.menuVariant,
         _clean(data['variantId']?.toString()),
+      );
+    }
+    if (_stockItemActions.contains(upper)) {
+      return GlobalAuditEntityRef(
+        GlobalAuditEntity.stockItem,
+        _clean(data['stockItemId']?.toString()),
+      );
+    }
+    if (_supplierActions.contains(upper)) {
+      return GlobalAuditEntityRef(
+        GlobalAuditEntity.supplier,
+        _clean(data['supplierId']?.toString()),
       );
     }
     if (_packageActions.contains(upper)) {

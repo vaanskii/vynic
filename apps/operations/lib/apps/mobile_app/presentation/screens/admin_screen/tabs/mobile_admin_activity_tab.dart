@@ -16,6 +16,8 @@ const List<({String? type, String label})> _activityFilters = [
   (type: null, label: 'ყველა'),
   (type: GlobalAuditEntity.staff, label: 'გუნდი'),
   (type: GlobalAuditEntity.menuItem, label: 'მენიუ'),
+  (type: GlobalAuditEntity.stockItem, label: 'მარაგები'),
+  (type: GlobalAuditEntity.supplier, label: 'მომწოდებლები'),
   (type: GlobalAuditEntity.package, label: 'პაკეტები'),
   (type: GlobalAuditEntity.expense, label: 'ხარჯები'),
   (type: GlobalAuditEntity.closeDay, label: 'დღის დახურვა'),
@@ -68,8 +70,7 @@ class _ActivityTabState extends State<_ActivityTab>
 
   void _onScroll() {
     if (!_hasMore || _loadingMore || _loading) return;
-    if (_scroll.position.pixels >=
-        _scroll.position.maxScrollExtent - 240) {
+    if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 240) {
       _load(more: true);
     }
   }
@@ -168,10 +169,8 @@ class _ActivityTabState extends State<_ActivityTab>
                 _AdminFilterChip(
                   label: filter.label,
                   selected: _entityType == filter.type && _entityId == null,
-                  onTap: () => _applyFilter(
-                    entityType: filter.type,
-                    clearSubject: true,
-                  ),
+                  onTap: () =>
+                      _applyFilter(entityType: filter.type, clearSubject: true),
                 ),
                 SizedBox(width: 8),
               ],
@@ -204,10 +203,8 @@ class _ActivityTabState extends State<_ActivityTab>
               child: _AdminFilterChip(
                 label: '✕  $_entityIdLabel',
                 selected: true,
-                onTap: () => _applyFilter(
-                  entityType: _entityType,
-                  clearSubject: true,
-                ),
+                onTap: () =>
+                    _applyFilter(entityType: _entityType, clearSubject: true),
               ),
             ),
           ),
@@ -332,11 +329,7 @@ class _ActivityRow extends StatelessWidget {
             SizedBox(height: 6),
             Row(
               children: [
-                Icon(
-                  Icons.person_outline,
-                  size: 13,
-                  color: AdminTheme.textDim,
-                ),
+                Icon(Icons.person_outline, size: 13, color: AdminTheme.textDim),
                 SizedBox(width: 4),
                 Flexible(
                   child: Text(

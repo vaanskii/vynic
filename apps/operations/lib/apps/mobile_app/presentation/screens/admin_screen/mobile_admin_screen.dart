@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:vynic/core/services/audit/close_event_presentation.dart';
 import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/global_audit_entry.dart';
+import 'package:vynic/core/models/inventory.dart';
 import 'package:vynic/core/services/audit/global_audit.dart';
 import 'package:vynic/core/models/monitoring.dart';
 import 'package:vynic/core/models/staff_role.dart';
@@ -22,6 +23,7 @@ part 'tabs/mobile_admin_sales_tab.dart';
 part 'tabs/mobile_admin_report_tab.dart';
 part 'tabs/mobile_admin_audit_tab.dart';
 part 'tabs/mobile_admin_activity_tab.dart';
+part 'tabs/mobile_admin_inventory_tab.dart';
 part 'tabs/mobile_admin_settings_tab.dart';
 part 'shared/mobile_admin_shared_widgets.dart';
 
@@ -35,6 +37,16 @@ class MobileAdminScreen extends StatefulWidget {
     required this.user,
     required this.onLogout,
   });
+
+  static const adminTabs = <({String label, IconData icon})>[
+    (label: 'ანგარიში', icon: Icons.analytics_outlined),
+    (label: 'გაყიდვები', icon: Icons.receipt_long_outlined),
+    (label: 'აუდიტი', icon: Icons.fact_check_outlined),
+    (label: 'აქტივობა', icon: Icons.history_outlined),
+    (label: 'მარაგები', icon: Icons.inventory_2_outlined),
+    (label: 'გუნდი', icon: Icons.people_outline),
+    (label: 'პარამეტრები', icon: Icons.settings_outlined),
+  ];
 
   @override
   State<MobileAdminScreen> createState() => _MobileAdminScreenState();
@@ -92,19 +104,13 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabs;
 
-  static const _tabDefs = <({String label, IconData icon})>[
-    (label: 'ანგარიში', icon: Icons.analytics_outlined),
-    (label: 'გაყიდვები', icon: Icons.receipt_long_outlined),
-    (label: 'აუდიტი', icon: Icons.fact_check_outlined),
-    (label: 'აქტივობა', icon: Icons.history_outlined),
-    (label: 'გუნდი', icon: Icons.people_outline),
-    (label: 'პარამეტრები', icon: Icons.settings_outlined),
-  ];
-
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: _tabDefs.length, vsync: this);
+    _tabs = TabController(
+      length: MobileAdminScreen.adminTabs.length,
+      vsync: this,
+    );
   }
 
   @override
@@ -185,7 +191,7 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
                   fontWeight: FontWeight.w500,
                 ),
                 tabs: [
-                  for (final t in _tabDefs)
+                  for (final t in MobileAdminScreen.adminTabs)
                     Tab(
                       height: 48,
                       child: Row(
@@ -208,6 +214,7 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
                   _SalesTab(),
                   _AuditTab(),
                   _ActivityTab(),
+                  InventoryAdminTab(),
                   _UsersTab(currentUser: widget.user),
                   _SettingsTab(user: widget.user, onLogout: widget.onLogout),
                 ],

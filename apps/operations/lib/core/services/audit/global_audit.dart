@@ -16,6 +16,8 @@ abstract final class GlobalAuditEntity {
   static const String menuItem = 'MENU_ITEM';
   static const String menuCategory = 'MENU_CATEGORY';
   static const String menuVariant = 'MENU_VARIANT';
+  static const String stockItem = 'STOCK_ITEM';
+  static const String supplier = 'SUPPLIER';
   static const String package = 'PACKAGE';
   static const String expense = 'EXPENSE';
   static const String closeDay = 'CLOSE_DAY';
@@ -32,6 +34,8 @@ abstract final class GlobalAuditEntity {
     menuItem,
     menuCategory,
     menuVariant,
+    stockItem,
+    supplier,
     package,
     expense,
     closeDay,
@@ -70,6 +74,13 @@ abstract final class GlobalAuditAction {
   static const String menuVariantCreated = 'MENU_VARIANT_CREATED';
   static const String menuVariantUpdated = 'MENU_VARIANT_UPDATED';
   static const String menuVariantDeleted = 'MENU_VARIANT_DELETED';
+
+  static const String stockItemCreated = 'STOCK_ITEM_CREATED';
+  static const String stockItemUpdated = 'STOCK_ITEM_UPDATED';
+  static const String stockItemDisabled = 'STOCK_ITEM_DISABLED';
+  static const String supplierCreated = 'SUPPLIER_CREATED';
+  static const String supplierUpdated = 'SUPPLIER_UPDATED';
+  static const String supplierDisabled = 'SUPPLIER_DISABLED';
 
   // Package definitions. Applying a package to an Order is `APPLY_PACKAGE` on
   // that Order's report and is deliberately not duplicated here.
@@ -196,11 +207,7 @@ abstract final class GlobalAudit {
     source: source,
     data: <String, dynamic>{
       'staffName': username,
-      ...change(
-        field: 'role',
-        previousValue: previousRole,
-        newValue: newRole,
-      ),
+      ...change(field: 'role', previousValue: previousRole, newValue: newRole),
     },
   );
 

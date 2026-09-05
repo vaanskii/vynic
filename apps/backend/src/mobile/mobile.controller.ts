@@ -1,3 +1,4 @@
+import { SaleConsumptionService } from '../inventory/sale-consumption.service';
 import {
   Controller,
   Get,
@@ -46,10 +47,7 @@ import {
   ReceivingService,
   type ReceivingInput,
 } from '../inventory/receiving.service';
-import {
-  RecipeService,
-  type RecipeInput,
-} from '../inventory/recipe.service';
+import { RecipeService, type RecipeInput } from '../inventory/recipe.service';
 
 // ─── Controller ───────────────────────────────────────────────────────────────
 
@@ -70,9 +68,26 @@ export class MobileController {
     private readonly orders: MobileOrdersService,
     private readonly saleLedger: MobileSaleLedgerService,
     private readonly inventory: InventoryService,
+    private readonly consumption: SaleConsumptionService,
     private readonly receiving: ReceivingService,
     private readonly recipes: RecipeService,
   ) {}
+
+  @Get('inventory/consumptions')
+  consumptions(
+    @ManagerTenant() tenant: TenantContext,
+    @Query() query: { from?: string; to?: string; unmapped?: string },
+  ) {
+    return this.consumption.list(tenant, query);
+  }
+
+  @Get('inventory/consumptions/:id')
+  consumptionDetail(
+    @ManagerTenant() tenant: TenantContext,
+    @Param('id') id: string,
+  ) {
+    return this.consumption.detail(tenant, id);
+  }
 
   @Get('inventory/units')
   getInventoryUnits() {

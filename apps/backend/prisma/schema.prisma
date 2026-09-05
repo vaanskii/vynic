@@ -203,10 +203,11 @@ model StockItem {
   updatedAt    DateTime @updatedAt
   venue        Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
-  purchaseUnits         StockItemPurchaseUnit[]
-  receivingLines        ReceivingLine[]
-  movements             StockMovement[]
-  consumptionComponents MenuConsumptionComponent[]
+  purchaseUnits             StockItemPurchaseUnit[]
+  receivingLines            ReceivingLine[]
+  movements                 StockMovement[]
+  saleConsumptionComponents SaleConsumptionComponent[]
+  consumptionComponents     MenuConsumptionComponent[]
 
   @@unique([venueId, sku])
   @@index([venueId, isActive, name])
@@ -348,6 +349,8 @@ model ReceivingLine {
 enum StockMovementType {
   RECEIVING
   RECEIVING_REVERSAL
+  CONSUMPTION
+  CONSUMPTION_REVERSAL
 
   @@schema("pos")
 }
@@ -357,36 +360,38 @@ enum StockMovementType {
 ///
 /// Rows are history: a posted movement is never edited into a different number.
 /// A correction is an explicit reversing movement beside the original. Later
-/// steps add SALE / WASTE / STOCKTAKE members to `movementType`; nothing here
-/// assumes only the two Step 2 members exist.
+/// steps may add WASTE / STOCKTAKE; consumption and restore use the same ledger.
 model StockMovement {
-  id                   String            @id @default(uuid())
-  venueId              String
-  stockItemId          String
-  movementType         StockMovementType
+  id                     String                    @id @default(uuid())
+  venueId                String
+  stockItemId            String
+  movementType           StockMovementType
   /// Signed change in the Stock Item's own base unit.
-  quantityDeltaBase    Decimal           @db.Decimal(18, 3)
-  baseUnit             String
-  receivingId          String?
-  receivingLineId      String?
+  quantityDeltaBase      Decimal                   @db.Decimal(21, 6)
+  baseUnit               String
+  consumptionComponentId String?
+  consumptionComponent   SaleConsumptionComponent? @relation(fields: [consumptionComponentId], references: [id], onDelete: Restrict)
+  receivingId            String?
+  receivingLineId        String?
   /// Set on a reversal. Unique, so a repeated cancellation cannot reverse the
   /// same movement twice even under concurrency.
-  reversalOfMovementId String?           @unique
-  businessDate         String
-  effectiveAt          DateTime
-  actorId              String
-  actorName            String
-  source               String
-  createdAt            DateTime          @default(now())
-  details              Json?
-  venue                Venue             @relation(fields: [venueId], references: [id], onDelete: Restrict)
-  stockItem            StockItem         @relation(fields: [stockItemId], references: [id], onDelete: Restrict)
-  receiving            Receiving?        @relation(fields: [receivingId], references: [id], onDelete: Restrict)
-  receivingLine        ReceivingLine?    @relation(fields: [receivingLineId], references: [id], onDelete: Restrict)
+  reversalOfMovementId   String?                   @unique
+  businessDate           String
+  effectiveAt            DateTime
+  actorId                String
+  actorName              String
+  source                 String
+  createdAt              DateTime                  @default(now())
+  details                Json?
+  venue                  Venue                     @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  stockItem              StockItem                 @relation(fields: [stockItemId], references: [id], onDelete: Restrict)
+  receiving              Receiving?                @relation(fields: [receivingId], references: [id], onDelete: Restrict)
+  receivingLine          ReceivingLine?            @relation(fields: [receivingLineId], references: [id], onDelete: Restrict)
 
   /// One movement of each kind per Receiving line, enforced by the database.
   /// Future movement kinds carry a null `receivingLineId`, which PostgreSQL
   /// treats as distinct, so they are unconstrained by this index.
+  @@unique([consumptionComponentId, movementType])
   @@unique([receivingLineId, movementType])
   @@index([venueId, stockItemId, createdAt, id])
   @@index([venueId, receivingId])
@@ -480,6 +485,71 @@ model MenuConsumptionComponent {
   stockItem StockItem             @relation(fields: [stockItemId], references: [id], onDelete: Restrict)
 
   @@unique([recipeId, sequence])
+  @@index([venueId, stockItemId])
+  @@schema("pos")
+}
+
+/// Immutable POS close-time inventory intent. No historical Sale backfill.
+model SaleConsumption {
+  id                 String                @id @default(uuid())
+  venueId            String
+  posSaleId          String
+  closureId          String
+  orderId            Int
+  businessDate       String
+  closedAt           DateTime
+  catalogGeneratedAt String?
+  policy             String
+  snapshot           Json
+  reversedAt         DateTime?
+  createdAt          DateTime              @default(now())
+  venue              Venue                 @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  lines              SaleConsumptionLine[]
+
+  @@unique([venueId, posSaleId])
+  @@unique([venueId, closureId])
+  @@index([venueId, businessDate, id])
+  @@schema("pos")
+}
+
+model SaleConsumptionLine {
+  id             String                     @id @default(uuid())
+  venueId        String
+  consumptionId  String
+  lineSeq        Int
+  menuItemId     String?
+  variantId      String?
+  itemName       String
+  variantName    String?
+  soldQuantity   Int
+  status         String
+  reason         String?
+  recipeId       String?
+  recipeRevision Int?
+  venue          Venue                      @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  consumption    SaleConsumption            @relation(fields: [consumptionId], references: [id], onDelete: Restrict)
+  components     SaleConsumptionComponent[]
+
+  @@unique([consumptionId, lineSeq])
+  @@index([venueId, status])
+  @@schema("pos")
+}
+
+model SaleConsumptionComponent {
+  id                    String              @id @default(uuid())
+  venueId               String
+  lineId                String
+  stockItemId           String
+  stockItemNameSnapshot String
+  baseQuantityPerUnit   Decimal             @db.Decimal(18, 6)
+  totalBaseQuantity     Decimal             @db.Decimal(21, 6)
+  baseUnit              String
+  venue                 Venue               @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  line                  SaleConsumptionLine @relation(fields: [lineId], references: [id], onDelete: Restrict)
+  stockItem             StockItem           @relation(fields: [stockItemId], references: [id], onDelete: Restrict)
+  movements             StockMovement[]
+
+  @@unique([lineId, stockItemId])
   @@index([venueId, stockItemId])
   @@schema("pos")
 }
@@ -1015,48 +1085,51 @@ model Organization {
 
 /// One physical restaurant/location owned by an Organization.
 model Venue {
-  id                    String                     @id @default(uuid())
-  organizationId        String
-  name                  String
-  status                VenueStatus                @default(ACTIVE)
-  timezone              String
-  currency              String
-  createdAt             DateTime                   @default(now())
-  updatedAt             DateTime                   @updatedAt
-  organization          Organization               @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  devices               Device[]
-  tables                Table[]
-  orders                Order[]
-  menuCategories        MenuCategory[]
-  menuItems             MenuItem[]
-  expenses              Expense[]
-  stockItems            StockItem[]
-  suppliers             Supplier[]
-  cloudSales            CloudSale[]
-  saleLedgerDays        SaleLedgerDay[]
-  staff                 Staff[]
-  auditReports          AuditReport[]
-  posReservations       PosReservation[]
-  auditEventLogs        AuditEventLog[]
-  dailySnapshots        DailySnapshot[]
-  settings              Setting[]
-  callbackOutbox        PosCallbackOutbox[]
-  quickOrderDrafts      QuickOrderDraft[]
-  notifications         ManagerNotification[]
-  pushDevices           PushDevice[]
-  planAssignment        VenuePlanAssignment?
-  featureOverrides      VenueFeatureOverride[]
-  websiteConfig         VenueWebsiteConfig?
-  domains               VenueDomain[]
-  websiteTables         WebsiteTable[]
-  websiteBookings       WebsiteReservation[]
-  edgeCommands          EdgeCommand[]
-  deviceEnrollments     DeviceEnrollment[]
-  receivings            Receiving[]
-  stockMovements        StockMovement[]
-  purchaseUnits         StockItemPurchaseUnit[]
-  consumptionRecipes    MenuConsumptionRecipe[]
-  consumptionComponents MenuConsumptionComponent[]
+  id                        String                     @id @default(uuid())
+  organizationId            String
+  name                      String
+  status                    VenueStatus                @default(ACTIVE)
+  timezone                  String
+  currency                  String
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+  organization              Organization               @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  devices                   Device[]
+  tables                    Table[]
+  orders                    Order[]
+  menuCategories            MenuCategory[]
+  menuItems                 MenuItem[]
+  expenses                  Expense[]
+  stockItems                StockItem[]
+  suppliers                 Supplier[]
+  cloudSales                CloudSale[]
+  saleLedgerDays            SaleLedgerDay[]
+  staff                     Staff[]
+  auditReports              AuditReport[]
+  posReservations           PosReservation[]
+  auditEventLogs            AuditEventLog[]
+  dailySnapshots            DailySnapshot[]
+  settings                  Setting[]
+  callbackOutbox            PosCallbackOutbox[]
+  quickOrderDrafts          QuickOrderDraft[]
+  notifications             ManagerNotification[]
+  pushDevices               PushDevice[]
+  planAssignment            VenuePlanAssignment?
+  featureOverrides          VenueFeatureOverride[]
+  websiteConfig             VenueWebsiteConfig?
+  domains                   VenueDomain[]
+  websiteTables             WebsiteTable[]
+  websiteBookings           WebsiteReservation[]
+  edgeCommands              EdgeCommand[]
+  deviceEnrollments         DeviceEnrollment[]
+  receivings                Receiving[]
+  stockMovements            StockMovement[]
+  purchaseUnits             StockItemPurchaseUnit[]
+  saleConsumptions          SaleConsumption[]
+  saleConsumptionLines      SaleConsumptionLine[]
+  consumptionRecipes        MenuConsumptionRecipe[]
+  saleConsumptionComponents SaleConsumptionComponent[]
+  consumptionComponents     MenuConsumptionComponent[]
 
   @@index([organizationId])
   @@schema("pos")

@@ -1,3 +1,4 @@
+import { stockQuantityText } from './inventory-quantity';
 import {
   BadRequestException,
   ConflictException,
@@ -206,11 +207,7 @@ export class ReceivingService {
     });
   }
 
-  async updateDraft(
-    actor: InventoryActor,
-    id: string,
-    input: ReceivingInput,
-  ) {
+  async updateDraft(actor: InventoryActor, id: string, input: ReceivingInput) {
     const cleanId = requiredText(id, 'id');
     const header = this.readHeader(input);
     return this.prisma.$transaction(async (tx) => {
@@ -586,7 +583,9 @@ export class ReceivingService {
 
     const inputs = raw as ReceivingLineInput[];
     const ids = Array.from(
-      new Set(inputs.map((line) => requiredText(line.stockItemId, 'stockItemId'))),
+      new Set(
+        inputs.map((line) => requiredText(line.stockItemId, 'stockItemId')),
+      ),
     );
     const items = await tx.stockItem.findMany({
       where: { id: { in: ids }, venueId: actor.venueId },
@@ -741,7 +740,7 @@ export function presentMovement(movement: any) {
     id: movement.id,
     stockItemId: movement.stockItemId,
     movementType: movement.movementType,
-    quantityDeltaBase: quantityText(movement.quantityDeltaBase),
+    quantityDeltaBase: stockQuantityText(movement.quantityDeltaBase),
     baseUnit: movement.baseUnit,
     receivingId: movement.receivingId,
     receivingLineId: movement.receivingLineId,

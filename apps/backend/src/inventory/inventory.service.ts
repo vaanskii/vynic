@@ -16,6 +16,7 @@ import {
   multiplierText,
   positiveMultiplier,
   quantityText,
+  stockQuantityText,
   recipeUnitsFor,
 } from './inventory-quantity';
 import {
@@ -511,8 +512,14 @@ export class InventoryService {
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       // Derived from StockMovement on every read. Never a stored balance.
-      currentStock: quantityText(currentStock),
-      stockStatus: minimum == null ? 'NO_MINIMUM' : isLowStock ? 'LOW' : 'OK',
+      currentStock: stockQuantityText(currentStock),
+      stockStatus: currentStock.isNegative()
+        ? 'NEGATIVE'
+        : minimum == null
+          ? 'NO_MINIMUM'
+          : isLowStock
+            ? 'LOW'
+            : 'OK',
       isLowStock,
       purchaseUnits: (row.purchaseUnits ?? []).map((unit: any) => ({
         id: unit.id,
@@ -682,7 +689,9 @@ function readPurchaseUnits(
     throw new BadRequestException('purchaseUnits must be an array');
   }
   if (raw.length > 8) {
-    throw new BadRequestException('A Stock Item may hold up to 8 purchase units');
+    throw new BadRequestException(
+      'A Stock Item may hold up to 8 purchase units',
+    );
   }
   const seen = new Set<string>();
   return raw.map((entry) => {

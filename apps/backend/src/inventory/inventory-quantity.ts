@@ -284,11 +284,14 @@ export function lineMoney(input: {
 
 export function sumMoney(values: readonly Prisma.Decimal[]): Prisma.Decimal {
   return money(
-    values.reduce(
-      (total, value) => total.plus(value),
-      new Prisma.Decimal(0),
-    ),
+    values.reduce((total, value) => total.plus(value), new Prisma.Decimal(0)),
   );
 }
 
 export type { InventoryUnit };
+
+/** Ledger balances retain all six consumption decimals; Receiving keeps three. */
+export function stockQuantityText(value: unknown): string {
+  const decimal = new Prisma.Decimal((value ?? 0) as never);
+  return decimal.toFixed(decimal.decimalPlaces() > 3 ? 6 : 3);
+}

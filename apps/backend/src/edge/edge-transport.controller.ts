@@ -1,3 +1,4 @@
+import { SaleConsumptionService } from '../inventory/sale-consumption.service';
 import {
   BadRequestException,
   Body,
@@ -40,6 +41,7 @@ export class EdgeTransportController {
   constructor(
     private readonly commands: EdgeCommandService,
     private readonly inventory: InventoryService,
+    private readonly consumption: SaleConsumptionService,
   ) {}
 
   /**
@@ -47,6 +49,11 @@ export class EdgeTransportController {
    * The Device cannot name a Venue; EdgeDeviceGuard derived it from the
    * credential before this method runs.
    */
+  @Post('inventory/consumption')
+  consume(@EdgeDevice() device: EdgeDeviceContext, @Body() body: unknown) {
+    return this.consumption.apply(device, body);
+  }
+
   @Get('inventory/catalog')
   async inventoryCatalog(@EdgeDevice() device: EdgeDeviceContext) {
     return this.inventory.getCatalog(device);

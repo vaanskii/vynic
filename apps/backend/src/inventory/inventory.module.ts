@@ -1,3 +1,4 @@
+import { SaleConsumptionService } from './sale-consumption.service';
 import { Module } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { ReceivingService } from './receiving.service';
@@ -11,7 +12,17 @@ import { RecipeService } from './recipe.service';
  * the domain services take a resolved Venue and never a client-supplied one.
  */
 @Module({
-  providers: [InventoryService, ReceivingService, RecipeService],
-  exports: [InventoryService, ReceivingService, RecipeService],
+  providers: [
+    InventoryService,
+    ReceivingService,
+    RecipeService,
+    SaleConsumptionService,
+  ],
+  exports: [
+    InventoryService,
+    ReceivingService,
+    RecipeService,
+    SaleConsumptionService,
+  ],
 })
 export class InventoryModule {}

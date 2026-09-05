@@ -1,3 +1,4 @@
+import { SaleConsumptionService } from '../inventory/sale-consumption.service';
 import {
   BadRequestException,
   ForbiddenException,
@@ -68,6 +69,7 @@ describeDatabase('Cloud → Edge transport (PostgreSQL)', () => {
     controller = new EdgeTransportController(
       commands,
       new InventoryService(prisma, new RecipeService(prisma)),
+      new SaleConsumptionService(prisma),
     );
     guard = new EdgeDeviceGuard(credentials);
 

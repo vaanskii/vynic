@@ -723,6 +723,10 @@ class BackupRepository {
             ((payload['inventoryCatalog'] as Map?)?['suppliers'] as List?)
                 ?.length ??
             0,
+        'recipes':
+            ((payload['inventoryCatalog'] as Map?)?['recipes'] as List?)
+                ?.length ??
+            0,
       },
     );
   }

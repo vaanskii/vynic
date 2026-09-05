@@ -384,14 +384,14 @@ class _ReceivingDetailDialogState extends State<ReceivingDetailDialog> {
           ),
           const SizedBox(height: 2),
           Text(
-            '${_quantityText(line.enteredQuantity)} ${line.enteredUnit.wireValue}'
-            ' · ${line.unitPurchaseCost} ₾ / ${line.enteredUnit.wireValue}',
+            '${_quantityText(line.enteredQuantity)} ${_unitShort(line.enteredUnit)}'
+            ' · ${line.unitPurchaseCost} ₾ / ${_unitShort(line.enteredUnit)}',
             style: TextStyle(color: AdminTheme.textMuted, fontSize: 12),
           ),
           if (line.isConverted)
             Text(
-              'მიღებული: ${_quantityText(line.baseQuantity)} ${line.baseUnit.wireValue}'
-              ' (${line.effectiveBaseUnitCost} ₾ / ${line.baseUnit.wireValue})',
+              'მიღებული: ${_quantityText(line.baseQuantity)} ${_unitShort(line.baseUnit)}'
+              ' (${line.effectiveBaseUnitCost} ₾ / ${_unitShort(line.baseUnit)})',
               key: Key('receiving-line-converted-${line.lineSequence}'),
               style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
             ),
@@ -431,7 +431,7 @@ class _ReceivingDetailDialogState extends State<ReceivingDetailDialog> {
         for (final movement in movements)
           Text(
             '${movement.isNegative ? '' : '+'}${_quantityText(movement.quantityDeltaBase)}'
-            ' ${movement.baseUnit.wireValue} · ${nameFor(movement)}',
+            ' ${_unitShort(movement.baseUnit)} · ${nameFor(movement)}',
             style: TextStyle(
               color: movement.isNegative ? AdminTheme.warn : AdminTheme.good,
               fontSize: 12,
@@ -1000,7 +1000,7 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
                     for (final unit in line.allowedUnits)
                       DropdownMenuItem(
                         value: unit,
-                        child: Text(unit.wireValue),
+                        child: Text(_unitShort(unit)),
                       ),
                   ],
                   onChanged: _saving
@@ -1032,7 +1032,7 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
               Expanded(
                 child: converted && base != null
                     ? Text(
-                        'მიღებული: ${_quantity(base)} ${line.stockItem!.baseUnit.wireValue}',
+                        'მიღებული: ${_quantity(base)} ${_unitShort(line.stockItem!.baseUnit)}',
                         key: Key('receiving-line-base-$index'),
                         style: TextStyle(
                           color: AdminTheme.textMuted,
@@ -1085,8 +1085,8 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
       if (line.baseQuantity == null) {
         setState(
           () => _error =
-              '${item.name}: ${line.unit?.wireValue} ვერ გადაიყვანება '
-              '${item.baseUnit.wireValue}-ში',
+              '${item.name}: ${line.unit == null ? '' : _unitShort(line.unit!)} '
+              'ვერ გადაიყვანება ${_unitShort(item.baseUnit)}-ში',
         );
         return;
       }
@@ -1223,7 +1223,7 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
           children: [
             Expanded(
               child: Text(
-                '${_quantityText(item.currentStock)} ${item.baseUnit.wireValue}',
+                '${_quantityText(item.currentStock)} ${_unitShort(item.baseUnit)}',
                 key: const Key('stock-detail-current'),
                 style: TextStyle(
                   color: item.isLowStock ? AdminTheme.warn : AdminTheme.text,
@@ -1241,18 +1241,66 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
           style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
         ),
         const SizedBox(height: 14),
-        _detailRow('საბაზო ერთეული', item.baseUnit.wireValue),
+        _detailRow('საბაზო ერთეული', _unitLabel(item.baseUnit)),
         _detailRow(
-          'მინიმალური მარაგი',
+          'მინიმალური ნაშთი',
           item.minimumStock == null
               ? 'არ არის მითითებული'
-              : '${_quantity(item.minimumStock!)} ${item.baseUnit.wireValue}',
+              : '${_quantity(item.minimumStock!)} ${_unitShort(item.baseUnit)}',
         ),
+        if (item.minimumStock != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text(
+              'ამ რაოდენობაზე ნაკლების შემთხვევაში სისტემა გაგაფრთხილებთ.',
+              key: const Key('stock-detail-minimum-help'),
+              style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
+            ),
+          ),
         for (final unit in item.purchaseUnits)
           _detailRow(
-            'შეფუთვა',
-            '1 ${unit.unit.wireValue} = ${unit.baseUnitMultiplier} ${item.baseUnit.wireValue}',
+            'შესყიდვის შეფუთვა',
+            '1 ${_unitShort(unit.unit)} = ${unit.baseUnitMultiplier} ${_unitShort(item.baseUnit)}',
           ),
+        if (detail.usedBy.isNotEmpty) ...[
+          const Divider(height: 24),
+          Text(
+            'გამოიყენება პროდუქტებში',
+            style: TextStyle(
+              color: AdminTheme.textMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          // The reverse of the recipe editor, and the question inventory
+          // administration actually asks before renaming or disabling an item.
+          for (final usage in detail.usedBy)
+            Padding(
+              key: Key('stock-detail-usage-${usage.recipeId}'),
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      usage.variantLabel == null
+                          ? usage.menuItemName
+                          : '${usage.menuItemName} · ${usage.variantLabel}',
+                      style: TextStyle(color: AdminTheme.text, fontSize: 13),
+                    ),
+                  ),
+                  Text(
+                    '${_quantityText(usage.quantityPerUnit)} ${_unitShort(usage.baseUnit)}',
+                    style: TextStyle(
+                      color: AdminTheme.textMuted,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
         const Divider(height: 24),
         Text(
           'ბოლო მოძრაობები',
@@ -1298,7 +1346,7 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
                   ),
                   Text(
                     '${movement.isNegative ? '' : '+'}${_quantityText(movement.quantityDeltaBase)}'
-                    ' ${movement.baseUnit.wireValue}',
+                    ' ${_unitShort(movement.baseUnit)}',
                     style: TextStyle(
                       color: movement.isNegative
                           ? AdminTheme.warn

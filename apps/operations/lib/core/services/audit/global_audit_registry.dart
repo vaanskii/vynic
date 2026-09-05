@@ -76,6 +76,12 @@ abstract final class GlobalAuditRegistry {
     GlobalAuditAction.receivingCancelled,
   };
 
+  static const Set<String> _recipeActions = {
+    GlobalAuditAction.recipeCreated,
+    GlobalAuditAction.recipeUpdated,
+    GlobalAuditAction.recipeDisabled,
+  };
+
   static const Set<String> _packageActions = {
     GlobalAuditAction.packageCreated,
     GlobalAuditAction.packageUpdated,
@@ -197,6 +203,12 @@ abstract final class GlobalAuditRegistry {
       return GlobalAuditEntityRef(
         GlobalAuditEntity.receiving,
         _clean(data['receivingId']?.toString()),
+      );
+    }
+    if (_recipeActions.contains(upper)) {
+      return GlobalAuditEntityRef(
+        GlobalAuditEntity.recipe,
+        _clean(data['recipeId']?.toString()),
       );
     }
     if (_packageActions.contains(upper)) {

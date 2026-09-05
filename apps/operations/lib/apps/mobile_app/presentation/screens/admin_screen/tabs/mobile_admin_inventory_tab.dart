@@ -1,6 +1,6 @@
 part of '../mobile_admin_screen.dart';
 
-enum _InventorySection { stockItems, suppliers, receiving }
+enum _InventorySection { stockItems, suppliers, receiving, recipes }
 
 class InventoryAdminTab extends StatefulWidget {
   const InventoryAdminTab({
@@ -8,12 +8,14 @@ class InventoryAdminTab extends StatefulWidget {
     this.loadStockItems,
     this.loadSuppliers,
     this.loadReceivings,
+    this.loadRecipes,
     this.initialSection,
   });
 
   final Future<List<StockItem>> Function()? loadStockItems;
   final Future<List<Supplier>> Function()? loadSuppliers;
   final Future<ReceivingPage> Function()? loadReceivings;
+  final Future<List<RecipeMenuItem>> Function()? loadRecipes;
 
   /// Test seam only. The console always opens on Stock Items.
   final int? initialSection;
@@ -33,7 +35,9 @@ class _InventoryTabState extends State<InventoryAdminTab>
   List<StockItem> _stockItems = const [];
   List<Supplier> _suppliers = const [];
   List<Receiving> _receivings = const [];
+  List<RecipeMenuItem> _recipes = const [];
   _ReceivingStatusFilter _statusFilter = _ReceivingStatusFilter.all;
+  _RecipeFilter _recipeFilter = _RecipeFilter.all;
   bool _loading = true;
   String? _error;
 
@@ -59,12 +63,14 @@ class _InventoryTabState extends State<InventoryAdminTab>
         widget.loadStockItems?.call() ?? MobileApiService.getStockItems(),
         widget.loadSuppliers?.call() ?? MobileApiService.getSuppliers(),
         widget.loadReceivings?.call() ?? MobileApiService.getReceivings(),
+        widget.loadRecipes?.call() ?? MobileApiService.getRecipeMenuItems(),
       ]);
       if (!mounted) return;
       setState(() {
         _stockItems = results[0] as List<StockItem>;
         _suppliers = results[1] as List<Supplier>;
         _receivings = (results[2] as ReceivingPage).receivings;
+        _recipes = results[3] as List<RecipeMenuItem>;
         _loading = false;
       });
     } catch (error) {
@@ -115,8 +121,10 @@ class _InventoryTabState extends State<InventoryAdminTab>
                         _stockItemList()
                       else if (_section == _InventorySection.suppliers)
                         _supplierList()
+                      else if (_section == _InventorySection.receiving)
+                        _receivingList()
                       else
-                        _receivingList(),
+                        _recipeList(),
                     ],
                   ),
                 ),
@@ -147,6 +155,11 @@ class _InventoryTabState extends State<InventoryAdminTab>
           value: _InventorySection.receiving,
           icon: Icon(Icons.receipt_long_outlined),
           label: Text('მიღებები'),
+        ),
+        ButtonSegment(
+          value: _InventorySection.recipes,
+          icon: Icon(Icons.menu_book_outlined),
+          label: Text('რეცეპტები'),
         ),
       ],
       selected: {_section},
@@ -179,11 +192,11 @@ class _InventoryTabState extends State<InventoryAdminTab>
       onChanged: (_) => setState(() {}),
       style: TextStyle(color: AdminTheme.text),
       decoration:
-          _adminInput(
-            _section == _InventorySection.receiving
-                ? 'ძებნა ზედნადებით ან მომწოდებლით'
-                : 'ძებნა სახელით ან კოდით',
-          ).copyWith(
+          _adminInput(switch (_section) {
+            _InventorySection.receiving => 'ძებნა ზედნადებით ან მომწოდებლით',
+            _InventorySection.recipes => 'ძებნა კერძის სახელით',
+            _ => 'ძებნა სახელით ან კოდით',
+          }).copyWith(
             prefixIcon: Icon(Icons.search_rounded, color: AdminTheme.textDim),
             suffixIcon: _search.text.isEmpty
                 ? null
@@ -194,18 +207,23 @@ class _InventoryTabState extends State<InventoryAdminTab>
                   ),
           ),
     );
+    // Recipes have no "add": a definition always starts from a product the
+    // venue already sells, so the list itself is the entry point.
+    if (_section == _InventorySection.recipes) return search;
     final add = FilledButton.icon(
       key: const Key('inventory-add'),
       onPressed: switch (_section) {
         _InventorySection.stockItems => () => _editStockItem(),
         _InventorySection.suppliers => () => _editSupplier(),
         _InventorySection.receiving => () => _editReceiving(),
+        _InventorySection.recipes => null,
       },
       icon: const Icon(Icons.add_rounded),
       label: Text(switch (_section) {
         _InventorySection.stockItems => 'პროდუქტის დამატება',
         _InventorySection.suppliers => 'მომწოდებლის დამატება',
         _InventorySection.receiving => 'მიღების დამატება',
+        _InventorySection.recipes => '',
       }),
       style: FilledButton.styleFrom(
         backgroundColor: AdminTheme.primary,
@@ -298,11 +316,11 @@ class _InventoryTabState extends State<InventoryAdminTab>
   }
 
   Future<void> _editStockItem([StockItem? item]) async {
-    final saved = await showDialog<bool>(
+    final saved = await showDialog<StockItem>(
       context: context,
       builder: (_) => _StockItemEditorDialog(item: item),
     );
-    if (saved == true) {
+    if (saved != null) {
       _adminToast(
         context,
         item == null ? 'პროდუქტი დაემატა' : 'პროდუქტი განახლდა',
@@ -387,6 +405,78 @@ class _InventoryTabState extends State<InventoryAdminTab>
             ),
       ],
     );
+  }
+
+  Widget _recipeList() {
+    final query = _search.text.trim().toLowerCase();
+    final items = _recipes
+        .where((item) {
+          if (!_recipeFilter.matches(item)) return false;
+          return query.isEmpty || item.name.toLowerCase().contains(query);
+        })
+        .toList(growable: false);
+    return Column(
+      key: const Key('recipe-list'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _RecipeFilterBar(
+          selected: _recipeFilter,
+          onChanged: (value) => setState(() => _recipeFilter = value),
+        ),
+        const SizedBox(height: 12),
+        if (items.isEmpty)
+          _InventoryEmptyState(
+            icon: Icons.menu_book_outlined,
+            title: query.isEmpty && _recipeFilter == _RecipeFilter.all
+                ? 'მენიუ ჯერ არ არის'
+                : 'შესაბამისი კერძი ვერ მოიძებნა',
+            subtitle: query.isEmpty && _recipeFilter == _RecipeFilter.all
+                ? 'რეცეპტი იქმნება მენიუს პროდუქტიდან.'
+                : 'შეცვალეთ ფილტრი ან საძიებო სიტყვა.',
+          )
+        else
+          for (final item in items)
+            _RecipeCard(
+              item: item,
+              onOpen: (variant) => _openRecipe(item, variant),
+            ),
+      ],
+    );
+  }
+
+  Future<void> _openRecipe(
+    RecipeMenuItem item,
+    RecipeMenuVariant? variant,
+  ) async {
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (_) => RecipeEditorDialog(
+        menuItemId: item.menuItemId,
+        menuItemName: item.name,
+        variantId: variant?.variantId,
+        variantLabel: variant?.label,
+        stockItems: _stockItems,
+        onCreateStockItem: _createStockItemFor,
+      ),
+    );
+    if (saved == true) {
+      if (mounted) _adminToast(context, 'რეცეპტი შენახულია');
+      await _load();
+    }
+  }
+
+  /// Opens the Stock Item editor pre-filled with the Menu Item's name and
+  /// nothing else. Unit, packaging and threshold stay real decisions, and the
+  /// created row gets its own identity — a Menu Item is never a Stock Item.
+  Future<StockItem?> _createStockItemFor(String prefillName) async {
+    final created = await showDialog<StockItem>(
+      context: context,
+      builder: (_) => _StockItemEditorDialog(prefillName: prefillName),
+    );
+    if (created != null) {
+      setState(() => _stockItems = [..._stockItems, created]);
+    }
+    return created;
   }
 
   Future<void> _editReceiving([Receiving? receiving]) async {
@@ -508,25 +598,25 @@ class _StockItemCard extends StatelessWidget {
                   children: [
                     _InventoryMeta(
                       icon: Icons.straighten_rounded,
-                      label: 'ერთეული: ${item.baseUnit.wireValue}',
+                      label: 'ერთეული: ${_unitShort(item.baseUnit)}',
                     ),
                     _InventoryMeta(
                       icon: Icons.inventory_rounded,
                       label:
-                          'ნაშთი: ${_quantityText(item.currentStock)} ${item.baseUnit.wireValue}',
+                          'ნაშთი: ${_quantityText(item.currentStock)} ${_unitShort(item.baseUnit)}',
                       emphasis: item.isLowStock,
                     ),
                     for (final unit in item.purchaseUnits)
                       _InventoryMeta(
                         icon: Icons.all_inbox_outlined,
                         label:
-                            '1 ${unit.unit.wireValue} = ${unit.baseUnitMultiplier} ${item.baseUnit.wireValue}',
+                            '1 ${_unitShort(unit.unit)} = ${unit.baseUnitMultiplier} ${_unitShort(item.baseUnit)}',
                       ),
                     if (item.minimumStock != null)
                       _InventoryMeta(
                         icon: Icons.notification_important_outlined,
                         label:
-                            'მინიმუმი: ${_quantity(item.minimumStock!)} ${item.baseUnit.wireValue}',
+                            'მინიმალური ნაშთი: ${_quantity(item.minimumStock!)} ${_unitShort(item.baseUnit)}',
                       ),
                     if (item.sku != null)
                       _InventoryMeta(
@@ -816,8 +906,12 @@ class _InventoryEmptyState extends StatelessWidget {
 }
 
 class _StockItemEditorDialog extends StatefulWidget {
-  const _StockItemEditorDialog({this.item});
+  const _StockItemEditorDialog({this.item, this.prefillName});
   final StockItem? item;
+
+  /// Suggested name when creating from a Menu Item. Only the name: assuming a
+  /// base unit or a packaging ratio from a menu name would be a guess.
+  final String? prefillName;
 
   @override
   State<_StockItemEditorDialog> createState() => _StockItemEditorDialogState();
@@ -838,7 +932,7 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
   void initState() {
     super.initState();
     final item = widget.item;
-    _name = TextEditingController(text: item?.name ?? '');
+    _name = TextEditingController(text: item?.name ?? widget.prefillName ?? '');
     _sku = TextEditingController(text: item?.sku ?? '');
     _minimum = TextEditingController(
       text: item?.minimumStock == null ? '' : _quantity(item!.minimumStock!),
@@ -889,7 +983,7 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
         Align(
           alignment: Alignment.centerLeft,
           child: Text(
-            'მაგ. 1 ყუთი = 24 ${_unit.wireValue}. ეს კოეფიციენტი მხოლოდ ამ პროდუქტს ეხება.',
+            'მაგ. 1 ყუთი = 24 ${_unitShort(_unit)}. ეს რაოდენობა მხოლოდ ამ პროდუქტს ეხება.',
             style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
           ),
         ),
@@ -911,7 +1005,7 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
                         if (unit != _unit)
                           DropdownMenuItem(
                             value: unit,
-                            child: Text(unit.wireValue),
+                            child: Text(_unitShort(unit)),
                           ),
                     ],
                     onChanged: _saving
@@ -932,7 +1026,9 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
                       decimal: true,
                     ),
                     style: TextStyle(color: AdminTheme.text),
-                    decoration: _adminInput('რაოდენობა ${_unit.wireValue}-ში'),
+                    decoration: _adminInput(
+                      'რამდენი ${_unitShort(_unit)} არის ერთში',
+                    ),
                   ),
                 ),
                 IconButton(
@@ -1015,9 +1111,23 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
               ),
               _dialogField(
                 _minimum,
-                'მინიმალური მარაგი',
+                'მინიმალური ნაშთი',
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
+                ),
+              ),
+              // A threshold, not a balance. Said plainly, because the two are
+              // easy to confuse and one of them is derived from the ledger.
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Text(
+                    'ამ რაოდენობაზე ნაკლების შემთხვევაში გამოჩნდება '
+                    'დაბალი მარაგის გაფრთხილება.',
+                    key: const Key('minimum-stock-help'),
+                    style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
+                  ),
                 ),
               ),
               _dialogField(_notes, 'შენიშვნა', maxLines: 3),
@@ -1048,7 +1158,9 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: _saving ? null : () => Navigator.pop(context, false),
+          // No result: this dialog answers with the saved Stock Item or with
+          // nothing at all.
+          onPressed: _saving ? null : () => Navigator.pop(context),
           child: Text(
             'გაუქმება',
             style: TextStyle(color: AdminTheme.textMuted),
@@ -1082,7 +1194,7 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
     }
     if (minimumText.isNotEmpty && (minimum == null || minimum < 0)) {
       setState(
-        () => _error = 'მინიმალური მარაგი უნდა იყოს არაუარყოფითი რიცხვი',
+        () => _error = 'მინიმალური ნაშთი უნდა იყოს არაუარყოფითი რიცხვი',
       );
       return;
     }
@@ -1110,7 +1222,7 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
       _error = null;
     });
     try {
-      await MobileApiService.saveStockItem(
+      final saved = await MobileApiService.saveStockItem(
         id: widget.item?.id,
         name: name,
         sku: _sku.text,
@@ -1120,7 +1232,7 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
         isActive: _active,
         purchaseUnits: purchaseUnits,
       );
-      if (mounted) Navigator.pop(context, true);
+      if (mounted) Navigator.pop(context, saved);
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -1327,22 +1439,46 @@ class _PurchaseUnitDraft {
   final TextEditingController multiplier;
 }
 
-String _unitLabel(InventoryUnit unit) {
+/// What restaurant staff read. Storage and the wire keep the stable English
+/// codes; only the label is translated, so no enum value depends on language.
+String _unitShort(InventoryUnit unit) {
   switch (unit) {
     case InventoryUnit.kg:
-      return 'კილოგრამი (kg)';
+      return 'კგ';
     case InventoryUnit.g:
-      return 'გრამი (g)';
+      return 'გ';
     case InventoryUnit.liter:
-      return 'ლიტრი (L)';
+      return 'ლ';
     case InventoryUnit.ml:
-      return 'მილილიტრი (ml)';
+      return 'მლ';
     case InventoryUnit.piece:
       return 'ცალი';
     case InventoryUnit.bottle:
       return 'ბოთლი';
     case InventoryUnit.pack:
-      return 'შეფუთვა';
+      return 'შეკვრა';
+    case InventoryUnit.box:
+      return 'ყუთი';
+  }
+}
+
+/// The long form, for a dropdown where the choice needs spelling out.
+String _unitLabel(InventoryUnit unit) {
+  switch (unit) {
+    case InventoryUnit.kg:
+      return 'კილოგრამი (კგ)';
+    case InventoryUnit.g:
+      return 'გრამი (გ)';
+    case InventoryUnit.liter:
+      return 'ლიტრი (ლ)';
+    case InventoryUnit.ml:
+      return 'მილილიტრი (მლ)';
+    case InventoryUnit.piece:
+      return 'ცალი';
+    case InventoryUnit.bottle:
+      return 'ბოთლი';
+    case InventoryUnit.pack:
+      return 'შეკვრა';
     case InventoryUnit.box:
       return 'ყუთი';
   }

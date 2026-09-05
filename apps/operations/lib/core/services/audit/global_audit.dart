@@ -19,6 +19,7 @@ abstract final class GlobalAuditEntity {
   static const String stockItem = 'STOCK_ITEM';
   static const String supplier = 'SUPPLIER';
   static const String receiving = 'RECEIVING';
+  static const String recipe = 'RECIPE';
   static const String package = 'PACKAGE';
   static const String expense = 'EXPENSE';
   static const String closeDay = 'CLOSE_DAY';
@@ -38,6 +39,7 @@ abstract final class GlobalAuditEntity {
     stockItem,
     supplier,
     receiving,
+    recipe,
     package,
     expense,
     closeDay,
@@ -90,6 +92,12 @@ abstract final class GlobalAuditAction {
   static const String receivingUpdated = 'RECEIVING_UPDATED';
   static const String receivingPosted = 'RECEIVING_POSTED';
   static const String receivingCancelled = 'RECEIVING_CANCELLED';
+
+  /// Menu consumption definitions. Cloud-authoritative and Manager-written;
+  /// the row summarises the card rather than carrying it.
+  static const String recipeCreated = 'RECIPE_CREATED';
+  static const String recipeUpdated = 'RECIPE_UPDATED';
+  static const String recipeDisabled = 'RECIPE_DISABLED';
 
   // Package definitions. Applying a package to an Order is `APPLY_PACKAGE` on
   // that Order's report and is deliberately not duplicated here.

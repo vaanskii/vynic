@@ -15,6 +15,7 @@ import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 import 'package:vynic/core/models/global_audit_entry.dart';
 import 'package:vynic/core/models/inventory.dart';
 import 'package:vynic/core/models/receiving.dart';
+import 'package:vynic/core/models/menu_recipe.dart';
 
 /// Production-grade mobile API service.
 ///
@@ -960,6 +961,89 @@ class MobileApiService {
       throw Exception(_apiError('Receiving', response));
     }
     return _receiving(response);
+  }
+
+  // ── Recipes / technological cards ─────────────────────────────────────
+
+  /// Menu-oriented: every Menu Item, marked configured or not.
+  static Future<List<RecipeMenuItem>> getRecipeMenuItems({
+    String? search,
+    String? status,
+  }) async {
+    final params = <String, String>{
+      if (search != null && search.trim().isNotEmpty) 'q': search.trim(),
+      if (status != null && status.isNotEmpty) 'status': status,
+    };
+    final query = params.isEmpty
+        ? ''
+        : '?${params.entries.map((entry) => '${entry.key}=${Uri.encodeQueryComponent(entry.value)}').join('&')}';
+    final response = await _get('/mobile/inventory/recipes$query');
+    if (response.statusCode != 200) {
+      throw Exception(_apiError('Recipes', response));
+    }
+    return (jsonDecode(response.body) as List)
+        .whereType<Map>()
+        .map((row) => RecipeMenuItem.fromJson(Map<String, dynamic>.from(row)))
+        .toList(growable: false);
+  }
+
+  /// The definition for one product. `recipe` is null when none is configured.
+  static Future<MenuRecipeDetail> getRecipe(
+    String menuItemId, {
+    String? variantId,
+  }) async {
+    final query = variantId == null || variantId.isEmpty
+        ? ''
+        : '?variantId=${Uri.encodeQueryComponent(variantId)}';
+    final response = await _get(
+      '/mobile/inventory/recipes/menu-item/${Uri.encodeComponent(menuItemId)}$query',
+    );
+    if (response.statusCode != 200) {
+      throw Exception(_apiError('Recipe', response));
+    }
+    return MenuRecipeDetail.fromJson(
+      Map<String, dynamic>.from(jsonDecode(response.body) as Map),
+    );
+  }
+
+  /// Creates or replaces the one definition for this Menu Item + variant.
+  /// Components are a declared set: sending them without an ingredient is how
+  /// that ingredient is removed.
+  static Future<MenuRecipe> saveRecipe({
+    required String menuItemId,
+    String? variantId,
+    String? yieldQuantity,
+    String? notes,
+    required List<Map<String, dynamic>> components,
+  }) async {
+    final response = await _post('/mobile/inventory/recipes', <String, dynamic>{
+      'menuItemId': menuItemId,
+      'variantId': variantId,
+      if (yieldQuantity != null) 'yieldQuantity': yieldQuantity,
+      'notes': notes,
+      'components': components,
+    });
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(_apiError('Recipe', response));
+    }
+    return MenuRecipe.fromJson(
+      Map<String, dynamic>.from(jsonDecode(response.body) as Map),
+    );
+  }
+
+  /// Stops applying a definition. Cloud keeps the card; disabling is
+  /// idempotent, so a repeated request changes nothing.
+  static Future<MenuRecipe> disableRecipe(String id) async {
+    final response = await _post(
+      '/mobile/inventory/recipes/${Uri.encodeComponent(id)}/disable',
+      const <String, dynamic>{},
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(_apiError('Recipe', response));
+    }
+    return MenuRecipe.fromJson(
+      Map<String, dynamic>.from(jsonDecode(response.body) as Map),
+    );
   }
 
   static Receiving _receiving(http.Response response) {

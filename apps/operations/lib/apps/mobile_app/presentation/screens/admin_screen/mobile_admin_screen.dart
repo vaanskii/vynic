@@ -6,6 +6,7 @@ import 'package:vynic/core/models/global_audit_entry.dart';
 import 'package:vynic/core/models/inventory.dart';
 import 'package:vynic/core/services/audit/global_audit.dart';
 import 'package:vynic/core/models/monitoring.dart';
+import 'package:vynic/core/models/menu_recipe.dart';
 import 'package:vynic/core/models/receiving.dart';
 import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/models/user.dart';
@@ -26,6 +27,7 @@ part 'tabs/mobile_admin_audit_tab.dart';
 part 'tabs/mobile_admin_activity_tab.dart';
 part 'tabs/mobile_admin_inventory_tab.dart';
 part 'tabs/mobile_admin_receiving.dart';
+part 'tabs/mobile_admin_recipes.dart';
 part 'tabs/mobile_admin_settings_tab.dart';
 part 'shared/mobile_admin_shared_widgets.dart';
 

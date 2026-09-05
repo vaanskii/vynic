@@ -27,6 +27,19 @@ abstract final class InventoryRepository {
         .toList(growable: false);
   }
 
+  /// The active consumption definitions, as Cloud last projected them.
+  ///
+  /// Read-only: the POS never authors a recipe, and Step 4 will consume from
+  /// these numbers rather than recompute them.
+  static List<InventoryRecipe> getRecipes() {
+    final raw = _catalog()['recipes'];
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((row) => InventoryRecipe.fromJson(Map<String, dynamic>.from(row)))
+        .toList(growable: false);
+  }
+
   static DateTime? get lastRefreshedAt =>
       DateTime.tryParse(_catalog()['generatedAt']?.toString() ?? '')?.toUtc();
 
@@ -43,6 +56,15 @@ abstract final class InventoryRepository {
           (row) => Supplier.fromJson(Map<String, dynamic>.from(row)).toJson(),
         )
         .toList(growable: false);
+    // Absent on a v1/v2 catalog and on a backup written before Step 3. An
+    // empty list is the honest answer there; the next Device pull fills it.
+    final recipes = (catalog['recipes'] as List? ?? const [])
+        .whereType<Map>()
+        .map(
+          (row) =>
+              InventoryRecipe.fromJson(Map<String, dynamic>.from(row)).toJson(),
+        )
+        .toList(growable: false);
     final normalized = <String, dynamic>{
       'version': (catalog['version'] as num?)?.toInt() ?? 1,
       'generatedAt':
@@ -52,6 +74,7 @@ abstract final class InventoryRepository {
           DateTime.now().toUtc().toIso8601String(),
       'stockItems': stockItems,
       'suppliers': suppliers,
+      'recipes': recipes,
     };
     await DatabaseCore.inventoryBox!.put(catalogKey, normalized);
   }

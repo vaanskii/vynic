@@ -1,4 +1,5 @@
 import 'package:vynic/core/models/inventory.dart';
+import 'package:vynic/core/models/menu_recipe.dart';
 
 /// Where a Receiving document is in its life.
 ///
@@ -285,10 +286,16 @@ class StockItemDetail {
   const StockItemDetail({
     required this.item,
     this.recentMovements = const <StockMovement>[],
+    this.usedBy = const <StockItemUsage>[],
   });
 
   final StockItem item;
   final List<StockMovement> recentMovements;
+
+  /// Which Menu Items consume this one. Empty on an older backend, which is
+  /// indistinguishable from "nothing uses it" and equally harmless: the list
+  /// is administrative context, never a rule.
+  final List<StockItemUsage> usedBy;
 
   factory StockItemDetail.fromJson(Map<String, dynamic> json) {
     return StockItemDetail(
@@ -296,6 +303,10 @@ class StockItemDetail {
       recentMovements: (json['recentMovements'] as List? ?? const [])
           .whereType<Map>()
           .map((row) => StockMovement.fromJson(Map<String, dynamic>.from(row)))
+          .toList(growable: false),
+      usedBy: (json['usedBy'] as List? ?? const [])
+          .whereType<Map>()
+          .map((row) => StockItemUsage.fromJson(Map<String, dynamic>.from(row)))
           .toList(growable: false),
     );
   }

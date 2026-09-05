@@ -100,6 +100,7 @@ class StockItem {
     this.currentStock = '0.000',
     this.stockStatus = 'NO_MINIMUM',
     this.purchaseUnits = const <StockItemPurchaseUnit>[],
+    this.recipeUnits = const <InventoryUnit>[],
   });
 
   final String id;
@@ -123,6 +124,18 @@ class StockItem {
   final String stockStatus;
 
   final List<StockItemPurchaseUnit> purchaseUnits;
+
+  /// The units a recipe may consume this item in, as Cloud decides them.
+  ///
+  /// Narrower than [purchaseUnits] on purpose: a venue buys lemonade by the
+  /// box and serves it by the bottle, so packaging is deliberately not offered
+  /// here. Empty on an older catalog; [consumptionUnits] then falls back to the
+  /// base unit rather than guessing.
+  final List<InventoryUnit> recipeUnits;
+
+  /// What a recipe editor should offer. Never empty.
+  List<InventoryUnit> get consumptionUnits =>
+      recipeUnits.isEmpty ? <InventoryUnit>[baseUnit] : recipeUnits;
 
   /// For display and layout only. The durable value stays [currentStock].
   double get currentStockValue => double.tryParse(currentStock) ?? 0;
@@ -153,6 +166,7 @@ class StockItem {
                 StockItemPurchaseUnit.fromJson(Map<String, dynamic>.from(row)),
           )
           .toList(growable: false),
+      recipeUnits: _units(json['recipeUnits']),
     );
   }
 
@@ -171,6 +185,116 @@ class StockItem {
     'purchaseUnits': [
       for (final unit in purchaseUnits) unit.toJson(),
     ],
+    'recipeUnits': [for (final unit in recipeUnits) unit.wireValue],
+  };
+}
+
+/// One active consumption definition, as the POS caches it offline.
+///
+/// Read-only, like the rest of the projection: Cloud administers recipes and
+/// the POS holds the answer so a later step can consume stock without asking.
+/// Both identities travel — the Cloud key that Manager writes address, and the
+/// POS's own Menu identity, which is what an offline terminal can match a sold
+/// line against.
+class InventoryRecipe {
+  const InventoryRecipe({
+    required this.recipeId,
+    required this.revision,
+    required this.menuItemId,
+    required this.components,
+    this.posMenuItemId,
+    this.variantId,
+    this.posMenuVariantId,
+    this.menuItemName = '',
+    this.variantLabel,
+    this.yieldQuantity = '1.000',
+  });
+
+  final String recipeId;
+
+  /// Bumped by Cloud on every saved change, so a later step can record which
+  /// definition it consumed by instead of joining today's recipe onto a past
+  /// sale.
+  final int revision;
+
+  final String menuItemId;
+  final String? posMenuItemId;
+  final String? variantId;
+  final String? posMenuVariantId;
+  final String menuItemName;
+  final String? variantLabel;
+  final String yieldQuantity;
+  final List<InventoryRecipeComponent> components;
+
+  factory InventoryRecipe.fromJson(Map<String, dynamic> json) {
+    return InventoryRecipe(
+      recipeId: _requiredString(json, 'recipeId'),
+      revision: (json['revision'] as num?)?.toInt() ?? 1,
+      menuItemId: _requiredString(json, 'menuItemId'),
+      posMenuItemId: _optionalString(json['posMenuItemId']),
+      variantId: _optionalString(json['variantId']),
+      posMenuVariantId: _optionalString(json['posMenuVariantId']),
+      menuItemName: _optionalString(json['menuItemName']) ?? '',
+      variantLabel: _optionalString(json['variantLabel']),
+      yieldQuantity: _optionalString(json['yieldQuantity']) ?? '1.000',
+      components: (json['components'] as List? ?? const [])
+          .whereType<Map>()
+          .map(
+            (row) => InventoryRecipeComponent.fromJson(
+              Map<String, dynamic>.from(row),
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'recipeId': recipeId,
+    'revision': revision,
+    'menuItemId': menuItemId,
+    'posMenuItemId': posMenuItemId,
+    'variantId': variantId,
+    'posMenuVariantId': posMenuVariantId,
+    'menuItemName': menuItemName,
+    'variantLabel': variantLabel,
+    'yieldQuantity': yieldQuantity,
+    'components': [for (final component in components) component.toJson()],
+  };
+}
+
+/// What one sold unit consumes of one Stock Item.
+class InventoryRecipeComponent {
+  const InventoryRecipeComponent({
+    required this.stockItemId,
+    required this.baseQuantityPerUnit,
+    required this.baseUnit,
+    this.stockItemName = '',
+  });
+
+  final String stockItemId;
+
+  /// Already divided by the recipe yield by Cloud. Exact decimal text, kept
+  /// verbatim: the POS never recomputes a consumption quantity.
+  final String baseQuantityPerUnit;
+
+  final InventoryUnit baseUnit;
+  final String stockItemName;
+
+  factory InventoryRecipeComponent.fromJson(Map<String, dynamic> json) {
+    return InventoryRecipeComponent(
+      stockItemId: _requiredString(json, 'stockItemId'),
+      baseQuantityPerUnit:
+          _optionalString(json['baseQuantityPerUnit']) ?? '0.000000',
+      baseUnit: InventoryUnit.parse(_requiredString(json, 'baseUnit')),
+      stockItemName: _optionalString(json['stockItemName']) ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'stockItemId': stockItemId,
+    'stockItemName': stockItemName,
+    'baseQuantityPerUnit': baseQuantityPerUnit,
+    'baseUnit': baseUnit.wireValue,
   };
 }
 
@@ -238,6 +362,23 @@ String? _optionalString(Object? raw) {
   if (raw == null) return null;
   final value = raw.toString().trim();
   return value.isEmpty ? null : value;
+}
+
+/// Unit codes a newer Cloud may extend. An unknown code is dropped rather
+/// than crashing the whole catalog decode.
+List<InventoryUnit> _units(Object? raw) {
+  if (raw is! List) return const <InventoryUnit>[];
+  final units = <InventoryUnit>[];
+  for (final entry in raw) {
+    final value = _optionalString(entry);
+    if (value == null) continue;
+    try {
+      units.add(InventoryUnit.parse(value));
+    } on FormatException {
+      continue;
+    }
+  }
+  return List<InventoryUnit>.unmodifiable(units);
 }
 
 double? _optionalDouble(Object? raw) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_admin_screen.dart';
 import 'package:vynic/core/models/inventory.dart';
+import 'package:vynic/core/models/menu_recipe.dart';
 import 'package:vynic/core/models/receiving.dart';
 
 final _stock = StockItem(
@@ -35,6 +36,7 @@ Widget _app() => MaterialApp(
       loadStockItems: () async => [_stock],
       loadSuppliers: () async => [_supplier],
       loadReceivings: () async => const ReceivingPage(receivings: []),
+      loadRecipes: () async => const <RecipeMenuItem>[],
     ),
   ),
 );
@@ -60,10 +62,11 @@ void main() {
       expect(find.byKey(const Key('inventory-search')), findsOneWidget);
       expect(find.byKey(const Key('stock-item-list')), findsOneWidget);
       expect(find.text('Beef'), findsOneWidget);
-      expect(find.text('ერთეული: kg'), findsOneWidget);
+      // Step 3 reads units in Georgian; storage keeps the English codes.
+      expect(find.text('ერთეული: კგ'), findsOneWidget);
       // Step 2 replaced the placeholder with the ledger's own answer.
-      expect(find.text('ნაშთი: 0 kg'), findsOneWidget);
-      expect(find.text('მინიმუმი: 2.5 kg'), findsOneWidget);
+      expect(find.text('ნაშთი: 0 კგ'), findsOneWidget);
+      expect(find.text('მინიმალური ნაშთი: 2.5 კგ'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       await tester.tap(find.byKey(const Key('inventory-add')));

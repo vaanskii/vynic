@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_admin_screen.dart';
 import 'package:vynic/core/models/inventory.dart';
+import 'package:vynic/core/models/menu_recipe.dart';
 import 'package:vynic/core/models/receiving.dart';
 
 /// The Manager Receiving surface.
@@ -140,6 +141,7 @@ Widget _tab({
               ),
             ],
       ),
+      loadRecipes: () async => const <RecipeMenuItem>[],
     ),
   ),
 );
@@ -256,7 +258,7 @@ void main() {
       expect(find.byKey(const Key('receiving-detail')), findsOneWidget);
       expect(find.text('750.00 ₾'), findsNWidgets(2));
       expect(find.byKey(const Key('receiving-original-impact')), findsOneWidget);
-      expect(find.text('+50 kg · Beef'), findsOneWidget);
+      expect(find.text('+50 კგ · Beef'), findsOneWidget);
       // A posted document is inventory history: no edit, no delete, no post.
       expect(find.byKey(const Key('receiving-edit')), findsNothing);
       expect(find.byKey(const Key('receiving-delete')), findsNothing);
@@ -285,9 +287,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('საწყისი გავლენა მარაგზე'), findsOneWidget);
-      expect(find.text('+50 kg · Beef'), findsOneWidget);
+      expect(find.text('+50 კგ · Beef'), findsOneWidget);
       expect(find.byKey(const Key('receiving-reversal-impact')), findsOneWidget);
-      expect(find.text('-50 kg · Beef'), findsOneWidget);
+      expect(find.text('-50 კგ · Beef'), findsOneWidget);
       expect(find.byKey(const Key('receiving-cancel')), findsNothing);
     });
 
@@ -389,15 +391,16 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // The unit dropdown offers the item's own box beside its base unit.
+      // The unit dropdown offers the item's own box beside its base unit,
+      // named the way restaurant staff read it.
       await tester.tap(find.byKey(const Key('receiving-line-unit-0')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('box').last);
+      await tester.tap(find.text('ყუთი').last);
       await tester.pumpAndSettle();
 
       // 10 boxes of 24 is 240 bottles, said before anything is posted.
       expect(find.byKey(const Key('receiving-line-base-0')), findsOneWidget);
-      expect(find.text('მიღებული: 240 bottle'), findsOneWidget);
+      expect(find.text('მიღებული: 240 ბოთლი'), findsOneWidget);
       expect(find.text('288.00 ₾'), findsNWidgets(2));
 
       await tester.tap(find.byKey(const Key('receiving-save')));
@@ -478,9 +481,9 @@ void main() {
       await tester.pumpWidget(_tab(section: 0));
       await tester.pumpAndSettle();
 
-      expect(find.text('ნაშთი: 62.5 kg'), findsOneWidget);
-      expect(find.text('ნაშთი: 240 bottle'), findsOneWidget);
-      expect(find.text('1 box = 24 bottle'), findsOneWidget);
+      expect(find.text('ნაშთი: 62.5 კგ'), findsOneWidget);
+      expect(find.text('ნაშთი: 240 ბოთლი'), findsOneWidget);
+      expect(find.text('1 ყუთი = 24 ბოთლი'), findsOneWidget);
       // The Step 1 placeholder is gone for good.
       expect(find.text('მოძრაობები ჯერ არ არის'), findsNothing);
       expect(find.byKey(const Key('low-stock-badge')), findsNothing);
@@ -497,7 +500,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('low-stock-badge')), findsOneWidget);
-      expect(find.text('ნაშთი: 2 kg'), findsOneWidget);
+      expect(find.text('ნაშთი: 2 კგ'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
@@ -550,11 +553,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('stock-detail-current')), findsOneWidget);
-      expect(find.text('62.5 kg'), findsOneWidget);
+      expect(find.text('62.5 კგ'), findsOneWidget);
       expect(find.text('მიღება #123'), findsOneWidget);
-      expect(find.text('+50 kg'), findsOneWidget);
+      expect(find.text('+50 კგ'), findsOneWidget);
       expect(find.text('მიღების რევერსი'), findsOneWidget);
-      expect(find.text('-7.5 kg'), findsOneWidget);
+      expect(find.text('-7.5 კგ'), findsOneWidget);
     });
 
     testWidgets('say plainly when an item has no movements yet', (
@@ -578,7 +581,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('0 kg'), findsOneWidget);
+      expect(find.text('0 კგ'), findsOneWidget);
       expect(
         find.byKey(const Key('stock-detail-no-movements')),
         findsOneWidget,

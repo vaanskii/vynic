@@ -45,10 +45,10 @@ current transport status.
 - The latest completed sequence covers Money Integrity 1A/1B, POS enrollment
   1C, incremental audit sync, Edge Step 6C, Menu Identity Phases 4.5/4.6, and
   the Phase 5 Cloud Sale Ledger/Manager financial experience.
-- Inventory Steps 1 and 2 are implemented after the Cloud Sale Ledger. Stock
-  Items, Suppliers, Receiving/waybill documents and the StockMovement quantity
-  ledger are present; Recipes, Sale consumption, costing, waste and stocktake
-  remain later steps.
+- Inventory Steps 1, 2 and 3 are implemented after the Cloud Sale Ledger. Stock
+  Items, Suppliers, Receiving/waybill documents, the StockMovement quantity
+  ledger and Menu consumption definitions are present; automatic Sale
+  consumption, costing, waste and stocktake remain later steps.
 
 ## Completed Foundations
 
@@ -72,6 +72,11 @@ current transport status.
   (`DRAFT`/`POSTED`/`CANCELLED`), frozen `ReceivingLine` purchase snapshots,
   item-specific `StockItemPurchaseUnit` packaging ratios, and the append-only
   `StockMovement` ledger with the `RECEIVING` and `RECEIVING_REVERSAL` types.
+- Inventory Step 3 is implemented: `MenuConsumptionRecipe` +
+  `MenuConsumptionComponent` define what one sold Menu Item consumes. One
+  generalized model covers direct bottled products, draft pours by volume and
+  multi-ingredient recipes; it is a definition only and writes no
+  `StockMovement`.
 
 ## POS / Edge State
 
@@ -185,11 +190,33 @@ current transport status.
   `StockItemPurchaseUnit` -> global mass/volume, then refuses. Count packaging
   (`box`, `pack`) is never globalised: one venue's box is 24 bottles of lemonade
   and 6 of wine, so the ratio belongs to the Stock Item.
+- Recipe conversion is deliberately narrower than receiving conversion: base
+  unit or the global mass/volume table only, then refuse. Item packaging is
+  never a consumption unit — a box is how a venue buys lemonade, never how it
+  serves it. `recipeUnitsFor` is the one authority and offers `g`/`kg` for mass,
+  `ml`/`L` for volume and the base unit itself for a counted item.
+- There is exactly one active consumption definition per Menu Item + variant,
+  enforced by `@@unique([menuItemId, variantKey])` where
+  `variantKey = variantId ?? ''`. PostgreSQL treats NULLs as distinct, so the
+  non-null discriminator is what makes the rule a database rule. Identity is
+  `MenuItem.id` / `MenuItemVariant.id`; names are display snapshots only.
+- Each component stores `baseQuantityPerUnit` (`Decimal(18,6)`), already divided
+  by the recipe yield, so a batch definition ("100 khinkali from 3.5 kg beef")
+  and the per-sale-unit number can never disagree. Recipes carry no purchase
+  cost: a definition is physical consumption, not procurement price. Editing,
+  creating or disabling one writes no `StockMovement` and leaves current stock
+  unchanged; a `revision` counter lets a later step snapshot which definition
+  applied instead of joining today's recipe onto a past sale.
+- Manager Inventory labels are Georgian (`კგ`, `გ`, `ლ`, `მლ`, `ცალი`,
+  `ბოთლი`, `შეკვრა`, `ყუთი`; `მინიმალური ნაშთი`, `შესყიდვის შეფუთვა`) while
+  storage and the wire keep the stable English enum codes, so no persisted value
+  depends on language.
 - Venue-wide accountability lives in the append-only `AuditEventLog`, which is
   now readable. Every row carries `entityType`/`entityId`
   (`STAFF`, `MENU_ITEM`, `MENU_CATEGORY`, `MENU_VARIANT`, `PACKAGE`, `EXPENSE`,
   `CLOSE_DAY`, `BACKUP`, `RESERVATION`, `ORDER`, `SALE`, `BUSINESS_DATE`,
-  `SETTINGS`, `DEVELOPER`, `STOCK_ITEM`, `SUPPLIER`, `RECEIVING`), written by
+  `SETTINGS`, `DEVELOPER`, `STOCK_ITEM`, `SUPPLIER`, `RECEIVING`, `RECIPE`),
+  written by
   `GlobalAudit`
   and additive in Hive, on
   the wire and in Cloud. Rows written before those fields existed are never
@@ -209,6 +236,8 @@ current transport status.
   `RECEIVING_CREATED` / `RECEIVING_UPDATED` / `RECEIVING_POSTED` /
   `RECEIVING_CANCELLED` (document summary and status transition only —
   StockMovement is already ledger history and is never mirrored row by row),
+  `RECIPE_CREATED` / `RECIPE_UPDATED` / `RECIPE_DISABLED` (Menu Item, variant,
+  yield, component count and revision — a summary, never the card itself),
   `CLOSE_DAY_COMPLETED` / `CLOSE_DAY_BLOCKED`, and `BACKUP_RESTORED`. Each
   writer is a no-op when nothing moved, and a redelivered Manager command
   produces no second row. `BACKUP_RESTORED` is written after the payload is
@@ -357,7 +386,15 @@ current transport status.
   (`LOW`/`OK`/`NO_MINIMUM`) and its `purchaseUnits`. The POS keeps Cloud's exact
   decimal text and Cloud's own low-stock verdict; it never recomputes a balance
   and never posts a Receiving. Receiving and StockMovement stay Cloud
-  financial history and are deliberately not in the POS backup.
+  financial history and are deliberately not in the POS backup. The catalog is
+  now version 3 and additionally carries the active Menu consumption
+  definitions — both identities (`menuItemId`/`posMenuItemId`,
+  `variantId`/`posMenuVariantId`), the recipe `revision` and each component's
+  `baseQuantityPerUnit` — so a later step can consume stock offline. The POS
+  authors no recipe and recomputes no consumption quantity; recipes ride inside
+  the existing `inventoryCatalog` backup value, so no second recipe authority
+  appears, and a pre-Step-3 backup restores with an empty list corrected by the
+  next Device pull.
 - Reservations now sync into `PosReservation`; Manager and website reads no
   longer make a synchronous LAN call to the POS.
 - Audit reports sync incrementally in batches using content revisions and
@@ -493,9 +530,9 @@ current transport status.
 
 ## Deferred Work
 
-- Restaurant Backoffice, Venue Policy, custom roles/RBAC, Inventory Recipes /
-  Sale consumption / Costing / Waste / Stocktake / inventory variance, cash
-  management,
+- Restaurant Backoffice, Venue Policy, custom roles/RBAC, Inventory automatic
+  Sale consumption / Costing / Waste / Stocktake / inventory variance / expected
+  yield and pour loss, cash management,
   reservation holds, generic SaaS venue web, SaaS billing, and per-Venue
   payment credentials.
 - Device-addressed printer selection, lower-latency Edge long polling, OS
@@ -505,8 +542,9 @@ current transport status.
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260909120000_inventory_step2_receiving`.
+  `20260910120000_inventory_step3_menu_consumption`.
 - Immediately preceding state migrations:
+  `20260909120000_inventory_step2_receiving`,
   `20260908120000_inventory_step1_core`,
   `20260907120000_cloud_sale_ledger`,
   `20260906140000_complete_menu_identity`,

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -9,6 +10,7 @@ import { EDGE_COMMAND_CONTRACT_VERSION } from '../shared/contracts/edge-command'
 import { EdgeCommandService } from './edge-command.service';
 import { EdgeDevice, type EdgeDeviceContext } from './edge-device-context';
 import { EdgeDeviceGuard } from './edge-device.guard';
+import { InventoryService } from '../inventory/inventory.service';
 
 interface ClaimBody {
   limit?: number;
@@ -35,7 +37,20 @@ interface AcknowledgeBody {
 @Controller('edge')
 @UseGuards(EdgeDeviceGuard)
 export class EdgeTransportController {
-  constructor(private readonly commands: EdgeCommandService) {}
+  constructor(
+    private readonly commands: EdgeCommandService,
+    private readonly inventory: InventoryService,
+  ) {}
+
+  /**
+   * Complete Cloud-authoritative Inventory projection for this Device's Venue.
+   * The Device cannot name a Venue; EdgeDeviceGuard derived it from the
+   * credential before this method runs.
+   */
+  @Get('inventory/catalog')
+  async inventoryCatalog(@EdgeDevice() device: EdgeDeviceContext) {
+    return this.inventory.getCatalog(device);
+  }
 
   /** What work is waiting for this Edge, and a lease on each item returned. */
   @Post('commands/claim')

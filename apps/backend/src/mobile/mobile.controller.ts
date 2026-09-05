@@ -14,7 +14,11 @@ import {
   Req,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ManagerTenant } from '../auth/manager-auth-context';
+import {
+  ManagerAuth,
+  ManagerTenant,
+  type ManagerAuthContext,
+} from '../auth/manager-auth-context';
 import type { TenantContext } from '../tenancy/tenant-context';
 import { FeatureGuard } from '../entitlements/feature.guard';
 import { FeatureKeys } from '../entitlements/feature-keys';
@@ -33,6 +37,11 @@ import { MobileReservationsService } from './services/mobile-reservations.servic
 import { MobileDashboardService } from './services/mobile-dashboard.service';
 import { MobileOrdersService } from './services/mobile-orders.service';
 import { MobileSaleLedgerService } from './services/mobile-sale-ledger.service';
+import {
+  InventoryService,
+  type StockItemInput,
+  type SupplierInput,
+} from '../inventory/inventory.service';
 
 // ─── Controller ───────────────────────────────────────────────────────────────
 
@@ -52,7 +61,63 @@ export class MobileController {
     private readonly dashboard: MobileDashboardService,
     private readonly orders: MobileOrdersService,
     private readonly saleLedger: MobileSaleLedgerService,
+    private readonly inventory: InventoryService,
   ) {}
+
+  @Get('inventory/units')
+  getInventoryUnits() {
+    return this.inventory.getUnits();
+  }
+
+  @Get('inventory/stock-items')
+  getStockItems(
+    @ManagerTenant() tenant: TenantContext,
+    @Query('q') search?: string,
+  ) {
+    return this.inventory.listStockItems(tenant, search);
+  }
+
+  @Post('inventory/stock-items')
+  createStockItem(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Body() payload: StockItemInput,
+  ) {
+    return this.inventory.createStockItem(actor, payload);
+  }
+
+  @Patch('inventory/stock-items/:id')
+  updateStockItem(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Body() payload: StockItemInput,
+  ) {
+    return this.inventory.updateStockItem(actor, id, payload);
+  }
+
+  @Get('inventory/suppliers')
+  getSuppliers(
+    @ManagerTenant() tenant: TenantContext,
+    @Query('q') search?: string,
+  ) {
+    return this.inventory.listSuppliers(tenant, search);
+  }
+
+  @Post('inventory/suppliers')
+  createSupplier(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Body() payload: SupplierInput,
+  ) {
+    return this.inventory.createSupplier(actor, payload);
+  }
+
+  @Patch('inventory/suppliers/:id')
+  updateSupplier(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Body() payload: SupplierInput,
+  ) {
+    return this.inventory.updateSupplier(actor, id, payload);
+  }
 
   // GET /mobile/restaurant-settings
   @Get('restaurant-settings')

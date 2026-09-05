@@ -184,6 +184,48 @@ model Expense {
   @@schema("pos")
 }
 
+/// One durable ingredient, packaged product, or other inventory identity.
+/// Quantity is deliberately absent: StockMovement becomes the authoritative
+/// history in Inventory Step 2. Until then clients present a derived zero.
+model StockItem {
+  id           String   @id @default(uuid())
+  venueId      String
+  name         String
+  /// Normalized to upper case by InventoryService before persistence.
+  sku          String?
+  baseUnit     String
+  minimumStock Decimal? @db.Decimal(18, 3)
+  isActive     Boolean  @default(true)
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  venue        Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@unique([venueId, sku])
+  @@index([venueId, isActive, name])
+  @@schema("pos")
+}
+
+/// A Venue-owned supplier. Rows are disabled rather than deleted so future
+/// receiving records can retain a stable reference to their counterparty.
+model Supplier {
+  id        String   @id @default(uuid())
+  venueId   String
+  name      String
+  taxId     String?
+  phone     String?
+  email     String?
+  address   String?
+  notes     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@index([venueId, isActive, name])
+  @@schema("pos")
+}
+
 /// Durable Cloud mirror of one genuine Sale retained by the POS.
 ///
 /// The POS remains the operational/offline transaction authority. Monetary
@@ -460,7 +502,7 @@ model AuditEventLog {
   /// What kind of thing this row is about: `STAFF`, `MENU_ITEM`,
   /// `MENU_CATEGORY`, `PACKAGE`, `EXPENSE`, `CLOSE_DAY`, `BACKUP`,
   /// `RESERVATION`, `ORDER`, `SALE`, `BUSINESS_DATE`, `SETTINGS`,
-  /// `DEVELOPER`.
+  /// `DEVELOPER`, `STOCK_ITEM`, `SUPPLIER`.
   ///
   /// Null for every row written before entity identity existed, and for an
   /// action the derivation cannot classify. Historical rows are not rewritten:
@@ -730,6 +772,8 @@ model Venue {
   menuCategories    MenuCategory[]
   menuItems         MenuItem[]
   expenses          Expense[]
+  stockItems        StockItem[]
+  suppliers         Supplier[]
   cloudSales        CloudSale[]
   saleLedgerDays    SaleLedgerDay[]
   staff             Staff[]

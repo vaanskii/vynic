@@ -21,6 +21,8 @@ export const AUDIT_LOG_ENTITY_TYPES = [
   'MENU_ITEM',
   'MENU_CATEGORY',
   'MENU_VARIANT',
+  'STOCK_ITEM',
+  'SUPPLIER',
   'PACKAGE',
   'EXPENSE',
   'CLOSE_DAY',
@@ -35,9 +37,7 @@ export const AUDIT_LOG_ENTITY_TYPES = [
 
 export type AuditLogEntityType = (typeof AUDIT_LOG_ENTITY_TYPES)[number];
 
-export function isAuditLogEntityType(
-  raw: unknown,
-): raw is AuditLogEntityType {
+export function isAuditLogEntityType(raw: unknown): raw is AuditLogEntityType {
   return (
     typeof raw === 'string' &&
     (AUDIT_LOG_ENTITY_TYPES as readonly string[]).includes(raw.toUpperCase())
@@ -144,6 +144,23 @@ const ACTION_RULES: Readonly<Record<string, EntityRule>> = {
     idKeys: ['variantId'],
   },
 
+  STOCK_ITEM_CREATED: {
+    entityType: 'STOCK_ITEM',
+    idKeys: ['stockItemId'],
+  },
+  STOCK_ITEM_UPDATED: {
+    entityType: 'STOCK_ITEM',
+    idKeys: ['stockItemId'],
+  },
+  STOCK_ITEM_DISABLED: {
+    entityType: 'STOCK_ITEM',
+    idKeys: ['stockItemId'],
+  },
+
+  SUPPLIER_CREATED: { entityType: 'SUPPLIER', idKeys: ['supplierId'] },
+  SUPPLIER_UPDATED: { entityType: 'SUPPLIER', idKeys: ['supplierId'] },
+  SUPPLIER_DISABLED: { entityType: 'SUPPLIER', idKeys: ['supplierId'] },
+
   // Package definitions. Applying a package to an Order is `APPLY_PACKAGE` on
   // that Order's report and is deliberately not mirrored here.
   PACKAGE_CREATED: { entityType: 'PACKAGE', idKeys: ['packageId'] },
@@ -229,9 +246,7 @@ export function deriveAuditLogEntity(
  * for "everything about staff" has to find both the rows that say so and the
  * older rows whose action says so, without rewriting either.
  */
-export function actionsForEntityType(
-  entityType: AuditLogEntityType,
-): string[] {
+export function actionsForEntityType(entityType: AuditLogEntityType): string[] {
   const actions = Object.entries(ACTION_RULES)
     .filter(([, rule]) => rule.entityType === entityType)
     .map(([action]) => action);

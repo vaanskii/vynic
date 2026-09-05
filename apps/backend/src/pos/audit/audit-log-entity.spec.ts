@@ -27,6 +27,12 @@ describe('deriveAuditLogEntity', () => {
       deriveAuditLogEntity('PACKAGE_UPDATED', { packageId: 'pkg-1' }),
     ).toEqual({ entityType: 'PACKAGE', entityId: 'pkg-1' });
     expect(
+      deriveAuditLogEntity('STOCK_ITEM_UPDATED', { stockItemId: 'stock-1' }),
+    ).toEqual({ entityType: 'STOCK_ITEM', entityId: 'stock-1' });
+    expect(
+      deriveAuditLogEntity('SUPPLIER_DISABLED', { supplierId: 'supplier-1' }),
+    ).toEqual({ entityType: 'SUPPLIER', entityId: 'supplier-1' });
+    expect(
       deriveAuditLogEntity('EXPENSE_CREATED', { expenseId: 'exp-9' }),
     ).toEqual({ entityType: 'EXPENSE', entityId: 'exp-9' });
     expect(
@@ -57,9 +63,10 @@ describe('deriveAuditLogEntity', () => {
       }),
     ).toEqual({ entityType: 'SALE', entityId: 'sale-1' });
     // And falls through when the earlier keys are absent, rather than giving up.
-    expect(
-      deriveAuditLogEntity('SALE_CANCELLED', { orderId: 7 }),
-    ).toEqual({ entityType: 'SALE', entityId: '7' });
+    expect(deriveAuditLogEntity('SALE_CANCELLED', { orderId: 7 })).toEqual({
+      entityType: 'SALE',
+      entityId: '7',
+    });
   });
 
   it('classifies the legacy lowercase reservation action', () => {
@@ -127,7 +134,14 @@ describe('actionsForEntityType', () => {
   });
 
   it('round-trips: every listed action derives back to its entity type', () => {
-    for (const entityType of ['ORDER', 'SALE', 'MENU_ITEM', 'PACKAGE'] as const) {
+    for (const entityType of [
+      'ORDER',
+      'SALE',
+      'MENU_ITEM',
+      'PACKAGE',
+      'STOCK_ITEM',
+      'SUPPLIER',
+    ] as const) {
       for (const action of actionsForEntityType(entityType)) {
         expect(deriveAuditLogEntity(action, {}).entityType).toBe(entityType);
       }

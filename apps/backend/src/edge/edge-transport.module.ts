@@ -7,6 +7,7 @@ import { EdgeCommandService } from './edge-command.service';
 import { EdgeDeviceGuard } from './edge-device.guard';
 import { EdgeTransportController } from './edge-transport.controller';
 import { EnrollmentRateLimiter } from './enrollment-rate-limiter';
+import { InventoryService } from '../inventory/inventory.service';
 
 /**
  * Cloud ↔ Edge transport, and how a terminal gets onto it.
@@ -28,7 +29,8 @@ import { EnrollmentRateLimiter } from './enrollment-rate-limiter';
     EdgeDeviceGuard,
     DeviceEnrollmentService,
     EnrollmentRateLimiter,
+    InventoryService,
   ],
-  exports: [EdgeCommandService, DeviceEnrollmentService],
+  exports: [EdgeCommandService, DeviceEnrollmentService, InventoryService],
 })
 export class EdgeTransportModule {}

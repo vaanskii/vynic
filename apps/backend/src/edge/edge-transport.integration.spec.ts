@@ -16,6 +16,7 @@ import {
   EDGE_COMMAND_MAX_BATCH_SIZE,
   EdgeCommandTypes,
 } from '../shared/contracts/edge-command';
+import { InventoryService } from '../inventory/inventory.service';
 
 const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
 const describeDatabase = databaseUrl ? describe : describe.skip;
@@ -63,7 +64,10 @@ describeDatabase('Cloud → Edge transport (PostgreSQL)', () => {
     await prisma.$connect();
     credentials = new DeviceCredentialService(prisma);
     commands = new EdgeCommandService(prisma);
-    controller = new EdgeTransportController(commands);
+    controller = new EdgeTransportController(
+      commands,
+      new InventoryService(prisma),
+    );
     guard = new EdgeDeviceGuard(credentials);
 
     const venue = (id: string, name: string) => ({
@@ -112,6 +116,8 @@ describeDatabase('Cloud → Edge transport (PostgreSQL)', () => {
   });
 
   afterAll(async () => {
+    await prisma.stockItem.deleteMany({ where: { venueId: { in: venueIds } } });
+    await prisma.supplier.deleteMany({ where: { venueId: { in: venueIds } } });
     await prisma.edgeCommand.deleteMany({
       where: { venueId: { in: venueIds } },
     });
@@ -154,6 +160,32 @@ describeDatabase('Cloud → Edge transport (PostgreSQL)', () => {
           }),
         } as never),
       ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+  });
+
+  describe('Inventory projection tenancy', () => {
+    it('returns only the authenticated Device Venue catalog', async () => {
+      await prisma.stockItem.createMany({
+        data: [
+          { venueId: venueAId, name: 'Venue A flour', baseUnit: 'kg' },
+          { venueId: venueBId, name: 'Venue B flour', baseUnit: 'kg' },
+        ],
+      });
+      await prisma.supplier.createMany({
+        data: [
+          { venueId: venueAId, name: 'Venue A supplier' },
+          { venueId: venueBId, name: 'Venue B supplier' },
+        ],
+      });
+
+      const catalog = await controller.inventoryCatalog(deviceA);
+
+      expect(catalog.stockItems.map((item) => item.name)).toEqual([
+        'Venue A flour',
+      ]);
+      expect(catalog.suppliers.map((supplier) => supplier.name)).toEqual([
+        'Venue A supplier',
+      ]);
     });
   });
 

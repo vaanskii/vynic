@@ -14,6 +14,7 @@ import 'package:vynic/core/services/sync/mobile_edit_echo_guard.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 import 'package:vynic/core/models/global_audit_entry.dart';
 import 'package:vynic/core/models/inventory.dart';
+import 'package:vynic/core/models/receiving.dart';
 
 /// Production-grade mobile API service.
 ///
@@ -764,6 +765,7 @@ class MobileApiService {
     double? minimumStock,
     String? notes,
     required bool isActive,
+    List<StockItemPurchaseUnit>? purchaseUnits,
   }) async {
     final payload = <String, dynamic>{
       'name': name,
@@ -772,6 +774,16 @@ class MobileApiService {
       'minimumStock': minimumStock,
       'notes': notes,
       'isActive': isActive,
+      // Omitted entirely when the caller is not editing packaging, so a save
+      // that says nothing about purchase units cannot silently clear them.
+      if (purchaseUnits != null)
+        'purchaseUnits': [
+          for (final unit in purchaseUnits)
+            {
+              'unit': unit.unit.wireValue,
+              'baseUnitMultiplier': unit.baseUnitMultiplier,
+            },
+        ],
     };
     final response = id == null
         ? await _post('/mobile/inventory/stock-items', payload)
@@ -780,6 +792,19 @@ class MobileApiService {
       throw Exception(_apiError('Stock item', response));
     }
     return StockItem.fromJson(
+      Map<String, dynamic>.from(jsonDecode(response.body) as Map),
+    );
+  }
+
+  /// One Stock Item with its derived balance and recent ledger movements.
+  static Future<StockItemDetail> getStockItem(String id) async {
+    final response = await _get(
+      '/mobile/inventory/stock-items/${Uri.encodeComponent(id)}',
+    );
+    if (response.statusCode != 200) {
+      throw Exception(_apiError('Stock item', response));
+    }
+    return StockItemDetail.fromJson(
       Map<String, dynamic>.from(jsonDecode(response.body) as Map),
     );
   }
@@ -824,6 +849,121 @@ class MobileApiService {
       throw Exception(_apiError('Supplier', response));
     }
     return Supplier.fromJson(
+      Map<String, dynamic>.from(jsonDecode(response.body) as Map),
+    );
+  }
+
+  // ── Receiving / waybills ──────────────────────────────────────────────
+
+  static Future<ReceivingPage> getReceivings({
+    String? from,
+    String? to,
+    String? supplierId,
+    String? status,
+    String? search,
+    int? take,
+    String? cursor,
+  }) async {
+    final params = <String, String>{
+      if (from != null && from.isNotEmpty) 'from': from,
+      if (to != null && to.isNotEmpty) 'to': to,
+      if (supplierId != null && supplierId.isNotEmpty) 'supplierId': supplierId,
+      if (status != null && status.isNotEmpty) 'status': status,
+      if (search != null && search.trim().isNotEmpty) 'q': search.trim(),
+      if (take != null) 'take': '$take',
+      if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+    };
+    final query = params.isEmpty
+        ? ''
+        : '?${params.entries.map((entry) => '${entry.key}=${Uri.encodeQueryComponent(entry.value)}').join('&')}';
+    final response = await _get('/mobile/inventory/receivings$query');
+    if (response.statusCode != 200) {
+      throw Exception(_apiError('Receivings', response));
+    }
+    return ReceivingPage.fromJson(
+      Map<String, dynamic>.from(jsonDecode(response.body) as Map),
+    );
+  }
+
+  static Future<Receiving> getReceiving(String id) async {
+    final response = await _get(
+      '/mobile/inventory/receivings/${Uri.encodeComponent(id)}',
+    );
+    if (response.statusCode != 200) {
+      throw Exception(_apiError('Receiving', response));
+    }
+    return _receiving(response);
+  }
+
+  /// Creates or replaces a draft. Cloud refuses to edit anything else, so a
+  /// posted document can never be rewritten through this path.
+  static Future<Receiving> saveReceivingDraft({
+    String? id,
+    required String supplierId,
+    required String documentDate,
+    String? waybillNumber,
+    String? invoiceNumber,
+    String? notes,
+    DateTime? receivedAt,
+    required List<Map<String, dynamic>> lines,
+  }) async {
+    final payload = <String, dynamic>{
+      'supplierId': supplierId,
+      'documentDate': documentDate,
+      'waybillNumber': waybillNumber,
+      'invoiceNumber': invoiceNumber,
+      'notes': notes,
+      if (receivedAt != null)
+        'receivedAt': receivedAt.toUtc().toIso8601String(),
+      'lines': lines,
+    };
+    final response = id == null
+        ? await _post('/mobile/inventory/receivings', payload)
+        : await _patch(
+            '/mobile/inventory/receivings/${Uri.encodeComponent(id)}',
+            payload,
+          );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(_apiError('Receiving', response));
+    }
+    return _receiving(response);
+  }
+
+  static Future<void> deleteReceivingDraft(String id) async {
+    final response = await _delete(
+      '/mobile/inventory/receivings/${Uri.encodeComponent(id)}',
+    );
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      throw Exception(_apiError('Receiving', response));
+    }
+  }
+
+  /// Posting is idempotent server-side; a redelivered request returns the
+  /// same document rather than moving stock again.
+  static Future<Receiving> postReceiving(String id) async {
+    final response = await _post(
+      '/mobile/inventory/receivings/${Uri.encodeComponent(id)}/post',
+      const <String, dynamic>{},
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(_apiError('Receiving', response));
+    }
+    return _receiving(response);
+  }
+
+  static Future<Receiving> cancelReceiving(String id, {String? reason}) async {
+    final response = await _post(
+      '/mobile/inventory/receivings/${Uri.encodeComponent(id)}/cancel',
+      <String, dynamic>{'reason': reason},
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(_apiError('Receiving', response));
+    }
+    return _receiving(response);
+  }
+
+  static Receiving _receiving(http.Response response) {
+    return Receiving.fromJson(
       Map<String, dynamic>.from(jsonDecode(response.body) as Map),
     );
   }

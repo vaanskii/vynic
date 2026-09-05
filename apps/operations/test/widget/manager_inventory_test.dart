@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_admin_screen.dart';
 import 'package:vynic/core/models/inventory.dart';
+import 'package:vynic/core/models/receiving.dart';
 
 final _stock = StockItem(
   id: 'stock-1',
@@ -33,6 +34,7 @@ Widget _app() => MaterialApp(
     body: InventoryAdminTab(
       loadStockItems: () async => [_stock],
       loadSuppliers: () async => [_supplier],
+      loadReceivings: () async => const ReceivingPage(receivings: []),
     ),
   ),
 );
@@ -46,7 +48,7 @@ void main() {
   });
 
   testWidgets(
-    'shows Stock Items, placeholder stock, search, and both editors',
+    'shows Stock Items, derived stock, search, and both editors',
     (tester) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1;
@@ -59,7 +61,8 @@ void main() {
       expect(find.byKey(const Key('stock-item-list')), findsOneWidget);
       expect(find.text('Beef'), findsOneWidget);
       expect(find.text('ერთეული: kg'), findsOneWidget);
-      expect(find.text('მოძრაობები ჯერ არ არის'), findsOneWidget);
+      // Step 2 replaced the placeholder with the ledger's own answer.
+      expect(find.text('ნაშთი: 0 kg'), findsOneWidget);
       expect(find.text('მინიმუმი: 2.5 kg'), findsOneWidget);
       expect(tester.takeException(), isNull);
 

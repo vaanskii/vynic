@@ -45,10 +45,10 @@ current transport status.
 - The latest completed sequence covers Money Integrity 1A/1B, POS enrollment
   1C, incremental audit sync, Edge Step 6C, Menu Identity Phases 4.5/4.6, and
   the Phase 5 Cloud Sale Ledger/Manager financial experience.
-- Inventory Step 1 is implemented after the Cloud Sale Ledger. The durable
-  Stock Item, unit, Supplier, Manager CRUD, global audit, and offline POS
-  projection foundations are present; Receiving/Waybills and all quantity or
-  costing flows remain later steps.
+- Inventory Steps 1 and 2 are implemented after the Cloud Sale Ledger. Stock
+  Items, Suppliers, Receiving/waybill documents and the StockMovement quantity
+  ledger are present; Recipes, Sale consumption, costing, waste and stocktake
+  remain later steps.
 
 ## Completed Foundations
 
@@ -67,8 +67,11 @@ current transport status.
 - One-time, Venue-bound POS self-enrollment is implemented (Phase 1C).
 - Inventory Step 1 is implemented: Venue-owned Stock Items and Suppliers use
   immutable UUIDs, optional Venue-unique normalized SKUs, soft activation, and
-  exact minimum-stock thresholds. Current stock remains an explicit derived
-  zero until StockMovement exists.
+  exact minimum-stock thresholds.
+- Inventory Step 2 is implemented: Venue-owned `Receiving` documents
+  (`DRAFT`/`POSTED`/`CANCELLED`), frozen `ReceivingLine` purchase snapshots,
+  item-specific `StockItemPurchaseUnit` packaging ratios, and the append-only
+  `StockMovement` ledger with the `RECEIVING` and `RECEIVING_REVERSAL` types.
 
 ## POS / Edge State
 
@@ -166,11 +169,28 @@ current transport status.
   `ACTIVATE_RESERVATION`; a delete writes the booking's last snapshot first.
   Legacy `reservation_cancelled` rows are read as `CANCEL_RESERVATION` and
   never written again.
+- Current stock is derived, never stored: `SUM(StockMovement.quantityDeltaBase)`
+  per Stock Item, computed in PostgreSQL as `Decimal`. There is no editable
+  balance column. Quantities are `Decimal(18,3)`, GEL totals `Decimal(18,2)`,
+  unit purchase cost `Decimal(18,4)`, effective base-unit cost `Decimal(18,6)`;
+  every value crosses the wire as fixed-scale decimal text.
+- A posted Receiving is inventory history: it cannot be edited or deleted, and
+  cancelling it adds reversal movements beside the originals rather than
+  removing them. Posting and cancelling both take `SELECT ... FOR UPDATE` on the
+  document, and two database rules make them idempotent under concurrency —
+  `@@unique([receivingLineId, movementType])` and a unique
+  `StockMovement.reversalOfMovementId`. A repeat returns `already_posted` /
+  `already_cancelled` and writes nothing.
+- Receiving unit conversion resolves base unit -> item-specific
+  `StockItemPurchaseUnit` -> global mass/volume, then refuses. Count packaging
+  (`box`, `pack`) is never globalised: one venue's box is 24 bottles of lemonade
+  and 6 of wine, so the ratio belongs to the Stock Item.
 - Venue-wide accountability lives in the append-only `AuditEventLog`, which is
   now readable. Every row carries `entityType`/`entityId`
   (`STAFF`, `MENU_ITEM`, `MENU_CATEGORY`, `MENU_VARIANT`, `PACKAGE`, `EXPENSE`,
   `CLOSE_DAY`, `BACKUP`, `RESERVATION`, `ORDER`, `SALE`, `BUSINESS_DATE`,
-  `SETTINGS`, `DEVELOPER`, `STOCK_ITEM`, `SUPPLIER`), written by `GlobalAudit`
+  `SETTINGS`, `DEVELOPER`, `STOCK_ITEM`, `SUPPLIER`, `RECEIVING`), written by
+  `GlobalAudit`
   and additive in Hive, on
   the wire and in Cloud. Rows written before those fields existed are never
   rewritten: both
@@ -186,6 +206,9 @@ current transport status.
   through as `changes` field deltas, never a menu snapshot), `PACKAGE_CREATED` /
   `PACKAGE_UPDATED` / `PACKAGE_DELETED` (definitions only — applying one to an
   Order stays `APPLY_PACKAGE` on that Order's report), `EXPENSE_CREATED`,
+  `RECEIVING_CREATED` / `RECEIVING_UPDATED` / `RECEIVING_POSTED` /
+  `RECEIVING_CANCELLED` (document summary and status transition only —
+  StockMovement is already ledger history and is never mirrored row by row),
   `CLOSE_DAY_COMPLETED` / `CLOSE_DAY_BLOCKED`, and `BACKUP_RESTORED`. Each
   writer is a no-op when nothing moved, and a redelivered Manager command
   produces no second row. `BACKUP_RESTORED` is written after the payload is
@@ -329,7 +352,12 @@ current transport status.
   POS pulls a complete Device -> Venue catalog through
   `GET /edge/inventory/catalog` into one atomically replaced Hive value at
   startup, after enrollment, and periodically. Failure leaves the last good
-  offline projection intact and never blocks POS startup.
+  offline projection intact and never blocks POS startup. The catalog is now
+  version 2 and carries each item's derived `currentStock`, its `stockStatus`
+  (`LOW`/`OK`/`NO_MINIMUM`) and its `purchaseUnits`. The POS keeps Cloud's exact
+  decimal text and Cloud's own low-stock verdict; it never recomputes a balance
+  and never posts a Receiving. Receiving and StockMovement stay Cloud
+  financial history and are deliberately not in the POS backup.
 - Reservations now sync into `PosReservation`; Manager and website reads no
   longer make a synchronous LAN call to the POS.
 - Audit reports sync incrementally in batches using content revisions and
@@ -465,8 +493,9 @@ current transport status.
 
 ## Deferred Work
 
-- Restaurant Backoffice, Venue Policy, custom roles/RBAC, Inventory Receiving /
-  Recipes / StockMovement / Costing / Waste / Stocktake, cash management,
+- Restaurant Backoffice, Venue Policy, custom roles/RBAC, Inventory Recipes /
+  Sale consumption / Costing / Waste / Stocktake / inventory variance, cash
+  management,
   reservation holds, generic SaaS venue web, SaaS billing, and per-Venue
   payment credentials.
 - Device-addressed printer selection, lower-latency Edge long polling, OS
@@ -476,8 +505,9 @@ current transport status.
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260908120000_inventory_step1_core`.
+  `20260909120000_inventory_step2_receiving`.
 - Immediately preceding state migrations:
+  `20260908120000_inventory_step1_core`,
   `20260907120000_cloud_sale_ledger`,
   `20260906140000_complete_menu_identity`,
   `20260906120000_menu_item_pos_identity`,

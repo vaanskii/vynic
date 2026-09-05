@@ -18,6 +18,7 @@ abstract final class GlobalAuditEntity {
   static const String menuVariant = 'MENU_VARIANT';
   static const String stockItem = 'STOCK_ITEM';
   static const String supplier = 'SUPPLIER';
+  static const String receiving = 'RECEIVING';
   static const String package = 'PACKAGE';
   static const String expense = 'EXPENSE';
   static const String closeDay = 'CLOSE_DAY';
@@ -36,6 +37,7 @@ abstract final class GlobalAuditEntity {
     menuVariant,
     stockItem,
     supplier,
+    receiving,
     package,
     expense,
     closeDay,
@@ -81,6 +83,13 @@ abstract final class GlobalAuditAction {
   static const String supplierCreated = 'SUPPLIER_CREATED';
   static const String supplierUpdated = 'SUPPLIER_UPDATED';
   static const String supplierDisabled = 'SUPPLIER_DISABLED';
+
+  /// Receiving documents. Cloud-authoritative and Manager-written; the POS
+  /// only reads them back through the venue-wide feed.
+  static const String receivingCreated = 'RECEIVING_CREATED';
+  static const String receivingUpdated = 'RECEIVING_UPDATED';
+  static const String receivingPosted = 'RECEIVING_POSTED';
+  static const String receivingCancelled = 'RECEIVING_CANCELLED';
 
   // Package definitions. Applying a package to an Order is `APPLY_PACKAGE` on
   // that Order's report and is deliberately not duplicated here.

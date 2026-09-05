@@ -89,7 +89,12 @@ void main() {
       final roundTrip = StockItem.fromJson(item.toJson());
 
       expect(item.isActive, isTrue);
-      expect(item.currentStock, 0);
+      // A payload with no balance reads as an honest zero and no threshold
+      // verdict, never as a fabricated number.
+      expect(item.currentStock, '0.000');
+      expect(item.currentStockValue, 0);
+      expect(item.stockStatus, 'NO_MINIMUM');
+      expect(item.isLowStock, isFalse);
       expect(roundTrip.id, 'stock-immutable-1');
       expect(roundTrip.minimumStock, 2.5);
     },

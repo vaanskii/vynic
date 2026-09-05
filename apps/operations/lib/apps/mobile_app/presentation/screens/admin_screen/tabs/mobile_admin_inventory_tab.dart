@@ -1,12 +1,22 @@
 part of '../mobile_admin_screen.dart';
 
-enum _InventorySection { stockItems, suppliers }
+enum _InventorySection { stockItems, suppliers, receiving }
 
 class InventoryAdminTab extends StatefulWidget {
-  const InventoryAdminTab({super.key, this.loadStockItems, this.loadSuppliers});
+  const InventoryAdminTab({
+    super.key,
+    this.loadStockItems,
+    this.loadSuppliers,
+    this.loadReceivings,
+    this.initialSection,
+  });
 
   final Future<List<StockItem>> Function()? loadStockItems;
   final Future<List<Supplier>> Function()? loadSuppliers;
+  final Future<ReceivingPage> Function()? loadReceivings;
+
+  /// Test seam only. The console always opens on Stock Items.
+  final int? initialSection;
 
   @override
   State<InventoryAdminTab> createState() => _InventoryTabState();
@@ -17,10 +27,13 @@ class _InventoryTabState extends State<InventoryAdminTab>
   @override
   bool get wantKeepAlive => true;
 
-  _InventorySection _section = _InventorySection.stockItems;
+  late _InventorySection _section =
+      _InventorySection.values[widget.initialSection ?? 0];
   final _search = TextEditingController();
   List<StockItem> _stockItems = const [];
   List<Supplier> _suppliers = const [];
+  List<Receiving> _receivings = const [];
+  _ReceivingStatusFilter _statusFilter = _ReceivingStatusFilter.all;
   bool _loading = true;
   String? _error;
 
@@ -45,11 +58,13 @@ class _InventoryTabState extends State<InventoryAdminTab>
       final results = await Future.wait<Object>([
         widget.loadStockItems?.call() ?? MobileApiService.getStockItems(),
         widget.loadSuppliers?.call() ?? MobileApiService.getSuppliers(),
+        widget.loadReceivings?.call() ?? MobileApiService.getReceivings(),
       ]);
       if (!mounted) return;
       setState(() {
         _stockItems = results[0] as List<StockItem>;
         _suppliers = results[1] as List<Supplier>;
+        _receivings = (results[2] as ReceivingPage).receivings;
         _loading = false;
       });
     } catch (error) {
@@ -98,8 +113,10 @@ class _InventoryTabState extends State<InventoryAdminTab>
                       const SizedBox(height: 18),
                       if (_section == _InventorySection.stockItems)
                         _stockItemList()
+                      else if (_section == _InventorySection.suppliers)
+                        _supplierList()
                       else
-                        _supplierList(),
+                        _receivingList(),
                     ],
                   ),
                 ),
@@ -114,16 +131,22 @@ class _InventoryTabState extends State<InventoryAdminTab>
   Widget _sectionSelector() {
     return SegmentedButton<_InventorySection>(
       key: const Key('inventory-section-selector'),
+      showSelectedIcon: false,
       segments: const [
         ButtonSegment(
           value: _InventorySection.stockItems,
           icon: Icon(Icons.inventory_2_outlined),
-          label: Text('საწყობის პროდუქტები'),
+          label: Text('პროდუქტები'),
         ),
         ButtonSegment(
           value: _InventorySection.suppliers,
           icon: Icon(Icons.local_shipping_outlined),
           label: Text('მომწოდებლები'),
+        ),
+        ButtonSegment(
+          value: _InventorySection.receiving,
+          icon: Icon(Icons.receipt_long_outlined),
+          label: Text('მიღებები'),
         ),
       ],
       selected: {_section},
@@ -155,28 +178,35 @@ class _InventoryTabState extends State<InventoryAdminTab>
       controller: _search,
       onChanged: (_) => setState(() {}),
       style: TextStyle(color: AdminTheme.text),
-      decoration: _adminInput('ძებნა სახელით ან კოდით').copyWith(
-        prefixIcon: Icon(Icons.search_rounded, color: AdminTheme.textDim),
-        suffixIcon: _search.text.isEmpty
-            ? null
-            : IconButton(
-                tooltip: 'გასუფთავება',
-                onPressed: () => setState(_search.clear),
-                icon: const Icon(Icons.close_rounded),
-              ),
-      ),
+      decoration:
+          _adminInput(
+            _section == _InventorySection.receiving
+                ? 'ძებნა ზედნადებით ან მომწოდებლით'
+                : 'ძებნა სახელით ან კოდით',
+          ).copyWith(
+            prefixIcon: Icon(Icons.search_rounded, color: AdminTheme.textDim),
+            suffixIcon: _search.text.isEmpty
+                ? null
+                : IconButton(
+                    tooltip: 'გასუფთავება',
+                    onPressed: () => setState(_search.clear),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+          ),
     );
     final add = FilledButton.icon(
       key: const Key('inventory-add'),
-      onPressed: _section == _InventorySection.stockItems
-          ? () => _editStockItem()
-          : () => _editSupplier(),
+      onPressed: switch (_section) {
+        _InventorySection.stockItems => () => _editStockItem(),
+        _InventorySection.suppliers => () => _editSupplier(),
+        _InventorySection.receiving => () => _editReceiving(),
+      },
       icon: const Icon(Icons.add_rounded),
-      label: Text(
-        _section == _InventorySection.stockItems
-            ? 'პროდუქტის დამატება'
-            : 'მომწოდებლის დამატება',
-      ),
+      label: Text(switch (_section) {
+        _InventorySection.stockItems => 'პროდუქტის დამატება',
+        _InventorySection.suppliers => 'მომწოდებლის დამატება',
+        _InventorySection.receiving => 'მიღების დამატება',
+      }),
       style: FilledButton.styleFrom(
         backgroundColor: AdminTheme.primary,
         foregroundColor: Colors.white,
@@ -226,6 +256,7 @@ class _InventoryTabState extends State<InventoryAdminTab>
             item: item,
             onEdit: () => _editStockItem(item),
             onToggle: () => _toggleStockItem(item),
+            onOpen: () => _openStockItem(item),
           ),
       ],
     );
@@ -316,6 +347,93 @@ class _InventoryTabState extends State<InventoryAdminTab>
     }
   }
 
+  Widget _receivingList() {
+    final query = _search.text.trim().toLowerCase();
+    final items = _receivings
+        .where((receiving) {
+          if (!_statusFilter.matches(receiving.status)) return false;
+          return query.isEmpty ||
+              receiving.supplierName.toLowerCase().contains(query) ||
+              (receiving.waybillNumber?.toLowerCase().contains(query) ??
+                  false) ||
+              (receiving.invoiceNumber?.toLowerCase().contains(query) ?? false);
+        })
+        .toList(growable: false);
+    return Column(
+      key: const Key('receiving-list'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _ReceivingStatusFilterBar(
+          selected: _statusFilter,
+          onChanged: (value) => setState(() => _statusFilter = value),
+        ),
+        const SizedBox(height: 12),
+        if (items.isEmpty)
+          _InventoryEmptyState(
+            icon: Icons.receipt_long_outlined,
+            title: query.isEmpty && _statusFilter == _ReceivingStatusFilter.all
+                ? 'მიღებები ჯერ არ არის'
+                : 'შესაბამისი დოკუმენტი ვერ მოიძებნა',
+            subtitle:
+                query.isEmpty && _statusFilter == _ReceivingStatusFilter.all
+                ? 'დაამატეთ ზედნადები და აღრიცხეთ მიღებული პროდუქტი.'
+                : 'შეცვალეთ ფილტრი ან საძიებო სიტყვა.',
+          )
+        else
+          for (final receiving in items)
+            _ReceivingCard(
+              receiving: receiving,
+              onOpen: () => _openReceiving(receiving),
+            ),
+      ],
+    );
+  }
+
+  Future<void> _editReceiving([Receiving? receiving]) async {
+    if (_suppliers.where((supplier) => supplier.isActive).isEmpty) {
+      _adminToast(context, 'ჯერ დაამატეთ მომწოდებელი', error: true);
+      return;
+    }
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (_) => ReceivingEditorDialog(
+        receiving: receiving,
+        suppliers: _suppliers.where((supplier) => supplier.isActive).toList(),
+        stockItems: _stockItems.where((item) => item.isActive).toList(),
+      ),
+    );
+    if (saved == true) {
+      if (mounted) {
+        _adminToast(
+          context,
+          receiving == null ? 'მიღება შეიქმნა' : 'მიღება განახლდა',
+        );
+      }
+      await _load();
+    }
+  }
+
+  Future<void> _openReceiving(Receiving receiving) async {
+    final changed = await showDialog<bool>(
+      context: context,
+      builder: (_) => ReceivingDetailDialog(
+        receivingId: receiving.id,
+        onEditDraft: (draft) async {
+          Navigator.pop(context, false);
+          await _editReceiving(draft);
+        },
+      ),
+    );
+    if (changed == true) await _load();
+  }
+
+  Future<void> _openStockItem(StockItem item) async {
+    await showDialog<void>(
+      context: context,
+      builder: (_) => StockItemDetailDialog(stockItemId: item.id),
+    );
+  }
+
   Future<void> _toggleSupplier(Supplier supplier) async {
     try {
       await MobileApiService.saveSupplier(
@@ -345,11 +463,13 @@ class _StockItemCard extends StatelessWidget {
     required this.item,
     required this.onEdit,
     required this.onToggle,
+    required this.onOpen,
   });
 
   final StockItem item;
   final VoidCallback onEdit;
   final VoidCallback onToggle;
+  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -374,6 +494,10 @@ class _StockItemCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (item.isLowStock) ...[
+                      const _LowStockBadge(),
+                      const SizedBox(width: 6),
+                    ],
                     _InventoryStateBadge(active: item.isActive),
                   ],
                 ),
@@ -387,9 +511,17 @@ class _StockItemCard extends StatelessWidget {
                       label: 'ერთეული: ${item.baseUnit.wireValue}',
                     ),
                     _InventoryMeta(
-                      icon: Icons.layers_clear_outlined,
-                      label: 'მოძრაობები ჯერ არ არის',
+                      icon: Icons.inventory_rounded,
+                      label:
+                          'ნაშთი: ${_quantityText(item.currentStock)} ${item.baseUnit.wireValue}',
+                      emphasis: item.isLowStock,
                     ),
+                    for (final unit in item.purchaseUnits)
+                      _InventoryMeta(
+                        icon: Icons.all_inbox_outlined,
+                        label:
+                            '1 ${unit.unit.wireValue} = ${unit.baseUnitMultiplier} ${item.baseUnit.wireValue}',
+                      ),
                     if (item.minimumStock != null)
                       _InventoryMeta(
                         icon: Icons.notification_important_outlined,
@@ -409,6 +541,7 @@ class _StockItemCard extends StatelessWidget {
               active: item.isActive,
               onEdit: onEdit,
               onToggle: onToggle,
+              onOpen: onOpen,
             );
             if (constraints.maxWidth < 560) {
               return Column(
@@ -514,36 +647,53 @@ class _InventoryActions extends StatelessWidget {
     required this.active,
     required this.onEdit,
     required this.onToggle,
+    this.onOpen,
   });
 
   final bool active;
   final VoidCallback onEdit;
   final VoidCallback onToggle;
+  final VoidCallback? onOpen;
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 6,
-      runSpacing: 6,
-      alignment: WrapAlignment.end,
-      children: [
-        OutlinedButton.icon(
-          onPressed: onEdit,
-          icon: const Icon(Icons.edit_outlined, size: 17),
-          label: const Text('რედაქტირება'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AdminTheme.text,
-            side: BorderSide(color: AdminTheme.border),
+    // Bounded so the row beside it keeps its width: three actions would
+    // otherwise take their full intrinsic line and overflow a wide card.
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 320),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        alignment: WrapAlignment.end,
+        children: [
+          if (onOpen != null)
+            TextButton.icon(
+              key: const Key('stock-item-open'),
+              onPressed: onOpen,
+              icon: const Icon(Icons.history_rounded, size: 17),
+              label: const Text('მოძრაობები'),
+              style: TextButton.styleFrom(
+                foregroundColor: AdminTheme.textMuted,
+              ),
+            ),
+          OutlinedButton.icon(
+            onPressed: onEdit,
+            icon: const Icon(Icons.edit_outlined, size: 17),
+            label: const Text('რედაქტირება'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AdminTheme.text,
+              side: BorderSide(color: AdminTheme.border),
+            ),
           ),
-        ),
-        TextButton(
-          onPressed: onToggle,
-          style: TextButton.styleFrom(
-            foregroundColor: active ? AdminTheme.warn : AdminTheme.good,
+          TextButton(
+            onPressed: onToggle,
+            style: TextButton.styleFrom(
+              foregroundColor: active ? AdminTheme.warn : AdminTheme.good,
+            ),
+            child: Text(active ? 'გათიშვა' : 'გააქტიურება'),
           ),
-          child: Text(active ? 'გათიშვა' : 'გააქტიურება'),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -574,18 +724,56 @@ class _InventoryStateBadge extends StatelessWidget {
 }
 
 class _InventoryMeta extends StatelessWidget {
-  const _InventoryMeta({required this.icon, required this.label});
+  const _InventoryMeta({
+    required this.icon,
+    required this.label,
+    this.emphasis = false,
+  });
   final IconData icon;
   final String label;
+  final bool emphasis;
 
   @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Icon(icon, size: 15, color: AdminTheme.textDim),
-      const SizedBox(width: 4),
-      Text(label, style: TextStyle(color: AdminTheme.textMuted, fontSize: 12)),
-    ],
+  Widget build(BuildContext context) {
+    final color = emphasis ? AdminTheme.warn : AdminTheme.textMuted;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 15, color: emphasis ? color : AdminTheme.textDim),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontSize: 12,
+            fontWeight: emphasis ? FontWeight.w700 : FontWeight.w400,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Shown only when a threshold is configured and Cloud says it is reached.
+class _LowStockBadge extends StatelessWidget {
+  const _LowStockBadge();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: const Key('low-stock-badge'),
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: BoxDecoration(
+      color: AdminTheme.warn.withValues(alpha: 0.14),
+      borderRadius: BorderRadius.circular(999),
+    ),
+    child: Text(
+      'მარაგი მცირდება',
+      style: TextStyle(
+        color: AdminTheme.warn,
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
   );
 }
 
@@ -642,6 +830,7 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
   late final TextEditingController _notes;
   late InventoryUnit _unit;
   late bool _active;
+  late List<_PurchaseUnitDraft> _purchaseUnits;
   bool _saving = false;
   String? _error;
 
@@ -657,6 +846,13 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
     _notes = TextEditingController(text: item?.notes ?? '');
     _unit = item?.baseUnit ?? InventoryUnit.kg;
     _active = item?.isActive ?? true;
+    _purchaseUnits = [
+      for (final unit in item?.purchaseUnits ?? const <StockItemPurchaseUnit>[])
+        _PurchaseUnitDraft(
+          unit: unit.unit,
+          multiplier: TextEditingController(text: unit.baseUnitMultiplier),
+        ),
+    ];
   }
 
   @override
@@ -665,7 +861,121 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
     _sku.dispose();
     _minimum.dispose();
     _notes.dispose();
+    for (final draft in _purchaseUnits) {
+      draft.multiplier.dispose();
+    }
     super.dispose();
+  }
+
+  /// Item-specific packaging: "1 box = 24 bottle" for this product only.
+  Widget _purchaseUnitEditor() {
+    return Column(
+      key: const Key('purchase-unit-editor'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 4),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'შესყიდვის შეფუთვა',
+            style: TextStyle(
+              color: AdminTheme.textMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'მაგ. 1 ყუთი = 24 ${_unit.wireValue}. ეს კოეფიციენტი მხოლოდ ამ პროდუქტს ეხება.',
+            style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
+          ),
+        ),
+        const SizedBox(height: 8),
+        for (var index = 0; index < _purchaseUnits.length; index++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 4,
+                  child: DropdownButtonFormField<InventoryUnit>(
+                    initialValue: _purchaseUnits[index].unit,
+                    dropdownColor: AdminTheme.surfaceElevated,
+                    style: TextStyle(color: AdminTheme.text, fontSize: 13),
+                    decoration: _adminInput('ერთეული'),
+                    items: [
+                      for (final unit in InventoryUnit.values)
+                        if (unit != _unit)
+                          DropdownMenuItem(
+                            value: unit,
+                            child: Text(unit.wireValue),
+                          ),
+                    ],
+                    onChanged: _saving
+                        ? null
+                        : (value) => setState(() {
+                            if (value != null) {
+                              _purchaseUnits[index].unit = value;
+                            }
+                          }),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 5,
+                  child: TextField(
+                    controller: _purchaseUnits[index].multiplier,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    style: TextStyle(color: AdminTheme.text),
+                    decoration: _adminInput('რაოდენობა ${_unit.wireValue}-ში'),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'წაშლა',
+                  onPressed: _saving
+                      ? null
+                      : () => setState(() {
+                          _purchaseUnits.removeAt(index).multiplier.dispose();
+                        }),
+                  icon: Icon(Icons.close_rounded, color: AdminTheme.textDim),
+                ),
+              ],
+            ),
+          ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            key: const Key('purchase-unit-add'),
+            onPressed: _saving || _availablePurchaseUnit() == null
+                ? null
+                : () => setState(() {
+                    _purchaseUnits.add(
+                      _PurchaseUnitDraft(
+                        unit: _availablePurchaseUnit()!,
+                        multiplier: TextEditingController(),
+                      ),
+                    );
+                  }),
+            icon: const Icon(Icons.add_rounded, size: 18),
+            label: const Text('შეფუთვის დამატება'),
+            style: TextButton.styleFrom(foregroundColor: AdminTheme.primary),
+          ),
+        ),
+      ],
+    );
+  }
+
+  InventoryUnit? _availablePurchaseUnit() {
+    final used = _purchaseUnits.map((draft) => draft.unit).toSet()..add(_unit);
+    for (final unit in InventoryUnit.values) {
+      if (!used.contains(unit)) return unit;
+    }
+    return null;
   }
 
   @override
@@ -711,6 +1021,7 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
                 ),
               ),
               _dialogField(_notes, 'შენიშვნა', maxLines: 3),
+              _purchaseUnitEditor(),
               SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
                 title: Text(
@@ -775,6 +1086,25 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
       );
       return;
     }
+    final purchaseUnits = <StockItemPurchaseUnit>[];
+    for (final draft in _purchaseUnits) {
+      final text = draft.multiplier.text.trim().replaceAll(',', '.');
+      final value = double.tryParse(text);
+      if (value == null || value <= 0) {
+        setState(
+          () => _error =
+              '${draft.unit.wireValue}: შეფუთვის კოეფიციენტი უნდა იყოს დადებითი',
+        );
+        return;
+      }
+      purchaseUnits.add(
+        StockItemPurchaseUnit(
+          id: '',
+          unit: draft.unit,
+          baseUnitMultiplier: text,
+        ),
+      );
+    }
     setState(() {
       _saving = true;
       _error = null;
@@ -788,6 +1118,7 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
         minimumStock: minimum,
         notes: _notes.text,
         isActive: _active,
+        purchaseUnits: purchaseUnits,
       );
       if (mounted) Navigator.pop(context, true);
     } catch (error) {
@@ -974,9 +1305,26 @@ Widget _dialogField(
   );
 }
 
+/// Trims Cloud's fixed-scale decimal text for display without re-rounding it.
+String _quantityText(String exact) {
+  if (!exact.contains('.')) return exact;
+  final trimmed = exact.replaceFirst(RegExp(r'0+$'), '');
+  return trimmed.endsWith('.')
+      ? trimmed.substring(0, trimmed.length - 1)
+      : trimmed;
+}
+
 String _quantity(double value) {
   final fixed = value.toStringAsFixed(3);
   return fixed.replaceFirst(RegExp(r'\.?0+$'), '');
+}
+
+/// One packaging row being edited, before it is validated into a ratio.
+class _PurchaseUnitDraft {
+  _PurchaseUnitDraft({required this.unit, required this.multiplier});
+
+  InventoryUnit unit;
+  final TextEditingController multiplier;
 }
 
 String _unitLabel(InventoryUnit unit) {

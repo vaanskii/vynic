@@ -50,6 +50,42 @@ double convertInventoryQuantity(
   return value * fromFactor / toFactor;
 }
 
+/// One item-specific purchasing package, e.g. "1 box = 24 bottle".
+///
+/// Cloud-owned like the rest of the catalog; the POS reads it so a later step
+/// can speak the same packaging language the Manager entered a waybill in.
+class StockItemPurchaseUnit {
+  const StockItemPurchaseUnit({
+    required this.id,
+    required this.unit,
+    required this.baseUnitMultiplier,
+  });
+
+  final String id;
+  final InventoryUnit unit;
+
+  /// Exact ratio text as Cloud stored it. Kept verbatim so a round trip
+  /// through this projection never re-rounds a Cloud decimal.
+  final String baseUnitMultiplier;
+
+  double get multiplier => double.tryParse(baseUnitMultiplier) ?? 0;
+
+  factory StockItemPurchaseUnit.fromJson(Map<String, dynamic> json) {
+    return StockItemPurchaseUnit(
+      id: _requiredString(json, 'id'),
+      unit: InventoryUnit.parse(_requiredString(json, 'unit')),
+      baseUnitMultiplier:
+          _optionalString(json['baseUnitMultiplier']) ?? '0',
+    );
+  }
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'id': id,
+    'unit': unit.wireValue,
+    'baseUnitMultiplier': baseUnitMultiplier,
+  };
+}
+
 class StockItem {
   const StockItem({
     required this.id,
@@ -61,6 +97,9 @@ class StockItem {
     this.sku,
     this.minimumStock,
     this.notes,
+    this.currentStock = '0.000',
+    this.stockStatus = 'NO_MINIMUM',
+    this.purchaseUnits = const <StockItemPurchaseUnit>[],
   });
 
   final String id;
@@ -73,8 +112,24 @@ class StockItem {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  /// Inventory Step 1 has no movements. This is derived and never editable.
-  double get currentStock => 0;
+  /// Cloud's derived balance as exact decimal text.
+  ///
+  /// Current stock is `SUM(StockMovement.quantityDeltaBase)`, computed in
+  /// PostgreSQL where the arithmetic is exact. The POS holds a projection of
+  /// that answer and never recomputes or accumulates it locally.
+  final String currentStock;
+
+  /// `LOW`, `OK`, or `NO_MINIMUM` when no threshold is configured.
+  final String stockStatus;
+
+  final List<StockItemPurchaseUnit> purchaseUnits;
+
+  /// For display and layout only. The durable value stays [currentStock].
+  double get currentStockValue => double.tryParse(currentStock) ?? 0;
+
+  /// Cloud's verdict, not a local re-derivation, so the POS and the Manager
+  /// never disagree at the threshold boundary.
+  bool get isLowStock => stockStatus == 'LOW';
 
   factory StockItem.fromJson(Map<String, dynamic> json) {
     return StockItem(
@@ -87,6 +142,17 @@ class StockItem {
       notes: _optionalString(json['notes']),
       createdAt: _date(json['createdAt']),
       updatedAt: _date(json['updatedAt']),
+      // A v1 catalog, or a v1 backup, carries neither. Absent reads as an
+      // honest zero with no threshold rather than as a fabricated balance.
+      currentStock: _optionalString(json['currentStock']) ?? '0.000',
+      stockStatus: _optionalString(json['stockStatus']) ?? 'NO_MINIMUM',
+      purchaseUnits: (json['purchaseUnits'] as List? ?? const [])
+          .whereType<Map>()
+          .map(
+            (row) =>
+                StockItemPurchaseUnit.fromJson(Map<String, dynamic>.from(row)),
+          )
+          .toList(growable: false),
     );
   }
 
@@ -100,8 +166,11 @@ class StockItem {
     'notes': notes,
     'createdAt': createdAt.toUtc().toIso8601String(),
     'updatedAt': updatedAt.toUtc().toIso8601String(),
-    'currentStock': '0',
-    'stockStatus': 'NO_MOVEMENTS',
+    'currentStock': currentStock,
+    'stockStatus': stockStatus,
+    'purchaseUnits': [
+      for (final unit in purchaseUnits) unit.toJson(),
+    ],
   };
 }
 

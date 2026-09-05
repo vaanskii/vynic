@@ -145,13 +145,19 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## Inventory
 
-- Boundary and authority: `docs/INVENTORY_STEP1.md`
-- Cloud schema/migration: `apps/backend/prisma/schema.prisma` (`StockItem`, `Supplier`), `apps/backend/prisma/migrations/20260908120000_inventory_step1_core/`
-- Tenant-safe domain CRUD, units, derived zero and global audit: `apps/backend/src/inventory/inventory.service.ts`, `apps/backend/src/inventory/inventory-unit.ts`; Manager routes in `apps/backend/src/mobile/mobile.controller.ts`
-- Device -> Venue complete projection: `GET /edge/inventory/catalog` in `apps/backend/src/edge/edge-transport.controller.ts`
+- Boundary and authority: `docs/INVENTORY_STEP1.md` (catalog), `docs/INVENTORY_STEP2.md` (receiving and the quantity ledger)
+- Module wiring: `apps/backend/src/inventory/inventory.module.ts`, imported by `app.module.ts` and `edge-transport.module.ts`
+- Cloud schema: `apps/backend/prisma/schema.prisma` (`StockItem`, `Supplier`, `StockItemPurchaseUnit`, `Receiving`, `ReceivingLine`, `StockMovement`); migrations `20260908120000_inventory_step1_core/`, `20260909120000_inventory_step2_receiving/`
+- Catalog CRUD, derived current stock (`currentStock`), packaging and item detail: `apps/backend/src/inventory/inventory.service.ts`
+- Receiving lifecycle, posting/cancellation transactions and history reads: `apps/backend/src/inventory/receiving.service.ts`
+- Units and exact decimal arithmetic: `apps/backend/src/inventory/inventory-unit.ts`, `apps/backend/src/inventory/inventory-quantity.ts` (`resolveBaseQuantity`, `lineMoney`)
+- Shared venue-wide audit writer/actions: `apps/backend/src/inventory/inventory-audit.ts`
+- Manager routes: `apps/backend/src/mobile/mobile.controller.ts` (`/mobile/inventory/*`, including `receivings`, `receivings/:id/post`, `receivings/:id/cancel`)
+- Device -> Venue complete projection (catalog v2): `GET /edge/inventory/catalog` in `apps/backend/src/edge/edge-transport.controller.ts`
 - POS offline model/store/pull: `apps/operations/lib/core/models/inventory.dart`, `apps/operations/lib/core/database/repositories/inventory_repository.dart`, `apps/operations/lib/core/services/edge/inventory_projection_sync_service.dart`
-- Manager UI: `apps/operations/lib/apps/mobile_app/presentation/screens/admin_screen/tabs/mobile_admin_inventory_tab.dart`
-- Proofs: `apps/backend/src/inventory/*.spec.ts`, `apps/backend/src/edge/edge-transport.integration.spec.ts`, `apps/operations/test/unit/inventory_*_test.dart`, `apps/operations/test/widget/manager_inventory_test.dart`
+- Manager Receiving read models: `apps/operations/lib/core/models/receiving.dart`; API client in `apps/operations/lib/core/services/manager_app/mobile_api_service.dart`
+- Manager UI: `apps/operations/lib/apps/mobile_app/presentation/screens/admin_screen/tabs/mobile_admin_inventory_tab.dart` (catalog), `.../tabs/mobile_admin_receiving.dart` (Receiving list/detail/editor, Stock Item detail)
+- Proofs: `apps/backend/src/inventory/*.spec.ts` (`receiving.integration.spec.ts` covers lifecycle, derived stock, idempotency, concurrency, tenancy and audit), `apps/backend/src/edge/edge-transport.integration.spec.ts`, `apps/operations/test/unit/inventory_*_test.dart`, `apps/operations/test/widget/manager_inventory_test.dart`, `apps/operations/test/widget/manager_receiving_test.dart`
 
 ## Reservations
 

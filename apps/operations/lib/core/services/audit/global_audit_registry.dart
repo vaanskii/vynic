@@ -69,6 +69,13 @@ abstract final class GlobalAuditRegistry {
     GlobalAuditAction.supplierDisabled,
   };
 
+  static const Set<String> _receivingActions = {
+    GlobalAuditAction.receivingCreated,
+    GlobalAuditAction.receivingUpdated,
+    GlobalAuditAction.receivingPosted,
+    GlobalAuditAction.receivingCancelled,
+  };
+
   static const Set<String> _packageActions = {
     GlobalAuditAction.packageCreated,
     GlobalAuditAction.packageUpdated,
@@ -184,6 +191,12 @@ abstract final class GlobalAuditRegistry {
       return GlobalAuditEntityRef(
         GlobalAuditEntity.supplier,
         _clean(data['supplierId']?.toString()),
+      );
+    }
+    if (_receivingActions.contains(upper)) {
+      return GlobalAuditEntityRef(
+        GlobalAuditEntity.receiving,
+        _clean(data['receivingId']?.toString()),
       );
     }
     if (_packageActions.contains(upper)) {

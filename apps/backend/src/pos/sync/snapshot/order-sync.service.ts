@@ -177,10 +177,12 @@ export class OrderSyncService {
             data: {
               items: {
                 deleteMany: {},
-                create: order.items.map((item: any) => ({
-                  name: item.name,
+                create: order.items.map((item) => ({
+                  name: item.itemName ?? item.name ?? '',
                   quantity: item.quantity,
-                  price: item.price,
+                  price: item.unitPrice ?? item.price ?? 0,
+                  menuItemId: item.menuItemId ?? null,
+                  variantId: item.variantId ?? null,
                 })),
               },
             },

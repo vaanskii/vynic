@@ -88,6 +88,18 @@ export class MenuService {
     return this.toWebsiteMenuItem(item, sub);
   }
 
+  /** Resolve a public Cloud item key to the POS identity used on order lines. */
+  async getPosItemIdByCloudId(
+    tenant: TenantContext,
+    itemId: string,
+  ): Promise<string | null> {
+    const item = await this.prisma.menuItem.findFirst({
+      where: { id: itemId, venueId: tenant.venueId },
+      select: { posMenuItemId: true },
+    });
+    return item?.posMenuItemId ?? null;
+  }
+
   private menuInclude() {
     return {
       items: {

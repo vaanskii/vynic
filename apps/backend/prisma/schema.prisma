@@ -63,47 +63,53 @@ model Order {
 }
 
 model OrderItem {
-  id       String @id @default(uuid())
-  orderId  String
-  name     String
-  quantity Int
-  price    Float
-  order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id         String  @id @default(uuid())
+  orderId    String
+  name       String
+  quantity   Int
+  price      Float
+  menuItemId String?
+  variantId  String?
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@schema("pos")
 }
 
 model MenuCategory {
-  id            String            @id @default(uuid())
-  venueId       String
-  slug          String
-  nameKa        String
-  nameEn        String
-  sendToKitchen Boolean           @default(true)
-  sortOrder     Int               @default(0)
-  updatedAt     DateTime          @updatedAt
-  items         MenuItem[]
-  subcategories MenuSubcategory[]
-  venue         Venue             @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  id                String            @id @default(uuid())
+  venueId           String
+  posMenuCategoryId String?
+  slug              String
+  nameKa            String
+  nameEn            String
+  sendToKitchen     Boolean           @default(true)
+  sortOrder         Int               @default(0)
+  updatedAt         DateTime          @updatedAt
+  items             MenuItem[]
+  subcategories     MenuSubcategory[]
+  venue             Venue             @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
   @@unique([venueId, slug])
+  @@unique([venueId, posMenuCategoryId])
   @@index([venueId])
   @@schema("pos")
 }
 
 model MenuSubcategory {
-  id         String       @id @default(uuid())
-  slug       String
-  nameKa     String
-  nameEn     String
-  categoryId String
-  sortOrder  Int          @default(0)
-  updatedAt  DateTime     @updatedAt
-  items      MenuItem[]
-  category   MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  id                   String       @id @default(uuid())
+  slug                 String
+  nameKa               String
+  nameEn               String
+  categoryId           String
+  posMenuSubcategoryId String?
+  sortOrder            Int          @default(0)
+  updatedAt            DateTime     @updatedAt
+  items                MenuItem[]
+  category             MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@unique([slug, categoryId])
+  @@unique([categoryId, posMenuSubcategoryId])
   @@schema("pos")
 }
 
@@ -142,12 +148,14 @@ model MenuItem {
 }
 
 model MenuItemVariant {
-  id         String   @id @default(uuid())
-  menuItemId String
-  size       Float
-  price      Float
-  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  id               String   @id @default(uuid())
+  menuItemId       String
+  posMenuVariantId String?
+  size             Float
+  price            Float
+  menuItem         MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
 
+  @@unique([menuItemId, posMenuVariantId])
   @@index([menuItemId])
   @@schema("pos")
 }

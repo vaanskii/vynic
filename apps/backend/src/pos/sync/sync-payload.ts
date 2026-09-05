@@ -36,7 +36,7 @@ export interface OrderSync {
   customerName?: string;
   customerPhone?: string;
   pickupTime?: string;
-  items?: any[];
+  items?: OrderItemSync[];
   includeServiceFee?: boolean;
   discountAmount?: number;
   /**
@@ -49,6 +49,51 @@ export interface OrderSync {
   customServiceFeePercentage?: number;
   /** ISO timestamp of the order's last local edit on the POS (LWW conflict resolution). */
   updatedAt?: string;
+}
+
+export interface OrderItemSync {
+  name?: string;
+  itemName?: string;
+  itemKey?: string;
+  quantity: number;
+  price?: number;
+  unitPrice?: number;
+  comment?: string | null;
+  menuItemId?: string | null;
+  variantId?: string | null;
+}
+
+export interface MenuVariantSync {
+  id?: string;
+  size: number;
+  price: number;
+}
+
+export interface MenuItemSync {
+  id?: string;
+  nameKa: string;
+  nameEn: string;
+  price: number;
+  sendToKitchen?: boolean;
+  variants?: MenuVariantSync[];
+}
+
+export interface MenuSubcategorySync {
+  id?: string;
+  slug: string;
+  nameKa: string;
+  nameEn: string;
+  items?: MenuItemSync[];
+}
+
+export interface MenuCategorySync {
+  id?: string;
+  slug: string;
+  nameKa: string;
+  nameEn: string;
+  sendToKitchen?: boolean;
+  items?: MenuItemSync[];
+  subcategories?: MenuSubcategorySync[];
 }
 
 export interface ExpenseSync {
@@ -121,7 +166,9 @@ export interface SyncPayload {
   tables?: TableSync[];
   orders?: OrderSync[];
   expenses?: ExpenseSync[];
-  menu?: any[];
+  menu?: MenuCategorySync[];
+  /** Enables destructive reconciliation only for clients with full node ids. */
+  menuIdentityVersion?: number;
   staff?: StaffSync[];
   /**
    * Every reservation the POS holds. Absent on builds predating Step 6C, and

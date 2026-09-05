@@ -342,12 +342,16 @@ export class WebsitePosReservationBridgeService {
       const quantity = Math.max(1, Math.floor(Number(entry.quantity) || 1));
       const price = Number(entry.price) || 0;
       let name = String(entry.name ?? '').trim();
+      let menuItemId: string | null = null;
       if (!name && id) {
         const menuItem = await this.menuService.getMenuItemById(tenant, id);
         name =
           menuItem?.nameEn ??
           menuItem?.translations?.find((t) => t.language === 'en')?.name ??
           id;
+      }
+      if (id) {
+        menuItemId = await this.menuService.getPosItemIdByCloudId(tenant, id);
       }
       if (!name) continue;
       items.push({
@@ -357,6 +361,7 @@ export class WebsitePosReservationBridgeService {
         quantity,
         total: price * quantity,
         comment: null,
+        ...(menuItemId ? { menuItemId } : {}),
       });
     }
     return items;

@@ -57,7 +57,7 @@ export const EdgeCommandTypes = {
    * Payload:
    * - `posOrderId`: int, the order's POS identity
    * - `updatedBy`: string?, who the Manager identified itself as
-   * - `items`: array of {itemName, quantity, unitPrice, itemKey?, comment?}
+   * - `items`: array of {itemName, quantity, unitPrice, itemKey?, comment?, menuItemId?, variantId?}
    * - `totalAmount`: number?
    * - `includeServiceFee`: bool?
    *
@@ -97,7 +97,7 @@ export const EdgeCommandTypes = {
    * - `pickupTime`: string
    * - `waiterName`: string
    * - `businessDate`: string?, YYYY-MM-DD
-   * - `items`: array of {itemName, quantity, unitPrice, comment?}
+   * - `items`: array of {itemName, quantity, unitPrice, comment?, menuItemId?, variantId?}
    * - `totalAmount`: number
    */
   TAKEAWAY_ORDER_UPSERT: 'TAKEAWAY_ORDER_UPSERT',
@@ -114,7 +114,7 @@ export const EdgeCommandTypes = {
    * - `waiterName`: string
    * - `guestCount`: int
    * - `businessDate`: string?, YYYY-MM-DD
-   * - `items`: array of {itemName, quantity, unitPrice, comment?}
+   * - `items`: array of {itemName, quantity, unitPrice, comment?, menuItemId?, variantId?}
    * - `totalAmount`: number
    */
   DINE_IN_ORDER_UPSERT: 'DINE_IN_ORDER_UPSERT',
@@ -199,7 +199,7 @@ export const EdgeCommandTypes = {
    *
    * Payload:
    * - `displayName`: string?
-   * - `items`: array of {itemName, quantity, unitPrice, total?, comment?}
+   * - `items`: array of {itemName, quantity, unitPrice, total?, comment?, menuItemId?, variantId?}
    * - `subtotal`: number
    * - `serviceFeeAmount`: number
    * - `total`: number

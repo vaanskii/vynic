@@ -92,6 +92,9 @@ function makeMockPrisma(overrides: Record<string, (arg: any) => any> = {}): {
     {
       get: (_t, model) => {
         if (typeof model === 'symbol') return undefined;
+        if (model === '$transaction') {
+          return (callback: (db: unknown) => unknown) => callback(prisma);
+        }
         return modelProxy(String(model));
       },
     },

@@ -492,7 +492,7 @@ describeDatabase('Cloud → Edge transport (PostgreSQL)', () => {
           tableNumber: '3',
           floor: 'first',
           isReserved: false,
-          activeOrderId: null,
+          activeOrderId: undefined,
           currentBill: 0,
         },
       ],

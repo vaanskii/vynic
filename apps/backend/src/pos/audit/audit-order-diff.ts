@@ -6,12 +6,15 @@ export type AuditEventInput = {
   waiterId: string;
   waiterName: string;
   note?: string | null;
+  details?: { menuItemId?: string | null; variantId?: string | null };
 };
 
 type LineItem = {
   itemKey: string;
   itemName: string;
   quantity: number;
+  menuItemId?: string | null;
+  variantId?: string | null;
 };
 
 function lineKey(name: string, unitPrice: number): string {
@@ -25,6 +28,8 @@ function toLineItems(
     quantity?: number;
     unitPrice?: number;
     price?: number;
+    menuItemId?: string | null;
+    variantId?: string | null;
   }>,
 ): LineItem[] {
   return items.map((it) => {
@@ -37,6 +42,8 @@ function toLineItems(
         lineKey(name, unitPrice),
       itemName: name,
       quantity,
+      menuItemId: it.menuItemId ?? null,
+      variantId: it.variantId ?? null,
     };
   });
 }
@@ -49,6 +56,8 @@ export function buildAuditEventsForOrderDiff(params: {
     unitPrice?: number;
     price?: number;
     itemKey?: string;
+    menuItemId?: string | null;
+    variantId?: string | null;
   }>;
   updatedItems: Array<{
     name?: string;
@@ -57,6 +66,8 @@ export function buildAuditEventsForOrderDiff(params: {
     unitPrice?: number;
     price?: number;
     itemKey?: string;
+    menuItemId?: string | null;
+    variantId?: string | null;
   }>;
   performerId: string;
   performerName: string;
@@ -91,6 +102,8 @@ export function buildAuditEventsForOrderDiff(params: {
     } else {
       type = 'REDUCE_QTY';
     }
+    const menuItemId = nextItem?.menuItemId ?? prevItem?.menuItemId ?? null;
+    const variantId = nextItem?.variantId ?? prevItem?.variantId ?? null;
 
     events.push({
       type,
@@ -99,6 +112,14 @@ export function buildAuditEventsForOrderDiff(params: {
       newQty,
       waiterId: performerId,
       waiterName: performerName,
+      ...(menuItemId || variantId
+        ? {
+            details: {
+              ...(menuItemId ? { menuItemId } : {}),
+              ...(variantId ? { variantId } : {}),
+            },
+          }
+        : {}),
     });
   }
 

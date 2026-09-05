@@ -90,7 +90,9 @@ export class IngestPosSnapshotService {
 
     // Sync Menu
     if (menu && !realtimeOnly) {
-      await timing.phase('menu', () => this.menu.sync(tenant, menu));
+      await timing.phase('menu', () =>
+        this.menu.sync(tenant, menu, data.menuIdentityVersion),
+      );
     }
 
     console.log(

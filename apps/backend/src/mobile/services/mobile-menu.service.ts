@@ -54,6 +54,7 @@ export class MobileMenuService {
       orderBy: { sortOrder: 'asc' },
     });
     return cats.map((cat: any) => ({
+      id: cat.posMenuCategoryId ?? null,
       slug: cat.slug,
       nameEn: cat.nameEn,
       nameKa: cat.nameKa,
@@ -68,11 +69,13 @@ export class MobileMenuService {
         price: Math.round(it.price * 100) / 100,
         sendToKitchen: it.sendToKitchen,
         variants: (it.variants ?? []).map((v: any) => ({
+          id: v.posMenuVariantId ?? null,
           size: v.size,
           price: v.price,
         })),
       })),
       subcategories: (cat.subcategories ?? []).map((sub: any) => ({
+        id: sub.posMenuSubcategoryId ?? null,
         slug: sub.slug,
         nameEn: sub.nameEn,
         nameKa: sub.nameKa,
@@ -83,6 +86,7 @@ export class MobileMenuService {
           price: Math.round(it.price * 100) / 100,
           sendToKitchen: it.sendToKitchen,
           variants: (it.variants ?? []).map((v: any) => ({
+            id: v.posMenuVariantId ?? null,
             size: v.size,
             price: v.price,
           })),

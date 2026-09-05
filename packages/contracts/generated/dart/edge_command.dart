@@ -54,7 +54,7 @@ class EdgeCommandTypes {
   /// Payload:
   /// - `posOrderId`: int, the order's POS identity
   /// - `updatedBy`: string?, who the Manager identified itself as
-  /// - `items`: array of {itemName, quantity, unitPrice, itemKey?, comment?}
+  /// - `items`: array of {itemName, quantity, unitPrice, itemKey?, comment?, menuItemId?, variantId?}
   /// - `totalAmount`: number?
   /// - `includeServiceFee`: bool?
   ///
@@ -88,7 +88,7 @@ class EdgeCommandTypes {
   /// - `pickupTime`: string
   /// - `waiterName`: string
   /// - `businessDate`: string?, YYYY-MM-DD
-  /// - `items`: array of {itemName, quantity, unitPrice, comment?}
+  /// - `items`: array of {itemName, quantity, unitPrice, comment?, menuItemId?, variantId?}
   /// - `totalAmount`: number
   static const String takeawayOrderUpsert = 'TAKEAWAY_ORDER_UPSERT';
 
@@ -103,7 +103,7 @@ class EdgeCommandTypes {
   /// - `waiterName`: string
   /// - `guestCount`: int
   /// - `businessDate`: string?, YYYY-MM-DD
-  /// - `items`: array of {itemName, quantity, unitPrice, comment?}
+  /// - `items`: array of {itemName, quantity, unitPrice, comment?, menuItemId?, variantId?}
   /// - `totalAmount`: number
   static const String dineInOrderUpsert = 'DINE_IN_ORDER_UPSERT';
 
@@ -176,7 +176,7 @@ class EdgeCommandTypes {
   ///
   /// Payload:
   /// - `displayName`: string?
-  /// - `items`: array of {itemName, quantity, unitPrice, total?, comment?}
+  /// - `items`: array of {itemName, quantity, unitPrice, total?, comment?, menuItemId?, variantId?}
   /// - `subtotal`: number
   /// - `serviceFeeAmount`: number
   /// - `total`: number

@@ -20,6 +20,7 @@ export const AUDIT_LOG_ENTITY_TYPES = [
   'STAFF',
   'MENU_ITEM',
   'MENU_CATEGORY',
+  'MENU_VARIANT',
   'PACKAGE',
   'EXPENSE',
   'CLOSE_DAY',
@@ -106,9 +107,18 @@ const ACTION_RULES: Readonly<Record<string, EntityRule>> = {
   STAFF_DELETED: { entityType: 'STAFF', idKeys: ['staffName'] },
 
   // Menu.
-  MENU_ITEM_CREATED: { entityType: 'MENU_ITEM', idKeys: ['itemId', 'itemName'] },
-  MENU_ITEM_UPDATED: { entityType: 'MENU_ITEM', idKeys: ['itemId', 'itemName'] },
-  MENU_ITEM_DELETED: { entityType: 'MENU_ITEM', idKeys: ['itemId', 'itemName'] },
+  MENU_ITEM_CREATED: {
+    entityType: 'MENU_ITEM',
+    idKeys: ['itemId', 'itemName'],
+  },
+  MENU_ITEM_UPDATED: {
+    entityType: 'MENU_ITEM',
+    idKeys: ['itemId', 'itemName'],
+  },
+  MENU_ITEM_DELETED: {
+    entityType: 'MENU_ITEM',
+    idKeys: ['itemId', 'itemName'],
+  },
   MENU_CATEGORY_CREATED: {
     entityType: 'MENU_CATEGORY',
     idKeys: ['categoryName'],
@@ -120,6 +130,18 @@ const ACTION_RULES: Readonly<Record<string, EntityRule>> = {
   MENU_CATEGORY_DELETED: {
     entityType: 'MENU_CATEGORY',
     idKeys: ['categoryName'],
+  },
+  MENU_VARIANT_CREATED: {
+    entityType: 'MENU_VARIANT',
+    idKeys: ['variantId'],
+  },
+  MENU_VARIANT_UPDATED: {
+    entityType: 'MENU_VARIANT',
+    idKeys: ['variantId'],
+  },
+  MENU_VARIANT_DELETED: {
+    entityType: 'MENU_VARIANT',
+    idKeys: ['variantId'],
   },
 
   // Package definitions. Applying a package to an Order is `APPLY_PACKAGE` on

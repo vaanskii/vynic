@@ -28,7 +28,7 @@
       "payload": {
         "posOrderId": "int, the order's POS identity",
         "updatedBy": "string?, who the Manager identified itself as",
-        "items": "array of {itemName, quantity, unitPrice, itemKey?, comment?}",
+        "items": "array of {itemName, quantity, unitPrice, itemKey?, comment?, menuItemId?, variantId?}",
         "totalAmount": "number?",
         "includeServiceFee": "bool?"
       },
@@ -62,7 +62,7 @@
         "pickupTime": "string",
         "waiterName": "string",
         "businessDate": "string?, YYYY-MM-DD",
-        "items": "array of {itemName, quantity, unitPrice, comment?}",
+        "items": "array of {itemName, quantity, unitPrice, comment?, menuItemId?, variantId?}",
         "totalAmount": "number"
       }
     },
@@ -79,7 +79,7 @@
         "waiterName": "string",
         "guestCount": "int",
         "businessDate": "string?, YYYY-MM-DD",
-        "items": "array of {itemName, quantity, unitPrice, comment?}",
+        "items": "array of {itemName, quantity, unitPrice, comment?, menuItemId?, variantId?}",
         "totalAmount": "number"
       }
     },
@@ -147,7 +147,7 @@
       "idempotency": "Journal-guarded, exactly as ORDER_CHECK_PRINT. The draft lives in Cloud rather than POS Hive, which is why the whole thing travels in the payload.",
       "payload": {
         "displayName": "string?",
-        "items": "array of {itemName, quantity, unitPrice, total?, comment?}",
+        "items": "array of {itemName, quantity, unitPrice, total?, comment?, menuItemId?, variantId?}",
         "subtotal": "number",
         "serviceFeeAmount": "number",
         "total": "number",

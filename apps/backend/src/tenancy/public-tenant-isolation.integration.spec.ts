@@ -501,7 +501,7 @@ describeDatabase('Public website tenant isolation (PostgreSQL)', () => {
           tableNumber: '4',
           floor: 'first',
           isReserved: false,
-          activeOrderId: null,
+          activeOrderId: undefined,
           currentBill: 0,
         },
       ],

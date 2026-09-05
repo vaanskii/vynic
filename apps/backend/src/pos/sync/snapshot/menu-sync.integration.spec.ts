@@ -29,6 +29,8 @@ describeDatabase('Menu identity in the Cloud mirror (PostgreSQL)', () => {
   const tenantB: TenantContext = { venueId: venueBId, organizationId };
 
   const KHINKALI = 'menu-item-khinkali-0001';
+  const HOT = 'menu-category-hot-0001';
+  const SOUPS = 'menu-subcategory-soups-0001';
 
   /** One category holding one item, in the shape the POS snapshot sends. */
   function menu(
@@ -37,9 +39,13 @@ describeDatabase('Menu identity in the Cloud mirror (PostgreSQL)', () => {
       nameEn: string;
       nameKa?: string;
       price?: number;
-      variants?: Array<{ size: number; price: number }>;
+      variants?: Array<{ id?: string; size: number; price: number }>;
     },
-    opts: { categorySlug?: string; subcategorySlug?: string } = {},
+    opts: {
+      categorySlug?: string;
+      categoryNameEn?: string;
+      subcategorySlug?: string;
+    } = {},
   ) {
     const line = {
       ...(item.id ? { id: item.id } : {}),
@@ -50,14 +56,16 @@ describeDatabase('Menu identity in the Cloud mirror (PostgreSQL)', () => {
       variants: item.variants ?? [],
     };
     const category = {
+      id: HOT,
       slug: opts.categorySlug ?? 'hot',
-      nameEn: 'Hot',
+      nameEn: opts.categoryNameEn ?? 'Hot',
       nameKa: 'ცხელი',
       sendToKitchen: true,
       items: opts.subcategorySlug ? [] : [line],
       subcategories: opts.subcategorySlug
         ? [
             {
+              id: SOUPS,
               slug: opts.subcategorySlug,
               nameEn: 'Soups',
               nameKa: 'სუპები',
@@ -73,6 +81,12 @@ describeDatabase('Menu identity in the Cloud mirror (PostgreSQL)', () => {
     prisma.menuItem.findMany({
       where: { venueId },
       orderBy: { nameEn: 'asc' },
+    });
+
+  const categoriesOf = (venueId: string) =>
+    prisma.menuCategory.findMany({
+      where: { venueId },
+      orderBy: { slug: 'asc' },
     });
 
   beforeAll(async () => {
@@ -159,6 +173,74 @@ describeDatabase('Menu identity in the Cloud mirror (PostgreSQL)', () => {
     expect(after[0].price).toBe(3);
   });
 
+  it('updates the same category row through a name and slug rename', async () => {
+    await service.sync(
+      tenantA,
+      menu(
+        { id: KHINKALI, nameEn: 'Khinkali' },
+        { categorySlug: 'georgian-food', categoryNameEn: 'Georgian food' },
+      ),
+      1,
+    );
+    const before = await categoriesOf(venueAId);
+
+    await service.sync(
+      tenantA,
+      menu(
+        { id: KHINKALI, nameEn: 'Khinkali' },
+        {
+          categorySlug: 'georgian-cuisine',
+          categoryNameEn: 'Georgian cuisine',
+        },
+      ),
+      1,
+    );
+
+    const after = await categoriesOf(venueAId);
+    expect(before).toHaveLength(1);
+    expect(after).toHaveLength(1);
+    expect(after[0].id).toBe(before[0].id);
+    expect(after[0].posMenuCategoryId).toBe(HOT);
+    expect(after[0].slug).toBe('georgian-cuisine');
+    expect(after[0].nameEn).toBe('Georgian cuisine');
+  });
+
+  it('updates a variant without changing its Cloud row or POS identity', async () => {
+    await service.sync(
+      tenantA,
+      menu({
+        id: KHINKALI,
+        nameEn: 'Khinkali',
+        variants: [{ id: 'variant-large', size: 10, price: 20 }],
+      }),
+      1,
+    );
+    const item = (await itemsOf(venueAId))[0];
+    const before = await prisma.menuItemVariant.findMany({
+      where: { menuItemId: item.id },
+    });
+
+    await service.sync(
+      tenantA,
+      menu({
+        id: KHINKALI,
+        nameEn: 'Khinkali',
+        variants: [{ id: 'variant-large', size: 12, price: 24 }],
+      }),
+      1,
+    );
+
+    const after = await prisma.menuItemVariant.findMany({
+      where: { menuItemId: item.id },
+    });
+    expect(before).toHaveLength(1);
+    expect(after).toHaveLength(1);
+    expect(after[0].id).toBe(before[0].id);
+    expect(after[0].posMenuVariantId).toBe('variant-large');
+    expect(after[0].size).toBe(12);
+    expect(after[0].price).toBe(24);
+  });
+
   it('follows a move between categories', async () => {
     await service.sync(tenantA, menu({ id: KHINKALI, nameEn: 'Khinkali' }));
     const before = await itemsOf(venueAId);
@@ -179,19 +261,46 @@ describeDatabase('Menu identity in the Cloud mirror (PostgreSQL)', () => {
   });
 
   it('is idempotent across repeated snapshots', async () => {
-    for (let i = 0; i < 3; i++) {
-      await service.sync(tenantA, menu({ id: KHINKALI, nameEn: 'Khinkali' }));
-    }
+    const snapshot = menu({
+      id: KHINKALI,
+      nameEn: 'Khinkali',
+      variants: [{ id: 'variant-10', size: 10, price: 20 }],
+    });
+    await service.sync(tenantA, snapshot, 1);
+    const categoryBefore = (await categoriesOf(venueAId))[0];
+    const itemBefore = (await itemsOf(venueAId))[0];
+    const variantBefore = await prisma.menuItemVariant.findFirstOrThrow({
+      where: { menuItemId: itemBefore.id },
+    });
 
+    await service.sync(tenantA, snapshot, 1);
+
+    const categories = await categoriesOf(venueAId);
     const items = await itemsOf(venueAId);
+    const variants = await prisma.menuItemVariant.findMany({
+      where: { menuItemId: itemBefore.id },
+    });
+    expect(categories).toHaveLength(1);
     expect(items).toHaveLength(1);
+    expect(variants).toHaveLength(1);
+    expect(categories[0].id).toBe(categoryBefore.id);
+    expect(categories[0].updatedAt).toEqual(categoryBefore.updatedAt);
+    expect(items[0].id).toBe(itemBefore.id);
+    expect(items[0].updatedAt).toEqual(itemBefore.updatedAt);
+    expect(variants[0]).toEqual(variantBefore);
   });
 
   it('does not steal a row that belongs to a different product', async () => {
     // Two items sharing a name under the same parent is degenerate, but the
     // adoption rule must not merge them: only an unclaimed row is adoptable.
-    await service.sync(tenantA, menu({ id: 'menu-item-a', nameEn: 'Khinkali' }));
-    await service.sync(tenantA, menu({ id: 'menu-item-b', nameEn: 'Khinkali' }));
+    await service.sync(
+      tenantA,
+      menu({ id: 'menu-item-a', nameEn: 'Khinkali' }),
+    );
+    await service.sync(
+      tenantA,
+      menu({ id: 'menu-item-b', nameEn: 'Khinkali' }),
+    );
 
     const items = await itemsOf(venueAId);
     expect(items).toHaveLength(2);
@@ -227,5 +336,103 @@ describeDatabase('Menu identity in the Cloud mirror (PostgreSQL)', () => {
     expect(items).toHaveLength(1);
     expect(items[0].posMenuItemId).toBeNull();
     expect(items[0].price).toBe(4);
+  });
+
+  it('reconciles deleted variants, items and categories from an authoritative snapshot', async () => {
+    await service.sync(
+      tenantA,
+      menu({
+        id: KHINKALI,
+        nameEn: 'Khinkali',
+        variants: [
+          { id: 'variant-10', size: 10, price: 20 },
+          { id: 'variant-20', size: 20, price: 35 },
+        ],
+      }),
+      1,
+    );
+
+    const item = (await itemsOf(venueAId))[0];
+    expect(
+      await prisma.menuItemVariant.count({ where: { menuItemId: item.id } }),
+    ).toBe(2);
+
+    await service.sync(
+      tenantA,
+      menu({
+        id: KHINKALI,
+        nameEn: 'Khinkali',
+        variants: [{ id: 'variant-20', size: 20, price: 35 }],
+      }),
+      1,
+    );
+    expect(
+      await prisma.menuItemVariant.findMany({
+        where: { menuItemId: item.id },
+        select: { posMenuVariantId: true },
+      }),
+    ).toEqual([{ posMenuVariantId: 'variant-20' }]);
+
+    const emptyCategory = menu({ id: KHINKALI, nameEn: 'Khinkali' });
+    emptyCategory[0].items = [];
+    await service.sync(tenantA, emptyCategory, 1);
+    expect(await itemsOf(venueAId)).toHaveLength(0);
+    expect(
+      await prisma.menuCategory.count({ where: { venueId: venueAId } }),
+    ).toBe(1);
+
+    await service.sync(tenantA, [], 1);
+    expect(
+      await prisma.menuCategory.count({ where: { venueId: venueAId } }),
+    ).toBe(0);
+  });
+
+  it('authoritative cleanup deletes only this Venue POS rows and keeps legacy content', async () => {
+    await service.sync(
+      tenantA,
+      menu({
+        id: KHINKALI,
+        nameEn: 'Khinkali A',
+        variants: [{ id: 'variant-a', size: 10, price: 20 }],
+      }),
+      1,
+    );
+    await service.sync(
+      tenantB,
+      menu({ id: KHINKALI, nameEn: 'Khinkali B' }),
+      1,
+    );
+    await prisma.menuCategory.create({
+      data: {
+        venueId: venueAId,
+        slug: 'website-specials',
+        nameKa: 'სპეციალური',
+        nameEn: 'Website specials',
+        items: {
+          create: {
+            venueId: venueAId,
+            nameKa: 'Custom cake',
+            nameEn: 'Custom cake',
+            price: 50,
+          },
+        },
+      },
+    });
+
+    await service.sync(tenantA, [], 1);
+
+    const venueAItems = await itemsOf(venueAId);
+    const venueACategories = await categoriesOf(venueAId);
+    const venueBItems = await itemsOf(venueBId);
+    const venueBCategories = await categoriesOf(venueBId);
+    expect(venueAItems).toHaveLength(1);
+    expect(venueAItems[0].posMenuItemId).toBeNull();
+    expect(venueAItems[0].nameEn).toBe('Custom cake');
+    expect(venueACategories).toHaveLength(1);
+    expect(venueACategories[0].posMenuCategoryId).toBeNull();
+    expect(venueBItems).toHaveLength(1);
+    expect(venueBItems[0].posMenuItemId).toBe(KHINKALI);
+    expect(venueBCategories).toHaveLength(1);
+    expect(venueBCategories[0].posMenuCategoryId).toBe(HOT);
   });
 });

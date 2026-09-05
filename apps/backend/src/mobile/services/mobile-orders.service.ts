@@ -39,6 +39,14 @@ export interface PaginatedOrders {
   hasMore: boolean;
 }
 
+type MobileOrderLine = {
+  itemName: string;
+  unitPrice: number;
+  quantity: number;
+  menuItemId?: string | null;
+  variantId?: string | null;
+};
+
 /**
  * Order endpoints for the mobile manager app: dine-in order list/detail/edit/
  * cancel plus takeaway and walk-in order creation
@@ -191,6 +199,8 @@ export class MobileOrdersService {
           name: item.itemName ?? item.name ?? '',
           quantity: item.quantity ?? 1,
           price: item.unitPrice ?? item.price ?? 0,
+          menuItemId: item.menuItemId ?? null,
+          variantId: item.variantId ?? null,
         },
       });
     }
@@ -354,6 +364,8 @@ export class MobileOrdersService {
           total: (it.unitPrice ?? it.price ?? 0) * (it.quantity ?? 1),
           itemKey: it.itemKey ?? it.itemName ?? it.name ?? '',
           itemName: it.itemName ?? it.name ?? '',
+          menuItemId: it.menuItemId ?? null,
+          variantId: it.variantId ?? null,
         })),
         totalAmount: newTotal > 0 ? newTotal : 0,
         includeServiceFee,
@@ -434,6 +446,7 @@ export class MobileOrdersService {
         waiterName: ev.waiterName,
         eventTime: now,
         note: ev.note ?? null,
+        details: ev.details ?? undefined,
         seq: startSeq + seq,
       })),
     });
@@ -547,7 +560,7 @@ export class MobileOrdersService {
       customerName: string;
       pickupTime: string;
       waiterName: string;
-      items: { itemName: string; unitPrice: number; quantity: number }[];
+      items: MobileOrderLine[];
     },
   ) {
     // Resolve current business date
@@ -587,6 +600,8 @@ export class MobileOrdersService {
                 name: it.itemName,
                 quantity: it.quantity,
                 price: it.unitPrice,
+                menuItemId: it.menuItemId ?? null,
+                variantId: it.variantId ?? null,
               })),
             },
           },
@@ -638,6 +653,8 @@ export class MobileOrdersService {
         itemName: it.name,
         unitPrice: it.price,
         quantity: it.quantity,
+        menuItemId: it.menuItemId,
+        variantId: it.variantId,
       })),
     };
   }
@@ -650,7 +667,7 @@ export class MobileOrdersService {
       floor: string;
       waiterName: string;
       guestCount?: number;
-      items: { itemName: string; unitPrice: number; quantity: number }[];
+      items: MobileOrderLine[];
     },
   ) {
     const floor = (body.floor ?? 'first').toString().trim() || 'first';
@@ -713,6 +730,8 @@ export class MobileOrdersService {
                 name: it.itemName,
                 quantity: it.quantity,
                 price: it.unitPrice,
+                menuItemId: it.menuItemId ?? null,
+                variantId: it.variantId ?? null,
               })),
             },
           },
@@ -798,6 +817,8 @@ export class MobileOrdersService {
         itemName: it.name,
         unitPrice: it.price,
         quantity: it.quantity,
+        menuItemId: it.menuItemId,
+        variantId: it.variantId,
       })),
     };
   }
@@ -898,6 +919,8 @@ export class MobileOrdersService {
         unitPrice: Math.round(Number(it.price) * 100) / 100,
         quantity: it.quantity,
         total: Math.round(Number(it.price) * it.quantity * 100) / 100,
+        menuItemId: it.menuItemId,
+        variantId: it.variantId,
       })),
     }));
   }

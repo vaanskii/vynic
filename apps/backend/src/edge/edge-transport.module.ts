@@ -7,7 +7,7 @@ import { EdgeCommandService } from './edge-command.service';
 import { EdgeDeviceGuard } from './edge-device.guard';
 import { EdgeTransportController } from './edge-transport.controller';
 import { EnrollmentRateLimiter } from './enrollment-rate-limiter';
-import { InventoryService } from '../inventory/inventory.service';
+import { InventoryModule } from '../inventory/inventory.module';
 
 /**
  * Cloud ↔ Edge transport, and how a terminal gets onto it.
@@ -22,15 +22,14 @@ import { InventoryService } from '../inventory/inventory.service';
  * invitations; the reverse import would be a cycle.
  */
 @Module({
-  imports: [AuthModule, PlatformAuditModule],
+  imports: [AuthModule, PlatformAuditModule, InventoryModule],
   controllers: [EdgeTransportController, DeviceEnrollmentController],
   providers: [
     EdgeCommandService,
     EdgeDeviceGuard,
     DeviceEnrollmentService,
     EnrollmentRateLimiter,
-    InventoryService,
   ],
-  exports: [EdgeCommandService, DeviceEnrollmentService, InventoryService],
+  exports: [EdgeCommandService, DeviceEnrollmentService, InventoryModule],
 })
 export class EdgeTransportModule {}

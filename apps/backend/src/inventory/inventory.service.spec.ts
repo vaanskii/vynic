@@ -21,8 +21,20 @@ const ACTOR_B: ManagerAuthContext = {
 class InventoryFakeDb {
   stockItems: any[] = [];
   suppliers: any[] = [];
+  purchaseUnits: any[] = [];
+  movements: any[] = [];
   audits: any[] = [];
   private sequence = 0;
+
+  /** What a Prisma `include` would attach to a Stock Item row. */
+  private withRelations(row: any) {
+    return {
+      ...row,
+      purchaseUnits: this.purchaseUnits
+        .filter((unit) => unit.stockItemId === row.id)
+        .sort((left, right) => left.unit.localeCompare(right.unit)),
+    };
+  }
 
   private row(data: any, prefix: string) {
     const now = new Date(`2026-09-05T10:00:0${this.sequence}.000Z`);
@@ -37,7 +49,9 @@ class InventoryFakeDb {
   readonly stockItem = {
     findMany: ({ where }: any) =>
       Promise.resolve(
-        this.stockItems.filter((row) => row.venueId === where.venueId),
+        this.stockItems
+          .filter((row) => row.venueId === where.venueId)
+          .map((row) => this.withRelations(row)),
       ),
     create: ({ data }: any) => {
       if (
@@ -51,9 +65,15 @@ class InventoryFakeDb {
           clientVersion: '6.19.3',
         });
       }
-      const row = this.row(data, 'stock');
+      const { purchaseUnits, ...fields } = data;
+      const row = this.row(fields, 'stock');
       this.stockItems.push(row);
-      return Promise.resolve(row);
+      for (const unit of purchaseUnits?.create ?? []) {
+        this.purchaseUnits.push(
+          this.row({ ...unit, stockItemId: row.id }, 'purchase'),
+        );
+      }
+      return Promise.resolve(this.withRelations(row));
     },
     findFirst: ({ where }: any) =>
       Promise.resolve(
@@ -61,10 +81,60 @@ class InventoryFakeDb {
           (row) => row.id === where.id && row.venueId === where.venueId,
         ) ?? null,
       ),
+    findUniqueOrThrow: ({ where }: any) => {
+      const row = this.stockItems.find((item) => item.id === where.id);
+      if (!row) throw new Error('Stock item not found');
+      return Promise.resolve(this.withRelations(row));
+    },
     update: ({ where, data }: any) => {
       const row = this.stockItems.find((item) => item.id === where.id);
       Object.assign(row, data, { updatedAt: new Date('2026-09-05T11:00:00Z') });
-      return Promise.resolve(row);
+      return Promise.resolve(this.withRelations(row));
+    },
+  };
+
+  readonly stockItemPurchaseUnit = {
+    findMany: ({ where }: any) =>
+      Promise.resolve(
+        this.purchaseUnits
+          .filter((row) => row.stockItemId === where.stockItemId)
+          .sort((left, right) => left.unit.localeCompare(right.unit)),
+      ),
+    deleteMany: ({ where }: any) => {
+      this.purchaseUnits = this.purchaseUnits.filter(
+        (row) => row.stockItemId !== where.stockItemId,
+      );
+      return Promise.resolve({ count: 0 });
+    },
+    createMany: ({ data }: any) => {
+      for (const unit of data) {
+        this.purchaseUnits.push(this.row(unit, 'purchase'));
+      }
+      return Promise.resolve({ count: data.length });
+    },
+  };
+
+  /** Enough of `groupBy` for the derived-balance read. */
+  readonly stockMovement = {
+    groupBy: ({ where }: any) => {
+      const wanted: string[] | null = where.stockItemId?.in ?? null;
+      const totals = new Map<string, Prisma.Decimal>();
+      for (const movement of this.movements) {
+        if (movement.venueId !== where.venueId) continue;
+        if (wanted && !wanted.includes(movement.stockItemId)) continue;
+        totals.set(
+          movement.stockItemId,
+          (totals.get(movement.stockItemId) ?? new Prisma.Decimal(0)).plus(
+            movement.quantityDeltaBase,
+          ),
+        );
+      }
+      return Promise.resolve(
+        [...totals].map(([stockItemId, sum]) => ({
+          stockItemId,
+          _sum: { quantityDeltaBase: sum },
+        })),
+      );
     },
   };
 
@@ -127,7 +197,84 @@ describe('InventoryService', () => {
     expect(first.id).not.toBe(second.id);
     expect(edited.id).toBe(first.id);
     expect(edited.name).toBe('Premium beef');
-    expect(edited.currentStock).toBe('0');
+    // Step 2 derives the balance from the ledger; no movements is an exact
+    // zero at quantity scale, not a placeholder.
+    expect(edited.currentStock).toBe('0.000');
+    expect(edited.stockStatus).toBe('NO_MINIMUM');
+  });
+
+  it('stores item packaging as one declared set and audits the change', async () => {
+    const h = harness();
+    const created = await h.service.createStockItem(ACTOR_A, {
+      name: 'Lemonade 0.5L',
+      baseUnit: 'bottle',
+      purchaseUnits: [
+        { unit: 'box', baseUnitMultiplier: '24' },
+        { unit: 'pack', baseUnitMultiplier: '6' },
+      ],
+    });
+    expect(created.purchaseUnits.map((unit: any) => unit.unit)).toEqual([
+      'box',
+      'pack',
+    ]);
+    expect(created.purchaseUnits[0].baseUnitMultiplier).toBe('24');
+
+    // Sending the set without "pack" is how a ratio is removed.
+    const edited = await h.service.updateStockItem(ACTOR_A, created.id, {
+      purchaseUnits: [{ unit: 'box', baseUnitMultiplier: '12' }],
+    });
+    expect(edited.purchaseUnits).toEqual([
+      { id: expect.any(String), unit: 'box', baseUnitMultiplier: '12' },
+    ]);
+    expect(h.db.audits.at(-1).data.changes).toEqual([
+      {
+        field: 'purchaseUnits',
+        previousValue: 'box=24, pack=6',
+        newValue: 'box=12',
+      },
+    ]);
+  });
+
+  it('leaves packaging alone when a save does not mention it', async () => {
+    const h = harness();
+    const created = await h.service.createStockItem(ACTOR_A, {
+      name: 'Wine',
+      baseUnit: 'bottle',
+      purchaseUnits: [{ unit: 'box', baseUnitMultiplier: '6' }],
+    });
+    const renamed = await h.service.updateStockItem(ACTOR_A, created.id, {
+      name: 'Saperavi',
+    });
+    expect(renamed.purchaseUnits).toHaveLength(1);
+    expect(renamed.purchaseUnits[0].baseUnitMultiplier).toBe('6');
+  });
+
+  it('refuses a ratio for the item’s own base unit or a duplicate label', async () => {
+    const h = harness();
+    await expect(
+      h.service.createStockItem(ACTOR_A, {
+        name: 'Confused',
+        baseUnit: 'bottle',
+        purchaseUnits: [{ unit: 'bottle', baseUnitMultiplier: '1' }],
+      }),
+    ).rejects.toThrow('needs no purchase ratio');
+    await expect(
+      h.service.createStockItem(ACTOR_A, {
+        name: 'Twice',
+        baseUnit: 'bottle',
+        purchaseUnits: [
+          { unit: 'box', baseUnitMultiplier: '24' },
+          { unit: 'box', baseUnitMultiplier: '12' },
+        ],
+      }),
+    ).rejects.toThrow('listed twice');
+    await expect(
+      h.service.createStockItem(ACTOR_A, {
+        name: 'Zero',
+        baseUnit: 'bottle',
+        purchaseUnits: [{ unit: 'box', baseUnitMultiplier: '0' }],
+      }),
+    ).rejects.toThrow('greater than zero');
   });
 
   it('normalizes SKU and enforces uniqueness only inside one Venue', async () => {

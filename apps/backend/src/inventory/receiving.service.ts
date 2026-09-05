@@ -1,0 +1,794 @@
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { Prisma, ReceivingStatus, StockMovementType } from '@prisma/client';
+import { PrismaService } from '../prisma.service';
+import type { TenantContext } from '../tenancy/tenant-context';
+import {
+  InventoryAuditAction,
+  writeInventoryAudit,
+  type InventoryActor,
+} from './inventory-audit';
+import {
+  baseUnitCostText,
+  lineMoney,
+  moneyText,
+  multiplierText,
+  nonNegativeCost,
+  positiveQuantity,
+  quantityText,
+  resolveBaseQuantity,
+  sumMoney,
+  unitCostText,
+} from './inventory-quantity';
+import { inventoryUnit } from './inventory-unit';
+
+export interface ReceivingLineInput {
+  stockItemId?: unknown;
+  enteredQuantity?: unknown;
+  enteredUnit?: unknown;
+  unitPurchaseCost?: unknown;
+  notes?: unknown;
+}
+
+export interface ReceivingInput {
+  supplierId?: unknown;
+  waybillNumber?: unknown;
+  invoiceNumber?: unknown;
+  documentDate?: unknown;
+  receivedAt?: unknown;
+  notes?: unknown;
+  lines?: unknown;
+}
+
+export interface ReceivingListQuery {
+  from?: string;
+  to?: string;
+  supplierId?: string;
+  status?: string;
+  search?: string;
+  take?: number;
+  cursor?: string;
+}
+
+/** A line after validation, ready to persist. */
+interface PreparedLine {
+  lineSequence: number;
+  stockItemId: string;
+  stockItemNameSnapshot: string;
+  enteredQuantity: Prisma.Decimal;
+  enteredUnit: string;
+  baseQuantity: Prisma.Decimal;
+  baseUnit: string;
+  unitPurchaseCost: Prisma.Decimal;
+  lineTotal: Prisma.Decimal;
+  effectiveBaseUnitCost: Prisma.Decimal;
+  notes: string | null;
+}
+
+const MAX_PAGE = 100;
+const DEFAULT_PAGE = 25;
+
+/**
+ * Receiving documents and the movements they produce.
+ *
+ * The three states mean three different things about stock. A DRAFT is working
+ * paper: it can be edited freely and has moved nothing. POSTED is the only
+ * state behind which StockMovements exist. CANCELLED keeps the document and
+ * its original movements and adds reversals beside them, because a receipt that
+ * was entered and then withdrawn is two facts, not zero.
+ *
+ * Posting and cancelling both take a row lock on the document and both rely on
+ * a database uniqueness rule as the final word, so a redelivered command or two
+ * simultaneous clicks cannot double a venue's stock.
+ */
+@Injectable()
+export class ReceivingService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  // ── Reads ───────────────────────────────────────────────────────────────
+
+  async list(tenant: TenantContext, query: ReceivingListQuery = {}) {
+    const take = Math.min(
+      Math.max(Math.trunc(query.take ?? DEFAULT_PAGE), 1),
+      MAX_PAGE,
+    );
+    const search = query.search?.trim();
+    const where: Prisma.ReceivingWhereInput = {
+      venueId: tenant.venueId,
+      ...(query.supplierId?.trim()
+        ? { supplierId: query.supplierId.trim() }
+        : {}),
+      ...(query.status?.trim()
+        ? { status: receivingStatus(query.status) }
+        : {}),
+      ...(query.from?.trim() || query.to?.trim()
+        ? {
+            documentDate: {
+              ...(query.from?.trim() ? { gte: isoDateText(query.from) } : {}),
+              ...(query.to?.trim() ? { lte: isoDateText(query.to) } : {}),
+            },
+          }
+        : {}),
+      ...(search
+        ? {
+            OR: [
+              { waybillNumber: { contains: search, mode: 'insensitive' } },
+              { invoiceNumber: { contains: search, mode: 'insensitive' } },
+              {
+                supplierNameSnapshot: {
+                  contains: search,
+                  mode: 'insensitive',
+                },
+              },
+            ],
+          }
+        : {}),
+    };
+
+    const rows = await this.prisma.receiving.findMany({
+      where,
+      orderBy: [
+        { documentDate: 'desc' },
+        { createdAt: 'desc' },
+        { id: 'desc' },
+      ],
+      take: take + 1,
+      ...(query.cursor?.trim()
+        ? { cursor: { id: query.cursor.trim() }, skip: 1 }
+        : {}),
+      include: { _count: { select: { lines: true } } },
+    });
+
+    const page = rows.slice(0, take);
+    return {
+      receivings: page.map((row) => this.presentSummary(row)),
+      nextCursor: rows.length > take ? (page.at(-1)?.id ?? null) : null,
+    };
+  }
+
+  async detail(tenant: TenantContext, id: string) {
+    const row = await this.prisma.receiving.findFirst({
+      where: { id: requiredText(id, 'id'), venueId: tenant.venueId },
+      include: {
+        lines: { orderBy: { lineSequence: 'asc' } },
+        movements: { orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] },
+        _count: { select: { lines: true } },
+      },
+    });
+    if (!row) throw new NotFoundException('Receiving not found');
+    return {
+      ...this.presentSummary(row),
+      lines: row.lines.map((line) => this.presentLine(line)),
+      movements: row.movements.map((movement) => presentMovement(movement)),
+    };
+  }
+
+  // ── Draft lifecycle ─────────────────────────────────────────────────────
+
+  async createDraft(actor: InventoryActor, input: ReceivingInput) {
+    const header = this.readHeader(input);
+    return this.prisma.$transaction(async (tx) => {
+      const supplier = await this.requireSupplier(tx, actor, header.supplierId);
+      const lines = await this.prepareLines(tx, actor, input.lines);
+      const created = await tx.receiving.create({
+        data: {
+          venueId: actor.venueId,
+          supplierId: supplier.id,
+          supplierNameSnapshot: supplier.name,
+          waybillNumber: header.waybillNumber,
+          invoiceNumber: header.invoiceNumber,
+          documentDate: header.documentDate,
+          receivedAt: header.receivedAt,
+          notes: header.notes,
+          status: ReceivingStatus.DRAFT,
+          documentTotal: sumMoney(lines.map((line) => line.lineTotal)),
+          createdById: actor.staffId,
+          createdByName: actor.username,
+          lines: { create: lines },
+        },
+        include: {
+          lines: { orderBy: { lineSequence: 'asc' } },
+          movements: true,
+          _count: { select: { lines: true } },
+        },
+      });
+      await writeInventoryAudit(tx, actor, {
+        action: InventoryAuditAction.RECEIVING_CREATED,
+        entityType: 'RECEIVING',
+        entityId: created.id,
+        data: this.auditContext(created),
+      });
+      return this.presentDetail(created);
+    });
+  }
+
+  async updateDraft(
+    actor: InventoryActor,
+    id: string,
+    input: ReceivingInput,
+  ) {
+    const cleanId = requiredText(id, 'id');
+    const header = this.readHeader(input);
+    return this.prisma.$transaction(async (tx) => {
+      const existing = await this.lockReceiving(tx, actor.venueId, cleanId);
+      if (existing.status !== ReceivingStatus.DRAFT) {
+        throw new ConflictException(
+          `A ${existing.status.toLowerCase()} Receiving is inventory history and cannot be edited`,
+        );
+      }
+      const supplier = await this.requireSupplier(tx, actor, header.supplierId);
+      const lines = await this.prepareLines(tx, actor, input.lines);
+      await tx.receivingLine.deleteMany({ where: { receivingId: cleanId } });
+      const updated = await tx.receiving.update({
+        where: { id: cleanId },
+        data: {
+          supplierId: supplier.id,
+          supplierNameSnapshot: supplier.name,
+          waybillNumber: header.waybillNumber,
+          invoiceNumber: header.invoiceNumber,
+          documentDate: header.documentDate,
+          receivedAt: header.receivedAt,
+          notes: header.notes,
+          documentTotal: sumMoney(lines.map((line) => line.lineTotal)),
+          lines: { create: lines },
+        },
+        include: {
+          lines: { orderBy: { lineSequence: 'asc' } },
+          movements: true,
+          _count: { select: { lines: true } },
+        },
+      });
+      await writeInventoryAudit(tx, actor, {
+        action: InventoryAuditAction.RECEIVING_UPDATED,
+        entityType: 'RECEIVING',
+        entityId: updated.id,
+        data: this.auditContext(updated),
+      });
+      return this.presentDetail(updated);
+    });
+  }
+
+  /**
+   * A draft is working paper and may be discarded. A posted or cancelled
+   * document never can be: the database itself refuses, because its movements
+   * reference its lines.
+   */
+  async deleteDraft(actor: InventoryActor, id: string) {
+    const cleanId = requiredText(id, 'id');
+    return this.prisma.$transaction(async (tx) => {
+      const existing = await this.lockReceiving(tx, actor.venueId, cleanId);
+      if (existing.status !== ReceivingStatus.DRAFT) {
+        throw new ConflictException(
+          'Only a draft Receiving can be deleted; post it and cancel it instead',
+        );
+      }
+      await tx.receiving.delete({ where: { id: cleanId } });
+      return { id: cleanId, deleted: true };
+    });
+  }
+
+  // ── Posting ─────────────────────────────────────────────────────────────
+
+  /**
+   * Freeze the document and write one movement per line, atomically.
+   *
+   * Redelivery is expected, not exceptional: a Manager double-tap and a retried
+   * request both arrive here. The row lock serialises them, the status check
+   * turns the second into `already_posted`, and the movement's unique index
+   * over `(receivingLineId, movementType)` is the backstop if anything ever
+   * gets past both.
+   */
+  async post(actor: InventoryActor, id: string) {
+    const cleanId = requiredText(id, 'id');
+    return this.prisma.$transaction(async (tx) => {
+      const locked = await this.lockReceiving(tx, actor.venueId, cleanId);
+
+      if (locked.status === ReceivingStatus.POSTED) {
+        return {
+          ...(await this.loadDetail(tx, cleanId)),
+          result: 'already_posted' as const,
+        };
+      }
+      if (locked.status === ReceivingStatus.CANCELLED) {
+        throw new ConflictException('A cancelled Receiving cannot be posted');
+      }
+
+      const lines = await tx.receivingLine.findMany({
+        where: { receivingId: cleanId },
+        orderBy: { lineSequence: 'asc' },
+      });
+      if (lines.length === 0) {
+        throw new BadRequestException(
+          'A Receiving must have at least one line before it is posted',
+        );
+      }
+
+      // Re-validate against live tenancy: a Stock Item may have been disabled
+      // or a Supplier reassigned while the draft sat open.
+      const stockItems = await tx.stockItem.findMany({
+        where: {
+          id: { in: lines.map((line) => line.stockItemId) },
+          venueId: actor.venueId,
+        },
+        select: { id: true, baseUnit: true },
+      });
+      const byId = new Map(stockItems.map((item) => [item.id, item]));
+      for (const line of lines) {
+        const item = byId.get(line.stockItemId);
+        if (!item) {
+          throw new BadRequestException(
+            `Stock item ${line.stockItemId} does not belong to this Venue`,
+          );
+        }
+        if (item.baseUnit !== line.baseUnit) {
+          throw new ConflictException(
+            `Stock item base unit changed to ${item.baseUnit} after this line was entered as ${line.baseUnit}; re-enter the line`,
+          );
+        }
+        if (line.baseQuantity.lessThanOrEqualTo(0)) {
+          throw new BadRequestException('Line quantities must be positive');
+        }
+        if (line.unitPurchaseCost.isNegative()) {
+          throw new BadRequestException('Line costs must not be negative');
+        }
+      }
+      await this.requireSupplier(tx, actor, locked.supplierId);
+
+      const postedAt = new Date();
+      await tx.stockMovement.createMany({
+        data: lines.map((line) => ({
+          venueId: actor.venueId,
+          stockItemId: line.stockItemId,
+          movementType: StockMovementType.RECEIVING,
+          quantityDeltaBase: line.baseQuantity,
+          baseUnit: line.baseUnit,
+          receivingId: cleanId,
+          receivingLineId: line.id,
+          businessDate: locked.documentDate,
+          effectiveAt: locked.receivedAt,
+          actorId: actor.staffId,
+          actorName: actor.username,
+          source: 'MANAGER',
+          details: {
+            waybillNumber: locked.waybillNumber,
+            lineSequence: line.lineSequence,
+            stockItemName: line.stockItemNameSnapshot,
+          } as Prisma.InputJsonValue,
+        })),
+      });
+
+      const posted = await tx.receiving.update({
+        where: { id: cleanId },
+        data: {
+          status: ReceivingStatus.POSTED,
+          postedAt,
+          postedById: actor.staffId,
+          postedByName: actor.username,
+          documentTotal: sumMoney(lines.map((line) => line.lineTotal)),
+        },
+        include: {
+          lines: { orderBy: { lineSequence: 'asc' } },
+          movements: { orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] },
+          _count: { select: { lines: true } },
+        },
+      });
+      await writeInventoryAudit(tx, actor, {
+        action: InventoryAuditAction.RECEIVING_POSTED,
+        entityType: 'RECEIVING',
+        entityId: posted.id,
+        data: {
+          ...this.auditContext(posted),
+          previousStatus: ReceivingStatus.DRAFT,
+          newStatus: ReceivingStatus.POSTED,
+          movementCount: lines.length,
+        },
+      });
+      return { ...this.presentDetail(posted), result: 'posted' as const };
+    });
+  }
+
+  // ── Cancellation ────────────────────────────────────────────────────────
+
+  /**
+   * Withdraw a posted receipt without erasing it.
+   *
+   * Every original RECEIVING movement gains exactly one mirrored reversal, and
+   * `reversalOfMovementId` is unique, so a second cancellation adds nothing. The
+   * reversal is dated when the cancellation happened rather than when the goods
+   * arrived: the day the stock genuinely was on the shelf keeps saying so.
+   */
+  async cancel(actor: InventoryActor, id: string, reason?: unknown) {
+    const cleanId = requiredText(id, 'id');
+    const cancellationReason = optionalText(reason);
+    return this.prisma.$transaction(async (tx) => {
+      const locked = await this.lockReceiving(tx, actor.venueId, cleanId);
+
+      if (locked.status === ReceivingStatus.CANCELLED) {
+        return {
+          ...(await this.loadDetail(tx, cleanId)),
+          result: 'already_cancelled' as const,
+        };
+      }
+      if (locked.status !== ReceivingStatus.POSTED) {
+        throw new ConflictException(
+          'Only a posted Receiving can be cancelled; delete the draft instead',
+        );
+      }
+
+      const originals = await tx.stockMovement.findMany({
+        where: {
+          receivingId: cleanId,
+          venueId: actor.venueId,
+          movementType: StockMovementType.RECEIVING,
+        },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      });
+      const alreadyReversed = new Set(
+        (
+          await tx.stockMovement.findMany({
+            where: {
+              receivingId: cleanId,
+              movementType: StockMovementType.RECEIVING_REVERSAL,
+            },
+            select: { reversalOfMovementId: true },
+          })
+        ).flatMap((row) =>
+          row.reversalOfMovementId ? [row.reversalOfMovementId] : [],
+        ),
+      );
+
+      const cancelledAt = new Date();
+      const pending = originals.filter((row) => !alreadyReversed.has(row.id));
+      if (pending.length > 0) {
+        await tx.stockMovement.createMany({
+          data: pending.map((original) => ({
+            venueId: actor.venueId,
+            stockItemId: original.stockItemId,
+            movementType: StockMovementType.RECEIVING_REVERSAL,
+            quantityDeltaBase: original.quantityDeltaBase.negated(),
+            baseUnit: original.baseUnit,
+            receivingId: cleanId,
+            receivingLineId: original.receivingLineId,
+            reversalOfMovementId: original.id,
+            businessDate: isoDate(cancelledAt),
+            effectiveAt: cancelledAt,
+            actorId: actor.staffId,
+            actorName: actor.username,
+            source: 'MANAGER',
+            details: {
+              waybillNumber: locked.waybillNumber,
+              reversalOf: original.id,
+              reason: cancellationReason,
+            } as Prisma.InputJsonValue,
+          })),
+        });
+      }
+
+      const cancelled = await tx.receiving.update({
+        where: { id: cleanId },
+        data: {
+          status: ReceivingStatus.CANCELLED,
+          cancelledAt,
+          cancelledById: actor.staffId,
+          cancelledByName: actor.username,
+          cancellationReason,
+        },
+        include: {
+          lines: { orderBy: { lineSequence: 'asc' } },
+          movements: { orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] },
+          _count: { select: { lines: true } },
+        },
+      });
+      await writeInventoryAudit(tx, actor, {
+        action: InventoryAuditAction.RECEIVING_CANCELLED,
+        entityType: 'RECEIVING',
+        entityId: cancelled.id,
+        data: {
+          ...this.auditContext(cancelled),
+          previousStatus: ReceivingStatus.POSTED,
+          newStatus: ReceivingStatus.CANCELLED,
+          reversalCount: pending.length,
+          reason: cancellationReason,
+        },
+      });
+      return { ...this.presentDetail(cancelled), result: 'cancelled' as const };
+    });
+  }
+
+  // ── Internals ───────────────────────────────────────────────────────────
+
+  /**
+   * `SELECT ... FOR UPDATE` on the document.
+   *
+   * Prisma has no first-class row lock, and without one two concurrent posts
+   * could each read DRAFT before either wrote POSTED.
+   */
+  private async lockReceiving(
+    tx: Prisma.TransactionClient,
+    venueId: string,
+    id: string,
+  ) {
+    const locked = await tx.$queryRaw<
+      {
+        id: string;
+        status: ReceivingStatus;
+        supplierId: string;
+        documentDate: string;
+        receivedAt: Date;
+        waybillNumber: string | null;
+      }[]
+    >`
+      SELECT "id", "status", "supplierId", "documentDate", "receivedAt", "waybillNumber"
+      FROM "pos"."Receiving"
+      WHERE "id" = ${id} AND "venueId" = ${venueId}
+      FOR UPDATE
+    `;
+    const row = locked[0];
+    if (!row) throw new NotFoundException('Receiving not found');
+    return row;
+  }
+
+  private async requireSupplier(
+    tx: Prisma.TransactionClient,
+    actor: InventoryActor,
+    supplierId: string,
+  ) {
+    const supplier = await tx.supplier.findFirst({
+      where: { id: supplierId, venueId: actor.venueId },
+      select: { id: true, name: true },
+    });
+    if (!supplier) throw new NotFoundException('Supplier not found');
+    return supplier;
+  }
+
+  private readHeader(input: ReceivingInput) {
+    const receivedAtRaw = input.receivedAt;
+    const receivedAt =
+      receivedAtRaw == null || receivedAtRaw === ''
+        ? new Date()
+        : new Date(String(receivedAtRaw));
+    if (Number.isNaN(receivedAt.getTime())) {
+      throw new BadRequestException('receivedAt is not a valid date');
+    }
+    return {
+      supplierId: requiredText(input.supplierId, 'supplierId'),
+      waybillNumber: optionalText(input.waybillNumber),
+      invoiceNumber: optionalText(input.invoiceNumber),
+      documentDate: isoDateText(input.documentDate ?? isoDate(receivedAt)),
+      receivedAt,
+      notes: optionalText(input.notes),
+    };
+  }
+
+  /**
+   * Validate the line set against live Stock Items and their packaging.
+   *
+   * Every line is converted to the item's own base unit here, so the document
+   * keeps saying "10 box" while the ledger only ever deals in "240 bottle".
+   */
+  private async prepareLines(
+    tx: Prisma.TransactionClient,
+    actor: InventoryActor,
+    raw: unknown,
+  ): Promise<PreparedLine[]> {
+    if (raw == null) return [];
+    if (!Array.isArray(raw)) {
+      throw new BadRequestException('lines must be an array');
+    }
+    if (raw.length === 0) return [];
+    if (raw.length > 200) {
+      throw new BadRequestException('A Receiving may hold up to 200 lines');
+    }
+
+    const inputs = raw as ReceivingLineInput[];
+    const ids = Array.from(
+      new Set(inputs.map((line) => requiredText(line.stockItemId, 'stockItemId'))),
+    );
+    const items = await tx.stockItem.findMany({
+      where: { id: { in: ids }, venueId: actor.venueId },
+      select: {
+        id: true,
+        name: true,
+        baseUnit: true,
+        purchaseUnits: { select: { unit: true, baseUnitMultiplier: true } },
+      },
+    });
+    const byId = new Map(items.map((item) => [item.id, item]));
+
+    return inputs.map((line, index) => {
+      const stockItemId = requiredText(line.stockItemId, 'stockItemId');
+      const item = byId.get(stockItemId);
+      if (!item) {
+        throw new NotFoundException(`Stock item ${stockItemId} not found`);
+      }
+      const enteredQuantity = positiveQuantity(
+        line.enteredQuantity,
+        'enteredQuantity',
+      );
+      const enteredUnit = inventoryUnit(line.enteredUnit ?? item.baseUnit);
+      const unitPurchaseCost = nonNegativeCost(
+        line.unitPurchaseCost ?? '0',
+        'unitPurchaseCost',
+      );
+      const resolved = resolveBaseQuantity({
+        enteredQuantity,
+        enteredUnit,
+        baseUnit: item.baseUnit,
+        purchaseUnits: item.purchaseUnits,
+      });
+      if (resolved.baseQuantity.lessThanOrEqualTo(0)) {
+        throw new BadRequestException(
+          'A line must deliver a positive base quantity',
+        );
+      }
+      const { lineTotal, effectiveBaseUnitCost } = lineMoney({
+        enteredQuantity,
+        unitPurchaseCost,
+        baseQuantity: resolved.baseQuantity,
+      });
+      return {
+        lineSequence: index,
+        stockItemId,
+        stockItemNameSnapshot: item.name,
+        enteredQuantity,
+        enteredUnit,
+        baseQuantity: resolved.baseQuantity,
+        baseUnit: item.baseUnit,
+        unitPurchaseCost,
+        lineTotal,
+        effectiveBaseUnitCost,
+        notes: optionalText(line.notes),
+      };
+    });
+  }
+
+  private loadDetail(tx: Prisma.TransactionClient, id: string) {
+    return tx.receiving
+      .findUniqueOrThrow({
+        where: { id },
+        include: {
+          lines: { orderBy: { lineSequence: 'asc' } },
+          movements: { orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] },
+          _count: { select: { lines: true } },
+        },
+      })
+      .then((row) => this.presentDetail(row));
+  }
+
+  private auditContext(row: {
+    id: string;
+    supplierId: string;
+    supplierNameSnapshot: string;
+    waybillNumber: string | null;
+    documentDate: string;
+    status: ReceivingStatus;
+    documentTotal: Prisma.Decimal;
+    lines: unknown[];
+  }) {
+    return {
+      receivingId: row.id,
+      supplierId: row.supplierId,
+      supplierName: row.supplierNameSnapshot,
+      waybillNumber: row.waybillNumber,
+      documentDate: row.documentDate,
+      status: row.status,
+      lineCount: row.lines.length,
+      documentTotal: moneyText(row.documentTotal),
+    };
+  }
+
+  private presentSummary(row: any) {
+    return {
+      id: row.id,
+      supplierId: row.supplierId,
+      supplierName: row.supplierNameSnapshot,
+      waybillNumber: row.waybillNumber,
+      invoiceNumber: row.invoiceNumber,
+      documentDate: row.documentDate,
+      receivedAt: row.receivedAt,
+      status: row.status,
+      notes: row.notes,
+      documentTotal: moneyText(row.documentTotal),
+      lineCount: row._count?.lines ?? row.lines?.length ?? 0,
+      createdById: row.createdById,
+      createdByName: row.createdByName,
+      postedById: row.postedById,
+      postedByName: row.postedByName,
+      postedAt: row.postedAt,
+      cancelledById: row.cancelledById,
+      cancelledByName: row.cancelledByName,
+      cancelledAt: row.cancelledAt,
+      cancellationReason: row.cancellationReason,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    };
+  }
+
+  private presentLine(line: any) {
+    return {
+      id: line.id,
+      lineSequence: line.lineSequence,
+      stockItemId: line.stockItemId,
+      stockItemName: line.stockItemNameSnapshot,
+      enteredQuantity: quantityText(line.enteredQuantity),
+      enteredUnit: line.enteredUnit,
+      baseQuantity: quantityText(line.baseQuantity),
+      baseUnit: line.baseUnit,
+      unitPurchaseCost: unitCostText(line.unitPurchaseCost),
+      lineTotal: moneyText(line.lineTotal),
+      effectiveBaseUnitCost: baseUnitCostText(line.effectiveBaseUnitCost),
+      notes: line.notes,
+    };
+  }
+
+  private presentDetail(row: any) {
+    return {
+      ...this.presentSummary(row),
+      lines: (row.lines ?? []).map((line: any) => this.presentLine(line)),
+      movements: (row.movements ?? []).map((movement: any) =>
+        presentMovement(movement),
+      ),
+    };
+  }
+}
+
+export function presentMovement(movement: any) {
+  return {
+    id: movement.id,
+    stockItemId: movement.stockItemId,
+    movementType: movement.movementType,
+    quantityDeltaBase: quantityText(movement.quantityDeltaBase),
+    baseUnit: movement.baseUnit,
+    receivingId: movement.receivingId,
+    receivingLineId: movement.receivingLineId,
+    reversalOfMovementId: movement.reversalOfMovementId,
+    businessDate: movement.businessDate,
+    effectiveAt: movement.effectiveAt,
+    actorId: movement.actorId,
+    actorName: movement.actorName,
+    source: movement.source,
+    createdAt: movement.createdAt,
+    details: movement.details ?? null,
+  };
+}
+
+export { multiplierText };
+
+function receivingStatus(raw: string): ReceivingStatus {
+  const value = raw.trim().toUpperCase();
+  if (value in ReceivingStatus) return value as ReceivingStatus;
+  throw new BadRequestException(
+    `status must be one of: ${Object.keys(ReceivingStatus).join(', ')}`,
+  );
+}
+
+function isoDate(value: Date): string {
+  return value.toISOString().slice(0, 10);
+}
+
+function isoDateText(raw: unknown): string {
+  const value = String(raw ?? '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new BadRequestException('documentDate must be YYYY-MM-DD');
+  }
+  return value;
+}
+
+function requiredText(raw: unknown, field: string): string {
+  const value = typeof raw === 'string' ? raw.trim() : '';
+  if (!value) throw new BadRequestException(`${field} is required`);
+  if (value.length > 500) throw new BadRequestException(`${field} is too long`);
+  return value;
+}
+
+function optionalText(raw: unknown): string | null {
+  if (raw == null) return null;
+  if (typeof raw !== 'string') throw new BadRequestException('Expected text');
+  const value = raw.trim();
+  if (value.length > 2000) throw new BadRequestException('Text is too long');
+  return value || null;
+}

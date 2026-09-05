@@ -23,6 +23,7 @@ export const AUDIT_LOG_ENTITY_TYPES = [
   'MENU_VARIANT',
   'STOCK_ITEM',
   'SUPPLIER',
+  'RECEIVING',
   'PACKAGE',
   'EXPENSE',
   'CLOSE_DAY',
@@ -160,6 +161,13 @@ const ACTION_RULES: Readonly<Record<string, EntityRule>> = {
   SUPPLIER_CREATED: { entityType: 'SUPPLIER', idKeys: ['supplierId'] },
   SUPPLIER_UPDATED: { entityType: 'SUPPLIER', idKeys: ['supplierId'] },
   SUPPLIER_DISABLED: { entityType: 'SUPPLIER', idKeys: ['supplierId'] },
+
+  // Receiving documents. The movements they produce are already durable
+  // ledger history and are summarised here rather than mirrored row by row.
+  RECEIVING_CREATED: { entityType: 'RECEIVING', idKeys: ['receivingId'] },
+  RECEIVING_UPDATED: { entityType: 'RECEIVING', idKeys: ['receivingId'] },
+  RECEIVING_POSTED: { entityType: 'RECEIVING', idKeys: ['receivingId'] },
+  RECEIVING_CANCELLED: { entityType: 'RECEIVING', idKeys: ['receivingId'] },
 
   // Package definitions. Applying a package to an Order is `APPLY_PACKAGE` on
   // that Order's report and is deliberately not mirrored here.

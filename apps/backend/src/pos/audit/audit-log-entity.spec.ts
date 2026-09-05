@@ -33,6 +33,12 @@ describe('deriveAuditLogEntity', () => {
       deriveAuditLogEntity('SUPPLIER_DISABLED', { supplierId: 'supplier-1' }),
     ).toEqual({ entityType: 'SUPPLIER', entityId: 'supplier-1' });
     expect(
+      deriveAuditLogEntity('RECEIVING_POSTED', {
+        receivingId: 'r-1',
+        waybillNumber: '12345',
+      }),
+    ).toEqual({ entityType: 'RECEIVING', entityId: 'r-1' });
+    expect(
       deriveAuditLogEntity('EXPENSE_CREATED', { expenseId: 'exp-9' }),
     ).toEqual({ entityType: 'EXPENSE', entityId: 'exp-9' });
     expect(
@@ -141,6 +147,7 @@ describe('actionsForEntityType', () => {
       'PACKAGE',
       'STOCK_ITEM',
       'SUPPLIER',
+      'RECEIVING',
     ] as const) {
       for (const action of actionsForEntityType(entityType)) {
         expect(deriveAuditLogEntity(action, {}).entityType).toBe(entityType);

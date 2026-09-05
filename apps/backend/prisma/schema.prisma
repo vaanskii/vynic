@@ -201,6 +201,10 @@ model StockItem {
   updatedAt    DateTime @updatedAt
   venue        Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  purchaseUnits  StockItemPurchaseUnit[]
+  receivingLines ReceivingLine[]
+  movements      StockMovement[]
+
   @@unique([venueId, sku])
   @@index([venueId, isActive, name])
   @@schema("pos")
@@ -222,7 +226,168 @@ model Supplier {
   updatedAt DateTime @updatedAt
   venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  receivings Receiving[]
+
   @@index([venueId, isActive, name])
+  @@schema("pos")
+}
+
+/// One item-specific purchasing package, e.g. "1 box = 24 bottle".
+///
+/// Count labels are deliberately never globalised: one venue's box holds 24
+/// bottles of lemonade and 6 of wine. The ratio therefore belongs to the Stock
+/// Item, never to the unit. Mass and volume still convert globally and need no
+/// row here.
+model StockItemPurchaseUnit {
+  id                 String    @id @default(uuid())
+  venueId            String
+  stockItemId        String
+  /// Purchasing label. Never equal to the Stock Item's own base unit.
+  unit               String
+  /// How many base units one `unit` contains. Strictly positive.
+  baseUnitMultiplier Decimal   @db.Decimal(18, 6)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  venue              Venue     @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  stockItem          StockItem @relation(fields: [stockItemId], references: [id], onDelete: Cascade)
+
+  @@unique([stockItemId, unit])
+  @@index([venueId, stockItemId])
+  @@schema("pos")
+}
+
+enum ReceivingStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+
+  @@schema("pos")
+}
+
+/// One procurement document: what arrived, from whom, on what waybill.
+///
+/// A DRAFT is working paper and moves no stock. POSTED freezes the document and
+/// is the only state that has produced StockMovements. CANCELLED keeps both the
+/// document and its original movements and adds reversals beside them, because
+/// this is financial history rather than an editable balance.
+model Receiving {
+  id                   String          @id @default(uuid())
+  venueId              String
+  supplierId           String
+  /// Display truth frozen at creation. A later Supplier rename must not
+  /// rewrite what this document said when it was received.
+  supplierNameSnapshot String
+  waybillNumber        String?
+  invoiceNumber        String?
+  /// Document date as `YYYY-MM-DD`, the same shape as a business date.
+  documentDate         String
+  receivedAt           DateTime
+  status               ReceivingStatus @default(DRAFT)
+  notes                String?
+  /// SUM(line.lineTotal), maintained exactly on every write.
+  documentTotal        Decimal         @default(0) @db.Decimal(18, 2)
+  createdById          String
+  createdByName        String
+  postedById           String?
+  postedByName         String?
+  postedAt             DateTime?
+  cancelledById        String?
+  cancelledByName      String?
+  cancelledAt          DateTime?
+  cancellationReason   String?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  venue                Venue           @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  supplier             Supplier        @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  lines                ReceivingLine[]
+  movements            StockMovement[]
+
+  @@index([venueId, documentDate, createdAt, id])
+  @@index([venueId, status, documentDate])
+  @@index([venueId, supplierId, documentDate])
+  @@index([venueId, waybillNumber])
+  @@schema("pos")
+}
+
+/// A frozen purchase snapshot for one Stock Item on one Receiving.
+///
+/// `stockItemId` is the durable identity; `stockItemNameSnapshot` is historical
+/// display context only. Both the entered figures and the base-unit figures are
+/// kept, so the document still reads as it was written ("10 box") while the
+/// ledger works in one unit ("240 bottle").
+model ReceivingLine {
+  id                    String          @id @default(uuid())
+  receivingId           String
+  lineSequence          Int
+  stockItemId           String
+  stockItemNameSnapshot String
+  enteredQuantity       Decimal         @db.Decimal(18, 3)
+  enteredUnit           String
+  baseQuantity          Decimal         @db.Decimal(18, 3)
+  baseUnit              String
+  /// Purchase cost of one `enteredUnit`.
+  unitPurchaseCost      Decimal         @db.Decimal(18, 4)
+  /// enteredQuantity x unitPurchaseCost, rounded half-up to exact GEL.
+  lineTotal             Decimal         @db.Decimal(18, 2)
+  /// lineTotal / baseQuantity. Preserved for later weighted-average costing;
+  /// Step 2 computes no running valuation from it.
+  effectiveBaseUnitCost Decimal         @db.Decimal(18, 6)
+  notes                 String?
+  receiving             Receiving       @relation(fields: [receivingId], references: [id], onDelete: Cascade)
+  stockItem             StockItem       @relation(fields: [stockItemId], references: [id], onDelete: Restrict)
+  movements             StockMovement[]
+
+  @@unique([receivingId, lineSequence])
+  @@index([stockItemId])
+  @@schema("pos")
+}
+
+enum StockMovementType {
+  RECEIVING
+  RECEIVING_REVERSAL
+
+  @@schema("pos")
+}
+
+/// The authoritative quantity ledger. Current stock is SUM(quantityDeltaBase)
+/// and is never stored as an editable balance.
+///
+/// Rows are history: a posted movement is never edited into a different number.
+/// A correction is an explicit reversing movement beside the original. Later
+/// steps add SALE / WASTE / STOCKTAKE members to `movementType`; nothing here
+/// assumes only the two Step 2 members exist.
+model StockMovement {
+  id                   String            @id @default(uuid())
+  venueId              String
+  stockItemId          String
+  movementType         StockMovementType
+  /// Signed change in the Stock Item's own base unit.
+  quantityDeltaBase    Decimal           @db.Decimal(18, 3)
+  baseUnit             String
+  receivingId          String?
+  receivingLineId      String?
+  /// Set on a reversal. Unique, so a repeated cancellation cannot reverse the
+  /// same movement twice even under concurrency.
+  reversalOfMovementId String?           @unique
+  businessDate         String
+  effectiveAt          DateTime
+  actorId              String
+  actorName            String
+  source               String
+  createdAt            DateTime          @default(now())
+  details              Json?
+  venue                Venue             @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  stockItem            StockItem         @relation(fields: [stockItemId], references: [id], onDelete: Restrict)
+  receiving            Receiving?        @relation(fields: [receivingId], references: [id], onDelete: Restrict)
+  receivingLine        ReceivingLine?    @relation(fields: [receivingLineId], references: [id], onDelete: Restrict)
+
+  /// One movement of each kind per Receiving line, enforced by the database.
+  /// Future movement kinds carry a null `receivingLineId`, which PostgreSQL
+  /// treats as distinct, so they are unconstrained by this index.
+  @@unique([receivingLineId, movementType])
+  @@index([venueId, stockItemId, createdAt, id])
+  @@index([venueId, receivingId])
+  @@index([venueId, movementType, businessDate])
   @@schema("pos")
 }
 
@@ -385,29 +550,29 @@ model Staff {
 /// that does not send reservations yet leaves the mirror alone rather than
 /// emptying it.
 model PosReservation {
-  id               String   @id @default(uuid())
+  id               String    @id @default(uuid())
   venueId          String
   /// The reservation's identity on the POS, which owns it.
   posReservationId String
   customerName     String
-  customerPhone    String   @default("")
+  customerPhone    String    @default("")
   /// Legacy integer table codes, the form the website availability rules use.
   tableNumbers     Int[]
   /// Lossless floor/number references, where the POS build sends them.
   tableRefs        String[]
   reservationDate  DateTime
   reservationTime  String
-  numberOfGuests   Int      @default(0)
+  numberOfGuests   Int       @default(0)
   notes            String?
   status           String
   createdBy        String?
-  isTakeAway       Boolean  @default(false)
+  isTakeAway       Boolean   @default(false)
   /// Set when this record is the POS's bookkeeping for a walk-in or takeaway
   /// order rather than a real booking.
   linkedOrderId    Int?
   posCreatedAt     DateTime?
-  syncedAt         DateTime @updatedAt
-  venue            Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  syncedAt         DateTime  @updatedAt
+  venue            Venue     @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
   @@unique([venueId, posReservationId])
   @@index([venueId, reservationDate])
@@ -757,15 +922,15 @@ model Organization {
 
 /// One physical restaurant/location owned by an Organization.
 model Venue {
-  id                String                 @id @default(uuid())
+  id                String                  @id @default(uuid())
   organizationId    String
   name              String
-  status            VenueStatus            @default(ACTIVE)
+  status            VenueStatus             @default(ACTIVE)
   timezone          String
   currency          String
-  createdAt         DateTime               @default(now())
-  updatedAt         DateTime               @updatedAt
-  organization      Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  organization      Organization            @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   devices           Device[]
   tables            Table[]
   orders            Order[]
@@ -794,6 +959,9 @@ model Venue {
   websiteBookings   WebsiteReservation[]
   edgeCommands      EdgeCommand[]
   deviceEnrollments DeviceEnrollment[]
+  receivings        Receiving[]
+  stockMovements    StockMovement[]
+  purchaseUnits     StockItemPurchaseUnit[]
 
   @@index([organizationId])
   @@schema("pos")

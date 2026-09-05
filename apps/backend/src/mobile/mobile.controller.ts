@@ -42,6 +42,10 @@ import {
   type StockItemInput,
   type SupplierInput,
 } from '../inventory/inventory.service';
+import {
+  ReceivingService,
+  type ReceivingInput,
+} from '../inventory/receiving.service';
 
 // ─── Controller ───────────────────────────────────────────────────────────────
 
@@ -62,6 +66,7 @@ export class MobileController {
     private readonly orders: MobileOrdersService,
     private readonly saleLedger: MobileSaleLedgerService,
     private readonly inventory: InventoryService,
+    private readonly receiving: ReceivingService,
   ) {}
 
   @Get('inventory/units')
@@ -94,6 +99,14 @@ export class MobileController {
     return this.inventory.updateStockItem(actor, id, payload);
   }
 
+  @Get('inventory/stock-items/:id')
+  getStockItem(
+    @ManagerTenant() tenant: TenantContext,
+    @Param('id') id: string,
+  ) {
+    return this.inventory.getStockItem(tenant, id);
+  }
+
   @Get('inventory/suppliers')
   getSuppliers(
     @ManagerTenant() tenant: TenantContext,
@@ -117,6 +130,81 @@ export class MobileController {
     @Body() payload: SupplierInput,
   ) {
     return this.inventory.updateSupplier(actor, id, payload);
+  }
+
+  // ── Receiving / waybills ──────────────────────────────────────────────
+
+  @Get('inventory/receivings')
+  listReceivings(
+    @ManagerTenant() tenant: TenantContext,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('supplierId') supplierId?: string,
+    @Query('status') status?: string,
+    @Query('q') search?: string,
+    @Query('take') take?: string,
+    @Query('cursor') cursor?: string,
+  ) {
+    return this.receiving.list(tenant, {
+      from,
+      to,
+      supplierId,
+      status,
+      search,
+      take: take ? Number(take) : undefined,
+      cursor,
+    });
+  }
+
+  @Get('inventory/receivings/:id')
+  getReceiving(
+    @ManagerTenant() tenant: TenantContext,
+    @Param('id') id: string,
+  ) {
+    return this.receiving.detail(tenant, id);
+  }
+
+  @Post('inventory/receivings')
+  createReceiving(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Body() payload: ReceivingInput,
+  ) {
+    return this.receiving.createDraft(actor, payload);
+  }
+
+  @Patch('inventory/receivings/:id')
+  updateReceiving(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Body() payload: ReceivingInput,
+  ) {
+    return this.receiving.updateDraft(actor, id, payload);
+  }
+
+  /** Drafts only. A posted document is cancelled, never deleted. */
+  @Delete('inventory/receivings/:id')
+  deleteReceiving(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+  ) {
+    return this.receiving.deleteDraft(actor, id);
+  }
+
+  @Post('inventory/receivings/:id/post')
+  postReceiving(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+  ) {
+    return this.receiving.post(actor, id);
+  }
+
+  @Post('inventory/receivings/:id/cancel')
+  cancelReceiving(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Body() payload: { reason?: unknown } = {},
+  ) {
+    return this.receiving.cancel(actor, id, payload?.reason);
   }
 
   // GET /mobile/restaurant-settings

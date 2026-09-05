@@ -141,6 +141,12 @@ export class SaleLedgerSyncService {
         'gross must equal advanceApplied + amountDueNow',
       );
     }
+    // Non-fiscal history preserves the advance context, but records no payment
+    // rows: that receipt was collected earlier, not at this internal close.
+    // Fiscal Sales still require an exact advance payment part below.
+    if (!sale.isFiscal && (!collected.isZero() || sale.payments.length > 0)) {
+      throw new BadRequestException('Non-fiscal Sales cannot collect tender');
+    }
     if (sale.isFiscal && !collected.equals(due)) {
       throw new BadRequestException(
         'collectedNow must equal amountDueNow for fiscal Sales',
@@ -155,13 +161,10 @@ export class SaleLedgerSyncService {
     const advancePartAmount = advancePart
       ? decimal(advancePart.amount, 'payments.advance')
       : new Prisma.Decimal(0);
-    if (!advancePartAmount.equals(advance)) {
+    if (sale.isFiscal && !advancePartAmount.equals(advance)) {
       throw new BadRequestException(
         'Advance payment part must equal advanceApplied',
       );
-    }
-    if (!sale.isFiscal && !collected.isZero()) {
-      throw new BadRequestException('Non-fiscal Sales cannot collect tender');
     }
 
     for (const line of sale.lines) {

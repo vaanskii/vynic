@@ -106,7 +106,11 @@ class ClosureMoney {
   static bool collectedNothing(Map<dynamic, dynamic> sale) {
     if (sale['isCancelled'] == true) return true;
     if (sale['isFiscal'] == false) return true;
-    return PaymentUtils.isNonTenderSentinel(sale['paymentMethod']?.toString());
+    final method = sale['paymentMethod']?.toString();
+    // `split` is not a tender key, but its cash/card parts did collect money.
+    // Only lifecycle sentinels imply zero collection for a legacy record.
+    return method == PaymentUtils.methodCancelled ||
+        method == PaymentUtils.methodNonFiscal;
   }
 
   /// `null` when the split is internally consistent, otherwise why it is not.

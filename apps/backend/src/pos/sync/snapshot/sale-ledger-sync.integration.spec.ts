@@ -417,6 +417,86 @@ describeDatabase('Cloud Sale ledger (PostgreSQL)', () => {
     expect(summary.revenue).toBe('200.00');
   });
 
+  const retainedSnapshotPath = process.env.POS_RETAINED_SALES_WIRE_OUTPUT;
+  (retainedSnapshotPath ? it : it.skip)(
+    'ingests every retained Dart Sale payload and acknowledges the complete history',
+    async () => {
+      const rows = JSON.parse(
+        readFileSync(retainedSnapshotPath!, 'utf8'),
+      ) as SaleLedgerSync[];
+      const acknowledgements: string[] = [];
+      for (let offset = 0; offset < rows.length; offset += 250) {
+        const result = await sync.sync(
+          venueA,
+          rows.slice(offset, offset + 250),
+          [],
+        );
+        acknowledgements.push(
+          ...result.acknowledgements.map((row) => row.posSaleId),
+        );
+      }
+      expect(acknowledgements).toEqual(rows.map((row) => row.posSaleId));
+      expect(
+        await prisma.cloudSale.count({ where: { venueId: venueA.venueId } }),
+      ).toBe(rows.length);
+      const invalidPayments = await prisma.salePayment.count({
+        where: { sale: { venueId: venueA.venueId, isFiscal: false } },
+      });
+      expect(invalidPayments).toBe(0);
+    },
+  );
+
+  it('preserves non-fiscal advance context without inventing payment rows', async () => {
+    for (const isCancelled of [false, true]) {
+      const row = sale(`internal-advance-${isCancelled}`, {
+        isFiscal: false,
+        isCancelled,
+        paymentMethod: 'non-fiscal',
+        advanceApplied: '40.00',
+        amountDueNow: '60.00',
+        collectedNow: '0.00',
+        payments: [],
+      });
+      await sync.sync(venueA, [row], []);
+      const stored = await prisma.cloudSale.findFirstOrThrow({
+        where: { venueId: venueA.venueId, posSaleId: row.posSaleId },
+        include: { payments: true },
+      });
+      expect(stored.gross.toFixed(2)).toBe('100.00');
+      expect(stored.advanceApplied.toFixed(2)).toBe('40.00');
+      expect(stored.amountDueNow.toFixed(2)).toBe('60.00');
+      expect(stored.collectedNow.toFixed(2)).toBe('0.00');
+      expect(stored.payments).toEqual([]);
+      for (const payments of [
+        [{ method: 'advance', amount: '40.00' }],
+        [{ method: 'cash', amount: '10.00' }],
+      ]) {
+        await expect(
+          sync.sync(venueA, [{ ...row, payments }], []),
+        ).rejects.toThrow('Non-fiscal Sales cannot collect tender');
+      }
+    }
+    await expect(
+      sync.sync(
+        venueA,
+        [
+          sale('bad-fiscal-advance', {
+            advanceApplied: '40.00',
+            amountDueNow: '60.00',
+            collectedNow: '60.00',
+            payments: [{ method: 'cash', amount: '60.00' }],
+          }),
+        ],
+        [],
+      ),
+    ).rejects.toThrow('Advance payment part must equal advanceApplied');
+    const summary = await queries.getSummary(venueA, {
+      from: '2026-09-04',
+      to: '2026-09-04',
+    });
+    expect(summary.revenue).toBe('0.00');
+  });
+
   it('rejects captured stale tender and ingests Dart-normalized mixed history over HTTP', async () => {
     const fixture = (name: string) =>
       JSON.parse(
@@ -444,19 +524,6 @@ describeDatabase('Cloud Sale ledger (PostgreSQL)', () => {
     const app = module.createNestApplication();
     await app.init();
     try {
-      // Preserve the existing strict advance contract too: suppressing payments
-      // cannot silently erase a historical advance or make this shape valid.
-      const advanceConflict = await request(app.getHttpServer())
-        .post('/snapshot')
-        .send({
-          sales: [
-            { ...normalized, advanceApplied: '4.00', amountDueNow: '172.00' },
-          ],
-        })
-        .expect(400);
-      expect(advanceConflict.body.message).toBe(
-        'Advance payment part must equal advanceApplied',
-      );
       const before = {
         ...normalized,
         collectedNow: '176.00',

@@ -68,13 +68,48 @@ distinguishes raw history from ledger wire semantics.
   current cancellation and missing-money-field legacy cases remain covered.
 - Revenue remains `isFiscal && !isCancelled && !restoredToOrder`.
 
-Adjacent compatibility limit: the broader local copy also contains 38
-non-fiscal Sale records carrying nonzero advance values. The strict backend
-requires an advance payment part equal to `advanceApplied`, whereas the requested
-non-fiscal wire rule requires no payments. This task preserves both the advance
-field and backend validation; it does not resolve that separate contract conflict
-by erasing advance history or relaxing validation. The captured 176.00 offender
-has zero advance and passes. Full historical catch-up is therefore not claimed.
+## Advance and full-history follow-up
 
-No Inventory Step 4, schema, transaction, revenue predicate or production
-backend validation change is included.
+The next observed 400 was `Advance payment part must equal advanceApplied`.
+The full local copy contains 38 non-fiscal Sale records with nonzero advances,
+including legacy `paymentMethod=advance` records (Order 948: gross 50.00,
+legacy advanceAmount 50.00, no stored collectedNow). The wire preserves the
+advance identity and gross while sending no payments. Requiring a payment row
+for these records contradicts the non-fiscal no-payment contract.
+
+Cloud now requires an exactly matching advance payment part only for fiscal
+Sales. Non-fiscal Sales must have zero collection and no payment rows at all,
+including no advance payment row. The gross = advance + due identity stays
+strict for both. A previously collected advance remains historical context,
+not newly collected tender. No schema or retained-Hive rewrite is necessary.
+
+Full-history validation also exposed 33 legacy fiscal split Sales without
+`collectedNow`: `ClosureMoney.collectedNothing` mistakenly treated `split` as
+proof that no money changed hands. Order 250 retained gross 133.10, TBC 118.00
+and cash 15.10. The fallback now distinguishes cancellation/non-fiscal lifecycle
+markers from the `split` header, preserving those real tender parts. Explicit
+stored collection still wins for fiscal history.
+
+All 1,715 retained Sale payloads from the copy pass backend validation and
+full disposable-PostgreSQL ingestion, with 1,715 acknowledgments. The actual
+`vynic-pos` client was rebuilt and connected to `http://127.0.0.1:3000` using
+its saved override. Eight consecutive full syncs succeeded, including the
+follow-up batches, and the POS displayed its green synchronized indicator.
+The final copied ACK state contained 1,715 acknowledged Sales and zero pending.
+The Manager development command also resolved the same localhost backend.
+
+The opt-in `local_retained_snapshot_test.dart` copies the supplied Hive file
+before opening it and exports all Sale payloads without using or modifying live
+ACK state. Set `POS_RETAINED_SALES_HIVE` to the source file and
+`POS_RETAINED_SALES_WIRE_OUTPUT` to a private temporary output path. Feed that
+output to `sale-ledger-sync.integration.spec.ts` with the same output variable
+and `TENANT_INTEGRATION_DATABASE_URL` pointing **only to disposable PostgreSQL**.
+The integration test verifies complete ingestion, exact acknowledgment identity,
+and the absence of non-fiscal payment rows. Neither test rewrites source Hive.
+
+Validation: 133 Flutter tests and 93 backend ledger/snapshot/controller tests
+passed, including full retained-history coverage. Backend build, TypeScript
+`--noEmit`, Flutter analysis and `git diff --check` passed.
+
+No Inventory Step 4, schema, closure/cancellation transaction, or revenue
+predicate change is included.

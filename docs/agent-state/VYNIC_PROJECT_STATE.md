@@ -329,9 +329,11 @@ current transport status.
   zero collection and no payments, preserving operational gross and history
   without rewriting Hive. Cancelled wire rows are non-fiscal. Stored collection
   wins only for fiscal, non-cancelled Sales; restored fiscal snapshots retain
-  tender while the revenue predicate excludes them. Historical non-fiscal rows
-  with nonzero advances still conflict with strict Cloud advance-part validation;
-  see `docs/SALE_LEDGER_NON_FISCAL_COMPATIBILITY.md`.
+  tender while the revenue predicate excludes them. Cloud permits preserved
+  non-fiscal advance context with no payment rows; fiscal advances still require
+  an exactly matching advance part. Any non-fiscal payment row is rejected.
+  Legacy fiscal `split` rows without stored collection derive their balance
+  normally: `split` describes tender parts, not a no-collection lifecycle.
 - `CloudSale`, `SaleLine`, and `SalePayment` are the durable Venue-scoped Cloud
   financial mirror. Ledger money is `Decimal(18,2)` and crosses the wire as
   fixed two-decimal strings. `(venueId,posSaleId)` is the primary idempotency

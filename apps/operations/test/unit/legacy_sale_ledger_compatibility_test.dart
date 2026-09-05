@@ -333,6 +333,25 @@ void main() {
       ]);
     });
 
+    test(
+      'legacy split without collectedNow preserves its real tender parts',
+      () {
+        final retained = {
+          ...base(id: 'legacy-split-no-money', total: 133.10, method: 'split'),
+          'isFiscal': true,
+          'isCancelled': false,
+          'paymentBreakdown': {'card-tbc': 118.0, 'cash': 15.1},
+        };
+        final wire = payload(retained);
+        expect(ClosureMoney.fromSaleMap(retained).collectedNow, 133.10);
+        expect(wire['collectedNow'], '133.10');
+        expect(wire['payments'], [
+          {'method': 'card-tbc', 'amount': '118.00'},
+          {'method': 'cash', 'amount': '15.10'},
+        ]);
+      },
+    );
+
     test('a stored breakdown of real tenders is preserved whole', () {
       final wire = payload({
         ...base(id: 'legacy-split', total: 12.0, method: 'split'),

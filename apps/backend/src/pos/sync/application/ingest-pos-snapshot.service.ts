@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Optional } from '@nestjs/common';
 import { PosOutboxService } from '../../pos-outbox.service';
 import { PosConnectionRegistry } from '../pos-connection.registry';
 import { BusinessDaySyncService } from '../snapshot/business-day-sync.service';
@@ -7,6 +7,7 @@ import { OrderSyncService } from '../snapshot/order-sync.service';
 import { ReservationSyncService } from '../snapshot/reservation-sync.service';
 import { StaffSyncService } from '../snapshot/staff-sync.service';
 import { SyncBroadcastService } from '../snapshot/sync-broadcast.service';
+import { SaleLedgerSyncService } from '../snapshot/sale-ledger-sync.service';
 import { TableSyncService } from '../snapshot/table-sync.service';
 import { SyncPayload } from '../sync-payload';
 import { SyncTimer } from '../sync-timing';
@@ -22,6 +23,8 @@ export interface SnapshotIngestResult {
    * snapshot, which is how a re-provisioned server recollects what it needs.
    */
   staffNeedingPin?: string[];
+  /** Revisions durably accepted by the Cloud ledger. */
+  saleLedgerAck?: Array<{ posSaleId: string; revision: number }>;
 }
 
 /**
@@ -54,6 +57,7 @@ export class IngestPosSnapshotService {
     private readonly staff: StaffSyncService,
     private readonly businessDay: BusinessDaySyncService,
     private readonly broadcasts: SyncBroadcastService,
+    @Optional() private readonly saleLedger?: SaleLedgerSyncService,
   ) {}
 
   async execute(
@@ -93,6 +97,22 @@ export class IngestPosSnapshotService {
       await timing.phase('menu', () =>
         this.menu.sync(tenant, menu, data.menuIdentityVersion),
       );
+    }
+
+    // The critical close transaction is already durable in Hive before this
+    // asynchronous full snapshot runs. Realtime snapshots intentionally skip
+    // financial history work.
+    let saleLedgerAck: Array<{ posSaleId: string; revision: number }> = [];
+    const saleLedgerService = this.saleLedger;
+    if (
+      saleLedgerService &&
+      !realtimeOnly &&
+      (data.saleLedger || data.saleLedgerDays)
+    ) {
+      const result = await timing.phase('sale-ledger', () =>
+        saleLedgerService.sync(tenant, data.saleLedger, data.saleLedgerDays),
+      );
+      saleLedgerAck = result.acknowledgements;
     }
 
     console.log(
@@ -202,6 +222,7 @@ export class IngestPosSnapshotService {
       success: true,
       syncedAt: new Date().toISOString(),
       ...(staffNeedingPin.length > 0 ? { staffNeedingPin } : {}),
+      ...(saleLedgerAck.length > 0 ? { saleLedgerAck } : {}),
     };
   }
 }

@@ -162,6 +162,75 @@ export interface AuditEventLogSync {
   createdAt: string;
 }
 
+/** Fixed two-decimal wire value, for example `"12.30"`. */
+export type LedgerMoneySync = string;
+
+export interface SaleLineSync {
+  lineSeq: number;
+  menuItemId?: string | null;
+  variantId?: string | null;
+  itemName: string;
+  variantName?: string | null;
+  quantity: number;
+  unitPrice: LedgerMoneySync;
+  lineTotal: LedgerMoneySync;
+  comment?: string | null;
+}
+
+export interface SalePaymentSync {
+  method: string;
+  amount: LedgerMoneySync;
+}
+
+/** One genuine retained POS Sale; never synthesized from an aggregate. */
+export interface SaleLedgerSync {
+  /** Ignored for tenancy. Present only to prove payload tenant hints are inert. */
+  venueId?: string;
+  posSaleId: string;
+  posOrderId: number;
+  closureId?: string | null;
+  businessDate: string;
+  createdAt: string;
+  closedAt: string;
+  gross: LedgerMoneySync;
+  subtotal: LedgerMoneySync;
+  serviceFee: LedgerMoneySync;
+  discount: LedgerMoneySync;
+  manualAdjustment: LedgerMoneySync;
+  advanceApplied: LedgerMoneySync;
+  amountDueNow: LedgerMoneySync;
+  collectedNow: LedgerMoneySync;
+  paymentMethod: string;
+  customPaymentLabel?: string | null;
+  isFiscal: boolean;
+  isCancelled: boolean;
+  cancelledAt?: string | null;
+  cancelledBy?: string | null;
+  cancellationReason?: string | null;
+  restoredToOrder: boolean;
+  restoredAt?: string | null;
+  restoredBy?: string | null;
+  createdBy: string;
+  closedById?: string | null;
+  tableNumbers: string[];
+  floor: string;
+  revision: number;
+  sourceUpdatedAt: string;
+  lines: SaleLineSync[];
+  payments: SalePaymentSync[];
+}
+
+export interface SaleLedgerDaySync {
+  businessDate: string;
+  expectedSaleCount?: number;
+  expectedRevenue?: LedgerMoneySync;
+  legacyRevenue?: LedgerMoneySync;
+  /** True only after every retained Sale revision for this date was ACKed. */
+  uploadComplete: boolean;
+  /** Aggregate-only dates are explicitly classified and never backfilled. */
+  legacySummaryOnly?: boolean;
+}
+
 export interface SyncPayload {
   tables?: TableSync[];
   orders?: OrderSync[];
@@ -170,6 +239,10 @@ export interface SyncPayload {
   /** Enables destructive reconciliation only for clients with full node ids. */
   menuIdentityVersion?: number;
   staff?: StaffSync[];
+  /** Bounded asynchronous upload of genuine retained local Sale records. */
+  saleLedger?: SaleLedgerSync[];
+  /** Per-day completeness claims independently reconciled by Cloud. */
+  saleLedgerDays?: SaleLedgerDaySync[];
   /**
    * Every reservation the POS holds. Absent on builds predating Step 6C, and
    * absent from the `realtimeOnly` fast path.

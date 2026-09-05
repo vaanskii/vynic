@@ -22,6 +22,7 @@ import {
 } from '../util/mobile-date.util';
 import { settingIdentity } from '../../tenancy/tenant-identity';
 import type { TenantContext } from '../../tenancy/tenant-context';
+import { MobileSaleLedgerService } from './mobile-sale-ledger.service';
 
 const MANAGER_TABLE_LAYOUT: Record<string, Set<string>> = {
   first: new Set(['1', '2', '3', '4', '5', '6', '7', '8', '9']),
@@ -54,6 +55,11 @@ export interface DashboardResponse {
   reservedTables: number;
   freeTables: number;
   snapshotAt: string;
+  financialProvenance?: string;
+  financialWarning?: string | null;
+  tbcRevenue?: number;
+  bogRevenue?: number;
+  advanceApplied?: number;
 }
 
 export interface StaffRankEntry {
@@ -81,6 +87,14 @@ export interface FinancialsResponse {
     paymentType: string;
     createdAt: string;
   }[];
+  financialProvenance?: string;
+  financialWarning?: string | null;
+  tbcRevenue?: number;
+  bogRevenue?: number;
+  advanceApplied?: number;
+  voidedCount?: number;
+  restoredCount?: number;
+  internalCount?: number;
 }
 
 /**
@@ -99,6 +113,7 @@ export class MobileDashboardService {
     private readonly gateway: MonitoringGateway,
     private readonly posCommands: PosCommandDispatcher,
     private readonly mutationSupport: MobileMutationSupport,
+    private readonly saleLedger?: MobileSaleLedgerService,
   ) {}
 
   private normalizeManagerTableNumber(raw: unknown, floor: string): string {
@@ -367,6 +382,23 @@ export class MobileDashboardService {
       openTableOrders.length,
     );
 
+    const ledger = this.saleLedger
+      ? await this.saleLedger.getSummary(tenant, {
+          from: todayDateKey,
+          to: todayDateKey,
+        })
+      : null;
+    if (ledger?.provenance === 'LEDGER_COMPLETE') {
+      todayRev = Number(ledger.revenue);
+      closedTablesRevenue = todayRev;
+      todayOrderCount = ledger.revenueSaleCount;
+      cashRevenue = Number(ledger.cashCollected);
+      cardRevenue =
+        Number(ledger.tbcCollected) +
+        Number(ledger.bogCollected) +
+        Number(ledger.legacyCardCollected);
+    }
+
     return {
       todayRevenue: r(todayRev),
       shiftTotalRevenue: r(shiftTotalRevenue),
@@ -396,6 +428,15 @@ export class MobileDashboardService {
       reservedTables,
       freeTables,
       snapshotAt: new Date().toISOString(),
+      ...(ledger
+        ? {
+            financialProvenance: ledger.provenance,
+            financialWarning: ledger.warning,
+            tbcRevenue: Number(ledger.tbcCollected),
+            bogRevenue: Number(ledger.bogCollected),
+            advanceApplied: Number(ledger.advanceApplied),
+          }
+        : {}),
     };
   }
 
@@ -527,6 +568,22 @@ export class MobileDashboardService {
       expMap.set(e.category, (expMap.get(e.category) ?? 0) + Number(e.amount));
     }
 
+    const ledger = this.saleLedger
+      ? await this.saleLedger.getSummary(tenant, {
+          from: currentBusinessDate,
+          to: currentBusinessDate,
+        })
+      : null;
+    if (ledger?.provenance === 'LEDGER_COMPLETE') {
+      revenue = Number(ledger.revenue);
+      cashRev = Number(ledger.cashCollected);
+      cardRev =
+        Number(ledger.tbcCollected) +
+        Number(ledger.bogCollected) +
+        Number(ledger.legacyCardCollected);
+      orderCount = ledger.revenueSaleCount;
+    }
+
     return {
       revenue: r(revenue),
       expenses: r(totalExp),
@@ -549,6 +606,18 @@ export class MobileDashboardService {
         paymentType: e.paymentType,
         createdAt: e.createdAt.toISOString(),
       })),
+      ...(ledger
+        ? {
+            financialProvenance: ledger.provenance,
+            financialWarning: ledger.warning,
+            tbcRevenue: Number(ledger.tbcCollected),
+            bogRevenue: Number(ledger.bogCollected),
+            advanceApplied: Number(ledger.advanceApplied),
+            voidedCount: ledger.voidedCount,
+            restoredCount: ledger.restoredCount,
+            internalCount: ledger.internalCount,
+          }
+        : {}),
     };
   }
 

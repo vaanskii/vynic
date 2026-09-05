@@ -184,6 +184,135 @@ model Expense {
   @@schema("pos")
 }
 
+/// Durable Cloud mirror of one genuine Sale retained by the POS.
+///
+/// The POS remains the operational/offline transaction authority. Monetary
+/// values cross the sync boundary as fixed-scale decimal strings and are
+/// persisted exactly; this model never derives historical prices from the
+/// mutable Menu mirror.
+model CloudSale {
+  id                 String        @id @default(uuid())
+  venueId            String
+  posSaleId          String
+  posOrderId         Int
+  closureId          String?
+  businessDate       String
+  createdAt          DateTime
+  closedAt           DateTime
+  gross              Decimal       @db.Decimal(18, 2)
+  subtotal           Decimal       @db.Decimal(18, 2)
+  serviceFee         Decimal       @db.Decimal(18, 2)
+  discount           Decimal       @db.Decimal(18, 2)
+  manualAdjustment   Decimal       @db.Decimal(18, 2)
+  advanceApplied     Decimal       @db.Decimal(18, 2)
+  amountDueNow       Decimal       @db.Decimal(18, 2)
+  collectedNow       Decimal       @db.Decimal(18, 2)
+  paymentMethod      String
+  customPaymentLabel String?
+  isFiscal           Boolean
+  isCancelled        Boolean       @default(false)
+  cancelledAt        DateTime?
+  cancelledBy        String?
+  cancellationReason String?
+  restoredToOrder    Boolean       @default(false)
+  restoredAt         DateTime?
+  restoredBy         String?
+  createdBy          String
+  closedById         String?
+  tableNumbers       String[]
+  floor              String
+  sourceRevision     Int
+  sourceUpdatedAt    DateTime
+  syncedAt           DateTime      @updatedAt
+  venue              Venue         @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  lines              SaleLine[]
+  payments           SalePayment[]
+
+  @@unique([venueId, posSaleId])
+  @@unique([venueId, closureId])
+  @@index([venueId, businessDate, closedAt, id])
+  @@index([venueId, businessDate, paymentMethod])
+  @@index([venueId, closedById, businessDate])
+  @@schema("pos")
+}
+
+/// Frozen transaction-time line snapshot. menuItemId/variantId are the POS
+/// business identities established by the complete Menu identity migration;
+/// null means the line was manual/unlinked and is never inferred from a name.
+model SaleLine {
+  id          String    @id @default(uuid())
+  saleId      String
+  lineSeq     Int
+  menuItemId  String?
+  variantId   String?
+  itemName    String
+  variantName String?
+  quantity    Int
+  unitPrice   Decimal   @db.Decimal(18, 2)
+  lineTotal   Decimal   @db.Decimal(18, 2)
+  comment     String?
+  sale        CloudSale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@unique([saleId, lineSeq])
+  @@index([menuItemId])
+  @@index([variantId])
+  @@schema("pos")
+}
+
+/// One durable tender/advance component of a Sale.
+model SalePayment {
+  id     String    @id @default(uuid())
+  saleId String
+  method String
+  amount Decimal   @db.Decimal(18, 2)
+  sale   CloudSale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@unique([saleId, method])
+  @@index([method])
+  @@schema("pos")
+}
+
+enum SaleLedgerCompleteness {
+  COMPLETE
+  PARTIAL
+  LEGACY_SUMMARY_ONLY
+
+  @@schema("pos")
+}
+
+enum SaleLedgerReconciliation {
+  MATCHED
+  MISMATCH
+  INCOMPLETE
+  LEGACY_ONLY
+
+  @@schema("pos")
+}
+
+/// Per-business-day proof of whether the per-Sale mirror is safe to use as a
+/// complete financial source. A day is COMPLETE only after the POS says its
+/// bounded upload has no outstanding revisions and Cloud independently
+/// re-derives the same Sale count and revenue.
+model SaleLedgerDay {
+  id                 String                   @id @default(uuid())
+  venueId            String
+  businessDate       String
+  completeness       SaleLedgerCompleteness
+  reconciliation     SaleLedgerReconciliation
+  expectedSaleCount  Int?
+  expectedRevenue    Decimal?                 @db.Decimal(18, 2)
+  ledgerSaleCount    Int
+  ledgerRevenue      Decimal                  @db.Decimal(18, 2)
+  legacyRevenue      Decimal?                 @db.Decimal(18, 2)
+  declaredCompleteAt DateTime?
+  lastSyncedAt       DateTime
+  venue              Venue                    @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@unique([venueId, businessDate])
+  @@index([venueId, completeness, businessDate])
+  @@schema("pos")
+}
+
 model Staff {
   id        String    @id @default(uuid())
   venueId   String
@@ -601,6 +730,8 @@ model Venue {
   menuCategories    MenuCategory[]
   menuItems         MenuItem[]
   expenses          Expense[]
+  cloudSales        CloudSale[]
+  saleLedgerDays    SaleLedgerDay[]
   staff             Staff[]
   auditReports      AuditReport[]
   posReservations   PosReservation[]

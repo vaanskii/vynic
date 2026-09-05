@@ -32,6 +32,7 @@ import { MobileMutationSupport } from './services/mobile-mutation-support.servic
 import { MobileReservationsService } from './services/mobile-reservations.service';
 import { MobileDashboardService } from './services/mobile-dashboard.service';
 import { MobileOrdersService } from './services/mobile-orders.service';
+import { MobileSaleLedgerService } from './services/mobile-sale-ledger.service';
 
 // ─── Controller ───────────────────────────────────────────────────────────────
 
@@ -50,6 +51,7 @@ export class MobileController {
     private readonly reservations: MobileReservationsService,
     private readonly dashboard: MobileDashboardService,
     private readonly orders: MobileOrdersService,
+    private readonly saleLedger: MobileSaleLedgerService,
   ) {}
 
   // GET /mobile/restaurant-settings
@@ -129,6 +131,60 @@ export class MobileController {
   @Get('financials')
   async getFinancials(@ManagerTenant() tenant: TenantContext) {
     return this.dashboard.getFinancials(tenant);
+  }
+
+  /** Exact, provenance-bearing Cloud Sale ledger summary. */
+  @Get('financial-summary')
+  async getFinancialSummary(
+    @ManagerTenant() tenant: TenantContext,
+    @Query() query: { from?: string; to?: string },
+  ) {
+    return this.saleLedger.getSummary(tenant, query);
+  }
+
+  /** Keyset-paginated frozen Sale history. */
+  @Get('sales')
+  async getSales(
+    @ManagerTenant() tenant: TenantContext,
+    @Query()
+    query: {
+      from?: string;
+      to?: string;
+      cursor?: string;
+      limit?: string;
+      paymentMethod?: string;
+      staffId?: string;
+      fiscal?: string;
+      state?: string;
+      menuItemId?: string;
+      variantId?: string;
+    },
+  ) {
+    return this.saleLedger.listSales(tenant, query);
+  }
+
+  @Get('sales/:id')
+  async getSale(
+    @ManagerTenant() tenant: TenantContext,
+    @Param('id') id: string,
+  ) {
+    return this.saleLedger.getSale(tenant, id);
+  }
+
+  @Get('product-analytics')
+  async getProductAnalytics(
+    @ManagerTenant() tenant: TenantContext,
+    @Query() query: { from?: string; to?: string; limit?: string },
+  ) {
+    return this.saleLedger.getProducts(tenant, query);
+  }
+
+  @Get('sale-staff-analytics')
+  async getSaleStaffAnalytics(
+    @ManagerTenant() tenant: TenantContext,
+    @Query() query: { from?: string; to?: string },
+  ) {
+    return this.saleLedger.getStaff(tenant, query);
   }
 
   // POST /mobile/expenses

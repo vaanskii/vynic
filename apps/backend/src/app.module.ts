@@ -17,6 +17,7 @@ import { MobileMutationSupport } from './mobile/services/mobile-mutation-support
 import { MobileReservationsService } from './mobile/services/mobile-reservations.service';
 import { MobileDashboardService } from './mobile/services/mobile-dashboard.service';
 import { MobileOrdersService } from './mobile/services/mobile-orders.service';
+import { MobileSaleLedgerService } from './mobile/services/mobile-sale-ledger.service';
 import { PlatformModule } from './platform/platform.module';
 import { PosCallbackModule } from './pos/pos-callback.module';
 import { PosCommandModule } from './pos/pos-command.module';
@@ -33,6 +34,7 @@ import { ReservationSyncService } from './pos/sync/snapshot/reservation-sync.ser
 import { StaffSyncService } from './pos/sync/snapshot/staff-sync.service';
 import { SyncBroadcastService } from './pos/sync/snapshot/sync-broadcast.service';
 import { TableSyncService } from './pos/sync/snapshot/table-sync.service';
+import { SaleLedgerSyncService } from './pos/sync/snapshot/sale-ledger-sync.service';
 import { RealtimeModule } from './realtime/realtime.module';
 import { WebsiteModule } from './website/website.module';
 
@@ -64,6 +66,7 @@ import { WebsiteModule } from './website/website.module';
     ReservationSyncService,
     StaffSyncService,
     BusinessDaySyncService,
+    SaleLedgerSyncService,
     SyncBroadcastService,
     MobileUsersService,
     MobileAuditLogService,
@@ -74,6 +77,7 @@ import { WebsiteModule } from './website/website.module';
     MobileReservationsService,
     MobileDashboardService,
     MobileOrdersService,
+    MobileSaleLedgerService,
   ],
 })
 export class AppModule {}

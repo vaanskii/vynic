@@ -966,6 +966,35 @@ class MobileApiService {
   // ── Recipes / technological cards ─────────────────────────────────────
 
   /// Menu-oriented: every Menu Item, marked configured or not.
+  static Future<List<Map<String, dynamic>>> getConsumptions({
+    String? from,
+    String? to,
+    bool unmapped = false,
+  }) async {
+    final query = Uri(
+      queryParameters: {
+        'unmapped': '$unmapped',
+        if (from != null) 'from': from,
+        if (to != null) 'to': to,
+      },
+    ).query;
+    final response = await _get('/mobile/inventory/consumptions?$query');
+    if (response.statusCode != 200)
+      throw Exception(_apiError('Consumption history', response));
+    return (jsonDecode(response.body) as List)
+        .map((r) => Map<String, dynamic>.from(r as Map))
+        .toList();
+  }
+
+  static Future<Map<String, dynamic>> getConsumption(String id) async {
+    final response = await _get(
+      '/mobile/inventory/consumptions/${Uri.encodeComponent(id)}',
+    );
+    if (response.statusCode != 200)
+      throw Exception(_apiError('Consumption detail', response));
+    return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+  }
+
   static Future<List<RecipeMenuItem>> getRecipeMenuItems({
     String? search,
     String? status,

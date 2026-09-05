@@ -114,6 +114,21 @@ class _InventoryTabState extends State<InventoryAdminTab>
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _sectionSelector(),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          key: const Key('inventory-consumption-history'),
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const ConsumptionHistoryScreen(),
+                            ),
+                          ),
+                          icon: const Icon(Icons.receipt_long_outlined),
+                          label: const Text(
+                            'ჩამოწერები და დაუკავშირებელი გაყიდვები',
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 12),
                       _searchAndAdd(constraints.maxWidth),
                       const SizedBox(height: 18),
@@ -137,6 +152,25 @@ class _InventoryTabState extends State<InventoryAdminTab>
   }
 
   Widget _sectionSelector() {
+    if (MediaQuery.sizeOf(context).width < 520) {
+      const labels = ['პროდუქტები', 'მომწოდებლები', 'მიღებები', 'რეცეპტები'];
+      return Wrap(
+        key: const Key('inventory-section-selector'),
+        spacing: 8,
+        runSpacing: 4,
+        children: [
+          for (final section in _InventorySection.values)
+            ChoiceChip(
+              label: Text(labels[section.index]),
+              selected: _section == section,
+              onSelected: (_) => setState(() {
+                _section = section;
+                _search.clear();
+              }),
+            ),
+        ],
+      );
+    }
     return SegmentedButton<_InventorySection>(
       key: const Key('inventory-section-selector'),
       showSelectedIcon: false,
@@ -584,7 +618,18 @@ class _StockItemCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (item.isLowStock) ...[
+                    if (item.isNegativeStock) ...[
+                      const Flexible(
+                        child: Text(
+                          'უარყოფითი ნაშთი',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ] else if (item.isLowStock) ...[
                       const _LowStockBadge(),
                       const SizedBox(width: 6),
                     ],
@@ -604,7 +649,7 @@ class _StockItemCard extends StatelessWidget {
                       icon: Icons.inventory_rounded,
                       label:
                           'ნაშთი: ${_quantityText(item.currentStock)} ${_unitShort(item.baseUnit)}',
-                      emphasis: item.isLowStock,
+                      emphasis: item.isLowStock || item.isNegativeStock,
                     ),
                     for (final unit in item.purchaseUnits)
                       _InventoryMeta(
@@ -1193,9 +1238,7 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
       return;
     }
     if (minimumText.isNotEmpty && (minimum == null || minimum < 0)) {
-      setState(
-        () => _error = 'მინიმალური ნაშთი უნდა იყოს არაუარყოფითი რიცხვი',
-      );
+      setState(() => _error = 'მინიმალური ნაშთი უნდა იყოს არაუარყოფითი რიცხვი');
       return;
     }
     final purchaseUnits = <StockItemPurchaseUnit>[];

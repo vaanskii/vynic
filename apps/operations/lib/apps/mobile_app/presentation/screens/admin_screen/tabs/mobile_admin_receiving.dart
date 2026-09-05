@@ -256,10 +256,7 @@ class _ReceivingDetailDialogState extends State<ReceivingDetailDialog> {
       title: Row(
         children: [
           Expanded(
-            child: Text(
-              'მიღება',
-              style: TextStyle(color: AdminTheme.text),
-            ),
+            child: Text('მიღება', style: TextStyle(color: AdminTheme.text)),
           ),
           if (receiving != null)
             _ReceivingStatusBadge(status: receiving.status),
@@ -350,10 +347,7 @@ class _ReceivingDetailDialogState extends State<ReceivingDetailDialog> {
         ],
         if (_error != null) ...[
           const SizedBox(height: 10),
-          Text(
-            _error!,
-            style: TextStyle(color: AdminTheme.bad, fontSize: 12),
-          ),
+          Text(_error!, style: TextStyle(color: AdminTheme.bad, fontSize: 12)),
         ],
       ],
     );
@@ -447,20 +441,14 @@ class _ReceivingDetailDialogState extends State<ReceivingDetailDialog> {
       return [
         TextButton(
           onPressed: () => Navigator.pop(context, _changed),
-          child: Text(
-            'დახურვა',
-            style: TextStyle(color: AdminTheme.textMuted),
-          ),
+          child: Text('დახურვა', style: TextStyle(color: AdminTheme.textMuted)),
         ),
       ];
     }
     return [
       TextButton(
         onPressed: _busy ? null : () => Navigator.pop(context, _changed),
-        child: Text(
-          'დახურვა',
-          style: TextStyle(color: AdminTheme.textMuted),
-        ),
+        child: Text('დახურვა', style: TextStyle(color: AdminTheme.textMuted)),
       ),
       if (receiving.isDraft) ...[
         TextButton(
@@ -482,10 +470,7 @@ class _ReceivingDetailDialogState extends State<ReceivingDetailDialog> {
           key: const Key('receiving-post'),
           onPressed: _busy ? null : _post,
           style: FilledButton.styleFrom(backgroundColor: AdminTheme.primary),
-          child: const Text(
-            'გატარება',
-            style: TextStyle(color: Colors.white),
-          ),
+          child: const Text('გატარება', style: TextStyle(color: Colors.white)),
         ),
       ],
       if (receiving.isPosted)
@@ -493,10 +478,7 @@ class _ReceivingDetailDialogState extends State<ReceivingDetailDialog> {
           key: const Key('receiving-cancel'),
           onPressed: _busy ? null : _cancel,
           style: FilledButton.styleFrom(backgroundColor: AdminTheme.warn),
-          child: const Text(
-            'გაუქმება',
-            style: TextStyle(color: Colors.white),
-          ),
+          child: const Text('გაუქმება', style: TextStyle(color: Colors.white)),
         ),
     ];
   }
@@ -914,10 +896,7 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
                     color: Colors.white,
                   ),
                 )
-              : const Text(
-                  'შენახვა',
-                  style: TextStyle(color: Colors.white),
-                ),
+              : const Text('შენახვა', style: TextStyle(color: Colors.white)),
         ),
       ],
     );
@@ -1138,7 +1117,11 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
 
 /// Current stock, threshold, packaging and the recent ledger rows behind them.
 class StockItemDetailDialog extends StatefulWidget {
-  const StockItemDetailDialog({super.key, required this.stockItemId, this.load});
+  const StockItemDetailDialog({
+    super.key,
+    required this.stockItemId,
+    this.load,
+  });
 
   final String stockItemId;
   final Future<StockItemDetail> Function()? load;
@@ -1204,10 +1187,7 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(
-            'დახურვა',
-            style: TextStyle(color: AdminTheme.textMuted),
-          ),
+          child: Text('დახურვა', style: TextStyle(color: AdminTheme.textMuted)),
         ),
       ],
     );
@@ -1226,13 +1206,26 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
                 '${_quantityText(item.currentStock)} ${_unitShort(item.baseUnit)}',
                 key: const Key('stock-detail-current'),
                 style: TextStyle(
-                  color: item.isLowStock ? AdminTheme.warn : AdminTheme.text,
+                  color: item.isNegativeStock
+                      ? Colors.red
+                      : item.isLowStock
+                      ? AdminTheme.warn
+                      : AdminTheme.text,
                   fontSize: 26,
                   fontWeight: FontWeight.w800,
                 ),
               ),
             ),
-            if (item.isLowStock) const _LowStockBadge(),
+            if (item.isNegativeStock)
+              const Text(
+                'უარყოფითი ნაშთი',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              )
+            else if (item.isLowStock)
+              const _LowStockBadge(),
           ],
         ),
         const SizedBox(height: 4),
@@ -1334,6 +1327,17 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
                             fontSize: 13,
                           ),
                         ),
+                        if (movement.consumptionId != null)
+                          TextButton(
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => ConsumptionHistoryScreen(
+                                  consumptionId: movement.consumptionId,
+                                ),
+                              ),
+                            ),
+                            child: const Text('დეტალები'),
+                          ),
                         Text(
                           '${movement.businessDate} · ${movement.actorName}',
                           style: TextStyle(
@@ -1369,6 +1373,10 @@ String _movementLabel(StockMovement movement) {
       return waybill == null ? 'მიღება' : 'მიღება #$waybill';
     case StockMovementType.receivingReversal:
       return waybill == null ? 'მიღების რევერსი' : 'მიღების რევერსი #$waybill';
+    case StockMovementType.consumption:
+      return 'ჩამოწერა · შეკვეთა #${movement.orderId ?? "—"}';
+    case StockMovementType.consumptionReversal:
+      return 'აღდგენა · შეკვეთა #${movement.orderId ?? "—"}';
     case StockMovementType.unknown:
       return 'მოძრაობა';
   }

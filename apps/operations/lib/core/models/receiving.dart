@@ -27,6 +27,8 @@ enum ReceivingStatus {
 enum StockMovementType {
   receiving('RECEIVING'),
   receivingReversal('RECEIVING_REVERSAL'),
+  consumption('CONSUMPTION'),
+  consumptionReversal('CONSUMPTION_REVERSAL'),
   unknown('UNKNOWN');
 
   const StockMovementType(this.wireValue);
@@ -123,6 +125,8 @@ class StockMovement {
     this.reversalOfMovementId,
     this.receivingWaybillNumber,
     this.receivingSupplierName,
+    this.consumptionId,
+    this.orderId,
   });
 
   final String id;
@@ -137,6 +141,8 @@ class StockMovement {
   final String? reversalOfMovementId;
   final String? receivingWaybillNumber;
   final String? receivingSupplierName;
+  final String? consumptionId;
+  final int? orderId;
 
   double get quantityValue => double.tryParse(quantityDeltaBase) ?? 0;
   bool get isNegative => quantityValue < 0;
@@ -159,6 +165,12 @@ class StockMovement {
       reversalOfMovementId: _text(json['reversalOfMovementId']),
       receivingWaybillNumber: _text(nested['waybillNumber']),
       receivingSupplierName: _text(nested['supplierName']),
+      consumptionId: json['details'] is Map
+          ? _text(json['details']['consumptionId'])
+          : null,
+      orderId: json['details'] is Map
+          ? (json['details']['orderId'] as num?)?.toInt()
+          : null,
     );
   }
 }

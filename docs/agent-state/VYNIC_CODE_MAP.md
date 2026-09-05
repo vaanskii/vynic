@@ -146,6 +146,10 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 ## Inventory
 
 - Boundary and authority: `docs/INVENTORY_STEP1.md` (catalog), `docs/INVENTORY_STEP2.md` (receiving and the quantity ledger), `docs/INVENTORY_STEP3.md` (Menu consumption definitions)
+- Sale consumption/restore authority and rollout: `docs/INVENTORY_STEP4.md`; Cloud materialization, immutable snapshots and Manager history: `apps/backend/src/inventory/sale-consumption.service.ts`; migration `20260911120000_inventory_step4_sale_consumption/`.
+- POS close-time fixed-point snapshot: `apps/operations/lib/core/services/pos/sale_consumption_snapshot.dart`, captured atomically with the Sale by `SalesRepository`; independent durable ACK/retry: `apps/operations/lib/core/services/edge/sale_consumption_sync_service.dart`, driven by Inventory projection refresh. Backup preserves the complete Sale map.
+- Manager consumption investigation: `apps/operations/lib/apps/mobile_app/presentation/screens/consumption_history_screen.dart`; Device upload `POST /edge/inventory/consumption`, Staff history `/mobile/inventory/consumptions` and `/:id`.
+- Step 4 proofs: `apps/backend/src/inventory/sale-consumption.integration.spec.ts`, `apps/operations/test/unit/sale_consumption_test.dart`, `apps/operations/test/widget/manager_consumption_test.dart`, plus existing closure/backup regression suites.
 - Module wiring: `apps/backend/src/inventory/inventory.module.ts`, imported by `app.module.ts` and `edge-transport.module.ts`
 - Cloud schema: `apps/backend/prisma/schema.prisma` (`StockItem`, `Supplier`, `StockItemPurchaseUnit`, `Receiving`, `ReceivingLine`, `StockMovement`, `MenuConsumptionRecipe`, `MenuConsumptionComponent`); migrations `20260908120000_inventory_step1_core/`, `20260909120000_inventory_step2_receiving/`, `20260910120000_inventory_step3_menu_consumption/`
 - Catalog CRUD, derived current stock (`currentStock`), packaging and item detail: `apps/backend/src/inventory/inventory.service.ts`

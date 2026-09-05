@@ -111,6 +111,16 @@ subscription billing is a different domain.
 **Implication:** Never treat a Plan assignment as a subscription or reuse a
 restaurant merchant account for Vynic billing.
 
+## D014 — Sale owns consumption intent; Cloud owns stock effects
+
+**Decision:** Freeze new close-time inventory intent atomically inside the local
+Sale and deliver it independently of financial ledger ACKs. Cloud transactionally
+materializes immutable consumption/reversal movements from that snapshot.
+**Reason:** Checkout and crash recovery cannot depend on Cloud or a later live
+recipe. A restore must reverse the original quantities, not today's recipe.
+**Implication:** No historical backfill, no stock writes on open Orders, no
+second POS StockMovement authority. See `docs/INVENTORY_STEP4.md`.
+
 ## Maintenance
 
 Add an entry only when it prevents repeated architectural debate. Update or

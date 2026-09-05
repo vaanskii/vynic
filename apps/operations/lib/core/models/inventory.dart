@@ -123,6 +123,8 @@ class StockItem {
   /// `LOW`, `OK`, or `NO_MINIMUM` when no threshold is configured.
   final String stockStatus;
 
+  bool get isNegativeStock => stockStatus == 'NEGATIVE';
+
   final List<StockItemPurchaseUnit> purchaseUnits;
 
   /// The units a recipe may consume this item in, as Cloud decides them.
@@ -182,9 +184,7 @@ class StockItem {
     'updatedAt': updatedAt.toUtc().toIso8601String(),
     'currentStock': currentStock,
     'stockStatus': stockStatus,
-    'purchaseUnits': [
-      for (final unit in purchaseUnits) unit.toJson(),
-    ],
+    'purchaseUnits': [for (final unit in purchaseUnits) unit.toJson()],
     'recipeUnits': [for (final unit in recipeUnits) unit.wireValue],
   };
 }

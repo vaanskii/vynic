@@ -45,10 +45,10 @@ current transport status.
 - The latest completed sequence covers Money Integrity 1A/1B, POS enrollment
   1C, incremental audit sync, Edge Step 6C, Menu Identity Phases 4.5/4.6, and
   the Phase 5 Cloud Sale Ledger/Manager financial experience.
-- Inventory Steps 1, 2 and 3 are implemented after the Cloud Sale Ledger. Stock
+- Inventory Steps 1, 2, 3 and 4 are implemented after the Cloud Sale Ledger. Stock
   Items, Suppliers, Receiving/waybill documents, the StockMovement quantity
-  ledger and Menu consumption definitions are present; automatic Sale
-  consumption, costing, waste and stocktake remain later steps.
+  ledger, Menu consumption definitions and automatic Sale consumption/restore
+  reversal are present; costing, waste and stocktake remain later steps.
 
 ## Completed Foundations
 
@@ -75,8 +75,15 @@ current transport status.
 - Inventory Step 3 is implemented: `MenuConsumptionRecipe` +
   `MenuConsumptionComponent` define what one sold Menu Item consumes. One
   generalized model covers direct bottled products, draft pours by volume and
-  multi-ingredient recipes; it is a definition only and writes no
-  `StockMovement`.
+  multi-ingredient recipes; editing a definition writes no `StockMovement`.
+- Inventory Step 4 snapshots new close-time consumption inside the durable POS
+  Sale, then independently retries Device-authenticated effects to Cloud.
+  Cloud atomically materializes `CONSUMPTION` and exact
+  `CONSUMPTION_REVERSAL` movements; restore/re-close preserves old snapshots
+  and uses a new Sale identity. No historical Sale backfill occurs. Internal
+  closes are explicitly excluded because current data cannot distinguish
+  physical internal use from bookkeeping. Unmapped lines never block close and
+  remain visible in Manager history. See `docs/INVENTORY_STEP4.md`.
 
 ## POS / Edge State
 
@@ -176,9 +183,13 @@ current transport status.
   never written again.
 - Current stock is derived, never stored: `SUM(StockMovement.quantityDeltaBase)`
   per Stock Item, computed in PostgreSQL as `Decimal`. There is no editable
-  balance column. Quantities are `Decimal(18,3)`, GEL totals `Decimal(18,2)`,
+  balance column. Receiving quantities are `Decimal(18,3)`, GEL totals `Decimal(18,2)`,
   unit purchase cost `Decimal(18,4)`, effective base-unit cost `Decimal(18,6)`;
   every value crosses the wire as fixed-scale decimal text.
+- StockMovement quantities are `Decimal(21,6)` so six-decimal recipe amounts
+  are preserved without narrowing the previous integer range. Derived negative
+  stock is allowed and explicitly shown as `NEGATIVE`, including without a
+  minimum. Receiving quantity/cost scales remain unchanged.
 - A posted Receiving is inventory history: it cannot be edited or deleted, and
   cancelling it adds reversal movements beside the originals rather than
   removing them. Posting and cancelling both take `SELECT ... FOR UPDATE` on the
@@ -205,8 +216,8 @@ current transport status.
   and the per-sale-unit number can never disagree. Recipes carry no purchase
   cost: a definition is physical consumption, not procurement price. Editing,
   creating or disabling one writes no `StockMovement` and leaves current stock
-  unchanged; a `revision` counter lets a later step snapshot which definition
-  applied instead of joining today's recipe onto a past sale.
+  unchanged; close-time snapshots preserve its `revision` instead of joining
+  today's recipe onto a past sale.
 - Manager Inventory labels are Georgian (`კგ`, `გ`, `ლ`, `მლ`, `ცალი`,
   `ბოთლი`, `შეკვრა`, `ყუთი`; `მინიმალური ნაშთი`, `შესყიდვის შეფუთვა`) while
   storage and the wire keep the stable English enum codes, so no persisted value
@@ -368,7 +379,7 @@ current transport status.
   authenticated as `PlatformUser` to fill that gap.
 - Venue Policy is documented in `docs/VENUE_POLICY_PLAN.md` but not implemented.
   Current operational switches/settings remain local to the POS.
-- Custom restaurant roles/permissions, inventory, SaaS billing, and per-Venue
+- Custom restaurant roles/permissions, SaaS billing, and per-Venue
   payment integration configuration do not exist.
 
 ## Website State
@@ -391,19 +402,18 @@ current transport status.
   POS pulls a complete Device -> Venue catalog through
   `GET /edge/inventory/catalog` into one atomically replaced Hive value at
   startup, after enrollment, and periodically. Failure leaves the last good
-  offline projection intact and never blocks POS startup. The catalog is now
-  version 2 and carries each item's derived `currentStock`, its `stockStatus`
-  (`LOW`/`OK`/`NO_MINIMUM`) and its `purchaseUnits`. The POS keeps Cloud's exact
+  offline projection intact and never blocks POS startup. Catalog version 3
+  carries each item's derived `currentStock`, `stockStatus`
+  (`NEGATIVE`/`LOW`/`OK`/`NO_MINIMUM`) and `purchaseUnits`. The POS keeps exact
   decimal text and Cloud's own low-stock verdict; it never recomputes a balance
   and never posts a Receiving. Receiving and StockMovement stay Cloud
-  financial history and are deliberately not in the POS backup. The catalog is
-  now version 3 and additionally carries the active Menu consumption
-  definitions — both identities (`menuItemId`/`posMenuItemId`,
+  financial history and are deliberately not in the POS backup. The catalog
+  additionally carries the active Menu consumption definitions — both identities (`menuItemId`/`posMenuItemId`,
   `variantId`/`posMenuVariantId`), the recipe `revision` and each component's
-  `baseQuantityPerUnit` — so a later step can consume stock offline. The POS
-  authors no recipe and recomputes no consumption quantity; recipes ride inside
-  the existing `inventoryCatalog` backup value, so no second recipe authority
-  appears, and a pre-Step-3 backup restores with an empty list corrected by the
+  `baseQuantityPerUnit` — for close-time offline snapshots. The POS authors no
+  recipe; it multiplies frozen six-decimal per-unit quantities by sold integers using fixed-point
+  arithmetic. Recipes ride inside the existing `inventoryCatalog` backup value,
+  so no second recipe authority appears, and a pre-Step-3 backup restores with an empty list corrected by the
   next Device pull.
 - Reservations now sync into `PosReservation`; Manager and website reads no
   longer make a synchronous LAN call to the POS.
@@ -540,8 +550,8 @@ current transport status.
 
 ## Deferred Work
 
-- Restaurant Backoffice, Venue Policy, custom roles/RBAC, Inventory automatic
-  Sale consumption / Costing / Waste / Stocktake / inventory variance / expected
+- Restaurant Backoffice, Venue Policy, custom roles/RBAC, Inventory
+  Costing / Waste / Stocktake / inventory variance / expected
   yield and pour loss, cash management,
   reservation holds, generic SaaS venue web, SaaS billing, and per-Venue
   payment credentials.
@@ -552,8 +562,9 @@ current transport status.
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260910120000_inventory_step3_menu_consumption`.
+  `20260911120000_inventory_step4_sale_consumption`.
 - Immediately preceding state migrations:
+  `20260910120000_inventory_step3_menu_consumption`,
   `20260909120000_inventory_step2_receiving`,
   `20260908120000_inventory_step1_core`,
   `20260907120000_cloud_sale_ledger`,

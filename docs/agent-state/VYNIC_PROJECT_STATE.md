@@ -48,7 +48,9 @@ current transport status.
 - Inventory Steps 1, 2, 3 and 4 are implemented after the Cloud Sale Ledger. Stock
   Items, Suppliers, Receiving/waybill documents, the StockMovement quantity
   ledger, Menu consumption definitions and automatic Sale consumption/restore
-  reversal are present; costing, waste and stocktake remain later steps.
+  reversal are present. Step 4.5 adds food/beverage catalog classification, supplier
+  product links, business-date daily receiving and current weighted purchase /
+  theoretical Menu costs; historical Sale COGS, waste and stocktake remain later steps.
 
 ## Completed Foundations
 
@@ -84,6 +86,13 @@ current transport status.
   closes are explicitly excluded because current data cannot distinguish
   physical internal use from bookkeeping. Unmapped lines never block close and
   remain visible in Manager history. See `docs/INVENTORY_STEP4.md`.
+
+- Inventory Step 4.5 is implemented: `SupplierProduct` uses composite Venue-safe
+  foreign keys; Stock Items persist FOOD/BEVERAGE classification; Receiving has a
+  separate businessDate and full-day procurement summaries. Current theoretical
+  Menu cost uses exact Decimal `SUM(POSTED lineTotal) / SUM(baseQuantity)` over
+  valid purchase history, excluding cancelled documents. Missing prices remain
+  explicit, and no historical Sale is revalued. See `docs/INVENTORY_STEP45.md`.
 
 ## POS / Edge State
 
@@ -402,9 +411,10 @@ current transport status.
   POS pulls a complete Device -> Venue catalog through
   `GET /edge/inventory/catalog` into one atomically replaced Hive value at
   startup, after enrollment, and periodically. Failure leaves the last good
-  offline projection intact and never blocks POS startup. Catalog version 3
-  carries each item's derived `currentStock`, `stockStatus`
-  (`NEGATIVE`/`LOW`/`OK`/`NO_MINIMUM`) and `purchaseUnits`. The POS keeps exact
+  offline projection intact and never blocks POS startup. Catalog version 4
+  adds food/beverage classification and supplier links and carries each item's derived `currentStock`, `stockStatus`
+  (`NEGATIVE`/`LOW`/`OK`/`NO_MINIMUM`) and `purchaseUnits`. New POS clients request catalog v4 for item-specific keg packaging; older
+  clients receive v3-compatible purchase units with all active recipes. The POS keeps exact
   decimal text and Cloud's own low-stock verdict; it never recomputes a balance
   and never posts a Receiving. Receiving and StockMovement stay Cloud
   financial history and are deliberately not in the POS backup. The catalog
@@ -551,7 +561,7 @@ current transport status.
 ## Deferred Work
 
 - Restaurant Backoffice, Venue Policy, custom roles/RBAC, Inventory
-  Costing / Waste / Stocktake / inventory variance / expected
+  historical Sale COGS / realized Gross Profit / Waste / Stocktake / inventory variance / expected
   yield and pour loss, cash management,
   reservation holds, generic SaaS venue web, SaaS billing, and per-Venue
   payment credentials.
@@ -562,8 +572,9 @@ current transport status.
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260911120000_inventory_step4_sale_consumption`.
+  `20260912120000_inventory_step45_catalog_cost`.
 - Immediately preceding state migrations:
+  `20260911120000_inventory_step4_sale_consumption`,
   `20260910120000_inventory_step3_menu_consumption`,
   `20260909120000_inventory_step2_receiving`,
   `20260908120000_inventory_step1_core`,

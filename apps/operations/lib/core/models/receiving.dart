@@ -182,6 +182,7 @@ class Receiving {
     required this.supplierId,
     required this.supplierName,
     required this.documentDate,
+    this.businessDate,
     required this.receivedAt,
     required this.status,
     required this.documentTotal,
@@ -208,6 +209,8 @@ class Receiving {
   final String supplierName;
 
   final String documentDate;
+  final String? businessDate;
+  String get effectiveBusinessDate => businessDate ?? documentDate;
   final DateTime receivedAt;
   final ReceivingStatus status;
   final String documentTotal;
@@ -249,6 +252,7 @@ class Receiving {
       supplierId: _text(json['supplierId']) ?? '',
       supplierName: _text(json['supplierName']) ?? '',
       documentDate: _text(json['documentDate']) ?? '',
+      businessDate: _text(json['businessDate']),
       receivedAt: _date(json['receivedAt']),
       status: ReceivingStatus.parse(_text(json['status'])),
       documentTotal: _text(json['documentTotal']) ?? '0.00',
@@ -277,10 +281,17 @@ class Receiving {
 
 /// One page of Receiving history.
 class ReceivingPage {
-  const ReceivingPage({required this.receivings, this.nextCursor});
+  const ReceivingPage({
+    required this.receivings,
+    this.nextCursor,
+    this.currentBusinessDate,
+    this.businessDays = const [],
+  });
 
   final List<Receiving> receivings;
   final String? nextCursor;
+  final String? currentBusinessDate;
+  final List<ReceivingDaySummary> businessDays;
 
   factory ReceivingPage.fromJson(Map<String, dynamic> json) {
     return ReceivingPage(
@@ -289,6 +300,13 @@ class ReceivingPage {
           .map((row) => Receiving.fromJson(Map<String, dynamic>.from(row)))
           .toList(growable: false),
       nextCursor: _text(json['nextCursor']),
+      currentBusinessDate: _text(json['currentBusinessDate']),
+      businessDays: (json['businessDays'] as List? ?? [])
+          .map(
+            (row) =>
+                ReceivingDaySummary.fromJson(Map<String, dynamic>.from(row)),
+          )
+          .toList(),
     );
   }
 }
@@ -297,11 +315,15 @@ class ReceivingPage {
 class StockItemDetail {
   const StockItemDetail({
     required this.item,
+    this.weightedUnitCost,
+    this.lastPurchaseUnitCost,
     this.recentMovements = const <StockMovement>[],
     this.usedBy = const <StockItemUsage>[],
   });
 
   final StockItem item;
+  final String? weightedUnitCost;
+  final String? lastPurchaseUnitCost;
   final List<StockMovement> recentMovements;
 
   /// Which Menu Items consume this one. Empty on an older backend, which is
@@ -312,6 +334,10 @@ class StockItemDetail {
   factory StockItemDetail.fromJson(Map<String, dynamic> json) {
     return StockItemDetail(
       item: StockItem.fromJson(json),
+      weightedUnitCost:
+          (json['currentCost'] as Map?)?['weightedUnitCost'] as String?,
+      lastPurchaseUnitCost:
+          (json['currentCost'] as Map?)?['lastPurchaseUnitCost'] as String?,
       recentMovements: (json['recentMovements'] as List? ?? const [])
           .whereType<Map>()
           .map((row) => StockMovement.fromJson(Map<String, dynamic>.from(row)))
@@ -337,4 +363,24 @@ DateTime _date(Object? raw) {
 
 DateTime? _optionalDate(Object? raw) {
   return DateTime.tryParse(raw?.toString() ?? '')?.toLocal();
+}
+
+class ReceivingDaySummary {
+  const ReceivingDaySummary({
+    required this.businessDate,
+    required this.status,
+    required this.count,
+    required this.total,
+  });
+  final String businessDate;
+  final ReceivingStatus status;
+  final int count;
+  final String total;
+  factory ReceivingDaySummary.fromJson(Map<String, dynamic> row) =>
+      ReceivingDaySummary(
+        businessDate: row['businessDate'] as String,
+        status: ReceivingStatus.parse(row['status'] as String),
+        count: row['count'] as int,
+        total: row['total'] as String,
+      );
 }

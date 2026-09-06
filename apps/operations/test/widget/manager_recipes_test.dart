@@ -245,10 +245,7 @@ void main() {
       await tester.pumpWidget(_tab());
       await tester.pumpAndSettle();
 
-      await tester.enterText(
-        find.byKey(const Key('inventory-search')),
-        'burg',
-      );
+      await tester.enterText(find.byKey(const Key('inventory-search')), 'burg');
       await tester.pumpAndSettle();
       expect(find.text('Burger'), findsOneWidget);
       expect(find.text('ხინკალი'), findsNothing);
@@ -315,7 +312,7 @@ void main() {
 
       expect(find.byKey(const Key('recipe-editor')), findsOneWidget);
       // The selling price is context, and read-only.
-      expect(find.text('ფასი: 4.00 ₾'), findsOneWidget);
+      expect(find.text('გასაყიდი ფასი: 4.00 ₾'), findsOneWidget);
       expect(find.text('მარაგთან დაკავშირება'), findsOneWidget);
       // A direct link has no ingredient list to grow.
       expect(find.byKey(const Key('recipe-add-component')), findsNothing);
@@ -460,7 +457,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('რეცეპტი'));
+      await tester.tap(find.text('ტექნოლოგიური ბარათი'));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('recipe-yield')), findsOneWidget);
 
@@ -515,7 +512,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('რეცეპტი'));
+      await tester.tap(find.text('ტექნოლოგიური ბარათი'));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('recipe-component-unit-0')));
       await tester.pumpAndSettle();
@@ -557,7 +554,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('რეცეპტი'));
+      await tester.tap(find.text('ტექნოლოგიური ბარათი'));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const Key('recipe-component-quantity-0')),
@@ -653,6 +650,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      await tester.ensureVisible(
+        find.byKey(const Key('recipe-create-stock-item')),
+      );
       await tester.tap(find.byKey(const Key('recipe-create-stock-item')));
       await tester.pumpAndSettle();
 
@@ -748,7 +748,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('გამოიყენება პროდუქტებში'), findsOneWidget);
-      expect(find.byKey(const Key('stock-detail-usage-recipe-1')), findsOneWidget);
+      expect(
+        find.byKey(const Key('stock-detail-usage-recipe-1')),
+        findsOneWidget,
+      );
       expect(find.text('ხინკალი'), findsOneWidget);
       expect(find.text('0.035 კგ'), findsOneWidget);
       expect(find.text('Burger'), findsOneWidget);

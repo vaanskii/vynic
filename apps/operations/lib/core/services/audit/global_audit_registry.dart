@@ -58,12 +58,15 @@ abstract final class GlobalAuditRegistry {
   };
 
   static const Set<String> _stockItemActions = {
+    GlobalAuditAction.stockItemSuppliersUpdated,
     GlobalAuditAction.stockItemCreated,
     GlobalAuditAction.stockItemUpdated,
     GlobalAuditAction.stockItemDisabled,
   };
 
   static const Set<String> _supplierActions = {
+    GlobalAuditAction.supplierProductLinked,
+    GlobalAuditAction.supplierProductUnlinked,
     GlobalAuditAction.supplierCreated,
     GlobalAuditAction.supplierUpdated,
     GlobalAuditAction.supplierDisabled,

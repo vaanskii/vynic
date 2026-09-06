@@ -9,6 +9,7 @@ export const INVENTORY_UNITS = [
   'bottle',
   'pack',
   'box',
+  'keg',
 ] as const;
 
 export type InventoryUnit = (typeof INVENTORY_UNITS)[number];
@@ -23,6 +24,7 @@ const UNIT_DIMENSIONS: Record<InventoryUnit, InventoryUnitDimension> = {
   bottle: 'COUNT',
   pack: 'COUNT',
   box: 'COUNT',
+  keg: 'COUNT',
 };
 
 const TO_CANONICAL: Partial<Record<InventoryUnit, number>> = {

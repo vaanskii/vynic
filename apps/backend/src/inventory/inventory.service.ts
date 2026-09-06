@@ -4,7 +4,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { InventoryCostService } from './inventory-cost.service';
+import { Prisma, StockItemClassification } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import type { TenantContext } from '../tenancy/tenant-context';
 import {
@@ -40,6 +41,8 @@ export interface PurchaseUnitInput {
 export interface StockItemInput {
   name?: unknown;
   sku?: unknown;
+  classification?: unknown;
+  supplierIds?: unknown;
   baseUnit?: unknown;
   minimumStock?: unknown;
   notes?: unknown;
@@ -90,7 +93,10 @@ export class InventoryService {
           : {}),
       },
       orderBy: [{ isActive: 'desc' }, { name: 'asc' }, { id: 'asc' }],
-      include: { purchaseUnits: { orderBy: { unit: 'asc' } } },
+      include: {
+        supplierProducts: true,
+        purchaseUnits: { orderBy: { unit: 'asc' } },
+      },
     });
     const balances = await this.currentStock(tenant.venueId);
     return rows.map((row) => this.presentStockItem(row, balances.get(row.id)));
@@ -106,7 +112,10 @@ export class InventoryService {
     const cleanId = requiredText(id, 'id');
     const row = await this.prisma.stockItem.findFirst({
       where: { id: cleanId, venueId: tenant.venueId },
-      include: { purchaseUnits: { orderBy: { unit: 'asc' } } },
+      include: {
+        supplierProducts: true,
+        purchaseUnits: { orderBy: { unit: 'asc' } },
+      },
     });
     if (!row) throw new NotFoundException('Stock item not found');
     const [balances, movements, usedBy] = await Promise.all([
@@ -133,6 +142,10 @@ export class InventoryService {
     ]);
     return {
       ...this.presentStockItem(row, balances.get(cleanId)),
+      currentCost: await new InventoryCostService(this.prisma).stockItem(
+        tenant,
+        cleanId,
+      ),
       usedBy,
       recentMovements: movements.map((movement) => ({
         ...presentMovement(movement),
@@ -194,24 +207,41 @@ export class InventoryService {
       },
       orderBy: [{ isActive: 'desc' }, { name: 'asc' }, { id: 'asc' }],
     });
-    return rows.map((row) => this.presentSupplier(row));
+    const links = await this.prisma.supplierProduct.findMany({
+      where: { venueId: tenant.venueId },
+    });
+    return rows.map((row) => ({
+      ...this.presentSupplier(row),
+      stockItemIds: links
+        .filter((link) => link.supplierId === row.id)
+        .map((link) => link.stockItemId),
+    }));
   }
 
   /** Complete Device-scoped projection for the POS Hive cache. */
-  async getCatalog(tenant: TenantContext) {
+  async getCatalog(tenant: TenantContext, version: 3 | 4 = 4) {
     const [stockItems, suppliers, recipes] = await Promise.all([
       this.listStockItems(tenant),
       this.listSuppliers(tenant),
       this.recipes.projection(tenant.venueId),
     ]);
     return {
-      // v2 added derived current stock and item packaging; v3 adds the active
-      // consumption definitions Step 4 will need offline. An older POS ignores
-      // every field it does not know and keeps working from the rest.
-      version: 3,
+      // Older POS decoders reject unknown purchase units. Keep their recipe
+      // refresh working by omitting the new purchasing-only keg label.
+      version,
       generatedAt: new Date().toISOString(),
-      units: INVENTORY_UNIT_DEFINITIONS,
-      stockItems,
+      units: INVENTORY_UNIT_DEFINITIONS.filter(
+        (unit) => version >= 4 || unit.code !== 'keg',
+      ),
+      stockItems:
+        version >= 4
+          ? stockItems
+          : stockItems.map((item) => ({
+              ...item,
+              purchaseUnits: item.purchaseUnits.filter(
+                (unit) => unit.unit !== 'keg',
+              ),
+            })),
       suppliers,
       recipes,
     };
@@ -222,7 +252,8 @@ export class InventoryService {
       venueId: actor.venueId,
       name: requiredText(input.name, 'name'),
       sku: optionalSku(input.sku),
-      baseUnit: inventoryUnit(input.baseUnit),
+      classification: classification(input.classification ?? 'FOOD'),
+      baseUnit: stockBaseUnit(input.baseUnit),
       minimumStock: optionalQuantity(input.minimumStock, 'minimumStock'),
       notes: optionalText(input.notes),
       isActive: optionalBoolean(input.isActive, true, 'isActive'),
@@ -243,8 +274,17 @@ export class InventoryService {
               })),
             },
           },
-          include: { purchaseUnits: { orderBy: { unit: 'asc' } } },
+          include: {
+            supplierProducts: true,
+            purchaseUnits: { orderBy: { unit: 'asc' } },
+          },
         });
+        if (has(input, 'supplierIds')) {
+          await this.replaceSuppliers(tx, actor, row.id, input.supplierIds);
+          row.supplierProducts = await tx.supplierProduct.findMany({
+            where: { venueId: actor.venueId, stockItemId: row.id },
+          });
+        }
         await this.audit(tx, actor, {
           action: InventoryAuditAction.STOCK_ITEM_CREATED,
           entityType: 'STOCK_ITEM',
@@ -253,6 +293,10 @@ export class InventoryService {
             stockItemId: row.id,
             name: row.name,
             sku: row.sku,
+            classification: row.classification,
+            supplierIds: (row.supplierProducts ?? []).map(
+              (link: any) => link.supplierId,
+            ),
             baseUnit: row.baseUnit,
             minimumStock: decimalText(row.minimumStock),
             isActive: row.isActive,
@@ -287,11 +331,46 @@ export class InventoryService {
         assignChange(
           data,
           changes,
+          'classification',
+          existing.classification,
+          input,
+          classification,
+        );
+        if (has(input, 'supplierIds'))
+          await this.replaceSuppliers(
+            tx,
+            actor,
+            existing.id,
+            input.supplierIds,
+          );
+        assignChange(
+          data,
+          changes,
           'baseUnit',
           existing.baseUnit,
           input,
-          inventoryUnit,
+          stockBaseUnit,
         );
+        if (data.baseUnit != null && data.baseUnit !== existing.baseUnit) {
+          const [receiving, recipe] = await Promise.all([
+            tx.receivingLine.findFirst({
+              where: {
+                stockItemId: existing.id,
+                receiving: {
+                  venueId: actor.venueId,
+                  status: { in: ['POSTED', 'CANCELLED'] },
+                },
+              },
+            }),
+            tx.menuConsumptionComponent.findFirst({
+              where: { venueId: actor.venueId, stockItemId: existing.id },
+            }),
+          ]);
+          if (receiving || recipe)
+            throw new ConflictException(
+              'A used stock item must keep its base unit',
+            );
+        }
         if (has(input, 'minimumStock')) {
           const next = optionalQuantity(input.minimumStock, 'minimumStock');
           const previousText = decimalText(existing.minimumStock);
@@ -327,8 +406,10 @@ export class InventoryService {
 
         // Packaging arrives as one declared set, so removing "pack" is
         // expressed by sending the set without it rather than by a delete call.
-        const baseUnit = (data.baseUnit as string | undefined) ?? existing.baseUnit;
-        let nextPurchaseUnits: ReturnType<typeof readPurchaseUnits> | null = null;
+        const baseUnit =
+          (data.baseUnit as string | undefined) ?? existing.baseUnit;
+        let nextPurchaseUnits: ReturnType<typeof readPurchaseUnits> | null =
+          null;
         if (has(input, 'purchaseUnits')) {
           const current = await tx.stockItemPurchaseUnit.findMany({
             where: { stockItemId: existing.id },
@@ -351,7 +432,10 @@ export class InventoryService {
           return this.presentStockItem(
             await tx.stockItem.findUniqueOrThrow({
               where: { id: existing.id },
-              include: { purchaseUnits: { orderBy: { unit: 'asc' } } },
+              include: {
+                supplierProducts: true,
+                purchaseUnits: { orderBy: { unit: 'asc' } },
+              },
             }),
             (await this.currentStock(actor.venueId, [existing.id])).get(
               existing.id,
@@ -379,7 +463,10 @@ export class InventoryService {
         const updated = await tx.stockItem.update({
           where: { id: existing.id },
           data,
-          include: { purchaseUnits: { orderBy: { unit: 'asc' } } },
+          include: {
+            supplierProducts: true,
+            purchaseUnits: { orderBy: { unit: 'asc' } },
+          },
         });
         await this.audit(tx, actor, {
           action:
@@ -495,6 +582,132 @@ export class InventoryService {
     });
   }
 
+  async supplierDetail(tenant: TenantContext, id: string) {
+    const supplier = await this.prisma.supplier.findFirst({
+      where: { venueId: tenant.venueId, id },
+    });
+    if (!supplier) throw new NotFoundException('Supplier not found');
+    const [links, recentReceivings] = await Promise.all([
+      this.prisma.supplierProduct.findMany({
+        where: { venueId: tenant.venueId, supplierId: id },
+        include: { stockItem: true },
+      }),
+      this.prisma.receiving.findMany({
+        where: { venueId: tenant.venueId, supplierId: id },
+        orderBy: [{ businessDate: 'desc' }, { createdAt: 'desc' }],
+        take: 20,
+        select: {
+          id: true,
+          businessDate: true,
+          supplierNameSnapshot: true,
+          status: true,
+          documentTotal: true,
+        },
+      }),
+    ]);
+    return {
+      ...this.presentSupplier(supplier),
+      products: links.map((link) => ({
+        id: link.stockItem.id,
+        name: link.stockItem.name,
+        classification: link.stockItem.classification,
+      })),
+      recentReceivings: recentReceivings.map((row) => ({
+        ...row,
+        documentTotal: row.documentTotal.toFixed(2),
+      })),
+    };
+  }
+
+  async setSupplierProduct(
+    actor: InventoryActor,
+    supplierId: string,
+    stockItemId: string,
+    linked: boolean,
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      const supplier = await tx.supplier.findFirst({
+        where: { venueId: actor.venueId, id: supplierId },
+      });
+      const item = await tx.stockItem.findFirst({
+        where: { venueId: actor.venueId, id: stockItemId },
+      });
+      if (!supplier || !item)
+        throw new NotFoundException('Supplier or stock item not found');
+      // Serialize catalog edits for this item, including full replacement in its editor.
+      await tx.$queryRaw`SELECT id FROM pos."StockItem" WHERE id = ${stockItemId} AND "venueId" = ${actor.venueId} FOR UPDATE`;
+      const key = { venueId: actor.venueId, supplierId, stockItemId };
+      const changed = linked
+        ? (
+            await tx.supplierProduct.createMany({
+              data: [key],
+              skipDuplicates: true,
+            })
+          ).count
+        : (await tx.supplierProduct.deleteMany({ where: key })).count;
+      if (changed)
+        await writeInventoryAudit(tx, actor, {
+          action: linked
+            ? 'SUPPLIER_PRODUCT_LINKED'
+            : 'SUPPLIER_PRODUCT_UNLINKED',
+          entityType: 'SUPPLIER',
+          entityId: supplierId,
+          data: {
+            supplierId,
+            supplierName: supplier.name,
+            stockItemId,
+            stockItemName: item.name,
+          },
+        });
+      return { linked };
+    });
+  }
+
+  private async replaceSuppliers(
+    tx: Prisma.TransactionClient,
+    actor: InventoryActor,
+    stockItemId: string,
+    raw: unknown,
+  ) {
+    if (
+      !Array.isArray(raw) ||
+      raw.length > 100 ||
+      raw.some((id) => typeof id !== 'string')
+    )
+      throw new BadRequestException('supplierIds must be a list of IDs');
+    const ids = [...new Set(raw as string[])].sort();
+    const suppliers = await tx.supplier.findMany({
+      where: { venueId: actor.venueId, id: { in: ids } },
+    });
+    if (suppliers.length !== ids.length)
+      throw new NotFoundException('Supplier not found');
+    await tx.$queryRaw`SELECT id FROM pos."StockItem" WHERE id = ${stockItemId} AND "venueId" = ${actor.venueId} FOR UPDATE`;
+    const before = (
+      await tx.supplierProduct.findMany({
+        where: { venueId: actor.venueId, stockItemId },
+      })
+    )
+      .map((link) => link.supplierId)
+      .sort();
+    if (JSON.stringify(before) === JSON.stringify(ids)) return;
+    await tx.supplierProduct.deleteMany({
+      where: { venueId: actor.venueId, stockItemId },
+    });
+    await tx.supplierProduct.createMany({
+      data: ids.map((supplierId) => ({
+        venueId: actor.venueId,
+        stockItemId,
+        supplierId,
+      })),
+    });
+    await writeInventoryAudit(tx, actor, {
+      action: 'STOCK_ITEM_SUPPLIERS_UPDATED',
+      entityType: 'STOCK_ITEM',
+      entityId: stockItemId,
+      data: { stockItemId, previousSupplierIds: before, supplierIds: ids },
+    });
+  }
+
   private presentStockItem(row: any, balance?: Prisma.Decimal) {
     const currentStock = new Prisma.Decimal(balance ?? 0);
     const minimum =
@@ -505,6 +718,10 @@ export class InventoryService {
       id: row.id,
       name: row.name,
       sku: row.sku,
+      classification: row.classification,
+      supplierIds: (row.supplierProducts ?? []).map(
+        (link: any) => link.supplierId,
+      ),
       baseUnit: row.baseUnit,
       minimumStock: decimalText(row.minimumStock),
       isActive: row.isActive,
@@ -734,4 +951,18 @@ function rethrowInventoryConstraint(error: unknown): never {
     throw new ConflictException('SKU already exists in this Venue');
   }
   throw error;
+}
+
+function classification(raw: unknown): StockItemClassification {
+  if (raw === 'FOOD' || raw === 'BEVERAGE') return raw;
+  throw new BadRequestException('classification must be FOOD or BEVERAGE');
+}
+
+function stockBaseUnit(raw: unknown): InventoryUnit {
+  const unit = inventoryUnit(raw);
+  if (unit === 'keg')
+    throw new BadRequestException(
+      'keg is a purchase package; use L as the base unit',
+    );
+  return unit;
 }

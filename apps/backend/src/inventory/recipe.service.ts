@@ -1,3 +1,4 @@
+import { InventoryCostService } from './inventory-cost.service';
 import {
   BadRequestException,
   Injectable,
@@ -120,8 +121,13 @@ export class RecipeService {
         nameKa: row.nameKa,
         nameEn: row.nameEn,
         price: row.price,
-        categoryName:
-          row.subcategory?.nameKa ?? row.category?.nameKa ?? null,
+        menuGroup: menuGroup([
+          row.category?.nameKa,
+          row.category?.nameEn,
+          row.subcategory?.nameKa,
+          row.subcategory?.nameEn,
+        ]),
+        categoryName: row.subcategory?.nameKa ?? row.category?.nameKa ?? null,
         recipe: summarise(byKey.get('')),
         variants: row.variants.map((variant) => ({
           variantId: variant.id,
@@ -177,6 +183,10 @@ export class RecipeService {
       variantLabel: variantLabel(menuItem.variant),
       /** What the editor may offer for each chosen Stock Item. */
       recipe: recipe ? this.present(recipe) : null,
+      currentCost: await new InventoryCostService(this.prisma).recipe(
+        tenant,
+        recipe,
+      ),
     };
   }
 
@@ -298,7 +308,8 @@ export class RecipeService {
         variantLabelSnapshot: variantLabel(menuItem.variant),
         yieldQuantity,
         notes,
-        isActive: input.isActive == null ? true : requiredBoolean(input.isActive),
+        isActive:
+          input.isActive == null ? true : requiredBoolean(input.isActive),
         updatedById: actor.staffId,
         updatedByName: actor.username,
       };
@@ -373,7 +384,10 @@ export class RecipeService {
       });
       if (!existing) throw new NotFoundException('Recipe not found');
       if (!existing.isActive) {
-        return { ...this.present(existing), result: 'already_disabled' as const };
+        return {
+          ...this.present(existing),
+          result: 'already_disabled' as const,
+        };
       }
       const disabled = await tx.menuConsumptionRecipe.update({
         where: { id: existing.id },
@@ -420,9 +434,7 @@ export class RecipeService {
     }
     const variant = menuItem.variants.find((row) => row.id === variantId);
     if (!variant) {
-      throw new NotFoundException(
-        'Menu variant not found on this Menu item',
-      );
+      throw new NotFoundException('Menu variant not found on this Menu item');
     }
     return { ...menuItem, variant };
   }
@@ -561,7 +573,14 @@ export class RecipeService {
 }
 
 function summarise(
-  recipe: { id: string; isActive: boolean; revision: number; _count?: { components: number } } | undefined,
+  recipe:
+    | {
+        id: string;
+        isActive: boolean;
+        revision: number;
+        _count?: { components: number };
+      }
+    | undefined,
 ) {
   if (!recipe) return null;
   return {
@@ -591,7 +610,9 @@ function variantKeyOf(variantId: string | null): string {
 }
 
 /** `0.5 L`-style label, frozen for display. Identity stays the variant id. */
-function variantLabel(variant: { size: number } | null | undefined): string | null {
+function variantLabel(
+  variant: { size: number } | null | undefined,
+): string | null {
   if (!variant) return null;
   return `${variant.size}`;
 }
@@ -616,4 +637,23 @@ function requiredBoolean(raw: unknown): boolean {
     throw new BadRequestException('isActive must be boolean');
   }
   return raw;
+}
+
+export function menuGroup(
+  names: (string | null | undefined)[],
+): 'BEVERAGE' | 'FOOD' | 'OTHER' {
+  const text = names.filter(Boolean).join(' ').toLowerCase();
+  if (
+    /(სასმელ|ლუდი|ღვინო|ღვინომასალა|ყავა|ჩაი|კოქტეილ|ლიმონათ|წყალი|drink|beverage|beer|wine|coffee|cocktail|juice|water|spirits)/u.test(
+      text,
+    )
+  )
+    return 'BEVERAGE';
+  if (
+    /(კერძ|საკვებ|ხინკალ|ხაჭაპურ|სალათ|წვნიან|ხორც|ცხელი|ცივი|დესერტ|პიცა|გარნირ|food|dish|salad|soup|meat|dessert|pizza|bread|starter|main)/u.test(
+      text,
+    )
+  )
+    return 'FOOD';
+  return 'OTHER';
 }

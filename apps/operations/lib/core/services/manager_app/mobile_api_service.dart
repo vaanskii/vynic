@@ -766,12 +766,16 @@ class MobileApiService {
     double? minimumStock,
     String? notes,
     required bool isActive,
+    StockItemClassification? classification,
+    List<String>? supplierIds,
     List<StockItemPurchaseUnit>? purchaseUnits,
   }) async {
     final payload = <String, dynamic>{
       'name': name,
       'sku': sku,
       'baseUnit': baseUnit.wireValue,
+      if (classification != null) 'classification': classification.wireValue,
+      if (supplierIds != null) 'supplierIds': supplierIds,
       'minimumStock': minimumStock,
       'notes': notes,
       'isActive': isActive,
@@ -854,6 +858,27 @@ class MobileApiService {
     );
   }
 
+  static Future<Map<String, dynamic>> getSupplierDetail(String id) async {
+    final response = await _get(
+      '/mobile/inventory/suppliers/${Uri.encodeComponent(id)}',
+    );
+    if (response.statusCode != 200)
+      throw Exception(_apiError('მომწოდებელი', response));
+    return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+  }
+
+  static Future<void> setSupplierProduct(
+    String supplierId,
+    String stockItemId,
+    bool linked,
+  ) async {
+    final path =
+        '/mobile/inventory/suppliers/${Uri.encodeComponent(supplierId)}/products/${Uri.encodeComponent(stockItemId)}';
+    final response = linked ? await _post(path, {}) : await _delete(path);
+    if (response.statusCode != 200 && response.statusCode != 201)
+      throw Exception(_apiError('მომწოდებლის პროდუქტი', response));
+  }
+
   // ── Receiving / waybills ──────────────────────────────────────────────
 
   static Future<ReceivingPage> getReceivings({
@@ -902,6 +927,7 @@ class MobileApiService {
     String? id,
     required String supplierId,
     required String documentDate,
+    String? businessDate,
     String? waybillNumber,
     String? invoiceNumber,
     String? notes,
@@ -911,6 +937,7 @@ class MobileApiService {
     final payload = <String, dynamic>{
       'supplierId': supplierId,
       'documentDate': documentDate,
+      if (businessDate != null) 'businessDate': businessDate,
       'waybillNumber': waybillNumber,
       'invoiceNumber': invoiceNumber,
       'notes': notes,

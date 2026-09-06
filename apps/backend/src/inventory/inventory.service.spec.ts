@@ -47,6 +47,12 @@ class InventoryFakeDb {
     };
   }
 
+  readonly supplierProduct = { findMany: () => Promise.resolve([]) };
+  readonly receivingLine = { findFirst: () => Promise.resolve(null) };
+  readonly menuConsumptionComponent = {
+    findFirst: () => Promise.resolve(null),
+  };
+
   readonly stockItem = {
     findMany: ({ where }: any) =>
       Promise.resolve(

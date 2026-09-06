@@ -145,6 +145,8 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## Inventory
 
+- Step 4.5 catalog, supplier links, daily procurement and current-cost semantics/rollout: `docs/INVENTORY_STEP45.md`; current purchase / theoretical recipe cost read model: `apps/backend/src/inventory/inventory-cost.service.ts`; proof: `catalog-cost.integration.spec.ts`, `apps/operations/test/widget/manager_catalog_cost_test.dart`, `apps/operations/test/unit/inventory_projection_step45_test.dart`.
+
 - Boundary and authority: `docs/INVENTORY_STEP1.md` (catalog), `docs/INVENTORY_STEP2.md` (receiving and the quantity ledger), `docs/INVENTORY_STEP3.md` (Menu consumption definitions)
 - Sale consumption/restore authority and rollout: `docs/INVENTORY_STEP4.md`; Cloud materialization, immutable snapshots and Manager history: `apps/backend/src/inventory/sale-consumption.service.ts`; migration `20260911120000_inventory_step4_sale_consumption/`.
 - POS close-time fixed-point snapshot: `apps/operations/lib/core/services/pos/sale_consumption_snapshot.dart`, captured atomically with the Sale by `SalesRepository`; independent durable ACK/retry: `apps/operations/lib/core/services/edge/sale_consumption_sync_service.dart`, driven by Inventory projection refresh. Backup preserves the complete Sale map.
@@ -158,7 +160,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Units and exact decimal arithmetic: `apps/backend/src/inventory/inventory-unit.ts`, `apps/backend/src/inventory/inventory-quantity.ts` (`resolveBaseQuantity` and `lineMoney` for receiving; the narrower `resolveRecipeQuantity`, `recipeUnitsFor` and `perUnitQuantity` for consumption)
 - Shared venue-wide audit writer/actions: `apps/backend/src/inventory/inventory-audit.ts`
 - Manager routes: `apps/backend/src/mobile/mobile.controller.ts` (`/mobile/inventory/*`, including `receivings`, `receivings/:id/post`, `receivings/:id/cancel`, `recipes`, `recipes/menu-item/:menuItemId`, `recipes/:id/disable`)
-- Device -> Venue complete projection (catalog v3): `GET /edge/inventory/catalog` in `apps/backend/src/edge/edge-transport.controller.ts`
+- Device -> Venue complete projection (catalog v4; v3-compatible units for older clients): `GET /edge/inventory/catalog` in `apps/backend/src/edge/edge-transport.controller.ts`
 - POS offline model/store/pull: `apps/operations/lib/core/models/inventory.dart`, `apps/operations/lib/core/database/repositories/inventory_repository.dart`, `apps/operations/lib/core/services/edge/inventory_projection_sync_service.dart`
 - Manager read models: `apps/operations/lib/core/models/receiving.dart` (Receiving, Stock Item detail), `apps/operations/lib/core/models/menu_recipe.dart` (recipes, menu-oriented list, reverse usage); API client in `apps/operations/lib/core/services/manager_app/mobile_api_service.dart`
 - Manager UI: `apps/operations/lib/apps/mobile_app/presentation/screens/admin_screen/tabs/mobile_admin_inventory_tab.dart` (catalog, section selector, Georgian unit labels via `_unitShort`), `.../tabs/mobile_admin_receiving.dart` (Receiving list/detail/editor, Stock Item detail and its reverse usage), `.../tabs/mobile_admin_recipes.dart` (Menu-oriented recipe list and the direct-link/recipe editor)

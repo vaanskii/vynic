@@ -211,6 +211,11 @@ abstract final class GlobalAuditPresentation {
     GlobalAuditAction.stockItemCreated: 'Stock item added',
     GlobalAuditAction.stockItemUpdated: 'Stock item updated',
     GlobalAuditAction.stockItemDisabled: 'Stock item disabled',
+    GlobalAuditAction.stockItemSuppliersUpdated:
+        'პროდუქტის მომწოდებლები შეიცვალა',
+    GlobalAuditAction.supplierProductLinked: 'მომწოდებელს პროდუქტი მიება',
+    GlobalAuditAction.supplierProductUnlinked:
+        'მომწოდებლის პროდუქტის მიბმა მოიხსნა',
     GlobalAuditAction.supplierCreated: 'Supplier added',
     GlobalAuditAction.supplierUpdated: 'Supplier updated',
     GlobalAuditAction.supplierDisabled: 'Supplier disabled',

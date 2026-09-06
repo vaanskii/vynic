@@ -232,7 +232,7 @@ class _ReceivingDetailDialogState extends State<ReceivingDetailDialog> {
     try {
       final receiving =
           await (widget.load?.call() ??
-          MobileApiService.getReceiving(widget.receivingId));
+              MobileApiService.getReceiving(widget.receivingId));
       if (!mounted) return;
       setState(() {
         _receiving = receiving;
@@ -673,7 +673,9 @@ class _ReceivingLineDraft {
       item.baseUnit,
       for (final purchase in item.purchaseUnits) purchase.unit,
       for (final candidate in InventoryUnit.values)
-        if (candidate.dimension == item.baseUnit.dimension) candidate,
+        if (candidate.dimension != InventoryUnitDimension.count &&
+            candidate.dimension == item.baseUnit.dimension)
+          candidate,
     }.toList(growable: false);
   }
 
@@ -689,10 +691,12 @@ class ReceivingEditorDialog extends StatefulWidget {
     required this.suppliers,
     required this.stockItems,
     this.receiving,
+    this.businessDate,
     this.save,
   });
 
   final Receiving? receiving;
+  final String? businessDate;
   final List<Supplier> suppliers;
   final List<StockItem> stockItems;
 
@@ -709,6 +713,7 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
   late final TextEditingController _notes;
   late String _supplierId;
   late DateTime _documentDate;
+  DateTime? _businessDate;
   late List<_ReceivingLineDraft> _lines;
   bool _saving = false;
   String? _error;
@@ -726,6 +731,9 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
     }
     _documentDate =
         DateTime.tryParse(receiving?.documentDate ?? '') ?? DateTime.now();
+    _businessDate = DateTime.tryParse(
+      receiving?.effectiveBusinessDate ?? widget.businessDate ?? '',
+    );
     _lines = [
       for (final line in receiving?.lines ?? const <ReceivingLine>[])
         _ReceivingLineDraft(
@@ -753,8 +761,21 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
     super.dispose();
   }
 
+  List<StockItem> get _prioritizedItems {
+    final linked =
+        widget.suppliers
+            .where((s) => s.id == _supplierId)
+            .firstOrNull
+            ?.stockItemIds ??
+        const <String>[];
+    return [
+      ...widget.stockItems.where((item) => linked.contains(item.id)),
+      ...widget.stockItems.where((item) => !linked.contains(item.id)),
+    ];
+  }
+
   void _addLine() {
-    final item = widget.stockItems.firstOrNull;
+    final item = _prioritizedItems.firstOrNull;
     _lines.add(
       _ReceivingLineDraft(
         stockItem: item,
@@ -787,27 +808,65 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
               DropdownButtonFormField<String>(
                 key: const Key('receiving-supplier'),
                 initialValue: _supplierId,
+                isExpanded: true,
                 dropdownColor: AdminTheme.surfaceElevated,
-                style: TextStyle(color: AdminTheme.text),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium!.copyWith(color: AdminTheme.text),
                 decoration: _adminInput('მომწოდებელი *'),
                 items: [
                   for (final supplier in widget.suppliers)
                     DropdownMenuItem(
                       value: supplier.id,
-                      child: Text(supplier.name),
+                      child: Text(
+                        supplier.name,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                 ],
                 onChanged: _saving
                     ? null
-                    : (value) =>
-                          setState(() => _supplierId = value ?? _supplierId),
+                    : (value) => setState(() {
+                        _supplierId = value ?? _supplierId;
+                        if (_lines.length == 1 &&
+                            _lines.first.quantity.text.isEmpty &&
+                            _lines.first.cost.text.isEmpty) {
+                          _lines.first.dispose();
+                          _lines.clear();
+                          _addLine();
+                        }
+                      }),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                key: const Key('receiving-business-date'),
+                icon: const Icon(Icons.today),
+                label: Text(
+                  _businessDate == null
+                      ? 'აირჩიეთ სამუშაო დღე'
+                      : 'სამუშაო დღე: ${_isoDate(_businessDate!)}',
+                ),
+                onPressed: _saving
+                    ? null
+                    : () async {
+                        final selected = await showDatePicker(
+                          context: context,
+                          initialDate: _businessDate ?? DateTime.now(),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now().add(
+                            const Duration(days: 366),
+                          ),
+                        );
+                        if (selected != null)
+                          setState(() => _businessDate = selected);
+                      },
               ),
               const SizedBox(height: 10),
               OutlinedButton.icon(
                 key: const Key('receiving-date'),
                 onPressed: _saving ? null : _pickDate,
                 icon: const Icon(Icons.event_rounded, size: 18),
-                label: Text('თარიღი: ${_isoDate(_documentDate)}'),
+                label: Text('დოკუმენტის თარიღი: ${_isoDate(_documentDate)}'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AdminTheme.text,
                   side: BorderSide(color: AdminTheme.border),
@@ -823,6 +882,57 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
               _dialogField(_invoice, 'ინვოისის ნომერი'),
               _dialogField(_notes, 'შენიშვნა', maxLines: 2),
               const Divider(height: 24),
+              if (widget.suppliers
+                      .where((s) => s.id == _supplierId)
+                      .firstOrNull
+                      ?.stockItemIds
+                      .isNotEmpty ==
+                  true) ...[
+                Text(
+                  'მომწოდებლის პროდუქტები',
+                  style: TextStyle(color: AdminTheme.textMuted),
+                ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    for (final item in _prioritizedItems.where(
+                      (item) => widget.suppliers
+                          .firstWhere((s) => s.id == _supplierId)
+                          .stockItemIds
+                          .contains(item.id),
+                    ))
+                      ActionChip(
+                        label: Text(item.name),
+                        onPressed: _saving
+                            ? null
+                            : () => setState(() {
+                                final blank = _lines
+                                    .where(
+                                      (line) =>
+                                          line.quantity.text.isEmpty &&
+                                          line.cost.text.isEmpty,
+                                    )
+                                    .firstOrNull;
+                                if (blank != null) {
+                                  blank.stockItem = item;
+                                  blank.unit = item.baseUnit;
+                                } else {
+                                  _lines.add(
+                                    _ReceivingLineDraft(
+                                      stockItem: item,
+                                      unit: item.baseUnit,
+                                      quantity: TextEditingController(),
+                                      cost: TextEditingController(),
+                                    ),
+                                  );
+                                }
+                              }),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+              ],
               for (var index = 0; index < _lines.length; index++)
                 _lineEditor(index),
               Align(
@@ -918,14 +1028,19 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  key: Key('receiving-line-item-$index'),
+                  key: ValueKey(
+                    'receiving-line-item-$index-${line.stockItem?.id}',
+                  ),
                   initialValue: line.stockItem?.id,
                   isExpanded: true,
                   dropdownColor: AdminTheme.surfaceElevated,
-                  style: TextStyle(color: AdminTheme.text, fontSize: 13),
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                    color: AdminTheme.text,
+                    fontSize: 13,
+                  ),
                   decoration: _adminInput('პროდუქტი'),
                   items: [
-                    for (final item in widget.stockItems)
+                    for (final item in _prioritizedItems)
                       DropdownMenuItem(
                         value: item.id,
                         child: Text(item.name, overflow: TextOverflow.ellipsis),
@@ -951,59 +1066,14 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
             ],
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: TextField(
-                  key: Key('receiving-line-quantity-$index'),
-                  controller: line.quantity,
-                  onChanged: (_) => setState(() {}),
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  style: TextStyle(color: AdminTheme.text),
-                  decoration: _adminInput('რაოდენობა'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 3,
-                child: DropdownButtonFormField<InventoryUnit>(
-                  key: Key('receiving-line-unit-$index'),
-                  initialValue: line.unit,
-                  dropdownColor: AdminTheme.surfaceElevated,
-                  style: TextStyle(color: AdminTheme.text, fontSize: 13),
-                  decoration: _adminInput('ერთეული'),
-                  items: [
-                    for (final unit in line.allowedUnits)
-                      DropdownMenuItem(
-                        value: unit,
-                        child: Text(_unitShort(unit)),
-                      ),
-                  ],
-                  onChanged: _saving
-                      ? null
-                      : (value) => setState(() => line.unit = value),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 4,
-                child: TextField(
-                  key: Key('receiving-line-cost-$index'),
-                  controller: line.cost,
-                  onChanged: (_) => setState(() {}),
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  style: TextStyle(color: AdminTheme.text),
-                  decoration: _adminInput('ფასი ერთეულზე'),
-                ),
-              ),
-            ],
-          ),
+          _amountFields(line, index),
           const SizedBox(height: 6),
+          if (converted &&
+              line.stockItem!.purchaseUnits.any((p) => p.unit == line.unit))
+            Text(
+              '1 ${_unitShort(line.unit!)} = ${_quantityText(line.stockItem!.purchaseUnits.firstWhere((p) => p.unit == line.unit).baseUnitMultiplier)} ${_unitShort(line.stockItem!.baseUnit)}',
+              style: TextStyle(color: AdminTheme.textMuted, fontSize: 12),
+            ),
           Row(
             children: [
               // The converted base quantity is shown before posting, so nobody
@@ -1035,6 +1105,73 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
     );
   }
 
+  Widget _amountFields(_ReceivingLineDraft line, int index) {
+    final quantity = TextField(
+      key: Key('receiving-line-quantity-$index'),
+      controller: line.quantity,
+      onChanged: (_) => setState(() {}),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      style: Theme.of(
+        context,
+      ).textTheme.bodyMedium!.copyWith(color: AdminTheme.text),
+      decoration: _adminInput('რაოდენობა'),
+    );
+    final unit = DropdownButtonFormField<InventoryUnit>(
+      key: Key('receiving-line-unit-$index'),
+      initialValue: line.unit,
+      isExpanded: true,
+      dropdownColor: AdminTheme.surfaceElevated,
+      style: Theme.of(
+        context,
+      ).textTheme.bodyMedium!.copyWith(color: AdminTheme.text),
+      decoration: _adminInput('ერთეული'),
+      items: [
+        for (final unit in line.allowedUnits)
+          DropdownMenuItem(value: unit, child: Text(_unitShort(unit))),
+      ],
+      onChanged: _saving ? null : (value) => setState(() => line.unit = value),
+    );
+    final price = TextField(
+      key: Key('receiving-line-cost-$index'),
+      controller: line.cost,
+      onChanged: (_) => setState(() {}),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      style: Theme.of(
+        context,
+      ).textTheme.bodyMedium!.copyWith(color: AdminTheme.text),
+      decoration: _adminInput(
+        'დღევანდელი ფასი / ${line.unit == null ? '' : _unitShort(line.unit!)}',
+      ),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 420)
+          return Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(child: quantity),
+                  const SizedBox(width: 8),
+                  Expanded(child: unit),
+                ],
+              ),
+              const SizedBox(height: 10),
+              price,
+            ],
+          );
+        return Row(
+          children: [
+            Expanded(child: quantity),
+            const SizedBox(width: 8),
+            Expanded(child: unit),
+            const SizedBox(width: 8),
+            Expanded(flex: 2, child: price),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -1046,6 +1183,10 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
   }
 
   Future<void> _save() async {
+    if (_businessDate == null) {
+      setState(() => _error = 'აირჩიეთ რესტორნის სამუშაო დღე');
+      return;
+    }
     final payload = <Map<String, dynamic>>[];
     for (final line in _lines) {
       final item = line.stockItem;
@@ -1057,8 +1198,11 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
         setState(() => _error = '${item.name}: რაოდენობა უნდა იყოს დადებითი');
         return;
       }
-      if (line.costValue < 0) {
-        setState(() => _error = '${item.name}: ფასი არ უნდა იყოს უარყოფითი');
+      final price = double.tryParse(line.cost.text.trim().replaceAll(',', '.'));
+      if (price == null || !price.isFinite || price < 0) {
+        setState(
+          () => _error = '${item.name}: ჩაწერეთ დღევანდელი შესყიდვის ფასი',
+        );
         return;
       }
       if (line.baseQuantity == null) {
@@ -1088,6 +1232,7 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
         await save(<String, dynamic>{
           'supplierId': _supplierId,
           'documentDate': _isoDate(_documentDate),
+          if (_businessDate != null) 'businessDate': _isoDate(_businessDate!),
           'waybillNumber': _waybill.text.trim(),
           'lines': payload,
         });
@@ -1096,6 +1241,7 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
           id: widget.receiving?.id,
           supplierId: _supplierId,
           documentDate: _isoDate(_documentDate),
+          businessDate: _isoDate(_businessDate!),
           waybillNumber: _waybill.text,
           invoiceNumber: _invoice.text,
           notes: _notes.text,
@@ -1145,7 +1291,7 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
     try {
       final detail =
           await (widget.load?.call() ??
-          MobileApiService.getStockItem(widget.stockItemId));
+              MobileApiService.getStockItem(widget.stockItemId));
       if (!mounted) return;
       setState(() {
         _detail = detail;
@@ -1228,6 +1374,16 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
               const _LowStockBadge(),
           ],
         ),
+        const SizedBox(height: 12),
+        Text(
+          'შესყიდვის საშუალო ფასი: ${detail.weightedUnitCost == null ? 'ისტორია არ არის' : '${_quantityText(detail.weightedUnitCost!)} ₾ / ${_unitShort(item.baseUnit)}'}',
+          style: TextStyle(color: AdminTheme.text),
+        ),
+        if (detail.lastPurchaseUnitCost != null)
+          Text(
+            'ბოლო შესყიდვის ფასი: ${_quantityText(detail.lastPurchaseUnitCost!)} ₾ / ${_unitShort(item.baseUnit)}',
+            style: TextStyle(color: AdminTheme.textMuted),
+          ),
         const SizedBox(height: 4),
         Text(
           'მიმდინარე ნაშთი მოძრაობების ჯამია',

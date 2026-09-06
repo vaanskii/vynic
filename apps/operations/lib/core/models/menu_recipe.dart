@@ -64,7 +64,8 @@ class MenuRecipe {
       components: (json['components'] as List? ?? const [])
           .whereType<Map>()
           .map(
-            (row) => MenuRecipeComponent.fromJson(Map<String, dynamic>.from(row)),
+            (row) =>
+                MenuRecipeComponent.fromJson(Map<String, dynamic>.from(row)),
           )
           .toList(growable: false),
     );
@@ -164,6 +165,7 @@ class RecipeMenuItem {
     required this.price,
     this.posMenuItemId,
     this.categoryName,
+    this.menuGroup = 'OTHER',
     this.recipe,
     this.variants = const <RecipeMenuVariant>[],
   });
@@ -173,6 +175,7 @@ class RecipeMenuItem {
   final String name;
   final double price;
   final String? categoryName;
+  final String menuGroup;
 
   /// The definition for the item itself (`variantId = null`).
   final MenuRecipeSummary? recipe;
@@ -204,6 +207,7 @@ class RecipeMenuItem {
       name: _text(json['nameKa']) ?? _text(json['nameEn']) ?? '',
       price: (json['price'] as num?)?.toDouble() ?? 0,
       categoryName: _text(json['categoryName']),
+      menuGroup: _text(json['menuGroup']) ?? 'OTHER',
       recipe: MenuRecipeSummary.fromJson(json['recipe']),
       variants: (json['variants'] as List? ?? const [])
           .whereType<Map>()
@@ -251,6 +255,7 @@ class MenuRecipeDetail {
     required this.menuItemId,
     required this.menuItemName,
     required this.price,
+    this.currentCost,
     this.posMenuItemId,
     this.variantId,
     this.variantLabel,
@@ -264,6 +269,7 @@ class MenuRecipeDetail {
   final String? variantId;
   final String? variantLabel;
   final MenuRecipe? recipe;
+  final CurrentRecipeCost? currentCost;
 
   factory MenuRecipeDetail.fromJson(Map<String, dynamic> json) {
     final recipe = json['recipe'];
@@ -274,6 +280,11 @@ class MenuRecipeDetail {
       price: (json['price'] as num?)?.toDouble() ?? 0,
       variantId: _text(json['variantId']),
       variantLabel: _text(json['variantLabel']),
+      currentCost: json['currentCost'] is Map
+          ? CurrentRecipeCost.fromJson(
+              Map<String, dynamic>.from(json['currentCost']),
+            )
+          : null,
       recipe: recipe is Map
           ? MenuRecipe.fromJson(Map<String, dynamic>.from(recipe))
           : null,
@@ -318,4 +329,49 @@ String? _text(Object? raw) {
   if (raw == null) return null;
   final value = raw.toString().trim();
   return value.isEmpty ? null : value;
+}
+
+class CurrentRecipeCost {
+  const CurrentRecipeCost({
+    required this.status,
+    this.total,
+    this.components = const [],
+  });
+  final String status;
+  final String? total;
+  final List<CurrentCostComponent> components;
+  factory CurrentRecipeCost.fromJson(Map<String, dynamic> json) =>
+      CurrentRecipeCost(
+        status: json['status'] as String,
+        total: json['total'] as String?,
+        components: (json['components'] as List? ?? [])
+            .map(
+              (row) =>
+                  CurrentCostComponent.fromJson(Map<String, dynamic>.from(row)),
+            )
+            .toList(),
+      );
+}
+
+class CurrentCostComponent {
+  const CurrentCostComponent({
+    required this.name,
+    required this.quantity,
+    required this.baseUnit,
+    this.unitCost,
+    this.cost,
+  });
+  final String name;
+  final String quantity;
+  final InventoryUnit baseUnit;
+  final String? unitCost;
+  final String? cost;
+  factory CurrentCostComponent.fromJson(Map<String, dynamic> json) =>
+      CurrentCostComponent(
+        name: json['stockItemName'] as String,
+        quantity: json['quantity'] as String,
+        baseUnit: InventoryUnit.parse(json['baseUnit'] as String),
+        unitCost: json['weightedUnitCost'] as String?,
+        cost: json['cost'] as String?,
+      );
 }

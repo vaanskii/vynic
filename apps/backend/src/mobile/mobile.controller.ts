@@ -135,6 +135,32 @@ export class MobileController {
     return this.inventory.listSuppliers(tenant, search);
   }
 
+  @Get('inventory/suppliers/:id')
+  async inventorySupplierDetail(
+    @ManagerTenant() tenant: TenantContext,
+    @Param('id') id: string,
+  ) {
+    return this.inventory.supplierDetail(tenant, id);
+  }
+
+  @Post('inventory/suppliers/:id/products/:stockItemId')
+  async linkSupplierProduct(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Param('stockItemId') stockItemId: string,
+  ) {
+    return this.inventory.setSupplierProduct(actor, id, stockItemId, true);
+  }
+
+  @Delete('inventory/suppliers/:id/products/:stockItemId')
+  async unlinkSupplierProduct(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Param('stockItemId') stockItemId: string,
+  ) {
+    return this.inventory.setSupplierProduct(actor, id, stockItemId, false);
+  }
+
   @Post('inventory/suppliers')
   createSupplier(
     @ManagerAuth() actor: ManagerAuthContext,

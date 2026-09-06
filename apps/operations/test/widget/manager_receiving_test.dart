@@ -257,7 +257,10 @@ void main() {
 
       expect(find.byKey(const Key('receiving-detail')), findsOneWidget);
       expect(find.text('750.00 ₾'), findsNWidgets(2));
-      expect(find.byKey(const Key('receiving-original-impact')), findsOneWidget);
+      expect(
+        find.byKey(const Key('receiving-original-impact')),
+        findsOneWidget,
+      );
       expect(find.text('+50 კგ · Beef'), findsOneWidget);
       // A posted document is inventory history: no edit, no delete, no post.
       expect(find.byKey(const Key('receiving-edit')), findsNothing);
@@ -288,7 +291,10 @@ void main() {
 
       expect(find.text('საწყისი გავლენა მარაგზე'), findsOneWidget);
       expect(find.text('+50 კგ · Beef'), findsOneWidget);
-      expect(find.byKey(const Key('receiving-reversal-impact')), findsOneWidget);
+      expect(
+        find.byKey(const Key('receiving-reversal-impact')),
+        findsOneWidget,
+      );
       expect(find.text('-50 კგ · Beef'), findsOneWidget);
       expect(find.byKey(const Key('receiving-cancel')), findsNothing);
     });
@@ -349,10 +355,7 @@ void main() {
       await tester.tap(find.byKey(const Key('receiving-cancel')));
       await tester.pumpAndSettle();
       expect(find.text('გაუქმდეს მიღება?'), findsOneWidget);
-      expect(
-        find.textContaining('საწყისი მოძრაობები რჩება'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('საწყისი მოძრაობები რჩება'), findsOneWidget);
       expect(find.byKey(const Key('receiving-cancel-confirm')), findsOneWidget);
     });
   });
@@ -369,6 +372,7 @@ void main() {
       await tester.pumpWidget(
         _host(
           ReceivingEditorDialog(
+            businessDate: '2026-09-05',
             suppliers: [_supplier],
             stockItems: [_lemonade, _beef],
             save: (payload) async => saved = payload,
@@ -429,6 +433,7 @@ void main() {
       await tester.pumpWidget(
         _host(
           ReceivingEditorDialog(
+            businessDate: '2026-09-05',
             suppliers: [_supplier],
             stockItems: [_beef],
             save: (_) async => called = true,
@@ -444,7 +449,10 @@ void main() {
       await tester.tap(find.byKey(const Key('receiving-save')));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('რაოდენობა უნდა იყოს დადებითი'), findsOneWidget);
+      expect(
+        find.textContaining('რაოდენობა უნდა იყოს დადებითი'),
+        findsOneWidget,
+      );
       expect(called, isFalse);
     });
 
@@ -456,6 +464,7 @@ void main() {
       await tester.pumpWidget(
         _host(
           ReceivingEditorDialog(
+            businessDate: '2026-09-05',
             receiving: Receiving.fromJson(_receivingJson(status: 'DRAFT')),
             suppliers: [_supplier],
             stockItems: [_beef],

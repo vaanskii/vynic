@@ -1,3 +1,14 @@
+enum StockItemClassification {
+  food('FOOD', 'საკვები / ნედლეული'),
+  beverage('BEVERAGE', 'სასმელები');
+
+  const StockItemClassification(this.wireValue, this.label);
+  final String wireValue;
+  final String label;
+  static StockItemClassification parse(Object? value) =>
+      value == 'BEVERAGE' ? beverage : food;
+}
+
 enum InventoryUnitDimension { mass, volume, count }
 
 enum InventoryUnit {
@@ -8,6 +19,7 @@ enum InventoryUnit {
   piece('piece', InventoryUnitDimension.count),
   bottle('bottle', InventoryUnitDimension.count),
   pack('pack', InventoryUnitDimension.count),
+  keg('keg', InventoryUnitDimension.count),
   box('box', InventoryUnitDimension.count);
 
   const InventoryUnit(this.wireValue, this.dimension);
@@ -74,8 +86,7 @@ class StockItemPurchaseUnit {
     return StockItemPurchaseUnit(
       id: _requiredString(json, 'id'),
       unit: InventoryUnit.parse(_requiredString(json, 'unit')),
-      baseUnitMultiplier:
-          _optionalString(json['baseUnitMultiplier']) ?? '0',
+      baseUnitMultiplier: _optionalString(json['baseUnitMultiplier']) ?? '0',
     );
   }
 
@@ -101,11 +112,15 @@ class StockItem {
     this.stockStatus = 'NO_MINIMUM',
     this.purchaseUnits = const <StockItemPurchaseUnit>[],
     this.recipeUnits = const <InventoryUnit>[],
+    this.classification = StockItemClassification.food,
+    this.supplierIds = const [],
   });
 
   final String id;
   final String name;
   final String? sku;
+  final StockItemClassification classification;
+  final List<String> supplierIds;
   final InventoryUnit baseUnit;
   final double? minimumStock;
   final bool isActive;
@@ -151,6 +166,8 @@ class StockItem {
       id: _requiredString(json, 'id'),
       name: _requiredString(json, 'name'),
       sku: _optionalString(json['sku']),
+      classification: StockItemClassification.parse(json['classification']),
+      supplierIds: (json['supplierIds'] as List? ?? []).cast<String>(),
       baseUnit: InventoryUnit.parse(_requiredString(json, 'baseUnit')),
       minimumStock: _optionalDouble(json['minimumStock']),
       isActive: json['isActive'] as bool? ?? true,
@@ -176,6 +193,8 @@ class StockItem {
     'id': id,
     'name': name,
     'sku': sku,
+    'classification': classification.wireValue,
+    'supplierIds': supplierIds,
     'baseUnit': baseUnit.wireValue,
     'minimumStock': minimumStock,
     'isActive': isActive,
@@ -305,6 +324,7 @@ class Supplier {
     required this.isActive,
     required this.createdAt,
     required this.updatedAt,
+    this.stockItemIds = const [],
     this.taxId,
     this.phone,
     this.email,
@@ -314,6 +334,7 @@ class Supplier {
 
   final String id;
   final String name;
+  final List<String> stockItemIds;
   final String? taxId;
   final String? phone;
   final String? email;
@@ -327,6 +348,7 @@ class Supplier {
     return Supplier(
       id: _requiredString(json, 'id'),
       name: _requiredString(json, 'name'),
+      stockItemIds: (json['stockItemIds'] as List? ?? []).cast<String>(),
       taxId: _optionalString(json['taxId']),
       phone: _optionalString(json['phone']),
       email: _optionalString(json['email']),
@@ -341,6 +363,7 @@ class Supplier {
   Map<String, dynamic> toJson() => <String, dynamic>{
     'id': id,
     'name': name,
+    'stockItemIds': stockItemIds,
     'taxId': taxId,
     'phone': phone,
     'email': email,

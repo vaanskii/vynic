@@ -82,6 +82,10 @@ abstract final class GlobalAuditAction {
   static const String stockItemCreated = 'STOCK_ITEM_CREATED';
   static const String stockItemUpdated = 'STOCK_ITEM_UPDATED';
   static const String stockItemDisabled = 'STOCK_ITEM_DISABLED';
+  static const String stockItemSuppliersUpdated =
+      'STOCK_ITEM_SUPPLIERS_UPDATED';
+  static const String supplierProductLinked = 'SUPPLIER_PRODUCT_LINKED';
+  static const String supplierProductUnlinked = 'SUPPLIER_PRODUCT_UNLINKED';
   static const String supplierCreated = 'SUPPLIER_CREATED';
   static const String supplierUpdated = 'SUPPLIER_UPDATED';
   static const String supplierDisabled = 'SUPPLIER_DISABLED';

@@ -40,12 +40,14 @@ export interface ReceivingInput {
   waybillNumber?: unknown;
   invoiceNumber?: unknown;
   documentDate?: unknown;
+  businessDate?: unknown;
   receivedAt?: unknown;
   notes?: unknown;
   lines?: unknown;
 }
 
 export interface ReceivingListQuery {
+  businessDate?: string;
   from?: string;
   to?: string;
   supplierId?: string;
@@ -100,6 +102,9 @@ export class ReceivingService {
     const search = query.search?.trim();
     const where: Prisma.ReceivingWhereInput = {
       venueId: tenant.venueId,
+      ...(query.businessDate
+        ? { businessDate: isoDateText(query.businessDate) }
+        : {}),
       ...(query.supplierId?.trim()
         ? { supplierId: query.supplierId.trim() }
         : {}),
@@ -108,7 +113,7 @@ export class ReceivingService {
         : {}),
       ...(query.from?.trim() || query.to?.trim()
         ? {
-            documentDate: {
+            businessDate: {
               ...(query.from?.trim() ? { gte: isoDateText(query.from) } : {}),
               ...(query.to?.trim() ? { lte: isoDateText(query.to) } : {}),
             },
@@ -133,7 +138,7 @@ export class ReceivingService {
     const rows = await this.prisma.receiving.findMany({
       where,
       orderBy: [
-        { documentDate: 'desc' },
+        { businessDate: 'desc' },
         { createdAt: 'desc' },
         { id: 'desc' },
       ],
@@ -145,7 +150,23 @@ export class ReceivingService {
     });
 
     const page = rows.slice(0, take);
+    const days = await this.prisma.receiving.groupBy({
+      by: ['businessDate', 'status'],
+      where: {
+        venueId: tenant.venueId,
+        businessDate: { in: [...new Set(page.map((row) => row.businessDate))] },
+      },
+      _sum: { documentTotal: true },
+      _count: { _all: true },
+    });
     return {
+      businessDays: days.map((day) => ({
+        businessDate: day.businessDate,
+        status: day.status,
+        count: day._count._all,
+        total: (day._sum.documentTotal ?? new Prisma.Decimal(0)).toFixed(2),
+      })),
+      currentBusinessDate: await this.currentBusinessDate(tenant),
       receivings: page.map((row) => this.presentSummary(row)),
       nextCursor: rows.length > take ? (page.at(-1)?.id ?? null) : null,
     };
@@ -183,6 +204,11 @@ export class ReceivingService {
           waybillNumber: header.waybillNumber,
           invoiceNumber: header.invoiceNumber,
           documentDate: header.documentDate,
+          businessDate: isoDateText(
+            input.businessDate ??
+              (await this.currentBusinessDate(actor)) ??
+              header.documentDate,
+          ),
           receivedAt: header.receivedAt,
           notes: header.notes,
           status: ReceivingStatus.DRAFT,
@@ -228,6 +254,9 @@ export class ReceivingService {
           waybillNumber: header.waybillNumber,
           invoiceNumber: header.invoiceNumber,
           documentDate: header.documentDate,
+          businessDate: isoDateText(
+            input.businessDate ?? existing.businessDate,
+          ),
           receivedAt: header.receivedAt,
           notes: header.notes,
           documentTotal: sumMoney(lines.map((line) => line.lineTotal)),
@@ -345,7 +374,7 @@ export class ReceivingService {
           baseUnit: line.baseUnit,
           receivingId: cleanId,
           receivingLineId: line.id,
-          businessDate: locked.documentDate,
+          businessDate: locked.businessDate,
           effectiveAt: locked.receivedAt,
           actorId: actor.staffId,
           actorName: actor.username,
@@ -515,11 +544,12 @@ export class ReceivingService {
         status: ReceivingStatus;
         supplierId: string;
         documentDate: string;
+        businessDate: string;
         receivedAt: Date;
         waybillNumber: string | null;
       }[]
     >`
-      SELECT "id", "status", "supplierId", "documentDate", "receivedAt", "waybillNumber"
+      SELECT "id", "status", "supplierId", "documentDate", "businessDate", "receivedAt", "waybillNumber"
       FROM "pos"."Receiving"
       WHERE "id" = ${id} AND "venueId" = ${venueId}
       FOR UPDATE
@@ -540,6 +570,15 @@ export class ReceivingService {
     });
     if (!supplier) throw new NotFoundException('Supplier not found');
     return supplier;
+  }
+
+  async currentBusinessDate(tenant: TenantContext): Promise<string | null> {
+    const setting = await this.prisma.setting.findUnique({
+      where: {
+        venueId_key: { venueId: tenant.venueId, key: 'currentBusinessDate' },
+      },
+    });
+    return setting?.value ? isoDateText(setting.value) : null;
   }
 
   private readHeader(input: ReceivingInput) {
@@ -664,6 +703,7 @@ export class ReceivingService {
     supplierNameSnapshot: string;
     waybillNumber: string | null;
     documentDate: string;
+    businessDate: string;
     status: ReceivingStatus;
     documentTotal: Prisma.Decimal;
     lines: unknown[];
@@ -674,6 +714,7 @@ export class ReceivingService {
       supplierName: row.supplierNameSnapshot,
       waybillNumber: row.waybillNumber,
       documentDate: row.documentDate,
+      businessDate: row.businessDate,
       status: row.status,
       lineCount: row.lines.length,
       documentTotal: moneyText(row.documentTotal),
@@ -688,6 +729,7 @@ export class ReceivingService {
       waybillNumber: row.waybillNumber,
       invoiceNumber: row.invoiceNumber,
       documentDate: row.documentDate,
+      businessDate: row.businessDate,
       receivedAt: row.receivedAt,
       status: row.status,
       notes: row.notes,

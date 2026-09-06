@@ -38,6 +38,13 @@ class _InventoryTabState extends State<InventoryAdminTab>
   List<RecipeMenuItem> _recipes = const [];
   _ReceivingStatusFilter _statusFilter = _ReceivingStatusFilter.all;
   _RecipeFilter _recipeFilter = _RecipeFilter.all;
+  StockItemClassification? _classificationFilter;
+  String? _menuGroupFilter;
+  String? _businessDate;
+  String? _receivingDayFilter;
+  List<ReceivingDaySummary> _receivingDays = const [];
+  String? _receivingCursor;
+  bool _loadingMore = false;
   bool _loading = true;
   String? _error;
 
@@ -62,7 +69,11 @@ class _InventoryTabState extends State<InventoryAdminTab>
       final results = await Future.wait<Object>([
         widget.loadStockItems?.call() ?? MobileApiService.getStockItems(),
         widget.loadSuppliers?.call() ?? MobileApiService.getSuppliers(),
-        widget.loadReceivings?.call() ?? MobileApiService.getReceivings(),
+        widget.loadReceivings?.call() ??
+            MobileApiService.getReceivings(
+              from: _receivingDayFilter,
+              to: _receivingDayFilter,
+            ),
         widget.loadRecipes?.call() ?? MobileApiService.getRecipeMenuItems(),
       ]);
       if (!mounted) return;
@@ -70,6 +81,9 @@ class _InventoryTabState extends State<InventoryAdminTab>
         _stockItems = results[0] as List<StockItem>;
         _suppliers = results[1] as List<Supplier>;
         _receivings = (results[2] as ReceivingPage).receivings;
+        _businessDate = (results[2] as ReceivingPage).currentBusinessDate;
+        _receivingDays = (results[2] as ReceivingPage).businessDays;
+        _receivingCursor = (results[2] as ReceivingPage).nextCursor;
         _recipes = results[3] as List<RecipeMenuItem>;
         _loading = false;
       });
@@ -133,7 +147,13 @@ class _InventoryTabState extends State<InventoryAdminTab>
                       _searchAndAdd(constraints.maxWidth),
                       const SizedBox(height: 18),
                       if (_section == _InventorySection.stockItems)
-                        _stockItemList()
+                        Column(
+                          children: [
+                            _catalogFilters(),
+                            const SizedBox(height: 12),
+                            _stockItemList(),
+                          ],
+                        )
                       else if (_section == _InventorySection.suppliers)
                         _supplierList()
                       else if (_section == _InventorySection.receiving)
@@ -153,7 +173,12 @@ class _InventoryTabState extends State<InventoryAdminTab>
 
   Widget _sectionSelector() {
     if (MediaQuery.sizeOf(context).width < 520) {
-      const labels = ['პროდუქტები', 'მომწოდებლები', 'მიღებები', 'რეცეპტები'];
+      const labels = [
+        'პროდუქტები',
+        'მომწოდებლები',
+        'დღიური მიღება',
+        'რეცეპტები',
+      ];
       return Wrap(
         key: const Key('inventory-section-selector'),
         spacing: 8,
@@ -188,7 +213,7 @@ class _InventoryTabState extends State<InventoryAdminTab>
         ButtonSegment(
           value: _InventorySection.receiving,
           icon: Icon(Icons.receipt_long_outlined),
-          label: Text('მიღებები'),
+          label: Text('დღიური მიღება'),
         ),
         ButtonSegment(
           value: _InventorySection.recipes,
@@ -280,10 +305,31 @@ class _InventoryTabState extends State<InventoryAdminTab>
     );
   }
 
+  Widget _catalogFilters() => Wrap(
+    spacing: 8,
+    runSpacing: 4,
+    children: [
+      ChoiceChip(
+        label: const Text('ყველა'),
+        selected: _classificationFilter == null,
+        onSelected: (_) => setState(() => _classificationFilter = null),
+      ),
+      for (final value in StockItemClassification.values)
+        ChoiceChip(
+          label: Text(value.label),
+          selected: _classificationFilter == value,
+          onSelected: (_) => setState(() => _classificationFilter = value),
+        ),
+    ],
+  );
+
   Widget _stockItemList() {
     final query = _search.text.trim().toLowerCase();
     final items = _stockItems
         .where((item) {
+          if (_classificationFilter != null &&
+              item.classification != _classificationFilter)
+            return false;
           return query.isEmpty ||
               item.name.toLowerCase().contains(query) ||
               (item.sku?.toLowerCase().contains(query) ?? false);
@@ -342,6 +388,7 @@ class _InventoryTabState extends State<InventoryAdminTab>
         for (final supplier in items)
           _SupplierCard(
             supplier: supplier,
+            onOpen: () => _openSupplier(supplier),
             onEdit: () => _editSupplier(supplier),
             onToggle: () => _toggleSupplier(supplier),
           ),
@@ -349,10 +396,47 @@ class _InventoryTabState extends State<InventoryAdminTab>
     );
   }
 
+  Future<void> _moreReceivings() async {
+    setState(() => _loadingMore = true);
+    try {
+      final page = await MobileApiService.getReceivings(
+        cursor: _receivingCursor,
+        from: _receivingDayFilter,
+        to: _receivingDayFilter,
+      );
+      if (!mounted) return;
+      setState(() {
+        _receivings = [..._receivings, ...page.receivings];
+        _receivingDays = [
+          ..._receivingDays.where(
+            (day) => !page.businessDays.any(
+              (next) => next.businessDate == day.businessDate,
+            ),
+          ),
+          ...page.businessDays,
+        ];
+        _receivingCursor = page.nextCursor;
+      });
+    } catch (error) {
+      if (mounted) _adminToast(context, '$error', error: true);
+    } finally {
+      if (mounted) setState(() => _loadingMore = false);
+    }
+  }
+
+  Future<void> _openSupplier(Supplier supplier) async {
+    await showDialog<void>(
+      context: context,
+      builder: (_) =>
+          SupplierDetailDialog(supplier: supplier, stockItems: _stockItems),
+    );
+    if (mounted) await _load();
+  }
+
   Future<void> _editStockItem([StockItem? item]) async {
     final saved = await showDialog<StockItem>(
       context: context,
-      builder: (_) => _StockItemEditorDialog(item: item),
+      builder: (_) => _StockItemEditorDialog(item: item, suppliers: _suppliers),
     );
     if (saved != null) {
       _adminToast(
@@ -415,6 +499,45 @@ class _InventoryTabState extends State<InventoryAdminTab>
       key: const Key('receiving-list'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (_businessDate != null)
+          Text(
+            'სამუშაო დღე: $_businessDate',
+            style: TextStyle(color: AdminTheme.text),
+          ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: [
+            OutlinedButton.icon(
+              icon: const Icon(Icons.event),
+              label: Text(_receivingDayFilter ?? 'სამუშაო დღის არჩევა'),
+              onPressed: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate:
+                      DateTime.tryParse(
+                        _receivingDayFilter ?? _businessDate ?? '',
+                      ) ??
+                      DateTime.now(),
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime.now().add(const Duration(days: 366)),
+                );
+                if (date != null) {
+                  _receivingDayFilter = _isoDate(date);
+                  await _load();
+                }
+              },
+            ),
+            if (_receivingDayFilter != null)
+              TextButton(
+                onPressed: () {
+                  _receivingDayFilter = null;
+                  _load();
+                },
+                child: const Text('ყველა დღე'),
+              ),
+          ],
+        ),
         _ReceivingStatusFilterBar(
           selected: _statusFilter,
           onChanged: (value) => setState(() => _statusFilter = value),
@@ -432,13 +555,44 @@ class _InventoryTabState extends State<InventoryAdminTab>
                 : 'შეცვალეთ ფილტრი ან საძიებო სიტყვა.',
           )
         else
-          for (final receiving in items)
+          for (var index = 0; index < items.length; index++) ...[
+            if (index == 0 ||
+                items[index - 1].effectiveBusinessDate !=
+                    items[index].effectiveBusinessDate)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Text(
+                  'სამუშაო დღე: ${items[index].effectiveBusinessDate}${_dayTotal(items[index].effectiveBusinessDate)}',
+                  style: TextStyle(
+                    color: AdminTheme.text,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             _ReceivingCard(
-              receiving: receiving,
-              onOpen: () => _openReceiving(receiving),
+              receiving: items[index],
+              onOpen: () => _openReceiving(items[index]),
             ),
+          ],
+        if (_receivingCursor != null)
+          TextButton(
+            onPressed: _loadingMore ? null : _moreReceivings,
+            child: Text(_loadingMore ? 'იტვირთება…' : 'მეტი მიღების ნახვა'),
+          ),
       ],
     );
+  }
+
+  String _dayTotal(String date) {
+    final day = _receivingDays
+        .where(
+          (row) =>
+              row.businessDate == date && row.status == ReceivingStatus.posted,
+        )
+        .firstOrNull;
+    return day == null
+        ? ''
+        : '\nდადასტურებული: ${day.count} მიღება · ${day.total} ₾';
   }
 
   Widget _recipeList() {
@@ -446,6 +600,8 @@ class _InventoryTabState extends State<InventoryAdminTab>
     final items = _recipes
         .where((item) {
           if (!_recipeFilter.matches(item)) return false;
+          if (_menuGroupFilter != null && item.menuGroup != _menuGroupFilter)
+            return false;
           return query.isEmpty || item.name.toLowerCase().contains(query);
         })
         .toList(growable: false);
@@ -453,6 +609,26 @@ class _InventoryTabState extends State<InventoryAdminTab>
       key: const Key('recipe-list'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            for (final entry in const <String, String>{
+              '': 'ყველა',
+              'FOOD': 'კერძები',
+              'BEVERAGE': 'სასმელები',
+              'OTHER': 'სხვა კატეგორიები',
+            }.entries)
+              ChoiceChip(
+                label: Text(entry.value),
+                selected: (_menuGroupFilter ?? '') == entry.key,
+                onSelected: (_) => setState(
+                  () => _menuGroupFilter = entry.key.isEmpty ? null : entry.key,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
         _RecipeFilterBar(
           selected: _recipeFilter,
           onChanged: (value) => setState(() => _recipeFilter = value),
@@ -487,10 +663,16 @@ class _InventoryTabState extends State<InventoryAdminTab>
       builder: (_) => RecipeEditorDialog(
         menuItemId: item.menuItemId,
         menuItemName: item.name,
+        menuGroup: item.menuGroup,
         variantId: variant?.variantId,
         variantLabel: variant?.label,
         stockItems: _stockItems,
-        onCreateStockItem: _createStockItemFor,
+        onCreateStockItem: (name) => _createStockItemFor(
+          name,
+          item.menuGroup == 'BEVERAGE'
+              ? StockItemClassification.beverage
+              : StockItemClassification.food,
+        ),
       ),
     );
     if (saved == true) {
@@ -502,10 +684,17 @@ class _InventoryTabState extends State<InventoryAdminTab>
   /// Opens the Stock Item editor pre-filled with the Menu Item's name and
   /// nothing else. Unit, packaging and threshold stay real decisions, and the
   /// created row gets its own identity — a Menu Item is never a Stock Item.
-  Future<StockItem?> _createStockItemFor(String prefillName) async {
+  Future<StockItem?> _createStockItemFor(
+    String prefillName,
+    StockItemClassification initialClassification,
+  ) async {
     final created = await showDialog<StockItem>(
       context: context,
-      builder: (_) => _StockItemEditorDialog(prefillName: prefillName),
+      builder: (_) => _StockItemEditorDialog(
+        prefillName: prefillName,
+        initialClassification: initialClassification,
+        suppliers: _suppliers,
+      ),
     );
     if (created != null) {
       setState(() => _stockItems = [..._stockItems, created]);
@@ -522,6 +711,7 @@ class _InventoryTabState extends State<InventoryAdminTab>
       context: context,
       builder: (_) => ReceivingEditorDialog(
         receiving: receiving,
+        businessDate: _businessDate,
         suppliers: _suppliers.where((supplier) => supplier.isActive).toList(),
         stockItems: _stockItems.where((item) => item.isActive).toList(),
       ),
@@ -700,12 +890,14 @@ class _StockItemCard extends StatelessWidget {
 
 class _SupplierCard extends StatelessWidget {
   const _SupplierCard({
+    required this.onOpen,
     required this.supplier,
     required this.onEdit,
     required this.onToggle,
   });
 
   final Supplier supplier;
+  final VoidCallback onOpen;
   final VoidCallback onEdit;
   final VoidCallback onToggle;
 
@@ -740,6 +932,13 @@ class _SupplierCard extends StatelessWidget {
                     ),
                     _InventoryStateBadge(active: supplier.isActive),
                   ],
+                ),
+                TextButton.icon(
+                  onPressed: onOpen,
+                  icon: const Icon(Icons.inventory_2_outlined, size: 18),
+                  label: Text(
+                    'მისი პროდუქტები (${supplier.stockItemIds.length})',
+                  ),
                 ),
                 if (details.isNotEmpty) ...[
                   const SizedBox(height: 7),
@@ -951,7 +1150,14 @@ class _InventoryEmptyState extends StatelessWidget {
 }
 
 class _StockItemEditorDialog extends StatefulWidget {
-  const _StockItemEditorDialog({this.item, this.prefillName});
+  const _StockItemEditorDialog({
+    this.item,
+    this.prefillName,
+    this.suppliers = const [],
+    this.initialClassification = StockItemClassification.food,
+  });
+  final StockItemClassification initialClassification;
+  final List<Supplier> suppliers;
   final StockItem? item;
 
   /// Suggested name when creating from a Menu Item. Only the name: assuming a
@@ -968,6 +1174,8 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
   late final TextEditingController _minimum;
   late final TextEditingController _notes;
   late InventoryUnit _unit;
+  late StockItemClassification _classification;
+  late Set<String> _supplierIds;
   late bool _active;
   late List<_PurchaseUnitDraft> _purchaseUnits;
   bool _saving = false;
@@ -984,6 +1192,8 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
     );
     _notes = TextEditingController(text: item?.notes ?? '');
     _unit = item?.baseUnit ?? InventoryUnit.kg;
+    _classification = item?.classification ?? widget.initialClassification;
+    _supplierIds = {...?item?.supplierIds};
     _active = item?.isActive ?? true;
     _purchaseUnits = [
       for (final unit in item?.purchaseUnits ?? const <StockItemPurchaseUnit>[])
@@ -1043,7 +1253,10 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
                   child: DropdownButtonFormField<InventoryUnit>(
                     initialValue: _purchaseUnits[index].unit,
                     dropdownColor: AdminTheme.surfaceElevated,
-                    style: TextStyle(color: AdminTheme.text, fontSize: 13),
+                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                      color: AdminTheme.text,
+                      fontSize: 13,
+                    ),
                     decoration: _adminInput('ერთეული'),
                     items: [
                       for (final unit in InventoryUnit.values)
@@ -1136,15 +1349,44 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _dialogField(_name, 'სახელი *', key: const Key('stock-name')),
-              _dialogField(_sku, 'SKU'),
+              _dialogField(_name, 'დასახელება *', key: const Key('stock-name')),
+              DropdownButtonFormField<StockItemClassification>(
+                key: const Key('stock-classification'),
+                initialValue: _classification,
+                isExpanded: true,
+                decoration: _adminInput('ტიპი'),
+                dropdownColor: AdminTheme.surfaceElevated,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium!.copyWith(color: AdminTheme.text),
+                items: [
+                  for (final value in StockItemClassification.values)
+                    DropdownMenuItem(
+                      value: value,
+                      child: Text(
+                        value == StockItemClassification.food
+                            ? 'საკვები'
+                            : 'სასმელი',
+                      ),
+                    ),
+                ],
+                onChanged: _saving
+                    ? null
+                    : (value) => setState(() => _classification = value!),
+              ),
+              const SizedBox(height: 10),
+              _dialogField(_sku, 'პროდუქტის კოდი'),
               DropdownButtonFormField<InventoryUnit>(
                 initialValue: _unit,
                 dropdownColor: AdminTheme.surfaceElevated,
-                style: TextStyle(color: AdminTheme.text),
-                decoration: _adminInput('საბაზო ერთეული'),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium!.copyWith(color: AdminTheme.text),
+                decoration: _adminInput('როგორ ვითვლით საწყობში?'),
                 items: [
-                  for (final unit in InventoryUnit.values)
+                  for (final unit in InventoryUnit.values.where(
+                    (unit) => unit != InventoryUnit.keg,
+                  ))
                     DropdownMenuItem(
                       value: unit,
                       child: Text(_unitLabel(unit)),
@@ -1176,6 +1418,36 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
                 ),
               ),
               _dialogField(_notes, 'შენიშვნა', maxLines: 3),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'მომწოდებლები',
+                  style: TextStyle(color: AdminTheme.textMuted),
+                ),
+              ),
+              if (widget.suppliers.isEmpty)
+                Text(
+                  'ჯერ დაამატეთ მომწოდებელი მომწოდებლების განყოფილებაში.',
+                  style: TextStyle(color: AdminTheme.textMuted),
+                ),
+              for (final supplier in widget.suppliers)
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    supplier.name,
+                    style: TextStyle(color: AdminTheme.text),
+                  ),
+                  value: _supplierIds.contains(supplier.id),
+                  onChanged: _saving
+                      ? null
+                      : (value) => setState(() {
+                          if (value == true) {
+                            _supplierIds.add(supplier.id);
+                          } else {
+                            _supplierIds.remove(supplier.id);
+                          }
+                        }),
+                ),
               _purchaseUnitEditor(),
               SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
@@ -1270,6 +1542,8 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
         name: name,
         sku: _sku.text,
         baseUnit: _unit,
+        classification: _classification,
+        supplierIds: _supplierIds.toList(),
         minimumStock: minimum,
         notes: _notes.text,
         isActive: _active,
@@ -1500,6 +1774,8 @@ String _unitShort(InventoryUnit unit) {
       return 'ბოთლი';
     case InventoryUnit.pack:
       return 'შეკვრა';
+    case InventoryUnit.keg:
+      return 'კეგი';
     case InventoryUnit.box:
       return 'ყუთი';
   }
@@ -1522,7 +1798,211 @@ String _unitLabel(InventoryUnit unit) {
       return 'ბოთლი';
     case InventoryUnit.pack:
       return 'შეკვრა';
+    case InventoryUnit.keg:
+      return 'კეგი';
     case InventoryUnit.box:
       return 'ყუთი';
+  }
+}
+
+class SupplierDetailDialog extends StatefulWidget {
+  const SupplierDetailDialog({
+    super.key,
+    required this.supplier,
+    required this.stockItems,
+    this.load,
+    this.setLink,
+  });
+  final Supplier supplier;
+  final List<StockItem> stockItems;
+  final Future<Map<String, dynamic>> Function()? load;
+  final Future<void> Function(String stockItemId, bool linked)? setLink;
+  @override
+  State<SupplierDetailDialog> createState() => _SupplierDetailDialogState();
+}
+
+class _SupplierDetailDialogState extends State<SupplierDetailDialog> {
+  Map<String, dynamic>? _detail;
+  String? _error;
+  String _search = '';
+  bool _busy = false;
+  bool _selecting = false;
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final detail =
+          await (widget.load?.call() ??
+              MobileApiService.getSupplierDetail(widget.supplier.id));
+      if (mounted)
+        setState(() {
+          _detail = detail;
+          _error = null;
+        });
+    } catch (error) {
+      if (mounted) setState(() => _error = '$error');
+    }
+  }
+
+  Future<void> _link(String id, bool linked) async {
+    setState(() => _busy = true);
+    try {
+      await (widget.setLink?.call(id, linked) ??
+          MobileApiService.setSupplierProduct(widget.supplier.id, id, linked));
+      await _load();
+    } catch (error) {
+      if (mounted) setState(() => _error = '$error');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final products = (_detail?['products'] as List? ?? []).cast<Map>();
+    final ids = products.map((row) => row['id']).toSet();
+    final receivings = (_detail?['recentReceivings'] as List? ?? [])
+        .cast<Map>();
+    return AlertDialog(
+      key: const Key('supplier-detail'),
+      backgroundColor: AdminTheme.surface,
+      title: Text(
+        widget.supplier.name,
+        style: TextStyle(color: AdminTheme.text),
+      ),
+      content: SizedBox(
+        width: 540,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (_error != null) ...[
+                Text(_error!, style: TextStyle(color: AdminTheme.bad)),
+                TextButton(onPressed: _load, child: const Text('ხელახლა ცდა')),
+              ],
+              if (_detail == null && _error == null)
+                const Center(child: CircularProgressIndicator()),
+              Text(
+                'მისი პროდუქტები',
+                style: TextStyle(
+                  color: AdminTheme.text,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              if (products.isEmpty && _detail != null)
+                Text(
+                  'პროდუქტი ჯერ არ არის მიბმული.',
+                  style: TextStyle(color: AdminTheme.textMuted),
+                ),
+              for (final product in products)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    '${product['name']}',
+                    style: TextStyle(color: AdminTheme.text),
+                  ),
+                  trailing: IconButton(
+                    tooltip: 'მიბმის მოხსნა',
+                    onPressed: _busy
+                        ? null
+                        : () => _link(product['id'] as String, false),
+                    icon: const Icon(Icons.link_off),
+                  ),
+                ),
+              TextButton.icon(
+                onPressed: _busy
+                    ? null
+                    : () => setState(() => _selecting = !_selecting),
+                icon: const Icon(Icons.add),
+                label: const Text('პროდუქტის მიბმა'),
+              ),
+              if (_selecting) ...[
+                TextField(
+                  decoration: _adminInput('პროდუქტის ძებნა'),
+                  style: TextStyle(color: AdminTheme.text),
+                  onChanged: (value) =>
+                      setState(() => _search = value.toLowerCase()),
+                ),
+                for (final item in widget.stockItems.where(
+                  (item) =>
+                      item.isActive &&
+                      !ids.contains(item.id) &&
+                      item.name.toLowerCase().contains(_search),
+                ))
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      item.name,
+                      style: TextStyle(color: AdminTheme.text),
+                    ),
+                    trailing: IconButton(
+                      tooltip: 'მიბმა',
+                      onPressed: _busy ? null : () => _link(item.id, true),
+                      icon: const Icon(Icons.add_link),
+                    ),
+                  ),
+              ],
+              const Divider(height: 24),
+              Text(
+                'ბოლო მიღებები',
+                style: TextStyle(
+                  color: AdminTheme.text,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              if (receivings.isEmpty && _detail != null)
+                Text(
+                  'მიღებები ჯერ არ არის.',
+                  style: TextStyle(color: AdminTheme.textMuted),
+                ),
+              for (final row in receivings)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    '${row['businessDate']} · ${row['documentTotal']} ₾',
+                    style: TextStyle(color: AdminTheme.text),
+                  ),
+                  subtitle: Text(
+                    '${row['supplierNameSnapshot']}',
+                    style: TextStyle(color: AdminTheme.textMuted),
+                  ),
+                  trailing: _ReceivingStatusBadge(
+                    status: ReceivingStatus.parse(row['status'] as String?),
+                  ),
+                  onTap: () => showDialog<void>(
+                    context: context,
+                    builder: (_) => ReceivingDetailDialog(
+                      receivingId: row['id'] as String,
+                      onEditDraft: (draft) async {
+                        Navigator.pop(context);
+                        await showDialog<bool>(
+                          context: context,
+                          builder: (_) => ReceivingEditorDialog(
+                            receiving: draft,
+                            suppliers: [widget.supplier],
+                            stockItems: widget.stockItems,
+                          ),
+                        );
+                        await _load();
+                      },
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _busy ? null : () => Navigator.pop(context),
+          child: const Text('დახურვა'),
+        ),
+      ],
+    );
   }
 }

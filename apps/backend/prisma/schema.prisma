@@ -189,12 +189,19 @@ model Expense {
 /// One durable ingredient, packaged product, or other inventory identity.
 /// Quantity is deliberately absent: StockMovement becomes the authoritative
 /// history in Inventory Step 2. Until then clients present a derived zero.
+enum StockItemClassification {
+  FOOD
+  BEVERAGE
+  @@schema("pos")
+}
+
 model StockItem {
   id           String   @id @default(uuid())
   venueId      String
   name         String
   /// Normalized to upper case by InventoryService before persistence.
   sku          String?
+  classification StockItemClassification @default(FOOD)
   baseUnit     String
   minimumStock Decimal? @db.Decimal(18, 3)
   isActive     Boolean  @default(true)
@@ -203,12 +210,14 @@ model StockItem {
   updatedAt    DateTime @updatedAt
   venue        Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  supplierProducts          SupplierProduct[]
   purchaseUnits             StockItemPurchaseUnit[]
   receivingLines            ReceivingLine[]
   movements                 StockMovement[]
   saleConsumptionComponents SaleConsumptionComponent[]
   consumptionComponents     MenuConsumptionComponent[]
 
+  @@unique([venueId, id])
   @@unique([venueId, sku])
   @@index([venueId, isActive, name])
   @@schema("pos")
@@ -230,9 +239,25 @@ model Supplier {
   updatedAt DateTime @updatedAt
   venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  supplierProducts SupplierProduct[]
   receivings Receiving[]
 
+  @@unique([venueId, id])
+
   @@index([venueId, isActive, name])
+  @@schema("pos")
+}
+
+/// A reusable supplier catalog. No Receiving depends on this link.
+model SupplierProduct {
+  venueId String
+  supplierId String
+  stockItemId String
+  createdAt DateTime @default(now())
+  supplier Supplier @relation(fields: [venueId, supplierId], references: [venueId, id], onDelete: Cascade)
+  stockItem StockItem @relation(fields: [venueId, stockItemId], references: [venueId, id], onDelete: Cascade)
+  @@id([venueId, supplierId, stockItemId])
+  @@index([venueId, stockItemId])
   @@schema("pos")
 }
 
@@ -285,6 +310,7 @@ model Receiving {
   invoiceNumber        String?
   /// Document date as `YYYY-MM-DD`, the same shape as a business date.
   documentDate         String
+  businessDate         String
   receivedAt           DateTime
   status               ReceivingStatus @default(DRAFT)
   notes                String?
@@ -306,6 +332,7 @@ model Receiving {
   lines                ReceivingLine[]
   movements            StockMovement[]
 
+  @@index([venueId, businessDate, createdAt, id])
   @@index([venueId, documentDate, createdAt, id])
   @@index([venueId, status, documentDate])
   @@index([venueId, supplierId, documentDate])

@@ -159,6 +159,12 @@ const ACTION_RULES: Readonly<Record<string, EntityRule>> = {
     idKeys: ['stockItemId'],
   },
 
+  STOCK_ITEM_SUPPLIERS_UPDATED: {
+    entityType: 'STOCK_ITEM',
+    idKeys: ['stockItemId'],
+  },
+  SUPPLIER_PRODUCT_LINKED: { entityType: 'SUPPLIER', idKeys: ['supplierId'] },
+  SUPPLIER_PRODUCT_UNLINKED: { entityType: 'SUPPLIER', idKeys: ['supplierId'] },
   SUPPLIER_CREATED: { entityType: 'SUPPLIER', idKeys: ['supplierId'] },
   SUPPLIER_UPDATED: { entityType: 'SUPPLIER', idKeys: ['supplierId'] },
   SUPPLIER_DISABLED: { entityType: 'SUPPLIER', idKeys: ['supplierId'] },

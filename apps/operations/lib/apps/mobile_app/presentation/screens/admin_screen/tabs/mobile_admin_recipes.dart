@@ -152,8 +152,7 @@ class _RecipeCard extends StatelessWidget {
                           key: Key('recipe-variant-${variant.variantId}'),
                           onPressed: () => onOpen(variant),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor:
-                                variant.recipe?.isActive == true
+                            foregroundColor: variant.recipe?.isActive == true
                                 ? AdminTheme.good
                                 : AdminTheme.textMuted,
                             side: BorderSide(color: AdminTheme.border),
@@ -225,6 +224,7 @@ class RecipeEditorDialog extends StatefulWidget {
     super.key,
     required this.menuItemId,
     required this.menuItemName,
+    this.menuGroup = 'OTHER',
     required this.stockItems,
     this.variantId,
     this.variantLabel,
@@ -236,6 +236,7 @@ class RecipeEditorDialog extends StatefulWidget {
 
   final String menuItemId;
   final String menuItemName;
+  final String menuGroup;
   final String? variantId;
   final String? variantLabel;
   final List<StockItem> stockItems;
@@ -283,18 +284,18 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
     try {
       final detail =
           await (widget.load?.call() ??
-          MobileApiService.getRecipe(
-            widget.menuItemId,
-            variantId: widget.variantId,
-          ));
+              MobileApiService.getRecipe(
+                widget.menuItemId,
+                variantId: widget.variantId,
+              ));
       if (!mounted) return;
       setState(() {
         _detail = detail;
         _loading = false;
         final recipe = detail.recipe;
         if (recipe == null) {
+          _directMode = widget.menuGroup != 'FOOD';
           _components = [_emptyComponent()];
-          _directMode = true;
         } else {
           _yield.text = _quantityText(recipe.yieldQuantity);
           _components = [
@@ -311,7 +312,10 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
           ];
           // A single component with a yield of one is a direct stock link;
           // the Manager should not have to read it as a recipe.
-          _directMode = recipe.isDirectLink && recipe.yieldValue == 1;
+          _directMode =
+              widget.menuGroup != 'FOOD' &&
+              recipe.isDirectLink &&
+              recipe.yieldValue == 1;
         }
       });
     } catch (error) {
@@ -370,50 +374,47 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
             children: [
               Expanded(
                 child: Text(
-                  'ფასი: ${detail.price.toStringAsFixed(2)} ₾',
+                  'გასაყიდი ფასი: ${detail.price.toStringAsFixed(2)} ₾',
                   key: const Key('recipe-price'),
                   style: TextStyle(color: AdminTheme.textMuted, fontSize: 12),
                 ),
               ),
-              _RecipeStatusBadge(
-                configured: detail.recipe?.isActive == true,
-              ),
+              _RecipeStatusBadge(configured: detail.recipe?.isActive == true),
             ],
           ),
+        if (detail != null) CurrentRecipeCostPanel(cost: detail.currentCost),
         const SizedBox(height: 12),
-        SegmentedButton<bool>(
+        Wrap(
           key: const Key('recipe-mode'),
-          showSelectedIcon: false,
-          segments: const [
-            ButtonSegment(value: true, label: Text('მარაგთან დაკავშირება')),
-            ButtonSegment(value: false, label: Text('რეცეპტი')),
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            for (final mode in const {
+              true: 'მარაგთან დაკავშირება',
+              false: 'ტექნოლოგიური ბარათი',
+            }.entries)
+              ChoiceChip(
+                label: Text(mode.value),
+                selected: _directMode == mode.key,
+                selectedColor: AdminTheme.primary,
+                labelStyle: TextStyle(
+                  color: _directMode == mode.key
+                      ? Colors.white
+                      : AdminTheme.textMuted,
+                ),
+                onSelected: _saving
+                    ? null
+                    : (_) => setState(() {
+                        _directMode = mode.key;
+                        if (_directMode) {
+                          while (_components.length > 1) {
+                            _components.removeLast().dispose();
+                          }
+                          _yield.text = '1';
+                        }
+                      }),
+              ),
           ],
-          selected: {_directMode},
-          onSelectionChanged: _saving
-              ? null
-              : (selection) => setState(() {
-                  _directMode = selection.single;
-                  if (_directMode) {
-                    // One component, one sold unit: the simple shape.
-                    while (_components.length > 1) {
-                      _components.removeLast().dispose();
-                    }
-                    _yield.text = '1';
-                  }
-                }),
-          style: ButtonStyle(
-            foregroundColor: WidgetStateProperty.resolveWith(
-              (states) => states.contains(WidgetState.selected)
-                  ? Colors.white
-                  : AdminTheme.textMuted,
-            ),
-            backgroundColor: WidgetStateProperty.resolveWith(
-              (states) => states.contains(WidgetState.selected)
-                  ? AdminTheme.primary
-                  : AdminTheme.surface,
-            ),
-            side: WidgetStatePropertyAll(BorderSide(color: AdminTheme.border)),
-          ),
         ),
         const SizedBox(height: 6),
         Text(
@@ -486,7 +487,9 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
     final base = component.baseQuantity;
     final item = component.stockItem;
     final converted =
-        item != null && component.unit != null && component.unit != item.baseUnit;
+        item != null &&
+        component.unit != null &&
+        component.unit != item.baseUnit;
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -500,7 +503,10 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
                   initialValue: item?.id,
                   isExpanded: true,
                   dropdownColor: AdminTheme.surfaceElevated,
-                  style: TextStyle(color: AdminTheme.text, fontSize: 13),
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                    color: AdminTheme.text,
+                    fontSize: 13,
+                  ),
                   decoration: _adminInput('მარაგის პროდუქტი'),
                   items: [
                     for (final option in _stockItems)
@@ -529,8 +535,9 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
                   tooltip: 'წაშლა',
                   onPressed: _saving || _components.length == 1
                       ? null
-                      : () =>
-                            setState(() => _components.removeAt(index).dispose()),
+                      : () => setState(
+                          () => _components.removeAt(index).dispose(),
+                        ),
                   icon: Icon(Icons.close_rounded, color: AdminTheme.textDim),
                 ),
             ],
@@ -558,7 +565,10 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
                   key: Key('recipe-component-unit-$index'),
                   initialValue: component.unit,
                   dropdownColor: AdminTheme.surfaceElevated,
-                  style: TextStyle(color: AdminTheme.text, fontSize: 13),
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                    color: AdminTheme.text,
+                    fontSize: 13,
+                  ),
                   decoration: _adminInput('ერთეული'),
                   items: [
                     // Only natural consumption units. Purchase packaging such
@@ -600,10 +610,7 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
     return [
       TextButton(
         onPressed: _saving ? null : () => Navigator.pop(context, false),
-        child: Text(
-          'დახურვა',
-          style: TextStyle(color: AdminTheme.textMuted),
-        ),
+        child: Text('დახურვა', style: TextStyle(color: AdminTheme.textMuted)),
       ),
       if (recipe != null && recipe.isActive)
         TextButton(
@@ -633,7 +640,9 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
   /// real decisions, and the new Stock Item gets its own identity — a Menu
   /// Item and a Stock Item are never the same row.
   Future<void> _createStockItem() async {
-    final created = await widget.onCreateStockItem!(widget.menuItemName);
+    final created = await widget.onCreateStockItem!(
+      _directMode ? widget.menuItemName : '',
+    );
     if (created == null || !mounted) return;
     setState(() {
       _stockItems = [..._stockItems, created];
@@ -734,4 +743,62 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
       });
     }
   }
+}
+
+/// Current procurement costs of the saved definition; never a sale profit figure.
+class CurrentRecipeCostPanel extends StatelessWidget {
+  const CurrentRecipeCostPanel({super.key, required this.cost});
+  final CurrentRecipeCost? cost;
+  @override
+  Widget build(BuildContext context) => Padding(
+    key: const Key('recipe-current-cost'),
+    padding: const EdgeInsets.only(top: 12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'მიმდინარე თვითღირებულება: ${cost?.total == null ? 'ვერ გამოითვლება' : '${cost!.total} ₾'}',
+          style: TextStyle(color: AdminTheme.text, fontWeight: FontWeight.w700),
+        ),
+        if (cost == null || cost!.status == 'NO_ACTIVE_RECIPE')
+          Text(
+            'შეინახეთ შემადგენლობა ღირებულების სანახავად.',
+            style: TextStyle(color: AdminTheme.textMuted),
+          ),
+        if (cost?.status == 'MISSING_COMPONENT_COST')
+          Text(
+            'ზოგი ინგრედიენტის შესყიდვის ფასი ჯერ არ გვაქვს.',
+            style: TextStyle(color: AdminTheme.warn),
+          ),
+        if (cost != null && cost!.components.isNotEmpty)
+          ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            title: Text(
+              'შენახული შემადგენლობით · საშუალო შესყიდვის ფასი',
+              style: TextStyle(color: AdminTheme.textMuted, fontSize: 12),
+            ),
+            children: [
+              for (final component in cost!.components)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    component.name,
+                    style: TextStyle(color: AdminTheme.text),
+                  ),
+                  subtitle: Text(
+                    component.unitCost == null
+                        ? 'შესყიდვის ისტორია არ არის'
+                        : '${_quantityText(component.quantity)} ${_unitShort(component.baseUnit)} × ${_quantityText(component.unitCost!)} ₾ / ${_unitShort(component.baseUnit)} = ${_quantityText(component.cost!)} ₾',
+                    style: TextStyle(color: AdminTheme.textMuted),
+                  ),
+                ),
+              Text(
+                'დათვლილია დადასტურებული მიღებებიდან. გაუქმებული მიღებები არ შედის. შემადგენლობის ცვლილება გამოჩნდება შენახვის შემდეგ.',
+                style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
+              ),
+            ],
+          ),
+      ],
+    ),
+  );
 }

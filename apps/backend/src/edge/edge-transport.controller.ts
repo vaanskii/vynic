@@ -4,6 +4,7 @@ import {
   Body,
   Controller,
   Get,
+  Query,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -55,8 +56,11 @@ export class EdgeTransportController {
   }
 
   @Get('inventory/catalog')
-  async inventoryCatalog(@EdgeDevice() device: EdgeDeviceContext) {
-    return this.inventory.getCatalog(device);
+  async inventoryCatalog(
+    @EdgeDevice() device: EdgeDeviceContext,
+    @Query('version') version?: string,
+  ) {
+    return this.inventory.getCatalog(device, version === '4' ? 4 : 3);
   }
 
   /** What work is waiting for this Edge, and a lease on each item returned. */

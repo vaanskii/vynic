@@ -167,9 +167,7 @@ describeDatabase('Menu consumption recipes (PostgreSQL)', () => {
     for (const pour of pours) {
       const saved = await recipes.save(a, {
         menuItemId: pour.item.id,
-        components: [
-          { stockItemId: beer.id, quantity: pour.ml, unit: 'ml' },
-        ],
+        components: [{ stockItemId: beer.id, quantity: pour.ml, unit: 'ml' }],
       });
       expect(saved.components[0].baseQuantity).toBe(pour.expected);
       expect(saved.components[0].baseUnit).toBe('L');
@@ -486,7 +484,7 @@ describeDatabase('Menu consumption recipes (PostgreSQL)', () => {
     });
 
     const catalog = await inventory.getCatalog(tenantA);
-    expect(catalog.version).toBe(3);
+    expect(catalog.version).toBe(4);
     expect(catalog.recipes).toHaveLength(1);
     expect(catalog.recipes[0]).toMatchObject({
       menuItemId: pizza.id,
@@ -574,9 +572,9 @@ describeDatabase('Menu consumption recipes (PostgreSQL)', () => {
     await expect(recipes.disable(b, mine.id)).rejects.toThrow(
       /Recipe not found/,
     );
-    expect((await recipes.listMenuItems(tenantB)).map((r) => r.nameKa)).toEqual([
-      'Foreign dish',
-    ]);
+    expect((await recipes.listMenuItems(tenantB)).map((r) => r.nameKa)).toEqual(
+      ['Foreign dish'],
+    );
     expect(await recipes.projection(venueBId)).toEqual([]);
   });
 });

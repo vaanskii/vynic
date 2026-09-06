@@ -1,3 +1,4 @@
+import { isProcurementCategory } from '../util/expense-category';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { normalizeAuditEventType } from '../../pos/audit/audit-event-type';
@@ -135,7 +136,7 @@ export class MobileReportsService {
       from = parseBusinessDateStart(resolvedBusinessDate);
     }
 
-    const expenses = await this.prisma.expense.findMany({
+    const expenseRows = await this.prisma.expense.findMany({
       where:
         period === 'today' && currentBusinessDate
           ? {
@@ -153,6 +154,9 @@ export class MobileReportsService {
       select: { amount: true, category: true },
     });
 
+    const expenses = expenseRows.filter(
+      (row) => !isProcurementCategory(row.category),
+    );
     const r = (n: number) => Math.round(n * 100) / 100;
     const totalExpenses = expenses.reduce(
       (sum, e) => sum + Number(e.amount),
@@ -453,10 +457,13 @@ export class MobileReportsService {
   }
 
   async getSalesDaily(tenant: TenantContext, month?: string) {
-    const expenses = await this.prisma.expense.findMany({
+    const expenseRows = await this.prisma.expense.findMany({
       where: { venueId: tenant.venueId },
-      select: { amount: true, createdAt: true },
+      select: { amount: true, createdAt: true, category: true },
     });
+    const expenses = expenseRows.filter(
+      (row) => !isProcurementCategory(row.category),
+    );
     const expensesByDate = new Map<string, number>();
     const dateKey = (d: Date) => {
       const y = d.getFullYear().toString().padStart(4, '0');

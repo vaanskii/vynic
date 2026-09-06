@@ -89,6 +89,11 @@ export class MobileController {
     return this.consumption.detail(tenant, id);
   }
 
+  @Get('inventory/overview')
+  getInventoryOverview(@ManagerTenant() tenant: TenantContext) {
+    return this.inventory.overview(tenant);
+  }
+
   @Get('inventory/units')
   getInventoryUnits() {
     return this.inventory.getUnits();
@@ -99,7 +104,7 @@ export class MobileController {
     @ManagerTenant() tenant: TenantContext,
     @Query('q') search?: string,
   ) {
-    return this.inventory.listStockItems(tenant, search);
+    return this.inventory.listStockItems(tenant, search, true);
   }
 
   @Post('inventory/stock-items')

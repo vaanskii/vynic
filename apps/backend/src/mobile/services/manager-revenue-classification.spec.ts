@@ -50,6 +50,16 @@ function makePrisma(fixture: Fixture = {}) {
     table: {
       findMany: jest.fn(() => Promise.resolve(fixture.tables ?? [])),
     },
+    venue: {
+      findUniqueOrThrow: jest
+        .fn()
+        .mockResolvedValue({ timezone: 'Asia/Tbilisi' }),
+    },
+    receiving: {
+      aggregate: jest
+        .fn()
+        .mockResolvedValue({ _sum: { documentTotal: null }, _count: 0 }),
+    },
     expense: {
       findMany: jest.fn(() => Promise.resolve(fixture.expenses ?? [])),
     },

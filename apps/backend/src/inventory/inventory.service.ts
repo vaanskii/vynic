@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { procurementSummary } from './procurement-summary';
 import { InventoryCostService } from './inventory-cost.service';
 import { Prisma, StockItemClassification } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
@@ -78,7 +79,11 @@ export class InventoryService {
     return INVENTORY_UNIT_DEFINITIONS;
   }
 
-  async listStockItems(tenant: TenantContext, search?: string) {
+  async listStockItems(
+    tenant: TenantContext,
+    search?: string,
+    withPrices = false,
+  ) {
     const query = search?.trim();
     const rows = await this.prisma.stockItem.findMany({
       where: {
@@ -99,7 +104,41 @@ export class InventoryService {
       },
     });
     const balances = await this.currentStock(tenant.venueId);
-    return rows.map((row) => this.presentStockItem(row, balances.get(row.id)));
+    const lastPrices = withPrices
+      ? await this.prisma.receivingLine.findMany({
+          where: {
+            stockItem: { venueId: tenant.venueId },
+            receiving: { venueId: tenant.venueId, status: 'POSTED' },
+          },
+          distinct: ['stockItemId', 'baseUnit'],
+          orderBy: [
+            { receiving: { businessDate: 'desc' } },
+            { receiving: { postedAt: 'desc' } },
+            { receivingId: 'desc' },
+            { lineSequence: 'desc' },
+          ],
+          select: {
+            stockItemId: true,
+            baseUnit: true,
+            effectiveBaseUnitCost: true,
+          },
+        })
+      : [];
+    const prices = new Map(
+      lastPrices.map((r) => [
+        r.stockItemId + ':' + r.baseUnit,
+        r.effectiveBaseUnitCost.toFixed(6),
+      ]),
+    );
+    return rows.map((row) => ({
+      ...this.presentStockItem(row, balances.get(row.id)),
+      ...(withPrices
+        ? {
+            lastPurchaseUnitCost:
+              prices.get(row.id + ':' + row.baseUnit) ?? null,
+          }
+        : {}),
+    }));
   }
 
   /**
@@ -219,7 +258,83 @@ export class InventoryService {
   }
 
   /** Complete Device-scoped projection for the POS Hive cache. */
-  async getCatalog(tenant: TenantContext, version: 3 | 4 = 4) {
+  async overview(tenant: TenantContext) {
+    const [procurement, items, unmapped] = await Promise.all([
+      procurementSummary(this.prisma, tenant),
+      this.listStockItems(tenant),
+      this.prisma.saleConsumptionLine.findMany({
+        where: {
+          venueId: tenant.venueId,
+          status: 'UNMAPPED',
+          consumption: { venueId: tenant.venueId, reversedAt: null },
+        },
+        distinct: ['menuItemId', 'variantId', 'itemName'],
+        select: {
+          menuItemId: true,
+          variantId: true,
+          itemName: true,
+          variantName: true,
+        },
+        orderBy: { id: 'asc' },
+      }),
+    ]);
+    return {
+      procurement,
+      lowStock: items.filter((i) => i.isActive && i.stockStatus === 'LOW')
+        .length,
+      negativeStock: items.filter(
+        (i) => i.isActive && i.stockStatus === 'NEGATIVE',
+      ).length,
+      unmappedCount: unmapped.length,
+      unmapped,
+    };
+  }
+
+  async inspection(tenant: TenantContext) {
+    const overview = await this.overview(tenant);
+    const [items, receivings, menuItems] = await Promise.all([
+      this.prisma.stockItem.findMany({
+        where: { venueId: tenant.venueId },
+        select: {
+          id: true,
+          movements: {
+            where: { venueId: tenant.venueId },
+            take: 20,
+            orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          },
+        },
+      }),
+      this.prisma.receiving.findMany({
+        where: {
+          venueId: tenant.venueId,
+          businessDate: overview.procurement.businessDate,
+          status: 'POSTED',
+        },
+        take: 100,
+        orderBy: [{ postedAt: 'desc' }, { id: 'desc' }],
+        select: {
+          id: true,
+          supplierNameSnapshot: true,
+          documentTotal: true,
+          businessDate: true,
+        },
+      }),
+      this.recipes.listMenuItems(tenant),
+    ]);
+    return {
+      ...overview,
+      menuItems,
+      movementsByItem: Object.fromEntries(
+        items.map((item) => [item.id, item.movements.map(presentMovement)]),
+      ),
+      receivings: receivings.map((r) => ({
+        ...r,
+        documentTotal: r.documentTotal.toFixed(2),
+      })),
+    };
+  }
+
+  async getCatalog(tenant: TenantContext, version: 3 | 4 | 5 = 4) {
     const [stockItems, suppliers, recipes] = await Promise.all([
       this.listStockItems(tenant),
       this.listSuppliers(tenant),
@@ -244,6 +359,7 @@ export class InventoryService {
             })),
       suppliers,
       recipes,
+      ...(version >= 5 ? { inspection: await this.inspection(tenant) } : {}),
     };
   }
 

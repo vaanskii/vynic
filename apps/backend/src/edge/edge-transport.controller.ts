@@ -60,7 +60,10 @@ export class EdgeTransportController {
     @EdgeDevice() device: EdgeDeviceContext,
     @Query('version') version?: string,
   ) {
-    return this.inventory.getCatalog(device, version === '4' ? 4 : 3);
+    return this.inventory.getCatalog(
+      device,
+      version === '5' ? 5 : version === '4' ? 4 : 3,
+    );
   }
 
   /** What work is waiting for this Edge, and a lease on each item returned. */

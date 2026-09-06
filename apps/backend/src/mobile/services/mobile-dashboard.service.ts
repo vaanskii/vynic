@@ -3,6 +3,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { procurementSummary } from '../../inventory/procurement-summary';
+import {
+  isProcurementCategory,
+  isSalaryCategory,
+} from '../util/expense-category';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
 import { MonitoringGateway } from '../../realtime/monitoring.gateway';
 import {
@@ -71,6 +77,10 @@ export interface StaffRankEntry {
 }
 
 export interface FinancialsResponse {
+  procurement: Awaited<ReturnType<typeof procurementSummary>>;
+  otherExpenses: string;
+  salaryPayments: string;
+  totalOutflows: string;
   revenue: number;
   expenses: number;
   profit: number;
@@ -505,16 +515,15 @@ export class MobileDashboardService {
   }
 
   async getFinancials(tenant: TenantContext): Promise<FinancialsResponse> {
-    const businessDateSetting = await (this.prisma as any).setting.findUnique({
-      where: settingIdentity(tenant, 'currentBusinessDate'),
-    });
-    const currentBusinessDate =
-      businessDateSetting?.value ?? todayStart().toISOString().split('T')[0];
+    // Resolve the reporting day once, so Close Day cannot mix an old Expense
+    // range with procurement from the next business day in the same response.
+    const procurement = await procurementSummary(this.prisma, tenant);
+    const currentBusinessDate = procurement.businessDate;
     const r = (n: number) => Math.round(n * 100) / 100;
 
     const start = parseBusinessDateStart(currentBusinessDate);
     const end = nextDay(start);
-    const [summarySetting, expenses] = await Promise.all([
+    const [summarySetting, expenseRows] = await Promise.all([
       (this.prisma as any).setting.findUnique({
         where: settingIdentity(tenant, `salesSummary:${currentBusinessDate}`),
       }),
@@ -535,6 +544,20 @@ export class MobileDashboardService {
       }),
     ]);
 
+    const expenses = expenseRows.filter(
+      (row) => !isProcurementCategory(row.category),
+    );
+    const moneySum = (rows: typeof expenses) =>
+      rows.reduce((sum, row) => sum.plus(row.amount), new Prisma.Decimal(0));
+    const salaryPayments = moneySum(
+      expenses.filter((row) => isSalaryCategory(row.category)),
+    );
+    const otherExpenses = moneySum(
+      expenses.filter((row) => !isSalaryCategory(row.category)),
+    );
+    const totalOutflows = otherExpenses
+      .plus(salaryPayments)
+      .plus(procurement.businessDay.total);
     let revenue = 0;
     let cashRev = 0;
     let cardRev = 0;
@@ -585,9 +608,13 @@ export class MobileDashboardService {
     }
 
     return {
+      procurement,
+      otherExpenses: otherExpenses.toFixed(2),
+      salaryPayments: salaryPayments.toFixed(2),
+      totalOutflows: totalOutflows.toFixed(2),
       revenue: r(revenue),
       expenses: r(totalExp),
-      profit: r(revenue - totalExp),
+      profit: new Prisma.Decimal(revenue).minus(totalOutflows).toNumber(),
       cashRevenue: r(cashRev),
       cardRevenue: r(cardRev),
       orderCount,
@@ -640,6 +667,11 @@ export class MobileDashboardService {
   }> {
     const description = (payload.description ?? '').trim();
     const category = (payload.category ?? 'სხვა').trim() || 'სხვა';
+    if (isProcurementCategory(category)) {
+      throw new BadRequestException(
+        'შესყიდვა დაამატეთ მარაგებში — დღიური მიღება',
+      );
+    }
     const paymentType = normalizePaymentType(payload.paymentType ?? 'cash');
     const amount = Number(payload.amount ?? 0);
     if (!description) {

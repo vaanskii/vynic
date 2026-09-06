@@ -62,8 +62,8 @@ void main() {
 
     expect(await service.syncOnce(), EdgeTransportOutcome.ok);
     expect(requested.path, '/edge/inventory/catalog');
-    expect(requested.queryParameters['version'], '4');
-    expect(requested.queryParameters, {'version': '4'});
+    expect(requested.queryParameters['version'], '5');
+    expect(requested.queryParameters, {'version': '5'});
     expect(credential, 'vynic-device-v1.device.secret');
     expect(InventoryRepository.getStockItems().single.id, 'stock-1');
   });

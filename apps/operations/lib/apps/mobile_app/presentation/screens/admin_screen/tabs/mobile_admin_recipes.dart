@@ -346,20 +346,25 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      key: const Key('recipe-editor'),
-      backgroundColor: AdminTheme.surface,
-      title: Text(_title, style: TextStyle(color: AdminTheme.text)),
-      content: SizedBox(
-        width: 620,
-        child: _loading
-            ? const Padding(
-                padding: EdgeInsets.symmetric(vertical: 32),
-                child: Center(child: CircularProgressIndicator()),
-              )
-            : SingleChildScrollView(child: _body()),
+    return Theme(
+      data: inventoryTheme(context),
+      child: AlertDialog(
+        insetPadding: const EdgeInsets.all(VynicSpacing.md),
+        contentPadding: const EdgeInsets.all(VynicSpacing.md),
+        key: const Key('recipe-editor'),
+        backgroundColor: AdminTheme.surface,
+        title: Text(_title, style: TextStyle(color: AdminTheme.text)),
+        content: SizedBox(
+          width: 620,
+          child: _loading
+              ? const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 32),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              : SingleChildScrollView(child: _body()),
+        ),
+        actions: _actions(),
       ),
-      actions: _actions(),
     );
   }
 

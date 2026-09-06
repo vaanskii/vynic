@@ -145,6 +145,10 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## Inventory
 
+- Step 4.6 UX and procurement semantics/rollout: `docs/INVENTORY_STEP46.md`.
+- POSTED-only day/month purchase totals: `apps/backend/src/inventory/procurement-summary.ts`; financial composition and legacy Expense-category guard: `apps/backend/src/mobile/services/mobile-dashboard.service.ts`, `apps/backend/src/mobile/util/expense-category.ts`; proof: `apps/backend/src/inventory/procurement.integration.spec.ts`.
+- Manager Dashboard summary/deep links: `apps/operations/lib/apps/mobile_app/presentation/widgets/inventory_summary_card.dart`, `InventoryScreen` in the existing Inventory tab library. POS Admin offline read-only section: `apps/operations/lib/apps/windows_pos/widgets/admin/admin_inventory_section.dart`. Responsive/offline/financial navigation proof: `apps/operations/test/widget/inventory_consolidation_test.dart`.
+
 - Step 4.5 catalog, supplier links, daily procurement and current-cost semantics/rollout: `docs/INVENTORY_STEP45.md`; current purchase / theoretical recipe cost read model: `apps/backend/src/inventory/inventory-cost.service.ts`; proof: `catalog-cost.integration.spec.ts`, `apps/operations/test/widget/manager_catalog_cost_test.dart`, `apps/operations/test/unit/inventory_projection_step45_test.dart`.
 
 - Boundary and authority: `docs/INVENTORY_STEP1.md` (catalog), `docs/INVENTORY_STEP2.md` (receiving and the quantity ledger), `docs/INVENTORY_STEP3.md` (Menu consumption definitions)
@@ -160,7 +164,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Units and exact decimal arithmetic: `apps/backend/src/inventory/inventory-unit.ts`, `apps/backend/src/inventory/inventory-quantity.ts` (`resolveBaseQuantity` and `lineMoney` for receiving; the narrower `resolveRecipeQuantity`, `recipeUnitsFor` and `perUnitQuantity` for consumption)
 - Shared venue-wide audit writer/actions: `apps/backend/src/inventory/inventory-audit.ts`
 - Manager routes: `apps/backend/src/mobile/mobile.controller.ts` (`/mobile/inventory/*`, including `receivings`, `receivings/:id/post`, `receivings/:id/cancel`, `recipes`, `recipes/menu-item/:menuItemId`, `recipes/:id/disable`)
-- Device -> Venue complete projection (catalog v4; v3-compatible units for older clients): `GET /edge/inventory/catalog` in `apps/backend/src/edge/edge-transport.controller.ts`
+- Device -> Venue complete projection (catalog v5 with inspection excerpts; v3/v4 compatibility for older clients): `GET /edge/inventory/catalog` in `apps/backend/src/edge/edge-transport.controller.ts`
 - POS offline model/store/pull: `apps/operations/lib/core/models/inventory.dart`, `apps/operations/lib/core/database/repositories/inventory_repository.dart`, `apps/operations/lib/core/services/edge/inventory_projection_sync_service.dart`
 - Manager read models: `apps/operations/lib/core/models/receiving.dart` (Receiving, Stock Item detail), `apps/operations/lib/core/models/menu_recipe.dart` (recipes, menu-oriented list, reverse usage); API client in `apps/operations/lib/core/services/manager_app/mobile_api_service.dart`
 - Manager UI: `apps/operations/lib/apps/mobile_app/presentation/screens/admin_screen/tabs/mobile_admin_inventory_tab.dart` (catalog, section selector, Georgian unit labels via `_unitShort`), `.../tabs/mobile_admin_receiving.dart` (Receiving list/detail/editor, Stock Item detail and its reverse usage), `.../tabs/mobile_admin_recipes.dart` (Menu-oriented recipe list and the direct-link/recipe editor)

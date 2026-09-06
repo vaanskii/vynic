@@ -1,3 +1,5 @@
+import 'package:vynic/apps/mobile_app/presentation/screens/mobile_admin_screen.dart';
+import 'package:vynic/core/models/expense_category.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -203,6 +205,10 @@ class _FinancialsScreenState extends State<FinancialsScreen>
 
   Future<void> _addExpense() async {
     final category = _categoryController.text.trim();
+    if (ExpenseCategory.isProcurement(category)) {
+      _toast('შესყიდვა დაამატეთ მარაგებში — დღიური მიღება', error: true);
+      return;
+    }
     final description = _expenseDescriptionController.text.trim();
     final amount = double.tryParse(_expenseAmountController.text.trim());
     if (category.isEmpty ||
@@ -349,7 +355,9 @@ class _FinancialsScreenState extends State<FinancialsScreen>
     final double revenue = ledger.isNotEmpty
         ? _number(ledger['revenue'])
         : _number(_data!['revenue']);
-    final double expenses = (_data!['expenses'] ?? 0).toDouble();
+    final double expenses = _number(
+      _data!['totalOutflows'] ?? _data!['expenses'],
+    );
     final double profit = revenue - expenses;
     final double cash = (_data!['cashRevenue'] ?? 0).toDouble();
     final double card = (_data!['cardRevenue'] ?? 0).toDouble();
@@ -386,6 +394,8 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                     ),
                   ),
                   SizedBox(height: 28),
+                  _buildProcurement(),
+                  const SizedBox(height: 24),
                   _fade(0.2, _buildPaymentCard(cash, card)),
                   SizedBox(height: 28),
                   _fade(0.25, _buildLedgerPaymentCard(ledger)),
@@ -490,7 +500,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      positive ? 'წმინდა მოგება (დღეს)' : 'ზარალი (დღეს)',
+                      'გაყიდვები − გასავლები',
                       style: TextStyle(
                         color: MobileGlassTheme.textSecondary,
                         fontSize: 14,
@@ -556,7 +566,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
             children: [
               Expanded(
                 child: _MiniStatBlock(
-                  title: 'შემოსავალი',
+                  title: 'გაყიდვები',
                   amount: _gel(revenue),
                   color: MobileGlassTheme.good,
                   icon: Icons.arrow_downward_rounded,
@@ -621,7 +631,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
             children: [
               _legendDot(MobileGlassTheme.bad, 'ხარჯი'),
               SizedBox(width: 16),
-              _legendDot(MobileGlassTheme.good, 'მოგება'),
+              _legendDot(MobileGlassTheme.good, 'სხვაობა'),
             ],
           ),
         ],
@@ -1118,6 +1128,69 @@ class _FinancialsScreenState extends State<FinancialsScreen>
     );
   }
 
+  Widget _buildProcurement() {
+    final procurement = _data?['procurement'] as Map?;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: _GlassCard(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const _SectionHeader(title: 'შესყიდვები'),
+            if (procurement == null)
+              const Text('შესყიდვების მონაცემები მიუწვდომელია'),
+            if (procurement != null) ...[
+              for (final entry in [
+                ('calendarDay', 'დღევანდელი შესყიდვები'),
+                ('businessDay', 'სამუშაო დღის შესყიდვები'),
+                ('calendarMonth', 'ამ თვის შესყიდვები'),
+              ])
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    spacing: 16,
+                    children: [
+                      Text(entry.$2),
+                      Text('${(procurement[entry.$1] as Map)['total']} ₾'),
+                    ],
+                  ),
+                ),
+              Text(
+                'სამუშაო დღე: ${procurement['businessDate']} · თვე: ${procurement['month']}',
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                key: const Key('financials-receiving'),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => InventoryScreen(
+                      section: 2,
+                      businessDate: procurement['businessDate'] as String?,
+                    ),
+                  ),
+                ),
+                icon: const Icon(Icons.receipt_long_outlined),
+                label: const Text('დღიური მიღება'),
+              ),
+            ],
+            const Divider(height: 32),
+            Text(
+              'სხვა ხარჯები: ${_data?['otherExpenses'] ?? _data?['expenses'] ?? '—'} ₾',
+            ),
+            Text('ხელფასები: ${_data?['salaryPayments'] ?? '—'} ₾'),
+            Text('სულ გასავლები: ${_data?['totalOutflows'] ?? '—'} ₾'),
+            const SizedBox(height: 8),
+            const Text(
+              'შესყიდვები აღირიცხება დადასტურებული მიღებებით. გადახდის თარიღს ცალკე არ აღრიცხავს.',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ── Add-expense composer ──────────────────────────────────────────────
   Widget _buildExpenseComposer() {
     return Padding(
@@ -1125,14 +1198,14 @@ class _FinancialsScreenState extends State<FinancialsScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionHeader(title: 'ახალი ხარჯი'),
+          const _SectionHeader(title: 'სხვა ხარჯის დამატება'),
           SizedBox(height: 16),
           _GlassCard(
             borderRadius: BorderRadius.circular(24),
             padding: const EdgeInsets.all(18),
             child: Column(
               children: [
-                _darkField(_categoryController, 'კატეგორია (მაგ: ბაზარი)'),
+                _darkField(_categoryController, 'კატეგორია (მაგ: ტრანსპორტი)'),
                 SizedBox(height: 12),
                 _darkField(_expenseDescriptionController, 'აღწერა'),
                 SizedBox(height: 12),

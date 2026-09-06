@@ -1,3 +1,4 @@
+import 'package:vynic/core/models/expense_category.dart';
 import 'dart:developer' as developer;
 
 import 'package:vynic/core/services/pos/sale_consumption_snapshot.dart';
@@ -396,6 +397,9 @@ class SalesRepository {
     String? actorName,
     AuditSource source = AuditSource.pos,
   }) async {
+    if (ExpenseCategory.isProcurement(category)) {
+      throw ArgumentError('შესყიდვა დაამატეთ მარაგებში — დღიური მიღება');
+    }
     final now = createdAt ?? BusinessDayRepository.getCurrentDateTime();
     final date =
         businessDate ??
@@ -480,6 +484,7 @@ class SalesRepository {
       if (raw is! Map) continue;
       final data = Map<String, dynamic>.from(raw);
       if ((data['date'] as String?) != date) continue;
+      if (ExpenseCategory.isProcurement(data['category'])) continue;
       data['recordKey'] = key;
       entries.add(data);
     }
@@ -504,6 +509,7 @@ class SalesRepository {
       final raw = DatabaseCore.expenseBox!.get(key);
       if (raw is! Map) continue;
       final data = Map<String, dynamic>.from(raw);
+      if (ExpenseCategory.isProcurement(data['category'])) continue;
       data['recordKey'] = key;
       entries.add(data);
     }

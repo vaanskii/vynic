@@ -103,6 +103,8 @@ void main() {
       250,
       scrollable: find.byType(Scrollable).first,
     );
+    await tester.ensureVisible(saleRow);
+    await tester.pumpAndSettle();
     await tester.tap(saleRow);
     await tester.pumpAndSettle();
     expect(find.text('Closure ID'), findsOneWidget);

@@ -792,7 +792,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('კილოგრამი (კგ)'), findsOneWidget);
-      expect(find.text('შესყიდვის შეფუთვა'), findsOneWidget);
+      expect(find.text('როგორ მოდის მომწოდებლისგან?'), findsOneWidget);
       expect(find.text('1 ყუთი = 24 კგ'), findsOneWidget);
       // Nothing consumes it yet, so the section is absent rather than empty.
       expect(find.text('გამოიყენება პროდუქტებში'), findsNothing);
@@ -815,7 +815,7 @@ void main() {
 
       expect(find.text('მინიმალური ნაშთი'), findsOneWidget);
       expect(find.byKey(const Key('minimum-stock-help')), findsOneWidget);
-      expect(find.text('შესყიდვის შეფუთვა'), findsOneWidget);
+      expect(find.text('როგორ მოდის მომწოდებლისგან?'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

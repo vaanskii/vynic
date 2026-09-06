@@ -1,5 +1,6 @@
 import 'package:vynic/apps/mobile_app/presentation/screens/consumption_history_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/core/ui/vynic_spacing.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/core/services/audit/close_event_presentation.dart';
 import 'package:vynic/core/models/audit_report.dart';

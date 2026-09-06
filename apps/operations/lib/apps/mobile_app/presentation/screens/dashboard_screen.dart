@@ -1,3 +1,4 @@
+import 'package:vynic/apps/mobile_app/presentation/widgets/inventory_summary_card.dart';
 import 'dart:async';
 import 'dart:ui';
 
@@ -456,6 +457,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                                             fade(0.15, hero),
                                             const SizedBox(height: 16),
                                             fade(0.25, secondary),
+                                            const SizedBox(height: 16),
+                                            const InventorySummaryCard(),
                                             const SizedBox(height: 28),
                                             fade(0.32, pulse),
                                             const SizedBox(height: 28),
@@ -496,6 +499,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                                                 fade(0.0, header),
                                                 const SizedBox(height: 20),
                                                 fade(0.04, aiCard),
+                                                const SizedBox(height: 20),
+                                                const InventorySummaryCard(),
                                                 const SizedBox(height: 20),
                                                 grid,
                                                 const SizedBox(height: 28),

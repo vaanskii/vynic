@@ -1,3 +1,4 @@
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_inventory_section.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -47,6 +48,7 @@ class AdminScreen extends StatefulWidget {
     'staff',
     'menu',
     'packages',
+    'inventory',
     'reservations',
     'tableLayouts',
     'display',
@@ -1277,6 +1279,8 @@ class _AdminScreenState extends State<AdminScreen> {
         return 'პერსონალი';
       case 'menu':
         return 'მენიუ';
+      case 'inventory':
+        return 'მარაგები';
       case 'packages':
         return 'პაკეტები';
       case 'reservations':
@@ -1379,6 +1383,11 @@ class _AdminScreenState extends State<AdminScreen> {
         icon: Icons.restaurant_menu,
         title: 'მენიუ',
         section: 'menu',
+      ),
+      _buildMenuItem(
+        icon: Icons.warehouse_outlined,
+        title: 'მარაგები',
+        section: 'inventory',
       ),
       _buildMenuItem(
         icon: Icons.inventory_2,
@@ -3758,6 +3767,8 @@ class _AdminScreenState extends State<AdminScreen> {
         return AdminStaffSection(user: widget.user);
       case 'menu':
         return AdminMenuSection(user: widget.user);
+      case 'inventory':
+        return const AdminInventorySection();
       case 'packages':
         return AdminPackagesSection(user: widget.user);
       case 'reservations':

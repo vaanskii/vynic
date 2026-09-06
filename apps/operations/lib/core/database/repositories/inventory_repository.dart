@@ -75,6 +75,8 @@ abstract final class InventoryRepository {
       'stockItems': stockItems,
       'suppliers': suppliers,
       'recipes': recipes,
+      if (catalog['inspection'] is Map)
+        'inspection': Map<String, dynamic>.from(catalog['inspection'] as Map),
     };
     await DatabaseCore.inventoryBox!.put(catalogKey, normalized);
   }

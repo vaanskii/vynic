@@ -34,7 +34,7 @@ class InventoryProjectionClient {
     try {
       final response = await _http
           .get(
-            Uri.parse('${_baseUrl()}/edge/inventory/catalog?version=4'),
+            Uri.parse('${_baseUrl()}/edge/inventory/catalog?version=5'),
             headers: <String, String>{
               'Accept': 'application/json',
               'X-POS-Sync-Key': credential,

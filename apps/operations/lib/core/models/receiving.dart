@@ -35,6 +35,14 @@ enum StockMovementType {
 
   final String wireValue;
 
+  String get label => switch (this) {
+    receiving => 'მიღება',
+    receivingReversal => 'მიღების გაუქმება',
+    consumption => 'გაყიდვით ჩამოწერა',
+    consumptionReversal => 'ჩამოწერის დაბრუნება',
+    unknown => 'სხვა მოძრაობა',
+  };
+
   /// A movement kind a later step introduces reads as [unknown] rather than
   /// failing to decode: this build shows it plainly instead of hiding it.
   static StockMovementType parse(String? raw) {

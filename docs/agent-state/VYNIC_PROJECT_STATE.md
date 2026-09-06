@@ -50,7 +50,9 @@ current transport status.
   ledger, Menu consumption definitions and automatic Sale consumption/restore
   reversal are present. Step 4.5 adds food/beverage catalog classification, supplier
   product links, business-date daily receiving and current weighted purchase /
-  theoretical Menu costs; historical Sale COGS, waste and stocktake remain later steps.
+  theoretical Menu costs. Step 4.6 consolidates procurement Financials, responsive
+  Manager Inventory and read-only POS Admin inspection; historical Sale COGS,
+  waste and stocktake remain later steps.
 
 ## Completed Foundations
 
@@ -93,6 +95,14 @@ current transport status.
   Menu cost uses exact Decimal `SUM(POSTED lineTotal) / SUM(baseQuantity)` over
   valid purchase history, excluding cancelled documents. Missing prices remain
   explicit, and no historical Sale is revalued. See `docs/INVENTORY_STEP45.md`.
+
+- Inventory Step 4.6 makes POSTED Receiving the sole purchasing entry point.
+  Known legacy Market Expense categories are rejected and excluded from Expense
+  reporting; shared Expense storage/audit and the existing salary flow remain.
+  Financials separates purchases, other expenses and salary payments, summing
+  each once. Dashboard links procurement/stock warnings into Inventory. POS
+  Admin exposes read-only stock, recent movements/receipts, recipe status and
+  unmapped sold products from catalog v5. See `docs/INVENTORY_STEP46.md`.
 
 ## POS / Edge State
 
@@ -411,13 +421,17 @@ current transport status.
   POS pulls a complete Device -> Venue catalog through
   `GET /edge/inventory/catalog` into one atomically replaced Hive value at
   startup, after enrollment, and periodically. Failure leaves the last good
-  offline projection intact and never blocks POS startup. Catalog version 4
+  offline projection intact and never blocks POS startup. Catalog version 5 adds
+  a read-only inspection excerpt; version 4
   adds food/beverage classification and supplier links and carries each item's derived `currentStock`, `stockStatus`
-  (`NEGATIVE`/`LOW`/`OK`/`NO_MINIMUM`) and `purchaseUnits`. New POS clients request catalog v4 for item-specific keg packaging; older
+  (`NEGATIVE`/`LOW`/`OK`/`NO_MINIMUM`) and `purchaseUnits`. New POS clients request
+  catalog v5 for Admin inspection and item-specific keg packaging; older
   clients receive v3-compatible purchase units with all active recipes. The POS keeps exact
   decimal text and Cloud's own low-stock verdict; it never recomputes a balance
   and never posts a Receiving. Receiving and StockMovement stay Cloud
-  financial history and are deliberately not in the POS backup. The catalog
+  financial history. The POS backup carries only the catalog's cached inspection
+  excerpt (20 movements per item, up to 100 current-business-day receipts and
+  derived totals), never an authoritative history ledger. The catalog
   additionally carries the active Menu consumption definitions — both identities (`menuItemId`/`posMenuItemId`,
   `variantId`/`posMenuVariantId`), the recipe `revision` and each component's
   `baseQuantityPerUnit` — for close-time offline snapshots. The POS authors no

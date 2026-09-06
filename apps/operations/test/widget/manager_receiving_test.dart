@@ -492,7 +492,7 @@ void main() {
 
       expect(find.text('ნაშთი: 62.5 კგ'), findsOneWidget);
       expect(find.text('ნაშთი: 240 ბოთლი'), findsOneWidget);
-      expect(find.text('1 ყუთი = 24 ბოთლი'), findsOneWidget);
+      expect(find.text('მომწოდებლები: 0'), findsWidgets);
       // The Step 1 placeholder is gone for good.
       expect(find.text('მოძრაობები ჯერ არ არის'), findsNothing);
       expect(find.byKey(const Key('low-stock-badge')), findsNothing);

@@ -10,6 +10,8 @@ class InventoryAdminTab extends StatefulWidget {
     this.loadReceivings,
     this.loadRecipes,
     this.initialSection,
+    this.initialStockStatus,
+    this.initialBusinessDate,
   });
 
   final Future<List<StockItem>> Function()? loadStockItems;
@@ -17,7 +19,10 @@ class InventoryAdminTab extends StatefulWidget {
   final Future<ReceivingPage> Function()? loadReceivings;
   final Future<List<RecipeMenuItem>> Function()? loadRecipes;
 
-  /// Test seam only. The console always opens on Stock Items.
+  final String? initialStockStatus;
+  final String? initialBusinessDate;
+
+  /// Destination used by Dashboard and Financials deep links.
   final int? initialSection;
 
   @override
@@ -41,7 +46,8 @@ class _InventoryTabState extends State<InventoryAdminTab>
   StockItemClassification? _classificationFilter;
   String? _menuGroupFilter;
   String? _businessDate;
-  String? _receivingDayFilter;
+  late String? _receivingDayFilter = widget.initialBusinessDate;
+  late String? _stockStatusFilter = widget.initialStockStatus;
   List<ReceivingDaySummary> _receivingDays = const [];
   String? _receivingCursor;
   bool _loadingMore = false;
@@ -102,147 +108,139 @@ class _InventoryTabState extends State<InventoryAdminTab>
     if (_loading) return const _AdminLoading();
     if (_error != null) return _ErrorWidget(onRetry: _load);
 
-    return RefreshIndicator(
-      color: AdminTheme.primary,
-      backgroundColor: AdminTheme.surface,
-      onRefresh: _load,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final horizontal = constraints.maxWidth >= 720 ? 24.0 : 16.0;
-          return ListView(
-            key: const Key('inventory-admin-list'),
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            padding: EdgeInsets.fromLTRB(
-              horizontal,
-              12,
-              horizontal,
-              MediaQuery.paddingOf(context).bottom + 108,
-            ),
-            children: [
-              Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 980),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _sectionSelector(),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton.icon(
-                          key: const Key('inventory-consumption-history'),
-                          onPressed: () => Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => const ConsumptionHistoryScreen(),
+    return Theme(
+      data: inventoryTheme(context),
+      child: RefreshIndicator(
+        color: AdminTheme.primary,
+        backgroundColor: AdminTheme.surface,
+        onRefresh: _load,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final horizontal = constraints.maxWidth >= 720 ? 24.0 : 16.0;
+            return ListView(
+              key: const Key('inventory-admin-list'),
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              padding: EdgeInsets.fromLTRB(
+                horizontal,
+                12,
+                horizontal,
+                MediaQuery.paddingOf(context).bottom + 108,
+              ),
+              children: [
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1280),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _sectionSelector(),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            key: const Key('inventory-consumption-history'),
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    const ConsumptionHistoryScreen(),
+                              ),
                             ),
-                          ),
-                          icon: const Icon(Icons.receipt_long_outlined),
-                          label: const Text(
-                            'ჩამოწერები და დაუკავშირებელი გაყიდვები',
+                            icon: const Icon(Icons.receipt_long_outlined),
+                            label: const Text('ჩამოწერების ისტორია'),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      _searchAndAdd(constraints.maxWidth),
-                      const SizedBox(height: 18),
-                      if (_section == _InventorySection.stockItems)
-                        Column(
-                          children: [
-                            _catalogFilters(),
-                            const SizedBox(height: 12),
-                            _stockItemList(),
-                          ],
-                        )
-                      else if (_section == _InventorySection.suppliers)
-                        _supplierList()
-                      else if (_section == _InventorySection.receiving)
-                        _receivingList()
-                      else
-                        _recipeList(),
-                    ],
+                        const SizedBox(height: 12),
+                        _searchAndAdd(constraints.maxWidth - horizontal * 2),
+                        const SizedBox(height: VynicSpacing.lg),
+                        if (_section == _InventorySection.stockItems)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _catalogFilters(),
+                              const SizedBox(height: 12),
+                              _stockItemList(),
+                            ],
+                          )
+                        else if (_section == _InventorySection.suppliers)
+                          _supplierList()
+                        else if (_section == _InventorySection.receiving)
+                          _receivingList()
+                        else
+                          _recipeList(),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 
-  Widget _sectionSelector() {
-    if (MediaQuery.sizeOf(context).width < 520) {
+  Widget _sectionSelector() => LayoutBuilder(
+    builder: (context, constraints) {
       const labels = [
         'პროდუქტები',
         'მომწოდებლები',
         'დღიური მიღება',
         'რეცეპტები',
       ];
+      const icons = [
+        Icons.inventory_2_outlined,
+        Icons.local_shipping_outlined,
+        Icons.receipt_long_outlined,
+        Icons.menu_book_outlined,
+      ];
+      final columns = constraints.maxWidth < 680 ? 2 : 4;
+      final width =
+          (constraints.maxWidth - VynicSpacing.xs * (columns - 1)) / columns;
       return Wrap(
         key: const Key('inventory-section-selector'),
-        spacing: 8,
-        runSpacing: 4,
+        spacing: VynicSpacing.xs,
+        runSpacing: VynicSpacing.xs,
         children: [
           for (final section in _InventorySection.values)
-            ChoiceChip(
-              label: Text(labels[section.index]),
-              selected: _section == section,
-              onSelected: (_) => setState(() {
-                _section = section;
-                _search.clear();
-              }),
+            SizedBox(
+              width: width,
+              child: OutlinedButton(
+                onPressed: () => setState(() {
+                  _section = section;
+                  _search.clear();
+                }),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: _section == section
+                      ? AdminTheme.primary.withValues(alpha: .12)
+                      : AdminTheme.surface,
+                  foregroundColor: _section == section
+                      ? AdminTheme.primary
+                      : AdminTheme.textMuted,
+                  side: BorderSide(
+                    color: _section == section
+                        ? AdminTheme.primary
+                        : AdminTheme.border,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: VynicSpacing.xs,
+                    vertical: VynicSpacing.sm,
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icons[section.index], size: 22),
+                    const SizedBox(height: VynicSpacing.xs),
+                    Text(labels[section.index], textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
             ),
         ],
       );
-    }
-    return SegmentedButton<_InventorySection>(
-      key: const Key('inventory-section-selector'),
-      showSelectedIcon: false,
-      segments: const [
-        ButtonSegment(
-          value: _InventorySection.stockItems,
-          icon: Icon(Icons.inventory_2_outlined),
-          label: Text('პროდუქტები'),
-        ),
-        ButtonSegment(
-          value: _InventorySection.suppliers,
-          icon: Icon(Icons.local_shipping_outlined),
-          label: Text('მომწოდებლები'),
-        ),
-        ButtonSegment(
-          value: _InventorySection.receiving,
-          icon: Icon(Icons.receipt_long_outlined),
-          label: Text('დღიური მიღება'),
-        ),
-        ButtonSegment(
-          value: _InventorySection.recipes,
-          icon: Icon(Icons.menu_book_outlined),
-          label: Text('რეცეპტები'),
-        ),
-      ],
-      selected: {_section},
-      onSelectionChanged: (selection) {
-        setState(() {
-          _section = selection.single;
-          _search.clear();
-        });
-      },
-      style: ButtonStyle(
-        foregroundColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? Colors.white
-              : AdminTheme.textMuted,
-        ),
-        backgroundColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? AdminTheme.primary
-              : AdminTheme.surface,
-        ),
-        side: WidgetStatePropertyAll(BorderSide(color: AdminTheme.border)),
-      ),
-    );
-  }
+    },
+  );
 
   Widget _searchAndAdd(double width) {
     final search = TextField(
@@ -279,9 +277,9 @@ class _InventoryTabState extends State<InventoryAdminTab>
       },
       icon: const Icon(Icons.add_rounded),
       label: Text(switch (_section) {
-        _InventorySection.stockItems => 'პროდუქტის დამატება',
-        _InventorySection.suppliers => 'მომწოდებლის დამატება',
-        _InventorySection.receiving => 'მიღების დამატება',
+        _InventorySection.stockItems => 'ახალი პროდუქტი',
+        _InventorySection.suppliers => 'ახალი მომწოდებელი',
+        _InventorySection.receiving => 'ახალი მიღება',
         _InventorySection.recipes => '',
       }),
       style: FilledButton.styleFrom(
@@ -293,7 +291,11 @@ class _InventoryTabState extends State<InventoryAdminTab>
     if (width < 620) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [search, const SizedBox(height: 10), add],
+        children: [
+          search,
+          const SizedBox(height: VynicSpacing.sm),
+          add,
+        ],
       );
     }
     return Row(
@@ -314,6 +316,13 @@ class _InventoryTabState extends State<InventoryAdminTab>
         selected: _classificationFilter == null,
         onSelected: (_) => setState(() => _classificationFilter = null),
       ),
+      if (_stockStatusFilter != null)
+        InputChip(
+          label: Text(
+            _stockStatusFilter == 'LOW' ? 'დაბალი მარაგი' : 'უარყოფითი მარაგი',
+          ),
+          onDeleted: () => setState(() => _stockStatusFilter = null),
+        ),
       for (final value in StockItemClassification.values)
         ChoiceChip(
           label: Text(value.label),
@@ -327,6 +336,9 @@ class _InventoryTabState extends State<InventoryAdminTab>
     final query = _search.text.trim().toLowerCase();
     final items = _stockItems
         .where((item) {
+          if (_stockStatusFilter != null &&
+              (!item.isActive || item.stockStatus != _stockStatusFilter))
+            return false;
           if (_classificationFilter != null &&
               item.classification != _classificationFilter)
             return false;
@@ -788,64 +800,66 @@ class _StockItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: VynicSpacing.sm),
       child: _AdminPanel(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(VynicSpacing.md),
         child: LayoutBuilder(
           builder: (context, constraints) {
             final content = Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Text(
+                  item.name,
+                  style: TextStyle(
+                    color: AdminTheme.text,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: VynicSpacing.xs),
+                Wrap(
+                  spacing: VynicSpacing.xs,
+                  runSpacing: VynicSpacing.xs,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Expanded(
-                      child: Text(
-                        item.name,
-                        style: TextStyle(
-                          color: AdminTheme.text,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                        ),
+                    Text(
+                      'ნაშთი: ${_quantityText(item.currentStock)} ${_unitShort(item.baseUnit)}',
+                      style: TextStyle(
+                        color: item.isNegativeStock
+                            ? AdminTheme.bad
+                            : AdminTheme.text,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    if (item.isNegativeStock) ...[
-                      const Flexible(
-                        child: Text(
-                          'უარყოფითი ნაშთი',
-                          style: TextStyle(
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
+                    if (item.isNegativeStock)
+                      Text(
+                        'უარყოფითი ნაშთი',
+                        style: TextStyle(
+                          color: AdminTheme.bad,
+                          fontWeight: FontWeight.w700,
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                    ] else if (item.isLowStock) ...[
+                      )
+                    else if (item.isLowStock)
                       const _LowStockBadge(),
-                      const SizedBox(width: 6),
-                    ],
-                    _InventoryStateBadge(active: item.isActive),
+                    if (!item.isActive)
+                      const _InventoryStateBadge(active: false),
                   ],
                 ),
-                const SizedBox(height: 7),
+                const SizedBox(height: VynicSpacing.sm),
                 Wrap(
                   spacing: 12,
                   runSpacing: 6,
                   children: [
                     _InventoryMeta(
-                      icon: Icons.straighten_rounded,
-                      label: 'ერთეული: ${_unitShort(item.baseUnit)}',
+                      icon: Icons.local_shipping_outlined,
+                      label: 'მომწოდებლები: ${item.supplierIds.length}',
                     ),
-                    _InventoryMeta(
-                      icon: Icons.inventory_rounded,
-                      label:
-                          'ნაშთი: ${_quantityText(item.currentStock)} ${_unitShort(item.baseUnit)}',
-                      emphasis: item.isLowStock || item.isNegativeStock,
-                    ),
-                    for (final unit in item.purchaseUnits)
+                    if (item.lastPurchaseUnitCost != null)
                       _InventoryMeta(
-                        icon: Icons.all_inbox_outlined,
+                        icon: Icons.payments_outlined,
                         label:
-                            '1 ${_unitShort(unit.unit)} = ${unit.baseUnitMultiplier} ${_unitShort(item.baseUnit)}',
+                            'ბოლო ფასი: ${_quantityText(item.lastPurchaseUnitCost!)} ₾ / ${item.baseUnit.label}',
                       ),
                     if (item.minimumStock != null)
                       _InventoryMeta(
@@ -856,7 +870,7 @@ class _StockItemCard extends StatelessWidget {
                     if (item.sku != null)
                       _InventoryMeta(
                         icon: Icons.qr_code_rounded,
-                        label: 'SKU: ${item.sku}',
+                        label: 'კოდი: ${item.sku}',
                       ),
                   ],
                 ),
@@ -871,7 +885,11 @@ class _StockItemCard extends StatelessWidget {
             if (constraints.maxWidth < 560) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [content, const SizedBox(height: 10), actions],
+                children: [
+                  content,
+                  const SizedBox(height: VynicSpacing.sm),
+                  actions,
+                ],
               );
             }
             return Row(
@@ -910,9 +928,9 @@ class _SupplierCard extends StatelessWidget {
       if (supplier.address != null) supplier.address!,
     ];
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: VynicSpacing.sm),
       child: _AdminPanel(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(VynicSpacing.md),
         child: LayoutBuilder(
           builder: (context, constraints) {
             final content = Column(
@@ -959,7 +977,11 @@ class _SupplierCard extends StatelessWidget {
             if (constraints.maxWidth < 560) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [content, const SizedBox(height: 10), actions],
+                children: [
+                  content,
+                  const SizedBox(height: VynicSpacing.sm),
+                  actions,
+                ],
               );
             }
             return Row(
@@ -1061,26 +1083,24 @@ class _InventoryMeta extends StatelessWidget {
   const _InventoryMeta({
     required this.icon,
     required this.label,
-    this.emphasis = false,
   });
   final IconData icon;
   final String label;
-  final bool emphasis;
 
   @override
   Widget build(BuildContext context) {
-    final color = emphasis ? AdminTheme.warn : AdminTheme.textMuted;
+    final color = AdminTheme.textMuted;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 15, color: emphasis ? color : AdminTheme.textDim),
+        Icon(icon, size: 15, color: AdminTheme.textDim),
         const SizedBox(width: 4),
         Text(
           label,
           style: TextStyle(
             color: color,
             fontSize: 12,
-            fontWeight: emphasis ? FontWeight.w700 : FontWeight.w400,
+            fontWeight: FontWeight.w400,
           ),
         ),
       ],
@@ -1226,7 +1246,7 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
         Align(
           alignment: Alignment.centerLeft,
           child: Text(
-            'შესყიდვის შეფუთვა',
+            'როგორ მოდის მომწოდებლისგან?',
             style: TextStyle(
               color: AdminTheme.textMuted,
               fontSize: 12,
@@ -1252,6 +1272,7 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
                   flex: 4,
                   child: DropdownButtonFormField<InventoryUnit>(
                     initialValue: _purchaseUnits[index].unit,
+                    isExpanded: true,
                     dropdownColor: AdminTheme.surfaceElevated,
                     style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                       color: AdminTheme.text,
@@ -1285,8 +1306,8 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
                     ),
                     style: TextStyle(color: AdminTheme.text),
                     decoration: _adminInput(
-                      'რამდენი ${_unitShort(_unit)} არის ერთში',
-                    ),
+                      '1 ${_purchaseUnits[index].unit.label} =',
+                    ).copyWith(suffixText: _unit.label),
                   ),
                 ),
                 IconButton(
@@ -1326,7 +1347,17 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
 
   InventoryUnit? _availablePurchaseUnit() {
     final used = _purchaseUnits.map((draft) => draft.unit).toSet()..add(_unit);
-    for (final unit in InventoryUnit.values) {
+    for (final unit in [
+      InventoryUnit.pack,
+      InventoryUnit.box,
+      InventoryUnit.keg,
+      InventoryUnit.bottle,
+      InventoryUnit.piece,
+      InventoryUnit.kg,
+      InventoryUnit.g,
+      InventoryUnit.liter,
+      InventoryUnit.ml,
+    ]) {
       if (!used.contains(unit)) return unit;
     }
     return null;
@@ -1334,170 +1365,180 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      key: const Key('stock-item-editor'),
-      backgroundColor: AdminTheme.surface,
-      title: Text(
-        widget.item == null
-            ? 'ახალი საწყობის პროდუქტი'
-            : 'პროდუქტის რედაქტირება',
-        style: TextStyle(color: AdminTheme.text),
-      ),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _dialogField(_name, 'დასახელება *', key: const Key('stock-name')),
-              DropdownButtonFormField<StockItemClassification>(
-                key: const Key('stock-classification'),
-                initialValue: _classification,
-                isExpanded: true,
-                decoration: _adminInput('ტიპი'),
-                dropdownColor: AdminTheme.surfaceElevated,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium!.copyWith(color: AdminTheme.text),
-                items: [
-                  for (final value in StockItemClassification.values)
-                    DropdownMenuItem(
-                      value: value,
-                      child: Text(
-                        value == StockItemClassification.food
-                            ? 'საკვები'
-                            : 'სასმელი',
+    return Theme(
+      data: inventoryTheme(context),
+      child: AlertDialog(
+        insetPadding: const EdgeInsets.all(VynicSpacing.md),
+        contentPadding: const EdgeInsets.all(VynicSpacing.md),
+        key: const Key('stock-item-editor'),
+        backgroundColor: AdminTheme.surface,
+        title: Text(
+          widget.item == null ? 'ახალი პროდუქტი' : 'პროდუქტის რედაქტირება',
+          style: TextStyle(color: AdminTheme.text),
+        ),
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            minWidth: (MediaQuery.sizeOf(context).width - 64).clamp(0, 520),
+            maxWidth: 520,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _dialogField(
+                  _name,
+                  'დასახელება *',
+                  key: const Key('stock-name'),
+                ),
+                DropdownButtonFormField<StockItemClassification>(
+                  key: const Key('stock-classification'),
+                  initialValue: _classification,
+                  isExpanded: true,
+                  decoration: _adminInput('ტიპი'),
+                  dropdownColor: AdminTheme.surfaceElevated,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium!.copyWith(color: AdminTheme.text),
+                  items: [
+                    for (final value in StockItemClassification.values)
+                      DropdownMenuItem(
+                        value: value,
+                        child: Text(
+                          value == StockItemClassification.food
+                              ? 'საკვები'
+                              : 'სასმელი',
+                        ),
                       ),
-                    ),
-                ],
-                onChanged: _saving
-                    ? null
-                    : (value) => setState(() => _classification = value!),
-              ),
-              const SizedBox(height: 10),
-              _dialogField(_sku, 'პროდუქტის კოდი'),
-              DropdownButtonFormField<InventoryUnit>(
-                initialValue: _unit,
-                dropdownColor: AdminTheme.surfaceElevated,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium!.copyWith(color: AdminTheme.text),
-                decoration: _adminInput('როგორ ვითვლით საწყობში?'),
-                items: [
-                  for (final unit in InventoryUnit.values.where(
-                    (unit) => unit != InventoryUnit.keg,
-                  ))
-                    DropdownMenuItem(
-                      value: unit,
-                      child: Text(_unitLabel(unit)),
-                    ),
-                ],
-                onChanged: _saving
-                    ? null
-                    : (value) => setState(() => _unit = value ?? _unit),
-              ),
-              _dialogField(
-                _minimum,
-                'მინიმალური ნაშთი',
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-              ),
-              // A threshold, not a balance. Said plainly, because the two are
-              // easy to confuse and one of them is derived from the ledger.
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Text(
-                    'ამ რაოდენობაზე ნაკლების შემთხვევაში გამოჩნდება '
-                    'დაბალი მარაგის გაფრთხილება.',
-                    key: const Key('minimum-stock-help'),
-                    style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
-                  ),
-                ),
-              ),
-              _dialogField(_notes, 'შენიშვნა', maxLines: 3),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'მომწოდებლები',
-                  style: TextStyle(color: AdminTheme.textMuted),
-                ),
-              ),
-              if (widget.suppliers.isEmpty)
-                Text(
-                  'ჯერ დაამატეთ მომწოდებელი მომწოდებლების განყოფილებაში.',
-                  style: TextStyle(color: AdminTheme.textMuted),
-                ),
-              for (final supplier in widget.suppliers)
-                CheckboxListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    supplier.name,
-                    style: TextStyle(color: AdminTheme.text),
-                  ),
-                  value: _supplierIds.contains(supplier.id),
+                  ],
                   onChanged: _saving
                       ? null
-                      : (value) => setState(() {
-                          if (value == true) {
-                            _supplierIds.add(supplier.id);
-                          } else {
-                            _supplierIds.remove(supplier.id);
-                          }
-                        }),
+                      : (value) => setState(() => _classification = value!),
                 ),
-              _purchaseUnitEditor(),
-              SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  'აქტიური',
-                  style: TextStyle(color: AdminTheme.text),
+                const SizedBox(height: VynicSpacing.sm),
+                _dialogField(_sku, 'პროდუქტის კოდი'),
+                DropdownButtonFormField<InventoryUnit>(
+                  initialValue: _unit,
+                  dropdownColor: AdminTheme.surfaceElevated,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium!.copyWith(color: AdminTheme.text),
+                  decoration: _adminInput('როგორ ვითვლით საწყობში?'),
+                  items: [
+                    for (final unit in InventoryUnit.values.where(
+                      (unit) => unit != InventoryUnit.keg,
+                    ))
+                      DropdownMenuItem(
+                        value: unit,
+                        child: Text(_unitLabel(unit)),
+                      ),
+                  ],
+                  onChanged: _saving
+                      ? null
+                      : (value) => setState(() => _unit = value ?? _unit),
                 ),
-                value: _active,
-                activeTrackColor: AdminTheme.primary,
-                onChanged: _saving
-                    ? null
-                    : (value) => setState(() => _active = value),
-              ),
-              if (_error != null)
+                _dialogField(
+                  _minimum,
+                  'მინიმალური ნაშთი',
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                ),
+                // A threshold, not a balance. Said plainly, because the two are
+                // easy to confuse and one of them is derived from the ledger.
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: VynicSpacing.sm),
+                    child: Text(
+                      'ამ რაოდენობაზე ნაკლების შემთხვევაში გამოჩნდება '
+                      'დაბალი მარაგის გაფრთხილება.',
+                      key: const Key('minimum-stock-help'),
+                      style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
+                    ),
+                  ),
+                ),
+                _dialogField(_notes, 'შენიშვნა', maxLines: 3),
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    _error!,
-                    style: TextStyle(color: AdminTheme.bad, fontSize: 12),
+                    'მომწოდებლები',
+                    style: TextStyle(color: AdminTheme.textMuted),
                   ),
                 ),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          // No result: this dialog answers with the saved Stock Item or with
-          // nothing at all.
-          onPressed: _saving ? null : () => Navigator.pop(context),
-          child: Text(
-            'გაუქმება',
-            style: TextStyle(color: AdminTheme.textMuted),
-          ),
-        ),
-        FilledButton(
-          key: const Key('stock-save'),
-          onPressed: _saving ? null : _save,
-          style: FilledButton.styleFrom(backgroundColor: AdminTheme.primary),
-          child: _saving
-              ? const SizedBox.square(
-                  dimension: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
+                if (widget.suppliers.isEmpty)
+                  Text(
+                    'ჯერ დაამატეთ მომწოდებელი მომწოდებლების განყოფილებაში.',
+                    style: TextStyle(color: AdminTheme.textMuted),
                   ),
-                )
-              : const Text('შენახვა', style: TextStyle(color: Colors.white)),
+                for (final supplier in widget.suppliers)
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      supplier.name,
+                      style: TextStyle(color: AdminTheme.text),
+                    ),
+                    value: _supplierIds.contains(supplier.id),
+                    onChanged: _saving
+                        ? null
+                        : (value) => setState(() {
+                            if (value == true) {
+                              _supplierIds.add(supplier.id);
+                            } else {
+                              _supplierIds.remove(supplier.id);
+                            }
+                          }),
+                  ),
+                _purchaseUnitEditor(),
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    'აქტიური',
+                    style: TextStyle(color: AdminTheme.text),
+                  ),
+                  value: _active,
+                  activeTrackColor: AdminTheme.primary,
+                  onChanged: _saving
+                      ? null
+                      : (value) => setState(() => _active = value),
+                ),
+                if (_error != null)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      _error!,
+                      style: TextStyle(color: AdminTheme.bad, fontSize: 12),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
-      ],
+        actions: [
+          TextButton(
+            // No result: this dialog answers with the saved Stock Item or with
+            // nothing at all.
+            onPressed: _saving ? null : () => Navigator.pop(context),
+            child: Text(
+              'გაუქმება',
+              style: TextStyle(color: AdminTheme.textMuted),
+            ),
+          ),
+          FilledButton(
+            key: const Key('stock-save'),
+            onPressed: _saving ? null : _save,
+            style: FilledButton.styleFrom(backgroundColor: AdminTheme.primary),
+            child: _saving
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text('შენახვა', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1520,7 +1561,7 @@ class _StockItemEditorDialogState extends State<_StockItemEditorDialog> {
       if (value == null || value <= 0) {
         setState(
           () => _error =
-              '${draft.unit.wireValue}: შეფუთვის კოეფიციენტი უნდა იყოს დადებითი',
+              '${draft.unit.label}: შეფუთვაში რაოდენობა უნდა იყოს დადებითი',
         );
         return;
       }
@@ -1599,86 +1640,94 @@ class _SupplierEditorDialogState extends State<_SupplierEditorDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      key: const Key('supplier-editor'),
-      backgroundColor: AdminTheme.surface,
-      title: Text(
-        widget.supplier == null
-            ? 'ახალი მომწოდებელი'
-            : 'მომწოდებლის რედაქტირება',
-        style: TextStyle(color: AdminTheme.text),
-      ),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _dialogField(
-                _fields['name']!,
-                'სახელი *',
-                key: const Key('supplier-name'),
-              ),
-              _dialogField(_fields['taxId']!, 'საგადასახადო კოდი'),
-              _dialogField(
-                _fields['phone']!,
-                'ტელეფონი',
-                keyboardType: TextInputType.phone,
-              ),
-              _dialogField(
-                _fields['email']!,
-                'ელფოსტა',
-                keyboardType: TextInputType.emailAddress,
-              ),
-              _dialogField(_fields['address']!, 'მისამართი'),
-              _dialogField(_fields['notes']!, 'შენიშვნა', maxLines: 3),
-              SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  'აქტიური',
-                  style: TextStyle(color: AdminTheme.text),
+    return Theme(
+      data: inventoryTheme(context),
+      child: AlertDialog(
+        insetPadding: const EdgeInsets.all(VynicSpacing.md),
+        contentPadding: const EdgeInsets.all(VynicSpacing.md),
+        key: const Key('supplier-editor'),
+        backgroundColor: AdminTheme.surface,
+        title: Text(
+          widget.supplier == null
+              ? 'ახალი მომწოდებელი'
+              : 'მომწოდებლის რედაქტირება',
+          style: TextStyle(color: AdminTheme.text),
+        ),
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            minWidth: (MediaQuery.sizeOf(context).width - 64).clamp(0, 520),
+            maxWidth: 520,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _dialogField(
+                  _fields['name']!,
+                  'სახელი *',
+                  key: const Key('supplier-name'),
                 ),
-                value: _active,
-                activeTrackColor: AdminTheme.primary,
-                onChanged: _saving
-                    ? null
-                    : (value) => setState(() => _active = value),
-              ),
-              if (_error != null)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    _error!,
-                    style: TextStyle(color: AdminTheme.bad, fontSize: 12),
+                _dialogField(_fields['taxId']!, 'საგადასახადო კოდი'),
+                _dialogField(
+                  _fields['phone']!,
+                  'ტელეფონი',
+                  keyboardType: TextInputType.phone,
+                ),
+                _dialogField(
+                  _fields['email']!,
+                  'ელფოსტა',
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                _dialogField(_fields['address']!, 'მისამართი'),
+                _dialogField(_fields['notes']!, 'შენიშვნა', maxLines: 3),
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    'აქტიური',
+                    style: TextStyle(color: AdminTheme.text),
                   ),
+                  value: _active,
+                  activeTrackColor: AdminTheme.primary,
+                  onChanged: _saving
+                      ? null
+                      : (value) => setState(() => _active = value),
                 ),
-            ],
+                if (_error != null)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      _error!,
+                      style: TextStyle(color: AdminTheme.bad, fontSize: 12),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: _saving ? null : () => Navigator.pop(context, false),
-          child: Text(
-            'გაუქმება',
-            style: TextStyle(color: AdminTheme.textMuted),
+        actions: [
+          TextButton(
+            onPressed: _saving ? null : () => Navigator.pop(context, false),
+            child: Text(
+              'გაუქმება',
+              style: TextStyle(color: AdminTheme.textMuted),
+            ),
           ),
-        ),
-        FilledButton(
-          key: const Key('supplier-save'),
-          onPressed: _saving ? null : _save,
-          style: FilledButton.styleFrom(backgroundColor: AdminTheme.primary),
-          child: _saving
-              ? const SizedBox.square(
-                  dimension: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Text('შენახვა', style: TextStyle(color: Colors.white)),
-        ),
-      ],
+          FilledButton(
+            key: const Key('supplier-save'),
+            onPressed: _saving ? null : _save,
+            style: FilledButton.styleFrom(backgroundColor: AdminTheme.primary),
+            child: _saving
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text('შენახვა', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1722,7 +1771,7 @@ Widget _dialogField(
   int maxLines = 1,
 }) {
   return Padding(
-    padding: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.only(bottom: VynicSpacing.sm),
     child: TextField(
       key: key,
       controller: controller,
@@ -1758,28 +1807,7 @@ class _PurchaseUnitDraft {
 
 /// What restaurant staff read. Storage and the wire keep the stable English
 /// codes; only the label is translated, so no enum value depends on language.
-String _unitShort(InventoryUnit unit) {
-  switch (unit) {
-    case InventoryUnit.kg:
-      return 'კგ';
-    case InventoryUnit.g:
-      return 'გ';
-    case InventoryUnit.liter:
-      return 'ლ';
-    case InventoryUnit.ml:
-      return 'მლ';
-    case InventoryUnit.piece:
-      return 'ცალი';
-    case InventoryUnit.bottle:
-      return 'ბოთლი';
-    case InventoryUnit.pack:
-      return 'შეკვრა';
-    case InventoryUnit.keg:
-      return 'კეგი';
-    case InventoryUnit.box:
-      return 'ყუთი';
-  }
-}
+String _unitShort(InventoryUnit unit) => unit.label;
 
 /// The long form, for a dropdown where the choice needs spelling out.
 String _unitLabel(InventoryUnit unit) {
@@ -1867,142 +1895,197 @@ class _SupplierDetailDialogState extends State<SupplierDetailDialog> {
     final ids = products.map((row) => row['id']).toSet();
     final receivings = (_detail?['recentReceivings'] as List? ?? [])
         .cast<Map>();
-    return AlertDialog(
-      key: const Key('supplier-detail'),
-      backgroundColor: AdminTheme.surface,
-      title: Text(
-        widget.supplier.name,
-        style: TextStyle(color: AdminTheme.text),
-      ),
-      content: SizedBox(
-        width: 540,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (_error != null) ...[
-                Text(_error!, style: TextStyle(color: AdminTheme.bad)),
-                TextButton(onPressed: _load, child: const Text('ხელახლა ცდა')),
-              ],
-              if (_detail == null && _error == null)
-                const Center(child: CircularProgressIndicator()),
-              Text(
-                'მისი პროდუქტები',
-                style: TextStyle(
-                  color: AdminTheme.text,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              if (products.isEmpty && _detail != null)
+    return Theme(
+      data: inventoryTheme(context),
+      child: AlertDialog(
+        insetPadding: const EdgeInsets.all(VynicSpacing.md),
+        contentPadding: const EdgeInsets.all(VynicSpacing.md),
+        key: const Key('supplier-detail'),
+        backgroundColor: AdminTheme.surface,
+        title: Text(
+          widget.supplier.name,
+          style: TextStyle(color: AdminTheme.text),
+        ),
+        content: SizedBox(
+          width: 540,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (_error != null) ...[
+                  Text(_error!, style: TextStyle(color: AdminTheme.bad)),
+                  TextButton(
+                    onPressed: _load,
+                    child: const Text('ხელახლა ცდა'),
+                  ),
+                ],
+                if (_detail == null && _error == null)
+                  const Center(child: CircularProgressIndicator()),
                 Text(
-                  'პროდუქტი ჯერ არ არის მიბმული.',
-                  style: TextStyle(color: AdminTheme.textMuted),
-                ),
-              for (final product in products)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    '${product['name']}',
-                    style: TextStyle(color: AdminTheme.text),
-                  ),
-                  trailing: IconButton(
-                    tooltip: 'მიბმის მოხსნა',
-                    onPressed: _busy
-                        ? null
-                        : () => _link(product['id'] as String, false),
-                    icon: const Icon(Icons.link_off),
+                  'მისი პროდუქტები',
+                  style: TextStyle(
+                    color: AdminTheme.text,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-              TextButton.icon(
-                onPressed: _busy
-                    ? null
-                    : () => setState(() => _selecting = !_selecting),
-                icon: const Icon(Icons.add),
-                label: const Text('პროდუქტის მიბმა'),
-              ),
-              if (_selecting) ...[
-                TextField(
-                  decoration: _adminInput('პროდუქტის ძებნა'),
-                  style: TextStyle(color: AdminTheme.text),
-                  onChanged: (value) =>
-                      setState(() => _search = value.toLowerCase()),
-                ),
-                for (final item in widget.stockItems.where(
-                  (item) =>
-                      item.isActive &&
-                      !ids.contains(item.id) &&
-                      item.name.toLowerCase().contains(_search),
-                ))
+                if (products.isEmpty && _detail != null)
+                  Text(
+                    'პროდუქტი ჯერ არ არის მიბმული.',
+                    style: TextStyle(color: AdminTheme.textMuted),
+                  ),
+                for (final product in products)
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     title: Text(
-                      item.name,
+                      '${product['name']}',
                       style: TextStyle(color: AdminTheme.text),
                     ),
                     trailing: IconButton(
-                      tooltip: 'მიბმა',
-                      onPressed: _busy ? null : () => _link(item.id, true),
-                      icon: const Icon(Icons.add_link),
+                      tooltip: 'მიბმის მოხსნა',
+                      onPressed: _busy
+                          ? null
+                          : () => _link(product['id'] as String, false),
+                      icon: const Icon(Icons.link_off),
+                    ),
+                  ),
+                TextButton.icon(
+                  onPressed: _busy
+                      ? null
+                      : () => setState(() => _selecting = !_selecting),
+                  icon: const Icon(Icons.add),
+                  label: const Text('პროდუქტის მიბმა'),
+                ),
+                if (_selecting) ...[
+                  TextField(
+                    decoration: _adminInput('პროდუქტის ძებნა'),
+                    style: TextStyle(color: AdminTheme.text),
+                    onChanged: (value) =>
+                        setState(() => _search = value.toLowerCase()),
+                  ),
+                  for (final item in widget.stockItems.where(
+                    (item) =>
+                        item.isActive &&
+                        !ids.contains(item.id) &&
+                        item.name.toLowerCase().contains(_search),
+                  ))
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        item.name,
+                        style: TextStyle(color: AdminTheme.text),
+                      ),
+                      trailing: IconButton(
+                        tooltip: 'მიბმა',
+                        onPressed: _busy ? null : () => _link(item.id, true),
+                        icon: const Icon(Icons.add_link),
+                      ),
+                    ),
+                ],
+                const Divider(height: 24),
+                Text(
+                  'ბოლო მიღებები',
+                  style: TextStyle(
+                    color: AdminTheme.text,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (receivings.isEmpty && _detail != null)
+                  Text(
+                    'მიღებები ჯერ არ არის.',
+                    style: TextStyle(color: AdminTheme.textMuted),
+                  ),
+                for (final row in receivings)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      '${row['businessDate']} · ${row['documentTotal']} ₾',
+                      style: TextStyle(color: AdminTheme.text),
+                    ),
+                    subtitle: Text(
+                      '${row['supplierNameSnapshot']}',
+                      style: TextStyle(color: AdminTheme.textMuted),
+                    ),
+                    trailing: _ReceivingStatusBadge(
+                      status: ReceivingStatus.parse(row['status'] as String?),
+                    ),
+                    onTap: () => showDialog<void>(
+                      context: context,
+                      builder: (_) => ReceivingDetailDialog(
+                        receivingId: row['id'] as String,
+                        onEditDraft: (draft) async {
+                          Navigator.pop(context);
+                          await showDialog<bool>(
+                            context: context,
+                            builder: (_) => ReceivingEditorDialog(
+                              receiving: draft,
+                              suppliers: [widget.supplier],
+                              stockItems: widget.stockItems,
+                            ),
+                          );
+                          await _load();
+                        },
+                      ),
                     ),
                   ),
               ],
-              const Divider(height: 24),
-              Text(
-                'ბოლო მიღებები',
-                style: TextStyle(
-                  color: AdminTheme.text,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              if (receivings.isEmpty && _detail != null)
-                Text(
-                  'მიღებები ჯერ არ არის.',
-                  style: TextStyle(color: AdminTheme.textMuted),
-                ),
-              for (final row in receivings)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    '${row['businessDate']} · ${row['documentTotal']} ₾',
-                    style: TextStyle(color: AdminTheme.text),
-                  ),
-                  subtitle: Text(
-                    '${row['supplierNameSnapshot']}',
-                    style: TextStyle(color: AdminTheme.textMuted),
-                  ),
-                  trailing: _ReceivingStatusBadge(
-                    status: ReceivingStatus.parse(row['status'] as String?),
-                  ),
-                  onTap: () => showDialog<void>(
-                    context: context,
-                    builder: (_) => ReceivingDetailDialog(
-                      receivingId: row['id'] as String,
-                      onEditDraft: (draft) async {
-                        Navigator.pop(context);
-                        await showDialog<bool>(
-                          context: context,
-                          builder: (_) => ReceivingEditorDialog(
-                            receiving: draft,
-                            suppliers: [widget.supplier],
-                            stockItems: widget.stockItems,
-                          ),
-                        );
-                        await _load();
-                      },
-                    ),
-                  ),
-                ),
-            ],
+            ),
           ),
         ),
+        actions: [
+          TextButton(
+            onPressed: _busy ? null : () => Navigator.pop(context),
+            child: const Text('დახურვა'),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: _busy ? null : () => Navigator.pop(context),
-          child: const Text('დახურვა'),
-        ),
-      ],
     );
   }
+}
+
+/// Inventory controls share the existing spacing scale and Manager palette.
+ThemeData inventoryTheme(BuildContext context) {
+  final theme = Theme.of(context);
+  final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
+  final style = ButtonStyle(
+    minimumSize: const WidgetStatePropertyAll(Size(48, 48)),
+    shape: WidgetStatePropertyAll(shape),
+  );
+  return theme.copyWith(
+    filledButtonTheme: FilledButtonThemeData(style: style),
+    outlinedButtonTheme: OutlinedButtonThemeData(style: style),
+    textButtonTheme: TextButtonThemeData(style: style),
+    iconButtonTheme: const IconButtonThemeData(
+      style: ButtonStyle(minimumSize: WidgetStatePropertyAll(Size(48, 48))),
+    ),
+  );
+}
+
+/// One navigable Inventory destination shared by Dashboard and Financials.
+class InventoryScreen extends StatelessWidget {
+  const InventoryScreen({
+    super.key,
+    this.section = 0,
+    this.stockStatus,
+    this.businessDate,
+  });
+  final int section;
+  final String? stockStatus;
+  final String? businessDate;
+  @override
+  Widget build(BuildContext context) => Theme(
+    data: inventoryTheme(context),
+    child: Scaffold(
+      backgroundColor: AdminTheme.bg,
+      appBar: AppBar(
+        title: const Text('მარაგები'),
+        backgroundColor: AdminTheme.bg,
+      ),
+      body: InventoryAdminTab(
+        initialSection: section,
+        initialStockStatus: stockStatus,
+        initialBusinessDate: businessDate,
+      ),
+    ),
+  );
 }

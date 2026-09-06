@@ -49,50 +49,52 @@ void main() {
     );
   });
 
-  testWidgets(
-    'shows Stock Items, derived stock, search, and both editors',
-    (tester) async {
-      tester.view.physicalSize = const Size(390, 844);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.reset);
+  testWidgets('shows Stock Items, derived stock, search, and both editors', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(_app());
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(_app());
+    await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('inventory-search')), findsOneWidget);
-      expect(find.byKey(const Key('stock-item-list')), findsOneWidget);
-      expect(find.text('Beef'), findsOneWidget);
-      // Step 3 reads units in Georgian; storage keeps the English codes.
-      expect(find.text('ერთეული: კგ'), findsOneWidget);
-      // Step 2 replaced the placeholder with the ledger's own answer.
-      expect(find.text('ნაშთი: 0 კგ'), findsOneWidget);
-      expect(find.text('მინიმალური ნაშთი: 2.5 კგ'), findsOneWidget);
-      expect(tester.takeException(), isNull);
+    expect(find.byKey(const Key('inventory-search')), findsOneWidget);
+    expect(find.byKey(const Key('stock-item-list')), findsOneWidget);
+    expect(find.text('Beef'), findsOneWidget);
+    // Step 3 reads units in Georgian; storage keeps the English codes.
+    expect(
+      find.text('ერთეული: კგ'),
+      findsNothing,
+    ); // Unit is beside the quantity.
+    // Step 2 replaced the placeholder with the ledger's own answer.
+    expect(find.text('ნაშთი: 0 კგ'), findsOneWidget);
+    expect(find.text('მინიმალური ნაშთი: 2.5 კგ'), findsOneWidget);
+    expect(tester.takeException(), isNull);
 
-      await tester.tap(find.byKey(const Key('inventory-add')));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('stock-item-editor')), findsOneWidget);
-      expect(find.byKey(const Key('stock-name')), findsOneWidget);
-      await tester.tap(find.text('გაუქმება'));
-      await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('inventory-add')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('stock-item-editor')), findsOneWidget);
+    expect(find.byKey(const Key('stock-name')), findsOneWidget);
+    await tester.tap(find.text('გაუქმება'));
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.text('რედაქტირება').first);
-      await tester.pumpAndSettle();
-      expect(find.widgetWithText(TextField, 'Beef'), findsOneWidget);
-      await tester.tap(find.text('გაუქმება'));
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('რედაქტირება').first);
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, 'Beef'), findsOneWidget);
+    await tester.tap(find.text('გაუქმება'));
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.text('მომწოდებლები'));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('supplier-list')), findsOneWidget);
-      expect(find.text('Farm Georgia'), findsOneWidget);
-      await tester.tap(find.byKey(const Key('inventory-add')));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('supplier-editor')), findsOneWidget);
-      expect(find.byKey(const Key('supplier-name')), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    },
-  );
+    await tester.tap(find.text('მომწოდებლები'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('supplier-list')), findsOneWidget);
+    expect(find.text('Farm Georgia'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('inventory-add')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('supplier-editor')), findsOneWidget);
+    expect(find.byKey(const Key('supplier-name')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('uses a wider search/action row without stretching content', (
     tester,

@@ -6,9 +6,11 @@ class ConsumptionHistoryScreen extends StatefulWidget {
   const ConsumptionHistoryScreen({
     super.key,
     this.consumptionId,
+    this.initialUnmapped = false,
     this.load,
     this.loadDetail,
   });
+  final bool initialUnmapped;
   final String? consumptionId;
   final Future<List<Map<String, dynamic>>> Function(
     bool unmapped,
@@ -22,7 +24,7 @@ class ConsumptionHistoryScreen extends StatefulWidget {
 }
 
 class _ConsumptionHistoryState extends State<ConsumptionHistoryScreen> {
-  bool _unmapped = false;
+  late bool _unmapped = widget.initialUnmapped;
   DateTimeRange? _dates;
   late Future<List<Map<String, dynamic>>> _rows;
   String _date(DateTime date) => date.toIso8601String().split('T').first;

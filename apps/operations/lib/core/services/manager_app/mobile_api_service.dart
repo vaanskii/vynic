@@ -744,6 +744,13 @@ class MobileApiService {
 
   // ── Users (admin panel) ───────────────────────────────────────────────────
 
+  static Future<Map<String, dynamic>> getInventoryOverview() async {
+    final response = await _get('/mobile/inventory/overview');
+    if (response.statusCode != 200)
+      throw Exception('მარაგების მიმოხილვა ვერ ჩაიტვირთა');
+    return Map<String, dynamic>.from(json.decode(response.body) as Map);
+  }
+
   static Future<List<StockItem>> getStockItems({String? search}) async {
     final query = search == null || search.trim().isEmpty
         ? ''

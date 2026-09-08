@@ -1,3 +1,6 @@
+import { FinanceController } from './finance/finance.controller';
+import { PayrollService } from './finance/payroll.service';
+import { ObligationsService } from './finance/obligations.service';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -55,7 +58,12 @@ import { WebsiteModule } from './website/website.module';
     PosCommandModule,
     WebsiteModule,
   ],
-  controllers: [AppController, MobileController, SyncController],
+  controllers: [
+    FinanceController,
+    AppController,
+    MobileController,
+    SyncController,
+  ],
   providers: [
     AppService,
     PosSyncGuard,
@@ -78,6 +86,8 @@ import { WebsiteModule } from './website/website.module';
     MobileMutationSupport,
     MobileReservationsService,
     MobileDashboardService,
+    PayrollService,
+    ObligationsService,
     MobileOrdersService,
     MobileSaleLedgerService,
   ],

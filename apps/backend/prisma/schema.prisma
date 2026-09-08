@@ -721,6 +721,10 @@ model Staff {
   updatedAt DateTime  @updatedAt
   venue     Venue     @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  compensations  StaffCompensation[]
+  payrollPeriods PayrollPeriod[]
+
+  @@unique([venueId, id])
   @@unique([venueId, username])
   @@index([venueId])
   @@schema("pos")
@@ -1127,6 +1131,14 @@ model Venue {
   menuCategories            MenuCategory[]
   menuItems                 MenuItem[]
   expenses                  Expense[]
+  compensations             StaffCompensation[]
+  payrollPeriods            PayrollPeriod[]
+  payrollPayments           PayrollPayment[]
+  payrollAccruals           PayrollAccrual[]
+  financialObligations      FinancialObligation[]
+  obligationCycles          ObligationCycle[]
+  obligationReserves        ObligationReserveEntry[]
+  obligationPayments        ObligationPayment[]
   stockItems                StockItem[]
   suppliers                 Supplier[]
   cloudSales                CloudSale[]
@@ -1574,4 +1586,178 @@ model WebsiteReservationTable {
   @@unique([reservationId, tableId])
   @@map("reservation_tables")
   @@schema("website")
+}
+
+
+enum CompensationType {
+  MONTHLY_FIXED
+  DAILY_FIXED
+  MANUAL
+
+  @@schema("pos")
+}
+
+enum FinancialObligationType {
+  RENT
+  BANK_LOAN
+  LEASE
+  UTILITY
+  OTHER
+
+  @@schema("pos")
+}
+
+/// Effective-month rules. Opened periods freeze their rule; only unopened future rules may be edited.
+model StaffCompensation {
+  id               String           @id @default(uuid())
+  venueId          String
+  staffId          String
+  compensationType CompensationType
+  amount           Decimal          @db.Decimal(18, 2)
+  effectiveFrom    String
+  isActive         Boolean          @default(true)
+  notes            String?
+  createdAt        DateTime         @default(now())
+  actorId          String
+  actorName        String
+  venue            Venue            @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  staff            Staff            @relation(fields: [venueId, staffId], references: [venueId, id], onDelete: Restrict)
+
+  @@unique([venueId, staffId, effectiveFrom])
+  @@schema("pos")
+}
+
+/// Frozen monthly rule; expected is fixed target plus explicit daily/manual accruals.
+model PayrollPeriod {
+  id               String           @id @default(uuid())
+  venueId          String
+  staffId          String
+  staffName        String
+  periodMonth      String
+  compensationType CompensationType
+  rate             Decimal          @db.Decimal(18, 2)
+  targetAmount     Decimal          @db.Decimal(18, 2)
+  createdAt        DateTime         @default(now())
+  venue            Venue            @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  staff            Staff            @relation(fields: [venueId, staffId], references: [venueId, id], onDelete: Restrict)
+  payments         PayrollPayment[]
+  accruals         PayrollAccrual[]
+
+  @@unique([venueId, staffId, periodMonth])
+  @@unique([venueId, id])
+  @@schema("pos")
+}
+
+model PayrollAccrual {
+  id              String        @id
+  venueId         String
+  payrollPeriodId String
+  payableDate     String?
+  amount          Decimal       @db.Decimal(18, 2)
+  notes           String?
+  actorId         String
+  actorName       String
+  createdAt       DateTime      @default(now())
+  venue           Venue         @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  period          PayrollPeriod @relation(fields: [venueId, payrollPeriodId], references: [venueId, id], onDelete: Restrict)
+
+  @@unique([payrollPeriodId, payableDate])
+  @@index([venueId, payrollPeriodId])
+  @@schema("pos")
+}
+
+model PayrollPayment {
+  id              String        @id
+  venueId         String
+  payrollPeriodId String
+  amount          Decimal       @db.Decimal(18, 2)
+  businessDate    String
+  paymentDate     String
+  notes           String?
+  actorId         String
+  actorName       String
+  createdAt       DateTime      @default(now())
+  venue           Venue         @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  period          PayrollPeriod @relation(fields: [venueId, payrollPeriodId], references: [venueId, id], onDelete: Restrict)
+
+  @@index([venueId, businessDate])
+  @@schema("pos")
+}
+
+model FinancialObligation {
+  id                  String                  @id @default(uuid())
+  venueId             String
+  name                String
+  type                FinancialObligationType
+  monthlyAmount       Decimal                 @db.Decimal(18, 2)
+  materializedThrough String?
+  dueDay              Int
+  startsOn            String
+  endsOn              String?
+  isActive            Boolean                 @default(true)
+  notes               String?
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+  venue               Venue                   @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  cycles              ObligationCycle[]
+
+  @@unique([venueId, id])
+  @@index([venueId, isActive])
+  @@schema("pos")
+}
+
+model ObligationCycle {
+  id           String                   @id @default(uuid())
+  venueId      String
+  obligationId String
+  name         String
+  type         FinancialObligationType
+  periodMonth  String
+  targetAmount Decimal                  @db.Decimal(18, 2)
+  dueDate      String
+  createdAt    DateTime                 @default(now())
+  venue        Venue                    @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  obligation   FinancialObligation      @relation(fields: [venueId, obligationId], references: [venueId, id], onDelete: Restrict)
+  reserves     ObligationReserveEntry[]
+  payments     ObligationPayment[]
+
+  @@unique([venueId, obligationId, periodMonth])
+  @@unique([venueId, id])
+  @@schema("pos")
+}
+
+model ObligationReserveEntry {
+  id                String          @id
+  venueId           String
+  obligationCycleId String
+  amount            Decimal         @db.Decimal(18, 2)
+  businessDate      String
+  notes             String?
+  actorId           String
+  actorName         String
+  createdAt         DateTime        @default(now())
+  venue             Venue           @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  cycle             ObligationCycle @relation(fields: [venueId, obligationCycleId], references: [venueId, id], onDelete: Restrict)
+
+  @@index([venueId, businessDate])
+  @@schema("pos")
+}
+
+model ObligationPayment {
+  id                String          @id
+  venueId           String
+  obligationCycleId String
+  amount            Decimal         @db.Decimal(18, 2)
+  reserveConsumed   Decimal         @db.Decimal(18, 2)
+  businessDate      String
+  paymentDate       String
+  notes             String?
+  actorId           String
+  actorName         String
+  createdAt         DateTime        @default(now())
+  venue             Venue           @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  cycle             ObligationCycle @relation(fields: [venueId, obligationCycleId], references: [venueId, id], onDelete: Restrict)
+
+  @@index([venueId, businessDate])
+  @@schema("pos")
 }

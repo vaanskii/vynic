@@ -42,7 +42,8 @@ export interface StaffSyncResult {
  * This also keeps an older POS build, which sends every PIN on every snapshot,
  * as cheap as a current one instead of holding ingest open for seconds.
  *
- * The reconcile deletes members missing from the snapshot, except those with an
+ * Reconciliation deactivates payroll-referenced members and deletes other missing
+ * members, except those with an
  * in-flight queued mobile change implying they should exist: the POS simply has
  * not applied the create/rename yet, and deleting here would undo it.
  */
@@ -138,7 +139,10 @@ export class StaffSyncService {
     const protectedUsernames = pendingStaffUsernames(pendingUserRows);
     const existing = await (this.prisma as any).staff.findMany({
       where: { venueId: tenant.venueId },
-      select: { username: true },
+      select: {
+        username: true,
+        _count: { select: { compensations: true, payrollPeriods: true } },
+      },
     });
     const stale = existing
       .map((u: any) => String(u.username ?? ''))
@@ -148,9 +152,30 @@ export class StaffSyncService {
           !incomingUsernames.has(username) &&
           !protectedUsernames.has(username),
       );
-    if (stale.length > 0) {
+    // Payroll identities outlive their POS login. Only unreferenced rows are removed.
+    const retained = existing.filter(
+      (u: any) =>
+        stale.includes(u.username) &&
+        ((u._count?.compensations ?? 0) > 0 ||
+          (u._count?.payrollPeriods ?? 0) > 0),
+    );
+    for (const member of retained) {
+      await this.prisma.staff.update({
+        where: {
+          venueId_username: {
+            venueId: tenant.venueId,
+            username: member.username,
+          },
+        },
+        data: { isActive: false },
+      });
+    }
+    const removable = stale.filter(
+      (name: string) => !retained.some((u: any) => u.username === name),
+    );
+    if (removable.length > 0) {
       await (this.prisma as any).staff.deleteMany({
-        where: { venueId: tenant.venueId, username: { in: stale } },
+        where: { venueId: tenant.venueId, username: { in: removable } },
       });
     }
 

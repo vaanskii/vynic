@@ -1,3 +1,4 @@
+import { financialPayments } from '../../finance/financial-summary';
 import {
   BadRequestException,
   Injectable,
@@ -80,6 +81,11 @@ export interface FinancialsResponse {
   procurement: Awaited<ReturnType<typeof procurementSummary>>;
   otherExpenses: string;
   salaryPayments: string;
+  legacySalaryPayments: string;
+  revenueExact: string;
+  differenceExact: string;
+  payrollPayments: string;
+  obligationPayments: string;
   totalOutflows: string;
   revenue: number;
   expenses: number;
@@ -521,8 +527,6 @@ export class MobileDashboardService {
     const currentBusinessDate = procurement.businessDate;
     const r = (n: number) => Math.round(n * 100) / 100;
 
-    const start = parseBusinessDateStart(currentBusinessDate);
-    const end = nextDay(start);
     const [summarySetting, expenseRows] = await Promise.all([
       (this.prisma as any).setting.findUnique({
         where: settingIdentity(tenant, `salesSummary:${currentBusinessDate}`),
@@ -530,7 +534,7 @@ export class MobileDashboardService {
       this.prisma.expense.findMany({
         where: {
           venueId: tenant.venueId,
-          createdAt: { gte: start, lt: end },
+          ...businessDateWhere(currentBusinessDate),
         },
         select: {
           id: true,
@@ -549,14 +553,21 @@ export class MobileDashboardService {
     );
     const moneySum = (rows: typeof expenses) =>
       rows.reduce((sum, row) => sum.plus(row.amount), new Prisma.Decimal(0));
-    const salaryPayments = moneySum(
+    const legacySalaryPayments = moneySum(
       expenses.filter((row) => isSalaryCategory(row.category)),
     );
     const otherExpenses = moneySum(
       expenses.filter((row) => !isSalaryCategory(row.category)),
     );
+    const actual = await financialPayments(
+      this.prisma,
+      tenant,
+      currentBusinessDate,
+    );
+    const salaryPayments = legacySalaryPayments.plus(actual.payrollPayments);
     const totalOutflows = otherExpenses
       .plus(salaryPayments)
+      .plus(actual.obligationPayments)
       .plus(procurement.businessDay.total);
     let revenue = 0;
     let cashRev = 0;
@@ -611,6 +622,16 @@ export class MobileDashboardService {
       procurement,
       otherExpenses: otherExpenses.toFixed(2),
       salaryPayments: salaryPayments.toFixed(2),
+      legacySalaryPayments: legacySalaryPayments.toFixed(2),
+      revenueExact: new Prisma.Decimal(
+        ledger?.provenance === 'LEDGER_COMPLETE' ? ledger.revenue : revenue,
+      ).toFixed(2),
+      differenceExact: new Prisma.Decimal(
+        ledger?.provenance === 'LEDGER_COMPLETE' ? ledger.revenue : revenue,
+      )
+        .minus(totalOutflows)
+        .toFixed(2),
+      ...actual,
       totalOutflows: totalOutflows.toFixed(2),
       revenue: r(revenue),
       expenses: r(totalExp),
@@ -672,6 +693,8 @@ export class MobileDashboardService {
         'შესყიდვა დაამატეთ მარაგებში — დღიური მიღება',
       );
     }
+    if (isSalaryCategory(category))
+      throw new BadRequestException('ხელფასი დაამატეთ ფინანსებში — ხელფასები');
     const paymentType = normalizePaymentType(payload.paymentType ?? 'cash');
     const amount = Number(payload.amount ?? 0);
     if (!description) {
@@ -743,6 +766,13 @@ export class MobileDashboardService {
     tenant: TenantContext,
     id: string,
   ): Promise<{ success: true }> {
+    const existing = await this.prisma.expense.findFirst({
+      where: { id, venueId: tenant.venueId },
+    });
+    if (existing && isSalaryCategory(existing.category))
+      throw new BadRequestException(
+        'ძველი ხელფასის ისტორია მხოლოდ წაკითხვისთვისაა',
+      );
     const deleted = await this.prisma.expense.deleteMany({
       where: { id, venueId: tenant.venueId },
     });

@@ -55,6 +55,12 @@ function makePrisma(fixture: Fixture = {}) {
         .fn()
         .mockResolvedValue({ timezone: 'Asia/Tbilisi' }),
     },
+    payrollPayment: {
+      aggregate: jest.fn().mockResolvedValue({ _sum: { amount: null } }),
+    },
+    obligationPayment: {
+      aggregate: jest.fn().mockResolvedValue({ _sum: { amount: null } }),
+    },
     receiving: {
       aggregate: jest
         .fn()

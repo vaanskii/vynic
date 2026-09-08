@@ -133,6 +133,7 @@ describe('deriveAuditLogEntity', () => {
 describe('actionsForEntityType', () => {
   it('lists every action that means an entity, so history is still findable', () => {
     expect(actionsForEntityType('STAFF').sort()).toEqual([
+      'STAFF_COMPENSATION_CHANGED',
       'STAFF_CREATED',
       'STAFF_DELETED',
       'STAFF_PIN_CHANGED',

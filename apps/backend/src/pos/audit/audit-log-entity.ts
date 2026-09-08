@@ -18,6 +18,10 @@
 
 export const AUDIT_LOG_ENTITY_TYPES = [
   'STAFF',
+  'PAYROLL_PAYMENT',
+  'PAYROLL_PERIOD',
+  'FINANCIAL_OBLIGATION',
+  'OBLIGATION_CYCLE',
   'MENU_ITEM',
   'MENU_CATEGORY',
   'MENU_VARIANT',
@@ -101,6 +105,35 @@ const ACTION_RULES: Readonly<Record<string, EntityRule>> = {
   },
   REPORT_COST_ASSUMPTION_CHANGED: { entityType: 'SETTINGS', idKeys: ['field'] },
 
+  STAFF_COMPENSATION_CHANGED: { entityType: 'STAFF', idKeys: ['staffId'] },
+  PAYROLL_PAYMENT_RECORDED: {
+    entityType: 'PAYROLL_PAYMENT',
+    idKeys: ['paymentId'],
+  },
+  PAYROLL_ACCRUAL_RECORDED: {
+    entityType: 'PAYROLL_PERIOD',
+    idKeys: ['periodId'],
+  },
+  FINANCIAL_OBLIGATION_CREATED: {
+    entityType: 'FINANCIAL_OBLIGATION',
+    idKeys: ['obligationId'],
+  },
+  FINANCIAL_OBLIGATION_UPDATED: {
+    entityType: 'FINANCIAL_OBLIGATION',
+    idKeys: ['obligationId'],
+  },
+  FINANCIAL_OBLIGATION_DISABLED: {
+    entityType: 'FINANCIAL_OBLIGATION',
+    idKeys: ['obligationId'],
+  },
+  OBLIGATION_RESERVE_RECORDED: {
+    entityType: 'OBLIGATION_CYCLE',
+    idKeys: ['cycleId'],
+  },
+  OBLIGATION_PAYMENT_RECORDED: {
+    entityType: 'OBLIGATION_CYCLE',
+    idKeys: ['cycleId'],
+  },
   // Staff.
   STAFF_CREATED: { entityType: 'STAFF', idKeys: ['staffName'] },
   STAFF_UPDATED: { entityType: 'STAFF', idKeys: ['staffName'] },

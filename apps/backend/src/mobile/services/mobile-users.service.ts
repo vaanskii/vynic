@@ -302,7 +302,11 @@ export class MobileUsersService {
     const username = (usernameParam ?? '').trim();
     const existing = await (this.prisma as any).staff.findUnique({
       where: staffIdentity(tenant, username),
-      select: { id: true, role: true },
+      select: {
+        id: true,
+        role: true,
+        _count: { select: { compensations: true, payrollPeriods: true } },
+      },
     });
     if (!existing) {
       throw new NotFoundException('User not found');
@@ -319,9 +323,19 @@ export class MobileUsersService {
         throw new BadRequestException('Cannot delete the last manager');
       }
     }
-    await (this.prisma as any).staff.delete({
-      where: staffIdentity(tenant, username),
-    });
+    if (
+      (existing._count?.compensations ?? 0) > 0 ||
+      (existing._count?.payrollPeriods ?? 0) > 0
+    ) {
+      await this.prisma.staff.update({
+        where: staffIdentity(tenant, username),
+        data: { isActive: false },
+      });
+    } else {
+      await this.prisma.staff.delete({
+        where: staffIdentity(tenant, username),
+      });
+    }
     const pinsMap = await this.pinVault.read(tenant);
     delete pinsMap[username];
     await this.pinVault.write(pinsMap, tenant);

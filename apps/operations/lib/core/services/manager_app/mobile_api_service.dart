@@ -398,6 +398,33 @@ class MobileApiService {
 
   // ── Financials ─────────────────────────────────────────────────────────────
 
+  /// Finance mutations carry a caller-generated UUID, retained across retries.
+  /// Cloud confirms persistence; no optimistic/offline financial writes.
+  static Future<Map<String, dynamic>> financeRead(String path) async {
+    final response = await _get('/mobile/finance/$path');
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+    }
+    throw Exception('მონაცემები ვერ ჩაიტვირთა (${response.statusCode})');
+  }
+
+  static Future<void> financeWrite(
+    String path,
+    Map<String, dynamic> data, {
+    bool update = false,
+  }) async {
+    final response = update
+        ? await _patch('/mobile/finance/$path', data)
+        : await _post('/mobile/finance/$path', data);
+    if (response.statusCode >= 200 && response.statusCode < 300) return;
+    final decoded = jsonDecode(response.body);
+    throw Exception(
+      decoded is Map
+          ? decoded['message'] ?? 'შენახვა ვერ მოხერხდა'
+          : 'შენახვა ვერ მოხერხდა (${response.statusCode})',
+    );
+  }
+
   static Future<Map<String, dynamic>> getFinancials() async {
     try {
       final response = await _get('/mobile/financials');

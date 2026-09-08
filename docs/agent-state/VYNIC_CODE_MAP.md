@@ -52,6 +52,18 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Manager backend reports: `apps/backend/src/mobile/services/mobile-reports.service.ts`
 - Cloud money reconciliation: `apps/backend/src/pos/sync/snapshot/business-day-sync.service.ts`
 
+## Manager Financials / Payroll / Obligations
+
+- Step 4.7 decisions, legacy salary preservation, calculation rules and rollout: `docs/FINANCIALS_STEP47.md`.
+- Cloud Manager-only routes: `apps/backend/src/finance/finance.controller.ts`; server-owned tenant/actor and business-date convention: `finance-common.ts` in the same directory.
+- Staff compensation, frozen monthly payroll, explicit daily/manual accrual and historical payments: `apps/backend/src/finance/payroll.service.ts`.
+- Obligation templates, immutable month snapshots, reserve consumption and payment concurrency: `apps/backend/src/finance/obligations.service.ts`; exact date/money calculations: `finance-rules.ts`.
+- Actual payment aggregation: `apps/backend/src/finance/financial-summary.ts`; purchases + expenses + legacy/new payroll + obligations composition: `apps/backend/src/mobile/services/mobile-dashboard.service.ts`.
+- Additive schema/migration: `apps/backend/prisma/migrations/20260913120000_payroll_obligations/`; real PostgreSQL proofs: `apps/backend/src/finance/finance.integration.spec.ts`, `finance-rules.spec.ts`.
+- Manager Payroll/Obligations, Staff detail, entry forms and history: `apps/operations/lib/apps/mobile_app/presentation/screens/finance_planning_screen.dart`; Financials links/composition: `financials_screen.dart` beside it; Dashboard card: `apps/operations/lib/apps/mobile_app/presentation/widgets/financial_planning_card.dart`.
+- Responsive workflows, retry identity, history and deep links: `apps/operations/test/widget/finance_planning_test.dart`.
+- Legacy salary remains in Expense/Hive, with category classification in `apps/backend/src/mobile/util/expense-category.ts` and `apps/operations/lib/core/models/expense_category.dart`. New Manager salary writes use payroll; no historical Staff inference or deletion.
+
 ## Audit Sync
 
 - POS event order/sequence: `apps/operations/lib/core/models/audit_report.dart`
@@ -82,6 +94,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - POS snapshot assembly: `apps/operations/lib/core/services/sync/manager_sync_service.dart`
 - Backend mirror/reconcile: `apps/backend/src/pos/sync/snapshot/staff-sync.service.ts`
 - Plain-PIN store: `apps/backend/src/auth/staff-pin-vault.service.ts`
+- Payroll-referenced Staff are retained inactive on login removal/snapshot reconciliation.
 - Manager-side staff CRUD: `apps/backend/src/mobile/services/mobile-users.service.ts`
 - Proofs: `apps/operations/test/unit/staff_credential_sync_test.dart`,
   `apps/backend/src/pos/sync/snapshot/staff-sync.service.spec.ts`,

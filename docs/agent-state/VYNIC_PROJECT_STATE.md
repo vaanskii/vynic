@@ -52,7 +52,8 @@ current transport status.
   product links, business-date daily receiving and current weighted purchase /
   theoretical Menu costs. Step 4.6 consolidates procurement Financials, responsive
   Manager Inventory and read-only POS Admin inspection; historical Sale COGS,
-  waste and stocktake remain later steps.
+  waste and stocktake remain later steps. Step 4.7 adds Staff payroll and recurring
+  obligations/reserve planning; feature control remains a later step.
 
 ## Completed Foundations
 
@@ -98,11 +99,26 @@ current transport status.
 
 - Inventory Step 4.6 makes POSTED Receiving the sole purchasing entry point.
   Known legacy Market Expense categories are rejected and excluded from Expense
-  reporting; shared Expense storage/audit and the existing salary flow remain.
-  Financials separates purchases, other expenses and salary payments, summing
-  each once. Dashboard links procurement/stock warnings into Inventory. POS
+  reporting; shared Expense storage/audit remain. Legacy salary Expense history
+  is retained read-only after Step 4.7. Financials separates purchases, other
+  expenses, payroll and obligation payments, summing each once. Dashboard links
+  procurement/stock warnings into Inventory. POS
   Admin exposes read-only stock, recent movements/receipts, recipe status and
   unmapped sold products from catalog v5. See `docs/INVENTORY_STEP46.md`.
+
+- Financials Step 4.7 adds Venue/Staff compensation rules, frozen PayrollPeriod
+  snapshots and append-only payroll accrual/payment history. Daily wages require
+  explicit payable dates; no hours/attendance are inferred. Legacy salary Expense
+  rows stay unmapped/read-only with no destructive migration. Payroll references
+  retain Staff identities when login removal/sync deactivates them.
+- Recurring obligations use monthly snapshots and exact Decimal reserves/payments.
+  Payments consume available reserve under a cycle lock; reserves are planning,
+  never outflows. Daily recommendations include today and the due date, clamp
+  overdue divisors to one, and round upward to cents. Changes preserve opened
+  periods. Dashboard deep-links into the separate Payroll/Obligations screens.
+  Global Audit and Staff -> Venue authority cover every new mutation; no new
+  entitlement or POS/Close Day dependency is introduced. See
+  `docs/FINANCIALS_STEP47.md` for rules, preservation and rollout.
 
 ## POS / Edge State
 
@@ -586,8 +602,9 @@ current transport status.
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260912120000_inventory_step45_catalog_cost`.
+  `20260913120000_payroll_obligations`.
 - Immediately preceding state migrations:
+  `20260912120000_inventory_step45_catalog_cost`,
   `20260911120000_inventory_step4_sale_consumption`,
   `20260910120000_inventory_step3_menu_consumption`,
   `20260909120000_inventory_step2_receiving`,

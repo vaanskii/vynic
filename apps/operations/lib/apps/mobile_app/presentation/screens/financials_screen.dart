@@ -1,3 +1,4 @@
+import 'finance_planning_screen.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_admin_screen.dart';
 import 'package:vynic/core/models/expense_category.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
@@ -41,7 +42,6 @@ class _FinancialsScreenState extends State<FinancialsScreen>
   bool _isLoading = true;
   String? _error;
   bool _isAddingExpense = false;
-  bool _isApplyingSalaries = false;
   bool _isLoadingMoreSales = false;
   String? _salesCursor;
 
@@ -52,10 +52,6 @@ class _FinancialsScreenState extends State<FinancialsScreen>
       TextEditingController();
   final TextEditingController _expenseAmountController =
       TextEditingController();
-  final TextEditingController _staffNameController = TextEditingController();
-  final TextEditingController _staffSalaryController = TextEditingController();
-
-  final List<_SalaryItem> _salaryItems = [];
 
   @override
   void initState() {
@@ -73,8 +69,6 @@ class _FinancialsScreenState extends State<FinancialsScreen>
     _categoryController.dispose();
     _expenseDescriptionController.dispose();
     _expenseAmountController.dispose();
-    _staffNameController.dispose();
-    _staffSalaryController.dispose();
     super.dispose();
   }
 
@@ -209,6 +203,10 @@ class _FinancialsScreenState extends State<FinancialsScreen>
       _toast('შესყიდვა დაამატეთ მარაგებში — დღიური მიღება', error: true);
       return;
     }
+    if (ExpenseCategory.isSalary(category)) {
+      _toast('ხელფასი დაამატეთ ფინანსებში — ხელფასები', error: true);
+      return;
+    }
     final description = _expenseDescriptionController.text.trim();
     final amount = double.tryParse(_expenseAmountController.text.trim());
     if (category.isEmpty ||
@@ -242,47 +240,6 @@ class _FinancialsScreenState extends State<FinancialsScreen>
       await _loadFinancials();
     } catch (_) {
       _toast('ხარჯის წაშლა ვერ მოხერხდა', error: true);
-    }
-  }
-
-  void _addSalaryDraft() {
-    final name = _staffNameController.text.trim();
-    final salary = double.tryParse(_staffSalaryController.text.trim());
-    if (name.isEmpty || salary == null || salary <= 0) {
-      _toast('შეავსეთ სახელი და ხელფასი სწორად', error: true);
-      return;
-    }
-    setState(() {
-      _salaryItems.add(_SalaryItem(name: name, amount: salary));
-      _staffNameController.clear();
-      _staffSalaryController.clear();
-    });
-  }
-
-  Future<void> _applySelectedSalaries() async {
-    final selected = _salaryItems.where((e) => e.selected).toList();
-    if (selected.isEmpty) {
-      _toast('მონიშნეთ მინიმუმ ერთი თანამშრომელი', error: true);
-      return;
-    }
-    setState(() => _isApplyingSalaries = true);
-    try {
-      for (final item in selected) {
-        await MobileApiService.createExpense(
-          description: item.name,
-          amount: item.amount,
-          category: 'პერსონალი',
-        );
-      }
-      setState(() {
-        _salaryItems.removeWhere((item) => item.selected);
-      });
-      await _loadFinancials();
-      _toast('მონიშნული ხელფასები დაემატა ხარჯებში');
-    } catch (_) {
-      _toast('ხელფასების დამატება ვერ მოხერხდა', error: true);
-    } finally {
-      if (mounted) setState(() => _isApplyingSalaries = false);
     }
   }
 
@@ -361,9 +318,6 @@ class _FinancialsScreenState extends State<FinancialsScreen>
     final double profit = revenue - expenses;
     final double cash = (_data!['cashRevenue'] ?? 0).toDouble();
     final double card = (_data!['cardRevenue'] ?? 0).toDouble();
-    final selectedSalariesTotal = _salaryItems
-        .where((e) => e.selected)
-        .fold<double>(0, (sum, e) => sum + e.amount);
 
     return RefreshIndicator(
       color: MobileGlassTheme.primary,
@@ -395,6 +349,8 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                   ),
                   SizedBox(height: 28),
                   _buildProcurement(),
+                  const SizedBox(height: 16),
+                  _buildPlanningLinks(),
                   const SizedBox(height: 24),
                   _fade(0.2, _buildPaymentCard(cash, card)),
                   SizedBox(height: 28),
@@ -412,8 +368,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                   SizedBox(height: 28),
                   _fade(0.6, _buildExpenseComposer()),
                   SizedBox(height: 28),
-                  _fade(0.7, _buildSalaryPlanner(selectedSalariesTotal)),
-                  SizedBox(height: 28),
+
                   _fade(0.8, _buildExpenseLog()),
                 ],
               ),
@@ -511,7 +466,9 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        _gel(profit.abs()),
+                        _data?['differenceExact'] != null
+                            ? '₾${_data!["differenceExact"]}'
+                            : _gel(profit.abs()),
                         style: TextStyle(
                           color: MobileGlassTheme.textPrimary,
                           fontSize: 36,
@@ -567,7 +524,9 @@ class _FinancialsScreenState extends State<FinancialsScreen>
               Expanded(
                 child: _MiniStatBlock(
                   title: 'გაყიდვები',
-                  amount: _gel(revenue),
+                  amount: _data?['revenueExact'] != null
+                      ? '₾${_data!["revenueExact"]}'
+                      : _gel(revenue),
                   color: MobileGlassTheme.good,
                   icon: Icons.arrow_downward_rounded,
                 ),
@@ -580,7 +539,9 @@ class _FinancialsScreenState extends State<FinancialsScreen>
               Expanded(
                 child: _MiniStatBlock(
                   title: 'ხარჯი',
-                  amount: _gel(expenses),
+                  amount: _data?['totalOutflows'] != null
+                      ? '₾${_data!["totalOutflows"]}'
+                      : _gel(expenses),
                   color: MobileGlassTheme.bad,
                   icon: Icons.arrow_upward_rounded,
                 ),
@@ -1180,6 +1141,13 @@ class _FinancialsScreenState extends State<FinancialsScreen>
               'სხვა ხარჯები: ${_data?['otherExpenses'] ?? _data?['expenses'] ?? '—'} ₾',
             ),
             Text('ხელფასები: ${_data?['salaryPayments'] ?? '—'} ₾'),
+            if (_data?['legacySalaryPayments'] != null)
+              Text(
+                'მათ შორის ძველი ჩანაწერები: ${_data!['legacySalaryPayments']} ₾',
+              ),
+            Text(
+              'ვალდებულებების გადახდები: ${_data?['obligationPayments'] ?? '—'} ₾',
+            ),
             Text('სულ გასავლები: ${_data?['totalOutflows'] ?? '—'} ₾'),
             const SizedBox(height: 8),
             const Text(
@@ -1223,145 +1191,35 @@ class _FinancialsScreenState extends State<FinancialsScreen>
     );
   }
 
-  // ── Salary planner ────────────────────────────────────────────────────
-  Widget _buildSalaryPlanner(double selectedSalariesTotal) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _SectionHeader(title: 'პერსონალის ხელფასები'),
-          SizedBox(height: 16),
-          _GlassCard(
-            borderRadius: BorderRadius.circular(24),
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'დაამატეთ სახელი და ხელფასი, შემდეგ მონიშნულები ერთიანად ჩასვით ხარჯებში.',
-                  style: TextStyle(
-                    color: MobileGlassTheme.textSecondary,
-                    fontSize: 12,
-                  ),
+  Widget _buildPlanningLinks() => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 24),
+    child: Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        for (final entry in [
+          (false, 'ხელფასები', Icons.people_outline),
+          (true, 'ყოველთვიური ვალდებულებები', Icons.event_repeat),
+        ])
+          OutlinedButton.icon(
+            key: ValueKey(
+              entry.$1 ? 'financials-obligations' : 'financials-payroll',
+            ),
+            style: OutlinedButton.styleFrom(minimumSize: const Size(48, 48)),
+            onPressed: () async {
+              await Navigator.of(context).push<void>(
+                MaterialPageRoute(
+                  builder: (_) => FinancePlanningScreen(obligations: entry.$1),
                 ),
-                SizedBox(height: 14),
-                _darkField(_staffNameController, 'სახელი'),
-                SizedBox(height: 12),
-                _darkField(_staffSalaryController, 'ხელფასი', number: true),
-                SizedBox(height: 12),
-                _outlineButton(label: 'სიაში დამატება', onTap: _addSalaryDraft),
-                if (_salaryItems.isNotEmpty) ...[
-                  SizedBox(height: 14),
-                  for (var idx = 0; idx < _salaryItems.length; idx++)
-                    _buildSalaryRow(idx, _salaryItems[idx]),
-                  SizedBox(height: 8),
-                  Divider(color: MobileGlassTheme.border(0.12)),
-                  SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'მონიშნული ჯამი',
-                        style: TextStyle(
-                          color: MobileGlassTheme.textSecondary,
-                          fontSize: 13,
-                        ),
-                      ),
-                      Text(
-                        _gel(selectedSalariesTotal),
-                        style: TextStyle(
-                          color: MobileGlassTheme.textPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 12),
-                  _primaryButton(
-                    label: _isApplyingSalaries
-                        ? 'ინახება...'
-                        : 'მონიშნულის ხარჯებში დამატება',
-                    onTap: _isApplyingSalaries ? null : _applySelectedSalaries,
-                  ),
-                ],
-              ],
-            ),
+              );
+              if (mounted) await _loadFinancials();
+            },
+            icon: Icon(entry.$3),
+            label: Text(entry.$2),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSalaryRow(int idx, _SalaryItem item) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => setState(
-              () => _salaryItems[idx] = item.copyWith(selected: !item.selected),
-            ),
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: item.selected
-                    ? MobileGlassTheme.primary
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(7),
-                border: Border.all(
-                  color: item.selected
-                      ? MobileGlassTheme.primary
-                      : Colors.white.withValues(alpha: 0.25),
-                ),
-              ),
-              child: item.selected
-                  ? Icon(
-                      Icons.check_rounded,
-                      size: 16,
-                      color: MobileGlassTheme.textPrimary,
-                    )
-                  : null,
-            ),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.name,
-                  style: TextStyle(
-                    color: MobileGlassTheme.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  _gel(item.amount),
-                  style: TextStyle(
-                    color: MobileGlassTheme.textSecondary,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          GestureDetector(
-            onTap: () => setState(() => _salaryItems.removeAt(idx)),
-            behavior: HitTestBehavior.opaque,
-            child: Icon(
-              Icons.delete_outline_rounded,
-              size: 20,
-              color: Colors.white.withValues(alpha: 0.4),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+      ],
+    ),
+  );
 
   // ── Expense history ───────────────────────────────────────────────────
   Widget _buildExpenseLog() {
@@ -1457,18 +1315,19 @@ class _FinancialsScreenState extends State<FinancialsScreen>
               fontSize: 14,
             ),
           ),
-          GestureDetector(
-            onTap: () => _deleteExpense((e['id'] ?? '').toString()),
-            behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: Icon(
-                Icons.close_rounded,
-                size: 18,
-                color: Colors.white.withValues(alpha: 0.35),
+          if (!ExpenseCategory.isSalary(e['category']))
+            GestureDetector(
+              onTap: () => _deleteExpense((e['id'] ?? '').toString()),
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 18,
+                  color: Colors.white.withValues(alpha: 0.35),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -1530,26 +1389,6 @@ class _FinancialsScreenState extends State<FinancialsScreen>
           ),
         ),
         child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-      ),
-    );
-  }
-
-  Widget _outlineButton({required String label, required VoidCallback onTap}) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton(
-        onPressed: onTap,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: MobileGlassTheme.accentText,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          side: BorderSide(
-            color: MobileGlassTheme.primary.withValues(alpha: 0.5),
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-        child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
       ),
     );
   }
@@ -1765,26 +1604,6 @@ class _SaleDetailSheet extends StatelessWidget {
       ],
     ),
   );
-}
-
-class _SalaryItem {
-  final String name;
-  final double amount;
-  final bool selected;
-
-  const _SalaryItem({
-    required this.name,
-    required this.amount,
-    this.selected = true,
-  });
-
-  _SalaryItem copyWith({String? name, double? amount, bool? selected}) {
-    return _SalaryItem(
-      name: name ?? this.name,
-      amount: amount ?? this.amount,
-      selected: selected ?? this.selected,
-    );
-  }
 }
 
 /// ------------------------------------------------------------------

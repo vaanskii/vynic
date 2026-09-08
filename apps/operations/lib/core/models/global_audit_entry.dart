@@ -194,6 +194,14 @@ class GlobalAuditEntry {
 /// the same event, and so a new action name has exactly one place to be named.
 abstract final class GlobalAuditPresentation {
   static const Map<String, String> _actionLabels = {
+    'STAFF_COMPENSATION_CHANGED': 'ხელფასის წესის შეცვლა',
+    'PAYROLL_PAYMENT_RECORDED': 'ხელფასის გადახდა',
+    'PAYROLL_ACCRUAL_RECORDED': 'ხელფასის დარიცხვა',
+    'FINANCIAL_OBLIGATION_CREATED': 'ვალდებულების დამატება',
+    'FINANCIAL_OBLIGATION_UPDATED': 'ვალდებულების შეცვლა',
+    'FINANCIAL_OBLIGATION_DISABLED': 'ვალდებულების გამორთვა',
+    'OBLIGATION_RESERVE_RECORDED': 'თანხის გადადება',
+    'OBLIGATION_PAYMENT_RECORDED': 'ვალდებულების გადახდა',
     GlobalAuditAction.staffCreated: 'Staff added',
     GlobalAuditAction.staffUpdated: 'Staff updated',
     GlobalAuditAction.staffRoleChanged: 'Staff role changed',

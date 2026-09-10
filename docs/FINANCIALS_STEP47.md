@@ -45,7 +45,8 @@ interval; there is no mutable effectiveTo column.
 `PayrollPeriod` freezes Staff name, type, rate and monthly target. It is unique by
 Venue + Staff + periodMonth. Monthly expected equals the frozen monthly salary.
 Daily expected starts at zero: every explicit, unique payableDate in that month
-adds one frozen daily rate through an append-only PayrollAccrual. MANUAL expected
+adds one frozen daily rate through an append-only PayrollAccrual; linked signed
+adjustments safely reverse/reactivate that day without deleting it. MANUAL expected
 starts at zero and grows through explicit exact-amount accruals. Neither accruals
 nor compensation settings count as financial outflows.
 
@@ -222,3 +223,58 @@ remote push or database access was performed during implementation.
   No entitlement key, Platform Admin toggle or domain entitlement branch is added.
 
 Stop after Step 4.7. Platform Entitlements is the next separately requested step.
+
+
+## Daily payroll workflow
+
+Manager Payroll now has Overview / Daily / Monthly / Payments sections. Staff
+salary forms explicitly select თვიური / დღიური / ხელით and show only the matching
+rate field. Manual rules submit zero configuration amount and retain the existing
+manual accrual/payment flow. Staff payroll detail shows type, rate, accrued, paid,
+remaining, worked-day count where relevant, and history. Monthly/manual periods
+never appear in the daily sheet. Phone cards and wider compact rows share the
+same worked action; the history and payment actions remain separate.
+
+The default payroll month follows `currentBusinessDate` from the authenticated
+Venue's setting, with the existing Venue-timezone calendar fallback. Daily date
+navigation can cross months, but the API and picker reject future business days.
+Close Day has no payroll deletion path; advancing the business-date setting does
+not remove accruals or payments.
+
+`POST /mobile/finance/payroll/:id/day` accepts a UUID `id`, `businessDate` and
+boolean `worked`. The period is resolved through authenticated Staff → Venue and
+locked with the same row lock as payroll payments. The original date row remains
+unique by `(payrollPeriodId, payableDate)`, with periods unique by
+`(venueId, staffId, periodMonth)`. The additive migration
+`20260914120000_payroll_day_adjustments` introduces nullable `dayEntryId` and
+`worked` fields. Its composite self-FK requires each adjustment to reference an
+accrual in the same Venue and period. Existing rows are unchanged.
+
+A command appends the difference between the desired day value (frozen period
+rate or zero) and the sum of that day's entries. Reversals are negative entries;
+reactivation adds back the same frozen rate. No original accrual is updated or
+deleted. A new command whose desired state is already satisfied stores a zero
+entry as a retry receipt; it emits no derived audit event and is hidden from the
+human history. Reusing a command UUID with the same intent returns the original
+receipt even after a later opposite action; mismatched intent is rejected. The
+Manager keeps the UUID after a failed response and reloads authoritative state
+before allowing another action. Refresh can reconcile a failed command.
+
+A reversal is refused if the resulting period accrual would be less than its
+payments. Payments are period-level, so this is a balance rule, not allocation of
+individual payments to days. Marking never creates a payment or Expense. Existing
+`PAYROLL_ACCRUAL_RECORDED`, `STAFF_COMPENSATION_CHANGED` and
+`PAYROLL_PAYMENT_RECORDED` audit actions remain; `PAYROLL_DAY_REVERSED` identifies
+a negative day adjustment. Every mutation remains tenant/actor scoped.
+
+The existing Step 4.7 rate policy is unchanged: daily and monthly rates are frozen
+for each opened month. A rate change can affect the next unopened month; it does
+not silently reprice old days or permit mid-month rate changes. Exact Decimal
+accrual sums and server-derived worked-day counts drive displayed totals.
+
+Validation covers 12 × 50 = 600, payment 400 / remaining 200, concurrent/replayed
+commands, reactivation, paid-balance reversal refusal, old/new monthly rate
+snapshots, month-boundary business dates, tenant/FK isolation, audit and payment-only
+outflows in `finance.integration.spec.ts`. Widget tests cover all salary choices,
+retry/reversal, date navigation and the 360/768/1280 layouts. Migration validation
+uses disposable `vynic_step47_test` databases only; `vankisi_database` is excluded.

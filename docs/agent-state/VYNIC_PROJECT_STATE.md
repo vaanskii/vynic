@@ -111,6 +111,15 @@ current transport status.
   explicit payable dates; no hours/attendance are inferred. Legacy salary Expense
   rows stay unmapped/read-only with no destructive migration. Payroll references
   retain Staff identities when login removal/sync deactivates them.
+- Manager Payroll separates overview, daily staff, monthly staff and payments.
+  Salary-type selection shows only the relevant rate input. The daily sheet
+  defaults to the Venue business date (including its month across midnight),
+  excludes monthly/manual periods, and rejects future days. Worked toggles use
+  request UUIDs, a period lock and linked append-only signed accrual adjustments;
+  reversals cannot reduce accrued pay below paid pay. Original day identity,
+  period rate snapshots and audit history survive reversal and Close Day.
+  Totals use exact Decimal; only payments enter Financials outflows. Compensation
+  changes still take effect in an unopened month, not midway through a frozen one.
 - Recurring obligations use monthly snapshots and exact Decimal reserves/payments.
   Payments consume available reserve under a cycle lock; reserves are planning,
   never outflows. Daily recommendations include today and the due date, clamp
@@ -602,8 +611,9 @@ current transport status.
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260913120000_payroll_obligations`.
+  `20260914120000_payroll_day_adjustments`.
 - Immediately preceding state migrations:
+  `20260913120000_payroll_obligations`,
   `20260912120000_inventory_step45_catalog_cost`,
   `20260911120000_inventory_step4_sale_consumption`,
   `20260910120000_inventory_step3_menu_consumption`,

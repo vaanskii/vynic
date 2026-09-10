@@ -23,6 +23,7 @@ import {
   type CompensationInput,
   type PaymentInput,
   type AccrualInput,
+  type PayrollDayInput,
 } from './payroll.service';
 import {
   ObligationsService,
@@ -75,6 +76,13 @@ export class FinanceController {
     @Body() body: AccrualInput,
   ) {
     return this.payroll.recordAccrual(a, id, body);
+  }
+  @Post('payroll/:id/day') payableDay(
+    @ManagerAuth() a: Actor,
+    @Param('id') id: string,
+    @Body() body: PayrollDayInput,
+  ) {
+    return this.payroll.setPayableDay(a, id, body);
   }
   @Get('obligations') obligationList(
     @ManagerTenant() t: TenantContext,

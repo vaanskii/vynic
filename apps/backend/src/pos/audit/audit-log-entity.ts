@@ -110,6 +110,7 @@ const ACTION_RULES: Readonly<Record<string, EntityRule>> = {
     entityType: 'PAYROLL_PAYMENT',
     idKeys: ['paymentId'],
   },
+  PAYROLL_DAY_REVERSED: { entityType: 'PAYROLL_PERIOD', idKeys: ['periodId'] },
   PAYROLL_ACCRUAL_RECORDED: {
     entityType: 'PAYROLL_PERIOD',
     idKeys: ['periodId'],

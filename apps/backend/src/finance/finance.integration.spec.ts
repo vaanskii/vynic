@@ -11,6 +11,7 @@ jest.mock('../mobile/services/mobile-mutation-support.service', () => ({
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../prisma.service';
 import { PayrollService } from './payroll.service';
+import { financialPayments } from './financial-summary';
 import { ObligationsService } from './obligations.service';
 import { FinanceController } from './finance.controller';
 import { MobileDashboardService } from '../mobile/services/mobile-dashboard.service';
@@ -43,8 +44,10 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
       startsOn: '2026-09-01',
     });
     const period = async (id: string) =>
-      ((await payroll.overview(a)).staff as any[]).find((s) => s.id === id)
-        .period;
+      (
+        (await payroll.overview(a, now.toISOString().slice(0, 7)))
+          .staff as any[]
+      ).find((s) => s.id === id).period;
     beforeAll(async () => {
       if (!url?.includes('vynic_step47_test'))
         throw new Error('Use only vynic_step47_test disposable database');
@@ -462,6 +465,171 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         (await reader.getAuditLog(b, { entityType: 'PAYROLL_PAYMENT' })).items,
       ).toHaveLength(0);
     });
+    it('daily sheet commands preserve business dates, exact totals, reversals, retries, rates and tenant authority', async () => {
+      const employee = randomUUID();
+      await db.staff.create({
+        data: {
+          id: employee,
+          venueId: a.venueId,
+          username: 'Daily sheet',
+          pinHash: 'private',
+        },
+      });
+      await payroll.setCompensation(a, employee, {
+        compensationType: 'DAILY_FIXED',
+        amount: '50',
+        effectiveFrom: '2026-09-01',
+      });
+      const p = await period(employee);
+      const command = (date: string, worked = true) => ({
+        id: randomUUID(),
+        businessDate: date,
+        worked,
+      });
+      const first = command('2026-09-01');
+      await Promise.all([
+        payroll.setPayableDay(a, p.id, first),
+        payroll.setPayableDay(a, p.id, first),
+        payroll.setPayableDay(a, p.id, command('2026-09-01')),
+      ]);
+      for (let i = 2; i <= 12; i++)
+        await payroll.setPayableDay(
+          a,
+          p.id,
+          command(`2026-09-${String(i).padStart(2, '0')}`),
+        );
+      expect(await period(employee)).toMatchObject({
+        expected: '600.00',
+        workedDays: 12,
+        paid: '0.00',
+      });
+      const before = await financialPayments(db, a, '2026-09-15');
+      expect(before.payrollPayments).toBe('300.00'); // days did not add outflows
+      const payment = pay('400');
+      await Promise.all([
+        payroll.recordPayment(a, p.id, payment),
+        payroll.recordPayment(a, p.id, payment),
+      ]);
+      expect(await period(employee)).toMatchObject({
+        expected: '600.00',
+        paid: '400.00',
+        remaining: '200.00',
+      });
+      expect(
+        (await financialPayments(db, a, '2026-09-15')).payrollPayments,
+      ).toBe('700.00');
+      const reverse = command('2026-09-01', false);
+      await Promise.all([
+        payroll.setPayableDay(a, p.id, reverse),
+        payroll.setPayableDay(a, p.id, reverse),
+      ]);
+      // A delayed retry of the original mark must not undo the later reversal.
+      await payroll.setPayableDay(a, p.id, first);
+      expect(await period(employee)).toMatchObject({
+        expected: '550.00',
+        workedDays: 11,
+      });
+      for (let i = 2; i <= 4; i++)
+        await payroll.setPayableDay(a, p.id, command(`2026-09-0${i}`, false));
+      await expect(
+        payroll.setPayableDay(a, p.id, command('2026-09-05', false)),
+      ).rejects.toThrow('გადახდილ');
+      for (let i = 1; i <= 4; i++)
+        await payroll.setPayableDay(a, p.id, command(`2026-09-0${i}`));
+      await expect(
+        payroll.setPayableDay(a, p.id, { ...first, worked: false }),
+      ).rejects.toThrow('გამოყენებულია');
+      await expect(
+        payroll.setPayableDay(b, p.id, command('2026-09-10')),
+      ).rejects.toThrow('ვერ მოიძებნა');
+      await expect(payroll.history(b, employee)).rejects.toThrow(
+        'ვერ მოიძებნა',
+      );
+      await expect(
+        payroll.setCompensation(b, employee, {
+          compensationType: 'DAILY_FIXED',
+          amount: '1',
+          effectiveFrom: '2026-10-01',
+        }),
+      ).rejects.toThrow('ვერ მოიძებნა');
+      expect(
+        (await payroll.overview(b)).staff.some((s) => s.id === employee),
+      ).toBe(false);
+      await expect(
+        payroll.setPayableDay(
+          a,
+          (await period(staff)).id,
+          command('2026-09-10'),
+        ),
+      ).rejects.toThrow('მხოლოდ');
+      await expect(
+        payroll.setPayableDay(a, p.id, command('2026-09-17')),
+      ).rejects.toThrow('მომავალი');
+      await expect(
+        payroll.setPayableDay(a, p.id, command('2026-08-31')),
+      ).rejects.toThrow('არჩეულ თვეს');
+      await payroll.setCompensation(a, employee, {
+        compensationType: 'DAILY_FIXED',
+        amount: '60',
+        effectiveFrom: '2026-10-01',
+      });
+      now = new Date('2026-09-30T21:00:00Z'); // October 1 locally, still September business date
+      expect((await payroll.overview(a)).periodMonth).toBe('2026-09');
+      expect(
+        (await payroll.history(a, employee)).periods.find(
+          (p) => p.periodMonth === '2026-09',
+        ),
+      ).toMatchObject({ rate: '50.00', expected: '600.00' });
+      await db.setting.update({
+        where: {
+          venueId_key: { venueId: a.venueId, key: 'currentBusinessDate' },
+        },
+        data: { value: '2026-10-01' },
+      });
+      now = new Date('2026-10-01T12:00:00Z');
+      const next = await period(employee);
+      await payroll.setPayableDay(a, next.id, command('2026-10-01'));
+      expect(await period(employee)).toMatchObject({
+        rate: '60.00',
+        expected: '60.00',
+        workedDays: 1,
+      });
+      expect(
+        (await payroll.history(a, employee)).periods.find(
+          (p) => p.periodMonth === '2026-09',
+        ),
+      ).toMatchObject({ expected: '600.00', paid: '400.00', workedDays: 12 });
+      const events = await db.auditEventLog.findMany({
+        where: { venueId: a.venueId, entityId: p.id },
+      });
+      expect(
+        events.filter((e) => e.action === 'PAYROLL_DAY_REVERSED'),
+      ).toHaveLength(4);
+      expect(
+        events.filter((e) => e.action === 'PAYROLL_ACCRUAL_RECORDED'),
+      ).toHaveLength(16);
+      // Composite adjustment FK rejects another Venue/period, even outside the service.
+      await expect(
+        db.payrollAccrual.create({
+          data: {
+            id: randomUUID(),
+            venueId: a.venueId,
+            payrollPeriodId: next.id,
+            dayEntryId: first.id,
+            amount: '-50',
+            actorId: a.staffId,
+            actorName: a.username,
+          },
+        }),
+      ).rejects.toThrow();
+      now = new Date('2026-09-15T12:00:00Z');
+      await db.setting.update({
+        where: {
+          venueId_key: { venueId: a.venueId, key: 'currentBusinessDate' },
+        },
+        data: { value: '2026-09-16' },
+      });
+    });
     it('Manager Staff removal preserves referenced identity and allows a later stop rule', async () => {
       const service = new MobileUsersService(
         db,
@@ -479,7 +647,9 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         isActive: false,
       });
       expect(
-        (await payroll.history(a, daily)).periods.find((p) => p.periodMonth === '2026-09')!.accruals,
+        (await payroll.history(a, daily)).periods.find(
+          (p) => p.periodMonth === '2026-09',
+        )!.accruals,
       ).toHaveLength(1);
     });
     it('retries obligation creation and compensation without duplicate audit, and permits editing only unopened future rules', async () => {

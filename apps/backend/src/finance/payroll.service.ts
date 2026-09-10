@@ -25,6 +25,11 @@ export interface PaymentInput {
   paymentDate: string;
   notes?: string;
 }
+export interface PayrollDayInput {
+  id: string;
+  businessDate: string;
+  worked: boolean;
+}
 export interface AccrualInput {
   id: string;
   payableDate?: string;
@@ -185,7 +190,9 @@ export class PayrollService {
     return this.db.$transaction(
       async (tx) => {
         const dates = await financeDates(tx, tenant);
-        const periodMonth = month(selectedMonth ?? dates.periodMonth);
+        const periodMonth = month(
+          selectedMonth ?? dates.businessDate.slice(0, 7),
+        );
         if (periodMonth > dates.periodMonth)
           throw new BadRequestException('მომავალი პერიოდი ჯერ არ გახსნილა');
         const staff = await tx.staff.findMany({
@@ -200,7 +207,13 @@ export class PayrollService {
           select: { id: true, username: true, isActive: true },
           orderBy: { username: 'asc' },
         });
-        const result: unknown[] = [];
+        const result: Array<{
+          id: string;
+          username: string;
+          isActive: boolean;
+          compensation: Prisma.StaffCompensationGetPayload<object>[];
+          period: ReturnType<PayrollService['present']> | null;
+        }> = [];
         for (const member of staff) {
           await this.materialize(tx, tenant, member.id, dates.periodMonth);
           const periods = await tx.payrollPeriod.findMany({
@@ -217,7 +230,15 @@ export class PayrollService {
             period: periods[0] ? this.present(periods[0]) : null,
           });
         }
-        return { ...dates, periodMonth, staff: result };
+        const totals = { expected: '0.00', paid: '0.00', remaining: '0.00' };
+        for (const key of ['expected', 'paid', 'remaining'] as const)
+          totals[key] = result
+            .reduce(
+              (total, s) => total.plus(s.period?.[key] ?? 0),
+              new Prisma.Decimal(0),
+            )
+            .toFixed(2);
+        return { ...dates, periodMonth, totals, staff: result };
       },
       { timeout: 30000 },
     );
@@ -238,7 +259,21 @@ export class PayrollService {
   ) {
     const expected = p.targetAmount.plus(sum(p.accruals));
     const paid = sum(p.payments);
+    const payableDays = p.accruals
+      .filter((e) => e.payableDate)
+      .map((e) => {
+        const amount = e.amount.plus(
+          sum(p.accruals.filter((a) => a.dayEntryId === e.id)),
+        );
+        return {
+          businessDate: e.payableDate!,
+          amount: amount.toFixed(2),
+          worked: amount.gt(0),
+        };
+      });
     return {
+      payableDays,
+      workedDays: payableDays.filter((d) => d.worked).length,
       ...p,
       rate: p.rate.toFixed(2),
       targetAmount: p.targetAmount.toFixed(2),
@@ -305,6 +340,89 @@ export class PayrollService {
       return payment;
     });
   }
+  /** A desired state command, serialized with payments. Never deletes earned history. */
+  async setPayableDay(actor: Actor, periodId: string, input: PayrollDayInput) {
+    inputObject(input);
+    const id = entryId(input.id),
+      businessDate = day(input.businessDate);
+    if (typeof input.worked !== 'boolean')
+      throw new BadRequestException('აირჩიეთ იმუშავა ან არ უმუშავია');
+    return this.db.$transaction(async (tx) => {
+      const p = await this.lockPeriod(tx, actor, periodId);
+      if (p.compensationType !== 'DAILY_FIXED')
+        throw new BadRequestException('მხოლოდ დღიური თანამშრომლებისთვის');
+      const dates = await financeDates(tx, actor);
+      if (businessDate > dates.businessDate)
+        throw new BadRequestException('მომავალი სამუშაო დღე დაუშვებელია');
+      if (businessDate.slice(0, 7) !== p.periodMonth)
+        throw new BadRequestException(
+          'სამუშაო დღე უნდა ეკუთვნოდეს არჩეულ თვეს',
+        );
+      const entries = await tx.payrollAccrual.findMany({
+        where: { venueId: actor.venueId, payrollPeriodId: periodId },
+      });
+      const original = entries.find((e) => e.payableDate === businessDate);
+      const existing = await tx.payrollAccrual.findUnique({ where: { id } });
+      if (existing) {
+        if (
+          existing.venueId !== actor.venueId ||
+          existing.payrollPeriodId !== periodId ||
+          existing.worked !== input.worked ||
+          (existing.payableDate !== businessDate &&
+            (!original || existing.dayEntryId !== original.id))
+        )
+          throw new ConflictException(
+            'ჩანაწერის იდენტიფიკატორი უკვე გამოყენებულია',
+          );
+        return existing;
+      }
+      const accrued = original
+        ? original.amount.plus(
+            sum(entries.filter((e) => e.dayEntryId === original.id)),
+          )
+        : new Prisma.Decimal(0);
+      const amount = (input.worked ? p.rate : new Prisma.Decimal(0)).minus(
+        accrued,
+      );
+      if (amount.lt(0)) {
+        const payments = await tx.payrollPayment.findMany({
+          where: { venueId: actor.venueId, payrollPeriodId: periodId },
+        });
+        if (sum(entries).plus(amount).lt(sum(payments)))
+          throw new ConflictException(
+            'დღე ვერ გაუქმდება: დარჩენილი დარიცხვა გადახდილ თანხაზე ნაკლებია',
+          );
+      }
+      const entry = await tx.payrollAccrual.create({
+        data: {
+          id,
+          ...actorData(actor),
+          payrollPeriodId: periodId,
+          payableDate: original ? null : businessDate,
+          dayEntryId: original?.id,
+          worked: input.worked,
+          amount,
+        },
+      });
+      if (!amount.isZero())
+        await audit(
+          tx,
+          actor,
+          input.worked ? 'PAYROLL_ACCRUAL_RECORDED' : 'PAYROLL_DAY_REVERSED',
+          'PAYROLL_PERIOD',
+          periodId,
+          {
+            entryId: id,
+            staffId: p.staffId,
+            businessDate,
+            payableDate: businessDate,
+            amount: amount.toFixed(2),
+            worked: input.worked,
+          },
+        );
+      return entry;
+    });
+  }
   async recordAccrual(actor: Actor, periodId: string, input: AccrualInput) {
     inputObject(input);
     const id = entryId(input.id),
@@ -321,6 +439,11 @@ export class PayrollService {
         throw new BadRequestException(
           'სამუშაო დღე უნდა ეკუთვნოდეს არჩეულ თვეს',
         );
+      if (
+        payableDate &&
+        payableDate > (await financeDates(tx, actor)).businessDate
+      )
+        throw new BadRequestException('მომავალი სამუშაო დღე დაუშვებელია');
       const amount = payableDate ? period.rate : money(input.amount);
       const existing = await tx.payrollAccrual.findUnique({ where: { id } });
       if (existing) {

@@ -162,7 +162,7 @@ void main() {
         );
         await t.pumpAndSettle();
         await tapVisible(t, find.text('გიორგი გრძელი გვარით'));
-        expect(find.text('მოსალოდნელი: 1500.00 ₾'), findsOneWidget);
+        expect(find.text('დარიცხული: 1500.00 ₾'), findsOneWidget);
         expect(find.text('გადახდილი: 800.00 ₾'), findsOneWidget);
         expect(t.takeException(), isNull);
         await qa.screenshot(t, 'payroll-$width');
@@ -192,16 +192,152 @@ void main() {
         await qa.screenshot(t, 'compensation-$width');
         await tapVisible(t, find.text('გაუქმება'));
         await tapVisible(t, find.text('ნიკა'));
-        await tapVisible(t, find.text('სამუშაო დღის დამატება'));
-        expect(find.byKey(const Key('finance-payableDate')), findsOneWidget);
-        await t.enterText(
-          find.byKey(const Key('finance-payableDate')),
-          '2026-09-04',
-        );
-        await tapVisible(t, find.byKey(const Key('finance-save')));
-        expect(paths.last, 'payroll/d/accruals');
-        expect(writes.last['payableDate'], '2026-09-04');
+        await tapVisible(t, find.text('დღიური თანამშრომლები'));
+        expect(find.text('გიორგი გრძელი გვარით'), findsNothing);
+        await tapVisible(t, find.byKey(const Key('worked-nika')));
+        expect(paths.last, 'payroll/d/day');
+        expect(writes.last['businessDate'], '2026-09-14');
+        expect(writes.last['worked'], isTrue);
         expect(writes.last.containsKey('amount'), isFalse);
+        await qa.screenshot(t, 'daily-sheet-$width');
+        expect(t.takeException(), isNull);
+      },
+    );
+    testWidgets(
+      'Salary choices hide irrelevant fields and save each type at $width',
+      (t) async {
+        qa.narrow(t, width: width, height: 900);
+        final writes = <Map<String, dynamic>>[];
+        await t.pumpWidget(
+          qa.app(
+            FinancePlanningScreen(
+              read: (_) async => payroll,
+              write: (_, data, {bool update = false}) async {
+                writes.add(data);
+              },
+            ),
+          ),
+        );
+        await t.pumpAndSettle();
+        await tapVisible(t, find.text('გიორგი გრძელი გვარით'));
+        for (final type in ['MONTHLY_FIXED', 'DAILY_FIXED', 'MANUAL']) {
+          await tapVisible(t, find.text('ხელფასის წესი').first);
+          await tapVisible(t, find.byKey(Key('salary-type-$type')));
+          if (type == 'MANUAL') {
+            expect(find.byKey(const Key('finance-amount')), findsNothing);
+            expect(find.text('ხელფასი გამოითვლება ხელით'), findsOneWidget);
+          } else {
+            expect(
+              find.text(
+                type == 'DAILY_FIXED'
+                    ? 'დღიური განაკვეთი (₾ / დღე)'
+                    : 'თვიური ხელფასი (₾)',
+              ),
+              findsOneWidget,
+            );
+            expect(
+              find.text(
+                type == 'DAILY_FIXED'
+                    ? 'თვიური ხელფასი (₾)'
+                    : 'დღიური განაკვეთი (₾ / დღე)',
+              ),
+              findsNothing,
+            );
+            await t.enterText(
+              find.byKey(const Key('finance-amount')),
+              type == 'DAILY_FIXED' ? '50.00' : '1500.00',
+            );
+          }
+          await t.pumpAndSettle();
+          await qa.screenshot(t, 'salary-$type-$width');
+          await tapVisible(t, find.byKey(const Key('finance-save')));
+          expect(writes.last['compensationType'], type);
+          if (type == 'MANUAL') expect(writes.last['amount'], '0.00');
+          expect(t.takeException(), isNull);
+        }
+      },
+    );
+    testWidgets(
+      'Daily toggle, retry, reversal, date navigation and monthly separation at $width',
+      (t) async {
+        qa.narrow(t, width: width, height: 900);
+        var worked = false;
+        var fail = true;
+        final writes = <Map<String, dynamic>>[];
+        final reads = <String>[];
+        await t.pumpWidget(
+          qa.app(
+            FinancePlanningScreen(
+              read: (path) async {
+                reads.add(path);
+                return {
+                  ...payroll,
+                  'staff': [
+                    financeRows(payroll['staff']).first,
+                    {
+                      ...financeRows(payroll['staff']).last,
+                      'period': {
+                        ...Map<String, dynamic>.from(
+                          financeRows(payroll['staff']).last['period'],
+                        ),
+                        'workedDays': worked ? 12 : 11,
+                        'expected': worked ? '600.00' : '550.00',
+                        'paid': '400.00',
+                        'remaining': worked ? '200.00' : '150.00',
+                        'rate': '50.00',
+                        'payableDays': [
+                          {'businessDate': '2026-09-14', 'worked': worked},
+                        ],
+                      },
+                    },
+                  ],
+                };
+              },
+              write: (_, data, {bool update = false}) async {
+                writes.add({...data});
+                worked =
+                    data['worked']
+                        as bool; // server saved even when response is lost
+                if (fail) {
+                  fail = false;
+                  throw const SocketException('კავშირი გაწყდა');
+                }
+              },
+            ),
+          ),
+        );
+        await t.pumpAndSettle();
+        await tapVisible(t, find.byKey(const Key('payroll-tab-1')));
+        expect(find.text('გიორგი გრძელი გვარით'), findsNothing);
+        expect(
+          t
+              .widget<IconButton>(
+                find.byWidgetPredicate(
+                  (w) => w is IconButton && w.tooltip == 'შემდეგი სამუშაო დღე',
+                ),
+              )
+              .onPressed,
+          isNull,
+        );
+        await tapVisible(t, find.byKey(const Key('worked-nika')));
+        expect(find.textContaining('კავშირი გაწყდა'), findsOneWidget);
+        await tapVisible(t, find.text('თავიდან ცდა'));
+        expect(writes[0]['id'], writes[1]['id']);
+        expect(find.text('დარიცხული: 600.00 ₾'), findsOneWidget);
+        expect(find.text('გადახდილი: 400.00 ₾'), findsOneWidget);
+        expect(find.text('დარჩენილი: 200.00 ₾'), findsOneWidget);
+        await qa.screenshot(t, 'daily-paid-$width');
+        await tapVisible(t, find.byKey(const Key('worked-nika')));
+        expect(writes.last['worked'], isFalse);
+        expect(writes.last['businessDate'], '2026-09-14');
+        expect(find.text('ნამუშევარი დღეები: 11'), findsOneWidget);
+        await tapVisible(t, find.byTooltip('წინა სამუშაო დღე'));
+        expect(find.textContaining('2026-09-13'), findsOneWidget);
+        await tapVisible(t, find.byKey(const Key('payroll-tab-2')));
+        expect(find.text('გიორგი გრძელი გვარით'), findsOneWidget);
+        expect(find.text('ნიკა'), findsNothing);
+        await tapVisible(t, find.byKey(const Key('payroll-tab-3')));
+        expect(find.text('გადახდის დაფიქსირება'), findsNWidgets(2));
         expect(t.takeException(), isNull);
       },
     );

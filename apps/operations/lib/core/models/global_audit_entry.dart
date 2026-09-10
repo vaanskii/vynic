@@ -196,6 +196,7 @@ abstract final class GlobalAuditPresentation {
   static const Map<String, String> _actionLabels = {
     'STAFF_COMPENSATION_CHANGED': 'ხელფასის წესის შეცვლა',
     'PAYROLL_PAYMENT_RECORDED': 'ხელფასის გადახდა',
+    'PAYROLL_DAY_REVERSED': 'სამუშაო დღის გაუქმება',
     'PAYROLL_ACCRUAL_RECORDED': 'ხელფასის დარიცხვა',
     'FINANCIAL_OBLIGATION_CREATED': 'ვალდებულების დამატება',
     'FINANCIAL_OBLIGATION_UPDATED': 'ვალდებულების შეცვლა',

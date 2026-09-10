@@ -14,7 +14,7 @@ typedef FinanceWrite =
 const compensationLabels = {
   'MONTHLY_FIXED': 'თვიური',
   'DAILY_FIXED': 'დღიური',
-  'MANUAL': 'ხელით დარიცხვა',
+  'MANUAL': 'ხელით',
 };
 const obligationLabels = {
   'RENT': 'ქირა',
@@ -55,6 +55,11 @@ class _FinancePlanningState extends State<FinancePlanningScreen> {
   Map<String, dynamic>? _data;
   String? _month, _error;
   bool _loading = true;
+  int _payrollTab = 0;
+  String? _day;
+  final _dayBusy = <String>{};
+  final _dayErrors = <String, String>{};
+  final _dayRequests = <String, Map<String, dynamic>>{};
   FinanceRead get read => widget.read ?? MobileApiService.financeRead;
   FinanceWrite get write => widget.write ?? MobileApiService.financeWrite;
   @override
@@ -64,6 +69,7 @@ class _FinancePlanningState extends State<FinancePlanningScreen> {
   }
 
   Future<void> _load() async {
+    if (_dayBusy.isNotEmpty) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -75,7 +81,10 @@ class _FinancePlanningState extends State<FinancePlanningScreen> {
       if (mounted)
         setState(() {
           _data = data;
+          _dayErrors.clear();
+          _dayRequests.clear();
           _month = data['periodMonth'] as String?;
+          _day ??= data['businessDate'] as String?;
         });
     } catch (_) {
       if (mounted)
@@ -147,7 +156,7 @@ class _FinancePlanningState extends State<FinancePlanningScreen> {
   Future<void> _compensation(Map<String, dynamic> staff) {
     final rules = financeRows(staff['compensation']);
     final current = rules.isEmpty ? <String, dynamic>{} : rules.first;
-    final from = DateTime.parse('${_month!}-01');
+    final from = DateTime.parse('${today.substring(0, 7)}-01');
     final next = DateTime(
       from.year,
       from.month + 1,
@@ -173,7 +182,11 @@ class _FinancePlanningState extends State<FinancePlanningScreen> {
         FinanceField(
           'effectiveFrom',
           'მოქმედებს თვის პირველი რიცხვიდან',
-          value: rules.isEmpty ? '${_month!}-01' : next,
+          value: rules.isEmpty
+              ? '${today.substring(0, 7)}-01'
+              : (current['effectiveFrom'].toString().compareTo(next) > 0
+                    ? current['effectiveFrom'].toString()
+                    : next),
           date: true,
         ),
         FinanceField(
@@ -254,10 +267,13 @@ class _FinancePlanningState extends State<FinancePlanningScreen> {
       context: context,
       initialDate: DateTime.parse('${_month!}-01'),
       firstDate: DateTime(2000),
-      lastDate: DateTime.parse(today),
+      lastDate: DateTime.parse(widget.obligations ? today : businessDate),
     );
     if (picked != null) {
       _month = picked.toIso8601String().substring(0, 7);
+      _day = _month == businessDate.substring(0, 7)
+          ? businessDate
+          : '${_month!}-01';
       await _load();
     }
   }
@@ -276,7 +292,7 @@ class _FinancePlanningState extends State<FinancePlanningScreen> {
         ),
         actions: [
           IconButton(
-            onPressed: _loading ? null : _load,
+            onPressed: _loading || _dayBusy.isNotEmpty ? null : _load,
             tooltip: 'განახლება',
             icon: const Icon(Icons.refresh),
           ),
@@ -314,7 +330,9 @@ class _FinancePlanningState extends State<FinancePlanningScreen> {
                         runSpacing: 8,
                         children: [
                           OutlinedButton.icon(
-                            onPressed: _monthPicker,
+                            onPressed: _dayBusy.isNotEmpty
+                                ? null
+                                : _monthPicker,
                             icon: const Icon(Icons.calendar_month),
                             label: Text('პერიოდი: $_month'),
                           ),
@@ -337,8 +355,58 @@ class _FinancePlanningState extends State<FinancePlanningScreen> {
                       const SizedBox(height: 16),
                       if (widget.obligations)
                         ..._obligations()
-                      else
-                        ..._payroll(),
+                      else ...[
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final item in const [
+                              'მიმოხილვა',
+                              'დღიური',
+                              'თვიური',
+                              'გადახდები',
+                            ].asMap().entries)
+                              ChoiceChip(
+                                key: ValueKey('payroll-tab-${item.key}'),
+                                label: Text(item.value),
+                                selected: _payrollTab == item.key,
+                                onSelected: _dayBusy.isNotEmpty
+                                    ? null
+                                    : (_) => setState(
+                                        () => _payrollTab = item.key,
+                                      ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        if (_payrollTab == 1)
+                          ..._dailySheet()
+                        else if (_payrollTab == 3)
+                          ..._payments()
+                        else ...[
+                          if (_payrollTab == 0 && _data!['totals'] is Map)
+                            Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'მთლიანი დარიცხული: ${_data!['totals']['expected']} ₾',
+                                    ),
+                                    Text(
+                                      'მთლიანი გადახდილი: ${_data!['totals']['paid']} ₾',
+                                    ),
+                                    Text(
+                                      'მთლიანი დარჩენილი: ${_data!['totals']['remaining']} ₾',
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ..._payroll(),
+                        ],
+                      ],
                     ],
                   ),
                 ),
@@ -347,7 +415,13 @@ class _FinancePlanningState extends State<FinancePlanningScreen> {
     ),
   );
   List<Widget> _payroll() {
-    final staff = financeRows(_data!['staff']);
+    final staff = financeRows(_data!['staff'])
+        .where(
+          (s) =>
+              _payrollTab != 2 ||
+              s['period']?['compensationType'] == 'MONTHLY_FIXED',
+        )
+        .toList();
     if (staff.isEmpty)
       return [
         const Padding(
@@ -367,8 +441,8 @@ class _FinancePlanningState extends State<FinancePlanningScreen> {
           title: Text(s['username'].toString()),
           subtitle: Text(
             p == null
-                ? 'ხელფასის წესი დასაყენებელია'
-                : '${compensationLabels[p['compensationType']]}: ${p['rate']} ₾\nდარჩენილი: ${p['remaining']} ₾',
+                ? 'ხელფასის ტიპი დასაყენებელია'
+                : 'ხელფასის ტიპი: ${compensationLabels[p['compensationType']]}\nდარჩენილი: ${p['remaining']} ₾',
           ),
           childrenPadding: const EdgeInsets.all(16),
           expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
@@ -376,17 +450,24 @@ class _FinancePlanningState extends State<FinancePlanningScreen> {
             Text('მიმდინარე პერიოდი: $_month'),
             if (s['isActive'] == false) const Text('არააქტიური თანამშრომელი'),
             if (p != null) ...[
-              Text('მოსალოდნელი: ${p['expected']} ₾'),
+              Text(
+                p['compensationType'] == 'MANUAL'
+                    ? 'ხელფასი გამოითვლება ხელით'
+                    : '${p['compensationType'] == 'DAILY_FIXED' ? 'დღიური განაკვეთი' : 'თვიური ხელფასი'}: ${p['rate']} ₾',
+              ),
+              Text('დარიცხული: ${p['expected']} ₾'),
               Text('გადახდილი: ${p['paid']} ₾'),
               Text('დარჩენილი: ${p['remaining']} ₾'),
               if (p['overpaid'] != '0.00')
                 Text('ზედმეტად გადახდილი: ${p['overpaid']} ₾'),
               if (p['compensationType'] == 'DAILY_FIXED')
-                Text('სამუშაო დღეები: ${financeRows(p['accruals']).length}'),
+                Text(
+                  'ამ თვეში ნამუშევარი დღეები: ${p['workedDays'] ?? financeRows(p['accruals']).length}',
+                ),
             ],
             for (final rule in financeRows(s['compensation']))
               Text(
-                '${compensationLabels[rule['compensationType']]}: ${rule['amount']} ₾ · ${rule['effectiveFrom']}${rule['isActive'] == false ? ' · შეჩერებული' : ''}',
+                '${compensationLabels[rule['compensationType']]}${rule['compensationType'] == 'MANUAL' ? '' : ': ${rule['amount']} ₾'} · ${rule['effectiveFrom']}${rule['isActive'] == false ? ' · შეჩერებული' : ''}',
               ),
             const SizedBox(height: 12),
             Wrap(
@@ -402,39 +483,28 @@ class _FinancePlanningState extends State<FinancePlanningScreen> {
                     onPressed: () => _payment('payroll/${p['id']}/payments'),
                     child: const Text('გადახდის დაფიქსირება'),
                   ),
-                if (p != null && p['compensationType'] != 'MONTHLY_FIXED')
+                if (p != null && p['compensationType'] == 'DAILY_FIXED')
+                  OutlinedButton(
+                    onPressed: () => setState(() => _payrollTab = 1),
+                    child: const Text('დღიური თანამშრომლები'),
+                  ),
+                if (p != null && p['compensationType'] == 'MANUAL')
                   OutlinedButton(
                     onPressed: () => _form(
-                      p['compensationType'] == 'DAILY_FIXED'
-                          ? 'სამუშაო დღის დამატება'
-                          : 'ხელით დარიცხვა',
+                      'ხელით დარიცხვა',
                       'payroll/${p['id']}/accruals',
                       [
-                        if (p['compensationType'] == 'DAILY_FIXED')
-                          FinanceField(
-                            'payableDate',
-                            'ნამუშევარი დღე',
-                            value: businessDate.startsWith(_month!)
-                                ? businessDate
-                                : '${_month!}-01',
-                            date: true,
-                          )
-                        else
-                          const FinanceField(
-                            'amount',
-                            'დასარიცხი თანხა (₾)',
-                            money: true,
-                          ),
+                        const FinanceField(
+                          'amount',
+                          'დასარიცხი თანხა (₾)',
+                          money: true,
+                        ),
                         const FinanceField('notes', 'შენიშვნა', optional: true),
                       ],
                       defaults: {'id': const Uuid().v4()},
                       help: 'დარიცხვა გადახდა არ არის.',
                     ),
-                    child: Text(
-                      p['compensationType'] == 'DAILY_FIXED'
-                          ? 'სამუშაო დღის დამატება'
-                          : 'ხელით დარიცხვა',
-                    ),
+                    child: const Text('ხელით დარიცხვა'),
                   ),
                 OutlinedButton(
                   onPressed: () => _history(
@@ -449,6 +519,257 @@ class _FinancePlanningState extends State<FinancePlanningScreen> {
         ),
       );
     }).toList();
+  }
+
+  Future<void> _selectDay(String value) async {
+    setState(() => _day = value);
+    if (value.substring(0, 7) != _month) {
+      _month = value.substring(0, 7);
+      await _load();
+    }
+  }
+
+  Future<void> _pickDay() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: DateTime.parse(_day!),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.parse(businessDate),
+    );
+    if (date != null) await _selectDay(date.toIso8601String().substring(0, 10));
+  }
+
+  Future<void> _worked(Map<String, dynamic> p, bool worked) async {
+    final key = '${p['id']}:$_day';
+    final data = _dayRequests.putIfAbsent(
+      key,
+      () => {'id': const Uuid().v4(), 'businessDate': _day, 'worked': worked},
+    );
+    setState(() {
+      _dayBusy.add(key);
+      _dayErrors.remove(key);
+    });
+    try {
+      await write('payroll/${p['id']}/day', data);
+      // Reconcile from the server before permitting a different action.
+      final fresh = await read('payroll?month=$_month');
+      if (mounted)
+        setState(() {
+          _data = fresh;
+          _dayRequests.remove(key);
+        });
+    } catch (e) {
+      if (mounted)
+        setState(
+          () => _dayErrors[key] = e.toString().replaceFirst('Exception: ', ''),
+        );
+    } finally {
+      if (mounted) setState(() => _dayBusy.remove(key));
+    }
+  }
+
+  List<Widget> _dailySheet() {
+    final staff = financeRows(
+      _data!['staff'],
+    ).where((s) => s['period']?['compensationType'] == 'DAILY_FIXED').toList();
+    final date = DateTime.parse(_day!);
+    String shift(int n) =>
+        date.add(Duration(days: n)).toIso8601String().substring(0, 10);
+    return [
+      Text(
+        'დღიური თანამშრომლები',
+        style: Theme.of(context).textTheme.titleLarge,
+      ),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: SizedBox(
+          width: 440,
+          child: Row(
+            children: [
+              IconButton(
+                tooltip: 'წინა სამუშაო დღე',
+                onPressed: _dayBusy.isNotEmpty || _day == '2000-01-01'
+                    ? null
+                    : () => _selectDay(shift(-1)),
+                icon: const Icon(Icons.chevron_left),
+              ),
+              Expanded(
+                child: TextButton(
+                  onPressed: _dayBusy.isNotEmpty ? null : _pickDay,
+                  child: Text(
+                    'სამუშაო თარიღი\n$_day',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'შემდეგი სამუშაო დღე',
+                onPressed:
+                    _dayBusy.isNotEmpty || _day!.compareTo(businessDate) >= 0
+                    ? null
+                    : () => _selectDay(shift(1)),
+                icon: const Icon(Icons.chevron_right),
+              ),
+            ],
+          ),
+        ),
+      ),
+      const Text('მონიშნეთ ნამუშევარი დღე. გადახდა ცალკე ფიქსირდება.'),
+      const SizedBox(height: 12),
+      if (staff.isEmpty) const Text('ამ თვეში დღიური თანამშრომლები არ არის.'),
+      for (final s in staff) _dailyStaff(s),
+    ];
+  }
+
+  Widget _dailyStaff(Map<String, dynamic> s) {
+    final p = Map<String, dynamic>.from(s['period']);
+    final days = financeRows(p['payableDays']);
+    final worked = days.any(
+      (d) => d['businessDate'] == _day && d['worked'] == true,
+    );
+    final key = '${p['id']}:$_day';
+    final error = _dayErrors[key];
+    final identity = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          s['username'].toString(),
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        if (s['isActive'] == false) const Text('არააქტიური თანამშრომელი'),
+        Text('დღიური განაკვეთი: ${p['rate']} ₾ / დღე'),
+      ],
+    );
+    final toggle = CheckboxListTile(
+      key: ValueKey('worked-${s['id']}'),
+      contentPadding: EdgeInsets.zero,
+      controlAffinity: ListTileControlAffinity.leading,
+      title: Text(
+        _dayBusy.contains(key)
+            ? 'ინახება…'
+            : worked
+            ? 'იმუშავა'
+            : 'არ უმუშავია',
+      ),
+      value: worked,
+      onChanged: _dayBusy.isNotEmpty || error != null
+          ? null
+          : (v) => _worked(p, v!),
+    );
+    final totals = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('ნამუშევარი დღეები: ${p['workedDays'] ?? 0}'),
+        Text('დარიცხული: ${p['expected']} ₾'),
+        Text('გადახდილი: ${p['paid']} ₾'),
+        Text('დარჩენილი: ${p['remaining']} ₾'),
+      ],
+    );
+    final history = TextButton(
+      onPressed: () =>
+          _history(s['username'].toString(), 'staff/${s['id']}/history'),
+      child: const Text('ისტორია'),
+    );
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (constraints.maxWidth >= 680)
+                  Row(
+                    children: [
+                      Expanded(flex: 3, child: identity),
+                      const SizedBox(width: 16),
+                      Expanded(flex: 2, child: toggle),
+                      const SizedBox(width: 16),
+                      Expanded(flex: 3, child: totals),
+                      history,
+                    ],
+                  )
+                else ...[
+                  identity,
+                  toggle,
+                  totals,
+                  Align(alignment: Alignment.centerLeft, child: history),
+                ],
+                if (error != null) ...[
+                  Text(
+                    error,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: _dayBusy.isNotEmpty
+                          ? null
+                          : () => _worked(
+                              p,
+                              _dayRequests[key]!['worked'] as bool,
+                            ),
+                      child: const Text('თავიდან ცდა'),
+                    ),
+                  ),
+                ],
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _payments() {
+    final staff = financeRows(
+      _data!['staff'],
+    ).where((s) => s['period'] != null).toList();
+    return [
+      const Text('ჩაწერეთ უკვე შესრულებული გადახდა.'),
+      if (staff.isEmpty) const Text('გადახდისთვის ჯერ ხელფასის ტიპი დააყენეთ.'),
+      for (final s in staff)
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  s['username'].toString(),
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                Text(
+                  'გადახდილი: ${s['period']['paid']} ₾ · დარჩენილი: ${s['period']['remaining']} ₾',
+                ),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    FilledButton(
+                      onPressed: () =>
+                          _payment('payroll/${s['period']['id']}/payments'),
+                      child: const Text('გადახდის დაფიქსირება'),
+                    ),
+                    TextButton(
+                      onPressed: () => _history(
+                        s['username'].toString(),
+                        'staff/${s['id']}/history',
+                      ),
+                      child: const Text('ისტორია'),
+                    ),
+                  ],
+                ),
+                for (final e in financeRows(s['period']['payments']))
+                  Text(
+                    '${e['amount']} ₾ · ${e['paymentDate']} · ${e['actorName']}',
+                  ),
+              ],
+            ),
+          ),
+        ),
+    ];
   }
 
   List<Widget> _obligations() {
@@ -581,6 +902,10 @@ class _FinanceEntryState extends State<FinanceEntryDialog> {
     for (final f in widget.fields) f.name: TextEditingController(text: f.value),
   };
   bool _saving = false;
+  String? get _salaryType => _controllers['compensationType']?.text;
+  Iterable<FinanceField> get _visibleFields => widget.fields.where(
+    (f) => !(f.name == 'amount' && _salaryType == 'MANUAL'),
+  );
   String? _error;
   @override
   void dispose() {
@@ -615,7 +940,8 @@ class _FinanceEntryState extends State<FinanceEntryDialog> {
       _error = null;
     });
     final data = {...widget.defaults};
-    for (final f in widget.fields) {
+    if (_salaryType == 'MANUAL') data['amount'] = '0.00';
+    for (final f in _visibleFields) {
       final value = _controllers[f.name]!.text.trim();
       data[f.name] = f.integer
           ? int.parse(value)
@@ -656,10 +982,45 @@ class _FinanceEntryState extends State<FinanceEntryDialog> {
                     padding: const EdgeInsets.only(bottom: 16),
                     child: Text(widget.help!),
                   ),
-                for (final f in widget.fields)
+                if (_salaryType == 'MANUAL')
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 16),
+                    child: Text('ხელფასი გამოითვლება ხელით'),
+                  ),
+                for (final f in _visibleFields)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16),
-                    child: f.choices != null
+                    child: f.name == 'compensationType'
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(f.label),
+                              RadioGroup<String>(
+                                groupValue: _salaryType,
+                                onChanged: (v) {
+                                  if (!_saving)
+                                    setState(() {
+                                      if (_controllers[f.name]!.text != v)
+                                        _controllers['amount']?.clear();
+                                      _controllers[f.name]!.text = v!;
+                                    });
+                                },
+                                child: Column(
+                                  children: [
+                                    for (final e in compensationLabels.entries)
+                                      RadioListTile<String>(
+                                        key: ValueKey('salary-type-${e.key}'),
+                                        value: e.key,
+                                        title: Text(e.value),
+                                        enabled: !_saving,
+                                        contentPadding: EdgeInsets.zero,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          )
+                        : f.choices != null
                         ? DropdownButtonFormField<String>(
                             key: ValueKey('finance-${f.name}'),
                             initialValue: f.value,
@@ -683,7 +1044,12 @@ class _FinanceEntryState extends State<FinanceEntryDialog> {
                             readOnly: f.readOnly,
                             enabled: !_saving,
                             decoration: InputDecoration(
-                              labelText: f.label,
+                              labelText:
+                                  f.name == 'amount' && _salaryType != null
+                                  ? (_salaryType == 'DAILY_FIXED'
+                                        ? 'დღიური განაკვეთი (₾ / დღე)'
+                                        : 'თვიური ხელფასი (₾)')
+                                  : f.label,
                               hintText: f.date ? 'YYYY-MM-DD' : null,
                             ),
                             keyboardType: f.money
@@ -693,7 +1059,13 @@ class _FinanceEntryState extends State<FinanceEntryDialog> {
                                 : f.integer
                                 ? TextInputType.number
                                 : TextInputType.text,
-                            validator: (v) => _validate(f, v),
+                            validator: (v) =>
+                                f.name == 'amount' && _salaryType != null
+                                ? _validate(
+                                    FinanceField('amount', '', money: true),
+                                    v,
+                                  )
+                                : _validate(f, v),
                           ),
                   ),
                 if (_error != null)
@@ -801,11 +1173,13 @@ class _FinanceHistoryState extends State<FinanceHistoryScreen> {
                             ('reserves', 'გადადება'),
                             ('accruals', 'დარიცხვა'),
                           ])
-                            for (final e in financeRows(p[group.$1]))
+                            for (final e in financeRows(
+                              p[group.$1],
+                            ).where((e) => e['amount'] != '0.00'))
                               Padding(
                                 padding: const EdgeInsets.only(top: 12),
                                 child: Text(
-                                  '${group.$2}: ${e['amount']} ₾\n${e['businessDate'] ?? e['payableDate'] ?? p['periodMonth']} · ${e['actorName']}'
+                                  '${group.$2}: ${e['amount']} ₾\n${e['businessDate'] ?? e['payableDate'] ?? financeRows(p['accruals']).where((a) => a['id'] == e['dayEntryId']).firstOrNull?['payableDate'] ?? p['periodMonth']} · ${e['actorName']}'
                                   '${e['paymentDate'] == null ? '' : '\nგადახდის თარიღი: ${e['paymentDate']}'}'
                                   '${e['reserveConsumed'] == null ? '' : '\nრეზერვიდან: ${e['reserveConsumed']} ₾'}'
                                   '${e['notes'] == null ? '' : '\n${e['notes']}'}',

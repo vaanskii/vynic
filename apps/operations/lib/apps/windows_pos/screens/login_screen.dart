@@ -1,3 +1,5 @@
+import 'package:vynic/core/contracts/manager_login.dart';
+import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -145,26 +147,62 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    final codeController = TextEditingController(
+      text:
+          ManagerAppPreferences.loginVenueCode ??
+          ManagerLoginContract.rolloutVenueCode,
+    );
+    final venueCode = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('რესტორანი'),
+        content: TextField(
+          controller: codeController,
+          autofocus: true,
+          autocorrect: false,
+          maxLength: 32,
+          decoration: const InputDecoration(labelText: 'რესტორნის კოდი'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('გაუქმება'),
+          ),
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(ctx, codeController.text.trim().toLowerCase()),
+            child: const Text('შესვლა'),
+          ),
+        ],
+      ),
+    );
+    codeController.dispose();
+    if (venueCode == null || !mounted) return;
     setState(() => _isLoading = true);
 
     // Build a minimal User object to pass to the shell
     User? shellUser;
 
     try {
-      final result = await MobileAuthService.login(_pin.value);
+      final result = await MobileAuthService.login(
+        _pin.value,
+        venueCode: venueCode,
+      );
       shellUser = User(
         username: result.username,
-        pinCode: _pin.value,
+        pinCode: '',
         role: StaffRole.fromApi(result.role),
       );
     } on MobileAuthError catch (e) {
       if (e == MobileAuthError.networkError) {
         // Try cached token (offline fallback)
-        final offline = MobileAuthService.tryOfflineAccess();
+        final offline = MobileAuthService.tryOfflineAccess(
+          venueCode: venueCode,
+        );
         if (offline != null) {
           shellUser = User(
             username: offline.username,
-            pinCode: _pin.value,
+            pinCode: '',
             role: StaffRole.fromApi(offline.role),
           );
           if (offline.isStale && mounted) {
@@ -181,33 +219,6 @@ class _LoginScreenState extends State<LoginScreen> {
             unawaited(
               showErrorToast(context, 'სერვერთან კავშირი ვერ დამყარდა'),
             );
-          }
-          return;
-        }
-      } else if (e == MobileAuthError.invalidPin) {
-        // Backend Staff table may be empty (first run / DB reset).
-        // Fall back to local DB — only valid when the POS runs on this device.
-        final localUser = DatabaseService.authenticateByPin(_pin.value);
-        if (localUser != null && localUser.canUseManagerMobileApp) {
-          // Sync staff to backend FIRST (awaited), then retry login to get JWT.
-          await ManagerSyncService.syncToManagerApp();
-          try {
-            final retryResult = await MobileAuthService.login(_pin.value);
-            shellUser = User(
-              username: retryResult.username,
-              pinCode: _pin.value,
-              role: StaffRole.fromApi(retryResult.role),
-            );
-          } catch (_) {
-            // Sync succeeded but login still failed — enter with local user,
-            // all API calls will gracefully fall back to cache.
-            shellUser = localUser;
-          }
-        } else {
-          if (mounted) {
-            setState(() => _isLoading = false);
-            unawaited(showErrorToast(context, 'არასწორი PIN კოდი'));
-            clearPin();
           }
           return;
         }

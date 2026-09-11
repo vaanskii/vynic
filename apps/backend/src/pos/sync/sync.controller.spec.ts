@@ -1,4 +1,6 @@
 import 'reflect-metadata';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 
 // Named stubs: the guard assertions below compare class names, and the real
 // modules drag in the firebase-admin / uuid (ESM) chain ts-jest can't load.
@@ -96,12 +98,29 @@ describe('SyncController — route table', () => {
     });
   });
 
-  it('exposes GET /sync/diff behind the manager JWT guards', () => {
-    expect(routeOf('getDiff')).toEqual({
-      path: 'diff',
-      verb: RequestMethod.GET,
-      guards: ['JwtAuthGuard', 'RolesGuard'],
-    });
+  it('removes the unused Manager diff route', () => {
+    expect('getDiff' in SyncController.prototype).toBe(false);
+    for (const key of Object.getOwnPropertyNames(SyncController.prototype)) {
+      const method = SyncController.prototype[key];
+      if (typeof method === 'function')
+        expect(Reflect.getMetadata('path', method)).not.toBe('diff');
+    }
+  });
+
+  it('has no Flutter diff route or wrapper caller dependency', () => {
+    const root = resolve(__dirname, '../../../../operations/lib');
+    function inspect(directory: string) {
+      for (const entry of readdirSync(directory, { withFileTypes: true })) {
+        const path = join(directory, entry.name);
+        if (entry.isDirectory()) inspect(path);
+        else if (entry.name.endsWith('.dart')) {
+          const source = readFileSync(path, 'utf8');
+          expect(source).not.toContain('/sync/diff');
+          expect(source).not.toMatch(/MobileApiService\.getDiff\s*\(/);
+        }
+      }
+    }
+    inspect(root);
   });
 
   it('exposes POST /sync/manager-data behind the POS sync guard', () => {

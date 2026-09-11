@@ -5,9 +5,9 @@ import {
 import type { TenantContext } from '../auth/pos-auth-context';
 
 /**
- * Transitional server-side tenant for Manager/mobile and website reads.
- * These clients do not yet carry authoritative Venue identity, so Step 4B1
- * preserves the existing restaurant by pinning them to the bootstrap Venue.
+ * Historical helper retained for the bootstrap seeder only.
+ * Never use this as Manager, website, realtime or notification authority.
+ * Runtime requests resolve their tenant from the authenticated principal.
  */
 export const LEGACY_MANAGER_TENANT: TenantContext = Object.freeze({
   venueId: BOOTSTRAP_VENUE_ID,

@@ -495,11 +495,12 @@ export class MobileDashboardService {
     });
     if (updated.count === 0)
       return { success: false, error: 'table_not_found' };
-    this.mutationSupport.registerMobileMutationEchoGuard(undefined, {
+    this.mutationSupport.registerMobileMutationEchoGuard(tenant, undefined, {
       tableNumber,
       floor,
     });
     this.gateway.broadcastUpdate(
+      tenant,
       'data_updated',
       {
         type: 'tables',

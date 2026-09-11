@@ -1,3 +1,4 @@
+import 'package:vynic/core/contracts/manager_login.dart';
 import 'package:vynic/apps/mobile_app/theme/manager_dashboard_theme.dart';
 import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
@@ -24,6 +25,11 @@ class MobileLoginScreen extends StatefulWidget {
 class _MobileLoginScreenState extends State<MobileLoginScreen>
     with SingleTickerProviderStateMixin {
   String _pin = '';
+  final _venueCode = TextEditingController(
+    text:
+        ManagerAppPreferences.loginVenueCode ??
+        ManagerLoginContract.rolloutVenueCode,
+  );
   bool _isLoading = false;
 
   late final AnimationController _pulseController;
@@ -39,6 +45,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
 
   @override
   void dispose() {
+    _venueCode.dispose();
     _pulseController.dispose();
     super.dispose();
   }
@@ -59,6 +66,13 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   void _clearPin() => setState(() => _pin = '');
 
   Future<void> _login() async {
+    if (!RegExp(
+      ManagerLoginContract.venueCodePattern,
+    ).hasMatch(_venueCode.text.trim().toLowerCase())) {
+      ManagerToast.show(context, 'შეიყვანეთ რესტორნის კოდი', isError: true);
+      return;
+    }
+    FocusScope.of(context).unfocus();
     if (_pin.length < 4) {
       ManagerToast.show(context, 'გთხოვთ შეიყვანოთ PIN კოდი', isError: true);
       return;
@@ -69,19 +83,24 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     User? shellUser;
 
     try {
-      final result = await MobileAuthService.login(_pin);
+      final result = await MobileAuthService.login(
+        _pin,
+        venueCode: _venueCode.text,
+      );
       shellUser = User(
         username: result.username,
-        pinCode: _pin,
+        pinCode: '',
         role: StaffRole.fromApi(result.role),
       );
     } on MobileAuthError catch (e) {
       if (e == MobileAuthError.networkError) {
-        final offline = MobileAuthService.tryOfflineAccess();
+        final offline = MobileAuthService.tryOfflineAccess(
+          venueCode: _venueCode.text,
+        );
         if (offline != null) {
           shellUser = User(
             username: offline.username,
-            pinCode: _pin,
+            pinCode: '',
             role: StaffRole.fromApi(offline.role),
           );
           if (offline.isStale && mounted) {
@@ -108,7 +127,11 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
       } else if (e == MobileAuthError.invalidPin) {
         if (mounted) {
           setState(() => _isLoading = false);
-          ManagerToast.show(context, 'არასწორი PIN კოდი', isError: true);
+          ManagerToast.show(
+            context,
+            'არასწორი რესტორნის კოდი ან PIN',
+            isError: true,
+          );
           _clearPin();
         }
         return;
@@ -273,6 +296,23 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          TextField(
+                            key: const Key('manager-venue-code'),
+                            controller: _venueCode,
+                            enabled: !_isLoading,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                            maxLength: 32,
+                            textInputAction: TextInputAction.done,
+                            decoration: const InputDecoration(
+                              labelText: 'რესტორანი',
+                              hintText: 'vankisi',
+                              counterText: '',
+                              border: OutlineInputBorder(),
+                            ),
+                            onChanged: (_) => _clearPin(),
+                          ),
+                          const SizedBox(height: 20),
                           Text(
                             'შეიყვანეთ PIN კოდი',
                             textAlign: TextAlign.center,
@@ -532,19 +572,21 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: row.map((label) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: _LoginPadButton(
-                  label: label,
-                  onTap: () {
-                    if (label == '⌫') {
-                      _deleteDigit();
-                    } else if (label == 'C') {
-                      _clearPin();
-                    } else {
-                      _addDigit(label);
-                    }
-                  },
+              return Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: _LoginPadButton(
+                    label: label,
+                    onTap: () {
+                      if (label == '⌫') {
+                        _deleteDigit();
+                      } else if (label == 'C') {
+                        _clearPin();
+                      } else {
+                        _addDigit(label);
+                      }
+                    },
+                  ),
                 ),
               );
             }).toList(),

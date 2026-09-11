@@ -1116,6 +1116,7 @@ model Organization {
 
 /// One physical restaurant/location owned by an Organization.
 model Venue {
+  loginCode                 String                     @unique @default(dbgenerated("('venue-'::text || substr(md5((random())::text), 1, 12))"))
   id                        String                     @id @default(uuid())
   organizationId            String
   name                      String

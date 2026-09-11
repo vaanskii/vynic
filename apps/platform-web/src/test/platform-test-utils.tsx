@@ -31,6 +31,7 @@ export const organization = {
 };
 
 export const venue = {
+  loginCode: "vankisi",
   id: ids.venue,
   organizationId: ids.organization,
   name: "Vankisi",

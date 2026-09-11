@@ -136,6 +136,8 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Backend controller/services: `apps/backend/src/mobile/`
 - Auth and tenant resolution: `apps/backend/src/auth/auth.service.ts`, `apps/backend/src/auth/manager-tenant.service.ts`
 - Tenant rules: `docs/MANAGER_TENANT_AUTH.md`
+- SaaS login/realtime rollout and broadcast audit: `docs/MANAGER_SAAS_PHASE1.md`
+- Two-Venue HTTP/socket/push proof: `apps/backend/src/tenancy/manager-saas.integration.spec.ts`
 
 ## Orders / Walk-In / Takeaway / Packages
 

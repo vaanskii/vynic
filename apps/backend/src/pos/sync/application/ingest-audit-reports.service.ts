@@ -175,8 +175,10 @@ export class IngestAuditReportsService {
       this.reconcile(tenant, body, reports),
     );
 
-    if (upserted > 0 && !isPosAuditBroadcastSuppressed()) {
-      this.gateway.broadcastUpdate('audit_updated', { count: upserted });
+    if (upserted > 0 && !isPosAuditBroadcastSuppressed(tenant)) {
+      this.gateway.broadcastUpdate(tenant, 'audit_updated', {
+        count: upserted,
+      });
     }
 
     timing.note(`written=${upserted} unchanged=${unchanged}`);

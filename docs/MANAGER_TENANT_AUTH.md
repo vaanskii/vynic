@@ -167,41 +167,35 @@ historical retention are untouched, so a customer who buys Manager later finds
 their history already there. This is proven for a Venue that never bought
 Manager, not merely asserted.
 
-## Known limitation: PIN-only login
+## Venue-discriminating login
 
-`POST /auth/mobile-login` authenticates on a bare PIN with no user or venue
-identifier. That cannot discriminate a Venue: with several restaurants, a PIN
-colliding with another restaurant's manager would authenticate into the wrong
-tenant.
+`POST /auth/mobile-login` now accepts `{ venueCode, pin }`. The unique, stored
+`Venue.loginCode` is resolved before comparing PINs among active Manager/Admin
+Staff in that active Venue. Exactly one PIN match is required; ambiguity within
+a Venue is denied. Different Venues may use identical usernames and PINs.
+The response adds `venueCode`; the JWT still identifies Staff by `sub`.
+The generated boundary is `packages/contracts/schema/manager-login.contract.json`.
 
-The candidate search is therefore still confined to the bootstrap Venue — a
-deliberate transitional limit, marked in `AuthService.mobileLogin`. Everything
-downstream is already correct: the session's Venue is read from the matched
-Staff row, not assumed, so only the *search scope* is transitional, not the
-authority.
+Previously a PIN-only request scanned only the bootstrap Venue. Old clients can
+be supported by explicitly configuring `MANAGER_LEGACY_LOGIN_UNTIL` with an ISO
+UTC expiry no later than `2026-12-01T00:00:00Z`. It is disabled when unset,
+invalid, expired, or beyond that cap. It selects the stored code `vankisi`, never
+an internal bootstrap UUID. Remove the setting after all deployed Managers use
+venue codes; delete the compatibility branch in the next auth contract version.
+See `docs/MANAGER_SAAS_PHASE1.md` for deployment order and proofs.
 
-**Retirement condition.** This limit lifts when login carries a venue
-discriminator — username + PIN, a per-Venue login code, or a device-bound
-Manager credential. That is a login-contract change affecting the Manager app,
-so it belongs with the Manager Cloud transport phase rather than here. Until
-then, a second Venue's manager cannot obtain a token at all, which fails closed.
+The Manager remembers only the selected code and the existing session token.
+New sessions clear old cached restaurant data and notification history. Offline
+fallback from a login attempt requires the same code as the cached session.
+The desktop companion launcher also asks for a code and cannot bypass a Cloud
+credential rejection using a local POS user.
 
 ## Legacy bootstrap tenant
 
-`LEGACY_MANAGER_TENANT` is no longer used by any Manager API. It remains for:
-
-| Caller | Why it still uses it |
-| --- | --- |
-| `auth.service.ts` | The login search scope above. |
-| `website/menu`, `website/user` | Public website requests carry no authoritative Venue. Step 4B2B. |
-| `pos/sync/sync.controller.ts` | Legacy shared-key compatibility path. |
-| `realtime/.../hybrid-notification` | Notifications are raised by POS sync events, which reach it without a Manager tenant. |
-| `shared/bootstrap` | Seeds the single existing installation. |
-
-**Retirement condition.** It disappears when the public website resolves a
-Venue from its Host (Step 4B2B), every deployed POS uses a Device credential
-instead of the shared key, and notification raising carries the sync request's
-tenant. It is compatibility scaffolding, not the multi-tenant security model.
+No active Manager login, realtime, notification or sync route uses
+`LEGACY_MANAGER_TENANT`. It remains only in the unrelated bootstrap seeder.
+Device-less POS shared-key and frozen callback compatibility still resolve their
+legacy tenant explicitly; these are not Manager tenant authorities.
 
 ## Notification, push, and draft ownership
 
@@ -220,7 +214,8 @@ All four Manager-facing ones needed it: without ownership, a second Venue's
 manager would have read the first's counted menus and notifications, so the
 isolation claim would have been false for those endpoints.
 
-`hybrid-notification.service.ts` still writes notifications against the
-bootstrap Venue, because it is triggered by POS sync events that reach it
-without a Manager tenant. Threading the sync request's tenant into notification
-raising is deferred; the column that will carry it now exists.
+`HybridNotificationService` now carries the triggering server-resolved Venue
+through persistence, delivery rows, presence, coalescing and FCM recipient
+selection. Socket rooms are `managers:<venueId>` and socket identity is resolved
+from current Staff state at handshake and before outgoing Venue events.
+`GET /sync/diff` and its unused Flutter wrapper were removed.

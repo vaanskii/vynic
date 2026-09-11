@@ -165,10 +165,12 @@ function makeHarness(overrides: Record<string, Override> = {}): Harness {
     },
   );
 
-  const broadcastUpdate = jest.fn((event: string, payload: unknown) => {
-    broadcasts.push({ event, payload });
-    trace.push(`ws:${event}`);
-  });
+  const broadcastUpdate = jest.fn(
+    (_tenant: unknown, event: string, payload: unknown) => {
+      broadcasts.push({ event, payload });
+      trace.push(`ws:${event}`);
+    },
+  );
   const kickPending = jest.fn(() => Promise.resolve());
   const vaultRead = jest.fn(() => Promise.resolve({}));
   const vaultWrite = jest.fn(() => Promise.resolve());
@@ -1167,7 +1169,7 @@ describe('POST /sync/manager-data — realtime hints and echo suppression', () =
   });
 
   it('drops an order hint whose echo is suppressed', async () => {
-    suppressPosEchoForOrder(4242);
+    suppressPosEchoForOrder(AUTH_CONTEXT, 4242);
     const h = makeHarness();
 
     await h.sync({ touchedOrderHints: [{ posOrderId: 4242 }] });
@@ -1243,7 +1245,7 @@ describe('POST /sync/manager-data — realtime hints and echo suppression', () =
   });
 
   it('drops a table hint whose echo is suppressed', async () => {
-    suppressPosEchoForTable('9', 'first');
+    suppressPosEchoForTable(AUTH_CONTEXT, '9', 'first');
     const h = makeHarness();
 
     await h.sync({
@@ -1279,7 +1281,7 @@ describe('POST /sync/manager-data — realtime hints and echo suppression', () =
   });
 
   it('drops a reservation hint whose echo is suppressed', async () => {
-    suppressPosEchoForReservation('r-echo');
+    suppressPosEchoForReservation(AUTH_CONTEXT, 'r-echo');
     const h = makeHarness();
 
     await h.sync({ touchedReservationHints: [{ reservationId: 'r-echo' }] });

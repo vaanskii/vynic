@@ -18,16 +18,22 @@ export class AuthController {
     private readonly throttle: LoginThrottleService,
   ) {}
 
-  /** POST /auth/mobile-login  { pin: "1234" } */
+  /** POST /auth/mobile-login  { venueCode: "vankisi", pin: "1234" } */
   @Post('mobile-login')
   @HttpCode(HttpStatus.OK)
-  async mobileLogin(@Body() body: { pin?: string }, @Ip() ip: string) {
+  async mobileLogin(
+    @Body() body: { pin?: string; venueCode?: string },
+    @Ip() ip: string,
+  ) {
     if (!body?.pin) {
       throw new BadRequestException('PIN is required');
     }
     this.throttle.assertNotLocked(ip);
     try {
-      const result = await this.authService.mobileLogin(body.pin);
+      const result = await this.authService.mobileLogin(
+        body.pin,
+        body.venueCode,
+      );
       this.throttle.recordSuccess(ip);
       return result;
     } catch (e) {

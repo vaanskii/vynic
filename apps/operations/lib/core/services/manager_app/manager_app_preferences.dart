@@ -11,6 +11,10 @@ class ManagerAppPreferences {
   static const _backendUrlKey = 'backend_url_override';
 
   static Box? _box;
+  static String? get loginVenueCode => _box?.get('login_venue_code') as String?;
+  static Future<void> setLoginVenueCode(String code) async {
+    await _box?.put('login_venue_code', code);
+  }
 
   static final ValueNotifier<ManagerDashboardAppearance> dashboardAppearance =
       ValueNotifier(ManagerDashboardAppearance.light);

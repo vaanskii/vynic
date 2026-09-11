@@ -27,6 +27,7 @@ const ORGANIZATION_FIELDS = {
 } as const;
 
 const VENUE_FIELDS = {
+  loginCode: true,
   id: true,
   organizationId: true,
   name: true,

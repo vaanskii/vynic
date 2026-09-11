@@ -57,6 +57,13 @@ current transport status.
 
 ## Completed Foundations
 
+- SaaS Manager Phase 1 is implemented: stable Venue login codes + PIN,
+  Staff-resolved socket rooms, tenant-carrying notifications/push/presence,
+  Venue-local echo suppression and removal of unused `/sync/diff`.
+  Old Vankisi PIN-only clients require an explicit expiry setting capped at
+  2026-12-01; migration/client rollout is not established by repository code.
+  See `docs/MANAGER_SAAS_PHASE1.md`.
+
 - Organization/Venue foundation and Venue-scoped operational data are
   implemented (Steps 4A and 4B1).
 - Manager Staff -> Venue resolution and `MANAGER_APP` enforcement are
@@ -587,16 +594,6 @@ current transport status.
 
 - Website reservation availability has no transactional hold; simultaneous
   bookings can still allocate the same table.
-- Manager PIN-only login searches only the bootstrap Venue. Authenticated
-  requests are correctly Staff-scoped, but a second Venue's manager cannot yet
-  obtain a token without a Venue-discriminating login contract.
-- Notification raising still assigns some sync-triggered notifications to the
-  bootstrap Venue instead of carrying the authenticated sync tenant through.
-- The Manager WebSocket gateway joins every authenticated manager to one
-  `managers` room, so sync broadcasts are not Venue-scoped, and the
-  Manager-authenticated `GET /sync/diff` reads bootstrap-Venue tables/orders
-  (no Flutter caller found). Both are single-tenant holdovers, not
-  compatibility paths.
 - Feature entitlement has exactly three seeded keys (`POS`, `WEBSITE`,
   `MANAGER_APP`); Inventory, Payroll, Obligations and Audit are all bundled
   under `MANAGER_APP`.
@@ -621,8 +618,9 @@ current transport status.
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260914120000_payroll_day_adjustments`.
+  `20260915120000_manager_login_code`.
 - Immediately preceding state migrations:
+  `20260914120000_payroll_day_adjustments`,
   `20260913120000_payroll_obligations`,
   `20260912120000_inventory_step45_catalog_cost`,
   `20260911120000_inventory_step4_sale_consumption`,

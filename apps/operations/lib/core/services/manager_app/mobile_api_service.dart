@@ -1374,32 +1374,4 @@ class MobileApiService {
       rethrow;
     }
   }
-
-  // ── Diff sync ──────────────────────────────────────────────────────────────
-
-  /// Fetches only records updated since `since` (ISO string).
-  /// Uses GET /sync/diff?since=ISO.
-  static Future<Map<String, dynamic>> getDiff({String? since}) async {
-    final sinceParam = since ?? MobileCacheService.lastServerTime ?? '';
-    final path =
-        '/sync/diff${sinceParam.isNotEmpty ? '?since=${Uri.encodeComponent(sinceParam)}' : ''}';
-    final response = await _get(path);
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      // Apply table diff to cache
-      if (data['tables'] is List) {
-        final tables = (data['tables'] as List)
-            .whereType<Map<String, dynamic>>()
-            .toList();
-        await MobileCacheService.applyTableDiff(tables);
-      }
-      if (data['serverTime'] is String) {
-        await MobileCacheService.setLastServerTime(
-          data['serverTime'] as String,
-        );
-      }
-      return data;
-    }
-    throw Exception('Diff failed: ${response.statusCode}');
-  }
 }

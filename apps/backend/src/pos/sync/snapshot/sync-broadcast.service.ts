@@ -101,12 +101,13 @@ export class SyncBroadcastService {
       : [];
     const filteredOrderHints = dedupeOrderHintsByPosOrderId(
       touchedOrderHints.filter(
-        (h: { posOrderId: number }) => !isPosEchoSuppressed(h.posOrderId),
+        (h: { posOrderId: number }) =>
+          !isPosEchoSuppressed(tenant, h.posOrderId),
       ),
     );
     const hadOrderLineTouch = filteredOrderHints.length > 0;
     if (hadOrderLineTouch) {
-      this.gateway.broadcastUpdate('orders_bulk_touch', {
+      this.gateway.broadcastUpdate(tenant, 'orders_bulk_touch', {
         touches: filteredOrderHints,
         posOrderIds: filteredOrderHints.map(
           (h: { posOrderId: number }) => h.posOrderId,
@@ -142,10 +143,10 @@ export class SyncBroadcastService {
           .filter((h) => h.tableNumber.length > 0)
       : [];
     const filteredTableHints = touchedTableHints.filter((h) => {
-      if (isTableEchoSuppressed(h.tableNumber, h.floor)) return false;
+      if (isTableEchoSuppressed(tenant, h.tableNumber, h.floor)) return false;
       if (
         h.activeOrderId !== undefined &&
-        isPosEchoSuppressed(h.activeOrderId)
+        isPosEchoSuppressed(tenant, h.activeOrderId)
       ) {
         return false;
       }
@@ -178,7 +179,7 @@ export class SyncBroadcastService {
           });
         }
       }
-      this.gateway.broadcastUpdate('tables_bulk_touch', {
+      this.gateway.broadcastUpdate(tenant, 'tables_bulk_touch', {
         touches: filteredTableHints,
         tables: tableSnapshots,
         source: 'pos_sync',
@@ -226,7 +227,7 @@ export class SyncBroadcastService {
           .filter((h) => h.reservationId.length > 0)
       : [];
     const filteredReservationHints = reservationHints.filter(
-      (h) => !isReservationEchoSuppressed(h.reservationId),
+      (h) => !isReservationEchoSuppressed(tenant, h.reservationId),
     );
     if (filteredReservationHints.length > 0) {
       const latest =
@@ -236,7 +237,7 @@ export class SyncBroadcastService {
         latest.walkIn === true ||
         customer === 'walk-in' ||
         customer.includes('walk-in');
-      this.gateway.broadcastUpdate('data_updated', {
+      this.gateway.broadcastUpdate(tenant, 'data_updated', {
         type: 'reservations',
         reservationId: latest.reservationId,
         customerName: latest.customerName,
@@ -261,37 +262,47 @@ export class SyncBroadcastService {
   }
 
   /** The coarse "something changed" notifications for the whole snapshot. */
-  announceSnapshotApplied({
-    orders,
-    hadOrderLineTouch,
-    hadTableTouch,
-    didSyncTables,
-    releasedTables,
-    changed,
-  }: SnapshotAnnouncement): void {
+  announceSnapshotApplied(
+    tenant: TenantContext,
+    {
+      orders,
+      hadOrderLineTouch,
+      hadTableTouch,
+      didSyncTables,
+      releasedTables,
+      changed,
+    }: SnapshotAnnouncement,
+  ): void {
     // Avoid duplicate "სალარო" + "მაგიდები" toasts: line changes use orders_bulk_touch only.
     if (orders && orders.length > 0 && !hadOrderLineTouch && !hadTableTouch) {
       const posOrderIds = filterSuppressedOrderIds(
+        tenant,
         orders
           .map((o) => Number(o.posOrderId))
           .filter((id) => Number.isFinite(id)),
       );
       if (posOrderIds.length > 0) {
-        this.gateway.broadcastUpdate('order_updated', {
+        this.gateway.broadcastUpdate(tenant, 'order_updated', {
           posOrderIds,
           source: 'pos_sync',
         });
       }
     }
     if (didSyncTables || releasedTables) {
-      this.gateway.broadcastUpdate('table_updated', { source: 'pos_sync' });
+      this.gateway.broadcastUpdate(tenant, 'table_updated', {
+        source: 'pos_sync',
+      });
     }
     if (changed) {
-      this.gateway.broadcastUpdate('data_updated', { type: 'all' });
+      this.gateway.broadcastUpdate(tenant, 'data_updated', { type: 'all' });
     }
   }
 
-  announceDayClosed(date: string, prevDate: unknown): void {
-    this.gateway.broadcastUpdate('day_closed', { date, prevDate });
+  announceDayClosed(
+    tenant: TenantContext,
+    date: string,
+    prevDate: unknown,
+  ): void {
+    this.gateway.broadcastUpdate(tenant, 'day_closed', { date, prevDate });
   }
 }

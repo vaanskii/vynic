@@ -1,3 +1,4 @@
+import type { TenantContext } from '../../tenancy/tenant-context';
 import { Injectable } from '@nestjs/common';
 import {
   suppressPosAuditBroadcast,
@@ -25,17 +26,18 @@ export class MobileMutationSupport {
 
   /** Block POS round-trip WS notifications after this mobile mutation. */
   registerMobileMutationEchoGuard(
+    tenant: TenantContext,
     posOrderId?: number,
     options?: { tableNumber?: string; floor?: string },
   ): void {
     if (posOrderId !== undefined && Number.isFinite(posOrderId)) {
-      suppressPosEchoForOrder(posOrderId);
+      suppressPosEchoForOrder(tenant, posOrderId);
     }
-    suppressPosAuditBroadcast();
+    suppressPosAuditBroadcast(tenant);
     const tableNumber = options?.tableNumber?.trim();
     const floor = options?.floor?.trim() ?? 'first';
     if (tableNumber && tableNumber.length > 0) {
-      suppressPosEchoForTable(tableNumber, floor);
+      suppressPosEchoForTable(tenant, tableNumber, floor);
     }
   }
 }

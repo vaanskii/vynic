@@ -205,7 +205,12 @@ export class MobileMenuService {
       });
     }
 
-    this.gateway.broadcastUpdate('data_updated', { type: 'all' }, excludeOpts);
+    this.gateway.broadcastUpdate(
+      tenant,
+      'data_updated',
+      { type: 'all' },
+      excludeOpts,
+    );
     return { success: true, id: dbDraft.draftId };
   }
 
@@ -217,7 +222,12 @@ export class MobileMenuService {
     await (this.prisma as any).quickOrderDraft.delete({
       where: quickOrderDraftIdentity(tenant, id),
     });
-    this.gateway.broadcastUpdate('data_updated', { type: 'all' }, excludeOpts);
+    this.gateway.broadcastUpdate(
+      tenant,
+      'data_updated',
+      { type: 'all' },
+      excludeOpts,
+    );
     return { success: true };
   }
 
@@ -285,7 +295,12 @@ export class MobileMenuService {
       });
     }
 
-    this.gateway.broadcastUpdate('data_updated', { type: 'all' }, excludeOpts);
+    this.gateway.broadcastUpdate(
+      tenant,
+      'data_updated',
+      { type: 'all' },
+      excludeOpts,
+    );
     return { success: true, id: existing.draftId };
   }
 

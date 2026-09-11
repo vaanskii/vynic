@@ -168,8 +168,9 @@ export class MobileReservationsService {
 
     // Suppress the POS round-trip echo so the device that created this
     // reservation isn't re-notified when the POS syncs it back.
-    suppressPosEchoForReservation(reservationId);
+    suppressPosEchoForReservation(tenant, reservationId);
     this.gateway.broadcastUpdate(
+      tenant,
       'data_updated',
       {
         type: 'reservations',
@@ -220,6 +221,7 @@ export class MobileReservationsService {
       payload: { reservationId: id, status },
     });
     this.gateway.broadcastUpdate(
+      tenant,
       'data_updated',
       {
         type: 'reservations',
@@ -241,6 +243,7 @@ export class MobileReservationsService {
       payload: { reservationId: id },
     });
     this.gateway.broadcastUpdate(
+      tenant,
       'data_updated',
       {
         type: 'reservations',

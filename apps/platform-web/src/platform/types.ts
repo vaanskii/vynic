@@ -35,6 +35,7 @@ export interface Organization {
 }
 
 export interface Venue {
+  loginCode: string;
   id: string;
   organizationId: string;
   name: string;

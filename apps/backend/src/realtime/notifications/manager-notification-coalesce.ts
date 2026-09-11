@@ -1,5 +1,5 @@
 import { mergeChangeSummaries } from './notification-summary.util';
-import type { BroadcastOptions, WsEventType } from '../ws-events';
+import type { VenueBroadcastOptions, WsEventType } from '../ws-events';
 
 const SERVICE_FEE_COALESCE_MS = 2500;
 
@@ -108,7 +108,7 @@ export function mergeOrdersBulkTouchPayload(
 export type CoalescedDeliverFn = (
   type: WsEventType,
   payload: unknown,
-  options?: BroadcastOptions,
+  options: VenueBroadcastOptions,
 ) => Promise<void>;
 
 export class ServiceFeeNotificationCoalescer {
@@ -118,7 +118,7 @@ export class ServiceFeeNotificationCoalescer {
       timer: ReturnType<typeof setTimeout>;
       type: WsEventType;
       payload: Record<string, unknown>;
-      options?: BroadcastOptions;
+      options: VenueBroadcastOptions;
     }
   >();
 
@@ -131,7 +131,7 @@ export class ServiceFeeNotificationCoalescer {
     key: string,
     type: WsEventType,
     payload: unknown,
-    options?: BroadcastOptions,
+    options: VenueBroadcastOptions,
   ): void {
     const incoming = asRecord(payload) ?? {};
     const existing = this.pending.get(key);

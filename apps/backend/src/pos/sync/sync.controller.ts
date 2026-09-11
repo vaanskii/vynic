@@ -4,24 +4,18 @@ import {
   Get,
   OnModuleInit,
   Post,
-  Query,
   UseGuards,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { PosSyncGuard } from '../../auth/pos-sync.guard';
 import { PosAuth } from '../../auth/pos-auth-context';
 import type { PosAuthContext } from '../../auth/pos-auth-context';
-import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
-import { RolesGuard } from '../../auth/roles.guard';
-import { Roles } from '../../auth/roles.decorator';
-import { StaffRole } from '../../staff/staff-role';
 import { IngestAuditReportsService } from './application/ingest-audit-reports.service';
 import { IngestPosSnapshotService } from './application/ingest-pos-snapshot.service';
 import { PosConnectionRegistry } from './pos-connection.registry';
 // `import type`: interfaces named in a decorated signature must not be value
 // imports while isolatedModules + emitDecoratorMetadata are both on.
 import type { AuditEventLogSync, SyncPayload } from './sync-payload';
-import { LEGACY_MANAGER_TENANT } from '../../tenancy/legacy-manager-tenant';
 
 /**
  * HTTP surface of POS → server synchronization.
@@ -52,48 +46,6 @@ export class SyncController implements OnModuleInit {
   ping() {
     return {
       ok: true,
-      serverTime: new Date().toISOString(),
-    };
-  }
-
-  /**
-   * GET /sync/diff?since=2024-01-01T00:00:00.000Z
-   * Returns only records updated after `since`.
-   * Mobile clients call this after reconnection instead of full reload.
-   * Manager-only (mobile JWT) — exposes live table/order deltas, so it must
-   * not be reachable unauthenticated.
-   */
-  @Get('diff')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(StaffRole.MANAGER)
-  async getDiff(@Query('since') since?: string) {
-    const sinceDate = since ? new Date(since) : new Date(0);
-
-    const [tables, orders] = await Promise.all([
-      (this.prisma as any).table.findMany({
-        where: {
-          venueId: LEGACY_MANAGER_TENANT.venueId,
-          updatedAt: { gt: sinceDate },
-        },
-      }),
-      this.prisma.order.findMany({
-        where: {
-          venueId: LEGACY_MANAGER_TENANT.venueId,
-          updatedAt: { gt: sinceDate },
-        },
-        select: {
-          posOrderId: true,
-          status: true,
-          totalAmount: true,
-          waiterName: true,
-          updatedAt: true,
-        },
-      }),
-    ]);
-
-    return {
-      tables,
-      orders,
       serverTime: new Date().toISOString(),
     };
   }

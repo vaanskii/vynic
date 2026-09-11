@@ -272,7 +272,7 @@ export class MobileOrdersService {
     const performerName =
       performer.length > 0 ? performer : 'მობილური მენეჯერი';
     const posOrderId = Number(id);
-    this.mutationSupport.registerMobileMutationEchoGuard(posOrderId);
+    this.mutationSupport.registerMobileMutationEchoGuard(tenant, posOrderId);
 
     const auditEvents = buildAuditEventsForOrderDiff({
       previousItems: previousItems.map((it) => ({
@@ -295,6 +295,7 @@ export class MobileOrdersService {
         events: auditEvents,
       });
       this.gateway.broadcastUpdate(
+        tenant,
         'audit_updated',
         { count: auditEvents.length, source: 'mobile', posOrderId },
         this.mutationSupport.wsExcludeOpts(monitoringSocketId),
@@ -302,6 +303,7 @@ export class MobileOrdersService {
     }
 
     this.gateway.broadcastUpdate(
+      tenant,
       'order_updated',
       { posOrderId, source: 'mobile_manager' },
       this.mutationSupport.wsExcludeOpts(monitoringSocketId),
@@ -324,6 +326,7 @@ export class MobileOrdersService {
           : 'სერვისის საფასური გამორთულია'
         : 'თანხა განახლდა';
       this.gateway.broadcastUpdate(
+        tenant,
         'orders_bulk_touch',
         {
           touches: [
@@ -342,6 +345,7 @@ export class MobileOrdersService {
         this.mutationSupport.wsExcludeOpts(monitoringSocketId),
       );
       this.gateway.broadcastUpdate(
+        tenant,
         'table_updated',
         { source: 'mobile_manager' },
         this.mutationSupport.wsExcludeOpts(monitoringSocketId),
@@ -468,7 +472,7 @@ export class MobileOrdersService {
     });
     if (!order) return { success: false, error: 'order_not_found' };
 
-    this.mutationSupport.registerMobileMutationEchoGuard(posOrderId);
+    this.mutationSupport.registerMobileMutationEchoGuard(tenant, posOrderId);
 
     // Capture which tables this order held before we release them, so the
     // cancellation notification can say which table was freed.
@@ -499,6 +503,7 @@ export class MobileOrdersService {
     });
 
     this.gateway.broadcastUpdate(
+      tenant,
       'order_cancelled',
       {
         posOrderId,
@@ -580,7 +585,7 @@ export class MobileOrdersService {
     let order: any;
     for (let attempt = 0; ; attempt++) {
       const candidateId = await this.allocateMobileOrderId(tenant);
-      this.mutationSupport.registerMobileMutationEchoGuard(candidateId);
+      this.mutationSupport.registerMobileMutationEchoGuard(tenant, candidateId);
       try {
         order = await this.prisma.order.create({
           data: {
@@ -616,6 +621,7 @@ export class MobileOrdersService {
     const nextId = order.posOrderId;
 
     this.gateway.broadcastUpdate(
+      tenant,
       'takeaway_created',
       {
         posOrderId: nextId,
@@ -705,12 +711,16 @@ export class MobileOrdersService {
     for (let attempt = 0; ; attempt++) {
       const candidateId = await this.allocateMobileOrderId(tenant);
       // Suppress echo for the order and every reserved table.
-      this.mutationSupport.registerMobileMutationEchoGuard(candidateId);
+      this.mutationSupport.registerMobileMutationEchoGuard(tenant, candidateId);
       for (const tableNumber of tableNumbers) {
-        this.mutationSupport.registerMobileMutationEchoGuard(candidateId, {
-          tableNumber,
-          floor,
-        });
+        this.mutationSupport.registerMobileMutationEchoGuard(
+          tenant,
+          candidateId,
+          {
+            tableNumber,
+            floor,
+          },
+        );
       }
       try {
         order = await this.prisma.order.create({
@@ -772,6 +782,7 @@ export class MobileOrdersService {
     }
 
     this.gateway.broadcastUpdate(
+      tenant,
       'order_created',
       {
         posOrderId: nextId,
@@ -783,6 +794,7 @@ export class MobileOrdersService {
       this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
     this.gateway.broadcastUpdate(
+      tenant,
       'table_updated',
       { source: 'mobile' },
       this.mutationSupport.wsExcludeOpts(monitoringSocketId),
@@ -834,7 +846,7 @@ export class MobileOrdersService {
     });
     if (!order) return { success: false, error: 'order_not_found' };
 
-    this.mutationSupport.registerMobileMutationEchoGuard(posOrderId);
+    this.mutationSupport.registerMobileMutationEchoGuard(tenant, posOrderId);
 
     // The Cloud row is the mirror of a POS Order that is about to be
     // cancelled, not erased: the POS keeps the Order and its audit report and
@@ -848,6 +860,7 @@ export class MobileOrdersService {
     }
 
     this.gateway.broadcastUpdate(
+      tenant,
       'takeaway_deleted',
       { posOrderId },
       this.mutationSupport.wsExcludeOpts(monitoringSocketId),

@@ -179,7 +179,7 @@ export class IngestPosSnapshotService {
     const changed =
       didSyncTables || !!orders || !!expenses || !!menu || !!staff;
 
-    this.broadcasts.announceSnapshotApplied({
+    this.broadcasts.announceSnapshotApplied(tenant, {
       orders,
       hadOrderLineTouch,
       hadTableTouch,
@@ -195,7 +195,11 @@ export class IngestPosSnapshotService {
       this.businessDay.trackBusinessDate(tenant, data.businessDate),
     );
     if (rollover) {
-      this.broadcasts.announceDayClosed(rollover.date, rollover.prevDate);
+      this.broadcasts.announceDayClosed(
+        tenant,
+        rollover.date,
+        rollover.prevDate,
+      );
     }
     await timing.phase('reporting', () =>
       this.businessDay.persistReportingSnapshot(tenant, data, realtimeOnly),

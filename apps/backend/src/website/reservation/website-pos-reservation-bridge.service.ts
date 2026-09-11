@@ -257,9 +257,9 @@ export class WebsitePosReservationBridgeService {
       idempotencyKey: `RESERVATION_CREATE:website:${reservation.id}`,
     });
 
-    suppressPosEchoForReservation(posReservationId);
+    suppressPosEchoForReservation(tenant, posReservationId);
 
-    this.gateway.broadcastUpdate('data_updated', {
+    this.gateway.broadcastUpdate(tenant, 'data_updated', {
       type: 'reservations',
       action: 'created',
       source: 'website',
@@ -296,7 +296,7 @@ export class WebsitePosReservationBridgeService {
         },
         idempotencyKey: `RESERVATION_STATUS_UPDATE:website-cancel:${id}`,
       });
-      this.gateway.broadcastUpdate('data_updated', {
+      this.gateway.broadcastUpdate(tenant, 'data_updated', {
         type: 'reservations',
         action: 'cancelled',
         source: 'website',

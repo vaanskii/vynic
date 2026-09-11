@@ -569,7 +569,7 @@ export class MobileDashboardService {
     const totalOutflows = otherExpenses
       .plus(salaryPayments)
       .plus(actual.obligationPayments)
-      .plus(procurement.businessDay.total);
+      .plus(procurement.supplierPayments.businessDay.total);
     let revenue = 0;
     let cashRev = 0;
     let cardRev = 0;

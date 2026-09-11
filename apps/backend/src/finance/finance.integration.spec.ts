@@ -348,7 +348,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         }),
       ).rejects.toThrow();
     });
-    it('Financials includes Receiving + other Expenses + legacy/new payroll + obligation payments exactly once, excludes reserves', async () => {
+    it('Financials separates purchases from actual expenses/payroll/obligation outflows, excludes reserves', async () => {
       const supplier = await db.supplier.create({
         data: { venueId: a.venueId, name: 'Supplier' },
       });
@@ -398,7 +398,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         salaryPayments: '375.00',
         obligationPayments: '500.00',
         otherExpenses: '25.00',
-        totalOutflows: '1400.00',
+        totalOutflows: '900.00',
       });
       expect((await controller.legacy(a)).entries).toHaveLength(1);
       await expect(dashboard.deleteExpense(a, legacy.id)).rejects.toThrow(

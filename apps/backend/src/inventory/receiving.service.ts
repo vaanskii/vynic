@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { paymentSummary, SupplierPayments } from './supplier-payments';
 import { stockQuantityText } from './inventory-quantity';
 import {
   BadRequestException,
@@ -32,11 +34,15 @@ export interface ReceivingLineInput {
   enteredQuantity?: unknown;
   enteredUnit?: unknown;
   unitPurchaseCost?: unknown;
+  lineTotal?: unknown;
+  priceBasis?: unknown;
   notes?: unknown;
 }
 
 export interface ReceivingInput {
+  requestId?: unknown;
   supplierId?: unknown;
+  dueDate?: unknown;
   waybillNumber?: unknown;
   invoiceNumber?: unknown;
   documentDate?: unknown;
@@ -92,6 +98,29 @@ const DEFAULT_PAGE = 25;
 export class ReceivingService {
   constructor(private readonly prisma: PrismaService) {}
 
+  reversePayment(
+    actor: InventoryActor,
+    id: string,
+    paymentId: string,
+    input: unknown,
+  ) {
+    return new SupplierPayments(this.prisma).reverse(
+      actor,
+      id,
+      paymentId,
+      input,
+    );
+  }
+  verifyPayments(actor: InventoryActor, id: string, input: unknown) {
+    return new SupplierPayments(this.prisma).verifyHistory(actor, id, input);
+  }
+  payments(tenant: TenantContext, supplierId?: string) {
+    return new SupplierPayments(this.prisma).list(tenant, supplierId);
+  }
+  recordPayment(actor: InventoryActor, id: string, input: unknown) {
+    return new SupplierPayments(this.prisma).record(actor, id, input);
+  }
+
   // ── Reads ───────────────────────────────────────────────────────────────
 
   async list(tenant: TenantContext, query: ReceivingListQuery = {}) {
@@ -146,7 +175,7 @@ export class ReceivingService {
       ...(query.cursor?.trim()
         ? { cursor: { id: query.cursor.trim() }, skip: 1 }
         : {}),
-      include: { _count: { select: { lines: true } } },
+      include: { payments: true, _count: { select: { lines: true } } },
     });
 
     const page = rows.slice(0, take);
@@ -176,6 +205,7 @@ export class ReceivingService {
     const row = await this.prisma.receiving.findFirst({
       where: { id: requiredText(id, 'id'), venueId: tenant.venueId },
       include: {
+        payments: true,
         lines: { orderBy: { lineSequence: 'asc' } },
         movements: { orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] },
         _count: { select: { lines: true } },
@@ -193,12 +223,40 @@ export class ReceivingService {
 
   async createDraft(actor: InventoryActor, input: ReceivingInput) {
     const header = this.readHeader(input);
+    const requestId =
+      input.requestId == null
+        ? null
+        : requiredText(input.requestId, 'requestId');
+    if (requestId && !/^[0-9a-f-]{36}$/i.test(requestId))
+      throw new BadRequestException('requestId must be UUID');
+    const fingerprint = createHash('sha256')
+      .update(JSON.stringify(input))
+      .digest('hex');
     return this.prisma.$transaction(async (tx) => {
+      if (requestId) {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${actor.venueId + ':receipt:' + requestId},0))`;
+        const prior = await tx.receiving.findUnique({
+          where: {
+            venueId_creationRequestId: {
+              venueId: actor.venueId,
+              creationRequestId: requestId,
+            },
+          },
+        });
+        if (prior) {
+          if (prior.creationFingerprint !== fingerprint)
+            throw new ConflictException(
+              'Receiving request reused with different values',
+            );
+          return this.loadDetail(tx, prior.id);
+        }
+      }
       const supplier = await this.requireSupplier(tx, actor, header.supplierId);
       const lines = await this.prepareLines(tx, actor, input.lines);
       const created = await tx.receiving.create({
         data: {
           venueId: actor.venueId,
+          dueDate: input.dueDate ? isoDateText(input.dueDate) : null,
           supplierId: supplier.id,
           supplierNameSnapshot: supplier.name,
           waybillNumber: header.waybillNumber,
@@ -211,6 +269,8 @@ export class ReceivingService {
           ),
           receivedAt: header.receivedAt,
           notes: header.notes,
+          creationRequestId: requestId,
+          creationFingerprint: fingerprint,
           status: ReceivingStatus.DRAFT,
           documentTotal: sumMoney(lines.map((line) => line.lineTotal)),
           createdById: actor.staffId,
@@ -218,6 +278,7 @@ export class ReceivingService {
           lines: { create: lines },
         },
         include: {
+          payments: true,
           lines: { orderBy: { lineSequence: 'asc' } },
           movements: true,
           _count: { select: { lines: true } },
@@ -249,6 +310,7 @@ export class ReceivingService {
       const updated = await tx.receiving.update({
         where: { id: cleanId },
         data: {
+          dueDate: input.dueDate ? isoDateText(input.dueDate) : null,
           supplierId: supplier.id,
           supplierNameSnapshot: supplier.name,
           waybillNumber: header.waybillNumber,
@@ -263,6 +325,7 @@ export class ReceivingService {
           lines: { create: lines },
         },
         include: {
+          payments: true,
           lines: { orderBy: { lineSequence: 'asc' } },
           movements: true,
           _count: { select: { lines: true } },
@@ -364,6 +427,7 @@ export class ReceivingService {
       }
       await this.requireSupplier(tx, actor, locked.supplierId);
 
+      await tx.$queryRaw`SELECT id FROM pos."StockItem" WHERE "venueId"=${actor.venueId} AND id IN (SELECT "stockItemId" FROM pos."ReceivingLine" WHERE "receivingId"=${cleanId}) ORDER BY id FOR UPDATE`;
       const postedAt = new Date();
       await tx.stockMovement.createMany({
         data: lines.map((line) => ({
@@ -391,12 +455,14 @@ export class ReceivingService {
         where: { id: cleanId },
         data: {
           status: ReceivingStatus.POSTED,
+          paymentHistoryKnown: true,
           postedAt,
           postedById: actor.staffId,
           postedByName: actor.username,
           documentTotal: sumMoney(lines.map((line) => line.lineTotal)),
         },
         include: {
+          payments: true,
           lines: { orderBy: { lineSequence: 'asc' } },
           movements: { orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] },
           _count: { select: { lines: true } },
@@ -445,6 +511,21 @@ export class ReceivingService {
         );
       }
 
+      const paid = await tx.supplierPayment.aggregate({
+        where: { venueId: actor.venueId, receivingId: cleanId },
+        _sum: { amount: true },
+      });
+      const settlement = await tx.receiving.findUniqueOrThrow({
+        where: { id: cleanId },
+      });
+      if (
+        !settlement.paymentHistoryKnown ||
+        !new Prisma.Decimal(paid._sum.amount ?? 0).isZero()
+      ) {
+        throw new ConflictException(
+          'Cannot cancel: supplier settlement must be verified and payments reversed first',
+        );
+      }
       const originals = await tx.stockMovement.findMany({
         where: {
           receivingId: cleanId,
@@ -467,6 +548,7 @@ export class ReceivingService {
         ),
       );
 
+      await tx.$queryRaw`SELECT id FROM pos."StockItem" WHERE "venueId"=${actor.venueId} AND id IN (SELECT "stockItemId" FROM pos."ReceivingLine" WHERE "receivingId"=${cleanId}) ORDER BY id FOR UPDATE`;
       const cancelledAt = new Date();
       const pending = originals.filter((row) => !alreadyReversed.has(row.id));
       if (pending.length > 0) {
@@ -504,6 +586,7 @@ export class ReceivingService {
           cancellationReason,
         },
         include: {
+          payments: true,
           lines: { orderBy: { lineSequence: 'asc' } },
           movements: { orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] },
           _count: { select: { lines: true } },
@@ -648,7 +731,7 @@ export class ReceivingService {
         'enteredQuantity',
       );
       const enteredUnit = inventoryUnit(line.enteredUnit ?? item.baseUnit);
-      const unitPurchaseCost = nonNegativeCost(
+      let unitPurchaseCost = nonNegativeCost(
         line.unitPurchaseCost ?? '0',
         'unitPurchaseCost',
       );
@@ -663,11 +746,29 @@ export class ReceivingService {
           'A line must deliver a positive base quantity',
         );
       }
-      const { lineTotal, effectiveBaseUnitCost } = lineMoney({
+      if (line.priceBasis === 'base')
+        unitPurchaseCost = unitPurchaseCost
+          .times(resolved.baseQuantity)
+          .div(enteredQuantity);
+      let { lineTotal, effectiveBaseUnitCost } = lineMoney({
         enteredQuantity,
         unitPurchaseCost,
         baseQuantity: resolved.baseQuantity,
       });
+      if (line.lineTotal != null) {
+        if (line.unitPurchaseCost != null)
+          throw new BadRequestException(
+            'Supply lineTotal or unitPurchaseCost, not both',
+          );
+        const text = String(line.lineTotal);
+        if (!/^\d+(\.\d{1,2})?$/.test(text))
+          throw new BadRequestException('lineTotal must be exact GEL');
+        lineTotal = new (Prisma.Decimal.clone({ precision: 60 }))(text);
+        unitPurchaseCost = lineTotal.div(enteredQuantity).toDecimalPlaces(4);
+        effectiveBaseUnitCost = lineTotal
+          .div(resolved.baseQuantity)
+          .toDecimalPlaces(6);
+      }
       return {
         lineSequence: index,
         stockItemId,
@@ -689,6 +790,7 @@ export class ReceivingService {
       .findUniqueOrThrow({
         where: { id },
         include: {
+          payments: true,
           lines: { orderBy: { lineSequence: 'asc' } },
           movements: { orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] },
           _count: { select: { lines: true } },
@@ -723,6 +825,11 @@ export class ReceivingService {
 
   private presentSummary(row: any) {
     return {
+      ...paymentSummary(row),
+      payments: (row.payments ?? []).map((p: any) => ({
+        ...p,
+        amount: p.amount.toFixed(2),
+      })),
       id: row.id,
       supplierId: row.supplierId,
       supplierName: row.supplierNameSnapshot,
@@ -779,6 +886,9 @@ export class ReceivingService {
 
 export function presentMovement(movement: any) {
   return {
+    costPerBaseUnit: movement.costPerBaseUnit?.toFixed(12) ?? null,
+    inventoryValueDelta: movement.inventoryValueDelta?.toFixed(12) ?? null,
+    valuationStatus: movement.valuationStatus,
     id: movement.id,
     stockItemId: movement.stockItemId,
     movementType: movement.movementType,
@@ -813,7 +923,12 @@ function isoDate(value: Date): string {
 
 function isoDateText(raw: unknown): string {
   const value = String(raw ?? '').trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+  const parsed = new Date(value + 'T00:00:00Z');
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
+    !Number.isFinite(parsed.getTime()) ||
+    parsed.toISOString().slice(0, 10) !== value
+  ) {
     throw new BadRequestException('documentDate must be YYYY-MM-DD');
   }
   return value;

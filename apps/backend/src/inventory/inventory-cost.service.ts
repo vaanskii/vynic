@@ -9,33 +9,14 @@ const Exact = Prisma.Decimal.clone({
   rounding: Prisma.Decimal.ROUND_HALF_UP,
 });
 
-/** All currently POSTED procurement, not moving stock valuation or Sale COGS.
- * Cancellation is atomic with reversal, so the entire cancelled receipt is excluded.
- * SUM frozen lineTotal / SUM baseQuantity avoids re-averaging rounded unit costs.
- */
+/** Current value comes from frozen movement values, including consumption. */
 export class InventoryCostService {
   constructor(private readonly prisma: PrismaService) {}
-
   async bases(tenant: TenantContext, ids: string[]) {
-    const rows = await this.prisma.receivingLine.findMany({
-      where: {
-        stockItemId: { in: ids },
-        stockItem: { venueId: tenant.venueId },
-        receiving: { venueId: tenant.venueId, status: 'POSTED' },
-      },
-      orderBy: [
-        { receiving: { businessDate: 'desc' } },
-        { receiving: { postedAt: 'desc' } },
-        { receivingId: 'desc' },
-        { lineSequence: 'desc' },
-      ],
-      select: {
-        stockItemId: true,
-        baseUnit: true,
-        baseQuantity: true,
-        lineTotal: true,
-        effectiveBaseUnitCost: true,
-      },
+    const rows = await this.prisma.stockMovement.findMany({
+      where: { venueId: tenant.venueId, stockItemId: { in: ids } },
+      orderBy: { valuationSequence: 'asc' },
+      include: { receiving: { select: { status: true } } },
     });
     const grouped = new Map<
       string,
@@ -43,20 +24,48 @@ export class InventoryCostService {
         quantity: Prisma.Decimal;
         value: Prisma.Decimal;
         unit: string;
-        last: string;
+        last: string | null;
+        cost: Prisma.Decimal | null;
+        provisional: boolean;
+        hasPurchase: boolean;
       }
     >();
     for (const row of rows) {
       const key = row.stockItemId + ':' + row.baseUnit;
-      const group = grouped.get(key) ?? {
+      const g = grouped.get(key) ?? {
         quantity: new Exact(0),
         value: new Exact(0),
         unit: row.baseUnit,
-        last: row.effectiveBaseUnitCost.toFixed(6),
+        last: null,
+        cost: null,
+        provisional: false,
+        hasPurchase: false,
       };
-      group.quantity = group.quantity.plus(row.baseQuantity.toString());
-      group.value = group.value.plus(row.lineTotal.toString());
-      grouped.set(key, group);
+      g.quantity = g.quantity.plus(row.quantityDeltaBase.toString());
+      g.value = g.value.plus(row.inventoryValueDelta?.toString() ?? '0');
+      if (
+        row.movementType === 'RECEIVING' &&
+        row.receiving?.status !== 'CANCELLED'
+      )
+        g.hasPurchase = true;
+      if (
+        row.movementType === 'RECEIVING' &&
+        row.receiving?.status !== 'CANCELLED'
+      )
+        g.last = row.costPerBaseUnit?.toFixed(6) ?? null;
+      if (row.costPerBaseUnit != null)
+        g.cost = new Exact(row.costPerBaseUnit.toString());
+      if (
+        row.valuationStatus === 'PROVISIONAL' ||
+        row.inventoryValueDelta == null
+      )
+        g.provisional = true;
+      grouped.set(key, g);
+    }
+    for (const g of grouped.values()) {
+      if (g.quantity.gt(0) && g.value.gte(0)) g.cost = g.value.div(g.quantity);
+      if (!g.hasPurchase && g.quantity.isZero()) g.cost = null;
+      if (g.quantity.lt(0) || g.value.lt(0)) g.provisional = true;
     }
     return grouped;
   }
@@ -70,13 +79,17 @@ export class InventoryCostService {
       id + ':' + item.baseUnit,
     );
     return {
-      method: 'POSTED_PURCHASE_WEIGHTED_AVERAGE',
-      status: group ? 'AVAILABLE' : 'NO_PURCHASE_HISTORY',
+      method: 'MOVING_WEIGHTED_AVERAGE',
+      status: group?.provisional
+        ? 'PROVISIONAL'
+        : group?.cost != null
+          ? 'AVAILABLE'
+          : 'NO_PURCHASE_HISTORY',
       baseUnit: item.baseUnit,
-      weightedUnitCost: group
-        ? group.value.div(group.quantity).toFixed(6)
-        : null,
+      weightedUnitCost: group?.cost?.toFixed(6) ?? null,
       lastPurchaseUnitCost: group?.last ?? null,
+      currentQuantity: group?.quantity.toFixed(6) ?? '0.000000',
+      inventoryValue: group?.value.toFixed(12) ?? '0.000000000000',
       purchaseQuantity: group?.quantity.toFixed(3) ?? '0.000',
       purchaseValue: group?.value.toFixed(2) ?? '0.00',
     };
@@ -104,7 +117,7 @@ export class InventoryCostService {
     let complete = true;
     const components = recipe.components.map((component) => {
       const group = bases.get(component.stockItemId + ':' + component.baseUnit);
-      const unitCost = group ? group.value.div(group.quantity) : null;
+      const unitCost = group?.provisional ? null : (group?.cost ?? null);
       const cost =
         unitCost?.times(component.baseQuantityPerUnit.toString()) ?? null;
       if (cost == null) complete = false;
@@ -120,7 +133,7 @@ export class InventoryCostService {
       };
     });
     return {
-      method: 'POSTED_PURCHASE_WEIGHTED_AVERAGE',
+      method: 'MOVING_WEIGHTED_AVERAGE',
       status: complete ? 'AVAILABLE' : 'MISSING_COMPONENT_COST',
       total: complete ? total.toFixed(2) : null,
       totalExact: complete ? total.toFixed(12) : null,

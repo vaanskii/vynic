@@ -265,7 +265,11 @@ export class RecipeService {
    * definition it consumed by, instead of joining today's recipe onto a sale
    * that happened last week.
    */
-  async save(actor: InventoryActor, input: RecipeInput) {
+  async save(
+    actor: InventoryActor,
+    input: RecipeInput,
+    transaction?: Prisma.TransactionClient,
+  ) {
     const menuItemId = requiredText(input.menuItemId, 'menuItemId');
     const variantIdRaw = optionalText(input.variantId);
     const yieldQuantity = positiveQuantity(
@@ -274,7 +278,8 @@ export class RecipeService {
     );
     const notes = optionalText(input.notes);
 
-    return this.prisma.$transaction(async (tx) => {
+    const work = async (tx: Prisma.TransactionClient) => {
+      await tx.$queryRaw`SELECT id FROM pos."MenuItem" WHERE id=${menuItemId} AND "venueId"=${actor.venueId} FOR UPDATE`;
       const menuItem = await this.requireMenuItem(
         tx,
         actor.venueId,
@@ -365,7 +370,8 @@ export class RecipeService {
         data: this.auditContext(saved),
       });
       return this.present(saved);
-    });
+    };
+    return transaction ? work(transaction) : this.prisma.$transaction(work);
   }
 
   /**

@@ -148,6 +148,14 @@ export class MobileController {
     return this.inventory.supplierDetail(tenant, id);
   }
 
+  @Post('inventory/suppliers/:id/items')
+  addSuppliedItem(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Body() input: unknown,
+  ) {
+    return this.inventory.addSuppliedItem(actor, id, input);
+  }
   @Post('inventory/suppliers/:id/products/:stockItemId')
   async linkSupplierProduct(
     @ManagerAuth() actor: ManagerAuthContext,
@@ -184,6 +192,39 @@ export class MobileController {
   }
 
   // ── Receiving / waybills ──────────────────────────────────────────────
+
+  @Post('inventory/receivings/:id/payments/:paymentId/reverse')
+  reverseSupplierPayment(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Param('paymentId') paymentId: string,
+    @Body() input: unknown,
+  ) {
+    return this.receiving.reversePayment(actor, id, paymentId, input);
+  }
+  @Post('inventory/receivings/:id/verify-settlement')
+  verifySupplierSettlement(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Body() input: unknown,
+  ) {
+    return this.receiving.verifyPayments(actor, id, input);
+  }
+  @Get('inventory/payables')
+  supplierPayables(
+    @ManagerTenant() tenant: TenantContext,
+    @Query('supplierId') supplierId?: string,
+  ) {
+    return this.receiving.payments(tenant, supplierId);
+  }
+  @Post('inventory/receivings/:id/payments')
+  supplierPayment(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Body() input: unknown,
+  ) {
+    return this.receiving.recordPayment(actor, id, input);
+  }
 
   @Get('inventory/receivings')
   listReceivings(

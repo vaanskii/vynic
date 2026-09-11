@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { procurementSummary } from './procurement-summary';
 import { InventoryCostService } from './inventory-cost.service';
+import { SupplierPayments } from './supplier-payments';
 import { Prisma, StockItemClassification } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import type { TenantContext } from '../tenancy/tenant-context';
@@ -27,7 +28,7 @@ import {
   type InventoryActor,
 } from './inventory-audit';
 import { presentMovement } from './receiving.service';
-import { RecipeService } from './recipe.service';
+import { RecipeService, menuGroup } from './recipe.service';
 
 export { InventoryAuditAction };
 
@@ -186,6 +187,29 @@ export class InventoryService {
         cleanId,
       ),
       usedBy,
+      purchaseHistory: (
+        await this.prisma.receivingLine.findMany({
+          where: {
+            stockItemId: cleanId,
+            receiving: { venueId: tenant.venueId, status: 'POSTED' },
+          },
+          include: {
+            receiving: {
+              select: { businessDate: true, supplierNameSnapshot: true },
+            },
+          },
+          orderBy: { receiving: { postedAt: 'desc' } },
+          take: 20,
+        })
+      ).map((l) => ({
+        receivingId: l.receivingId,
+        businessDate: l.receiving.businessDate,
+        supplierName: l.receiving.supplierNameSnapshot,
+        quantity: l.baseQuantity.toFixed(3),
+        baseUnit: l.baseUnit,
+        total: l.lineTotal.toFixed(2),
+        unitCost: l.effectiveBaseUnitCost.toFixed(6),
+      })),
       recentMovements: movements.map((movement) => ({
         ...presentMovement(movement),
         receiving: movement.receiving
@@ -324,6 +348,21 @@ export class InventoryService {
     return {
       ...overview,
       menuItems,
+      costsByItem: Object.fromEntries(
+        [
+          ...(await new InventoryCostService(this.prisma).bases(
+            tenant,
+            items.map((i) => i.id),
+          )),
+        ].map(([key, g]) => [
+          key.slice(0, key.lastIndexOf(':')),
+          {
+            unitCost: g.cost?.toFixed(6) ?? null,
+            inventoryValue: g.value.toFixed(12),
+            status: g.provisional ? 'PROVISIONAL' : 'AVAILABLE',
+          },
+        ]),
+      ),
       movementsByItem: Object.fromEntries(
         items.map((item) => [item.id, item.movements.map(presentMovement)]),
       ),
@@ -698,6 +737,176 @@ export class InventoryService {
     });
   }
 
+  async addSuppliedItem(actor: InventoryActor, supplierId: string, input: any) {
+    const mode = input.mode;
+    if (!['menu', 'ingredient', 'bulk', 'existing'].includes(mode))
+      throw new BadRequestException('Invalid supplied item mode');
+    return this.prisma.$transaction(async (tx) => {
+      const supplier = await tx.supplier.findFirst({
+        where: { id: supplierId, venueId: actor.venueId, isActive: true },
+      });
+      if (!supplier) throw new NotFoundException('Supplier not found');
+      const menuId =
+        mode === 'menu' ? requiredText(input.menuItemId, 'menuItemId') : null;
+      if (menuId)
+        await tx.$queryRaw`SELECT id FROM pos."MenuItem" WHERE id=${menuId} AND "venueId"=${actor.venueId} FOR UPDATE`;
+      const menu = menuId
+        ? await tx.menuItem.findFirst({
+            where: { id: menuId, venueId: actor.venueId },
+            include: { variants: true, category: true, subcategory: true },
+          })
+        : null;
+      if (menuId && !menu) throw new NotFoundException('Menu item not found');
+      const variantId = optionalText(input.variantId);
+      if (menu && variantId && !menu.variants.some((v) => v.id === variantId))
+        throw new NotFoundException('Menu variant not found');
+      if (menu && menu.variants.length && !variantId)
+        throw new BadRequestException('Select the Menu variant');
+      const recipe = menu
+        ? await tx.menuConsumptionRecipe.findFirst({
+            where: {
+              venueId: actor.venueId,
+              menuItemId: menu.id,
+              variantKey: variantId ?? '',
+            },
+            include: { components: true },
+          })
+        : null;
+      if (
+        recipe &&
+        (!recipe.isActive ||
+          recipe.components.length !== 1 ||
+          !recipe.components[0].baseQuantityPerUnit.eq(1) ||
+          !['piece', 'bottle'].includes(recipe.components[0].baseUnit))
+      )
+        throw new BadRequestException(
+          'This Menu item has a recipe; use its existing ingredients or edit the recipe explicitly',
+        );
+      const requestId =
+        input.requestId == null
+          ? null
+          : requiredText(input.requestId, 'requestId');
+      if (requestId && !/^[0-9a-f-]{36}$/i.test(requestId))
+        throw new BadRequestException('requestId must be UUID');
+      if (requestId)
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${actor.venueId + ':item:' + requestId},0))`;
+      const previous = requestId
+        ? await tx.stockItem.findUnique({
+            where: {
+              venueId_creationRequestId: {
+                venueId: actor.venueId,
+                creationRequestId: requestId,
+              },
+            },
+          })
+        : null;
+      if (
+        recipe &&
+        input.stockItemId &&
+        recipe.components[0].stockItemId !== input.stockItemId
+      )
+        throw new BadRequestException('Menu already linked to different stock');
+      const stockId =
+        previous?.id ??
+        recipe?.components[0].stockItemId ??
+        (input.stockItemId
+          ? requiredText(input.stockItemId, 'stockItemId')
+          : null);
+      let item = stockId
+        ? await tx.stockItem.findFirst({
+            where: { id: stockId, venueId: actor.venueId, isActive: true },
+          })
+        : null;
+      if (stockId && !item) throw new NotFoundException('Stock item not found');
+      if (mode === 'existing' && !item)
+        throw new BadRequestException('Choose an inventory item');
+      const baseUnit = menu
+        ? 'piece'
+        : mode === 'bulk'
+          ? 'L'
+          : stockBaseUnit(input.baseUnit ?? 'kg');
+      if (
+        previous &&
+        (previous.name !== (menu?.nameKa ?? input.name?.trim()) ||
+          previous.baseUnit !== baseUnit)
+      )
+        throw new BadRequestException(
+          'Creation request already used for different goods',
+        );
+      if (menu && item && !['piece', 'bottle'].includes(item.baseUnit))
+        throw new BadRequestException('Direct Menu goods require piece stock');
+      if (!item) {
+        item = await tx.stockItem.create({
+          data: {
+            creationRequestId: requestId,
+            venueId: actor.venueId,
+            name: menu?.nameKa ?? requiredText(input.name, 'name'),
+            baseUnit,
+            classification:
+              mode === 'bulk' ||
+              menuGroup([
+                menu?.category?.nameKa,
+                menu?.category?.nameEn,
+                menu?.subcategory?.nameKa,
+                menu?.subcategory?.nameEn,
+              ]) === 'BEVERAGE'
+                ? 'BEVERAGE'
+                : 'FOOD',
+          },
+        });
+        await writeInventoryAudit(tx, actor, {
+          action: 'STOCK_ITEM_CREATED',
+          entityType: 'STOCK_ITEM',
+          entityId: item.id,
+          data: { name: item.name, baseUnit: item.baseUnit },
+        });
+      }
+      if (input.purchaseUnits != null) {
+        const units = readPurchaseUnits(input.purchaseUnits, item.baseUnit);
+        for (const unit of units) {
+          const old = await tx.stockItemPurchaseUnit.findUnique({
+            where: {
+              stockItemId_unit: { stockItemId: item.id, unit: unit.unit },
+            },
+          });
+          if (old && !old.baseUnitMultiplier.eq(unit.baseUnitMultiplier))
+            throw new BadRequestException(
+              'Packaging differs from existing item; edit packaging explicitly',
+            );
+          if (!old)
+            await tx.stockItemPurchaseUnit.create({
+              data: { venueId: actor.venueId, stockItemId: item.id, ...unit },
+            });
+        }
+      }
+      const linked = await tx.supplierProduct.createMany({
+        data: [{ venueId: actor.venueId, supplierId, stockItemId: item.id }],
+        skipDuplicates: true,
+      });
+      if (menu && !recipe)
+        await this.recipes.save(
+          actor,
+          {
+            menuItemId: menu.id,
+            variantId,
+            yieldQuantity: '1',
+            components: [
+              { stockItemId: item.id, quantity: '1', unit: item.baseUnit },
+            ],
+          },
+          tx,
+        );
+      if (linked.count)
+        await writeInventoryAudit(tx, actor, {
+          action: 'SUPPLIER_ITEM_LINKED',
+          entityType: 'SUPPLIER',
+          entityId: supplierId,
+          data: { stockItemId: item.id, menuItemId: menu?.id ?? null },
+        });
+      return { stockItemId: item.id, menuItemId: menu?.id ?? null };
+    });
+  }
+
   async supplierDetail(tenant: TenantContext, id: string) {
     const supplier = await this.prisma.supplier.findFirst({
       where: { venueId: tenant.venueId, id },
@@ -706,7 +915,7 @@ export class InventoryService {
     const [links, recentReceivings] = await Promise.all([
       this.prisma.supplierProduct.findMany({
         where: { venueId: tenant.venueId, supplierId: id },
-        include: { stockItem: true },
+        include: { stockItem: { include: { purchaseUnits: true } } },
       }),
       this.prisma.receiving.findMany({
         where: { venueId: tenant.venueId, supplierId: id },
@@ -723,10 +932,16 @@ export class InventoryService {
     ]);
     return {
       ...this.presentSupplier(supplier),
+      settlement: await new SupplierPayments(this.prisma).list(tenant, id),
       products: links.map((link) => ({
         id: link.stockItem.id,
         name: link.stockItem.name,
         classification: link.stockItem.classification,
+        baseUnit: link.stockItem.baseUnit,
+        purchaseUnits: link.stockItem.purchaseUnits.map((u) => ({
+          unit: u.unit,
+          baseUnitMultiplier: u.baseUnitMultiplier.toString(),
+        })),
       })),
       recentReceivings: recentReceivings.map((row) => ({
         ...row,
@@ -763,9 +978,7 @@ export class InventoryService {
         : (await tx.supplierProduct.deleteMany({ where: key })).count;
       if (changed)
         await writeInventoryAudit(tx, actor, {
-          action: linked
-            ? 'SUPPLIER_PRODUCT_LINKED'
-            : 'SUPPLIER_PRODUCT_UNLINKED',
+          action: linked ? 'SUPPLIER_ITEM_LINKED' : 'SUPPLIER_ITEM_UNLINKED',
           entityType: 'SUPPLIER',
           entityId: supplierId,
           data: {

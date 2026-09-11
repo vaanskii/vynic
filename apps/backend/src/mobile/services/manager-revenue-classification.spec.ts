@@ -61,7 +61,11 @@ function makePrisma(fixture: Fixture = {}) {
     obligationPayment: {
       aggregate: jest.fn().mockResolvedValue({ _sum: { amount: null } }),
     },
+    supplierPayment: {
+      aggregate: jest.fn().mockResolvedValue({ _sum: { amount: null } }),
+    },
     receiving: {
+      findMany: jest.fn().mockResolvedValue([]),
       aggregate: jest
         .fn()
         .mockResolvedValue({ _sum: { documentTotal: null }, _count: 0 }),

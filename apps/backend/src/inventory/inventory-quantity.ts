@@ -27,6 +27,11 @@ export const BASE_UNIT_COST_SCALE = 6;
 /** Packaging ratios. Matches `Decimal(18, 6)`. */
 export const MULTIPLIER_SCALE = 6;
 
+const Exact = Prisma.Decimal.clone({
+  precision: 60,
+  rounding: Prisma.Decimal.ROUND_HALF_UP,
+});
+
 const ROUND_HALF_UP = Prisma.Decimal.ROUND_HALF_UP;
 
 function parseDecimal(raw: unknown, field: string): Prisma.Decimal {
@@ -37,7 +42,7 @@ function parseDecimal(raw: unknown, field: string): Prisma.Decimal {
   if (!/^-?\d+(?:\.\d+)?$/.test(text)) {
     throw new BadRequestException(`${field} must be a decimal number`);
   }
-  const value = new Prisma.Decimal(text);
+  const value = new Exact(text);
   if (!value.isFinite()) {
     throw new BadRequestException(`${field} must be finite`);
   }
@@ -273,7 +278,11 @@ export function lineMoney(input: {
   unitPurchaseCost: Prisma.Decimal;
   baseQuantity: Prisma.Decimal;
 }): LineMoney {
-  const lineTotal = money(input.enteredQuantity.times(input.unitPurchaseCost));
+  const lineTotal = money(
+    new Exact(input.enteredQuantity.toString()).times(
+      input.unitPurchaseCost.toString(),
+    ),
+  );
   const effectiveBaseUnitCost = input.baseQuantity.isZero()
     ? new Prisma.Decimal(0)
     : lineTotal

@@ -210,6 +210,8 @@ model StockItem {
   updatedAt    DateTime @updatedAt
   venue        Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  creationRequestId         String?
+  @@unique([venueId, creationRequestId])
   supplierProducts          SupplierProduct[]
   purchaseUnits             StockItemPurchaseUnit[]
   receivingLines            ReceivingLine[]
@@ -331,7 +333,14 @@ model Receiving {
   supplier             Supplier        @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   lines                ReceivingLine[]
   movements            StockMovement[]
+  creationRequestId    String?
+  creationFingerprint  String?
+  @@unique([venueId, creationRequestId])
+  payments             SupplierPayment[]
+  dueDate              String?
+  paymentHistoryKnown  Boolean @default(true)
 
+  @@unique([venueId, id])
   @@index([venueId, businessDate, createdAt, id])
   @@index([venueId, documentDate, createdAt, id])
   @@index([venueId, status, documentDate])
@@ -396,6 +405,10 @@ model StockMovement {
   /// Signed change in the Stock Item's own base unit.
   quantityDeltaBase      Decimal                   @db.Decimal(21, 6)
   baseUnit               String
+  costPerBaseUnit        Decimal? @db.Decimal(30, 12)
+  inventoryValueDelta    Decimal? @db.Decimal(30, 12)
+  valuationStatus        String @default("UNVALUED")
+  valuationSequence      BigInt @unique @default(autoincrement())
   consumptionComponentId String?
   consumptionComponent   SaleConsumptionComponent? @relation(fields: [consumptionComponentId], references: [id], onDelete: Restrict)
   receivingId            String?
@@ -1765,6 +1778,30 @@ model ObligationPayment {
   venue             Venue           @relation(fields: [venueId], references: [id], onDelete: Restrict)
   cycle             ObligationCycle @relation(fields: [venueId, obligationCycleId], references: [venueId, id], onDelete: Restrict)
 
+  @@index([venueId, businessDate])
+  @@schema("pos")
+}
+
+/// Append-only actual supplier disbursements, allocated to one frozen receipt.
+model SupplierPayment {
+  id String @id @default(uuid())
+  venueId String
+  receivingId String
+  requestId String
+  amount Decimal @db.Decimal(18, 2)
+  paymentDate String
+  businessDate String
+  method String
+  actorId String
+  actorName String
+  notes String?
+  reference String?
+  reversalOfId String? @unique
+  reversalOf SupplierPayment? @relation("SupplierPaymentReversal",fields:[reversalOfId],references:[id],onDelete:NoAction,onUpdate:NoAction,map:"SupplierPayment_reversal_fkey")
+  reversal SupplierPayment? @relation("SupplierPaymentReversal")
+  createdAt DateTime @default(now())
+  receiving Receiving @relation(fields: [venueId, receivingId], references: [venueId, id], onDelete: Restrict, map:"SupplierPayment_receiving_fkey")
+  @@unique([venueId, requestId])
   @@index([venueId, businessDate])
   @@schema("pos")
 }

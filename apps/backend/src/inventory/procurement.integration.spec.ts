@@ -157,7 +157,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
       expect(financials.procurement.businessDay.total).toBe('500.00');
       expect(financials.otherExpenses).toBe('25.00');
       expect(financials.salaryPayments).toBe('75.00');
-      expect(financials.totalOutflows).toBe('600.00');
+      expect(financials.totalOutflows).toBe('100.00');
       expect(financials.expenses).toBe(100);
       expect(financials.expenseEntries).toHaveLength(2);
       expect(await db.auditEventLog.count({ where: { venueId } })).toBe(

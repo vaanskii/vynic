@@ -175,7 +175,7 @@ const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
         await db.auditEventLog.count({
           where: {
             venueId: a.venueId,
-            action: 'SUPPLIER_PRODUCT_LINKED',
+            action: 'SUPPLIER_ITEM_LINKED',
             entityId: supplier.id,
           },
         }),

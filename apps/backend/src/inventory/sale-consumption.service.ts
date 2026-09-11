@@ -1,3 +1,4 @@
+import { presentMovement } from './receiving.service';
 import {
   BadRequestException,
   ConflictException,
@@ -103,6 +104,17 @@ export class SaleConsumptionService {
         // Serialize the same durable identity across devices/processes, including
         // its first insertion; timestamps are never idempotency keys.
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${tenant.venueId + ':' + posSaleId}, 0))`;
+        const itemIds: string[] = [
+          ...new Set<string>(
+            snapshot.lines.flatMap((l: any) =>
+              l.components.map((c: any) => String(c.stockItemId)),
+            ),
+          ),
+        ].sort();
+        if (itemIds.length)
+          await tx.$queryRaw(
+            Prisma.sql`SELECT id FROM pos."StockItem" WHERE "venueId"=${tenant.venueId} AND id IN (${Prisma.join(itemIds)}) ORDER BY id FOR UPDATE`,
+          );
         let stored = await tx.saleConsumption.findUnique({
           where: { venueId_posSaleId: { venueId: tenant.venueId, posSaleId } },
         });
@@ -337,7 +349,10 @@ export class SaleConsumptionService {
     const row = await this.prisma.saleConsumption.findFirst({
       where: { venueId: tenant.venueId, id },
       include: {
-        lines: { orderBy: { lineSeq: 'asc' }, include: { components: true } },
+        lines: {
+          orderBy: { lineSeq: 'asc' },
+          include: { components: { include: { movements: true } } },
+        },
       },
     });
     if (!row) throw new NotFoundException('Sale consumption not found');
@@ -347,6 +362,7 @@ export class SaleConsumptionService {
         ...line,
         components: line.components.map((component) => ({
           ...component,
+          movements: component.movements.map(presentMovement),
           baseQuantityPerUnit: component.baseQuantityPerUnit.toFixed(6),
           totalBaseQuantity: component.totalBaseQuantity.toFixed(6),
         })),

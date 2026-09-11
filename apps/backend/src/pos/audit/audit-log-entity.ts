@@ -197,6 +197,20 @@ const ACTION_RULES: Readonly<Record<string, EntityRule>> = {
     entityType: 'STOCK_ITEM',
     idKeys: ['stockItemId'],
   },
+  SUPPLIER_ITEM_LINKED: { entityType: 'SUPPLIER', idKeys: ['supplierId'] },
+  SUPPLIER_ITEM_UNLINKED: { entityType: 'SUPPLIER', idKeys: ['supplierId'] },
+  SUPPLIER_PAYMENT_RECORDED: {
+    entityType: 'RECEIVING',
+    idKeys: ['receivingId'],
+  },
+  SUPPLIER_PAYMENT_REVERSED: {
+    entityType: 'RECEIVING',
+    idKeys: ['receivingId'],
+  },
+  SUPPLIER_SETTLEMENT_VERIFIED: {
+    entityType: 'RECEIVING',
+    idKeys: ['receivingId'],
+  },
   SUPPLIER_PRODUCT_LINKED: { entityType: 'SUPPLIER', idKeys: ['supplierId'] },
   SUPPLIER_PRODUCT_UNLINKED: { entityType: 'SUPPLIER', idKeys: ['supplierId'] },
   SUPPLIER_CREATED: { entityType: 'SUPPLIER', idKeys: ['supplierId'] },

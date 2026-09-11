@@ -592,6 +592,16 @@ current transport status.
   obtain a token without a Venue-discriminating login contract.
 - Notification raising still assigns some sync-triggered notifications to the
   bootstrap Venue instead of carrying the authenticated sync tenant through.
+- The Manager WebSocket gateway joins every authenticated manager to one
+  `managers` room, so sync broadcasts are not Venue-scoped, and the
+  Manager-authenticated `GET /sync/diff` reads bootstrap-Venue tables/orders
+  (no Flutter caller found). Both are single-tenant holdovers, not
+  compatibility paths.
+- Feature entitlement has exactly three seeded keys (`POS`, `WEBSITE`,
+  `MANAGER_APP`); Inventory, Payroll, Obligations and Audit are all bundled
+  under `MANAGER_APP`.
+- POS printer, backend-URL, error-log and restore/wipe sections require a
+  signed developer token; a restaurant cannot configure printers itself.
 - Production Cloud deployment foundations (origins, HTTPS, CORS, runtime
   secrets, hosting, and deployment verification) are not established.
 - Full legacy callback retirement depends on real fleet enrollment, not merely

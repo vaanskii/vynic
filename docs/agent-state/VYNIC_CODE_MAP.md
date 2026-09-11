@@ -11,6 +11,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Custom Vankisi website: `apps/venue-web/`
 - Shared generated contracts: `packages/contracts/`
 - Architecture and state: `docs/`
+- SaaS readiness master audit and roadmap: `docs/SAAS_READINESS_AUDIT.md`
 
 ## POS / Operations Shell
 

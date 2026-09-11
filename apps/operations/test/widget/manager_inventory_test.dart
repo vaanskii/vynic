@@ -33,6 +33,7 @@ Widget _app() => MaterialApp(
   theme: ThemeData.dark(useMaterial3: true),
   home: Scaffold(
     body: InventoryAdminTab(
+      initialSection: 0,
       loadStockItems: () async => [_stock],
       loadSuppliers: () async => [_supplier],
       loadReceivings: () async => const ReceivingPage(receivings: []),
@@ -79,12 +80,21 @@ void main() {
     await tester.tap(find.text('გაუქმება'));
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.text('რედაქტირება').first);
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.byKey(const Key('inventory-admin-list')),
+      const Offset(0, -250),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.text('რედაქტირება').first);
     await tester.pumpAndSettle();
     expect(find.widgetWithText(TextField, 'Beef'), findsOneWidget);
     await tester.tap(find.text('გაუქმება'));
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.text('მომწოდებლები'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('მომწოდებლები'));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('supplier-list')), findsOneWidget);

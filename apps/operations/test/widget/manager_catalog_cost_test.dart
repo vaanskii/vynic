@@ -90,6 +90,7 @@ void main() {
       await tester.pumpWidget(
         app(
           InventoryAdminTab(
+            initialSection: 0,
             loadStockItems: () async => stocks,
             loadSuppliers: () async => [supplier],
             loadReceivings: () async => const ReceivingPage(receivings: []),
@@ -150,7 +151,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('მისი პროდუქტები'), findsOneWidget);
+      expect(find.text('მისი საქონელი'), findsOneWidget);
       expect(find.text('ბოლო მიღებები'), findsOneWidget);
       await tester.tap(find.text('პროდუქტის მიბმა'));
       await tester.pumpAndSettle();
@@ -214,7 +215,7 @@ void main() {
       );
       await tester.enterText(
         find.byKey(const Key('receiving-line-cost-0')),
-        '12',
+        '1.20',
       );
       await tester.pumpAndSettle();
       expect(find.text('მიღებული: 100 ცალი'), findsOneWidget);
@@ -225,7 +226,7 @@ void main() {
       await tester.tap(find.byKey(const Key('receiving-save')));
       await tester.pumpAndSettle();
       expect(saved?['businessDate'], '2026-09-05');
-      expect((saved?['lines'] as List).single['unitPurchaseCost'], '12');
+      expect((saved?['lines'] as List).single['unitPurchaseCost'], '1.20');
     },
   );
 

@@ -59,7 +59,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Cloud Manager-only routes: `apps/backend/src/finance/finance.controller.ts`; server-owned tenant/actor and business-date convention: `finance-common.ts` in the same directory.
 - Staff compensation, frozen monthly payroll, explicit daily/manual accrual and historical payments: `apps/backend/src/finance/payroll.service.ts`.
 - Obligation templates, immutable month snapshots, reserve consumption and payment concurrency: `apps/backend/src/finance/obligations.service.ts`; exact date/money calculations: `finance-rules.ts`.
-- Actual payment aggregation: `apps/backend/src/finance/financial-summary.ts`; purchases + expenses + legacy/new payroll + obligations composition: `apps/backend/src/mobile/services/mobile-dashboard.service.ts`.
+- Actual payment aggregation: `apps/backend/src/finance/financial-summary.ts`; supplier payments + expenses + legacy/new payroll + obligations outflows: `apps/backend/src/mobile/services/mobile-dashboard.service.ts`.
 - Daily state commands and linked signed adjustments: `POST /mobile/finance/payroll/:id/day` in the finance controller/service; `apps/backend/prisma/migrations/20260914120000_payroll_day_adjustments/`.
 - Step 4.7 schema/migration: `apps/backend/prisma/migrations/20260913120000_payroll_obligations/`; real PostgreSQL proofs: `apps/backend/src/finance/finance.integration.spec.ts`, `finance-rules.spec.ts`.
 - Manager Payroll/Obligations, Staff detail, entry forms and history: `apps/operations/lib/apps/mobile_app/presentation/screens/finance_planning_screen.dart`; Financials links/composition: `financials_screen.dart` beside it; Dashboard card: `apps/operations/lib/apps/mobile_app/presentation/widgets/financial_planning_card.dart`.
@@ -161,6 +161,10 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Proofs: `apps/operations/test/unit/menu_item_identity_test.dart`, `apps/backend/src/pos/sync/snapshot/menu-sync.service.spec.ts`, `apps/backend/src/pos/sync/snapshot/menu-sync.integration.spec.ts`
 
 ## Inventory
+
+- Current supplier-first procurement, payables, moving valuation, migration and rollout: `docs/INVENTORY_PROCUREMENT_REWORK.md`; whole-workflow proof: `apps/backend/src/inventory/procurement-rework.integration.spec.ts`.
+- Actual supplier payments, derived debt, historical verification and reversals: `apps/backend/src/inventory/supplier-payments.ts`; PostgreSQL value writer: `apps/backend/prisma/migrations/20260916120000_inventory_procurement/migration.sql`.
+- Supplier goods and payment forms: `apps/operations/lib/apps/mobile_app/presentation/screens/admin_screen/tabs/mobile_admin_procurement.dart`; exact previews: `apps/operations/lib/core/models/inventory_decimal.dart`; responsive proof: `apps/operations/test/widget/procurement_rework_test.dart`.
 
 - Step 4.6 UX and procurement semantics/rollout: `docs/INVENTORY_STEP46.md`.
 - POSTED-only day/month purchase totals: `apps/backend/src/inventory/procurement-summary.ts`; financial composition and legacy Expense-category guard: `apps/backend/src/mobile/services/mobile-dashboard.service.ts`, `apps/backend/src/mobile/util/expense-category.ts`; proof: `apps/backend/src/inventory/procurement.integration.spec.ts`.

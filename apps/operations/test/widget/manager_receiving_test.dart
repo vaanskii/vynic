@@ -381,6 +381,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      await tester.tap(find.byKey(const Key('receiving-price-mode-0')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('შესყიდვის ერთეულის ფასი').last);
+      await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const Key('receiving-waybill')),
         '123456',
@@ -417,6 +421,7 @@ void main() {
           'stockItemId': 'stock-lemonade',
           'enteredQuantity': '10',
           'enteredUnit': 'box',
+          'priceBasis': 'entered',
           'unitPurchaseCost': '28.80',
         },
       ]);

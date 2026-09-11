@@ -291,6 +291,23 @@ class _ReceivingDetailDialogState extends State<ReceivingDetailDialog> {
       mainAxisSize: MainAxisSize.min,
       children: [
         _detailRow('მომწოდებელი', receiving.supplierName),
+        if (receiving.isPosted) ...[
+          _detailRow('გადახდილი', '${receiving.paid} ₾'),
+          _detailRow(
+            'დარჩენილი',
+            '${receiving.remaining} ₾ · ${_paymentLabel(receiving.paymentStatus)}',
+          ),
+          if (receiving.dueDate != null)
+            _detailRow('გადახდის ვადა', receiving.dueDate!),
+          OutlinedButton(
+            onPressed: () => showDialog<void>(
+              context: context,
+              builder: (_) =>
+                  SupplierPayablesDialog(supplierId: receiving.supplierId),
+            ).then((_) => _load()),
+            child: const Text('გადახდის დაფიქსირება'),
+          ),
+        ],
         if (receiving.waybillNumber != null)
           _detailRow('ზედნადები', receiving.waybillNumber!),
         if (receiving.invoiceNumber != null)
@@ -641,6 +658,7 @@ class _ReceivingLineDraft {
   InventoryUnit? unit;
   final TextEditingController quantity;
   final TextEditingController cost;
+  String priceMode = "base";
 
   double get quantityValue =>
       double.tryParse(quantity.text.trim().replaceAll(',', '.')) ?? 0;
@@ -648,28 +666,56 @@ class _ReceivingLineDraft {
       double.tryParse(cost.text.trim().replaceAll(',', '.')) ?? 0;
 
   /// Preview only. Cloud recomputes both exactly before anything is stored.
-  double get lineTotal => quantityValue * costValue;
-
-  /// How many base units this line delivers, using the item's own packaging.
-  double? get baseQuantity {
-    final item = stockItem;
-    final entered = unit;
-    if (item == null || entered == null) return null;
-    if (entered == item.baseUnit) return quantityValue;
-    for (final purchase in item.purchaseUnits) {
-      if (purchase.unit == entered) return quantityValue * purchase.multiplier;
-    }
-    if (entered.dimension != item.baseUnit.dimension) return null;
+  InventoryDecimal get lineTotal {
     try {
-      return convertInventoryQuantity(
-        quantityValue,
-        from: entered,
-        to: item.baseUnit,
-      );
-    } catch (_) {
+      final price = InventoryDecimal.parse(
+        cost.text,
+      ).round(priceMode == "total" ? 2 : 4);
+      if (priceMode == 'total') return price;
+      return ((priceMode == 'base'
+                  ? (exactBaseQuantity ?? InventoryDecimal.zero)
+                  : InventoryDecimal.parse(quantity.text).round(3)) *
+              price)
+          .round(2);
+    } on FormatException {
+      return InventoryDecimal.zero;
+    }
+  }
+
+  String? get effectiveCost {
+    final base = exactBaseQuantity;
+    if (base == null || base.raw <= BigInt.zero) return null;
+    return (lineTotal / base).toStringAsFixed(6);
+  }
+
+  InventoryDecimal? get exactBaseQuantity {
+    final item = stockItem, entered = unit;
+    if (item == null || entered == null) return null;
+    try {
+      final q = InventoryDecimal.parse(quantity.text).round(3);
+      if (entered == item.baseUnit) return q;
+      for (final p in item.purchaseUnits) {
+        if (p.unit == entered)
+          return (q * InventoryDecimal.parse(p.baseUnitMultiplier)).round(3);
+      }
+      if (entered.dimension != item.baseUnit.dimension) return null;
+      const ratios = {'kg': '1000', 'g': '1', 'L': '1000', 'ml': '1'};
+      if (!ratios.containsKey(entered.wireValue) ||
+          !ratios.containsKey(item.baseUnit.wireValue))
+        return null;
+      return (q *
+              InventoryDecimal.parse(ratios[entered.wireValue]!) /
+              InventoryDecimal.parse(ratios[item.baseUnit.wireValue]!))
+          .round(3);
+    } on FormatException {
       return null;
     }
   }
+
+  /// How many base units this line delivers, using the item's own packaging.
+  double? get baseQuantity => exactBaseQuantity == null
+      ? null
+      : double.parse(exactBaseQuantity!.toStringAsFixed(3));
 
   /// Units this item may legitimately be received in.
   List<InventoryUnit> get allowedUnits {
@@ -722,12 +768,16 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
   DateTime? _businessDate;
   late List<_ReceivingLineDraft> _lines;
   bool _saving = false;
+  String? _savedDraftId;
+  final _requestId = const Uuid().v4();
+  final _dueDate = TextEditingController();
   String? _error;
 
   @override
   void initState() {
     super.initState();
     final receiving = widget.receiving;
+    _dueDate.text = receiving?.dueDate ?? "";
     _waybill = TextEditingController(text: receiving?.waybillNumber ?? '');
     _invoice = TextEditingController(text: receiving?.invoiceNumber ?? '');
     _notes = TextEditingController(text: receiving?.notes ?? '');
@@ -750,14 +800,15 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
           quantity: TextEditingController(
             text: _quantityText(line.enteredQuantity),
           ),
-          cost: TextEditingController(text: line.unitPurchaseCost),
-        ),
+          cost: TextEditingController(text: line.lineTotal),
+        )..priceMode = "total",
     ];
     if (_lines.isEmpty) _addLine();
   }
 
   @override
   void dispose() {
+    _dueDate.dispose();
     _waybill.dispose();
     _invoice.dispose();
     _notes.dispose();
@@ -792,8 +843,10 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
     );
   }
 
-  double get _documentTotal =>
-      _lines.fold(0, (total, line) => total + line.lineTotal);
+  InventoryDecimal get _documentTotal => _lines.fold(
+    InventoryDecimal.zero,
+    (total, line) => total + line.lineTotal,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -982,6 +1035,12 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
                     ),
                   ],
                 ),
+                TextField(
+                  controller: _dueDate,
+                  decoration: _adminInput(
+                    "გადახდის ვადა (არასავალდებულო) YYYY-MM-DD",
+                  ),
+                ),
                 if (_error != null) ...[
                   const SizedBox(height: 8),
                   Align(
@@ -1004,9 +1063,14 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
               style: TextStyle(color: AdminTheme.textMuted),
             ),
           ),
+          TextButton(
+            key: const Key('receiving-save-draft'),
+            onPressed: _saving ? null : () => _save(),
+            child: const Text('მონახაზის შენახვა'),
+          ),
           FilledButton(
             key: const Key('receiving-save'),
-            onPressed: _saving ? null : _save,
+            onPressed: _saving ? null : () => _save(post: true),
             style: FilledButton.styleFrom(backgroundColor: AdminTheme.primary),
             child: _saving
                 ? const SizedBox.square(
@@ -1016,7 +1080,10 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
                       color: Colors.white,
                     ),
                   )
-                : const Text('შენახვა', style: TextStyle(color: Colors.white)),
+                : const Text(
+                    'მიღება და მარაგში დამატება',
+                    style: TextStyle(color: Colors.white),
+                  ),
           ),
         ],
       ),
@@ -1077,7 +1144,39 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
             ],
           ),
           const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            key: Key('receiving-price-mode-$index'),
+            initialValue: line.priceMode,
+            isExpanded: true,
+            decoration: _adminInput('ფასის შეყვანა'),
+            items: const [
+              DropdownMenuItem(
+                value: 'entered',
+                child: Text('შესყიდვის ერთეულის ფასი'),
+              ),
+              DropdownMenuItem(
+                value: 'base',
+                child: Text('მარაგის ერთეულის ფასი'),
+              ),
+              DropdownMenuItem(
+                value: 'total',
+                child: Text('პოზიციის სრული თანხა'),
+              ),
+            ],
+            onChanged: _saving
+                ? null
+                : (v) => setState(() => line.priceMode = v!),
+          ),
+          const SizedBox(height: 10),
           _amountFields(line, index),
+          if (line.effectiveCost != null && line.stockItem != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                '${line.effectiveCost} ₾ / ${_unitShort(line.stockItem!.baseUnit)}',
+                style: TextStyle(color: AdminTheme.textMuted),
+              ),
+            ),
           const SizedBox(height: 6),
           if (converted &&
               line.stockItem!.purchaseUnits.any((p) => p.unit == line.unit))
@@ -1092,7 +1191,7 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
               Expanded(
                 child: converted && base != null
                     ? Text(
-                        'მიღებული: ${_quantity(base)} ${_unitShort(line.stockItem!.baseUnit)}',
+                        'მიღებული: ${line.exactBaseQuantity?.toStringAsFixed(3).replaceFirst(RegExp(r'\.?0+$'), '') ?? '—'} ${_unitShort(line.stockItem!.baseUnit)}',
                         key: Key('receiving-line-base-$index'),
                         style: TextStyle(
                           color: AdminTheme.textMuted,
@@ -1151,7 +1250,13 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
         context,
       ).textTheme.bodyMedium!.copyWith(color: AdminTheme.text),
       decoration: _adminInput(
-        'დღევანდელი ფასი / ${line.unit == null ? '' : _unitShort(line.unit!)}',
+        line.priceMode == 'total'
+            ? 'სრული თანხა ₾'
+            : 'დღევანდელი ფასი / ${line.priceMode == 'base'
+                  ? _unitShort(line.stockItem!.baseUnit)
+                  : line.unit == null
+                  ? ''
+                  : _unitShort(line.unit!)}',
       ),
     );
     return LayoutBuilder(
@@ -1193,7 +1298,7 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
     if (picked != null) setState(() => _documentDate = picked);
   }
 
-  Future<void> _save() async {
+  Future<void> _save({bool post = false}) async {
     if (_businessDate == null) {
       setState(() => _error = 'აირჩიეთ რესტორნის სამუშაო დღე');
       return;
@@ -1228,10 +1333,23 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
         'stockItemId': item.id,
         'enteredQuantity': line.quantity.text.trim().replaceAll(',', '.'),
         'enteredUnit': (line.unit ?? item.baseUnit).wireValue,
-        'unitPurchaseCost': line.cost.text.trim().replaceAll(',', '.').isEmpty
-            ? '0'
-            : line.cost.text.trim().replaceAll(',', '.'),
+        if (line.priceMode != 'total') 'priceBasis': line.priceMode,
+        line.priceMode == 'total' ? 'lineTotal' : 'unitPurchaseCost': line
+            .cost
+            .text
+            .trim()
+            .replaceAll(',', '.'),
       });
+    }
+    if (post && widget.save == null) {
+      final ok = await _confirmInventoryAction(
+        context,
+        title: 'საქონლის მიღება',
+        message:
+            'მიღება დაემატება მარაგს. თანხა: ${_documentTotal.toStringAsFixed(2)} ₾. გადახდა ცალკე აღირიცხება.',
+        confirmLabel: 'მიღება და მარაგში დამატება',
+      );
+      if (ok != true) return;
     }
     setState(() {
       _saving = true;
@@ -1241,6 +1359,7 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
       final save = widget.save;
       if (save != null) {
         await save(<String, dynamic>{
+          'post': post,
           'supplierId': _supplierId,
           'documentDate': _isoDate(_documentDate),
           if (_businessDate != null) 'businessDate': _isoDate(_businessDate!),
@@ -1248,8 +1367,17 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
           'lines': payload,
         });
       } else {
-        await MobileApiService.saveReceivingDraft(
-          id: widget.receiving?.id,
+        if (_savedDraftId != null) {
+          final existing = await MobileApiService.getReceiving(_savedDraftId!);
+          if (existing.isPosted) {
+            if (mounted) Navigator.pop(context, true);
+            return;
+          }
+        }
+        final saved = await MobileApiService.saveReceivingDraft(
+          id: _savedDraftId ?? widget.receiving?.id,
+          requestId: _requestId,
+          dueDate: _dueDate.text.trim(),
           supplierId: _supplierId,
           documentDate: _isoDate(_documentDate),
           businessDate: _isoDate(_businessDate!),
@@ -1258,6 +1386,8 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
           notes: _notes.text,
           lines: payload,
         );
+        _savedDraftId = saved.id;
+        if (post) await MobileApiService.postReceiving(saved.id);
       }
       if (mounted) Navigator.pop(context, true);
     } catch (error) {
@@ -1395,9 +1525,24 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
         ),
         const SizedBox(height: 12),
         Text(
-          'შესყიდვის საშუალო ფასი: ${detail.weightedUnitCost == null ? 'ისტორია არ არის' : '${_quantityText(detail.weightedUnitCost!)} ₾ / ${_unitShort(item.baseUnit)}'}',
+          'მარაგის საშუალო ფასი: ${detail.weightedUnitCost == null ? 'ისტორია არ არის' : '${_quantityText(detail.weightedUnitCost!)} ₾ / ${_unitShort(item.baseUnit)}'}',
           style: TextStyle(color: AdminTheme.text),
         ),
+        if (detail.costStatus == 'PROVISIONAL')
+          Text(
+            'შეფასება წინასწარია — შეამოწმეთ უარყოფითი მარაგის ისტორია',
+            style: TextStyle(color: AdminTheme.bad),
+          ),
+        if (detail.inventoryValue != null)
+          Text('მარაგის ღირებულება: ${detail.inventoryValue} ₾'),
+        for (final row in detail.purchaseHistory)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text('${row['businessDate']} · ${row['supplierName']}'),
+            subtitle: Text(
+              '${row['quantity']} ${row['baseUnit']} · ${row['total']} ₾ · ${row['unitCost']} ₾ / ${row['baseUnit']}',
+            ),
+          ),
         if (detail.lastPurchaseUnitCost != null)
           Text(
             'ბოლო შესყიდვის ფასი: ${_quantityText(detail.lastPurchaseUnitCost!)} ₾ / ${_unitShort(item.baseUnit)}',

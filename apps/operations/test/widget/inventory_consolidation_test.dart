@@ -98,8 +98,8 @@ void main() {
       for (final label in [
         'მომწოდებლები',
         'დღიური მიღება',
-        'რეცეპტები',
-        'პროდუქტები',
+        'მენიუს შემადგენლობა',
+        'ნაშთები',
       ]) {
         await tester.ensureVisible(find.text(label).first);
         await tester.tap(find.text(label).first);

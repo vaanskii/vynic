@@ -35,7 +35,7 @@ class _InventoryTabState extends State<InventoryAdminTab>
   bool get wantKeepAlive => true;
 
   late _InventorySection _section =
-      _InventorySection.values[widget.initialSection ?? 0];
+      _InventorySection.values[widget.initialSection ?? 1];
   final _search = TextEditingController();
   List<StockItem> _stockItems = const [];
   List<Supplier> _suppliers = const [];
@@ -136,6 +136,14 @@ class _InventoryTabState extends State<InventoryAdminTab>
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _sectionSelector(),
+                        TextButton.icon(
+                          onPressed: () => showDialog<void>(
+                            context: context,
+                            builder: (_) => const SupplierPayablesDialog(),
+                          ),
+                          icon: const Icon(Icons.payments_outlined),
+                          label: const Text('მომწოდებლის დავალიანება'),
+                        ),
                         Align(
                           alignment: Alignment.centerLeft,
                           child: TextButton.icon(
@@ -183,10 +191,10 @@ class _InventoryTabState extends State<InventoryAdminTab>
   Widget _sectionSelector() => LayoutBuilder(
     builder: (context, constraints) {
       const labels = [
-        'პროდუქტები',
+        'ნაშთები',
         'მომწოდებლები',
         'დღიური მიღება',
-        'რეცეპტები',
+        'მენიუს შემადგენლობა',
       ];
       const icons = [
         Icons.inventory_2_outlined,
@@ -202,7 +210,12 @@ class _InventoryTabState extends State<InventoryAdminTab>
         spacing: VynicSpacing.xs,
         runSpacing: VynicSpacing.xs,
         children: [
-          for (final section in _InventorySection.values)
+          for (final section in [
+            _InventorySection.suppliers,
+            _InventorySection.receiving,
+            _InventorySection.stockItems,
+            _InventorySection.recipes,
+          ])
             SizedBox(
               width: width,
               child: OutlinedButton(
@@ -1080,10 +1093,7 @@ class _InventoryStateBadge extends StatelessWidget {
 }
 
 class _InventoryMeta extends StatelessWidget {
-  const _InventoryMeta({
-    required this.icon,
-    required this.label,
-  });
+  const _InventoryMeta({required this.icon, required this.label});
   final IconData icon;
   final String label;
 
@@ -1855,6 +1865,7 @@ class _SupplierDetailDialogState extends State<SupplierDetailDialog> {
   String _search = '';
   bool _busy = false;
   bool _selecting = false;
+  List<StockItem>? _freshStock;
   @override
   void initState() {
     super.initState();
@@ -1884,6 +1895,52 @@ class _SupplierDetailDialogState extends State<SupplierDetailDialog> {
       await _load();
     } catch (error) {
       if (mounted) setState(() => _error = '$error');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _newReceiving() async {
+    setState(() => _busy = true);
+    try {
+      final stock = await MobileApiService.getStockItems();
+      final suppliers = await MobileApiService.getSuppliers();
+      final page = await MobileApiService.getReceivings();
+      if (!mounted) return;
+      await showDialog<bool>(
+        context: context,
+        builder: (_) => ReceivingEditorDialog(
+          suppliers: suppliers
+              .where((s) => s.id == widget.supplier.id)
+              .toList(),
+          stockItems: stock,
+          businessDate: page.currentBusinessDate,
+        ),
+      );
+      await _load();
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _addGoods() async {
+    setState(() => _busy = true);
+    try {
+      final changed = await showDialog<bool>(
+        context: context,
+        builder: (_) => SuppliedItemDialog(
+          supplierId: widget.supplier.id,
+          stockItems: _freshStock ?? widget.stockItems,
+        ),
+      );
+      if (changed == true) {
+        _freshStock = await MobileApiService.getStockItems();
+        await _load();
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -1922,8 +1979,41 @@ class _SupplierDetailDialogState extends State<SupplierDetailDialog> {
                 ],
                 if (_detail == null && _error == null)
                   const Center(child: CircularProgressIndicator()),
+                if (_detail?['settlement'] case final Map settlement) ...[
+                  Text(
+                    'დავალიანება: ${settlement['outstanding']} ₾',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  if (settlement['unverified'] != '0.00')
+                    Text(
+                      'შესამოწმებელი ძველი ნაშთი: ${settlement['unverified']} ₾',
+                    ),
+                  const SizedBox(height: 12),
+                ],
+                FilledButton.icon(
+                  key: const Key('supplier-new-receiving'),
+                  onPressed: _busy ? null : _newReceiving,
+                  icon: const Icon(Icons.add),
+                  label: const Text('ახალი მიღება'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => showDialog<void>(
+                    context: context,
+                    builder: (_) =>
+                        SupplierPayablesDialog(supplierId: widget.supplier.id),
+                  ),
+                  icon: const Icon(Icons.payments_outlined),
+                  label: const Text('გადახდები და დავალიანება'),
+                ),
+                FilledButton.tonalIcon(
+                  key: const Key('supplier-add-item'),
+                  onPressed: _busy ? null : _addGoods,
+                  icon: const Icon(Icons.add_shopping_cart),
+                  label: const Text('საქონლის დამატება'),
+                ),
+                const SizedBox(height: 16),
                 Text(
-                  'მისი პროდუქტები',
+                  'მისი საქონელი',
                   style: TextStyle(
                     color: AdminTheme.text,
                     fontWeight: FontWeight.w700,
@@ -1937,6 +2027,12 @@ class _SupplierDetailDialogState extends State<SupplierDetailDialog> {
                 for (final product in products)
                   ListTile(
                     contentPadding: EdgeInsets.zero,
+                    onTap: () => showDialog<void>(
+                      context: context,
+                      builder: (_) => StockItemDetailDialog(
+                        stockItemId: product['id'] as String,
+                      ),
+                    ),
                     title: Text(
                       '${product['name']}',
                       style: TextStyle(color: AdminTheme.text),
@@ -2052,6 +2148,10 @@ ThemeData inventoryTheme(BuildContext context) {
     shape: WidgetStatePropertyAll(shape),
   );
   return theme.copyWith(
+    colorScheme: theme.colorScheme.copyWith(primary: AdminTheme.primary),
+    dialogTheme: theme.dialogTheme.copyWith(
+      backgroundColor: AdminTheme.surface,
+    ),
     filledButtonTheme: FilledButtonThemeData(style: style),
     outlinedButtonTheme: OutlinedButtonThemeData(style: style),
     textButtonTheme: TextButtonThemeData(style: style),
@@ -2065,7 +2165,7 @@ ThemeData inventoryTheme(BuildContext context) {
 class InventoryScreen extends StatelessWidget {
   const InventoryScreen({
     super.key,
-    this.section = 0,
+    this.section = 1,
     this.stockStatus,
     this.businessDate,
   });

@@ -901,6 +901,18 @@ class MobileApiService {
     return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
   }
 
+  static Future<Map<String, dynamic>> procurementRequest(
+    String path, [
+    Map<String, dynamic>? payload,
+  ]) async {
+    final response = payload == null
+        ? await _get('/mobile/inventory/$path')
+        : await _post('/mobile/inventory/$path', payload);
+    if (response.statusCode != 200 && response.statusCode != 201)
+      throw Exception(_apiError('მარაგები', response));
+    return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+  }
+
   static Future<void> setSupplierProduct(
     String supplierId,
     String stockItemId,
@@ -959,6 +971,8 @@ class MobileApiService {
   /// posted document can never be rewritten through this path.
   static Future<Receiving> saveReceivingDraft({
     String? id,
+    String? requestId,
+    String? dueDate,
     required String supplierId,
     required String documentDate,
     String? businessDate,
@@ -969,6 +983,8 @@ class MobileApiService {
     required List<Map<String, dynamic>> lines,
   }) async {
     final payload = <String, dynamic>{
+      if (requestId != null) 'requestId': requestId,
+      if (dueDate != null && dueDate.isNotEmpty) 'dueDate': dueDate,
       'supplierId': supplierId,
       'documentDate': documentDate,
       if (businessDate != null) 'businessDate': businessDate,

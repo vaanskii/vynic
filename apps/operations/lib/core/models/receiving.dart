@@ -191,6 +191,10 @@ class Receiving {
     required this.supplierName,
     required this.documentDate,
     this.businessDate,
+    this.paid = "0.00",
+    this.remaining = "0.00",
+    this.paymentStatus = "UNVERIFIED",
+    this.dueDate,
     required this.receivedAt,
     required this.status,
     required this.documentTotal,
@@ -209,6 +213,8 @@ class Receiving {
     this.movements = const <StockMovement>[],
   });
 
+  final String paid, remaining, paymentStatus;
+  final String? dueDate;
   final String id;
   final String supplierId;
 
@@ -256,6 +262,10 @@ class Receiving {
 
   factory Receiving.fromJson(Map<String, dynamic> json) {
     return Receiving(
+      paid: _text(json['paid']) ?? '0.00',
+      remaining: _text(json['remaining']) ?? '0.00',
+      paymentStatus: _text(json['paymentStatus']) ?? 'UNVERIFIED',
+      dueDate: _text(json['dueDate']),
       id: _text(json['id']) ?? '',
       supplierId: _text(json['supplierId']) ?? '',
       supplierName: _text(json['supplierName']) ?? '',
@@ -324,11 +334,16 @@ class StockItemDetail {
   const StockItemDetail({
     required this.item,
     this.weightedUnitCost,
+    this.costStatus,
+    this.inventoryValue,
+    this.purchaseHistory = const [],
     this.lastPurchaseUnitCost,
     this.recentMovements = const <StockMovement>[],
     this.usedBy = const <StockItemUsage>[],
   });
 
+  final String? costStatus, inventoryValue;
+  final List<Map> purchaseHistory;
   final StockItem item;
   final String? weightedUnitCost;
   final String? lastPurchaseUnitCost;
@@ -342,6 +357,10 @@ class StockItemDetail {
   factory StockItemDetail.fromJson(Map<String, dynamic> json) {
     return StockItemDetail(
       item: StockItem.fromJson(json),
+      costStatus: (json['currentCost'] as Map?)?['status'] as String?,
+      inventoryValue:
+          (json['currentCost'] as Map?)?['inventoryValue'] as String?,
+      purchaseHistory: (json['purchaseHistory'] as List? ?? []).cast<Map>(),
       weightedUnitCost:
           (json['currentCost'] as Map?)?['weightedUnitCost'] as String?,
       lastPurchaseUnitCost:

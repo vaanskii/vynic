@@ -1,3 +1,5 @@
+import 'package:vynic/core/models/inventory_decimal.dart';
+import 'package:uuid/uuid.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/consumption_history_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/ui/vynic_spacing.dart';
@@ -29,6 +31,7 @@ part 'tabs/mobile_admin_audit_tab.dart';
 part 'tabs/mobile_admin_activity_tab.dart';
 part 'tabs/mobile_admin_inventory_tab.dart';
 part 'tabs/mobile_admin_receiving.dart';
+part 'tabs/mobile_admin_procurement.dart';
 part 'tabs/mobile_admin_recipes.dart';
 part 'tabs/mobile_admin_settings_tab.dart';
 part 'shared/mobile_admin_shared_widgets.dart';

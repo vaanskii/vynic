@@ -121,6 +121,17 @@ recipe. A restore must reverse the original quantities, not today's recipe.
 **Implication:** No historical backfill, no stock writes on open Orders, no
 second POS StockMovement authority. See `docs/INVENTORY_STEP4.md`.
 
+## D015 — Stock valuation follows Cloud acceptance order
+
+**Decision:** Freeze stock issue cost when Cloud accepts the movement, under the
+same item lock used by receipts and reversals. Preserve effective/business dates
+without revaluing prior issues when offline activity arrives late.
+**Reason:** POS checkout cannot know later Cloud receipts, and immutable issue
+values must survive restore. Historical reconstruction is labelled separately.
+**Implication:** These are Cloud inventory cost snapshots, not guaranteed
+historical POS close-time COGS. Negative/unknown bases stay provisional. See
+`docs/INVENTORY_PROCUREMENT_REWORK.md`.
+
 ## Maintenance
 
 Add an entry only when it prevents repeated architectural debate. Update or

@@ -1136,6 +1136,15 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                 label: const Text('დღიური მიღება'),
               ),
             ],
+            Text(
+              'მომწოდებლებს დღეს გადახდილი: ${((procurement?['supplierPayments'] as Map?)?['calendarDay'] as Map?)?['total'] ?? '—'} ₾',
+            ),
+            Text(
+              'მომწოდებლის დავალიანება: ${procurement?['outstanding'] ?? '—'} ₾',
+            ),
+            Text(
+              'შესამოწმებელი ძველი ნაშთი: ${procurement?['unverified'] ?? '—'} ₾',
+            ),
             const Divider(height: 32),
             Text(
               'სხვა ხარჯები: ${_data?['otherExpenses'] ?? _data?['expenses'] ?? '—'} ₾',
@@ -1150,9 +1159,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
             ),
             Text('სულ გასავლები: ${_data?['totalOutflows'] ?? '—'} ₾'),
             const SizedBox(height: 8),
-            const Text(
-              'შესყიდვები აღირიცხება დადასტურებული მიღებებით. გადახდის თარიღს ცალკე არ აღრიცხავს.',
-            ),
+            const Text('გასავლებში შედის მომწოდებელთან გადახდილი თანხა.'),
           ],
         ),
       ),

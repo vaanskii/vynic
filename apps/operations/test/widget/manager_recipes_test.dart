@@ -808,7 +808,7 @@ void main() {
       await tester.pumpWidget(_tab());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('პროდუქტები'));
+      await tester.tap(find.text('ნაშთები'));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('inventory-add')));
       await tester.pumpAndSettle();

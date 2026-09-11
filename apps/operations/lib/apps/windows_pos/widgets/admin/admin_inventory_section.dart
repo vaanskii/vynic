@@ -149,6 +149,17 @@ class _AdminInventoryState extends State<AdminInventorySection> {
                             style: Theme.of(context).textTheme.headlineSmall,
                           ),
                           Text(_statusLabel(item)),
+                          if ((inspection?['costsByItem'] as Map?)?[item.id]
+                              case final Map cost) ...[
+                            Text(
+                              'მარაგის საშუალო ფასი: ${cost['unitCost'] ?? '—'} ₾ / ${item.baseUnit.label}',
+                            ),
+                            Text(
+                              'მარაგის ღირებულება: ${cost['inventoryValue'] ?? '—'} ₾',
+                            ),
+                            if (cost['status'] == 'PROVISIONAL')
+                              const Text('შეფასება წინასწარია'),
+                          ],
                           const SizedBox(height: 24),
                           const Text('გამოიყენება მენიუში'),
                           if (!recipes.any(
@@ -219,6 +230,14 @@ class _AdminInventoryState extends State<AdminInventorySection> {
           ),
           children: [
             const ListTile(title: Text('ბოლო 100 დადასტურებული მიღება')),
+            if (procurement != null) ...[
+              Text(
+                'მომწოდებლებს გადახდილი: ${((procurement['supplierPayments'] as Map?)?['businessDay'] as Map?)?['total'] ?? '—'} ₾',
+              ),
+              Text(
+                'დღის მიღებების დავალიანება: ${procurement['newUnpaidBalance'] ?? '—'} ₾',
+              ),
+            ],
             for (final r in _rows(inspection?['receivings']))
               ListTile(
                 title: Text('${r['supplierNameSnapshot']}'),

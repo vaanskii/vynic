@@ -107,6 +107,7 @@ void main() {
             ),
             home: Scaffold(
               body: InventoryAdminTab(
+                initialSection: 0,
                 loadStockItems: () async => [
                   StockItem(
                     id: 'beef',

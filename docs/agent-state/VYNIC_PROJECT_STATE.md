@@ -50,7 +50,9 @@ current transport status.
   ledger, Menu consumption definitions and automatic Sale consumption/restore
   reversal are present. Step 4.5 adds food/beverage catalog classification, supplier
   product links, business-date daily receiving and current weighted purchase /
-  theoretical Menu costs. Step 4.6 consolidates procurement Financials, responsive
+  theoretical Menu costs. The procurement rework supersedes historical-purchase
+  averaging with moving stock valuation and separates supplier payments from receipts.
+  Step 4.6 consolidates procurement Financials, responsive
   Manager Inventory and read-only POS Admin inspection; historical Sale COGS,
   waste and stocktake remain later steps. Step 4.7 adds Staff payroll and recurring
   obligations/reserve planning; feature control remains a later step.
@@ -99,19 +101,31 @@ current transport status.
 
 - Inventory Step 4.5 is implemented: `SupplierProduct` uses composite Venue-safe
   foreign keys; Stock Items persist FOOD/BEVERAGE classification; Receiving has a
-  separate businessDate and full-day procurement summaries. Current theoretical
-  Menu cost uses exact Decimal `SUM(POSTED lineTotal) / SUM(baseQuantity)` over
-  valid purchase history, excluding cancelled documents. Missing prices remain
-  explicit, and no historical Sale is revalued. See `docs/INVENTORY_STEP45.md`.
+  separate businessDate and full-day procurement summaries. The procurement
+  rework now uses movement-derived remaining quantity/value for current
+  theoretical Menu costs. Historical phase context: `docs/INVENTORY_STEP45.md`.
 
 - Inventory Step 4.6 makes POSTED Receiving the sole purchasing entry point.
   Known legacy Market Expense categories are rejected and excluded from Expense
   reporting; shared Expense storage/audit remain. Legacy salary Expense history
-  is retained read-only after Step 4.7. Financials separates purchases, other
-  expenses, payroll and obligation payments, summing each once. Dashboard links
+  is retained read-only after Step 4.7. Financials separates purchases,
+  supplier payments, other expenses, payroll and obligation payments. Only actual
+  payments enter outflows; receipt totals are purchases. Dashboard links
   procurement/stock warnings into Inventory. POS
   Admin exposes read-only stock, recent movements/receipts, recipe status and
   unmapped sold products from catalog v5. See `docs/INVENTORY_STEP46.md`.
+
+- Inventory procurement rework is implemented: supplier-first creation supports
+  existing Menu goods, ingredients and bulk beverages, retaining StockItem and
+  generalized recipes. Receiving has explicit Post/Draft actions, exact price or
+  line-value entry, and retry identities. SupplierPayment is append-only with
+  derived debt/partial/paid states and explicit reversal. Old settlement is
+  unverified until reconciled; cancellation requires verified zero net payments.
+  StockMovement freezes current moving-average issue costs and exact reversal
+  values under item locks, in Cloud acceptance order. Historical values are
+  explicitly reconstructed; negative/unknown bases are provisional. Manager
+  and read-only POS inspection show current values; checkout is unchanged.
+  See `docs/INVENTORY_PROCUREMENT_REWORK.md`.
 
 - Financials Step 4.7 adds Venue/Staff compensation rules, frozen PayrollPeriod
   snapshots and append-only payroll accrual/payment history. Daily wages require
@@ -618,8 +632,10 @@ current transport status.
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260915120000_manager_login_code`.
+  `20260916123000_procurement_request_identity`.
 - Immediately preceding state migrations:
+  `20260916120000_inventory_procurement`,
+  `20260915120000_manager_login_code`,
   `20260914120000_payroll_day_adjustments`,
   `20260913120000_payroll_obligations`,
   `20260912120000_inventory_step45_catalog_cost`,

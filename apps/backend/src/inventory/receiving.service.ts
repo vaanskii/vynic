@@ -42,6 +42,8 @@ export interface ReceivingLineInput {
 export interface ReceivingInput {
   requestId?: unknown;
   supplierId?: unknown;
+  sourceType?: unknown;
+  sourceLabel?: unknown;
   dueDate?: unknown;
   waybillNumber?: unknown;
   invoiceNumber?: unknown;
@@ -251,14 +253,17 @@ export class ReceivingService {
           return this.loadDetail(tx, prior.id);
         }
       }
-      const supplier = await this.requireSupplier(tx, actor, header.supplierId);
+      const supplier = header.supplierId
+        ? await this.requireSupplier(tx, actor, header.supplierId)
+        : null;
       const lines = await this.prepareLines(tx, actor, input.lines);
       const created = await tx.receiving.create({
         data: {
           venueId: actor.venueId,
           dueDate: input.dueDate ? isoDateText(input.dueDate) : null,
-          supplierId: supplier.id,
-          supplierNameSnapshot: supplier.name,
+          supplierId: supplier?.id ?? null,
+          sourceType: header.sourceType,
+          supplierNameSnapshot: supplier?.name ?? header.sourceLabel,
           waybillNumber: header.waybillNumber,
           invoiceNumber: header.invoiceNumber,
           documentDate: header.documentDate,
@@ -304,15 +309,18 @@ export class ReceivingService {
           `A ${existing.status.toLowerCase()} Receiving is inventory history and cannot be edited`,
         );
       }
-      const supplier = await this.requireSupplier(tx, actor, header.supplierId);
+      const supplier = header.supplierId
+        ? await this.requireSupplier(tx, actor, header.supplierId)
+        : null;
       const lines = await this.prepareLines(tx, actor, input.lines);
       await tx.receivingLine.deleteMany({ where: { receivingId: cleanId } });
       const updated = await tx.receiving.update({
         where: { id: cleanId },
         data: {
           dueDate: input.dueDate ? isoDateText(input.dueDate) : null,
-          supplierId: supplier.id,
-          supplierNameSnapshot: supplier.name,
+          supplierId: supplier?.id ?? null,
+          sourceType: header.sourceType,
+          supplierNameSnapshot: supplier?.name ?? header.sourceLabel,
           waybillNumber: header.waybillNumber,
           invoiceNumber: header.invoiceNumber,
           documentDate: header.documentDate,
@@ -425,7 +433,8 @@ export class ReceivingService {
           throw new BadRequestException('Line costs must not be negative');
         }
       }
-      await this.requireSupplier(tx, actor, locked.supplierId);
+      if (locked.supplierId)
+        await this.requireSupplier(tx, actor, locked.supplierId);
 
       await tx.$queryRaw`SELECT id FROM pos."StockItem" WHERE "venueId"=${actor.venueId} AND id IN (SELECT "stockItemId" FROM pos."ReceivingLine" WHERE "receivingId"=${cleanId}) ORDER BY id FOR UPDATE`;
       const postedAt = new Date();
@@ -625,7 +634,7 @@ export class ReceivingService {
       {
         id: string;
         status: ReceivingStatus;
-        supplierId: string;
+        supplierId: string | null;
         documentDate: string;
         businessDate: string;
         receivedAt: Date;
@@ -673,8 +682,21 @@ export class ReceivingService {
     if (Number.isNaN(receivedAt.getTime())) {
       throw new BadRequestException('receivedAt is not a valid date');
     }
+    const sourceType = input.sourceType ?? 'SUPPLIER';
+    if (!['SUPPLIER', 'SELF_PURCHASE'].includes(String(sourceType)))
+      throw new BadRequestException('Invalid receiving source');
+    if (sourceType === 'SELF_PURCHASE' && input.supplierId)
+      throw new BadRequestException('Self purchase cannot have a supplier');
+    const sourceLabel = optionalText(input.sourceLabel) ?? 'ჩემით / ბაზრიდან';
+    if (sourceLabel.length > 200)
+      throw new BadRequestException('Source label is too long');
     return {
-      supplierId: requiredText(input.supplierId, 'supplierId'),
+      sourceType: String(sourceType),
+      sourceLabel,
+      supplierId:
+        sourceType === 'SELF_PURCHASE'
+          ? null
+          : requiredText(input.supplierId, 'supplierId'),
       waybillNumber: optionalText(input.waybillNumber),
       invoiceNumber: optionalText(input.invoiceNumber),
       documentDate: isoDateText(input.documentDate ?? isoDate(receivedAt)),
@@ -801,7 +823,7 @@ export class ReceivingService {
 
   private auditContext(row: {
     id: string;
-    supplierId: string;
+    supplierId: string | null;
     supplierNameSnapshot: string;
     waybillNumber: string | null;
     documentDate: string;
@@ -814,6 +836,7 @@ export class ReceivingService {
       receivingId: row.id,
       supplierId: row.supplierId,
       supplierName: row.supplierNameSnapshot,
+      sourceType: 'sourceType' in row ? row.sourceType : 'SUPPLIER',
       waybillNumber: row.waybillNumber,
       documentDate: row.documentDate,
       businessDate: row.businessDate,
@@ -833,6 +856,7 @@ export class ReceivingService {
       id: row.id,
       supplierId: row.supplierId,
       supplierName: row.supplierNameSnapshot,
+      sourceType: 'sourceType' in row ? row.sourceType : 'SUPPLIER',
       waybillNumber: row.waybillNumber,
       invoiceNumber: row.invoiceNumber,
       documentDate: row.documentDate,

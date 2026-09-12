@@ -41,6 +41,7 @@ export interface PurchaseUnitInput {
 }
 
 export interface StockItemInput {
+  requestId?: unknown;
   name?: unknown;
   sku?: unknown;
   classification?: unknown;
@@ -153,7 +154,9 @@ export class InventoryService {
     const row = await this.prisma.stockItem.findFirst({
       where: { id: cleanId, venueId: tenant.venueId },
       include: {
-        supplierProducts: true,
+        supplierProducts: {
+          include: { supplier: { select: { id: true, name: true } } },
+        },
         purchaseUnits: { orderBy: { unit: 'asc' } },
       },
     });
@@ -187,6 +190,7 @@ export class InventoryService {
         cleanId,
       ),
       usedBy,
+      suppliers: row.supplierProducts.map((link) => link.supplier),
       purchaseHistory: (
         await this.prisma.receivingLine.findMany({
           where: {
@@ -403,6 +407,18 @@ export class InventoryService {
   }
 
   async createStockItem(actor: InventoryActor, input: StockItemInput) {
+    const requestId =
+      input.requestId == null
+        ? null
+        : requiredText(input.requestId, 'requestId');
+    if (requestId && !/^[0-9a-f-]{36}$/i.test(requestId))
+      throw new BadRequestException('requestId must be UUID');
+    // Inline ingredient creation carries only ingredient properties. Complex
+    // supplier/packaging setup uses the existing atomic supplier-items route.
+    if (requestId && (has(input, 'supplierIds') || has(input, 'purchaseUnits')))
+      throw new BadRequestException(
+        'Use supplied-item creation for supplier packaging',
+      );
     const data = {
       venueId: actor.venueId,
       name: requiredText(input.name, 'name'),
@@ -418,9 +434,37 @@ export class InventoryService {
       : [];
     try {
       const created = await this.prisma.$transaction(async (tx) => {
+        if (requestId) {
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${actor.venueId + ':item:' + requestId},0))`;
+          const prior = await tx.stockItem.findUnique({
+            where: {
+              venueId_creationRequestId: {
+                venueId: actor.venueId,
+                creationRequestId: requestId,
+              },
+            },
+            include: {
+              supplierProducts: true,
+              purchaseUnits: { orderBy: { unit: 'asc' } },
+            },
+          });
+          if (prior) {
+            if (
+              Object.entries(data).some(
+                ([key, value]) =>
+                  String(prior[key] ?? '') !== String(value ?? ''),
+              )
+            )
+              throw new ConflictException(
+                'Ingredient request already used with different values',
+              );
+            return prior;
+          }
+        }
         const row = await tx.stockItem.create({
           data: {
             ...data,
+            creationRequestId: requestId,
             purchaseUnits: {
               create: purchaseUnits.map((unit) => ({
                 venueId: actor.venueId,

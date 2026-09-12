@@ -458,4 +458,98 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
       'PARTIALLY_PAID',
     );
   });
+  it('market source preserves history, shares stock across suppliers and keeps durable payments', async () => {
+    const supplierA = await inventory.createSupplier(a, { name: 'Market A' });
+    const supplierB = await inventory.createSupplier(a, { name: 'Market B' });
+    const ingredient = await inventory.addSuppliedItem(a, supplierA.id, {
+      mode: 'ingredient',
+      name: 'Shared flour',
+      baseUnit: 'kg',
+      requestId: randomUUID(),
+    });
+    await inventory.addSuppliedItem(a, supplierB.id, {
+      mode: 'ingredient',
+      stockItemId: ingredient.stockItemId,
+      baseUnit: 'kg',
+    });
+    const before = await db.supplier.count({ where: { venueId: a.venueId } });
+    const input = {
+      requestId: randomUUID(),
+      sourceType: 'SELF_PURCHASE',
+      sourceLabel: 'ბათუმის ბაზარი',
+      documentDate: '2026-09-10',
+      businessDate: '2026-09-10',
+      lines: [
+        {
+          stockItemId: ingredient.stockItemId,
+          enteredQuantity: '20',
+          enteredUnit: 'kg',
+          lineTotal: '800',
+        },
+      ],
+    };
+    const draft = await receiving.createDraft(a, input);
+    expect(draft.sourceType).toBe('SELF_PURCHASE');
+    expect(draft.supplierId).toBeNull();
+    expect((await receiving.createDraft(a, input)).id).toBe(draft.id);
+    const posted = await receiving.post(a, draft.id);
+    expect(posted.supplierName).toBe('ბათუმის ბაზარი');
+    expect(await db.supplier.count({ where: { venueId: a.venueId } })).toBe(
+      before,
+    );
+    const payment = {
+      requestId: randomUUID(),
+      amount: '300',
+      paymentDate: '2026-09-10',
+      businessDate: '2026-09-10',
+      method: 'cash',
+    };
+    await payments.record(a, draft.id, payment);
+    await payments.record(a, draft.id, payment);
+    expect((await receiving.detail(a, draft.id)).remaining).toBe('500.00');
+    await receive(supplierA.id, ingredient.stockItemId, '2', 'kg', '40');
+    await receive(supplierB.id, ingredient.stockItemId, '3', 'kg', '40');
+    expect(
+      (await inventory.getStockItem(a, ingredient.stockItemId)).currentStock,
+    ).toBe('25.000');
+    await expect(receiving.createDraft(b, input)).rejects.toThrow();
+    await expect(
+      receiving.createDraft(a, {
+        ...input,
+        requestId: randomUUID(),
+        supplierId: supplierA.id,
+      }),
+    ).rejects.toThrow();
+    await expect(
+      receiving.updateDraft(a, draft.id, { ...input, sourceLabel: 'Changed' }),
+    ).rejects.toThrow();
+    expect((await receiving.detail(a, draft.id)).supplierName).toBe(
+      'ბათუმის ბაზარი',
+    );
+  });
+
+  it('inline ingredient retries keep one identity and reject changed intent', async () => {
+    const input = {
+      requestId: randomUUID(),
+      name: 'Shared cheese',
+      baseUnit: 'kg',
+    };
+    const [first, second] = await Promise.all([
+      inventory.createStockItem(a, input),
+      inventory.createStockItem(a, input),
+    ]);
+    expect(first.id).toBe(second.id);
+    await expect(
+      inventory.createStockItem(a, { ...input, name: 'Other cheese' }),
+    ).rejects.toThrow();
+    const dishA = await menu('Dish A'),
+      dishB = await menu('Dish B');
+    for (const dish of [dishA, dishB])
+      await recipes.save(a, {
+        menuItemId: dish.id,
+        yieldQuantity: '1',
+        components: [{ stockItemId: first.id, quantity: '25', unit: 'g' }],
+      });
+    expect((await inventory.getStockItem(a, first.id)).usedBy).toHaveLength(2);
+  });
 });

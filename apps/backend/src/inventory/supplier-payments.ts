@@ -241,8 +241,8 @@ export class SupplierPayments {
       });
       await writeInventoryAudit(tx, actor, {
         action: 'SUPPLIER_PAYMENT_RECORDED',
-        entityType: 'SUPPLIER',
-        entityId: row.supplierId,
+        entityType: row.supplierId ? 'SUPPLIER' : 'RECEIVING',
+        entityId: row.supplierId ?? receivingId,
         data: {
           receivingId,
           paymentId: payment.id,

@@ -304,10 +304,11 @@ enum ReceivingStatus {
 model Receiving {
   id                   String          @id @default(uuid())
   venueId              String
-  supplierId           String
+  supplierId           String?
   /// Display truth frozen at creation. A later Supplier rename must not
   /// rewrite what this document said when it was received.
   supplierNameSnapshot String
+  sourceType           String          @default("SUPPLIER")
   waybillNumber        String?
   invoiceNumber        String?
   /// Document date as `YYYY-MM-DD`, the same shape as a business date.
@@ -330,7 +331,7 @@ model Receiving {
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @updatedAt
   venue                Venue           @relation(fields: [venueId], references: [id], onDelete: Restrict)
-  supplier             Supplier        @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  supplier             Supplier?       @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   lines                ReceivingLine[]
   movements            StockMovement[]
   creationRequestId    String?

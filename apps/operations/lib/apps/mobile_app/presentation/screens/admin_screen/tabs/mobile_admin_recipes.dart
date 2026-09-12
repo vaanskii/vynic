@@ -35,10 +35,13 @@ class _RecipeFilterBar extends StatelessWidget {
             selected: selected == filter,
             onSelected: (_) => onChanged(filter),
             backgroundColor: AdminTheme.surface,
-            selectedColor: AdminTheme.primary,
+            selectedColor: AdminTheme.surfaceElevated,
+            checkmarkColor: AdminTheme.primary,
             side: BorderSide(color: AdminTheme.border),
             labelStyle: TextStyle(
-              color: selected == filter ? Colors.white : AdminTheme.textMuted,
+              color: selected == filter
+                  ? AdminTheme.primary
+                  : AdminTheme.textMuted,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
@@ -55,7 +58,7 @@ class _RecipeStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = configured ? AdminTheme.good : AdminTheme.textDim;
+    final color = configured ? AdminTheme.good : AdminTheme.textMuted;
     return Container(
       key: Key('recipe-status-${configured ? 'configured' : 'unconfigured'}'),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -64,7 +67,7 @@ class _RecipeStatusBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
-        configured ? 'მიბმულია' : 'მიბმული არ არის',
+        configured ? 'შევსებულია' : 'შესავსებია',
         style: TextStyle(
           color: color,
           fontSize: 11,
@@ -137,7 +140,7 @@ class _RecipeCard extends StatelessWidget {
                       icon: Icons.blender_outlined,
                       label: item.isConfigured
                           ? '${item.componentCount} კომპონენტი'
-                          : 'რეცეპტი არ არის',
+                          : 'შემადგენლობა შესავსებია',
                     ),
                   ],
                 ),
@@ -332,7 +335,11 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
     final item = _stockItems.where((row) => row.isActive).firstOrNull;
     return _RecipeComponentDraft(
       stockItem: item,
-      unit: item?.consumptionUnits.first,
+      unit:
+          !_directMode &&
+              item?.consumptionUnits.contains(InventoryUnit.g) == true
+          ? InventoryUnit.g
+          : item?.consumptionUnits.first,
       quantity: TextEditingController(text: _directMode ? '1' : ''),
     );
   }
@@ -387,47 +394,51 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
               _RecipeStatusBadge(configured: detail.recipe?.isActive == true),
             ],
           ),
-        if (detail != null) CurrentRecipeCostPanel(cost: detail.currentCost),
         const SizedBox(height: 12),
-        Wrap(
-          key: const Key('recipe-mode'),
-          spacing: 8,
-          runSpacing: 4,
-          children: [
-            for (final mode in const {
-              true: 'მარაგთან დაკავშირება',
-              false: 'ტექნოლოგიური ბარათი',
-            }.entries)
-              ChoiceChip(
-                label: Text(mode.value),
-                selected: _directMode == mode.key,
-                selectedColor: AdminTheme.primary,
-                labelStyle: TextStyle(
-                  color: _directMode == mode.key
-                      ? Colors.white
-                      : AdminTheme.textMuted,
-                ),
-                onSelected: _saving
-                    ? null
-                    : (_) => setState(() {
-                        _directMode = mode.key;
-                        if (_directMode) {
-                          while (_components.length > 1) {
-                            _components.removeLast().dispose();
-                          }
-                          _yield.text = '1';
-                        }
-                      }),
-              ),
-          ],
-        ),
-        const SizedBox(height: 6),
         Text(
           _directMode
-              ? 'ერთი გაყიდვისას ჩამოიწერება ერთი მარაგის პროდუქტი.'
-              : 'ჩამოთვალეთ ყველა ინგრედიენტი, რომელიც ერთ პორციაზე იხარჯება.',
-          style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
+              ? '1 გაყიდვა = მარაგიდან'
+              : '${_yield.text} ცალზე საჭიროა:',
+          style: TextStyle(
+            color: AdminTheme.text,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
         ),
+        if (widget.menuGroup != 'FOOD')
+          TextButton(
+            key: const Key('recipe-mode'),
+            onPressed: _saving
+                ? null
+                : () => setState(() {
+                    // Switching to a simple drink must never discard ingredients.
+                    if (_components.length <= 1) {
+                      if (!_directMode && _components.isNotEmpty) {
+                        try {
+                          _components.single.quantity.text =
+                              (InventoryDecimal.parse(
+                                        _components.single.quantity.text,
+                                      ) /
+                                      InventoryDecimal.parse(_yield.text))
+                                  .toStringAsFixed(6);
+                          _yield.text = '1';
+                        } on FormatException {
+                          _error = 'შეამოწმეთ რაოდენობა და პორციების რიცხვი';
+                          return;
+                        }
+                      }
+                      _directMode = !_directMode;
+                    } else {
+                      _error =
+                          'ერთ საქონელზე გადასასვლელად ჯერ გადაამოწმეთ ინგრედიენტები.';
+                    }
+                  }),
+            child: Text(
+              _directMode
+                  ? 'რამდენიმე ინგრედიენტის დამატება'
+                  : 'ერთი საქონლიდან ჩამოწერა',
+            ),
+          ),
         const Divider(height: 24),
         for (var index = 0; index < _components.length; index++)
           _componentEditor(index),
@@ -436,28 +447,35 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
               key: const Key('recipe-add-component'),
-              onPressed: _saving || _stockItems.isEmpty
-                  ? null
-                  : () => setState(() => _components.add(_emptyComponent())),
+              onPressed: _saving ? null : _pickIngredient,
               icon: const Icon(Icons.add_rounded, size: 18),
               label: const Text('ინგრედიენტის დამატება'),
               style: TextButton.styleFrom(foregroundColor: AdminTheme.primary),
             ),
           ),
           const SizedBox(height: 6),
-          TextField(
-            key: const Key('recipe-yield'),
-            controller: _yield,
-            onChanged: (_) => setState(() {}),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: TextStyle(color: AdminTheme.text),
-            decoration: _adminInput('რამდენ პორციაზეა გაწერილი'),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'დატოვეთ 1, თუ რაოდენობები ერთ პორციაზეა. მაგ. 100 ხინკლის '
-            'ცომი და ხორცი შეიყვანეთ ერთად და მიუთითეთ 100.',
-            style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
+          ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            initiallyExpanded: _yield.text != '1',
+            title: const Text('რამდენიმე პორციაზე მომზადება'),
+            children: [
+              TextField(
+                key: const Key('recipe-yield'),
+                controller: _yield,
+                onChanged: (_) => setState(() {}),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                style: TextStyle(color: AdminTheme.text),
+                decoration: _adminInput('რამდენ პორციაზეა გაწერილი'),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'დატოვეთ 1, თუ რაოდენობები ერთ პორციაზეა. მაგ. 100 ხინკლის '
+                'ცომი და ხორცი შეიყვანეთ ერთად და მიუთითეთ 100.',
+                style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
+              ),
+            ],
           ),
         ],
         if (widget.onCreateStockItem != null) ...[
@@ -468,11 +486,12 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
               key: const Key('recipe-create-stock-item'),
               onPressed: _saving ? null : _createStockItem,
               icon: const Icon(Icons.add_box_outlined, size: 18),
-              label: const Text('მარაგის პროდუქტის შექმნა'),
+              label: const Text('ახალი ნედლეულის შექმნა'),
               style: TextButton.styleFrom(foregroundColor: AdminTheme.primary),
             ),
           ),
         ],
+        if (detail != null) CurrentRecipeCostPanel(cost: detail.currentCost),
         if (_error != null) ...[
           const SizedBox(height: 8),
           Align(
@@ -512,7 +531,9 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
                     color: AdminTheme.text,
                     fontSize: 13,
                   ),
-                  decoration: _adminInput('მარაგის პროდუქტი'),
+                  decoration: _adminInput(
+                    _directMode ? 'მარაგიდან' : 'ინგრედიენტი',
+                  ),
                   items: [
                     for (final option in _stockItems)
                       if (option.isActive)
@@ -531,7 +552,11 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
                               .where((row) => row.id == value)
                               .firstOrNull;
                           component.unit =
-                              component.stockItem?.consumptionUnits.first;
+                              !_directMode &&
+                                  component.stockItem?.baseUnit ==
+                                      InventoryUnit.kg
+                              ? InventoryUnit.g
+                              : component.stockItem?.consumptionUnits.first;
                         }),
                 ),
               ),
@@ -629,14 +654,14 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
         onPressed: _saving ? null : _save,
         style: FilledButton.styleFrom(backgroundColor: AdminTheme.primary),
         child: _saving
-            ? const SizedBox.square(
+            ? SizedBox.square(
                 dimension: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.white,
+                  color: _inventoryOnPrimary,
                 ),
               )
-            : const Text('შენახვა', style: TextStyle(color: Colors.white)),
+            : Text('შენახვა', style: TextStyle(color: _inventoryOnPrimary)),
       ),
     ];
   }
@@ -644,6 +669,25 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
   /// §O: pre-fill the name and nothing else. Unit, packaging and threshold are
   /// real decisions, and the new Stock Item gets its own identity — a Menu
   /// Item and a Stock Item are never the same row.
+  Future<void> _pickIngredient() async {
+    final picked = await showDialog<StockItem>(
+      context: context,
+      builder: (_) => InventoryIngredientPicker(items: _stockItems),
+    );
+    if (picked == null || !mounted) return;
+    setState(
+      () => _components.add(
+        _RecipeComponentDraft(
+          stockItem: picked,
+          unit: picked.consumptionUnits.contains(InventoryUnit.g)
+              ? InventoryUnit.g
+              : picked.consumptionUnits.first,
+          quantity: TextEditingController(),
+        ),
+      ),
+    );
+  }
+
   Future<void> _createStockItem() async {
     final created = await widget.onCreateStockItem!(
       _directMode ? widget.menuItemName : '',
@@ -655,6 +699,17 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
       if (target != null && target.stockItem == null) {
         target.stockItem = created;
         target.unit = created.consumptionUnits.first;
+      } else {
+        _components.add(
+          _RecipeComponentDraft(
+            stockItem: created,
+            unit: created.consumptionUnits.contains(InventoryUnit.g)
+                ? InventoryUnit.g
+                : created.consumptionUnits.first,
+            quantity: TextEditingController(),
+          ),
+        );
+        _directMode = false;
       }
     });
   }

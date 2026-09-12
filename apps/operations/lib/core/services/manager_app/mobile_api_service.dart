@@ -794,6 +794,7 @@ class MobileApiService {
 
   static Future<StockItem> saveStockItem({
     String? id,
+    String? requestId,
     required String name,
     String? sku,
     required InventoryUnit baseUnit,
@@ -805,6 +806,7 @@ class MobileApiService {
     List<StockItemPurchaseUnit>? purchaseUnits,
   }) async {
     final payload = <String, dynamic>{
+      if (requestId != null) 'requestId': requestId,
       'name': name,
       'sku': sku,
       'baseUnit': baseUnit.wireValue,
@@ -974,6 +976,8 @@ class MobileApiService {
     String? requestId,
     String? dueDate,
     required String supplierId,
+    String sourceType = 'SUPPLIER',
+    String? sourceLabel,
     required String documentDate,
     String? businessDate,
     String? waybillNumber,
@@ -985,7 +989,9 @@ class MobileApiService {
     final payload = <String, dynamic>{
       if (requestId != null) 'requestId': requestId,
       if (dueDate != null && dueDate.isNotEmpty) 'dueDate': dueDate,
-      'supplierId': supplierId,
+      'supplierId': sourceType == 'SELF_PURCHASE' ? null : supplierId,
+      'sourceType': sourceType,
+      if (sourceLabel != null) 'sourceLabel': sourceLabel,
       'documentDate': documentDate,
       if (businessDate != null) 'businessDate': businessDate,
       'waybillNumber': waybillNumber,

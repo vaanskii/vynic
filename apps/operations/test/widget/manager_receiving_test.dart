@@ -381,9 +381,15 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      await tester.ensureVisible(
+        find.byKey(const Key('receiving-price-mode-0')),
+      );
       await tester.tap(find.byKey(const Key('receiving-price-mode-0')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('შესყიდვის ერთეულის ფასი').last);
+      await tester.tap(find.text('შეფუთვის ფასი').last);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('თარიღი და დოკუმენტის დეტალები'));
+      await tester.tap(find.text('თარიღი და დოკუმენტის დეტალები'));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const Key('receiving-waybill')),
@@ -480,6 +486,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('მიღების რედაქტირება'), findsOneWidget);
+      await tester.tap(find.text('თარიღი და დოკუმენტის დეტალები'));
+      await tester.pumpAndSettle();
       expect(find.widgetWithText(TextField, '12345'), findsOneWidget);
       expect(find.widgetWithText(TextField, '50'), findsOneWidget);
       expect(find.text('750.00 ₾'), findsNWidgets(2));
@@ -495,8 +503,8 @@ void main() {
       await tester.pumpWidget(_tab(section: 0));
       await tester.pumpAndSettle();
 
-      expect(find.text('ნაშთი: 62.5 კგ'), findsOneWidget);
-      expect(find.text('ნაშთი: 240 ბოთლი'), findsOneWidget);
+      expect(find.text('მარაგშია: 62.5 კგ'), findsOneWidget);
+      expect(find.text('მარაგშია: 240 ბოთლი'), findsOneWidget);
       expect(find.text('მომწოდებლები: 0'), findsWidgets);
       // The Step 1 placeholder is gone for good.
       expect(find.text('მოძრაობები ჯერ არ არის'), findsNothing);
@@ -514,7 +522,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('low-stock-badge')), findsOneWidget);
-      expect(find.text('ნაშთი: 2 კგ'), findsOneWidget);
+      expect(find.text('მარაგშია: 2 კგ'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 

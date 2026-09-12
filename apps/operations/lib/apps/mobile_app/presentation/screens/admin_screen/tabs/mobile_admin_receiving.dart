@@ -40,7 +40,9 @@ class _ReceivingStatusFilterBar extends StatelessWidget {
             selectedColor: AdminTheme.primary,
             side: BorderSide(color: AdminTheme.border),
             labelStyle: TextStyle(
-              color: selected == filter ? Colors.white : AdminTheme.textMuted,
+              color: selected == filter
+                  ? _inventoryOnPrimary
+                  : AdminTheme.textMuted,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
@@ -55,9 +57,9 @@ class _ReceivingStatusFilterBar extends StatelessWidget {
 ({Color color, String label}) _receivingStatusStyle(ReceivingStatus status) {
   switch (status) {
     case ReceivingStatus.draft:
-      return (color: AdminTheme.textDim, label: 'მონახაზი');
+      return (color: AdminTheme.textMuted, label: 'მარაგში ჯერ არ დამატებულა');
     case ReceivingStatus.posted:
-      return (color: AdminTheme.good, label: 'გატარებული');
+      return (color: AdminTheme.good, label: 'მარაგში დაემატა');
     case ReceivingStatus.cancelled:
       return (color: AdminTheme.warn, label: 'გაუქმებული');
   }
@@ -493,7 +495,10 @@ class _ReceivingDetailDialogState extends State<ReceivingDetailDialog> {
           key: const Key('receiving-post'),
           onPressed: _busy ? null : _post,
           style: FilledButton.styleFrom(backgroundColor: AdminTheme.primary),
-          child: const Text('გატარება', style: TextStyle(color: Colors.white)),
+          child: Text(
+            'მიღების დადასტურება',
+            style: TextStyle(color: _inventoryOnPrimary),
+          ),
         ),
       ],
       if (receiving.isPosted)
@@ -501,7 +506,10 @@ class _ReceivingDetailDialogState extends State<ReceivingDetailDialog> {
           key: const Key('receiving-cancel'),
           onPressed: _busy ? null : _cancel,
           style: FilledButton.styleFrom(backgroundColor: AdminTheme.warn),
-          child: const Text('გაუქმება', style: TextStyle(color: Colors.white)),
+          child: Text(
+            'გაუქმება',
+            style: TextStyle(color: _inventoryInk(AdminTheme.warn)),
+          ),
         ),
     ];
   }
@@ -610,7 +618,7 @@ class _ReceivingDetailDialogState extends State<ReceivingDetailDialog> {
             style: FilledButton.styleFrom(backgroundColor: AdminTheme.primary),
             child: Text(
               confirmLabel,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: _inventoryOnPrimary),
             ),
           ),
         ],
@@ -745,8 +753,15 @@ class ReceivingEditorDialog extends StatefulWidget {
     this.receiving,
     this.businessDate,
     this.save,
+    this.saveDraft,
+    this.loadReceiving,
+    this.postReceiving,
+    this.recordPayment,
   });
 
+  final Future<Receiving> Function(Map<String, dynamic>)? saveDraft;
+  final Future<Receiving> Function(String)? loadReceiving, postReceiving;
+  final Future<void> Function(String, Map<String, dynamic>)? recordPayment;
   final Receiving? receiving;
   final String? businessDate;
   final List<Supplier> suppliers;
@@ -764,9 +779,18 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
   late final TextEditingController _invoice;
   late final TextEditingController _notes;
   late String _supplierId;
+  String _sourceType = 'SUPPLIER',
+      _paymentMode = 'unpaid',
+      _paymentMethod = 'cash';
+  final _sourceLabel = TextEditingController(),
+      _paidNow = TextEditingController();
+  final _paymentRequestId = const Uuid().v4();
+  final _paymentDate = _isoDate(DateTime.now());
+  bool _posted = false, _attempted = false;
   late DateTime _documentDate;
   DateTime? _businessDate;
   late List<_ReceivingLineDraft> _lines;
+  late List<StockItem> _availableStock;
   bool _saving = false;
   String? _savedDraftId;
   final _requestId = const Uuid().v4();
@@ -776,14 +800,21 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
   @override
   void initState() {
     super.initState();
+    _availableStock = [...widget.stockItems];
     final receiving = widget.receiving;
     _dueDate.text = receiving?.dueDate ?? "";
     _waybill = TextEditingController(text: receiving?.waybillNumber ?? '');
     _invoice = TextEditingController(text: receiving?.invoiceNumber ?? '');
     _notes = TextEditingController(text: receiving?.notes ?? '');
-    _supplierId = receiving?.supplierId ?? widget.suppliers.first.id;
+    _supplierId =
+        receiving?.supplierId ?? widget.suppliers.firstOrNull?.id ?? '';
+    _sourceType =
+        receiving?.sourceType ??
+        (widget.suppliers.isEmpty ? 'SELF_PURCHASE' : 'SUPPLIER');
+    if (_sourceType == 'SELF_PURCHASE')
+      _sourceLabel.text = receiving?.supplierName ?? '';
     if (widget.suppliers.every((supplier) => supplier.id != _supplierId)) {
-      _supplierId = widget.suppliers.first.id;
+      _supplierId = widget.suppliers.firstOrNull?.id ?? '';
     }
     _documentDate =
         DateTime.tryParse(receiving?.documentDate ?? '') ?? DateTime.now();
@@ -793,7 +824,7 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
     _lines = [
       for (final line in receiving?.lines ?? const <ReceivingLine>[])
         _ReceivingLineDraft(
-          stockItem: widget.stockItems
+          stockItem: _availableStock
               .where((item) => item.id == line.stockItemId)
               .firstOrNull,
           unit: line.enteredUnit,
@@ -803,11 +834,13 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
           cost: TextEditingController(text: line.lineTotal),
         )..priceMode = "total",
     ];
-    if (_lines.isEmpty) _addLine();
+    if (_lines.isEmpty) _seedSupplierLines();
   }
 
   @override
   void dispose() {
+    _sourceLabel.dispose();
+    _paidNow.dispose();
     _dueDate.dispose();
     _waybill.dispose();
     _invoice.dispose();
@@ -826,9 +859,54 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
             ?.stockItemIds ??
         const <String>[];
     return [
-      ...widget.stockItems.where((item) => linked.contains(item.id)),
-      ...widget.stockItems.where((item) => !linked.contains(item.id)),
+      ..._availableStock.where((item) => linked.contains(item.id)),
+      ..._availableStock.where((item) => !linked.contains(item.id)),
     ];
+  }
+
+  void _seedSupplierLines() {
+    final ids =
+        widget.suppliers
+            .where((s) => s.id == _supplierId)
+            .firstOrNull
+            ?.stockItemIds ??
+        <String>[];
+    for (final item in _availableStock.where((i) => ids.contains(i.id))) {
+      _lines.add(
+        _ReceivingLineDraft(
+          stockItem: item,
+          unit: item.purchaseUnits.firstOrNull?.unit ?? item.baseUnit,
+          quantity: TextEditingController(),
+          cost: TextEditingController(),
+        ),
+      );
+    }
+    if (_lines.isEmpty) _addLine();
+  }
+
+  Future<void> _newIngredient() async {
+    final item = await showDialog<StockItem>(
+      context: context,
+      builder: (_) => const IngredientQuickDialog(),
+    );
+    if (item == null || !mounted) return;
+    setState(() {
+      _availableStock.add(item);
+      final blank = _lines.where((l) => l.stockItem == null).firstOrNull;
+      if (blank != null) {
+        blank.stockItem = item;
+        blank.unit = item.baseUnit;
+      } else {
+        _lines.add(
+          _ReceivingLineDraft(
+            stockItem: item,
+            unit: item.baseUnit,
+            quantity: TextEditingController(),
+            cost: TextEditingController(),
+          ),
+        );
+      }
+    });
   }
 
   void _addLine() {
@@ -864,226 +942,315 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
         content: SizedBox(
           width: 620,
           child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                DropdownButtonFormField<String>(
-                  key: const Key('receiving-supplier'),
-                  initialValue: _supplierId,
-                  isExpanded: true,
-                  dropdownColor: AdminTheme.surfaceElevated,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium!.copyWith(color: AdminTheme.text),
-                  decoration: _adminInput('მომწოდებელი *'),
-                  items: [
-                    for (final supplier in widget.suppliers)
+            child: AbsorbPointer(
+              absorbing: _saving || _attempted,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 8),
+                  if (_posted)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Text(
+                        'მარაგში დაემატა. გადახდის ჩაწერა ჯერ არ დასრულებულა — ხელახლა სცადეთ.',
+                        style: TextStyle(color: AdminTheme.warn),
+                      ),
+                    ),
+                  DropdownButtonFormField<String>(
+                    key: const Key('receiving-source'),
+                    initialValue: _sourceType,
+                    isExpanded: true,
+                    decoration: _adminInput('მომწოდებელი / წყარო'),
+                    items: const [
                       DropdownMenuItem(
-                        value: supplier.id,
-                        child: Text(
-                          supplier.name,
-                          overflow: TextOverflow.ellipsis,
+                        value: 'SUPPLIER',
+                        child: Text('მომწოდებელი'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'SELF_PURCHASE',
+                        child: Text('ჩემით / ბაზრიდან'),
+                      ),
+                    ],
+                    onChanged: _saving || _attempted
+                        ? null
+                        : (v) => setState(() => _sourceType = v!),
+                  ),
+                  const SizedBox(height: 16),
+                  if (_sourceType == 'SELF_PURCHASE')
+                    TextField(
+                      key: const Key('receiving-source-label'),
+                      controller: _sourceLabel,
+                      enabled: !_attempted,
+                      decoration: _adminInput('საიდან? (არასავალდებულო)'),
+                    ),
+                  if (_sourceType == 'SUPPLIER')
+                    DropdownButtonFormField<String>(
+                      key: const Key('receiving-supplier'),
+                      initialValue: _supplierId.isEmpty ? null : _supplierId,
+                      isExpanded: true,
+                      dropdownColor: AdminTheme.surfaceElevated,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium!.copyWith(color: AdminTheme.text),
+                      decoration: _adminInput('ვისგან / საიდან?'),
+                      items: [
+                        for (final supplier in widget.suppliers)
+                          DropdownMenuItem(
+                            value: supplier.id,
+                            child: Text(
+                              supplier.name,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                      onChanged: _saving
+                          ? null
+                          : (value) => setState(() {
+                              _supplierId = value ?? _supplierId;
+                              if (_lines.every(
+                                (l) =>
+                                    l.quantity.text.isEmpty &&
+                                    l.cost.text.isEmpty,
+                              )) {
+                                for (final line in _lines) {
+                                  line.dispose();
+                                }
+                                _lines.clear();
+                                _seedSupplierLines();
+                              }
+                            }),
+                    ),
+                  const SizedBox(height: 10),
+                  ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: const Text('თარიღი და დოკუმენტის დეტალები'),
+                    children: [
+                      OutlinedButton.icon(
+                        key: const Key('receiving-business-date'),
+                        icon: const Icon(Icons.today),
+                        label: Text(
+                          _businessDate == null
+                              ? 'აირჩიეთ სამუშაო დღე'
+                              : 'სამუშაო დღე: ${_isoDate(_businessDate!)}',
+                        ),
+                        onPressed: _saving
+                            ? null
+                            : () async {
+                                final selected = await showDatePicker(
+                                  context: context,
+                                  initialDate: _businessDate ?? DateTime.now(),
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime.now().add(
+                                    const Duration(days: 366),
+                                  ),
+                                );
+                                if (selected != null)
+                                  setState(() => _businessDate = selected);
+                              },
+                      ),
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        key: const Key('receiving-date'),
+                        onPressed: _saving ? null : _pickDate,
+                        icon: const Icon(Icons.event_rounded, size: 18),
+                        label: Text(
+                          'დოკუმენტის თარიღი: ${_isoDate(_documentDate)}',
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AdminTheme.text,
+                          side: BorderSide(color: AdminTheme.border),
+                          minimumSize: const Size(0, 52),
                         ),
                       ),
-                  ],
-                  onChanged: _saving
-                      ? null
-                      : (value) => setState(() {
-                          _supplierId = value ?? _supplierId;
-                          if (_lines.length == 1 &&
-                              _lines.first.quantity.text.isEmpty &&
-                              _lines.first.cost.text.isEmpty) {
-                            _lines.first.dispose();
-                            _lines.clear();
-                            _addLine();
-                          }
-                        }),
-                ),
-                const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  key: const Key('receiving-business-date'),
-                  icon: const Icon(Icons.today),
-                  label: Text(
-                    _businessDate == null
-                        ? 'აირჩიეთ სამუშაო დღე'
-                        : 'სამუშაო დღე: ${_isoDate(_businessDate!)}',
-                  ),
-                  onPressed: _saving
-                      ? null
-                      : () async {
-                          final selected = await showDatePicker(
-                            context: context,
-                            initialDate: _businessDate ?? DateTime.now(),
-                            firstDate: DateTime(2020),
-                            lastDate: DateTime.now().add(
-                              const Duration(days: 366),
-                            ),
-                          );
-                          if (selected != null)
-                            setState(() => _businessDate = selected);
-                        },
-                ),
-                const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  key: const Key('receiving-date'),
-                  onPressed: _saving ? null : _pickDate,
-                  icon: const Icon(Icons.event_rounded, size: 18),
-                  label: Text('დოკუმენტის თარიღი: ${_isoDate(_documentDate)}'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AdminTheme.text,
-                    side: BorderSide(color: AdminTheme.border),
-                    minimumSize: const Size(0, 52),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                _dialogField(
-                  _waybill,
-                  'ზედნადების ნომერი',
-                  key: const Key('receiving-waybill'),
-                ),
-                _dialogField(_invoice, 'ინვოისის ნომერი'),
-                _dialogField(_notes, 'შენიშვნა', maxLines: 2),
-                const Divider(height: 24),
-                if (widget.suppliers
-                        .where((s) => s.id == _supplierId)
-                        .firstOrNull
-                        ?.stockItemIds
-                        .isNotEmpty ==
-                    true) ...[
-                  Text(
-                    'მომწოდებლის პროდუქტები',
-                    style: TextStyle(color: AdminTheme.textMuted),
-                  ),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: [
-                      for (final item in _prioritizedItems.where(
-                        (item) => widget.suppliers
-                            .firstWhere((s) => s.id == _supplierId)
-                            .stockItemIds
-                            .contains(item.id),
-                      ))
-                        ActionChip(
-                          label: Text(item.name),
-                          onPressed: _saving
-                              ? null
-                              : () => setState(() {
-                                  final blank = _lines
-                                      .where(
-                                        (line) =>
-                                            line.quantity.text.isEmpty &&
-                                            line.cost.text.isEmpty,
-                                      )
-                                      .firstOrNull;
-                                  if (blank != null) {
-                                    blank.stockItem = item;
-                                    blank.unit = item.baseUnit;
-                                  } else {
-                                    _lines.add(
-                                      _ReceivingLineDraft(
-                                        stockItem: item,
-                                        unit: item.baseUnit,
-                                        quantity: TextEditingController(),
-                                        cost: TextEditingController(),
-                                      ),
-                                    );
-                                  }
-                                }),
-                        ),
+                      const SizedBox(height: 10),
+                      _dialogField(
+                        _waybill,
+                        'ზედნადების ნომერი',
+                        key: const Key('receiving-waybill'),
+                      ),
+                      _dialogField(_invoice, 'ინვოისის ნომერი'),
+                      _dialogField(_notes, 'შენიშვნა', maxLines: 2),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                ],
-                for (var index = 0; index < _lines.length; index++)
-                  _lineEditor(index),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    key: const Key('receiving-add-line'),
-                    onPressed: _saving || widget.stockItems.isEmpty
-                        ? null
-                        : () => setState(_addLine),
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: const Text('პოზიციის დამატება'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AdminTheme.primary,
+                  const Divider(height: 24),
+                  Text(
+                    'რას ვიღებთ დღეს?',
+                    style: TextStyle(
+                      color: AdminTheme.text,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                ),
-                const Divider(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'ჯამი',
-                        style: TextStyle(
-                          color: AdminTheme.textMuted,
-                          fontWeight: FontWeight.w700,
-                        ),
+                  const SizedBox(height: 16),
+                  for (var index = 0; index < _lines.length; index++)
+                    _lineEditor(index),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      key: const Key('receiving-add-line'),
+                      onPressed: _saving || _availableStock.isEmpty
+                          ? null
+                          : () => setState(_addLine),
+                      icon: const Icon(Icons.add_rounded, size: 18),
+                      label: const Text('საქონლის დამატება'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AdminTheme.primary,
                       ),
                     ),
-                    Text(
-                      '${_documentTotal.toStringAsFixed(2)} ₾',
-                      key: const Key('receiving-editor-total'),
-                      style: TextStyle(
-                        color: AdminTheme.text,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
+                  ),
+                  TextButton.icon(
+                    onPressed: _saving ? null : _newIngredient,
+                    icon: const Icon(Icons.add),
+                    label: const Text('ახალი ნედლეულის შექმნა'),
+                  ),
+                  const Divider(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'ჯამი',
+                          style: TextStyle(
+                            color: AdminTheme.textMuted,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${_documentTotal.toStringAsFixed(2)} ₾',
+                        key: const Key('receiving-editor-total'),
+                        style: TextStyle(
+                          color: AdminTheme.text,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'გადახდა',
+                    style: TextStyle(
+                      color: AdminTheme.text,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    key: const Key('receiving-payment-mode'),
+                    initialValue: _paymentMode,
+                    isExpanded: true,
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'unpaid',
+                        child: Text('ჯერ არ გადამიხდია'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'full',
+                        child: Text('სრულად გადავიხადე'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'partial',
+                        child: Text('ნაწილობრივ გადავიხადე'),
+                      ),
+                    ],
+                    onChanged: _saving || _attempted
+                        ? null
+                        : (v) => setState(() => _paymentMode = v!),
+                  ),
+                  if (_paymentMode == 'partial') ...[
+                    const SizedBox(height: 16),
+                    TextField(
+                      key: const Key('receiving-paid-now'),
+                      controller: _paidNow,
+                      enabled: !_attempted,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      onChanged: (_) => setState(() {}),
+                      decoration: _adminInput('ახლა გადავიხადე ₾'),
+                    ),
+                    const SizedBox(height: 8),
+                    Text('დარჩა: ${_remainingPreview()} ₾'),
+                  ],
+                  if (_paymentMode != 'unpaid') ...[
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: _paymentMethod,
+                      decoration: _adminInput('როგორ გადაიხადეთ?'),
+                      items: const [
+                        DropdownMenuItem(value: 'cash', child: Text('ნაღდი')),
+                        DropdownMenuItem(value: 'bank', child: Text('ბანკი')),
+                      ],
+                      onChanged: _attempted
+                          ? null
+                          : (v) => setState(() => _paymentMethod = v!),
+                    ),
+                    const SizedBox(height: 8),
+                    Text('გადახდის თარიღი: $_paymentDate'),
+                  ],
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _dueDate,
+                    decoration: _adminInput(
+                      "გადახდის ვადა (არასავალდებულო) YYYY-MM-DD",
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('დადასტურების შემდეგ საქონელი დაემატება მარაგს.'),
+                  if (_error != null) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        _error!,
+                        style: TextStyle(color: AdminTheme.bad, fontSize: 12),
                       ),
                     ),
                   ],
-                ),
-                TextField(
-                  controller: _dueDate,
-                  decoration: _adminInput(
-                    "გადახდის ვადა (არასავალდებულო) YYYY-MM-DD",
-                  ),
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      _error!,
-                      style: TextStyle(color: AdminTheme.bad, fontSize: 12),
-                    ),
-                  ),
                 ],
-              ],
+              ),
             ),
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: _saving ? null : () => Navigator.pop(context, false),
-            child: Text(
-              'გაუქმება',
-              style: TextStyle(color: AdminTheme.textMuted),
-            ),
-          ),
-          TextButton(
-            key: const Key('receiving-save-draft'),
-            onPressed: _saving ? null : () => _save(),
-            child: const Text('მონახაზის შენახვა'),
-          ),
-          FilledButton(
-            key: const Key('receiving-save'),
-            onPressed: _saving ? null : () => _save(post: true),
-            style: FilledButton.styleFrom(backgroundColor: AdminTheme.primary),
-            child: _saving
-                ? const SizedBox.square(
-                    dimension: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Text(
-                    'მიღება და მარაგში დამატება',
-                    style: TextStyle(color: Colors.white),
+          SizedBox(
+            width: double.infinity,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FilledButton(
+                  key: const Key('receiving-save'),
+                  onPressed: _saving ? null : () => _save(post: true),
+                  child: Text(
+                    _saving
+                        ? 'ინახება…'
+                        : _posted
+                        ? 'გადახდის ჩაწერის გამეორება'
+                        : 'მიღების დადასტურება',
+                    textAlign: TextAlign.center,
                   ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 8,
+                  children: [
+                    TextButton(
+                      onPressed: _saving
+                          ? null
+                          : () => Navigator.pop(context, _attempted),
+                      child: const Text('დახურვა'),
+                    ),
+                    TextButton(
+                      key: const Key('receiving-save-draft'),
+                      onPressed: _saving || _attempted ? null : () => _save(),
+                      child: const Text('მონახაზად შენახვა'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -1127,7 +1294,7 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
                   onChanged: _saving
                       ? null
                       : (value) => setState(() {
-                          line.stockItem = widget.stockItems
+                          line.stockItem = _availableStock
                               .where((item) => item.id == value)
                               .firstOrNull;
                           line.unit = line.stockItem?.baseUnit;
@@ -1150,18 +1317,9 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
             isExpanded: true,
             decoration: _adminInput('ფასის შეყვანა'),
             items: const [
-              DropdownMenuItem(
-                value: 'entered',
-                child: Text('შესყიდვის ერთეულის ფასი'),
-              ),
-              DropdownMenuItem(
-                value: 'base',
-                child: Text('მარაგის ერთეულის ფასი'),
-              ),
-              DropdownMenuItem(
-                value: 'total',
-                child: Text('პოზიციის სრული თანხა'),
-              ),
+              DropdownMenuItem(value: 'entered', child: Text('შეფუთვის ფასი')),
+              DropdownMenuItem(value: 'base', child: Text('ერთეულის ფასი')),
+              DropdownMenuItem(value: 'total', child: Text('მთლიანი თანხა')),
             ],
             onChanged: _saving
                 ? null
@@ -1251,9 +1409,11 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
       ).textTheme.bodyMedium!.copyWith(color: AdminTheme.text),
       decoration: _adminInput(
         line.priceMode == 'total'
-            ? 'სრული თანხა ₾'
+            ? 'სულ გადავიხდი ₾'
             : 'დღევანდელი ფასი / ${line.priceMode == 'base'
-                  ? _unitShort(line.stockItem!.baseUnit)
+                  ? line.stockItem == null
+                        ? ''
+                        : _unitShort(line.stockItem!.baseUnit)
                   : line.unit == null
                   ? ''
                   : _unitShort(line.unit!)}',
@@ -1298,13 +1458,57 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
     if (picked != null) setState(() => _documentDate = picked);
   }
 
+  String get _paymentAmount => _paymentMode == 'full'
+      ? _documentTotal.toStringAsFixed(2)
+      : _paidNow.text.trim().replaceAll(',', '.');
+  Map<String, dynamic> get _paymentPayload => {
+    'requestId': _paymentRequestId,
+    'amount': _paymentAmount,
+    'paymentDate': _paymentDate,
+    'businessDate': _isoDate(_businessDate!),
+    'method': _paymentMethod,
+  };
+  String _remainingPreview() {
+    try {
+      final paid = InventoryDecimal.parse(_paymentAmount);
+      if (paid.raw > _documentTotal.raw) return 'თანხა აღემატება ჯამს';
+      final cents = (_documentTotal.raw - paid.raw) ~/ BigInt.from(10000000000);
+      return '${cents ~/ BigInt.from(100)}.${(cents % BigInt.from(100)).toString().padLeft(2, '0')}';
+    } on FormatException {
+      return _documentTotal.toStringAsFixed(2);
+    }
+  }
+
   Future<void> _save({bool post = false}) async {
     if (_businessDate == null) {
       setState(() => _error = 'აირჩიეთ რესტორნის სამუშაო დღე');
       return;
     }
+    if (_sourceType == 'SUPPLIER' && _supplierId.isEmpty) {
+      setState(() => _error = 'აირჩიეთ მომწოდებელი ან ჩემით / ბაზრიდან');
+      return;
+    }
+    if (post && _paymentMode != 'unpaid') {
+      try {
+        final amount = InventoryDecimal.parse(_paymentAmount);
+        if (amount.raw <= BigInt.zero ||
+            amount.raw > _documentTotal.raw ||
+            amount.round(2).raw != amount.raw)
+          throw const FormatException();
+      } on FormatException {
+        setState(
+          () => _error =
+              'შეიყვანეთ გადახდილი თანხა ჯამის ფარგლებში (თეთრების სიზუსტით)',
+        );
+        return;
+      }
+    }
     final payload = <Map<String, dynamic>>[];
     for (final line in _lines) {
+      if (line.quantity.text.trim().isEmpty &&
+          line.cost.text.trim().isEmpty &&
+          _lines.length > 1)
+        continue;
       final item = line.stockItem;
       if (item == null) {
         setState(() => _error = 'აირჩიეთ პროდუქტი ყველა პოზიციაზე');
@@ -1341,15 +1545,9 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
             .replaceAll(',', '.'),
       });
     }
-    if (post && widget.save == null) {
-      final ok = await _confirmInventoryAction(
-        context,
-        title: 'საქონლის მიღება',
-        message:
-            'მიღება დაემატება მარაგს. თანხა: ${_documentTotal.toStringAsFixed(2)} ₾. გადახდა ცალკე აღირიცხება.',
-        confirmLabel: 'მიღება და მარაგში დამატება',
-      );
-      if (ok != true) return;
+    if (payload.isEmpty) {
+      setState(() => _error = 'შეიყვანეთ მიღებული საქონელი');
+      return;
     }
     setState(() {
       _saving = true;
@@ -1360,36 +1558,73 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
       if (save != null) {
         await save(<String, dynamic>{
           'post': post,
-          'supplierId': _supplierId,
+          'supplierId': _sourceType == 'SELF_PURCHASE' ? null : _supplierId,
+          'sourceType': _sourceType,
+          'sourceLabel': _sourceLabel.text.trim(),
+          if (post && _paymentMode != 'unpaid') 'payment': _paymentPayload,
           'documentDate': _isoDate(_documentDate),
           if (_businessDate != null) 'businessDate': _isoDate(_businessDate!),
           'waybillNumber': _waybill.text.trim(),
           'lines': payload,
         });
       } else {
-        if (_savedDraftId != null) {
-          final existing = await MobileApiService.getReceiving(_savedDraftId!);
-          if (existing.isPosted) {
-            if (mounted) Navigator.pop(context, true);
-            return;
+        _attempted = true;
+        Receiving? saved;
+        if (_savedDraftId != null)
+          saved = await (widget.loadReceiving ?? MobileApiService.getReceiving)(
+            _savedDraftId!,
+          );
+        if (saved?.isPosted != true) {
+          saved = widget.saveDraft != null
+              ? await widget.saveDraft!({
+                  'requestId': _requestId,
+                  'supplierId': _supplierId,
+                  'sourceType': _sourceType,
+                  'sourceLabel': _sourceLabel.text,
+                  'lines': payload,
+                })
+              : await MobileApiService.saveReceivingDraft(
+                  id: _savedDraftId ?? widget.receiving?.id,
+                  requestId: _requestId,
+                  dueDate: _dueDate.text.trim(),
+                  supplierId: _supplierId,
+                  sourceType: _sourceType,
+                  sourceLabel: _sourceLabel.text.trim(),
+                  documentDate: _isoDate(_documentDate),
+                  businessDate: _isoDate(_businessDate!),
+                  waybillNumber: _waybill.text,
+                  invoiceNumber: _invoice.text,
+                  notes: _notes.text,
+                  lines: payload,
+                );
+          _savedDraftId = saved.id;
+          if (post && !saved.isPosted)
+            saved =
+                await (widget.postReceiving ?? MobileApiService.postReceiving)(
+                  saved.id,
+                );
+        }
+        _posted = saved!.isPosted;
+        if (post && _paymentMode != 'unpaid') {
+          if (widget.recordPayment != null) {
+            await widget.recordPayment!(saved.id, _paymentPayload);
+          } else {
+            await MobileApiService.procurementRequest(
+              'receivings/${saved.id}/payments',
+              _paymentPayload,
+            );
           }
         }
-        final saved = await MobileApiService.saveReceivingDraft(
-          id: _savedDraftId ?? widget.receiving?.id,
-          requestId: _requestId,
-          dueDate: _dueDate.text.trim(),
-          supplierId: _supplierId,
-          documentDate: _isoDate(_documentDate),
-          businessDate: _isoDate(_businessDate!),
-          waybillNumber: _waybill.text,
-          invoiceNumber: _invoice.text,
-          notes: _notes.text,
-          lines: payload,
-        );
-        _savedDraftId = saved.id;
-        if (post) await MobileApiService.postReceiving(saved.id);
       }
-      if (mounted) Navigator.pop(context, true);
+      if (mounted) {
+        _adminToast(
+          context,
+          post
+              ? 'მარაგში დაემატა'
+              : 'მონახაზი შენახულია — მარაგში ჯერ არ დამატებულა',
+        );
+        Navigator.pop(context, true);
+      }
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -1502,7 +1737,7 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
                 key: const Key('stock-detail-current'),
                 style: TextStyle(
                   color: item.isNegativeStock
-                      ? Colors.red
+                      ? AdminTheme.bad
                       : item.isLowStock
                       ? AdminTheme.warn
                       : AdminTheme.text,
@@ -1513,7 +1748,7 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
             ),
             if (item.isNegativeStock)
               const Text(
-                'უარყოფითი ნაშთი',
+                'უარყოფითი მარაგი',
                 style: TextStyle(
                   color: Colors.red,
                   fontWeight: FontWeight.bold,
@@ -1550,13 +1785,13 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
           ),
         const SizedBox(height: 4),
         Text(
-          'მიმდინარე ნაშთი მოძრაობების ჯამია',
+          'მარაგშია',
           style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
         ),
         const SizedBox(height: 14),
         _detailRow('როგორ ვითვლით საწყობში?', _unitLabel(item.baseUnit)),
         _detailRow(
-          'მინიმალური ნაშთი',
+          'მინიმალური მარაგი',
           item.minimumStock == null
               ? 'არ არის მითითებული'
               : '${_quantity(item.minimumStock!)} ${_unitShort(item.baseUnit)}',
@@ -1575,6 +1810,21 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
             'როგორ მოდის მომწოდებლისგან?',
             '1 ${_unitShort(unit.unit)} = ${unit.baseUnitMultiplier} ${_unitShort(item.baseUnit)}',
           ),
+        if (detail.suppliers.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Text(
+            'მომწოდებლები',
+            style: TextStyle(
+              color: AdminTheme.text,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          for (final supplier in detail.suppliers)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Text('${supplier['name']}'),
+            ),
+        ],
         if (detail.usedBy.isNotEmpty) ...[
           const Divider(height: 24),
           Text(
@@ -1603,7 +1853,9 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
                     ),
                   ),
                   Text(
-                    '${_quantityText(usage.quantityPerUnit)} ${_unitShort(usage.baseUnit)}',
+                    usage.baseUnit == InventoryUnit.kg
+                        ? '${_quantityText((InventoryDecimal.parse(usage.quantityPerUnit) * InventoryDecimal.parse('1000')).toStringAsFixed(3))} გ'
+                        : '${_quantityText(usage.quantityPerUnit)} ${_unitShort(usage.baseUnit)}',
                     style: TextStyle(
                       color: AdminTheme.textMuted,
                       fontSize: 12,

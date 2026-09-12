@@ -151,9 +151,9 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('მისი საქონელი'), findsOneWidget);
+      expect(find.text('რას გვაწვდის'), findsOneWidget);
       expect(find.text('ბოლო მიღებები'), findsOneWidget);
-      await tester.tap(find.text('პროდუქტის მიბმა'));
+      await tester.tap(find.text('არსებული საქონლის არჩევა'));
       await tester.pumpAndSettle();
       await tester.tap(
         find.descendant(
@@ -193,12 +193,14 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await tester.tap(find.text('თარიღი და დოკუმენტის დეტალები'));
+      await tester.pumpAndSettle();
       expect(find.text('სამუშაო დღე: 2026-09-05'), findsOneWidget);
       final product = tester.widget<DropdownButtonFormField<String>>(
         find.byWidgetPredicate(
           (w) =>
               w is DropdownButtonFormField<String> &&
-              w.key.toString().contains('receiving-line-item'),
+              w.key.toString().contains('receiving-line-item-0'),
         ),
       );
       expect(product.initialValue, 'borjomi');
@@ -322,7 +324,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('გასაყიდი ფასი: 2.50 ₾'), findsOneWidget);
     expect(find.text('მიმდინარე თვითღირებულება: 0.65 ₾'), findsOneWidget);
-    await tester.tap(find.byType(ExpansionTile));
+    await tester.ensureVisible(
+      find.text('შენახული შემადგენლობით · საშუალო შესყიდვის ფასი'),
+    );
+    await tester.tap(
+      find.text('შენახული შემადგენლობით · საშუალო შესყიდვის ფასი'),
+    );
     await tester.pumpAndSettle();
     expect(find.textContaining('0.6475 ₾'), findsOneWidget);
     expect(tester.takeException(), isNull);

@@ -97,14 +97,20 @@ void main() {
       await qa.screenshot(tester, 'inventory-$width');
       for (final label in [
         'მომწოდებლები',
-        'დღიური მიღება',
+        'მიღებების ისტორია',
         'მენიუს შემადგენლობა',
-        'ნაშთები',
+        'მარაგის მართვა',
       ]) {
+        if (find.byTooltip('მარაგი').evaluate().isNotEmpty) {
+          await tester.tap(find.byTooltip('მარაგი'));
+          await tester.pumpAndSettle();
+        }
         await tester.ensureVisible(find.text(label).first);
+        await tester.pumpAndSettle();
         await tester.tap(find.text(label).first);
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
+        expect(find.byKey(const Key('inventory-home')), findsNothing);
       }
       final add = find.byKey(const Key('inventory-add'));
       await tester.ensureVisible(add);
@@ -144,7 +150,7 @@ void main() {
         find.byWidgetPredicate(
           (w) =>
               w is DropdownButtonFormField<String> &&
-              w.key.toString().contains('receiving-line-item'),
+              w.key.toString().contains('receiving-line-item-0'),
         ),
       );
       expect(product.initialValue, 'borjomi');

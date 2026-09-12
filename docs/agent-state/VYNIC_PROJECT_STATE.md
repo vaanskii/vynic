@@ -125,7 +125,11 @@ current transport status.
   values under item locks, in Cloud acceptance order. Historical values are
   explicitly reconstructed; negative/unknown bases are provisional. Manager
   and read-only POS inspection show current values; checkout is unchanged.
-  See `docs/INVENTORY_PROCUREMENT_REWORK.md`.
+  Manager Inventory now opens a daily dashboard with secondary supplier/Menu
+  management. Receiving includes payment choices and supports self-purchase
+  source snapshots without fake Suppliers. Dish/drink composition reuses the
+  existing recipe engine; inline ingredient creation has retry identity.
+  See `docs/INVENTORY_PROCUREMENT_REWORK.md` and `docs/INVENTORY_DAILY_UX.md`.
 
 - Financials Step 4.7 adds Venue/Staff compensation rules, frozen PayrollPeriod
   snapshots and append-only payroll accrual/payment history. Daily wages require
@@ -284,7 +288,7 @@ current transport status.
   unchanged; close-time snapshots preserve its `revision` instead of joining
   today's recipe onto a past sale.
 - Manager Inventory labels are Georgian (`კგ`, `გ`, `ლ`, `მლ`, `ცალი`,
-  `ბოთლი`, `შეკვრა`, `ყუთი`; `მინიმალური ნაშთი`, `შესყიდვის შეფუთვა`) while
+  `ბოთლი`, `შეკვრა`, `ყუთი`; `მინიმალური მარაგი`, `როგორ ვითვლით?`) while
   storage and the wire keep the stable English enum codes, so no persisted value
   depends on language.
 - Venue-wide accountability lives in the append-only `AuditEventLog`, which is
@@ -632,8 +636,9 @@ current transport status.
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260916123000_procurement_request_identity`.
+  `20260917120000_receiving_self_purchase`.
 - Immediately preceding state migrations:
+  `20260916123000_procurement_request_identity`,
   `20260916120000_inventory_procurement`,
   `20260915120000_manager_login_code`,
   `20260914120000_payroll_day_adjustments`,

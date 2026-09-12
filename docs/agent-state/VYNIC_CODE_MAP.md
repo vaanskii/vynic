@@ -162,6 +162,8 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## Inventory
 
+- Daily Inventory UX, inline payment/retry, self-purchase sources and composition simplification: `docs/INVENTORY_DAILY_UX.md`; seven-surface responsive proof: `apps/operations/test/widget/inventory_daily_ux_test.dart`. The dashboard lives in `mobile_admin_inventory_tab.dart`; inline ingredient search/create in `mobile_admin_procurement.dart`.
+
 - Current supplier-first procurement, payables, moving valuation, migration and rollout: `docs/INVENTORY_PROCUREMENT_REWORK.md`; whole-workflow proof: `apps/backend/src/inventory/procurement-rework.integration.spec.ts`.
 - Actual supplier payments, derived debt, historical verification and reversals: `apps/backend/src/inventory/supplier-payments.ts`; PostgreSQL value writer: `apps/backend/prisma/migrations/20260916120000_inventory_procurement/migration.sql`.
 - Supplier goods and payment forms: `apps/operations/lib/apps/mobile_app/presentation/screens/admin_screen/tabs/mobile_admin_procurement.dart`; exact previews: `apps/operations/lib/core/models/inventory_decimal.dart`; responsive proof: `apps/operations/test/widget/procurement_rework_test.dart`.
@@ -188,7 +190,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Device -> Venue complete projection (catalog v5 with inspection excerpts; v3/v4 compatibility for older clients): `GET /edge/inventory/catalog` in `apps/backend/src/edge/edge-transport.controller.ts`
 - POS offline model/store/pull: `apps/operations/lib/core/models/inventory.dart`, `apps/operations/lib/core/database/repositories/inventory_repository.dart`, `apps/operations/lib/core/services/edge/inventory_projection_sync_service.dart`
 - Manager read models: `apps/operations/lib/core/models/receiving.dart` (Receiving, Stock Item detail), `apps/operations/lib/core/models/menu_recipe.dart` (recipes, menu-oriented list, reverse usage); API client in `apps/operations/lib/core/services/manager_app/mobile_api_service.dart`
-- Manager UI: `apps/operations/lib/apps/mobile_app/presentation/screens/admin_screen/tabs/mobile_admin_inventory_tab.dart` (catalog, section selector, Georgian unit labels via `_unitShort`), `.../tabs/mobile_admin_receiving.dart` (Receiving list/detail/editor, Stock Item detail and its reverse usage), `.../tabs/mobile_admin_recipes.dart` (Menu-oriented recipe list and the direct-link/recipe editor)
+- Manager UI: `apps/operations/lib/apps/mobile_app/presentation/screens/admin_screen/tabs/mobile_admin_inventory_tab.dart` (daily home, secondary catalog management, Georgian unit labels via `_unitShort`), `.../tabs/mobile_admin_receiving.dart` (Receiving list/detail/editor, Stock Item detail and its reverse usage), `.../tabs/mobile_admin_recipes.dart` (Menu-oriented recipe list and the direct-link/recipe editor)
 - Proofs: `apps/backend/src/inventory/*.spec.ts` (`receiving.integration.spec.ts` covers lifecycle, derived stock, idempotency, concurrency, tenancy and audit; `recipe.integration.spec.ts` covers the three product shapes, variants, one-definition-per-product, no stock effect, reverse usage, projection, audit and tenancy), `apps/backend/src/edge/edge-transport.integration.spec.ts`, `apps/operations/test/unit/inventory_*_test.dart`, `apps/operations/test/widget/manager_inventory_test.dart`, `apps/operations/test/widget/manager_receiving_test.dart`, `apps/operations/test/widget/manager_recipes_test.dart`
 
 ## Reservations

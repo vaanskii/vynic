@@ -137,7 +137,7 @@ void main() {
       await t.ensureVisible(find.byKey(const Key('receiving-price-mode-0')));
       await t.tap(find.byKey(const Key('receiving-price-mode-0')));
       await t.pumpAndSettle();
-      await t.tap(find.text('პოზიციის სრული თანხა').last);
+      await t.tap(find.text('მთლიანი თანხა').last);
       await t.pumpAndSettle();
       await t.enterText(
         find.byKey(const Key('receiving-line-quantity-0')),

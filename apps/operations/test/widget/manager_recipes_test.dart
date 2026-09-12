@@ -212,7 +212,7 @@ void main() {
       // The product with no definition is a first-class row, not an absence.
       expect(find.text('Burger'), findsOneWidget);
       expect(find.text('4 კომპონენტი'), findsOneWidget);
-      expect(find.text('რეცეპტი არ არის'), findsOneWidget);
+      expect(find.text('შემადგენლობა შესავსებია'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
@@ -226,6 +226,8 @@ void main() {
       await tester.pumpWidget(_tab());
       await tester.pumpAndSettle();
 
+      await tester.tap(find.text('შემადგენლობის სტატუსი'));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('recipe-filter-unlinked')));
       await tester.pumpAndSettle();
       expect(find.text('Burger'), findsOneWidget);
@@ -313,7 +315,7 @@ void main() {
       expect(find.byKey(const Key('recipe-editor')), findsOneWidget);
       // The selling price is context, and read-only.
       expect(find.text('გასაყიდი ფასი: 4.00 ₾'), findsOneWidget);
-      expect(find.text('მარაგთან დაკავშირება'), findsOneWidget);
+      expect(find.text('1 გაყიდვა = მარაგიდან'), findsOneWidget);
       // A direct link has no ingredient list to grow.
       expect(find.byKey(const Key('recipe-add-component')), findsNothing);
       expect(find.byKey(const Key('recipe-yield')), findsNothing);
@@ -457,9 +459,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('ტექნოლოგიური ბარათი'));
+      await tester.tap(find.text('რამდენიმე ინგრედიენტის დამატება'));
       await tester.pumpAndSettle();
-      expect(find.byKey(const Key('recipe-yield')), findsOneWidget);
+      expect(find.text('რამდენიმე პორციაზე მომზადება'), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('recipe-component-unit-0')));
       await tester.pumpAndSettle();
@@ -472,8 +474,6 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('recipe-add-component')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('recipe-component-item-1')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Flour').last);
       await tester.pumpAndSettle();
@@ -512,7 +512,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('ტექნოლოგიური ბარათი'));
+      await tester.tap(find.text('რამდენიმე ინგრედიენტის დამატება'));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('recipe-component-unit-0')));
       await tester.pumpAndSettle();
@@ -522,6 +522,9 @@ void main() {
         find.byKey(const Key('recipe-component-quantity-0')),
         '3.5',
       );
+      await tester.ensureVisible(find.text('რამდენიმე პორციაზე მომზადება'));
+      await tester.tap(find.text('რამდენიმე პორციაზე მომზადება'));
+      await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('recipe-yield')), '100');
       await tester.pumpAndSettle();
 
@@ -554,13 +557,15 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('ტექნოლოგიური ბარათი'));
+      await tester.tap(find.text('რამდენიმე ინგრედიენტის დამატება'));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const Key('recipe-component-quantity-0')),
         '1',
       );
       await tester.tap(find.byKey(const Key('recipe-add-component')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Beef').last);
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const Key('recipe-component-quantity-1')),
@@ -753,9 +758,9 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('ხინკალი'), findsOneWidget);
-      expect(find.text('0.035 კგ'), findsOneWidget);
+      expect(find.text('35 გ'), findsOneWidget);
       expect(find.text('Burger'), findsOneWidget);
-      expect(find.text('0.15 კგ'), findsOneWidget);
+      expect(find.text('150 გ'), findsOneWidget);
     });
 
     testWidgets('says plainly what a minimum stock threshold means', (
@@ -785,7 +790,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // A threshold, not a balance — and both read in Georgian.
-      expect(find.text('მინიმალური ნაშთი'), findsOneWidget);
+      expect(find.text('მინიმალური მარაგი'), findsOneWidget);
       expect(find.text('10 კგ'), findsOneWidget);
       expect(
         find.byKey(const Key('stock-detail-minimum-help')),
@@ -808,12 +813,15 @@ void main() {
       await tester.pumpWidget(_tab());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('ნაშთები'));
+      await tester.tap(find.byTooltip('მარაგი'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('მარაგის მართვა'));
+      await tester.tap(find.text('მარაგის მართვა'));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('inventory-add')));
       await tester.pumpAndSettle();
 
-      expect(find.text('მინიმალური ნაშთი'), findsOneWidget);
+      expect(find.text('მინიმალური მარაგი'), findsOneWidget);
       expect(find.byKey(const Key('minimum-stock-help')), findsOneWidget);
       expect(find.text('როგორ მოდის მომწოდებლისგან?'), findsOneWidget);
       expect(tester.takeException(), isNull);

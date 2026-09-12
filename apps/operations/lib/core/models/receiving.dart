@@ -188,6 +188,7 @@ class Receiving {
   const Receiving({
     required this.id,
     required this.supplierId,
+    this.sourceType = 'SUPPLIER',
     required this.supplierName,
     required this.documentDate,
     this.businessDate,
@@ -217,6 +218,7 @@ class Receiving {
   final String? dueDate;
   final String id;
   final String supplierId;
+  final String sourceType;
 
   /// Frozen at creation, so renaming or disabling a Supplier later never
   /// rewrites what this document said when the goods arrived.
@@ -268,6 +270,7 @@ class Receiving {
       dueDate: _text(json['dueDate']),
       id: _text(json['id']) ?? '',
       supplierId: _text(json['supplierId']) ?? '',
+      sourceType: _text(json['sourceType']) ?? 'SUPPLIER',
       supplierName: _text(json['supplierName']) ?? '',
       documentDate: _text(json['documentDate']) ?? '',
       businessDate: _text(json['businessDate']),
@@ -337,13 +340,14 @@ class StockItemDetail {
     this.costStatus,
     this.inventoryValue,
     this.purchaseHistory = const [],
+    this.suppliers = const [],
     this.lastPurchaseUnitCost,
     this.recentMovements = const <StockMovement>[],
     this.usedBy = const <StockItemUsage>[],
   });
 
   final String? costStatus, inventoryValue;
-  final List<Map> purchaseHistory;
+  final List<Map> purchaseHistory, suppliers;
   final StockItem item;
   final String? weightedUnitCost;
   final String? lastPurchaseUnitCost;
@@ -361,6 +365,7 @@ class StockItemDetail {
       inventoryValue:
           (json['currentCost'] as Map?)?['inventoryValue'] as String?,
       purchaseHistory: (json['purchaseHistory'] as List? ?? []).cast<Map>(),
+      suppliers: (json['suppliers'] as List? ?? []).cast<Map>(),
       weightedUnitCost:
           (json['currentCost'] as Map?)?['weightedUnitCost'] as String?,
       lastPurchaseUnitCost:

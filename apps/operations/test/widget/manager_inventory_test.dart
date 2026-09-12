@@ -69,8 +69,8 @@ void main() {
       findsNothing,
     ); // Unit is beside the quantity.
     // Step 2 replaced the placeholder with the ledger's own answer.
-    expect(find.text('ნაშთი: 0 კგ'), findsOneWidget);
-    expect(find.text('მინიმალური ნაშთი: 2.5 კგ'), findsOneWidget);
+    expect(find.text('მარაგშია: 0 კგ'), findsOneWidget);
+    expect(find.text('მინიმალური მარაგი: 2.5 კგ'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await tester.tap(find.byKey(const Key('inventory-add')));
@@ -93,6 +93,8 @@ void main() {
     await tester.tap(find.text('გაუქმება'));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byTooltip('მარაგი'));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('მომწოდებლები'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('მომწოდებლები'));

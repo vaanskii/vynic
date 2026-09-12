@@ -120,6 +120,9 @@ class StockItem {
     this.minimumStock,
     this.notes,
     this.lastPurchaseUnitCost,
+    this.weightedUnitCost,
+    this.costStatus,
+    this.menuUsageCount,
     this.currentStock = '0.000',
     this.stockStatus = 'NO_MINIMUM',
     this.purchaseUnits = const <StockItemPurchaseUnit>[],
@@ -145,8 +148,9 @@ class StockItem {
   /// Current stock is `SUM(StockMovement.quantityDeltaBase)`, computed in
   /// PostgreSQL where the arithmetic is exact. The POS holds a projection of
   /// that answer and never recomputes or accumulates it locally.
-  final String? lastPurchaseUnitCost;
+  final String? lastPurchaseUnitCost, weightedUnitCost, costStatus;
   final String currentStock;
+  final int? menuUsageCount;
 
   /// `LOW`, `OK`, or `NO_MINIMUM` when no threshold is configured.
   final String stockStatus;
@@ -190,6 +194,9 @@ class StockItem {
       // A v1 catalog, or a v1 backup, carries neither. Absent reads as an
       // honest zero with no threshold rather than as a fabricated balance.
       lastPurchaseUnitCost: _optionalString(json['lastPurchaseUnitCost']),
+      weightedUnitCost: _optionalString(json['weightedUnitCost']),
+      costStatus: _optionalString(json['costStatus']),
+      menuUsageCount: (json['menuUsageCount'] as num?)?.toInt(),
       currentStock: _optionalString(json['currentStock']) ?? '0.000',
       stockStatus: _optionalString(json['stockStatus']) ?? 'NO_MINIMUM',
       purchaseUnits: (json['purchaseUnits'] as List? ?? const [])
@@ -216,6 +223,9 @@ class StockItem {
     'createdAt': createdAt.toUtc().toIso8601String(),
     'updatedAt': updatedAt.toUtc().toIso8601String(),
     'lastPurchaseUnitCost': lastPurchaseUnitCost,
+    if (weightedUnitCost != null) 'weightedUnitCost': weightedUnitCost,
+    if (costStatus != null) 'costStatus': costStatus,
+    if (menuUsageCount != null) 'menuUsageCount': menuUsageCount,
     'currentStock': currentStock,
     'stockStatus': stockStatus,
     'purchaseUnits': [for (final unit in purchaseUnits) unit.toJson()],

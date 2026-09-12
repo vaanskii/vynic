@@ -1144,27 +1144,30 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
+                  Column(
                     key: const Key('receiving-payment-mode'),
-                    initialValue: _paymentMode,
-                    isExpanded: true,
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'unpaid',
-                        child: Text('ჯერ არ გადამიხდია'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'full',
-                        child: Text('სრულად გადავიხადე'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'partial',
-                        child: Text('ნაწილობრივ გადავიხადე'),
-                      ),
+                    children: [
+                      for (final mode in const {
+                        'unpaid': 'ჯერ არ გადამიხდია',
+                        'full': 'სრულად გადავიხადე',
+                        'partial': 'ნაწილობრივ გადავიხადე',
+                      }.entries)
+                        ListTile(
+                          key: Key('receiving-payment-${mode.key}'),
+                          selected: _paymentMode == mode.key,
+                          selectedColor: AdminTheme.primary,
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(
+                            _paymentMode == mode.key
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_off,
+                          ),
+                          title: Text(mode.value),
+                          onTap: _saving || _attempted
+                              ? null
+                              : () => setState(() => _paymentMode = mode.key),
+                        ),
                     ],
-                    onChanged: _saving || _attempted
-                        ? null
-                        : (v) => setState(() => _paymentMode = v!),
                   ),
                   if (_paymentMode == 'partial') ...[
                     const SizedBox(height: 16),
@@ -1201,11 +1204,11 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
                   TextField(
                     controller: _dueDate,
                     decoration: _adminInput(
-                      "გადახდის ვადა (არასავალდებულო) YYYY-MM-DD",
-                    ),
+                      'გადახდის ვადა',
+                    ).copyWith(helperText: 'არასავალდებულო · YYYY-MM-DD'),
                   ),
                   const SizedBox(height: 16),
-                  const Text('დადასტურების შემდეგ საქონელი დაემატება მარაგს.'),
+                  _confirmationSummary(),
                   if (_error != null) ...[
                     const SizedBox(height: 8),
                     Align(
@@ -1280,33 +1283,33 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
           Row(
             children: [
               Expanded(
-                child: DropdownButtonFormField<String>(
+                child: OutlinedButton.icon(
                   key: ValueKey(
                     'receiving-line-item-$index-${line.stockItem?.id}',
                   ),
-                  initialValue: line.stockItem?.id,
-                  isExpanded: true,
-                  dropdownColor: AdminTheme.surfaceElevated,
-                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                    color: AdminTheme.text,
-                    fontSize: 13,
+                  style: OutlinedButton.styleFrom(
+                    alignment: Alignment.centerLeft,
                   ),
-                  decoration: _adminInput('პროდუქტი'),
-                  items: [
-                    for (final item in _prioritizedItems)
-                      DropdownMenuItem(
-                        value: item.id,
-                        child: Text(item.name, overflow: TextOverflow.ellipsis),
-                      ),
-                  ],
-                  onChanged: _saving
+                  icon: const Icon(Icons.search),
+                  label: Text(line.stockItem?.name ?? 'საქონლის არჩევა'),
+                  onPressed: _saving
                       ? null
-                      : (value) => setState(() {
-                          line.stockItem = _availableStock
-                              .where((item) => item.id == value)
-                              .firstOrNull;
-                          line.unit = line.stockItem?.baseUnit;
-                        }),
+                      : () async {
+                          final item = await showDialog<StockItem>(
+                            context: context,
+                            builder: (_) => InventoryIngredientPicker(
+                              title: 'რას ვიღებთ?',
+                              items: _prioritizedItems,
+                            ),
+                          );
+                          if (item != null && mounted)
+                            setState(() {
+                              line.stockItem = item;
+                              line.unit =
+                                  item.purchaseUnits.firstOrNull?.unit ??
+                                  item.baseUnit;
+                            });
+                        },
                 ),
               ),
               IconButton(
@@ -1319,21 +1322,6 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
             ],
           ),
           const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            key: Key('receiving-price-mode-$index'),
-            initialValue: line.priceMode,
-            isExpanded: true,
-            decoration: _adminInput('ფასის შეყვანა'),
-            items: const [
-              DropdownMenuItem(value: 'entered', child: Text('შეფუთვის ფასი')),
-              DropdownMenuItem(value: 'base', child: Text('ერთეულის ფასი')),
-              DropdownMenuItem(value: 'total', child: Text('მთლიანი თანხა')),
-            ],
-            onChanged: _saving
-                ? null
-                : (v) => setState(() => line.priceMode = v!),
-          ),
-          const SizedBox(height: 10),
           _amountFields(line, index),
           if (line.effectiveCost != null && line.stockItem != null)
             Padding(
@@ -1405,7 +1393,14 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
         for (final unit in line.allowedUnits)
           DropdownMenuItem(value: unit, child: Text(_unitShort(unit))),
       ],
-      onChanged: _saving ? null : (value) => setState(() => line.unit = value),
+      onChanged: _saving
+          ? null
+          : (value) => setState(() {
+              line.unit = value;
+              if (value == line.stockItem?.baseUnit &&
+                  line.priceMode == 'entered')
+                line.priceMode = 'base';
+            }),
     );
     final price = TextField(
       key: Key('receiving-line-cost-$index'),
@@ -1417,8 +1412,8 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
       ).textTheme.bodyMedium!.copyWith(color: AdminTheme.text),
       decoration: _adminInput(
         line.priceMode == 'total'
-            ? 'სულ გადავიხდი ₾'
-            : 'დღევანდელი ფასი / ${line.priceMode == 'base'
+            ? 'მთლიანად გადავიხადე / გადავიხდი ₾'
+            : 'ფასი ₾ / ${line.priceMode == 'base'
                   ? line.stockItem == null
                         ? ''
                         : _unitShort(line.stockItem!.baseUnit)
@@ -1427,34 +1422,89 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
                   : _unitShort(line.unit!)}',
       ),
     );
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 420)
-          return Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(child: quantity),
-                  const SizedBox(width: 8),
-                  Expanded(child: unit),
-                ],
-              ),
-              const SizedBox(height: 10),
-              price,
-            ],
-          );
-        return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
           children: [
             Expanded(child: quantity),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             Expanded(child: unit),
-            const SizedBox(width: 8),
-            Expanded(flex: 2, child: price),
           ],
-        );
-      },
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'როგორ უთითებთ ფასს?',
+          style: TextStyle(color: AdminTheme.textMuted),
+        ),
+        Wrap(
+          key: Key('receiving-price-mode-$index'),
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final mode in <String, String>{
+              'base':
+                  'ფასი / ${_unitShort(line.stockItem?.baseUnit ?? InventoryUnit.piece)}',
+              if (line.unit != line.stockItem?.baseUnit)
+                'entered':
+                    'ფასი / ${_unitShort(line.unit ?? InventoryUnit.piece)}',
+              'total': 'მთლიანი თანხა',
+            }.entries)
+              ChoiceChip(
+                key: Key('receiving-price-$index-${mode.key}'),
+                label: Text(mode.value),
+                selected: line.priceMode == mode.key,
+                onSelected: _saving
+                    ? null
+                    : (_) => setState(() => line.priceMode = mode.key),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        price,
+      ],
     );
   }
+
+  Widget _confirmationSummary() => Card(
+    key: const Key('receiving-confirmation-summary'),
+    margin: EdgeInsets.zero,
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'დაემატება მარაგში:',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 12),
+          for (final line in _lines.where(
+            (l) => l.stockItem != null && l.quantity.text.trim().isNotEmpty,
+          ))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                '${line.stockItem!.name} +${line.exactBaseQuantity?.toStringAsFixed(3) ?? '—'} ${_unitShort(line.stockItem!.baseUnit)}',
+              ),
+            ),
+          const Divider(height: 24),
+          Text('მიღების ღირებულება: ${_documentTotal.toStringAsFixed(2)} ₾'),
+          const SizedBox(height: 8),
+          Text(
+            'ახლა გადახდილი: ${_paymentMode == 'unpaid' ? '0.00' : _paymentAmount} ₾',
+          ),
+          const SizedBox(height: 8),
+          Text('დავალიანება: ${_remainingPreview()} ₾'),
+          const SizedBox(height: 12),
+          Text(
+            'მონახაზი: მარაგში ჯერ არ დამატებულა',
+            style: TextStyle(color: AdminTheme.textMuted),
+          ),
+        ],
+      ),
+    ),
+  );
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -1466,7 +1516,9 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
     if (picked != null) setState(() => _documentDate = picked);
   }
 
-  String get _paymentAmount => _paymentMode == 'full'
+  String get _paymentAmount => _paymentMode == 'unpaid'
+      ? '0.00'
+      : _paymentMode == 'full'
       ? _documentTotal.toStringAsFixed(2)
       : _paidNow.text.trim().replaceAll(',', '.');
   Map<String, dynamic> get _paymentPayload => {
@@ -1768,7 +1820,7 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
         ),
         const SizedBox(height: 12),
         Text(
-          'მარაგის საშუალო ფასი: ${detail.weightedUnitCost == null ? 'ისტორია არ არის' : '${_quantityText(detail.weightedUnitCost!)} ₾ / ${_unitShort(item.baseUnit)}'}',
+          'მიმდინარე საშუალო ფასი: ${detail.weightedUnitCost == null ? 'ისტორია არ არის' : '${_quantityText(detail.weightedUnitCost!)} ₾ / ${_unitShort(item.baseUnit)}'}',
           style: TextStyle(color: AdminTheme.text),
         ),
         if (detail.costStatus == 'PROVISIONAL')
@@ -1783,7 +1835,7 @@ class _StockItemDetailDialogState extends State<StockItemDetailDialog> {
             contentPadding: EdgeInsets.zero,
             title: Text('${row['businessDate']} · ${row['supplierName']}'),
             subtitle: Text(
-              '${row['quantity']} ${row['baseUnit']} · ${row['total']} ₾ · ${row['unitCost']} ₾ / ${row['baseUnit']}',
+              '${row['quantity']} ${_unitShort(InventoryUnit.parse('${row['baseUnit']}'))} · ${row['total']} ₾ · ${row['unitCost']} ₾ / ${_unitShort(InventoryUnit.parse('${row['baseUnit']}'))}',
             ),
           ),
         if (detail.lastPurchaseUnitCost != null)

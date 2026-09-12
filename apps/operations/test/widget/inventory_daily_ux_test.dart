@@ -59,10 +59,16 @@ MenuRecipeDetail detail(String name, StockItem item, String qty, String unit) =>
       },
     });
 Future<void> select(WidgetTester t, Key key, String text) async {
-  await t.ensureVisible(find.byKey(key));
-  await t.tap(find.byKey(key));
-  await t.pumpAndSettle();
-  await t.tap(find.text(text).last);
+  if (key.toString().contains('price-mode') ||
+      key.toString().contains('payment-mode')) {
+    await t.ensureVisible(find.text(text).last);
+    await t.tap(find.text(text).last);
+  } else {
+    await t.ensureVisible(find.byKey(key));
+    await t.tap(find.byKey(key));
+    await t.pumpAndSettle();
+    await t.tap(find.text(text).last);
+  }
   await t.pumpAndSettle();
 }
 

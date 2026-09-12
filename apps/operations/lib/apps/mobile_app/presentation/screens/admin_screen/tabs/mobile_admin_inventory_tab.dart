@@ -44,7 +44,7 @@ class _InventoryTabState extends State<InventoryAdminTab>
   _ReceivingStatusFilter _statusFilter = _ReceivingStatusFilter.all;
   _RecipeFilter _recipeFilter = _RecipeFilter.all;
   StockItemClassification? _classificationFilter;
-  String? _menuGroupFilter;
+  String? _menuGroupFilter, _menuCategoryFilter;
   String? _businessDate;
   late String? _receivingDayFilter = widget.initialBusinessDate;
   late String? _stockStatusFilter = widget.initialStockStatus;
@@ -263,7 +263,7 @@ class _InventoryTabState extends State<InventoryAdminTab>
           builder: (context, box) {
             final width = box.maxWidth < 600
                 ? box.maxWidth
-                : (box.maxWidth - 32) / 3;
+                : (box.maxWidth - 16) / 2;
             return Wrap(
               spacing: 16,
               runSpacing: 12,
@@ -273,6 +273,11 @@ class _InventoryTabState extends State<InventoryAdminTab>
                   today == null
                       ? 'სამუშაო დღე უცნობია'
                       : '${_todayTotal(today)} ₾',
+                  width,
+                ),
+                _homeMetric(
+                  'დღევანდელი მიღებები · გადახდილი / გადასახდელი',
+                  '${receipts.where((r) => r.isPosted).fold(InventoryDecimal.zero, (sum, r) => sum + InventoryDecimal.parse(r.paid)).toStringAsFixed(2)} / ${receipts.where((r) => r.isPosted && r.paymentStatus != 'UNVERIFIED').fold(InventoryDecimal.zero, (sum, r) => sum + InventoryDecimal.parse(r.remaining)).toStringAsFixed(2)} ₾',
                   width,
                 ),
                 _homeMetric(
@@ -290,6 +295,14 @@ class _InventoryTabState extends State<InventoryAdminTab>
           },
         ),
         const SizedBox(height: 24),
+        if (receipts.any((r) => r.isPosted && r.paymentStatus == 'UNVERIFIED'))
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              'ძველი გადახდები შესამოწმებელია',
+              style: TextStyle(color: AdminTheme.textMuted),
+            ),
+          ),
         _homeHeading('დღევანდელი მიღებები'),
         if (receipts.isEmpty)
           Padding(
@@ -309,54 +322,7 @@ class _InventoryTabState extends State<InventoryAdminTab>
           child: const Text('მიღებების ისტორია'),
         ),
         const SizedBox(height: 24),
-        _homeHeading('მარაგის მდგომარეობა'),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _search,
-          decoration: _adminInput(
-            'პროდუქტის ძებნა',
-          ).copyWith(prefixIcon: const Icon(Icons.search)),
-          onChanged: (_) => setState(() {}),
-        ),
-        const SizedBox(height: 12),
-        if (active.isEmpty)
-          Text(
-            'დაამატეთ საქონელი მომწოდებლის გვერდიდან ან შექმენით ნედლეული მენიუს შემადგენლობაში.',
-            style: TextStyle(color: AdminTheme.textMuted),
-          ),
-        for (final item in active.where(
-          (i) => i.name.toLowerCase().contains(_search.text.toLowerCase()),
-        ))
-          Card(
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 8,
-              ),
-              onTap: () => _openStockItem(item),
-              title: Text(item.name),
-              subtitle: Text(
-                'მარაგშია: ${_quantityText(item.currentStock)} ${_unitShort(item.baseUnit)}'
-                '${item.stockStatus == 'NEGATIVE'
-                    ? '\nუარყოფითი მარაგი'
-                    : item.stockStatus == 'LOW'
-                    ? '\nდაბალი მარაგი'
-                    : ''}',
-                style: TextStyle(
-                  color: item.stockStatus == 'NEGATIVE'
-                      ? AdminTheme.bad
-                      : AdminTheme.textMuted,
-                ),
-              ),
-              trailing: const Icon(Icons.chevron_right),
-            ),
-          ),
-        TextButton(
-          onPressed: () => _navigate(_InventorySection.stockItems),
-          child: const Text('მარაგის მართვა'),
-        ),
-        const SizedBox(height: 24),
-        _homeHeading('სწრაფი მართვა'),
+        _homeHeading('მართვა'),
         ListTile(
           contentPadding: EdgeInsets.zero,
           title: const Text('მომწოდებლები'),
@@ -388,6 +354,57 @@ class _InventoryTabState extends State<InventoryAdminTab>
               builder: (_) => const ConsumptionHistoryScreen(),
             ),
           ),
+        ),
+        const SizedBox(height: 24),
+        _homeHeading('მარაგის მდგომარეობა'),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _search,
+          decoration: _adminInput(
+            'პროდუქტის ძებნა',
+          ).copyWith(prefixIcon: const Icon(Icons.search)),
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: 12),
+        if (active.isEmpty)
+          Text(
+            'დაამატეთ საქონელი მომწოდებლის გვერდიდან ან შექმენით ნედლეული მენიუს შემადგენლობაში.',
+            style: TextStyle(color: AdminTheme.textMuted),
+          ),
+        for (final item
+            in active
+                .where(
+                  (i) =>
+                      i.name.toLowerCase().contains(_search.text.toLowerCase()),
+                )
+                .take(_search.text.isEmpty ? 5 : active.length))
+          Card(
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
+              onTap: () => _openStockItem(item),
+              title: Text(item.name),
+              subtitle: Text(
+                'მარაგშია: ${_quantityText(item.currentStock)} ${_unitShort(item.baseUnit)}'
+                '${item.stockStatus == 'NEGATIVE'
+                    ? '\nუარყოფითი მარაგი'
+                    : item.stockStatus == 'LOW'
+                    ? '\nდაბალი მარაგი'
+                    : ''}',
+                style: TextStyle(
+                  color: item.stockStatus == 'NEGATIVE'
+                      ? AdminTheme.bad
+                      : AdminTheme.textMuted,
+                ),
+              ),
+              trailing: const Icon(Icons.chevron_right),
+            ),
+          ),
+        TextButton(
+          onPressed: () => _navigate(_InventorySection.stockItems),
+          child: const Text('ყველა მარაგის პროდუქტი'),
         ),
       ],
     );
@@ -450,7 +467,9 @@ class _InventoryTabState extends State<InventoryAdminTab>
     );
     // Recipes have no "add": a definition always starts from a product the
     // venue already sells, so the list itself is the entry point.
-    if (_section == _InventorySection.recipes) return search;
+    if (_section == _InventorySection.recipes ||
+        _section == _InventorySection.stockItems)
+      return search;
     final add = FilledButton.icon(
       key: const Key('inventory-add'),
       onPressed: switch (_section) {
@@ -829,28 +848,53 @@ class _InventoryTabState extends State<InventoryAdminTab>
           if (!_recipeFilter.matches(item)) return false;
           if (_menuGroupFilter != null && item.menuGroup != _menuGroupFilter)
             return false;
-          return query.isEmpty || item.name.toLowerCase().contains(query);
+          if (_menuCategoryFilter != null &&
+              item.browseCategory != _menuCategoryFilter)
+            return false;
+          return query.isEmpty ||
+              '${item.name} ${item.browseCategory} ${item.subcategoryName ?? ''}'
+                  .toLowerCase()
+                  .contains(query);
         })
         .toList(growable: false);
     return Column(
       key: const Key('recipe-list'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (_recipes.every((i) => i.parentCategoryName == null))
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              for (final entry in const <String, String>{
+                '': 'ყველა',
+                'FOOD': 'კერძები',
+                'BEVERAGE': 'სასმელები',
+              }.entries)
+                ChoiceChip(
+                  label: Text(entry.value),
+                  selected: (_menuGroupFilter ?? '') == entry.key,
+                  onSelected: (_) => setState(
+                    () =>
+                        _menuGroupFilter = entry.key.isEmpty ? null : entry.key,
+                  ),
+                ),
+            ],
+          ),
+        const SizedBox(height: 8),
         Wrap(
           spacing: 8,
-          runSpacing: 4,
+          runSpacing: 8,
           children: [
-            for (final entry in const <String, String>{
-              '': 'ყველა',
-              'FOOD': 'კერძები',
-              'BEVERAGE': 'სასმელები',
-            }.entries)
+            for (final category in <String?>[
+              null,
+              ..._recipes.map((i) => i.browseCategory).toSet(),
+            ])
               ChoiceChip(
-                label: Text(entry.value),
-                selected: (_menuGroupFilter ?? '') == entry.key,
-                onSelected: (_) => setState(
-                  () => _menuGroupFilter = entry.key.isEmpty ? null : entry.key,
-                ),
+                label: Text(category ?? 'ყველა კატეგორია'),
+                selected: _menuCategoryFilter == category,
+                onSelected: (_) =>
+                    setState(() => _menuCategoryFilter = category),
               ),
           ],
         ),
@@ -1076,11 +1120,23 @@ class _StockItemCard extends StatelessWidget {
                       icon: Icons.local_shipping_outlined,
                       label: 'მომწოდებლები: ${item.supplierIds.length}',
                     ),
+                    if (item.menuUsageCount != null)
+                      _InventoryMeta(
+                        icon: Icons.restaurant_outlined,
+                        label:
+                            'გამოიყენება ${item.menuUsageCount} მენიუს პროდუქტში',
+                      ),
                     if (item.lastPurchaseUnitCost != null)
                       _InventoryMeta(
                         icon: Icons.payments_outlined,
                         label:
-                            'ბოლო ფასი: ${_quantityText(item.lastPurchaseUnitCost!)} ₾ / ${item.baseUnit.label}',
+                            'ბოლო ფასი: ${_quantityText(item.lastPurchaseUnitCost!)} ₾ / ${_unitShort(item.baseUnit)}',
+                      ),
+                    if (item.weightedUnitCost != null)
+                      _InventoryMeta(
+                        icon: Icons.calculate_outlined,
+                        label:
+                            'მიმდინარე საშუალო ფასი: ${_quantityText(item.weightedUnitCost!)} ₾ / ${_unitShort(item.baseUnit)}${item.costStatus == 'PROVISIONAL' ? ' · წინასწარი' : ''}',
                       ),
                     if (item.minimumStock != null)
                       _InventoryMeta(
@@ -2072,9 +2128,7 @@ class SupplierDetailDialog extends StatefulWidget {
 class _SupplierDetailDialogState extends State<SupplierDetailDialog> {
   Map<String, dynamic>? _detail;
   String? _error;
-  String _search = '';
   bool _busy = false;
-  bool _selecting = false;
   List<StockItem>? _freshStock;
   @override
   void initState() {
@@ -2157,6 +2211,48 @@ class _SupplierDetailDialogState extends State<SupplierDetailDialog> {
     }
   }
 
+  Future<void> _recordSupplierPayment() async {
+    final settlement = _detail?['settlement'] as Map?;
+    final rows = (settlement?['receivings'] as List? ?? []).cast<Map>();
+    final selected = await showDialog<Map>(
+      context: context,
+      builder: (context) => Theme(
+        data: inventoryTheme(context),
+        child: SimpleDialog(
+          title: const Text('რომელი მიღებისთვის იხდით?'),
+          children: [
+            if (rows.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(24),
+                child: Text('ჯერ დააფიქსირეთ მიღება.'),
+              ),
+            for (final row in rows)
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(context, row),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    '${row['businessDate']} · დარჩა ${row['remaining']} ₾',
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (selected == null || !mounted) return;
+    await showDialog<bool>(
+      context: context,
+      builder: (_) => SupplierPaymentDialog(
+        receiving: {
+          ...selected,
+          'currentBusinessDate': settlement?['businessDate'],
+        },
+      ),
+    );
+    await _load();
+  }
+
   Future<void> _useInDish(String stockId) async {
     setState(() => _busy = true);
     try {
@@ -2191,7 +2287,6 @@ class _SupplierDetailDialogState extends State<SupplierDetailDialog> {
   @override
   Widget build(BuildContext context) {
     final products = (_detail?['products'] as List? ?? []).cast<Map>();
-    final ids = products.map((row) => row['id']).toSet();
     final receivings = (_detail?['recentReceivings'] as List? ?? [])
         .cast<Map>();
     return Theme(
@@ -2226,9 +2321,12 @@ class _SupplierDetailDialogState extends State<SupplierDetailDialog> {
                     'დავალიანება: ${settlement['outstanding']} ₾',
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
+                  Text(
+                    'გადახდილი: ${(settlement['receivings'] as List? ?? []).cast<Map>().fold(InventoryDecimal.zero, (sum, row) => sum + InventoryDecimal.parse('${row['paid'] ?? '0'}')).toStringAsFixed(2)} ₾',
+                  ),
                   if (settlement['unverified'] != '0.00')
                     Text(
-                      'შესამოწმებელი ძველი მარაგშია: ${settlement['unverified']} ₾',
+                      'შესამოწმებელი ძველი მიღებები: ${settlement['unverified']} ₾',
                     ),
                   const SizedBox(height: 12),
                 ],
@@ -2254,6 +2352,14 @@ class _SupplierDetailDialogState extends State<SupplierDetailDialog> {
                   icon: const Icon(Icons.add_shopping_cart),
                   label: const Text('საქონლის დამატება'),
                 ),
+                OutlinedButton.icon(
+                  key: const Key('supplier-record-payment'),
+                  onPressed: _busy || _detail == null
+                      ? null
+                      : _recordSupplierPayment,
+                  icon: const Icon(Icons.payments_outlined),
+                  label: const Text('გადახდის დაფიქსირება'),
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'რას გვაწვდის',
@@ -2264,7 +2370,7 @@ class _SupplierDetailDialogState extends State<SupplierDetailDialog> {
                 ),
                 if (products.isEmpty && _detail != null)
                   Text(
-                    'პროდუქტი ჯერ არ არის მიბმული.',
+                    'საქონელი ჯერ არ არის დამატებული.',
                     style: TextStyle(color: AdminTheme.textMuted),
                   ),
                 for (final product in products)
@@ -2298,39 +2404,6 @@ class _SupplierDetailDialogState extends State<SupplierDetailDialog> {
                       icon: const Icon(Icons.link_off),
                     ),
                   ),
-                TextButton.icon(
-                  onPressed: _busy
-                      ? null
-                      : () => setState(() => _selecting = !_selecting),
-                  icon: const Icon(Icons.add),
-                  label: const Text('არსებული საქონლის არჩევა'),
-                ),
-                if (_selecting) ...[
-                  TextField(
-                    decoration: _adminInput('პროდუქტის ძებნა'),
-                    style: TextStyle(color: AdminTheme.text),
-                    onChanged: (value) =>
-                        setState(() => _search = value.toLowerCase()),
-                  ),
-                  for (final item in widget.stockItems.where(
-                    (item) =>
-                        item.isActive &&
-                        !ids.contains(item.id) &&
-                        item.name.toLowerCase().contains(_search),
-                  ))
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        item.name,
-                        style: TextStyle(color: AdminTheme.text),
-                      ),
-                      trailing: IconButton(
-                        tooltip: 'მიბმა',
-                        onPressed: _busy ? null : () => _link(item.id, true),
-                        icon: const Icon(Icons.add_link),
-                      ),
-                    ),
-                ],
                 const Divider(height: 24),
                 Text(
                   'ბოლო მიღებები',
@@ -2439,6 +2512,7 @@ ThemeData inventoryTheme(BuildContext context) {
       ),
       checkmarkColor: AdminTheme.primary,
       side: BorderSide(color: AdminTheme.border),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
     ),
     iconTheme: theme.iconTheme.copyWith(color: AdminTheme.textMuted),
     cardTheme: theme.cardTheme.copyWith(

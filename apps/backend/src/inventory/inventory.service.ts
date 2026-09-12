@@ -103,6 +103,19 @@ export class InventoryService {
       include: {
         supplierProducts: true,
         purchaseUnits: { orderBy: { unit: 'asc' } },
+        ...(withPrices
+          ? {
+              _count: {
+                select: {
+                  consumptionComponents: {
+                    where: {
+                      recipe: { isActive: true, venueId: tenant.venueId },
+                    },
+                  },
+                },
+              },
+            }
+          : {}),
       },
     });
     const balances = await this.currentStock(tenant.venueId);
@@ -132,10 +145,22 @@ export class InventoryService {
         r.effectiveBaseUnitCost.toFixed(6),
       ]),
     );
+    const costs = withPrices
+      ? await new InventoryCostService(this.prisma).bases(
+          tenant,
+          rows.map((r) => r.id),
+        )
+      : new Map();
     return rows.map((row) => ({
       ...this.presentStockItem(row, balances.get(row.id)),
       ...(withPrices
         ? {
+            menuUsageCount: row._count?.consumptionComponents ?? 0,
+            weightedUnitCost:
+              costs.get(row.id + ':' + row.baseUnit)?.cost?.toFixed(6) ?? null,
+            costStatus: costs.get(row.id + ':' + row.baseUnit)?.provisional
+              ? 'PROVISIONAL'
+              : 'AVAILABLE',
             lastPurchaseUnitCost:
               prices.get(row.id + ':' + row.baseUnit) ?? null,
           }

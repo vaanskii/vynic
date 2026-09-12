@@ -104,7 +104,7 @@ void main() {
       expect(find.text(beef.name), findsNothing);
       expect(find.text(borjomi.name), findsOneWidget);
       await screenshot(tester, 'catalog-mobile');
-      await tester.tap(find.byKey(const Key('inventory-add')));
+      await tester.tap(find.text('რედაქტირება').first);
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('stock-classification')), findsOneWidget);
       expect(find.text('როგორ ვითვლით საწყობში?'), findsOneWidget);
@@ -153,16 +153,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('რას გვაწვდის'), findsOneWidget);
       expect(find.text('ბოლო მიღებები'), findsOneWidget);
-      await tester.tap(find.text('არსებული საქონლის არჩევა'));
-      await tester.pumpAndSettle();
-      await tester.tap(
-        find.descendant(
-          of: find.widgetWithText(ListTile, bakuriani.name),
-          matching: find.byType(IconButton),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(links, contains('bakuriani'));
+      expect(find.text('არსებული საქონლის არჩევა'), findsNothing);
       await tester.tap(
         find.descendant(
           of: find.widgetWithText(ListTile, borjomi.name),
@@ -196,14 +187,10 @@ void main() {
       await tester.tap(find.text('თარიღი და დოკუმენტის დეტალები'));
       await tester.pumpAndSettle();
       expect(find.text('სამუშაო დღე: 2026-09-05'), findsOneWidget);
-      final product = tester.widget<DropdownButtonFormField<String>>(
-        find.byWidgetPredicate(
-          (w) =>
-              w is DropdownButtonFormField<String> &&
-              w.key.toString().contains('receiving-line-item-0'),
-        ),
+      expect(
+        find.byKey(const ValueKey('receiving-line-item-0-borjomi')),
+        findsOneWidget,
       );
-      expect(product.initialValue, 'borjomi');
       await tester.ensureVisible(
         find.byKey(const Key('receiving-line-unit-0')),
       );

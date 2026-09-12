@@ -211,7 +211,7 @@ void main() {
       expect(find.text('ხინკალი'), findsOneWidget);
       // The product with no definition is a first-class row, not an absence.
       expect(find.text('Burger'), findsOneWidget);
-      expect(find.text('4 კომპონენტი'), findsOneWidget);
+      expect(find.text('4 ინგრედიენტი'), findsOneWidget);
       expect(find.text('შემადგენლობა შესავსებია'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
@@ -271,8 +271,8 @@ void main() {
         find.byKey(const Key('recipe-variant-variant-large')),
         findsOneWidget,
       );
-      expect(find.text('30.0 · 2 კომპონენტი'), findsOneWidget);
-      expect(find.text('45.0 · მიბმული არ არის'), findsOneWidget);
+      expect(find.text('30.0 · 2 ინგრედიენტი'), findsOneWidget);
+      expect(find.text('45.0 · შემადგენლობა შესავსებია'), findsOneWidget);
     });
 
     testWidgets('lays out on a narrow phone without overflowing', (
@@ -815,10 +815,10 @@ void main() {
 
       await tester.tap(find.byTooltip('მარაგი'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('მარაგის მართვა'));
-      await tester.tap(find.text('მარაგის მართვა'));
+      await tester.ensureVisible(find.text('ყველა მარაგის პროდუქტი'));
+      await tester.tap(find.text('ყველა მარაგის პროდუქტი'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('inventory-add')));
+      await tester.tap(find.text('რედაქტირება').first);
       await tester.pumpAndSettle();
 
       expect(find.text('მინიმალური მარაგი'), findsOneWidget);

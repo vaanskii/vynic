@@ -99,7 +99,7 @@ void main() {
       await t.pumpAndSettle();
       await t.tap(find.text('ბორჯომი 0.5L').last);
       await t.pumpAndSettle();
-      expect(find.text('1 გაყიდვა = 1 ცალი მარაგიდან'), findsOneWidget);
+      expect(find.text('როგორ ვითვლით? ცალი'), findsOneWidget);
       await shot(t, 'supplier-${width.toInt()}');
       await t.tap(find.byKey(const Key('supplied-save')));
       await t.pumpAndSettle();
@@ -137,8 +137,6 @@ void main() {
       );
       await t.pumpAndSettle();
       await t.ensureVisible(find.byKey(const Key('receiving-price-mode-0')));
-      await t.tap(find.byKey(const Key('receiving-price-mode-0')));
-      await t.pumpAndSettle();
       await t.tap(find.text('მთლიანი თანხა').last);
       await t.pumpAndSettle();
       await t.enterText(

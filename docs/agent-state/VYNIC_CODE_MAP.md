@@ -162,7 +162,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## Inventory
 
-- Daily Inventory UX, inline payment/retry, self-purchase sources and composition simplification: `docs/INVENTORY_DAILY_UX.md`; seven-surface responsive proof: `apps/operations/test/widget/inventory_daily_ux_test.dart`. The dashboard lives in `mobile_admin_inventory_tab.dart`; inline ingredient search/create and the shared `InventoryMenuPicker` category browser in `mobile_admin_procurement.dart`. Supplier goods link directly into `RecipeEditorDialog` through `initialIngredientId`.
+- Daily Inventory UX, inline payment/retry, self-purchase sources and composition simplification: `docs/INVENTORY_DAILY_UX.md`; full Manager HTTP/navigation journeys: `apps/operations/test/widget/inventory_final_journeys_test.dart`; seven-surface responsive proof: `apps/operations/test/widget/inventory_daily_ux_test.dart`. The dashboard lives in `mobile_admin_inventory_tab.dart`; inline ingredient search/create and the shared `InventoryMenuPicker` category browser in `mobile_admin_procurement.dart`. Supplier goods link directly into `RecipeEditorDialog` through `initialIngredientId`.
 
 - Current supplier-first procurement, payables, moving valuation, migration and rollout: `docs/INVENTORY_PROCUREMENT_REWORK.md`; whole-workflow proof: `apps/backend/src/inventory/procurement-rework.integration.spec.ts`.
 - Actual supplier payments, derived debt, historical verification and reversals: `apps/backend/src/inventory/supplier-payments.ts`; PostgreSQL value writer: `apps/backend/prisma/migrations/20260916120000_inventory_procurement/migration.sql`.

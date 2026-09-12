@@ -99,7 +99,7 @@ void main() {
         'მომწოდებლები',
         'მიღებების ისტორია',
         'მენიუს შემადგენლობა',
-        'მარაგის მართვა',
+        'ყველა მარაგის პროდუქტი',
       ]) {
         if (find.byTooltip('მარაგი').evaluate().isNotEmpty) {
           await tester.tap(find.byTooltip('მარაგი'));
@@ -112,7 +112,8 @@ void main() {
         expect(tester.takeException(), isNull);
         expect(find.byKey(const Key('inventory-home')), findsNothing);
       }
-      final add = find.byKey(const Key('inventory-add'));
+      expect(find.byKey(const Key('inventory-add')), findsNothing);
+      final add = find.widgetWithText(OutlinedButton, 'რედაქტირება').first;
       await tester.ensureVisible(add);
       await tester.pumpAndSettle();
       expect(tester.getSize(add).height, greaterThanOrEqualTo(48));
@@ -146,14 +147,10 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      final product = tester.widget<DropdownButtonFormField<String>>(
-        find.byWidgetPredicate(
-          (w) =>
-              w is DropdownButtonFormField<String> &&
-              w.key.toString().contains('receiving-line-item-0'),
-        ),
+      expect(
+        find.byKey(const ValueKey('receiving-line-item-0-borjomi')),
+        findsOneWidget,
       );
-      expect(product.initialValue, 'borjomi');
       final cost = find.byKey(const Key('receiving-line-cost-0'));
       await tester.ensureVisible(cost);
       await tester.pumpAndSettle();

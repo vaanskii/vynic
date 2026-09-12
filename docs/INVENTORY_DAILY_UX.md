@@ -21,8 +21,13 @@ Some controls inherited colors independently of the Manager appearance setting.
 - Today's documents explicitly say `მარაგში ჯერ არ დამატებულა` or
   `მარაგში დაემატა`. The home queries the current restaurant business day, so
   pagination or future documents cannot displace that day's information.
-- Searchable stock cards say `მარაგშია`. History, suppliers, Menu composition,
-  payments/debt, and consumption history remain accessible below the daily work.
+- Today's receipt summary separates recorded payment from verified debt and flags
+  unknown historical settlement separately. It describes today's receipts, not all
+  cash payments made today for older purchases.
+- History and management links precede the searchable stock preview. The preview
+  shows five attention-first items until searched; `ყველა მარაგის პროდუქტი` opens
+  the complete catalog. Stock cards show last price, current moving average and
+  active Menu usage count, with provisional cost clearly labeled.
 - Existing numbered deep links remain compatible: stock 0, suppliers 1,
   receiving 2, composition 3. Default navigation opens home (4).
 
@@ -30,17 +35,17 @@ Some controls inherited colors independently of the Manager appearance setting.
 
 Supplier cards offer `საქონლის დამატება` directly, without opening detail first.
 The same action remains in supplier detail. The form starts with explicit choices:
-`ნედლეული`, `მზა პროდუქტი`, and `ჩამოსასხმელი სასმელი`, with restaurant examples.
+`მენიუდან`, `ნედლეული`, and `ჩამოსასხმელი სასმელი`, with restaurant examples.
 No Menu item is selected by default. Save stays visible below the scrollable form.
 
 Ready-made products open a dedicated Menu browser with name/category search,
-category filters, and explicit variant rows. Choosing a packaged Menu product uses
+parent-category and subcategory filters, and explicit variant rows. Choosing a packaged Menu product uses
 the existing atomic supplier-items API: create/reuse an inventory identity and
 direct consumption mapping, then record packaging such as 10 pieces per pack.
 Menu and stock identities remain separate. Existing counted stock can be chosen
 through a searchable picker. Existing non-direct recipes are not overwritten.
 
-Ingredient and bulk modes search existing goods before creating a new identity;
+Ingredient creation offers kg/g/L/ml/piece. Ingredient and bulk modes search existing goods before creating a new identity;
 creation carries the typed search name forward. An existing ingredient can belong
 to several suppliers; receipts affect the same quantity and moving value. Bulk
 beverages retain liters and item-specific keg packaging. Creating or reusing beef
@@ -64,16 +69,20 @@ are omitted when saving; a half-filled or invalid line must be corrected. At
 least one valid line is required. Goods can also be selected from existing stock,
 and a missing ingredient can be created inline.
 
-The form supports price per stock unit, price per package, or a whole-line total.
+Visible choices offer price per stock unit, price per selected package, or a whole-line total; the labels name the actual unit. The duplicate package option disappears when receiving in the stock unit.
 Exact fixed-point previews show converted quantity, line amount and effective
 unit cost. Document dates/numbers are under a secondary disclosure. A current
 business day must be available or explicitly selected.
 
 `მიღების დადასტურება` posts stock. `მონახაზად შენახვა` saves working data with
-no stock or payment effects. Unpaid/full/partial payment choices are on the same
+no stock or payment effects. Visible unpaid/full/partial payment choices are on the same
 form, including amount remaining and cash/bank method. The current flow records
 payment on the client's current calendar date and the selected business date.
+The confirmation summary lists every entered stock increase, receipt cost,
+payment now and remaining debt; drafts explicitly have no stock effect.
 Later or historical payments remain available in the payment history flow.
+Supplier detail also offers a direct `გადახდის დაფიქსირება` action: select the
+receipt, record payment, and return to refreshed supplier totals.
 
 Posting and payment are **separate durable transactions**, using the existing
 endpoints. The form retains request IDs and locks submitted values while retrying.
@@ -105,7 +114,7 @@ names, scoped through its existing Venue-safe supplier relations.
 
 ## Menu composition
 
-The existing Menu is searchable and filterable by dishes/drinks. A dish opens its
+The existing Menu is searchable and filterable by its actual categories as well as dishes/drinks. A dish opens its
 ingredients directly, normally per one sold unit. Grams are preferred when the
 item advertises them. Batch yield stays available under a disclosure and existing
 batch quantities are preserved. Ingredient search selects existing stock; inline
@@ -142,7 +151,7 @@ navigation and actions visually distinct from the daily primary action.
   dark-theme views. The dark appearance test checks action/surface contrast.
 - Interaction tests cover partial payment in receiving, market draft with no
   payment write, ingredient search, and a lost payment response after stock posts.
-- Focused Flutter Inventory/POS consumption regressions: 104 tests passed;
+- Focused Flutter Inventory/POS consumption regressions: 142 tests passed;
   Flutter analyzer reported no issues.
 - Screenshot artifacts are generated under `/tmp/procurement-ux-*.png` by
   `test/widget/inventory_daily_ux_test.dart` and visually reviewed.
@@ -168,3 +177,34 @@ Cloud acceptance-time valuation retain the procurement baseline's limitations.
 No StockMovement valuation algorithm, Sale consumption materialization, restore
 reversal, recipe revision history, offline checkout, or tenant authority was
 rewritten. There is no GL, FIFO, waste, stocktake, bank integration or deployment.
+
+## Final usability pass: compatibility and removed paths
+
+The stock catalog's standalone `ახალი პროდუქტი` creation action is hidden.
+Editing an existing product's name, threshold, activity and packaging remains.
+The supplier detail's duplicate `არსებული საქონლის არჩევა` link/unlink setup list
+is removed; all goods creation/reuse starts through `საქონლის დამატება`. Unlink
+remains on supplied goods. Receiving's giant product dropdown is replaced by the
+searchable in-place picker. Composition ingredient replacement uses the same picker. Price and payment dropdowns are replaced by visible
+choices. No backend model, stored identity or history was removed.
+
+Two read-only Manager projections gained display fields: Menu parent/subcategory
+names and Stock Item current moving cost/provisional status/active Menu usage
+count. They reuse existing queries/valuation calculations and server tenant scope.
+Older clients ignore these additions; newer clients fall back to the old category
+name and omit absent stock metadata. No schema or migration changes are required
+for this pass. Deploy the updated backend and Manager to expose all display fields.
+
+`inventory_final_journeys_test.dart` exercises real Manager navigation and HTTP
+serialization against scripted server responses at 360/768/1280: supplier goods,
+category/subcategory selection, receiving/post/payment, beef and beer composition,
+second supplier reuse, self purchase, and equivalent piece/package/total pricing.
+These are UI integration proofs; real stock/payment/tenant effects are verified
+separately by the PostgreSQL Inventory regressions. Screenshots are written to
+`/tmp/procurement-final-*.png`, alongside the daily UX screenshot set.
+
+Remaining limits: live restaurant/device testing and deployment are outside this
+pass. Large supplier and ingredient catalogs remain searchable lists. The Menu
+browser scrolls category chips horizontally on narrow screens. Pending payment
+intent does not survive an app restart; inspect durable receipt/payment history
+before paying later. Drafts do not persist payment choices.

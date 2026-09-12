@@ -129,8 +129,11 @@ current transport status.
   management. Receiving includes payment choices and supports self-purchase
   source snapshots without fake Suppliers. Dish/drink composition reuses the
   existing recipe engine; inline ingredient creation has retry identity. Supplier
-  cards open goods creation directly; Menu selection has category/search browsing.
-  Supplied ingredients can open a dish composition with existing components preserved.
+  cards open goods creation directly; Menu selection has category/subcategory/search
+  browsing. Supplied ingredients can open a dish composition with existing components
+  preserved. Receiving shows explicit unit/package/total price choices and a stock /
+  payment / debt confirmation summary. Supplier detail records payments directly;
+  the stock catalog shows current moving cost and active Menu usage counts.
   See `docs/INVENTORY_PROCUREMENT_REWORK.md` and `docs/INVENTORY_DAILY_UX.md`.
 
 - Financials Step 4.7 adds Venue/Staff compensation rules, frozen PayrollPeriod

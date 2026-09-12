@@ -3,7 +3,7 @@ part of '../mobile_admin_screen.dart';
 /// Which products the Recipes list is showing.
 enum _RecipeFilter {
   all(null, 'ყველა'),
-  linked(true, 'მიბმული'),
+  linked(true, 'შევსებული'),
   unlinked(false, 'მიუბმელი');
 
   const _RecipeFilter(this.wanted, this.label);
@@ -139,7 +139,7 @@ class _RecipeCard extends StatelessWidget {
                     _InventoryMeta(
                       icon: Icons.blender_outlined,
                       label: item.isConfigured
-                          ? '${item.componentCount} კომპონენტი'
+                          ? '${item.componentCount} ინგრედიენტი'
                           : 'შემადგენლობა შესავსებია',
                     ),
                   ],
@@ -162,7 +162,7 @@ class _RecipeCard extends StatelessWidget {
                           ),
                           child: Text(
                             '${variant.label} · '
-                            '${variant.recipe?.isActive == true ? '${variant.recipe!.componentCount} კომპონენტი' : 'მიბმული არ არის'}',
+                            '${variant.recipe?.isActive == true ? '${variant.recipe!.componentCount} ინგრედიენტი' : 'შემადგენლობა შესავსებია'}',
                           ),
                         ),
                     ],
@@ -351,6 +351,10 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
               ),
             );
           }
+          _directMode =
+              widget.menuGroup != 'FOOD' &&
+              _components.length == 1 &&
+              (recipe == null || recipe.yieldValue == 1);
         }
       });
     } catch (error) {
@@ -561,42 +565,36 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
           Row(
             children: [
               Expanded(
-                child: DropdownButtonFormField<String>(
+                child: OutlinedButton.icon(
                   key: Key('recipe-component-item-$index'),
-                  initialValue: item?.id,
-                  isExpanded: true,
-                  dropdownColor: AdminTheme.surfaceElevated,
-                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                    color: AdminTheme.text,
-                    fontSize: 13,
+                  style: OutlinedButton.styleFrom(
+                    alignment: Alignment.centerLeft,
                   ),
-                  decoration: _adminInput(
-                    _directMode ? 'მარაგიდან' : 'ინგრედიენტი',
+                  icon: const Icon(Icons.search),
+                  label: Text(
+                    item?.name ??
+                        (_directMode ? 'მარაგიდან' : 'ინგრედიენტის არჩევა'),
                   ),
-                  items: [
-                    for (final option in _stockItems)
-                      if (option.isActive)
-                        DropdownMenuItem(
-                          value: option.id,
-                          child: Text(
-                            option.name,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                  ],
-                  onChanged: _saving
+                  onPressed: _saving
                       ? null
-                      : (value) => setState(() {
-                          component.stockItem = _stockItems
-                              .where((row) => row.id == value)
-                              .firstOrNull;
-                          component.unit =
-                              !_directMode &&
-                                  component.stockItem?.baseUnit ==
-                                      InventoryUnit.kg
-                              ? InventoryUnit.g
-                              : component.stockItem?.consumptionUnits.first;
-                        }),
+                      : () async {
+                          final selected = await showDialog<StockItem>(
+                            context: context,
+                            builder: (_) =>
+                                InventoryIngredientPicker(items: _stockItems),
+                          );
+                          if (selected != null && mounted)
+                            setState(() {
+                              component.stockItem = selected;
+                              component.unit =
+                                  !_directMode &&
+                                      selected.consumptionUnits.contains(
+                                        InventoryUnit.g,
+                                      )
+                                  ? InventoryUnit.g
+                                  : selected.consumptionUnits.first;
+                            });
+                        },
                 ),
               ),
               if (!_directMode)

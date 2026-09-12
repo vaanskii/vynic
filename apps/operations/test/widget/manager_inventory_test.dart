@@ -73,12 +73,7 @@ void main() {
     expect(find.text('მინიმალური მარაგი: 2.5 კგ'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    await tester.tap(find.byKey(const Key('inventory-add')));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('stock-item-editor')), findsOneWidget);
-    expect(find.byKey(const Key('stock-name')), findsOneWidget);
-    await tester.tap(find.text('გაუქმება'));
-    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('inventory-add')), findsNothing);
 
     await tester.ensureVisible(find.text('რედაქტირება').first);
     await tester.pumpAndSettle();
@@ -120,8 +115,8 @@ void main() {
 
     final list = tester.getRect(find.byKey(const Key('inventory-admin-list')));
     final search = tester.getRect(find.byKey(const Key('inventory-search')));
-    final add = tester.getRect(find.byKey(const Key('inventory-add')));
-    expect(search.center.dy, closeTo(add.center.dy, 2));
+    expect(find.byKey(const Key('inventory-add')), findsNothing);
+    expect(search.width, lessThanOrEqualTo(list.width - 32));
     expect(list.width, 1100);
     expect(tester.takeException(), isNull);
   });

@@ -381,13 +381,6 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.ensureVisible(
-        find.byKey(const Key('receiving-price-mode-0')),
-      );
-      await tester.tap(find.byKey(const Key('receiving-price-mode-0')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('შეფუთვის ფასი').last);
-      await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('თარიღი და დოკუმენტის დეტალები'));
       await tester.tap(find.text('თარიღი და დოკუმენტის დეტალები'));
       await tester.pumpAndSettle();
@@ -412,6 +405,11 @@ void main() {
       await tester.tap(find.text('ყუთი').last);
       await tester.pumpAndSettle();
 
+      await tester.ensureVisible(
+        find.byKey(const Key('receiving-price-0-entered')),
+      );
+      await tester.tap(find.byKey(const Key('receiving-price-0-entered')));
+      await tester.pumpAndSettle();
       // 10 boxes of 24 is 240 bottles, said before anything is posted.
       expect(find.byKey(const Key('receiving-line-base-0')), findsOneWidget);
       expect(find.text('მიღებული: 240 ბოთლი'), findsOneWidget);

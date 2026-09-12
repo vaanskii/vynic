@@ -165,6 +165,8 @@ class RecipeMenuItem {
     required this.price,
     this.posMenuItemId,
     this.categoryName,
+    this.parentCategoryName,
+    this.subcategoryName,
     this.menuGroup = 'OTHER',
     this.recipe,
     this.variants = const <RecipeMenuVariant>[],
@@ -174,7 +176,8 @@ class RecipeMenuItem {
   final String? posMenuItemId;
   final String name;
   final double price;
-  final String? categoryName;
+  final String? categoryName, parentCategoryName, subcategoryName;
+  String get browseCategory => parentCategoryName ?? categoryName ?? 'სხვა';
   final String menuGroup;
 
   /// The definition for the item itself (`variantId = null`).
@@ -207,6 +210,8 @@ class RecipeMenuItem {
       name: _text(json['nameKa']) ?? _text(json['nameEn']) ?? '',
       price: (json['price'] as num?)?.toDouble() ?? 0,
       categoryName: _text(json['categoryName']),
+      parentCategoryName: _text(json['parentCategoryName']),
+      subcategoryName: _text(json['subcategoryName']),
       menuGroup: _text(json['menuGroup']) ?? 'OTHER',
       recipe: MenuRecipeSummary.fromJson(json['recipe']),
       variants: (json['variants'] as List? ?? const [])

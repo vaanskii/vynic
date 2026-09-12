@@ -225,7 +225,21 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
     expect((await balance(beef.stockItemId)).currentCost.weightedUnitCost).toBe(
       '40.000000',
     );
+    expect(
+      (await inventory.listStockItems(a, undefined, true)).find(
+        (row) => row.id === beef.stockItemId,
+      ),
+    ).toMatchObject({
+      currentStock: '20.000',
+      lastPurchaseUnitCost: '40.000000',
+      weightedUnitCost: '40.000000',
+    });
     const khinkali = await menu('ხინკალი');
+    expect(
+      (await recipes.listMenuItems(a, {})).find(
+        (row) => row.menuItemId === khinkali.id,
+      ),
+    ).toMatchObject({ parentCategoryName: 'სასმელები', subcategoryName: null });
     await recipes.save(a, {
       menuItemId: khinkali.id,
       components: [

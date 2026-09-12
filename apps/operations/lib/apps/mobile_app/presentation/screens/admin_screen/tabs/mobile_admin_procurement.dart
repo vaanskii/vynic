@@ -81,7 +81,7 @@ class _SuppliedItemState extends State<SuppliedItemDialog> {
 
   Future<void> _save() async {
     if (_mode == 'menu' && _selected == null) {
-      setState(() => _error = 'აირჩიეთ მზა პროდუქტი');
+      setState(() => _error = 'აირჩიეთ მენიუს პროდუქტი');
       return;
     }
     if (_mode != 'menu' &&
@@ -150,7 +150,7 @@ class _SuppliedItemState extends State<SuppliedItemDialog> {
         backgroundColor: AdminTheme.surface,
         child: SizedBox(
           width: 640,
-          height: MediaQuery.sizeOf(context).height * .86,
+          height: (MediaQuery.sizeOf(context).height * .86).clamp(0.0, 720.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -205,7 +205,7 @@ class _SuppliedItemState extends State<SuppliedItemDialog> {
                       _modeTile(
                         'menu',
                         Icons.local_drink_outlined,
-                        'მზა პროდუქტი',
+                        'მენიუდან',
                         'მაგ. ბორჯომის ბოთლი — იყიდება ცალობით',
                       ),
                       _modeTile(
@@ -227,7 +227,7 @@ class _SuppliedItemState extends State<SuppliedItemDialog> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        const Text('1 გაყიდვა = 1 ცალი მარაგიდან'),
+                        const Text('როგორ ვითვლით? ცალი'),
                         TextButton(
                           onPressed: _busy ? null : _reuseCountedGoods,
                           child: Text(
@@ -321,7 +321,9 @@ class _SuppliedItemState extends State<SuppliedItemDialog> {
                                 children: [
                                   for (final unit in {
                                     'kg': 'კგ',
-                                    'L': 'ლიტრი',
+                                    'g': 'გ',
+                                    'L': 'ლ',
+                                    'ml': 'მლ',
                                     'piece': 'ცალი',
                                   }.entries)
                                     ChoiceChip(
@@ -346,7 +348,7 @@ class _SuppliedItemState extends State<SuppliedItemDialog> {
                         const SizedBox(height: 16),
                         SwitchListTile(
                           contentPadding: EdgeInsets.zero,
-                          title: const Text('მოაქვს შეფუთვით'),
+                          title: const Text('როგორ მოდის? შეფუთვით'),
                           value: _packaging,
                           onChanged: _busy
                               ? null
@@ -380,13 +382,7 @@ class _SuppliedItemState extends State<SuppliedItemDialog> {
                               decimal: true,
                             ),
                             decoration: _adminInput(
-                              '1 შეფუთვაში რამდენი ${_mode == 'menu'
-                                  ? 'ცალი'
-                                  : _unit == 'kg'
-                                  ? 'კგ'
-                                  : _unit == 'L'
-                                  ? 'ლიტრი'
-                                  : 'ცალი'}?',
+                              '1 ${_unitShort(InventoryUnit.parse(_package))} = რამდენი ${_unitShort(_stock?.baseUnit ?? InventoryUnit.parse(_mode == 'menu' ? 'piece' : _unit))}?',
                             ),
                           ),
                         ],
@@ -471,7 +467,7 @@ class InventoryMenuPicker extends StatefulWidget {
 class _InventoryMenuPickerState extends State<InventoryMenuPicker> {
   List<RecipeMenuItem>? _items;
   String _query = '';
-  String? _category, _error;
+  String? _category, _subcategory, _error;
   @override
   void initState() {
     super.initState();
@@ -492,17 +488,26 @@ class _InventoryMenuPickerState extends State<InventoryMenuPicker> {
   Widget build(BuildContext context) {
     final categories =
         (_items ?? <RecipeMenuItem>[])
-            .map((i) => i.categoryName ?? 'სხვა')
+            .map((i) => i.browseCategory)
+            .toSet()
+            .toList()
+          ..sort();
+    final subcategories =
+        (_items ?? <RecipeMenuItem>[])
+            .where((i) => i.browseCategory == _category)
+            .map((i) => i.subcategoryName)
+            .whereType<String>()
             .toSet()
             .toList()
           ..sort();
     final rows = (_items ?? <RecipeMenuItem>[])
         .where(
           (i) =>
-              (_category == null || (i.categoryName ?? 'სხვა') == _category) &&
-              '${i.name} ${i.categoryName ?? ''}'.toLowerCase().contains(
-                _query.trim().toLowerCase(),
-              ),
+              (_category == null || i.browseCategory == _category) &&
+              (_subcategory == null || i.subcategoryName == _subcategory) &&
+              '${i.name} ${i.browseCategory} ${i.subcategoryName ?? ''} ${i.variants.map((v) => v.label).join(' ')}'
+                  .toLowerCase()
+                  .contains(_query.trim().toLowerCase()),
         )
         .toList();
     return Theme(
@@ -540,8 +545,29 @@ class _InventoryMenuPickerState extends State<InventoryMenuPicker> {
                               child: ChoiceChip(
                                 label: Text(category ?? 'ყველა'),
                                 selected: _category == category,
+                                onSelected: (_) => setState(() {
+                                  _category = category;
+                                  _subcategory = null;
+                                }),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  if (subcategories.isNotEmpty)
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        children: [
+                          for (final sub in <String?>[null, ...subcategories])
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ChoiceChip(
+                                label: Text(sub ?? 'ყველა ქვეკატეგორია'),
+                                selected: _subcategory == sub,
                                 onSelected: (_) =>
-                                    setState(() => _category = category),
+                                    setState(() => _subcategory = sub),
                               ),
                             ),
                         ],

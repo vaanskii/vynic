@@ -128,6 +128,10 @@ export class RecipeService {
           row.subcategory?.nameEn,
         ]),
         categoryName: row.subcategory?.nameKa ?? row.category?.nameKa ?? null,
+        parentCategoryName:
+          row.category?.nameKa ?? row.category?.nameEn ?? null,
+        subcategoryName:
+          row.subcategory?.nameKa ?? row.subcategory?.nameEn ?? null,
         recipe: summarise(byKey.get('')),
         variants: row.variants.map((variant) => ({
           variantId: variant.id,

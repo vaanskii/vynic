@@ -842,13 +842,19 @@ class _InventoryTabState extends State<InventoryAdminTab>
           ],
         ),
         const SizedBox(height: 8),
+        // Expansion booleans must not share the ancestor's scroll-offset entry.
         ExpansionTile(
+          key: const PageStorageKey('inventory-composition-status'),
           tilePadding: EdgeInsets.zero,
           title: const Text('შემადგენლობის სტატუსი'),
           children: [
-            _RecipeFilterBar(
-              selected: _recipeFilter,
-              onChanged: (value) => setState(() => _recipeFilter = value),
+            _InventoryExpansionContents(
+              children: [
+                _RecipeFilterBar(
+                  selected: _recipeFilter,
+                  onChanged: (value) => setState(() => _recipeFilter = value),
+                ),
+              ],
             ),
           ],
         ),
@@ -2417,6 +2423,29 @@ class InventoryScreen extends StatelessWidget {
         initialStockStatus: stockStatus,
         initialBusinessDate: businessDate,
       ),
+    ),
+  );
+}
+
+/// Expanded form fields have scroll positions of their own. Keep them outside
+/// the tile's boolean PageStorage entry, including after collapse/reopen.
+class _InventoryExpansionContents extends StatefulWidget {
+  const _InventoryExpansionContents({required this.children});
+  final List<Widget> children;
+  @override
+  State<_InventoryExpansionContents> createState() =>
+      _InventoryExpansionContentsState();
+}
+
+class _InventoryExpansionContentsState
+    extends State<_InventoryExpansionContents> {
+  final _bucket = PageStorageBucket();
+  @override
+  Widget build(BuildContext context) => PageStorage(
+    bucket: _bucket,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: widget.children,
     ),
   );
 }

@@ -1023,54 +1023,62 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
                     ),
                   const SizedBox(height: 10),
                   ExpansionTile(
+                    key: const PageStorageKey(
+                      'inventory-receiving-document-details',
+                    ),
                     tilePadding: EdgeInsets.zero,
                     title: const Text('თარიღი და დოკუმენტის დეტალები'),
                     children: [
-                      OutlinedButton.icon(
-                        key: const Key('receiving-business-date'),
-                        icon: const Icon(Icons.today),
-                        label: Text(
-                          _businessDate == null
-                              ? 'აირჩიეთ სამუშაო დღე'
-                              : 'სამუშაო დღე: ${_isoDate(_businessDate!)}',
-                        ),
-                        onPressed: _saving
-                            ? null
-                            : () async {
-                                final selected = await showDatePicker(
-                                  context: context,
-                                  initialDate: _businessDate ?? DateTime.now(),
-                                  firstDate: DateTime(2020),
-                                  lastDate: DateTime.now().add(
-                                    const Duration(days: 366),
-                                  ),
-                                );
-                                if (selected != null)
-                                  setState(() => _businessDate = selected);
-                              },
+                      _InventoryExpansionContents(
+                        children: [
+                          OutlinedButton.icon(
+                            key: const Key('receiving-business-date'),
+                            icon: const Icon(Icons.today),
+                            label: Text(
+                              _businessDate == null
+                                  ? 'აირჩიეთ სამუშაო დღე'
+                                  : 'სამუშაო დღე: ${_isoDate(_businessDate!)}',
+                            ),
+                            onPressed: _saving
+                                ? null
+                                : () async {
+                                    final selected = await showDatePicker(
+                                      context: context,
+                                      initialDate:
+                                          _businessDate ?? DateTime.now(),
+                                      firstDate: DateTime(2020),
+                                      lastDate: DateTime.now().add(
+                                        const Duration(days: 366),
+                                      ),
+                                    );
+                                    if (selected != null)
+                                      setState(() => _businessDate = selected);
+                                  },
+                          ),
+                          const SizedBox(height: 10),
+                          OutlinedButton.icon(
+                            key: const Key('receiving-date'),
+                            onPressed: _saving ? null : _pickDate,
+                            icon: const Icon(Icons.event_rounded, size: 18),
+                            label: Text(
+                              'დოკუმენტის თარიღი: ${_isoDate(_documentDate)}',
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AdminTheme.text,
+                              side: BorderSide(color: AdminTheme.border),
+                              minimumSize: const Size(0, 52),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          _dialogField(
+                            _waybill,
+                            'ზედნადების ნომერი',
+                            key: const Key('receiving-waybill'),
+                          ),
+                          _dialogField(_invoice, 'ინვოისის ნომერი'),
+                          _dialogField(_notes, 'შენიშვნა', maxLines: 2),
+                        ],
                       ),
-                      const SizedBox(height: 10),
-                      OutlinedButton.icon(
-                        key: const Key('receiving-date'),
-                        onPressed: _saving ? null : _pickDate,
-                        icon: const Icon(Icons.event_rounded, size: 18),
-                        label: Text(
-                          'დოკუმენტის თარიღი: ${_isoDate(_documentDate)}',
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AdminTheme.text,
-                          side: BorderSide(color: AdminTheme.border),
-                          minimumSize: const Size(0, 52),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      _dialogField(
-                        _waybill,
-                        'ზედნადების ნომერი',
-                        key: const Key('receiving-waybill'),
-                      ),
-                      _dialogField(_invoice, 'ინვოისის ნომერი'),
-                      _dialogField(_notes, 'შენიშვნა', maxLines: 2),
                     ],
                   ),
                   const Divider(height: 24),

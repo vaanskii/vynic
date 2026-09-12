@@ -441,4 +441,88 @@ void main() {
     expect((sent?['components'] as List).single['quantity'], '0.500000');
     expect(t.takeException(), isNull);
   });
+  testWidgets(
+    'composition expansion does not read or overwrite parent scroll state',
+    (t) async {
+      qa.size(t, 768);
+      final bucket = PageStorageBucket();
+      var seeded = false;
+      late BuildContext storageContext;
+      Widget host(int generation) => qa.app(
+        PageStorage(
+          bucket: bucket,
+          child: KeyedSubtree(
+            key: const PageStorageKey('admin-inventory'),
+            child: Builder(
+              builder: (context) {
+                storageContext = context;
+                if (!seeded) {
+                  bucket.writeState(context, 120.0);
+                  seeded = true;
+                }
+                return InventoryAdminTab(
+                  key: ValueKey(generation),
+                  initialSection: 3,
+                  loadStockItems: () async => fixtures.stocks,
+                  loadSuppliers: () async => [],
+                  loadReceivings: () async =>
+                      const ReceivingPage(receivings: []),
+                  loadRecipes: () async => menu,
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      await t.pumpWidget(host(1));
+      await t.pumpAndSettle();
+      expect(t.takeException(), isNull);
+      await t.ensureVisible(find.text('შემადგენლობის სტატუსი'));
+      await t.pumpAndSettle();
+      await t.tap(find.text('შემადგენლობის სტატუსი'));
+      await t.pumpAndSettle();
+      expect(find.byKey(const Key('recipe-filter-unlinked')), findsOneWidget);
+      expect(bucket.readState(storageContext), isA<double>());
+      await t.pumpWidget(host(2));
+      await t.pumpAndSettle();
+      expect(t.takeException(), isNull);
+      expect(find.byKey(const Key('recipe-filter-unlinked')), findsOneWidget);
+      expect(bucket.readState(storageContext), isA<double>());
+    },
+  );
+  testWidgets(
+    'receiving details reopen without mixing field scroll and expansion state',
+    (t) async {
+      qa.size(t, 768);
+      await t.pumpWidget(
+        qa.app(
+          ReceivingEditorDialog(
+            suppliers: [fixtures.supplier],
+            stockItems: fixtures.stocks,
+            businessDate: '2026-09-10',
+            save: (_) async {},
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+      final disclosure = find.text('თარიღი და დოკუმენტის დეტალები');
+      await t.tap(disclosure);
+      await t.pumpAndSettle();
+      await t.enterText(find.byKey(const Key('receiving-waybill')), '123456');
+      await t.ensureVisible(disclosure);
+      await t.pumpAndSettle();
+      await t.tap(disclosure);
+      await t.pumpAndSettle();
+      await t.tap(disclosure);
+      await t.pumpAndSettle();
+      expect(t.takeException(), isNull);
+      expect(
+        t
+            .widget<TextField>(find.byKey(const Key('receiving-waybill')))
+            .controller!
+            .text,
+        '123456',
+      );
+    },
+  );
 }

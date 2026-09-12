@@ -172,36 +172,43 @@ class _SuppliedItemState extends State<SuppliedItemDialog> {
                     child: Text('1 გაყიდვა = 1 ცალი მარაგიდან'),
                   ),
                   ExpansionTile(
+                    key: const PageStorageKey(
+                      'inventory-supplied-existing-goods',
+                    ),
                     tilePadding: EdgeInsets.zero,
                     title: const Text('უკვე გვაქვს ეს საქონელი?'),
                     children: [
-                      DropdownButtonFormField<String>(
-                        initialValue: _stockId ?? '',
-                        isExpanded: true,
-                        decoration: _adminInput('არსებული საქონელი'),
-                        items: [
-                          const DropdownMenuItem(
-                            value: '',
-                            child: Text('ავტომატურად'),
-                          ),
-                          for (final item in widget.stockItems.where(
-                            (i) =>
-                                i.isActive &&
-                                [
-                                  InventoryUnit.piece,
-                                  InventoryUnit.bottle,
-                                ].contains(i.baseUnit),
-                          ))
-                            DropdownMenuItem(
-                              value: item.id,
-                              child: Text(
-                                item.name,
-                                overflow: TextOverflow.ellipsis,
+                      _InventoryExpansionContents(
+                        children: [
+                          DropdownButtonFormField<String>(
+                            initialValue: _stockId ?? '',
+                            isExpanded: true,
+                            decoration: _adminInput('არსებული საქონელი'),
+                            items: [
+                              const DropdownMenuItem(
+                                value: '',
+                                child: Text('ავტომატურად'),
                               ),
-                            ),
+                              for (final item in widget.stockItems.where(
+                                (i) =>
+                                    i.isActive &&
+                                    [
+                                      InventoryUnit.piece,
+                                      InventoryUnit.bottle,
+                                    ].contains(i.baseUnit),
+                              ))
+                                DropdownMenuItem(
+                                  value: item.id,
+                                  child: Text(
+                                    item.name,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                            ],
+                            onChanged: (v) =>
+                                setState(() => _stockId = v == '' ? null : v),
+                          ),
                         ],
-                        onChanged: (v) =>
-                            setState(() => _stockId = v == '' ? null : v),
                       ),
                     ],
                   ),

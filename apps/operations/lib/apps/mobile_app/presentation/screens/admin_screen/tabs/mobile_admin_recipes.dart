@@ -455,25 +455,32 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
           ),
           const SizedBox(height: 6),
           ExpansionTile(
+            key: PageStorageKey(
+              'inventory-recipe-batch-${widget.menuItemId}-${widget.variantId ?? ''}',
+            ),
             tilePadding: EdgeInsets.zero,
             initiallyExpanded: _yield.text != '1',
             title: const Text('რამდენიმე პორციაზე მომზადება'),
             children: [
-              TextField(
-                key: const Key('recipe-yield'),
-                controller: _yield,
-                onChanged: (_) => setState(() {}),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                style: TextStyle(color: AdminTheme.text),
-                decoration: _adminInput('რამდენ პორციაზეა გაწერილი'),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'დატოვეთ 1, თუ რაოდენობები ერთ პორციაზეა. მაგ. 100 ხინკლის '
-                'ცომი და ხორცი შეიყვანეთ ერთად და მიუთითეთ 100.',
-                style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
+              _InventoryExpansionContents(
+                children: [
+                  TextField(
+                    key: const Key('recipe-yield'),
+                    controller: _yield,
+                    onChanged: (_) => setState(() {}),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    style: TextStyle(color: AdminTheme.text),
+                    decoration: _adminInput('რამდენ პორციაზეა გაწერილი'),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'დატოვეთ 1, თუ რაოდენობები ერთ პორციაზეა. მაგ. 100 ხინკლის '
+                    'ცომი და ხორცი შეიყვანეთ ერთად და მიუთითეთ 100.',
+                    style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
+                  ),
+                ],
               ),
             ],
           ),
@@ -832,29 +839,34 @@ class CurrentRecipeCostPanel extends StatelessWidget {
           ),
         if (cost != null && cost!.components.isNotEmpty)
           ExpansionTile(
+            key: const PageStorageKey('inventory-recipe-cost-details'),
             tilePadding: EdgeInsets.zero,
             title: Text(
               'შენახული შემადგენლობით · საშუალო შესყიდვის ფასი',
               style: TextStyle(color: AdminTheme.textMuted, fontSize: 12),
             ),
             children: [
-              for (final component in cost!.components)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    component.name,
-                    style: TextStyle(color: AdminTheme.text),
+              _InventoryExpansionContents(
+                children: [
+                  for (final component in cost!.components)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        component.name,
+                        style: TextStyle(color: AdminTheme.text),
+                      ),
+                      subtitle: Text(
+                        component.unitCost == null
+                            ? 'შესყიდვის ისტორია არ არის'
+                            : '${_quantityText(component.quantity)} ${_unitShort(component.baseUnit)} × ${_quantityText(component.unitCost!)} ₾ / ${_unitShort(component.baseUnit)} = ${_quantityText(component.cost!)} ₾',
+                        style: TextStyle(color: AdminTheme.textMuted),
+                      ),
+                    ),
+                  Text(
+                    'დათვლილია დადასტურებული მიღებებიდან. გაუქმებული მიღებები არ შედის. შემადგენლობის ცვლილება გამოჩნდება შენახვის შემდეგ.',
+                    style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
                   ),
-                  subtitle: Text(
-                    component.unitCost == null
-                        ? 'შესყიდვის ისტორია არ არის'
-                        : '${_quantityText(component.quantity)} ${_unitShort(component.baseUnit)} × ${_quantityText(component.unitCost!)} ₾ / ${_unitShort(component.baseUnit)} = ${_quantityText(component.cost!)} ₾',
-                    style: TextStyle(color: AdminTheme.textMuted),
-                  ),
-                ),
-              Text(
-                'დათვლილია დადასტურებული მიღებებიდან. გაუქმებული მიღებები არ შედის. შემადგენლობის ცვლილება გამოჩნდება შენახვის შემდეგ.',
-                style: TextStyle(color: AdminTheme.textDim, fontSize: 11),
+                ],
               ),
             ],
           ),

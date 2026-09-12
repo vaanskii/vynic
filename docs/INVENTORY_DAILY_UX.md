@@ -28,19 +28,34 @@ Some controls inherited colors independently of the Manager appearance setting.
 
 ## Supplier and goods setup
 
-Supplier detail shows its goods, receiving action, and settlement. Goods setup
-has three modes: choose from Menu, ingredient, or bulk beverage.
+Supplier cards offer `საქონლის დამატება` directly, without opening detail first.
+The same action remains in supplier detail. The form starts with explicit choices:
+`ნედლეული`, `მზა პროდუქტი`, and `ჩამოსასხმელი სასმელი`, with restaurant examples.
+No Menu item is selected by default. Save stays visible below the scrollable form.
 
-Choosing a packaged Menu product uses the existing atomic supplier-items API:
-create/reuse an inventory identity and direct consumption mapping, then record
-packaging such as 10 pieces per pack. Menu and stock identities remain separate.
-Manual reuse of previously unlinked counted goods is an optional disclosure.
-Existing non-direct recipes are not silently overwritten.
+Ready-made products open a dedicated Menu browser with name/category search,
+category filters, and explicit variant rows. Choosing a packaged Menu product uses
+the existing atomic supplier-items API: create/reuse an inventory identity and
+direct consumption mapping, then record packaging such as 10 pieces per pack.
+Menu and stock identities remain separate. Existing counted stock can be chosen
+through a searchable picker. Existing non-direct recipes are not overwritten.
 
-Ingredient and bulk modes offer existing goods before creating a new identity.
-An explicitly selected existing ingredient can belong to several suppliers;
-receipts from all sources affect that same item's quantity and moving value.
-Bulk beverages retain liters and item-specific keg packaging.
+Ingredient and bulk modes search existing goods before creating a new identity;
+creation carries the typed search name forward. An existing ingredient can belong
+to several suppliers; receipts affect the same quantity and moving value. Bulk
+beverages retain liters and item-specific keg packaging. Creating or reusing beef
+sends no Menu identity and does not create a one-piece khinkali mapping.
+
+Each supplied good has `გამოყენება კერძში`: choose a dish and variant in the Menu
+browser, then edit its composition with that ingredient included. Existing
+components, quantities and batch yield remain loaded; an already-present ingredient
+is not duplicated. New ingredients start with an empty quantity (grams for kg
+ingredients), requiring the manager to enter the real amount. Failed recipe loads
+block saving and offer retry. This flow does not require changing Inventory tabs.
+
+Inventory themes explicitly set popup canvas colors alongside surface and text
+colors. Supplier choices, ingredient search, Menu categories and save controls have
+responsive widget coverage at 360, 768 and 1280 pixels, plus dark-theme inspection.
 
 ## Receiving and payment
 

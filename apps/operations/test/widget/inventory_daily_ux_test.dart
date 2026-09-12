@@ -441,6 +441,307 @@ void main() {
     expect((sent?['components'] as List).single['quantity'], '0.500000');
     expect(t.takeException(), isNull);
   });
+  for (final width in [360.0, 768.0, 1280.0]) {
+    testWidgets('supplier ingredient search and creation at $width', (t) async {
+      qa.size(t, width);
+      Map<String, dynamic>? sent;
+      await t.pumpWidget(
+        qa.app(
+          SuppliedItemDialog(
+            supplierId: 'meat',
+            supplierName: 'ხორცის მომწოდებელი',
+            stockItems: [beef, beer],
+            menuItems: menu,
+            save: (p) async => sent = p,
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+      await qa.shot(t, 'supplier-choices-${width.toInt()}');
+      expect(find.byKey(const Key('supplied-menu')), findsNothing);
+      await t.tap(find.byKey(const Key('supplied-mode-ingredient')));
+      await t.pumpAndSettle();
+      await t.enterText(find.byKey(const Key('supplied-search')), 'ხორცი');
+      await t.pumpAndSettle();
+      expect(find.text(beer.name), findsNothing);
+      await t.tap(find.byKey(const Key('supplied-stock-beef')));
+      await t.pumpAndSettle();
+      await qa.shot(t, 'supplier-beef-${width.toInt()}');
+      await t.tap(find.byKey(const Key('supplied-save')));
+      await t.pumpAndSettle();
+      expect(sent?['mode'], 'ingredient');
+      expect(sent?['stockItemId'], 'beef');
+      expect(sent?.containsKey('menuItemId'), false);
+      expect(sent?.containsKey('purchaseUnits'), false);
+      expect(t.takeException(), isNull);
+    });
+    testWidgets(
+      'menu category and search find variant without catalog scrolling at $width',
+      (t) async {
+        qa.size(t, width);
+        await t.pumpWidget(
+          qa.app(
+            InventoryMenuPicker(
+              items: [
+                for (var i = 0; i < 60; i++)
+                  RecipeMenuItem(
+                    menuItemId: 'dish-$i',
+                    name: 'კერძი $i',
+                    price: 2,
+                    categoryName: 'კერძები',
+                  ),
+                const RecipeMenuItem(
+                  menuItemId: 'water',
+                  name: 'ბორჯომი',
+                  price: 4,
+                  categoryName: 'სასმელები',
+                  variants: [
+                    RecipeMenuVariant(variantId: 'large', size: 0.5, price: 4),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+        await t.pumpAndSettle();
+        await t.tap(find.text('სასმელები').first);
+        await t.pumpAndSettle();
+        expect(find.text('კერძი 0'), findsNothing);
+        expect(find.text('ბორჯომი · 0.5'), findsOneWidget);
+        await t.enterText(
+          find.byKey(const Key('inventory-menu-search')),
+          'ბორჯომი',
+        );
+        await t.pumpAndSettle();
+        await qa.shot(t, 'supplier-menu-${width.toInt()}');
+        await t.enterText(
+          find.byKey(const Key('inventory-menu-search')),
+          'zzzz',
+        );
+        await t.pumpAndSettle();
+        expect(
+          find.text('ვერ მოიძებნა. შეცვალეთ ძებნა ან კატეგორია.'),
+          findsOneWidget,
+        );
+        expect(t.takeException(), isNull);
+      },
+    );
+  }
+  testWidgets(
+    'new ingredient keeps retry identity and never sends a menu identity',
+    (t) async {
+      qa.size(t, 360);
+      final sent = <Map<String, dynamic>>[];
+      await t.pumpWidget(
+        qa.app(
+          SuppliedItemDialog(
+            supplierId: 'meat',
+            stockItems: [],
+            menuItems: menu,
+            save: (p) async {
+              sent.add(p);
+              if (sent.length == 1) throw Exception('ხელახლა ცდა');
+            },
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('supplied-mode-ingredient')));
+      await t.pumpAndSettle();
+      await t.enterText(
+        find.byKey(const Key('supplied-search')),
+        'საქონლის ხორცი',
+      );
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('supplied-create')));
+      await t.pumpAndSettle();
+      expect(
+        t
+            .widget<TextField>(find.byKey(const Key('supplied-name')))
+            .controller!
+            .text,
+        'საქონლის ხორცი',
+      );
+      await t.tap(find.byKey(const Key('supplied-save')));
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('supplied-save')));
+      await t.pumpAndSettle();
+      expect(sent.length, 2);
+      expect(sent[0]['requestId'], sent[1]['requestId']);
+      expect(sent[1]['baseUnit'], 'kg');
+      expect(sent[1].containsKey('menuItemId'), false);
+      expect(t.takeException(), isNull);
+    },
+  );
+  testWidgets(
+    'supplier ingredient is appended without replacing a dish recipe',
+    (t) async {
+      qa.size(t, 768);
+      final flour = StockItem.fromJson({
+        'id': 'flour',
+        'name': 'ფქვილი',
+        'baseUnit': 'kg',
+        'recipeUnits': ['g', 'kg'],
+      });
+      Map<String, dynamic>? sent;
+      await t.pumpWidget(
+        qa.app(
+          RecipeEditorDialog(
+            menuItemId: 'khinkali',
+            menuItemName: 'ხინკალი',
+            menuGroup: 'FOOD',
+            stockItems: [flour, beef],
+            initialIngredientId: 'beef',
+            load: () async => detail('ხინკალი', flour, '50', 'g'),
+            save: (p) async => sent = p,
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+      await t.enterText(
+        find.byKey(const Key('recipe-component-quantity-1')),
+        '35',
+      );
+      await t.ensureVisible(find.byKey(const Key('recipe-save')));
+      await t.tap(find.byKey(const Key('recipe-save')));
+      await t.pumpAndSettle();
+      final components = sent?['components'] as List;
+      expect(components.length, 2);
+      expect(components[0]['stockItemId'], 'flour');
+      expect(components[0]['quantity'], '50');
+      expect(components[1]['stockItemId'], 'beef');
+      expect(components[1]['quantity'], '35');
+      expect(components[1]['unit'], 'g');
+      expect(t.takeException(), isNull);
+    },
+  );
+  testWidgets('supplier list opens goods creation directly', (t) async {
+    qa.size(t, 360);
+    await t.pumpWidget(
+      qa.app(
+        InventoryAdminTab(
+          initialSection: 1,
+          loadStockItems: () async => [beef],
+          loadSuppliers: () async => [fixtures.supplier],
+          loadReceivings: () async => const ReceivingPage(receivings: []),
+          loadRecipes: () async => menu,
+        ),
+      ),
+    );
+    await t.pumpAndSettle();
+    final add = find.byKey(Key('supplier-add-goods-${fixtures.supplier.id}'));
+    await t.ensureVisible(add);
+    await t.tap(add);
+    await t.pumpAndSettle();
+    expect(find.byKey(const Key('supplied-mode-ingredient')), findsOneWidget);
+    expect(find.byKey(const Key('supplier-detail')), findsNothing);
+    expect(t.takeException(), isNull);
+  });
+  testWidgets('menu selection carries the chosen variant identity', (t) async {
+    qa.size(t, 360);
+    Map<String, dynamic>? sent;
+    await t.pumpWidget(
+      qa.app(
+        SuppliedItemDialog(
+          supplierId: 's',
+          stockItems: [],
+          menuItems: const [
+            RecipeMenuItem(
+              menuItemId: 'water',
+              name: 'ბორჯომი',
+              price: 4,
+              variants: [
+                RecipeMenuVariant(variantId: 'small', size: 0.3, price: 3),
+                RecipeMenuVariant(variantId: 'large', size: 0.5, price: 4),
+              ],
+            ),
+          ],
+          save: (p) async => sent = p,
+        ),
+      ),
+    );
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(const Key('supplied-mode-menu')));
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(const Key('supplied-menu')));
+    await t.pumpAndSettle();
+    await t.tap(find.text('ბორჯომი · 0.5'));
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(const Key('supplied-save')));
+    await t.pumpAndSettle();
+    expect(sent?['menuItemId'], 'water');
+    expect(sent?['variantId'], 'large');
+    expect(t.takeException(), isNull);
+  });
+  testWidgets(
+    'dish load failure blocks replacement and retry does not duplicate beef',
+    (t) async {
+      qa.size(t, 768);
+      var attempts = 0;
+      Map<String, dynamic>? sent;
+      await t.pumpWidget(
+        qa.app(
+          RecipeEditorDialog(
+            menuItemId: 'khinkali',
+            menuItemName: 'ხინკალი',
+            menuGroup: 'FOOD',
+            stockItems: [beef],
+            initialIngredientId: 'beef',
+            load: () async {
+              if (++attempts == 1) throw Exception('load failed');
+              return detail('ხინკალი', beef, '35', 'g');
+            },
+            save: (p) async => sent = p,
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+      expect(
+        t.widget<FilledButton>(find.byKey(const Key('recipe-save'))).onPressed,
+        isNull,
+      );
+      await t.tap(find.text('ხელახლა ცდა'));
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('recipe-save')));
+      await t.pumpAndSettle();
+      expect((sent?['components'] as List).length, 1);
+      expect((sent?['components'] as List).single['quantity'], '35');
+      expect(t.takeException(), isNull);
+    },
+  );
+  testWidgets('supplier picker dark surfaces stay readable', (t) async {
+    qa.size(t, 360);
+    final previous = ManagerAppPreferences.dashboardAppearance.value;
+    ManagerAppPreferences.dashboardAppearance.value =
+        ManagerDashboardAppearance.dark;
+    addTearDown(
+      () => ManagerAppPreferences.dashboardAppearance.value = previous,
+    );
+    await t.pumpWidget(
+      qa.app(
+        SuppliedItemDialog(
+          supplierId: 's',
+          stockItems: [beef],
+          menuItems: menu,
+        ),
+      ),
+    );
+    await t.pumpAndSettle();
+    await qa.shot(t, 'supplier-choices-dark-360');
+    await t.tap(find.byKey(const Key('supplied-mode-menu')));
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(const Key('supplied-menu')));
+    await t.pumpAndSettle();
+    final theme = Theme.of(
+      t.element(find.byKey(const Key('inventory-menu-search'))),
+    );
+    expect(theme.canvasColor, theme.colorScheme.surface);
+    final a = theme.colorScheme.onSurface.computeLuminance(),
+        b = theme.colorScheme.surface.computeLuminance();
+    expect((a + .05) / (b + .05), greaterThanOrEqualTo(4.5));
+    await qa.shot(t, 'supplier-menu-dark-360');
+    expect(t.takeException(), isNull);
+  });
   testWidgets(
     'composition expansion does not read or overwrite parent scroll state',
     (t) async {

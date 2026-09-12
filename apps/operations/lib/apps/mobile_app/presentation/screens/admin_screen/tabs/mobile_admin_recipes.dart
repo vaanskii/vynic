@@ -235,8 +235,10 @@ class RecipeEditorDialog extends StatefulWidget {
     this.save,
     this.disable,
     this.onCreateStockItem,
+    this.initialIngredientId,
   });
 
+  final String? initialIngredientId;
   final String menuItemId;
   final String menuItemName;
   final String menuGroup;
@@ -284,6 +286,10 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
   }
 
   Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final detail =
           await (widget.load?.call() ??
@@ -295,6 +301,9 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
       setState(() {
         _detail = detail;
         _loading = false;
+        for (final component in _components) {
+          component.dispose();
+        }
         final recipe = detail.recipe;
         if (recipe == null) {
           _directMode = widget.menuGroup != 'FOOD';
@@ -319,6 +328,29 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
               widget.menuGroup != 'FOOD' &&
               recipe.isDirectLink &&
               recipe.yieldValue == 1;
+        }
+        final ingredient = _stockItems
+            .where((i) => i.id == widget.initialIngredientId && i.isActive)
+            .firstOrNull;
+        if (ingredient != null) {
+          _directMode = false;
+          if (recipe == null) {
+            for (final component in _components) {
+              component.dispose();
+            }
+            _components = [];
+          }
+          if (!_components.any((c) => c.stockItem?.id == ingredient.id)) {
+            _components.add(
+              _RecipeComponentDraft(
+                stockItem: ingredient,
+                unit: ingredient.consumptionUnits.contains(InventoryUnit.g)
+                    ? InventoryUnit.g
+                    : ingredient.baseUnit,
+                quantity: TextEditingController(),
+              ),
+            );
+          }
         }
       });
     } catch (error) {
@@ -656,9 +688,11 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
           style: TextButton.styleFrom(foregroundColor: AdminTheme.warn),
           child: const Text('გათიშვა'),
         ),
+      if (!_loading && _detail == null)
+        TextButton(onPressed: _load, child: const Text('ხელახლა ცდა')),
       FilledButton(
         key: const Key('recipe-save'),
-        onPressed: _saving ? null : _save,
+        onPressed: _saving || _loading || _detail == null ? null : _save,
         style: FilledButton.styleFrom(backgroundColor: AdminTheme.primary),
         child: _saving
             ? SizedBox.square(

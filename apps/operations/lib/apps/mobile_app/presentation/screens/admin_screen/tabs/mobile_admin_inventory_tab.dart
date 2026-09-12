@@ -587,6 +587,7 @@ class _InventoryTabState extends State<InventoryAdminTab>
           _SupplierCard(
             supplier: supplier,
             onOpen: () => _openSupplier(supplier),
+            onAddGoods: () => _addSupplierGoods(supplier),
             onEdit: () => _editSupplier(supplier),
             onToggle: () => _toggleSupplier(supplier),
           ),
@@ -620,6 +621,18 @@ class _InventoryTabState extends State<InventoryAdminTab>
     } finally {
       if (mounted) setState(() => _loadingMore = false);
     }
+  }
+
+  Future<void> _addSupplierGoods(Supplier supplier) async {
+    final changed = await showDialog<bool>(
+      context: context,
+      builder: (_) => SuppliedItemDialog(
+        supplierId: supplier.id,
+        supplierName: supplier.name,
+        stockItems: _stockItems,
+      ),
+    );
+    if (changed == true && mounted) await _load();
   }
 
   Future<void> _openSupplier(Supplier supplier) async {
@@ -1117,6 +1130,7 @@ class _StockItemCard extends StatelessWidget {
 class _SupplierCard extends StatelessWidget {
   const _SupplierCard({
     required this.onOpen,
+    required this.onAddGoods,
     required this.supplier,
     required this.onEdit,
     required this.onToggle,
@@ -1124,6 +1138,7 @@ class _SupplierCard extends StatelessWidget {
 
   final Supplier supplier;
   final VoidCallback onOpen;
+  final VoidCallback onAddGoods;
   final VoidCallback onEdit;
   final VoidCallback onToggle;
 
@@ -1165,6 +1180,12 @@ class _SupplierCard extends StatelessWidget {
                   label: Text(
                     'მისი პროდუქტები (${supplier.stockItemIds.length})',
                   ),
+                ),
+                OutlinedButton.icon(
+                  key: Key('supplier-add-goods-${supplier.id}'),
+                  onPressed: supplier.isActive ? onAddGoods : null,
+                  icon: const Icon(Icons.add),
+                  label: const Text('საქონლის დამატება'),
                 ),
                 if (details.isNotEmpty) ...[
                   const SizedBox(height: 7),
@@ -2121,6 +2142,7 @@ class _SupplierDetailDialogState extends State<SupplierDetailDialog> {
         context: context,
         builder: (_) => SuppliedItemDialog(
           supplierId: widget.supplier.id,
+          supplierName: widget.supplier.name,
           stockItems: _freshStock ?? widget.stockItems,
         ),
       );
@@ -2128,6 +2150,37 @@ class _SupplierDetailDialogState extends State<SupplierDetailDialog> {
         _freshStock = await MobileApiService.getStockItems();
         await _load();
       }
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _useInDish(String stockId) async {
+    setState(() => _busy = true);
+    try {
+      final stock = _freshStock ?? await MobileApiService.getStockItems();
+      if (!mounted) return;
+      final selected = await Navigator.of(context).push<InventoryMenuSelection>(
+        MaterialPageRoute(
+          builder: (_) =>
+              const InventoryMenuPicker(title: 'რომელ კერძში ვიყენებთ?'),
+        ),
+      );
+      if (selected == null || !mounted) return;
+      await showDialog<bool>(
+        context: context,
+        builder: (_) => RecipeEditorDialog(
+          menuItemId: selected.item.menuItemId,
+          menuItemName: selected.item.name,
+          menuGroup: selected.item.menuGroup,
+          variantId: selected.variant?.variantId,
+          variantLabel: selected.variant?.label,
+          stockItems: stock,
+          initialIngredientId: stockId,
+        ),
+      );
     } catch (e) {
       if (mounted) setState(() => _error = '$e');
     } finally {
@@ -2226,6 +2279,16 @@ class _SupplierDetailDialogState extends State<SupplierDetailDialog> {
                     title: Text(
                       '${product['name']}',
                       style: TextStyle(color: AdminTheme.text),
+                    ),
+                    subtitle: Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: _busy
+                            ? null
+                            : () => _useInDish(product['id'] as String),
+                        icon: const Icon(Icons.restaurant_outlined, size: 18),
+                        label: const Text('გამოყენება კერძში'),
+                      ),
                     ),
                     trailing: IconButton(
                       tooltip: 'მიბმის მოხსნა',
@@ -2348,6 +2411,7 @@ ThemeData inventoryTheme(BuildContext context) {
   );
   return theme.copyWith(
     scaffoldBackgroundColor: AdminTheme.bg,
+    canvasColor: AdminTheme.surface,
     textTheme: theme.textTheme.apply(
       bodyColor: AdminTheme.text,
       displayColor: AdminTheme.text,

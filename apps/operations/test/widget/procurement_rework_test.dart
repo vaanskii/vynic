@@ -93,6 +93,8 @@ void main() {
         ),
       );
       await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('supplied-mode-menu')));
+      await t.pumpAndSettle();
       await t.tap(find.byKey(const Key('supplied-menu')));
       await t.pumpAndSettle();
       await t.tap(find.text('ბორჯომი 0.5L').last);

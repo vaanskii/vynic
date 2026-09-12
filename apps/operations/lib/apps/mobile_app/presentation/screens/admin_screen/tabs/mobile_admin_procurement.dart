@@ -5,10 +5,12 @@ class SuppliedItemDialog extends StatefulWidget {
     super.key,
     required this.supplierId,
     required this.stockItems,
+    this.supplierName,
     this.menuItems,
     this.save,
   });
   final String supplierId;
+  final String? supplierName;
   final List<StockItem> stockItems;
   final List<RecipeMenuItem>? menuItems;
   final Future<void> Function(Map<String, dynamic>)? save;
@@ -18,28 +20,13 @@ class SuppliedItemDialog extends StatefulWidget {
 
 class _SuppliedItemState extends State<SuppliedItemDialog> {
   final _requestId = const Uuid().v4();
-  String _mode = 'menu', _unit = 'kg', _package = 'pack';
-  String? _menuId, _stockId, _variantId, _error;
-  final _name = TextEditingController(),
-      _ratio = TextEditingController(text: '10');
-  List<RecipeMenuItem>? _menu;
-  bool _busy = false, _packaging = true;
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    try {
-      final rows =
-          widget.menuItems ?? await MobileApiService.getRecipeMenuItems();
-      if (mounted) setState(() => _menu = rows);
-    } catch (e) {
-      if (mounted) setState(() => _error = '$e');
-    }
-  }
-
+  String? _mode, _error;
+  String _unit = 'kg', _package = 'pack', _query = '';
+  StockItem? _stock;
+  InventoryMenuSelection? _selected;
+  final _name = TextEditingController();
+  final _ratio = TextEditingController(text: '10');
+  bool _busy = false, _packaging = false, _creating = false;
   @override
   void dispose() {
     _name.dispose();
@@ -47,7 +34,67 @@ class _SuppliedItemState extends State<SuppliedItemDialog> {
     super.dispose();
   }
 
+  void _chooseMode(String mode) => setState(() {
+    _mode = mode;
+    _stock = null;
+    _selected = null;
+    _creating = false;
+    _query = '';
+    _name.clear();
+    _error = null;
+    _unit = mode == 'bulk' ? 'L' : 'kg';
+    _packaging = mode != 'ingredient';
+    _package = mode == 'bulk' ? 'keg' : 'pack';
+    _ratio.text = mode == 'bulk' ? '30' : '10';
+  });
+
+  Future<void> _pickMenu() async {
+    final result = await Navigator.of(context).push<InventoryMenuSelection>(
+      MaterialPageRoute(
+        builder: (_) => InventoryMenuPicker(items: widget.menuItems),
+      ),
+    );
+    if (result != null && mounted)
+      setState(() {
+        _selected = result;
+        _error = null;
+      });
+  }
+
+  Future<void> _reuseCountedGoods() async {
+    final item = await showDialog<StockItem>(
+      context: context,
+      builder: (_) => InventoryIngredientPicker(
+        title: 'არსებული საქონელი',
+        items: widget.stockItems
+            .where(
+              (i) => [
+                InventoryUnit.piece,
+                InventoryUnit.bottle,
+              ].contains(i.baseUnit),
+            )
+            .toList(),
+      ),
+    );
+    if (mounted && item != null) setState(() => _stock = item);
+  }
+
   Future<void> _save() async {
+    if (_mode == 'menu' && _selected == null) {
+      setState(() => _error = 'აირჩიეთ მზა პროდუქტი');
+      return;
+    }
+    if (_mode != 'menu' &&
+        _stock == null &&
+        (!_creating || _name.text.trim().isEmpty)) {
+      setState(() => _error = 'აირჩიეთ საქონელი ან შეიყვანეთ ახალი დასახელება');
+      return;
+    }
+    if (_packaging &&
+        (double.tryParse(_ratio.text.replaceAll(',', '.')) ?? 0) <= 0) {
+      setState(() => _error = 'შეფუთვის რაოდენობა უნდა იყოს ნულზე მეტი');
+      return;
+    }
     setState(() {
       _busy = true;
       _error = null;
@@ -56,12 +103,13 @@ class _SuppliedItemState extends State<SuppliedItemDialog> {
       final payload = <String, dynamic>{
         'requestId': _requestId,
         'mode': _mode,
-        'name': _name.text.trim(),
-        'baseUnit': _unit,
-        if (_mode == 'menu') 'menuItemId': _menuId,
-        if (_variantId != null) 'variantId': _variantId,
-        if (_stockId != null) 'stockItemId': _stockId,
-        if (_packaging && _mode != 'existing')
+        'name': _stock?.name ?? _name.text.trim(),
+        'baseUnit': _stock?.baseUnit.wireValue ?? _unit,
+        if (_mode == 'menu') 'menuItemId': _selected!.item.menuItemId,
+        if (_mode == 'menu' && _selected!.variant != null)
+          'variantId': _selected!.variant!.variantId,
+        if (_stock != null) 'stockItemId': _stock!.id,
+        if (_packaging)
           'purchaseUnits': [
             {
               'unit': _package,
@@ -87,268 +135,481 @@ class _SuppliedItemState extends State<SuppliedItemDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final selected = _menu?.where((m) => m.menuItemId == _menuId).firstOrNull;
+    final matches = widget.stockItems
+        .where(
+          (i) =>
+              i.isActive &&
+              (_mode != 'bulk' || i.baseUnit == InventoryUnit.liter) &&
+              i.name.toLowerCase().contains(_query.trim().toLowerCase()),
+        )
+        .toList();
     return Theme(
       data: inventoryTheme(context),
-      child: AlertDialog(
-        insetPadding: const EdgeInsets.all(16),
-        title: const Text('საქონლის დამატება'),
-        content: SizedBox(
-          width: 520,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  key: const Key('supplied-mode'),
-                  initialValue: _mode,
-                  isExpanded: true,
-                  decoration: _adminInput('საქონლის ტიპი'),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'menu',
-                      child: Text('მენიუდან არჩევა'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'ingredient',
-                      child: Text('ნედლეულის დამატება'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'bulk',
-                      child: Text('ჩამოსასხმელი სასმელი'),
+      child: Dialog(
+        insetPadding: const EdgeInsets.all(12),
+        backgroundColor: AdminTheme.surface,
+        child: SizedBox(
+          width: 640,
+          height: MediaQuery.sizeOf(context).height * .86,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    if (_mode != null)
+                      IconButton(
+                        tooltip: 'უკან',
+                        onPressed: _busy
+                            ? null
+                            : () => setState(() => _mode = null),
+                        icon: const Icon(Icons.arrow_back),
+                      ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'საქონლის დამატება',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          if (widget.supplierName != null)
+                            Text(
+                              widget.supplierName!,
+                              style: TextStyle(color: AdminTheme.textMuted),
+                            ),
+                        ],
+                      ),
                     ),
                   ],
-                  onChanged: _busy
-                      ? null
-                      : (v) => setState(() {
-                          _mode = v!;
-                          _packaging = v == 'menu' || v == 'bulk';
-                          _package = v == 'bulk' ? 'keg' : 'pack';
-                          _ratio.text = v == 'bulk' ? '30' : '10';
-                          _stockId = null;
-                        }),
                 ),
-                const SizedBox(height: 16),
-                if (_mode == 'menu') ...[
-                  if (_menu == null) const LinearProgressIndicator(),
-                  DropdownButtonFormField<String>(
-                    key: const Key('supplied-menu'),
-                    initialValue: _menuId,
-                    isExpanded: true,
-                    decoration: _adminInput('აირჩიეთ მენიუდან'),
-                    items: [
-                      for (final m in _menu ?? <RecipeMenuItem>[])
-                        DropdownMenuItem(
-                          value: m.menuItemId,
-                          child: Text(m.name, overflow: TextOverflow.ellipsis),
-                        ),
-                    ],
-                    onChanged: _busy
-                        ? null
-                        : (v) => setState(() {
-                            _menuId = v;
-                            _variantId = null;
-                          }),
-                  ),
-                  if (selected?.hasVariants ?? false)
-                    DropdownButtonFormField<String>(
-                      key: ValueKey(_menuId),
-                      initialValue: _variantId,
-                      isExpanded: true,
-                      decoration: _adminInput('ზომა'),
-                      items: [
-                        for (final v in selected!.variants)
-                          DropdownMenuItem(
-                            value: v.variantId,
-                            child: Text('${v.size}'),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    if (_mode == null) ...[
+                      const Text('რას გვაწვდის მომწოდებელი?'),
+                      const SizedBox(height: 16),
+                      _modeTile(
+                        'ingredient',
+                        Icons.restaurant_outlined,
+                        'ნედლეული',
+                        'ხორცი, ფქვილი, ყველი — კერძის მოსამზადებლად',
+                      ),
+                      _modeTile(
+                        'menu',
+                        Icons.local_drink_outlined,
+                        'მზა პროდუქტი',
+                        'მაგ. ბორჯომის ბოთლი — იყიდება ცალობით',
+                      ),
+                      _modeTile(
+                        'bulk',
+                        Icons.sports_bar_outlined,
+                        'ჩამოსასხმელი სასმელი',
+                        'ლუდი ან ღვინო — მარაგი ლიტრებში',
+                      ),
+                    ] else ...[
+                      if (_mode == 'menu') ...[
+                        OutlinedButton.icon(
+                          key: const Key('supplied-menu'),
+                          onPressed: _busy ? null : _pickMenu,
+                          icon: const Icon(Icons.search),
+                          label: Text(
+                            _selected == null
+                                ? 'პროდუქტის არჩევა'
+                                : '${_selected!.item.name}${_selected!.variant == null ? '' : ' · ${_selected!.variant!.label}'}',
                           ),
-                      ],
-                      onChanged: (v) => setState(() => _variantId = v),
-                    ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    child: Text('1 გაყიდვა = 1 ცალი მარაგიდან'),
-                  ),
-                  ExpansionTile(
-                    key: const PageStorageKey(
-                      'inventory-supplied-existing-goods',
-                    ),
-                    tilePadding: EdgeInsets.zero,
-                    title: const Text('უკვე გვაქვს ეს საქონელი?'),
-                    children: [
-                      _InventoryExpansionContents(
-                        children: [
-                          DropdownButtonFormField<String>(
-                            initialValue: _stockId ?? '',
-                            isExpanded: true,
-                            decoration: _adminInput('არსებული საქონელი'),
-                            items: [
-                              const DropdownMenuItem(
-                                value: '',
-                                child: Text('ავტომატურად'),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text('1 გაყიდვა = 1 ცალი მარაგიდან'),
+                        TextButton(
+                          onPressed: _busy ? null : _reuseCountedGoods,
+                          child: Text(
+                            _stock == null
+                                ? 'არსებული მარაგის გამოყენება'
+                                : 'მარაგი: ${_stock!.name}',
+                          ),
+                        ),
+                        if (_stock != null)
+                          TextButton(
+                            onPressed: _busy
+                                ? null
+                                : () => setState(() => _stock = null),
+                            child: const Text('ავტომატურად დაკავშირება'),
+                          ),
+
+                        const SizedBox(height: 8),
+                        const Text(
+                          'ხორცი ან ფქვილი? დაბრუნდით და აირჩიეთ ნედლეული. კერძის რაოდენობები ივსება მის შემადგენლობაში.',
+                        ),
+                      ] else ...[
+                        if (_stock == null && !_creating) ...[
+                          TextField(
+                            key: const Key('supplied-search'),
+                            decoration: _adminInput('საქონლის ძებნა'),
+                            onChanged: (v) => setState(() => _query = v),
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton.icon(
+                            key: const Key('supplied-create'),
+                            onPressed: _busy
+                                ? null
+                                : () => setState(() {
+                                    _creating = true;
+                                    _name.text = _query.trim();
+                                  }),
+                            icon: const Icon(Icons.add),
+                            label: Text(
+                              _query.trim().isEmpty
+                                  ? 'ახალი საქონლის შექმნა'
+                                  : 'ახალი: ${_query.trim()}',
+                            ),
+                          ),
+                          if (matches.isEmpty)
+                            const Text(
+                              'ვერ მოიძებნა. შეგიძლიათ ახალი საქონლის შექმნა.',
+                            ),
+                          for (final item in matches)
+                            ListTile(
+                              key: ValueKey('supplied-stock-${item.id}'),
+                              title: Text(item.name),
+                              subtitle: Text(_unitShort(item.baseUnit)),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: _busy
+                                  ? null
+                                  : () => setState(() {
+                                      _stock = item;
+                                      _unit = item.baseUnit.wireValue;
+                                    }),
+                            ),
+                        ] else ...[
+                          if (_stock != null)
+                            ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(_stock!.name),
+                              subtitle: Text(_unitShort(_stock!.baseUnit)),
+                              trailing: TextButton(
+                                onPressed: _busy
+                                    ? null
+                                    : () => setState(() => _stock = null),
+                                child: const Text('შეცვლა'),
                               ),
-                              for (final item in widget.stockItems.where(
-                                (i) =>
-                                    i.isActive &&
-                                    [
-                                      InventoryUnit.piece,
-                                      InventoryUnit.bottle,
-                                    ].contains(i.baseUnit),
-                              ))
-                                DropdownMenuItem(
-                                  value: item.id,
-                                  child: Text(
-                                    item.name,
-                                    overflow: TextOverflow.ellipsis,
+                            )
+                          else ...[
+                            TextField(
+                              key: const Key('supplied-name'),
+                              controller: _name,
+                              enabled: !_busy,
+                              decoration: _adminInput(
+                                _mode == 'bulk'
+                                    ? 'სასმლის დასახელება'
+                                    : 'ნედლეულის დასახელება',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            if (_mode == 'bulk')
+                              const Text('მარაგს ვითვლით ლიტრებში')
+                            else
+                              Wrap(
+                                spacing: 8,
+                                children: [
+                                  for (final unit in {
+                                    'kg': 'კგ',
+                                    'L': 'ლიტრი',
+                                    'piece': 'ცალი',
+                                  }.entries)
+                                    ChoiceChip(
+                                      label: Text(unit.value),
+                                      selected: _unit == unit.key,
+                                      onSelected: _busy
+                                          ? null
+                                          : (_) => setState(
+                                              () => _unit = unit.key,
+                                            ),
+                                    ),
+                                ],
+                              ),
+                          ],
+                          const SizedBox(height: 12),
+                          const Text(
+                            'კერძში რაოდენობას ცალკე მიუთითებთ — მაგალითად, ხინკალში 35 გ ხორცი.',
+                          ),
+                        ],
+                      ],
+                      if (_selected != null || _stock != null || _creating) ...[
+                        const SizedBox(height: 16),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('მოაქვს შეფუთვით'),
+                          value: _packaging,
+                          onChanged: _busy
+                              ? null
+                              : (v) => setState(() => _packaging = v),
+                        ),
+                        if (_packaging) ...[
+                          Wrap(
+                            spacing: 8,
+                            children: [
+                              for (final pack in {
+                                'pack': 'შეკვრა',
+                                'box': 'ყუთი',
+                                'keg': 'კეგი',
+                              }.entries)
+                                ChoiceChip(
+                                  label: Text(pack.value),
+                                  selected: _package == pack.key,
+                                  onSelected: _busy
+                                      ? null
+                                      : (_) =>
+                                            setState(() => _package = pack.key),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            key: const Key('supplied-package-ratio'),
+                            controller: _ratio,
+                            enabled: !_busy,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            decoration: _adminInput(
+                              '1 შეფუთვაში რამდენი ${_mode == 'menu'
+                                  ? 'ცალი'
+                                  : _unit == 'kg'
+                                  ? 'კგ'
+                                  : _unit == 'L'
+                                  ? 'ლიტრი'
+                                  : 'ცალი'}?',
+                            ),
+                          ),
+                        ],
+                      ],
+                    ],
+                  ],
+                ),
+              ),
+              if (_error != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(_error!, style: TextStyle(color: AdminTheme.bad)),
+                ),
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    TextButton(
+                      onPressed: _busy ? null : () => Navigator.pop(context),
+                      child: const Text('დახურვა'),
+                    ),
+                    const Spacer(),
+                    if (_mode != null)
+                      FilledButton(
+                        key: const Key('supplied-save'),
+                        onPressed:
+                            _busy ||
+                                (_selected == null &&
+                                    _stock == null &&
+                                    !_creating)
+                            ? null
+                            : _save,
+                        child: Text(_busy ? 'ინახება…' : 'დამატება'),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _modeTile(String mode, IconData icon, String title, String subtitle) =>
+      Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Card(
+          child: ListTile(
+            key: Key('supplied-mode-$mode'),
+            contentPadding: const EdgeInsets.all(16),
+            leading: Icon(icon),
+            title: Text(title),
+            subtitle: Text(subtitle),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _chooseMode(mode),
+          ),
+        ),
+      );
+}
+
+class InventoryMenuSelection {
+  const InventoryMenuSelection(this.item, [this.variant]);
+  final RecipeMenuItem item;
+  final RecipeMenuVariant? variant;
+}
+
+/// A dedicated menu browser keeps search and categories above a bounded list.
+class InventoryMenuPicker extends StatefulWidget {
+  const InventoryMenuPicker({
+    super.key,
+    this.items,
+    this.title = 'პროდუქტის არჩევა',
+  });
+  final List<RecipeMenuItem>? items;
+  final String title;
+  @override
+  State<InventoryMenuPicker> createState() => _InventoryMenuPickerState();
+}
+
+class _InventoryMenuPickerState extends State<InventoryMenuPicker> {
+  List<RecipeMenuItem>? _items;
+  String _query = '';
+  String? _category, _error;
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _error = null);
+    try {
+      final items = widget.items ?? await MobileApiService.getRecipeMenuItems();
+      if (mounted) setState(() => _items = items);
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final categories =
+        (_items ?? <RecipeMenuItem>[])
+            .map((i) => i.categoryName ?? 'სხვა')
+            .toSet()
+            .toList()
+          ..sort();
+    final rows = (_items ?? <RecipeMenuItem>[])
+        .where(
+          (i) =>
+              (_category == null || (i.categoryName ?? 'სხვა') == _category) &&
+              '${i.name} ${i.categoryName ?? ''}'.toLowerCase().contains(
+                _query.trim().toLowerCase(),
+              ),
+        )
+        .toList();
+    return Theme(
+      data: inventoryTheme(context),
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: AdminTheme.surface,
+          foregroundColor: AdminTheme.text,
+          title: Text(widget.title),
+        ),
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 900),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: TextField(
+                      key: const Key('inventory-menu-search'),
+                      decoration: _adminInput('ძებნა სახელით ან კატეგორიით'),
+                      onChanged: (v) => setState(() => _query = v),
+                    ),
+                  ),
+                  if (categories.isNotEmpty)
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        children: [
+                          for (final category in <String?>[null, ...categories])
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ChoiceChip(
+                                label: Text(category ?? 'ყველა'),
+                                selected: _category == category,
+                                onSelected: (_) =>
+                                    setState(() => _category = category),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  if (_error != null) ...[
+                    Text(_error!),
+                    TextButton(
+                      onPressed: _load,
+                      child: const Text('ხელახლა ცდა'),
+                    ),
+                  ] else if (_items == null)
+                    const LinearProgressIndicator(),
+                  if (_items != null && rows.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text('ვერ მოიძებნა. შეცვალეთ ძებნა ან კატეგორია.'),
+                    ),
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: rows.length,
+                      itemBuilder: (context, index) {
+                        final item = rows[index];
+                        if (item.hasVariants)
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Text(
+                                  item.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              for (final variant in item.variants)
+                                ListTile(
+                                  title: Text(
+                                    '${item.name} · ${variant.label}',
+                                  ),
+                                  subtitle: Text(item.categoryName ?? 'სხვა'),
+                                  trailing: const Icon(Icons.chevron_right),
+                                  onTap: () => Navigator.pop(
+                                    context,
+                                    InventoryMenuSelection(item, variant),
                                   ),
                                 ),
                             ],
-                            onChanged: (v) =>
-                                setState(() => _stockId = v == '' ? null : v),
+                          );
+                        return ListTile(
+                          title: Text(item.name),
+                          subtitle: Text(item.categoryName ?? 'სხვა'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => Navigator.pop(
+                            context,
+                            InventoryMenuSelection(item),
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ] else if (_mode == 'existing')
-                  DropdownButtonFormField<String>(
-                    initialValue: _stockId,
-                    isExpanded: true,
-                    decoration: _adminInput('საქონელი'),
-                    items: [
-                      for (final item in widget.stockItems.where(
-                        (i) => i.isActive,
-                      ))
-                        DropdownMenuItem(
-                          value: item.id,
-                          child: Text(
-                            item.name,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                    ],
-                    onChanged: (v) => setState(() => _stockId = v),
-                  )
-                else ...[
-                  DropdownButtonFormField<String>(
-                    key: ValueKey('reuse-$_mode'),
-                    initialValue: _stockId ?? '',
-                    isExpanded: true,
-                    decoration: _adminInput('რას გვაწვდის?'),
-                    items: [
-                      const DropdownMenuItem(
-                        value: '',
-                        child: Text('ახალი ნედლეულის დამატება'),
-                      ),
-                      for (final item in widget.stockItems.where(
-                        (i) =>
-                            i.isActive &&
-                            (_mode != 'bulk' ||
-                                i.baseUnit == InventoryUnit.liter),
-                      ))
-                        DropdownMenuItem(
-                          value: item.id,
-                          child: Text(
-                            item.name,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                    ],
-                    onChanged: _busy
-                        ? null
-                        : (v) => setState(() {
-                            _stockId = v == '' ? null : v;
-                            if (_stockId != null) {
-                              final item = widget.stockItems.firstWhere(
-                                (i) => i.id == v,
-                              );
-                              _unit = item.baseUnit.wireValue;
-                            }
-                          }),
-                  ),
-                  const SizedBox(height: 16),
-                  if (_stockId == null)
-                    TextField(
-                      key: const Key('supplied-name'),
-                      controller: _name,
-                      decoration: _adminInput('დასახელება'),
+                        );
+                      },
                     ),
-                  const SizedBox(height: 12),
-                  if (_stockId != null)
-                    const Text(
-                      'სხვა მომწოდებლის მიღებაც ამავე მარაგს დაემატება.',
-                    )
-                  else if (_mode == 'bulk')
-                    const Text('როგორ ვითვლით? ლიტრი')
-                  else
-                    DropdownButtonFormField<String>(
-                      initialValue: _unit,
-                      decoration: _adminInput('როგორ ვითვლით?'),
-                      items: const [
-                        DropdownMenuItem(value: 'kg', child: Text('კგ')),
-                        DropdownMenuItem(value: 'L', child: Text('ლიტრი')),
-                        DropdownMenuItem(value: 'piece', child: Text('ცალი')),
-                      ],
-                      onChanged: (v) => setState(() => _unit = v!),
-                    ),
+                  ),
                 ],
-                if (_mode != 'existing') ...[
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('მოაქვს შეფუთვით'),
-                    value: _packaging,
-                    onChanged: _busy
-                        ? null
-                        : (v) => setState(() => _packaging = v),
-                  ),
-                  if (_packaging) ...[
-                    DropdownButtonFormField<String>(
-                      key: ValueKey(_package),
-                      initialValue: _package,
-                      decoration: _adminInput('როგორ მოაქვს მომწოდებელს?'),
-                      items: const [
-                        DropdownMenuItem(value: 'pack', child: Text('შეკვრა')),
-                        DropdownMenuItem(value: 'box', child: Text('ყუთი')),
-                        DropdownMenuItem(value: 'keg', child: Text('კეგი')),
-                      ],
-                      onChanged: (v) => setState(() => _package = v!),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      key: const Key('supplied-package-ratio'),
-                      controller: _ratio,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: _adminInput(
-                        '1 შეფუთვაში რამდენი ${_mode == 'menu'
-                            ? 'ცალი'
-                            : _mode == 'bulk'
-                            ? 'ლიტრი'
-                            : _unit}?',
-                      ),
-                    ),
-                  ],
-                ],
-                if (_error != null)
-                  Text(_error!, style: TextStyle(color: AdminTheme.bad)),
-              ],
+              ),
             ),
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: _busy ? null : () => Navigator.pop(context),
-            child: const Text('გაუქმება'),
-          ),
-          FilledButton(
-            key: const Key('supplied-save'),
-            onPressed: _busy ? null : _save,
-            child: Text(_busy ? 'ინახება…' : 'დამატება'),
-          ),
-        ],
       ),
     );
   }
@@ -699,7 +960,12 @@ Future<bool?> _confirmInventoryAction(
 
 /// A search over existing goods, shared across dishes. Selecting never creates stock.
 class InventoryIngredientPicker extends StatefulWidget {
-  const InventoryIngredientPicker({super.key, required this.items});
+  final String title;
+  const InventoryIngredientPicker({
+    super.key,
+    required this.items,
+    this.title = 'ინგრედიენტის დამატება',
+  });
   final List<StockItem> items;
   @override
   State<InventoryIngredientPicker> createState() => _IngredientPickerState();
@@ -711,7 +977,7 @@ class _IngredientPickerState extends State<InventoryIngredientPicker> {
   Widget build(BuildContext context) => Theme(
     data: inventoryTheme(context),
     child: AlertDialog(
-      title: const Text('ინგრედიენტის დამატება'),
+      title: Text(widget.title),
       content: SizedBox(
         width: 520,
         height: 360,

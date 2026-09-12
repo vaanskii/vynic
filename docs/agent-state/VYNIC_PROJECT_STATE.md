@@ -128,7 +128,9 @@ current transport status.
   Manager Inventory now opens a daily dashboard with secondary supplier/Menu
   management. Receiving includes payment choices and supports self-purchase
   source snapshots without fake Suppliers. Dish/drink composition reuses the
-  existing recipe engine; inline ingredient creation has retry identity.
+  existing recipe engine; inline ingredient creation has retry identity. Supplier
+  cards open goods creation directly; Menu selection has category/search browsing.
+  Supplied ingredients can open a dish composition with existing components preserved.
   See `docs/INVENTORY_PROCUREMENT_REWORK.md` and `docs/INVENTORY_DAILY_UX.md`.
 
 - Financials Step 4.7 adds Venue/Staff compensation rules, frozen PayrollPeriod

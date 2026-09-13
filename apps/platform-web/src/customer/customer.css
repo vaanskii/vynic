@@ -1,0 +1,171 @@
+.customer {
+  min-height: 100vh;
+  background: #f5f4ef;
+  color: #172e29;
+  font-family: inherit;
+  overflow-wrap: anywhere;
+}
+.customer * {
+  box-sizing: border-box;
+}
+.customer header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 20px clamp(20px, 5vw, 72px);
+  border-bottom: 1px solid #d4ddd7;
+}
+.customer-brand {
+  font-size: 28px;
+  font-weight: 750;
+  color: inherit;
+  text-decoration: none;
+}
+.customer header button {
+  margin-left: auto;
+}
+.customer main {
+  max-width: 1080px;
+  margin: auto;
+  padding: 40px 24px 80px;
+}
+.customer h1 {
+  font-size: clamp(26px, 4vw, 38px);
+  margin: 0 0 24px;
+}
+.customer h2 {
+  font-size: 21px;
+}
+.customer p {
+  line-height: 1.65;
+}
+.customer section {
+  padding: 24px;
+  background: white;
+  border: 1px solid #d4ddd7;
+  margin: 20px 0;
+}
+.customer-auth {
+  max-width: 500px;
+}
+.customer form {
+  display: grid;
+  gap: 18px;
+}
+.customer label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+}
+.customer input:not([type="checkbox"]) {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #8d9d97;
+  padding: 12px;
+  background: white;
+  color: #172e29;
+  border-radius: 4px;
+  font: inherit;
+}
+.customer input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+}
+.customer button {
+  font: inherit;
+  cursor: pointer;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid #244d40;
+  border-radius: 4px;
+  background: #244d40;
+  color: white;
+  width: fit-content;
+  max-width: 100%;
+}
+.customer button.secondary {
+  background: transparent;
+  color: #244d40;
+}
+.customer button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+.customer :focus-visible {
+  outline: 3px solid #d4a14a;
+  outline-offset: 3px;
+}
+.customer-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.customer-columns section {
+  margin: 0;
+}
+.customer fieldset {
+  min-width: 0;
+  border: 1px solid #c9d3cd;
+  padding: 18px;
+  display: grid;
+  gap: 16px;
+}
+.customer nav,
+.customer-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin: 24px 0;
+}
+.customer-code {
+  font-family: monospace;
+  font-size: 24px;
+  user-select: all;
+}
+.customer-error {
+  padding: 16px;
+  background: #ffece8;
+  color: #8b2820;
+}
+.customer-checklist {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+}
+@media (max-width: 650px) {
+  .customer-columns {
+    grid-template-columns: 1fr;
+  }
+  .customer header {
+    gap: 12px;
+  }
+  .customer header span {
+    display: none;
+  }
+  .customer main {
+    padding: 28px 16px;
+  }
+  .customer section {
+    padding: 20px;
+  }
+  .customer nav button {
+    flex: 1 1 42%;
+  }
+}
+
+.customer-auth > button {
+  margin-top: 16px;
+}
+.customer select {
+  font: inherit;
+  padding: 12px;
+  max-width: 100%;
+  border: 1px solid #8d9d97;
+  background: white;
+  color: #172e29;
+}

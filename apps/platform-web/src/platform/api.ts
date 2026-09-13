@@ -269,3 +269,7 @@ export const platformApi = {
     return request<AuditEvent[]>(`/platform/audit?${search}`);
   },
 };
+
+export function platformOnboardingApi(path: string, body?: unknown): Promise<any> {
+  return request(`/platform/onboarding/${path}`, body === undefined ? {} : {method:'PUT',body:JSON.stringify(body)});
+}

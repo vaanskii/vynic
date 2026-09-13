@@ -8,6 +8,7 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
   const { copy, locale } = useLocale();
   const navItems = [
+    {label: locale === "ka" ? "დაიწყე Vynic-ის გამოყენება" : "Get started", href: "/start"},
     { label: copy.nav.product, href: "#product" },
     { label: copy.nav.floorPlan, href: "#floor-plan" },
     { label: copy.nav.reservations, href: "#reservations" },

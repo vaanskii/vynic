@@ -18,6 +18,7 @@ import vynicLogo from "../assets/vynic-logo.png";
 import { useAuth } from "./auth";
 
 const navigation = [
+  { label: "Onboarding", to: "/admin/onboarding", icon: Buildings },
   { label: "Overview", to: "/admin", icon: SquaresFour, end: true },
   { label: "Organizations", to: "/admin/organizations", icon: Buildings },
   { label: "Platform users", to: "/admin/users", icon: Buildings },

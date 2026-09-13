@@ -48,6 +48,7 @@ export function VenueDetailPage() {
 
   return (
     <>
+    <NavLink to={`/admin/onboarding/${venueId}`}>Customer owner and onboarding</NavLink>
     <PageHeader eyebrow={`${record.organization?.name ?? record.organizationId} / Venue`} title={record.name} description="Platform configuration and infrastructure for this location." actions={<><StatusBadge value={record.status} /><Button onClick={() => { setForm({ name: record.name, timezone: record.timezone, currency: record.currency,
                 }); setEditOpen(true); }}><PencilSimple size={16} /> Edit details</Button><Button tone={record.status === "ACTIVE" ? "danger" : "secondary"} onClick={() => setConfirmStatus(true)}><Power size={16} /> {" "}
               {record.status === "ACTIVE" ? "Disable" : "Enable"}</Button></>} />

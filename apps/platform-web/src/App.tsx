@@ -1,3 +1,5 @@
+import { OnboardingPage } from './platform/pages/OnboardingPage';
+import { CustomerPortal } from './customer/CustomerPortal';
 import { PlatformUsersPage } from "./platform/pages/PlatformUsersPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
@@ -48,6 +50,8 @@ export function AppRoutes() {
       <Route path="/product" element={<LocaleProvider><HomePage /></LocaleProvider>} />
       <Route path="/en" element={<LocaleProvider><HomePage /></LocaleProvider>} />
       <Route path="/ka" element={<LocaleProvider><HomePage /></LocaleProvider>} />
+      <Route path="/start" element={<CustomerPortal />} />
+      <Route path="/portal" element={<CustomerPortal />} />
       <Route path="/login" element={<Navigate to="/admin/login" replace />} />
       <Route path="/admin/login" element={<LoginPage />} />
       <Route path="/admin" element={<ProtectedRoute><Shell /></ProtectedRoute>}>
@@ -56,6 +60,7 @@ export function AppRoutes() {
         <Route path="organizations/:organizationId" element={<OrganizationDetailPage />} />
         <Route path="venues" element={<VenuesPage />} />
         <Route path="venues/:venueId/:tab?" element={<VenueDetailPage />} />
+        <Route path="onboarding/:venueId?" element={<OnboardingPage />} />
         <Route path="users" element={<PlatformUsersPage />} />
         <Route path="plans" element={<PlansPage />} />
         <Route path="features" element={<FeaturesPage />} />

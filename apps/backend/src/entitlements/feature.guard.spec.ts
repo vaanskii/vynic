@@ -37,7 +37,7 @@ function makeManagerContext(venueId: string): ExecutionContext {
 
 function makeGuard(requiredFeature: string | undefined, entitled: string[]) {
   const reflector = {
-    getAllAndOverride: jest.fn(() => requiredFeature),
+    get: jest.fn(() => requiredFeature),
   } as unknown as Reflector;
   const hasFeature = jest.fn((_venueId: string, key: string) =>
     Promise.resolve(entitled.includes(key)),

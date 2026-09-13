@@ -1,3 +1,4 @@
+import { EntitlementsModule } from '../entitlements/entitlements.module';
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { PlatformAuditModule } from '../platform/platform-audit.module';
@@ -22,7 +23,12 @@ import { InventoryModule } from '../inventory/inventory.module';
  * invitations; the reverse import would be a cycle.
  */
 @Module({
-  imports: [AuthModule, PlatformAuditModule, InventoryModule],
+  imports: [
+    EntitlementsModule,
+    AuthModule,
+    PlatformAuditModule,
+    InventoryModule,
+  ],
   controllers: [EdgeTransportController, DeviceEnrollmentController],
   providers: [
     EdgeCommandService,

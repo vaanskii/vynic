@@ -725,6 +725,8 @@ model SaleLedgerDay {
 }
 
 model Staff {
+  platformManaged Boolean @default(false)
+  displayName String?
   id        String    @id @default(uuid())
   venueId   String
   username  String
@@ -1023,6 +1025,7 @@ enum PlatformUserStatus {
 /// roles, which are a different domain entirely.
 enum PlatformRole {
   SUPER_ADMIN
+  SUPPORT_READONLY
 
   @@schema("pos")
 }
@@ -1168,6 +1171,7 @@ model Venue {
   quickOrderDrafts          QuickOrderDraft[]
   notifications             ManagerNotification[]
   pushDevices               PushDevice[]
+  subscription              VenueSubscription?
   planAssignment            VenuePlanAssignment?
   featureOverrides          VenueFeatureOverride[]
   websiteConfig             VenueWebsiteConfig?
@@ -1804,5 +1808,31 @@ model SupplierPayment {
   receiving Receiving @relation(fields: [venueId, receivingId], references: [venueId, id], onDelete: Restrict, map:"SupplierPayment_receiving_fkey")
   @@unique([venueId, requestId])
   @@index([venueId, businessDate])
+  @@schema("pos")
+}
+
+// Missing row preserves pre-Phase-2 access; new Venues receive an explicit trial.
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  SUSPENDED
+  CANCELLED
+  @@schema("pos")
+}
+
+model VenueSubscription {
+  venueId String @id
+  status SubscriptionStatus @default(TRIAL)
+  startedAt DateTime?
+  trialEndsAt DateTime?
+  currentPeriodEndsAt DateTime?
+  suspendedAt DateTime?
+  cancelledAt DateTime?
+  note String?
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
   @@schema("pos")
 }

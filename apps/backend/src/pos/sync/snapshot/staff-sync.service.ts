@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../../prisma.service';
@@ -58,7 +59,21 @@ export class StaffSyncService {
     tenant: TenantContext,
     staff: StaffSync[],
   ): Promise<StaffSyncResult> {
-    const plainPinsByUsername = await this.pinVault.read(tenant);
+    return this.prisma.$transaction(
+      async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${tenant.venueId} FOR UPDATE`;
+        return this.syncLocked(tenant, staff, tx);
+      },
+      { timeout: 30000 },
+    );
+  }
+
+  private async syncLocked(
+    tenant: TenantContext,
+    staff: StaffSync[],
+    db: Prisma.TransactionClient,
+  ): Promise<StaffSyncResult> {
+    const plainPinsByUsername = await this.pinVault.read(tenant, db);
     let pinsMapChanged = false;
     let pinsHashed = 0;
     const needsPin: string[] = [];
@@ -72,9 +87,10 @@ export class StaffSyncService {
         },
       };
       const pin = typeof member.pin === 'string' ? member.pin.trim() : '';
-      const existingMember = await (this.prisma as any).staff.findUnique({
+      const existingMember = await (db as any).staff.findUnique({
         where: identity,
       });
+      if (existingMember?.platformManaged) continue;
       // A PIN that already matches the vault entry for a member the server
       // holds would hash to the credential it already has. Skip the
       // derivation, not the record.
@@ -86,7 +102,7 @@ export class StaffSyncService {
       if (pin.length > 0 && !credentialUnchanged) {
         const pinHash = await bcrypt.hash(pin, 12);
         pinsHashed += 1;
-        await (this.prisma as any).staff.upsert({
+        await (db as any).staff.upsert({
           where: identity,
           update: {
             pinHash,
@@ -104,7 +120,7 @@ export class StaffSyncService {
         plainPinsByUsername[member.username] = pin;
         pinsMapChanged = true;
       } else if (existingMember) {
-        await (this.prisma as any).staff.update({
+        await (db as any).staff.update({
           where: identity,
           data: { role: normalizeStaffRole(member.role), isActive: true },
         });
@@ -116,7 +132,7 @@ export class StaffSyncService {
       }
     }
     if (pinsMapChanged) {
-      await this.pinVault.write(plainPinsByUsername, tenant);
+      await this.pinVault.write(plainPinsByUsername, tenant, db);
     }
 
     // Reconcile deletions: if user disappeared from Windows POS list,
@@ -126,9 +142,7 @@ export class StaffSyncService {
     // (create/rename/pin/role): the POS simply hasn't applied it yet, so its
     // current snapshot legitimately predates the user. Deleting here would
     // wrongly remove a manager-created user until the POS catches up.
-    const pendingUserRows = await (
-      this.prisma as any
-    ).posCallbackOutbox.findMany({
+    const pendingUserRows = await (db as any).posCallbackOutbox.findMany({
       where: {
         venueId: tenant.venueId,
         status: 'pending',
@@ -137,14 +151,16 @@ export class StaffSyncService {
       select: { endpoint: true, payload: true },
     });
     const protectedUsernames = pendingStaffUsernames(pendingUserRows);
-    const existing = await (this.prisma as any).staff.findMany({
+    const existing = await (db as any).staff.findMany({
       where: { venueId: tenant.venueId },
       select: {
         username: true,
+        platformManaged: true,
         _count: { select: { compensations: true, payrollPeriods: true } },
       },
     });
     const stale = existing
+      .filter((u: any) => !u.platformManaged)
       .map((u: any) => String(u.username ?? ''))
       .filter(
         (username: string) =>
@@ -160,7 +176,7 @@ export class StaffSyncService {
           (u._count?.payrollPeriods ?? 0) > 0),
     );
     for (const member of retained) {
-      await this.prisma.staff.update({
+      await db.staff.update({
         where: {
           venueId_username: {
             venueId: tenant.venueId,
@@ -174,7 +190,7 @@ export class StaffSyncService {
       (name: string) => !retained.some((u: any) => u.username === name),
     );
     if (removable.length > 0) {
-      await (this.prisma as any).staff.deleteMany({
+      await (db as any).staff.deleteMany({
         where: { venueId: tenant.venueId, username: { in: removable } },
       });
     }

@@ -1,3 +1,5 @@
+import { PlatformCommercialController } from './platform-commercial.controller';
+import { PlatformCommercialService } from './platform-commercial.service';
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { EdgeTransportModule } from '../edge/edge-transport.module';
@@ -29,12 +31,14 @@ import { PlatformVenuesController } from './platform-venues.controller';
     PlatformAuditModule,
   ],
   controllers: [
+    PlatformCommercialController,
     PlatformAuthController,
     PlatformOrganizationsController,
     PlatformVenuesController,
     PlatformCatalogController,
   ],
   providers: [
+    PlatformCommercialService,
     PlatformAuthService,
     PlatformAuthGuard,
     PlatformDirectoryService,

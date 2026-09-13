@@ -27,6 +27,15 @@ describe('Venue realtime boundaries', () => {
     jest.useFakeTimers();
     const rows: any[] = [];
     const prisma = {
+      venueSubscription: { findUnique: jest.fn(async () => null) },
+      venue: {
+        findUnique: jest.fn(async () => ({
+          planAssignment: {
+            plan: { features: [{ feature: { key: 'MANAGER_APP' } }] },
+          },
+          featureOverrides: [],
+        })),
+      },
       managerNotification: {
         create: jest.fn(async ({ data }) => {
           rows.push(data);

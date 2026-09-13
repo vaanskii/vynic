@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { Injectable } from '@nestjs/common';
 import {
   createCipheriv,
@@ -51,9 +52,12 @@ export class StaffPinVault {
   }
 
   /** Decrypt + parse the stored PIN map (handles legacy cleartext rows). */
-  async read(tenant: Pick<TenantContext, 'venueId'>): Promise<PinMap> {
+  async read(
+    tenant: Pick<TenantContext, 'venueId'>,
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<PinMap> {
     const venueId = StaffPinVault.venueOf(tenant);
-    const row = await (this.prisma as any).setting.findUnique({
+    const row = await db.setting.findUnique({
       where: {
         venueId_key: { venueId, key: StaffPinVault.SETTING_KEY },
       },
@@ -76,10 +80,11 @@ export class StaffPinVault {
   async write(
     map: PinMap,
     tenant: Pick<TenantContext, 'venueId'>,
+    db: Prisma.TransactionClient = this.prisma,
   ): Promise<void> {
     const venueId = StaffPinVault.venueOf(tenant);
     const value = this.encrypt(JSON.stringify(map));
-    await (this.prisma as any).setting.upsert({
+    await db.setting.upsert({
       where: {
         venueId_key: { venueId, key: StaffPinVault.SETTING_KEY },
       },

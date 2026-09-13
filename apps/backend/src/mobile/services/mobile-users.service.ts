@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -64,6 +65,7 @@ export class MobileUsersService {
       where: { venueId: tenant.venueId },
       orderBy: [{ role: 'asc' }, { username: 'asc' }],
       select: {
+        platformManaged: true,
         id: true,
         username: true,
         role: true,
@@ -74,7 +76,7 @@ export class MobileUsersService {
     });
     return staff.map((u: any) => ({
       ...u,
-      pinCode: pinsMap[u.username] ?? '',
+      pinCode: u.platformManaged ? '' : (pinsMap[u.username] ?? ''),
     }));
   }
 
@@ -114,6 +116,7 @@ export class MobileUsersService {
         isActive: true,
       },
       select: {
+        platformManaged: true,
         id: true,
         username: true,
         role: true,
@@ -146,6 +149,7 @@ export class MobileUsersService {
     const existing = await (this.prisma as any).staff.findUnique({
       where: staffIdentity(tenant, username),
       select: {
+        platformManaged: true,
         id: true,
         role: true,
         isActive: true,
@@ -153,6 +157,10 @@ export class MobileUsersService {
         updatedAt: true,
       },
     });
+    if (existing?.platformManaged)
+      throw new ForbiddenException(
+        'This Manager access is controlled by Platform',
+      );
     if (!existing) {
       throw new NotFoundException('User not found');
     }
@@ -196,8 +204,12 @@ export class MobileUsersService {
 
     const existing = await (this.prisma as any).staff.findUnique({
       where: staffIdentity(tenant, username),
-      select: { id: true, role: true, isActive: true },
+      select: { platformManaged: true, id: true, role: true, isActive: true },
     });
+    if (existing?.platformManaged)
+      throw new ForbiddenException(
+        'This Manager access is controlled by Platform',
+      );
     if (!existing) {
       throw new NotFoundException('User not found');
     }
@@ -222,6 +234,7 @@ export class MobileUsersService {
       where: staffIdentity(tenant, username),
       data: { role },
       select: {
+        platformManaged: true,
         id: true,
         username: true,
         role: true,
@@ -254,6 +267,7 @@ export class MobileUsersService {
     const existing = await (this.prisma as any).staff.findUnique({
       where: staffIdentity(tenant, oldUsername),
       select: {
+        platformManaged: true,
         id: true,
         role: true,
         isActive: true,
@@ -261,6 +275,10 @@ export class MobileUsersService {
         updatedAt: true,
       },
     });
+    if (existing?.platformManaged)
+      throw new ForbiddenException(
+        'This Manager access is controlled by Platform',
+      );
     if (!existing) {
       throw new NotFoundException('User not found');
     }
@@ -275,6 +293,7 @@ export class MobileUsersService {
       where: staffIdentity(tenant, oldUsername),
       data: { username: newUsername },
       select: {
+        platformManaged: true,
         id: true,
         username: true,
         role: true,
@@ -303,11 +322,16 @@ export class MobileUsersService {
     const existing = await (this.prisma as any).staff.findUnique({
       where: staffIdentity(tenant, username),
       select: {
+        platformManaged: true,
         id: true,
         role: true,
         _count: { select: { compensations: true, payrollPeriods: true } },
       },
     });
+    if (existing?.platformManaged)
+      throw new ForbiddenException(
+        'This Manager access is controlled by Platform',
+      );
     if (!existing) {
       throw new NotFoundException('User not found');
     }

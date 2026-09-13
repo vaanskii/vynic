@@ -1,3 +1,5 @@
+import { financeDates } from './finance-common';
+import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
 import {
   Body,
   Controller,
@@ -44,86 +46,103 @@ export class FinanceController {
     private readonly obligations: ObligationsService,
     private readonly db: PrismaService,
   ) {}
-  @Get('payroll') payrollList(
+  @RequiresFeature(FeatureKeys.PAYROLL)
+  @Get('payroll')
+  payrollList(
     @ManagerTenant() t: TenantContext,
     @Query('month') month?: string,
   ) {
     return this.payroll.overview(t, month);
   }
-  @Post('staff/:id/compensation') compensation(
+  @RequiresFeature(FeatureKeys.PAYROLL)
+  @Post('staff/:id/compensation')
+  compensation(
     @ManagerAuth() a: Actor,
     @Param('id') id: string,
     @Body() body: CompensationInput,
   ) {
     return this.payroll.setCompensation(a, id, body);
   }
-  @Get('staff/:id/history') payrollHistory(
-    @ManagerTenant() t: TenantContext,
-    @Param('id') id: string,
-  ) {
+  @RequiresFeature(FeatureKeys.PAYROLL)
+  @Get('staff/:id/history')
+  payrollHistory(@ManagerTenant() t: TenantContext, @Param('id') id: string) {
     return this.payroll.history(t, id);
   }
-  @Post('payroll/:id/payments') payrollPayment(
+  @RequiresFeature(FeatureKeys.PAYROLL)
+  @Post('payroll/:id/payments')
+  payrollPayment(
     @ManagerAuth() a: Actor,
     @Param('id') id: string,
     @Body() body: PaymentInput,
   ) {
     return this.payroll.recordPayment(a, id, body);
   }
-  @Post('payroll/:id/accruals') accrual(
+  @RequiresFeature(FeatureKeys.PAYROLL)
+  @Post('payroll/:id/accruals')
+  accrual(
     @ManagerAuth() a: Actor,
     @Param('id') id: string,
     @Body() body: AccrualInput,
   ) {
     return this.payroll.recordAccrual(a, id, body);
   }
-  @Post('payroll/:id/day') payableDay(
+  @RequiresFeature(FeatureKeys.PAYROLL)
+  @Post('payroll/:id/day')
+  payableDay(
     @ManagerAuth() a: Actor,
     @Param('id') id: string,
     @Body() body: PayrollDayInput,
   ) {
     return this.payroll.setPayableDay(a, id, body);
   }
-  @Get('obligations') obligationList(
+  @RequiresFeature(FeatureKeys.FINANCIAL_PLANNING)
+  @Get('obligations')
+  obligationList(
     @ManagerTenant() t: TenantContext,
     @Query('month') month?: string,
   ) {
     return this.obligations.overview(t, month);
   }
-  @Post('obligations') create(
-    @ManagerAuth() a: Actor,
-    @Body() body: ObligationInput,
-  ) {
+  @RequiresFeature(FeatureKeys.FINANCIAL_PLANNING)
+  @Post('obligations')
+  create(@ManagerAuth() a: Actor, @Body() body: ObligationInput) {
     return this.obligations.create(a, body);
   }
-  @Patch('obligations/:id') update(
+  @RequiresFeature(FeatureKeys.FINANCIAL_PLANNING)
+  @Patch('obligations/:id')
+  update(
     @ManagerAuth() a: Actor,
     @Param('id') id: string,
     @Body() body: ObligationInput,
   ) {
     return this.obligations.update(a, id, body);
   }
-  @Get('obligations/:id/history') history(
-    @ManagerTenant() t: TenantContext,
-    @Param('id') id: string,
-  ) {
+  @RequiresFeature(FeatureKeys.FINANCIAL_PLANNING)
+  @Get('obligations/:id/history')
+  history(@ManagerTenant() t: TenantContext, @Param('id') id: string) {
     return this.obligations.history(t, id);
   }
-  @Post('cycles/:id/reserves') reserve(
+  @RequiresFeature(FeatureKeys.FINANCIAL_PLANNING)
+  @Post('cycles/:id/reserves')
+  reserve(
     @ManagerAuth() a: Actor,
     @Param('id') id: string,
     @Body() body: PaymentInput,
   ) {
     return this.obligations.record(a, id, body, false);
   }
-  @Post('cycles/:id/payments') payment(
+  @RequiresFeature(FeatureKeys.FINANCIAL_PLANNING)
+  @Post('cycles/:id/payments')
+  payment(
     @ManagerAuth() a: Actor,
     @Param('id') id: string,
     @Body() body: PaymentInput,
   ) {
     return this.obligations.record(a, id, body, true);
   }
-  @Get('legacy-salaries') async legacy(@ManagerTenant() t: TenantContext) {
+  @RequiresFeature(FeatureKeys.PAYROLL)
+  @Get('legacy-salaries')
+  async legacy(@ManagerTenant() t: TenantContext) {
     const rows = await this.db.expense.findMany({
       where: { venueId: t.venueId },
       orderBy: { createdAt: 'desc' },
@@ -133,8 +152,15 @@ export class FinanceController {
       classification: 'LEGACY_UNMAPPED_READ_ONLY',
     };
   }
-  @Get('planning') async planning(@ManagerTenant() t: TenantContext) {
-    const payroll = await this.payroll.overview(t);
+  @RequiresFeature(FeatureKeys.FINANCIAL_PLANNING)
+  @Get('planning')
+  async planning(@ManagerTenant() t: TenantContext) {
+    const payrollEnabled = await new VenueEntitlementsService(
+      this.db,
+    ).hasFeature(t.venueId, FeatureKeys.PAYROLL);
+    const payroll = payrollEnabled
+      ? await this.payroll.overview(t)
+      : await financeDates(this.db, t);
     await this.obligations.overview(t);
     const cycles = await this.db.obligationCycle.findMany({
       where: { venueId: t.venueId, periodMonth: { lte: payroll.periodMonth } },
@@ -147,7 +173,9 @@ export class FinanceController {
     return {
       today: payroll.today,
       businessDate: payroll.businessDate,
-      payrollRemaining: await payrollRemaining(this.db, t, payroll.periodMonth),
+      payrollRemaining: payrollEnabled
+        ? await payrollRemaining(this.db, t, payroll.periodMonth)
+        : null,
       obligationsRemaining: open
         .reduce((s, c) => s.plus(c.remainingToPay), zero())
         .toFixed(2),

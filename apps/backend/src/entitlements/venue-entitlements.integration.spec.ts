@@ -123,6 +123,11 @@ describeDatabase('Venue product entitlements (PostgreSQL)', () => {
     await prisma.$disconnect();
   });
 
+  const managerModules = Object.values(FeatureKeys).filter(
+    (key) => ![POS, WEBSITE, MANAGER_APP].includes(key as any),
+  );
+  const bundled = (...keys: string[]) => [...managerModules, ...keys].sort();
+
   it('represents every package the business sells', async () => {
     await expect(entitlements.effectiveFeatures(posOnly)).resolves.toEqual([
       POS,
@@ -131,15 +136,12 @@ describeDatabase('Venue product entitlements (PostgreSQL)', () => {
       POS,
       WEBSITE,
     ]);
-    await expect(entitlements.effectiveFeatures(posManager)).resolves.toEqual([
-      MANAGER_APP,
-      POS,
-    ]);
-    await expect(entitlements.effectiveFeatures(full)).resolves.toEqual([
-      MANAGER_APP,
-      POS,
-      WEBSITE,
-    ]);
+    await expect(entitlements.effectiveFeatures(posManager)).resolves.toEqual(
+      bundled(MANAGER_APP, POS),
+    );
+    await expect(entitlements.effectiveFeatures(full)).resolves.toEqual(
+      bundled(MANAGER_APP, POS, WEBSITE),
+    );
   });
 
   it('entitles a Venue with no plan assignment to nothing', async () => {
@@ -184,8 +186,8 @@ describeDatabase('Venue product entitlements (PostgreSQL)', () => {
     expect(packages).toEqual([
       [POS],
       [POS, WEBSITE],
-      [MANAGER_APP, POS],
-      [MANAGER_APP, POS, WEBSITE],
+      bundled(MANAGER_APP, POS),
+      bundled(MANAGER_APP, POS, WEBSITE),
     ]);
     expect(
       await prisma.venue.count({ where: { organizationId } }),
@@ -218,10 +220,9 @@ describeDatabase('Venue product entitlements (PostgreSQL)', () => {
       },
     });
 
-    await expect(entitlements.effectiveFeatures(full)).resolves.toEqual([
-      MANAGER_APP,
-      POS,
-    ]);
+    await expect(entitlements.effectiveFeatures(full)).resolves.toEqual(
+      bundled(MANAGER_APP, POS),
+    );
 
     // The stored CUSTOM mode survives the entitlement being withdrawn.
     await expect(entitlements.websiteAccess(full)).resolves.toEqual({
@@ -347,7 +348,7 @@ describeDatabase('Venue product entitlements (PostgreSQL)', () => {
   it('leaves the bootstrap Vankisi Venue with everything it could already do', async () => {
     await expect(
       entitlements.effectiveFeatures(BOOTSTRAP_VENUE_ID),
-    ).resolves.toEqual([MANAGER_APP, POS, WEBSITE]);
+    ).resolves.toEqual(bundled(MANAGER_APP, POS, WEBSITE));
 
     await expect(
       entitlements.websiteAccess(BOOTSTRAP_VENUE_ID),

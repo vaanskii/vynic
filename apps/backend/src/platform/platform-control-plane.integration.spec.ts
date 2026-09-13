@@ -455,7 +455,7 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
       // check must agree, because they read the same resolver.
       const featureGuard = (venueId: string) =>
         new FeatureGuard(
-          { getAllAndOverride: () => FeatureKeys.MANAGER_APP } as never,
+          { get: () => FeatureKeys.MANAGER_APP } as never,
           entitlements,
         ).canActivate({
           getHandler: () => () => undefined,

@@ -1,3 +1,4 @@
+import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
 import { SaleConsumptionService } from '../inventory/sale-consumption.service';
 import {
   BadRequestException,
@@ -67,6 +68,7 @@ describeDatabase('Cloud → Edge transport (PostgreSQL)', () => {
     credentials = new DeviceCredentialService(prisma);
     commands = new EdgeCommandService(prisma);
     controller = new EdgeTransportController(
+      new VenueEntitlementsService(prisma),
       commands,
       new InventoryService(prisma, new RecipeService(prisma)),
       new SaleConsumptionService(prisma),
@@ -89,6 +91,13 @@ describeDatabase('Cloud → Edge transport (PostgreSQL)', () => {
       },
     });
 
+    await prisma.venueFeatureOverride.createMany({
+      data: [venueAId, venueBId].map((venueId) => ({
+        venueId,
+        featureId: 'feature-inventory',
+        effect: 'ENABLED',
+      })),
+    });
     const issuedA = await credentials.issueCredential({
       venueId: venueAId,
       installationId: `81000000-0000-4000-8000-${suffix}`,

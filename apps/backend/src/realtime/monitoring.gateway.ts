@@ -80,6 +80,7 @@ export class MonitoringGateway
         }>(token);
         const principal = await this.managerTenant.resolveByStaffId(
           decoded.sub,
+          true,
         );
         if (!principal || !Number.isFinite(decoded.exp))
           return next(new Error('unauthorized'));
@@ -141,6 +142,7 @@ export class MonitoringGateway
     for (const socket of await this.server.in(room).fetchSockets()) {
       const principal = await this.managerTenant.resolveByStaffId(
         socket.data.staffId,
+        true,
       );
       if (
         !principal ||

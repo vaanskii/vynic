@@ -1,3 +1,4 @@
+import { commercialAccessAllowed } from '../entitlements/subscription-policy';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { StaffRole as StaffRoleEnum } from '@prisma/client';
@@ -56,8 +57,13 @@ export class AuthService {
     }
     const venue = await this.prisma.venue.findUnique({
       where: { loginCode: code },
+      include: { subscription: true },
     });
-    if (!venue || venue.status !== 'ACTIVE')
+    if (
+      !venue ||
+      venue.status !== 'ACTIVE' ||
+      !commercialAccessAllowed(venue.subscription?.status)
+    )
       throw new UnauthorizedException('Invalid credentials');
     const candidates = await this.prisma.staff.findMany({
       where: {

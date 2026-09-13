@@ -1,3 +1,5 @@
+import { VenueEntitlementsService } from '../../entitlements/venue-entitlements.service';
+import { FeatureKeys } from '../../entitlements/feature-keys';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { getApps, initializeApp, applicationDefault } from 'firebase-admin/app';
@@ -79,7 +81,13 @@ export class HybridNotificationService {
     const pushCopy = buildManagerPushCopy(type, payload);
 
     try {
-      if (pushCopy) {
+      if (
+        pushCopy &&
+        (await new VenueEntitlementsService(this.prisma).hasFeature(
+          options.venueId,
+          FeatureKeys.MANAGER_APP,
+        ))
+      ) {
         await this.prisma.managerNotification.create({
           data: {
             id: notificationId,
@@ -98,6 +106,16 @@ export class HybridNotificationService {
           where: {
             venueId: options.venueId,
             isActive: true,
+            venue: {
+              OR: [
+                { subscription: { is: null } },
+                {
+                  subscription: {
+                    status: { in: ['TRIAL', 'ACTIVE', 'PAST_DUE'] },
+                  },
+                },
+              ],
+            },
             role: {
               in: [StaffRole.ADMIN, StaffRole.MANAGER],
             },

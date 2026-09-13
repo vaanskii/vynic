@@ -361,7 +361,7 @@ describeDatabase('Manager tenant isolation (PostgreSQL)', () => {
   /** The guard the Manager controller carries, driven exactly as Nest drives it. */
   function makeFeatureGuard() {
     const reflector = {
-      getAllAndOverride: () => FeatureKeys.MANAGER_APP,
+      get: () => FeatureKeys.MANAGER_APP,
     } as never;
     const guard = new FeatureGuard(reflector, entitlements);
     return (venueId: string) =>

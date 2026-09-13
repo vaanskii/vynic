@@ -514,7 +514,7 @@ describeDatabase('Public website tenant isolation (PostgreSQL)', () => {
   /** The guard the public website controllers carry, driven as Nest drives it. */
   function makeFeatureGuard() {
     const reflector = {
-      getAllAndOverride: () => FeatureKeys.WEBSITE,
+      get: () => FeatureKeys.WEBSITE,
     } as never;
     const guard = new FeatureGuard(reflector, entitlements);
     return (venueId: string) =>

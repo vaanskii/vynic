@@ -38,7 +38,10 @@ function makeService(fixture: VenueProductFixture | null) {
       ),
     ),
   };
-  const prisma = { venue } as unknown as PrismaService;
+  const prisma = {
+    venue,
+    venueSubscription: { findUnique: jest.fn().mockResolvedValue(null) },
+  } as unknown as PrismaService;
   return { service: new VenueEntitlementsService(prisma), venue };
 }
 

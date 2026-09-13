@@ -47,6 +47,12 @@ interface StaffIdentity {
 
 /** An in-memory `staff` table, so a credential can be read back after a sync. */
 class FakeStaffDb {
+  async $transaction<T>(fn: (db: this) => Promise<T>) {
+    return fn(this);
+  }
+  async $queryRaw() {
+    return [];
+  }
   readonly rows: StaffRow[] = [];
 
   private rowFor(where: StaffIdentity): StaffRow | undefined {
@@ -220,6 +226,7 @@ describe('StaffSyncService — credentials that genuinely change', () => {
     expect(h.vault.write).toHaveBeenCalledWith(
       { mary: '1234' },
       expect.objectContaining({ venueId: 'venue-a' }),
+      h.db,
     );
   });
 

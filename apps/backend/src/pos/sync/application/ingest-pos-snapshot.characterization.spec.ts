@@ -157,6 +157,7 @@ function makeHarness(overrides: Record<string, Override> = {}): Harness {
     {
       get: (_target, model) => {
         if (typeof model === 'symbol') return undefined;
+        if (model === '$queryRaw') return async () => [];
         if (model === '$transaction') {
           return (callback: (db: unknown) => unknown) => callback(prisma);
         }
@@ -1066,6 +1067,7 @@ describe('POST /sync/manager-data — staff sync', () => {
     expect(h.vaultWrite).toHaveBeenCalledWith(
       { mary: '1234' },
       expect.objectContaining({ venueId: 'venue-a' }),
+      expect.anything(),
     );
   });
 

@@ -1,3 +1,4 @@
+import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { EdgeTransportController } from '../edge/edge-transport.controller';
@@ -333,7 +334,9 @@ const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
       const f = await fixture();
       const invalidMapped = payload(f.recipe);
       invalidMapped.snapshot.lines[0].menuItemId = null;
-      await expect(service.apply(a, invalidMapped)).rejects.toThrow('mapped menuItemId');
+      await expect(service.apply(a, invalidMapped)).rejects.toThrow(
+        'mapped menuItemId',
+      );
       const row: any = payload(f.recipe);
       row.snapshot.lines = [
         {
@@ -399,34 +402,67 @@ const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
       ).toBe(false);
     });
     it('HTTP consumption uses the authenticated Device Venue and acknowledges valid effects', async () => {
-    const f = await fixture();
-    const row = payload(f.recipe, 1);
-    const module = await Test.createTestingModule({
-      controllers: [EdgeTransportController],
-      providers: [
-        { provide: SaleConsumptionService, useValue: service },
-        { provide: InventoryService, useValue: inventory },
-        { provide: EdgeCommandService, useValue: {} },
-        { provide: DeviceCredentialService, useValue: {
-          isDeviceCredential: (key: string) => key === 'test-device',
-          verifyCredential: async () => ({ ...a, deviceId: 'test-device-id' }),
-        } },
-      ],
-    }).compile();
-    const app = module.createNestApplication();
-    await app.init();
-    try {
-      await request(app.getHttpServer()).post('/edge/inventory/consumption').send(row).expect(401);
-      const response = await request(app.getHttpServer()).post('/edge/inventory/consumption')
-        .set('X-POS-Sync-Key', 'test-device').send({ ...row, venueId: b.venueId }).expect(201);
-      expect(response.body).toEqual({ posSaleId: row.posSaleId, revision: 1 });
-      expect(await prisma.saleConsumption.count({ where: { posSaleId: row.posSaleId, venueId: a.venueId } })).toBe(1);
-      expect(await prisma.saleConsumption.count({ where: { posSaleId: row.posSaleId, venueId: b.venueId } })).toBe(0);
-      await request(app.getHttpServer()).post('/edge/inventory/consumption').set('X-POS-Sync-Key', 'test-device').send({}).expect(400);
-    } finally { await app.close(); }
-  });
+      const f = await fixture();
+      const row = payload(f.recipe, 1);
+      const module = await Test.createTestingModule({
+        controllers: [EdgeTransportController],
+        providers: [
+          {
+            provide: VenueEntitlementsService,
+            useValue: new VenueEntitlementsService(prisma),
+          },
+          { provide: SaleConsumptionService, useValue: service },
+          { provide: InventoryService, useValue: inventory },
+          { provide: EdgeCommandService, useValue: {} },
+          {
+            provide: DeviceCredentialService,
+            useValue: {
+              isDeviceCredential: (key: string) => key === 'test-device',
+              verifyCredential: async () => ({
+                ...a,
+                deviceId: 'test-device-id',
+              }),
+            },
+          },
+        ],
+      }).compile();
+      const app = module.createNestApplication();
+      await app.init();
+      try {
+        await request(app.getHttpServer())
+          .post('/edge/inventory/consumption')
+          .send(row)
+          .expect(401);
+        const response = await request(app.getHttpServer())
+          .post('/edge/inventory/consumption')
+          .set('X-POS-Sync-Key', 'test-device')
+          .send({ ...row, venueId: b.venueId })
+          .expect(201);
+        expect(response.body).toEqual({
+          posSaleId: row.posSaleId,
+          revision: 1,
+        });
+        expect(
+          await prisma.saleConsumption.count({
+            where: { posSaleId: row.posSaleId, venueId: a.venueId },
+          }),
+        ).toBe(1);
+        expect(
+          await prisma.saleConsumption.count({
+            where: { posSaleId: row.posSaleId, venueId: b.venueId },
+          }),
+        ).toBe(0);
+        await request(app.getHttpServer())
+          .post('/edge/inventory/consumption')
+          .set('X-POS-Sync-Key', 'test-device')
+          .send({})
+          .expect(400);
+      } finally {
+        await app.close();
+      }
+    });
 
-  it('a crash after the first component write rolls the entire effect back', async () => {
+    it('a crash after the first component write rolls the entire effect back', async () => {
       const f = await fixture('kg', '0.035');
       const other = await inventory.createStockItem(a, {
         name: 'Second ingredient',

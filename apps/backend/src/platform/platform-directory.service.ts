@@ -170,6 +170,7 @@ export class PlatformDirectoryService {
         name: input.name,
         timezone: input.timezone,
         currency: input.currency,
+        subscription: { create: { status: 'TRIAL', startedAt: new Date() } },
       },
       select: VENUE_FIELDS,
     });

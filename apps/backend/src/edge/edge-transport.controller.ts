@@ -1,3 +1,6 @@
+import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
+import { FeatureKeys } from '../entitlements/feature-keys';
+import { withoutProfitability } from '../entitlements/commercial-projection';
 import { SaleConsumptionService } from '../inventory/sale-consumption.service';
 import {
   BadRequestException,
@@ -40,6 +43,7 @@ interface AcknowledgeBody {
 @UseGuards(EdgeDeviceGuard)
 export class EdgeTransportController {
   constructor(
+    private readonly entitlements: VenueEntitlementsService,
     private readonly commands: EdgeCommandService,
     private readonly inventory: InventoryService,
     private readonly consumption: SaleConsumptionService,
@@ -60,10 +64,26 @@ export class EdgeTransportController {
     @EdgeDevice() device: EdgeDeviceContext,
     @Query('version') version?: string,
   ) {
-    return this.inventory.getCatalog(
+    const features = await this.entitlements.effectiveFeatures(device.venueId);
+    if (!features.includes(FeatureKeys.INVENTORY))
+      return {
+        version: version === '5' ? 5 : version === '4' ? 4 : 3,
+        generatedAt: new Date().toISOString(),
+        features,
+        stockItems: [],
+        suppliers: [],
+        recipes: [],
+      };
+    const catalog = await this.inventory.getCatalog(
       device,
       version === '5' ? 5 : version === '4' ? 4 : 3,
     );
+    return {
+      ...(features.includes(FeatureKeys.PROFITABILITY)
+        ? catalog
+        : withoutProfitability(catalog)),
+      features,
+    };
   }
 
   /** What work is waiting for this Edge, and a lease on each item returned. */

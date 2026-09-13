@@ -55,7 +55,7 @@ current transport status.
   Step 4.6 consolidates procurement Financials, responsive
   Manager Inventory and read-only POS Admin inspection; historical Sale COGS,
   waste and stocktake remain later steps. Step 4.7 adds Staff payroll and recurring
-  obligations/reserve planning; feature control remains a later step.
+  obligations/reserve planning; module entitlements and manual Platform commercial control are implemented in SaaS Phase 2.
 
 ## Completed Foundations
 
@@ -444,6 +444,22 @@ current transport status.
 
 ## Platform / Admin State
 
+- SaaS Phase 2 adds Inventory, Payroll, Financial Planning, Profitability,
+  Manager Reservations and Advanced Audit to the existing entitlement engine.
+  Manager consumes effective features; optional POS sections use cached catalog
+  keys. Controller and route feature requirements intersect. Existing Manager
+  plans/Vankisi retain all previously bundled modules at migration.
+- Manual VenueSubscription is separate from operational Venue status. Trial,
+  active and manually managed past-due grace allow commercial Cloud access;
+  suspended/cancelled deny Manager/Website access. POS critical/offline work and
+  Device sync remain independent. Dates do not auto-expire access.
+- Platform can create/reset/disable real Manager/Admin Staff with atomic audit,
+  PIN-vault and durable Edge writes. Platform-managed rows resist stale POS sync;
+  the Phase 2 POS handles revision ordering and retains disabled login identities.
+  Upgrade POS before using these access actions. Platform user management supports
+  SUPER_ADMIN and SUPPORT_READONLY with server-enforced read-only authority.
+  See `docs/SAAS_PHASE2_CONTROL_PLANE.md` for policy, tests and deployment order.
+
 - Platform Admin can manage Organizations, Venues, plan assignment, feature
   overrides, WebsiteMode, domains, Devices, credentials, enrollment codes, and
   platform audit records. It can issue a fixed `NOOP` connection test.
@@ -617,9 +633,6 @@ current transport status.
 
 - Website reservation availability has no transactional hold; simultaneous
   bookings can still allocate the same table.
-- Feature entitlement has exactly three seeded keys (`POS`, `WEBSITE`,
-  `MANAGER_APP`); Inventory, Payroll, Obligations and Audit are all bundled
-  under `MANAGER_APP`.
 - POS printer, backend-URL, error-log and restore/wipe sections require a
   signed developer token; a restaurant cannot configure printers itself.
 - Production Cloud deployment foundations (origins, HTTPS, CORS, runtime
@@ -641,8 +654,9 @@ current transport status.
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260917120000_receiving_self_purchase`.
+  `20260918120000_saas_phase2_control_plane`.
 - Immediately preceding state migrations:
+  `20260917120000_receiving_self_purchase`,
   `20260916123000_procurement_request_identity`,
   `20260916120000_inventory_procurement`,
   `20260915120000_manager_login_code`,

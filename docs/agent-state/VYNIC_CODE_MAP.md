@@ -132,6 +132,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 ## Manager App
 
 - Flutter shell/screens: `apps/operations/lib/apps/mobile_app/`
+- Effective feature state: `apps/operations/lib/core/services/manager_app/manager_entitlements.dart`; centralized keys: `core/models/feature_keys.dart`
 - Shared Manager API client: `apps/operations/lib/core/services/manager_app/mobile_api_service.dart`
 - Backend controller/services: `apps/backend/src/mobile/`
 - Auth and tenant resolution: `apps/backend/src/auth/auth.service.ts`, `apps/backend/src/auth/manager-tenant.service.ts`
@@ -217,13 +218,15 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Backend module/controllers/services: `apps/backend/src/platform/`
 - Principal/auth: `apps/backend/src/platform/platform-auth.service.ts`, `apps/backend/src/platform/platform-auth.guard.ts`
 - Entitlements: `apps/backend/src/entitlements/venue-entitlements.service.ts`
+- Manual subscriptions, Manager bootstrap/reset/disable and Platform users: `apps/backend/src/platform/platform-commercial.controller.ts`, `platform-commercial.service.ts`
+- Phase 2 policy and rollout: `docs/SAAS_PHASE2_CONTROL_PLANE.md`; proof: `apps/backend/src/platform/saas-phase2.integration.spec.ts`
 - API reference: `docs/PLATFORM_CONTROL_PLANE_API.md`
 
 ## Platform Admin UI
 
 - Route shell: `apps/platform-web/src/App.tsx`, `apps/platform-web/src/platform/Shell.tsx`
 - Auth/session/API: `apps/platform-web/src/platform/auth.tsx`, `apps/platform-web/src/platform/session.ts`, `apps/platform-web/src/platform/api.ts`
-- Pages: `apps/platform-web/src/platform/pages/`
+- Pages: `apps/platform-web/src/platform/pages/`; Venue commercial/access controls: `venue/VenueCommercialTab.tsx`; Platform users: `PlatformUsersPage.tsx`
 - Integration tests: `apps/platform-web/src/test/`
 
 ## Venue Website

@@ -132,6 +132,18 @@ values must survive restore. Historical reconstruction is labelled separately.
 historical POS close-time COGS. Negative/unknown bases stay provisional. See
 `docs/INVENTORY_PROCUREMENT_REWORK.md`.
 
+## D016 — Platform access overrides operational Staff mirroring
+
+**Decision:** Platform-created/reset/disabled Manager Staff are explicitly
+Platform-managed. Snapshot sync and restaurant Manager CRUD cannot reverse that
+access state. Venue locks serialize snapshot ingestion and Platform writes.
+**Reason:** An offline terminal must not reactivate a disabled Manager or restore
+an old PIN while its Edge commands are pending.
+**Implication:** Keep the actual Staff UUID and historical links. Queue the
+existing STAFF commands atomically with Cloud access/audit; the Phase 2 POS
+rejects older revisions and disables future login without destroying local
+identity or interrupting already-open operation. See `SAAS_PHASE2_CONTROL_PLANE.md`.
+
 ## Maintenance
 
 Add an entry only when it prevents repeated architectural debate. Update or

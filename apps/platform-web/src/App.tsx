@@ -1,3 +1,4 @@
+import { PlatformUsersPage } from "./platform/pages/PlatformUsersPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
@@ -55,6 +56,7 @@ export function AppRoutes() {
         <Route path="organizations/:organizationId" element={<OrganizationDetailPage />} />
         <Route path="venues" element={<VenuesPage />} />
         <Route path="venues/:venueId/:tab?" element={<VenueDetailPage />} />
+        <Route path="users" element={<PlatformUsersPage />} />
         <Route path="plans" element={<PlansPage />} />
         <Route path="features" element={<FeaturesPage />} />
         <Route path="devices" element={<DevicesPage />} />

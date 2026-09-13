@@ -15,7 +15,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## POS / Operations Shell
 
-- Entry and runtime roles: `apps/operations/lib/main.dart`
+- Fixed product entrypoints: `apps/operations/lib/main_manager.dart`, `main_pos.dart`; POS bootstrap: `startup_pos.dart`; isolated native builds: `apps/operations/tool/product.py`
 - Windows POS screens: `apps/operations/lib/apps/windows_pos/screens/`
 - Windows POS widgets: `apps/operations/lib/apps/windows_pos/widgets/`
 - Shared persistence facade: `apps/operations/lib/core/services/database_service.dart`
@@ -120,6 +120,14 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Handler registry: `apps/operations/lib/core/services/edge/pos_edge_command_handlers.dart`
 - Shared operation body: `apps/operations/lib/core/services/pos/pos_command_applier.dart`
 - Legacy listener adapter: `apps/operations/lib/core/services/sync/pos_ingest_server.dart`
+
+## Customer Onboarding / Runtime Configuration
+
+- Customer principal, portal/onboarding and operator pilot policy: `apps/backend/src/customer/`
+- Real two-customer proof: `apps/backend/src/customer/customer-onboarding.integration.spec.ts`
+- Public/customer UI: `apps/platform-web/src/customer/`; operator controls: `src/platform/pages/OnboardingPage.tsx`
+- POS first-run: `apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart`; printer pull/cache: `core/services/edge/runtime_config_sync.dart`
+- Canonical environment/build/runtime policy: `docs/SAAS_BUILD_RUNTIME_ONBOARDING.md`
 
 ## Device Enrollment
 

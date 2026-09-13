@@ -465,8 +465,18 @@ current transport status.
   platform audit records. It can issue a fixed `NOOP` connection test.
 - Device credentials and enrollment codes are one-time values; verifier hashes
   are never returned by normal reads.
-- Restaurant Backoffice does not exist. Restaurant operators must not be
-  authenticated as `PlatformUser` to fill that gap.
+- SaaS Phase 3 adds a limited CustomerAccount owner portal, separate from
+  PlatformUser/Staff/WebsiteUser. Pilot signup is closed until Platform selects
+  an active trial plan and enables it. Owners create their own restaurant,
+  Manager access and POS enrollment; email remains explicitly unverified.
+- POS/Manager use fixed product entrypoints and isolated native build metadata.
+  Manager supports Windows/macOS/Android/iOS; POS is Windows only. New builds
+  use VYNIC_ENV/VYNIC_API_URL, ship no .env and read no shared POS sync key.
+  Manager never initializes POS persistence/printing/ingest/sync.
+- Device printer config is Cloud-authored, Device-authenticated pull and durable
+  local cache. The owner portal configures printers without a developer token.
+  First successful full sync records Device.firstSyncAt for onboarding readiness.
+  See `docs/SAAS_BUILD_RUNTIME_ONBOARDING.md` for commands, rollout and limits.
 - Venue Policy is documented in `docs/VENUE_POLICY_PLAN.md` but not implemented.
   Current operational switches/settings remain local to the POS.
 - Custom restaurant roles/permissions, SaaS billing, and per-Venue
@@ -633,8 +643,9 @@ current transport status.
 
 - Website reservation availability has no transactional hold; simultaneous
   bookings can still allocate the same table.
-- POS printer, backend-URL, error-log and restore/wipe sections require a
-  signed developer token; a restaurant cannot configure printers itself.
+- Local POS diagnostics/error-log/restore-wipe remain developer-gated. Customer
+  printer setup is available through the owner portal; physical remote test-print
+  and real Windows coexistence/hardware validation remain release checks.
 - Production Cloud deployment foundations (origins, HTTPS, CORS, runtime
   secrets, hosting, and deployment verification) are not established.
 - Full legacy callback retirement depends on real fleet enrollment, not merely
@@ -642,20 +653,21 @@ current transport status.
 
 ## Deferred Work
 
-- Restaurant Backoffice, Venue Policy, custom roles/RBAC, Inventory
+- General Restaurant Backoffice, Venue Policy, custom roles/RBAC, Inventory
   historical Sale COGS / realized Gross Profit / Waste / Stocktake / inventory variance / expected
   yield and pour loss, cash management,
   reservation holds, generic SaaS venue web, SaaS billing, and per-Venue
   payment credentials.
-- Device-addressed printer selection, lower-latency Edge long polling, OS
+- Physical printer-test command, lower-latency Edge long polling, OS
   keychain credential storage, and multi-Device queue contention optimization.
 - Legacy shared sync key/callback removal after rollout evidence permits it.
 
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260918120000_saas_phase2_control_plane`.
+  `20260919120000_customer_onboarding_runtime`.
 - Immediately preceding state migrations:
+  `20260918120000_saas_phase2_control_plane`,
   `20260917120000_receiving_self_purchase`,
   `20260916123000_procurement_request_identity`,
   `20260916120000_inventory_procurement`,

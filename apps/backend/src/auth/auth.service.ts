@@ -1,3 +1,5 @@
+import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
+import { FeatureKeys } from '../entitlements/feature-keys';
 import { commercialAccessAllowed } from '../entitlements/subscription-policy';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -24,6 +26,39 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
   ) {}
+
+  /** Public identifier lookup: never returns Staff, credentials or a session. */
+  async resolveManagerVenue(value: unknown) {
+    const code = typeof value === 'string' ? value.trim().toLowerCase() : '';
+    if (!new RegExp(managerLoginContract.venueCodePattern).test(code))
+      throw new UnauthorizedException('Restaurant unavailable');
+    const venue = await this.prisma.venue.findUnique({
+      where: { loginCode: code },
+      include: { subscription: true },
+    });
+    if (
+      !venue ||
+      venue.status !== 'ACTIVE' ||
+      !commercialAccessAllowed(venue.subscription?.status) ||
+      !(await new VenueEntitlementsService(this.prisma).hasFeature(
+        venue.id,
+        FeatureKeys.MANAGER_APP,
+      ))
+    )
+      throw new UnauthorizedException('Restaurant unavailable');
+    // Optional profile fields are additive; older Venues need only a name/code.
+    const profile = venue as typeof venue & {
+      branchName?: string | null;
+      address?: string | null;
+    };
+    return {
+      id: venue.id,
+      code: venue.loginCode,
+      name: venue.name,
+      branchName: profile.branchName ?? null,
+      address: profile.address ?? null,
+    };
+  }
 
   /** Venue is selected before any PIN comparisons; duplicate matches fail closed. */
   async mobileLogin(

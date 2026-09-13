@@ -1,13 +1,14 @@
 import { screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import { actor, ids, installApi, renderPlatform } from "./platform-test-utils";
+import { actor, ids, installApi, renderPlatform, product } from "./platform-test-utils";
 
 describe("Phase 2 commercial controls", () => {
   it("creates a Manager, hides PIN after save, resets and disables; subscription requires confirmation", async () => {
     let managers: any[] = [];
     let status = "ACTIVE";
     const api = installApi((req) => {
+      if (req.url.pathname.endsWith("/product")) return { body: { ...product, effectiveFeatures: ["POS", "MANAGER_APP"] } };
       if (req.url.pathname.endsWith("/subscription")) {
         if (req.method === "PUT") status = String(req.body?.status);
         return {
@@ -82,6 +83,7 @@ describe("Phase 2 commercial controls", () => {
   });
   it("shows support read access without commercial mutation controls", async () => {
     installApi((req) => {
+      if (req.url.pathname.endsWith("/product")) return { body: { ...product, effectiveFeatures: ["POS", "MANAGER_APP"] } };
       if (req.url.pathname.endsWith("/auth/me"))
         return { body: { ...actor, role: "SUPPORT_READONLY" } };
       if (req.url.pathname.endsWith("/subscription"))

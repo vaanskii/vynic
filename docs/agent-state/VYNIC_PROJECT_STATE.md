@@ -64,7 +64,11 @@ current transport status.
   Venue-local echo suppression and removal of unused `/sync/diff`.
   Old Vankisi PIN-only clients require an explicit expiry setting capped at
   2026-12-01; migration/client rollout is not established by repository code.
-  See `docs/MANAGER_SAAS_PHASE1.md`.
+  Manager now validates and remembers Venue selection per device/API origin:
+  first launch is Restaurant Code entry, subsequent launches are PIN-only.
+  Logout retains selection; restaurant switching clears session/cache/selection.
+  Production login/settings hide API controls. Platform and owner Manager setup
+  display/copy the existing immutable code. See `docs/MANAGER_SAAS_PHASE1.md`.
 
 - Organization/Venue foundation and Venue-scoped operational data are
   implemented (Steps 4A and 4B1).

@@ -249,6 +249,70 @@ describeDb('SaaS Manager: real PostgreSQL, HTTP and Socket.IO', () => {
       .get(path)
       .set('Authorization', `Bearer ${tokens[index]}`);
 
+  it('looks up a code without credentials and returns only safe Venue identity', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/auth/manager-venue')
+      .send({ venueCode: ` ${venues[0].loginCode.toUpperCase()} ` })
+      .expect(200);
+    expect(response.body).toEqual({
+      id: venues[0].id,
+      code: venues[0].loginCode,
+      name: venues[0].name,
+      branchName: null,
+      address: null,
+    });
+    await request(app.getHttpServer())
+      .post('/auth/manager-venue')
+      .send({ venueCode: 'not-a-venue' })
+      .expect(401);
+    await request(app.getHttpServer())
+      .post('/auth/manager-venue')
+      .send({ venueCode: { id: venues[0].id } })
+      .expect(401);
+  });
+
+  it('rejects Venue selection when disabled, commercially suspended or Manager is excluded', async () => {
+    const venueId = venues[0].id;
+    await prisma.venue.update({
+      where: { id: venueId },
+      data: { status: 'DISABLED' },
+    });
+    await expect(auth.resolveManagerVenue(venues[0].loginCode)).rejects.toThrow(
+      'Restaurant unavailable',
+    );
+    await prisma.venue.update({
+      where: { id: venueId },
+      data: { status: 'ACTIVE' },
+    });
+    await prisma.venueSubscription.upsert({
+      where: { venueId },
+      create: { venueId, status: 'SUSPENDED' },
+      update: { status: 'SUSPENDED' },
+    });
+    await expect(auth.resolveManagerVenue(venues[0].loginCode)).rejects.toThrow(
+      'Restaurant unavailable',
+    );
+    await prisma.venueSubscription.update({
+      where: { venueId },
+      data: { status: 'ACTIVE' },
+    });
+    const feature = await prisma.feature.findUniqueOrThrow({
+      where: { key: 'MANAGER_APP' },
+    });
+    await prisma.venueFeatureOverride.create({
+      data: { venueId, featureId: feature.id, effect: 'DISABLED' },
+    });
+    await expect(auth.resolveManagerVenue(venues[0].loginCode)).rejects.toThrow(
+      'Restaurant unavailable',
+    );
+    await prisma.venueFeatureOverride.delete({
+      where: { venueId_featureId: { venueId, featureId: feature.id } },
+    });
+    await expect(
+      auth.resolveManagerVenue(venues[0].loginCode),
+    ).resolves.toHaveProperty('id', venueId);
+  });
+
   it('resolves identical username/PIN credentials independently after Venue selection', async () => {
     for (let i = 0; i < 2; i++) {
       const claims = jwt.verify(tokens[i]);

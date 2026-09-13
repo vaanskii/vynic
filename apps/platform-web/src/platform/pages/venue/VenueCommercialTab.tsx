@@ -19,18 +19,28 @@ const actions: [SubscriptionStatus, string][] = [
   ["SUSPENDED", "Suspend"],
   ["CANCELLED", "Cancel subscription"],
 ];
-export function VenueCommercialTab({ venueId }: { venueId: string }) {
+export function VenueCommercialTab({
+  venueId,
+  accessOnly = false,
+  showAccess = true,
+}: {
+  venueId: string;
+  accessOnly?: boolean;
+  showAccess?: boolean;
+}) {
   const { actor } = useAuth();
   const canEdit = actor?.role === "SUPER_ADMIN";
   const client = useQueryClient();
   const subscription = useQuery({
     queryKey: ["subscription", venueId],
     queryFn: () => platformApi.subscription(venueId),
+    enabled: !accessOnly,
   });
   const managers = useQuery({
     queryKey: ["managers", venueId],
     queryFn: () => platformApi.managers(venueId),
     refetchInterval: 15000,
+    enabled: showAccess,
   });
   const [nextStatus, setNextStatus] = useState<SubscriptionStatus | null>(null);
   const [note, setNote] = useState("");
@@ -95,12 +105,17 @@ export function VenueCommercialTab({ venueId }: { venueId: string }) {
     setForm({ displayName: "", username: "", role: "MANAGER", pin: "" });
     setAccess({ action, staff, requestId: crypto.randomUUID() });
   };
-  if (subscription.isPending || managers.isPending)
+  if (
+    (!accessOnly && subscription.isPending) ||
+    (showAccess && managers.isPending)
+  )
     return <LoadingState label="Loading commercial access" />;
-  if (subscription.error || managers.error)
+  if ((!accessOnly && subscription.error) || (showAccess && managers.error))
     return (
       <ErrorState
-        error={errorMessage(subscription.error ?? managers.error)}
+        error={errorMessage(
+          (!accessOnly && subscription.error) || managers.error,
+        )}
         retry={() => {
           void subscription.refetch();
           void managers.refetch();
@@ -118,123 +133,127 @@ export function VenueCommercialTab({ venueId }: { venueId: string }) {
           {feedback}
         </p>
       )}
-      <Panel
-        title="Subscription"
-        description="Controls Manager and Website access. Past due retains access during a manually managed grace period."
-      >
-        <StatusBadge value={current?.status ?? "ACTIVE"} />
-        <dl>
-          <dt>Started</dt>
-          <dd>
-            {current?.startedAt ? formatDateTime(current.startedAt) : "—"}
-          </dd>
-          <dt>Trial ends</dt>
-          <dd>
-            {current?.trialEndsAt ? formatDateTime(current.trialEndsAt) : "—"}
-          </dd>
-          <dt>Current period ends</dt>
-          <dd>
-            {current?.currentPeriodEndsAt
-              ? formatDateTime(current.currentPeriodEndsAt)
-              : "—"}
-          </dd>
-          <dt>Note</dt>
-          <dd>{current?.note || "—"}</dd>
-        </dl>
-        {canEdit && (
-          <div className="platform-form">
-            <Field label="Operator note">
-              <Input
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                maxLength={1000}
-              />
-            </Field>
-            <div className="platform-form-grid">
-              <Field label="Trial end date">
+      {!accessOnly && (
+        <Panel
+          title="Subscription"
+          description="Controls Manager and Website access. Past due retains access during a manually managed grace period."
+        >
+          <StatusBadge value={current?.status ?? "ACTIVE"} />
+          <dl>
+            <dt>Started</dt>
+            <dd>
+              {current?.startedAt ? formatDateTime(current.startedAt) : "—"}
+            </dd>
+            <dt>Trial ends</dt>
+            <dd>
+              {current?.trialEndsAt ? formatDateTime(current.trialEndsAt) : "—"}
+            </dd>
+            <dt>Current period ends</dt>
+            <dd>
+              {current?.currentPeriodEndsAt
+                ? formatDateTime(current.currentPeriodEndsAt)
+                : "—"}
+            </dd>
+            <dt>Note</dt>
+            <dd>{current?.note || "—"}</dd>
+          </dl>
+          {canEdit && (
+            <div className="platform-form">
+              <Field label="Operator note">
                 <Input
-                  type="date"
-                  value={trialEndsAt}
-                  onChange={(e) => setTrialEndsAt(e.target.value)}
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  maxLength={1000}
                 />
               </Field>
-              <Field label="Current period end date">
-                <Input
-                  type="date"
-                  value={currentPeriodEndsAt}
-                  onChange={(e) => setCurrentPeriodEndsAt(e.target.value)}
-                />
-              </Field>
-            </div>
-            <div className="platform-feature-actions">
-              {actions.map(([status, label]) => (
-                <Button
-                  key={status}
-                  tone={
-                    status === "SUSPENDED" || status === "CANCELLED"
-                      ? "danger"
-                      : "secondary"
-                  }
-                  onClick={() => {
-                    changeSubscription.reset();
-                    setNextStatus(status);
-                  }}
-                >
-                  {label}
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
-      </Panel>
-      <Panel
-        title="Manager access"
-        description="Use the Venue login code and PIN to sign in. POS access updates when the terminal reconnects."
-      >
-        {canEdit && (
-          <Button tone="primary" onClick={() => openAccess("create")}>
-            Create Manager
-          </Button>
-        )}
-        {!managers.data?.length && <p>No Manager accounts yet.</p>}
-        <div className="platform-feature-list">
-          {managers.data?.map((staff) => (
-            <article className="platform-feature-row" key={staff.id}>
-              <div className="platform-feature-row__copy">
-                <strong>{staff.displayName || staff.username}</strong>
-                <p>
-                  {staff.username} · {staff.role}
-                </p>
-                {staff.delivery && (
-                  <p>
-                    POS:{" "}
-                    {staff.delivery.status === "SUCCEEDED"
-                      ? "Applied"
-                      : staff.delivery.status === "FAILED"
-                        ? `Failed (${staff.delivery.resultCode ?? "unknown"}). Reset access to retry.`
-                        : "Waiting for terminal"}
-                  </p>
-                )}
+              <div className="platform-form-grid">
+                <Field label="Trial end date">
+                  <Input
+                    type="date"
+                    value={trialEndsAt}
+                    onChange={(e) => setTrialEndsAt(e.target.value)}
+                  />
+                </Field>
+                <Field label="Current period end date">
+                  <Input
+                    type="date"
+                    value={currentPeriodEndsAt}
+                    onChange={(e) => setCurrentPeriodEndsAt(e.target.value)}
+                  />
+                </Field>
               </div>
-              <StatusBadge value={staff.isActive ? "ACTIVE" : "DISABLED"} />
-              {canEdit && (
-                <div className="platform-feature-actions">
-                  <Button onClick={() => openAccess("reset", staff)}>
-                    Reset PIN / Reactivate
-                  </Button>
+              <div className="platform-feature-actions">
+                {actions.map(([status, label]) => (
                   <Button
-                    tone="danger"
-                    disabled={!staff.isActive}
-                    onClick={() => openAccess("disable", staff)}
+                    key={status}
+                    tone={
+                      status === "SUSPENDED" || status === "CANCELLED"
+                        ? "danger"
+                        : "secondary"
+                    }
+                    onClick={() => {
+                      changeSubscription.reset();
+                      setNextStatus(status);
+                    }}
                   >
-                    Disable access
+                    {label}
                   </Button>
+                ))}
+              </div>
+            </div>
+          )}
+        </Panel>
+      )}
+      {showAccess && (
+        <Panel
+          title="Manager access"
+          description="რესტორნის კოდი შეიყვანეთ ერთხელ, შემდეგ გამოიყენეთ პირადი PIN. POS-ზე წვდომა განახლდება ტერმინალის დაკავშირებისას."
+        >
+          {canEdit && (
+            <Button tone="primary" onClick={() => openAccess("create")}>
+              Create Manager
+            </Button>
+          )}
+          {!managers.data?.length && <p>No Manager accounts yet.</p>}
+          <div className="platform-feature-list">
+            {managers.data?.map((staff) => (
+              <article className="platform-feature-row" key={staff.id}>
+                <div className="platform-feature-row__copy">
+                  <strong>{staff.displayName || staff.username}</strong>
+                  <p>
+                    {staff.username} · {staff.role}
+                  </p>
+                  {staff.delivery && (
+                    <p>
+                      POS:{" "}
+                      {staff.delivery.status === "SUCCEEDED"
+                        ? "Applied"
+                        : staff.delivery.status === "FAILED"
+                          ? `Failed (${staff.delivery.resultCode ?? "unknown"}). Reset access to retry.`
+                          : "Waiting for terminal"}
+                    </p>
+                  )}
                 </div>
-              )}
-            </article>
-          ))}
-        </div>
-      </Panel>
+                <StatusBadge value={staff.isActive ? "ACTIVE" : "DISABLED"} />
+                {canEdit && (
+                  <div className="platform-feature-actions">
+                    <Button onClick={() => openAccess("reset", staff)}>
+                      Reset PIN / Reactivate
+                    </Button>
+                    <Button
+                      tone="danger"
+                      disabled={!staff.isActive}
+                      onClick={() => openAccess("disable", staff)}
+                    >
+                      Disable access
+                    </Button>
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+        </Panel>
+      )}
       <ConfirmDialog
         open={nextStatus !== null}
         onOpenChange={(open) => {

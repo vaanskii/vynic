@@ -1,3 +1,4 @@
+import '../../models/manager_venue_selection.dart';
 import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
 import 'package:vynic/core/services/notifications/manager_notification_inbox.dart';
 import 'package:vynic/core/contracts/manager_login.dart';
@@ -31,6 +32,32 @@ enum MobileAuthError { invalidPin, networkError, serverError, accessDenied }
 /// Authenticates the manager against the backend (/auth/mobile-login).
 /// Falls back to cached token for offline access.
 class MobileAuthService {
+  static Future<ManagerVenueSelection> resolveVenue(
+    String value, {
+    http.Client? client,
+  }) async {
+    final code = value.trim().toLowerCase();
+    final origin = ApiConfig.baseUrl;
+    try {
+      final response = await (client?.post ?? http.post)(
+        Uri.parse('$origin/auth/manager-venue'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'venueCode': code}),
+      ).timeout(const Duration(seconds: 10));
+      if (response.statusCode != 200) throw MobileAuthError.accessDenied;
+      final venue = ManagerVenueSelection.fromMap(
+        jsonDecode(response.body) as Map,
+        origin: origin,
+      );
+      if (venue.code != code) throw MobileAuthError.accessDenied;
+      return venue;
+    } on MobileAuthError {
+      rethrow;
+    } catch (_) {
+      throw MobileAuthError.networkError;
+    }
+  }
+
   /// Attempt to authenticate with the backend.
   /// Returns a [MobileLoginResult] on success.
   /// Throws a [MobileAuthError] on failure.
@@ -94,7 +121,7 @@ class MobileAuthService {
     } on MobileAuthError {
       rethrow;
     } catch (e) {
-      debugPrint('[MobileAuth] Network error (${ApiConfig.baseUrl}): $e');
+      debugPrint('[MobileAuth] Login request failed');
       throw MobileAuthError.networkError;
     }
   }

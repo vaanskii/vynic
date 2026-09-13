@@ -30,6 +30,13 @@ class MobileApiService {
   static const int _maxRetries = 3;
   static const Duration _timeout = Duration(seconds: 12);
 
+  // Network exceptions may contain endpoint/IP details. Keep them out of release UI.
+  static Never _throwNetworkError(Object error, StackTrace stack) {
+    if (ApiConfig.allowDeveloperOverride)
+      Error.throwWithStackTrace(error, stack);
+    throw Exception('სერვერთან კავშირი ვერ დამყარდა. გადაამოწმეთ ინტერნეტი.');
+  }
+
   // ── Internal HTTP helpers ──────────────────────────────────────────────────
 
   static Map<String, String> get _headers {
@@ -70,7 +77,8 @@ class MobileApiService {
       try {
         final response = await http
             .get(uri, headers: _headers)
-            .timeout(_timeout);
+            .timeout(_timeout)
+            .catchError(_throwNetworkError);
         return response;
       } on SocketException catch (e) {
         lastError = e;
@@ -99,7 +107,8 @@ class MobileApiService {
     final uri = Uri.parse('$_base$path');
     return http
         .post(uri, headers: _headers, body: jsonEncode(body))
-        .timeout(_timeout);
+        .timeout(_timeout)
+        .catchError(_throwNetworkError);
   }
 
   static Future<http.Response> _patch(
@@ -109,12 +118,16 @@ class MobileApiService {
     final uri = Uri.parse('$_base$path');
     return http
         .patch(uri, headers: _headers, body: jsonEncode(body))
-        .timeout(_timeout);
+        .timeout(_timeout)
+        .catchError(_throwNetworkError);
   }
 
   static Future<http.Response> _delete(String path) async {
     final uri = Uri.parse('$_base$path');
-    return http.delete(uri, headers: _headers).timeout(_timeout);
+    return http
+        .delete(uri, headers: _headers)
+        .timeout(_timeout)
+        .catchError(_throwNetworkError);
   }
 
   /// Registers FCM device token (JWT required). Server uses it for offline push only.
@@ -301,7 +314,8 @@ class MobileApiService {
     final uri = Uri.parse('$_base/mobile/takeaway-orders/$posOrderId');
     final response = await http
         .delete(uri, headers: _headers)
-        .timeout(_timeout);
+        .timeout(_timeout)
+        .catchError(_throwNetworkError);
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception('deleteTakeawayOrder failed: ${response.statusCode}');
     }

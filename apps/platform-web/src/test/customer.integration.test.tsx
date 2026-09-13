@@ -64,6 +64,9 @@ describe("Customer onboarding", () => {
       );
       await user.click(screen.getByRole("button", { name: "გაგრძელება" }));
       expect(await screen.findByText("venue-a")).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "კოდის კოპირება" }));
+      expect(await navigator.clipboard.readText()).toBe("venue-a");
+      expect(screen.queryByText("venue-b")).not.toBeInTheDocument();
       expect(screen.queryByLabelText("პაროლი")).not.toBeInTheDocument();
       await user.type(screen.getByLabelText("მენეჯერის სახელი"), "Manager");
       await user.type(screen.getByLabelText("მომხმარებლის სახელი"), "manager");

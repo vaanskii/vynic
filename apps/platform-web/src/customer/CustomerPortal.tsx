@@ -323,17 +323,6 @@ export function CustomerPortal() {
             </p>
             <div className="customer-columns">
               <section>
-                <h2>რესტორნის კოდი</h2>
-                <p className="customer-code">{venue.venue.loginCode}</p>
-                <button
-                  className="secondary"
-                  onClick={() => void copy(venue.venue.loginCode)}
-                >
-                  კოდის კოპირება
-                </button>
-                <p>Vynic Manager-ში გამოიყენეთ ეს კოდი და მენეჯერის PIN.</p>
-              </section>
-              <section>
                 <h2>გამოწერა</h2>
                 <p>
                   {venue.subscription?.status ?? "TRIAL"}{" "}
@@ -372,6 +361,16 @@ export function CustomerPortal() {
             {step === "manager" && (
               <section>
                 <h2>მენეჯერის წვდომა</h2>
+                <h2>რესტორნის კოდი</h2>
+                <p className="customer-code">{venue.venue.loginCode}</p>
+                <button
+                  className="secondary"
+                  onClick={() => void copy(venue.venue.loginCode)}
+                >
+                  კოდის კოპირება
+                </button>
+                <p>კოდი შეიყვანეთ ერთხელ თითოეულ მოწყობილობაზე, შემდეგ გამოიყენეთ პირადი PIN.</p>
+                {!venue.features.includes("MANAGER_APP") && <p>მენეჯერის აპლიკაცია გამორთულია</p>}
                 {venue.managers.map((m: any) => (
                   <div className="customer-row" key={m.id}>
                     <span>

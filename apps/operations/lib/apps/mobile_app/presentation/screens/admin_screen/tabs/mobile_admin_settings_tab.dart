@@ -40,6 +40,7 @@ class _SettingsTabState extends State<_SettingsTab>
   /// Lets the manager set which backend (Windows POS server) this device
   /// connects to — e.g. http://10.10.10.4:3000 — without rebuilding the app.
   Future<void> _editBackendUrl() async {
+    if (!ApiConfig.allowDeveloperOverride) return;
     final controller = TextEditingController(text: ApiConfig.baseUrl);
     String? error;
 
@@ -389,18 +390,19 @@ class _SettingsTabState extends State<_SettingsTab>
               value: _connectionStatusLabel,
               unavailable: !MonitoringSocketService.isConnected.value,
             ),
-            _SettingsTile(
-              icon: Icons.dns_rounded,
-              label: 'Backend',
-              value: ApiConfig.baseUrl,
-              small: true,
-              onTap: _editBackendUrl,
-              trailing: Icon(
-                Icons.edit_outlined,
-                size: 18,
-                color: AdminTheme.primary,
+            if (ApiConfig.allowDeveloperOverride)
+              _SettingsTile(
+                icon: Icons.dns_rounded,
+                label: 'Backend',
+                value: ApiConfig.baseUrl,
+                small: true,
+                onTap: _editBackendUrl,
+                trailing: Icon(
+                  Icons.edit_outlined,
+                  size: 18,
+                  color: AdminTheme.primary,
+                ),
               ),
-            ),
           ],
         ),
         SizedBox(height: 16),

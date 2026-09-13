@@ -9,6 +9,8 @@ import 'package:vynic/core/services/auth/auth_token_service.dart';
 import 'package:vynic/core/services/auth/mobile_auth_service.dart';
 import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 import 'package:vynic/core/services/manager_app/mobile_cache_service.dart';
+import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
+import 'package:vynic/core/services/sync/api_config.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +26,73 @@ void main() {
     await Hive.close();
     await directory.delete(recursive: true);
   });
+
+  test(
+    'selection is origin-bound and ignores extra credential fields',
+    () async {
+      final selection = await MobileAuthService.resolveVenue(
+        'venue-b',
+        client: MockClient(
+          (_) async => http.Response(
+            jsonEncode({
+              'id': 'b',
+              'code': 'venue-b',
+              'name': 'B',
+              'pin': '654321',
+              'access_token': 'not-a-session',
+            }),
+            200,
+          ),
+        ),
+      );
+      await ManagerAppPreferences.rememberVenue(selection);
+      expect(
+        ManagerAppPreferences.selectedVenue(ApiConfig.baseUrl)?.code,
+        'venue-b',
+      );
+      expect(
+        ManagerAppPreferences.selectedVenue('https://another.invalid'),
+        isNull,
+      );
+      expect(
+        Hive.box('manager_preferences').values.toString(),
+        isNot(contains('654321')),
+      );
+      expect(
+        Hive.box('manager_preferences').values.toString(),
+        isNot(contains('not-a-session')),
+      );
+      expect(AuthTokenService.token, isNull);
+    },
+  );
+
+  test(
+    'production network failures never expose endpoint details to UI',
+    () async {
+      await http.runWithClient(
+        () async {
+          try {
+            await MobileApiService.registerPushDevice('test-token');
+            fail('Expected a network error');
+          } catch (error) {
+            if (!ApiConfig.allowDeveloperOverride) {
+              expect(error.toString(), isNot(contains('10.10.10.3')));
+              expect(error.toString(), isNot(contains('3000')));
+              expect(
+                error.toString(),
+                contains('სერვერთან კავშირი ვერ დამყარდა'),
+              );
+            } else {
+              expect(error, isA<SocketException>());
+            }
+          }
+        },
+        () => MockClient(
+          (_) async => throw const SocketException('http://10.10.10.3:3000'),
+        ),
+      );
+    },
+  );
 
   test(
     'Venue code and PIN use the generated contract; repeat login remembers only code',

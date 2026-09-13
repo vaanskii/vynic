@@ -26,13 +26,26 @@ format and rollout constants, with checked TypeScript and Dart output.
 
 ## Manager UI and session changes
 
-The existing Georgian login card adds **რესტორანი** above the PIN keypad.
-It initially shows `vankisi` for the existing installation and remembers the
-last successfully authenticated code in Manager preferences. It does not save
-the PIN; the transient shell User no longer receives the PIN either.
-The desktop POS's companion launcher asks for the same code. It no longer enters
-Manager as a local POS user after Cloud rejects credentials. POS login itself
-is unchanged. The keypad now fits a 320px phone without horizontal overflow.
+The first launch shows **რესტორნის კოდი** alone. `POST /auth/manager-venue`
+normalizes and validates the immutable code, requires an active Venue,
+commercial access and `MANAGER_APP`, and returns only id, code, name and optional
+branch/address. Lookup failure throttling is separate from PIN failure throttling.
+The Manager remembers this safe identity and API origin in its own preferences;
+it never persists the employee PIN. Subsequent launches show the remembered
+restaurant identity and PIN keypad. Each login still sends code + PIN to the
+existing server-owned Staff authentication flow.
+
+**რესტორნის შეცვლა** clears the session, notification/read cache and selected
+Venue before showing code entry again. Ordinary logout retains the selection.
+Selections belong to their API origin and are ignored if the configured origin
+changes. Production login and settings hide all API override controls and use
+the fixed environment origin; only development/debug builds expose the editor.
+
+The desktop POS companion launcher retains its existing code + PIN flow. POS
+login itself is unchanged. Platform Organization/Venue details and customer
+Manager setup show/copy the same `Venue.loginCode`. Platform keeps the code
+visible when `MANAGER_APP` is disabled and shows existing Manager access controls
+when enabled. Customer code visibility follows the existing owner-scoped API.
 
 A successful login clears the old Manager read cache, notification history and
 pending notification timers. A failed offline login can use only a cached

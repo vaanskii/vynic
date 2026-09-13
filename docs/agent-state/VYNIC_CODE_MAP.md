@@ -139,6 +139,8 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## Manager App
 
+- Remembered Venue/PIN login: `apps/operations/lib/apps/mobile_app/presentation/screens/mobile_login_screen.dart`; safe local selection: `core/models/manager_venue_selection.dart`, `core/services/manager_app/manager_app_preferences.dart` under the same `lib/`. Backend code lookup: `POST /auth/manager-venue` in `apps/backend/src/auth/auth.controller.ts` / `auth.service.ts`. Platform code/access panel: `apps/platform-web/src/platform/pages/venue/VenueManagerAccess.tsx`.
+
 - Flutter shell/screens: `apps/operations/lib/apps/mobile_app/`
 - Effective feature state: `apps/operations/lib/core/services/manager_app/manager_entitlements.dart`; centralized keys: `core/models/feature_keys.dart`
 - Shared Manager API client: `apps/operations/lib/core/services/manager_app/mobile_api_service.dart`

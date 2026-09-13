@@ -1,4 +1,5 @@
-import 'package:vynic/core/contracts/manager_login.dart';
+import 'package:vynic/core/models/manager_venue_selection.dart';
+import 'package:http/http.dart' as http;
 import 'package:vynic/apps/mobile_app/theme/manager_dashboard_theme.dart';
 import 'package:vynic/apps/mobile_app/theme/manager_theme.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
@@ -16,7 +17,9 @@ import 'package:vynic/core/services/sync/api_config.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/manager_toast.dart';
 
 class MobileLoginScreen extends StatefulWidget {
-  const MobileLoginScreen({super.key});
+  const MobileLoginScreen({super.key, this.client, this.onAuthenticated});
+  final http.Client? client;
+  final void Function(User user)? onAuthenticated;
 
   @override
   State<MobileLoginScreen> createState() => _MobileLoginScreenState();
@@ -25,10 +28,10 @@ class MobileLoginScreen extends StatefulWidget {
 class _MobileLoginScreenState extends State<MobileLoginScreen>
     with SingleTickerProviderStateMixin {
   String _pin = '';
+  ManagerVenueSelection? _selectedVenue;
+  String? _selectionError;
   final _venueCode = TextEditingController(
-    text:
-        ManagerAppPreferences.loginVenueCode ??
-        ManagerLoginContract.rolloutVenueCode,
+    text: ManagerAppPreferences.loginVenueCode ?? '',
   );
   bool _isLoading = false;
 
@@ -37,6 +40,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   @override
   void initState() {
     super.initState();
+    _selectedVenue = ManagerAppPreferences.selectedVenue(ApiConfig.baseUrl);
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2400),
@@ -65,13 +69,63 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
 
   void _clearPin() => setState(() => _pin = '');
 
-  Future<void> _login() async {
-    if (!RegExp(
-      ManagerLoginContract.venueCodePattern,
-    ).hasMatch(_venueCode.text.trim().toLowerCase())) {
-      ManagerToast.show(context, 'შეიყვანეთ რესტორნის კოდი', isError: true);
-      return;
+  Future<void> _selectVenue() async {
+    if (_isLoading) return;
+    setState(() {
+      _isLoading = true;
+      _selectionError = null;
+    });
+    try {
+      final venue = await MobileAuthService.resolveVenue(
+        _venueCode.text,
+        client: widget.client,
+      );
+      // A validated selection must not inherit an older origin/session cache.
+      await MobileAuthService.logout();
+      await ManagerAppPreferences.rememberVenue(venue);
+      if (mounted)
+        setState(() {
+          _selectedVenue = venue;
+          _pin = '';
+        });
+    } catch (_) {
+      if (mounted)
+        setState(
+          () => _selectionError =
+              'რესტორანი ვერ მოიძებნა ან წვდომა მიუწვდომელია. გადაამოწმეთ კოდი და კავშირი.',
+        );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _switchVenue() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    try {
+      await MobileAuthService.logout();
+      await ManagerAppPreferences.clearVenue();
+      if (mounted)
+        setState(() {
+          _selectedVenue = null;
+          _venueCode.clear();
+          _pin = '';
+          _selectionError = null;
+        });
+    } catch (_) {
+      if (mounted)
+        setState(
+          () => _selectionError =
+              'რესტორნის შეცვლა ვერ დასრულდა. სცადეთ ხელახლა.',
+        );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _login() async {
+    final selection = _selectedVenue;
+    if (_isLoading || selection == null) return;
     FocusScope.of(context).unfocus();
     if (_pin.length < 4) {
       ManagerToast.show(context, 'გთხოვთ შეიყვანოთ PIN კოდი', isError: true);
@@ -85,7 +139,8 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     try {
       final result = await MobileAuthService.login(
         _pin,
-        venueCode: _venueCode.text,
+        venueCode: selection.code,
+        client: widget.client,
       );
       shellUser = User(
         username: result.username,
@@ -95,7 +150,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     } on MobileAuthError catch (e) {
       if (e == MobileAuthError.networkError) {
         final offline = MobileAuthService.tryOfflineAccess(
-          venueCode: _venueCode.text,
+          venueCode: selection.code,
         );
         if (offline != null) {
           shellUser = User(
@@ -118,7 +173,9 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
             // stale IP, or the emulator default on a real handset.
             ManagerToast.show(
               context,
-              'ვერ დაუკავშირდა: ${ApiConfig.baseUrl}',
+              ApiConfig.allowDeveloperOverride
+                  ? 'ვერ დაუკავშირდა: ${ApiConfig.baseUrl}'
+                  : 'სერვერთან კავშირი ვერ დამყარდა. გადაამოწმეთ ინტერნეტი.',
               isError: true,
             );
           }
@@ -172,6 +229,12 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     }
 
     if (mounted) {
+      _pin = '';
+      if (widget.onAuthenticated != null) {
+        widget.onAuthenticated!(user);
+        setState(() => _isLoading = false);
+        return;
+      }
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => ManagerAppShell(user: user)),
       );
@@ -179,7 +242,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   }
 
   Future<void> _editBackendUrl() async {
-    if (_isLoading) return;
+    if (_isLoading || !ApiConfig.allowDeveloperOverride) return;
 
     final controller = TextEditingController(text: ApiConfig.baseUrl);
     String? error;
@@ -247,6 +310,8 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
     controller.dispose();
 
     if (saved == true && mounted) {
+      await _switchVenue();
+      if (!mounted) return;
       setState(() {});
       ManagerToast.show(context, 'სერვერის მისამართი შენახულია');
     }
@@ -296,55 +361,96 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          TextField(
-                            key: const Key('manager-venue-code'),
-                            controller: _venueCode,
-                            enabled: !_isLoading,
-                            autocorrect: false,
-                            enableSuggestions: false,
-                            maxLength: 32,
-                            textInputAction: TextInputAction.done,
-                            decoration: const InputDecoration(
-                              labelText: 'რესტორანი',
-                              hintText: 'vankisi',
-                              counterText: '',
-                              border: OutlineInputBorder(),
-                            ),
-                            onChanged: (_) => _clearPin(),
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            'შეიყვანეთ PIN კოდი',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: MobileGlassTheme.muted(0.75),
-                              letterSpacing: 0.4,
-                            ),
-                          ),
-                          SizedBox(height: 24),
-                          _buildPinDots(),
-                          SizedBox(height: 28),
-                          _buildNumberPad(),
-                          SizedBox(height: 24),
-                          if (_isLoading)
-                            Center(
-                              child: SizedBox(
-                                height: 48,
-                                width: 48,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  color: MobileGlassTheme.primary,
+                          if (_selectionError != null)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Text(
+                                _selectionError!,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
                                 ),
                               ),
-                            )
-                          else
-                            _LoginGradientButton(
-                              label: 'შესვლა',
-                              enabled: _pin.length >= 4,
-                              onPressed: _login,
                             ),
+                          if (_selectedVenue == null) ...[
+                            TextField(
+                              key: const Key('manager-venue-code'),
+                              controller: _venueCode,
+                              enabled: !_isLoading,
+                              autocorrect: false,
+                              enableSuggestions: false,
+                              maxLength: 32,
+                              textInputAction: TextInputAction.done,
+                              onSubmitted: (_) => _selectVenue(),
+                              decoration: const InputDecoration(
+                                labelText: 'რესტორნის კოდი',
+                                hintText: 'რეგისტრაციისას მიღებული კოდი',
+                                helperText: 'კოდი მოწყობილობაზე დამახსოვრდება.',
+                                helperMaxLines: 2,
+                                counterText: '',
+                                border: OutlineInputBorder(),
+                              ),
+                              onChanged: (_) => _clearPin(),
+                            ),
+                            const SizedBox(height: 20),
+                            _LoginGradientButton(
+                              label: _isLoading ? 'მოწმდება…' : 'გაგრძელება',
+                              enabled: !_isLoading,
+                              onPressed: _selectVenue,
+                            ),
+                          ] else ...[
+                            Text(
+                              _selectedVenue!.name,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.headlineSmall,
+                            ),
+                            if (_selectedVenue!.branchName?.isNotEmpty ?? false)
+                              Text(
+                                _selectedVenue!.branchName!,
+                                textAlign: TextAlign.center,
+                              ),
+                            if (_selectedVenue!.address?.isNotEmpty ?? false)
+                              Text(
+                                _selectedVenue!.address!,
+                                textAlign: TextAlign.center,
+                              ),
+                            const SizedBox(height: 20),
+                            Text(
+                              'შეიყვანეთ PIN კოდი',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: MobileGlassTheme.muted(0.75),
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                            SizedBox(height: 24),
+                            _buildPinDots(),
+                            SizedBox(height: 28),
+                            _buildNumberPad(),
+                            SizedBox(height: 24),
+                            if (_isLoading)
+                              Center(
+                                child: SizedBox(
+                                  height: 48,
+                                  width: 48,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: MobileGlassTheme.primary,
+                                  ),
+                                ),
+                              )
+                            else
+                              _LoginGradientButton(
+                                label: 'შესვლა',
+                                enabled: _pin.length >= 4,
+                                onPressed: _login,
+                              ),
+                            TextButton(
+                              onPressed: _isLoading ? null : _switchVenue,
+                              child: const Text('რესტორნის შეცვლა'),
+                            ),
+                          ],
                         ],
                       ),
                     ),

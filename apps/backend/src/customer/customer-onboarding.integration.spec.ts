@@ -267,6 +267,9 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
     });
     it('rejects cross-tenant portal, access, enrollment and printer requests and principal substitution', async () => {
       const [a, b] = owners;
+      const portal = (await http().get('/customer/portal').set(bearer(a.token)).expect(200)).body;
+      expect(portal.venues.map((entry: any) => entry.venue.loginCode)).toEqual([a.venue.loginCode]);
+      expect(JSON.stringify(portal)).not.toContain(b.venue.loginCode);
       await http()
         .get(`/customer/venues/${b.venue.id}`)
         .set(bearer(a.token))

@@ -1,3 +1,4 @@
+import type { ControlActor } from './control-actor';
 import {
   BadRequestException,
   ConflictException,
@@ -45,14 +46,24 @@ const userFields = {
 } as const;
 function audit(
   tx: Prisma.TransactionClient,
-  actor: PlatformPrincipal,
+  actor: ControlActor,
   venueId: string,
   action: string,
   metadata: Prisma.InputJsonObject,
 ) {
+  if (actor.customerAccountId)
+    return tx.customerAuditEvent.create({
+      data: {
+        customerAccountId: actor.customerAccountId,
+        action,
+        targetType: 'Venue',
+        targetId: venueId,
+        metadata,
+      },
+    });
   return tx.platformAuditEvent.create({
     data: {
-      platformUserId: actor.platformUserId,
+      platformUserId: actor.platformUserId!,
       action,
       targetType: 'Venue',
       targetId: venueId,
@@ -169,7 +180,7 @@ export class PlatformCommercialService {
   }
 
   async managerAccess(
-    actor: PlatformPrincipal,
+    actor: ControlActor,
     venueId: string,
     action: 'create' | 'reset' | 'disable',
     body: Record<string, unknown>,
@@ -203,6 +214,17 @@ export class PlatformCommercialService {
           !(await tx.venue.findUnique({
             where: { id: venueId },
             select: { id: true },
+          }))
+        )
+          throw new NotFoundException('Venue not found');
+        if (
+          actor.customerAccountId &&
+          !(await tx.customerAccount.findFirst({
+            where: {
+              id: actor.customerAccountId,
+              isActive: true,
+              organization: { venues: { some: { id: venueId } } },
+            },
           }))
         )
           throw new NotFoundException('Venue not found');
@@ -361,7 +383,7 @@ export class PlatformCommercialService {
       });
       await tx.platformAuditEvent.create({
         data: {
-          platformUserId: actor.platformUserId,
+          platformUserId: actor.platformUserId!,
           action: 'platform_user.created',
           targetType: 'PlatformUser',
           targetId: user.id,
@@ -386,7 +408,7 @@ export class PlatformCommercialService {
       });
       await tx.platformAuditEvent.create({
         data: {
-          platformUserId: actor.platformUserId,
+          platformUserId: actor.platformUserId!,
           action: 'platform_user.disabled',
           targetType: 'PlatformUser',
           targetId: id,

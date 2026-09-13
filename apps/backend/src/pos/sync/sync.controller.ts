@@ -56,7 +56,18 @@ export class SyncController implements OnModuleInit {
     @Body() data: SyncPayload,
     @PosAuth() authContext: PosAuthContext,
   ) {
-    return this.ingestSnapshot.execute(data, authContext);
+    const result = await this.ingestSnapshot.execute(data, authContext);
+    if (result.success && !data.realtimeOnly && authContext.deviceId) {
+      await this.prisma.device.updateMany({
+        where: {
+          id: authContext.deviceId,
+          venueId: authContext.venueId,
+          firstSyncAt: null,
+        },
+        data: { firstSyncAt: new Date() },
+      });
+    }
+    return result;
   }
 
   /**

@@ -1,3 +1,4 @@
+import { CustomerModule } from './customer/customer.module';
 import { FinanceController } from './finance/finance.controller';
 import { PayrollService } from './finance/payroll.service';
 import { ObligationsService } from './finance/obligations.service';
@@ -44,6 +45,7 @@ import { WebsiteModule } from './website/website.module';
 
 @Module({
   imports: [
+    CustomerModule,
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
     PrismaModule,

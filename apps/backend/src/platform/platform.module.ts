@@ -45,6 +45,6 @@ import { PlatformVenuesController } from './platform-venues.controller';
     PlatformVenueConfigService,
     PlatformDeviceService,
   ],
-  exports: [PlatformAuthService],
+  exports: [PlatformAuthService, PlatformAuthGuard, PlatformCommercialService],
 })
 export class PlatformModule {}

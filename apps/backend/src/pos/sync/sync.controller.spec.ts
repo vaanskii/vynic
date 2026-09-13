@@ -35,6 +35,7 @@ type CtorArgs = ConstructorParameters<typeof SyncController>;
 
 interface Stubs {
   controller: SyncController;
+  markSync: jest.Mock;
   execute: jest.Mock;
   ingestReports: jest.Mock;
   ingestEventLogs: jest.Mock;
@@ -59,13 +60,14 @@ function makeController(): Stubs {
     Promise.resolve({ success: true, count: 2 }),
   );
   const restore = jest.fn(() => Promise.resolve());
+  const markSync = jest.fn().mockResolvedValue({count: 1});
   const controller = new SyncController(
-    {} as unknown as CtorArgs[0],
+    {device: {updateMany: markSync}} as unknown as CtorArgs[0],
     { execute } as unknown as CtorArgs[1],
     { ingestReports, ingestEventLogs } as unknown as CtorArgs[2],
     { restore } as unknown as CtorArgs[3],
   );
-  return { controller, execute, ingestReports, ingestEventLogs, restore };
+  return { controller, markSync, execute, ingestReports, ingestEventLogs, restore };
 }
 
 function routeOf(method: keyof SyncController): {
@@ -249,5 +251,22 @@ describe('SyncController — delegation', () => {
     expect(new Date(result.serverTime).toString()).not.toBe('Invalid Date');
     expect(execute).not.toHaveBeenCalled();
     expect(restore).not.toHaveBeenCalled();
+  });
+});
+
+
+describe('first complete Device sync readiness', () => {
+  it('records only the authenticated Device after full success', async () => {
+    const {controller, markSync} = makeController();
+    await controller.syncManagerData({venueId: 'forged'} as any, AUTH_CONTEXT);
+    expect(markSync).toHaveBeenCalledWith({where: {id: 'device-a', venueId: 'venue-a', firstSyncAt: null}, data: {firstSyncAt: expect.any(Date)}});
+  });
+  it('does not mark realtime snapshots or failed ingestion ready', async () => {
+    const {controller, markSync, execute} = makeController();
+    await controller.syncManagerData({realtimeOnly: true}, AUTH_CONTEXT);
+    expect(markSync).not.toHaveBeenCalled();
+    execute.mockRejectedValueOnce(new Error('snapshot failed'));
+    await expect(controller.syncManagerData({}, AUTH_CONTEXT)).rejects.toThrow('snapshot failed');
+    expect(markSync).not.toHaveBeenCalled();
   });
 });

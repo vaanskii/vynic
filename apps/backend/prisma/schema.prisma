@@ -1126,6 +1126,7 @@ model Organization {
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  accounts CustomerAccount[]
   venues    Venue[]
 
   @@schema("pos")
@@ -1204,6 +1205,8 @@ model Device {
   platform       String
   credentialHash String
   status         DeviceStatus @default(ACTIVE)
+  firstSyncAt    DateTime?
+  runtimeConfig Json?
   lastSeenAt     DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -1255,13 +1258,15 @@ model DeviceEnrollment {
   redeemedInstallationId  String?
   deviceId                String?
   cancelledAt             DateTime?
-  createdByPlatformUserId String
+  createdByPlatformUserId String?
+  createdByCustomerAccountId String?
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
 
   venue     Venue        @relation(fields: [venueId], references: [id], onDelete: Cascade)
   device    Device?      @relation(fields: [deviceId], references: [id], onDelete: SetNull)
-  createdBy PlatformUser @relation(fields: [createdByPlatformUserId], references: [id], onDelete: Restrict)
+  customerActor CustomerAccount? @relation(fields: [createdByCustomerAccountId], references: [id], onDelete: Restrict)
+  createdBy PlatformUser? @relation(fields: [createdByPlatformUserId], references: [id], onDelete: Restrict)
 
   @@index([venueId, createdAt])
   @@index([expiresAt])
@@ -1834,5 +1839,47 @@ model VenueSubscription {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  @@schema("pos")
+}
+
+
+model CustomerAccount {
+  id String @id @default(uuid())
+  organizationId String
+  email String @unique
+  displayName String
+  passwordHash String
+  isActive Boolean @default(true)
+  emailVerifiedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  enrollments DeviceEnrollment[]
+  auditEvents CustomerAuditEvent[]
+  @@index([organizationId])
+  @@schema("pos")
+}
+
+model CustomerAuditEvent {
+  id String @id @default(uuid())
+  customerAccountId String
+  action String
+  targetType String
+  targetId String
+  metadata Json?
+  createdAt DateTime @default(now())
+  actor CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  @@index([customerAccountId, createdAt])
+  @@index([targetId, createdAt])
+  @@schema("pos")
+}
+
+model OnboardingPolicy {
+  id String @id @default("default")
+  enabled Boolean @default(false)
+  trialPlanId String?
+  trialDays Int @default(14)
+  releaseLinks Json?
+  updatedAt DateTime @updatedAt
   @@schema("pos")
 }

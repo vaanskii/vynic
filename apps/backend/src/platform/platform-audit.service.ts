@@ -1,3 +1,4 @@
+import type { ControlActor } from './control-actor';
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
@@ -54,15 +55,27 @@ export class PlatformAuditService {
   constructor(private readonly prisma: PrismaService) {}
 
   async record(
-    actor: Pick<PlatformPrincipal, 'platformUserId'>,
+    actor: ControlActor,
     action: PlatformAuditActionValue,
     target: { type: string; id: string },
     metadata?: Record<string, unknown>,
   ): Promise<void> {
     try {
+      if (actor.customerAccountId) {
+        await this.prisma.customerAuditEvent.create({
+          data: {
+            customerAccountId: actor.customerAccountId,
+            action,
+            targetType: target.type,
+            targetId: target.id,
+            metadata: metadata as Prisma.InputJsonValue,
+          },
+        });
+        return;
+      }
       await this.prisma.platformAuditEvent.create({
         data: {
-          platformUserId: actor.platformUserId,
+          platformUserId: actor.platformUserId!,
           action,
           targetType: target.type,
           targetId: target.id,

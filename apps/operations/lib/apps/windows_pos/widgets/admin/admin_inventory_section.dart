@@ -1,3 +1,4 @@
+import 'package:vynic/core/models/feature_keys.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:vynic/core/database/database_core.dart';
@@ -34,6 +35,8 @@ class _AdminInventoryState extends State<AdminInventorySection> {
   }
 
   Widget _content(BuildContext context) {
+    if (!InventoryRepository.hasFeature(FeatureKeys.inventory))
+      return const SizedBox.shrink();
     final items = InventoryRepository.getStockItems();
     final inspection =
         InventoryRepository.exportCatalog()['inspection'] as Map?;

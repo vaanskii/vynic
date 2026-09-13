@@ -898,18 +898,22 @@ class PosCommandApplier {
       // most likely. Repeating will not resolve it.
       return const PosCommandOutcome.conflicting('user_exists_or_pin_taken');
     }
-    await DatabaseService.updateUserPinByUsername(
+    final pinUpdated = await DatabaseService.updateUserPinByUsername(
       username: username,
       pinCode: pinCode,
       actorId: actor,
       source: AuditSource.manager,
     );
-    await DatabaseService.updateUserRoleByUsername(
+    if (!pinUpdated)
+      return const PosCommandOutcome.conflicting('pin_update_failed');
+    final roleUpdated = await DatabaseService.updateUserRoleByUsername(
       username: username,
       role: role,
       actorId: actor,
       source: AuditSource.manager,
     );
+    if (!roleUpdated)
+      return const PosCommandOutcome.conflicting('role_update_failed');
     scheduleCloudSync();
     return PosCommandOutcome.success(
       code: 'already_exists',

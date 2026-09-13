@@ -1,3 +1,6 @@
+import 'package:vynic/core/database/database_core.dart';
+import 'package:vynic/core/database/repositories/inventory_repository.dart';
+import 'package:vynic/core/models/feature_keys.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_inventory_section.dart';
 import 'dart:async';
 import 'dart:io';
@@ -227,9 +230,16 @@ class _AdminScreenState extends State<AdminScreen> {
     setState(() => _selectedSection = 'developer');
   }
 
+  StreamSubscription<dynamic>? _inventoryChanges;
+
   @override
   void initState() {
     super.initState();
+    _inventoryChanges = DatabaseCore.inventoryBox
+        ?.watch(key: InventoryRepository.catalogKey)
+        .listen((_) {
+          if (mounted) setState(() {});
+        });
     _isSidebarExpanded = !_isMobile;
     DeveloperAccess.unlocked.addListener(_onDeveloperAccessChanged);
     if (_isLimitedAdmin) {
@@ -245,6 +255,7 @@ class _AdminScreenState extends State<AdminScreen> {
 
   @override
   void dispose() {
+    _inventoryChanges?.cancel();
     DeveloperAccess.unlocked.removeListener(_onDeveloperAccessChanged);
     _kitchenPrinterController.dispose();
     _receiptPrinterController.dispose();
@@ -1384,11 +1395,12 @@ class _AdminScreenState extends State<AdminScreen> {
         title: 'მენიუ',
         section: 'menu',
       ),
-      _buildMenuItem(
-        icon: Icons.warehouse_outlined,
-        title: 'მარაგები',
-        section: 'inventory',
-      ),
+      if (InventoryRepository.hasFeature(FeatureKeys.inventory))
+        _buildMenuItem(
+          icon: Icons.warehouse_outlined,
+          title: 'მარაგები',
+          section: 'inventory',
+        ),
       _buildMenuItem(
         icon: Icons.inventory_2,
         title: 'პაკეტები',
@@ -1432,11 +1444,12 @@ class _AdminScreenState extends State<AdminScreen> {
         title: 'აუდიტი',
         section: 'audit',
       ),
-      _buildMenuItem(
-        icon: Icons.history,
-        title: 'აქტივობა',
-        section: 'activity',
-      ),
+      if (InventoryRepository.hasFeature(FeatureKeys.advancedAudit))
+        _buildMenuItem(
+          icon: Icons.history,
+          title: 'აქტივობა',
+          section: 'activity',
+        ),
       _buildMenuItem(
         icon: Icons.settings,
         title: 'პარამეტრები',
@@ -3768,7 +3781,9 @@ class _AdminScreenState extends State<AdminScreen> {
       case 'menu':
         return AdminMenuSection(user: widget.user);
       case 'inventory':
-        return const AdminInventorySection();
+        return InventoryRepository.hasFeature(FeatureKeys.inventory)
+            ? const AdminInventorySection()
+            : _buildSettingsSection();
       case 'packages':
         return AdminPackagesSection(user: widget.user);
       case 'reservations':
@@ -3830,7 +3845,9 @@ class _AdminScreenState extends State<AdminScreen> {
           onSetSelectedAuditMonth: _setSelectedAuditMonth,
         );
       case 'activity':
-        return const AdminActivityLogSection();
+        return InventoryRepository.hasFeature(FeatureKeys.advancedAudit)
+            ? const AdminActivityLogSection()
+            : _buildSettingsSection();
       case 'errors':
         return const AdminErrorLogSection();
       case 'printers':

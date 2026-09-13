@@ -64,7 +64,7 @@ class UserRepository {
     AuditSource source = AuditSource.pos,
   }) async {
     // Check if PIN code already exists
-    if (isPinCodeExists(pinCode)) {
+    if (getUserByUsername(username) != null || isPinCodeExists(pinCode)) {
       return false; // PIN code must be unique
     }
 
@@ -91,16 +91,32 @@ class UserRepository {
   static User? authenticateByPin(String pinCode) {
     try {
       return DatabaseCore.userBox!.values.firstWhere(
-        (user) => user.pinCode == pinCode,
+        (user) => user.pinCode == pinCode && !isPlatformDisabled(user.username),
       );
     } catch (e) {
       return null; // User not found
     }
   }
 
+  static bool isPlatformDisabled(String username) =>
+      DatabaseCore.settingsBox?.get('platform_staff_disabled:$username') ==
+      true;
+
+  static Future<void> setPlatformAccess(
+    String username, {
+    required bool disabled,
+  }) async {
+    final settings = DatabaseCore.settingsBox;
+    if (settings == null) throw StateError('Staff access settings unavailable');
+    await settings.put('platform_staff_disabled:$username', disabled);
+    _notifyUsersChanged();
+  }
+
   // Get all users
   static List<User> getAllUsers() {
-    return DatabaseCore.userBox!.values.toList();
+    return DatabaseCore.userBox!.values
+        .where((user) => !isPlatformDisabled(user.username))
+        .toList();
   }
 
   // Get user by username

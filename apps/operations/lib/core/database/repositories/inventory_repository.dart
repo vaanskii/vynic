@@ -1,3 +1,4 @@
+import 'package:vynic/core/models/feature_keys.dart';
 import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/models/inventory.dart';
 
@@ -8,6 +9,10 @@ import 'package:vynic/core/models/inventory.dart';
 /// need Cloud and no local code mints or edits business identities.
 abstract final class InventoryRepository {
   static const String catalogKey = 'catalog';
+  static bool hasFeature(String feature) {
+    final features = _catalog()['features'];
+    return features is! List || features.contains(feature);
+  }
 
   static List<StockItem> getStockItems() {
     final raw = _catalog()['stockItems'];
@@ -32,6 +37,7 @@ abstract final class InventoryRepository {
   /// Read-only: the POS never authors a recipe, and Step 4 will consume from
   /// these numbers rather than recompute them.
   static List<InventoryRecipe> getRecipes() {
+    if (!hasFeature(FeatureKeys.inventory)) return const [];
     final raw = _catalog()['recipes'];
     if (raw is! List) return const [];
     return raw
@@ -66,6 +72,8 @@ abstract final class InventoryRepository {
         )
         .toList(growable: false);
     final normalized = <String, dynamic>{
+      if (catalog['features'] is List)
+        'features': List<String>.from(catalog['features'] as List),
       'version': (catalog['version'] as num?)?.toInt() ?? 1,
       'generatedAt':
           DateTime.tryParse(

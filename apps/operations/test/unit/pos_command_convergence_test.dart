@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/edge/pos_edge_command_handlers.dart';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -107,6 +108,57 @@ void main() {
     await Hive.close();
     tempDir.deleteSync(recursive: true);
   });
+
+  test(
+    'Platform create/reset/disable resists replay and delayed older commands',
+    () async {
+      const create = StaffCreateEdgeHandler();
+      const remove = StaffDeleteEdgeHandler();
+      final payload = <String, dynamic>{
+        'username': 'phase2',
+        'pinCode': '483921',
+        'role': 'manager',
+        'staffId': 'phase2-manager',
+        'platformRevision': 1,
+      };
+      expect((await create.apply(payload)).ok, isTrue);
+      expect((await create.apply(payload)).ok, isTrue);
+      expect(
+        UserRepository.getAllUsers().where((u) => u.username == 'phase2'),
+        hasLength(1),
+      );
+      expect(
+        (await create.apply({
+          ...payload,
+          'pinCode': '692481',
+          'platformRevision': 2,
+        })).ok,
+        isTrue,
+      );
+      await create.apply(payload);
+      expect(
+        UserRepository.getAllUsers()
+            .singleWhere((u) => u.username == 'phase2')
+            .pinCode,
+        '692481',
+      );
+      expect(
+        (await remove.apply({
+          ...payload,
+          'platformRevision': 3,
+          'platformAction': 'disable',
+        })).ok,
+        isTrue,
+      );
+      await create.apply({...payload, 'platformRevision': 2});
+      expect(
+        UserRepository.getAllUsers().where((u) => u.username == 'phase2'),
+        isEmpty,
+      );
+      expect(UserRepository.getUserByUsername('phase2'), isNotNull);
+      expect(UserRepository.authenticateByPin('692481'), isNull);
+    },
+  );
 
   group('reservation creation', () {
     // Cloud allocates a 16-digit numeric id; the POS mints 13-digit ones, so

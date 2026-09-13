@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -132,6 +133,18 @@ Future<void> tapVisible(WidgetTester t, Finder f) async {
 }
 
 void main() {
+  setUp(
+    () => ManagerEntitlements.apply({
+      'features': [
+        FeatureKeys.managerApp,
+        FeatureKeys.inventory,
+        FeatureKeys.payroll,
+        FeatureKeys.financialPlanning,
+        FeatureKeys.profitability,
+      ],
+    }),
+  );
+  tearDown(ManagerEntitlements.clear);
   setUpAll(() async {
     for (final name in ['NotoSansGeorgian', 'Ahem']) {
       await (FontLoader(

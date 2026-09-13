@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
 import 'package:intl/intl.dart';
 import 'package:vynic/apps/mobile_app/data/models/dashboard_bundle.dart';
 import 'package:vynic/core/models/monitoring.dart';
@@ -26,9 +27,11 @@ class DashboardRemoteService {
         (_) => <Map<String, dynamic>>[],
       ),
       // Reservations for the active business day (manager pulse card).
-      MobileApiService.getReservations(
-        date: businessDate,
-      ).catchError((_) => <Map<String, dynamic>>[]),
+      ManagerEntitlements.has(FeatureKeys.managerReservations)
+          ? MobileApiService.getReservations(
+              date: businessDate,
+            ).catchError((_) => <Map<String, dynamic>>[])
+          : Future.value(<Map<String, dynamic>>[]),
       MobileApiService.getCountedMenus().catchError((_) => <dynamic>[]),
     ]);
 

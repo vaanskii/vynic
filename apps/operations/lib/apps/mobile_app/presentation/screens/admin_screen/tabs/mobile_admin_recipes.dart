@@ -534,7 +534,9 @@ class _RecipeEditorDialogState extends State<RecipeEditorDialog> {
             ),
           ),
         ],
-        if (detail != null) CurrentRecipeCostPanel(cost: detail.currentCost),
+        if (detail != null &&
+            ManagerEntitlements.has(FeatureKeys.profitability))
+          CurrentRecipeCostPanel(cost: detail.currentCost),
         if (_error != null) ...[
           const SizedBox(height: 8),
           Align(

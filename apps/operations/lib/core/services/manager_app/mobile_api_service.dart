@@ -1,3 +1,4 @@
+import 'manager_entitlements.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -41,6 +42,23 @@ class MobileApiService {
       map['X-Monitoring-Socket-Id'] = sid;
     }
     return map;
+  }
+
+  static Future<void> refreshEntitlements() async {
+    final session = AuthTokenService.authHeader['Authorization'];
+    final response = await _get('/mobile/entitlements');
+    if (session != AuthTokenService.authHeader['Authorization']) return;
+    if (response.statusCode != 200) {
+      ManagerEntitlements.clear();
+      await MobileCacheService.clear();
+      throw Exception('წვდომა ვერ განახლდა (${response.statusCode})');
+    }
+    final old = ManagerEntitlements.features.value;
+    ManagerEntitlements.apply(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+    if (!setEquals(old, ManagerEntitlements.features.value))
+      await MobileCacheService.clear();
   }
 
   /// GET with retry + exponential backoff.

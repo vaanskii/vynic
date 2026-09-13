@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/finance_planning_screen.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_admin_screen.dart';
@@ -92,7 +93,8 @@ class _FinancialPlanningCardState extends State<FinancialPlanningCard> {
               Text('${r['name']} · ${r['periodMonth']}: ${r['amount']} ₾'),
             const SizedBox(height: 8),
             for (final entry in [
-              (false, 'ხელფასებზე დარჩენილი', 'payrollRemaining'),
+              if (ManagerEntitlements.has(FeatureKeys.payroll))
+                (false, 'ხელფასებზე დარჩენილი', 'payrollRemaining'),
               (true, 'ვალდებულებებზე დარჩენილი', 'obligationsRemaining'),
             ])
               Padding(

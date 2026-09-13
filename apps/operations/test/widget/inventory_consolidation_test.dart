@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/consumption_history_screen.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -56,6 +57,18 @@ final negative = StockItem.fromJson({
   'stockStatus': 'NEGATIVE',
 });
 void main() {
+  setUp(
+    () => ManagerEntitlements.apply({
+      'features': [
+        FeatureKeys.managerApp,
+        FeatureKeys.inventory,
+        FeatureKeys.payroll,
+        FeatureKeys.financialPlanning,
+        FeatureKeys.profitability,
+      ],
+    }),
+  );
+  tearDown(ManagerEntitlements.clear);
   late Directory temp;
   setUpAll(() async {
     for (final name in ['NotoSansGeorgian', 'Ahem']) {

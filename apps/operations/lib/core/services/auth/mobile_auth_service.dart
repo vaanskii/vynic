@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
 import 'package:vynic/core/services/notifications/manager_notification_inbox.dart';
 import 'package:vynic/core/contracts/manager_login.dart';
 import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
@@ -127,6 +128,7 @@ class MobileAuthService {
   }
 
   static Future<void> logout() async {
+    ManagerEntitlements.clear();
     try {
       await FirebaseMessagingService.instance()
           .unregisterCurrentTokenFromBackend();

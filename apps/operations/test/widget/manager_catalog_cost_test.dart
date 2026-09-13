@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -72,6 +73,18 @@ Future<void> screenshot(WidgetTester tester, String name) async {
 }
 
 void main() {
+  setUp(
+    () => ManagerEntitlements.apply({
+      'features': [
+        FeatureKeys.managerApp,
+        FeatureKeys.inventory,
+        FeatureKeys.payroll,
+        FeatureKeys.financialPlanning,
+        FeatureKeys.profitability,
+      ],
+    }),
+  );
+  tearDown(ManagerEntitlements.clear);
   setUpAll(() async {
     final loader = FontLoader('NotoSansGeorgian')
       ..addFont(rootBundle.load('assets/fonts/NotoSansGeorgian.ttf'));

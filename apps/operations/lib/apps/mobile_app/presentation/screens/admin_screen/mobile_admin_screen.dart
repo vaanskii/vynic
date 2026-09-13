@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
 import 'package:vynic/core/models/inventory_decimal.dart';
 import 'package:uuid/uuid.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/consumption_history_screen.dart';
@@ -52,7 +53,6 @@ class MobileAdminScreen extends StatefulWidget {
     (label: 'გაყიდვები', icon: Icons.receipt_long_outlined),
     (label: 'აუდიტი', icon: Icons.fact_check_outlined),
     (label: 'აქტივობა', icon: Icons.history_outlined),
-    (label: 'მარაგები', icon: Icons.inventory_2_outlined),
     (label: 'გუნდი', icon: Icons.people_outline),
     (label: 'პარამეტრები', icon: Icons.settings_outlined),
   ];
@@ -112,14 +112,16 @@ class MobileAdminScreen extends StatefulWidget {
 class _MobileAdminScreenState extends State<MobileAdminScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabs;
+  late final _visibleTabs = [
+    for (final entry in MobileAdminScreen.adminTabs.indexed)
+      if (entry.$1 != 3 || ManagerEntitlements.has(FeatureKeys.advancedAudit))
+        entry.$2,
+  ];
 
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(
-      length: MobileAdminScreen.adminTabs.length,
-      vsync: this,
-    );
+    _tabs = TabController(length: _visibleTabs.length, vsync: this);
   }
 
   @override
@@ -200,7 +202,7 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
                   fontWeight: FontWeight.w500,
                 ),
                 tabs: [
-                  for (final t in MobileAdminScreen.adminTabs)
+                  for (final t in _visibleTabs)
                     Tab(
                       height: 48,
                       child: Row(
@@ -222,8 +224,8 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
                   _ReportTab(),
                   _SalesTab(),
                   _AuditTab(),
-                  _ActivityTab(),
-                  InventoryAdminTab(),
+                  if (ManagerEntitlements.has(FeatureKeys.advancedAudit))
+                    _ActivityTab(),
                   _UsersTab(currentUser: widget.user),
                   _SettingsTab(user: widget.user, onLogout: widget.onLogout),
                 ],

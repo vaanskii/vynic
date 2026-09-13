@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
 import 'finance_planning_screen.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_admin_screen.dart';
 import 'package:vynic/core/models/expense_category.dart';
@@ -348,7 +349,8 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                     ),
                   ),
                   SizedBox(height: 28),
-                  _buildProcurement(),
+                  if (ManagerEntitlements.has(FeatureKeys.inventory))
+                    _buildProcurement(),
                   const SizedBox(height: 16),
                   _buildPlanningLinks(),
                   const SizedBox(height: 24),
@@ -1205,8 +1207,10 @@ class _FinancialsScreenState extends State<FinancialsScreen>
       runSpacing: 12,
       children: [
         for (final entry in [
-          (false, 'ხელფასები', Icons.people_outline),
-          (true, 'ყოველთვიური ვალდებულებები', Icons.event_repeat),
+          if (ManagerEntitlements.has(FeatureKeys.payroll))
+            (false, 'ხელფასები', Icons.people_outline),
+          if (ManagerEntitlements.has(FeatureKeys.financialPlanning))
+            (true, 'ყოველთვიური ვალდებულებები', Icons.event_repeat),
         ])
           OutlinedButton.icon(
             key: ValueKey(

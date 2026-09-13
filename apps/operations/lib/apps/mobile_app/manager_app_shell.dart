@@ -1,3 +1,5 @@
+import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
+import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -27,6 +29,18 @@ class ManagerAppShell extends StatefulWidget {
   final User user;
   const ManagerAppShell({super.key, required this.user});
 
+  static const navItems = <ManagerNavItem>[
+    ManagerNavItem(label: 'დაფა', icon: Icons.dashboard_rounded),
+    ManagerNavItem(label: 'მაგიდები', icon: Icons.table_bar_rounded),
+    ManagerNavItem(
+      label: 'ფინანსები',
+      icon: Icons.account_balance_wallet_rounded,
+    ),
+    ManagerNavItem(label: 'მარაგები', icon: Icons.inventory_2_outlined),
+    ManagerNavItem(label: 'რეზერვაციები', icon: Icons.book_online_rounded),
+    ManagerNavItem(label: 'მართვა', icon: Icons.settings_rounded),
+  ];
+
   @override
   State<ManagerAppShell> createState() => _ManagerAppShellState();
 }
@@ -34,20 +48,32 @@ class ManagerAppShell extends StatefulWidget {
 class _ManagerAppShellState extends State<ManagerAppShell>
     with WidgetsBindingObserver {
   int _selectedIndex = 0;
+  List<int> _destinations = ManagerEntitlements.destinations;
+  Timer? _entitlementTimer;
+  String? _entitlementError;
+  Future<void> _refreshEntitlements() async {
+    try {
+      await MobileApiService.refreshEntitlements();
+      if (mounted) setState(() => _entitlementError = null);
+    } catch (_) {
+      if (mounted)
+        setState(
+          () => _entitlementError = 'წვდომა ვერ განახლდა. სცადეთ ხელახლა.',
+        );
+    }
+  }
+
+  void _featuresChanged() {
+    if (!mounted) return;
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    _destinations = ManagerEntitlements.destinations;
+    _selectedIndex = 0;
+    _refreshForThemeChange();
+  }
+
   late PageController _pageController;
 
   late List<Widget> _screens;
-
-  static const _navItems = <ManagerNavItem>[
-    ManagerNavItem(label: 'დაფა', icon: Icons.dashboard_rounded),
-    ManagerNavItem(label: 'მაგიდები', icon: Icons.table_bar_rounded),
-    ManagerNavItem(
-      label: 'ფინანსები',
-      icon: Icons.account_balance_wallet_rounded,
-    ),
-    ManagerNavItem(label: 'რეზერვაციები', icon: Icons.book_online_rounded),
-    ManagerNavItem(label: 'მართვა', icon: Icons.settings_rounded),
-  ];
 
   String? _lastToastNotificationId;
 
@@ -76,7 +102,15 @@ class _ManagerAppShellState extends State<ManagerAppShell>
     );
     // Initial catch-up for notifications created before socket connected.
     unawaited(ManagerNotificationInbox.syncMissedFromServer());
+    ManagerEntitlements.clear();
+    _destinations = ManagerEntitlements.destinations;
     _screens = _buildScreens();
+    ManagerEntitlements.features.addListener(_featuresChanged);
+    unawaited(_refreshEntitlements());
+    _entitlementTimer = Timer.periodic(
+      const Duration(minutes: 1),
+      (_) => unawaited(_refreshEntitlements()),
+    );
     ManagerAppPreferences.dashboardAppearance.addListener(
       _onDashboardAppearanceChanged,
     );
@@ -90,7 +124,7 @@ class _ManagerAppShellState extends State<ManagerAppShell>
   /// Rebuilds tabs and recreates [PageController] on the current tab so theme
   /// applies everywhere without jumping to დაფა.
   void _refreshForThemeChange() {
-    final index = _selectedIndex.clamp(0, _navItems.length - 1);
+    final index = _selectedIndex.clamp(0, _destinations.length - 1);
     final oldController = _pageController;
     _selectedIndex = index;
     _pageController = PageController(initialPage: index);
@@ -104,18 +138,22 @@ class _ManagerAppShellState extends State<ManagerAppShell>
     final tabs = <Widget>[
       DashboardScreen(
         user: widget.user,
-        onNavigateTab: _onItemTapped,
+        onNavigateTab: (original) {
+          final index = _destinations.indexOf(original);
+          if (index >= 0) _onItemTapped(index);
+        },
         onOpenNotifications: _openNotificationsSheet,
       ),
       LiveStatusScreen(user: widget.user),
       FinancialsScreen(user: widget.user),
+      const SafeArea(child: InventoryAdminTab()),
       StaffPerformanceScreen(user: widget.user),
       MobileAdminScreen(user: widget.user, onLogout: _logout),
     ];
-    return List.generate(tabs.length, (index) {
+    return List.generate(_destinations.length, (index) {
       return ManagerTabKeepAlive(
         storageKey: PageStorageKey<String>('manager_main_tab_$index'),
-        child: tabs[index],
+        child: tabs[_destinations[index]],
       );
     });
   }
@@ -124,6 +162,7 @@ class _ManagerAppShellState extends State<ManagerAppShell>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.resumed:
+        unawaited(_refreshEntitlements());
         _suppressToastsForResumeReconnect();
         MonitoringSocketService.onAppResumed();
         break;
@@ -302,7 +341,9 @@ class _ManagerAppShellState extends State<ManagerAppShell>
     // Reservation notification → open the reservations tab on the right date.
     final reservationId = meta['reservationId']?.toString().trim();
     if (reservationId != null && reservationId.isNotEmpty) {
-      _goToTab(3);
+      final reservationTab = _destinations.indexOf(4);
+      if (reservationTab < 0) return;
+      _goToTab(reservationTab);
       final resDate = meta['reservationDate']?.toString().trim();
       if (resDate != null && resDate.isNotEmpty) {
         // Reset first so the listener always re-fires, even for the same date.
@@ -378,15 +419,37 @@ class _ManagerAppShellState extends State<ManagerAppShell>
             body: Stack(
               clipBehavior: Clip.none,
               children: [
-                PageView(
-                  key: ValueKey(_pageController),
-                  controller: _pageController,
-                  onPageChanged: _onPageChanged,
-                  allowImplicitScrolling: true,
-                  physics: const BouncingScrollPhysics(
-                    parent: AlwaysScrollableScrollPhysics(),
-                  ),
-                  children: _screens,
+                Column(
+                  children: [
+                    if (_entitlementError != null ||
+                        ManagerEntitlements.pastDue.value)
+                      SafeArea(
+                        bottom: false,
+                        child: ListTile(
+                          title: Text(
+                            _entitlementError ??
+                                'გადახდის ვადა გასულია. დაუკავშირდით ადმინისტრაციას.',
+                          ),
+                          trailing: IconButton(
+                            tooltip: 'წვდომის განახლება',
+                            onPressed: _refreshEntitlements,
+                            icon: const Icon(Icons.refresh),
+                          ),
+                        ),
+                      ),
+                    Expanded(
+                      child: PageView(
+                        key: ValueKey(_pageController),
+                        controller: _pageController,
+                        onPageChanged: _onPageChanged,
+                        allowImplicitScrolling: true,
+                        physics: const BouncingScrollPhysics(
+                          parent: AlwaysScrollableScrollPhysics(),
+                        ),
+                        children: _screens,
+                      ),
+                    ),
+                  ],
                 ),
                 Positioned(
                   top: MediaQuery.paddingOf(context).top + 10,
@@ -399,8 +462,11 @@ class _ManagerAppShellState extends State<ManagerAppShell>
               key: ValueKey(_pageController),
               pageController: _pageController,
               selectedIndex: _selectedIndex,
-              itemCount: _navItems.length,
-              items: _navItems,
+              itemCount: _destinations.length,
+              items: [
+                for (final index in _destinations)
+                  ManagerAppShell.navItems[index],
+              ],
               onTap: _onItemTapped,
             ),
           );
@@ -411,6 +477,8 @@ class _ManagerAppShellState extends State<ManagerAppShell>
 
   @override
   void dispose() {
+    _entitlementTimer?.cancel();
+    ManagerEntitlements.features.removeListener(_featuresChanged);
     _pageController.dispose();
     _lifecycleReconnectTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:hive_flutter/hive_flutter.dart';
 import 'dart:io';
 import 'package:vynic/core/models/user.dart';
@@ -227,7 +228,7 @@ class DatabaseService {
   );
 
   // Initialize Hive and create default admin user
-  static Future<void> init() async {
+  static Future<void> init({bool createBootstrapManager = true}) async {
     // Storage bootstrap: data directory, Hive init, adapters, boxes,
     // schema migrations.
     await DatabaseCore.open();
@@ -252,7 +253,7 @@ class DatabaseService {
         _tableBox!.isEmpty &&
         _menuBox!.isEmpty;
 
-    if (_userBox!.isEmpty) {
+    if (_userBox!.isEmpty && createBootstrapManager) {
       await createDefaultAdmin();
     }
 
@@ -271,7 +272,8 @@ class DatabaseService {
       if (_tableBox!.isEmpty) {
         await TableRepository.initializeTables();
       }
-      if (_menuBox!.isEmpty) {
+      // The bundled restaurant menu is a development fixture, never release data.
+      if (_menuBox!.isEmpty && kDebugMode) {
         await MenuRepository.initializeMenuFromJson();
       }
       await adoptLegacyVenueHeader();

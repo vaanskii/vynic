@@ -3,7 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_login_screen.dart';
 
 void main() {
-  for (final size in [const Size(320, 640), const Size(1024, 900)]) {
+  for (final size in [
+    const Size(320, 640),
+    const Size(360, 800),
+    const Size(768, 1024),
+    const Size(1280, 900),
+    const Size(1024, 900),
+  ]) {
     testWidgets('restaurant entry and keypad remain usable at $size', (
       tester,
     ) async {

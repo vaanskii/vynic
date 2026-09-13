@@ -323,11 +323,17 @@ class SettingsRepository {
   /// did not clear the printer, it reverted it to a build-time address. What
   /// the admin panel shows is now what the POS uses.
   static String getKitchenPrinterIp() {
+    final cloud = _runtimePrinter('kitchen');
+    if (cloud != null)
+      return cloud['enabled'] == true ? cloud['host'] as String : '';
     final stored = _settingsBox!.get('printerKitchenIp');
     return stored is String ? stored.trim() : '';
   }
 
   static String getReceiptPrinterIp() {
+    final cloud = _runtimePrinter('receipt');
+    if (cloud != null)
+      return cloud['enabled'] == true ? cloud['host'] as String : '';
     final stored = _settingsBox!.get('printerReceiptIp');
     return stored is String ? stored.trim() : '';
   }
@@ -336,12 +342,18 @@ class SettingsRepository {
     return 9100;
   }
 
+  static Map? _runtimePrinter(String kind) {
+    final config = _settingsBox?.get('deviceRuntimeConfig');
+    if (config is! Map) return null;
+    return (config['printers'] as Map?)?[kind] as Map?;
+  }
+
   static int getKitchenPrinterPort() {
-    return 9100;
+    return _runtimePrinter('kitchen')?['port'] as int? ?? 9100;
   }
 
   static int getReceiptPrinterPort() {
-    return 9100;
+    return _runtimePrinter('receipt')?['port'] as int? ?? 9100;
   }
 
   static List<Map<String, dynamic>> getPrintersList() {
@@ -885,7 +897,9 @@ class SettingsRepository {
 
   /// Shared secret for server → POS HTTP callbacks (`x-connection-key`).
   static String ensurePosIngestConnectionKey() {
-    final fromEnv = dotenv.env['POS_CONNECTION_KEY']?.trim();
+    final fromEnv =
+        (dotenv.isInitialized ? dotenv.env['POS_CONNECTION_KEY'] : null)
+            ?.trim();
     if (fromEnv != null && fromEnv.isNotEmpty) {
       _settingsBox?.put(_posIngestConnectionKeySetting, fromEnv);
       return fromEnv;
@@ -899,7 +913,9 @@ class SettingsRepository {
   }
 
   static String? getPosIngestConnectionKey() {
-    final fromEnv = dotenv.env['POS_CONNECTION_KEY']?.trim();
+    final fromEnv =
+        (dotenv.isInitialized ? dotenv.env['POS_CONNECTION_KEY'] : null)
+            ?.trim();
     if (fromEnv != null && fromEnv.isNotEmpty) return fromEnv;
     return _settingsBox?.get(_posIngestConnectionKeySetting) as String?;
   }

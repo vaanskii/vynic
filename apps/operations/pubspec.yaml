@@ -88,7 +88,6 @@ flutter:
     - assets/black-logo.png
     - assets/logo/vynic-logo.png
     - data/menu.json
-    - .env
     - assets/fonts/NotoSansGeorgian.ttf
 
   # An image asset can refer to one or more resolution-specific "variants", see

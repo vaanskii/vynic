@@ -1,3 +1,4 @@
+import 'runtime_config_sync.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -140,7 +141,8 @@ class PosEnrollmentService {
       enrolledThrough: baseUrl,
       offered: result.apiBaseUrl,
     );
-    await DatabaseService.saveBackendUrlOverride(effectiveUrl);
+    if (ApiConfig.allowDeveloperOverride)
+      await DatabaseService.saveBackendUrlOverride(effectiveUrl);
     ApiConfig.resetResolvedUrlLog();
 
     // Polling is off on an unenrolled terminal, so it has to be told to begin.
@@ -148,6 +150,7 @@ class PosEnrollmentService {
     // enrollment, and the credential is already safely on disk.
     unawaited(EdgeTransportService.instance().start());
     unawaited(InventoryProjectionSyncService.instance().start());
+    unawaited(RuntimeConfigSync.instance.start());
 
     return PosEnrollmentResult(
       PosEnrollmentStatus.connected,

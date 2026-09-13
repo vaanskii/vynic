@@ -452,6 +452,7 @@ class _MobileLoginScreenState extends State<MobileLoginScreen>
   }
 
   Widget _buildConnectionSwitcher() {
+    if (!ApiConfig.allowDeveloperOverride) return const SizedBox.shrink();
     final theme = managerThemeOf(context);
     return ValueListenableBuilder<String?>(
       valueListenable: ManagerAppPreferences.backendUrlOverride,

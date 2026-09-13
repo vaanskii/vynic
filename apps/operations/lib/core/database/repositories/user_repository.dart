@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/models/user.dart';
@@ -36,16 +37,14 @@ class UserRepository {
     }
   }
 
-  /// The one account a brand-new terminal comes up with.
-  ///
-  /// PIN `000000`, so whoever unboxes it can get in; the operator renames it
-  /// and sets a real PIN from Staff. It used to be created as „vaanskii" —
-  /// the developer's own username, shipped to every venue and printed on their
-  /// checks as the waiter who opened the table.
+  /// Development-only bootstrap account for local fixtures and tests.
+  /// Release installations receive Manager access through authenticated Edge.
   static const String defaultManagerUsername = 'manager';
   static const String defaultManagerPin = '000000';
 
   static Future<void> createDefaultAdmin() async {
+    // Release installations receive their first Manager through authenticated Edge.
+    if (!kDebugMode) return;
     final manager = User(
       username: defaultManagerUsername,
       pinCode: defaultManagerPin,

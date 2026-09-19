@@ -1,0 +1,57 @@
+syntax = "proto3";
+package vynic.edge.v1;
+option go_package = "vynic.local/contracts/go/vynic/edge/v1;edgev1";
+
+// Infrastructure only. No business mutation or command execution methods.
+service Foundation {
+  rpc Pair(PairRequest) returns (PairResponse);
+  rpc Handshake(HandshakeRequest) returns (StatusResponse);
+  rpc Status(AuthenticatedRequest) returns (StatusResponse);
+  rpc WatchStatus(AuthenticatedRequest) returns (stream StatusResponse);
+}
+message Protocol {
+  uint32 major = 1;
+  uint32 minor = 2;
+  repeated string required_capabilities = 3;
+}
+message Scope {
+  string venue_id = 1;
+  string installation_id = 2;
+  Protocol protocol = 3;
+}
+message PairRequest {
+  Scope scope = 1;
+  string ticket = 2;
+  string request_id = 3;
+  string terminal_id = 4;
+  string terminal_secret = 5;
+  string display_name = 6;
+}
+message PairResponse {
+  string terminal_id = 1;
+  string installation_id = 2;
+  string venue_id = 3;
+}
+message AuthenticatedRequest {
+  Scope scope = 1;
+  string terminal_id = 2;
+  string terminal_secret = 3;
+}
+message HandshakeRequest {
+  AuthenticatedRequest auth = 1;
+  string session_id = 2;
+  string client_version = 3;
+}
+message StatusResponse {
+  string installation_id = 1;
+  string venue_id = 2;
+  Protocol protocol = 3;
+  string mode = 4;
+  bool business_mutations_enabled = 5;
+  uint32 schema_version = 6;
+  string boot_id = 7;
+  string terminal_id = 8;
+  string session_id = 9;
+  uint32 connected_streams = 10;
+  repeated string capabilities = 11;
+}

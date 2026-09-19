@@ -124,3 +124,12 @@ server, and because stored reservations carry them.
 
 Both forms live here so the eventual migration is a change to this package and
 its consumers, not another pair of hand-written implementations.
+
+
+## Local Edge foundation protobuf
+
+`proto/vynic/edge/v1/foundation.proto` defines only pairing, compatibility handshake
+and infrastructure status. `scripts/generate-edge.sh` generates the standalone Go
+module in `generated/go` and Dart package in `generated/edge_dart`; `--check` detects
+drift. Pinned tool versions and commands are in `apps/edge/README.md`. These are
+independent of the existing Cloud command contract and do not add business RPCs.

@@ -1,0 +1,8 @@
+name: vynic_edge_contracts
+publish_to: none
+version: 1.0.0
+environment:
+  sdk: '>=3.8.0 <4.0.0'
+dependencies:
+  grpc: 5.1.0
+  protobuf: 6.0.0

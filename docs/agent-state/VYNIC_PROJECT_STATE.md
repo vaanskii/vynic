@@ -41,7 +41,8 @@ current transport status.
 
 ## Current Phase
 
-- No product implementation phase is marked in progress by current code/docs.
+- Phase 0 primary-Device containment is implemented; Go Edge is not introduced.
+  See `docs/EDGE_PHASE0_PRIMARY_DEVICE.md` for fencing, replacement and rollout.
 - The latest completed sequence covers Money Integrity 1A/1B, POS enrollment
   1C, incremental audit sync, Edge Step 6C, Menu Identity Phases 4.5/4.6, and
   the Phase 5 Cloud Sale Ledger/Manager financial experience.
@@ -494,14 +495,30 @@ current transport status.
 - Payment callbacks derive Venue from the server-owned reservation.
 - The Vankisi site remains `CUSTOM`. The generic data-driven `SAAS` restaurant
   frontend and custom-site runtime/deployment control are not implemented.
-- BOG merchant credentials remain process-wide for the bootstrap deployment.
-  Adding another paying Venue before per-Venue credentials exist would route
-  money through the wrong merchant account.
+- The current process-wide BOG merchant integration belongs to the custom
+  Vankisi deployment, not the unbuilt SaaS website product. It is not a SaaS
+  tenancy template. Future SaaS operational work follows Website -> Cloud ->
+  durable Venue command -> Edge -> POS; payment callbacks and merchant authority
+  remain Cloud-side and website payments do not move through Go Edge.
 
 ## Current Transport and Sync State
 
 - POS -> Cloud snapshot ingestion remains Edge-initiated and is not gated by a
-  commercial feature.
+  commercial feature. Phase 0 admits only `Venue.activeOperationalDeviceId` for
+  authoritative snapshots, audit and sale-consumption intents. HTTP writes and
+  replacement serialize under one Venue lock/transaction; success broadcasts
+  follow commit. The primary alone claims untargeted Edge work; secondaries may
+  claim only their targeted NOOP diagnostics. No multi-POS coordination exists.
+- One Venue + one POS works normally. Multiple enrolled Devices require the
+  selected primary as sole operational authority. Migration selects only a sole
+  ACTIVE historical Device; multiple historical Devices require operator choice.
+  First enrollment selects the first Device transactionally, never on polling.
+  Platform replacement is audited, preserves old identity, and holds uncertain
+  attempted work for reconciliation. Customers can see primary/secondary roles.
+- Legacy shared-key sync/callback fallback remains only for zero-Device Venues.
+  Revoking all Devices does not restore that fallback. Local secondary Hive
+  operation is not remotely disabled: stop the old POS and restore/verify the
+  replacement before switching. This is Cloud containment, not replication.
 - Inventory administrative configuration is Cloud-authoritative. An enrolled
   POS pulls a complete Device -> Venue catalog through
   `GET /edge/inventory/catalog` into one atomically replaced Hive value at
@@ -663,14 +680,16 @@ current transport status.
   reservation holds, generic SaaS venue web, SaaS billing, and per-Venue
   payment credentials.
 - Physical printer-test command, lower-latency Edge long polling, OS
-  keychain credential storage, and multi-Device queue contention optimization.
+  keychain credential storage, Go Edge foundation (Phase 1) and Venue-local
+  multi-POS authority (Phase 2).
 - Legacy shared sync key/callback removal after rollout evidence permits it.
 
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260919120000_customer_onboarding_runtime`.
+  `20260922120000_operational_primary`.
 - Immediately preceding state migrations:
+  `20260919120000_customer_onboarding_runtime`,
   `20260918120000_saas_phase2_control_plane`,
   `20260917120000_receiving_self_purchase`,
   `20260916123000_procurement_request_identity`,

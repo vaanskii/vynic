@@ -1,3 +1,5 @@
+import { withOperationalAuthority } from '../edge/operational-authority';
+import type { EdgeDeviceContext } from '../edge/edge-device-context';
 import { presentMovement } from './receiving.service';
 import {
   BadRequestException,
@@ -59,6 +61,12 @@ function canonical(value: any): string {
 @Injectable()
 export class SaleConsumptionService {
   constructor(private readonly prisma: PrismaService) {}
+
+  applyFromDevice(device: EdgeDeviceContext, raw: unknown) {
+    return withOperationalAuthority(this.prisma, device, (db) =>
+      new SaleConsumptionService(db).apply(device, raw),
+    );
+  }
 
   async apply(tenant: TenantContext, raw: unknown) {
     const body = object(raw);

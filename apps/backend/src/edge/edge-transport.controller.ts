@@ -56,7 +56,7 @@ export class EdgeTransportController {
    */
   @Post('inventory/consumption')
   consume(@EdgeDevice() device: EdgeDeviceContext, @Body() body: unknown) {
-    return this.consumption.apply(device, body);
+    return this.consumption.applyFromDevice(device, body);
   }
 
   @Get('inventory/catalog')

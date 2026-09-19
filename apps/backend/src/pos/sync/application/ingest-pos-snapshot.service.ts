@@ -1,3 +1,4 @@
+import { PrismaService } from '../../../prisma.service';
 import { forwardRef, Inject, Injectable, Optional } from '@nestjs/common';
 import { PosOutboxService } from '../../pos-outbox.service';
 import { PosConnectionRegistry } from '../pos-connection.registry';
@@ -38,11 +39,9 @@ export interface SnapshotIngestResult {
  * the table snapshot, because it wipes the floor and an earlier wipe would be
  * undone by the very snapshot it is meant to clear.
  *
- * There is no enclosing transaction, here or in the services below, and adding
- * one would change failure behaviour: today a throw part-way leaves earlier
- * steps applied and skips the rest, and the POS retries the whole snapshot.
- * `ingest-pos-snapshot.characterization.spec.ts` pins both the order and that
- * partial-application behaviour.
+ * HTTP ingestion supplies a transaction-bound database under the Venue authority
+ * lock. A failed upload rolls back all writes; broadcasts run only after commit.
+ * Direct internal calls without a database retain the legacy partial-apply behavior.
  */
 @Injectable()
 export class IngestPosSnapshotService {
@@ -63,7 +62,22 @@ export class IngestPosSnapshotService {
   async execute(
     data: SyncPayload,
     authContext: PosAuthContext,
+    database?: PrismaService,
+    afterCommit?: Array<() => Promise<void>>,
   ): Promise<SnapshotIngestResult> {
+    const menuSync = database ? new MenuSyncService(database) : this.menu;
+    const tableSync = database ? new TableSyncService(database) : this.tables;
+    const orderSync = database ? new OrderSyncService(database) : this.orders;
+    const reservationSync = database
+      ? new ReservationSyncService(database)
+      : this.reservations;
+    const staffSync = database ? this.staff.withDatabase(database) : this.staff;
+    const businessDaySync = database
+      ? new BusinessDaySyncService(database)
+      : this.businessDay;
+    const ledgerSync = database
+      ? new SaleLedgerSyncService(database)
+      : this.saleLedger;
     const tenant: TenantContext = {
       venueId: authContext.venueId,
       organizationId: authContext.organizationId,
@@ -85,6 +99,7 @@ export class IngestPosSnapshotService {
       tenant,
       data.posCallbackUrl,
       data.posConnectionKey,
+      database,
     );
     if (!this.posConnection.hasCallbackUrl()) {
       console.warn(
@@ -95,7 +110,7 @@ export class IngestPosSnapshotService {
     // Sync Menu
     if (menu && !realtimeOnly) {
       await timing.phase('menu', () =>
-        this.menu.sync(tenant, menu, data.menuIdentityVersion),
+        menuSync.sync(tenant, menu, data.menuIdentityVersion),
       );
     }
 
@@ -103,7 +118,7 @@ export class IngestPosSnapshotService {
     // asynchronous full snapshot runs. Realtime snapshots intentionally skip
     // financial history work.
     let saleLedgerAck: Array<{ posSaleId: string; revision: number }> = [];
-    const saleLedgerService = this.saleLedger;
+    const saleLedgerService = ledgerSync;
     if (
       saleLedgerService &&
       !realtimeOnly &&
@@ -128,13 +143,13 @@ export class IngestPosSnapshotService {
     // Sync Tables — the POS is the source of truth, except for the cold-boot
     // all-free snapshot the service guards against.
     let didSyncTables = await timing.phase('tables', () =>
-      this.tables.sync(tenant, tables, realtimeOnly),
+      tableSync.sync(tenant, tables, realtimeOnly),
     );
 
     // Sync Orders — last-write-wins against the outbox, table linking, and
     // reconciliation of orders the snapshot no longer carries.
     const orderResult = await timing.phase('orders', () =>
-      this.orders.sync(tenant, orders, data.businessDate),
+      orderSync.sync(tenant, orders, data.businessDate),
     );
     didSyncTables = didSyncTables || orderResult.didSyncTables;
     const releasedTablesFromClosedOrders = orderResult.releasedTables;
@@ -142,7 +157,7 @@ export class IngestPosSnapshotService {
     // Sync Expenses
     if (expenses) {
       await timing.phase('expenses', () =>
-        this.businessDay.recordExpenses(tenant, expenses),
+        businessDaySync.recordExpenses(tenant, expenses),
       );
     }
 
@@ -153,7 +168,7 @@ export class IngestPosSnapshotService {
     let staffPinsHashed = 0;
     if (staff && staff.length > 0 && !realtimeOnly) {
       const staffResult = await timing.phase('staff', () =>
-        this.staff.sync(tenant, staff),
+        staffSync.sync(tenant, staff),
       );
       staffNeedingPin = staffResult.needsPin;
       staffPinsHashed = staffResult.pinsHashed;
@@ -165,50 +180,54 @@ export class IngestPosSnapshotService {
     // and a reservation change already brings a full snapshot with it.
     if (!realtimeOnly) {
       await timing.phase('reservations', () =>
-        this.reservations.sync(tenant, reservations),
+        reservationSync.sync(tenant, reservations, Boolean(database)),
       );
     }
-
-    // Realtime side effects. Per-record hints first, then the coarse
-    // notifications — every write above has already landed.
-    const { hadOrderLineTouch, hadTableTouch } = await timing.phase(
-      'hints',
-      () => this.broadcasts.relayPosHints(tenant, data),
-    );
-
-    const changed =
-      didSyncTables || !!orders || !!expenses || !!menu || !!staff;
-
-    this.broadcasts.announceSnapshotApplied(tenant, {
-      orders,
-      hadOrderLineTouch,
-      hadTableTouch,
-      didSyncTables,
-      releasedTables: releasedTablesFromClosedOrders,
-      changed,
-    });
 
     // Business-day tracking, then the reporting values the POS computed.
     // Order matters: the rollover wipes the floor after the table snapshot was
     // applied, and `openTablesPayable` is stored after that.
     const rollover = await timing.phase('businessDay', () =>
-      this.businessDay.trackBusinessDate(tenant, data.businessDate),
+      businessDaySync.trackBusinessDate(tenant, data.businessDate),
     );
-    if (rollover) {
-      this.broadcasts.announceDayClosed(
-        tenant,
-        rollover.date,
-        rollover.prevDate,
-      );
-    }
     await timing.phase('reporting', () =>
-      this.businessDay.persistReportingSnapshot(tenant, data, realtimeOnly),
+      businessDaySync.persistReportingSnapshot(tenant, data, realtimeOnly),
     );
 
-    // POS just pushed (so it's online): flush any held mobile changes to Hive
-    // now instead of waiting out the retry backoff. Runs after order sync so
-    // this push's stale snapshot is already held, not overwritten.
-    void this.posOutbox.kickPending(tenant);
+    const announce = async () => {
+      // Realtime side effects. Per-record hints first, then the coarse
+      // notifications — every write above has already landed.
+      const { hadOrderLineTouch, hadTableTouch } = await timing.phase(
+        'hints',
+        () => this.broadcasts.relayPosHints(tenant, data),
+      );
+
+      const changed =
+        didSyncTables || !!orders || !!expenses || !!menu || !!staff;
+
+      this.broadcasts.announceSnapshotApplied(tenant, {
+        orders,
+        hadOrderLineTouch,
+        hadTableTouch,
+        didSyncTables,
+        releasedTables: releasedTablesFromClosedOrders,
+        changed,
+      });
+
+      if (rollover) {
+        this.broadcasts.announceDayClosed(
+          tenant,
+          rollover.date,
+          rollover.prevDate,
+        );
+      }
+      // POS just pushed (so it's online): flush any held mobile changes to Hive
+      // now instead of waiting out the retry backoff. Runs after order sync so
+      // this push's stale snapshot is already held, not overwritten.
+      void this.posOutbox.kickPending(tenant);
+    };
+    if (afterCommit) afterCommit.push(announce);
+    else await announce();
 
     timing.note(
       `rows=${tables?.length ?? 0}t/${orders?.length ?? 0}o/` +

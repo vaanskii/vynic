@@ -1,3 +1,7 @@
+import {
+  lockOperationalVenue,
+  selectFirstOperationalDevice,
+} from './operational-authority';
 import type { ControlActor } from '../platform/control-actor';
 import {
   BadRequestException,
@@ -485,6 +489,7 @@ export class DeviceEnrollmentService {
       await this.credentials.mintCredentialMaterial();
 
     const device = await this.prisma.$transaction(async (tx) => {
+      await lockOperationalVenue(tx, enrollment.venueId);
       // The single-use guarantee. Two terminals racing the same code: exactly
       // one update matches, and the loser creates nothing.
       const claimed = await tx.deviceEnrollment.updateMany({
@@ -531,6 +536,9 @@ export class DeviceEnrollmentService {
         where: { id: enrollment.id },
         data: { deviceId: written.id },
       });
+      if (!existing) {
+        await selectFirstOperationalDevice(tx, enrollment.venueId, written.id);
+      }
       return written;
     });
 

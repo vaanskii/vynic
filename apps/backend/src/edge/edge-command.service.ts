@@ -1,4 +1,8 @@
 import {
+  lockOperationalVenue,
+  operationalDatabase,
+} from './operational-authority';
+import {
   BadRequestException,
   ForbiddenException,
   Injectable,
@@ -173,6 +177,29 @@ export class EdgeCommandService {
     device: EdgeDeviceContext,
     request: ClaimEdgeCommands = {},
   ): Promise<EdgeCommandEnvelope[]> {
+    return this.prisma.$transaction(async (tx) => {
+      const venue = await lockOperationalVenue(tx, device.venueId);
+      const active = await tx.device.count({
+        where: {
+          id: device.deviceId,
+          venueId: device.venueId,
+          status: 'ACTIVE',
+        },
+      });
+      if (!active) throw new ForbiddenException('Device is inactive');
+      return new EdgeCommandService(operationalDatabase(tx)).claimLocked(
+        device,
+        request,
+        venue.activeOperationalDeviceId === device.deviceId,
+      );
+    });
+  }
+
+  private async claimLocked(
+    device: EdgeDeviceContext,
+    request: ClaimEdgeCommands,
+    primary: boolean,
+  ): Promise<EdgeCommandEnvelope[]> {
     const limit = this.resolveLimit(request.limit);
     const now = new Date();
 
@@ -186,7 +213,9 @@ export class EdgeCommandService {
         venueId: device.venueId,
         status: EdgeCommandStatus.PENDING,
         availableAt: { lte: now },
-        OR: [{ deviceId: null }, { deviceId: device.deviceId }],
+        OR: primary
+          ? [{ deviceId: null }, { deviceId: device.deviceId }]
+          : [{ deviceId: device.deviceId, type: 'NOOP' }],
         ...(versions?.length ? { contractVersion: { in: versions } } : {}),
       },
       orderBy: CLAIM_ORDER,
@@ -200,10 +229,8 @@ export class EdgeCommandService {
       now.getTime() + EDGE_COMMAND_CLAIM_LEASE_SECONDS * 1000,
     );
 
-    // The status guard is what makes this safe against a second Edge polling at
-    // the same instant: whoever writes first wins, and the loser simply claims
-    // fewer rows. A multi-Device Venue under real contention would be better
-    // served by SELECT ... FOR UPDATE SKIP LOCKED; today a Venue runs one Edge.
+    // The Venue lock serializes claims with one another and with replacement.
+    // Keep the pending status predicate as a second check on the selected rows.
     await this.prisma.edgeCommand.updateMany({
       where: { id: { in: ids }, status: EdgeCommandStatus.PENDING },
       data: {
@@ -250,12 +277,28 @@ export class EdgeCommandService {
     device: EdgeDeviceContext,
     ack: AcknowledgeEdgeCommand,
   ): Promise<AcknowledgeResult> {
+    return this.prisma.$transaction(async (tx) => {
+      const venue = await lockOperationalVenue(tx, device.venueId);
+      return new EdgeCommandService(operationalDatabase(tx)).acknowledgeLocked(
+        device,
+        ack,
+        venue.activeOperationalDeviceId === device.deviceId,
+      );
+    });
+  }
+
+  private async acknowledgeLocked(
+    device: EdgeDeviceContext,
+    ack: AcknowledgeEdgeCommand,
+    primary: boolean,
+  ): Promise<AcknowledgeResult> {
     const command = await this.prisma.edgeCommand.findUnique({
       where: { id: ack.commandId },
       select: {
         id: true,
         venueId: true,
         deviceId: true,
+        type: true,
         status: true,
         claimedByDeviceId: true,
       },
@@ -265,6 +308,14 @@ export class EdgeCommandService {
     // acknowledgment must not become a way to probe which ids exist elsewhere.
     if (!command || command.venueId !== device.venueId) {
       throw new NotFoundException('Command not found');
+    }
+    if (
+      !primary &&
+      !(command.deviceId === device.deviceId && command.type === 'NOOP')
+    ) {
+      throw new ForbiddenException(
+        'Primary POS required for operational command acknowledgment',
+      );
     }
     if (
       command.claimedByDeviceId !== null &&

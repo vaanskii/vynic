@@ -77,3 +77,80 @@ describe("device lifecycle and audit", () => {
     expect(screen.getByText(/FULL/)).toBeVisible();
   });
 });
+
+describe("Primary POS containment", () => {
+  it("labels secondary devices and confirms replacement with the observed primary", async () => {
+    const primary = {
+      ...device,
+      isOperationalPrimary: true,
+      activeOperationalDeviceId: ids.device,
+    };
+    const secondary = {
+      ...device,
+      id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      displayName: "Replacement POS",
+      isOperationalPrimary: false,
+      activeOperationalDeviceId: ids.device,
+    };
+    const api = installApi((request) => {
+      if (request.url.pathname.endsWith("/devices") && request.method === "GET")
+        return { body: [primary, secondary] };
+      if (request.url.pathname.endsWith("/operational-primary"))
+        return { body: { activeOperationalDeviceId: secondary.id } };
+      return undefined;
+    });
+    const user = userEvent.setup();
+    renderPlatform(`/admin/venues/${ids.venue}/devices`);
+    expect(
+      await screen.findByText("Primary POS", { selector: "small" }),
+    ).toBeVisible();
+    expect(
+      screen.getByText("Secondary — operational sync inactive"),
+    ).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Make Primary POS" }));
+    const dialog = await screen.findByRole("dialog", {
+      name: "Make Replacement POS the Primary POS?",
+    });
+    expect(
+      within(dialog).getAllByText(/previous POS has stopped/)[0],
+    ).toBeVisible();
+    expect(
+      api.requests.filter((r) =>
+        r.url.pathname.endsWith("/operational-primary"),
+      ),
+    ).toHaveLength(0);
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: "Previous POS stopped — switch primary",
+      }),
+    );
+    await waitFor(() =>
+      expect(
+        api.requests.find((r) =>
+          r.url.pathname.endsWith("/operational-primary"),
+        )?.body,
+      ).toMatchObject({
+        deviceId: secondary.id,
+        expectedDeviceId: ids.device,
+        previousPosStopped: true,
+      }),
+    );
+  });
+  it("shows that an ambiguous venue needs a primary selection", async () => {
+    installApi((request) =>
+      request.url.pathname.endsWith("/devices")
+        ? {
+            body: [
+              {
+                ...device,
+                isOperationalPrimary: false,
+                activeOperationalDeviceId: null,
+              },
+            ],
+          }
+        : undefined,
+    );
+    renderPlatform(`/admin/venues/${ids.venue}/devices`);
+    expect(await screen.findByText(/Primary POS not selected/)).toBeVisible();
+  });
+});

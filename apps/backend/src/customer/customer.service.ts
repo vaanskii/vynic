@@ -91,6 +91,7 @@ export class CustomerService {
         id: venue.id,
         name: venue.name,
         status: venue.status,
+        activeOperationalDeviceId: venue.activeOperationalDeviceId,
         loginCode: venue.loginCode,
         timezone: venue.timezone,
         currency: venue.currency,
@@ -102,12 +103,12 @@ export class CustomerService {
       },
       features: await this.entitlements.effectiveFeatures(id),
       managers,
-      devices,
+      devices: devices.map((device) => ({ ...device, isOperationalPrimary: device.id === venue.activeOperationalDeviceId })),
       enrollments: enrollment,
       ready:
         venue.status === 'ACTIVE' &&
         managers.some((m) => m.isActive) &&
-        devices.some((d) => d.status === 'ACTIVE' && d.firstSyncAt),
+        devices.some((d) => d.id === venue.activeOperationalDeviceId && d.status === 'ACTIVE' && d.firstSyncAt),
       checklist: {
         restaurant: true,
         manager: managers.some((m) => m.isActive),
@@ -115,6 +116,7 @@ export class CustomerService {
         enrollment: enrollment.length > 0,
         connected: devices.some(
           (d) =>
+            d.id === venue.activeOperationalDeviceId &&
             d.status === 'ACTIVE' &&
             d.lastSeenAt &&
             Date.now() - d.lastSeenAt.getTime() < 120000,

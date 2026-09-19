@@ -154,6 +154,18 @@ do not manufacture a Platform principal for customer work. Device printer config
 is pulled and cached locally. Build environment selects only the deployment,
 while fixed entrypoints/native metadata select POS or Manager.
 
+## D018 — One operational Device before Go coordination
+
+**Decision:** Phase 0 selects one `Venue.activeOperationalDeviceId` to publish
+operational snapshots and claim Venue-wide commands. Enrollment is not authority.
+**Reason:** Separate Hive stores cannot safely reconcile a common Cloud mirror.
+**Implication:** Server-side fencing and replacement share a Venue transaction
+lock; ambiguous historical fleets need explicit operator selection. Preserve old
+Device identity, stop/restore locally before replacement, and hold uncertain
+command outcomes. This does not enable multiple working POS terminals. Phase 1
+builds Go foundations; Phase 2 introduces Venue-local multi-POS authority. See
+`docs/EDGE_PHASE0_PRIMARY_DEVICE.md`.
+
 ## Maintenance
 
 Add an entry only when it prevents repeated architectural debate. Update or

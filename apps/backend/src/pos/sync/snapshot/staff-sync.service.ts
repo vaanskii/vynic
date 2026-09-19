@@ -55,6 +55,10 @@ export class StaffSyncService {
     private readonly pinVault: StaffPinVault,
   ) {}
 
+  withDatabase(db: PrismaService) {
+    return new StaffSyncService(db, this.pinVault);
+  }
+
   async sync(
     tenant: TenantContext,
     staff: StaffSync[],

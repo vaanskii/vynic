@@ -393,11 +393,7 @@ describe('POST /sync/manager-data — full snapshot side-effect order', () => {
       'db:order.deleteMany',
       // 5. Expenses.
       'db:expense.create',
-      // 6. Aggregate broadcasts come AFTER all of the above.
-      'ws:order_updated',
-      'ws:table_updated',
-      'ws:data_updated',
-      // 7. Business-day tracking.
+      // 6. Business-day tracking precedes success notifications.
       'db:setting.findUnique',
       'db:setting.upsert',
       'db:setting.findUnique',
@@ -408,6 +404,9 @@ describe('POST /sync/manager-data — full snapshot side-effect order', () => {
       'db:setting.upsert', // restaurant:serviceFeeEnabled
       'db:setting.upsert', // dailySalesTotal:<date>
       'db:setting.upsert', // openTablesPayable:<date>
+      'ws:order_updated',
+      'ws:table_updated',
+      'ws:data_updated',
     ]);
   });
 
@@ -1311,15 +1310,15 @@ describe('POST /sync/manager-data — business day rollover', () => {
     expect(h.trace).toEqual([
       'db:table.count',
       'db:table.upsert', // the POS snapshot is applied first…
-      'ws:table_updated',
-      'ws:data_updated',
       'db:setting.findUnique', // currentBusinessDate
       'db:setting.upsert',
       'db:setting.findUnique', // businessDayOpenedAt:<date>
       'db:setting.upsert',
       'db:table.updateMany', // …and only then is the floor wiped
-      'ws:day_closed',
       'db:setting.upsert', // openTablesPayable:<date>
+      'ws:table_updated',
+      'ws:data_updated',
+      'ws:day_closed',
     ]);
 
     const wipe = h.calls.find((c) => c.key === 'table.updateMany');

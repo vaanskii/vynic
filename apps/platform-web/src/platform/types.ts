@@ -94,6 +94,8 @@ export interface VenueDomain {
 }
 
 export interface Device {
+  isOperationalPrimary: boolean;
+  activeOperationalDeviceId: string | null;
   id: string;
   venueId: string;
   installationId: string;

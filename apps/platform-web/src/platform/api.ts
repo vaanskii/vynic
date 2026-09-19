@@ -232,6 +232,24 @@ export const platformApi = {
       `/platform/venues/${venueId}/enrollments/${enrollmentId}`,
       { method: "DELETE" },
     ),
+  selectOperationalPrimary: (
+    venueId: string,
+    deviceId: string,
+    expectedDeviceId: string | null,
+  ) =>
+    request<{ activeOperationalDeviceId: string }>(
+      `/platform/venues/${venueId}/operational-primary`,
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          deviceId,
+          expectedDeviceId,
+          previousPosStopped: true,
+          reason:
+            "Operator confirmed previous POS stopped and replacement data verified",
+        }),
+      },
+    ),
   devices: (venueId: string) =>
     request<Device[]>(`/platform/venues/${venueId}/devices`),
   createDevice: (

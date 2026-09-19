@@ -1134,6 +1134,8 @@ model Organization {
 
 /// One physical restaurant/location owned by an Organization.
 model Venue {
+  activeOperationalDeviceId String? @unique
+  activeOperationalDevice Device? @relation("OperationalPrimary", fields: [activeOperationalDeviceId], references: [id], onDelete: SetNull)
   loginCode                 String                     @unique @default(dbgenerated("('venue-'::text || substr(md5((random())::text), 1, 12))"))
   id                        String                     @id @default(uuid())
   organizationId            String
@@ -1198,6 +1200,7 @@ model Venue {
 /// The raw credential secret is issued once; only its Argon2id verifier is
 /// persisted. Its Venue is the authoritative tenant boundary for POS auth.
 model Device {
+  operationalVenue Venue? @relation("OperationalPrimary")
   id             String       @id @default(uuid())
   venueId        String
   installationId String       @unique

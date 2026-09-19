@@ -67,6 +67,7 @@ export class PosConnectionRegistry {
     tenant: TenantContext,
     url?: string,
     key?: string,
+    database: PrismaService = this.prisma,
   ): Promise<void> {
     if (url && url.trim().length > 0) {
       const trimmedUrl = url.trim();
@@ -77,7 +78,7 @@ export class PosConnectionRegistry {
         );
       } else {
         this.posCallback.setCallbackUrl(trimmedUrl);
-        await (this.prisma as any).setting.upsert({
+        await (database as any).setting.upsert({
           where: {
             venueId_key: {
               venueId: tenant.venueId,
@@ -97,7 +98,7 @@ export class PosConnectionRegistry {
     if (key && key.trim().length > 0) {
       const trimmedKey = key.trim();
       this.posCallback.setConnectionKey(trimmedKey);
-      await (this.prisma as any).setting.upsert({
+      await (database as any).setting.upsert({
         where: {
           venueId_key: {
             venueId: tenant.venueId,

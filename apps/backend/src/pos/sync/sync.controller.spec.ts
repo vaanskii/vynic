@@ -18,6 +18,14 @@ jest.mock('../../auth/roles.guard', () => ({
   RolesGuard: class RolesGuard {},
 }));
 
+jest.mock('../../edge/operational-authority', () => ({
+  withOperationalAuthority: (
+    db: unknown,
+    _auth: unknown,
+    work: (db: unknown) => unknown,
+  ) => work(db),
+}));
+
 import { RequestMethod } from '@nestjs/common';
 import { SyncController } from './sync.controller';
 
@@ -60,14 +68,23 @@ function makeController(): Stubs {
     Promise.resolve({ success: true, count: 2 }),
   );
   const restore = jest.fn(() => Promise.resolve());
-  const markSync = jest.fn().mockResolvedValue({count: 1});
+  const markSync = jest.fn().mockResolvedValue({ count: 1 });
   const controller = new SyncController(
-    {device: {updateMany: markSync}} as unknown as CtorArgs[0],
+    { device: { updateMany: markSync } } as unknown as CtorArgs[0],
     { execute } as unknown as CtorArgs[1],
-    { ingestReports, ingestEventLogs } as unknown as CtorArgs[2],
+    {
+      withDatabase: () => ({ ingestReports, ingestEventLogs }),
+    } as unknown as CtorArgs[2],
     { restore } as unknown as CtorArgs[3],
   );
-  return { controller, markSync, execute, ingestReports, ingestEventLogs, restore };
+  return {
+    controller,
+    markSync,
+    execute,
+    ingestReports,
+    ingestEventLogs,
+    restore,
+  };
 }
 
 function routeOf(method: keyof SyncController): {
@@ -164,7 +181,12 @@ describe('SyncController — delegation', () => {
     await controller.syncManagerData(body, authContext);
 
     expect(execute).toHaveBeenCalledTimes(1);
-    expect(execute).toHaveBeenCalledWith(body, authContext);
+    expect(execute).toHaveBeenCalledWith(
+      body,
+      authContext,
+      expect.anything(),
+      expect.any(Array),
+    );
     expect((execute.mock.calls as unknown[][])[0][0]).toBe(body);
   });
 
@@ -200,7 +222,12 @@ describe('SyncController — delegation', () => {
 
     await controller.syncManagerData(body, authContext);
 
-    expect(execute).toHaveBeenCalledWith(body, authContext);
+    expect(execute).toHaveBeenCalledWith(
+      body,
+      authContext,
+      expect.anything(),
+      expect.any(Array),
+    );
     expect((execute.mock.calls as unknown[][])[0][1]).not.toBe(body);
     expect((execute.mock.calls as unknown[][])[0][1]).toMatchObject({
       venueId: 'verified-venue',
@@ -254,19 +281,26 @@ describe('SyncController — delegation', () => {
   });
 });
 
-
 describe('first complete Device sync readiness', () => {
   it('records only the authenticated Device after full success', async () => {
-    const {controller, markSync} = makeController();
-    await controller.syncManagerData({venueId: 'forged'} as any, AUTH_CONTEXT);
-    expect(markSync).toHaveBeenCalledWith({where: {id: 'device-a', venueId: 'venue-a', firstSyncAt: null}, data: {firstSyncAt: expect.any(Date)}});
+    const { controller, markSync } = makeController();
+    await controller.syncManagerData(
+      { venueId: 'forged' } as any,
+      AUTH_CONTEXT,
+    );
+    expect(markSync).toHaveBeenCalledWith({
+      where: { id: 'device-a', venueId: 'venue-a', firstSyncAt: null },
+      data: { firstSyncAt: expect.any(Date) },
+    });
   });
   it('does not mark realtime snapshots or failed ingestion ready', async () => {
-    const {controller, markSync, execute} = makeController();
-    await controller.syncManagerData({realtimeOnly: true}, AUTH_CONTEXT);
+    const { controller, markSync, execute } = makeController();
+    await controller.syncManagerData({ realtimeOnly: true }, AUTH_CONTEXT);
     expect(markSync).not.toHaveBeenCalled();
     execute.mockRejectedValueOnce(new Error('snapshot failed'));
-    await expect(controller.syncManagerData({}, AUTH_CONTEXT)).rejects.toThrow('snapshot failed');
+    await expect(controller.syncManagerData({}, AUTH_CONTEXT)).rejects.toThrow(
+      'snapshot failed',
+    );
     expect(markSync).not.toHaveBeenCalled();
   });
 });

@@ -37,7 +37,18 @@ function makeService(): {
     findUnique: jest.fn(),
     update: jest.fn(),
   };
-  const prisma = { device } as unknown as PrismaService;
+  const tx = {
+    device: { ...device, count: jest.fn().mockResolvedValue(1) },
+    $queryRaw: jest.fn(),
+    venue: {
+      findUnique: jest.fn().mockResolvedValue({ id: VENUE_ID }),
+      updateMany: jest.fn(),
+    },
+  };
+  const prisma = {
+    device,
+    $transaction: (work: any) => work(tx),
+  } as unknown as PrismaService;
   return { service: new DeviceCredentialService(prisma), device };
 }
 

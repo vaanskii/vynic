@@ -1,3 +1,4 @@
+import { withOperationalAuthority } from '../../edge/operational-authority';
 import {
   Body,
   Controller,
@@ -56,17 +57,31 @@ export class SyncController implements OnModuleInit {
     @Body() data: SyncPayload,
     @PosAuth() authContext: PosAuthContext,
   ) {
-    const result = await this.ingestSnapshot.execute(data, authContext);
-    if (result.success && !data.realtimeOnly && authContext.deviceId) {
-      await this.prisma.device.updateMany({
-        where: {
-          id: authContext.deviceId,
-          venueId: authContext.venueId,
-          firstSyncAt: null,
-        },
-        data: { firstSyncAt: new Date() },
-      });
-    }
+    const afterCommit: Array<() => Promise<void>> = [];
+    const result = await withOperationalAuthority(
+      this.prisma,
+      authContext,
+      async (db) => {
+        const result = await this.ingestSnapshot.execute(
+          data,
+          authContext,
+          db,
+          afterCommit,
+        );
+        if (result.success && !data.realtimeOnly && authContext.deviceId) {
+          await db.device.updateMany({
+            where: {
+              id: authContext.deviceId,
+              venueId: authContext.venueId,
+              firstSyncAt: null,
+            },
+            data: { firstSyncAt: new Date() },
+          });
+        }
+        return result;
+      },
+    );
+    for (const notify of afterCommit) await notify();
     return result;
   }
 
@@ -81,7 +96,17 @@ export class SyncController implements OnModuleInit {
     @Body() body: { reports?: any[]; fullSync?: boolean },
     @PosAuth() authContext: PosAuthContext,
   ) {
-    return this.ingestAudit.ingestReports(body, authContext);
+    const afterCommit: Array<() => Promise<void>> = [];
+    const result = await withOperationalAuthority(
+      this.prisma,
+      authContext,
+      (db) =>
+        this.ingestAudit
+          .withDatabase(db, afterCommit)
+          .ingestReports(body, authContext),
+    );
+    for (const notify of afterCommit) await notify();
+    return result;
   }
 
   /**
@@ -95,6 +120,16 @@ export class SyncController implements OnModuleInit {
     @Body() body: { logs?: AuditEventLogSync[] },
     @PosAuth() authContext: PosAuthContext,
   ) {
-    return this.ingestAudit.ingestEventLogs(body, authContext);
+    const afterCommit: Array<() => Promise<void>> = [];
+    const result = await withOperationalAuthority(
+      this.prisma,
+      authContext,
+      (db) =>
+        this.ingestAudit
+          .withDatabase(db, afterCommit)
+          .ingestEventLogs(body, authContext),
+    );
+    for (const notify of afterCommit) await notify();
+    return result;
   }
 }

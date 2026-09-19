@@ -118,6 +118,16 @@ export class IngestAuditReportsService {
     private readonly gateway: MonitoringGateway,
   ) {}
 
+  private atomic = false;
+  private afterCommit?: Array<() => Promise<void>>;
+
+  withDatabase(db: PrismaService, afterCommit: Array<() => Promise<void>>) {
+    const service = new IngestAuditReportsService(db, this.gateway);
+    service.atomic = true;
+    service.afterCommit = afterCommit;
+    return service;
+  }
+
   async ingestReports(body: IngestAuditReportsBody, tenant: TenantContext) {
     const timing = new SyncTimer();
     const reports = Array.isArray(body?.reports) ? body.reports : [];
@@ -164,6 +174,7 @@ export class IngestAuditReportsService {
           // absent, so the POS keeps it dirty and offers it again.
           acknowledged.push({ reportId, revision });
         } catch (error) {
+          if (this.atomic) throw error;
           console.warn(
             `[SyncAudit] Report ${reportId} failed: ${(error as Error).message}`,
           );
@@ -176,9 +187,13 @@ export class IngestAuditReportsService {
     );
 
     if (upserted > 0 && !isPosAuditBroadcastSuppressed(tenant)) {
-      this.gateway.broadcastUpdate(tenant, 'audit_updated', {
-        count: upserted,
-      });
+      const notify = async () => {
+        this.gateway.broadcastUpdate(tenant, 'audit_updated', {
+          count: upserted,
+        });
+      };
+      if (this.afterCommit) this.afterCommit.push(notify);
+      else await notify();
     }
 
     timing.note(`written=${upserted} unchanged=${unchanged}`);
@@ -387,6 +402,7 @@ export class IngestAuditReportsService {
         }
         count++;
       } catch (e) {
+        if (this.atomic) throw e;
         // Log error but continue with other logs
         console.warn(
           `[Sync] Error upserting audit log ${log.id}:`,

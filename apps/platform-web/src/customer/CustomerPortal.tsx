@@ -542,9 +542,11 @@ export function CustomerPortal() {
                       კოდის გაუქმება · {e.codeSelector}
                     </button>
                   ))}
+                <p>რამდენიმე POS-ის ერთობლივი მუშაობა ჯერ ჩართული არ არის. მხოლოდ მთავარი POS აგზავნის რესტორნის ოპერაციებს. მთავარი POS-ის შესაცვლელად მიმართეთ Vynic-ის მხარდაჭერას.</p>
+                {!venue.venue.activeOperationalDeviceId && venue.devices.length > 0 && <p role="status">მთავარი POS არ არის არჩეული.</p>}
                 {venue.devices.map((d: any) => (
                   <p key={d.id}>
-                    {d.displayName} · {d.status} ·{" "}
+                    {d.displayName} · {d.isOperationalPrimary ? "მთავარი POS" : "მეორადი — ოპერაციების სინქრონიზაცია გამორთულია"} · {d.status} ·{" "}
                     {d.lastSeenAt
                       ? `ბოლო კავშირი: ${new Date(d.lastSeenAt).toLocaleString("ka-GE")}`
                       : "კავშირის მოლოდინში"}

@@ -105,6 +105,8 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## Edge Transport — Backend
 
+- Phase 0 primary authority/locking/replacement: `apps/backend/src/edge/operational-authority.ts`; HTTP proof: `operational-authority.integration.spec.ts`; policy and migration: `docs/EDGE_PHASE0_PRIMARY_DEVICE.md`.
+
 - Module/routes/guard: `apps/backend/src/edge/`
 - Queue lifecycle: `apps/backend/src/edge/edge-command.service.ts`
 - Cloud operation dispatcher: `apps/backend/src/pos/pos-command-dispatcher.service.ts`

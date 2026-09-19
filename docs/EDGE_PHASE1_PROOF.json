@@ -1,0 +1,35 @@
+{
+  "checks": [
+    "Nest Platform authentication + Cloud-signed Venue/installation binding",
+    "Terminal A and B: distinct persisted identities + concurrent authenticated TLS streams",
+    "Exact pairing retry is idempotent",
+    "Consumed ticket rejects different terminal replay",
+    "Invalid terminal credential rejected",
+    "Wrong Venue rejected",
+    "Protocol major mismatch rejected",
+    "Second Edge process cannot open the same store",
+    "SIGKILL with populated WAL: stable installation/pairing/session + authenticated reconnect",
+    "Generated Dart client pairs/handshakes with Go over TLS using its own identity",
+    "Dart rejects a different certificate pin; no insecure TLS fallback",
+    "Graceful shutdown/startup and terminal reconnect",
+    "Three restart-stable terminals/sessions; replay creates no duplicate metadata",
+    "Newer schema, corruption and changed migration ledger refuse startup",
+    "Durable revocation rejects A while B still authenticates",
+    "Cloud registration revocation blocks new bootstrap grants"
+  ],
+  "installationId": "ddd2425b-2806-40c2-921a-fd5df6c22cbe",
+  "venueId": "ff54ab7d-a509-4006-96ec-bbff6a58a6e4",
+  "result": "PASS",
+  "terminals": {
+    "A": "f7d073d6-03f6-458e-9f8b-d4ff6286c5de",
+    "B": "11376e38-bc39-44f3-aee6-2ffadfaeea99",
+    "Dart": "135299e6-2170-4c85-8b98-9a2a862a7d45"
+  },
+  "validatedOn": "macOS arm64",
+  "toolchain": {
+    "Go": "1.27.1",
+    "Dart": "3.12.1",
+    "SQLiteGoModule": "modernc.org/sqlite v1.59.0",
+    "protoc": "36.2"
+  }
+}

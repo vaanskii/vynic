@@ -166,6 +166,18 @@ command outcomes. This does not enable multiple working POS terminals. Phase 1
 builds Go foundations; Phase 2 introduces Venue-local multi-POS authority. See
 `docs/EDGE_PHASE0_PRIMARY_DEVICE.md`.
 
+## D019 — Foundation Edge identity grants no operational authority
+
+**Decision:** Go installations are separate from POS Devices and carry an immutable
+Cloud-signed Venue binding. Phase 1 admits authenticated terminals for infrastructure
+only; it neither selects an active Edge nor changes the Phase 0 Primary POS.
+**Reason:** Transport, enrollment and durable local storage are prerequisites, not
+proof that multiple independent Hive stores can safely write restaurant state.
+**Implication:** TLS pairing, version/schema checks, metadata and crash recovery can
+ship separately. Phase 2 requires explicit fenced authority, coordinated mutation
+ACK/replay and operator handover proof. No automatic failover or business-domain
+rewrite in Go. See `docs/EDGE_PHASE1_FOUNDATION.md`.
+
 ## Maintenance
 
 Add an entry only when it prevents repeated architectural debate. Update or

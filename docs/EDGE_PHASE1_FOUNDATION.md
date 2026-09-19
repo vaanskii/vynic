@@ -81,8 +81,8 @@ not a silently reconstructed identity. No automatic salvage or leader failover.
 
 Foundation replacement registers a new installation with separate local state
 and terminal credentials, revokes the old Cloud registration, stops the old host,
-and explicitly pairs terminals again. Cloud revocation prevents new grants; it
-cannot remotely stop an offline foundation. Phase 1 carries no business state to
+and explicitly pairs terminals again. Cloud revocation prevents new grants; already-issued grants remain usable until
+their ten-minute expiry, and revocation cannot remotely stop an offline foundation. Phase 1 carries no business state to
 merge. It neither moves the Primary POS pointer nor copies Hive.
 
 Phase 2 must prove an explicit active Edge/epoch admission model, coordinated

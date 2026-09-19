@@ -1,0 +1,8 @@
+name: edge_terminal_sim
+publish_to: none
+environment:
+  sdk: '>=3.8.0 <4.0.0'
+dependencies:
+  grpc: 5.1.0
+  vynic_edge_contracts:
+    path: ../../../../packages/contracts/generated/edge_dart

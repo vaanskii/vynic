@@ -103,6 +103,15 @@ the implementation and nearby tests. Do not treat this as architecture truth.
   `apps/backend/src/auth/staff-pin-vault.service.spec.ts`,
   `apps/backend/src/mobile/services/mobile-users.service.spec.ts`
 
+## Go Edge Foundation — Phase 1
+
+- Contracts/boundaries: `docs/EDGE_PHASE1_FOUNDATION.md`; development/recovery: `apps/edge/README.md`.
+- Runtime/admin CLI: `apps/edge/cmd/edge`; terminal simulator: `cmd/terminal-sim`; isolated Dart: `tool/dart_sim`.
+- SQLite identity/migrations/recovery: `apps/edge/internal/store`; TLS gRPC: `internal/server`.
+- Mac process proof: `apps/edge/tool/mac-dev.sh`, `tool/prove.py`.
+- Separate Cloud registry/provisioning: `apps/backend/src/edge-foundation/edge-foundation.ts`; real HTTP/PG tests beside it.
+- Canonical proto: `packages/contracts/proto/vynic/edge/v1/foundation.proto`; Go/Dart generation: `packages/contracts/scripts/generate-edge.sh`.
+
 ## Edge Transport — Backend
 
 - Phase 0 primary authority/locking/replacement: `apps/backend/src/edge/operational-authority.ts`; HTTP proof: `operational-authority.integration.spec.ts`; policy and migration: `docs/EDGE_PHASE0_PRIMARY_DEVICE.md`.

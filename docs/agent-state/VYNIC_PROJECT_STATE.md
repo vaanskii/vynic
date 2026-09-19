@@ -18,8 +18,10 @@ current transport status.
   authenticated Platform Admin under `/admin`.
 - `apps/venue-web/` is the bespoke Vankisi customer website. It is not the
   generic multi-Venue SaaS website.
-- `packages/contracts/` owns the generated Cloud/Edge command and table-identity
-  wire contracts.
+- `packages/contracts/` owns the generated Cloud/Edge command, table-identity
+  and Go/Dart foundation protobuf wire contracts.
+- `apps/edge/` is the non-authoritative Go foundation; it exposes no restaurant
+  mutations and is not connected to production Flutter business operation.
 
 ## Current Architecture
 
@@ -41,8 +43,11 @@ current transport status.
 
 ## Current Phase
 
-- Phase 0 primary-Device containment is implemented; Go Edge is not introduced.
-  See `docs/EDGE_PHASE0_PRIMARY_DEVICE.md` for fencing, replacement and rollout.
+- Edge Phase 1 infrastructure is implemented in `apps/edge`: separate Cloud-bound
+  installation identity, TLS gRPC terminal pairing/status, SQLite/WAL and Mac
+  simulator proof. It is FOUNDATION_ONLY: Phase 0 Primary POS fencing remains
+  the production authority. See `docs/EDGE_PHASE1_FOUNDATION.md` and
+  `docs/EDGE_PHASE0_PRIMARY_DEVICE.md`; Phase 2 cutover is not implemented.
 - The latest completed sequence covers Money Integrity 1A/1B, POS enrollment
   1C, incremental audit sync, Edge Step 6C, Menu Identity Phases 4.5/4.6, and
   the Phase 5 Cloud Sale Ledger/Manager financial experience.
@@ -680,15 +685,15 @@ current transport status.
   reservation holds, generic SaaS venue web, SaaS billing, and per-Venue
   payment credentials.
 - Physical printer-test command, lower-latency Edge long polling, OS
-  keychain credential storage, Go Edge foundation (Phase 1) and Venue-local
-  multi-POS authority (Phase 2).
+  keychain credential storage and Venue-local multi-POS authority (Phase 2).
 - Legacy shared sync key/callback removal after rollout evidence permits it.
 
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260922120000_operational_primary`.
+  `20260923120000_edge_foundation`.
 - Immediately preceding state migrations:
+  `20260922120000_operational_primary`,
   `20260919120000_customer_onboarding_runtime`,
   `20260918120000_saas_phase2_control_plane`,
   `20260917120000_receiving_self_purchase`,

@@ -1,0 +1,9 @@
+/bin/
+/.local/
+*.db
+*.db-wal
+*.db-shm
+*.lock
+!pubspec.lock
+.dart_tool/
+__pycache__/

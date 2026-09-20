@@ -105,6 +105,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## Windows POS updater
 
+- First-install/repair/uninstall: `apps/edge/cmd/setup`, `apps/edge/internal/setup`; release build: `apps/edge/tool/build-setup.py`; offline publisher: `apps/edge/cmd/sign-bootstrap`; contract/qualification: `docs/WINDOWS_SETUP.md`.
 - Architecture/provisioning/signature and recovery contract: `docs/POS_WINDOWS_UPDATER.md`.
 - Go updater/state/Windows process adapter: `apps/edge/internal/updater/`; opt-in host entrypoint: `apps/edge/cmd/edge`; offline signing: `apps/edge/cmd/sign-pos-release`.
 - Single readiness gate/Hive admission and POS client: `apps/operations/lib/core/services/pos/update/`; UI: `apps/operations/lib/apps/windows_pos/widgets/update/pos_update_ui.dart`, mounted in POS startup and Settings only.

@@ -1,8 +1,9 @@
 # Windows POS updater — first production-oriented implementation
 
 The updater is implemented, with macOS simulation evidence. It is **not deployed
-or certified on Windows**. It requires an explicitly provisioned host and trusted
-release channel; no production signing keys/feed are invented or enabled.
+or certified on Windows**. Hosts can now be provisioned by `VynicSetup.exe` (see `WINDOWS_SETUP.md`).
+A real trusted release channel and Windows qualification remain required; no
+production signing keys/feed are invented or enabled.
 
 ## Ownership and boundaries
 
@@ -87,12 +88,14 @@ release validation, separate from the portable manifest signature.
 
 Use one interactive Windows account for POS and the current Go Edge process.
 Starting an interactive POS from a Windows LocalSystem/session-0 service is not
-implemented. A per-user startup task can run Edge; its long-running instance is
-not replaced by this updater.
+implemented. VynicSetup registers a per-user logon supervisor for Edge; its long-running
+instance is not replaced by this updater. The local `edge host` mode supports an
+unbound first install without opening LAN gRPC or changing Venue authority.
 
-Provision the first **updater-aware** POS baseline manually through the trusted
-initial distribution. Existing older POS executables without the readiness
-barrier cannot be remotely opted in. Keep existing product identity and the
+Provision the first **updater-aware** POS baseline with the custom
+`VynicSetup.exe`; its signed metadata/download/repair contract and per-user layout
+are in `docs/WINDOWS_SETUP.md`. Older POS executables without the readiness
+barrier still require a controlled migration. Keep existing product identity and the
 host's existing application-support Hive path. Do not copy data into release
 folders. Provision a complete baseline at:
 
@@ -114,11 +117,13 @@ The normal product-specific build preparation remains in `tool/product.py`.
 Build POS with the intended version/build number and preserve `ge.vynic.pos` and
 its existing support-directory identity. Do not use a Manager bundle.
 
-Provision a config outside the repository (illustrative values, not usable keys):
+VynicSetup performs initial config/ACL/startup provisioning automatically. The
+following example describes the existing config contract for support/manual
+installations (illustrative values, not usable keys):
 
 ```json
 {
-  "root": "C:\\Vynic\\POS",
+  "root": "C:\\Users\\POS\\AppData\\Local\\Vynic\\pos",
   "feed": "https://releases.example.invalid/pos/stable/manifest.json",
   "channel": "stable",
   "initialVersion": "1.8.0",
@@ -141,17 +146,19 @@ POS necessarily reads its host IPC credential, which is not a release-signing
 secret. Local administrator/same-account malware is outside this credential's
 security boundary. Never expose this port on a LAN proxy.
 
-Start the existing bound foundation with:
+For an already Cloud-bound manual installation, start the foundation with:
 
 ```text
 edge.exe serve --data C:\Vynic\Edge --pos-updater-config C:\Vynic\pos-updater.json
 ```
 
 The initial POS process needs `VYNIC_POS_UPDATER_CONFIG` set to that same config.
-Go-launched children inherit it automatically. Point the Windows POS shortcut to
+Go-launched children inherit it automatically. For manual bound installations, point the Windows POS shortcut to
 `edge.exe launch-pos --pos-updater-config C:\Vynic\pos-updater.json`; it requests
 launch from the already-running Edge and resolves the current release from the
-durable updater DB. It does not run a second Edge daemon or pin the old binary.
+durable updater DB. It does not run a second Edge daemon or pin the old binary. VynicSetup-created
+shortcuts instead use its stable `--launch` command, which starts the local host
+when necessary before requesting that same updater launch.
 Startup shortcuts must not independently launch a release during activation.
 
 `initialVersion`/`initialRelease` seed a new updater DB only. Never delete/restore
@@ -297,8 +304,9 @@ Windows cross-build do not establish those properties.
 
 ## Edge self-update boundary
 
-No Go replacement, bootstrap/helper, Windows service replacement, automatic
-installation or forced restart exists. Edge self-update needs a separately
+VynicSetup now covers first install, same-version repair and uninstall. No Go
+self-replacement/helper, Windows service replacement, automatic installation or
+forced POS restart exists. Edge self-update needs a separately
 reviewed privileged lifecycle, signed Edge releases, SQLite compatibility,
 operational fencing/intent drain, host recovery and helper/service rollback proof.
 It is not enabled by this POS updater or by Phase 2A readiness.

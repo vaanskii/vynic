@@ -50,8 +50,11 @@ current transport status.
   Durable open Orders/Tables and Cloud outboxes do not block; uncertain intents,
   projection recovery and in-flight payment/close/write operations do. Manager,
   Phase 0 fencing and Phase 2A production authority remain unchanged. macOS
-  simulations pass; host provisioning, real signing/channel setup and Windows
-  release qualification are still required. See `docs/POS_WINDOWS_UPDATER.md`.
+  simulations pass. `VynicSetup.exe` provisions a per-user Windows host from
+  signed Edge/POS bundles, with restricted ACLs, local-only Edge host startup,
+  updater-aware shortcuts and data-preserving repair/uninstall. Real signing/feed
+  publication and Windows qualification remain required. See
+  `docs/POS_WINDOWS_UPDATER.md` and `docs/WINDOWS_SETUP.md`.
 
 - Edge Phase 2A adds SHADOW Order/Table revisions, request idempotency, a durable
   event sequence, tombstones and replay/snapshots over Phase 1 TLS pairing.

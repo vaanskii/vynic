@@ -1,0 +1,61 @@
+{
+  "recordedAt": "2026-09-20T11:18:18.941452+00:00",
+  "host": "macOS-27.0-arm64-arm-64bit",
+  "go": "go version go1.27.1 darwin/arm64",
+  "command": "go test -race -json ./... (apps/edge)",
+  "topLevelPassed": 44,
+  "passedIncludingSubtests": 117,
+  "packages": [
+    "vynic.local/edge/internal/server",
+    "vynic.local/edge/internal/store",
+    "vynic.local/edge/cmd/sign-pos-release",
+    "vynic.local/edge/cmd/sign-bootstrap",
+    "vynic.local/edge/cmd/setup",
+    "vynic.local/edge/cmd/edge",
+    "vynic.local/edge/internal/setup",
+    "vynic.local/edge/internal/updater"
+  ],
+  "setupTests": [
+    "TestFirstInstallProvisioningAndRetry",
+    "TestSignaturePolicyMatrix",
+    "TestCorruptAndInterruptedDownloadRetry",
+    "TestFailedRepairPreservesWorkingReleaseAndData",
+    "TestInterruptedSwapRecovery",
+    "TestUninstallRetainsDataAndRepairReusesState",
+    "TestRepairNeverChangesEdgeVersion",
+    "TestRepairActivePOSPreservesUpdaterHighWater",
+    "TestRepairFailsClosedForMissingCorruptStateAndBusyHost",
+    "TestUnsafeBundleAndSymlink",
+    "TestNoInsecureRedirectAndBoundedMetadata",
+    "TestRepairRestoresConfigurationWithoutRotatingCredentials",
+    "TestIncompleteFlutterBundleRefused",
+    "TestUninstallBlocksUnresolvedUpdaterDecision",
+    "TestSingleSetupOwner",
+    "TestInterruptedRepairRestoresOldBinaryEvenOffline"
+  ],
+  "windowsFixture": {
+    "machine": "windows/amd64",
+    "subsystem": "GUI",
+    "executionLevel": "asInvoker",
+    "bytes": 17583616,
+    "authenticode": "separate signing/Windows verification required",
+    "sha256": "65159e0e137505affbb460addac0de9d0d123fc7c236ce43dd74cb508dda5397",
+    "configuration": "example.invalid endpoint, synthetic public key; not an installable production distribution"
+  },
+  "additionalChecks": [
+    "go vet ./... (darwin/arm64)",
+    "GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go vet ./...",
+    "Windows amd64 Edge cross-build",
+    "go mod tidy -diff (no changes)",
+    "Python build-tool compilation",
+    "PE GUI subsystem/asInvoker resource validation"
+  ],
+  "nativeWindowsExecution": false,
+  "downloadedFixtureBinariesExecuted": false,
+  "notes": [
+    "Local HTTPS uses the fixture CA, never TLS verification bypass.",
+    "The interrupted-swap test runs a real child process that exits with code 91 after journaled binary replacement.",
+    "Existing updater/SQLite/foundation/shadow tests remain in the full race suite.",
+    "No production filesystem, signing key, feed, service or POS process was changed."
+  ]
+}

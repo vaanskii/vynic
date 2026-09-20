@@ -196,3 +196,17 @@ release signing, readiness, recovery and Windows qualification requirements:
 
 macOS Hive process proof: `python3 tool/prove-pos-updater.py --dart <dart>`.
 Go tests include HTTPS download and actual child-process health/rollback simulation.
+
+## Windows first install
+
+`cmd/setup` builds the small `VynicSetup.exe` bootstrapper. It provisions a
+same-user Windows host from signed Edge/POS downloads, with ACLs, logon startup,
+updater-aware shortcuts and data-preserving repair/uninstall. `edge host` runs
+only local POS updater IPC before any Venue binding; `serve` remains bound-only.
+No Edge self-update or business-authority change is enabled.
+
+Build with `tool/build-setup.py --distribution <public-config.json> --out <VynicSetup.exe>`;
+the tool embeds the required unelevated GUI manifest. Publish metadata with
+`cmd/sign-bootstrap`, reusing the POS Ed25519 envelope/trust implementation.
+See [Windows setup](../../docs/WINDOWS_SETUP.md) for release inputs, layout,
+repair endpoints and mandatory real-Windows qualification.

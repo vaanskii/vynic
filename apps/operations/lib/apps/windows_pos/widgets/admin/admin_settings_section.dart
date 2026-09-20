@@ -1,3 +1,4 @@
+import 'package:vynic/apps/windows_pos/widgets/pos_quit_action.dart';
 import 'package:vynic/apps/windows_pos/widgets/update/pos_update_ui.dart';
 import 'dart:io' show Platform;
 
@@ -131,6 +132,8 @@ class AdminSettingsSection extends StatelessWidget {
                     _buildStatusStrip(),
                     const SizedBox(height: 16),
                     const PosUpdateSettings(),
+                    const SizedBox(height: 12),
+                    const PosQuitAction(),
                     const SizedBox(height: 16),
                     _buildSettingsHeader(
                       icon: Icons.storefront,

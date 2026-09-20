@@ -44,6 +44,14 @@ current transport status.
 
 ## Current Phase
 
+- Windows POS uses native borderless fullscreen with monitor/DPI refitting;
+  Manager keeps its normal window. Settings and Alt+F4 share confirmed clean Quit:
+  the existing readiness barrier excludes active transactions/startup probation,
+  POS workers stop and local journals/Hive flush before only POS exits. Durable
+  open Orders/Tables and Cloud backlog remain recoverable and do not block Quit.
+  Next POS publication is 1.0.5 / signed release 6; see
+  `docs/WINDOWS_POS_FULLSCREEN_QUIT.md`.
+
 - Windows POS has an opt-in Go Edge updater: signed Ed25519 release manifests,
   silent verified ZIP staging, explicit Georgian Update Now/Later and Settings,
   one readiness/admission barrier, startup health and binary-only rollback.

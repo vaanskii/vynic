@@ -142,6 +142,20 @@ class EdgeTransportService {
     await EdgeCommandJournal.close();
   }
 
+  /// Final process shutdown, after the readiness barrier excludes new work.
+  /// Unlike stop(), this must not acquire an operational admission token.
+  Future<void> shutdown() async {
+    _running = false;
+    _timer?.cancel();
+    _timer = null;
+    _client.close();
+    while (_polling) {
+      await Future<void>.delayed(const Duration(milliseconds: 25));
+    }
+    await EdgeCommandJournal.flushForUpdate();
+    await EdgeCommandJournal.close();
+  }
+
   /// One claim → execute → acknowledge cycle.
   ///
   /// Re-entrant calls are refused rather than queued: two claims in flight would
@@ -316,6 +330,10 @@ class EdgeTransportService {
     if (!_running) return;
     _timer = Timer(delay, () async {
       if (!_running) return;
+      if (UpdateReadiness.enabled && UpdateReadiness.frozen) {
+        _schedule(idleInterval);
+        return;
+      }
       final summary = await pollOnce();
       _schedule(_nextDelay(summary));
     });

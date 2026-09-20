@@ -87,10 +87,12 @@ class InventoryProjectionSyncService {
   Timer? _timer;
   bool _running = false;
   bool _syncing = false;
+  bool _shuttingDown = false;
 
   bool get isRunning => _running;
 
   Future<void> start() async {
+    if (_shuttingDown) return;
     if (_running) return;
     if (!EdgeDeviceCredentialStore.isLoaded) {
       await EdgeDeviceCredentialStore.load();
@@ -102,7 +104,7 @@ class InventoryProjectionSyncService {
   }
 
   Future<EdgeTransportOutcome> syncOnce() async {
-    if (_syncing) return EdgeTransportOutcome.ok;
+    if (_syncing || _shuttingDown) return EdgeTransportOutcome.ok;
     _syncing = true;
     try {
       final response = await _client.fetch();
@@ -115,8 +117,11 @@ class InventoryProjectionSyncService {
       debugPrint('[Inventory] Projection refresh failed: $error');
       return EdgeTransportOutcome.serverError;
     } finally {
-      _syncing = false;
-      await _effects.syncOnce();
+      try {
+        if (!_shuttingDown) await _effects.syncOnce();
+      } finally {
+        _syncing = false;
+      }
     }
   }
 
@@ -124,5 +129,15 @@ class InventoryProjectionSyncService {
     _running = false;
     _timer?.cancel();
     _timer = null;
+  }
+
+  Future<void> shutdown() async {
+    _shuttingDown = true;
+    await stop();
+    _client.close();
+    _effects.close();
+    while (_syncing) {
+      await Future<void>.delayed(const Duration(milliseconds: 25));
+    }
   }
 }

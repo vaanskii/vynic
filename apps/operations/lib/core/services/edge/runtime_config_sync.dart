@@ -13,7 +13,9 @@ class RuntimeConfigSync {
   static final instance = RuntimeConfigSync();
   Timer? _timer;
   bool _busy = false;
+  bool _shuttingDown = false;
   Future<void> start() async {
+    if (_shuttingDown) return;
     if (_timer != null || !EdgeDeviceCredentialStore.hasCredential) return;
     unawaited(pull());
     _timer = Timer.periodic(
@@ -23,7 +25,7 @@ class RuntimeConfigSync {
   }
 
   Future<void> pull() async {
-    if (_busy) return;
+    if (_busy || _shuttingDown) return;
     _busy = true;
     try {
       final response = await http
@@ -78,5 +80,13 @@ class RuntimeConfigSync {
   Future<void> stop() async {
     _timer?.cancel();
     _timer = null;
+  }
+
+  Future<void> shutdown() async {
+    _shuttingDown = true;
+    await stop();
+    while (_busy) {
+      await Future<void>.delayed(const Duration(milliseconds: 25));
+    }
   }
 }

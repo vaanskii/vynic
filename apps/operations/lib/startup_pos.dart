@@ -1,8 +1,10 @@
+import 'dart:io' show Platform;
+import 'package:vynic/core/services/pos/pos_quit.dart';
+import 'package:vynic/apps/windows_pos/widgets/pos_quit_action.dart';
 import 'package:vynic/core/services/pos/update/pos_updater.dart';
 import 'package:vynic/apps/windows_pos/widgets/update/pos_update_ui.dart';
 import 'dart:async';
 import 'dart:ui';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:vynic/core/ui/pos_scaled_surface.dart';
@@ -30,6 +32,7 @@ Future<void> startPos() async {
     loginBuilder: (_) => const LoginScreen(),
   );
   await DatabaseService.init(createBootstrapManager: false);
+  if (Platform.isWindows) PosQuit.enableWindowsTracking();
   await EdgeDeviceCredentialStore.load();
   await PosDisplaySettingsController.loadFromStorage();
   await PrinterService.initialize();
@@ -37,6 +40,7 @@ Future<void> startPos() async {
   runApp(const PosApp());
   WidgetsBinding.instance.addPostFrameCallback((_) async {
     await PosUpdater.instance.startAfterFirstFrame();
+    if (PosQuit.instance.shutdownStarted) return;
     ManagerSyncService.initialize();
     unawaited(EdgeTransportService.instance().start());
     unawaited(InventoryProjectionSyncService.instance().start());
@@ -70,129 +74,12 @@ class _PosAppState extends State<PosApp> with WidgetsBindingObserver {
 
   @override
   Future<AppExitResponse> didRequestAppExit() async {
-    // On mobile, just allow exit without the Windows-style confirmation dialog
-    final bool? shouldExit = await _showExitConfirmation();
-    if (shouldExit == true) {
-      // Clean up all background services
-      await _cleanupAndExit();
-      return AppExitResponse.exit;
-    }
-    return AppExitResponse.cancel;
-  }
-
-  Future<void> _cleanupAndExit() async {
-    try {
-      await EdgeTransportService.instance().stop();
-      await InventoryProjectionSyncService.instance().stop();
-      await RuntimeConfigSync.instance.stop();
-      PrinterService.dispose();
-      // Small delay to ensure sockets are closed
-      await Future.delayed(const Duration(milliseconds: 200));
-    } catch (e) {
-      debugPrint('Error during cleanup: $e');
-    }
-  }
-
-  Future<bool?> _showExitConfirmation() {
+    if (!Platform.isWindows) return AppExitResponse.exit;
     final context = navigatorKey.currentContext;
-    if (context == null) return Future.value(true);
-
-    return showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          width: 420,
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 40,
-                offset: Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEF4444).withOpacity(0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.power_settings_new_rounded,
-                  color: Color(0xFFEF4444),
-                  size: 48,
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'პროგრამიდან გამოსვლა',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'ნამდვილად გსურთ პროგრამის დახურვა? ყველა აქტიური პროცესი შეწყდება.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black54, fontSize: 16),
-              ),
-              const SizedBox(height: 32),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(false),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'გაუქმება',
-                        style: TextStyle(color: Colors.black54, fontSize: 16),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFEF4444),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'გამოსვლა',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    if (context == null) return AppExitResponse.cancel;
+    return await confirmPosQuit(context)
+        ? AppExitResponse.exit
+        : AppExitResponse.cancel;
   }
 
   @override

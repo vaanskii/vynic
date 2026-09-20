@@ -33,9 +33,11 @@ using EnableNonClientDpiScaling = BOOL __stdcall(HWND hwnd);
 
 // Scale helper to convert logical scaler values to physical using passed in
 // scale factor
+#ifndef VYNIC_POS_FULLSCREEN
 int Scale(int source, double scale_factor) {
   return static_cast<int>(source * scale_factor);
 }
+#endif
 
 // Dynamically loads the |EnableNonClientDpiScaling| from the User32 module.
 // This API is only needed for PerMonitor V1 awareness mode.
@@ -131,14 +133,27 @@ bool Win32Window::Create(const std::wstring& title,
   const POINT target_point = {static_cast<LONG>(origin.x),
                               static_cast<LONG>(origin.y)};
   HMONITOR monitor = MonitorFromPoint(target_point, MONITOR_DEFAULTTONEAREST);
+
+#ifdef VYNIC_POS_FULLSCREEN
+  MONITORINFO monitor_info{sizeof(MONITORINFO)};
+  if (!GetMonitorInfo(monitor, &monitor_info)) return false;
+  const RECT bounds = monitor_info.rcMonitor;
+  // Physical monitor bounds, including the taskbar. Flutter retains DPI-aware
+  // logical sizing; do not multiply these physical coordinates by DPI again.
+  HWND window = CreateWindow(
+      window_class, title.c_str(), WS_POPUP,
+      bounds.left, bounds.top, bounds.right - bounds.left,
+      bounds.bottom - bounds.top,
+      nullptr, nullptr, GetModuleHandle(nullptr), this);
+#else
   UINT dpi = FlutterDesktopGetDpiForMonitor(monitor);
   double scale_factor = dpi / 96.0;
-
   HWND window = CreateWindow(
       window_class, title.c_str(), WS_OVERLAPPEDWINDOW,
       Scale(origin.x, scale_factor), Scale(origin.y, scale_factor),
       Scale(size.width, scale_factor), Scale(size.height, scale_factor),
       nullptr, nullptr, GetModuleHandle(nullptr), this);
+#endif
 
   if (!window) {
     return false;
@@ -188,15 +203,38 @@ Win32Window::MessageHandler(HWND hwnd,
       return 0;
 
     case WM_DPICHANGED: {
+#ifdef VYNIC_POS_FULLSCREEN
+      auto suggested = reinterpret_cast<RECT*>(lparam);
+      MONITORINFO info{sizeof(MONITORINFO)};
+      if (GetMonitorInfo(MonitorFromRect(suggested, MONITOR_DEFAULTTONEAREST), &info)) {
+        const RECT bounds = info.rcMonitor;
+        SetWindowPos(hwnd, nullptr, bounds.left, bounds.top,
+                     bounds.right - bounds.left, bounds.bottom - bounds.top,
+                     SWP_NOZORDER | SWP_NOACTIVATE);
+      }
+#else
       auto newRectSize = reinterpret_cast<RECT*>(lparam);
       LONG newWidth = newRectSize->right - newRectSize->left;
       LONG newHeight = newRectSize->bottom - newRectSize->top;
 
       SetWindowPos(hwnd, nullptr, newRectSize->left, newRectSize->top, newWidth,
                    newHeight, SWP_NOZORDER | SWP_NOACTIVATE);
+#endif
 
       return 0;
     }
+#ifdef VYNIC_POS_FULLSCREEN
+    case WM_DISPLAYCHANGE: {
+      MONITORINFO info{sizeof(MONITORINFO)};
+      if (GetMonitorInfo(MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST), &info)) {
+        const RECT bounds = info.rcMonitor;
+        SetWindowPos(hwnd, nullptr, bounds.left, bounds.top,
+                     bounds.right - bounds.left, bounds.bottom - bounds.top,
+                     SWP_NOZORDER | SWP_NOACTIVATE);
+      }
+      return 0;
+    }
+#endif
     case WM_SIZE: {
       RECT rect = GetClientArea();
       if (child_content_ != nullptr) {

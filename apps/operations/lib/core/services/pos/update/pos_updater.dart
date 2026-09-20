@@ -24,6 +24,7 @@ class PosUpdater extends ChangeNotifier {
   bool installing = false;
   bool probation = false;
   bool awaitingDecision = false;
+  bool preparingInstall = false;
   bool get inputHeld => installing || probation || awaitingDecision;
   String? localBlock;
   String? deferredVersion;
@@ -31,6 +32,18 @@ class PosUpdater extends ChangeNotifier {
   Map<String, dynamic>? _config;
   Timer? _poll;
   bool _refreshing = false;
+  bool _stopping = false;
+
+  /// Cancel local polling only. Edge remains running and owns staged releases.
+  Future<void> stopForQuit() async {
+    _stopping = true;
+    _poll?.cancel();
+    // Startup probation is refused by Quit, so its heartbeat has already ended.
+    while (_refreshing) {
+      await Future<void>.delayed(const Duration(milliseconds: 25));
+    }
+  }
+
   String get status =>
       localBlock != null ? 'BLOCKED' : state['status'] as String? ?? 'FAILED';
   String get version => state['version'] as String? ?? '';
@@ -86,6 +99,7 @@ class PosUpdater extends ChangeNotifier {
   Future<void> startAfterFirstFrame() async {
     if (configured) {
       await refresh();
+      if (_stopping) return;
       _poll = Timer.periodic(
         const Duration(seconds: 2),
         (_) => unawaited(refresh()),
@@ -126,7 +140,7 @@ class PosUpdater extends ChangeNotifier {
   }
 
   Future<void> refresh() async {
-    if (_refreshing) return;
+    if (_refreshing || _stopping) return;
     _refreshing = true;
     try {
       state = await _request('status');
@@ -224,6 +238,9 @@ class PosUpdater extends ChangeNotifier {
   }
 
   Future<void> installNow() async {
+    if (preparingInstall) return;
+    preparingInstall = true;
+    notifyListeners();
     try {
       await _installNow();
     } catch (e, st) {
@@ -234,6 +251,8 @@ class PosUpdater extends ChangeNotifier {
         name: 'pos_updater',
       );
       localBlock = 'განახლებისთვის მონაცემების მომზადება ვერ დასრულდა';
+    } finally {
+      preparingInstall = false;
       notifyListeners();
     }
   }
@@ -260,7 +279,7 @@ class PosUpdater extends ChangeNotifier {
       });
       await DatabaseCore.settingsBox!.flush();
     }
-    localBlock = await UpdateReadiness.freeze(flushOverride ?? _flush);
+    localBlock = await UpdateReadiness.freeze(flushOverride ?? flushLocalState);
     if (localBlock != null) {
       notifyListeners();
       return;
@@ -321,7 +340,7 @@ class PosUpdater extends ChangeNotifier {
     }
   }
 
-  static Future<void> _flush() async {
+  static Future<void> flushLocalState() async {
     for (final box in <Box?>[
       DatabaseCore.metaBox,
       DatabaseCore.orderBox,

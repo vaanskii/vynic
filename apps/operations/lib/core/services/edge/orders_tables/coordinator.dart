@@ -14,9 +14,17 @@ abstract interface class OrderTableTransport {
   Future<ProjectionSnapshot> snapshot(SnapshotRequest request);
 }
 
-class GrpcOrderTableTransport implements OrderTableTransport {
-  GrpcOrderTableTransport(this.client);
+abstract interface class ClosableOrderTableTransport
+    implements OrderTableTransport {
+  Future<void> close();
+}
+
+class GrpcOrderTableTransport implements ClosableOrderTableTransport {
+  GrpcOrderTableTransport(this.client, {required this.shutdown});
   final OrdersTablesClient client;
+  final Future<void> Function() shutdown;
+  @override
+  Future<void> close() => shutdown();
   @override
   Future<CommitResult> commit(CommitIntent intent) => client.commit(intent);
   @override
@@ -53,6 +61,13 @@ class OrderTableCoordinator {
   static Future<void> flushForUpdate() async {
     for (final c in _instances.values) {
       await c.box.flush();
+    }
+  }
+
+  static Future<void> shutdownConnections() async {
+    for (final c in _instances.values) {
+      final transport = c.transport;
+      if (transport is ClosableOrderTableTransport) await transport.close();
     }
   }
 

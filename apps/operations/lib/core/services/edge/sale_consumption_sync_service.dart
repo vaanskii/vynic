@@ -19,6 +19,13 @@ class SaleConsumptionSyncService {
   final String Function() _baseUrl;
   final String? Function() _credential;
   bool _syncing = false;
+  bool _closed = false;
+
+  void close() {
+    _closed = true;
+    _client.close();
+  }
+
   String? _lastAttemptedId;
 
   static int revision(Map sale) => sale['restoredToOrder'] == true ? 2 : 1;
@@ -34,7 +41,7 @@ class SaleConsumptionSyncService {
       [];
 
   Future<void> syncOnce() async {
-    if (_syncing || _credential() == null) return;
+    if (_closed || _syncing || _credential() == null) return;
     _syncing = true;
     try {
       // Bounded, sequential, per-effect failure isolation; retry next minute.
@@ -46,6 +53,7 @@ class SaleConsumptionSyncService {
       final ordered = [...rows.skip(start), ...rows.take(start)];
       final deadline = DateTime.now().add(const Duration(seconds: 45));
       for (final sale in ordered.take(100)) {
+        if (_closed) break;
         if (DateTime.now().isAfter(deadline)) break;
         _lastAttemptedId = sale['posSaleId']?.toString();
         final sentRevision = revision(sale);

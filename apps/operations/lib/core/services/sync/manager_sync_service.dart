@@ -84,6 +84,7 @@ class ManagerSyncService {
   }
 
   static void initialize() {
+    if (_shuttingDown) return;
     ConnectionStatusService.initialize();
 
     // Always wire Hive changes to pending sync status.
@@ -349,8 +350,17 @@ class ManagerSyncService {
   /// overlapping pushes made the server delete and recreate the same order's
   /// lines twice over, which surfaced on the manager app as duplicated items.
   static Future<void>? _inFlight;
+  static bool _shuttingDown = false;
+
+  /// Stop this POS's mirror worker; pending durable work resumes next launch.
+  static Future<void> shutdown() async {
+    _shuttingDown = true;
+    dispose();
+    await _inFlight;
+  }
 
   static Future<void> syncToManagerApp() {
+    if (_shuttingDown) return Future<void>.value();
     final running = _inFlight;
     if (running != null) {
       // Coalesce: the push already running carries the same local state.

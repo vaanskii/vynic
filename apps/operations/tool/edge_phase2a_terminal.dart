@@ -124,6 +124,7 @@ Future<void> main(List<String> args) async {
     }
     OrderTableTransport transport = GrpcOrderTableTransport(
       OrdersTablesClient(channel, options: options),
+      shutdown: channel.shutdown,
     );
     if (config['loseAck'] == true) transport = LoseAck(transport);
     final isShadow = config['action'] == 'shadow';

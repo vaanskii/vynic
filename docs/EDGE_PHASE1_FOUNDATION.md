@@ -1,5 +1,9 @@
 # Edge Phase 1 — locked foundation contracts
 
+Historical Phase 1 contract. The additive, non-authoritative Orders/Tables shadow
+API, protocol 1.1 and SQLite schema 2 are described in
+`docs/EDGE_PHASE2A_ORDERS_TABLES.md`; production authority is still Phase 0.
+
 These contracts precede implementation. Phase 1 is infrastructure only. The
 Phase 0 `Venue.activeOperationalDeviceId` remains the only production operational
 authority. Flutter owns business rules/Hive; NestJS owns SaaS/Cloud domains.

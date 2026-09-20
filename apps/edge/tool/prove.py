@@ -30,6 +30,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--database-url", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--phase2a", action="store_true")
     opts = parser.parse_args()
     from urllib.parse import urlparse
 
@@ -326,6 +327,9 @@ def main():
             )
             assert p.returncode != 0 and "local store refused" in p.stderr
         check("Newer schema, corruption and changed migration ledger refuse startup")
+        if opts.phase2a:
+            from phase2a_proof import prove
+            report["phase2a"] = prove(work, cli, start, stop, venue, installation)
         aid = json.loads((work / "A/terminal.json").read_text())["TerminalID"]
         cli("revoke", "--terminal", aid)
         edge, fourth = start()

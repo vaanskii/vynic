@@ -1,8 +1,9 @@
-# Vynic Edge — Phase 1
+# Vynic Edge — foundation and Phase 2A shadow
 
-Infrastructure foundation only. The current Phase 0 Primary POS remains the
-operational authority. This process has no restaurant mutation or Cloud command
-execution API and no POS Device credential. See the locked
+The Phase 0 Primary POS remains the production operational authority. Go adds
+SHADOW Order/Table commit/replay/snapshot APIs, without an operational authority
+grant, Cloud command execution or POS Device credential. Phase 2A scope and
+rollout prerequisites: [Orders/Tables](../../docs/EDGE_PHASE2A_ORDERS_TABLES.md). See the locked
 [contracts](../../docs/EDGE_PHASE1_FOUNDATION.md) and captured
 [validation](../../docs/EDGE_PHASE1_VALIDATION.md).
 
@@ -39,9 +40,10 @@ CGO are not required. `go.sum` and both Dart lockfiles are committed.
 
 ## Generated protocol
 
-Canonical source: `packages/contracts/proto/vynic/edge/v1/foundation.proto`.
+Canonical sources: `packages/contracts/proto/vynic/edge/v1/*.proto`.
 Generated outputs are standalone Go/Dart packages under `packages/contracts`.
-Do not hand-edit them. Production Flutter is intentionally not wired to them.
+Do not hand-edit them. Flutter imports them for explicitly attached shadow
+observers and the isolated Hive client; normal startup does not attach Edge.
 
 Install `protoc` **36.2** from the official protobuf release for your OS
 ([releases](https://github.com/protocolbuffers/protobuf/releases/tag/v36.2)).
@@ -68,6 +70,8 @@ Resolve the isolated Dart simulator dependencies as above. From repository root:
 
 ```sh
 apps/edge/tool/mac-dev.sh
+# Add the separate-process Terminal A/Hive A + Terminal B/Hive B proof:
+apps/edge/tool/mac-dev.sh --phase2a
 ```
 
 `PG_BIN` optionally selects PostgreSQL 17 binaries (default Homebrew path).
@@ -75,7 +79,8 @@ apps/edge/tool/mac-dev.sh
 PostgreSQL cluster/database, applies migrations from empty, checks schema drift,
 runs real Nest/PG Phase 0 and foundation tests, builds Go, and invokes the proof.
 It stops its PostgreSQL cluster on exit. It never loads an application `.env`,
-connects to the live database, starts website/payment bootstrap, or starts Flutter.
+connects to the live database, starts website/payment bootstrap, or starts a production Flutter application. The Phase 2A option runs Dart
+terminal processes using the real Order/Table models and Hive adapters.
 
 The isolated Nest process uses **production** provisioning controller/service,
 Platform guard/JWT resolver and Prisma against the disposable database. It seeds

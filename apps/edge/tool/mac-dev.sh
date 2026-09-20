@@ -19,5 +19,5 @@ cd "$ROOT/apps/backend"
 npm test -- --runInBand --runTestsByPath src/edge-foundation/edge-foundation.integration.spec.ts src/edge/operational-authority.integration.spec.ts >"$RUN/backend-tests.log" 2>&1
 cd "$ROOT/apps/edge"
 go build -o bin/ ./cmd/...
-python3 tool/prove.py --database-url "$DATABASE_URL" --output "$RUN/proof.json"
+python3 tool/prove.py --database-url "$DATABASE_URL" --output "$RUN/proof.json" "${@}"
 echo "Disposable proof and validation logs: $RUN"

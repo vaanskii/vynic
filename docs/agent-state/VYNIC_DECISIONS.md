@@ -178,6 +178,20 @@ ship separately. Phase 2 requires explicit fenced authority, coordinated mutatio
 ACK/replay and operator handover proof. No automatic failover or business-domain
 rewrite in Go. See `docs/EDGE_PHASE1_FOUNDATION.md`.
 
+## D020 — Shadow coordination is not production authority
+
+**Decision:** Phase 2A commits proposed ordinary Order/Table post-images with
+revision checks, a durable event/result and replay into isolated Hive projections.
+Production observers compare before-write proposals to actual Primary results;
+Phase 0 remains the sole operational authority. Local shadow epochs never grant
+Cloud operational authority.
+**Reason:** Clean isolated convergence does not fence remaining payment/closure,
+reservation, package or remote writers. A partial gate would admit dual writers.
+**Implication:** Production cutover stays unavailable until full shadow coverage,
+Cloud-selected Edge/epoch, every writer boundary and handover/rollback are proven.
+No automatic leader election or independent terminal writes during partitions.
+See `docs/EDGE_PHASE2A_ORDERS_TABLES.md`.
+
 ## Maintenance
 
 Add an entry only when it prevents repeated architectural debate. Update or

@@ -133,3 +133,13 @@ and infrastructure status. `scripts/generate-edge.sh` generates the standalone G
 module in `generated/go` and Dart package in `generated/edge_dart`; `--check` detects
 drift. Pinned tool versions and commands are in `apps/edge/README.md`. These are
 independent of the existing Cloud command contract and do not add business RPCs.
+
+## Phase 2A shadow Orders/Tables
+
+`orders_tables.proto` adds Commit/Replay/Snapshot at protocol 1.1, capability
+`orders_tables.shadow`. The same generator emits Go/Dart stubs. JSON post-image
+shapes are in `schema/orders-tables-projection.schema.json`. Venue/installation
+authentication, expected revisions, request UUID/digest, local shadow epoch,
+atomic event sequence and permanent tombstones are documented in
+`docs/EDGE_PHASE2A_ORDERS_TABLES.md`. The API grants no production authority;
+Foundation 1.0 and existing Cloud contracts remain compatible.

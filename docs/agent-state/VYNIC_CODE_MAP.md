@@ -103,9 +103,12 @@ the implementation and nearby tests. Do not treat this as architecture truth.
   `apps/backend/src/auth/staff-pin-vault.service.spec.ts`,
   `apps/backend/src/mobile/services/mobile-users.service.spec.ts`
 
-## Go Edge Foundation — Phase 1
+## Go Edge Foundation / Orders-Tables Shadow — Phases 1 / 2A
 
 - Contracts/boundaries: `docs/EDGE_PHASE1_FOUNDATION.md`; development/recovery: `apps/edge/README.md`.
+- Shadow protocol/state: `docs/EDGE_PHASE2A_ORDERS_TABLES.md`, `packages/contracts/proto/vynic/edge/v1/orders_tables.proto`, `apps/edge/internal/store/coordination.go`, migration `002_orders_tables.sql`.
+- Flutter durable intent/replay and observers: `apps/operations/lib/core/services/edge/orders_tables/`; stable IDs: Hive migration 9, Order/Table models and backup serializer.
+- Two-Hive process proof: `apps/edge/tool/mac-dev.sh --phase2a`, `tool/phase2a_proof.py`, `apps/operations/tool/edge_phase2a_terminal.dart`; captured validation in `docs/EDGE_PHASE2A_VALIDATION.md`.
 - Runtime/admin CLI: `apps/edge/cmd/edge`; terminal simulator: `cmd/terminal-sim`; isolated Dart: `tool/dart_sim`.
 - SQLite identity/migrations/recovery: `apps/edge/internal/store`; TLS gRPC: `internal/server`.
 - Mac process proof: `apps/edge/tool/mac-dev.sh`, `tool/prove.py`.

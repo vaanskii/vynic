@@ -20,8 +20,9 @@ current transport status.
   generic multi-Venue SaaS website.
 - `packages/contracts/` owns the generated Cloud/Edge command, table-identity
   and Go/Dart foundation protobuf wire contracts.
-- `apps/edge/` is the non-authoritative Go foundation; it exposes no restaurant
-  mutations and is not connected to production Flutter business operation.
+- `apps/edge/` provides the non-authoritative Go foundation and Phase 2A shadow
+  Order/Table coordination. Explicit Flutter observers compare proposals/results;
+  production operation remains owned by the Phase 0 Primary POS.
 
 ## Current Architecture
 
@@ -43,11 +44,15 @@ current transport status.
 
 ## Current Phase
 
-- Edge Phase 1 infrastructure is implemented in `apps/edge`: separate Cloud-bound
-  installation identity, TLS gRPC terminal pairing/status, SQLite/WAL and Mac
-  simulator proof. It is FOUNDATION_ONLY: Phase 0 Primary POS fencing remains
-  the production authority. See `docs/EDGE_PHASE1_FOUNDATION.md` and
-  `docs/EDGE_PHASE0_PRIMARY_DEVICE.md`; Phase 2 cutover is not implemented.
+- Edge Phase 2A adds SHADOW Order/Table revisions, request idempotency, a durable
+  event sequence, tombstones and replay/snapshots over Phase 1 TLS pairing.
+  Two separate terminal processes/Hive stores converge against one Go Edge.
+  Hive v9 adds stable Order/OrderLine UUIDs; existing Table UUIDs are reused.
+  Explicit observers capture supported proposals before primary Hive writes and
+  compare the result. They are unattached by default. Production authority remains
+  Phase 0: no operational Edge selection or cutover gate is enabled. Remaining
+  writer coverage and cutover prerequisites: `docs/EDGE_PHASE2A_ORDERS_TABLES.md`;
+  foundation/fencing: `docs/EDGE_PHASE1_FOUNDATION.md`, `docs/EDGE_PHASE0_PRIMARY_DEVICE.md`.
 - The latest completed sequence covers Money Integrity 1A/1B, POS enrollment
   1C, incremental audit sync, Edge Step 6C, Menu Identity Phases 4.5/4.6, and
   the Phase 5 Cloud Sale Ledger/Manager financial experience.
@@ -685,7 +690,8 @@ current transport status.
   reservation holds, generic SaaS venue web, SaaS billing, and per-Venue
   payment credentials.
 - Physical printer-test command, lower-latency Edge long polling, OS
-  keychain credential storage and Venue-local multi-POS authority (Phase 2).
+  keychain credential storage and production Venue-local multi-POS authority
+  (Phase 2A is shadow/isolated proof only).
 - Legacy shared sync key/callback removal after rollout evidence permits it.
 
 ## Current Migration Versions
@@ -715,7 +721,7 @@ current transport status.
   `20260904120000_audit_closure_semantics`,
   `20260903140000_pos_reservation_mirror`, and
   `20260903120000_audit_report_sync_revision`.
-- Flutter Hive database target version: `8` in
+- Flutter Hive database target version: `9` in
   `apps/operations/lib/core/database/hive_migration_service.dart`.
 - A migration file in the repository does not prove deployment to any database.
 

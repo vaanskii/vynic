@@ -1,0 +1,54 @@
+{
+  "checks": [
+    "Nest Platform authentication + Cloud-signed Venue/installation binding",
+    "Terminal A and B: distinct persisted identities + concurrent authenticated TLS streams",
+    "Exact pairing retry is idempotent",
+    "Consumed ticket rejects different terminal replay",
+    "Invalid terminal credential rejected",
+    "Wrong Venue rejected",
+    "Protocol major mismatch rejected",
+    "Second Edge process cannot open the same store",
+    "SIGKILL with populated WAL: stable installation/pairing/session + authenticated reconnect",
+    "Generated Dart client pairs/handshakes with Go over TLS using its own identity",
+    "Dart rejects a different certificate pin; no insecure TLS fallback",
+    "Graceful shutdown/startup and terminal reconnect",
+    "Three restart-stable terminals/sessions; replay creates no duplicate metadata",
+    "Newer schema, corruption and changed migration ledger refuse startup",
+    "Durable revocation rejects A while B still authenticates",
+    "Cloud registration revocation blocks new bootstrap grants"
+  ],
+  "workspace": "<temporary-proof-workspace>",
+  "installationId": "1d418919-6a31-4556-a818-9094f207f2d4",
+  "venueId": "4de2a34b-f1f9-4d46-89b1-2882b45bb005",
+  "terminalIds": [
+    "02c0c14e-8925-4857-b976-110dcbaa9f14",
+    "268206d0-29b2-4c17-96da-228c1e56e508"
+  ],
+  "phase2a": {
+    "result": "PASS",
+    "checks": [
+      "Shadow proposals match actual Flutter Order calculation and Hive writes before any isolated coordination test",
+      "Injected operational divergence is durably diagnosed as mismatch",
+      "Distinct authenticated terminal identities and separate typed Hive stores",
+      "Order + occupied Table + free Table committed atomically, then reconciled into Hive A and B",
+      "Missed event replay converges restarted Terminal B",
+      "Concurrent same-revision edits produce exactly one winner and current-state conflict",
+      "Stale Table occupancy rejected without last-write-wins",
+      "Transfer-like Order + source Table + destination Table changes share one atomic event",
+      "Lost ACK + terminal process death + Edge crash: same durable request recovered exactly once",
+      "Atomic Edge snapshot state/cursor agrees with replay projection",
+      "Deleted/cancelled projection tombstone replays, releases occupancy and refuses resurrection",
+      "Clean Edge shutdown/startup and terminal restart retain identity, revisions and convergence",
+      "SQLite event count equals Venue sequence; integrity check passes"
+    ],
+    "terminalA": "3eece8e1-2770-42c4-8e07-102240cac4ef",
+    "terminalB": "3dea3095-f65c-4257-b875-ed548e5c6748",
+    "hiveA": "<temporary-proof-workspace>/HiveA",
+    "hiveB": "<temporary-proof-workspace>/HiveB",
+    "sequence": 9,
+    "productionAuthority": "PHASE0_PRIMARY_POS",
+    "edgeMode": "SHADOW",
+    "productionCutoverEnabled": false
+  },
+  "result": "PASS"
+}

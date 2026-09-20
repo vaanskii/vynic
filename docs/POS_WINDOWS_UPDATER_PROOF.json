@@ -1,0 +1,80 @@
+{
+  "proof": "Windows POS updater data recovery on macOS",
+  "independentPids": [
+    15487,
+    15538,
+    15550
+  ],
+  "checks": [
+    "open Order/Table are READY",
+    "flushed Hive survives abrupt process exit",
+    "new release reopens same durable UUIDs and occupancy",
+    "rollback release reopens same data without restoring it",
+    "durable pending Cloud outbox remains"
+  ],
+  "state": {
+    "readiness": "READY",
+    "order": {
+      "orderUuid": "bce598ac-ed77-4c56-9269-14233c047c66",
+      "edgeRevision": 0,
+      "orderId": 7,
+      "posOrderId": 7,
+      "tableNumbers": [
+        "1"
+      ],
+      "floor": "first",
+      "items": [
+        {
+          "lineUuid": "5798c86d-5aab-427e-a175-af7cbc382b08",
+          "itemKey": "tea",
+          "itemName": "Tea",
+          "unitPrice": 4.0,
+          "quantity": 2,
+          "total": 8.0,
+          "comment": null
+        }
+      ],
+      "totalAmount": 8.0,
+      "createdAt": "2026-09-20T00:00:00.000Z",
+      "createdBy": "proof",
+      "waiterName": "proof",
+      "status": "confirmed",
+      "updatedAt": null,
+      "includeServiceFee": false,
+      "paymentMethod": null,
+      "closedAt": null,
+      "discountAmount": 0.0,
+      "packageId": null,
+      "packageName": null,
+      "packagePrice": 0.0,
+      "packageUnitPrice": 0.0,
+      "packageGuestCount": 0,
+      "manualAdjustmentAmount": 0.0,
+      "openedByUserId": null,
+      "customServiceFeePercentage": null,
+      "closureId": null,
+      "advanceAmount": 0.0,
+      "advanceCollectedOn": null,
+      "advanceReceiptId": null,
+      "customerName": "",
+      "customerPhone": "",
+      "pickupTime": ""
+    },
+    "table": {
+      "edgeRevision": 0,
+      "tableNumber": "1",
+      "floor": "first",
+      "isReserved": true,
+      "reservedAt": null,
+      "reservedBy": null,
+      "activeOrderId": 7,
+      "reservationId": null,
+      "currentBill": null
+    },
+    "pendingCloud": {
+      "id": "stable-outbox-id",
+      "status": "pending"
+    }
+  },
+  "windowsArtifactExecuted": false
+}

@@ -184,3 +184,15 @@ Windows x64 cross-compilation is checked. Actual Windows runtime/locking/TLS tes
 service installation, shutdown integration, ACLs and firewall deployment remain
 release checks. Certificate renewal/keychain provisioning are not an updater or a
 hardware implementation. Phase 2 requirements are listed in the architecture doc.
+
+## Windows POS updater
+
+`serve --pos-updater-config <external-config.json>` enables signed background
+POS staging and explicit user installation. `launch-pos --pos-updater-config
+<external-config.json>` asks the running Edge to launch its selected POS release.
+No Edge self-update or production Order/Table authority is enabled. Provisioning,
+release signing, readiness, recovery and Windows qualification requirements:
+[Windows POS updater](../../docs/POS_WINDOWS_UPDATER.md).
+
+macOS Hive process proof: `python3 tool/prove-pos-updater.py --dart <dart>`.
+Go tests include HTTPS download and actual child-process health/rollback simulation.

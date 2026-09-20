@@ -44,6 +44,15 @@ current transport status.
 
 ## Current Phase
 
+- Windows POS has an opt-in Go Edge updater: signed Ed25519 release manifests,
+  silent verified ZIP staging, explicit Georgian Update Now/Later and Settings,
+  one readiness/admission barrier, startup health and binary-only rollback.
+  Durable open Orders/Tables and Cloud outboxes do not block; uncertain intents,
+  projection recovery and in-flight payment/close/write operations do. Manager,
+  Phase 0 fencing and Phase 2A production authority remain unchanged. macOS
+  simulations pass; host provisioning, real signing/channel setup and Windows
+  release qualification are still required. See `docs/POS_WINDOWS_UPDATER.md`.
+
 - Edge Phase 2A adds SHADOW Order/Table revisions, request idempotency, a durable
   event sequence, tombstones and replay/snapshots over Phase 1 TLS pairing.
   Two separate terminal processes/Hive stores converge against one Go Edge.

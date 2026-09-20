@@ -103,6 +103,13 @@ the implementation and nearby tests. Do not treat this as architecture truth.
   `apps/backend/src/auth/staff-pin-vault.service.spec.ts`,
   `apps/backend/src/mobile/services/mobile-users.service.spec.ts`
 
+## Windows POS updater
+
+- Architecture/provisioning/signature and recovery contract: `docs/POS_WINDOWS_UPDATER.md`.
+- Go updater/state/Windows process adapter: `apps/edge/internal/updater/`; opt-in host entrypoint: `apps/edge/cmd/edge`; offline signing: `apps/edge/cmd/sign-pos-release`.
+- Single readiness gate/Hive admission and POS client: `apps/operations/lib/core/services/pos/update/`; UI: `apps/operations/lib/apps/windows_pos/widgets/update/pos_update_ui.dart`, mounted in POS startup and Settings only.
+- macOS process/Hive proof: `apps/edge/tool/prove-pos-updater.py`, `apps/operations/tool/pos_update_hive_proof.dart`; unit/widget proof: `pos_update_readiness_test.dart`, `pos_update_ui_test.dart`.
+
 ## Go Edge Foundation / Orders-Tables Shadow — Phases 1 / 2A
 
 - Contracts/boundaries: `docs/EDGE_PHASE1_FOUNDATION.md`; development/recovery: `apps/edge/README.md`.

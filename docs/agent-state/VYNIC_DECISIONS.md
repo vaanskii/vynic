@@ -192,6 +192,19 @@ Cloud-selected Edge/epoch, every writer boundary and handover/rollback are prove
 No automatic leader election or independent terminal writes during partitions.
 See `docs/EDGE_PHASE2A_ORDERS_TABLES.md`.
 
+## D021 — POS update readiness is durable recoverability, not empty tables
+
+**Decision:** Windows POS installation requires explicit operator action and one
+readiness/admission barrier. Persisted open Orders/Tables and pending Cloud sync
+are safe. In-flight/uncertain work and unresolved Edge/projection recovery block.
+Go switches signed POS binary bundles and health-checks/rolls back binaries only.
+**Reason:** Closing restaurant business to replace software is unnecessary when
+its state is durable, while a check followed by unguarded writes is unsafe.
+**Implication:** Release signatures bind product/platform/version and unchanged
+Hive compatibility. No data rollback, Manager updater, Edge self-update or
+production Orders/Tables authority cutover is implied. See
+`docs/POS_WINDOWS_UPDATER.md`.
+
 ## Maintenance
 
 Add an entry only when it prevents repeated architectural debate. Update or

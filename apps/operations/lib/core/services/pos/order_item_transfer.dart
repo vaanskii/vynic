@@ -11,6 +11,8 @@
 library;
 
 import 'dart:developer' as developer;
+import '../edge/orders_tables/shadow.dart';
+import '../edge/orders_tables/pos_shadow_projection.dart';
 
 import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/audit_source.dart';
@@ -241,11 +243,17 @@ abstract final class OrderItemTransfer {
     );
     if (!result.ok) return result;
 
-    source.items = sourceDraft.items;
-    destination.items = destinationDraft.items;
-
-    await DatabaseService.updateOrder(destination);
-    await DatabaseService.updateOrder(source);
+    await OrderTableShadow.observe(
+      proposed: () =>
+          PosShadowProjection.orders([sourceDraft, destinationDraft]),
+      actual: () => PosShadowProjection.orders([source, destination]),
+      operation: () async {
+        source.items = sourceDraft.items;
+        destination.items = destinationDraft.items;
+        await DatabaseService.updateOrder(destination);
+        await DatabaseService.updateOrder(source);
+      },
+    );
 
     final now = DatabaseService.getCurrentDateTime();
     final movedAmount = result.totalAmount;
@@ -465,6 +473,8 @@ abstract final class OrderItemTransfer {
     }
     destination.items.add(
       OrderItem(
+        // A full unmerged move keeps line identity; a split creates a new line.
+        lineUuid: quantity == line.quantity ? line.lineUuid : null,
         itemKey: line.itemKey,
         itemName: line.itemName,
         unitPrice: line.unitPrice,

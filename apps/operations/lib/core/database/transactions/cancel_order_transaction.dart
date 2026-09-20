@@ -1,4 +1,6 @@
 import 'dart:developer' as developer;
+import '../../services/edge/orders_tables/shadow.dart';
+import '../../services/edge/orders_tables/pos_shadow_projection.dart';
 
 import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/audit_source.dart';
@@ -93,67 +95,73 @@ class CancelOrderTransaction {
     final trimmedReason = reason?.trim();
     final now = BusinessDayRepository.getCurrentDateTime();
 
-    try {
-      await _appendCancellationAudit(
-        order: order,
-        actorId: effectiveActorId,
-        actorName: effectiveActorName,
-        source: source,
-        reason: trimmedReason,
-        approvedBy: trimmedApprover,
-        timestamp: now,
-      );
-
-      await _writeCancelledSaleRecord(
-        order: order,
-        reason: trimmedReason,
-        cancelledAt: now,
-      );
-
-      // A genuine advance booking whose party was seated and then cancelled
-      // keeps its identity and its Order link; only its status moves.
-      await ReservationRepository.cancelReservationByOrderId(
-        order.orderId,
-        actorId: effectiveActorId,
-        actorName: effectiveActorName,
-        source: source,
-        reason: trimmedReason ?? 'Order cancelled',
-      );
-
-      order.statusEnum = OrderStatus.cancelled;
-      order.updatedAt = now;
-      await order.save();
-
-      // Takeaway lives on a synthetic `TA-` table and must not touch the floor.
-      if (!isTakeawayOrder(order)) {
-        for (final tableNumber in order.tableNumbers) {
-          await TableRepository.freeTable(
-            tableNumber: tableNumber,
-            floor: order.floor,
+    return OrderTableShadow.observe(
+      proposed: () => PosShadowProjection.cancelled(order, proposed: true),
+      actual: () => PosShadowProjection.cancelled(order, proposed: false),
+      operation: () async {
+        try {
+          await _appendCancellationAudit(
+            order: order,
+            actorId: effectiveActorId,
+            actorName: effectiveActorName,
+            source: source,
+            reason: trimmedReason,
+            approvedBy: trimmedApprover,
+            timestamp: now,
           );
-        }
-      }
 
-      SyncHub.notify(
-        SyncEvent(
-          type: SyncEventType.orders,
-          action: 'status_changed',
-          payload: {
-            'orderId': order.orderId,
-            'status': OrderStatus.cancelled.storageValue,
-          },
-        ),
-      );
-      return CancelOrderOutcome.cancelled;
-    } catch (e, stack) {
-      developer.log(
-        'Cancellation of order $orderId failed: $e',
-        error: e,
-        stackTrace: stack,
-        name: 'cancel_order',
-      );
-      return CancelOrderOutcome.failed;
-    }
+          await _writeCancelledSaleRecord(
+            order: order,
+            reason: trimmedReason,
+            cancelledAt: now,
+          );
+
+          // A genuine advance booking whose party was seated and then cancelled
+          // keeps its identity and its Order link; only its status moves.
+          await ReservationRepository.cancelReservationByOrderId(
+            order.orderId,
+            actorId: effectiveActorId,
+            actorName: effectiveActorName,
+            source: source,
+            reason: trimmedReason ?? 'Order cancelled',
+          );
+
+          order.statusEnum = OrderStatus.cancelled;
+          order.updatedAt = now;
+          await order.save();
+
+          // Takeaway lives on a synthetic `TA-` table and must not touch the floor.
+          if (!isTakeawayOrder(order)) {
+            for (final tableNumber in order.tableNumbers) {
+              await TableRepository.freeTable(
+                tableNumber: tableNumber,
+                floor: order.floor,
+              );
+            }
+          }
+
+          SyncHub.notify(
+            SyncEvent(
+              type: SyncEventType.orders,
+              action: 'status_changed',
+              payload: {
+                'orderId': order.orderId,
+                'status': OrderStatus.cancelled.storageValue,
+              },
+            ),
+          );
+          return CancelOrderOutcome.cancelled;
+        } catch (e, stack) {
+          developer.log(
+            'Cancellation of order $orderId failed: $e',
+            error: e,
+            stackTrace: stack,
+            name: 'cancel_order',
+          );
+          return CancelOrderOutcome.failed;
+        }
+      },
+    );
   }
 
   /// `WALK_IN`, `TAKEAWAY`, `PACKAGE` or `RESERVATION` — what kind of Order

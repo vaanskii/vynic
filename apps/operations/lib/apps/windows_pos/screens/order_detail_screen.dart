@@ -21,6 +21,8 @@ import 'package:vynic/core/widgets/pin_button.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 import 'package:vynic/core/services/pos/table_payment_service.dart';
 import 'package:vynic/core/services/pos/order_item_transfer.dart';
+import 'package:vynic/core/services/edge/orders_tables/shadow.dart';
+import 'package:vynic/core/services/edge/orders_tables/pos_shadow_projection.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/core/utils/table_naming.dart';
 import 'package:vynic/apps/windows_pos/widgets/order/order_detail_content_section.dart';
@@ -2037,31 +2039,51 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       toFloor ??= parts[1];
     }
 
-    if (toFloor == null) return;
+    final targetFloor = toFloor;
+    if (targetFloor == null) return;
 
     // Apply the change in memory
     _order!.tableNumbers = toTableNumbers;
-    _order!.floor = toFloor;
+    _order!.floor = targetFloor;
     _order!.updatedAt = DatabaseService.getCurrentDateTime();
 
     try {
-      // Save order changes
-      await DatabaseService.updateOrder(_order!);
+      await OrderTableShadow.observe(
+        proposed: () => PosShadowProjection.moved(
+          _order!,
+          fromTables,
+          fromFloor,
+          proposed: true,
+        ),
+        actual: () => PosShadowProjection.moved(
+          _order!,
+          fromTables,
+          fromFloor,
+          proposed: false,
+        ),
+        operation: () async {
+          // Save order changes
+          await DatabaseService.updateOrder(_order!);
 
-      // Free all previously occupied tables
-      for (final oldNum in fromTables) {
-        await DatabaseService.freeTable(tableNumber: oldNum, floor: fromFloor);
-      }
+          // Free all previously occupied tables
+          for (final oldNum in fromTables) {
+            await DatabaseService.freeTable(
+              tableNumber: oldNum,
+              floor: fromFloor,
+            );
+          }
 
-      // Reserve all new tables
-      for (final newNum in toTableNumbers) {
-        await DatabaseService.reserveTable(
-          tableNumber: newNum,
-          floor: toFloor,
-          username: _order!.createdBy,
-          orderId: _order!.orderId,
-        );
-      }
+          // Reserve all new tables
+          for (final newNum in toTableNumbers) {
+            await DatabaseService.reserveTable(
+              tableNumber: newNum,
+              floor: targetFloor,
+              username: _order!.createdBy,
+              orderId: _order!.orderId,
+            );
+          }
+        },
+      );
 
       // Also update any linked reservation if it exists
       if (_linkedReservation != null) {
@@ -2069,7 +2091,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           final tableRefs = [
             for (final n in toTableNumbers)
               if (int.tryParse(n) != null)
-                TableRef(floor: toFloor, tableNumber: n),
+                TableRef(floor: targetFloor, tableNumber: n),
           ];
 
           await DatabaseService.updateReservationTables(

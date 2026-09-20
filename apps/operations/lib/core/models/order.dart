@@ -1,5 +1,6 @@
 import 'package:hive/hive.dart';
 import 'order_status.dart';
+import 'package:uuid/uuid.dart';
 part 'order.g.dart';
 
 @HiveType(typeId: 3)
@@ -31,6 +32,9 @@ class OrderItem extends HiveObject {
   @HiveField(7)
   String? variantId;
 
+  @HiveField(8)
+  String? lineUuid;
+
   OrderItem({
     required this.itemKey,
     required this.itemName,
@@ -40,7 +44,8 @@ class OrderItem extends HiveObject {
     this.comment,
     this.menuItemId,
     this.variantId,
-  });
+    String? lineUuid,
+  }) : lineUuid = lineUuid ?? const Uuid().v4();
 
   OrderItem clone() {
     return OrderItem(
@@ -52,6 +57,7 @@ class OrderItem extends HiveObject {
       comment: comment,
       menuItemId: menuItemId,
       variantId: variantId,
+      lineUuid: lineUuid,
     );
   }
 
@@ -66,11 +72,13 @@ class OrderItem extends HiveObject {
       comment: json['comment'],
       menuItemId: json['menuItemId'] as String?,
       variantId: json['variantId'] as String?,
+      lineUuid: json['lineUuid'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'lineUuid': lineUuid,
       'itemKey': itemKey,
       'itemName': itemName,
       'unitPrice': unitPrice,
@@ -195,6 +203,13 @@ class Order extends HiveObject {
   @HiveField(28, defaultValue: '')
   String pickupTime;
 
+  /// Edge identity is independent of the legacy local display number.
+  @HiveField(29)
+  String? orderUuid;
+
+  @HiveField(30, defaultValue: 0)
+  int edgeRevision;
+
   static double Function()? serviceFeeRateResolver;
 
   Order({
@@ -227,10 +242,15 @@ class Order extends HiveObject {
     this.customerPhone = '',
     this.pickupTime = '',
     this.customerName = '',
-  }) : packageItems = packageItems ?? [];
+    String? orderUuid,
+    this.edgeRevision = 0,
+  }) : orderUuid = orderUuid ?? const Uuid().v4(),
+       packageItems = packageItems ?? [];
 
   Order clone() {
     return Order(
+      orderUuid: orderUuid,
+      edgeRevision: edgeRevision,
       orderId: orderId,
       tableNumbers: List.from(tableNumbers),
       floor: floor,
@@ -271,6 +291,8 @@ class Order extends HiveObject {
         [];
 
     return Order(
+      orderUuid: json['orderUuid'] as String?,
+      edgeRevision: json['edgeRevision'] as int? ?? 0,
       orderId: json['posOrderId'] ?? json['orderId'] ?? 0,
       tableNumbers:
           (json['tableNumbers'] as List<dynamic>?)
@@ -314,6 +336,8 @@ class Order extends HiveObject {
 
   Map<String, dynamic> toJson() {
     return {
+      'orderUuid': orderUuid,
+      'edgeRevision': edgeRevision,
       'orderId': orderId,
       'posOrderId': orderId,
       'tableNumbers': tableNumbers,

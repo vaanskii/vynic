@@ -38,7 +38,7 @@ class HiveMigrationService {
   static const String dbVersionKey = 'db_version';
   static const String lastMigrationKey = 'last_migration_timestamp';
   static const int initialVersion = 1;
-  static const int targetVersion = 8;
+  static const int targetVersion = 9;
 
   static Future<int> readCurrentVersion(Box metaBox) async {
     final stored = metaBox.get(dbVersionKey);
@@ -122,7 +122,26 @@ class HiveMigrationService {
       );
     }
 
+    if (currentVersion < 9) {
+      await migrateV8toV9(context);
+      currentVersion = 9;
+      await context.metaBox.put(dbVersionKey, currentVersion);
+      await context.metaBox.put(
+        lastMigrationKey,
+        DateTime.now().toIso8601String(),
+      );
+    }
     return currentVersion;
+  }
+
+  /// Constructors assign missing IDs while reading legacy adapters. Persist all
+  /// rows before advancing the version so the next process sees the same IDs.
+  /// Each successful row save preserves its IDs if migration is interrupted.
+  static Future<void> migrateV8toV9(HiveMigrationContext context) async {
+    for (final order in context.orderBox.values) {
+      await order.save();
+    }
+    await context.orderBox.flush();
   }
 
   static Future<void> migrateV1toV2(HiveMigrationContext context) async {

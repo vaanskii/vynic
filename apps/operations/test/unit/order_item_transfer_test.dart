@@ -64,6 +64,27 @@ void main() {
 
   tearDownAll(() => Order.serviceFeeRateResolver = null);
 
+  test('full move preserves line UUID; split allocates a distinct UUID', () {
+    final source = _order(id: 1, items: [_line('Tea', 4, 3)]);
+    final id = source.items.single.lineUuid;
+    final destination = _order(id: 2, items: []);
+    OrderItemTransfer.move(
+      source: source,
+      destination: destination,
+      moves: [(index: 0, quantity: 1)],
+    );
+    expect(source.items.single.lineUuid, id);
+    expect(destination.items.single.lineUuid, isNot(id));
+    final third = _order(id: 3, items: []);
+    OrderItemTransfer.move(
+      source: source,
+      destination: third,
+      moves: [(index: 0, quantity: 2)],
+    );
+    expect(third.items.single.lineUuid, id);
+    expect(source.items, isEmpty);
+  });
+
   group('moving part of a line', () {
     test('preserves menu and variant identity on both halves', () {
       final source = _order(

@@ -1,4 +1,6 @@
 import 'dart:async';
+import '../../services/edge/orders_tables/shadow.dart';
+import '../../services/edge/orders_tables/pos_shadow_projection.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:vynic/core/models/audit_report.dart';
@@ -104,89 +106,95 @@ class OrderRepository {
     );
     order.recalculateTotal();
 
-    await DatabaseCore.orderBox!.add(order);
-    await DatabaseCore.settingsBox?.put('lastOrderId', orderId);
+    return OrderTableShadow.observe(
+      proposed: () => PosShadowProjection.orders([order], opening: true),
+      actual: () => PosShadowProjection.orders([order]),
+      operation: () async {
+        await DatabaseCore.orderBox!.add(order);
+        await DatabaseCore.settingsBox?.put('lastOrderId', orderId);
 
-    // Reserve tables
-    for (final tableNumber in orderTableNumbers) {
-      await TableRepository.reserveTable(
-        tableNumber: tableNumber,
-        floor: floor,
-        username: createdBy,
-        orderId: orderId,
-        reservationId: null,
-      );
-    }
+        // Reserve tables
+        for (final tableNumber in orderTableNumbers) {
+          await TableRepository.reserveTable(
+            tableNumber: tableNumber,
+            floor: floor,
+            username: createdBy,
+            orderId: orderId,
+            reservationId: null,
+          );
+        }
 
-    SyncHub.notify(
-      SyncEvent(
-        type: SyncEventType.orders,
-        action: 'created',
-        payload: {'orderId': orderId},
-      ),
-    );
+        SyncHub.notify(
+          SyncEvent(
+            type: SyncEventType.orders,
+            action: 'created',
+            payload: {'orderId': orderId},
+          ),
+        );
 
-    debugPrint('[Audit] Logging ORDER_CREATED for order $orderId');
-    unawaited(
-      AuditEventService.logEvent(
-        action: 'ORDER_CREATED',
-        userId: createdBy,
-        entityType: GlobalAuditEntity.order,
-        entityId: '$orderId',
-        data: {
-          'orderId': orderId,
-          'tableNumbers': tableNumbers,
-          'total': order.totalAmount,
-          'floor': floor,
-        },
-      ),
-    );
+        debugPrint('[Audit] Logging ORDER_CREATED for order $orderId');
+        unawaited(
+          AuditEventService.logEvent(
+            action: 'ORDER_CREATED',
+            userId: createdBy,
+            entityType: GlobalAuditEntity.order,
+            entityId: '$orderId',
+            data: {
+              'orderId': orderId,
+              'tableNumbers': tableNumbers,
+              'total': order.totalAmount,
+              'floor': floor,
+            },
+          ),
+        );
 
-    final isActivation =
-        activatesReservationId != null && activatesReservationId.isNotEmpty;
-    final creationEvent = AuditEvent(
-      type: isActivation
-          ? AuditEventType.activateReservation
-          : AuditEventType.createWalkIn,
-      itemName: OrderAuditDetails.orderItemName,
-      previousQty: 0,
-      newQty: 0,
-      waiterId: createdBy,
-      waiterName: createdBy,
-      timestamp: order.createdAt,
-      details: <String, dynamic>{
-        ...OrderAuditDetails.base(
+        final isActivation =
+            activatesReservationId != null && activatesReservationId.isNotEmpty;
+        final creationEvent = AuditEvent(
+          type: isActivation
+              ? AuditEventType.activateReservation
+              : AuditEventType.createWalkIn,
+          itemName: OrderAuditDetails.orderItemName,
+          previousQty: 0,
+          newQty: 0,
+          waiterId: createdBy,
+          waiterName: createdBy,
+          timestamp: order.createdAt,
+          details: <String, dynamic>{
+            ...OrderAuditDetails.base(
+              order: order,
+              orderKind: isActivation
+                  ? OrderAuditDetails.reservation
+                  : forPackage
+                  ? OrderAuditDetails.package
+                  : OrderAuditDetails.walkIn,
+              source: source,
+              actorId: createdBy,
+            ),
+            if (isActivation) 'reservationId': activatesReservationId,
+            if (isActivation &&
+                reservationCustomerName != null &&
+                reservationCustomerName.trim().isNotEmpty)
+              'customerName': reservationCustomerName.trim(),
+            'includeServiceFee': shouldIncludeServiceFee,
+          },
+        );
+        await _appendCreationAudit(
           order: order,
-          orderKind: isActivation
-              ? OrderAuditDetails.reservation
-              : forPackage
-              ? OrderAuditDetails.package
-              : OrderAuditDetails.walkIn,
-          source: source,
-          actorId: createdBy,
-        ),
-        if (isActivation) 'reservationId': activatesReservationId,
-        if (isActivation &&
-            reservationCustomerName != null &&
-            reservationCustomerName.trim().isNotEmpty)
-          'customerName': reservationCustomerName.trim(),
-        'includeServiceFee': shouldIncludeServiceFee,
+          creationEvent: creationEvent,
+          actor: createdBy,
+        );
+
+        await AuditRepository.finalizeConflictingOpenAuditReports(
+          currentOrderId: orderId,
+          floor: floor,
+          tableNumbers: orderTableNumbers,
+          closedBy: createdBy,
+        );
+
+        return order;
       },
     );
-    await _appendCreationAudit(
-      order: order,
-      creationEvent: creationEvent,
-      actor: createdBy,
-    );
-
-    await AuditRepository.finalizeConflictingOpenAuditReports(
-      currentOrderId: orderId,
-      floor: floor,
-      tableNumbers: orderTableNumbers,
-      closedBy: createdBy,
-    );
-
-    return order;
   }
 
   static Future<Order> createTakeAwayOrder({
@@ -215,42 +223,48 @@ class OrderRepository {
     );
     order.recalculateTotal();
 
-    await DatabaseCore.orderBox!.add(order);
+    return OrderTableShadow.observe(
+      proposed: () => PosShadowProjection.orders([order]),
+      actual: () => PosShadowProjection.orders([order]),
+      operation: () async {
+        await DatabaseCore.orderBox!.add(order);
 
-    SyncHub.notify(
-      SyncEvent(
-        type: SyncEventType.orders,
-        action: 'created',
-        payload: {'orderId': orderId, 'takeAway': true},
-      ),
+        SyncHub.notify(
+          SyncEvent(
+            type: SyncEventType.orders,
+            action: 'created',
+            payload: {'orderId': orderId, 'takeAway': true},
+          ),
+        );
+
+        unawaited(
+          AuditEventService.logEvent(
+            action: 'TAKEAWAY_ORDER_CREATED',
+            userId: createdBy,
+            entityType: GlobalAuditEntity.order,
+            entityId: '$orderId',
+            data: {
+              'orderId': orderId,
+              'customerName': customerName,
+              'total': order.totalAmount,
+            },
+          ),
+        );
+
+        // The report exists from the first moment, not from the first later edit.
+        await _appendCreationAudit(
+          order: order,
+          creationEvent: _takeawayCreationEvent(
+            order: order,
+            source: source,
+            actor: createdBy,
+          ),
+          actor: createdBy,
+        );
+
+        return order;
+      },
     );
-
-    unawaited(
-      AuditEventService.logEvent(
-        action: 'TAKEAWAY_ORDER_CREATED',
-        userId: createdBy,
-        entityType: GlobalAuditEntity.order,
-        entityId: '$orderId',
-        data: {
-          'orderId': orderId,
-          'customerName': customerName,
-          'total': order.totalAmount,
-        },
-      ),
-    );
-
-    // The report exists from the first moment, not from the first later edit.
-    await _appendCreationAudit(
-      order: order,
-      creationEvent: _takeawayCreationEvent(
-        order: order,
-        source: source,
-        actor: createdBy,
-      ),
-      actor: createdBy,
-    );
-
-    return order;
   }
 
   /// Mobile/cloud takeaway with a fixed `posOrderId` from the backend counter.
@@ -801,7 +815,11 @@ class OrderRepository {
       original.packageGuestCount = order.packageGuestCount;
     }
 
-    await original.save();
+    await OrderTableShadow.observe(
+      proposed: () => PosShadowProjection.orders([original!]),
+      actual: () => PosShadowProjection.orders([original!]),
+      operation: () => original!.save(),
+    );
     final serviceFeeChanged =
         original.includeServiceFee != prevIncludeServiceFee;
     SyncHub.notify(

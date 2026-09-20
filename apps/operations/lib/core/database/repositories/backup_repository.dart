@@ -200,6 +200,7 @@ class BackupRepository {
 
   static Map<String, dynamic> _serializeTable(TableModel table) {
     return {
+      'edgeRevision': table.edgeRevision,
       'tableNumber': table.tableNumber,
       'floor': table.floor,
       'isReserved': table.isReserved,
@@ -212,6 +213,8 @@ class BackupRepository {
 
   static Map<String, dynamic> _serializeOrder(Order order) {
     return {
+      'orderUuid': order.orderUuid,
+      'edgeRevision': order.edgeRevision,
       'orderId': order.orderId,
       'tableNumbers': order.tableNumbers,
       'floor': order.floor,
@@ -246,6 +249,7 @@ class BackupRepository {
 
   static Map<String, dynamic> _serializeOrderItem(OrderItem item) {
     return {
+      'lineUuid': item.lineUuid,
       'itemKey': item.itemKey,
       'itemName': item.itemName,
       'unitPrice': item.unitPrice,
@@ -768,8 +772,7 @@ class BackupRepository {
       DatabaseCore.expenseBox!.clear(),
       DatabaseCore.auditLogBox!.clear(),
       DatabaseCore.errorLogBox!.clear(),
-      if (DatabaseCore.inventoryBox != null)
-        DatabaseCore.inventoryBox!.clear(),
+      if (DatabaseCore.inventoryBox != null) DatabaseCore.inventoryBox!.clear(),
       if (settings != null) settings.clear(),
     ]);
 
@@ -1124,6 +1127,7 @@ class BackupRepository {
 
   static TableModel _deserializeTable(Map<String, dynamic> json) {
     return TableModel(
+      edgeRevision: (json['edgeRevision'] as num?)?.toInt() ?? 0,
       tableNumber: json['tableNumber']?.toString() ?? '0',
       floor: json['floor'] as String? ?? 'first',
       isReserved: json['isReserved'] as bool? ?? false,
@@ -1145,6 +1149,8 @@ class BackupRepository {
         .toList();
 
     final order = Order(
+      orderUuid: json['orderUuid'] as String?,
+      edgeRevision: (json['edgeRevision'] as num?)?.toInt() ?? 0,
       orderId: (json['orderId'] as num?)?.toInt() ?? 0,
       tableNumbers: ((json['tableNumbers'] as List?) ?? const [])
           .map((e) => e.toString())
@@ -1352,6 +1358,7 @@ class BackupRepository {
     final quantity = (json['quantity'] as num?)?.toInt() ?? 0;
     final total = unitPrice * quantity;
     return OrderItem(
+      lineUuid: json['lineUuid'] as String?,
       itemKey: json['itemKey'] as String? ?? '',
       itemName: json['itemName'] as String? ?? '',
       unitPrice: unitPrice,

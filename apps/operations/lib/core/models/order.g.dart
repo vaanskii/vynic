@@ -25,13 +25,14 @@ class OrderItemAdapter extends TypeAdapter<OrderItem> {
       comment: fields[5] as String?,
       menuItemId: fields[6] as String?,
       variantId: fields[7] as String?,
+      lineUuid: fields[8] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, OrderItem obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.itemKey)
       ..writeByte(1)
@@ -47,7 +48,9 @@ class OrderItemAdapter extends TypeAdapter<OrderItem> {
       ..writeByte(6)
       ..write(obj.menuItemId)
       ..writeByte(7)
-      ..write(obj.variantId);
+      ..write(obj.variantId)
+      ..writeByte(8)
+      ..write(obj.lineUuid);
   }
 
   @override
@@ -101,13 +104,15 @@ class OrderAdapter extends TypeAdapter<Order> {
       customerPhone: fields[27] == null ? '' : fields[27] as String,
       pickupTime: fields[28] == null ? '' : fields[28] as String,
       customerName: fields[26] == null ? '' : fields[26] as String,
+      orderUuid: fields[29] as String?,
+      edgeRevision: fields[30] == null ? 0 : fields[30] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, Order obj) {
     writer
-      ..writeByte(29)
+      ..writeByte(31)
       ..writeByte(0)
       ..write(obj.orderId)
       ..writeByte(1)
@@ -165,7 +170,11 @@ class OrderAdapter extends TypeAdapter<Order> {
       ..writeByte(27)
       ..write(obj.customerPhone)
       ..writeByte(28)
-      ..write(obj.pickupTime);
+      ..write(obj.pickupTime)
+      ..writeByte(29)
+      ..write(obj.orderUuid)
+      ..writeByte(30)
+      ..write(obj.edgeRevision);
   }
 
   @override

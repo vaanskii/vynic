@@ -1,4 +1,12 @@
 import 'dart:io';
+import 'dart:convert';
+import 'package:fixnum/fixnum.dart';
+import 'package:vynic_edge_contracts/vynic_edge_contracts.dart';
+import 'package:vynic/core/services/edge/orders_tables/coordinator.dart';
+import 'package:vynic/core/services/edge/orders_tables/shadow.dart';
+import 'package:vynic/core/database/repositories/table_repository.dart';
+import 'package:vynic/core/database/transactions/cancel_order_transaction.dart';
+import 'package:vynic/core/models/audit_source.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
@@ -148,6 +156,75 @@ void main() {
     expect(details, containsPair('businessDate', businessDate));
     expect(details.keys.map((k) => k.toLowerCase()), isNot(contains('pin')));
   }
+
+  test(
+    'shadow commits before production create/cancel writes, then compares actual Hive',
+    () async {
+      await seedTable('1');
+      await TableRepository.ensureCanonicalTableIdentity();
+      final box = await Hive.openBox('oc_edge_shadow');
+      final transport = _ShadowTransport();
+      final coordinator = OrderTableCoordinator(
+        box: box,
+        transport: transport,
+        auth: AuthenticatedRequest(
+          scope: Scope(venueId: 'venue', installationId: 'edge'),
+          terminalId: 'terminal',
+        ),
+      );
+      await coordinator.open();
+      OrderTableShadow.observer = OrderTableShadow(coordinator);
+      try {
+        transport.beforeCommit = () {
+          expect(DatabaseCore.orderBox!.values, isEmpty);
+          expect(DatabaseCore.tableBox!.values.single.activeOrderId, isNull);
+        };
+        final order = await OrderRepository.createOrder(
+          tableNumbers: ['1'],
+          floor: 'first',
+          createdBy: 'Nino',
+          items: [],
+        );
+        expect(
+          jsonDecode((box.get('diagnostics') as List).last as String)['kind'],
+          'matched',
+        );
+        expect(
+          DatabaseCore.tableBox!.values.single.activeOrderId,
+          order.orderId,
+        );
+        transport.beforeCommit = () {
+          expect(order.status, 'pending');
+          expect(DatabaseCore.salesBox!.values, isEmpty);
+        };
+        final outcome = await CancelOrderTransaction.run(
+          orderId: order.orderId,
+          actorId: 'Nino',
+          source: AuditSource.pos,
+        );
+        expect(outcome, CancelOrderOutcome.cancelled);
+        expect(
+          jsonDecode((box.get('diagnostics') as List).last as String)['kind'],
+          'matched',
+        );
+        expect(DatabaseCore.tableBox!.values.single.activeOrderId, isNull);
+        expect(
+          DatabaseCore.salesBox!.values,
+          isNotEmpty,
+        ); // Sale remains Flutter-owned.
+        expect(
+          transport.events.last.entities
+              .where((e) => e.kind == ProjectionEntity_Kind.ORDER)
+              .single
+              .tombstone,
+          isTrue,
+        );
+      } finally {
+        OrderTableShadow.observer = null;
+        await box.deleteFromDisk();
+      }
+    },
+  );
 
   group('Walk-In', () {
     test(
@@ -563,4 +640,38 @@ void main() {
       expect(event.type, AuditEventType.addItem);
     });
   });
+}
+
+class _ShadowTransport implements OrderTableTransport {
+  final events = <CommittedEvent>[];
+  void Function()? beforeCommit;
+  @override
+  Future<CommitResult> commit(CommitIntent intent) async {
+    beforeCommit?.call();
+    final event = CommittedEvent(
+      sequence: Int64(events.length + 1),
+      authorityEpoch: Int64.ONE,
+      requestId: intent.requestId,
+      entities: intent.changes.map(
+        (c) => c.entity.deepCopy()..revision = c.expectedRevision + Int64.ONE,
+      ),
+    );
+    events.add(event);
+    return CommitResult(
+      outcome: CommitResult_Outcome.COMMITTED,
+      event: event,
+      authorityEpoch: Int64.ONE,
+      headSequence: event.sequence,
+    );
+  }
+
+  @override
+  Future<ReplayPage> replay(ReplayRequest request) async => ReplayPage(
+    authorityEpoch: Int64.ONE,
+    headSequence: Int64(events.length),
+    events: events.where((e) => e.sequence > request.afterSequence),
+  );
+  @override
+  Future<ProjectionSnapshot> snapshot(SnapshotRequest request) =>
+      throw UnimplementedError();
 }

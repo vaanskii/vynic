@@ -14,6 +14,7 @@ import (
 
 	"vynic.local/edge/internal/server"
 	"vynic.local/edge/internal/store"
+	"vynic.local/edge/internal/updater"
 )
 
 func run() (result error) {
@@ -26,9 +27,21 @@ func run() (result error) {
 	listen := flags.String("listen", "127.0.0.1:7443", "gRPC TLS listen address")
 	grant := flags.String("grant-file", "", "bootstrap grant file")
 	cloudKey := flags.String("cloud-key", "", "trusted Cloud public PEM file")
+	updateConfig := flags.String("pos-updater-config", "", "optional Windows POS updater configuration file")
 	terminal := flags.String("terminal", "", "terminal UUID to revoke")
 	if err := flags.Parse(os.Args[2:]); err != nil {
 		return err
+	}
+	if action == "launch-pos" {
+		b, e := os.ReadFile(*updateConfig)
+		if e != nil {
+			return e
+		}
+		var cfg updater.Config
+		if e = json.Unmarshal(b, &cfg); e != nil {
+			return e
+		}
+		return updater.LaunchCurrent(cfg)
 	}
 	if *dir == "" {
 		return errors.New("--data is required")
@@ -96,6 +109,33 @@ func run() (result error) {
 		defer stop()
 		if err = out.Encode(map[string]any{"listen": l.Addr().String(), "bootId": srv.BootID, "mode": "FOUNDATION_ONLY", "businessMutationsEnabled": false}); err != nil {
 			return err
+		}
+		if *updateConfig != "" {
+			raw, e := os.ReadFile(*updateConfig)
+			if e != nil {
+				return e
+			}
+			var cfg updater.Config
+			if e = json.Unmarshal(raw, &cfg); e != nil {
+				return e
+			}
+			u, e := updater.Open(cfg, updater.NativeProcess{})
+			if e != nil {
+				return e
+			}
+			// Native POS children inherit this location, never a signing secret.
+			if e = os.Setenv("VYNIC_POS_UPDATER_CONFIG", *updateConfig); e != nil {
+				return e
+			}
+			done := make(chan error, 1)
+			go func() { done <- u.Run(ctx) }()
+			go func() {
+				if e := <-done; e != nil {
+					fmt.Fprintln(os.Stderr, "POS updater stopped:", e)
+				}
+			}()
+			// Keep updater persistence open through process activation/recovery.
+			defer u.Close()
 		}
 		return srv.Serve(ctx, l)
 	}

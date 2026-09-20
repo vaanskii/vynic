@@ -1,3 +1,5 @@
+import 'package:vynic/core/services/pos/update/pos_updater.dart';
+import 'package:vynic/apps/windows_pos/widgets/update/pos_update_ui.dart';
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
@@ -31,11 +33,15 @@ Future<void> startPos() async {
   await EdgeDeviceCredentialStore.load();
   await PosDisplaySettingsController.loadFromStorage();
   await PrinterService.initialize();
-  ManagerSyncService.initialize();
-  unawaited(EdgeTransportService.instance().start());
-  unawaited(InventoryProjectionSyncService.instance().start());
-  unawaited(RuntimeConfigSync.instance.start());
+  await PosUpdater.instance.initialize();
   runApp(const PosApp());
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    await PosUpdater.instance.startAfterFirstFrame();
+    ManagerSyncService.initialize();
+    unawaited(EdgeTransportService.instance().start());
+    unawaited(InventoryProjectionSyncService.instance().start());
+    unawaited(RuntimeConfigSync.instance.start());
+  });
 }
 
 class PosApp extends StatefulWidget {
@@ -210,7 +216,10 @@ class _PosAppState extends State<PosApp> with WidgetsBindingObserver {
           builder: (context, settings, _) {
             return PosScaledSurface(
               scale: settings.scaleFactor,
-              child: activityAwareChild,
+              child: PosUpdateHost(
+                navigatorKey: navigatorKey,
+                child: activityAwareChild,
+              ),
             );
           },
         );

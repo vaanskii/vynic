@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'package:hive/hive.dart';
 
 part 'sale_record.g.dart';
@@ -6,7 +7,7 @@ part 'sale_record.g.dart';
 /// `{itemName, quantity, unitPrice, total}` written by
 /// `SalesRepository.saveSaleRecord`.
 @HiveType(typeId: 16)
-class SaleRecordItem extends HiveObject {
+class SaleRecordItem extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(0)
   String itemName;
 
@@ -78,7 +79,7 @@ class SaleRecordItem extends HiveObject {
 /// [fromMap] keep this typed form lossless for both retained legacy rows and
 /// current closure/ledger fields.
 @HiveType(typeId: 15)
-class SaleRecord extends HiveObject {
+class SaleRecord extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(0)
   String? closureId;
 

@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -41,7 +42,15 @@ class BackupRepository {
     return _serializeReservation(reservation);
   }
 
-  static Future<File> createDataBackup({String? targetFilePath}) async {
+  static Future<File> createDataBackup({String? targetFilePath}) =>
+      UpdateReadiness.track(
+        'createDataBackup',
+        () => _updateTrackedCreateDataBackup(targetFilePath: targetFilePath),
+      );
+
+  static Future<File> _updateTrackedCreateDataBackup({
+    String? targetFilePath,
+  }) async {
     final timestamp = DateTime.now();
     final backupFile = targetFilePath != null
         ? File(targetFilePath)
@@ -383,6 +392,19 @@ class BackupRepository {
     List<dynamic> payload, {
     bool clearExisting = false,
     bool silent = false,
+  }) => UpdateReadiness.track(
+    'importMenuFromJson',
+    () => _updateTrackedImportMenuFromJson(
+      payload,
+      clearExisting: clearExisting,
+      silent: silent,
+    ),
+  );
+
+  static Future<void> _updateTrackedImportMenuFromJson(
+    List<dynamic> payload, {
+    bool clearExisting = false,
+    bool silent = false,
   }) async {
     if (DatabaseCore.menuBox == null) {
       return;
@@ -416,7 +438,15 @@ class BackupRepository {
     return DatabaseCore.orderBox!.values.map(_serializeOrder).toList();
   }
 
-  static Future<void> replaceOrdersFromJson(List<dynamic> payload) async {
+  static Future<void> replaceOrdersFromJson(List<dynamic> payload) =>
+      UpdateReadiness.track(
+        'replaceOrdersFromJson',
+        () => _updateTrackedReplaceOrdersFromJson(payload),
+      );
+
+  static Future<void> _updateTrackedReplaceOrdersFromJson(
+    List<dynamic> payload,
+  ) async {
     if (DatabaseCore.orderBox == null) {
       return;
     }
@@ -440,6 +470,23 @@ class BackupRepository {
   /// This bypasses the standard createOrder flow (which auto-assigns IDs and reserves tables)
   /// to allow mobile-originated orders to appear on the POS with a known posOrderId.
   static Future<Order?> createTakeawayOrderFromRemote({
+    required int orderId,
+    required String customerName,
+    required String pickupTime,
+    required String waiterName,
+    required List<Map<String, dynamic>> items,
+  }) => UpdateReadiness.track(
+    'createTakeawayOrderFromRemote',
+    () => _updateTrackedCreateTakeawayOrderFromRemote(
+      orderId: orderId,
+      customerName: customerName,
+      pickupTime: pickupTime,
+      waiterName: waiterName,
+      items: items,
+    ),
+  );
+
+  static Future<Order?> _updateTrackedCreateTakeawayOrderFromRemote({
     required int orderId,
     required String customerName,
     required String pickupTime,
@@ -504,7 +551,15 @@ class BackupRepository {
     return order;
   }
 
-  static Future<Order> createOrderFromJson(Map<String, dynamic> json) async {
+  static Future<Order> createOrderFromJson(Map<String, dynamic> json) =>
+      UpdateReadiness.track(
+        'createOrderFromJson',
+        () => _updateTrackedCreateOrderFromJson(json),
+      );
+
+  static Future<Order> _updateTrackedCreateOrderFromJson(
+    Map<String, dynamic> json,
+  ) async {
     final tableNumbers = ((json['tableNumbers'] as List?) ?? const [])
         .map((entry) => entry.toString())
         .toList();
@@ -534,7 +589,15 @@ class BackupRepository {
         .toList();
   }
 
-  static Future<void> replaceReservationsFromJson(List<dynamic> payload) async {
+  static Future<void> replaceReservationsFromJson(List<dynamic> payload) =>
+      UpdateReadiness.track(
+        'replaceReservationsFromJson',
+        () => _updateTrackedReplaceReservationsFromJson(payload),
+      );
+
+  static Future<void> _updateTrackedReplaceReservationsFromJson(
+    List<dynamic> payload,
+  ) async {
     if (DatabaseCore.reservationBox == null) {
       return;
     }
@@ -556,6 +619,14 @@ class BackupRepository {
   }
 
   static Future<String> createReservationFromJson(
+    Map<String, dynamic> json, {
+    AuditSource source = AuditSource.manager,
+  }) => UpdateReadiness.track(
+    'createReservationFromJson',
+    () => _updateTrackedCreateReservationFromJson(json, source: source),
+  );
+
+  static Future<String> _updateTrackedCreateReservationFromJson(
     Map<String, dynamic> json, {
     AuditSource source = AuditSource.manager,
   }) async {
@@ -617,7 +688,15 @@ class BackupRepository {
     return DatabaseCore.tableBox!.values.map(_serializeTable).toList();
   }
 
-  static Future<void> replaceTablesFromJson(List<dynamic> payload) async {
+  static Future<void> replaceTablesFromJson(List<dynamic> payload) =>
+      UpdateReadiness.track(
+        'replaceTablesFromJson',
+        () => _updateTrackedReplaceTablesFromJson(payload),
+      );
+
+  static Future<void> _updateTrackedReplaceTablesFromJson(
+    List<dynamic> payload,
+  ) async {
     if (DatabaseCore.tableBox == null) {
       return;
     }
@@ -634,7 +713,15 @@ class BackupRepository {
     SyncHub.notify(SyncEvent(type: SyncEventType.tables, action: 'reloaded'));
   }
 
-  static Future<void> updateTableFromJson(Map<String, dynamic> json) async {
+  static Future<void> updateTableFromJson(Map<String, dynamic> json) =>
+      UpdateReadiness.track(
+        'updateTableFromJson',
+        () => _updateTrackedUpdateTableFromJson(json),
+      );
+
+  static Future<void> _updateTrackedUpdateTableFromJson(
+    Map<String, dynamic> json,
+  ) async {
     final tableNumber = json['tableNumber']?.toString();
     final floor = json['floor'] as String? ?? 'first';
     final table = TableRepository.getTable(tableNumber ?? '', floor);
@@ -659,6 +746,25 @@ class BackupRepository {
     String actorId = 'unknown',
     String? actorName,
     AuditSource source = AuditSource.pos,
+  }) => UpdateReadiness.track(
+    'restoreDataBackupFromFile',
+    () => _updateTrackedRestoreDataBackupFromFile(
+      backupFile,
+      clearExisting: clearExisting,
+      backupBeforeRestore: backupBeforeRestore,
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+    ),
+  );
+
+  static Future<void> _updateTrackedRestoreDataBackupFromFile(
+    File backupFile, {
+    bool clearExisting = true,
+    bool backupBeforeRestore = true,
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) async {
     if (!await backupFile.exists()) {
       throw ArgumentError('Backup file not found: ${backupFile.path}');
@@ -675,6 +781,25 @@ class BackupRepository {
   }
 
   static Future<void> restoreDataBackupFromJson(
+    String jsonString, {
+    bool clearExisting = true,
+    bool backupBeforeRestore = true,
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) => UpdateReadiness.track(
+    'restoreDataBackupFromJson',
+    () => _updateTrackedRestoreDataBackupFromJson(
+      jsonString,
+      clearExisting: clearExisting,
+      backupBeforeRestore: backupBeforeRestore,
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+    ),
+  );
+
+  static Future<void> _updateTrackedRestoreDataBackupFromJson(
     String jsonString, {
     bool clearExisting = true,
     bool backupBeforeRestore = true,
@@ -744,7 +869,15 @@ class BackupRepository {
   /// Settings are cleared too, but the terminal identity and the developer
   /// clock high-water mark survive: a wipe must not become a way to shed an
   /// unlock token's device binding or to rewind expiry checks.
-  static Future<String?> wipeAllData({bool backupFirst = true}) async {
+  static Future<String?> wipeAllData({bool backupFirst = true}) =>
+      UpdateReadiness.track(
+        'wipeAllData',
+        () => _updateTrackedWipeAllData(backupFirst: backupFirst),
+      );
+
+  static Future<String?> _updateTrackedWipeAllData({
+    bool backupFirst = true,
+  }) async {
     String? safetyBackupPath;
     if (backupFirst) {
       final file = await createDataBackup();

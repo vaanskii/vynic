@@ -1,10 +1,11 @@
+import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'package:hive/hive.dart';
 import 'order_status.dart';
 import 'package:uuid/uuid.dart';
 part 'order.g.dart';
 
 @HiveType(typeId: 3)
-class OrderItem extends HiveObject {
+class OrderItem extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(0)
   String itemKey; // e.g., "Beer - 0.5L" or "Khinkali"
 
@@ -92,7 +93,7 @@ class OrderItem extends HiveObject {
 }
 
 @HiveType(typeId: 4)
-class Order extends HiveObject {
+class Order extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(0)
   int orderId;
 

@@ -10,6 +10,8 @@
 /// wrong is not a visual bug.
 library;
 
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
+
 import 'dart:developer' as developer;
 import '../edge/orders_tables/shadow.dart';
 import '../edge/orders_tables/pos_shadow_projection.dart';
@@ -230,6 +232,27 @@ abstract final class OrderItemTransfer {
     required String sourceLabel,
     required String destinationLabel,
     AuditSource auditSource = AuditSource.pos,
+  }) => UpdateReadiness.track(
+    'apply',
+    () => _updateTrackedApply(
+      source: source,
+      destination: destination,
+      moves: moves,
+      user: user,
+      sourceLabel: sourceLabel,
+      destinationLabel: destinationLabel,
+      auditSource: auditSource,
+    ),
+  );
+
+  static Future<OrderTransferResult> _updateTrackedApply({
+    required Order source,
+    required Order destination,
+    required List<OrderItemMove> moves,
+    required User user,
+    required String sourceLabel,
+    required String destinationLabel,
+    AuditSource auditSource = AuditSource.pos,
   }) async {
     // Work on copies so a refusal — or a failed write — cannot leave the
     // in-memory orders half-moved behind the operator's back.
@@ -341,6 +364,21 @@ abstract final class OrderItemTransfer {
   /// trail ends the way the Order did instead of staying open forever.
   /// [destination] is the Order the last items went to, when known.
   static Future<void> releaseEmptiedOrder(
+    Order order, {
+    required User user,
+    Order? destination,
+    AuditSource auditSource = AuditSource.pos,
+  }) => UpdateReadiness.track(
+    'releaseEmptiedOrder',
+    () => _updateTrackedReleaseEmptiedOrder(
+      order,
+      user: user,
+      destination: destination,
+      auditSource: auditSource,
+    ),
+  );
+
+  static Future<void> _updateTrackedReleaseEmptiedOrder(
     Order order, {
     required User user,
     Order? destination,

@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'package:hive/hive.dart';
 import 'order.dart';
 import 'reservation_status.dart';
@@ -5,7 +6,7 @@ import 'reservation_status.dart';
 part 'reservation.g.dart';
 
 @HiveType(typeId: 9)
-class Reservation extends HiveObject {
+class Reservation extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(0)
   String id;
 

@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -84,7 +85,10 @@ class SettingsRepository {
   /// Seeds first-run defaults into the settings box. Called from
   /// `DatabaseService.init()` (the façade) after schema migrations, before anything reads
   /// settings.
-  static Future<void> seedDefaults() async {
+  static Future<void> seedDefaults() =>
+      UpdateReadiness.track('seedDefaults', () => _updateTrackedSeedDefaults());
+
+  static Future<void> _updateTrackedSeedDefaults() async {
     // Initialize current date if not set
     if (!_settingsBox!.containsKey('currentDate')) {
       await _settingsBox!.put('currentDate', DateTime.now().toIso8601String());
@@ -206,7 +210,15 @@ class SettingsRepository {
     return 13000.0;
   }
 
-  static Future<void> setMonthlyReportLeaseCost(double value) async {
+  static Future<void> setMonthlyReportLeaseCost(double value) =>
+      UpdateReadiness.track(
+        'setMonthlyReportLeaseCost',
+        () => _updateTrackedSetMonthlyReportLeaseCost(value),
+      );
+
+  static Future<void> _updateTrackedSetMonthlyReportLeaseCost(
+    double value,
+  ) async {
     await _settingsBox!.put(_monthlyReportLeaseCostSetting, value);
   }
 
@@ -218,7 +230,15 @@ class SettingsRepository {
     return 650.0;
   }
 
-  static Future<void> setMonthlyReportStaffDailyCost(double value) async {
+  static Future<void> setMonthlyReportStaffDailyCost(double value) =>
+      UpdateReadiness.track(
+        'setMonthlyReportStaffDailyCost',
+        () => _updateTrackedSetMonthlyReportStaffDailyCost(value),
+      );
+
+  static Future<void> _updateTrackedSetMonthlyReportStaffDailyCost(
+    double value,
+  ) async {
     await _settingsBox!.put(_monthlyReportStaffDailyCostSetting, value);
   }
 
@@ -233,7 +253,15 @@ class SettingsRepository {
     return 0.5;
   }
 
-  static Future<void> setMonthlyReportFoodProfitRatio(double ratio) async {
+  static Future<void> setMonthlyReportFoodProfitRatio(double ratio) =>
+      UpdateReadiness.track(
+        'setMonthlyReportFoodProfitRatio',
+        () => _updateTrackedSetMonthlyReportFoodProfitRatio(ratio),
+      );
+
+  static Future<void> _updateTrackedSetMonthlyReportFoodProfitRatio(
+    double ratio,
+  ) async {
     final normalized = ratio.clamp(0.0, 1.0);
     await _settingsBox!.put(_monthlyReportFoodProfitRatioSetting, normalized);
   }
@@ -253,6 +281,19 @@ class SettingsRepository {
   }
 
   static Future<void> setMonthlyReportLeaseCostOverrideForMonth(
+    int year,
+    int month,
+    double? value,
+  ) => UpdateReadiness.track(
+    'setMonthlyReportLeaseCostOverrideForMonth',
+    () => _updateTrackedSetMonthlyReportLeaseCostOverrideForMonth(
+      year,
+      month,
+      value,
+    ),
+  );
+
+  static Future<void> _updateTrackedSetMonthlyReportLeaseCostOverrideForMonth(
     int year,
     int month,
     double? value,
@@ -291,6 +332,20 @@ class SettingsRepository {
   }
 
   static Future<void> setMonthlyReportStaffDailyCostOverrideForMonth(
+    int year,
+    int month,
+    double? value,
+  ) => UpdateReadiness.track(
+    'setMonthlyReportStaffDailyCostOverrideForMonth',
+    () => _updateTrackedSetMonthlyReportStaffDailyCostOverrideForMonth(
+      year,
+      month,
+      value,
+    ),
+  );
+
+  static Future<void>
+  _updateTrackedSetMonthlyReportStaffDailyCostOverrideForMonth(
     int year,
     int month,
     double? value,
@@ -366,7 +421,13 @@ class SettingsRepository {
     return [];
   }
 
-  static Future<void> savePrintersList(
+  static Future<void> savePrintersList(List<Map<String, dynamic>> printers) =>
+      UpdateReadiness.track(
+        'savePrintersList',
+        () => _updateTrackedSavePrintersList(printers),
+      );
+
+  static Future<void> _updateTrackedSavePrintersList(
     List<Map<String, dynamic>> printers,
   ) async {
     await _settingsBox!.put('printersList', printers);
@@ -377,6 +438,19 @@ class SettingsRepository {
   }
 
   static Future<void> savePrinterConfiguration({
+    required String kitchenIp,
+    required String receiptIp,
+    required int port,
+  }) => UpdateReadiness.track(
+    'savePrinterConfiguration',
+    () => _updateTrackedSavePrinterConfiguration(
+      kitchenIp: kitchenIp,
+      receiptIp: receiptIp,
+      port: port,
+    ),
+  );
+
+  static Future<void> _updateTrackedSavePrinterConfiguration({
     required String kitchenIp,
     required String receiptIp,
     required int port,
@@ -444,6 +518,17 @@ class SettingsRepository {
   static bool defaultIncludeServiceFee() => isServiceFeeAvailable();
 
   static Future<void> updateServiceFeeSettings({
+    required double percentage,
+    required bool enabledByDefault,
+  }) => UpdateReadiness.track(
+    'updateServiceFeeSettings',
+    () => _updateTrackedUpdateServiceFeeSettings(
+      percentage: percentage,
+      enabledByDefault: enabledByDefault,
+    ),
+  );
+
+  static Future<void> _updateTrackedUpdateServiceFeeSettings({
     required double percentage,
     required bool enabledByDefault,
   }) async {
@@ -552,6 +637,14 @@ class SettingsRepository {
   static Future<void> setDestructiveActionPassword(
     String newPassword, {
     String hint = '',
+  }) => UpdateReadiness.track(
+    'setDestructiveActionPassword',
+    () => _updateTrackedSetDestructiveActionPassword(newPassword, hint: hint),
+  );
+
+  static Future<void> _updateTrackedSetDestructiveActionPassword(
+    String newPassword, {
+    String hint = '',
   }) async {
     final sanitized = newPassword.trim();
     if (sanitized.isEmpty) {
@@ -592,7 +685,15 @@ class SettingsRepository {
     return '';
   }
 
-  static Future<void> setDestructiveActionPasswordHint(String hint) async {
+  static Future<void> setDestructiveActionPasswordHint(String hint) =>
+      UpdateReadiness.track(
+        'setDestructiveActionPasswordHint',
+        () => _updateTrackedSetDestructiveActionPasswordHint(hint),
+      );
+
+  static Future<void> _updateTrackedSetDestructiveActionPasswordHint(
+    String hint,
+  ) async {
     await _settingsBox!.put(_destructivePasswordHintSetting, hint.trim());
     await _settingsBox!.put(
       _destructivePasswordUpdatedAtSetting,
@@ -625,7 +726,13 @@ class SettingsRepository {
     return (normalized == 'en' || normalized == 'ka') ? normalized : 'ka';
   }
 
-  static Future<void> setDefaultLanguage(String language) async {
+  static Future<void> setDefaultLanguage(String language) =>
+      UpdateReadiness.track(
+        'setDefaultLanguage',
+        () => _updateTrackedSetDefaultLanguage(language),
+      );
+
+  static Future<void> _updateTrackedSetDefaultLanguage(String language) async {
     final normalized = language.toLowerCase();
     await _settingsBox!.put(
       'defaultLanguage',
@@ -669,7 +776,15 @@ class SettingsRepository {
     );
   }
 
-  static Future<void> setPosDisplaySettings(PosDisplaySettings settings) async {
+  static Future<void> setPosDisplaySettings(PosDisplaySettings settings) =>
+      UpdateReadiness.track(
+        'setPosDisplaySettings',
+        () => _updateTrackedSetPosDisplaySettings(settings),
+      );
+
+  static Future<void> _updateTrackedSetPosDisplaySettings(
+    PosDisplaySettings settings,
+  ) async {
     await _settingsBox!.put(
       _posDisplayModeSetting,
       settings.displayMode.storageValue,
@@ -710,7 +825,15 @@ class SettingsRepository {
   }
 
   /// Set whether table closing is restricted to the owner
-  static Future<void> setTableCloseRestrictedToOwner(bool restricted) async {
+  static Future<void> setTableCloseRestrictedToOwner(bool restricted) =>
+      UpdateReadiness.track(
+        'setTableCloseRestrictedToOwner',
+        () => _updateTrackedSetTableCloseRestrictedToOwner(restricted),
+      );
+
+  static Future<void> _updateTrackedSetTableCloseRestrictedToOwner(
+    bool restricted,
+  ) async {
     await _settingsBox!.put(_restrictTableCloseToOwnerSetting, restricted);
   }
 
@@ -733,7 +856,15 @@ class SettingsRepository {
   }
 
   /// Set whether printed receipts show the separate service-fee line.
-  static Future<void> setReceiptServiceFeeLineVisible(bool visible) async {
+  static Future<void> setReceiptServiceFeeLineVisible(bool visible) =>
+      UpdateReadiness.track(
+        'setReceiptServiceFeeLineVisible',
+        () => _updateTrackedSetReceiptServiceFeeLineVisible(visible),
+      );
+
+  static Future<void> _updateTrackedSetReceiptServiceFeeLineVisible(
+    bool visible,
+  ) async {
     await _settingsBox!.put(_receiptShowServiceFeeLineSetting, visible);
     // Keep the superseded key from overriding a newer choice on re-read.
     await _settingsBox!.delete(_legacyReceiptHideServiceFeeLineSetting);
@@ -755,7 +886,15 @@ class SettingsRepository {
     return stored is bool ? stored : false;
   }
 
-  static Future<void> setCloseReceiptServiceFeeLineVisible(bool visible) async {
+  static Future<void> setCloseReceiptServiceFeeLineVisible(bool visible) =>
+      UpdateReadiness.track(
+        'setCloseReceiptServiceFeeLineVisible',
+        () => _updateTrackedSetCloseReceiptServiceFeeLineVisible(visible),
+      );
+
+  static Future<void> _updateTrackedSetCloseReceiptServiceFeeLineVisible(
+    bool visible,
+  ) async {
     await _settingsBox!.put(_closeReceiptShowServiceFeeLineSetting, visible);
   }
 
@@ -770,7 +909,12 @@ class SettingsRepository {
     return raw is String ? raw.trim() : '';
   }
 
-  static Future<void> setVenueName(String name) async {
+  static Future<void> setVenueName(String name) => UpdateReadiness.track(
+    'setVenueName',
+    () => _updateTrackedSetVenueName(name),
+  );
+
+  static Future<void> _updateTrackedSetVenueName(String name) async {
     await _settingsBox?.put(_venueNameSetting, name.trim());
   }
 
@@ -786,7 +930,12 @@ class SettingsRepository {
     return raw is String ? raw.trim() : '';
   }
 
-  static Future<void> setVenueLegalId(String legalId) async {
+  static Future<void> setVenueLegalId(String legalId) => UpdateReadiness.track(
+    'setVenueLegalId',
+    () => _updateTrackedSetVenueLegalId(legalId),
+  );
+
+  static Future<void> _updateTrackedSetVenueLegalId(String legalId) async {
     await _settingsBox?.put(_venueLegalIdSetting, legalId.trim());
   }
 
@@ -799,7 +948,12 @@ class SettingsRepository {
     return raw is String ? raw.trim() : '';
   }
 
-  static Future<void> setVenueAddress(String address) async {
+  static Future<void> setVenueAddress(String address) => UpdateReadiness.track(
+    'setVenueAddress',
+    () => _updateTrackedSetVenueAddress(address),
+  );
+
+  static Future<void> _updateTrackedSetVenueAddress(String address) async {
     await _settingsBox?.put(_venueAddressSetting, address.trim());
   }
 
@@ -809,7 +963,12 @@ class SettingsRepository {
     return raw is String ? raw.trim() : '';
   }
 
-  static Future<void> setVenuePhone(String phone) async {
+  static Future<void> setVenuePhone(String phone) => UpdateReadiness.track(
+    'setVenuePhone',
+    () => _updateTrackedSetVenuePhone(phone),
+  );
+
+  static Future<void> _updateTrackedSetVenuePhone(String phone) async {
     await _settingsBox?.put(_venuePhoneSetting, phone.trim());
   }
 
@@ -840,7 +999,12 @@ class SettingsRepository {
     return null;
   }
 
-  static Future<void> setVenueLogoPng(Uint8List? png) async {
+  static Future<void> setVenueLogoPng(Uint8List? png) => UpdateReadiness.track(
+    'setVenueLogoPng',
+    () => _updateTrackedSetVenueLogoPng(png),
+  );
+
+  static Future<void> _updateTrackedSetVenueLogoPng(Uint8List? png) async {
     if (png == null || png.isEmpty) {
       await _settingsBox?.delete(_venueLogoSetting);
       return;
@@ -864,7 +1028,13 @@ class SettingsRepository {
     );
   }
 
-  static Future<void> saveReceiptHeaderLayout(
+  static Future<void> saveReceiptHeaderLayout(ReceiptHeaderLayout layout) =>
+      UpdateReadiness.track(
+        'saveReceiptHeaderLayout',
+        () => _updateTrackedSaveReceiptHeaderLayout(layout),
+      );
+
+  static Future<void> _updateTrackedSaveReceiptHeaderLayout(
     ReceiptHeaderLayout layout,
   ) async {
     await _settingsBox?.put(
@@ -889,7 +1059,12 @@ class SettingsRepository {
     return _settingsBox?.get(_setupCompleteSetting) == true;
   }
 
-  static Future<void> markSetupComplete() async {
+  static Future<void> markSetupComplete() => UpdateReadiness.track(
+    'markSetupComplete',
+    () => _updateTrackedMarkSetupComplete(),
+  );
+
+  static Future<void> _updateTrackedMarkSetupComplete() async {
     await _settingsBox?.put(_setupCompleteSetting, true);
   }
 
@@ -926,7 +1101,15 @@ class SettingsRepository {
     return DateTime.tryParse(raw);
   }
 
-  static Future<void> saveLastManagerSyncAt(DateTime value) async {
+  static Future<void> saveLastManagerSyncAt(DateTime value) =>
+      UpdateReadiness.track(
+        'saveLastManagerSyncAt',
+        () => _updateTrackedSaveLastManagerSyncAt(value),
+      );
+
+  static Future<void> _updateTrackedSaveLastManagerSyncAt(
+    DateTime value,
+  ) async {
     await _settingsBox?.put(_lastManagerSyncAtSetting, value.toIso8601String());
   }
 
@@ -937,11 +1120,22 @@ class SettingsRepository {
     return trimmed;
   }
 
-  static Future<void> saveBackendUrlOverride(String value) async {
+  static Future<void> saveBackendUrlOverride(String value) =>
+      UpdateReadiness.track(
+        'saveBackendUrlOverride',
+        () => _updateTrackedSaveBackendUrlOverride(value),
+      );
+
+  static Future<void> _updateTrackedSaveBackendUrlOverride(String value) async {
     await _settingsBox?.put(_backendUrlOverrideSetting, value.trim());
   }
 
-  static Future<void> clearBackendUrlOverride() async {
+  static Future<void> clearBackendUrlOverride() => UpdateReadiness.track(
+    'clearBackendUrlOverride',
+    () => _updateTrackedClearBackendUrlOverride(),
+  );
+
+  static Future<void> _updateTrackedClearBackendUrlOverride() async {
     await _settingsBox?.delete(_backendUrlOverrideSetting);
   }
 
@@ -961,13 +1155,24 @@ class SettingsRepository {
     );
   }
 
-  static Future<void> saveActiveTableLayout(
+  static Future<void> saveActiveTableLayout(RestaurantTableLayout layout) =>
+      UpdateReadiness.track(
+        'saveActiveTableLayout',
+        () => _updateTrackedSaveActiveTableLayout(layout),
+      );
+
+  static Future<void> _updateTrackedSaveActiveTableLayout(
     RestaurantTableLayout layout,
   ) async {
     await _settingsBox?.put(_activeTableLayoutSetting, jsonEncode(layout));
   }
 
-  static Future<void> clearActiveTableLayout() async {
+  static Future<void> clearActiveTableLayout() => UpdateReadiness.track(
+    'clearActiveTableLayout',
+    () => _updateTrackedClearActiveTableLayout(),
+  );
+
+  static Future<void> _updateTrackedClearActiveTableLayout() async {
     await _settingsBox?.delete(_activeTableLayoutSetting);
   }
 }

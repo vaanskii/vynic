@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'package:hive/hive.dart';
 
 import 'order.dart';
@@ -5,7 +6,7 @@ import 'order.dart';
 part 'quick_order_draft.g.dart';
 
 @HiveType(typeId: 14)
-class QuickOrderDraft extends HiveObject {
+class QuickOrderDraft extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(0)
   String id;
 

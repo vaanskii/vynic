@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'dart:ui' show FontFeature;
 
 import 'package:flutter/material.dart';
@@ -68,7 +69,10 @@ class TablePaymentService {
     BoxShadow(color: Color(0x1F0F172A), blurRadius: 32, offset: Offset(0, 16)),
   ];
 
-  Future<TablePaymentSelection?> collect() async {
+  Future<TablePaymentSelection?> collect() =>
+      UpdateReadiness.track('collect', () => _updateTrackedCollect());
+
+  Future<TablePaymentSelection?> _updateTrackedCollect() async {
     if (total <= 0) {
       await showErrorToast(context, 'გადახდამდე გადათვალეთ შეკვეთის ჯამი');
       return null;

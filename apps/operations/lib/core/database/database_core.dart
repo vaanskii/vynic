@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'dart:io';
 
 import 'package:hive_flutter/hive_flutter.dart';
@@ -135,23 +136,29 @@ class DatabaseCore {
     Hive.registerAdapter(SaleRecordAdapter());
     Hive.registerAdapter(SaleRecordItemAdapter());
 
-    metaBox = await Hive.openBox(metaBoxName);
+    metaBox = UpdateTrackedBox(await Hive.openBox(metaBoxName));
 
     // Open boxes
-    userBox = await Hive.openBox<User>(userBoxName);
-    tableBox = await Hive.openBox<TableModel>(tableBoxName);
-    orderBox = await Hive.openBox<Order>(orderBoxName);
-    packageBox = await Hive.openBox<Package>(packageBoxName);
-    menuBox = await Hive.openBox<MenuCategoryDB>(menuBoxName);
-    settingsBox = await Hive.openBox(settingsBoxName);
-    salesBox = await Hive.openBox(salesBoxName);
-    expenseBox = await Hive.openBox(expenseBoxName);
-    auditLogBox = await Hive.openBox(auditLogBoxName);
-    errorLogBox = await Hive.openBox(errorLogBoxName);
-    reservationBox = await Hive.openBox<Reservation>(reservationBoxName);
-    quickOrderBox = await Hive.openBox<QuickOrderDraft>(quickOrderBoxName);
-    closureJournalBox = await Hive.openBox(closureJournalBoxName);
-    inventoryBox = await Hive.openBox(inventoryBoxName);
+    userBox = UpdateTrackedBox(await Hive.openBox<User>(userBoxName));
+    tableBox = UpdateTrackedBox(await Hive.openBox<TableModel>(tableBoxName));
+    orderBox = UpdateTrackedBox(await Hive.openBox<Order>(orderBoxName));
+    packageBox = UpdateTrackedBox(await Hive.openBox<Package>(packageBoxName));
+    menuBox = UpdateTrackedBox(await Hive.openBox<MenuCategoryDB>(menuBoxName));
+    settingsBox = UpdateTrackedBox(await Hive.openBox(settingsBoxName));
+    salesBox = UpdateTrackedBox(await Hive.openBox(salesBoxName));
+    expenseBox = UpdateTrackedBox(await Hive.openBox(expenseBoxName));
+    auditLogBox = UpdateTrackedBox(await Hive.openBox(auditLogBoxName));
+    errorLogBox = UpdateTrackedBox(await Hive.openBox(errorLogBoxName));
+    reservationBox = UpdateTrackedBox(
+      await Hive.openBox<Reservation>(reservationBoxName),
+    );
+    quickOrderBox = UpdateTrackedBox(
+      await Hive.openBox<QuickOrderDraft>(quickOrderBoxName),
+    );
+    closureJournalBox = UpdateTrackedBox(
+      await Hive.openBox(closureJournalBoxName),
+    );
+    inventoryBox = UpdateTrackedBox(await Hive.openBox(inventoryBoxName));
 
     // Run schema migrations before seeding defaults.
     final migrationContext = HiveMigrationContext(

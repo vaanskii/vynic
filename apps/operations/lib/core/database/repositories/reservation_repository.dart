@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'dart:developer' as developer;
 
 import 'package:uuid/uuid.dart';
@@ -39,6 +40,43 @@ class ReservationRepository {
 
   // Create a new reservation
   static Future<String> createReservation({
+    required String customerName,
+    required String customerPhone,
+    List<int> tableNumbers = const [],
+    List<TableRef>? tableRefs,
+    required DateTime reservationDate,
+    required String reservationTime,
+    required int numberOfGuests,
+    String? notes,
+    required String createdBy,
+    List<OrderItem>? preOrderItems,
+    bool isTakeAway = false,
+    int? linkedOrderId,
+    String status = 'pending',
+    String? id,
+    AuditSource source = AuditSource.pos,
+  }) => UpdateReadiness.track(
+    'createReservation',
+    () => _updateTrackedCreateReservation(
+      customerName: customerName,
+      customerPhone: customerPhone,
+      tableNumbers: tableNumbers,
+      tableRefs: tableRefs,
+      reservationDate: reservationDate,
+      reservationTime: reservationTime,
+      numberOfGuests: numberOfGuests,
+      notes: notes,
+      createdBy: createdBy,
+      preOrderItems: preOrderItems,
+      isTakeAway: isTakeAway,
+      linkedOrderId: linkedOrderId,
+      status: status,
+      id: id,
+      source: source,
+    ),
+  );
+
+  static Future<String> _updateTrackedCreateReservation({
     required String customerName,
     required String customerPhone,
     List<int> tableNumbers = const [],
@@ -192,6 +230,25 @@ class ReservationRepository {
     String? actorName,
     AuditSource source = AuditSource.pos,
     String? reason,
+  }) => UpdateReadiness.track(
+    'completeReservationByOrderId',
+    () => _updateTrackedCompleteReservationByOrderId(
+      orderId,
+      failOnError: failOnError,
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+      reason: reason,
+    ),
+  );
+
+  static Future<bool> _updateTrackedCompleteReservationByOrderId(
+    int orderId, {
+    bool failOnError = false,
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+    String? reason,
   }) async {
     try {
       final reservationBox = DatabaseCore.reservationBox;
@@ -232,6 +289,23 @@ class ReservationRepository {
   }
 
   static Future<bool> cancelReservationByOrderId(
+    int orderId, {
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+    String? reason,
+  }) => UpdateReadiness.track(
+    'cancelReservationByOrderId',
+    () => _updateTrackedCancelReservationByOrderId(
+      orderId,
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+      reason: reason,
+    ),
+  );
+
+  static Future<bool> _updateTrackedCancelReservationByOrderId(
     int orderId, {
     String actorId = 'system',
     String? actorName,
@@ -416,6 +490,25 @@ class ReservationRepository {
     String? actorName,
     AuditSource source = AuditSource.pos,
     String? reason,
+  }) => UpdateReadiness.track(
+    'updateReservationStatus',
+    () => _updateTrackedUpdateReservationStatus(
+      reservationId,
+      newStatus,
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+      reason: reason,
+    ),
+  );
+
+  static Future<void> _updateTrackedUpdateReservationStatus(
+    String reservationId,
+    String newStatus, {
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+    String? reason,
   }) async {
     final reservation = DatabaseCore.reservationBox!.values.firstWhere(
       (r) => r.id == reservationId,
@@ -456,6 +549,35 @@ class ReservationRepository {
   /// `UPDATE_RESERVATION` naming the fields that changed. Fields left null
   /// are untouched. Nothing is written when nothing changed.
   static Future<bool> updateReservationDetails(
+    String reservationId, {
+    String? customerName,
+    String? customerPhone,
+    String? notes,
+    bool clearNotes = false,
+    DateTime? reservationDate,
+    String? reservationTime,
+    int? numberOfGuests,
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) => UpdateReadiness.track(
+    'updateReservationDetails',
+    () => _updateTrackedUpdateReservationDetails(
+      reservationId,
+      customerName: customerName,
+      customerPhone: customerPhone,
+      notes: notes,
+      clearNotes: clearNotes,
+      reservationDate: reservationDate,
+      reservationTime: reservationTime,
+      numberOfGuests: numberOfGuests,
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+    ),
+  );
+
+  static Future<bool> _updateTrackedUpdateReservationDetails(
     String reservationId, {
     String? customerName,
     String? customerPhone,
@@ -547,6 +669,23 @@ class ReservationRepository {
     String actorId = 'system',
     String? actorName,
     AuditSource source = AuditSource.pos,
+  }) => UpdateReadiness.track(
+    'updateReservationPreOrderItems',
+    () => _updateTrackedUpdateReservationPreOrderItems(
+      reservationId,
+      updatedItems,
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+    ),
+  );
+
+  static Future<void> _updateTrackedUpdateReservationPreOrderItems(
+    String reservationId,
+    List<OrderItem> updatedItems, {
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) async {
     final reservation = DatabaseCore.reservationBox!.values.firstWhere(
       (r) => r.id == reservationId,
@@ -627,6 +766,25 @@ class ReservationRepository {
     String actorId = 'system',
     String? actorName,
     AuditSource source = AuditSource.pos,
+  }) => UpdateReadiness.track(
+    'updateReservationTables',
+    () => _updateTrackedUpdateReservationTables(
+      reservationId,
+      tableNumbers,
+      tableRefs: tableRefs,
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+    ),
+  );
+
+  static Future<void> _updateTrackedUpdateReservationTables(
+    String reservationId,
+    List<int> tableNumbers, {
+    List<TableRef>? tableRefs,
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) async {
     final reservations = DatabaseCore.reservationBox!.values.where(
       (r) => r.id == reservationId,
@@ -695,6 +853,23 @@ class ReservationRepository {
   /// deleted Reservation is still accountable for; an already-absent one is a
   /// redelivery and writes nothing.
   static Future<void> deleteReservation(
+    String reservationId, {
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+    String? reason,
+  }) => UpdateReadiness.track(
+    'deleteReservation',
+    () => _updateTrackedDeleteReservation(
+      reservationId,
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+      reason: reason,
+    ),
+  );
+
+  static Future<void> _updateTrackedDeleteReservation(
     String reservationId, {
     String actorId = 'system',
     String? actorName,

@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'dart:developer' as developer;
 
 import 'package:vynic/core/models/audit_source.dart';
@@ -34,6 +35,19 @@ class ActivateReservationTransaction {
   /// errors (e.g. `StateError('Table X is busy')` from [createOrder]) are NOT
   /// caught here — they propagate so callers can log and surface them.
   static Future<ReservationActivationResult> activate({
+    required String reservationId,
+    required String activatedBy,
+    AuditSource source = AuditSource.pos,
+  }) => UpdateReadiness.track(
+    'activate',
+    () => _updateTrackedActivate(
+      reservationId: reservationId,
+      activatedBy: activatedBy,
+      source: source,
+    ),
+  );
+
+  static Future<ReservationActivationResult> _updateTrackedActivate({
     required String reservationId,
     required String activatedBy,
     AuditSource source = AuditSource.pos,
@@ -178,7 +192,12 @@ class ActivateReservationTransaction {
   }
 
   // Activate today's confirmed reservations (called when app starts or day opens)
-  static Future<void> activateTodaysReservations() async {
+  static Future<void> activateTodaysReservations() => UpdateReadiness.track(
+    'activateTodaysReservations',
+    () => _updateTrackedActivateTodaysReservations(),
+  );
+
+  static Future<void> _updateTrackedActivateTodaysReservations() async {
     developer.log('========================================');
     developer.log('ACTIVATE TODAY\'S RESERVATIONS - CALLED');
 

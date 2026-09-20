@@ -1,10 +1,11 @@
+import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'package:hive/hive.dart';
 import 'table_operational_status.dart';
 
 part 'table.g.dart';
 
 @HiveType(typeId: 2)
-class TableModel extends HiveObject {
+class TableModel extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(0)
   String tableNumber;
 

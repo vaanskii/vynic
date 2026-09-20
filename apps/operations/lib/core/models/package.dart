@@ -1,10 +1,11 @@
+import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 
 part 'package.g.dart';
 
 @HiveType(typeId: 11)
-class Package extends HiveObject {
+class Package extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(0)
   String packageId;
 
@@ -76,7 +77,7 @@ class Package extends HiveObject {
 }
 
 @HiveType(typeId: 12)
-class PackageItem extends HiveObject {
+class PackageItem extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(0)
   String itemKey; // Format: "categorySlug|itemName" or "categorySlug|itemName|variantSize"
 

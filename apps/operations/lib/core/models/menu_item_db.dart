@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 
@@ -20,7 +21,7 @@ String newMenuItemId() => _uuid.v4();
 String newMenuNodeId() => _uuid.v4();
 
 @HiveType(typeId: 5)
-class MenuCategoryDB extends HiveObject {
+class MenuCategoryDB extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(0)
   String slug;
 
@@ -79,7 +80,7 @@ class MenuCategoryDB extends HiveObject {
 }
 
 @HiveType(typeId: 6)
-class MenuSubcategoryDB extends HiveObject {
+class MenuSubcategoryDB extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(0)
   String slug;
 
@@ -135,7 +136,7 @@ class MenuSubcategoryDB extends HiveObject {
 /// the Cloud mirror (which matches on `nameEn` under a parent) grew a second
 /// row and left the old one behind.
 @HiveType(typeId: 7)
-class MenuItemDB extends HiveObject {
+class MenuItemDB extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(0)
   Map<String, String> translationsEn;
 

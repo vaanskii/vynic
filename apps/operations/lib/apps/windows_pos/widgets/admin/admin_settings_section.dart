@@ -1,3 +1,4 @@
+import 'package:vynic/apps/windows_pos/widgets/update/pos_update_ui.dart';
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
@@ -128,6 +129,8 @@ class AdminSettingsSection extends StatelessWidget {
                     _buildModernHeader(),
                     const SizedBox(height: 14),
                     _buildStatusStrip(),
+                    const SizedBox(height: 16),
+                    const PosUpdateSettings(),
                     const SizedBox(height: 16),
                     _buildSettingsHeader(
                       icon: Icons.storefront,

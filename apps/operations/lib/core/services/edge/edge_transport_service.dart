@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'dart:async';
 import 'dart:math';
 
@@ -106,7 +107,10 @@ class EdgeTransportService {
   /// A POS with no credential is not an error and not a degraded state: it is
   /// every installation that has not been provisioned yet, and it must start
   /// and run exactly as it always did.
-  Future<void> start() async {
+  Future<void> start() =>
+      UpdateReadiness.track('start', () => _updateTrackedStart());
+
+  Future<void> _updateTrackedStart() async {
     if (_running) return;
     if (!EdgeDeviceCredentialStore.isLoaded) {
       await EdgeDeviceCredentialStore.load();
@@ -128,7 +132,10 @@ class EdgeTransportService {
   }
 
   /// Stops polling. Safe to call when never started.
-  Future<void> stop() async {
+  Future<void> stop() =>
+      UpdateReadiness.track('stop', () => _updateTrackedStop());
+
+  Future<void> _updateTrackedStop() async {
     _running = false;
     _timer?.cancel();
     _timer = null;
@@ -139,7 +146,10 @@ class EdgeTransportService {
   ///
   /// Re-entrant calls are refused rather than queued: two claims in flight would
   /// take two leases on the same work for no benefit.
-  Future<EdgePollSummary> pollOnce() async {
+  Future<EdgePollSummary> pollOnce() =>
+      UpdateReadiness.track('pollOnce', () => _updateTrackedPollOnce());
+
+  Future<EdgePollSummary> _updateTrackedPollOnce() async {
     if (_polling) {
       return const EdgePollSummary(outcome: EdgeTransportOutcome.ok);
     }

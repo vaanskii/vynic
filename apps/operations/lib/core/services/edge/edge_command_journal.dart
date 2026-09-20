@@ -83,6 +83,16 @@ class EdgeCommandJournal {
   }
 
   static bool get isOpen => _box != null;
+  static bool get hasUnresolvedExecution =>
+      _box?.values.any((raw) {
+        final status = raw['status'];
+        return status == EdgeExecutionStatus.running.name ||
+            status == EdgeExecutionStatus.interrupted.name;
+      }) ??
+      false;
+  static Future<void> flushForUpdate() async {
+    await _box?.flush();
+  }
 
   static Future<void> close() async {
     await _box?.close();
@@ -185,7 +195,10 @@ class EdgeCommandJournal {
       final map = Map<String, dynamic>.from(raw);
       if (map['status'] != EdgeExecutionStatus.running.name) continue;
       if (map['runId'] == _runId) continue;
-      await box.put(key, map..['status'] = EdgeExecutionStatus.interrupted.name);
+      await box.put(
+        key,
+        map..['status'] = EdgeExecutionStatus.interrupted.name,
+      );
     }
   }
 

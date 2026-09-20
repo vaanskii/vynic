@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'dart:async';
 import '../../services/edge/orders_tables/shadow.dart';
 import '../../services/edge/orders_tables/pos_shadow_projection.dart';
@@ -47,6 +48,31 @@ class OrderRepository {
   /// booking being seated. The initial `ADD_ITEM` rows follow it at the same
   /// instant. [source] says which channel opened it; the actor is [createdBy].
   static Future<Order> createOrder({
+    required List<String> tableNumbers,
+    required String floor,
+    required String createdBy,
+    required List<OrderItem> items,
+    bool? includeServiceFee,
+    AuditSource source = AuditSource.pos,
+    bool forPackage = false,
+    String? activatesReservationId,
+    String? reservationCustomerName,
+  }) => UpdateReadiness.track(
+    'createOrder',
+    () => _updateTrackedCreateOrder(
+      tableNumbers: tableNumbers,
+      floor: floor,
+      createdBy: createdBy,
+      items: items,
+      includeServiceFee: includeServiceFee,
+      source: source,
+      forPackage: forPackage,
+      activatesReservationId: activatesReservationId,
+      reservationCustomerName: reservationCustomerName,
+    ),
+  );
+
+  static Future<Order> _updateTrackedCreateOrder({
     required List<String> tableNumbers,
     required String floor,
     required String createdBy,
@@ -205,6 +231,27 @@ class OrderRepository {
     required List<OrderItem> items,
     required String createdBy,
     AuditSource source = AuditSource.pos,
+  }) => UpdateReadiness.track(
+    'createTakeAwayOrder',
+    () => _updateTrackedCreateTakeAwayOrder(
+      customerName: customerName,
+      customerPhone: customerPhone,
+      pickupTime: pickupTime,
+      notes: notes,
+      items: items,
+      createdBy: createdBy,
+      source: source,
+    ),
+  );
+
+  static Future<Order> _updateTrackedCreateTakeAwayOrder({
+    required String customerName,
+    required String customerPhone,
+    required String pickupTime,
+    String? notes,
+    required List<OrderItem> items,
+    required String createdBy,
+    AuditSource source = AuditSource.pos,
   }) async {
     final orderId = _getNextOrderId();
     final order = Order(
@@ -269,6 +316,27 @@ class OrderRepository {
 
   /// Mobile/cloud takeaway with a fixed `posOrderId` from the backend counter.
   static Future<Order?> upsertMobileTakeawayOrder({
+    required int posOrderId,
+    required String customerName,
+    required String pickupTime,
+    required String waiterName,
+    required List<OrderItem> items,
+    double? totalAmount,
+    AuditSource source = AuditSource.manager,
+  }) => UpdateReadiness.track(
+    'upsertMobileTakeawayOrder',
+    () => _updateTrackedUpsertMobileTakeawayOrder(
+      posOrderId: posOrderId,
+      customerName: customerName,
+      pickupTime: pickupTime,
+      waiterName: waiterName,
+      items: items,
+      totalAmount: totalAmount,
+      source: source,
+    ),
+  );
+
+  static Future<Order?> _updateTrackedUpsertMobileTakeawayOrder({
     required int posOrderId,
     required String customerName,
     required String pickupTime,
@@ -347,6 +415,29 @@ class OrderRepository {
   /// Mobile/cloud dine-in (walk-in) order with a fixed `posOrderId`.
   /// Reserves the chosen tables without manufacturing a Reservation record.
   static Future<Order?> upsertMobileDineInOrder({
+    required int posOrderId,
+    required List<String> tableNumbers,
+    required String floor,
+    required String waiterName,
+    required List<OrderItem> items,
+    int guestCount = 0,
+    double? totalAmount,
+    AuditSource source = AuditSource.manager,
+  }) => UpdateReadiness.track(
+    'upsertMobileDineInOrder',
+    () => _updateTrackedUpsertMobileDineInOrder(
+      posOrderId: posOrderId,
+      tableNumbers: tableNumbers,
+      floor: floor,
+      waiterName: waiterName,
+      items: items,
+      guestCount: guestCount,
+      totalAmount: totalAmount,
+      source: source,
+    ),
+  );
+
+  static Future<Order?> _updateTrackedUpsertMobileDineInOrder({
     required int posOrderId,
     required List<String> tableNumbers,
     required String floor,
@@ -458,6 +549,25 @@ class OrderRepository {
   }
 
   static Future<Order> createOrderForPackage({
+    required Package package,
+    required List<String> tableNumbers,
+    required String floor,
+    required int guestCount,
+    required String createdBy,
+    AuditSource source = AuditSource.pos,
+  }) => UpdateReadiness.track(
+    'createOrderForPackage',
+    () => _updateTrackedCreateOrderForPackage(
+      package: package,
+      tableNumbers: tableNumbers,
+      floor: floor,
+      guestCount: guestCount,
+      createdBy: createdBy,
+      source: source,
+    ),
+  );
+
+  static Future<Order> _updateTrackedCreateOrderForPackage({
     required Package package,
     required List<String> tableNumbers,
     required String floor,
@@ -777,6 +887,17 @@ class OrderRepository {
   static Future<void> updateOrder(
     Order order, {
     bool? previousIncludeServiceFee,
+  }) => UpdateReadiness.track(
+    'updateOrder',
+    () => _updateTrackedUpdateOrder(
+      order,
+      previousIncludeServiceFee: previousIncludeServiceFee,
+    ),
+  );
+
+  static Future<void> _updateTrackedUpdateOrder(
+    Order order, {
+    bool? previousIncludeServiceFee,
   }) async {
     order.recalculateTotal();
 
@@ -850,6 +971,14 @@ class OrderRepository {
   static Future<void> updateOrderStatus({
     required int orderId,
     required String status,
+  }) => UpdateReadiness.track(
+    'updateOrderStatus',
+    () => _updateTrackedUpdateOrderStatus(orderId: orderId, status: status),
+  );
+
+  static Future<void> _updateTrackedUpdateOrderStatus({
+    required int orderId,
+    required String status,
   }) async {
     final parsed = OrderStatus.fromStorage(status);
     if (parsed == OrderStatus.unknown) {
@@ -899,6 +1028,19 @@ class OrderRepository {
   /// row is a repair of corrupt data, not a licence to erase what happened —
   /// and the removal itself is written to the append-only action log.
   static Future<bool> hardDeleteOrderForRepair({
+    required int orderId,
+    required String deletedBy,
+    bool cancelLinkedReservation = true,
+  }) => UpdateReadiness.track(
+    'hardDeleteOrderForRepair',
+    () => _updateTrackedHardDeleteOrderForRepair(
+      orderId: orderId,
+      deletedBy: deletedBy,
+      cancelLinkedReservation: cancelLinkedReservation,
+    ),
+  );
+
+  static Future<bool> _updateTrackedHardDeleteOrderForRepair({
     required int orderId,
     required String deletedBy,
     bool cancelLinkedReservation = true,
@@ -968,6 +1110,14 @@ class OrderRepository {
   static Future<void> addItemToOrder({
     required int orderId,
     required OrderItem item,
+  }) => UpdateReadiness.track(
+    'addItemToOrder',
+    () => _updateTrackedAddItemToOrder(orderId: orderId, item: item),
+  );
+
+  static Future<void> _updateTrackedAddItemToOrder({
+    required int orderId,
+    required OrderItem item,
   }) async {
     final order = getOrder(orderId);
     if (order != null) {
@@ -980,6 +1130,14 @@ class OrderRepository {
   static Future<void> removeItemFromOrder({
     required int orderId,
     required String itemKey,
+  }) => UpdateReadiness.track(
+    'removeItemFromOrder',
+    () => _updateTrackedRemoveItemFromOrder(orderId: orderId, itemKey: itemKey),
+  );
+
+  static Future<void> _updateTrackedRemoveItemFromOrder({
+    required int orderId,
+    required String itemKey,
   }) async {
     final order = getOrder(orderId);
     if (order != null) {
@@ -990,6 +1148,19 @@ class OrderRepository {
 
   // Update item quantity in order
   static Future<void> updateOrderItemQuantity({
+    required int orderId,
+    required String itemKey,
+    required int quantity,
+  }) => UpdateReadiness.track(
+    'updateOrderItemQuantity',
+    () => _updateTrackedUpdateOrderItemQuantity(
+      orderId: orderId,
+      itemKey: itemKey,
+      quantity: quantity,
+    ),
+  );
+
+  static Future<void> _updateTrackedUpdateOrderItemQuantity({
     required int orderId,
     required String itemKey,
     required int quantity,

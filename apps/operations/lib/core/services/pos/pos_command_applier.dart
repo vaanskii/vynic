@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'package:flutter/foundation.dart';
 import 'package:vynic/core/database/transactions/cancel_order_transaction.dart';
 import 'package:vynic/core/models/audit_source.dart';
@@ -116,7 +117,12 @@ class PosCommandApplier {
   /// writes the same values. The audit diff is taken against what is stored, so
   /// a replay produces no events, and [MoneyAudit] already declines to record a
   /// service-fee change that did not move.
-  static Future<PosCommandOutcome> updateOrder(Map<String, dynamic> p) async {
+  static Future<PosCommandOutcome> updateOrder(Map<String, dynamic> p) =>
+      UpdateReadiness.track('updateOrder', () => _updateTrackedUpdateOrder(p));
+
+  static Future<PosCommandOutcome> _updateTrackedUpdateOrder(
+    Map<String, dynamic> p,
+  ) async {
     final posOrderId = _int(p['posOrderId']);
     if (posOrderId == null) {
       return const PosCommandOutcome.invalid('posOrderId_required');
@@ -211,6 +217,14 @@ class PosCommandApplier {
   static Future<PosCommandOutcome> cancelOrder(
     Map<String, dynamic> p, {
     bool treatMissingAsDone = false,
+  }) => UpdateReadiness.track(
+    'cancelOrder',
+    () => _updateTrackedCancelOrder(p, treatMissingAsDone: treatMissingAsDone),
+  );
+
+  static Future<PosCommandOutcome> _updateTrackedCancelOrder(
+    Map<String, dynamic> p, {
+    bool treatMissingAsDone = false,
   }) async {
     final posOrderId = _int(p['posOrderId']);
     if (posOrderId == null) {
@@ -292,7 +306,13 @@ class PosCommandApplier {
   /// is refused rather than assigned, a cancellation is delegated to the
   /// cancellation transaction, and a request the Order already satisfies is a
   /// clean no-op — so a redelivery converges without writing twice.
-  static Future<PosCommandOutcome> updateOrderStatus(
+  static Future<PosCommandOutcome> updateOrderStatus(Map<String, dynamic> p) =>
+      UpdateReadiness.track(
+        'updateOrderStatus',
+        () => _updateTrackedUpdateOrderStatus(p),
+      );
+
+  static Future<PosCommandOutcome> _updateTrackedUpdateOrderStatus(
     Map<String, dynamic> p,
   ) async {
     final posOrderId = _int(p['posOrderId']);
@@ -383,6 +403,13 @@ class PosCommandApplier {
   /// the order was not already here, which is what stops a replay reprinting it.
   static Future<PosCommandOutcome> upsertTakeawayOrder(
     Map<String, dynamic> p,
+  ) => UpdateReadiness.track(
+    'upsertTakeawayOrder',
+    () => _updateTrackedUpsertTakeawayOrder(p),
+  );
+
+  static Future<PosCommandOutcome> _updateTrackedUpsertTakeawayOrder(
+    Map<String, dynamic> p,
   ) async {
     final posOrderId = _int(p['posOrderId']);
     if (posOrderId == null) {
@@ -433,7 +460,13 @@ class PosCommandApplier {
   /// Create or update a Cloud-originated walk-in dine-in order.
   ///
   /// Convergent for the same reason as [upsertTakeawayOrder].
-  static Future<PosCommandOutcome> upsertDineInOrder(
+  static Future<PosCommandOutcome> upsertDineInOrder(Map<String, dynamic> p) =>
+      UpdateReadiness.track(
+        'upsertDineInOrder',
+        () => _updateTrackedUpsertDineInOrder(p),
+      );
+
+  static Future<PosCommandOutcome> _updateTrackedUpsertDineInOrder(
     Map<String, dynamic> p,
   ) async {
     final posOrderId = _int(p['posOrderId']);
@@ -500,7 +533,13 @@ class PosCommandApplier {
   ///
   /// Not convergent, and not pretended to be. Its protection against a repeated
   /// delivery is the Edge execution journal.
-  static Future<PosCommandOutcome> printOrderCheck(
+  static Future<PosCommandOutcome> printOrderCheck(Map<String, dynamic> p) =>
+      UpdateReadiness.track(
+        'printOrderCheck',
+        () => _updateTrackedPrintOrderCheck(p),
+      );
+
+  static Future<PosCommandOutcome> _updateTrackedPrintOrderCheck(
     Map<String, dynamic> p,
   ) async {
     final posOrderId = _int(p['posOrderId']);
@@ -597,6 +636,13 @@ class PosCommandApplier {
   /// uses when a reservation is created locally.
   static Future<PosCommandOutcome> printReservationCheck(
     Map<String, dynamic> p,
+  ) => UpdateReadiness.track(
+    'printReservationCheck',
+    () => _updateTrackedPrintReservationCheck(p),
+  );
+
+  static Future<PosCommandOutcome> _updateTrackedPrintReservationCheck(
+    Map<String, dynamic> p,
   ) async {
     final reservationId = _string(p['reservationId']);
     if (reservationId.isEmpty) {
@@ -646,7 +692,13 @@ class PosCommandApplier {
   /// Counted menus live in Cloud rather than POS Hive — a Manager creates them
   /// there and the POS has never seen one — so the whole draft travels in the
   /// command rather than being looked up.
-  static Future<PosCommandOutcome> printCountedMenu(
+  static Future<PosCommandOutcome> printCountedMenu(Map<String, dynamic> p) =>
+      UpdateReadiness.track(
+        'printCountedMenu',
+        () => _updateTrackedPrintCountedMenu(p),
+      );
+
+  static Future<PosCommandOutcome> _updateTrackedPrintCountedMenu(
     Map<String, dynamic> p,
   ) async {
     final rawItems = (p['items'] as List?) ?? const [];
@@ -701,7 +753,13 @@ class PosCommandApplier {
   /// where identity had to move for at-least-once delivery to be survivable.
   /// A reservation already carrying that id is reported as created, because it
   /// was: by the delivery before this one.
-  static Future<PosCommandOutcome> createReservation(
+  static Future<PosCommandOutcome> createReservation(Map<String, dynamic> p) =>
+      UpdateReadiness.track(
+        'createReservation',
+        () => _updateTrackedCreateReservation(p),
+      );
+
+  static Future<PosCommandOutcome> _updateTrackedCreateReservation(
     Map<String, dynamic> p,
   ) async {
     try {
@@ -762,6 +820,13 @@ class PosCommandApplier {
   /// Set a reservation's status. Convergent by assignment.
   static Future<PosCommandOutcome> updateReservationStatus(
     Map<String, dynamic> p,
+  ) => UpdateReadiness.track(
+    'updateReservationStatus',
+    () => _updateTrackedUpdateReservationStatus(p),
+  );
+
+  static Future<PosCommandOutcome> _updateTrackedUpdateReservationStatus(
+    Map<String, dynamic> p,
   ) async {
     final reservationId = _string(p['reservationId']);
     final status = _string(p['status']);
@@ -789,7 +854,13 @@ class PosCommandApplier {
   ///
   /// Convergent: the goal state is "this reservation is gone", which an absent
   /// reservation already satisfies.
-  static Future<PosCommandOutcome> deleteReservation(
+  static Future<PosCommandOutcome> deleteReservation(Map<String, dynamic> p) =>
+      UpdateReadiness.track(
+        'deleteReservation',
+        () => _updateTrackedDeleteReservation(p),
+      );
+
+  static Future<PosCommandOutcome> _updateTrackedDeleteReservation(
     Map<String, dynamic> p,
   ) async {
     final reservationId = _string(p['reservationId']);
@@ -825,7 +896,15 @@ class PosCommandApplier {
   /// Convergent because Cloud allocates the id and the local write upserts on
   /// it. Appending was the old behaviour, and it meant one retried delivery
   /// showed up as two expenses in a restaurant's day.
-  static Future<PosCommandOutcome> createExpense(Map<String, dynamic> p) async {
+  static Future<PosCommandOutcome> createExpense(Map<String, dynamic> p) =>
+      UpdateReadiness.track(
+        'createExpense',
+        () => _updateTrackedCreateExpense(p),
+      );
+
+  static Future<PosCommandOutcome> _updateTrackedCreateExpense(
+    Map<String, dynamic> p,
+  ) async {
     final description = _string(p['description']);
     final amount = _double(p['amount']) ?? 0;
     if (description.isEmpty || amount <= 0) {
@@ -860,6 +939,15 @@ class PosCommandApplier {
   /// a username that exists locally means this command has landed before —
   /// the role and PIN are reconciled and the outcome is success.
   static Future<PosCommandOutcome> createStaff(
+    Map<String, dynamic> p, {
+    bool treatExistingAsDone = false,
+  }) => UpdateReadiness.track(
+    'createStaff',
+    () =>
+        _updateTrackedCreateStaff(p, treatExistingAsDone: treatExistingAsDone),
+  );
+
+  static Future<PosCommandOutcome> _updateTrackedCreateStaff(
     Map<String, dynamic> p, {
     bool treatExistingAsDone = false,
   }) async {
@@ -924,7 +1012,13 @@ class PosCommandApplier {
   }
 
   /// Set a staff user's PIN. Convergent by assignment.
-  static Future<PosCommandOutcome> updateStaffPin(
+  static Future<PosCommandOutcome> updateStaffPin(Map<String, dynamic> p) =>
+      UpdateReadiness.track(
+        'updateStaffPin',
+        () => _updateTrackedUpdateStaffPin(p),
+      );
+
+  static Future<PosCommandOutcome> _updateTrackedUpdateStaffPin(
     Map<String, dynamic> p,
   ) async {
     final username = _string(p['username']);
@@ -944,7 +1038,13 @@ class PosCommandApplier {
   }
 
   /// Set a staff user's role. Convergent by assignment.
-  static Future<PosCommandOutcome> updateStaffRole(
+  static Future<PosCommandOutcome> updateStaffRole(Map<String, dynamic> p) =>
+      UpdateReadiness.track(
+        'updateStaffRole',
+        () => _updateTrackedUpdateStaffRole(p),
+      );
+
+  static Future<PosCommandOutcome> _updateTrackedUpdateStaffRole(
     Map<String, dynamic> p,
   ) async {
     final username = _string(p['username']);
@@ -974,6 +1074,14 @@ class PosCommandApplier {
   /// not". A redelivery finds exactly that and succeeds without touching
   /// anything.
   static Future<PosCommandOutcome> renameStaff(
+    Map<String, dynamic> p, {
+    bool treatRenamedAsDone = false,
+  }) => UpdateReadiness.track(
+    'renameStaff',
+    () => _updateTrackedRenameStaff(p, treatRenamedAsDone: treatRenamedAsDone),
+  );
+
+  static Future<PosCommandOutcome> _updateTrackedRenameStaff(
     Map<String, dynamic> p, {
     bool treatRenamedAsDone = false,
   }) async {
@@ -1012,6 +1120,14 @@ class PosCommandApplier {
   /// Convergent: the goal state is "this username is gone", which an absent
   /// user already satisfies.
   static Future<PosCommandOutcome> deleteStaff(
+    Map<String, dynamic> p, {
+    bool treatMissingAsDone = false,
+  }) => UpdateReadiness.track(
+    'deleteStaff',
+    () => _updateTrackedDeleteStaff(p, treatMissingAsDone: treatMissingAsDone),
+  );
+
+  static Future<PosCommandOutcome> _updateTrackedDeleteStaff(
     Map<String, dynamic> p, {
     bool treatMissingAsDone = false,
   }) async {

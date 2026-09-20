@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'dart:developer' as developer;
 
 import 'package:vynic/core/models/audit_report.dart';
@@ -96,6 +97,35 @@ class CloseTableTransaction {
   /// does not reconcile writes nothing at all — the guest was charged one
   /// number and a different one would have been booked.
   static Future<ClosureResult> run({
+    required int orderId,
+    required ClosureMoney money,
+    required String paymentMethod,
+    required Map<String, double> tenderBreakdown,
+    required String closedById,
+    required bool isFiscal,
+    String? closedByName,
+    String? customPaymentLabel,
+    List<OrderItem>? saleItems,
+    double? subtotalAmount,
+    Map<String, dynamic>? finalTransaction,
+  }) => UpdateReadiness.track(
+    'run',
+    () => _updateTrackedRun(
+      orderId: orderId,
+      money: money,
+      paymentMethod: paymentMethod,
+      tenderBreakdown: tenderBreakdown,
+      closedById: closedById,
+      isFiscal: isFiscal,
+      closedByName: closedByName,
+      customPaymentLabel: customPaymentLabel,
+      saleItems: saleItems,
+      subtotalAmount: subtotalAmount,
+      finalTransaction: finalTransaction,
+    ),
+  );
+
+  static Future<ClosureResult> _updateTrackedRun({
     required int orderId,
     required ClosureMoney money,
     required String paymentMethod,
@@ -351,6 +381,27 @@ class CloseTableTransaction {
   /// started it and the system completed it. The event type is unchanged
   /// either way, and a closure already finalized is never re-stamped.
   static Future<bool> completeExistingSale({
+    required ClosureJournalEntry entry,
+    required Order order,
+    Object? saleRecordKey,
+    String? closedByName,
+    String? customPaymentLabel,
+    AuditSource source = AuditSource.pos,
+    String? recoveryAction,
+  }) => UpdateReadiness.track(
+    'completeExistingSale',
+    () => _updateTrackedCompleteExistingSale(
+      entry: entry,
+      order: order,
+      saleRecordKey: saleRecordKey,
+      closedByName: closedByName,
+      customPaymentLabel: customPaymentLabel,
+      source: source,
+      recoveryAction: recoveryAction,
+    ),
+  );
+
+  static Future<bool> _updateTrackedCompleteExistingSale({
     required ClosureJournalEntry entry,
     required Order order,
     Object? saleRecordKey,

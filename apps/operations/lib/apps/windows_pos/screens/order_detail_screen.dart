@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'dart:async';
 import 'dart:developer' as developer;
 
@@ -2573,7 +2574,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
-  Future<void> _startTableClosureFlow() async {
+  Future<void> _startTableClosureFlow() => UpdateReadiness.track('payment/close', () => _startTableClosureFlowTracked());
+
+  Future<void> _startTableClosureFlowTracked() async {
     if (_order == null) {
       return;
     }
@@ -2622,7 +2625,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     await _finalizeTableClosure(currentOrder, selection);
   }
 
-  Future<void> _startNonFiscalClosureFlow() async {
+  Future<void> _startNonFiscalClosureFlow() => UpdateReadiness.track('payment/close', () => _startNonFiscalClosureFlowTracked());
+
+  Future<void> _startNonFiscalClosureFlowTracked() async {
     if (!widget.user.canCloseTablesNonFiscal) {
       unawaited(
         showErrorToast(context, 'არაფისკალური დახურვა მხოლოდ მენეჯერს შეუძლია'),

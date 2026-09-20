@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'package:vynic/core/services/audit/global_audit.dart';
 import 'package:vynic/core/services/audit/reservation_audit.dart';
 import 'package:vynic/core/models/audit_source.dart';
@@ -30,7 +31,13 @@ class CloseDayTransaction {
   /// final only lose a dangling Order link and write nothing.
   static Future<({int completed, int noShow})> finalizeReservationsForDay(
     String currentDateString,
-  ) async {
+  ) => UpdateReadiness.track(
+    'finalizeReservationsForDay',
+    () => _updateTrackedFinalizeReservationsForDay(currentDateString),
+  );
+
+  static Future<({int completed, int noShow})>
+  _updateTrackedFinalizeReservationsForDay(String currentDateString) async {
     var completedReservations = 0;
     var noShowReservations = 0;
     for (final reservation in DatabaseCore.reservationBox!.values) {
@@ -87,6 +94,19 @@ class CloseDayTransaction {
   /// reservation transitions inside it stay `system`/`SYSTEM`, while the day
   /// closing is attributed to the person who asked for it.
   static Future<bool> run({
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) => UpdateReadiness.track(
+    'run',
+    () => _updateTrackedRun(
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+    ),
+  );
+
+  static Future<bool> _updateTrackedRun({
     String actorId = 'unknown',
     String? actorName,
     AuditSource source = AuditSource.pos,
@@ -300,6 +320,7 @@ class CloseDayTransaction {
 
       return true;
     } catch (e) {
+      if (UpdateReadiness.enabled) UpdateReadiness.failure = e.toString();
       developer.log('❌ Error closing day: $e');
       return false;
     }

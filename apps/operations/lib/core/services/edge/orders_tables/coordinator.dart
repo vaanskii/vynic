@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'dart:convert';
 import 'package:fixnum/fixnum.dart';
 import 'package:hive/hive.dart';
@@ -36,7 +37,25 @@ class OrderTableCoordinator {
     required this.auth,
     this.orders,
     this.tables,
-  });
+  }) {
+    _instances[box.path ?? box.name] = this;
+  }
+  static final Map<String, OrderTableCoordinator> _instances = {};
+  static String? updateBlocker() {
+    for (final c in _instances.values) {
+      if (!c.box.isOpen || !c.ready || c._busy)
+        return 'Edge პროექცია ჯერ მზად არ არის';
+      if (c.pendingRequestId != null) return 'Edge ოპერაცია ჯერ არ დასრულებულა';
+    }
+    return null;
+  }
+
+  static Future<void> flushForUpdate() async {
+    for (final c in _instances.values) {
+      await c.box.flush();
+    }
+  }
+
   final Box box;
   final OrderTableTransport transport;
   final AuthenticatedRequest auth;
@@ -71,7 +90,12 @@ class OrderTableCoordinator {
     return null;
   }
 
-  Future<T> _exclusive<T>(Future<T> Function() action) async {
+  Future<T> _exclusive<T>(Future<T> Function() action) => UpdateReadiness.track(
+    'Edge intent/rebuild',
+    () => _exclusiveTracked(action),
+  );
+
+  Future<T> _exclusiveTracked<T>(Future<T> Function() action) async {
     if (_busy) throw StateError('Coordination operation already in flight');
     _busy = true;
     try {

@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'dart:developer' as developer;
 import '../../services/edge/orders_tables/shadow.dart';
 import '../../services/edge/orders_tables/pos_shadow_projection.dart';
@@ -62,6 +63,25 @@ class CancelOrderTransaction {
   static const String cancelledTransactionType = 'cancelled_order';
 
   static Future<CancelOrderOutcome> run({
+    required int orderId,
+    required String actorId,
+    String? actorName,
+    required AuditSource source,
+    String? reason,
+    String? approvedBy,
+  }) => UpdateReadiness.track(
+    'run',
+    () => _updateTrackedRun(
+      orderId: orderId,
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+      reason: reason,
+      approvedBy: approvedBy,
+    ),
+  );
+
+  static Future<CancelOrderOutcome> _updateTrackedRun({
     required int orderId,
     required String actorId,
     String? actorName,
@@ -152,6 +172,7 @@ class CancelOrderTransaction {
           );
           return CancelOrderOutcome.cancelled;
         } catch (e, stack) {
+          if (UpdateReadiness.enabled) UpdateReadiness.failure = e.toString();
           developer.log(
             'Cancellation of order $orderId failed: $e',
             error: e,

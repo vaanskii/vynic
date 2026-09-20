@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'package:vynic/core/models/expense_category.dart';
 import 'dart:developer' as developer;
 
@@ -105,6 +106,69 @@ class SalesRepository {
     String? businessDate,
     String? advanceReceiptId,
     bool captureConsumption = false,
+  }) => UpdateReadiness.track(
+    'saveSaleRecord',
+    () => _updateTrackedSaveSaleRecord(
+      orderId: orderId,
+      tableNumbers: tableNumbers,
+      floor: floor,
+      items: items,
+      totalAmount: totalAmount,
+      paymentMethod: paymentMethod,
+      paymentBreakdown: paymentBreakdown,
+      customPaymentLabel: customPaymentLabel,
+      createdBy: createdBy,
+      createdAt: createdAt,
+      closedAt: closedAt,
+      includeServiceFee: includeServiceFee,
+      discountAmount: discountAmount,
+      advanceAmount: advanceAmount,
+      subtotalAmount: subtotalAmount,
+      manualAdjustmentAmount: manualAdjustmentAmount,
+      finalTransaction: finalTransaction,
+      isFiscal: isFiscal,
+      isCancelled: isCancelled,
+      cancelledAt: cancelledAt,
+      closureId: closureId,
+      closedById: closedById,
+      grossSaleAmount: grossSaleAmount,
+      advanceApplied: advanceApplied,
+      collectedNow: collectedNow,
+      businessDate: businessDate,
+      advanceReceiptId: advanceReceiptId,
+      captureConsumption: captureConsumption,
+    ),
+  );
+
+  static Future<Object?> _updateTrackedSaveSaleRecord({
+    required int orderId,
+    required List<String> tableNumbers,
+    required String floor,
+    required List<OrderItem> items,
+    required double totalAmount,
+    required String paymentMethod,
+    Map<String, double>? paymentBreakdown,
+    String? customPaymentLabel,
+    required String createdBy,
+    required DateTime createdAt,
+    required DateTime closedAt,
+    required bool includeServiceFee,
+    double discountAmount = 0.0,
+    double advanceAmount = 0.0,
+    double? subtotalAmount,
+    double? manualAdjustmentAmount,
+    Map<String, dynamic>? finalTransaction,
+    bool isFiscal = true,
+    bool isCancelled = false,
+    DateTime? cancelledAt,
+    String? closureId,
+    String? closedById,
+    double? grossSaleAmount,
+    double advanceApplied = 0.0,
+    double? collectedNow,
+    String? businessDate,
+    String? advanceReceiptId,
+    bool captureConsumption = false,
   }) async {
     try {
       if (closureId != null) {
@@ -184,6 +248,7 @@ class SalesRepository {
 
       return await DatabaseCore.salesBox!.add(saleRecord);
     } catch (e) {
+      if (UpdateReadiness.enabled) UpdateReadiness.failure = e.toString();
       developer.log('Error saving sale record: $e');
       return null;
     }
@@ -220,6 +285,23 @@ class SalesRepository {
   /// Idempotent on [receiptId]: editing the amount rewrites the same receipt
   /// rather than adding a second one. Returns the receipt id.
   static Future<String?> recordAdvanceReceipt({
+    required int orderId,
+    required double amount,
+    required String collectedBy,
+    String? receiptId,
+    String? businessDate,
+  }) => UpdateReadiness.track(
+    'recordAdvanceReceipt',
+    () => _updateTrackedRecordAdvanceReceipt(
+      orderId: orderId,
+      amount: amount,
+      collectedBy: collectedBy,
+      receiptId: receiptId,
+      businessDate: businessDate,
+    ),
+  );
+
+  static Future<String?> _updateTrackedRecordAdvanceReceipt({
     required int orderId,
     required double amount,
     required String collectedBy,
@@ -304,6 +386,17 @@ class SalesRepository {
   }
 
   static Future<void> markAdvanceReceiptApplied({
+    required String receiptId,
+    required String closureId,
+  }) => UpdateReadiness.track(
+    'markAdvanceReceiptApplied',
+    () => _updateTrackedMarkAdvanceReceiptApplied(
+      receiptId: receiptId,
+      closureId: closureId,
+    ),
+  );
+
+  static Future<void> _updateTrackedMarkAdvanceReceiptApplied({
     required String receiptId,
     required String closureId,
   }) async {
@@ -396,6 +489,33 @@ class SalesRepository {
     String actorId = 'unknown',
     String? actorName,
     AuditSource source = AuditSource.pos,
+  }) => UpdateReadiness.track(
+    'saveExpenseRecord',
+    () => _updateTrackedSaveExpenseRecord(
+      description: description,
+      amount: amount,
+      category: category,
+      paymentType: paymentType,
+      createdAt: createdAt,
+      businessDate: businessDate,
+      sourceId: sourceId,
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+    ),
+  );
+
+  static Future<Map<String, dynamic>> _updateTrackedSaveExpenseRecord({
+    required String description,
+    required double amount,
+    required String category,
+    String paymentType = 'cash',
+    DateTime? createdAt,
+    String? businessDate,
+    String? sourceId,
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) async {
     if (ExpenseCategory.isProcurement(category)) {
       throw ArgumentError('შესყიდვა დაამატეთ მარაგებში — დღიური მიღება');
@@ -460,7 +580,12 @@ class SalesRepository {
   /// ingestion keys on this id to stay idempotent, so a record without one
   /// would either be dropped or duplicated on every sync. Runs once at
   /// startup and is a no-op afterwards.
-  static Future<int> ensureExpenseIdentities() async {
+  static Future<int> ensureExpenseIdentities() => UpdateReadiness.track(
+    'ensureExpenseIdentities',
+    () => _updateTrackedEnsureExpenseIdentities(),
+  );
+
+  static Future<int> _updateTrackedEnsureExpenseIdentities() async {
     final box = DatabaseCore.expenseBox;
     if (box == null) return 0;
     var backfilled = 0;
@@ -572,6 +697,21 @@ class SalesRepository {
     required String cancelledBy,
     required String reason,
     bool allowHistorical = false,
+  }) => UpdateReadiness.track(
+    'cancelSaleRecord',
+    () => _updateTrackedCancelSaleRecord(
+      recordKey: recordKey,
+      cancelledBy: cancelledBy,
+      reason: reason,
+      allowHistorical: allowHistorical,
+    ),
+  );
+
+  static Future<SaleCancellationOutcome> _updateTrackedCancelSaleRecord({
+    required dynamic recordKey,
+    required String cancelledBy,
+    required String reason,
+    bool allowHistorical = false,
   }) async {
     final trimmedReason = reason.trim();
     if (trimmedReason.isEmpty) {
@@ -630,12 +770,24 @@ class SalesRepository {
 
       return SaleCancellationOutcome.cancelled;
     } catch (e) {
+      if (UpdateReadiness.enabled) UpdateReadiness.failure = e.toString();
       developer.log('Error cancelling sale record: $e');
       return SaleCancellationOutcome.failed;
     }
   }
 
   static Future<bool> restoreClosedOrderFromSale({
+    required dynamic recordKey,
+    required String restoredBy,
+  }) => UpdateReadiness.track(
+    'restoreClosedOrderFromSale',
+    () => _updateTrackedRestoreClosedOrderFromSale(
+      recordKey: recordKey,
+      restoredBy: restoredBy,
+    ),
+  );
+
+  static Future<bool> _updateTrackedRestoreClosedOrderFromSale({
     required dynamic recordKey,
     required String restoredBy,
   }) async {
@@ -977,13 +1129,19 @@ class SalesRepository {
       );
       return true;
     } catch (e) {
+      if (UpdateReadiness.enabled) UpdateReadiness.failure = e.toString();
       developer.log('Error restoring sale record to order: $e');
       return false;
     }
   }
 
   // Reset daily sales total (called when closing day)
-  static Future<void> resetDailySalesTotal() async {
+  static Future<void> resetDailySalesTotal() => UpdateReadiness.track(
+    'resetDailySalesTotal',
+    () => _updateTrackedResetDailySalesTotal(),
+  );
+
+  static Future<void> _updateTrackedResetDailySalesTotal() async {
     await DatabaseCore.settingsBox!.put('dailySalesTotal', 0.0);
   }
 }

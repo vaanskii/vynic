@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'package:uuid/uuid.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/quick_order_draft.dart';
@@ -75,6 +76,25 @@ class QuickOrderRepository {
     required bool includeServiceFee,
     required double serviceFeeRate,
     String? displayName,
+  }) => UpdateReadiness.track(
+    'saveQuickOrderDraft',
+    () => _updateTrackedSaveQuickOrderDraft(
+      createdBy: createdBy,
+      items: items,
+      subtotal: subtotal,
+      includeServiceFee: includeServiceFee,
+      serviceFeeRate: serviceFeeRate,
+      displayName: displayName,
+    ),
+  );
+
+  static Future<QuickOrderDraft> _updateTrackedSaveQuickOrderDraft({
+    required String createdBy,
+    required List<OrderItem> items,
+    required double subtotal,
+    required bool includeServiceFee,
+    required double serviceFeeRate,
+    String? displayName,
   }) async {
     if (DatabaseCore.quickOrderBox == null) {
       throw StateError('Quick order storage is not initialized');
@@ -119,6 +139,27 @@ class QuickOrderRepository {
     required bool includeServiceFee,
     required double serviceFeeRate,
     String? displayName,
+  }) => UpdateReadiness.track(
+    'updateQuickOrderDraft',
+    () => _updateTrackedUpdateQuickOrderDraft(
+      id: id,
+      createdBy: createdBy,
+      items: items,
+      subtotal: subtotal,
+      includeServiceFee: includeServiceFee,
+      serviceFeeRate: serviceFeeRate,
+      displayName: displayName,
+    ),
+  );
+
+  static Future<QuickOrderDraft> _updateTrackedUpdateQuickOrderDraft({
+    required String id,
+    required String createdBy,
+    required List<OrderItem> items,
+    required double subtotal,
+    required bool includeServiceFee,
+    required double serviceFeeRate,
+    String? displayName,
   }) async {
     if (DatabaseCore.quickOrderBox == null) {
       throw StateError('Quick order storage is not initialized');
@@ -155,7 +196,12 @@ class QuickOrderRepository {
     return _cloneQuickOrderDraft(draft);
   }
 
-  static Future<void> deleteQuickOrderDraft(String id) async {
+  static Future<void> deleteQuickOrderDraft(String id) => UpdateReadiness.track(
+    'deleteQuickOrderDraft',
+    () => _updateTrackedDeleteQuickOrderDraft(id),
+  );
+
+  static Future<void> _updateTrackedDeleteQuickOrderDraft(String id) async {
     if (DatabaseCore.quickOrderBox == null) {
       return;
     }
@@ -164,6 +210,17 @@ class QuickOrderRepository {
   }
 
   static Future<void> setQuickOrderDraftDisplayName({
+    required String id,
+    String? displayName,
+  }) => UpdateReadiness.track(
+    'setQuickOrderDraftDisplayName',
+    () => _updateTrackedSetQuickOrderDraftDisplayName(
+      id: id,
+      displayName: displayName,
+    ),
+  );
+
+  static Future<void> _updateTrackedSetQuickOrderDraftDisplayName({
     required String id,
     String? displayName,
   }) async {
@@ -183,7 +240,12 @@ class QuickOrderRepository {
     await draft.save();
   }
 
-  static Future<void> clearQuickOrderDrafts() async {
+  static Future<void> clearQuickOrderDrafts() => UpdateReadiness.track(
+    'clearQuickOrderDrafts',
+    () => _updateTrackedClearQuickOrderDrafts(),
+  );
+
+  static Future<void> _updateTrackedClearQuickOrderDrafts() async {
     if (DatabaseCore.quickOrderBox == null) {
       return;
     }

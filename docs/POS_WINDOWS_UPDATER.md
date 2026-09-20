@@ -103,11 +103,15 @@ folders. Provision a complete baseline at:
 <managed-root>/
   updater.lock
   updater.sqlite (+ WAL/SHM)
-  staged.zip
-  releases/1.8.0/vynic_pos.exe
-  releases/1.8.0/flutter_windows.dll
-  releases/1.8.0/data/...
-  releases/1.9.0/...  (created only after explicit install)
+  current/                   sole active complete Flutter release
+    vynic_pos.exe
+    flutter_windows.dll
+    data/...
+    .vynic-release.json       updater-owned binary identity marker
+  staging/                   temporary, or one explicitly deferred candidate
+    candidate.zip(.part)
+    release/                 verified extracted candidate
+  rollback/                  previous release only until stabilization
 ```
 
 Every release ZIP contains the **entire Windows Flutter release directory** at
@@ -170,9 +174,9 @@ owner even if another Edge uses a different foundation data directory.
 
 Edge checks on start and every 30 minutes; Settings can request a check. It fetches
 a bounded signed envelope over HTTPS, verifies policy, then downloads into
-`staged.zip.part`, exposing byte progress. The download is limited to the signed
-size (maximum 512 MiB), flushed and SHA-256 verified before durable
-`READY_TO_INSTALL`. Partial/network-failed downloads never become executable;
+`staging/candidate.zip.part`, exposing byte progress. The download is limited to the signed
+size (maximum 512 MiB), flushed, SHA-256 verified and safely extracted into
+`staging/release` before durable `READY_TO_INSTALL`. Partial/network-failed downloads never become executable;
 retry starts a fresh download. HTTP downgrade redirects are refused. Staged data
 survives Edge/POS restart. A staged valid release is not automatically installed
 or replaced by polling.
@@ -243,37 +247,75 @@ are refused. Another install/launch/check cannot overlap the activation worker.
 
 ZIP extraction rejects traversal, absolute/drive/ADS paths, Windows reserved
 names, symlinks, duplicate case-insensitive paths and oversized expanded content
-(1.5 GiB / 20,000 entries). It extracts into a new immutable version directory.
-There is no in-place overwrite of the running Windows executable.
+(1.5 GiB / 20,000 entries). Immediately before activation it rebuilds the staged
+tree from the reverified signed ZIP, so an altered extracted candidate is not
+trusted. No running Windows executable is overwritten in place.
 
 After the POS readiness barrier:
 
 1. Go stops only matching `vynic_pos.exe` processes at the exact current managed
    path. Windows image-path validation and termination use the same kernel
    process handle, avoiding PID reuse/name-wide termination. Go waits for exit.
-2. SQLite/WAL/FULL records the active release and release high-water mark.
-3. Go starts the candidate with a random startup nonce and version in its child
-   environment, using its release directory as working directory.
-4. POS opens existing Hive, runs existing recovery and renders a first frame.
-   Candidate input and Cloud polling remain paused. It reports readiness through
-   authenticated IPC with nonce, PID, version, Hive schema and data directory;
-   Go verifies the process path and that both candidate/rollback open the same
-   directory as the original POS. A fresh/incorrect data path cannot pass health.
-5. Go durably records SUCCESS/startup verification before POS resumes operation.
+2. A SQLite/WAL/FULL swap intent precedes moving `current` to `rollback` and
+   `staging/release` to `current`. The current version and release high-water are
+   recorded before execution. Per-directory identity markers disambiguate
+   interrupted renames; directory moves stay on the same volume.
+3. Go starts `current/vynic_pos.exe` with a random startup nonce and version in
+   its child environment, using `current` as its working directory.
+4. POS opens existing Hive, runs existing recovery and renders its first frame.
+   Input and Cloud polling remain paused during startup probation. Authenticated
+   health includes nonce, PID, version, Hive schema and the original data path.
+   A fresh/incorrect data directory cannot pass health.
+5. Initial health must arrive within **90 seconds**. Then the same process must
+   remain alive for **30 seconds**, continuing authenticated Hive-ready reports
+   with no gap of **10 seconds**. Flutter's existing two-second probation polling
+   supplies these reports; no second readiness model is added.
+6. Go records SUCCESS/startup verification and a cleanup intent durably. Only
+   then may input resume and the temporary rollback, ZIP, partial downloads and
+   extracted staging files be deleted. Steady state contains one POS release.
 
-Missing/invalid health within 90 seconds or failed launch causes Go to stop the
-candidate, restore the **binary pointer only**, restart the previous POS, verify
-its health and report ROLLED_BACK. If even the previous POS cannot start, report
-FAILED with the previous release selected and an actionable diagnostic. A later
-explicit launch retries that selected binary. Previous version directories are
-retained; automatic release garbage collection is deferred.
+Failed startup or stabilization stops the candidate, removes its binary tree,
+restores `rollback` as `current`, and restarts/verifies the previous release. The
+result is ROLLED_BACK. If the previous release also fails, FAILED retains the
+recovery journal and previous binary for recovery/support; it never resets data
+or the anti-replay high-water. Unresolved activation cannot admit another update.
 
-Restarting Edge while only staged never grants consent. Restarting after durable
-INSTALLING/RESTARTING consent conservatively stops interrupted candidate/current
-processes and restores/health-checks the previous release. Updater SQLite integrity
-and schema are checked; corrupt/incompatible state refuses startup instead of
-resetting release history. Restaurant Hive and foundation Edge SQLite are never
-restored, deleted, copied or rolled back by the updater.
+A persisted cleanup intent is the point of no return for **binary** rollback.
+A locked file, antivirus intervention or permission failure during deletion is
+reported as `cleanupPending` with a diagnostic reason while the healthy current
+release remains selected. Edge retries every 30 seconds, on restart and on launch;
+new updates/repair cannot accumulate another rollback while cleanup is pending.
+A crash after stable commit retries deletion only, even if the previous release
+was already partly deleted. It never interprets cleanup failure as failed startup.
+
+Before stable commit, interrupted consented swaps conservatively restore and
+health-check the previous binary. Restarting with only a staged update never
+installs it. An ordinary launch or same-version repair preserves a READY/BLOCKED
+candidate selected with **Later**; successful explicit installation consumes it.
+Stale/failed staging is removed after a healthy launch. A repair retains at most
+one temporary POS rollback until explicit Open passes the same stabilization.
+
+The updater SQLite table schema remains 1; its strict decision document adds
+**binary layout 2** and persisted swap/cleanup fields. Unknown layouts/journal
+phases fail closed. An absent layout denotes the older `releases/<version>`
+format. Migration moves only the selected release to `current`, after proving
+legacy POS processes stopped (or after explicit update/repair has stopped them).
+It preserves any deferred ZIP and prunes recognized old version directories only
+after healthy current-path stabilization. Interrupted moves resume by checking
+binary identity; unknown/linked legacy contents require inspection, not deletion.
+
+Older Edge builds reject the new decision fields. Setup requires the signed
+bootstrap declaration `posBinaryLayout: 2` for its exact Edge artifact. Do not
+relabel an older Edge artifact as compatible, downgrade Edge against this state,
+or use repair to change the pinned Edge baseline. Existing-host Edge replacement
+still requires the separate controlled lifecycle; automatic self-update is absent.
+
+Deletion is restricted to managed application binary/staging slots, refuses
+symlink/reparse traversal, and rejects data-directory overlap. Restaurant Hive,
+foundation Edge SQLite, updater SQLite/consent records, credentials, journals,
+configuration and retained logs are never copied, restored or deleted. Persisted
+open Orders/Tables and Cloud outboxes remain safe under the existing readiness
+contract. See `POS_BINARY_RETENTION_VALIDATION.md` for crash/retention proof.
 
 ## Development proof and validation
 

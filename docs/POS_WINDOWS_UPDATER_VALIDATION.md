@@ -1,5 +1,8 @@
 # Windows POS updater validation
 
+The original validation below predates bounded binary retention. Current layout-2
+cleanup/crash evidence is in [POS_BINARY_RETENTION_VALIDATION.md](POS_BINARY_RETENTION_VALIDATION.md).
+
 Executed on macOS against disposable state. No production release, credential,
 database, Windows machine or POS installation was changed.
 

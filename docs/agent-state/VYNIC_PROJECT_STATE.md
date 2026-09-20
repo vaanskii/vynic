@@ -52,7 +52,11 @@ current transport status.
   Phase 0 fencing and Phase 2A production authority remain unchanged. macOS
   simulations pass. `VynicSetup.exe` provisions a per-user Windows host from
   signed Edge/POS bundles, with restricted ACLs, local-only Edge host startup,
-  updater-aware shortcuts and data-preserving repair/uninstall. Real signing/feed
+  updater-aware shortcuts and data-preserving repair/uninstall. POS binaries use
+  bounded `current/staging/rollback` slots: 30-second authenticated stabilization
+  precedes permanent rollback/temp cleanup; cleanup crashes retry deletion only.
+  Signed bootstrap metadata requires a layout-2-capable Edge; repair never changes
+  its pinned baseline. Deferred updates stay staged. Real signing/feed
   publication and Windows qualification remain required. See
   `docs/POS_WINDOWS_UPDATER.md` and `docs/WINDOWS_SETUP.md`.
 

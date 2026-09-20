@@ -15,7 +15,8 @@ is invented. No POS/Edge artifact is embedded in the setup executable.
 
 The Go installer lives in `apps/edge/cmd/setup` and `internal/setup`. It reuses
 `internal/updater` signature/hash/ZIP validation and existing SQLite initialization.
-POS signatures, updater wire/state contracts and rollout behavior are unchanged.
+POS signature and readiness contracts remain unchanged. Binary layout 2 adds
+a signed bootstrap compatibility declaration and durable updater cleanup state.
 `cmd/sign-bootstrap` is an offline publisher, not distributed to POS machines.
 
 The earlier `edge serve` requires a Cloud-signed Venue binding. First installation
@@ -41,10 +42,11 @@ manifest requests `asInvoker`. No LocalSystem/session-0 service is installed.
   bin\VynicSetup.exe                  stable launcher/repair UI/supervisor
   edge\releases\<version>\VynicEdge.exe
   pos\
-    releases\<version>\vynic_pos.exe  complete Flutter release beside exe
+    current\vynic_pos.exe            complete active Flutter release
+    staging\                        one candidate ZIP/tree; temporary setup files
+    rollback\                       temporary previous POS until stabilized
     updater.sqlite (+ WAL/SHM)       existing updater schema 1
     updater.lock
-    staged.zip                      existing POS updater's verified staging
   state\edge\edge.db (+ WAL/SHM)     foundation schema 2, identity/TLS keys
   state\edge\edge-cert.pem          public certificate export
   state\host.lock
@@ -55,7 +57,7 @@ manifest requests `asInvoker`. No LocalSystem/session-0 service is installed.
   config\pos-updater.json           existing updater config incl. host token
   logs\setup.log
   logs\edge.log
-  staging\                          setup downloads/extracted candidates only
+  staging\                          temporary Edge/setup downloads only
   setup.lock
 ```
 
@@ -64,8 +66,10 @@ location.** Setup never chooses, migrates, backs up, restores or deletes that
 location. Preserve the POS product identity/build configuration so the Flutter
 runtime resolves the same existing support directory. Edge SQLite and updater
 SQLite are separate; neither lives in a replaceable release directory. Within the
-existing updater-compatible `pos` root, mutable SQLite/staging and `releases/`
-remain separate siblings. No layout or schema redesign of the updater is required.
+`pos` root, mutable SQLite remains outside `current`, `staging` and `rollback`.
+Only POS binaries/runtime/assets occupy these replaceable slots. In steady state,
+only `current` contains a POS release. One deferred update may remain in `staging`
+until explicit Update Now. Logs follow their separate retention policy.
 
 ACLs are protected DACLs granting full control only to the current Windows user,
 SYSTEM and Administrators, with container/object inheritance. Setup applies them
@@ -110,6 +114,7 @@ Decoded bootstrap payload:
 ```text
 product: "vynic-bootstrap"
 protocol: 1
+posBinaryLayout: 2  # the exact signed Edge artifact supports current/staging/rollback
 release: positive baseline sequence
 os: "windows"
 arch: "amd64"
@@ -166,9 +171,12 @@ infrastructure; neither setup nor Edge/POS contains them.
 1. Build the normal product-specific Windows POS bundle, including all runtime
    DLLs/plugins/assets and existing updater/readiness integration. Keep its product
    identity and Hive 9 compatibility. ZIP the release directory contents at root.
-2. Build Edge from a revision that implements `host`, into **`VynicEdge.exe`**, and
+2. Build Edge from a revision that implements `host` and binary layout 2, into **`VynicEdge.exe`**, and
    ZIP it at root. Use Windows amd64/CGO disabled. The signed `edge2-no-migration`
-   declaration requires validation against retained foundation schema 2.
+   declaration requires validation against retained foundation schema 2. Set
+   `posBinaryLayout: 2` only for that compatible Edge artifact. Metadata without
+   this declaration is rejected before provisioning or migrating POS binaries.
+   An older pinned Edge baseline cannot be upgraded by Repair.
 3. Authenticode-sign Windows executables as required by the distribution policy
    **before** hashing/zipping. Publish the existing signed POS manifest with
    `cmd/sign-pos-release`.
@@ -216,7 +224,10 @@ supervises the baseline; it never chooses/replaces another Edge version.
 
 `Open Vynic` starts the host if necessary, then calls the existing authenticated
 updater launch path. Edge resolves the current POS from SQLite and performs the
-existing startup/health flow. Setup waits for authenticated startup health and
+shared startup/health flow: initial authenticated Hive-ready health within 90
+seconds, then 30 seconds of continued health (maximum 10-second heartbeat gap)
+and live-process checks. Input remains held during this probation. Setup waits
+for the complete stabilization, including rollback stabilization if needed, and
 reports failed launch/health, rather than treating the launch ACK as success.
 An already-running matching POS is not duplicated.
 Definitive `updater busy` replies may be retried briefly; a lost launch ACK is not
@@ -257,13 +268,25 @@ Repair. A process that is running the installed setup cannot recover a journal
 that replaces that same executable: use the original downloaded setup, as the
 error directs. Metadata/registry/shortcut registration is idempotent, but is not
 one OS-wide atomic transaction; failure requires retry and reports diagnostics.
+POS repair uses the same `current / staging / rollback` slots as the updater.
+Downloads/extraction use `pos/staging/setup.zip` and `setup-release`, separate from
+any deferred updater candidate. The setup journal records the POS rollback slot;
+Edge receives a persisted `repair_ready` decision before setup commits its swap.
+Explicit Open starts probation; success permanently deletes rollback and setup
+scratch. Failed repaired POS startup restores the previous binary and runs the
+same health checks. Repeated repair before Open first restores the retained
+fallback, so unproven copies never accumulate. Edge/setup repair backups remain
+transaction-local and are removed after setup commit. Installer downloads are
+removed on completion; interrupted scratch is reused/removed on Retry/Repair.
+The detailed cleanup/recovery contract is in `POS_WINDOWS_UPDATER.md`.
+
 After a failed repair the UI attempts to restart the previous host. It never
 force-kills POS/Edge/Manager or rolls back a database.
 
 Uninstall explicitly confirms **application removal with restaurant data kept**.
 It requires POS closed, stops the host, refuses unresolved update recovery,
 removes only owned startup/shortcuts/uninstall registration and Edge/POS release
-folders/setup staging. It retains Hive, Edge DB/identity, updater DB/high-water,
+slots (including temporary rollback and staging). It retains Hive, Edge DB/identity, updater DB/high-water,
 credentials, receipt and diagnostics. A small setup utility remains for Repair.
 There is intentionally **no data-deletion button**; permanent operational-data
 removal is a distinct support procedure. Repair after removal reuses retained
@@ -284,7 +307,9 @@ Native Windows validation remains mandatory:
   graceful shutdown while updater state is active, and orphaned Edge processes.
 - WinForms UI, progress/failure handling, DPI/localization, shell shortcuts,
   Programs & Features Repair/Uninstall and hardened PowerShell/WDAC environments.
-- Locked exe/DLL and installed-setup recovery using the external setup; disk full,
+- Locked exe/DLL directory moves and eventual rollback deletion, including cleanup
+  retry without reverting healthy current; installed-setup recovery using the
+  external setup; disk full,
   antivirus quarantine and power loss at every journal/rename/receipt boundary.
 - Real complete Flutter runtime/plugins/assets, Enrollment Code onboarding,
   same application-support directory and existing open-order recovery.

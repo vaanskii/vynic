@@ -107,6 +107,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 - First-install/repair/uninstall: `apps/edge/cmd/setup`, `apps/edge/internal/setup`; release build: `apps/edge/tool/build-setup.py`; offline publisher: `apps/edge/cmd/sign-bootstrap`; contract/qualification: `docs/WINDOWS_SETUP.md`.
 - Architecture/provisioning/signature and recovery contract: `docs/POS_WINDOWS_UPDATER.md`.
+- Bounded POS binary slots, legacy migration and repair cleanup: `apps/edge/internal/updater/layout.go`; crash/retention proof: `docs/POS_BINARY_RETENTION_VALIDATION.md`.
 - Go updater/state/Windows process adapter: `apps/edge/internal/updater/`; opt-in host entrypoint: `apps/edge/cmd/edge`; offline signing: `apps/edge/cmd/sign-pos-release`.
 - Single readiness gate/Hive admission and POS client: `apps/operations/lib/core/services/pos/update/`; UI: `apps/operations/lib/apps/windows_pos/widgets/update/pos_update_ui.dart`, mounted in POS startup and Settings only.
 - macOS process/Hive proof: `apps/edge/tool/prove-pos-updater.py`, `apps/operations/tool/pos_update_hive_proof.dart`; unit/widget proof: `pos_update_readiness_test.dart`, `pos_update_ui_test.dart`.

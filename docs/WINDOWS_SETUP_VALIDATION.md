@@ -1,5 +1,8 @@
 # Windows setup validation
 
+The original validation below predates bounded binary retention. Current layout-2
+cleanup/crash evidence is in [POS_BINARY_RETENTION_VALIDATION.md](POS_BINARY_RETENTION_VALIDATION.md).
+
 Implementation validation passed on macOS. This is not a Windows release
 qualification or a production deployment. Structured evidence:
 [`WINDOWS_SETUP_PROOF.json`](WINDOWS_SETUP_PROOF.json).

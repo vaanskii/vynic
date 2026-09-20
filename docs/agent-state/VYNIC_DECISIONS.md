@@ -208,14 +208,18 @@ production Orders/Tables authority cutover is implied. See
 ## D022 — First install uses a local interactive-user Edge host
 
 **Decision:** Windows setup provisions a per-user, unelevated host with versioned
-Edge/POS binaries, separate durable state, updater-aware shortcuts and signed
+Edge binaries and bounded POS current/staging/rollback slots, separate durable
+state, updater-aware shortcuts and signed
 baseline repair. An unbound `edge host` exposes only local updater IPC; the
 existing Venue-bound gRPC server and Phase 2A authority remain unchanged.
 **Reason:** First installation precedes Enrollment Code onboarding; an interactive
 POS cannot be launched safely by assuming a LocalSystem/session-0 service.
 **Implication:** Setup never requests Venue secrets or invents a binding. Repair
 pins the installed Edge baseline and preserves data/identity/update history.
-Edge self-update requires a separate helper and qualification, not an extension
+POS rollback is temporary until authenticated stabilization; permanent binary
+cleanup is journaled and never restores/deletes restaurant data. Deferred updates
+remain staged until explicit consent. Edge self-update requires a separate helper
+and qualification, not an extension
 of POS update consent. See `docs/WINDOWS_SETUP.md`.
 
 ## Maintenance

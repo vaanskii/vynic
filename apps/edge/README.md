@@ -195,7 +195,11 @@ release signing, readiness, recovery and Windows qualification requirements:
 [Windows POS updater](../../docs/POS_WINDOWS_UPDATER.md).
 
 macOS Hive process proof: `python3 tool/prove-pos-updater.py --dart <dart>`.
-Go tests include HTTPS download and actual child-process health/rollback simulation.
+Go tests include HTTPS download, real child-process health/rollback simulation,
+and crash recovery of the bounded `current / staging / rollback` POS layout.
+Rollback survives only until 30-second authenticated stabilization; cleanup is
+journaled/retried without touching restaurant data. See
+[binary retention proof](../../docs/POS_BINARY_RETENTION_VALIDATION.md).
 
 ## Windows first install
 

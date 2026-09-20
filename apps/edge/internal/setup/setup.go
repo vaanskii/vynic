@@ -277,8 +277,9 @@ func (i *Installer) Install(ctx context.Context, repair bool) (err error) {
 		if e != nil {
 			return e
 		}
+		e = u.PrepareRepair(r.Status == "removed")
 		st := u.Snapshot()
-		e = u.Close()
+		e = errors.Join(e, u.Close())
 		if e != nil {
 			return e
 		}
@@ -304,10 +305,21 @@ func (i *Installer) Install(ctx context.Context, repair bool) (err error) {
 	if e = os.MkdirAll(stage, 0700); e != nil {
 		return e
 	}
-	for _, m := range []updater.Manifest{b.Edge, pos} {
-		if e = download(ctx, c, m, filepath.Join(stage, m.Product+".zip"), i.report); e != nil {
-			return e
-		}
+	posStage := updater.StagingDir(l.POS())
+	if e = os.MkdirAll(posStage, 0700); e != nil {
+		return e
+	}
+	// Installer scratch and deferred updater candidates are separate names in the
+	// same bounded staging slot. A repair must preserve a user's Later choice.
+	posZip := filepath.Join(posStage, "setup.zip")
+	defer func() {
+		err = errors.Join(err, os.RemoveAll(stage), os.RemoveAll(posZip), os.RemoveAll(posZip+".part"))
+	}()
+	if e = download(ctx, c, b.Edge, filepath.Join(stage, "vynic-edge.zip"), i.report); e != nil {
+		return e
+	}
+	if e = download(ctx, c, pos, posZip, i.report); e != nil {
+		return e
 	}
 	// Expiry/trust is rechecked after potentially slow downloads.
 	if _, _, e = Verify(raw, d, time.Now()); e != nil {
@@ -318,7 +330,8 @@ func (i *Installer) Install(ctx context.Context, repair bool) (err error) {
 	}
 	// Verify all packages before modifying any working binary directory.
 	edgeNew := filepath.Join(stage, "edge-new")
-	posNew := filepath.Join(stage, "pos-new")
+	posNew := filepath.Join(posStage, "setup-release")
+	defer func() { err = errors.Join(err, os.RemoveAll(posNew)) }()
 	for _, p := range []string{edgeNew, posNew} {
 		if e = os.RemoveAll(p); e != nil {
 			return e
@@ -327,7 +340,10 @@ func (i *Installer) Install(ctx context.Context, repair bool) (err error) {
 	if e = updater.ExtractBundle(filepath.Join(stage, "vynic-edge.zip"), edgeNew, EdgeExecutable); e != nil {
 		return e
 	}
-	if e = updater.ExtractBundle(filepath.Join(stage, "vynic-pos.zip"), posNew, updater.Executable); e != nil {
+	if e = updater.ExtractBundle(posZip, posNew, updater.Executable); e != nil {
+		return e
+	}
+	if e = updater.MarkRelease(posNew, pos.Version); e != nil {
 		return e
 	}
 	// Full Flutter bundle, not a lone executable.
@@ -367,16 +383,14 @@ func (i *Installer) Install(ctx context.Context, repair bool) (err error) {
 	if e != nil {
 		return e
 	}
-	if e = u.Close(); e != nil {
-		return e
-	}
+	defer func() { err = errors.Join(err, u.Close()) }()
 	if e = writeJSON(l.Config(), r.Config); e != nil {
 		return e
 	}
 	if e = os.MkdirAll(filepath.Dir(l.Setup()), 0700); e != nil {
 		return e
 	}
-	swaps := []swap{{Target: filepath.Dir(l.Edge(r.EdgeVersion)), New: edgeNew}, {Target: filepath.Join(l.POS(), "releases", pos.Version), New: posNew}}
+	swaps := []swap{{Target: filepath.Dir(l.Edge(r.EdgeVersion)), New: edgeNew}, {Target: updater.CurrentDir(l.POS()), New: posNew, Backup: updater.RollbackDir(l.POS())}}
 	sourceInfo, e := os.Stat(i.SetupSource)
 	if e != nil {
 		return e
@@ -397,7 +411,10 @@ func (i *Installer) Install(ctx context.Context, repair bool) (err error) {
 		swaps = append(swaps, swap{Target: l.Setup(), New: setupNew})
 	}
 	for _, swap := range swaps {
-		if e = os.RemoveAll(swap.Target + ".setup-old"); e != nil {
+		if swap.Target == updater.CurrentDir(l.POS()) {
+			continue
+		}
+		if e = os.RemoveAll(swap.backup()); e != nil {
 			return e
 		}
 	}
@@ -417,12 +434,21 @@ func (i *Installer) Install(ctx context.Context, repair bool) (err error) {
 	if e = writeJSON(l.Receipt(), r); e != nil {
 		return e
 	}
+	// Record the POS probation before committing setup's multi-binary journal.
+	// A crash before journal deletion restores the original trees; a crash after
+	// deletion leaves current+rollback for Edge's authenticated stabilization.
+	if e = u.RegisterRepair(swaps[1].HadOld); e != nil {
+		return e
+	}
 	// The journal's deletion is the commit point; old trees remain until then.
 	if e = os.Remove(filepath.Join(l.Root, "state", "swap.json")); e != nil {
 		return e
 	}
 	for _, s := range swaps {
-		if e = os.RemoveAll(s.Target + ".setup-old"); e != nil {
+		if s.Target == updater.CurrentDir(l.POS()) {
+			continue
+		}
+		if e = os.RemoveAll(s.backup()); e != nil {
 			return e
 		}
 	}
@@ -432,7 +458,15 @@ func (i *Installer) Install(ctx context.Context, repair bool) (err error) {
 
 type swap struct {
 	Target, New string
+	Backup      string `json:",omitempty"`
 	HadOld      bool
+}
+
+func (s swap) backup() string {
+	if s.Backup != "" {
+		return s.Backup
+	}
+	return s.Target + ".setup-old"
 }
 
 func (i *Installer) beginSwaps(ss []swap) error {
@@ -442,7 +476,7 @@ func (i *Installer) beginSwaps(ss []swap) error {
 		if e != nil && !os.IsNotExist(e) {
 			return e
 		}
-		if _, e = os.Stat(ss[n].Target + ".setup-old"); e == nil {
+		if _, e = os.Stat(ss[n].backup()); e == nil {
 			return errors.New("uncommitted backup directory requires recovery")
 		}
 		if e = os.MkdirAll(filepath.Dir(ss[n].Target), 0700); e != nil {
@@ -454,7 +488,7 @@ func (i *Installer) beginSwaps(ss []swap) error {
 	}
 	for _, s := range ss {
 		if s.HadOld {
-			if e := replaceFile(s.Target, s.Target+".setup-old"); e != nil {
+			if e := replaceFile(s.Target, s.backup()); e != nil {
 				return errors.Join(e, i.recoverSwaps())
 			}
 		}
@@ -493,15 +527,15 @@ func (i *Installer) recoverSwaps() error {
 	for _, s := range ss {
 		rel, e := filepath.Rel(i.Layout.Root, s.Target)
 		validRelease := e == nil && !strings.HasPrefix(rel, "..") && (strings.HasPrefix(rel, filepath.Join("edge", "releases")+string(os.PathSeparator)) || strings.HasPrefix(rel, filepath.Join("pos", "releases")+string(os.PathSeparator))) && version.MatchString(filepath.Base(s.Target))
-		if !validRelease && s.Target != i.Layout.Setup() {
+		if (!validRelease && s.Target != i.Layout.Setup() && s.Target != updater.CurrentDir(i.Layout.POS())) || (s.Backup != "" && (s.Target != updater.CurrentDir(i.Layout.POS()) || s.Backup != updater.RollbackDir(i.Layout.POS()))) {
 			return errors.New("invalid recovery journal target")
 		}
 		if s.HadOld {
-			if _, e = os.Stat(s.Target + ".setup-old"); e == nil {
+			if _, e = os.Stat(s.backup()); e == nil {
 				if e = os.RemoveAll(s.Target); e != nil {
 					return e
 				}
-				if e = replaceFile(s.Target+".setup-old", s.Target); e != nil {
+				if e = replaceFile(s.backup(), s.Target); e != nil {
 					return e
 				}
 			} else if !os.IsNotExist(e) {
@@ -548,10 +582,11 @@ func (i *Installer) Uninstall(ctx context.Context) error {
 			return e
 		}
 		st := u.Snapshot()
-		if e = u.Close(); e != nil {
+		e = errors.Join(u.ValidateDataSeparation(), u.Close())
+		if e != nil {
 			return e
 		}
-		if st.Status == "INSTALLING" || st.Status == "RESTARTING" {
+		if st.Status == "INSTALLING" || st.Status == "RESTARTING" || (st.Swap != "" && st.Swap != "repair_ready" && st.Swap != "cleanup") {
 			return errors.New("unresolved POS install; recover before uninstall")
 		}
 	}
@@ -563,7 +598,7 @@ func (i *Installer) Uninstall(ctx context.Context) error {
 	if e = writeJSON(l.Receipt(), r); e != nil {
 		return e
 	}
-	for _, p := range []string{filepath.Join(l.Root, "edge", "releases"), filepath.Join(l.POS(), "releases"), filepath.Join(l.Root, "staging")} {
+	for _, p := range []string{filepath.Join(l.Root, "edge", "releases"), filepath.Join(l.POS(), "releases"), updater.CurrentDir(l.POS()), updater.RollbackDir(l.POS()), updater.StagingDir(l.POS()), filepath.Join(l.POS(), "staged.zip"), filepath.Join(l.POS(), "staged.zip.part"), filepath.Join(l.Root, "staging")} {
 		if e = os.RemoveAll(p); e != nil {
 			return e
 		}

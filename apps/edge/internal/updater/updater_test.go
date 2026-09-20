@@ -64,13 +64,26 @@ func newFixture(t *testing.T) *fixture {
 	f.m = Manifest{Product: Product, Version: "1.9.0", Release: 19, OS: "windows", Arch: "amd64", Channel: "stable", URL: f.server.URL + "/bundle", SHA256: hex.EncodeToString(h[:]), Size: int64(len(f.artifact)), Expires: time.Now().Add(time.Hour), UpdaterProtocol: 1, HiveSchema: 9, EdgeSchema: 2, DataPolicy: "hive9-no-migration"}
 	f.sign()
 	f.cfg = Config{Root: t.TempDir(), Feed: f.server.URL + "/feed", Channel: "stable", InitialVersion: "1.8.0", InitialRelease: 18, Token: strings.Repeat("a", 64), Listen: "127.0.0.1:7444", Keys: map[string]TrustedKey{"test-only": {Public: base64.StdEncoding.EncodeToString(pub), Expires: time.Now().Add(24 * time.Hour)}}}
-	f.p = &simProcess{children: map[string]*exec.Cmd{}, failVersion: "", token: f.cfg.Token}
+	f.cfg.Root, e = filepath.EvalSymlinks(f.cfg.Root)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if e = os.MkdirAll(CurrentDir(f.cfg.Root), 0700); e != nil {
+		t.Fatal(e)
+	}
+	if e = os.WriteFile(CurrentExecutable(f.cfg.Root), []byte("previous binary"), 0600); e != nil {
+		t.Fatal(e)
+	}
+	if e = MarkRelease(CurrentDir(f.cfg.Root), f.cfg.InitialVersion); e != nil {
+		t.Fatal(e)
+	}
+	f.p = &simProcess{children: map[string]*exec.Cmd{}, failVersion: "", token: f.cfg.Token, root: f.cfg.Root, exited: map[int]bool{}}
 	f.s, e = Open(f.cfg, f.p)
 	if e != nil {
 		t.Fatal(e)
 	}
 	f.s.client = f.server.Client()
-	f.s.healthTimeout = 2 * time.Second
+	fastHealth(f.s)
 	api := httptest.NewServer(f.s.Handler())
 	f.p.url = api.URL
 	t.Cleanup(api.Close)
@@ -86,7 +99,10 @@ func waitState(t *testing.T, s *Service, want string) {
 	end := time.Now().Add(8 * time.Second)
 	for time.Now().Before(end) {
 		st := s.Snapshot()
-		if st.Status == want {
+		s.mu.Lock()
+		busy := s.busy
+		s.mu.Unlock()
+		if st.Status == want && !busy {
 			return
 		}
 		if st.Status == "FAILED" && want != "FAILED" {
@@ -118,7 +134,7 @@ func TestStageRestartInstallAndIdempotency(t *testing.T) {
 	}
 	f.s = s
 	f.s.client = f.server.Client()
-	f.s.healthTimeout = 2 * time.Second
+	fastHealth(f.s)
 	api := httptest.NewServer(f.s.Handler())
 	defer api.Close()
 	f.p.url = api.URL
@@ -240,7 +256,17 @@ func TestReverifyStagedArtifactAndExpiry(t *testing.T) {
 }
 func TestCrashDuringActivationRecoversPrevious(t *testing.T) {
 	f := newFixture(t)
+	if e := moveBinary(CurrentDir(f.cfg.Root), RollbackDir(f.cfg.Root)); e != nil {
+		t.Fatal(e)
+	}
+	if e := os.MkdirAll(CurrentDir(f.cfg.Root), 0700); e != nil {
+		t.Fatal(e)
+	}
+	if e := MarkRelease(CurrentDir(f.cfg.Root), "1.9.0"); e != nil {
+		t.Fatal(e)
+	}
 	f.s.mu.Lock()
+	f.s.state.Swap = "starting"
 	f.s.state.Status = "RESTARTING"
 	f.s.state.Attempt = requestID
 	f.s.state.Previous = "1.8.0"
@@ -257,7 +283,7 @@ func TestCrashDuringActivationRecoversPrevious(t *testing.T) {
 		t.Fatal(e)
 	}
 	f.s = s
-	s.healthTimeout = 2 * time.Second
+	fastHealth(s)
 	api := httptest.NewServer(s.Handler())
 	defer api.Close()
 	f.p.url = api.URL
@@ -304,11 +330,15 @@ func TestArchivePaths(t *testing.T) {
 // Real child processes simulate startup/health/crash on macOS. Downloaded
 // synthetic .exe bytes are deliberately not executed on the wrong OS.
 type simProcess struct {
+	quietVersion            string
 	mu                      sync.Mutex
 	children                map[string]*exec.Cmd
 	count                   int
 	url, token, failVersion string
 	badDataVersion          string
+	crashVersion            string
+	root                    string
+	exited                  map[int]bool
 }
 
 func (p *simProcess) Validate(pid int, path string) error {
@@ -317,7 +347,7 @@ func (p *simProcess) Validate(pid int, path string) error {
 	if pid == 111 {
 		return nil
 	}
-	if c := p.children[path]; c != nil && c.Process.Pid == pid {
+	if c := p.children[path]; c != nil && c.Process.Pid == pid && !p.exited[pid] {
 		return nil
 	}
 	return errors.New("wrong process")
@@ -327,7 +357,7 @@ func (p *simProcess) Stop(path string) error {
 	defer p.mu.Unlock()
 	if c := p.children[path]; c != nil {
 		_ = c.Process.Kill()
-		_ = c.Wait()
+
 		delete(p.children, path)
 	}
 	return nil
@@ -338,17 +368,30 @@ func (p *simProcess) Start(path string, env []string) (int, error) {
 	p.count++
 	c := exec.Command(os.Args[0], "-test.run=^TestUpdaterChild$")
 	c.Env = append(os.Environ(), env...)
-	c.Env = append(c.Env, "VYNIC_TEST_CHILD=1", "VYNIC_TEST_URL="+p.url, "VYNIC_TEST_TOKEN="+p.token, "VYNIC_TEST_DATA="+filepath.Join(filepath.Dir(filepath.Dir(filepath.Dir(path))), "restaurant-data"))
-	if strings.Contains(path, p.failVersion) && p.failVersion != "" {
+	c.Env = append(c.Env, "VYNIC_TEST_CHILD=1", "VYNIC_TEST_URL="+p.url, "VYNIC_TEST_TOKEN="+p.token, "VYNIC_TEST_DATA="+filepath.Join(p.root, "restaurant-data"))
+	version := ""
+	for _, v := range env {
+		if strings.HasPrefix(v, "VYNIC_POS_UPDATE_VERSION=") {
+			version = strings.TrimPrefix(v, "VYNIC_POS_UPDATE_VERSION=")
+		}
+	}
+	if version == p.quietVersion {
+		c.Env = append(c.Env, "VYNIC_TEST_QUIET=1")
+	}
+	if version == p.crashVersion {
+		c.Env = append(c.Env, "VYNIC_TEST_CRASH=1")
+	}
+	if version == p.failVersion && p.failVersion != "" {
 		c.Env = append(c.Env, "VYNIC_TEST_FAIL=1")
 	}
-	if p.badDataVersion != "" && strings.Contains(path, p.badDataVersion) {
+	if p.badDataVersion != "" && version == p.badDataVersion {
 		c.Env = append(c.Env, "VYNIC_TEST_BAD_DATA=1")
 	}
 	if e := c.Start(); e != nil {
 		return 0, e
 	}
 	p.children[path] = c
+	go func() { _ = c.Wait(); p.mu.Lock(); p.exited[c.Process.Pid] = true; p.mu.Unlock() }()
 	return c.Process.Pid, nil
 }
 func (p *simProcess) starts() int { p.mu.Lock(); defer p.mu.Unlock(); return p.count }
@@ -357,7 +400,7 @@ func (p *simProcess) close() {
 	defer p.mu.Unlock()
 	for _, c := range p.children {
 		_ = c.Process.Kill()
-		_ = c.Wait()
+
 	}
 }
 func TestUpdaterChild(t *testing.T) {
@@ -373,18 +416,26 @@ func TestUpdaterChild(t *testing.T) {
 		dataPath = filepath.Join(dataPath, "unexpected-empty-db")
 	}
 	b, _ := json.Marshal(map[string]any{"nonce": os.Getenv("VYNIC_POS_UPDATE_NONCE"), "version": os.Getenv("VYNIC_POS_UPDATE_VERSION"), "pid": os.Getpid(), "dataPath": dataPath, "hiveSchema": 9})
-	r, _ := http.NewRequest("POST", os.Getenv("VYNIC_TEST_URL")+"/v1/health", bytes.NewReader(b))
-	r.Header.Set("Authorization", "Bearer "+os.Getenv("VYNIC_TEST_TOKEN"))
-	resp, e := http.DefaultClient.Do(r)
-	if e != nil {
-		os.Exit(24)
+	for n := 0; n < 600; n++ {
+		r, _ := http.NewRequest("POST", os.Getenv("VYNIC_TEST_URL")+"/v1/health", bytes.NewReader(b))
+		r.Header.Set("Authorization", "Bearer "+os.Getenv("VYNIC_TEST_TOKEN"))
+		resp, e := http.DefaultClient.Do(r)
+		if e != nil {
+			os.Exit(24)
+		}
+		_, _ = io.Copy(io.Discard, resp.Body)
+		resp.Body.Close()
+		if resp.StatusCode != 200 {
+			os.Exit(25)
+		}
+		if os.Getenv("VYNIC_TEST_CRASH") == "1" {
+			os.Exit(26)
+		}
+		if os.Getenv("VYNIC_TEST_QUIET") == "1" {
+			time.Sleep(30 * time.Second)
+		}
+		time.Sleep(40 * time.Millisecond)
 	}
-	_, _ = io.Copy(io.Discard, resp.Body)
-	resp.Body.Close()
-	if resp.StatusCode != 200 {
-		os.Exit(25)
-	}
-	time.Sleep(30 * time.Second)
 	os.Exit(0)
 }
 
@@ -417,7 +468,7 @@ func TestInterruptedDownloadRetryAndSingleOwner(t *testing.T) {
 	}
 }
 func TestCorruptedUpdaterStateRefused(t *testing.T) {
-	for _, kind := range []string{"json", "schema", "path"} {
+	for _, kind := range []string{"json", "schema", "path", "layout", "swap", "cleanupWithoutStability"} {
 		t.Run(kind, func(t *testing.T) {
 			f := newFixture(t)
 			switch kind {
@@ -425,6 +476,15 @@ func TestCorruptedUpdaterStateRefused(t *testing.T) {
 				_, _ = f.s.db.Exec(`UPDATE updater_state SET value='{'`)
 			case "schema":
 				_, _ = f.s.db.Exec(`PRAGMA ignore_check_constraints=ON; UPDATE updater_state SET version=8;`)
+			case "layout":
+				f.s.state.Layout = 999
+				_ = f.s.saveLocked()
+			case "cleanupWithoutStability":
+				f.s.state.CleanupPending = true
+				_ = f.s.saveLocked()
+			case "swap":
+				f.s.state.Swap = "future-activation"
+				_ = f.s.saveLocked()
 			case "path":
 				_, _ = f.s.db.Exec(`UPDATE updater_state SET value='{"status":"SUCCESS","current":"../escape"}'`)
 			}
@@ -451,4 +511,16 @@ func TestWrongDataDirectoryCannotPassStartupHealth(t *testing.T) {
 	if f.s.Snapshot().Current != "1.8.0" || !f.s.Snapshot().StartupVerified {
 		t.Fatal(f.s.Snapshot())
 	}
+}
+
+func fastHealth(s *Service) {
+	s.healthTimeout = 2 * time.Second
+	s.stabilization = 200 * time.Millisecond
+	s.heartbeatTimeout = 150 * time.Millisecond
+}
+func (p *simProcess) Running(path string) (bool, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	c := p.children[path]
+	return c != nil && !p.exited[c.Process.Pid], nil
 }

@@ -30,7 +30,7 @@ func TestOfflinePublisherRoundTrip(t *testing.T) {
 	edge.Product = "vynic-edge"
 	edge.Version = "1.0.0"
 	edge.DataPolicy = "edge2-no-migration"
-	b := setup.Bootstrap{Product: "vynic-bootstrap", Protocol: 1, Release: 1, OS: "windows", Arch: "amd64", Channel: "stable", Expires: now.Add(time.Hour), Edge: edge, POS: envelope, POSFeed: "https://example.invalid/pos.json", RepairBase: "https://example.invalid/repair", POSReleaseBase: "https://example.invalid/pos-releases"}
+	b := setup.Bootstrap{POSBinaryLayout: 2, Product: "vynic-bootstrap", Protocol: 1, Release: 1, OS: "windows", Arch: "amd64", Channel: "stable", Expires: now.Add(time.Hour), Edge: edge, POS: envelope, POSFeed: "https://example.invalid/pos.json", RepairBase: "https://example.invalid/repair", POSReleaseBase: "https://example.invalid/pos-releases"}
 	root := t.TempDir()
 	key, _ := x509.MarshalPKCS8PrivateKey(private)
 	files := map[string][]byte{"key.pem": pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}), "edge.zip": []byte("fixture bytes hashed by offline publisher")}

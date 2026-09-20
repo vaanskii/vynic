@@ -30,16 +30,17 @@ type Distribution struct {
 	Keys         map[string]updater.TrustedKey `json:"keys"`
 }
 type Bootstrap struct {
-	Product  string           `json:"product"`
-	Protocol int              `json:"protocol"`
-	Release  uint64           `json:"release"`
-	OS       string           `json:"os"`
-	Arch     string           `json:"arch"`
-	Channel  string           `json:"channel"`
-	Expires  time.Time        `json:"expires"`
-	Edge     updater.Manifest `json:"edge"`
-	POS      json.RawMessage  `json:"pos"`
-	POSFeed  string           `json:"posFeed"`
+	POSBinaryLayout int              `json:"posBinaryLayout"`
+	Product         string           `json:"product"`
+	Protocol        int              `json:"protocol"`
+	Release         uint64           `json:"release"`
+	OS              string           `json:"os"`
+	Arch            string           `json:"arch"`
+	Channel         string           `json:"channel"`
+	Expires         time.Time        `json:"expires"`
+	Edge            updater.Manifest `json:"edge"`
+	POS             json.RawMessage  `json:"pos"`
+	POSFeed         string           `json:"posFeed"`
 	// Renewed, signed metadata for this baseline / exact active POS version.
 	RepairBase     string `json:"repairBase"`
 	POSReleaseBase string `json:"posReleaseBase"`
@@ -83,7 +84,7 @@ func Verify(raw []byte, d Distribution, now time.Time) (Bootstrap, updater.Manif
 	}
 	m := b.Edge
 	digest, de := hex.DecodeString(m.SHA256)
-	if b.Product != "vynic-bootstrap" || b.Protocol != 1 || b.Release == 0 || b.OS != "windows" || b.Arch != "amd64" || b.Channel != d.Channel || !now.Before(b.Expires) || b.Expires.After(now.Add(31*24*time.Hour)) ||
+	if b.POSBinaryLayout != 2 || b.Product != "vynic-bootstrap" || b.Protocol != 1 || b.Release == 0 || b.OS != "windows" || b.Arch != "amd64" || b.Channel != d.Channel || !now.Before(b.Expires) || b.Expires.After(now.Add(31*24*time.Hour)) ||
 		m.Product != "vynic-edge" || !version.MatchString(m.Version) || m.Release == 0 || m.OS != "windows" || m.Arch != "amd64" || m.Channel != b.Channel || m.UpdaterProtocol != 1 || m.EdgeSchema != 2 || m.HiveSchema != 9 || m.DataPolicy != "edge2-no-migration" || !now.Before(m.Expires) || m.Expires.After(now.Add(31*24*time.Hour)) || !https(m.URL) || de != nil || len(digest) != 32 || m.Size < 1 || m.Size > updater.MaxArtifact || !https(b.POSFeed) || !https(b.RepairBase) || !https(b.POSReleaseBase) {
 		return b, p, errors.New("bootstrap compatibility/policy rejected")
 	}

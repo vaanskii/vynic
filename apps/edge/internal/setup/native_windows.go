@@ -393,7 +393,7 @@ func EnsureHost(ctx context.Context, l Layout, launch bool) error {
 		if e != nil {
 			return e
 		}
-		running, e := managedPOSRunning(filepath.Join(l.POS(), "releases", st.Current, updater.Executable))
+		running, e := managedPOSRunning(posExecutable(l, st))
 		if e != nil {
 			return e
 		}
@@ -448,7 +448,7 @@ func managedPOSRunning(path string) (bool, error) {
 // A launch ACK only schedules startup. Surface a failed process/health check to
 // the installer/shortcut caller instead of reporting installation launch success.
 func waitPOSHealth(ctx context.Context, l Layout, c updater.Config, previousReason string) error {
-	deadline := time.Now().Add(100 * time.Second)
+	deadline := time.Now().Add(250 * time.Second)
 	for {
 		select {
 		case <-ctx.Done():
@@ -457,7 +457,7 @@ func waitPOSHealth(ctx context.Context, l Layout, c updater.Config, previousReas
 		}
 		st, e := status(ctx, c)
 		if e == nil {
-			running, re := managedPOSRunning(filepath.Join(l.POS(), "releases", st.Current, updater.Executable))
+			running, re := managedPOSRunning(posExecutable(l, st))
 			if re != nil {
 				return re
 			}
@@ -472,4 +472,11 @@ func waitPOSHealth(ctx context.Context, l Layout, c updater.Config, previousReas
 			return errors.New("POS did not confirm startup health; inspect the POS window and logs, then close POS normally before Repair")
 		}
 	}
+}
+
+func posExecutable(l Layout, st updater.State) string {
+	if st.Layout == 0 {
+		return filepath.Join(l.POS(), "releases", st.Current, updater.Executable)
+	}
+	return updater.CurrentExecutable(l.POS())
 }

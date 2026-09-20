@@ -138,3 +138,14 @@ func (NativeProcess) Start(path string, env []string) (int, error) {
 	go func() { _ = c.Wait() }()
 	return pid, nil
 }
+
+func (NativeProcess) Running(path string) (bool, error) {
+	handles, e := matchingProcesses(path, 0)
+	if e != nil {
+		return false, e
+	}
+	for _, h := range handles {
+		windows.CloseHandle(h)
+	}
+	return len(handles) > 0, nil
+}

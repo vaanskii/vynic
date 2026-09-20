@@ -114,7 +114,7 @@ func newFixture(t *testing.T) *fixture {
 	f.p = metadata("vynic-pos", "1.8.0", "/pos.zip", pos)
 	em := metadata("vynic-edge", "1.0.0", "/edge.zip", edge)
 	em.DataPolicy = "edge2-no-migration"
-	f.b = Bootstrap{Product: "vynic-bootstrap", Protocol: 1, Release: 1, OS: "windows", Arch: "amd64", Channel: "stable", Expires: time.Now().Add(time.Hour), Edge: em, POS: signed(t, k, "VYNIC-POS-RELEASE-v1\n", f.p), POSFeed: f.s.URL + "/pos.json", RepairBase: f.s.URL + "/repair", POSReleaseBase: f.s.URL + "/pos-releases"}
+	f.b = Bootstrap{POSBinaryLayout: 2, Product: "vynic-bootstrap", Protocol: 1, Release: 1, OS: "windows", Arch: "amd64", Channel: "stable", Expires: time.Now().Add(time.Hour), Edge: em, POS: signed(t, k, "VYNIC-POS-RELEASE-v1\n", f.p), POSFeed: f.s.URL + "/pos.json", RepairBase: f.s.URL + "/repair", POSReleaseBase: f.s.URL + "/pos-releases"}
 	d := Distribution{BootstrapURL: f.s.URL + "/bootstrap.json", Channel: "stable", Keys: map[string]updater.TrustedKey{"test": {Public: base64.StdEncoding.EncodeToString(pub), Expires: time.Now().Add(2 * time.Hour)}}}
 	f.h = &fakeHost{}
 	parent, e := filepath.EvalSymlinks(t.TempDir())
@@ -180,15 +180,17 @@ func TestFirstInstallProvisioningAndRetry(t *testing.T) {
 }
 func TestSignaturePolicyMatrix(t *testing.T) {
 	cases := map[string]func(*fixture){
-		"signature":         func(f *fixture) { f.k = make(ed25519.PrivateKey, 64) },
-		"edge product":      func(f *fixture) { f.b.Edge.Product = "vynic-manager" },
-		"bootstrap purpose": func(f *fixture) { f.b.Product = "other" },
-		"schema":            func(f *fixture) { f.b.Edge.EdgeSchema = 3 },
-		"arch":              func(f *fixture) { f.b.Arch = "arm64" },
-		"channel":           func(f *fixture) { f.b.Channel = "beta" },
-		"expired":           func(f *fixture) { f.b.Expires = time.Now().Add(-time.Hour) },
-		"http":              func(f *fixture) { f.b.Edge.URL = "http://example.invalid/a.zip" },
-		"pos signature":     func(f *fixture) { f.b.POS = json.RawMessage(`{"keyId":"test","payload":"e30=","signature":"AA=="}`) },
+		"signature":            func(f *fixture) { f.k = make(ed25519.PrivateKey, 64) },
+		"edge product":         func(f *fixture) { f.b.Edge.Product = "vynic-manager" },
+		"bootstrap purpose":    func(f *fixture) { f.b.Product = "other" },
+		"old binary layout":    func(f *fixture) { f.b.POSBinaryLayout = 0 },
+		"future binary layout": func(f *fixture) { f.b.POSBinaryLayout = 3 },
+		"schema":               func(f *fixture) { f.b.Edge.EdgeSchema = 3 },
+		"arch":                 func(f *fixture) { f.b.Arch = "arm64" },
+		"channel":              func(f *fixture) { f.b.Channel = "beta" },
+		"expired":              func(f *fixture) { f.b.Expires = time.Now().Add(-time.Hour) },
+		"http":                 func(f *fixture) { f.b.Edge.URL = "http://example.invalid/a.zip" },
+		"pos signature":        func(f *fixture) { f.b.POS = json.RawMessage(`{"keyId":"test","payload":"e30=","signature":"AA=="}`) },
 		"pos product": func(f *fixture) {
 			p := f.p
 			p.Product = "vynic-manager"
@@ -251,7 +253,7 @@ func TestFailedRepairPreservesWorkingReleaseAndData(t *testing.T) {
 	before, e := os.ReadFile(path)
 	must(t, e)
 	preserved := map[string][]byte{}
-	for _, p := range []string{path, filepath.Join(l.POS(), "releases", "1.8.0", updater.Executable), l.Setup()} {
+	for _, p := range []string{path, updater.CurrentExecutable(l.POS()), l.Setup()} {
 		preserved[p], e = os.ReadFile(p)
 		must(t, e)
 	}
@@ -321,7 +323,7 @@ func TestUninstallRetainsDataAndRepairReusesState(t *testing.T) {
 	if f.h.removed != 1 {
 		t.Fatal("integration remained")
 	}
-	for _, p := range []string{l.Edge("1.0.0"), filepath.Join(l.POS(), "releases", "1.8.0", updater.Executable)} {
+	for _, p := range []string{l.Edge("1.0.0"), updater.CurrentExecutable(l.POS())} {
 		if _, e = os.Stat(p); !os.IsNotExist(e) {
 			t.Fatal("binary not removed")
 		}
@@ -363,6 +365,7 @@ func TestRepairActivePOSPreservesUpdaterHighWater(t *testing.T) {
 	var st updater.State
 	must(t, json.Unmarshal(raw, &st))
 	st.Current = "1.9.0"
+	must(t, updater.MarkRelease(updater.CurrentDir(l.POS()), "1.9.0"))
 	st.High = 4
 	raw, e = json.Marshal(st)
 	must(t, e)
@@ -383,7 +386,7 @@ func TestRepairActivePOSPreservesUpdaterHighWater(t *testing.T) {
 	if got.Current != "1.9.0" || got.High != 4 {
 		t.Fatal("repair reset version/history")
 	}
-	if _, e = os.Stat(filepath.Join(l.POS(), "releases", "1.9.0", updater.Executable)); e != nil {
+	if _, e = os.Stat(updater.CurrentExecutable(l.POS())); e != nil {
 		t.Fatal(e)
 	}
 }
@@ -556,5 +559,102 @@ func TestInterruptedRepairRestoresOldBinaryEvenOffline(t *testing.T) {
 	}
 	if _, e = os.Stat(l.Maintenance()); !os.IsNotExist(e) {
 		t.Fatal("failed repair stranded maintenance marker")
+	}
+}
+
+func TestRepairUsesOneTemporaryRollbackAndCleansDownloads(t *testing.T) {
+	f := newFixture(t)
+	f.install()
+	l := f.i.Layout
+	// Represent the existing proven release. Repeated repair before Open must
+	// retain this original fallback, not keep nesting unproven repair binaries.
+	sentinel := filepath.Join(updater.CurrentDir(l.POS()), "previous-runtime.dll")
+	must(t, os.WriteFile(sentinel, []byte("proven runtime"), 0600))
+	for n := 0; n < 3; n++ {
+		must(t, f.i.Install(context.Background(), true))
+		old, e := os.ReadFile(filepath.Join(updater.RollbackDir(l.POS()), "previous-runtime.dll"))
+		must(t, e)
+		if string(old) != "proven runtime" {
+			t.Fatal("repair discarded original fallback")
+		}
+		for _, p := range []string{filepath.Join(l.POS(), "releases"), updater.CurrentDir(l.POS()) + ".setup-old", filepath.Join(l.Root, "staging"), filepath.Join(updater.StagingDir(l.POS()), "setup.zip"), filepath.Join(updater.StagingDir(l.POS()), "setup-release")} {
+			if _, e = os.Stat(p); !os.IsNotExist(e) {
+				t.Fatalf("repair retained historical/temp path %s: %v", p, e)
+			}
+		}
+		r, e := Load(l)
+		must(t, e)
+		u, e := updater.OpenExisting(r.Config, updater.NativeProcess{})
+		must(t, e)
+		st := u.Snapshot()
+		must(t, u.Close())
+		if st.Swap != "repair_ready" || st.StartupVerified || st.Previous != st.Current {
+			t.Fatal("repair not awaiting explicit healthy Open", st)
+		}
+	}
+	must(t, f.i.Uninstall(context.Background()))
+	for _, p := range []string{updater.CurrentDir(l.POS()), updater.RollbackDir(l.POS()), updater.StagingDir(l.POS())} {
+		if _, e := os.Stat(p); !os.IsNotExist(e) {
+			t.Fatalf("binary slot survived uninstall: %s", p)
+		}
+	}
+}
+func TestInterruptedPOSRepairRestoresCurrentBeforeOfflineFailure(t *testing.T) {
+	f := newFixture(t)
+	f.install()
+	l := f.i.Layout
+	before, e := os.ReadFile(updater.CurrentExecutable(l.POS()))
+	must(t, e)
+	next := filepath.Join(updater.StagingDir(l.POS()), "setup-release")
+	must(t, os.MkdirAll(next, 0700))
+	must(t, os.WriteFile(filepath.Join(next, updater.Executable), []byte("uncommitted"), 0600))
+	must(t, updater.MarkRelease(next, "1.8.0"))
+	must(t, f.i.beginSwaps([]swap{{Target: updater.CurrentDir(l.POS()), New: next, Backup: updater.RollbackDir(l.POS())}}))
+	r, e := Load(l)
+	must(t, e)
+	u, e := updater.OpenExisting(r.Config, updater.NativeProcess{})
+	must(t, e)
+	must(t, u.RegisterRepair(true))
+	must(t, u.Close())
+	f.s.Close()
+	if e = f.i.Install(context.Background(), true); e == nil {
+		t.Fatal("offline repair reported success")
+	}
+	after, e := os.ReadFile(updater.CurrentExecutable(l.POS()))
+	must(t, e)
+	if !bytes.Equal(before, after) || existsSetup(updater.RollbackDir(l.POS())) {
+		t.Fatal("POS swap journal recovery failed")
+	}
+}
+func existsSetup(path string) bool { _, e := os.Stat(path); return e == nil }
+
+func TestOldEdgeCapabilityRefusedBeforeLegacyLayoutMigration(t *testing.T) {
+	f := newFixture(t)
+	f.install()
+	l := f.i.Layout
+	old := filepath.Join(l.POS(), "releases", "1.8.0")
+	must(t, os.MkdirAll(filepath.Dir(old), 0700))
+	must(t, os.Rename(updater.CurrentDir(l.POS()), old))
+	db, e := sql.Open("sqlite", filepath.Join(l.POS(), "updater.sqlite"))
+	must(t, e)
+	var raw []byte
+	must(t, db.QueryRow("SELECT value FROM updater_state WHERE id=1").Scan(&raw))
+	var st updater.State
+	must(t, json.Unmarshal(raw, &st))
+	st.Layout = 0
+	st.Swap = ""
+	st.RepairPending = false
+	raw, e = json.Marshal(st)
+	must(t, e)
+	_, e = db.Exec("UPDATE updater_state SET value=? WHERE id=1", string(raw))
+	must(t, e)
+	must(t, db.Close())
+	f.b.POSBinaryLayout = 0
+	f.publish()
+	if e = f.i.Install(context.Background(), true); e == nil {
+		t.Fatal("old Edge accepted current-slot layout")
+	}
+	if !existsSetup(filepath.Join(old, updater.Executable)) || existsSetup(updater.CurrentDir(l.POS())) {
+		t.Fatal("incompatible repair moved binaries")
 	}
 }

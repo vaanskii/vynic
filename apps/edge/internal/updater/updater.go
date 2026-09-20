@@ -34,6 +34,11 @@ type Config struct {
 	Keys           map[string]TrustedKey `json:"keys"`
 }
 type State struct {
+	RepairPending   bool   `json:"repairPending,omitempty"`
+	Layout          int    `json:"layout,omitempty"`
+	Swap            string `json:"swap,omitempty"`
+	CleanupPending  bool   `json:"cleanupPending,omitempty"`
+	DiscardStaging  bool   `json:"discardStaging,omitempty"`
 	DataPath        string `json:"dataPath,omitempty"`
 	Status          string `json:"status"`
 	LastOutcome     string `json:"lastOutcome,omitempty"`
@@ -53,21 +58,24 @@ type State struct {
 
 // Process operates on an exact managed POS path, never an image name or Edge.
 type Process interface {
+	Running(path string) (bool, error)
 	Validate(pid int, path string) error
 	Stop(path string) error
 	Start(path string, env []string) (int, error)
 }
 type Service struct {
-	lock          *flock.Flock
-	mu            sync.Mutex
-	state         State
-	db            *sql.DB
-	cfg           Config
-	process       Process
-	client        *http.Client
-	busy          bool
-	healthy       chan bool
-	healthTimeout time.Duration
+	lock             *flock.Flock
+	mu               sync.Mutex
+	state            State
+	db               *sql.DB
+	cfg              Config
+	process          Process
+	client           *http.Client
+	busy             bool
+	healthy          chan time.Time
+	healthTimeout    time.Duration
+	stabilization    time.Duration
+	heartbeatTimeout time.Duration
 }
 
 func Open(c Config, p Process) (*Service, error) {
@@ -106,7 +114,7 @@ func Open(c Config, p Process) (*Service, error) {
 		db.Close()
 		return nil, errors.New("updater SQLite integrity failure")
 	}
-	s := &Service{lock: lock, db: db, cfg: c, process: p, healthTimeout: 90 * time.Second, client: &http.Client{Timeout: 30 * time.Minute, CheckRedirect: func(r *http.Request, via []*http.Request) error {
+	s := &Service{lock: lock, db: db, cfg: c, process: p, healthTimeout: 90 * time.Second, stabilization: 30 * time.Second, heartbeatTimeout: 10 * time.Second, client: &http.Client{Timeout: 30 * time.Minute, CheckRedirect: func(r *http.Request, via []*http.Request) error {
 		if len(via) > 5 || r.URL.Scheme != "https" {
 			return errors.New("unsafe redirect")
 		}
@@ -116,7 +124,10 @@ func Open(c Config, p Process) (*Service, error) {
 	var schema int
 	err = db.QueryRow(`SELECT version, value FROM updater_state WHERE id=1`).Scan(&schema, &raw)
 	if err == sql.ErrNoRows {
-		s.state = State{Status: "UP_TO_DATE", Current: c.InitialVersion, High: c.InitialRelease}
+		s.state = State{Layout: binaryLayout, Status: "UP_TO_DATE", Current: c.InitialVersion, High: c.InitialRelease}
+		if exists(filepath.Join(c.Root, "releases")) {
+			s.state.Layout = 0
+		}
 		err = s.saveLocked()
 	} else if err == nil {
 		if schema != 1 {
@@ -130,9 +141,13 @@ func Open(c Config, p Process) (*Service, error) {
 	}
 	if err == nil {
 		allowed := map[string]bool{"UP_TO_DATE": true, "CHECKING": true, "DOWNLOADING": true, "READY_TO_INSTALL": true, "BLOCKED": true, "INSTALLING": true, "RESTARTING": true, "SUCCESS": true, "FAILED": true, "ROLLED_BACK": true}
-		if !allowed[s.state.Status] || ((s.state.Status == "INSTALLING" || s.state.Status == "RESTARTING") && (s.state.Previous == "" || s.state.Version == "" || s.state.Attempt == "")) {
+		swaps := map[string]bool{"": true, "prepared": true, "activating": true, "starting": true, "restoring": true, "cleanup": true, "repair_ready": true, "repair_starting": true}
+		if (s.state.Layout != 0 && s.state.Layout != binaryLayout) || !swaps[s.state.Swap] || !allowed[s.state.Status] || ((s.state.Status == "INSTALLING" || s.state.Status == "RESTARTING") && (s.state.Previous == "" || (s.state.Swap != "restoring" && (s.state.Version == "" || s.state.Attempt == "")))) {
 			err = errors.New("inconsistent updater state")
 		}
+	}
+	if err == nil {
+		err = validateBinaryJournal(s.state)
 	}
 	if err != nil {
 		db.Close()
@@ -196,9 +211,18 @@ func (s *Service) set(status, reason string) error {
 	return s.saveLocked()
 }
 func (s *Service) path(version string) string {
-	return filepath.Join(s.cfg.Root, "releases", version, Executable)
+	if s.state.Layout == 0 {
+		return filepath.Join(s.cfg.Root, "releases", version, Executable)
+	}
+	return CurrentExecutable(s.cfg.Root)
 }
-func (s *Service) artifact() string { return filepath.Join(s.cfg.Root, "staged.zip") }
+func (s *Service) artifact() string {
+	old := filepath.Join(s.cfg.Root, "staged.zip")
+	if s.state.Layout == 0 && exists(old) {
+		return old
+	}
+	return filepath.Join(StagingDir(s.cfg.Root), "candidate.zip")
+}
 func (s *Service) acquire() bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -234,6 +258,9 @@ func (s *Service) Check(ctx context.Context) error {
 	}
 	defer s.release()
 	st := s.Snapshot()
+	if st.CleanupPending || st.Swap != "" {
+		return nil
+	}
 	if st.Status == "READY_TO_INSTALL" || st.Status == "BLOCKED" || st.Status == "INSTALLING" || st.Status == "RESTARTING" {
 		return nil
 	}
@@ -285,6 +312,15 @@ func (s *Service) download(ctx context.Context) error {
 	if r.StatusCode != 200 {
 		return fmt.Errorf("artifact HTTP %d", r.StatusCode)
 	}
+	if e = safeDataPath(s.cfg.Root, st.DataPath); e != nil {
+		return e
+	}
+	if e = safeTree(StagingDir(s.cfg.Root)); e != nil {
+		return e
+	}
+	if e = os.MkdirAll(StagingDir(s.cfg.Root), 0700); e != nil {
+		return e
+	}
 	part := s.artifact() + ".part"
 	f, e := os.OpenFile(part, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
 	if e != nil {
@@ -304,6 +340,9 @@ func (s *Service) download(ctx context.Context) error {
 		return e
 	}
 	if e = os.Rename(part, s.artifact()); e != nil {
+		return e
+	}
+	if e = s.stageCandidate(m); e != nil {
 		return e
 	}
 	s.mu.Lock()
@@ -331,6 +370,9 @@ func (s *Service) Install(id, version, dataPath string, pid int, ready bool) err
 	if pe != nil || parsed == uuid.Nil || parsed.String() != id || pid < 1 || !filepath.IsAbs(dataPath) {
 		return errors.New("invalid install identity")
 	}
+	if e := safeDataPath(s.cfg.Root, dataPath); e != nil {
+		return e
+	}
 	s.mu.Lock()
 	var priorVersion, priorDataPath string
 	var priorPID int
@@ -354,7 +396,7 @@ func (s *Service) Install(id, version, dataPath string, pid int, ready bool) err
 		s.mu.Unlock()
 		return errors.New("staged release changed")
 	}
-	if s.busy || s.state.Status != "READY_TO_INSTALL" && s.state.Status != "BLOCKED" {
+	if s.busy || s.state.CleanupPending || s.state.Swap != "" || s.state.Status != "READY_TO_INSTALL" && s.state.Status != "BLOCKED" {
 		s.mu.Unlock()
 		return errors.New("update not staged or install busy")
 	}
@@ -385,6 +427,8 @@ func (s *Service) Install(id, version, dataPath string, pid int, ready bool) err
 	s.state.Attempt = id
 	s.state.Previous = s.state.Current
 	s.state.Status = "INSTALLING"
+	s.state.Swap = "prepared"
+	s.state.RepairPending = false
 	s.state.PID = pid
 	s.state.Reason = ""
 	s.busy = true
@@ -422,30 +466,59 @@ func (s *Service) Install(id, version, dataPath string, pid int, ready bool) err
 	}()
 	return nil
 }
+func (s *Service) stageCandidate(m Manifest) error {
+	if e := s.removeBinary(CandidateDir(s.cfg.Root)); e != nil {
+		return e
+	}
+	if e := extract(s.artifact(), CandidateDir(s.cfg.Root)); e != nil {
+		return e
+	}
+	return MarkRelease(CandidateDir(s.cfg.Root), m.Version)
+}
 func (s *Service) install(m Manifest) (result error) {
 	stopped := false
 	defer func() {
-		if result != nil && stopped {
+		if result != nil && stopped && !s.Snapshot().CleanupPending {
 			result = s.rollback(result)
 		}
 	}()
-	dest := filepath.Dir(s.path(m.Version))
-	if _, e := os.Stat(dest); e == nil {
-		return errors.New("release directory already exists; operator inspection required")
-	}
-	if e := extract(s.artifact(), dest); e != nil {
+	// Rebuild from the freshly reverified signed ZIP; never trust a staged tree.
+	if e := s.stageCandidate(m); e != nil {
 		return e
 	}
 	st := s.Snapshot()
-	stopped = true
 	if e := s.process.Stop(s.path(st.Previous)); e != nil {
+		return e
+	}
+	stopped = true
+	if e := s.MigrateClosedLayout(); e != nil {
+		return e
+	}
+	if exists(RollbackDir(s.cfg.Root)) {
+		return errors.New("unresolved rollback release")
+	}
+	if v, e := ReleaseVersion(CurrentDir(s.cfg.Root)); e != nil || v != st.Previous {
+		return errors.New("active release identity mismatch")
+	}
+	s.mu.Lock()
+	s.state.Swap = "activating"
+	e := s.saveLocked()
+	s.mu.Unlock()
+	if e != nil {
+		return e
+	}
+	if e = moveBinary(CurrentDir(s.cfg.Root), RollbackDir(s.cfg.Root)); e != nil {
+		return e
+	}
+	if e = moveBinary(CandidateDir(s.cfg.Root), CurrentDir(s.cfg.Root)); e != nil {
 		return e
 	}
 	s.mu.Lock()
 	s.state.Current = m.Version
 	s.state.High = m.Release
 	s.state.Status = "RESTARTING"
-	e := s.saveLocked()
+	s.state.Swap = "starting"
+	e = s.saveLocked()
 	s.mu.Unlock()
 	if e != nil {
 		return e
@@ -453,9 +526,16 @@ func (s *Service) install(m Manifest) (result error) {
 	if e = s.startHealthy(m.Version); e != nil {
 		return e
 	}
-	return s.set("SUCCESS", "")
+	return s.finishStable("SUCCESS", "", true)
 }
 func (s *Service) startHealthy(version string) error {
+	if e := safeTree(CurrentDir(s.cfg.Root)); e != nil {
+		return e
+	}
+	if v, e := ReleaseVersion(CurrentDir(s.cfg.Root)); e != nil || v != version {
+		return errors.New("startup release identity mismatch")
+	}
+
 	nonceBytes := make([]byte, 32)
 	if _, e := rand.Read(nonceBytes); e != nil {
 		return e
@@ -463,7 +543,7 @@ func (s *Service) startHealthy(version string) error {
 	s.mu.Lock()
 	s.state.StartupVerified = false
 	s.state.Nonce = hex.EncodeToString(nonceBytes)
-	s.healthy = make(chan bool, 1)
+	s.healthy = make(chan time.Time, 1)
 	nonce := s.state.Nonce
 	e := s.saveLocked()
 	s.mu.Unlock()
@@ -482,14 +562,46 @@ func (s *Service) startHealthy(version string) error {
 	if e != nil {
 		return e
 	}
+	var lastHealth time.Time
 	select {
-	case <-ch:
-		if e := s.process.Validate(pid, s.path(version)); e != nil {
-			return e
-		}
-		return nil
+	case lastHealth = <-ch:
 	case <-time.After(s.healthTimeout):
 		return errors.New("POS startup health timeout")
+	}
+	// Require continued authenticated Hive-ready heartbeats AND the same live
+	// process. POS remains in startup probation until this whole interval passes.
+	stable := time.NewTimer(s.stabilization)
+	defer stable.Stop()
+	heartbeat := time.NewTimer(s.heartbeatTimeout)
+	defer heartbeat.Stop()
+	tick := time.NewTicker(min(time.Second, s.stabilization/4))
+	defer tick.Stop()
+	for {
+		select {
+		case <-stable.C:
+			if time.Since(lastHealth) >= s.heartbeatTimeout {
+				return errors.New("POS stabilization heartbeat timeout")
+			}
+			return s.process.Validate(pid, s.path(version))
+		case <-heartbeat.C:
+			return errors.New("POS stabilization heartbeat timeout")
+		case <-tick.C:
+			if e := s.process.Validate(pid, s.path(version)); e != nil {
+				return e
+			}
+		case at := <-ch:
+			if at.Sub(lastHealth) >= s.heartbeatTimeout || time.Since(at) >= s.heartbeatTimeout {
+				return errors.New("POS stabilization heartbeat timeout")
+			}
+			lastHealth = at
+			if !heartbeat.Stop() {
+				select {
+				case <-heartbeat.C:
+				default:
+				}
+			}
+			heartbeat.Reset(time.Until(lastHealth.Add(s.heartbeatTimeout)))
+		}
 	}
 }
 func (s *Service) rollback(cause error) error {
@@ -497,11 +609,37 @@ func (s *Service) rollback(cause error) error {
 	if e := s.process.Stop(s.path(st.Current)); e != nil {
 		return errors.Join(cause, e)
 	}
+	// Legacy interrupted activations still have immutable version directories.
+	if st.Layout == 0 {
+		if e := s.process.Stop(s.path(st.Previous)); e != nil {
+			return e
+		}
+		s.mu.Lock()
+		s.state.Current = st.Previous
+		e := s.saveLocked()
+		s.mu.Unlock()
+		if e != nil {
+			return e
+		}
+		if e = s.MigrateClosedLayout(); e != nil {
+			return e
+		}
+	}
 	s.mu.Lock()
 	s.state.StartupVerified = false
-	s.state.Current = s.state.Previous
-	s.state.Status = "RESTARTING"
+	s.state.Swap = "restoring"
 	e := s.saveLocked()
+	s.mu.Unlock()
+	if e != nil {
+		return e
+	}
+	if e = s.restoreFiles(); e != nil {
+		return e
+	}
+	s.mu.Lock()
+	s.state.Current = st.Previous
+	s.state.Status = "RESTARTING"
+	e = s.saveLocked()
 	s.mu.Unlock()
 	if e != nil {
 		return e
@@ -509,25 +647,88 @@ func (s *Service) rollback(cause error) error {
 	if e = s.startHealthy(st.Previous); e != nil {
 		return errors.Join(cause, fmt.Errorf("rollback startup failed: %w", e))
 	}
-	return s.set("ROLLED_BACK", cause.Error())
+	status := "ROLLED_BACK"
+	if st.RepairPending && len(st.Envelope) > 0 && st.Version != st.Previous && exists(s.artifact()) {
+		status = "READY_TO_INSTALL"
+		s.mu.Lock()
+		s.state.LastOutcome = "ROLLED_BACK"
+		s.mu.Unlock()
+	}
+	return s.finishStable(status, cause.Error(), !st.RepairPending)
 }
 
-// Recovery never resumes a staged install without consent. An interrupted,
-// already-consented activation rolls back. High-water release stays advanced.
+// Interrupted consented activation restores the previous binary. Once stable
+// success is durable, recovery ONLY retries deletion, never rolls data/binaries back.
 func (s *Service) Recover() error {
-	st := s.Snapshot()
-	if st.Status != "INSTALLING" && st.Status != "RESTARTING" {
-		return nil
-	}
 	if !s.acquire() {
 		return errors.New("busy")
 	}
 	defer s.release()
-	if e := s.process.Stop(s.path(st.Version)); e != nil {
+	st := s.Snapshot()
+	if st.CleanupPending {
+		s.retryCleanup()
+		return nil
+	}
+	if st.Swap == "repair_ready" {
+		return nil
+	}
+	if st.Swap == "repair_starting" && st.Previous == "" {
+		if e := s.process.Stop(s.path(st.Current)); e != nil {
+			return e
+		}
+		s.mu.Lock()
+		s.state.Swap = "repair_ready"
+		e := s.saveLocked()
+		s.mu.Unlock()
 		return e
 	}
-	return s.rollback(errors.New("interrupted installation"))
+	if st.Swap != "" || st.Status == "INSTALLING" || st.Status == "RESTARTING" {
+		return s.rollback(errors.New("interrupted installation"))
+	}
+	return s.migrateIfIdle()
 }
+func (s *Service) launch() error {
+	st := s.Snapshot()
+	if st.CleanupPending {
+		s.retryCleanup()
+		st = s.Snapshot()
+	}
+	if st.Swap != "" && st.Swap != "repair_ready" && st.Swap != "cleanup" {
+		return errors.New("unresolved install requires recovery")
+	}
+	if st.Layout == 0 {
+		if e := s.migrateIfIdle(); e != nil {
+			return e
+		}
+		if s.Snapshot().Layout == 0 {
+			return errors.New("legacy POS still running")
+		}
+	}
+	if st.Swap == "repair_ready" {
+		s.mu.Lock()
+		s.state.Swap = "repair_starting"
+		e := s.saveLocked()
+		s.mu.Unlock()
+		if e != nil {
+			return e
+		}
+	}
+	if e := s.startHealthy(st.Current); e != nil {
+		if st.Previous != "" && st.Swap == "repair_ready" {
+			return s.rollback(e)
+		}
+		if st.Swap == "repair_ready" {
+			s.mu.Lock()
+			s.state.Swap = "repair_ready"
+			pe := s.saveLocked()
+			s.mu.Unlock()
+			return errors.Join(e, pe)
+		}
+		return e
+	}
+	return s.finishStable(st.Status, st.Reason, st.DiscardStaging)
+}
+
 func (s *Service) Handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -547,17 +748,8 @@ func (s *Service) Handler() http.Handler {
 			} else {
 				go func() {
 					defer s.release()
-					if e := s.startHealthy(s.Snapshot().Current); e != nil {
+					if e := s.launch(); e != nil {
 						_ = s.set("FAILED", e.Error())
-					} else {
-						s.mu.Lock()
-						s.state.StartupVerified = true
-						if e := s.saveLocked(); e != nil {
-							s.state.StartupVerified = false
-							s.state.Status = "FAILED"
-							s.state.Reason = e.Error()
-						}
-						s.mu.Unlock()
 					}
 				}()
 			}
@@ -587,7 +779,7 @@ func (s *Service) Handler() http.Handler {
 			err = decodeStrict(b, &q)
 			if err == nil {
 				s.mu.Lock()
-				if q.HiveSchema != 9 || !filepath.IsAbs(q.DataPath) || s.state.DataPath != "" && !strings.EqualFold(filepath.Clean(q.DataPath), filepath.Clean(s.state.DataPath)) || s.healthy == nil || q.Nonce != s.state.Nonce || q.Version != s.state.Current || q.PID != s.state.PID {
+				if safeDataPath(s.cfg.Root, q.DataPath) != nil || q.HiveSchema != 9 || !filepath.IsAbs(q.DataPath) || s.state.DataPath != "" && !strings.EqualFold(filepath.Clean(q.DataPath), filepath.Clean(s.state.DataPath)) || s.healthy == nil || q.Nonce != s.state.Nonce || q.Version != s.state.Current || q.PID != s.state.PID {
 					err = errors.New("stale startup health")
 				} else if err = s.process.Validate(q.PID, s.path(q.Version)); err == nil {
 					s.state.DataPath = q.DataPath
@@ -598,7 +790,7 @@ func (s *Service) Handler() http.Handler {
 						return
 					}
 					select {
-					case s.healthy <- true:
+					case s.healthy <- time.Now():
 					default:
 					}
 				}
@@ -635,12 +827,19 @@ func (s *Service) Run(ctx context.Context) error {
 		if s.Snapshot().Status != "ROLLED_BACK" && s.Snapshot().Status != "FAILED" {
 			_ = s.Check(ctx)
 		}
+		cleanup := time.NewTicker(30 * time.Second)
+		defer cleanup.Stop()
 		t := time.NewTicker(30 * time.Minute)
 		defer t.Stop()
 		for {
 			select {
 			case <-ctx.Done():
 				return
+			case <-cleanup.C:
+				if s.acquire() {
+					s.retryCleanup()
+					s.release()
+				}
 			case <-t.C:
 				_ = s.Check(ctx)
 			}

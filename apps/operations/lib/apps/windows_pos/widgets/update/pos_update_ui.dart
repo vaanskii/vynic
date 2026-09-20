@@ -41,7 +41,12 @@ class PosUpdateSettings extends StatelessWidget {
                           updateLabels['FAILED']!)
                     : 'განახლების სერვისი მიუწვდომელია',
               ),
-              if (u.version.isNotEmpty) Text(u.version),
+              if (u.version.isNotEmpty || u.state['current'] != null)
+                Text(
+                  u.status == 'ROLLED_BACK' || u.status == 'UP_TO_DATE'
+                      ? (u.state['current'] as String? ?? u.version)
+                      : u.version,
+                ),
               if (u.status == 'DOWNLOADING')
                 LinearProgressIndicator(
                   value: (u.state['total'] as num? ?? 0) > 0

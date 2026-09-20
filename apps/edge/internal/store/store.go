@@ -21,7 +21,7 @@ import (
 //go:embed migrations/*.sql
 var migrations embed.FS
 
-const SchemaVersion = 1
+const SchemaVersion = 2
 const applicationID = 1448693321
 
 type Store struct {

@@ -11,7 +11,7 @@ dart_tools=$(dart pub global list)
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 mkdir -p "$tmp/go" "$tmp/dart"
-protoc -I proto --go_out="$tmp/go" --go_opt=paths=source_relative --go-grpc_out="$tmp/go" --go-grpc_opt=paths=source_relative --dart_out="grpc:$tmp/dart" proto/vynic/edge/v1/foundation.proto
+protoc -I proto --go_out="$tmp/go" --go_opt=paths=source_relative --go-grpc_out="$tmp/go" --go-grpc_opt=paths=source_relative --dart_out="grpc:$tmp/dart" proto/vynic/edge/v1/*.proto
 if [[ "${1:-}" == '--check' ]]; then
   diff -ru generated/go/vynic "$tmp/go/vynic"
   diff -ru generated/edge_dart/lib/src/generated "$tmp/dart"

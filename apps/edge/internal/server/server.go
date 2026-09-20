@@ -22,6 +22,7 @@ import (
 
 type Server struct {
 	pb.UnimplementedFoundationServer
+	pb.UnimplementedOrdersTablesServer
 	store    *store.Store
 	identity store.Identity
 	BootID   string
@@ -45,11 +46,11 @@ func (s *Server) scope(v *pb.Scope) error {
 	if v.VenueId != s.identity.VenueID || v.InstallationId != s.identity.InstallationID {
 		return status.Error(codes.PermissionDenied, "Venue/installation mismatch")
 	}
-	if v.Protocol.Major != 1 || v.Protocol.Minor > 0 {
-		return status.Error(codes.FailedPrecondition, "unsupported protocol; server=1.0")
+	if v.Protocol.Major != 1 || v.Protocol.Minor > 1 {
+		return status.Error(codes.FailedPrecondition, "unsupported protocol; server=1.1")
 	}
 	for _, c := range v.Protocol.RequiredCapabilities {
-		if c != "foundation.status" {
+		if c != "foundation.status" && c != "orders_tables.shadow" {
 			return status.Error(codes.FailedPrecondition, "unsupported required capability")
 		}
 	}
@@ -100,7 +101,7 @@ func (s *Server) Pair(ctx context.Context, r *pb.PairRequest) (*pb.PairResponse,
 	return &pb.PairResponse{TerminalId: r.TerminalId, InstallationId: s.identity.InstallationID, VenueId: s.identity.VenueID}, nil
 }
 func (s *Server) response(terminal, session string) *pb.StatusResponse {
-	return &pb.StatusResponse{InstallationId: s.identity.InstallationID, VenueId: s.identity.VenueID, Protocol: &pb.Protocol{Major: 1, Minor: 0}, Mode: "FOUNDATION_ONLY", BusinessMutationsEnabled: false, SchemaVersion: store.SchemaVersion, BootId: s.BootID, TerminalId: terminal, SessionId: session, ConnectedStreams: uint32(s.streams.Load()), Capabilities: []string{"foundation.status"}}
+	return &pb.StatusResponse{InstallationId: s.identity.InstallationID, VenueId: s.identity.VenueID, Protocol: &pb.Protocol{Major: 1, Minor: 1}, Mode: "FOUNDATION_ONLY", BusinessMutationsEnabled: false, SchemaVersion: store.SchemaVersion, BootId: s.BootID, TerminalId: terminal, SessionId: session, ConnectedStreams: uint32(s.streams.Load()), Capabilities: []string{"foundation.status", "orders_tables.shadow"}}
 }
 func (s *Server) Handshake(ctx context.Context, r *pb.HandshakeRequest) (*pb.StatusResponse, error) {
 	if err := s.auth(ctx, r.Auth); err != nil {
@@ -149,8 +150,9 @@ func (s *Server) Serve(ctx context.Context, listener net.Listener) error {
 	if err != nil {
 		return err
 	}
-	g := grpc.NewServer(grpc.Creds(credentials.NewTLS(&tls.Config{Certificates: []tls.Certificate{cert}, MinVersion: tls.VersionTLS13})), grpc.MaxRecvMsgSize(16*1024), grpc.MaxConcurrentStreams(64))
+	g := grpc.NewServer(grpc.Creds(credentials.NewTLS(&tls.Config{Certificates: []tls.Certificate{cert}, MinVersion: tls.VersionTLS13})), grpc.MaxRecvMsgSize(1<<20), grpc.MaxConcurrentStreams(64))
 	pb.RegisterFoundationServer(g, s)
+	pb.RegisterOrdersTablesServer(g, s)
 	h := health.NewServer()
 	healthpb.RegisterHealthServer(g, h)
 	h.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)

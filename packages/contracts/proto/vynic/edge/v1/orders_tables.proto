@@ -1,0 +1,66 @@
+syntax = "proto3";
+package vynic.edge.v1;
+option go_package = "vynic.local/contracts/go/vynic/edge/v1;edgev1";
+import "vynic/edge/v1/foundation.proto";
+
+// Phase 2A is a SHADOW projection only. No production authority is granted.
+// Flutter owns business validation; Edge owns compare-and-swap and durability.
+service OrdersTables {
+  rpc Commit(CommitIntent) returns (CommitResult);
+  rpc Replay(ReplayRequest) returns (ReplayPage);
+  rpc Snapshot(SnapshotRequest) returns (ProjectionSnapshot);
+}
+message ProjectionEntity {
+  enum Kind { UNSPECIFIED = 0; ORDER = 1; TABLE = 2; }
+  Kind kind = 1;
+  string id = 2; // Order UUID or existing canonical physical Table UUID.
+  uint64 revision = 3; // Zero means never existed, not deleted.
+  bool tombstone = 4; // Retained forever in Phase 2A. Cannot resurrect an ID.
+  bytes document = 5; // UTF-8 JSON: schema/orders-tables-projection.schema.json.
+}
+message EntityChange {
+  ProjectionEntity entity = 1;
+  uint64 expected_revision = 2;
+}
+message CommitIntent {
+  AuthenticatedRequest auth = 1;
+  string request_id = 2; // UUID, unique across the installation.
+  uint64 authority_epoch = 3; // Local SHADOW generation, never a Cloud lease.
+  repeated EntityChange changes = 4; // One atomic Order/Table change set.
+}
+message CommittedEvent {
+  uint64 sequence = 1; // Venue + installation scoped, strictly increasing.
+  uint64 authority_epoch = 2;
+  string request_id = 3;
+  string terminal_id = 4;
+  repeated ProjectionEntity entities = 5; // Complete post-images, including tombstones.
+}
+message CommitResult {
+  enum Outcome { UNSPECIFIED = 0; COMMITTED = 1; CONFLICT = 2; }
+  Outcome outcome = 1;
+  CommittedEvent event = 2;
+  repeated ProjectionEntity current = 3; // Every touched entity on conflict.
+  uint64 authority_epoch = 4;
+  uint64 head_sequence = 5;
+}
+message ReplayRequest {
+  AuthenticatedRequest auth = 1;
+  uint64 authority_epoch = 2;
+  uint64 after_sequence = 3;
+  uint32 limit = 4; // 1..100; 0 defaults to 100.
+}
+message ReplayPage {
+  repeated CommittedEvent events = 1;
+  uint64 head_sequence = 2;
+  uint64 authority_epoch = 3;
+}
+message SnapshotRequest {
+  AuthenticatedRequest auth = 1;
+  uint64 authority_epoch = 2;
+}
+message ProjectionSnapshot {
+  repeated ProjectionEntity entities = 1;
+  uint64 sequence = 2; // State and cursor from the same SQLite read transaction.
+  uint64 authority_epoch = 3;
+  string mode = 4; // Always SHADOW. This is not an operational authority token.
+}

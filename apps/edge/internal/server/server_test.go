@@ -124,7 +124,7 @@ func TestPairingAuthenticationAndRestart(t *testing.T) {
 			case "major":
 				r.Scope.Protocol.Major = 2
 			case "minor":
-				r.Scope.Protocol.Minor = 1
+				r.Scope.Protocol.Minor = 2
 			case "capability":
 				r.Scope.Protocol.RequiredCapabilities = []string{"orders.write"}
 			}

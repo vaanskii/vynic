@@ -83,27 +83,36 @@ func decodeStrict(b []byte, v any) error {
 	}
 	return nil
 }
-func Verify(raw []byte, keys map[string]TrustedKey, channel, current string, high uint64, now time.Time) (Manifest, error) {
+
+// VerifyEnvelope shares the Ed25519 trust model; purposes use separate signature domains.
+func VerifyEnvelope(raw []byte, keys map[string]TrustedKey, domain string, now time.Time) ([]byte, error) {
 	var e Envelope
-	var m Manifest
 	if err := decodeStrict(raw, &e); err != nil {
-		return m, err
+		return nil, err
 	}
 	k, ok := keys[e.KeyID]
 	if !ok || !now.Before(k.Expires) {
-		return m, errors.New("untrusted/expired release key")
+		return nil, errors.New("untrusted/expired release key")
 	}
 	pub, err := base64.StdEncoding.DecodeString(k.Public)
 	if err != nil || len(pub) != ed25519.PublicKeySize {
-		return m, errors.New("invalid trusted key")
+		return nil, errors.New("invalid trusted key")
 	}
 	payload, err := base64.StdEncoding.DecodeString(e.Payload)
 	if err != nil {
-		return m, err
+		return nil, err
 	}
 	sig, err := base64.StdEncoding.DecodeString(e.Signature)
-	if err != nil || !ed25519.Verify(pub, append([]byte(signatureDomain), payload...), sig) {
-		return m, errors.New("invalid release signature")
+	if err != nil || !ed25519.Verify(pub, append([]byte(domain), payload...), sig) {
+		return nil, errors.New("invalid release signature")
+	}
+	return payload, nil
+}
+func Verify(raw []byte, keys map[string]TrustedKey, channel, current string, high uint64, now time.Time) (Manifest, error) {
+	var m Manifest
+	payload, err := VerifyEnvelope(raw, keys, signatureDomain, now)
+	if err != nil {
+		return m, err
 	}
 	if err = decodeStrict(payload, &m); err != nil {
 		return m, err
@@ -133,7 +142,10 @@ func verifyFile(path string, m Manifest) error {
 }
 
 // Extract only regular, portable relative paths. No scripts or installer is run.
-func extract(artifact, dest string) error {
+func extract(artifact, dest string) error { return ExtractBundle(artifact, dest, Executable) }
+
+// ExtractBundle uses the same portable ZIP safety policy for trusted bootstrap bundles.
+func ExtractBundle(artifact, dest, executable string) error {
 	z, e := zip.OpenReader(artifact)
 	if e != nil {
 		return e
@@ -189,12 +201,15 @@ func extract(artifact, dest string) error {
 		if e != nil {
 			return e
 		}
-		if name == Executable {
+		if name == executable {
 			hasEXE = true
 		}
 	}
 	if !hasEXE {
-		return errors.New("POS executable absent")
+		return errors.New("required executable absent")
 	}
 	return nil
 }
+
+// VerifyArtifact checks the exact signed digest and byte length before extraction.
+func VerifyArtifact(path string, m Manifest) error { return verifyFile(path, m) }

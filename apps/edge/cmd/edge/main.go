@@ -19,7 +19,7 @@ import (
 
 func run() (result error) {
 	if len(os.Args) < 2 {
-		return errors.New("usage: edge init|bind|ticket|revoke|inspect|serve --data DIR")
+		return errors.New("usage: edge init|bind|ticket|revoke|inspect|serve|host --data DIR")
 	}
 	action := os.Args[1]
 	flags := flag.NewFlagSet(action, flag.ContinueOnError)
@@ -28,6 +28,7 @@ func run() (result error) {
 	grant := flags.String("grant-file", "", "bootstrap grant file")
 	cloudKey := flags.String("cloud-key", "", "trusted Cloud public PEM file")
 	updateConfig := flags.String("pos-updater-config", "", "optional Windows POS updater configuration file")
+	shutdown := flags.String("shutdown-file", "", "local host graceful-stop marker")
 	terminal := flags.String("terminal", "", "terminal UUID to revoke")
 	if err := flags.Parse(os.Args[2:]); err != nil {
 		return err
@@ -45,6 +46,9 @@ func run() (result error) {
 	}
 	if *dir == "" {
 		return errors.New("--data is required")
+	}
+	if action == "host" {
+		return runLocalHost(*dir, *updateConfig, *shutdown)
 	}
 	if action != "init" && action != "bind" && action != "ticket" && action != "revoke" && action != "inspect" && action != "serve" {
 		return errors.New("unknown command")

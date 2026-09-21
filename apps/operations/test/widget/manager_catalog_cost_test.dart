@@ -1,4 +1,6 @@
 import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
+import 'inventory_test_actions.dart';
+import 'procurement_rework_test.dart' as flow;
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -153,13 +155,6 @@ void main() {
                 },
               ],
             },
-            setLink: (id, linked) async {
-              if (linked) {
-                links.add(id);
-              } else {
-                links.remove(id);
-              }
-            },
           ),
         ),
       );
@@ -167,14 +162,7 @@ void main() {
       expect(find.text('რას გვაწვდის'), findsOneWidget);
       expect(find.text('ბოლო მიღებები'), findsOneWidget);
       expect(find.text('არსებული საქონლის არჩევა'), findsNothing);
-      await tester.tap(
-        find.descendant(
-          of: find.widgetWithText(ListTile, borjomi.name),
-          matching: find.byTooltip('მიბმის მოხსნა'),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(links, isNot(contains('borjomi')));
+      expect(find.text('საქონლის დამატება'), findsNothing);
       expect(find.text('2026-09-06 · 120.00 ₾'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await screenshot(tester, 'supplier-mobile');
@@ -196,6 +184,9 @@ void main() {
           ),
         ),
       );
+      await tester.pumpAndSettle();
+      await flow.chooseReceivingProduct(tester);
+      await tester.ensureVisible(find.text('თარიღი და დოკუმენტის დეტალები'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('თარიღი და დოკუმენტის დეტალები'));
       await tester.pumpAndSettle();
@@ -225,6 +216,7 @@ void main() {
       expect(find.text('120.00 ₾'), findsWidgets);
       expect(tester.takeException(), isNull);
       await screenshot(tester, 'daily-market-mobile');
+      await reviewReceiving(tester);
       await tester.tap(find.byKey(const Key('receiving-save')));
       await tester.pumpAndSettle();
       expect(saved?['businessDate'], '2026-09-05');
@@ -265,6 +257,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('ხინკალი'), findsOneWidget);
     expect(find.text('ბორჯომი'), findsNothing);
+    await tester.tap(find.byKey(const Key('menu-category-back')));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('სასმელები'));
     await tester.pumpAndSettle();
     expect(find.text('ბორჯომი'), findsOneWidget);

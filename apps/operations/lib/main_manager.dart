@@ -1,3 +1,4 @@
+import 'package:vynic/core/widgets/connection_feedback.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -38,8 +39,10 @@ Future<void> main() async {
     debugPrint('Manager notifications unavailable: $error');
   }
   runApp(
-    const MaterialApp(
+    MaterialApp(
       title: 'Vynic Manager',
+      builder: (context, child) =>
+          ConnectionFeedback.manager(child: child ?? const SizedBox.shrink()),
       debugShowCheckedModeBanner: false,
       home: ManagerThemeListener(child: MobileLoginScreen()),
     ),

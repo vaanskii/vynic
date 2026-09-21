@@ -115,15 +115,15 @@ export function VenueEnrollmentPanel({ venueId, venueName }: { venueId: string; 
 
     <Dialog
       open={createOpen}
-      onOpenChange={setCreateOpen}
+      onOpenChange={(open) => { if (!create.isPending) setCreateOpen(open); }}
       title="Enrol a POS"
       description="A one-time code will be shown once. Have the terminal in front of you before you continue."
       footer={<>
-        <Button onClick={() => setCreateOpen(false)}>Cancel</Button>
-        <Button tone="primary" type="submit" form="create-enrollment" disabled={create.isPending}>Create enrollment code</Button>
+        <Button disabled={create.isPending} onClick={() => setCreateOpen(false)}>Cancel</Button>
+        <Button tone="primary" type="submit" form="create-enrollment" loading={create.isPending} loadingLabel="Creating…">Create enrollment code</Button>
       </>}
     >
-      <form id="create-enrollment" className="platform-form" onSubmit={(event) => { event.preventDefault(); create.mutate(); }}>
+      <form id="create-enrollment" className="platform-form" onSubmit={(event) => { event.preventDefault(); if (!create.isPending) create.mutate(); }}>
         <Field label="Terminal name" hint="What this till will be called in the device list.">
           <Input value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} required maxLength={200} autoFocus />
         </Field>

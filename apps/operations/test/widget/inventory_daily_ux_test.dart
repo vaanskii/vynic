@@ -1,3 +1,5 @@
+import 'inventory_test_actions.dart';
+import 'procurement_rework_test.dart' as flow;
 import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 import 'package:vynic/core/services/manager_app/manager_dashboard_appearance.dart';
 import 'package:flutter/material.dart';
@@ -59,6 +61,7 @@ MenuRecipeDetail detail(String name, StockItem item, String qty, String unit) =>
       },
     });
 Future<void> select(WidgetTester t, Key key, String text) async {
+  if (key.toString().contains('payment-mode')) await reviewReceiving(t);
   if (key.toString().contains('price-mode') ||
       key.toString().contains('payment-mode')) {
     await t.ensureVisible(find.text(text).last);
@@ -112,7 +115,10 @@ void main() {
       );
       await t.pumpAndSettle();
       expect(find.byKey(const Key('inventory-home')), findsOneWidget);
-      expect(find.byKey(const Key('inventory-section-selector')), findsNothing);
+      expect(
+        find.byKey(const Key('inventory-section-selector')),
+        findsOneWidget,
+      );
       expect(find.byType(FilledButton), findsOneWidget);
       expect(find.text('მარაგში ჯერ არ დამატებულა'), findsOneWidget);
       expect(find.text('მარაგში დაემატა'), findsOneWidget);
@@ -159,6 +165,7 @@ void main() {
           ),
         );
         await t.pumpAndSettle();
+        await flow.chooseReceivingProduct(t);
         await t.enterText(
           find.byKey(const Key('receiving-line-quantity-0')),
           '10',
@@ -179,6 +186,7 @@ void main() {
         await t.pumpAndSettle();
         expect(find.text('დარჩა: 70.00 ₾'), findsOneWidget);
         await qa.shot(t, 'ux-receiving-payment-${width.toInt()}');
+        await reviewReceiving(t);
         await t.tap(find.byKey(const Key('receiving-save')));
         await t.pumpAndSettle();
         expect(sent?['post'], true);
@@ -272,6 +280,7 @@ void main() {
         ),
       );
       await t.pumpAndSettle();
+      await flow.chooseReceivingProduct(t);
       await t.enterText(
         find.byKey(const Key('receiving-source-label')),
         'ბათუმის ბაზარი',
@@ -339,6 +348,7 @@ void main() {
         ),
       );
       await t.pumpAndSettle();
+      await flow.chooseReceivingProduct(t);
       await select(t, const Key('receiving-price-mode-0'), 'მთლიანი თანხა');
       await t.enterText(
         find.byKey(const Key('receiving-line-quantity-0')),
@@ -351,12 +361,14 @@ void main() {
         'ნაწილობრივ გადავიხადე',
       );
       await t.enterText(find.byKey(const Key('receiving-paid-now')), '300');
+      await reviewReceiving(t);
       await t.tap(find.byKey(const Key('receiving-save')));
       await t.pumpAndSettle();
       expect(
         find.textContaining('მარაგში დაემატა. გადახდის ჩაწერა'),
         findsOneWidget,
       );
+      await reviewReceiving(t);
       await t.tap(find.byKey(const Key('receiving-save')));
       await t.pumpAndSettle();
       expect(posts, 1);
@@ -386,8 +398,9 @@ void main() {
       ),
     );
     await t.pumpAndSettle();
+    await flow.chooseReceivingProduct(t);
     final colors = Theme.of(
-      t.element(find.byKey(const Key('receiving-save'))),
+      t.element(find.byKey(const Key('receiving-next'))),
     ).colorScheme;
     double contrast(Color a, Color b) {
       final x = a.computeLuminance(), y = b.computeLuminance();
@@ -526,7 +539,7 @@ void main() {
         );
         await t.pumpAndSettle();
         expect(
-          find.text('ვერ მოიძებნა. შეცვალეთ ძებნა ან კატეგორია.'),
+          find.text('პროდუქტი ვერ მოიძებნა. შეცვალეთ ძებნა ან ფილტრი.'),
           findsOneWidget,
         );
         expect(t.takeException(), isNull);
@@ -621,7 +634,7 @@ void main() {
       expect(t.takeException(), isNull);
     },
   );
-  testWidgets('supplier list opens goods creation directly', (t) async {
+  testWidgets('supplier list does not duplicate product creation', (t) async {
     qa.size(t, 360);
     await t.pumpWidget(
       qa.app(
@@ -635,11 +648,7 @@ void main() {
       ),
     );
     await t.pumpAndSettle();
-    final add = find.byKey(Key('supplier-add-goods-${fixtures.supplier.id}'));
-    await t.ensureVisible(add);
-    await t.tap(add);
-    await t.pumpAndSettle();
-    expect(find.byKey(const Key('supplied-mode-ingredient')), findsOneWidget);
+    expect(find.text('საქონლის დამატება'), findsNothing);
     expect(find.byKey(const Key('supplier-detail')), findsNothing);
     expect(t.takeException(), isNull);
   });
@@ -670,6 +679,8 @@ void main() {
     await t.tap(find.byKey(const Key('supplied-mode-menu')));
     await t.pumpAndSettle();
     await t.tap(find.byKey(const Key('supplied-menu')));
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(const Key('menu-show-all')));
     await t.pumpAndSettle();
     await t.tap(find.text('ბორჯომი · 0.5'));
     await t.pumpAndSettle();
@@ -784,13 +795,13 @@ void main() {
       await t.pumpWidget(host(1));
       await t.pumpAndSettle();
       expect(t.takeException(), isNull);
-      await t.ensureVisible(find.text('შემადგენლობის სტატუსი'));
-      await t.pumpAndSettle();
-      await t.tap(find.text('შემადგენლობის სტატუსი'));
+      await t.tap(find.byKey(const Key('menu-show-all')));
       await t.pumpAndSettle();
       expect(find.byKey(const Key('recipe-filter-unlinked')), findsOneWidget);
       expect(bucket.readState(storageContext), isA<double>());
       await t.pumpWidget(host(2));
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('menu-show-all')));
       await t.pumpAndSettle();
       expect(t.takeException(), isNull);
       expect(find.byKey(const Key('recipe-filter-unlinked')), findsOneWidget);
@@ -812,13 +823,20 @@ void main() {
         ),
       );
       await t.pumpAndSettle();
+      await flow.chooseReceivingProduct(t);
       final disclosure = find.text('თარიღი და დოკუმენტის დეტალები');
+      await t.ensureVisible(disclosure);
+      await t.pumpAndSettle();
       await t.tap(disclosure);
       await t.pumpAndSettle();
       await t.enterText(find.byKey(const Key('receiving-waybill')), '123456');
       await t.ensureVisible(disclosure);
       await t.pumpAndSettle();
+      await t.ensureVisible(disclosure);
+      await t.pumpAndSettle();
       await t.tap(disclosure);
+      await t.pumpAndSettle();
+      await t.ensureVisible(disclosure);
       await t.pumpAndSettle();
       await t.tap(disclosure);
       await t.pumpAndSettle();

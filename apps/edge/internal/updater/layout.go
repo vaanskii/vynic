@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 const binaryLayout = 2
@@ -321,7 +322,7 @@ func (s *Service) PrepareRepair(removed bool) error {
 	if e := safeDataPath(s.cfg.Root, st.DataPath); e != nil {
 		return e
 	}
-	if st.Swap != "" && st.Swap != "repair_ready" && st.Swap != "cleanup" || st.Status == "INSTALLING" || st.Status == "RESTARTING" {
+	if !removed && (st.Swap != "" && st.Swap != "repair_ready" && st.Swap != "cleanup" || st.Status == "INSTALLING" || st.Status == "RESTARTING") {
 		return errors.New("unresolved update; recover before repair")
 	}
 	if st.CleanupPending && !removed {
@@ -343,6 +344,9 @@ func (s *Service) PrepareRepair(removed bool) error {
 		s.state.Downloaded = 0
 		s.state.Total = 0
 		s.state.Attempt = ""
+		s.state.StartupVerified = false
+		s.state.Nonce = ""
+		s.state.PID = 0
 		s.state.Reason = ""
 		s.state.CleanupPending = false
 		s.state.DiscardStaging = false
@@ -441,4 +445,31 @@ func validateBinaryJournal(st State) error {
 		return errors.New("inconsistent binary swap/cleanup journal")
 	}
 	return nil
+}
+
+// SelectRemovedRelease is only for explicit Install after application removal.
+// Caller has stopped the host and verified/extracted the signed bundle. It never
+// rolls back Hive, credentials, consent rows or the accepted release high-water.
+func (s *Service) SelectRemovedRelease(raw []byte) error {
+	st := s.Snapshot()
+	if exists(CurrentDir(s.cfg.Root)) || exists(RollbackDir(s.cfg.Root)) || exists(filepath.Join(s.cfg.Root, "releases")) {
+		return errors.New("cannot select a release while installed binaries remain")
+	}
+	if st.Swap != "" || st.Status == "INSTALLING" || st.Status == "RESTARTING" {
+		return errors.New("removal must finish before selecting an install release")
+	}
+	m, e := Verify(raw, s.cfg.Keys, s.cfg.Channel, "0.0.0", 0, time.Now())
+	if e != nil {
+		return e
+	}
+	if m.Version != st.Current {
+		if _, e = Verify(raw, s.cfg.Keys, s.cfg.Channel, st.Current, st.High, time.Now()); e != nil {
+			return e
+		}
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.state.Current = m.Version
+	s.state.High = max(s.state.High, m.Release)
+	return s.saveLocked()
 }

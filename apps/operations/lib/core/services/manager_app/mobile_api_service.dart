@@ -51,6 +51,21 @@ class MobileApiService {
     return map;
   }
 
+  static Future<void> saveVenueProfile(Map<String, dynamic> profile) async {
+    final response = await http
+        .put(
+          Uri.parse('$_base/mobile/venue-profile'),
+          headers: _headers,
+          body: jsonEncode(profile),
+        )
+        .timeout(_timeout)
+        .catchError(_throwNetworkError);
+    if (response.statusCode != 200)
+      throw Exception('პროფილი ვერ შეინახა (${response.statusCode})');
+    ManagerEntitlements.profile.value =
+        jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
   static Future<void> refreshEntitlements() async {
     final session = AuthTokenService.authHeader['Authorization'];
     final response = await _get('/mobile/entitlements');
@@ -870,6 +885,15 @@ class MobileApiService {
   }
 
   /// One Stock Item with its derived balance and recent ledger movements.
+  static Future<void> setStockItemActive(String id, bool active) async {
+    final response = await _patch(
+      '/mobile/inventory/stock-items/${Uri.encodeComponent(id)}',
+      {'isActive': active},
+    );
+    if (response.statusCode != 200)
+      throw Exception(_apiError('პროდუქტის სტატუსი', response));
+  }
+
   static Future<StockItemDetail> getStockItem(String id) async {
     final response = await _get(
       '/mobile/inventory/stock-items/${Uri.encodeComponent(id)}',

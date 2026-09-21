@@ -98,7 +98,7 @@ class CloseDayTransaction {
     String? actorName,
     AuditSource source = AuditSource.pos,
   }) => UpdateReadiness.track(
-    'run',
+    'closeDay',
     () => _updateTrackedRun(
       actorId: actorId,
       actorName: actorName,

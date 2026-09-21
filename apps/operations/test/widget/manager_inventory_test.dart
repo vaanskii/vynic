@@ -1,3 +1,4 @@
+import 'inventory_test_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_admin_screen.dart';
@@ -43,10 +44,10 @@ Widget _app() => MaterialApp(
 );
 
 void main() {
-  test('Manager navigation exposes Inventory', () {
+  test('Management no longer duplicates the main Inventory destination', () {
     expect(
       MobileAdminScreen.adminTabs.map((tab) => tab.label),
-      contains('მარაგები'),
+      isNot(contains('მარაგები')),
     );
   });
 
@@ -88,7 +89,7 @@ void main() {
     await tester.tap(find.text('გაუქმება'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('მარაგი'));
+    await openInventorySection(tester, 'home');
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('მომწოდებლები'));
     await tester.pumpAndSettle();

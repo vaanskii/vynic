@@ -177,7 +177,10 @@ class RecipeMenuItem {
   final String name;
   final double price;
   final String? categoryName, parentCategoryName, subcategoryName;
-  String get browseCategory => parentCategoryName ?? categoryName ?? 'სხვა';
+  String get browseCategory =>
+      parentCategoryName ??
+      categoryName ??
+      (menuGroup == 'BEVERAGE' ? 'სასმელები' : 'კერძები');
   final String menuGroup;
 
   /// The definition for the item itself (`variantId = null`).
@@ -191,6 +194,11 @@ class RecipeMenuItem {
   bool get isConfigured =>
       recipe?.isActive == true ||
       variants.any((variant) => variant.recipe?.isActive == true);
+
+  /// Every sellable variant needs its own definition before setup is complete.
+  bool get isFullyConfigured => hasVariants
+      ? variants.every((variant) => variant.recipe?.isActive == true)
+      : recipe?.isActive == true;
 
   int get componentCount =>
       (recipe?.isActive == true ? recipe!.componentCount : 0) +

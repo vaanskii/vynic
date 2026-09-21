@@ -43,6 +43,33 @@ void main() {
     await dir.delete(recursive: true);
   });
   test(
+    'blocked install names payment and clears after completion without installing',
+    () async {
+      final operation = Completer<void>();
+      final tracked = UpdateReadiness.track('collect', () => operation.future);
+      var installs = 0;
+      final updater = PosUpdater(
+        requestOverride: (route, _) async {
+          if (route == 'install') installs++;
+          return {
+            'status': 'READY_TO_INSTALL',
+            'current': '1.0.4',
+            'version': '1.0.6',
+          };
+        },
+      );
+      await updater.installNow();
+      expect(updater.localBlock, contains('გადახდა'));
+      expect(updater.installing, isFalse);
+      operation.complete();
+      await tracked;
+      await updater.refresh();
+      expect(updater.localBlock, isNull);
+      expect(installs, 0);
+      updater.dispose();
+    },
+  );
+  test(
     'persisted open Order/Table and pending Cloud sync are READY and survive binary restart',
     () async {
       var orders = UpdateTrackedBox(await Hive.openBox<Order>('orders'));

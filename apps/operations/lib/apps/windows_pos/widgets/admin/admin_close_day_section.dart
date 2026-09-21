@@ -1,3 +1,5 @@
+import 'package:vynic/core/database/repositories/inventory_repository.dart';
+import 'package:vynic/core/models/feature_keys.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -446,7 +448,8 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
               'მომსახურების საფასურით',
               '${s.serviceFeeOrders} შეკვეთა',
             ),
-            if (s.nonFiscalCount > 0)
+            if (InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose) &&
+                s.nonFiscalCount > 0)
               _buildSummaryLine(
                 'არაფისკალური (ჯამში არ შედის)',
                 '${s.nonFiscalCount} · ₾${s.nonFiscalTotal.toStringAsFixed(2)}',
@@ -1260,10 +1263,9 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                                 (order) => _buildOpenOrderRow(
                                   order,
                                   onDelete: () async {
-                                    final deleted =
-                                        await _cancelOpenOrder(
-                                          order.orderId,
-                                        );
+                                    final deleted = await _cancelOpenOrder(
+                                      order.orderId,
+                                    );
                                     if (!deleted || !mounted) {
                                       return;
                                     }
@@ -1446,10 +1448,11 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
         'დღეს მიღებული ავანსი: ₾${advancesTakenToday.toStringAsFixed(2)}',
       );
       report.writeln('დღეს ინკასირებული: ₾${collected.toStringAsFixed(2)}');
-      report.writeln(
-        'არაფისკალური დახურვები (ჯამში არ შედის): '
-        '₾${nonFiscalTotal.toStringAsFixed(2)}',
-      );
+      if (InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose))
+        report.writeln(
+          'არაფისკალური დახურვები (ჯამში არ შედის): '
+          '₾${nonFiscalTotal.toStringAsFixed(2)}',
+        );
       report.writeln();
 
       double cardTbcTotal = 0;

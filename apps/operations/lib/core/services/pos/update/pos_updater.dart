@@ -14,7 +14,80 @@ import 'update_readiness.dart';
 /// Host-local updater IPC, separate from Venue operational authority.
 class PosUpdater extends ChangeNotifier {
   static final instance = PosUpdater();
-  PosUpdater({this.requestOverride, this.flushOverride, this.dataDirectory});
+  PosUpdater({
+    this.requestOverride,
+    this.flushOverride,
+    this.dataDirectory,
+    this.environmentOverride,
+    this.windowsOverride,
+    this.requestTimeout = const Duration(seconds: 12),
+    this.startupTimeout = const Duration(seconds: 150),
+  });
+  final Map<String, String>? environmentOverride;
+  final bool? windowsOverride;
+  final Duration requestTimeout;
+  final Duration startupTimeout;
+  Map<String, String> get _environment =>
+      environmentOverride ?? Platform.environment;
+  String? startupFailure;
+  String startupStage = 'მოწმდება ადგილობრივი მონაცემები';
+  final Stopwatch _startupWatch = Stopwatch();
+  Timer? _startupTimer;
+  int get startupSeconds => _startupWatch.elapsed.inSeconds;
+  String? _startupLogPath;
+  String? _lastStartupLog;
+
+  void _startupError(String message) {
+    startupFailure = message;
+    _recordStartup(message);
+  }
+
+  void _recordStartup(String message) {
+    if (_lastStartupLog == message) return;
+    _lastStartupLog = message;
+    final path = _startupLogPath;
+    if (path != null) {
+      unawaited(
+        File(path)
+            .writeAsString(
+              '${DateTime.now().toUtc().toIso8601String()} $message\n',
+              mode: FileMode.append,
+              flush: true,
+            )
+            .catchError((Object error) {
+              developer.log(
+                'Cannot write startup diagnostic',
+                error: error,
+                name: 'pos_updater',
+              );
+              return File(path);
+            }),
+      );
+    }
+  }
+
+  void _startStartupClock() {
+    if (!probation || _startupTimer != null) return;
+    _startupWatch.start();
+    _startupTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!probation) return;
+      if (_startupWatch.elapsed >= startupTimeout) {
+        _startupError(
+          'გაშვების შემოწმების დრო ამოიწურა. დახურეთ POS და შეამოწმეთ გაშვების ჟურნალი.',
+        );
+      }
+      notifyListeners();
+    });
+  }
+
+  Future<void> retryStartupCheck() async {
+    if (_refreshing) return;
+    if (!configured) {
+      await initialize();
+    }
+    if (configured) await refresh();
+  }
+
   final String? dataDirectory;
   final Future<Map<String, dynamic>> Function(String, Map<String, dynamic>?)?
   requestOverride;
@@ -24,9 +97,78 @@ class PosUpdater extends ChangeNotifier {
   bool installing = false;
   bool probation = false;
   bool awaitingDecision = false;
+  bool checking = false;
   bool preparingInstall = false;
   bool get inputHeld => installing || probation || awaitingDecision;
+  bool get blockingOverlay =>
+      installing || awaitingDecision || startupFailure != null;
+
+  /// Login/enrollment can remain visible while Go verifies startup. Do not
+  /// enter restaurant operations or start command execution until Go accepts
+  /// this process. A failed check is explicit and never bypasses admission.
+  Future<void> waitForStartup() async {
+    if (startupFailure != null) throw StateError(startupFailure!);
+    if (!inputHeld) return;
+    final done = Completer<void>();
+    void changed() {
+      if (done.isCompleted) return;
+      if (startupFailure != null) {
+        done.completeError(StateError(startupFailure!));
+      } else if (!inputHeld) {
+        done.complete();
+      }
+    }
+
+    addListener(changed);
+    try {
+      changed();
+      await done.future.timeout(startupTimeout);
+    } finally {
+      removeListener(changed);
+    }
+  }
+
   String? localBlock;
+  bool _readinessBlocked = false;
+  String? installStage;
+  String? get visibleInstallStage => preparingInstall
+      ? installStage ?? 'მოწმდება განახლების მზადყოფნა'
+      : installing
+      ? state['status'] == 'RESTARTING'
+            ? 'POS თავიდან ირთვება'
+            : state['status'] == 'INSTALLING'
+            ? 'მიმდინარეობს ახალი ვერსიის დაყენება'
+            : 'მოთხოვნა გაიგზავნა — ველოდებით Edge-ის პასუხს'
+      : null;
+  String? connectionIssue;
+  DateTime? lastStatusAt;
+
+  /// The launch identity belongs to this running process. Edge's current slot
+  /// may already refer to a candidate while activation/recovery is in progress.
+  String get currentVersion {
+    final launched = _environment['VYNIC_POS_UPDATE_VERSION']?.trim();
+    if (launched != null && launched.isNotEmpty) return launched;
+    return (state['current'] as String? ?? '').trim();
+  }
+
+  bool get lastUpdateRolledBack =>
+      state['lastOutcome'] == 'ROLLED_BACK' || state['status'] == 'ROLLED_BACK';
+  bool get hasStagedUpdate =>
+      connectionIssue == null &&
+      (state['status'] == 'READY_TO_INSTALL' || state['status'] == 'BLOCKED') &&
+      version.isNotEmpty &&
+      version != currentVersion;
+
+  /// Older Edge versions report all failures as FAILED. Preserve the failure,
+  /// but distinguish a feed lookup from an installation in customer copy.
+  bool get releaseCheckFailed {
+    final reason = (state['reason'] as String? ?? '').toLowerCase();
+    return state['status'] == 'FAILED' &&
+        (reason.contains('/manifest.json') ||
+            reason.contains('release http') ||
+            reason.contains('manifest too large'));
+  }
+
   String? deferredVersion;
   String? _attempt;
   Map<String, dynamic>? _config;
@@ -48,11 +190,49 @@ class PosUpdater extends ChangeNotifier {
       localBlock != null ? 'BLOCKED' : state['status'] as String? ?? 'FAILED';
   String get version => state['version'] as String? ?? '';
 
+  /// Resolve the updater's already-persisted data identity before opening Hive.
+  /// Windows publisher/product metadata may change; restaurant data must not.
+  Future<String?> pinnedDataDirectory() async {
+    if (!(windowsOverride ?? Platform.isWindows)) return null;
+    final path = _environment['VYNIC_POS_UPDATER_CONFIG'];
+    if (path == null) {
+      if (_environment['VYNIC_POS_UPDATE_NONCE'] != null) {
+        throw StateError('POS updater configuration is missing');
+      }
+      return null;
+    }
+    _config =
+        jsonDecode(await File(path).readAsString()) as Map<String, dynamic>;
+    if (!RegExp(
+      r'^127\.0\.0\.1:[0-9]+$',
+    ).hasMatch(_config!['listen'] as String)) {
+      throw StateError('Updater must use loopback');
+    }
+    final current = await _request('status');
+    final data = current['dataPath'];
+    if (data == null || data == '') return null;
+    if (data is! String ||
+        !Directory(data).isAbsolute ||
+        !await Directory(data).exists()) {
+      throw StateError(
+        'Saved restaurant data is unavailable; refusing to create an empty replacement.',
+      );
+    }
+    return data;
+  }
+
   Future<void> initialize() async {
-    if (!Platform.isWindows) return;
-    probation = Platform.environment['VYNIC_POS_UPDATE_NONCE'] != null;
-    final path = Platform.environment['VYNIC_POS_UPDATER_CONFIG'];
-    if (path == null) return;
+    if (!(windowsOverride ?? Platform.isWindows)) return;
+    probation = _environment['VYNIC_POS_UPDATE_NONCE'] != null;
+    final path = _environment['VYNIC_POS_UPDATER_CONFIG'];
+    _startStartupClock();
+    if (path == null) {
+      if (probation)
+        _startupError('განახლების სერვისის კონფიგურაცია ვერ მოიძებნა.');
+      return;
+    }
+    _startupLogPath =
+        '${File(path).parent.parent.path}${Platform.pathSeparator}logs${Platform.pathSeparator}pos-startup.log';
     try {
       _config =
           jsonDecode(await File(path).readAsString()) as Map<String, dynamic>;
@@ -81,10 +261,11 @@ class PosUpdater extends ChangeNotifier {
         _attempt = savedAttempt['id'] as String?;
         awaitingDecision = _attempt != null && !probation;
       }
-      final nonce = Platform.environment['VYNIC_POS_UPDATE_NONCE'];
+      final nonce = _environment['VYNIC_POS_UPDATE_NONCE'];
       probation = nonce != null;
     } catch (e, st) {
       state = {'status': 'FAILED'};
+      if (probation) _startupError('გაშვების მომზადება ვერ დასრულდა: $e');
       developer.log(
         'POS updater initialization failed',
         error: e,
@@ -114,26 +295,29 @@ class PosUpdater extends ChangeNotifier {
     String route, [
     Map<String, dynamic>? body,
   ]) async {
-    if (requestOverride != null) return requestOverride!(route, body);
+    if (requestOverride != null)
+      return requestOverride!(route, body).timeout(requestTimeout);
     final client = HttpClient()..connectionTimeout = const Duration(seconds: 5);
     try {
-      final req = await client.openUrl(
-        body == null ? 'GET' : 'POST',
-        Uri.parse('http://${_config!['listen']}/v1/$route'),
-      );
-      req.headers.set(
-        HttpHeaders.authorizationHeader,
-        'Bearer ${_config!['token']}',
-      );
-      if (body != null) {
-        req.headers.contentType = ContentType.json;
-        req.write(jsonEncode(body));
-      }
-      final response = await req.close().timeout(const Duration(seconds: 10));
-      final text = await utf8.decoder.bind(response).join();
-      if (response.statusCode != 200)
-        throw HttpException('Updater ${response.statusCode}: $text');
-      return jsonDecode(text) as Map<String, dynamic>;
+      return await (() async {
+        final req = await client.openUrl(
+          body == null ? 'GET' : 'POST',
+          Uri.parse('http://${_config!['listen']}/v1/$route'),
+        );
+        req.headers.set(
+          HttpHeaders.authorizationHeader,
+          'Bearer ${_config!['token']}',
+        );
+        if (body != null) {
+          req.headers.contentType = ContentType.json;
+          req.write(jsonEncode(body));
+        }
+        final response = await req.close().timeout(const Duration(seconds: 10));
+        final text = await utf8.decoder.bind(response).join();
+        if (response.statusCode != 200)
+          throw HttpException('Updater ${response.statusCode}: $text');
+        return jsonDecode(text) as Map<String, dynamic>;
+      })().timeout(requestTimeout);
     } finally {
       client.close(force: true);
     }
@@ -142,8 +326,14 @@ class PosUpdater extends ChangeNotifier {
   Future<void> refresh() async {
     if (_refreshing || _stopping) return;
     _refreshing = true;
+    if (_readinessBlocked) {
+      localBlock = UpdateReadiness.evaluate().reason;
+      _readinessBlocked = localBlock != null;
+    }
     try {
       state = await _request('status');
+      connectionIssue = null;
+      lastStatusAt = DateTime.now();
       if (awaitingDecision) {
         if (state['status'] == 'INSTALLING' ||
             state['status'] == 'RESTARTING') {
@@ -158,11 +348,16 @@ class PosUpdater extends ChangeNotifier {
         }
       }
       if (probation) {
+        _startStartupClock();
         final readiness = UpdateReadiness.evaluate();
         if (readiness.status == 'READY') {
+          startupStage = 'მოწმდება POS-ის სტაბილურობა';
+          _recordStartup(
+            'Sending startup health: schema=${DatabaseCore.dbVersion}, pid=$pid',
+          );
           await _request('health', {
-            'nonce': Platform.environment['VYNIC_POS_UPDATE_NONCE'],
-            'version': Platform.environment['VYNIC_POS_UPDATE_VERSION'],
+            'nonce': _environment['VYNIC_POS_UPDATE_NONCE'],
+            'version': _environment['VYNIC_POS_UPDATE_VERSION'],
             'pid': pid,
             'dataPath': DatabaseCore.dataDirectoryPath,
             'hiveSchema': DatabaseCore.dbVersion,
@@ -171,7 +366,16 @@ class PosUpdater extends ChangeNotifier {
           if (state['startupVerified'] == true) {
             await _clearAttempt();
             probation = false;
+            startupFailure = null;
+            _startupTimer?.cancel();
+            _startupTimer = null;
+            _startupWatch.stop();
+            _recordStartup('Startup health verified');
+          } else if (_startupWatch.elapsed < startupTimeout) {
+            startupFailure = null;
           }
+        } else {
+          _startupError(readiness.reason ?? 'მონაცემების აღდგენა ვერ დასრულდა');
         }
       }
       if (installing &&
@@ -190,7 +394,13 @@ class PosUpdater extends ChangeNotifier {
         stackTrace: st,
         name: 'pos_updater',
       );
-      if (!installing) state = {...state, 'status': 'FAILED'};
+      if (probation) {
+        final reason = state['reason'];
+        _startupError(
+          'გაშვების შემოწმება ვერ დასრულდა: $e${reason is String && reason.isNotEmpty ? '\n$reason' : ''}',
+        );
+      }
+      connectionIssue = e.toString();
     } finally {
       _refreshing = false;
       notifyListeners();
@@ -222,6 +432,10 @@ class PosUpdater extends ChangeNotifier {
   }
 
   Future<void> check() async {
+    if (checking || inputHeld) return;
+    checking = true;
+    localBlock = null;
+    notifyListeners();
     try {
       await _request('check', {});
       await refresh();
@@ -232,7 +446,9 @@ class PosUpdater extends ChangeNotifier {
         stackTrace: st,
         name: 'pos_updater',
       );
-      state = {...state, 'status': 'FAILED'};
+      connectionIssue = e.toString();
+    } finally {
+      checking = false;
       notifyListeners();
     }
   }
@@ -240,6 +456,7 @@ class PosUpdater extends ChangeNotifier {
   Future<void> installNow() async {
     if (preparingInstall) return;
     preparingInstall = true;
+    installStage = 'მოწმდება განახლების მზადყოფნა';
     notifyListeners();
     try {
       await _installNow();
@@ -253,6 +470,7 @@ class PosUpdater extends ChangeNotifier {
       localBlock = 'განახლებისთვის მონაცემების მომზადება ვერ დასრულდა';
     } finally {
       preparingInstall = false;
+      installStage = null;
       notifyListeners();
     }
   }
@@ -264,12 +482,19 @@ class PosUpdater extends ChangeNotifier {
       return;
     }
     localBlock = null;
+    _readinessBlocked = false;
     final readiness = UpdateReadiness.evaluate();
     if (readiness.status == 'BLOCKED') {
       localBlock = readiness.reason;
+      _readinessBlocked = true;
+      _recordStartup(
+        'Update blocked: $localBlock; active=${UpdateReadiness.activeOperations.join(', ')}',
+      );
       notifyListeners();
       return;
     }
+    installStage = 'ინახება მონაცემები — განახლება ჯერ არ დაწყებულა';
+    notifyListeners();
     _attempt ??= const Uuid().v4();
     // Persist before freeze, then recheck: writes can have arrived during await.
     if (DatabaseCore.settingsBox != null) {
@@ -281,10 +506,15 @@ class PosUpdater extends ChangeNotifier {
     }
     localBlock = await UpdateReadiness.freeze(flushOverride ?? flushLocalState);
     if (localBlock != null) {
+      _readinessBlocked = true;
+      _recordStartup(
+        'Update blocked: $localBlock; active=${UpdateReadiness.activeOperations.join(', ')}',
+      );
       notifyListeners();
       return;
     }
     installing = true;
+    installStage = 'მოთხოვნა იგზავნება Edge-ში';
     notifyListeners();
     await _submit();
   }
@@ -367,6 +597,8 @@ class PosUpdater extends ChangeNotifier {
   @override
   void dispose() {
     _poll?.cancel();
+    _startupTimer?.cancel();
+    _startupWatch.stop();
     super.dispose();
   }
 }

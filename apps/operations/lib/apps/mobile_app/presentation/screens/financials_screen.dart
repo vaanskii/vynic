@@ -1,3 +1,4 @@
+import 'package:vynic/core/models/sale_visibility.dart';
 import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
 import 'finance_planning_screen.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_admin_screen.dart';
@@ -704,7 +705,16 @@ class _FinancialsScreenState extends State<FinancialsScreen>
   }
 
   Widget _buildSalesHistory() {
-    final sales = _maps(_data?['sales']);
+    final sales = _maps(_data?['sales'])
+        .where(
+          (sale) => SaleVisibility.visible(
+            sale,
+            nonFiscalEnabled: ManagerEntitlements.has(
+              FeatureKeys.nonFiscalClose,
+            ),
+          ),
+        )
+        .toList();
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -729,18 +739,14 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                         if (i > 0) const Divider(height: 1),
                         _saleRow(sales[i]),
                       ],
-                      if (_salesCursor != null)
-                        TextButton(
-                          onPressed: _isLoadingMoreSales
-                              ? null
-                              : _loadMoreSales,
-                          child: Text(
-                            _isLoadingMoreSales ? 'იტვირთება…' : 'მეტის ნახვა',
-                          ),
-                        ),
                     ],
                   ),
           ),
+          if (_salesCursor != null)
+            TextButton(
+              onPressed: _isLoadingMoreSales ? null : _loadMoreSales,
+              child: Text(_isLoadingMoreSales ? 'იტვირთება…' : 'მეტის ნახვა'),
+            ),
         ],
       ),
     );
@@ -904,7 +910,8 @@ class _FinancialsScreenState extends State<FinancialsScreen>
     final entries = [
       ('გაუქმებული', (ledger['voidedCount'] as num?)?.toInt() ?? 0),
       ('აღდგენილი', (ledger['restoredCount'] as num?)?.toInt() ?? 0),
-      ('შიდა დახურვა', (ledger['internalCount'] as num?)?.toInt() ?? 0),
+      if (ManagerEntitlements.has(FeatureKeys.nonFiscalClose))
+        ('შიდა დახურვა', (ledger['internalCount'] as num?)?.toInt() ?? 0),
     ];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),

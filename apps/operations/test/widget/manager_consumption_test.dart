@@ -131,8 +131,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('უარყოფითი მარაგი'), findsOneWidget);
       expect(find.text('მარაგშია: -0.3 კგ'), findsOneWidget);
-      await tester.tap(find.byTooltip('მარაგი'));
-      await tester.pumpAndSettle();
+
       expect(
         find.byKey(const Key('inventory-consumption-history')),
         findsOneWidget,

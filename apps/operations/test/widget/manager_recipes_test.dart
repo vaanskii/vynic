@@ -1,3 +1,4 @@
+import 'inventory_test_actions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_admin_screen.dart';
@@ -206,8 +207,10 @@ void main() {
 
       await tester.pumpWidget(_tab());
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('menu-show-all')));
+      await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('recipe-list')), findsOneWidget);
+      expect(find.byKey(const Key('inventory-menu-results')), findsOneWidget);
       expect(find.text('ხინკალი'), findsOneWidget);
       // The product with no definition is a first-class row, not an absence.
       expect(find.text('Burger'), findsOneWidget);
@@ -225,8 +228,10 @@ void main() {
 
       await tester.pumpWidget(_tab());
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('menu-show-all')));
+      await tester.pumpAndSettle();
 
-      await tester.tap(find.text('შემადგენლობის სტატუსი'));
+      // Status filters are visible above the selected category.
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('recipe-filter-unlinked')));
       await tester.pumpAndSettle();
@@ -246,8 +251,13 @@ void main() {
 
       await tester.pumpWidget(_tab());
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('menu-show-all')));
+      await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('inventory-search')), 'burg');
+      await tester.enterText(
+        find.byKey(const Key('inventory-menu-search')),
+        'burg',
+      );
       await tester.pumpAndSettle();
       expect(find.text('Burger'), findsOneWidget);
       expect(find.text('ხინკალი'), findsNothing);
@@ -261,6 +271,8 @@ void main() {
       addTearDown(tester.view.reset);
 
       await tester.pumpWidget(_tab());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('menu-show-all')));
       await tester.pumpAndSettle();
 
       expect(
@@ -284,8 +296,10 @@ void main() {
 
       await tester.pumpWidget(_tab());
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('menu-show-all')));
+      await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('recipe-list')), findsOneWidget);
+      expect(find.byKey(const Key('inventory-menu-results')), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });
@@ -812,11 +826,10 @@ void main() {
 
       await tester.pumpWidget(_tab());
       await tester.pumpAndSettle();
-
-      await tester.tap(find.byTooltip('მარაგი'));
+      await tester.tap(find.byKey(const Key('menu-show-all')));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('ყველა მარაგის პროდუქტი'));
-      await tester.tap(find.text('ყველა მარაგის პროდუქტი'));
+
+      await openInventorySection(tester, 'stockItems');
       await tester.pumpAndSettle();
       await tester.tap(find.text('რედაქტირება').first);
       await tester.pumpAndSettle();

@@ -1,3 +1,4 @@
+import 'inventory_test_actions.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -97,6 +98,8 @@ void main() {
       await t.pumpAndSettle();
       await t.tap(find.byKey(const Key('supplied-menu')));
       await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('menu-show-all')));
+      await t.pumpAndSettle();
       await t.tap(find.text('ბორჯომი 0.5L').last);
       await t.pumpAndSettle();
       expect(find.text('როგორ ვითვლით? ცალი'), findsOneWidget);
@@ -136,6 +139,7 @@ void main() {
         ),
       );
       await t.pumpAndSettle();
+      await chooseReceivingProduct(t);
       await t.ensureVisible(find.byKey(const Key('receiving-price-mode-0')));
       await t.tap(find.text('მთლიანი თანხა').last);
       await t.pumpAndSettle();
@@ -146,6 +150,7 @@ void main() {
       await t.enterText(find.byKey(const Key('receiving-line-cost-0')), '800');
       await t.pumpAndSettle();
       await shot(t, 'receiving-${width.toInt()}');
+      await reviewReceiving(t);
       await t.tap(find.byKey(const Key('receiving-save')));
       await t.pumpAndSettle();
       expect(sent?['post'], true);
@@ -186,4 +191,21 @@ void main() {
       expect(t.takeException(), isNull);
     });
   }
+}
+
+// Receipt creation now starts with an explicit selection, even for one product.
+Future<void> chooseReceivingProduct(WidgetTester tester) async {
+  final blank = find.byKey(const ValueKey('receiving-line-item-0-null'));
+  if (blank.evaluate().isEmpty) return;
+  await tester.ensureVisible(blank);
+  await tester.pumpAndSettle();
+  await tester.tap(blank);
+  await tester.pumpAndSettle();
+  final options = find.descendant(
+    of: find.byType(InventoryIngredientPicker),
+    matching: find.byType(ListTile),
+  );
+  if (options.evaluate().isEmpty) return;
+  await tester.tap(options.first);
+  await tester.pumpAndSettle();
 }

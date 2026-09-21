@@ -137,16 +137,6 @@ class _SettingsTabState extends State<_SettingsTab>
         !MonitoringSocketService.apiError.value;
   }
 
-  String get _connectionStatusLabel {
-    if (!MonitoringSocketService.isConnected.value) {
-      return 'სერვერთან კავშირი არ არის';
-    }
-    if (MonitoringSocketService.apiError.value) {
-      return 'სერვერზე პრობლემაა';
-    }
-    return 'კავშირი სტაბილურია';
-  }
-
   Future<void> _loadAll() async {
     if (!_isServerReachable) {
       if (mounted) {
@@ -251,9 +241,6 @@ class _SettingsTabState extends State<_SettingsTab>
   Widget build(BuildContext context) {
     super.build(context);
     final s = _settings;
-    final restaurantName = s == null
-        ? null
-        : (s['restaurantName'] ?? s['name'])?.toString();
     final serviceFee = (s?['serviceFeePercent'] as num?)?.toDouble();
     final serviceFeeEnabled = s?['serviceFeeEnabled'] as bool? ?? false;
     final currency = s?['currency']?.toString();
@@ -273,6 +260,8 @@ class _SettingsTabState extends State<_SettingsTab>
       ),
       padding: _adminScrollPadding(context),
       children: [
+        const VenueProfileCard(),
+        const SizedBox(height: 16),
         if (_remoteUnavailable || _opsUnavailable) ...[
           const _AdminOfflineBanner(
             message:
@@ -350,7 +339,7 @@ class _SettingsTabState extends State<_SettingsTab>
         ),
         SizedBox(height: 16),
         _SettingsSection(
-          title: 'რესტორანი',
+          title: 'მომსახურება',
           children: showRestaurantSkeleton
               ? [
                   _SettingsTileSkeleton(),
@@ -358,12 +347,6 @@ class _SettingsTabState extends State<_SettingsTab>
                   _SettingsTileSkeleton(),
                 ]
               : [
-                  _SettingsTile(
-                    icon: Icons.storefront_rounded,
-                    label: 'სახელი',
-                    value: restaurantName ?? '—',
-                    unavailable: restaurantDisabled || restaurantName == null,
-                  ),
                   _SettingsTile(
                     icon: Icons.percent_rounded,
                     label: 'სერვისის ფი',
@@ -381,30 +364,25 @@ class _SettingsTabState extends State<_SettingsTab>
                 ],
         ),
         SizedBox(height: 16),
-        _SettingsSection(
-          title: 'კავშირი',
-          children: [
-            _SettingsTile(
-              icon: Icons.hub_outlined,
-              label: 'სტატუსი',
-              value: _connectionStatusLabel,
-              unavailable: !MonitoringSocketService.isConnected.value,
-            ),
-            if (ApiConfig.allowDeveloperOverride)
-              _SettingsTile(
-                icon: Icons.dns_rounded,
-                label: 'Backend',
-                value: ApiConfig.baseUrl,
-                small: true,
-                onTap: _editBackendUrl,
-                trailing: Icon(
-                  Icons.edit_outlined,
-                  size: 18,
-                  color: AdminTheme.primary,
+        if (ApiConfig.allowDeveloperOverride)
+          _SettingsSection(
+            title: 'კავშირი',
+            children: [
+              if (ApiConfig.allowDeveloperOverride)
+                _SettingsTile(
+                  icon: Icons.dns_rounded,
+                  label: 'Backend',
+                  value: ApiConfig.baseUrl,
+                  small: true,
+                  onTap: _editBackendUrl,
+                  trailing: Icon(
+                    Icons.edit_outlined,
+                    size: 18,
+                    color: AdminTheme.primary,
+                  ),
                 ),
-              ),
-          ],
-        ),
+            ],
+          ),
         SizedBox(height: 16),
         _SettingsSection(
           title: 'აპლიკაცია',

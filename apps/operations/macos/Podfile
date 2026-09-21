@@ -1,4 +1,4 @@
-platform :osx, '11.0'
+platform :osx, '12.0'
 
 # CocoaPods integration has been removed in favour of Swift Package Manager.
 # This stub Podfile lets `pod install` succeed (generating the lock files

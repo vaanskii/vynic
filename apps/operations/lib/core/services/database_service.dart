@@ -1,13 +1,9 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:hive_flutter/hive_flutter.dart';
 import 'dart:io';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/models/table.dart';
-import 'dart:developer' as developer;
 import 'dart:typed_data';
-
-import 'package:flutter/services.dart' show rootBundle;
 
 import 'package:vynic/core/models/receipt_header_layout.dart';
 import 'package:vynic/core/models/table_layout.dart';
@@ -228,10 +224,13 @@ class DatabaseService {
   );
 
   // Initialize Hive and create default admin user
-  static Future<void> init({bool createBootstrapManager = true}) async {
+  static Future<void> init({
+    bool createBootstrapManager = true,
+    String? managedDataDirectory,
+  }) async {
     // Storage bootstrap: data directory, Hive init, adapters, boxes,
     // schema migrations.
-    await DatabaseCore.open();
+    await DatabaseCore.open(managedDataDirectory: managedDataDirectory);
 
     await _migrateLegacyStaffRoles();
 
@@ -239,45 +238,11 @@ class DatabaseService {
     // language, monthly-report inputs).
     await SettingsRepository.seedDefaults();
 
-    // A terminal being switched on for the very first time, as opposed to one
-    // being updated. „Fresh" means nothing has ever been entered here: no
-    // staff, no tables, no menu.
-    //
-    // The distinction matters because everything below used to run
-    // unconditionally, so a venue unboxing a POS inherited this restaurant's
-    // nine tables, four VIP booths and entire menu, and had to delete them one
-    // by one before it could enter its own.
-    final isFreshInstall =
-        !SettingsRepository.isSetupComplete() &&
-        _userBox!.isEmpty &&
-        _tableBox!.isEmpty &&
-        _menuBox!.isEmpty;
-
+    // Persist setup state before Staff can arrive through Edge. Restarting an
+    // unfinished installation must never turn it into a legacy restaurant.
+    await initializeVenueSetup();
     if (_userBox!.isEmpty && createBootstrapManager) {
       await createDefaultAdmin();
-    }
-
-    if (isFreshInstall) {
-      // No tables and no menu: the venue enters its own. The empty plan is
-      // *saved*, not merely defaulted to — `getRestaurantTableLayout()` falls
-      // back to the built-in thirteen-table layout when nothing is stored, and
-      // an unconfigured terminal would otherwise draw a floor plan full of
-      // tables that do not exist here.
-      await SettingsRepository.saveActiveTableLayout(
-        RestaurantTableLayouts.emptyVenue,
-      );
-    } else {
-      // An existing terminal. Anything missing is backfilled exactly as before,
-      // and it is marked configured so it is never sent through setup.
-      if (_tableBox!.isEmpty) {
-        await TableRepository.initializeTables();
-      }
-      // The bundled restaurant menu is a development fixture, never release data.
-      if (_menuBox!.isEmpty && kDebugMode) {
-        await MenuRepository.initializeMenuFromJson();
-      }
-      await adoptLegacyVenueHeader();
-      await SettingsRepository.markSetupComplete();
     }
 
     await TableRepository.ensureCanonicalTableIdentity();
@@ -513,48 +478,22 @@ class DatabaseService {
   static Future<void> saveReceiptHeaderLayout(ReceiptHeaderLayout layout) =>
       SettingsRepository.saveReceiptHeaderLayout(layout);
 
-  /// Keeps a terminal printing exactly what it printed yesterday.
-  ///
-  /// The venue's name, street, phone and logo were literals in the renderers
-  /// and an asset in the bundle. Moving them into settings emptied the header
-  /// on every terminal that already existed — the receipts would simply have
-  /// lost their top. This copies the old values in once, for installs that
-  /// predate the setting, so nothing changes for them until someone edits it.
-  ///
-  /// A fresh install never reaches this: it has no header to preserve, and
-  /// inheriting another restaurant's address is the bug this whole change is
-  /// about.
-  static Future<void> adoptLegacyVenueHeader() async {
-    if (SettingsRepository.getVenueName().isEmpty) {
-      await SettingsRepository.setVenueName('RESTAURANT VANKISI');
+  /// Keeps unfinished setup across restarts and preserves existing stored data.
+  /// Missing identity and logo fields stay empty; no restaurant defaults are copied.
+  static Future<void> initializeVenueSetup() async {
+    if (SettingsRepository.isSetupComplete()) return;
+    final started = DatabaseCore.settingsBox!.get('venueSetupStarted') == true;
+    if (!started && (_tableBox!.isNotEmpty || _menuBox!.isNotEmpty)) {
+      // Preserve an existing operational installation exactly as stored.
+      // Missing identity/logo is never permission to borrow another venue's.
+      await SettingsRepository.markSetupComplete();
+      return;
     }
-    if (SettingsRepository.getVenueAddress().isEmpty) {
-      await SettingsRepository.setVenueAddress('ალექსანდრე პუშკინის ქ. N51');
-    }
-    if (SettingsRepository.getVenuePhone().isEmpty) {
-      await SettingsRepository.setVenuePhone('+995 599 98 93 76');
-    }
-    // Same reasoning for the identification code the monthly report used to
-    // hardcode. A terminal that already existed keeps printing what it
-    // printed; a fresh install gets nothing and says so on the report until
-    // its own code is entered.
-    if (SettingsRepository.getVenueLegalId().isEmpty) {
-      await SettingsRepository.setVenueLegalId('436687168');
-    }
-    if (SettingsRepository.getVenueLogoPng() == null) {
-      try {
-        final data = await rootBundle.load('assets/black-logo.png');
-        await SettingsRepository.setVenueLogoPng(
-          data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
-        );
-      } catch (error, stackTrace) {
-        developer.log(
-          'Legacy receipt logo could not be adopted',
-          error: error,
-          stackTrace: stackTrace,
-          name: 'DatabaseService',
-        );
-      }
+    if (!started) {
+      await DatabaseCore.settingsBox!.put('venueSetupStarted', true);
+      await SettingsRepository.saveActiveTableLayout(
+        RestaurantTableLayouts.emptyVenue,
+      );
     }
   }
 

@@ -4,7 +4,7 @@ part of '../mobile_admin_screen.dart';
 enum _RecipeFilter {
   all(null, 'ყველა'),
   linked(true, 'შევსებული'),
-  unlinked(false, 'მიუბმელი');
+  unlinked(false, 'შესავსები');
 
   const _RecipeFilter(this.wanted, this.label);
 
@@ -13,7 +13,7 @@ enum _RecipeFilter {
   final String label;
 
   bool matches(RecipeMenuItem item) =>
-      wanted == null || wanted == item.isConfigured;
+      wanted == null || wanted == item.isFullyConfigured;
 }
 
 class _RecipeFilterBar extends StatelessWidget {
@@ -110,7 +110,7 @@ class _RecipeCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         item.name,
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: AdminTheme.text,
@@ -119,7 +119,7 @@ class _RecipeCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    _RecipeStatusBadge(configured: item.isConfigured),
+                    _RecipeStatusBadge(configured: item.isFullyConfigured),
                   ],
                 ),
                 const SizedBox(height: 7),

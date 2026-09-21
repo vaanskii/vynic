@@ -5,6 +5,7 @@ export '../../models/feature_keys.dart';
 
 /// Server-resolved session capabilities. No plan/override calculation or disk cache.
 abstract final class ManagerEntitlements {
+  static final profile = ValueNotifier<Map<String, dynamic>?>(null);
   static final features = ValueNotifier<Set<String>>({});
   static final pastDue = ValueNotifier<bool>(false);
   static bool has(String feature) => features.value.contains(feature);
@@ -17,6 +18,8 @@ abstract final class ManagerEntitlements {
     5,
   ];
   static void apply(Map<String, dynamic> snapshot) {
+    if (snapshot['profile'] is Map)
+      profile.value = Map<String, dynamic>.from(snapshot['profile'] as Map);
     final next = snapshot['commercialAccess'] == false
         ? <String>{}
         : (snapshot['features'] as List).cast<String>().toSet();
@@ -25,6 +28,7 @@ abstract final class ManagerEntitlements {
   }
 
   static void clear() {
+    profile.value = null;
     features.value = {};
     pastDue.value = false;
   }

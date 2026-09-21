@@ -1,4 +1,6 @@
 import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
+import 'inventory_test_actions.dart';
+import 'procurement_rework_test.dart' as flow;
 import 'package:vynic/apps/mobile_app/presentation/screens/consumption_history_screen.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -108,20 +110,13 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       await qa.screenshot(tester, 'inventory-$width');
-      for (final label in [
-        'მომწოდებლები',
-        'მიღებების ისტორია',
-        'მენიუს შემადგენლობა',
-        'ყველა მარაგის პროდუქტი',
+      for (final section in [
+        'suppliers',
+        'receiving',
+        'recipes',
+        'stockItems',
       ]) {
-        if (find.byTooltip('მარაგი').evaluate().isNotEmpty) {
-          await tester.tap(find.byTooltip('მარაგი'));
-          await tester.pumpAndSettle();
-        }
-        await tester.ensureVisible(find.text(label).first);
-        await tester.pumpAndSettle();
-        await tester.tap(find.text(label).first);
-        await tester.pumpAndSettle();
+        await openInventorySection(tester, section);
         expect(tester.takeException(), isNull);
         expect(find.byKey(const Key('inventory-home')), findsNothing);
       }
@@ -160,6 +155,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await flow.chooseReceivingProduct(tester);
       expect(
         find.byKey(const ValueKey('receiving-line-item-0-borjomi')),
         findsOneWidget,
@@ -169,7 +165,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.getSize(cost).width, greaterThan(220));
       expect(
-        tester.getSize(find.byKey(const Key('receiving-save'))).height,
+        tester.getSize(find.byKey(const Key('receiving-next'))).height,
         greaterThanOrEqualTo(48),
       );
       expect(tester.takeException(), isNull);

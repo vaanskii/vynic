@@ -160,8 +160,7 @@ class EdgeTransportService {
   ///
   /// Re-entrant calls are refused rather than queued: two claims in flight would
   /// take two leases on the same work for no benefit.
-  Future<EdgePollSummary> pollOnce() =>
-      UpdateReadiness.track('pollOnce', () => _updateTrackedPollOnce());
+  Future<EdgePollSummary> pollOnce() => _updateTrackedPollOnce();
 
   Future<EdgePollSummary> _updateTrackedPollOnce() async {
     if (_polling) {
@@ -199,7 +198,13 @@ class EdgeTransportService {
     var acknowledged = 0;
 
     for (final command in response.commands) {
-      final result = await _handle(command);
+      // Network waits and durable acknowledgments are not business mutations.
+      // Recheck after claim: a freeze may have happened while Cloud responded.
+      if (UpdateReadiness.enabled && UpdateReadiness.frozen) break;
+      final result = await UpdateReadiness.track(
+        'Cloud command',
+        () => _handle(command),
+      );
       switch (result.kind) {
         case _HandledKind.executed:
           executed += 1;

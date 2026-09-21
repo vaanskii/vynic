@@ -6,9 +6,6 @@ class MenuService {
   static List<MenuCategory>? _cachedCategories;
 
   static Future<List<MenuCategory>> loadMenu() async {
-    if (_cachedCategories != null) {
-      return _cachedCategories!;
-    }
 
     try {
       // Load from database

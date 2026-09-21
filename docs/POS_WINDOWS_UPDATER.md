@@ -263,7 +263,13 @@ After the POS readiness barrier:
 3. Go starts `current/vynic_pos.exe` with a random startup nonce and version in
    its child environment, using `current` as its working directory.
 4. POS opens existing Hive, runs existing recovery and renders its first frame.
-   Input and Cloud polling remain paused during startup probation. Authenticated
+   Go owns the stabilization timer and rollback decision in the background.
+   POS renders its normal login/first-run screen without a stability overlay;
+   PIN entry and the Program Update dialog remain usable. Login/enrollment
+   admission and Cloud command execution wait for verification, so restaurant
+   operations cannot begin while Go may still roll back. A requested login
+   uses the normal checking indicator; failures remain visible and bounded.
+   Authenticated
    health includes nonce, PID, version, Hive schema and the original data path.
    A fresh/incorrect data directory cannot pass health.
 5. Initial health must arrive within **90 seconds**. Then the same process must
@@ -271,7 +277,7 @@ After the POS readiness barrier:
    with no gap of **10 seconds**. Flutter's existing two-second probation polling
    supplies these reports; no second readiness model is added.
 6. Go records SUCCESS/startup verification and a cleanup intent durably. Only
-   then may input resume and the temporary rollback, ZIP, partial downloads and
+   then may restaurant operations resume and the temporary rollback, ZIP, partial downloads and
    extracted staging files be deleted. Steady state contains one POS release.
 
 Failed startup or stabilization stops the candidate, removes its binary tree,

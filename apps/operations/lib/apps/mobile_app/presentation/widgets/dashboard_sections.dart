@@ -1,3 +1,5 @@
+import 'package:vynic/core/models/sale_visibility.dart';
+import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
 import 'dart:math' as math;
 
 import 'package:fl_chart/fl_chart.dart';
@@ -123,14 +125,15 @@ class HeroCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: 4),
-          Text(
-            'არაფისკალური დახურული: ${fmt.format(metrics.nonFiscalClosedRevenue)} ₾',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.78),
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+          if (ManagerEntitlements.has(FeatureKeys.nonFiscalClose))
+            Text(
+              'არაფისკალური დახურული: ${fmt.format(metrics.nonFiscalClosedRevenue)} ₾',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.78),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
           SizedBox(height: 4),
           Text(
             'ღია მაგიდების გადასახდელი: ${fmt.format(metrics.openTablesPayable)} ₾',
@@ -223,6 +226,9 @@ class PaymentSplitCard extends StatelessWidget {
     final rawBreakdown = salesReport?['paymentBreakdown'];
     if (rawBreakdown is Map) {
       rawBreakdown.forEach((key, value) {
+        if (!ManagerEntitlements.has(FeatureKeys.nonFiscalClose) &&
+            SaleVisibility.nonFiscalPayment(key.toString()))
+          return;
         final amount = (value as num?)?.toDouble();
         if (amount != null && amount > 0) breakdown[key.toString()] = amount;
       });

@@ -70,7 +70,7 @@ class CancelOrderTransaction {
     String? reason,
     String? approvedBy,
   }) => UpdateReadiness.track(
-    'run',
+    'cancelOrder',
     () => _updateTrackedRun(
       orderId: orderId,
       actorId: actorId,

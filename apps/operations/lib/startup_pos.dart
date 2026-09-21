@@ -1,14 +1,16 @@
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:vynic/core/services/pos/pos_locale.dart';
-import 'package:vynic/core/services/pos/pos_input_settings.dart';
 import 'dart:io' show Platform;
+import 'package:vynic/core/services/pos/pos_input_settings.dart';
 import 'package:vynic/core/services/pos/pos_quit.dart';
 import 'package:vynic/apps/windows_pos/widgets/pos_quit_action.dart';
 import 'package:vynic/core/services/pos/update/pos_updater.dart';
 import 'package:vynic/apps/windows_pos/widgets/update/pos_update_ui.dart';
+import 'package:vynic/core/widgets/connection_feedback.dart';
 import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:vynic/core/ui/pos_scaled_surface.dart';
 import 'package:vynic/apps/windows_pos/screens/login_screen.dart';
@@ -34,7 +36,31 @@ Future<void> startPos() async {
     lockRouteBuilder: staffLockRoute,
     loginBuilder: (_) => const LoginScreen(),
   );
-  await DatabaseService.init(createBootstrapManager: false);
+  try {
+    final dataDirectory = await PosUpdater.instance.pinnedDataDirectory();
+    await DatabaseService.init(
+      createBootstrapManager: false,
+      managedDataDirectory: dataDirectory,
+    );
+  } catch (error, stack) {
+    debugPrint('POS local data startup failed: $error\n$stack');
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: SelectableText(
+                'ადგილობრივ მონაცემებზე წვდომა ვერ მოხერხდა.\n$error',
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    return;
+  }
   if (Platform.isWindows) PosQuit.enableWindowsTracking();
   await EdgeDeviceCredentialStore.load();
   await PosDisplaySettingsController.loadFromStorage();
@@ -68,12 +94,19 @@ class _PosAppState extends State<PosApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    HardwareKeyboard.instance.addHandler(_recordKeyActivity);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    HardwareKeyboard.instance.removeHandler(_recordKeyActivity);
     super.dispose();
+  }
+
+  bool _recordKeyActivity(KeyEvent event) {
+    if (event is KeyDownEvent) SessionLock.recordActivity();
+    return false;
   }
 
   @override
@@ -114,7 +147,9 @@ class _PosAppState extends State<PosApp> with WidgetsBindingObserver {
                   scale: settings.scaleFactor,
                   child: PosUpdateHost(
                     navigatorKey: navigatorKey,
-                    child: PosInputScope(child: activityAwareChild),
+                    child: PosInputScope(
+                      child: ConnectionFeedback.pos(child: activityAwareChild),
+                    ),
                   ),
                 );
               },

@@ -49,7 +49,7 @@ type Receipt struct {
 // execute the downloaded fake Windows bundles.
 type Host interface {
 	Secure(Layout) error
-	Quiesce(context.Context, Layout, Receipt) error
+	Quiesce(context.Context, Layout, Receipt, bool) error
 	Integrate(Layout) error
 	RemoveIntegration(Layout) error
 }
@@ -220,10 +220,15 @@ func (i *Installer) Install(ctx context.Context, repair bool) (err error) {
 		}
 		defer os.Remove(l.Maintenance())
 		maintained = true
-		if e = i.Host.Quiesce(ctx, l, r); e != nil {
+		if e = i.Host.Quiesce(ctx, l, r, false); e != nil {
 			return e
 		}
-		if e = i.recoverSwaps(); e != nil {
+		if r.Status == "removed" {
+			e = i.retireSwapJournal()
+		} else {
+			e = i.recoverSwaps()
+		}
+		if e != nil {
 			return e
 		}
 	}
@@ -261,10 +266,15 @@ func (i *Installer) Install(ctx context.Context, repair bool) (err error) {
 			return e
 		}
 		defer os.Remove(l.Maintenance())
-		if e = i.Host.Quiesce(ctx, l, r); e != nil {
+		if e = i.Host.Quiesce(ctx, l, r, false); e != nil {
 			return e
 		}
-		if e = i.recoverSwaps(); e != nil {
+		if r.Status == "removed" {
+			e = i.retireSwapJournal()
+		} else {
+			e = i.recoverSwaps()
+		}
+		if e != nil {
 			return e
 		}
 	}
@@ -286,7 +296,24 @@ func (i *Installer) Install(ctx context.Context, repair bool) (err error) {
 		if st.Status == "INSTALLING" || st.Status == "RESTARTING" {
 			return errors.New("unresolved POS install: recover via existing Edge before repair")
 		}
-		if st.Current != pos.Version {
+		if r.Status == "removed" {
+			// Install after explicit removal selects the current signed POS
+			// release; Repair of an installed app stays version-pinned.
+			pr, e := fetch(ctx, c, r.Config.Feed, 64<<10)
+			if e != nil {
+				return e
+			}
+			candidate, e := updater.Verify(pr, d.Keys, d.Channel, "0.0.0", 0, time.Now())
+			if e != nil {
+				return e
+			}
+			if candidate.Version != st.Current {
+				if _, e = updater.Verify(pr, d.Keys, d.Channel, st.Current, st.High, time.Now()); e != nil {
+					return e
+				}
+			}
+			posRaw, pos = pr, candidate
+		} else if st.Current != pos.Version {
 			pr, e := fetch(ctx, c, strings.TrimRight(r.POSReleaseBase, "/")+"/"+st.Current+".json", 64<<10)
 			if e != nil {
 				return e
@@ -384,6 +411,11 @@ func (i *Installer) Install(ctx context.Context, repair bool) (err error) {
 		return e
 	}
 	defer func() { err = errors.Join(err, u.Close()) }()
+	if r.Status == "removed" {
+		if e = u.SelectRemovedRelease(posRaw); e != nil {
+			return e
+		}
+	}
 	if e = writeJSON(l.Config(), r.Config); e != nil {
 		return e
 	}
@@ -567,10 +599,7 @@ func (i *Installer) Uninstall(ctx context.Context) error {
 		return e
 	}
 	defer os.Remove(l.Maintenance())
-	if e = i.Host.Quiesce(ctx, l, r); e != nil {
-		return e
-	}
-	if e = i.recoverSwaps(); e != nil {
+	if e = i.Host.Quiesce(ctx, l, r, true); e != nil {
 		return e
 	}
 	if r.Status != "provisioning" {
@@ -581,13 +610,9 @@ func (i *Installer) Uninstall(ctx context.Context) error {
 		if e != nil {
 			return e
 		}
-		st := u.Snapshot()
 		e = errors.Join(u.ValidateDataSeparation(), u.Close())
 		if e != nil {
 			return e
-		}
-		if st.Status == "INSTALLING" || st.Status == "RESTARTING" || (st.Swap != "" && st.Swap != "repair_ready" && st.Swap != "cleanup") {
-			return errors.New("unresolved POS install; recover before uninstall")
 		}
 	}
 	if e = i.Host.RemoveIntegration(l); e != nil {
@@ -598,10 +623,30 @@ func (i *Installer) Uninstall(ctx context.Context) error {
 	if e = writeJSON(l.Receipt(), r); e != nil {
 		return e
 	}
+	if e = i.retireSwapJournal(); e != nil {
+		return e
+	}
+	i.report("Removing application files; restaurant data and diagnostics stay in place")
 	for _, p := range []string{filepath.Join(l.Root, "edge", "releases"), filepath.Join(l.POS(), "releases"), updater.CurrentDir(l.POS()), updater.RollbackDir(l.POS()), updater.StagingDir(l.POS()), filepath.Join(l.POS(), "staged.zip"), filepath.Join(l.POS(), "staged.zip.part"), filepath.Join(l.Root, "staging")} {
 		if e = os.RemoveAll(p); e != nil {
 			return e
 		}
+	}
+	return nil
+}
+
+func (i *Installer) retireSwapJournal() error {
+	l := i.Layout
+	// Keep the interrupted setup journal as evidence, but never replay its binary
+	// swaps after explicit removal. Updater SQLite and consent rows stay intact.
+	journal := filepath.Join(l.Root, "state", "swap.json")
+	if _, e := os.Stat(journal); e == nil {
+		archive := filepath.Join(l.Root, "state", fmt.Sprintf("uninstalled-swap-%d.json", time.Now().UnixNano()))
+		if e = replaceFile(journal, archive); e != nil {
+			return e
+		}
+	} else if !os.IsNotExist(e) {
+		return e
 	}
 	return nil
 }

@@ -351,7 +351,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       slivers: [
                         SliverToBoxAdapter(
                           child: Padding(
-                            padding: const EdgeInsets.only(bottom: 120),
+                            padding: const EdgeInsets.only(bottom: 24),
                             child: state.loading && state.metrics == null
                                 ? _DashboardSkeleton()
                                 : LayoutBuilder(
@@ -467,7 +467,15 @@ class _DashboardScreenState extends State<DashboardScreen>
                                             if (ManagerEntitlements.has(
                                               FeatureKeys.inventory,
                                             ))
-                                              const InventorySummaryCard(),
+                                              InventorySummaryCard(
+                                                onOpenInventory:
+                                                    widget.onNavigateTab == null
+                                                    ? null
+                                                    : () =>
+                                                          widget.onNavigateTab!(
+                                                            3,
+                                                          ),
+                                              ),
                                             const SizedBox(height: 12),
                                             if (ManagerEntitlements.has(
                                               FeatureKeys.financialPlanning,
@@ -517,7 +525,14 @@ class _DashboardScreenState extends State<DashboardScreen>
                                                 if (ManagerEntitlements.has(
                                                   FeatureKeys.inventory,
                                                 ))
-                                                  const InventorySummaryCard(),
+                                                  InventorySummaryCard(
+                                                    onOpenInventory:
+                                                        widget.onNavigateTab ==
+                                                            null
+                                                        ? null
+                                                        : () => widget
+                                                              .onNavigateTab!(3),
+                                                  ),
                                                 const SizedBox(height: 12),
                                                 if (ManagerEntitlements.has(
                                                   FeatureKeys.financialPlanning,
@@ -1258,7 +1273,8 @@ class _HeroRevenueCard extends StatelessWidget {
                       amount: closed,
                       color: context.dash.good,
                     ),
-                    if (metrics.nonFiscalClosedRevenue > 0.005) ...[
+                    if (ManagerEntitlements.has(FeatureKeys.nonFiscalClose) &&
+                        metrics.nonFiscalClosedRevenue > 0.005) ...[
                       SizedBox(height: 8),
                       _RevenueSplitRow(
                         icon: Icons.receipt_long_rounded,

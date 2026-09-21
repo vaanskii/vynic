@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:vynic/apps/windows_pos/widgets/login/login_desktop_view.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,6 +9,29 @@ import 'package:vynic/core/services/pos/update/pos_updater.dart';
 import 'package:vynic/core/services/pos/update/update_readiness.dart';
 
 void main() {
+  testWidgets('Windows login exposes the shared confirmed Quit before sign-in', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final pin = ValueNotifier('');
+    addTearDown(pin.dispose);
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: LoginDesktopView(
+      pin: pin, isLoading: false, workDate: DateTime(2026), now: DateTime(2026),
+      onDigitPressed: (_) {}, onClearPressed: () {}, onDeletePressed: () {},
+      onLoginPressed: () {}, showQuitAction: true,
+    ))));
+    await tester.tap(find.text('აპლიკაციიდან გასვლა'));
+    await tester.pumpAndSettle();
+    expect(find.text('ნამდვილად გსურთ Vynic POS-ის დახურვა?'), findsOneWidget);
+    await tester.tap(find.text('გაუქმება'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(tester.takeException(), isNull);
+    debugDefaultTargetPlatformOverride = null;
+  });
   testWidgets(
     'Settings exposes Windows-only Quit and cancellation keeps POS open',
     (tester) async {

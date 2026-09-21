@@ -1,6 +1,8 @@
+import 'package:vynic/core/database/database_core.dart';
 import 'runtime_config_sync.dart';
 import 'dart:async';
 import 'dart:io';
+import 'package:vynic/core/services/pos/update/pos_updater.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:vynic/core/services/database_service.dart';
@@ -84,6 +86,14 @@ class PosEnrollmentService {
     required String serverAddress,
     required String code,
   }) async {
+    try {
+      await PosUpdater.instance.waitForStartup();
+    } catch (_) {
+      return const PosEnrollmentResult(
+        PosEnrollmentStatus.serverError,
+        message: 'გაშვება ვერ დასრულდა. სცადეთ ხელახლა.',
+      );
+    }
     final baseUrl = ApiConfig.normalizeEditableBackendUrl(serverAddress);
     if (baseUrl == null) {
       return const PosEnrollmentResult(
@@ -136,6 +146,11 @@ class PosEnrollmentService {
             'this terminal until it expires.',
       );
     }
+
+    await DatabaseCore.settingsBox?.put(
+      'enrolledDeviceName',
+      result.deviceName,
+    );
 
     final effectiveUrl = _resolveBackendUrl(
       enrolledThrough: baseUrl,

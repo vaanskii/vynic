@@ -302,12 +302,16 @@ class _ReceivingDetailDialogState extends State<ReceivingDetailDialog> {
           if (receiving.dueDate != null)
             _detailRow('გადახდის ვადა', receiving.dueDate!),
           OutlinedButton(
-            onPressed: () => showDialog<void>(
-              context: context,
-              builder: (_) =>
-                  SupplierPayablesDialog(supplierId: receiving.supplierId),
-            ).then((_) => _load()),
-            child: const Text('გადახდის დაფიქსირება'),
+            onPressed: () => Navigator.of(context)
+                .push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => SupplierPayablesScreen(
+                      supplierId: receiving.supplierId,
+                    ),
+                  ),
+                )
+                .then((_) => _load()),
+            child: const Text('გადახდები და დავალიანება'),
           ),
         ],
         if (receiving.waybillNumber != null)
@@ -792,6 +796,8 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
   late List<_ReceivingLineDraft> _lines;
   late List<StockItem> _availableStock;
   bool _saving = false;
+  bool _reviewing = false;
+  final _formScroll = ScrollController(keepScrollOffset: false);
   String? _savedDraftId;
   final _requestId = const Uuid().v4();
   final _dueDate = TextEditingController();
@@ -807,14 +813,17 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
     _invoice = TextEditingController(text: receiving?.invoiceNumber ?? '');
     _notes = TextEditingController(text: receiving?.notes ?? '');
     _supplierId =
-        receiving?.supplierId ?? widget.suppliers.firstOrNull?.id ?? '';
+        receiving?.supplierId ??
+        (widget.suppliers.length == 1 ? widget.suppliers.single.id : '');
     _sourceType =
         receiving?.sourceType ??
         (widget.suppliers.isEmpty ? 'SELF_PURCHASE' : 'SUPPLIER');
     if (_sourceType == 'SELF_PURCHASE')
       _sourceLabel.text = receiving?.supplierName ?? '';
     if (widget.suppliers.every((supplier) => supplier.id != _supplierId)) {
-      _supplierId = widget.suppliers.firstOrNull?.id ?? '';
+      _supplierId = widget.suppliers.length == 1
+          ? widget.suppliers.single.id
+          : '';
     }
     _documentDate =
         DateTime.tryParse(receiving?.documentDate ?? '') ?? DateTime.now();
@@ -834,11 +843,12 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
           cost: TextEditingController(text: line.lineTotal),
         )..priceMode = "total",
     ];
-    if (_lines.isEmpty) _seedSupplierLines();
+    if (_lines.isEmpty) _addLine();
   }
 
   @override
   void dispose() {
+    _formScroll.dispose();
     _sourceLabel.dispose();
     _paidNow.dispose();
     _dueDate.dispose();
@@ -864,57 +874,43 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
     ];
   }
 
-  void _seedSupplierLines() {
-    final ids =
-        widget.suppliers
-            .where((s) => s.id == _supplierId)
-            .firstOrNull
-            ?.stockItemIds ??
-        <String>[];
-    for (final item in _availableStock.where((i) => ids.contains(i.id))) {
-      _lines.add(
-        _ReceivingLineDraft(
-          stockItem: item,
-          unit: item.purchaseUnits.firstOrNull?.unit ?? item.baseUnit,
-          quantity: TextEditingController(),
-          cost: TextEditingController(),
-        ),
-      );
-    }
-    if (_lines.isEmpty) _addLine();
-  }
-
-  Future<void> _newIngredient() async {
+  Future<StockItem?> _createReceivingProduct(String name) async {
     final item = await showDialog<StockItem>(
       context: context,
-      builder: (_) => const IngredientQuickDialog(),
+      builder: (_) =>
+          IngredientQuickDialog(initialName: name, receivingProduct: true),
     );
-    if (item == null || !mounted) return;
+    if (item != null && mounted) setState(() => _availableStock.add(item));
+    return item;
+  }
+
+  Future<bool> _pickLineProduct(int index) async {
+    final item = await showDialog<StockItem>(
+      context: context,
+      builder: (_) => InventoryIngredientPicker(
+        items: _prioritizedItems,
+        title: 'რას ვიღებთ?',
+        onCreate: _createReceivingProduct,
+      ),
+    );
+    if (item == null || !mounted) return false;
+    if (_lines[index].stockItem?.id == item.id) return true;
     setState(() {
-      _availableStock.add(item);
-      final blank = _lines.where((l) => l.stockItem == null).firstOrNull;
-      if (blank != null) {
-        blank.stockItem = item;
-        blank.unit = item.baseUnit;
-      } else {
-        _lines.add(
-          _ReceivingLineDraft(
-            stockItem: item,
-            unit: item.baseUnit,
-            quantity: TextEditingController(),
-            cost: TextEditingController(),
-          ),
-        );
-      }
+      final line = _lines[index];
+      line.stockItem = item;
+      line.unit = item.purchaseUnits.firstOrNull?.unit ?? item.baseUnit;
+      line.cost.clear();
+      line.quantity.clear();
+      line.priceMode = 'base';
     });
+    return true;
   }
 
   void _addLine() {
-    final item = _prioritizedItems.firstOrNull;
     _lines.add(
       _ReceivingLineDraft(
-        stockItem: item,
-        unit: item?.baseUnit,
+        stockItem: null,
+        unit: null,
         quantity: TextEditingController(),
         cost: TextEditingController(),
       ),
@@ -935,13 +931,26 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
         contentPadding: const EdgeInsets.all(VynicSpacing.md),
         key: const Key('receiving-editor'),
         backgroundColor: AdminTheme.surface,
-        title: Text(
-          widget.receiving == null ? 'ახალი მიღება' : 'მიღების რედაქტირება',
-          style: TextStyle(color: AdminTheme.text),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.receiving == null ? 'ახალი მიღება' : 'მიღების რედაქტირება',
+              style: TextStyle(color: AdminTheme.text),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _reviewing
+                  ? '2 / 2 · გადახდა და დადასტურება'
+                  : '1 / 2 · საქონელი',
+              style: TextStyle(color: AdminTheme.textMuted, fontSize: 13),
+            ),
+          ],
         ),
         content: SizedBox(
           width: 620,
           child: SingleChildScrollView(
+            controller: _formScroll,
             child: AbsorbPointer(
               absorbing: _saving || _attempted,
               child: Column(
@@ -957,267 +966,296 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
                         style: TextStyle(color: AdminTheme.warn),
                       ),
                     ),
-                  DropdownButtonFormField<String>(
-                    key: const Key('receiving-source'),
-                    initialValue: _sourceType,
-                    isExpanded: true,
-                    decoration: _adminInput('მომწოდებელი / წყარო'),
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'SUPPLIER',
-                        child: Text('მომწოდებელი'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'SELF_PURCHASE',
-                        child: Text('ჩემით / ბაზრიდან'),
-                      ),
-                    ],
-                    onChanged: _saving || _attempted
-                        ? null
-                        : (v) => setState(() => _sourceType = v!),
-                  ),
-                  const SizedBox(height: 16),
-                  if (_sourceType == 'SELF_PURCHASE')
-                    TextField(
-                      key: const Key('receiving-source-label'),
-                      controller: _sourceLabel,
-                      enabled: !_attempted,
-                      decoration: _adminInput('საიდან? (არასავალდებულო)'),
-                    ),
-                  if (_sourceType == 'SUPPLIER')
+                  if (!_reviewing) ...[
                     DropdownButtonFormField<String>(
-                      key: const Key('receiving-supplier'),
-                      initialValue: _supplierId.isEmpty ? null : _supplierId,
+                      key: const Key('receiving-source'),
+                      initialValue: _sourceType,
                       isExpanded: true,
-                      dropdownColor: AdminTheme.surfaceElevated,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium!.copyWith(color: AdminTheme.text),
-                      decoration: _adminInput('ვისგან / საიდან?'),
-                      items: [
-                        for (final supplier in widget.suppliers)
-                          DropdownMenuItem(
-                            value: supplier.id,
-                            child: Text(
-                              supplier.name,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                      ],
-                      onChanged: _saving
-                          ? null
-                          : (value) => setState(() {
-                              _supplierId = value ?? _supplierId;
-                              if (_lines.every(
-                                (l) =>
-                                    l.quantity.text.isEmpty &&
-                                    l.cost.text.isEmpty,
-                              )) {
-                                for (final line in _lines) {
-                                  line.dispose();
-                                }
-                                _lines.clear();
-                                _seedSupplierLines();
-                              }
-                            }),
-                    ),
-                  const SizedBox(height: 10),
-                  ExpansionTile(
-                    key: const PageStorageKey(
-                      'inventory-receiving-document-details',
-                    ),
-                    tilePadding: EdgeInsets.zero,
-                    title: const Text('თარიღი და დოკუმენტის დეტალები'),
-                    children: [
-                      _InventoryExpansionContents(
-                        children: [
-                          OutlinedButton.icon(
-                            key: const Key('receiving-business-date'),
-                            icon: const Icon(Icons.today),
-                            label: Text(
-                              _businessDate == null
-                                  ? 'აირჩიეთ სამუშაო დღე'
-                                  : 'სამუშაო დღე: ${_isoDate(_businessDate!)}',
-                            ),
-                            onPressed: _saving
-                                ? null
-                                : () async {
-                                    final selected = await showDatePicker(
-                                      context: context,
-                                      initialDate:
-                                          _businessDate ?? DateTime.now(),
-                                      firstDate: DateTime(2020),
-                                      lastDate: DateTime.now().add(
-                                        const Duration(days: 366),
-                                      ),
-                                    );
-                                    if (selected != null)
-                                      setState(() => _businessDate = selected);
-                                  },
-                          ),
-                          const SizedBox(height: 10),
-                          OutlinedButton.icon(
-                            key: const Key('receiving-date'),
-                            onPressed: _saving ? null : _pickDate,
-                            icon: const Icon(Icons.event_rounded, size: 18),
-                            label: Text(
-                              'დოკუმენტის თარიღი: ${_isoDate(_documentDate)}',
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AdminTheme.text,
-                              side: BorderSide(color: AdminTheme.border),
-                              minimumSize: const Size(0, 52),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          _dialogField(
-                            _waybill,
-                            'ზედნადების ნომერი',
-                            key: const Key('receiving-waybill'),
-                          ),
-                          _dialogField(_invoice, 'ინვოისის ნომერი'),
-                          _dialogField(_notes, 'შენიშვნა', maxLines: 2),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const Divider(height: 24),
-                  Text(
-                    'რას ვიღებთ დღეს?',
-                    style: TextStyle(
-                      color: AdminTheme.text,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  for (var index = 0; index < _lines.length; index++)
-                    _lineEditor(index),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      key: const Key('receiving-add-line'),
-                      onPressed: _saving || _availableStock.isEmpty
-                          ? null
-                          : () => setState(_addLine),
-                      icon: const Icon(Icons.add_rounded, size: 18),
-                      label: const Text('საქონლის დამატება'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: AdminTheme.primary,
-                      ),
-                    ),
-                  ),
-                  TextButton.icon(
-                    onPressed: _saving ? null : _newIngredient,
-                    icon: const Icon(Icons.add),
-                    label: const Text('ახალი ნედლეულის შექმნა'),
-                  ),
-                  const Divider(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'ჯამი',
-                          style: TextStyle(
-                            color: AdminTheme.textMuted,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        '${_documentTotal.toStringAsFixed(2)} ₾',
-                        key: const Key('receiving-editor-total'),
-                        style: TextStyle(
-                          color: AdminTheme.text,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'გადახდა',
-                    style: TextStyle(
-                      color: AdminTheme.text,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 18,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Column(
-                    key: const Key('receiving-payment-mode'),
-                    children: [
-                      for (final mode in const {
-                        'unpaid': 'ჯერ არ გადამიხდია',
-                        'full': 'სრულად გადავიხადე',
-                        'partial': 'ნაწილობრივ გადავიხადე',
-                      }.entries)
-                        ListTile(
-                          key: Key('receiving-payment-${mode.key}'),
-                          selected: _paymentMode == mode.key,
-                          selectedColor: AdminTheme.primary,
-                          contentPadding: EdgeInsets.zero,
-                          leading: Icon(
-                            _paymentMode == mode.key
-                                ? Icons.radio_button_checked
-                                : Icons.radio_button_off,
-                          ),
-                          title: Text(mode.value),
-                          onTap: _saving || _attempted
-                              ? null
-                              : () => setState(() => _paymentMode = mode.key),
-                        ),
-                    ],
-                  ),
-                  if (_paymentMode == 'partial') ...[
-                    const SizedBox(height: 16),
-                    TextField(
-                      key: const Key('receiving-paid-now'),
-                      controller: _paidNow,
-                      enabled: !_attempted,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      onChanged: (_) => setState(() {}),
-                      decoration: _adminInput('ახლა გადავიხადე ₾'),
-                    ),
-                    const SizedBox(height: 8),
-                    Text('დარჩა: ${_remainingPreview()} ₾'),
-                  ],
-                  if (_paymentMode != 'unpaid') ...[
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      initialValue: _paymentMethod,
-                      decoration: _adminInput('როგორ გადაიხადეთ?'),
+                      decoration: _adminInput('მომწოდებელი / წყარო'),
                       items: const [
-                        DropdownMenuItem(value: 'cash', child: Text('ნაღდი')),
-                        DropdownMenuItem(value: 'bank', child: Text('ბანკი')),
+                        DropdownMenuItem(
+                          value: 'SUPPLIER',
+                          child: Text('მომწოდებელი'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'SELF_PURCHASE',
+                          child: Text('ჩემით / ბაზრიდან'),
+                        ),
                       ],
-                      onChanged: _attempted
+                      onChanged: _saving || _attempted
                           ? null
-                          : (v) => setState(() => _paymentMethod = v!),
+                          : (v) => setState(() => _sourceType = v!),
                     ),
-                    const SizedBox(height: 8),
-                    Text('გადახდის თარიღი: $_paymentDate'),
-                  ],
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _dueDate,
-                    decoration: _adminInput(
-                      'გადახდის ვადა',
-                    ).copyWith(helperText: 'არასავალდებულო · YYYY-MM-DD'),
-                  ),
-                  const SizedBox(height: 16),
-                  _confirmationSummary(),
-                  if (_error != null) ...[
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
+                    if (_sourceType == 'SELF_PURCHASE')
+                      TextField(
+                        key: const Key('receiving-source-label'),
+                        controller: _sourceLabel,
+                        enabled: !_attempted,
+                        decoration: _adminInput('საიდან? (არასავალდებულო)'),
+                      ),
+                    if (_sourceType == 'SUPPLIER')
+                      DropdownButtonFormField<String>(
+                        key: const Key('receiving-supplier'),
+                        initialValue: _supplierId.isEmpty ? null : _supplierId,
+                        isExpanded: true,
+                        dropdownColor: AdminTheme.surfaceElevated,
+                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                          color: AdminTheme.text,
+                        ),
+                        decoration: _adminInput('ვისგან / საიდან?'),
+                        items: [
+                          for (final supplier in widget.suppliers)
+                            DropdownMenuItem(
+                              value: supplier.id,
+                              child: Text(
+                                supplier.name,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                        ],
+                        onChanged: _saving
+                            ? null
+                            : (value) => setState(() {
+                                _supplierId = value ?? _supplierId;
+                              }),
+                      ),
+                    const SizedBox(height: 10),
+                    ExpansionTile(
+                      key: const PageStorageKey(
+                        'inventory-receiving-document-details',
+                      ),
+                      tilePadding: EdgeInsets.zero,
+                      title: const Text('თარიღი და დოკუმენტის დეტალები'),
+                      children: [
+                        _InventoryExpansionContents(
+                          children: [
+                            OutlinedButton.icon(
+                              key: const Key('receiving-business-date'),
+                              icon: const Icon(Icons.today),
+                              label: Text(
+                                _businessDate == null
+                                    ? 'აირჩიეთ სამუშაო დღე'
+                                    : 'სამუშაო დღე: ${_isoDate(_businessDate!)}',
+                              ),
+                              onPressed: _saving
+                                  ? null
+                                  : () async {
+                                      final selected = await showDatePicker(
+                                        context: context,
+                                        builder: (context, child) => Theme(
+                                          data: inventoryTheme(context),
+                                          child: child!,
+                                        ),
+                                        initialDate:
+                                            _businessDate ?? DateTime.now(),
+                                        firstDate: DateTime(2020),
+                                        lastDate: DateTime.now().add(
+                                          const Duration(days: 366),
+                                        ),
+                                      );
+                                      if (selected != null)
+                                        setState(
+                                          () => _businessDate = selected,
+                                        );
+                                    },
+                            ),
+                            const SizedBox(height: 10),
+                            OutlinedButton.icon(
+                              key: const Key('receiving-date'),
+                              onPressed: _saving ? null : _pickDate,
+                              icon: const Icon(Icons.event_rounded, size: 18),
+                              label: Text(
+                                'დოკუმენტის თარიღი: ${_isoDate(_documentDate)}',
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AdminTheme.text,
+                                side: BorderSide(color: AdminTheme.border),
+                                minimumSize: const Size(0, 52),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            _dialogField(
+                              _waybill,
+                              'ზედნადების ნომერი',
+                              key: const Key('receiving-waybill'),
+                            ),
+                            _dialogField(_invoice, 'ინვოისის ნომერი'),
+                            _dialogField(_notes, 'შენიშვნა', maxLines: 2),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 24),
+                    Text(
+                      'რას ვიღებთ დღეს?',
+                      style: TextStyle(
+                        color: AdminTheme.text,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    for (var index = 0; index < _lines.length; index++)
+                      _lineEditor(index),
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: Text(
-                        _error!,
-                        style: TextStyle(color: AdminTheme.bad, fontSize: 12),
+                      child: TextButton.icon(
+                        key: const Key('receiving-add-line'),
+                        onPressed: _saving
+                            ? null
+                            : () async {
+                                final blank = _lines.indexWhere(
+                                  (line) => line.stockItem == null,
+                                );
+                                if (blank >= 0) {
+                                  await _pickLineProduct(blank);
+                                } else {
+                                  setState(_addLine);
+                                  final selected = await _pickLineProduct(
+                                    _lines.length - 1,
+                                  );
+                                  if (!selected && mounted)
+                                    setState(
+                                      () => _lines.removeLast().dispose(),
+                                    );
+                                }
+                              },
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: const Text('საქონლის დამატება'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AdminTheme.primary,
+                        ),
                       ),
                     ),
+                    const Divider(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'ჯამი',
+                            style: TextStyle(
+                              color: AdminTheme.textMuted,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '${_documentTotal.toStringAsFixed(2)} ₾',
+                          key: const Key('receiving-editor-total'),
+                          style: TextStyle(
+                            color: AdminTheme.text,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else ...[
+                    Text(
+                      'გადახდა',
+                      style: TextStyle(
+                        color: AdminTheme.text,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Column(
+                      key: const Key('receiving-payment-mode'),
+                      children: [
+                        for (final mode in const {
+                          'unpaid': 'ჯერ არ გადამიხდია',
+                          'full': 'სრულად გადავიხადე',
+                          'partial': 'ნაწილობრივ გადავიხადე',
+                        }.entries)
+                          ListTile(
+                            key: Key('receiving-payment-${mode.key}'),
+                            selected: _paymentMode == mode.key,
+                            selectedColor: AdminTheme.primary,
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(
+                              _paymentMode == mode.key
+                                  ? Icons.radio_button_checked
+                                  : Icons.radio_button_off,
+                            ),
+                            title: Text(mode.value),
+                            onTap: _saving || _attempted
+                                ? null
+                                : () => setState(() => _paymentMode = mode.key),
+                          ),
+                      ],
+                    ),
+                    if (_paymentMode == 'partial') ...[
+                      const SizedBox(height: 16),
+                      TextField(
+                        key: const Key('receiving-paid-now'),
+                        controller: _paidNow,
+                        enabled: !_attempted,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        onChanged: (_) => setState(() {}),
+                        decoration: _adminInput('ახლა გადავიხადე ₾'),
+                      ),
+                      const SizedBox(height: 8),
+                      Text('დარჩა: ${_remainingPreview()} ₾'),
+                    ],
+                    if (_paymentMode != 'unpaid') ...[
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        initialValue: _paymentMethod,
+                        decoration: _adminInput('როგორ გადაიხადეთ?'),
+                        items: const [
+                          DropdownMenuItem(value: 'cash', child: Text('ნაღდი')),
+                          DropdownMenuItem(value: 'bank', child: Text('ბანკი')),
+                        ],
+                        onChanged: _attempted
+                            ? null
+                            : (v) => setState(() => _paymentMethod = v!),
+                      ),
+                      const SizedBox(height: 8),
+                      Text('გადახდის თარიღი: $_paymentDate'),
+                    ],
+                    const SizedBox(height: 16),
+                    if (_paymentMode != 'full')
+                      TextField(
+                        key: const Key('receiving-due-date'),
+                        controller: _dueDate,
+                        readOnly: true,
+                        decoration:
+                            _adminInput(
+                              'გადახდის ვადა (არასავალდებულო)',
+                            ).copyWith(
+                              prefixIcon: const Icon(Icons.event_outlined),
+                              suffixIcon: _dueDate.text.isEmpty
+                                  ? null
+                                  : IconButton(
+                                      tooltip: 'ვადის წაშლა',
+                                      onPressed: () => setState(_dueDate.clear),
+                                      icon: const Icon(Icons.close),
+                                    ),
+                            ),
+                        onTap: () async {
+                          final date = await showDatePicker(
+                            context: context,
+                            builder: (context, child) => Theme(
+                              data: inventoryTheme(context),
+                              child: child!,
+                            ),
+                            initialDate:
+                                DateTime.tryParse(_dueDate.text) ??
+                                DateTime.now(),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime.now().add(
+                              const Duration(days: 3650),
+                            ),
+                          );
+                          if (date != null && mounted)
+                            setState(() => _dueDate.text = _isoDate(date));
+                        },
+                      ),
+                    const SizedBox(height: 16),
+                    _confirmationSummary(),
                   ],
                 ],
               ),
@@ -1230,15 +1268,30 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (_error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      _error!,
+                      key: const Key('receiving-error'),
+                      style: TextStyle(color: AdminTheme.bad),
+                    ),
+                  ),
                 FilledButton(
-                  key: const Key('receiving-save'),
-                  onPressed: _saving ? null : () => _save(post: true),
+                  key: Key(_reviewing ? 'receiving-save' : 'receiving-next'),
+                  onPressed: _saving
+                      ? null
+                      : () => _reviewing
+                            ? _save(post: true)
+                            : _save(reviewOnly: true),
                   child: Text(
                     _saving
                         ? 'ინახება…'
                         : _posted
                         ? 'გადახდის ჩაწერის გამეორება'
-                        : 'მიღების დადასტურება',
+                        : _reviewing
+                        ? 'მიღების დადასტურება'
+                        : 'შემდეგი · გადახდა',
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -1247,6 +1300,21 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
                   alignment: WrapAlignment.end,
                   spacing: 8,
                   children: [
+                    if (_reviewing && !_attempted)
+                      TextButton(
+                        key: const Key('receiving-back'),
+                        onPressed: _saving
+                            ? null
+                            : () {
+                                setState(() {
+                                  _reviewing = false;
+                                  _error = null;
+                                });
+                                if (_formScroll.hasClients)
+                                  _formScroll.jumpTo(0);
+                              },
+                        child: const Text('საქონლის შეცვლა'),
+                      ),
                     TextButton(
                       onPressed: _saving
                           ? null
@@ -1292,24 +1360,7 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
                   ),
                   icon: const Icon(Icons.search),
                   label: Text(line.stockItem?.name ?? 'საქონლის არჩევა'),
-                  onPressed: _saving
-                      ? null
-                      : () async {
-                          final item = await showDialog<StockItem>(
-                            context: context,
-                            builder: (_) => InventoryIngredientPicker(
-                              title: 'რას ვიღებთ?',
-                              items: _prioritizedItems,
-                            ),
-                          );
-                          if (item != null && mounted)
-                            setState(() {
-                              line.stockItem = item;
-                              line.unit =
-                                  item.purchaseUnits.firstOrNull?.unit ??
-                                  item.baseUnit;
-                            });
-                        },
+                  onPressed: _saving ? null : () => _pickLineProduct(index),
                 ),
               ),
               IconButton(
@@ -1496,11 +1547,6 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
           ),
           const SizedBox(height: 8),
           Text('დავალიანება: ${_remainingPreview()} ₾'),
-          const SizedBox(height: 12),
-          Text(
-            'მონახაზი: მარაგში ჯერ არ დამატებულა',
-            style: TextStyle(color: AdminTheme.textMuted),
-          ),
         ],
       ),
     ),
@@ -1509,6 +1555,8 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
+      builder: (context, child) =>
+          Theme(data: inventoryTheme(context), child: child!),
       initialDate: _documentDate,
       firstDate: DateTime(2020),
       lastDate: DateTime.now().add(const Duration(days: 1)),
@@ -1539,7 +1587,7 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
     }
   }
 
-  Future<void> _save({bool post = false}) async {
+  Future<void> _save({bool post = false, bool reviewOnly = false}) async {
     if (_businessDate == null) {
       setState(() => _error = 'აირჩიეთ რესტორნის სამუშაო დღე');
       return;
@@ -1607,6 +1655,15 @@ class _ReceivingEditorDialogState extends State<ReceivingEditorDialog> {
     }
     if (payload.isEmpty) {
       setState(() => _error = 'შეიყვანეთ მიღებული საქონელი');
+      return;
+    }
+    if (reviewOnly) {
+      FocusScope.of(context).unfocus();
+      setState(() {
+        _reviewing = true;
+        _error = null;
+      });
+      if (_formScroll.hasClients) _formScroll.jumpTo(0);
       return;
     }
     setState(() {

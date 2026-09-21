@@ -124,15 +124,21 @@ describeDatabase('Venue product entitlements (PostgreSQL)', () => {
   });
 
   const managerModules = Object.values(FeatureKeys).filter(
-    (key) => ![POS, WEBSITE, MANAGER_APP].includes(key as any),
+    (key) =>
+      ![POS, WEBSITE, MANAGER_APP, FeatureKeys.NON_FISCAL_CLOSE].includes(
+        key as any,
+      ),
   );
-  const bundled = (...keys: string[]) => [...managerModules, ...keys].sort();
+  const bundled = (...keys: string[]) =>
+    [...managerModules, 'NON_FISCAL_CLOSE', ...keys].sort();
 
   it('represents every package the business sells', async () => {
     await expect(entitlements.effectiveFeatures(posOnly)).resolves.toEqual([
+      'NON_FISCAL_CLOSE',
       POS,
     ]);
     await expect(entitlements.effectiveFeatures(posWebsite)).resolves.toEqual([
+      'NON_FISCAL_CLOSE',
       POS,
       WEBSITE,
     ]);
@@ -141,6 +147,32 @@ describeDatabase('Venue product entitlements (PostgreSQL)', () => {
     );
     await expect(entitlements.effectiveFeatures(full)).resolves.toEqual(
       bundled(MANAGER_APP, POS, WEBSITE),
+    );
+  });
+
+  it('can disable non-fiscal closing and restore plan inheritance independently', async () => {
+    const feature = await featureId(FeatureKeys.NON_FISCAL_CLOSE);
+    expect(await entitlements.effectiveFeatures(posOnly)).toContain(
+      FeatureKeys.NON_FISCAL_CLOSE,
+    );
+    await prisma.venueFeatureOverride.create({
+      data: {
+        venueId: posOnly,
+        featureId: feature,
+        effect: FeatureOverrideEffect.DISABLED,
+      },
+    });
+    expect(await entitlements.effectiveFeatures(posOnly)).not.toContain(
+      FeatureKeys.NON_FISCAL_CLOSE,
+    );
+    expect(await entitlements.effectiveFeatures(otherOrgVenue)).toContain(
+      FeatureKeys.NON_FISCAL_CLOSE,
+    );
+    await prisma.venueFeatureOverride.deleteMany({
+      where: { venueId: posOnly, featureId: feature },
+    });
+    expect(await entitlements.effectiveFeatures(posOnly)).toContain(
+      FeatureKeys.NON_FISCAL_CLOSE,
     );
   });
 
@@ -156,8 +188,8 @@ describeDatabase('Venue product entitlements (PostgreSQL)', () => {
       entitlements.effectiveFeatures(otherOrgVenue),
     ]);
 
-    expect(a).toEqual([POS]);
-    expect(b).toEqual([POS]);
+    expect(a).toEqual(['NON_FISCAL_CLOSE', POS]);
+    expect(b).toEqual(['NON_FISCAL_CLOSE', POS]);
 
     await prisma.venueFeatureOverride.create({
       data: {
@@ -170,8 +202,9 @@ describeDatabase('Venue product entitlements (PostgreSQL)', () => {
 
     await expect(
       entitlements.effectiveFeatures(otherOrgVenue),
-    ).resolves.toEqual([POS, WEBSITE]);
+    ).resolves.toEqual(['NON_FISCAL_CLOSE', POS, WEBSITE]);
     await expect(entitlements.effectiveFeatures(posOnly)).resolves.toEqual([
+      'NON_FISCAL_CLOSE',
       POS,
     ]);
   });
@@ -184,8 +217,8 @@ describeDatabase('Venue product entitlements (PostgreSQL)', () => {
     );
 
     expect(packages).toEqual([
-      [POS],
-      [POS, WEBSITE],
+      ['NON_FISCAL_CLOSE', POS],
+      ['NON_FISCAL_CLOSE', POS, WEBSITE],
       bundled(MANAGER_APP, POS),
       bundled(MANAGER_APP, POS, WEBSITE),
     ]);
@@ -206,6 +239,7 @@ describeDatabase('Venue product entitlements (PostgreSQL)', () => {
 
     await expect(entitlements.effectiveFeatures(posOnly)).resolves.toEqual([
       MANAGER_APP,
+      'NON_FISCAL_CLOSE',
       POS,
     ]);
   });

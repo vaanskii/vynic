@@ -23,6 +23,16 @@ def prepare(product, destination):
     p=destination/'windows/CMakeLists.txt';s=p.read_text();s=s.replace('set(BINARY_NAME "vynic_manager")',f'set(BINARY_NAME "{binary}")');p.write_text(s)
     for relative in ['windows/runner/main.cpp','windows/runner/Runner.rc']:
         p=destination/relative;s=p.read_text().replace('Vynic Manager',label).replace('vynic_manager',binary).replace('ge.vynic.manager',identity);p.write_text(s)
+    if product=='pos':
+        p=destination/'windows/runner/Runner.rc'
+        p.write_text(p.read_text().replace('"vanski"','"Vynic"').replace('2025 vanski.','2025 Vynic.'))
+    p=destination/'macos/Runner/Configs/AppInfo.xcconfig'
+    p.write_text(p.read_text().replace('Vynic Manager',label).replace('ge.vynic.manager',identity))
+    # Checked-in icon slots are Vynic POS; manager takes its own mark from branding/manager.
+    if product=='manager':
+        overlay=source/'branding/manager'
+        for icon in overlay.rglob('*'):
+            if icon.is_file(): shutil.copyfile(icon,destination/icon.relative_to(overlay))
     (destination/'product-identity.json').write_text(json.dumps({'product':label,'windowsApplicationId':identity,'binary':binary,'entrypoint':f'main_{product}.dart'},indent=2))
     return destination
 

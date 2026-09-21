@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:vynic/core/models/feature_keys.dart';
 import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/models/inventory.dart';
@@ -9,8 +10,18 @@ import 'package:vynic/core/models/inventory.dart';
 /// need Cloud and no local code mints or edits business identities.
 abstract final class InventoryRepository {
   static const String catalogKey = 'catalog';
+  static final featureRevision = ValueNotifier<int>(0);
+  static Future<void> applyRuntimeFeatures(List<String> features) async {
+    final old = DatabaseCore.settingsBox?.get('runtimeFeatures');
+    if (old is List && setEquals(old.toSet(), features.toSet())) return;
+    await DatabaseCore.settingsBox!.put('runtimeFeatures', features);
+    featureRevision.value++;
+  }
+
   static bool hasFeature(String feature) {
-    final features = _catalog()['features'];
+    final features =
+        DatabaseCore.settingsBox?.get('runtimeFeatures') ??
+        _catalog()['features'];
     return features is! List || features.contains(feature);
   }
 
@@ -87,6 +98,7 @@ abstract final class InventoryRepository {
         'inspection': Map<String, dynamic>.from(catalog['inspection'] as Map),
     };
     await DatabaseCore.inventoryBox!.put(catalogKey, normalized);
+    featureRevision.value++;
   }
 
   static Map<String, dynamic> exportCatalog() =>

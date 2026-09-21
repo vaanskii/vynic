@@ -25,7 +25,7 @@ input. Numeric standalone prompts likewise display their own value.
 
 | Path | Input behavior |
 | --- | --- |
-| Login and Lock | Shared PIN pad always visible; masked live digits; explicit Sign in/Enter |
+| Login and Lock | Shared PIN pad always visible; masked live digits; Login uses Sign in/Enter, Lock automatically unlocks on a matching PIN |
 | Staff create/change and admin verification | Same authentication pad; masked draft; Save/Confirm or Enter, retaining existing validation |
 | Reservations | Shared controller fields for name, phone, guests and notes; time selector uses shared numeric pad |
 | Menu editing/search and prices | Shared fields with live callbacks; existing slug/price formatters retained |
@@ -57,7 +57,7 @@ screen-local language flag.
 ## Layout and shutdown
 
 Login and Lock share a right-aligned business date/clock. Home uses a neutral
-work-date badge and a second row at compact widths instead of hiding the date.
+work-date badge beside the clock, including compact widths.
 Quit is a rounded Vynic dialog with cancellation and a destructive primary action.
 It calls the existing `PosQuit.prepare` coordinator without changing readiness,
 Hive flushing, service shutdown, Edge ownership or update recovery.

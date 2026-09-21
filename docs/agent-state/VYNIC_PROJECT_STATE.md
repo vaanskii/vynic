@@ -44,10 +44,20 @@ current transport status.
 
 ## Current Phase
 
+- Local POS releases have a one-command Mac publisher:
+  `apps/edge/tool/publish-local-pos.sh`. It uses the existing Parallels Windows VM,
+  detects the active registered LAN, builds real Windows POS, transfers/validates
+  its ZIP, signs and verifies the development feeds. Pending builds retry without
+  another version increment; unchanged published source is reused. Publication
+  rejects changed binaries under an issued version and rejects backward feeds. Signing keys
+  remain on Mac; publication never installs POS or replaces Edge. See
+  `docs/LOCAL_WINDOWS_RELEASE_TEST.md`.
+
 - POS touch input shares TEXT/NUMBER/DECIMAL/PIN modes, controller-backed fields,
   one text keyboard and one numeric/PIN pad. Login, lock and Staff authentication
   pads remain available when the optional operational keyboard is off. PIN digits
-  update masked displays immediately; submission is explicit by action/Enter.
+  update masked displays immediately; Lock unlocks automatically on a matching PIN,
+  while Login and Staff submit by action/Enter.
   Reservations, Menu, Packages, settings and Inventory search edit their actual
   controllers live; keyboard docks keep the focused field visible. Standalone
   prompts own one visible input, while form keyboards have no second text box.
@@ -59,32 +69,69 @@ current transport status.
   discarding drafts. Menu's language action uses the same persisted setting.
   Quit uses a responsive Vynic modal and the existing safe shutdown coordinator.
   Login/lock date and time sit at the right edge; Home keeps a neutral work-date
-  indicator visible at compact/fullscreen widths. Regression proof:
+  indicator beside the clock at compact/fullscreen widths. Regression proof:
   `test/widget/pos_interaction_pass_test.dart` under `apps/operations/`.
 
-
 - Windows POS uses native borderless fullscreen with monitor/DPI refitting;
-  Manager keeps its normal window. Settings and Alt+F4 share confirmed clean Quit:
+  Manager keeps its normal window. Login, About, the POS tray menu and Alt+F4
+  share confirmed clean Quit:
   the existing readiness barrier excludes active transactions/startup probation,
   POS workers stop and local journals/Hive flush before only POS exits. Durable
   open Orders/Tables and Cloud backlog remain recoverable and do not block Quit.
-  Next POS publication is 1.0.5 / signed release 6; see
+  Home opens მართვის ცენტრი; restaurant settings and About are distinct. About
+  is horizontally centered with responsive terminal details. Version labels prefer
+  the running POS launch identity over transient Edge state; the last rollback
+  remains visible across background checks. About shows release/download state
+  and distinguishes feed/Edge connectivity failures
+  from installation failures. Update readiness names active blockers and clears
+  completed blockers; data preparation/install/restart have distinct indicators.
+  Cloud claim/ack network waits do not own mutation admission; command execution
+  and journal completion do, with a freeze recheck after claim. Local release profiles trust both 10.10.10.3 and
+  172.20.10.2; changing networks does not rewrite installed endpoints.
+  Local POS publication is 1.0.8 / signed release 9, including shared input controls;
+  the one-command Windows build and signed HTTPS verification passed. Installation remains explicit. See
   `docs/WINDOWS_POS_FULLSCREEN_QUIT.md`.
 
 - Windows POS has an opt-in Go Edge updater: signed Ed25519 release manifests,
-  silent verified ZIP staging, explicit Georgian Update Now/Later and Settings,
+  silent verified ZIP staging, explicit Georgian Update Now/Later in About,
   one readiness/admission barrier, startup health and binary-only rollback.
   Durable open Orders/Tables and Cloud outboxes do not block; uncertain intents,
   projection recovery and in-flight payment/close/write operations do. Manager,
   Phase 0 fencing and Phase 2A production authority remain unchanged. macOS
   simulations pass. `VynicSetup.exe` provisions a per-user Windows host from
-  signed Edge/POS bundles, with restricted ACLs, local-only Edge host startup,
-  updater-aware shortcuts and data-preserving repair/uninstall. POS binaries use
+  signed Edge/POS bundles, with native Win32 UI/Shell Link integration (no runtime
+  PowerShell), a per-user destination wizard and explicit Update POS entry point
+  with download-first monitoring, byte/percentage progress and required recovery
+  stage/elapsed reporting,
+  restricted ACLs, local-only Edge host startup,
+  updater-aware branded shortcuts and data-preserving repair/uninstall. Ordinary
+  POS launches show only POS, with health monitoring and error reporting retained. Uninstall
+  requires stopped processes but not successful update recovery; interrupted
+  journals are retained and removed installations offer Install of the current
+  signed POS while keeping Edge pinned. POS resolves its pinned Hive data directory
+  before database startup, independent of Windows publisher metadata; failed
+  health failures are visible and bounded. Go monitors startup stabilization in
+  the background while POS shows login; login/enrollment admission waits for its
+  verified result. Windows login shows the installed POS version and a responsive,
+  right-aligned work date; its Program Update action is removed. Updates remain
+  in About and the first-run screen, including percentage/MB download progress.
+  A real Windows VM startup proof reopens
+  an isolated legacy Hive copy through the authenticated health handshake.
+  The Go source now skips repeated stabilization for an already verified ordinary
+  launch, while requiring a fresh authenticated data-ready heartbeat; install,
+  repair and rollback still stabilize. The explicitly approved Windows lab
+  upgrade now pins Edge 1.0.1 / bootstrap 3; POS remains 1.0.7 / release 8.
+  A fresh Windows launch reached verified health in under one second (previously
+  30 seconds), with restaurant data, Edge identity and POS binary verified unchanged.
+  This was manual local maintenance, not an Edge self-update feature. POS binaries use
   bounded `current/staging/rollback` slots: 30-second authenticated stabilization
   precedes permanent rollback/temp cleanup; cleanup crashes retry deletion only.
   Signed bootstrap metadata requires a layout-2-capable Edge; repair never changes
-  its pinned baseline. Deferred updates stay staged. Real signing/feed
-  publication and Windows qualification remain required. See
+  its pinned baseline. Deferred updates stay staged. Authenticode-ready PE
+  metadata/signing tools exist; production signing and
+  Windows qualification remain required. A reported Defender Bearfoos.A!ml
+  detection remains unclassified pending exact-hash Windows/Microsoft analysis;
+  see `docs/WINDOWS_DEFENDER_REVIEW.md`. See
   `docs/POS_WINDOWS_UPDATER.md` and `docs/WINDOWS_SETUP.md`.
 
 - Edge Phase 2A adds SHADOW Order/Table revisions, request idempotency, a durable
@@ -123,6 +170,10 @@ current transport status.
   Logout retains selection; restaurant switching clears session/cache/selection.
   Production login/settings hide API controls. Platform and owner Manager setup
   display/copy the existing immutable code. See `docs/MANAGER_SAAS_PHASE1.md`.
+  Platform Manager access shows pending delivery to the selected Primary POS,
+  its last-seen status and a device-selection link; enrollment does not replace
+  Primary automatically. Access/enrollment/device mutations show busy feedback
+  and prevent repeated submission while pending.
 
 - Organization/Venue foundation and Venue-scoped operational data are
   implemented (Steps 4A and 4B1).
@@ -173,7 +224,7 @@ current transport status.
   Admin exposes read-only stock, recent movements/receipts, recipe status and
   unmapped sold products from catalog v5. See `docs/INVENTORY_STEP46.md`.
 
-- Inventory procurement rework is implemented: supplier-first creation supports
+- Inventory procurement rework is implemented: stock creation supports
   existing Menu goods, ingredients and bulk beverages, retaining StockItem and
   generalized recipes. Receiving has explicit Post/Draft actions, exact price or
   line-value entry, and retry identities. SupplierPayment is append-only with
@@ -183,15 +234,28 @@ current transport status.
   values under item locks, in Cloud acceptance order. Historical values are
   explicitly reconstructed; negative/unknown bases are provisional. Manager
   and read-only POS inspection show current values; checkout is unchanged.
-  Manager Inventory now opens a daily dashboard with secondary supplier/Menu
-  management. Receiving includes payment choices and supports self-purchase
+  Manager Inventory is a main destination beside Financials with a Dashboard entry;
+  it is removed from Management. Its home prioritizes new receiving, daily work
+  and secondary supplier/Menu catalog maintenance. Receiving includes payment choices and supports self-purchase
   source snapshots without fake Suppliers. Dish/drink composition reuses the
-  existing recipe engine; inline ingredient creation has retry identity. Supplier
-  cards open goods creation directly; Menu selection has category/subcategory/search
-  browsing. Supplied ingredients can open a dish composition with existing components
-  preserved. Receiving shows explicit unit/package/total price choices and a stock /
-  payment / debt confirmation summary. Supplier detail records payments directly;
-  the stock catalog shows current moving cost and active Menu usage counts.
+  existing recipe engine. Inventory uses a grouped home and section menu for
+  receipts/stock/supplier/composition/payments. Main and Management tab reactivation
+  resets vertical scroll. The shell reserves bottom navigation height, so the final
+  composition product/variant remains tappable. Receiving requires explicit goods
+  selection and creates missing stock/packaging inline with retry identity. Goods
+  entry and payment/review are separate steps; advancing writes nothing and going
+  back preserves inputs. Creating a supplier opens its detail with a searchable
+  assortment: existing stock can be linked or created inline, and links can be
+  removed without stock/receipt effects. Failed linking retries the same stock
+  identity. Assortment goods are prioritized when receiving from that supplier.
+  Detail keeps receipts and filtered payments; Menu setup and dish shortcuts
+  remain separate. Composition and Menu selection
+  share category/subcategory/variant browsing; incomplete variants remain in the
+  unfinished filter. Stock supports confirmed archive
+  and same-identity restore with history retained. Payments/debt have supplier,
+  date and status filters; payment dates are distinct from receipt dates, and
+  cancelled receipt payment/reversal history remains visible. Moving cost and
+  active Menu usage remain on stock cards.
   See `docs/INVENTORY_PROCUREMENT_REWORK.md` and `docs/INVENTORY_DAILY_UX.md`.
 
 - Financials Step 4.7 adds Venue/Staff compensation rules, frozen PayrollPeriod
@@ -447,6 +511,10 @@ current transport status.
   The restored Sale retains its tender detail but is excluded by the existing
   revenue predicate. A consumed advance is put back on the open Order and is
   applied to closure B only.
+- Table-based audit cleanup preserves non-terminal Orders even when their
+  opening table snapshot is reused after a move. Editing can repair old synthetic
+  cleanup locks only when no terminal audit event, Sale or closure intent exists;
+  the repair is recorded in the audit trail.
 - Restoring a table Order occupies its tables locally again. Takeaway restore
   has no physical-table dependency, Package fields remain on the existing
   Order, and a genuine linked Reservation moves from completed back to
@@ -528,13 +596,31 @@ current transport status.
   an active trial plan and enables it. Owners create their own restaurant,
   Manager access and POS enrollment; email remains explicitly unverified.
 - POS/Manager use fixed product entrypoints and isolated native build metadata.
-  Manager supports Windows/macOS/Android/iOS; POS is Windows only. New builds
+  Manager supports Windows/macOS/Android/iOS; POS production is Windows only,
+  with macOS debug development via `tool/dev.zsh` shortcuts. New builds
   use VYNIC_ENV/VYNIC_API_URL, ship no .env and read no shared POS sync key.
   Manager never initializes POS persistence/printing/ingest/sync.
+  POS setup requires only a name and remains unfinished across restart/Staff
+  delivery; missing identity/logo/menu never triggers Vankisi defaults.
 - Device printer config is Cloud-authored, Device-authenticated pull and durable
   local cache. The owner portal configures printers without a developer token.
+  Device names/features refresh every 10 seconds without restart; local menu
+  changes refresh the open menu. NON_FISCAL_CLOSE adds a cached capability gate
+  alongside Staff permissions, with existing POS plans preserving prior access.
   First successful full sync records Device.firstSyncAt for onboarding readiness.
   See `docs/SAAS_BUILD_RUNTIME_ONBOARDING.md` for commands, rollout and limits.
+- Venue profile shares restaurant name, optional branch name/address/phone/legal ID
+  through authenticated Owner, Manager and Device routes. POS retains the profile
+  offline, queues Venue-bound local edits, and refreshes idle identity UI on pull;
+  an unrelated Venue backup cannot submit its pending profile. Existing local
+  identity remains until a Cloud profile is explicitly configured. Logo/layout stay
+  optional local receipt settings. Profile writes are atomically audited.
+- NON_FISCAL_CLOSE also controls POS/Manager sales, report and dashboard
+  presentation, including POS close-day non-fiscal summaries. Historical records,
+  advances, cancellation evidence, audit and financial ledger rules remain intact.
+  Platform explains dependencies before changes without altering override precedence;
+  profitability is described as current cost/valuation and Website as access to a
+  separately configured site, not automatic SaaS site provisioning.
 - Venue Policy is documented in `docs/VENUE_POLICY_PLAN.md` but not implemented.
   Current operational switches/settings remain local to the POS.
 - Custom restaurant roles/permissions, SaaS billing, and per-Venue
@@ -572,6 +658,9 @@ current transport status.
   Revoking all Devices does not restore that fallback. Local secondary Hive
   operation is not remotely disabled: stop the old POS and restore/verify the
   replacement before switching. This is Cloud containment, not replication.
+- POS/Manager show transient connection-loss and recovery feedback, without
+  persistent connection/sync badges. Routine sync/retries stay silent; developer
+  connection diagnostics remain available.
 - Inventory administrative configuration is Cloud-authoritative. An enrolled
   POS pulls a complete Device -> Venue catalog through
   `GET /edge/inventory/catalog` into one atomically replaced Hive value at
@@ -743,6 +832,8 @@ current transport status.
   `20260923120000_edge_foundation`.
 - Immediately preceding state migrations:
   `20260922120000_operational_primary`,
+  `20260921120000_venue_profile`,
+  `20260920120000_non_fiscal_close_feature`,
   `20260919120000_customer_onboarding_runtime`,
   `20260918120000_saas_phase2_control_plane`,
   `20260917120000_receiving_self_purchase`,

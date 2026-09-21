@@ -1,3 +1,4 @@
+import { profileSelect } from '../venue-profile/venue-profile';
 import { FeatureKeys } from '../entitlements/feature-keys';
 import {
   Body,
@@ -57,6 +58,13 @@ export class CustomerController {
   ) {
     await this.service.venue(actor, id);
     return this.service.status(id);
+  }
+  @Put('venues/:venueId/profile') profile(
+    @CustomerActor() actor: CustomerPrincipal,
+    @Param('venueId') id: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.service.profile(actor, id, body);
   }
   @Post('venues/:venueId/managers') manager(
     @CustomerActor() actor: CustomerPrincipal,
@@ -229,7 +237,7 @@ export class DeviceRuntimeConfigController {
       where: { id: actor.deviceId, venueId: actor.venueId },
       include: {
         venue: {
-          select: { id: true, name: true, timezone: true, currency: true },
+          select: { ...profileSelect, timezone: true, currency: true },
         },
       },
     });
@@ -237,7 +245,11 @@ export class DeviceRuntimeConfigController {
       version: 1,
       venue: device.venue,
       features: await this.entitlements.effectiveFeatures(actor.venueId),
-      device: { id: device.id, runtimeConfig: device.runtimeConfig },
+      device: {
+        id: device.id,
+        displayName: device.displayName,
+        runtimeConfig: device.runtimeConfig,
+      },
     };
   }
 }

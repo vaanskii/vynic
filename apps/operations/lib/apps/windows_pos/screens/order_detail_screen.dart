@@ -1,4 +1,7 @@
+import 'package:vynic/core/services/pos/pos_input_settings.dart';
 import 'package:vynic/core/services/pos/update/update_readiness.dart';
+import 'package:vynic/core/database/repositories/inventory_repository.dart';
+import 'package:vynic/core/models/feature_keys.dart';
 import 'dart:async';
 import 'dart:developer' as developer;
 
@@ -156,8 +159,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
+  void _onFeatureRefresh() {
+    if (mounted) setState(() {});
+  }
+
   bool _canNonFiscalCloseTable(Order order, String status) {
-    if (!widget.user.canCloseTablesNonFiscal) {
+    if (!widget.user.canCloseTablesNonFiscal ||
+        !InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose)) {
       return false;
     }
     if (_isFinalizedStatus(status)) {
@@ -427,6 +435,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   @override
   void initState() {
     super.initState();
+    InventoryRepository.featureRevision.addListener(_onFeatureRefresh);
     _mobileHighlightItemKeys = PosChangeHighlightService.takeForOrder(
       widget.orderId,
     );
@@ -438,6 +447,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   @override
   void dispose() {
+    InventoryRepository.featureRevision.removeListener(_onFeatureRefresh);
     _syncEventsSub?.cancel();
     PosLiveRefresh.generation.removeListener(_onExternalOrderChange);
     super.dispose();
@@ -968,7 +978,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     const SizedBox(height: 12),
                     TextField(
                       controller: controller,
-                      readOnly: true,
+                      readOnly: PosInputSettings.useOnScreen(context),
                       style: const TextStyle(
                         color: Color(0xFF0F172A),
                         fontSize: 26,
@@ -1207,7 +1217,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     const SizedBox(height: 12),
                     TextField(
                       controller: controller,
-                      readOnly: true,
+                      readOnly: PosInputSettings.useOnScreen(context),
                       style: const TextStyle(
                         color: Color(0xFF0F172A),
                         fontSize: 26,
@@ -2576,6 +2586,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   );
 
   Future<void> _startNonFiscalClosureFlowTracked() async {
+    if (!InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose)) {
+      unawaited(showErrorToast(context, 'არაფისკალური დახურვა გამორთულია'));
+      return;
+    }
     if (!widget.user.canCloseTablesNonFiscal) {
       unawaited(
         showErrorToast(context, 'არაფისკალური დახურვა მხოლოდ მენეჯერს შეუძლია'),
@@ -2727,6 +2741,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Future<void> _finalizeNonFiscalClosure(Order order) async {
+    if (!InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose)) {
+      unawaited(showErrorToast(context, 'არაფისკალური დახურვა გამორთულია'));
+      return;
+    }
     final saleItems = <OrderItem>[...order.packageItems, ...order.items];
     final subtotal = _calculateOrderSubtotal(order);
     final serviceFee = order.getServiceFee();

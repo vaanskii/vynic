@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/pos_input_settings.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -1459,10 +1460,12 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
                           padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
                           child: TextField(
                             controller: searchController,
-                            readOnly: true,
+                            readOnly: PosInputSettings.useOnScreen(context),
                             onTap: () {
                               setStateDialog(() {
-                                keyboardVisible = true;
+                                keyboardVisible = PosInputSettings.useOnScreen(
+                                  context,
+                                );
                               });
                             },
                             decoration: InputDecoration(
@@ -1705,7 +1708,8 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
                         ),
                       ],
                     ),
-                    if (keyboardVisible)
+                    if (keyboardVisible &&
+                        PosInputSettings.useOnScreen(context))
                       Positioned(
                         left: 16,
                         right: 16,

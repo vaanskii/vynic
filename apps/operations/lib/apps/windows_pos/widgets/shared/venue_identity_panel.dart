@@ -29,11 +29,15 @@ class VenueIdentityPanel extends StatefulWidget {
     required this.draft,
     this.showAddressAndPhone = true,
     this.showSaveButton = true,
+    this.showLogo = true,
   });
 
   final VenueIdentityDraft draft;
 
-  /// First-run setup asks only for the name and the logo; the rest can wait
+  /// Logo editing is optional and can wait until after first-run setup.
+  final bool showLogo;
+
+  /// First-run setup asks only for the name; the rest can wait
   /// until someone is sitting down with the paperwork.
   final bool showAddressAndPhone;
 
@@ -171,7 +175,21 @@ class _VenueIdentityPanelState extends State<VenueIdentityPanel> {
     try {
       await _draft.save();
       if (!mounted) return;
-      unawaited(showSuccessToast(context, 'შენახულია'));
+      unawaited(
+        showSuccessToast(
+          context,
+          'შენახულია მოწყობილობაზე. საერთო პროფილი კავშირისას განახლდება.',
+        ),
+      );
+    } catch (error) {
+      if (mounted)
+        unawaited(
+          showPosToast(
+            context: context,
+            message: 'შენახვა ვერ მოხერხდა: $error',
+            style: PosToastStyle.error,
+          ),
+        );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -209,6 +227,17 @@ class _VenueIdentityPanelState extends State<VenueIdentityPanel> {
         if (widget.showAddressAndPhone) ...[
           const SizedBox(height: 10),
           _VenueField(
+            label: 'ფილიალის სახელი',
+            value: _draft.branchName,
+            hint: 'არასავალდებულო',
+            onTap: () => _editText(
+              title: 'ფილიალის სახელი',
+              current: _draft.branchName,
+              apply: (value) => _draft.branchName = value,
+            ),
+          ),
+          const SizedBox(height: 10),
+          _VenueField(
             label: 'მისამართი',
             value: _draft.address,
             hint: 'არასავალდებულო',
@@ -241,32 +270,34 @@ class _VenueIdentityPanelState extends State<VenueIdentityPanel> {
             ),
           ),
         ],
-        const SizedBox(height: 16),
-        const PosSectionLabel('ჩეკის ლოგო'),
-        const SizedBox(height: 8),
-        _LogoTile(
-          logo: _draft.logo,
-          busy: _busy,
-          onPick: _pickLogo,
-          onRemove: _draft.logo == null ? null : () => _draft.setLogo(null),
-          onExport: _draft.logo == null ? null : _exportLogo,
-        ),
-        if (_draft.logo != null) ...[
-          const SizedBox(height: 10),
-          _ScaleSlider(
-            value: layout.clampedScale,
+        if (widget.showLogo) ...[
+          const SizedBox(height: 16),
+          const PosSectionLabel('ჩეკის ლოგო · არასავალდებულო'),
+          const SizedBox(height: 8),
+          _LogoTile(
             logo: _draft.logo,
-            onChanged: (value) =>
-                _draft.layout = layout.copyWith(logoScale: value),
+            busy: _busy,
+            onPick: _pickLogo,
+            onRemove: _draft.logo == null ? null : () => _draft.setLogo(null),
+            onExport: _draft.logo == null ? null : _exportLogo,
           ),
-        ],
-        if (_draft.sourceImage != null) ...[
-          const SizedBox(height: 10),
-          _ThresholdSlider(
-            value: _threshold,
-            onChanged: (value) => setState(() => _threshold = value),
-            onSettled: _retrace,
-          ),
+          if (_draft.logo != null) ...[
+            const SizedBox(height: 10),
+            _ScaleSlider(
+              value: layout.clampedScale,
+              logo: _draft.logo,
+              onChanged: (value) =>
+                  _draft.layout = layout.copyWith(logoScale: value),
+            ),
+          ],
+          if (_draft.sourceImage != null) ...[
+            const SizedBox(height: 10),
+            _ThresholdSlider(
+              value: _threshold,
+              onChanged: (value) => setState(() => _threshold = value),
+              onSettled: _retrace,
+            ),
+          ],
         ],
         if (widget.showAddressAndPhone) ...[
           const SizedBox(height: 18),
@@ -293,13 +324,14 @@ class _VenueIdentityPanelState extends State<VenueIdentityPanel> {
           ),
         ],
         const SizedBox(height: 14),
-        _HeaderPreview(
-          logo: _draft.logo,
-          layout: layout,
-          name: _draft.name,
-          address: widget.showAddressAndPhone ? _draft.address : '',
-          phone: widget.showAddressAndPhone ? _draft.phone : '',
-        ),
+        if (widget.showLogo)
+          _HeaderPreview(
+            logo: _draft.logo,
+            layout: layout,
+            name: _draft.name,
+            address: widget.showAddressAndPhone ? _draft.address : '',
+            phone: widget.showAddressAndPhone ? _draft.phone : '',
+          ),
         if (widget.showSaveButton) ...[
           const SizedBox(height: 16),
           Row(
@@ -340,7 +372,7 @@ class VenueIdentityCard extends StatefulWidget {
 }
 
 class _VenueIdentityCardState extends State<VenueIdentityCard> {
-  final VenueIdentityDraft _draft = VenueIdentityDraft();
+  final VenueIdentityDraft _draft = VenueIdentityDraft(watchProfile: true);
 
   @override
   void dispose() {

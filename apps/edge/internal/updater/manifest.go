@@ -160,12 +160,12 @@ func ExtractBundle(artifact, dest, executable string) error {
 	for _, f := range z.File {
 		name := strings.TrimSuffix(f.Name, "/")
 		lower := strings.ToLower(name)
-		if name == "" || strings.ContainsAny(name, `\:<>"|?*`) || strings.HasPrefix(name, "/") || seen[lower] || f.Mode()&os.ModeSymlink != 0 {
+		if name == "" || strings.ContainsAny(name, `\:<>"|?*`) || strings.ContainsFunc(name, func(r rune) bool { return r < 32 }) || strings.HasPrefix(name, "/") || seen[lower] || f.Mode()&os.ModeSymlink != 0 {
 			return errors.New("unsafe bundle path")
 		}
 		for _, part := range strings.Split(name, "/") {
 			base := strings.ToUpper(strings.Split(part, ".")[0])
-			if part == "." || part == ".." || strings.TrimRight(part, " .") != part || part == "" || regexp.MustCompile(`^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$`).MatchString(base) {
+			if part == "." || part == ".." || strings.TrimRight(part, " .") != part || part == "" || regexp.MustCompile(`^(CON|PRN|AUX|NUL|COM[1-9¹²³]|LPT[1-9¹²³])$`).MatchString(base) {
 				return errors.New("unsafe Windows bundle path")
 			}
 		}

@@ -1,3 +1,5 @@
+import 'package:vynic/core/models/sale_visibility.dart';
+import '../../widgets/venue_profile_card.dart';
 import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
 import 'package:vynic/core/models/inventory_decimal.dart';
 import 'package:uuid/uuid.dart';
@@ -33,6 +35,7 @@ part 'tabs/mobile_admin_activity_tab.dart';
 part 'tabs/mobile_admin_inventory_tab.dart';
 part 'tabs/mobile_admin_receiving.dart';
 part 'tabs/mobile_admin_procurement.dart';
+part 'tabs/mobile_admin_payables.dart';
 part 'tabs/mobile_admin_recipes.dart';
 part 'tabs/mobile_admin_settings_tab.dart';
 part 'shared/mobile_admin_shared_widgets.dart';
@@ -112,6 +115,7 @@ class MobileAdminScreen extends StatefulWidget {
 class _MobileAdminScreenState extends State<MobileAdminScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabs;
+  int _activeTab = 0;
   late final _visibleTabs = [
     for (final entry in MobileAdminScreen.adminTabs.indexed)
       if (entry.$1 != 3 || ManagerEntitlements.has(FeatureKeys.advancedAudit))
@@ -122,6 +126,9 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
   void initState() {
     super.initState();
     _tabs = TabController(length: _visibleTabs.length, vsync: this);
+    _tabs.addListener(() {
+      if (_activeTab != _tabs.index) setState(() => _activeTab = _tabs.index);
+    });
   }
 
   @override
@@ -221,13 +228,19 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
               child: TabBarView(
                 controller: _tabs,
                 children: [
-                  _ReportTab(),
-                  _SalesTab(),
-                  _AuditTab(),
-                  if (ManagerEntitlements.has(FeatureKeys.advancedAudit))
-                    _ActivityTab(),
-                  _UsersTab(currentUser: widget.user),
-                  _SettingsTab(user: widget.user, onLogout: widget.onLogout),
+                  for (final entry in <Widget>[
+                    _ReportTab(),
+                    _SalesTab(),
+                    _AuditTab(),
+                    if (ManagerEntitlements.has(FeatureKeys.advancedAudit))
+                      _ActivityTab(),
+                    _UsersTab(currentUser: widget.user),
+                    _SettingsTab(user: widget.user, onLogout: widget.onLogout),
+                  ].indexed)
+                    AdminTabViewport(
+                      active: _activeTab == entry.$1,
+                      child: entry.$2,
+                    ),
                 ],
               ),
             ),
@@ -236,4 +249,43 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
       ),
     );
   }
+}
+
+/// Preserve loaded tab state while returning every vertical viewport to its start.
+class AdminTabViewport extends StatefulWidget {
+  const AdminTabViewport({
+    super.key,
+    required this.active,
+    required this.child,
+  });
+  final bool active;
+  final Widget child;
+  @override
+  State<AdminTabViewport> createState() => _AdminTabViewportState();
+}
+
+class _AdminTabViewportState extends State<AdminTabViewport> {
+  @override
+  void didUpdateWidget(AdminTabViewport oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active && !oldWidget.active) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !widget.active) return;
+        void reset(Element element) {
+          if (element is StatefulElement && element.state is ScrollableState) {
+            final position = (element.state as ScrollableState).position;
+            if (axisDirectionToAxis(position.axisDirection) == Axis.vertical &&
+                position.hasContentDimensions)
+              position.jumpTo(position.minScrollExtent);
+          }
+          element.visitChildren(reset);
+        }
+
+        context.visitChildElements(reset);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

@@ -79,16 +79,21 @@ class _AdminDeveloperSectionState extends State<AdminDeveloperSection> {
     // An absolute time rather than a countdown: it needs no ticking timer to
     // stay honest, and „until 19:42" is what you actually want to know.
     final expiry = DeveloperAccess.expiresAt?.toLocal();
-    final expiryLabel = expiry == null
+    final expiryLabel = DeveloperAccess.isDevelopmentUnlocked
+        ? 'development build'
+        : expiry == null
         ? 'locked'
         : 'until ${DateFormat('HH:mm').format(expiry)}';
 
     return AdminSectionHeader(
       icon: Icons.engineering_outlined,
       title: 'Developer tools',
-      subtitle:
-          'Signed session on terminal ${DeveloperAccess.terminalIdShort}. '
-          'Every action here is written to the audit log.',
+      subtitle: DeveloperAccess.isDevelopmentUnlocked
+          ? 'Development build on terminal ${DeveloperAccess.terminalIdShort}: '
+                'unlocked without a token. '
+                'Every action here is written to the audit log.'
+          : 'Signed session on terminal ${DeveloperAccess.terminalIdShort}. '
+                'Every action here is written to the audit log.',
       badge: AdminStatusBadge(
         icon: Icons.timer_outlined,
         label: expiryLabel,
@@ -96,14 +101,16 @@ class _AdminDeveloperSectionState extends State<AdminDeveloperSection> {
         background: AdminDesign.accentSoft,
         border: AdminDesign.accentSoftBorder,
       ),
-      action: OutlinedButton.icon(
-        onPressed: () {
-          DeveloperAccess.lock();
-        },
-        style: AdminDesign.outlineButtonStyle(),
-        icon: const Icon(Icons.lock_outline, size: 18),
-        label: const Text('Lock now'),
-      ),
+      action: DeveloperAccess.isDevelopmentUnlocked
+          ? null
+          : OutlinedButton.icon(
+              onPressed: () {
+                DeveloperAccess.lock();
+              },
+              style: AdminDesign.outlineButtonStyle(),
+              icon: const Icon(Icons.lock_outline, size: 18),
+              label: const Text('Lock now'),
+            ),
     );
   }
 

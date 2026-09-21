@@ -1,3 +1,4 @@
+import { profileSelect } from '../venue-profile/venue-profile';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { WebsiteMode } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
@@ -84,7 +85,12 @@ export class VenueEntitlementsService {
         select: { status: true, trialEndsAt: true, currentPeriodEndsAt: true },
       }),
     ]);
+    const profile = await this.prisma.venue.findUniqueOrThrow({
+      where: { id: venueId },
+      select: profileSelect,
+    });
     return {
+      profile,
       features,
       subscription,
       commercialAccess: commercialAccessAllowed(subscription?.status),

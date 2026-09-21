@@ -529,6 +529,12 @@ func (s *Service) install(m Manifest) (result error) {
 	return s.finishStable("SUCCESS", "", true)
 }
 func (s *Service) startHealthy(version string) error {
+	return s.startWithHealth(version, true)
+}
+
+// A verified current release needs fresh authenticated data readiness, but
+// only newly installed/repaired/rolled-back binaries need a stability window.
+func (s *Service) startWithHealth(version string, stabilize bool) error {
 	if e := safeTree(CurrentDir(s.cfg.Root)); e != nil {
 		return e
 	}
@@ -567,6 +573,9 @@ func (s *Service) startHealthy(version string) error {
 	case lastHealth = <-ch:
 	case <-time.After(s.healthTimeout):
 		return errors.New("POS startup health timeout")
+	}
+	if !stabilize {
+		return s.process.Validate(pid, s.path(version))
 	}
 	// Require continued authenticated Hive-ready heartbeats AND the same live
 	// process. POS remains in startup probation until this whole interval passes.
@@ -713,7 +722,7 @@ func (s *Service) launch() error {
 			return e
 		}
 	}
-	if e := s.startHealthy(st.Current); e != nil {
+	if e := s.startWithHealth(st.Current, !st.StartupVerified || st.DataPath == "" || st.Swap != "" || st.Previous != ""); e != nil {
 		if st.Previous != "" && st.Swap == "repair_ready" {
 			return s.rollback(e)
 		}

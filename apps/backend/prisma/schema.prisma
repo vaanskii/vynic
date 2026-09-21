@@ -1137,6 +1137,11 @@ model Venue {
   edgeFoundations EdgeFoundationInstallation[]
   activeOperationalDeviceId String? @unique
   activeOperationalDevice Device? @relation("OperationalPrimary", fields: [activeOperationalDeviceId], references: [id], onDelete: SetNull)
+  branchName                String?
+  address                   String?
+  phone                     String?
+  legalId                   String?
+  profileUpdatedAt          DateTime?
   loginCode                 String                     @unique @default(dbgenerated("('venue-'::text || substr(md5((random())::text), 1, 12))"))
   id                        String                     @id @default(uuid())
   organizationId            String

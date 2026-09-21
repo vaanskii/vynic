@@ -1,3 +1,6 @@
+import 'package:vynic/core/database/repositories/inventory_repository.dart';
+import 'package:vynic/core/models/feature_keys.dart';
+import 'package:vynic/core/models/sale_visibility.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -46,9 +49,22 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
   late int _selectedSalesYear;
   late int _selectedSalesMonth;
 
+  bool get _showNonFiscal =>
+      InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose);
+  void _featuresChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    InventoryRepository.featureRevision.removeListener(_featuresChanged);
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
+    InventoryRepository.featureRevision.addListener(_featuresChanged);
     final availableMonths = _getAvailableOrderMonths();
     final currentBusinessDate = DatabaseService.getCurrentDate();
     final initialMonth = availableMonths.isNotEmpty
@@ -60,7 +76,14 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
 
   List<DateTime> _getAvailableOrderMonths() {
     final months = <DateTime>{};
-    final allSales = DatabaseService.getAllSales();
+    final allSales = DatabaseService.getAllSales()
+        .where(
+          (sale) =>
+              _showNonFiscal ||
+              _isAdvanceSale(sale) ||
+              !SaleVisibility.isInternal(sale),
+        )
+        .toList();
     for (final sale in allSales) {
       final dateString = sale['date'] as String?;
       if (dateString == null || dateString.isEmpty) {
@@ -526,7 +549,14 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
   Widget build(BuildContext context) {
     final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
-    final allSales = DatabaseService.getAllSales();
+    final allSales = DatabaseService.getAllSales()
+        .where(
+          (sale) =>
+              _showNonFiscal ||
+              _isAdvanceSale(sale) ||
+              !SaleVisibility.isInternal(sale),
+        )
+        .toList();
     final currentBusinessDate = DatabaseService.getCurrentDate();
     final todayDate = currentBusinessDate.toIso8601String().split('T')[0];
     final todaySales = allSales
@@ -772,8 +802,9 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                         child: _buildStatCard(
                                           icon: Icons.receipt_long,
                                           label: 'შეკვეთები',
-                                          value:
-                                              '${todayFiscalSales.length} / ${todayOperationalNonFiscalSales.length}',
+                                          value: (_showNonFiscal
+                                              ? '${todayFiscalSales.length} / ${todayOperationalNonFiscalSales.length}'
+                                              : '${todayFiscalSales.length}'),
                                           color: AdminTones.infoText,
                                         ),
                                       ),
@@ -792,15 +823,16 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                   const SizedBox(height: 12),
                                   Row(
                                     children: [
-                                      Expanded(
-                                        child: _buildStatCard(
-                                          icon: Icons.shield_outlined,
-                                          label: 'არაფისკალური',
-                                          value:
-                                              '₾${todayNonFiscalTotal.toStringAsFixed(2)}',
-                                          color: AdminTones.warningText,
+                                      if (_showNonFiscal)
+                                        Expanded(
+                                          child: _buildStatCard(
+                                            icon: Icons.shield_outlined,
+                                            label: 'არაფისკალური',
+                                            value:
+                                                '₾${todayNonFiscalTotal.toStringAsFixed(2)}',
+                                            color: AdminTones.warningText,
+                                          ),
                                         ),
-                                      ),
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: _buildStatCard(
@@ -820,10 +852,12 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                   Expanded(
                                     child: _buildStatCard(
                                       icon: Icons.receipt_long,
-                                      label:
-                                          'შეკვეთები (ფისკალური / არაფისკალური)',
-                                      value:
-                                          '${todayFiscalSales.length} / ${todayOperationalNonFiscalSales.length}',
+                                      label: (_showNonFiscal
+                                          ? 'შეკვეთები (ფისკალური / არაფისკალური)'
+                                          : 'შეკვეთები'),
+                                      value: (_showNonFiscal
+                                          ? '${todayFiscalSales.length} / ${todayOperationalNonFiscalSales.length}'
+                                          : '${todayFiscalSales.length}'),
                                       color: AdminTones.infoText,
                                     ),
                                   ),
@@ -838,15 +872,16 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                     ),
                                   ),
                                   const SizedBox(width: 16),
-                                  Expanded(
-                                    child: _buildStatCard(
-                                      icon: Icons.shield_outlined,
-                                      label: 'არაფისკალური თანხა',
-                                      value:
-                                          '₾${todayNonFiscalTotal.toStringAsFixed(2)}',
-                                      color: AdminTones.warningText,
+                                  if (_showNonFiscal)
+                                    Expanded(
+                                      child: _buildStatCard(
+                                        icon: Icons.shield_outlined,
+                                        label: 'არაფისკალური თანხა',
+                                        value:
+                                            '₾${todayNonFiscalTotal.toStringAsFixed(2)}',
+                                        color: AdminTones.warningText,
+                                      ),
                                     ),
-                                  ),
                                   const SizedBox(width: 16),
                                   Expanded(
                                     child: _buildStatCard(
@@ -1129,8 +1164,9 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                         child: _buildStatCard(
                                           icon: Icons.receipt_long,
                                           label: 'შეკვეთები',
-                                          value:
-                                              '${monthlyFiscalCount} / ${monthlyNonFiscalCount}',
+                                          value: (_showNonFiscal
+                                              ? '${monthlyFiscalCount} / ${monthlyNonFiscalCount}'
+                                              : '${monthlyFiscalCount}'),
                                           color: AdminTones.infoText,
                                         ),
                                       ),
@@ -1149,15 +1185,16 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                   const SizedBox(height: 12),
                                   Row(
                                     children: [
-                                      Expanded(
-                                        child: _buildStatCard(
-                                          icon: Icons.shield_outlined,
-                                          label: 'არაფისკალური',
-                                          value:
-                                              '₾${monthlyNonFiscalTotal.toStringAsFixed(2)}',
-                                          color: AdminTones.warningText,
+                                      if (_showNonFiscal)
+                                        Expanded(
+                                          child: _buildStatCard(
+                                            icon: Icons.shield_outlined,
+                                            label: 'არაფისკალური',
+                                            value:
+                                                '₾${monthlyNonFiscalTotal.toStringAsFixed(2)}',
+                                            color: AdminTones.warningText,
+                                          ),
                                         ),
-                                      ),
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: _buildStatCard(
@@ -1177,10 +1214,12 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                   Expanded(
                                     child: _buildStatCard(
                                       icon: Icons.receipt_long,
-                                      label:
-                                          'შეკვეთები (ფისკალური / არაფისკალური)',
-                                      value:
-                                          '${monthlyFiscalCount.toString()} / ${monthlyNonFiscalCount.toString()}',
+                                      label: (_showNonFiscal
+                                          ? 'შეკვეთები (ფისკალური / არაფისკალური)'
+                                          : 'შეკვეთები'),
+                                      value: (_showNonFiscal
+                                          ? '${monthlyFiscalCount.toString()} / ${monthlyNonFiscalCount.toString()}'
+                                          : '${monthlyFiscalCount.toString()}'),
                                       color: AdminTones.infoText,
                                     ),
                                   ),
@@ -1195,15 +1234,16 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                     ),
                                   ),
                                   const SizedBox(width: 16),
-                                  Expanded(
-                                    child: _buildStatCard(
-                                      icon: Icons.shield_outlined,
-                                      label: 'არაფისკალური თანხა',
-                                      value:
-                                          '₾${monthlyNonFiscalTotal.toStringAsFixed(2)}',
-                                      color: AdminTones.warningText,
+                                  if (_showNonFiscal)
+                                    Expanded(
+                                      child: _buildStatCard(
+                                        icon: Icons.shield_outlined,
+                                        label: 'არაფისკალური თანხა',
+                                        value:
+                                            '₾${monthlyNonFiscalTotal.toStringAsFixed(2)}',
+                                        color: AdminTones.warningText,
+                                      ),
                                     ),
-                                  ),
                                   const SizedBox(width: 16),
                                   Expanded(
                                     child: _buildStatCard(
@@ -1367,17 +1407,18 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                         accent: AdminDesign.accentDark,
                                       ),
                                     ),
-                                    SizedBox(
-                                      width: isMobile ? double.infinity : 260,
-                                      child: _buildInsightCard(
-                                        icon: Icons.pie_chart_outline,
-                                        title: 'არაფისკალური წილი',
-                                        value: _formatPercent(nonFiscalRate),
-                                        subtitle:
-                                            'არაფისკალური ₾${monthlyNonFiscalTotal.toStringAsFixed(2)} / სრული ₾${monthlyCombinedTotal.toStringAsFixed(2)}',
-                                        accent: AdminTones.warningText,
+                                    if (_showNonFiscal)
+                                      SizedBox(
+                                        width: isMobile ? double.infinity : 260,
+                                        child: _buildInsightCard(
+                                          icon: Icons.pie_chart_outline,
+                                          title: 'არაფისკალური წილი',
+                                          value: _formatPercent(nonFiscalRate),
+                                          subtitle:
+                                              'არაფისკალური ₾${monthlyNonFiscalTotal.toStringAsFixed(2)} / სრული ₾${monthlyCombinedTotal.toStringAsFixed(2)}',
+                                          accent: AdminTones.warningText,
+                                        ),
                                       ),
-                                    ),
                                     SizedBox(
                                       width: isMobile ? double.infinity : 260,
                                       child: _buildInsightCard(
@@ -1581,23 +1622,24 @@ class _AdminSalesSectionState extends State<AdminSalesSection> {
                                     accent: AdminDesign.accentDark,
                                   ),
                                 ),
-                                SizedBox(
-                                  width: isMobile ? double.infinity : 260,
-                                  child: _buildInsightCard(
-                                    icon: Icons.pie_chart_outline,
-                                    title: 'არაფისკალური წილი',
-                                    value: dateCombinedTotal <= 0
-                                        ? '0.0%'
-                                        : _formatPercent(
-                                            (nonFiscalDateTotal /
-                                                    dateCombinedTotal) *
-                                                100,
-                                          ),
-                                    subtitle:
-                                        'არაფისკალური ₾${nonFiscalDateTotal.toStringAsFixed(2)}',
-                                    accent: AdminTones.warningText,
+                                if (_showNonFiscal)
+                                  SizedBox(
+                                    width: isMobile ? double.infinity : 260,
+                                    child: _buildInsightCard(
+                                      icon: Icons.pie_chart_outline,
+                                      title: 'არაფისკალური წილი',
+                                      value: dateCombinedTotal <= 0
+                                          ? '0.0%'
+                                          : _formatPercent(
+                                              (nonFiscalDateTotal /
+                                                      dateCombinedTotal) *
+                                                  100,
+                                            ),
+                                      subtitle:
+                                          'არაფისკალური ₾${nonFiscalDateTotal.toStringAsFixed(2)}',
+                                      accent: AdminTones.warningText,
+                                    ),
                                   ),
-                                ),
                                 SizedBox(
                                   width: isMobile ? double.infinity : 260,
                                   child: _buildInsightCard(

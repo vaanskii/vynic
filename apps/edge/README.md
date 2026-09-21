@@ -214,3 +214,7 @@ the tool embeds the required unelevated GUI manifest. Publish metadata with
 `cmd/sign-bootstrap`, reusing the POS Ed25519 envelope/trust implementation.
 See [Windows setup](../../docs/WINDOWS_SETUP.md) for release inputs, layout,
 repair endpoints and mandatory real-Windows qualification.
+
+Local Mac-hosted Windows installer testing: `tool/local-windows-release-test.sh run`.
+The HTTPS lab uses development-only keys outside the repository and waits for a
+real Windows POS build. See [local release lab](../../docs/LOCAL_WINDOWS_RELEASE_TEST.md).

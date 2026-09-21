@@ -46,6 +46,7 @@ class _StaffLockScreenState extends State<_StaffLockScreen> {
       _pin += d;
       _error = false;
     });
+    if (_pin.length >= 4) _tryUnlock();
   }
 
   void _deleteDigit() {
@@ -137,11 +138,6 @@ class _StaffLockScreenState extends State<_StaffLockScreen> {
                       ),
                       const SizedBox(height: 8),
                       _buildPad(),
-                      const SizedBox(height: 12),
-                      FilledButton(
-                        onPressed: _pin.length >= 4 ? _tryUnlock : null,
-                        child: const PosText('შესვლა'),
-                      ),
                       const SizedBox(height: 22),
                       // The single full-logout entry point in the app. Logging out
                       // only returns to the login screen (which itself needs a PIN),

@@ -66,7 +66,7 @@ class DatabaseCore {
   ///
   /// Seeding of defaults (admin user, tables, menu, settings) stays with the
   /// owning repositories / the façade's `init()`.
-  static Future<void> open() async {
+  static Future<Directory> _resolveDefaultDirectory() async {
     // Resolve an application-owned storage directory. On Windows we avoid the
     // OneDrive-synced Documents folder to prevent lock conflicts.
     final baseDirectory = Platform.isWindows
@@ -115,6 +115,19 @@ class DatabaseCore {
       }
     }
 
+    return dataDirectory;
+  }
+
+  static Future<void> open({String? managedDataDirectory}) async {
+    final dataDirectory = managedDataDirectory == null
+        ? await _resolveDefaultDirectory()
+        : Directory(managedDataDirectory);
+    if (managedDataDirectory != null &&
+        (!dataDirectory.isAbsolute || !await dataDirectory.exists())) {
+      throw StateError(
+        'The managed restaurant data directory is unavailable; refusing to initialize empty data.',
+      );
+    }
     dataDirectoryPath = dataDirectory.path;
 
     // Initialize Hive with custom path unique per machine to avoid shared locks

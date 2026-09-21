@@ -1,5 +1,3 @@
-import 'package:vynic/apps/windows_pos/widgets/update/pos_update_ui.dart';
-import 'package:vynic/apps/windows_pos/widgets/pos_quit_action.dart';
 import 'package:vynic/core/database/repositories/settings_repository.dart';
 import 'package:vynic/core/widgets/pos_text.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/pos_input_settings_tile.dart';
@@ -131,13 +129,9 @@ class AdminSettingsSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildModernHeader(),
+                    const PosInputSettingsTile(),
                     const SizedBox(height: 14),
                     _buildStatusStrip(),
-                    const SizedBox(height: 16),
-                    const PosInputSettingsTile(),
-                    const PosUpdateSettings(),
-                    const SizedBox(height: 12),
-                    const PosQuitAction(),
                     const SizedBox(height: 16),
                     _buildSettingsHeader(
                       icon: Icons.storefront,

@@ -254,6 +254,50 @@ void main() {
     MenuService.clearCache();
   });
 
+  testWidgets('saved category appears in the open menu without restart', (
+    tester,
+  ) async {
+    await _pumpEmpty(tester, const Size(1440, 900));
+    expect(find.text('ახალი კატეგორია'), findsNothing);
+    await tester.runAsync(() async {
+      await DatabaseCore.menuBox!.add(
+        MenuCategoryDB(
+          slug: 'live-category',
+          translationsEn: {'name': 'Live category'},
+          translationsKa: {'name': 'ახალი კატეგორია'},
+        ),
+      );
+    });
+    await tester.pumpAndSettle();
+    expect(find.text('ახალი კატეგორია'), findsWidgets);
+    await tester.tap(find.text('ახალი კატეგორია').first);
+    await tester.pumpAndSettle();
+    await tester.runAsync(() async {
+      final row = DatabaseCore.menuBox!.values.firstWhere(
+        (c) => c.slug == 'live-category',
+      );
+      row.items = [
+        MenuItemDB(
+          translationsEn: {'name': 'Live item'},
+          translationsKa: {'name': 'ახალი კერძი'},
+          price: 12,
+        ),
+      ];
+      await row.save();
+    });
+    await tester.pumpAndSettle();
+    expect(find.text('ახალი კერძი'), findsWidgets);
+
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.runAsync(() async {
+      final row = DatabaseCore.menuBox!.values.firstWhere(
+        (c) => c.slug == 'live-category',
+      );
+      await row.delete();
+    });
+  });
+
   tearDownAll(() async {
     await Hive.close();
     DatabaseCore.menuBox = null;

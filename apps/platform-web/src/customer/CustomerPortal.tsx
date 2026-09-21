@@ -298,6 +298,7 @@ export function CustomerPortal() {
                 რესტორნის სახელი
                 <input name="name" required maxLength={100} />
               </label>
+              <ProfileFields />
               <label>
                 დროის სარტყელი
                 <input name="timezone" defaultValue="Asia/Tbilisi" required />
@@ -321,6 +322,18 @@ export function CustomerPortal() {
               ელფოსტა: {portal.account.email}{" "}
               {!portal.account.emailVerifiedAt && "· დაუდასტურებელი"}
             </p>
+            <section>
+              <h2>რესტორნის პროფილი</h2>
+              <form key={id} onSubmit={(e) => {
+                e.preventDefault();
+                const data = Object.fromEntries(new FormData(e.currentTarget));
+                void action(async () => { await customerApi(`venues/${id}/profile`, data, "PUT"); await refresh(); });
+              }}>
+                <label>რესტორნის სახელი<input name="name" defaultValue={venue.venue.name} required maxLength={100} /></label>
+                <ProfileFields profile={venue.venue} />
+                <button disabled={busy}>პროფილის შენახვა</button>
+              </form>
+            </section>
             <div className="customer-columns">
               <section>
                 <h2>გამოწერა</h2>
@@ -623,4 +636,13 @@ export function CustomerPortal() {
       </main>
     </div>
   );
+}
+
+function ProfileFields({ profile = {} }: { profile?: Record<string, string | null> }) {
+  return <>{([
+    ["branchName", "ფილიალის სახელი", 100], ["address", "მისამართი", 300],
+    ["phone", "ტელეფონი", 50], ["legalId", "საიდენტიფიკაციო ნომერი", 50],
+  ] as const).map(([key, label, max]) => <label key={key}>{label} — არასავალდებულო
+    <input name={key} defaultValue={profile[key] ?? ""} maxLength={max} />
+  </label>)}</>;
 }

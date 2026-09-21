@@ -1,4 +1,8 @@
 import 'dart:typed_data';
+import 'dart:async';
+import '../../database/database_core.dart';
+import '../edge/edge_device_credential_store.dart';
+import '../edge/runtime_config_sync.dart';
 
 import 'package:flutter/foundation.dart';
 
@@ -17,11 +21,36 @@ import 'package:vynic/core/services/printing/printer_service.dart';
 /// So edits land here and go no further until [save]. [revert] puts everything
 /// back to what is actually stored.
 class VenueIdentityDraft extends ChangeNotifier {
-  VenueIdentityDraft() {
+  VenueIdentityDraft({bool watchProfile = false}) {
     _load();
+    if (watchProfile) {
+      _profileChanges = DatabaseCore.settingsBox?.watch().listen((event) {
+        if (!_saving &&
+            !isDirty &&
+            const {
+              'venueName',
+              'venueBranchName',
+              'venueAddress',
+              'venuePhone',
+              'venueLegalId',
+            }.contains(event.key)) {
+          _load();
+          notifyListeners();
+        }
+      });
+    }
+  }
+  StreamSubscription<dynamic>? _profileChanges;
+  bool _saving = false;
+  @override
+  void dispose() {
+    unawaited(_profileChanges?.cancel());
+    super.dispose();
   }
 
   late String _name;
+  String _branchName = '';
+  String _savedBranchName = '';
   late String _address;
   late String _phone;
   late String _legalId;
@@ -41,6 +70,9 @@ class VenueIdentityDraft extends ChangeNotifier {
   Uint8List? sourceImage;
 
   void _load() {
+    _savedBranchName =
+        DatabaseCore.settingsBox?.get('venueBranchName') as String? ?? '';
+    _branchName = _savedBranchName;
     _savedName = DatabaseService.getVenueName();
     _savedAddress = DatabaseService.getVenueAddress();
     _savedPhone = DatabaseService.getVenuePhone();
@@ -57,6 +89,8 @@ class VenueIdentityDraft extends ChangeNotifier {
   }
 
   String get name => _name;
+  String get branchName => _branchName;
+  set branchName(String value) => _set(() => _branchName = value.trim());
   String get address => _address;
   String get phone => _phone;
 
@@ -70,7 +104,8 @@ class VenueIdentityDraft extends ChangeNotifier {
   bool get hasName => _name.trim().isNotEmpty;
 
   bool get isDirty {
-    return _name != _savedName ||
+    return _branchName != _savedBranchName ||
+        _name != _savedName ||
         _address != _savedAddress ||
         _phone != _savedPhone ||
         _legalId != _savedLegalId ||
@@ -103,36 +138,65 @@ class VenueIdentityDraft extends ChangeNotifier {
   /// it forces the next receipt to decode the image again, which is wasted
   /// work if all that moved was an alignment.
   Future<void> save() async {
-    final logoChanged = !_sameBytes(_logo, _savedLogo);
+    _saving = true;
+    try {
+      final profileChanged =
+          _name != _savedName ||
+          _branchName != _savedBranchName ||
+          _address != _savedAddress ||
+          _phone != _savedPhone ||
+          _legalId != _savedLegalId;
+      if (profileChanged && EdgeDeviceCredentialStore.hasCredential) {
+        if (!hasName) throw StateError('შეიყვანეთ რესტორნის სახელი');
+        if (_name.length > 100 ||
+            _branchName.length > 100 ||
+            _address.length > 300 ||
+            _phone.length > 50 ||
+            _legalId.length > 50)
+          throw StateError('პროფილის ველი ზედმეტად გრძელია');
+        await DatabaseCore.settingsBox!.put('pendingVenueProfile', {
+          'venueId': EdgeDeviceCredentialStore.venueId,
+          'profile': {
+            'name': _name,
+            'branchName': _branchName,
+            'address': _address,
+            'phone': _phone,
+            'legalId': _legalId,
+          },
+        });
+      }
+      await DatabaseCore.settingsBox?.put('venueBranchName', _branchName);
+      final logoChanged = !_sameBytes(_logo, _savedLogo);
 
-    await DatabaseService.setVenueName(_name);
-    await DatabaseService.setVenueAddress(_address);
-    await DatabaseService.setVenuePhone(_phone);
-    await DatabaseService.setVenueLegalId(_legalId);
-    await DatabaseService.saveReceiptHeaderLayout(_layout);
-    if (logoChanged) {
-      await DatabaseService.setVenueLogoPng(_logo);
-      PrinterService.clearReceiptLogoCache();
+      await DatabaseService.setVenueName(_name);
+      await DatabaseService.setVenueAddress(_address);
+      await DatabaseService.setVenuePhone(_phone);
+      await DatabaseService.setVenueLegalId(_legalId);
+      await DatabaseService.saveReceiptHeaderLayout(_layout);
+      if (logoChanged) {
+        await DatabaseService.setVenueLogoPng(_logo);
+        PrinterService.clearReceiptLogoCache();
+      }
+
+      _savedBranchName = _branchName;
+      _savedName = _name;
+      _savedAddress = _address;
+      _savedPhone = _phone;
+      _savedLegalId = _legalId;
+      _savedLogo = _logo;
+      _savedLayout = _layout;
+      if (profileChanged && EdgeDeviceCredentialStore.hasCredential)
+        unawaited(RuntimeConfigSync.instance.pull());
+      notifyListeners();
+    } finally {
+      _saving = false;
     }
-
-    _savedName = _name;
-    _savedAddress = _address;
-    _savedPhone = _phone;
-    _savedLegalId = _legalId;
-    _savedLogo = _logo;
-    _savedLayout = _layout;
-    notifyListeners();
   }
 
   /// Back to what is on disk, including the picked file.
   void revert() {
     _set(() {
-      _name = _savedName;
-      _address = _savedAddress;
-      _phone = _savedPhone;
-      _legalId = _savedLegalId;
-      _logo = _savedLogo;
-      _layout = _savedLayout;
+      _load();
       sourceImage = null;
     });
   }

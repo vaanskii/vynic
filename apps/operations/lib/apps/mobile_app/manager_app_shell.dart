@@ -15,7 +15,6 @@ import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 import 'package:vynic/core/services/auth/mobile_auth_service.dart';
 import 'package:vynic/core/services/notifications/app_notification_history_store.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/notifications_screen.dart';
-import 'package:vynic/core/widgets/manager_connection_status.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/manager_toast.dart';
 import 'package:vynic/core/widgets/notification_entry_style.dart';
 import 'package:vynic/core/services/notifications/notification_message_copy.dart';
@@ -51,7 +50,10 @@ class _ManagerAppShellState extends State<ManagerAppShell>
   List<int> _destinations = ManagerEntitlements.destinations;
   Timer? _entitlementTimer;
   String? _entitlementError;
+  bool _entitlementRefreshing = false;
   Future<void> _refreshEntitlements() async {
+    if (_entitlementRefreshing) return;
+    _entitlementRefreshing = true;
     try {
       await MobileApiService.refreshEntitlements();
       if (mounted) setState(() => _entitlementError = null);
@@ -60,6 +62,8 @@ class _ManagerAppShellState extends State<ManagerAppShell>
         setState(
           () => _entitlementError = 'წვდომა ვერ განახლდა. სცადეთ ხელახლა.',
         );
+    } finally {
+      _entitlementRefreshing = false;
     }
   }
 
@@ -108,7 +112,7 @@ class _ManagerAppShellState extends State<ManagerAppShell>
     ManagerEntitlements.features.addListener(_featuresChanged);
     unawaited(_refreshEntitlements());
     _entitlementTimer = Timer.periodic(
-      const Duration(minutes: 1),
+      const Duration(seconds: 10),
       (_) => unawaited(_refreshEntitlements()),
     );
     ManagerAppPreferences.dashboardAppearance.addListener(
@@ -146,7 +150,7 @@ class _ManagerAppShellState extends State<ManagerAppShell>
       ),
       LiveStatusScreen(user: widget.user),
       FinancialsScreen(user: widget.user),
-      const SafeArea(child: InventoryAdminTab()),
+      const InventoryScreen(embedded: true),
       StaffPerformanceScreen(user: widget.user),
       MobileAdminScreen(user: widget.user, onLogout: _logout),
     ];
@@ -412,10 +416,8 @@ class _ManagerAppShellState extends State<ManagerAppShell>
       child: Builder(
         builder: (context) {
           final theme = managerThemeOf(context);
-          return Scaffold(
+          return ManagerNavigationFrame(
             backgroundColor: theme.scaffoldBackground,
-            extendBody: true,
-            appBar: null,
             body: Stack(
               clipBehavior: Clip.none,
               children: [
@@ -446,15 +448,16 @@ class _ManagerAppShellState extends State<ManagerAppShell>
                         physics: const BouncingScrollPhysics(
                           parent: AlwaysScrollableScrollPhysics(),
                         ),
-                        children: _screens,
+                        children: [
+                          for (final entry in _screens.indexed)
+                            AdminTabViewport(
+                              active: _selectedIndex == entry.$1,
+                              child: entry.$2,
+                            ),
+                        ],
                       ),
                     ),
                   ],
-                ),
-                Positioned(
-                  top: MediaQuery.paddingOf(context).top + 10,
-                  right: 22,
-                  child: const ManagerConnectionStatusDot(),
                 ),
               ],
             ),

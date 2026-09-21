@@ -1,3 +1,5 @@
+import 'inventory_test_actions.dart';
+import 'procurement_rework_test.dart' as flow;
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -134,6 +136,11 @@ class JourneyApi {
           'receivings': posted ? [receipt] : [],
         },
       };
+    } else if (path == 'payables') {
+      result = {
+        'businessDate': '2026-09-12',
+        'receivings': [receipt],
+      };
     } else if (path == 'receivings') {
       result = {
         'currentBusinessDate': '2026-09-12',
@@ -192,7 +199,7 @@ void main() {
         await t.pumpWidget(qa.app(const InventoryAdminTab()));
         await t.pumpAndSettle();
         await tap(t, find.text('მენიუს შემადგენლობა'));
-        await tap(t, find.widgetWithText(ChoiceChip, 'კერძები').last);
+        await tap(t, find.byKey(const Key('menu-category-კერძები')));
         expect(find.byKey(const Key('recipe-card-water-menu')), findsNothing);
         await qa.shot(t, 'final-menu-composition-${width.toInt()}');
         await tap(t, find.byKey(const Key('recipe-card-khinkali')));
@@ -256,16 +263,16 @@ void main() {
             ),
           );
           await t.pumpAndSettle();
-          await tap(t, find.byKey(const Key('supplier-record-payment')));
-          await tap(t, find.byType(SimpleDialogOption).first);
+          await tap(t, find.byKey(const Key('supplier-payments')));
+          await tap(t, find.byKey(const Key('payable-pay-receipt')));
           await enter(t, 'supplier-payment-amount', '120');
           await tap(t, find.byKey(const Key('supplier-payment-save')));
           expect(
             api.writes['receivings/receipt/payments']!.single['amount'],
             '120',
           );
-          expect(find.byKey(const Key('supplier-detail')), findsOneWidget);
-          expect(find.text('დავალიანება: 0.00 ₾'), findsOneWidget);
+          expect(find.byType(SupplierPayablesView), findsOneWidget);
+          expect(find.text('მიმდინარე დავალიანება: 0.00 ₾'), findsOneWidget);
           expect(t.takeException(), isNull);
         }, () => api.client);
       },
@@ -286,11 +293,14 @@ void main() {
             ),
           );
           await t.pumpAndSettle();
+          await flow.chooseReceivingProduct(t);
           await enter(t, 'receiving-source-label', 'ბაზარი');
           await enter(t, 'receiving-line-quantity-0', '20');
           await tap(t, find.byKey(const Key('receiving-price-0-total')));
           await enter(t, 'receiving-line-cost-0', '800');
+          await reviewReceiving(t);
           await tap(t, find.byKey(const Key('receiving-payment-full')));
+          await reviewReceiving(t);
           await tap(t, find.byKey(const Key('receiving-save')));
           expect(
             api.writes['receivings']!.single,
@@ -323,6 +333,7 @@ void main() {
           ),
         );
         await t.pumpAndSettle();
+        await flow.chooseReceivingProduct(t);
         await enter(t, 'receiving-line-quantity-0', '10');
         for (final entry in {
           'base': '1.20',
@@ -345,36 +356,10 @@ void main() {
         qa.size(t, width);
         final api = JourneyApi(kind);
         await http.runWithClient(() async {
-          await t.pumpWidget(
-            qa.app(
-              SupplierDetailDialog(
-                supplier: Supplier.fromJson(api.supplier),
-                stockItems: [StockItem.fromJson(api.stock)],
-              ),
-            ),
-          );
+          await t.pumpWidget(qa.app(const InventoryAdminTab()));
           await t.pumpAndSettle();
-          await tap(t, find.byKey(const Key('supplier-add-item')));
-          await tap(t, find.byKey(Key('supplied-mode-$kind')));
-          if (kind == 'menu') {
-            await tap(t, find.byKey(const Key('supplied-menu')));
-            await tap(t, find.widgetWithText(ChoiceChip, 'სასმელები'));
-            await tap(t, find.widgetWithText(ChoiceChip, 'წყალი'));
-            await tap(t, find.widgetWithText(ListTile, 'ბორჯომი'));
-            await enter(t, 'supplied-package-ratio', '10');
-          } else {
-            await enter(t, 'supplied-search', api.name);
-            await tap(t, find.byKey(Key('supplied-stock-${api.id}')));
-            if (kind == 'bulk') await enter(t, 'supplied-package-ratio', '30');
-          }
-          await tap(t, find.byKey(const Key('supplied-save')));
-          final goods = api.writes['suppliers/source/items']!.single;
-          expect(goods['mode'], kind);
-          if (kind != 'menu') {
-            expect(goods['stockItemId'], api.id);
-            expect(goods.containsKey('menuItemId'), false);
-          }
-          await tap(t, find.byKey(const Key('supplier-new-receiving')));
+          await tap(t, find.byKey(const Key('inventory-add')));
+          await flow.chooseReceivingProduct(t);
           await enter(
             t,
             'receiving-line-quantity-0',
@@ -391,6 +376,7 @@ void main() {
             'receiving-line-cost-0',
             kind == 'menu' ? '1.20' : '800',
           );
+          await reviewReceiving(t);
           if (kind == 'menu')
             await tap(t, find.byKey(const Key('receiving-payment-full')));
           await t.ensureVisible(
@@ -408,6 +394,7 @@ void main() {
             findsOneWidget,
           );
           await qa.shot(t, 'final-$kind-summary-${width.toInt()}');
+          await reviewReceiving(t);
           await tap(t, find.byKey(const Key('receiving-save')));
           final line =
               (api.writes['receivings']!.single['lines'] as List).single as Map;
@@ -427,19 +414,24 @@ void main() {
               api.writes['receivings/receipt/payments']!.single['amount'],
               '120.00',
             );
-            expect(find.text('დავალიანება: 0.00 ₾'), findsOneWidget);
+            expect(find.byKey(const Key('inventory-home')), findsOneWidget);
           } else {
             expect(
               api.writes.containsKey('receivings/receipt/payments'),
               false,
             );
-            // Supplier's ingredient shortcut uses the actual Menu browser/editor.
-            await tap(t, find.text('გამოყენება კერძში'));
+            await openInventorySection(t, 'recipes');
+            await t.enterText(
+              find.byKey(const Key('inventory-menu-search')),
+              kind == 'ingredient' ? 'ხინკალი' : 'ლუდი',
+            );
+            await t.pumpAndSettle();
             await tap(
               t,
-              find.widgetWithText(
-                ListTile,
-                kind == 'ingredient' ? 'ხინკალი' : 'ლუდი 0.5L',
+              find.byKey(
+                Key(
+                  'recipe-card-${kind == 'ingredient' ? 'khinkali' : 'beer-menu'}',
+                ),
               ),
             );
             await enter(

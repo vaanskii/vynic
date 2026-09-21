@@ -15,6 +15,7 @@ from urllib.parse import urlparse
 MANIFEST = b'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
 <assemblyIdentity version="1.0.0.0" processorArchitecture="amd64" name="Vynic.Setup" type="win32"/>
+<dependency><dependentAssembly><assemblyIdentity type="win32" name="Microsoft.Windows.Common-Controls" version="6.0.0.0" processorArchitecture="amd64" publicKeyToken="6595b64144ccf1df" language="*"/></dependentAssembly></dependency>
 <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3"><security><requestedPrivileges>
 <requestedExecutionLevel level="asInvoker" uiAccess="false"/>
 </requestedPrivileges></security></trustInfo>
@@ -24,45 +25,29 @@ MANIFEST = b'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 </assembly>'''
 
 
-def resource(payload):
-    directory = struct.pack('<IIHHHH', 0, 0, 0, 0, 0, 1)
-    data = (directory + struct.pack('<II', 24, 0x80000000 | 24)
-            + directory + struct.pack('<II', 1, 0x80000000 | 48)
-            + directory + struct.pack('<II', 1033, 72)
-            + struct.pack('<IIII', 88, len(payload), 0, 0) + payload)
-    header = struct.pack('<HHIIIHH', 0x8664, 1, 0, 60 + len(data) + 10, 1, 0, 0)
-    section = struct.pack('<8sIIIIIIHHI', b'.rsrc', 0, 0, len(data), 60,
-                          60 + len(data), 0, 1, 0, 0x40000040)
-    reloc = struct.pack('<IIH', 72, 0, 3)  # IMAGE_REL_AMD64_ADDR32NB
-    symbol = struct.pack('<8sIhHBB', b'.rsrc', 0, 1, 0, 3, 0)
-    return header + section + data + reloc + symbol + struct.pack('<I', 4)
+from windows_pe import resource as pe_resource, version_info, inspect, icon_resources
 
 
-def inspect_pe(path):
-    image = Path(path).read_bytes()
-    pe = struct.unpack_from('<I', image, 60)[0]
-    assert image[pe:pe + 4] == b'PE\0\0', 'not PE'
-    machine, count = struct.unpack_from('<HH', image, pe + 4)
-    optional_size = struct.unpack_from('<H', image, pe + 20)[0]
-    optional = pe + 24
-    assert machine == 0x8664 and struct.unpack_from('<H', image, optional)[0] == 0x20b
-    assert struct.unpack_from('<H', image, optional + 68)[0] == 2, 'not GUI subsystem'
-    resource_rva, resource_size = struct.unpack_from('<II', image, optional + 112 + 16)
-    assert resource_rva and resource_size, 'missing embedded manifest'
-    sections = optional + optional_size
-    for n in range(count):
-        section = sections + n * 40
-        virtual_size, rva, raw_size, offset = struct.unpack_from('<IIII', image, section + 8)
-        if rva <= resource_rva < rva + max(virtual_size, raw_size):
-            data = image[offset + resource_rva - rva:offset + raw_size]
-            assert struct.unpack_from('<II', data, 16) == (24, 0x80000018)
-            manifest_rva, size = struct.unpack_from('<II', data, 72)
-            manifest = image[offset + manifest_rva - rva:offset + manifest_rva - rva + size]
-            assert manifest == MANIFEST, 'resource relocation or manifest mismatch'
-            return {'machine': 'windows/amd64', 'subsystem': 'GUI',
-                    'executionLevel': 'asInvoker', 'bytes': len(image),
-                    'authenticode': 'separate signing/Windows verification required'}
-    raise AssertionError('resource section missing')
+def resource(payload, version='1.0.7.0', product='Vynic Setup', filename='VynicSetup.exe'):
+    icon = Path(__file__).resolve().parents[2] / 'operations/windows/runner/resources/app_icon.ico'
+    return pe_resource({24:payload,16:version_info(product,filename,version), **icon_resources(icon.read_bytes())})
+
+
+def inspect_pe(path, version='1.0.7.0'):
+    result=inspect(Path(path))
+    assert result['subsystem']==2, 'not GUI subsystem'
+    assert result['resources'][(24,1,1033)]==MANIFEST.replace(b'1.0.0.0',version.encode()), 'manifest mismatch'
+    ver=result['resources'][(16,1,1033)]
+    for text in ['CompanyName','Vynic','FileDescription','Vynic Setup','OriginalFilename','VynicSetup.exe']:
+        assert (text+'\0').encode('utf-16le') in ver, 'version metadata missing'
+    assert (14,1,1033) in result['resources'], 'application icon missing'
+    result['iconImages'] = sum(key[0] == 3 for key in result['resources'])
+    assert result['iconImages'] > 0
+    del result['resources']
+    result['executionLevel']='asInvoker'
+    result['product']='Vynic Setup'
+    result['authenticode']='not signed; external signing and Defender qualification required'
+    return result
 
 
 def main():
@@ -70,6 +55,7 @@ def main():
     p.add_argument('--distribution', required=True, type=Path)
     p.add_argument('--out', required=True, type=Path)
     p.add_argument('--go', default='go')
+    p.add_argument('--version', default='1.0.7.0')
     a = p.parse_args()
     raw = a.distribution.read_bytes()
     d = json.loads(raw)
@@ -93,13 +79,13 @@ def main():
     syso = root / 'cmd/setup/manifest_windows_amd64.syso'
     if syso.exists():
         p.error('manifest resource already exists; preserve it and inspect')
-    syso.write_bytes(resource(MANIFEST))
+    syso.write_bytes(resource(MANIFEST.replace(b'1.0.0.0',a.version.encode()),a.version))
     try:
         subprocess.run([a.go, 'build', '-trimpath', '-ldflags',
-                        '-s -w -H=windowsgui -X main.distributionBase64=' + base64.b64encode(raw).decode(),
+                        '-H=windowsgui -X main.distributionBase64=' + base64.b64encode(raw).decode() + ' -X main.setupVersion=' + a.version,
                         '-o', str(a.out.resolve()), './cmd/setup'], cwd=root,
                        env={**os.environ, 'GOOS': 'windows', 'GOARCH': 'amd64', 'CGO_ENABLED': '0'}, check=True)
-        print(json.dumps(inspect_pe(a.out), indent=2))
+        print(json.dumps(inspect_pe(a.out,a.version), indent=2))
     finally:
         syso.unlink()
 

@@ -334,3 +334,51 @@ func TestRepairAfterRemovalDoesNotAdvertiseDeletedStaging(t *testing.T) {
 		t.Fatal("removed staging advertised/reset history", st)
 	}
 }
+
+func TestVerifiedOrdinaryLaunchNeedsFreshHealthButNotStabilization(t *testing.T) {
+	f := newFixture(t)
+	f.s.state.StartupVerified = true
+	f.s.state.DataPath = filepath.Join(f.cfg.Root, "restaurant-data")
+	mustRetention(t, f.s.saveLocked())
+	f.s.stabilization = time.Hour
+	done := make(chan error, 1)
+	go func() { done <- f.s.launch() }()
+	select {
+	case e := <-done:
+		mustRetention(t, e)
+	case <-time.After(2 * time.Second):
+		t.Fatal("verified ordinary launch repeated stabilization")
+	}
+	if !f.s.Snapshot().StartupVerified || f.p.starts() != 1 {
+		t.Fatal("fresh health was not verified")
+	}
+}
+
+func TestVerifiedOrdinaryLaunchStillRejectsWrongDataHealth(t *testing.T) {
+	f := newFixture(t)
+	f.s.state.StartupVerified = true
+	f.s.state.DataPath = filepath.Join(f.cfg.Root, "restaurant-data")
+	mustRetention(t, f.s.saveLocked())
+	f.p.badDataVersion = f.cfg.InitialVersion
+	f.s.healthTimeout = 300 * time.Millisecond
+	if e := f.s.launch(); e == nil {
+		t.Fatal("wrong data path admitted on quick launch")
+	}
+	if f.s.Snapshot().StartupVerified {
+		t.Fatal("failed launch reported ready")
+	}
+}
+
+func TestRepairOfVerifiedReleaseStillRequiresStabilization(t *testing.T) {
+	f := newFixture(t)
+	f.s.state.StartupVerified = true
+	f.s.state.DataPath = filepath.Join(f.cfg.Root, "restaurant-data")
+	mustRetention(t, f.s.saveLocked())
+	mustRetention(t, f.s.PrepareRepair(false))
+	mustRetention(t, f.s.RegisterRepair(false))
+	start := time.Now()
+	mustRetention(t, f.s.launch())
+	if time.Since(start) < f.s.stabilization {
+		t.Fatal("repair bypassed stabilization")
+	}
+}

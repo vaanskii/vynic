@@ -1,3 +1,4 @@
+import 'pos_venue_profile.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
@@ -7,9 +8,12 @@ import '../sync/api_config.dart';
 import '../printing/printer_service.dart';
 import '../printing/print_queue.dart';
 import 'edge_device_credential_store.dart';
+import '../../database/repositories/inventory_repository.dart';
 
 /// One complete durable configuration value; failed pulls retain the last good copy.
 class RuntimeConfigSync {
+  RuntimeConfigSync({http.Client? client}) : _client = client;
+  final http.Client? _client;
   static final instance = RuntimeConfigSync();
   Timer? _timer;
   bool _busy = false;
@@ -19,7 +23,7 @@ class RuntimeConfigSync {
     if (_timer != null || !EdgeDeviceCredentialStore.hasCredential) return;
     unawaited(pull());
     _timer = Timer.periodic(
-      const Duration(minutes: 1),
+      const Duration(seconds: 10),
       (_) => unawaited(pull()),
     );
   }
@@ -28,12 +32,15 @@ class RuntimeConfigSync {
     if (_busy || _shuttingDown) return;
     _busy = true;
     try {
-      final response = await http
-          .get(
-            Uri.parse('${ApiConfig.baseUrl}/edge/runtime-config'),
-            headers: ApiConfig.posSyncHeaders,
-          )
-          .timeout(const Duration(seconds: 15));
+      try {
+        await PosVenueProfile.pushPending(client: _client);
+      } catch (error) {
+        debugPrint('Venue profile pending: $error');
+      }
+      final response = await (_client?.get ?? http.get)(
+        Uri.parse('${ApiConfig.baseUrl}/edge/runtime-config'),
+        headers: ApiConfig.posSyncHeaders,
+      ).timeout(const Duration(seconds: 15));
       if (response.statusCode != 200)
         throw StateError('Configuration request: ${response.statusCode}');
       final snapshot = jsonDecode(response.body) as Map<String, dynamic>;
@@ -42,6 +49,24 @@ class RuntimeConfigSync {
           (EdgeDeviceCredentialStore.venueId != null &&
               snapshot['venue']?['id'] != EdgeDeviceCredentialStore.venueId))
         throw const FormatException('Unexpected Device configuration');
+      final features = snapshot['features'];
+      if (features is! List || features.any((key) => key is! String)) {
+        throw const FormatException('Invalid feature snapshot');
+      }
+      await InventoryRepository.applyRuntimeFeatures(
+        List<String>.from(features),
+      );
+      final venue = snapshot['venue'] as Map<String, dynamic>;
+      if (venue['profileUpdatedAt'] != null &&
+          DatabaseCore.settingsBox?.get('pendingVenueProfile') == null) {
+        await PosVenueProfile.cache(venue);
+      }
+      final name = snapshot['device']['displayName'];
+      if (name is String &&
+          name.trim().isNotEmpty &&
+          DatabaseCore.settingsBox?.get('enrolledDeviceName') != name) {
+        await DatabaseCore.settingsBox!.put('enrolledDeviceName', name);
+      }
       final config = snapshot['device']['runtimeConfig'];
       if (config == null)
         return; // Existing local printers remain until explicitly configured in Cloud.

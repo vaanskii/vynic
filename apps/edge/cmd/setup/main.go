@@ -14,6 +14,7 @@ import (
 // Build-time public configuration only. Release builds inject this with -X;
 // no endpoint/key default or production signing secret exists in source.
 var distributionBase64 string
+var setupVersion = "development"
 
 func distribution(path string) (setup.Distribution, error) {
 	var d setup.Distribution

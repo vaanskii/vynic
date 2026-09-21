@@ -1,4 +1,5 @@
 import 'package:vynic/core/widgets/pos_text.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/admin_about_section.dart';
 import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/database/repositories/inventory_repository.dart';
 import 'package:vynic/core/models/feature_keys.dart';
@@ -63,6 +64,7 @@ class AdminScreen extends StatefulWidget {
     'audit',
     'activity',
     'settings',
+    'about',
   ];
 
   /// Destinations that need a signed developer token.
@@ -231,11 +233,16 @@ class _AdminScreenState extends State<AdminScreen> {
     setState(() => _selectedSection = 'developer');
   }
 
+  void _onFeatureRefresh() {
+    if (mounted) setState(() {});
+  }
+
   StreamSubscription<dynamic>? _inventoryChanges;
 
   @override
   void initState() {
     super.initState();
+    InventoryRepository.featureRevision.addListener(_onFeatureRefresh);
     _inventoryChanges = DatabaseCore.inventoryBox
         ?.watch(key: InventoryRepository.catalogKey)
         .listen((_) {
@@ -256,6 +263,7 @@ class _AdminScreenState extends State<AdminScreen> {
 
   @override
   void dispose() {
+    InventoryRepository.featureRevision.removeListener(_onFeatureRefresh);
     _inventoryChanges?.cancel();
     DeveloperAccess.unlocked.removeListener(_onDeveloperAccessChanged);
     _kitchenPrinterController.dispose();
@@ -1321,8 +1329,10 @@ class _AdminScreenState extends State<AdminScreen> {
         return 'კავშირი';
       case 'developer':
         return 'დეველოპერი';
+      case 'about':
+        return 'პროგრამის შესახებ';
       case 'settings':
-        return 'პარამეტრები';
+        return 'რესტორნის პარამეტრები';
       default:
         return 'მართვის ცენტრი';
     }
@@ -1453,8 +1463,13 @@ class _AdminScreenState extends State<AdminScreen> {
         ),
       _buildMenuItem(
         icon: Icons.settings,
-        title: 'პარამეტრები',
+        title: 'რესტორნის პარამეტრები',
         section: 'settings',
+      ),
+      _buildMenuItem(
+        icon: Icons.info_outline,
+        title: 'პროგრამის შესახებ',
+        section: 'about',
       ),
       // Terminal plumbing and the developer tools, only while a signed token
       // is active. They are absent rather than disabled: a greyed-out
@@ -3867,6 +3882,8 @@ class _AdminScreenState extends State<AdminScreen> {
           lastBackupPath: _lastBackupPath,
           lastRestorePath: _lastRestorePath,
         );
+      case 'about':
+        return const AdminAboutSection();
       case 'settings':
         return _buildSettingsSection();
       default:

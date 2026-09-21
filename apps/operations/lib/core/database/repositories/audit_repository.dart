@@ -10,6 +10,8 @@ import 'package:vynic/core/services/audit/audit_event_service.dart';
 import 'business_day_repository.dart';
 import '../database_core.dart';
 import 'order_repository.dart';
+import 'closure_journal_repository.dart';
+import '../../models/order_status.dart';
 
 /// Order audit reports and the admin action log.
 class AuditRepository {
@@ -211,6 +213,12 @@ class AuditRepository {
         continue;
       }
 
+      // Table labels describe the opening snapshot, not current occupancy.
+      // A moved/restored live Order can legitimately share that old table set.
+      final order = OrderRepository.getOrder(report.orderId);
+      if (order != null && !OrderStatus.fromStorage(order.status).isTerminal)
+        continue;
+
       final updated = report.copyWith(
         status: AuditReportStatus.closed,
         locked: true,
@@ -272,8 +280,12 @@ class AuditRepository {
       );
       final keeper = reports.first;
       final stale = reports.skip(1);
+      var finalized = 0;
 
       for (final report in stale) {
+        final order = OrderRepository.getOrder(report.orderId);
+        if (order != null && !OrderStatus.fromStorage(order.status).isTerminal)
+          continue;
         final closedBy = report.closedByName ?? report.openedByName;
         final closedId = report.closedById ?? report.openedById;
         final fixed = report.copyWith(
@@ -285,12 +297,14 @@ class AuditRepository {
           updatedAt: now,
         );
         await DatabaseCore.auditLogBox!.put(fixed.reportId, fixed.toMap());
+        finalized++;
         changed = true;
       }
 
-      debugPrint(
-        '[AuditCleanup] ${reports.length - 1} stale OPEN reports closed for ${entry.key}, kept order #${keeper.orderId}.',
-      );
+      if (finalized > 0)
+        debugPrint(
+          '[AuditCleanup] $finalized stale OPEN reports closed for ${entry.key}, kept order #${keeper.orderId}.',
+        );
     }
 
     await DatabaseCore.settingsBox!.put(cleanupKey, true);
@@ -534,6 +548,70 @@ class AuditRepository {
     return const [];
   }
 
+  /// Repairs only the old table-based cleanup's synthetic lock. A real
+  /// closure/cancellation, a Sale, or a live closure journal stays authoritative.
+  static Future<AuditReport> _repairCleanupLock(AuditReport report) async {
+    final order = OrderRepository.getOrder(report.orderId);
+    if (order == null ||
+        !report.locked ||
+        report.status != AuditReportStatus.closed ||
+        DatabaseCore.salesBox == null ||
+        DatabaseCore.closureJournalBox == null)
+      return report;
+    final status = OrderStatus.fromStorage(order.status);
+    if (status == OrderStatus.unknown ||
+        status.isTerminal ||
+        order.closureId != null ||
+        ClosureJournalRepository.findByOrderId(order.orderId) != null)
+      return report;
+    const terminalEvents = {
+      AuditEventType.close,
+      AuditEventType.internalClose,
+      AuditEventType.cancelTable,
+      AuditEventType.transferClose,
+      AuditEventType.voidSale,
+    };
+    if (report.events.isEmpty ||
+        report.events.any((e) => terminalEvents.contains(e.type)))
+      return report;
+    if (DatabaseCore.salesBox!.values.any(
+      (raw) =>
+          raw is Map && raw['orderId']?.toString() == order.orderId.toString(),
+    ))
+      return report;
+    final now = BusinessDayRepository.getCurrentDateTime();
+    final repair = AuditEvent(
+      type: AuditEventType.custom,
+      itemName: 'ORDER',
+      previousQty: 0,
+      newQty: 0,
+      waiterId: 'system',
+      waiterName: 'System',
+      timestamp: now,
+      note: 'ღია შეკვეთის აუდიტის არასწორი ბლოკირება გასწორდა',
+      details: {
+        'reason': 'open_order_cleanup_lock_repair',
+        'previousClosedAt': report.closedAt?.toIso8601String(),
+        'previousClosedById': report.closedById,
+      },
+    );
+    final repaired = AuditReport(
+      reportId: report.reportId,
+      orderId: report.orderId,
+      tableNumbers: report.tableNumbers,
+      floor: report.floor,
+      openedById: report.openedById,
+      openedByName: report.openedByName,
+      openedAt: report.openedAt,
+      status: AuditReportStatus.open,
+      events: _appendedInSequence(report.events, [repair]),
+      updatedAt: now,
+      locked: false,
+    );
+    await saveAuditReport(repaired);
+    return repaired;
+  }
+
   /// Appends [events] to the Order's report.
   ///
   /// A locked report refuses new events, because a settled or cancelled Order
@@ -559,6 +637,9 @@ class AuditRepository {
       orderSnapshot: orderSnapshot,
     );
 
+    if (report.locked && !allowLocked) {
+      report = await _repairCleanupLock(report);
+    }
     if (report.locked && !allowLocked) {
       throw StateError('Audit report for order $orderId is locked');
     }

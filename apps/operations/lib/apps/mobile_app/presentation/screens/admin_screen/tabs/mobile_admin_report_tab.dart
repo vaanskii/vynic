@@ -134,6 +134,7 @@ class _ReportTabState extends State<_ReportTab>
   }
 
   Widget _buildReport() {
+    final showNonFiscal = ManagerEntitlements.has(FeatureKeys.nonFiscalClose);
     final d = _data!;
     final topItems = (d['topItems'] as List?) ?? [];
     final topItemsByCategory = (d['topItemsByCategory'] as List?) ?? [];
@@ -147,8 +148,14 @@ class _ReportTabState extends State<_ReportTab>
     final cashRevenue = (d['cashRevenue'] as num?)?.toDouble() ?? 0;
     final cardRevenue = (d['cardRevenue'] as num?)?.toDouble() ?? 0;
     final nonFiscalRevenue = _nonFiscalFromBreakdown(paymentBreakdown);
-    final breakdownEntries = paymentBreakdown.entries.toList()
-      ..sort((a, b) => (b.value as num).compareTo(a.value as num));
+    final breakdownEntries =
+        paymentBreakdown.entries
+            .where(
+              (entry) =>
+                  showNonFiscal || !SaleVisibility.nonFiscalPayment(entry.key),
+            )
+            .toList()
+          ..sort((a, b) => (b.value as num).compareTo(a.value as num));
 
     return RefreshIndicator(
       color: AdminTheme.primary,
@@ -184,13 +191,14 @@ class _ReportTabState extends State<_ReportTab>
                 icon: Icons.credit_card_outlined,
                 color: AdminTheme.accent,
               ),
-              _AdminKpiItem(
-                label: 'არაფისკალური',
-                value: _adminGel(nonFiscalRevenue),
-                subtitle: _adminShareSubtitle(nonFiscalRevenue, totalRevenue),
-                icon: Icons.receipt_long_outlined,
-                color: AdminTheme.warn,
-              ),
+              if (showNonFiscal)
+                _AdminKpiItem(
+                  label: 'არაფისკალური',
+                  value: _adminGel(nonFiscalRevenue),
+                  subtitle: _adminShareSubtitle(nonFiscalRevenue, totalRevenue),
+                  icon: Icons.receipt_long_outlined,
+                  color: AdminTheme.warn,
+                ),
               _AdminKpiItem(
                 label: 'შეკვეთები',
                 value: '$orderCount',

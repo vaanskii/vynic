@@ -26,12 +26,17 @@ file, and printer ports were fixed to 9100. Customer owners/portal did not exist
 ## Product identity and supported targets
 
 `main.dart` now exports `main_manager.dart`: the default always starts Manager.
-`main_pos.dart` starts only Windows POS and rejects other host platforms. It calls
+`main_pos.dart` supports Windows production and macOS debug development.
+It rejects other host platforms and non-development macOS modes. It calls
 `startup_pos.dart`. Neither entrypoint loads `.env` or reads APP_ROLE/PRINT_HOST.
 Manager initializes only its own Hive cache/preferences/auth and notifications;
 it does not initialize DatabaseService, printing, POS ingestion or POS sync.
 Manager cache storage uses a `VynicManager` subdirectory. POS retains its existing
 operational data/credential discovery and never boots companion Manager navigation.
+Unfinished POS setup persists across restart, including after Staff delivery.
+Only a restaurant name is required; logos are optional and edited later in Settings.
+Startup never copies Vankisi identity, logo, menu or tables into missing fields.
+Existing stored restaurant data is preserved.
 Fresh release POS has no universal bootstrap PIN; first Manager credentials arrive
 through Edge. Existing Staff are untouched. Debug bootstrap accounts remain for
 existing developer tests only. After a deliberate release data wipe, use portal
@@ -108,6 +113,22 @@ keystores, key properties or provisioning secrets. Legacy backend shared-key and
 callback compatibility stays frozen for old installed terminals; retire only
 after real fleet enrollment and old-build retirement evidence. New onboarding
 never displays callback settings, Venue UUIDs or shared keys.
+
+## macOS development shortcuts
+
+Source `apps/operations/tool/dev.zsh` from `~/.zshrc`, then run `vynic-pos`
+or `vynic-manager` from any directory (separate terminals to run both).
+POS remains Windows-only for production. These shortcuts use debug development,
+separate macOS bundle IDs/names and cached workspaces under
+`apps/operations/.dart_tool/vynic-dev/`. Their `lib` directories link to the
+shared source, so Flutter `r`/`R` hot reload/restart uses your actual edits.
+They do not read APP_ROLE or `.env`.
+
+Default API is `http://127.0.0.1:3000`. Override per invocation with
+`VYNIC_DEV_API_URL=http://HOST:3000 vynic-pos` (or `vynic-manager`).
+Additional Flutter run arguments pass through, e.g. `vynic-pos --verbose`.
+Quit with `q`; launch the same command again to refresh native configuration/assets.
+The shortcuts preserve build caches and never delete the POS operational database.
 
 ## Developer and release commands
 
@@ -241,7 +262,9 @@ Cloud stores configuration but never connects to the supplied LAN host.
 
 `GET /edge/runtime-config` derives Device/Venue solely from its credential and
 returns Venue identity, effective feature keys and that Device's versioned config.
-POS pulls on startup/enrollment and every minute. Validation precedes one atomic
+POS pulls on startup/enrollment and every 10 seconds. Device display name and
+effective features refresh independently of printer settings; the UI observes
+changes without restarting. Validation precedes one atomic
 Hive write. Null Cloud config preserves existing local printers. Failed pulls
 leave the last good config; backup already includes every settings key. Updates
 wait until the print queue is idle, then refresh local connections. Renderers,
@@ -312,3 +335,46 @@ store/notarization pipelines; Windows native build/coexistence verification; mai
 verification/recovery and distributed abuse controls before broad signup;
 OS-keychain credential storage; physical test-print command/hardware verification.
 No production deployment, publishing, billing or legacy fleet shutdown was done.
+
+## Live menu and feature changes
+
+Local POS menu saves refresh the open ordering menu without resetting the cart.
+Device names come from enrollment/runtime configuration, never a fixed POS-01 label.
+`NON_FISCAL_CLOSE` is an optional capability enforced from the last cached snapshot
+in addition to Staff permissions, including a final check before starting closure.
+The additive `20260920120000_non_fiscal_close_feature` migration adds it to existing
+POS plans to preserve their prior behavior. New custom plans choose their own set.
+Operators can Enable/Disable/Inherit it per Venue through Georgian product controls.
+Cloud feature updates normally appear within 10 seconds while connected; offline
+POS retains its last known capabilities and does not request Cloud during checkout.
+
+## Shared Venue profile
+
+Apply `20260921120000_venue_profile` before deploying the new backend/client.
+It adds nullable branchName/address/phone/legalId/profileUpdatedAt to Venue and
+never fills in a default branch, address or logo.
+
+Owners edit the profile in their portal (including optional fields at signup).
+Managers edit it under Management → Settings → Restaurant profile. POS edits the
+same text identity in Settings; logo and receipt layout remain local and optional.
+The name is required for shared profile writes; other text fields may be cleared.
+
+Owner routes check Organization ownership; `/mobile/venue-profile` resolves Staff
+and requires MANAGER_APP/Manager role; `/edge/venue-profile` resolves Device.
+Client Venue IDs never establish authority. Every accepted profile change and its
+before/after values are recorded atomically in Venue audit history.
+
+POS persists pending edits with its enrolled Venue identity before syncing. They
+survive restart/offline use and retry during runtime pulls. A pending edit restored
+from another Venue is discarded without sending it. Failed uploads do not block
+feature/printer refresh or overwrite local pending identity. Cloud pulls refresh
+idle forms and login identity; unsaved forms keep user edits. Last accepted profile
+save wins. The setup-complete marker remains independent from profile delivery.
+Legacy local receipt identity is retained until a profile has been configured in
+Cloud; no nullable migration field erases an existing local identity at startup.
+
+NON_FISCAL_CLOSE hides optional non-fiscal sales/report/dashboard presentation as
+well as the close action. It does not delete Sale records, rewrite totals, remove
+advance receipts/cancellations, or erase audit/consumption history. Re-enabling it
+restores visibility of the original history. Feature dependency warnings are
+advisory and never silently enable other modules or override plan precedence.

@@ -1,4 +1,5 @@
 abstract final class FeatureKeys {
+  static const nonFiscalClose = 'NON_FISCAL_CLOSE';
   static const pos = 'POS';
   static const website = 'WEBSITE';
   static const managerApp = 'MANAGER_APP';

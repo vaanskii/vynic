@@ -19,7 +19,7 @@ func posHandle(pid int, path string, access uint32) (windows.Handle, error) {
 	if pid < 1 || uint64(pid) > uint64(^uint32(0)) {
 		return 0, errors.New("invalid POS process ID")
 	}
-	if filepath.Base(path) != Executable {
+	if !filepath.IsAbs(path) || filepath.Base(path) != Executable {
 		return 0, errors.New("refusing non-POS executable")
 	}
 	h, e := windows.OpenProcess(access|windows.PROCESS_QUERY_LIMITED_INFORMATION|windows.SYNCHRONIZE, false, uint32(pid))
@@ -115,7 +115,7 @@ func (NativeProcess) Stop(path string) error {
 	return nil
 }
 func (NativeProcess) Start(path string, env []string) (int, error) {
-	if filepath.Base(path) != Executable {
+	if !filepath.IsAbs(path) || filepath.Base(path) != Executable {
 		return 0, errors.New("refusing non-POS executable")
 	}
 	handles, e := matchingProcesses(path, 0)

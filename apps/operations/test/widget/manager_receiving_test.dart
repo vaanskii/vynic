@@ -1,3 +1,5 @@
+import 'inventory_test_actions.dart';
+import 'procurement_rework_test.dart' as flow;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vynic/apps/mobile_app/presentation/screens/mobile_admin_screen.dart';
@@ -380,6 +382,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await flow.chooseReceivingProduct(tester);
 
       await tester.ensureVisible(find.text('თარიღი და დოკუმენტის დეტალები'));
       await tester.tap(find.text('თარიღი და დოკუმენტის დეტალები'));
@@ -415,6 +418,7 @@ void main() {
       expect(find.text('მიღებული: 240 ბოთლი'), findsOneWidget);
       expect(find.text('288.00 ₾'), findsNWidgets(2));
 
+      await reviewReceiving(tester);
       await tester.tap(find.byKey(const Key('receiving-save')));
       await tester.pumpAndSettle();
 
@@ -450,12 +454,13 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await flow.chooseReceivingProduct(tester);
 
       await tester.enterText(
         find.byKey(const Key('receiving-line-cost-0')),
         '15',
       );
-      await tester.tap(find.byKey(const Key('receiving-save')));
+      await reviewReceiving(tester);
       await tester.pumpAndSettle();
 
       expect(
@@ -482,6 +487,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await flow.chooseReceivingProduct(tester);
 
       expect(find.text('მიღების რედაქტირება'), findsOneWidget);
       await tester.tap(find.text('თარიღი და დოკუმენტის დეტალები'));
@@ -503,7 +509,7 @@ void main() {
 
       expect(find.text('მარაგშია: 62.5 კგ'), findsOneWidget);
       expect(find.text('მარაგშია: 240 ბოთლი'), findsOneWidget);
-      expect(find.text('მომწოდებლები: 0'), findsWidgets);
+      expect(find.text('მომწოდებლები: 0'), findsNothing);
       // The Step 1 placeholder is gone for good.
       expect(find.text('მოძრაობები ჯერ არ არის'), findsNothing);
       expect(find.byKey(const Key('low-stock-badge')), findsNothing);

@@ -11,6 +11,7 @@ export function ConfirmDialog({
   pending = false,
   error,
   onConfirm,
+  georgian = false,
 }: {
   open: boolean;
   onOpenChange(open: boolean): void;
@@ -21,27 +22,44 @@ export function ConfirmDialog({
   pending?: boolean;
   error?: string;
   onConfirm(): void;
+  georgian?: boolean;
 }) {
   return (
     <Dialog
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={(next) => { if (!pending) onOpenChange(next); }}
       title={title}
       description={description}
       footer={
         <>
-          <Button onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button tone={danger ? "danger" : "primary"} onClick={onConfirm} disabled={pending}>
-            {pending ? "Working…" : confirmLabel}
+          <Button disabled={pending} onClick={() => onOpenChange(false)}>
+            {georgian ? "გაუქმება" : "Cancel"}
+          </Button>
+          <Button
+            tone={danger ? "danger" : "primary"}
+            onClick={onConfirm}
+            loading={pending}
+          >
+            {pending ? (georgian ? "ინახება…" : "Working…") : confirmLabel}
           </Button>
         </>
       }
     >
-      <div className={`platform-confirm${danger ? " platform-confirm--danger" : ""}`}>
-        <strong>Review the impact before continuing.</strong>
+      <div
+        className={`platform-confirm${danger ? " platform-confirm--danger" : ""}`}
+      >
+        <strong>
+          {georgian
+            ? "გაგრძელებამდე გადაამოწმეთ ცვლილება."
+            : "Review the impact before continuing."}
+        </strong>
         <p>{description}</p>
       </div>
-      {error ? <p className="platform-form-error platform-confirm-error" role="alert">{error}</p> : null}
+      {error ? (
+        <p className="platform-form-error platform-confirm-error" role="alert">
+          {error}
+        </p>
+      ) : null}
     </Dialog>
   );
 }

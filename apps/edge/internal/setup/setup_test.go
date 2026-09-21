@@ -31,10 +31,10 @@ type fakeHost struct {
 	integrated, removed      int
 }
 
-func (h *fakeHost) Secure(Layout) error                            { return nil }
-func (h *fakeHost) Quiesce(context.Context, Layout, Receipt) error { return h.quiesceErr }
-func (h *fakeHost) Integrate(Layout) error                         { h.integrated++; return h.integrateErr }
-func (h *fakeHost) RemoveIntegration(Layout) error                 { h.removed++; return nil }
+func (h *fakeHost) Secure(Layout) error                                  { return nil }
+func (h *fakeHost) Quiesce(context.Context, Layout, Receipt, bool) error { return h.quiesceErr }
+func (h *fakeHost) Integrate(Layout) error                               { h.integrated++; return h.integrateErr }
+func (h *fakeHost) RemoveIntegration(Layout) error                       { h.removed++; return nil }
 
 type fixture struct {
 	t         *testing.T
@@ -509,25 +509,99 @@ func TestIncompleteFlutterBundleRefused(t *testing.T) {
 		t.Fatal("partial installation activated")
 	}
 }
-func TestUninstallBlocksUnresolvedUpdaterDecision(t *testing.T) {
-	f := newFixture(t)
-	f.install()
-	l := f.i.Layout
-	db, e := sql.Open("sqlite", filepath.Join(l.POS(), "updater.sqlite"))
-	must(t, e)
-	st := updater.State{Status: "INSTALLING", Current: "1.8.0", Version: "1.9.0", Previous: "1.8.0", Attempt: "consented-request", High: 1}
-	raw, e := json.Marshal(st)
-	must(t, e)
-	_, e = db.Exec("UPDATE updater_state SET value=? WHERE id=1", string(raw))
-	must(t, e)
-	must(t, db.Close())
-	if e = f.i.Uninstall(context.Background()); e == nil {
-		t.Fatal("unresolved update removed")
-	}
-	if f.h.removed != 0 {
-		t.Fatal("removed integration before resolving update")
+func TestUninstallUnresolvedUpdatePreservesDataAndAllowsReinstall(t *testing.T) {
+	for _, phase := range []string{"prepared", "activating", "starting", "restoring", "repair_starting"} {
+		t.Run(phase, func(t *testing.T) {
+			f := newFixture(t)
+			f.install()
+			l := f.i.Layout
+			hive := filepath.Join(t.TempDir(), "orders.hive")
+			must(t, os.WriteFile(hive, []byte("unsynced open orders"), 0600))
+			st := updater.State{Layout: 2, Swap: phase, Status: "FAILED", Current: f.p.Version, Version: "1.9.0", Previous: f.p.Version, Attempt: "consented-request", High: 2, DataPath: filepath.Dir(hive)}
+			if phase == "repair_starting" {
+				st.RepairPending = true
+			}
+			if phase == "activating" {
+				st.Status = "INSTALLING"
+			}
+			if phase == "starting" {
+				st.Status = "RESTARTING"
+			}
+			raw, e := json.Marshal(st)
+			must(t, e)
+			db, e := sql.Open("sqlite", filepath.Join(l.POS(), "updater.sqlite"))
+			must(t, e)
+			_, e = db.Exec("UPDATE updater_state SET value=? WHERE id=1", string(raw))
+			must(t, e)
+			_, e = db.Exec("INSERT INTO install_requests VALUES (?, ?, ?, ?)", "consented-request", "1.9.0", 123, filepath.Dir(hive))
+			must(t, e)
+			must(t, db.Close())
+			// Even a truncated setup journal must not force binary recovery for removal.
+			must(t, os.WriteFile(filepath.Join(l.Root, "state", "swap.json"), []byte("interrupted journal"), 0600))
+			must(t, f.i.Uninstall(context.Background()))
+			if f.h.removed != 1 {
+				t.Fatal("integration remained")
+			}
+			for _, p := range []string{updater.CurrentDir(l.POS()), updater.RollbackDir(l.POS()), updater.StagingDir(l.POS()), filepath.Join(l.Root, "edge", "releases")} {
+				if _, e = os.Stat(p); !os.IsNotExist(e) {
+					t.Fatal("binary remains", p, e)
+				}
+			}
+			db, e = sql.Open("sqlite", filepath.Join(l.POS(), "updater.sqlite"))
+			must(t, e)
+			var retained string
+			must(t, db.QueryRow("SELECT value FROM updater_state WHERE id=1").Scan(&retained))
+			if retained != string(raw) {
+				t.Fatal("uninstall rewrote recovery evidence")
+			}
+			must(t, db.Close())
+			archives, e := filepath.Glob(filepath.Join(l.Root, "state", "uninstalled-swap-*.json"))
+			must(t, e)
+			if len(archives) != 1 {
+				t.Fatal("setup journal not retained")
+			}
+			must(t, f.i.Uninstall(context.Background()))
+			must(t, f.i.Install(context.Background(), true))
+			r, e := Load(l)
+			must(t, e)
+			u, e := updater.OpenExisting(r.Config, updater.NativeProcess{})
+			must(t, e)
+			if u.Snapshot().High != 2 || u.Snapshot().DataPath != filepath.Dir(hive) {
+				t.Fatal("reinstall reset durable state")
+			}
+			must(t, u.Close())
+			b, e := os.ReadFile(hive)
+			must(t, e)
+			if string(b) != "unsynced open orders" {
+				t.Fatal("Hive changed")
+			}
+			db, e = sql.Open("sqlite", filepath.Join(l.POS(), "updater.sqlite"))
+			must(t, e)
+			var count int
+			must(t, db.QueryRow("SELECT count(*) FROM install_requests WHERE id='consented-request'").Scan(&count))
+			must(t, db.Close())
+			if count != 1 {
+				t.Fatal("consent history deleted")
+			}
+		})
 	}
 }
+
+func TestUninstallStillRequiresQuiescentProcesses(t *testing.T) {
+	f := newFixture(t)
+	f.install()
+	f.h.quiesceErr = errors.New("POS still running")
+	if e := f.i.Uninstall(context.Background()); e == nil {
+		t.Fatal("removed running application")
+	}
+	if f.h.removed != 0 {
+		t.Fatal("integration removed before stop")
+	}
+	if _, e := os.Stat(updater.CurrentExecutable(f.i.Layout.POS())); e != nil {
+		t.Fatal(e)
+	}
+}
+
 func TestSingleSetupOwner(t *testing.T) {
 	f := newFixture(t)
 	unlock, e := f.i.lock()
@@ -656,5 +730,54 @@ func TestOldEdgeCapabilityRefusedBeforeLegacyLayoutMigration(t *testing.T) {
 	}
 	if !existsSetup(filepath.Join(old, updater.Executable)) || existsSetup(updater.CurrentDir(l.POS())) {
 		t.Fatal("incompatible repair moved binaries")
+	}
+}
+
+func TestInstallAfterRemovalUsesCurrentSignedPOSButRepairStaysPinned(t *testing.T) {
+	f := newFixture(t)
+	f.install()
+	before, e := Load(f.i.Layout)
+	must(t, e)
+	newer := f.p
+	newer.Version = "1.9.0"
+	newer.Release = 2
+	f.set("/pos.json", signed(t, f.k, "VYNIC-POS-RELEASE-v1\n", newer))
+	must(t, f.i.Install(context.Background(), true))
+	version, e := updater.ReleaseVersion(updater.CurrentDir(f.i.Layout.POS()))
+	must(t, e)
+	if version != "1.8.0" {
+		t.Fatal("repair upgraded POS", version)
+	}
+	must(t, f.i.Uninstall(context.Background()))
+	must(t, f.i.Install(context.Background(), true))
+	version, e = updater.ReleaseVersion(updater.CurrentDir(f.i.Layout.POS()))
+	must(t, e)
+	if version != "1.9.0" {
+		t.Fatal("Install restored obsolete POS", version)
+	}
+	after, e := Load(f.i.Layout)
+	must(t, e)
+	if after.EdgeHash != before.EdgeHash || after.Config.Token != before.Config.Token || after.Config.InitialVersion != before.Config.InitialVersion {
+		t.Fatal("install changed pinned Edge or identity")
+	}
+	u, e := updater.OpenExisting(after.Config, updater.NativeProcess{})
+	must(t, e)
+	st := u.Snapshot()
+	must(t, u.Close())
+	if st.Current != "1.9.0" || st.High != 2 {
+		t.Fatal(st)
+	}
+}
+
+func TestRemovedInstallStillRejectsUntrustedRelease(t *testing.T) {
+	f := newFixture(t)
+	f.install()
+	must(t, f.i.Uninstall(context.Background()))
+	f.set("/pos.json", []byte(`{"keyId":"untrusted"}`))
+	if e := f.i.Install(context.Background(), true); e == nil {
+		t.Fatal("unsigned release installed")
+	}
+	if _, e := os.Stat(updater.CurrentExecutable(f.i.Layout.POS())); !os.IsNotExist(e) {
+		t.Fatal("untrusted binary activated")
 	}
 }

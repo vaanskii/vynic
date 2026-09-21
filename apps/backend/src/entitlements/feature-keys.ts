@@ -1,6 +1,7 @@
 /** Stable commercial capabilities. Resolution remains database-driven. */
 export const FeatureKeys = {
   POS: 'POS',
+  NON_FISCAL_CLOSE: 'NON_FISCAL_CLOSE',
   WEBSITE: 'WEBSITE',
   MANAGER_APP: 'MANAGER_APP',
   INVENTORY: 'INVENTORY',

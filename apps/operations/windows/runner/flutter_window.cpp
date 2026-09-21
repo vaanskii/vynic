@@ -1,6 +1,10 @@
 #include "flutter_window.h"
 
 #include <optional>
+#ifdef VYNIC_POS_FULLSCREEN
+#include <shellapi.h>
+#include "resource.h"
+#endif
 
 #include "flutter/generated_plugin_registrant.h"
 
@@ -29,6 +33,9 @@ bool FlutterWindow::OnCreate() {
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     this->Show();
+#ifdef VYNIC_POS_FULLSCREEN
+    AddTrayIcon();
+#endif
   });
 
   // Flutter can complete the first frame before the "show window" callback is
@@ -40,6 +47,9 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+#ifdef VYNIC_POS_FULLSCREEN
+  RemoveTrayIcon();
+#endif
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }
@@ -51,6 +61,35 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+#ifdef VYNIC_POS_FULLSCREEN
+  static const UINT taskbar_created = RegisterWindowMessage(L"TaskbarCreated");
+  if (message == taskbar_created) {
+    tray_added_ = false;
+    AddTrayIcon();
+    return 0;
+  }
+  if (message == WM_APP + 17) {
+    if (lparam == WM_LBUTTONDBLCLK) ShowFromTray();
+    if (lparam == WM_RBUTTONUP || lparam == WM_CONTEXTMENU) {
+      HMENU menu = CreatePopupMenu();
+      if (!menu) return 0;
+      AppendMenuW(menu, MF_STRING, 1, L"Vynic POS-ის გახსნა");
+      AppendMenuW(menu, MF_STRING, 2, L"აპლიკაციიდან გასვლა");
+      POINT point;
+      GetCursorPos(&point);
+      SetForegroundWindow(hwnd);
+      const UINT action = TrackPopupMenu(menu, TPM_RETURNCMD | TPM_RIGHTBUTTON,
+                                         point.x, point.y, 0, hwnd, nullptr);
+      DestroyMenu(menu);
+      PostMessage(hwnd, WM_NULL, 0, 0);
+      if (action == 1 || action == 2) ShowFromTray();
+      // WM_CLOSE follows Flutter's existing confirmed clean-exit handler.
+      // Never terminate the process or signal the Edge host from the tray.
+      if (action == 2) PostMessage(hwnd, WM_CLOSE, 0, 0);
+    }
+    return 0;
+  }
+#endif
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
     std::optional<LRESULT> result =
@@ -69,3 +108,33 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
 
   return Win32Window::MessageHandler(hwnd, message, wparam, lparam);
 }
+
+#ifdef VYNIC_POS_FULLSCREEN
+void FlutterWindow::AddTrayIcon() {
+  if (tray_added_) return;
+  NOTIFYICONDATAW data = {};
+  data.cbSize = sizeof(data);
+  data.hWnd = GetHandle();
+  data.uID = 1;
+  data.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+  data.uCallbackMessage = WM_APP + 17;
+  data.hIcon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDI_APP_ICON));
+  wcscpy_s(data.szTip, L"Vynic POS");
+  tray_added_ = Shell_NotifyIconW(NIM_ADD, &data) != FALSE;
+  if (!tray_added_) OutputDebugStringW(L"Vynic POS: notification icon could not be added\n");
+}
+void FlutterWindow::RemoveTrayIcon() {
+  if (!tray_added_) return;
+  NOTIFYICONDATAW data = {};
+  data.cbSize = sizeof(data);
+  data.hWnd = GetHandle();
+  data.uID = 1;
+  if (!Shell_NotifyIconW(NIM_DELETE, &data))
+    OutputDebugStringW(L"Vynic POS: notification icon removal failed\n");
+  tray_added_ = false;
+}
+void FlutterWindow::ShowFromTray() {
+  ShowWindow(GetHandle(), SW_RESTORE);
+  SetForegroundWindow(GetHandle());
+}
+#endif

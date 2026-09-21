@@ -438,11 +438,11 @@ export class InventoryService {
         : requiredText(input.requestId, 'requestId');
     if (requestId && !/^[0-9a-f-]{36}$/i.test(requestId))
       throw new BadRequestException('requestId must be UUID');
-    // Inline ingredient creation carries only ingredient properties. Complex
-    // supplier/packaging setup uses the existing atomic supplier-items route.
-    if (requestId && (has(input, 'supplierIds') || has(input, 'purchaseUnits')))
+    // Receiving may create stock with packaging before any supplier linkage.
+    // A retry must match both the product properties and its complete packaging.
+    if (requestId && has(input, 'supplierIds'))
       throw new BadRequestException(
-        'Use supplied-item creation for supplier packaging',
+        'Use supplied-item creation for supplier links',
       );
     const data = {
       venueId: actor.venueId,
@@ -478,7 +478,9 @@ export class InventoryService {
               Object.entries(data).some(
                 ([key, value]) =>
                   String(prior[key] ?? '') !== String(value ?? ''),
-              )
+              ) ||
+              purchaseUnitSummary(prior.purchaseUnits) !==
+                purchaseUnitSummary(purchaseUnits)
             )
               throw new ConflictException(
                 'Ingredient request already used with different values',

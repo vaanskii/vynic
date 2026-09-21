@@ -33,7 +33,8 @@ func NativeLayout() (Layout, error) {
 	if e != nil {
 		return Layout{}, e
 	}
-	return Layout{filepath.Join(root, "Vynic")}, nil
+	root, e = installRoot(root)
+	return Layout{root}, e
 }
 func (NativeHost) Secure(l Layout) error {
 	u, e := windows.GetCurrentProcessToken().GetTokenUser()
@@ -94,11 +95,13 @@ func status(ctx context.Context, c updater.Config) (updater.State, error) {
 	e = json.NewDecoder(io.LimitReader(res.Body, 16<<10)).Decode(&st)
 	return st, e
 }
-func (NativeHost) Quiesce(ctx context.Context, l Layout, r Receipt) error {
+func (NativeHost) Quiesce(ctx context.Context, l Layout, r Receipt, uninstall bool) error {
 	if e := noPOS(); e != nil {
 		return e
 	}
-	if st, e := status(ctx, r.Config); e == nil && (st.Status == "INSTALLING" || st.Status == "RESTARTING") {
+	// Removal needs stopped processes, not a successfully recovered binary journal.
+	// The caller subsequently acquires the updater lock before deleting any files.
+	if st, e := status(ctx, r.Config); !uninstall && e == nil && (st.Status == "INSTALLING" || st.Status == "RESTARTING") {
 		return errors.New("POS install/recovery in progress; wait for its result")
 	}
 	if e := writeAtomic(l.StopFile(), []byte("stop\n")); e != nil {
@@ -135,30 +138,6 @@ const uninstallKey = `Software\Microsoft\Windows\CurrentVersion\Uninstall\VynicP
 const runName = "Vynic POS Edge"
 
 func quote(s string) string { return syscall.EscapeArg(s) }
-func shortcuts(l Layout, remove bool) error {
-	start, e := windows.KnownFolderPath(windows.FOLDERID_Programs, 0)
-	if e != nil {
-		return e
-	}
-	desktop, e := windows.KnownFolderPath(windows.FOLDERID_Desktop, 0)
-	if e != nil {
-		return e
-	}
-	sys, e := windows.GetSystemDirectory()
-	if e != nil {
-		return e
-	}
-	// Static local script; paths are data in environment variables, never executable interpolation.
-	script := `$ErrorActionPreference='Stop'; $w=New-Object -ComObject WScript.Shell; foreach($folder in @($env:VYNIC_START,$env:VYNIC_DESKTOP)){ $p=Join-Path $folder 'Vynic POS.lnk'; $s=$w.CreateShortcut($p); if((Test-Path -LiteralPath $p) -and $s.TargetPath -ne $env:VYNIC_TARGET){throw 'An unrelated Vynic POS shortcut exists; preserve it and contact support'}; if($env:VYNIC_REMOVE -eq 'true'){if(Test-Path -LiteralPath $p){Remove-Item -LiteralPath $p}}else{$s.TargetPath=$env:VYNIC_TARGET; $s.Arguments='--launch'; $s.WorkingDirectory=[IO.Path]::GetDirectoryName($env:VYNIC_TARGET); $s.Description='Vynic POS'; $s.Save()}}`
-	c := exec.Command(filepath.Join(sys, "WindowsPowerShell", "v1.0", "powershell.exe"), "-NoProfile", "-NonInteractive", "-Command", script)
-	c.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	c.Env = append(os.Environ(), "VYNIC_START="+start, "VYNIC_DESKTOP="+desktop, "VYNIC_TARGET="+l.Setup(), fmt.Sprintf("VYNIC_REMOVE=%t", remove))
-	out, e := c.CombinedOutput()
-	if e != nil {
-		return fmt.Errorf("shortcut registration: %w: %s", e, out)
-	}
-	return nil
-}
 func (NativeHost) Integrate(l Layout) error {
 	if e := checkRegistration(l); e != nil {
 		return e
@@ -328,7 +307,7 @@ func Supervise(l Layout) error {
 		c.Dir = filepath.Dir(l.Edge(r.EdgeVersion))
 		c.Stdout = f
 		c.Stderr = f
-		c.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+		c.SysProcAttr = &syscall.SysProcAttr{CreationFlags: windows.CREATE_NO_WINDOW}
 		e = c.Run()
 		if _, se := os.Stat(l.StopFile()); se == nil {
 			return nil
@@ -339,6 +318,9 @@ func Supervise(l Layout) error {
 	return errors.New("Edge repeatedly failed; inspect logs/edge.log and use Repair")
 }
 func EnsureHost(ctx context.Context, l Layout, launch bool) error {
+	return ensureHost(ctx, l, launch, nil)
+}
+func ensureHost(ctx context.Context, l Layout, launch bool, report func(UpdateProgress)) error {
 	if e := rejectLinks(l.Root); e != nil {
 		return e
 	}
@@ -363,12 +345,20 @@ func EnsureHost(ctx context.Context, l Layout, launch bool) error {
 		return errors.New("setup is running")
 	}
 	defer lock.Unlock()
+	// Admission is serialized, but health observation must not own the setup
+	// lock for minutes after the daemon accepts launch.
+	waitHealth := func(previous string) error {
+		if e := lock.Unlock(); e != nil {
+			return e
+		}
+		return waitPOSHealth(ctx, l, r.Config, previous, report)
+	}
 	if e = os.Remove(l.StopFile()); e != nil && !os.IsNotExist(e) {
 		return e
 	}
 	if _, e = status(ctx, r.Config); e != nil {
 		c := exec.Command(l.Setup(), "--host")
-		c.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+		c.SysProcAttr = &syscall.SysProcAttr{CreationFlags: windows.CREATE_NO_WINDOW}
 		if e = c.Start(); e != nil {
 			return e
 		}
@@ -401,6 +391,9 @@ func EnsureHost(ctx context.Context, l Layout, launch bool) error {
 			if st.Status == "FAILED" && !st.StartupVerified {
 				return fmt.Errorf("POS startup failed: %s; inspect logs and close POS before Repair", st.Reason)
 			}
+			if report != nil && !st.StartupVerified {
+				return waitHealth(st.Reason)
+			}
 			return nil
 		}
 		if e = noPOS(); e != nil {
@@ -410,7 +403,7 @@ func EnsureHost(ctx context.Context, l Layout, launch bool) error {
 		for {
 			e = updater.LaunchCurrent(r.Config)
 			if e == nil {
-				return waitPOSHealth(ctx, l, r.Config, st.Reason)
+				return waitHealth(st.Reason)
 			}
 			if !strings.Contains(e.Error(), "updater busy") || time.Now().After(deadline) {
 				return e
@@ -447,7 +440,9 @@ func managedPOSRunning(path string) (bool, error) {
 
 // A launch ACK only schedules startup. Surface a failed process/health check to
 // the installer/shortcut caller instead of reporting installation launch success.
-func waitPOSHealth(ctx context.Context, l Layout, c updater.Config, previousReason string) error {
+func waitPOSHealth(ctx context.Context, l Layout, c updater.Config, previousReason string, report func(UpdateProgress)) error {
+	started := time.Now()
+	lastSecond := -1
 	deadline := time.Now().Add(250 * time.Second)
 	for {
 		select {
@@ -455,11 +450,29 @@ func waitPOSHealth(ctx context.Context, l Layout, c updater.Config, previousReas
 			return ctx.Err()
 		case <-time.After(250 * time.Millisecond):
 		}
+		if _, e := os.Stat(l.Maintenance()); e == nil {
+			return errors.New("POS launch cancelled by installation maintenance")
+		}
 		st, e := status(ctx, c)
+		elapsed := int(time.Since(started).Seconds())
+		if report != nil && elapsed != lastSecond {
+			message := "Checking local data and POS startup health. Edge requires a 30-second stability check."
+			if e != nil {
+				message = "Waiting for the local update service to respond…"
+			}
+			if st.Swap == "restoring" {
+				message = "Restoring the previous POS release and checking its startup health…"
+			}
+			report(UpdateProgress{Message: fmt.Sprintf("%s\nElapsed: %ds", message, elapsed)})
+			lastSecond = elapsed
+		}
 		if e == nil {
 			running, re := managedPOSRunning(posExecutable(l, st))
 			if re != nil {
 				return re
+			}
+			if !running && time.Since(started) > 5*time.Second {
+				return fmt.Errorf("POS exited before startup health completed; %s", st.Reason)
 			}
 			if st.StartupVerified && running {
 				return nil

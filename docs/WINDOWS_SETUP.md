@@ -1,10 +1,37 @@
 # Vynic Windows first-install bootstrapper
 
-`VynicSetup.exe` now implements first install, Open, Repair and Uninstall for
+`VynicSetup.exe` implements first install, Update POS, Open, Repair and Uninstall for
 **Windows amd64 POS**. It is implemented and cross-built, not Windows-qualified
 or deployed. A release owner must supply actual HTTPS endpoints, pinned public
 keys, signed manifests/bundles and Authenticode signing. No production URL or key
 is invented. No POS/Edge artifact is embedded in the setup executable.
+
+## Installer wizard and update entry point
+
+Fresh installation uses native Welcome -> Destination -> Review -> Install ->
+Finish pages, Back/Next navigation, a folder browser and native progress control.
+The default is `%LOCALAPPDATA%\Vynic`; a fresh install may select an empty,
+dedicated descendant of the current user's LocalAppData. The location is recorded
+in HKCU `Software\Vynic\Setup` (`InstallRoot`). Subsequent Setup/host/shortcut
+launches resolve that same location. Invalid, linked, reserved and outside-user
+paths fail closed; existing/removed installations cannot relocate retained data.
+Only one interactive wizard is allowed per user session. No elevation is added.
+
+Existing installations expose **Update POS** separately from **Repair**. Update
+connects to Edge and requests a release check/download before opening POS. If
+Edge reports an unfinished activation or startup, Setup completes that existing
+health gate first and reports the stage plus elapsed time. Download progress uses
+Edge's observed bytes: percentage, received/total MB and a determinate native bar.
+Unknown totals and startup/manifest checks use a marquee; receiving 100% never
+means verification succeeded. A completed download remains on a result page with
+**Open POS / Later**. Later leaves the release staged and does not launch/install.
+The existing authenticated loopback API and pinned Edge binary are unchanged. POS retains explicit
+Update Now consent and its exclusive readiness barrier. Setup never calls the
+install endpoint or supplies a made-up readiness result. Repair still restores
+the exact installed version and does not upgrade it.
+
+The wizard build displays/logs Setup's own version, distinct from the POS release.
+Native Windows behavior remains a qualification requirement.
 
 ## Runtime boundary
 
@@ -235,12 +262,14 @@ blindly resubmitted. The shortcut never pins a POS release directory. Existing P
 Enrollment Code onboarding runs afterward; setup asks for no Venue UUID, database
 credentials, API secret or printer IP.
 
-The compact GUI uses a bundled static script with Windows PowerShell 5.1 and
-WinForms, plus fixed COM calls for `.lnk` creation. It does not download scripts,
-set `ExecutionPolicy Bypass` or relax AppLocker/WDAC policy. Progress shows the
-current phase with a marquee; explicit confirmation precedes install/removal.
-A hardened environment that disables these Windows components must be qualified
-or use a future native UI implementation; this build reports the failure.
+The Setup GUI is native Win32 inside VynicSetup.exe. A locked OS thread owns the
+window/message loop and controls; installation work runs separately and reports
+progress to that window. Closing cannot abandon an active mutation. Native Shell
+Link COM APIs create/validate shortcuts without an interpreter or target resolution.
+No runtime scripts, cmd.exe or powershell.exe are launched. Explicit --host is the
+only background mode; process starts use absolute owned executable paths and the
+current unelevated token. See `WINDOWS_DEFENDER_REVIEW.md` for native qualification,
+PE metadata, external Authenticode signing and unresolved Defender analysis.
 
 ## Existing installation, repair and uninstall
 
@@ -284,13 +313,34 @@ After a failed repair the UI attempts to restart the previous host. It never
 force-kills POS/Edge/Manager or rolls back a database.
 
 Uninstall explicitly confirms **application removal with restaurant data kept**.
-It requires POS closed, stops the host, refuses unresolved update recovery,
-removes only owned startup/shortcuts/uninstall registration and Edge/POS release
+It requires POS closed and waits for the host to stop, but **does not require
+startup health or recovery of an interrupted update**. The updater ownership
+lock must be free before removal; a live/locked process still blocks deletion.
+It removes only owned startup/shortcuts/uninstall registration and Edge/POS release
 slots (including temporary rollback and staging). It retains Hive, Edge DB/identity, updater DB/high-water,
 credentials, receipt and diagnostics. A small setup utility remains for Repair.
 There is intentionally **no data-deletion button**; permanent operational-data
 removal is a distinct support procedure. Repair after removal reuses retained
-state and the active POS version. Repeated removal is safe.
+state. Install after explicit removal selects the current compatible signed POS
+release, subject to the retained version/high-water checks; installed Repair
+remains version-pinned and Edge always retains its pinned baseline. Only after all release slots are removed does
+Reinstall reset abandoned binary activation/health fields; data paths, credentials,
+release high-water and consent rows remain. Interrupted setup swap journals are
+archived under `state/uninstalled-swap-*.json`, never replayed after removal.
+Repeated removal is safe, and incomplete removal can be retried from the wizard.
+
+Setup 1.0.4.0 embeds the existing Vynic brand icon at seven resolutions. Native
+windows and POS Shell Links explicitly use that resource; the shortcut target
+remains the updater-aware Setup launcher. Reinstall with the new downloaded
+Setup installs the icon-bearing launcher and recreates the owned shortcuts.
+No Flutter rebuild or Edge self-update is needed for these fixes.
+
+Setup 1.0.5.0 launches POS without an installer/progress window, including
+`--launch`, Open POS and Launch after installation. The launcher still waits for
+authenticated startup health; failure is written to `logs/setup.log` and shown
+in a native error dialog. Normal no-argument Setup remains the visible wizard;
+install/repair/update actions keep their progress UI. To update an existing
+launcher, close POS and run the new downloaded Setup → More options → Repair.
 
 ## Windows/network/security qualification
 
@@ -305,8 +355,8 @@ Native Windows validation remains mandatory:
   protected ACLs and inherited file permissions on NTFS.
 - Logon startup, sign-out/reboot, duplicate launches, host crashes/retry exhaustion,
   graceful shutdown while updater state is active, and orphaned Edge processes.
-- WinForms UI, progress/failure handling, DPI/localization, shell shortcuts,
-  Programs & Features Repair/Uninstall and hardened PowerShell/WDAC environments.
+- Native Win32 UI, progress/failure handling, DPI/localization, shell shortcuts,
+  Programs & Features Repair/Uninstall and AppLocker/WDAC environments.
 - Locked exe/DLL directory moves and eventual rollback deletion, including cleanup
   retry without reverting healthy current; installed-setup recovery using the
   external setup; disk full,
@@ -342,3 +392,44 @@ that this implementation has passed Windows qualification.
    directories and existing state/config paths stable.
 6. Real Windows crash/power-loss/ACL/lock/AV qualification and controlled rollout
    with previous-version recovery. None of these enable Phase 2A authority.
+
+Setup 1.0.6.0 includes update progress and download-first monitoring. It does not
+shorten Edge's 30-second startup stabilization or modify production authority.
+Checks and downloads may run with POS closed; installation still requires POS
+readiness and explicit consent. Monitoring is bounded to 30 minutes; a monitoring
+timeout is an error and does not claim the background download was cancelled.
+
+## Startup data identity regression (Setup 1.0.7.0 / POS 1.0.3)
+
+Windows `path_provider` derives its default application-support directory from
+PE CompanyName/ProductName. Branding changed CompanyName from `vanski` to `Vynic`;
+POS 1.0.1 consequently opened a different Hive folder, while Edge correctly
+rejected its health heartbeat against the previously pinned data directory.
+The client hid the rejection behind indefinite startup probation.
+
+POS now obtains the persisted `dataPath` over authenticated loopback IPC **before
+opening Hive** and passes that exact directory through DatabaseService/DatabaseCore.
+Missing/unreachable pinned storage fails visibly; it never falls back to empty
+restaurant data. New installations without a pinned path retain normal initial
+provisioning. Manager storage selection is unchanged. No folders are moved, merged
+or deleted by this fix.
+
+The client bounds complete IPC requests, reports readiness/health errors, logs
+them in `logs/pos-startup.log`, and replaces endless probation with an error at
+150 seconds. Input stays fenced until verified health. Window close during
+probation does not open a confirmation dialog beneath the blocking overlay.
+Setup releases its admission lock after Edge accepts launch, before observing
+health, so a slow launch no longer monopolizes the uninstall lock.
+
+After uninstall the wizard says **Install**, preserving local data and trust.
+That explicit action can install the newer signed POS fix; ordinary Repair does
+not upgrade an installed app. Signed artifact/hash/compatibility checks and the
+pinned Edge baseline remain mandatory.
+
+Windows 11 Parallels validation used the real signed POS bundle with an isolated
+updater and copies of the legacy Hive files. The original failure was confirmed
+as a `vanski` vs `Vynic` data-path mismatch. The corrected bundle sent accepted
+heartbeats with the pinned legacy-copy path and completed the full 30-second
+stabilization. Original Hive/state and the installed Edge were not replaced by
+this diagnostic. Native installer UI and upgrades still require normal rollout
+qualification; this does not classify the earlier Defender report.

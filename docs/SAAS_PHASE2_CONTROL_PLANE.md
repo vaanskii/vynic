@@ -41,7 +41,7 @@ actor identity. Clients never calculate plan/override precedence.
 ## Manager runtime and offline behavior
 
 The Manager shell starts with no optional modules and fetches the authoritative
-snapshot. It refreshes on resume, every minute, and Dashboard pull-to-refresh.
+snapshot. It refreshes on resume, every 10 seconds, and Dashboard pull-to-refresh.
 A changed snapshot clears Manager read caches, closes stale pushed screens,
 recreates kept-alive tabs and returns to Dashboard. Stable destination indices
 map Dashboard links to the currently visible navigation, so removing Inventory

@@ -9,12 +9,24 @@ class UpdateReadiness {
   static String? failure;
   static final Map<Object, String> _active = {};
   static final List<String? Function()> recoveryChecks = [];
+  static List<String> get activeOperations =>
+      List.unmodifiable(_active.values.toSet());
+  static String operationLabel(String operation) => switch (operation) {
+    'collect' =>
+      'მიმდინარეობს გადახდა — დაასრულეთ ან გააუქმეთ გადახდის ფანჯარა',
+    'closeTable' || 'completeExistingSale' => 'მიმდინარეობს მაგიდის დახურვა',
+    'closeDay' => 'მიმდინარეობს დღის დახურვა',
+    'cancelOrder' => 'მიმდინარეობს შეკვეთის გაუქმება',
+    'Cloud command' => 'სრულდება სერვერიდან მიღებული ოპერაცია',
+    'Hive write' || 'Hive model write' => 'მიმდინარეობს მონაცემების შენახვა',
+    _ => 'მიმდინარეობს ლოკალური ოპერაცია',
+  };
 
   static String? get blockedReason {
     if (!startupReady) return 'პროგრამა ჯერ მზად არ არის';
     if (failure != null) return 'საჭიროა ოპერაციის აღდგენა';
     if (frozen) return 'განახლება მიმდინარეობს';
-    if (_active.isNotEmpty) return 'დაელოდეთ მიმდინარე ოპერაციის დასრულებას';
+    if (_active.isNotEmpty) return operationLabel(_active.values.first);
     for (final check in recoveryChecks) {
       try {
         final reason = check();

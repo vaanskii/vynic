@@ -37,7 +37,10 @@ export class SupplierPayments {
     const rows = await this.db.receiving.findMany({
       where: {
         venueId: tenant.venueId,
-        status: 'POSTED',
+        OR: [
+          { status: 'POSTED' },
+          { status: 'CANCELLED', payments: { some: {} } },
+        ],
         ...(supplierId ? { supplierId } : {}),
       },
       include: { payments: { orderBy: { createdAt: 'desc' } } },
@@ -52,6 +55,7 @@ export class SupplierPayments {
       else unverified = unverified.plus(summary.remaining);
       return {
         id: row.id,
+        status: row.status,
         supplierId: row.supplierId,
         supplierName: row.supplierNameSnapshot,
         businessDate: row.businessDate,

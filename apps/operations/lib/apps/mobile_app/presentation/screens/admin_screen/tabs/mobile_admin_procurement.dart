@@ -466,8 +466,7 @@ class InventoryMenuPicker extends StatefulWidget {
 
 class _InventoryMenuPickerState extends State<InventoryMenuPicker> {
   List<RecipeMenuItem>? _items;
-  String _query = '';
-  String? _category, _subcategory, _error;
+  String? _error;
   @override
   void initState() {
     super.initState();
@@ -485,315 +484,303 @@ class _InventoryMenuPickerState extends State<InventoryMenuPicker> {
   }
 
   @override
+  Widget build(BuildContext context) => Theme(
+    data: inventoryTheme(context),
+    child: Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+        backgroundColor: AdminTheme.surface,
+        foregroundColor: AdminTheme.text,
+      ),
+      body: _error != null
+          ? _ErrorWidget(onRetry: _load)
+          : _items == null
+          ? const _AdminLoading()
+          : InventoryMenuBrowser(
+              items: _items!,
+              onSelected: (selection) => Navigator.pop(context, selection),
+            ),
+    ),
+  );
+}
+
+/// Shared category → subcategory → product browsing for stock setup and recipes.
+class InventoryMenuBrowser extends StatefulWidget {
+  const InventoryMenuBrowser({
+    super.key,
+    required this.items,
+    required this.onSelected,
+    this.composition = false,
+  });
+  final List<RecipeMenuItem> items;
+  final ValueChanged<InventoryMenuSelection> onSelected;
+  final bool composition;
+  @override
+  State<InventoryMenuBrowser> createState() => _InventoryMenuBrowserState();
+}
+
+class _InventoryMenuBrowserState extends State<InventoryMenuBrowser> {
+  final _search = TextEditingController();
+  final _scroll = ScrollController(keepScrollOffset: false);
+  String? _category, _subcategory;
+  bool _all = false, _allSubcategories = false;
+  _RecipeFilter _filter = _RecipeFilter.all;
+  @override
+  void dispose() {
+    _search.dispose();
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _change(VoidCallback change) {
+    if (_scroll.hasClients) _scroll.jumpTo(0);
+    setState(change);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final query = _search.text.trim().toLowerCase();
     final categories =
-        (_items ?? <RecipeMenuItem>[])
-            .map((i) => i.browseCategory)
-            .toSet()
-            .toList()
-          ..sort();
+        widget.items.map((i) => i.browseCategory).toSet().toList()..sort();
     final subcategories =
-        (_items ?? <RecipeMenuItem>[])
+        widget.items
             .where((i) => i.browseCategory == _category)
             .map((i) => i.subcategoryName)
             .whereType<String>()
             .toSet()
             .toList()
           ..sort();
-    final rows = (_items ?? <RecipeMenuItem>[])
-        .where(
-          (i) =>
-              (_category == null || i.browseCategory == _category) &&
-              (_subcategory == null || i.subcategoryName == _subcategory) &&
-              '${i.name} ${i.browseCategory} ${i.subcategoryName ?? ''} ${i.variants.map((v) => v.label).join(' ')}'
-                  .toLowerCase()
-                  .contains(_query.trim().toLowerCase()),
-        )
-        .toList();
-    return Theme(
-      data: inventoryTheme(context),
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: AdminTheme.surface,
-          foregroundColor: AdminTheme.text,
-          title: Text(widget.title),
-        ),
-        body: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 900),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+    final categoryStage = query.isEmpty && _category == null && !_all;
+    final subcategoryStage =
+        query.isEmpty &&
+        _category != null &&
+        _subcategory == null &&
+        !_allSubcategories &&
+        subcategories.isNotEmpty;
+    final rows = widget.items.where((item) {
+      if (widget.composition && !_filter.matches(item)) return false;
+      if (query.isNotEmpty)
+        return '${item.name} ${item.browseCategory} ${item.subcategoryName ?? ''} ${item.variants.map((v) => v.label).join(' ')}'
+            .toLowerCase()
+            .contains(query);
+      return (_category == null || item.browseCategory == _category) &&
+          (_subcategory == null || item.subcategoryName == _subcategory);
+    }).toList();
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1000),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: TextField(
+                key: const Key('inventory-menu-search'),
+                controller: _search,
+                decoration: _adminInput('მენიუში ძებნა').copyWith(
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: query.isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: 'გასუფთავება',
+                          onPressed: () => _change(_search.clear),
+                          icon: const Icon(Icons.close),
+                        ),
+                ),
+                onChanged: (_) => _change(() {}),
+              ),
+            ),
+            if (!categoryStage && query.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Row(
+                  children: [
+                    TextButton.icon(
+                      key: const Key('menu-category-back'),
+                      icon: const Icon(Icons.arrow_back),
+                      label: const Text('კატეგორიები'),
+                      onPressed: () => _change(() {
+                        _category = null;
+                        _subcategory = null;
+                        _all = false;
+                        _allSubcategories = false;
+                      }),
+                    ),
+                    Expanded(
+                      child: Text(
+                        [
+                          _category,
+                          _subcategory,
+                        ].whereType<String>().join(' / '),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            if (widget.composition && !categoryStage && !subcategoryStage)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _RecipeFilterBar(
+                  selected: _filter,
+                  onChanged: (f) => _change(() => _filter = f),
+                ),
+              ),
+            Expanded(
+              child: ListView(
+                key: const Key('inventory-menu-results'),
+                controller: _scroll,
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: TextField(
-                      key: const Key('inventory-menu-search'),
-                      decoration: _adminInput('ძებნა სახელით ან კატეგორიით'),
-                      onChanged: (v) => setState(() => _query = v),
-                    ),
-                  ),
-                  if (categories.isNotEmpty)
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        children: [
-                          for (final category in <String?>[null, ...categories])
-                            Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: ChoiceChip(
-                                label: Text(category ?? 'ყველა'),
-                                selected: _category == category,
-                                onSelected: (_) => setState(() {
-                                  _category = category;
-                                  _subcategory = null;
-                                }),
-                              ),
-                            ),
-                        ],
+                  if (categoryStage || subcategoryStage) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Text(
+                        categoryStage
+                            ? 'აირჩიეთ კატეგორია'
+                            : 'აირჩიეთ ქვეკატეგორია',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 18,
+                        ),
                       ),
                     ),
-                  if (subcategories.isNotEmpty)
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        children: [
-                          for (final sub in <String?>[null, ...subcategories])
-                            Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: ChoiceChip(
-                                label: Text(sub ?? 'ყველა ქვეკატეგორია'),
-                                selected: _subcategory == sub,
-                                onSelected: (_) =>
-                                    setState(() => _subcategory = sub),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  if (_error != null) ...[
-                    Text(_error!),
-                    TextButton(
-                      onPressed: _load,
-                      child: const Text('ხელახლა ცდა'),
-                    ),
-                  ] else if (_items == null)
-                    const LinearProgressIndicator(),
-                  if (_items != null && rows.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Text('ვერ მოიძებნა. შეცვალეთ ძებნა ან კატეგორია.'),
-                    ),
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: rows.length,
-                      itemBuilder: (context, index) {
-                        final item = rows[index];
-                        if (item.hasVariants)
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Text(
-                                  item.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
+                    LayoutBuilder(
+                      builder: (context, box) {
+                        final names = categoryStage
+                            ? categories
+                            : subcategories;
+                        final columns = (box.maxWidth / 190).floor().clamp(
+                          2,
+                          4,
+                        );
+                        return Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: [
+                            for (final name in names)
+                              SizedBox(
+                                width:
+                                    (box.maxWidth - 12 * (columns - 1)) /
+                                    columns,
+                                child: Card(
+                                  margin: EdgeInsets.zero,
+                                  clipBehavior: Clip.antiAlias,
+                                  child: InkWell(
+                                    key: ValueKey('menu-category-$name'),
+                                    onTap: () => _change(() {
+                                      if (categoryStage) {
+                                        _category = name;
+                                        _subcategory = null;
+                                        _allSubcategories = false;
+                                      } else {
+                                        _subcategory = name;
+                                      }
+                                    }),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Icon(
+                                            categoryStage
+                                                ? Icons.restaurant_menu
+                                                : Icons.menu_book_outlined,
+                                            color: AdminTheme.primary,
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Text(
+                                            name,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '${widget.items.where((i) => categoryStage ? i.browseCategory == name : i.browseCategory == _category && i.subcategoryName == name).length} პროდუქტი',
+                                            style: TextStyle(
+                                              color: AdminTheme.textMuted,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
-                              for (final variant in item.variants)
-                                ListTile(
-                                  title: Text(
-                                    '${item.name} · ${variant.label}',
-                                  ),
-                                  subtitle: Text(item.categoryName ?? 'სხვა'),
-                                  trailing: const Icon(Icons.chevron_right),
-                                  onTap: () => Navigator.pop(
-                                    context,
-                                    InventoryMenuSelection(item, variant),
-                                  ),
-                                ),
-                            ],
-                          );
-                        return ListTile(
-                          title: Text(item.name),
-                          subtitle: Text(item.categoryName ?? 'სხვა'),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () => Navigator.pop(
-                            context,
-                            InventoryMenuSelection(item),
-                          ),
+                          ],
                         );
                       },
                     ),
-                  ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      key: const Key('menu-show-all'),
+                      onPressed: () => _change(() {
+                        if (categoryStage) {
+                          _all = true;
+                        } else {
+                          _allSubcategories = true;
+                        }
+                      }),
+                      child: const Text('ყველა პროდუქტის ნახვა'),
+                    ),
+                    if (widget.items.isEmpty) const Text('მენიუ ჯერ არ არის.'),
+                  ] else ...[
+                    if (rows.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text(
+                          'პროდუქტი ვერ მოიძებნა. შეცვალეთ ძებნა ან ფილტრი.',
+                        ),
+                      ),
+                    for (final item in rows)
+                      if (widget.composition)
+                        _RecipeCard(
+                          item: item,
+                          onOpen: (variant) => widget.onSelected(
+                            InventoryMenuSelection(item, variant),
+                          ),
+                        )
+                      else if (item.hasVariants) ...[
+                        Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Text(
+                            item.name,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        for (final variant in item.variants)
+                          ListTile(
+                            title: Text('${item.name} · ${variant.label}'),
+                            subtitle: Text(
+                              item.categoryName ?? item.browseCategory,
+                            ),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () => widget.onSelected(
+                              InventoryMenuSelection(item, variant),
+                            ),
+                          ),
+                      ] else
+                        ListTile(
+                          title: Text(item.name),
+                          subtitle: Text(
+                            item.categoryName ?? item.browseCategory,
+                          ),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () =>
+                              widget.onSelected(InventoryMenuSelection(item)),
+                        ),
+                  ],
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
-  }
-}
-
-class SupplierPayablesDialog extends StatefulWidget {
-  const SupplierPayablesDialog({super.key, this.supplierId, this.load});
-  final String? supplierId;
-  final Future<Map<String, dynamic>> Function()? load;
-  @override
-  State<SupplierPayablesDialog> createState() => _PayablesState();
-}
-
-class _PayablesState extends State<SupplierPayablesDialog> {
-  Map<String, dynamic>? _data;
-  String? _error;
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    try {
-      final data =
-          await (widget.load?.call() ??
-              MobileApiService.procurementRequest(
-                'payables${widget.supplierId == null ? '' : '?supplierId=${Uri.encodeQueryComponent(widget.supplierId!)}'}',
-              ));
-      if (mounted)
-        setState(() {
-          _data = data;
-          _error = null;
-        });
-    } catch (e) {
-      if (mounted) setState(() => _error = '$e');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) => Theme(
-    data: inventoryTheme(context),
-    child: AlertDialog(
-      insetPadding: const EdgeInsets.all(16),
-      title: const Text('გადახდები და დავალიანება'),
-      content: SizedBox(
-        width: 640,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (_data == null && _error == null)
-                const LinearProgressIndicator(),
-              if (_error != null) ...[
-                Text(_error!),
-                TextButton(onPressed: _load, child: const Text('ხელახლა ცდა')),
-              ],
-              Text('დავალიანება: ${_data?['outstanding'] ?? '—'} ₾'),
-              Text('შესამოწმებელი: ${_data?['unverified'] ?? '—'} ₾'),
-              for (final row
-                  in (_data?['receivings'] as List? ?? []).cast<Map>()) ...[
-                const Divider(height: 24),
-                Text(
-                  '${row['supplierName']} · ${row['businessDate']}',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                Text(
-                  'მიღება: ${row['documentTotal']} ₾ · გადახდილი: ${row['paid']} ₾',
-                ),
-                Text(
-                  'დარჩენილი: ${row['remaining']} ₾ · ${_paymentLabel(row['paymentStatus'])}',
-                ),
-                if (row['dueDate'] != null) Text('ვადა: ${row['dueDate']}'),
-                FilledButton.tonal(
-                  onPressed: () => _payment(row),
-                  child: const Text('გადახდის დაფიქსირება'),
-                ),
-                for (final p in (row['payments'] as List? ?? []).cast<Map>())
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text('${p['paymentDate']} · ${p['amount']} ₾'),
-                    subtitle: Text(
-                      '${p['actorName']} · ${p['method'] == 'cash' ? 'ნაღდი' : 'ბანკი'}',
-                    ),
-                    trailing: p['reversalOfId'] == null
-                        ? IconButton(
-                            tooltip: 'გადახდის უკუქცევა',
-                            icon: const Icon(Icons.undo),
-                            onPressed: () => _reverse(row, p),
-                          )
-                        : null,
-                  ),
-                if (row['paymentStatus'] == 'UNVERIFIED')
-                  TextButton(
-                    onPressed: () => _verify(row),
-                    child: const Text('ძველი გადახდების შემოწმება'),
-                  ),
-              ],
-              if (_data != null && (_data!['receivings'] as List).isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text('გატარებული მიღება ჯერ არ არის.'),
-                ),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('დახურვა'),
-        ),
-      ],
-    ),
-  );
-  Future<void> _payment(Map row) async {
-    await showDialog<bool>(
-      context: context,
-      builder: (_) => SupplierPaymentDialog(
-        receiving: {...row, 'currentBusinessDate': _data?['businessDate']},
-      ),
-    );
-    await _load();
-  }
-
-  Future<void> _reverse(Map row, Map payment) async {
-    await showDialog<bool>(
-      context: context,
-      builder: (_) => SupplierPaymentDialog(
-        receiving: {...row, 'currentBusinessDate': _data?['businessDate']},
-        reversal: payment,
-      ),
-    );
-    await _load();
-  }
-
-  Future<void> _verify(Map row) async {
-    final ok = await _confirmInventoryAction(
-      context,
-      title: 'ძველი გადახდები შემოწმებულია?',
-      message:
-          'ჯერ შეიტანეთ ყველა რეალური გადახდა თავისი თარიღით. დადასტურება ნიშნავს, რომ აღურიცხავი გადახდა აღარ დარჩა.',
-      confirmLabel: 'შემოწმებულია',
-    );
-    if (ok != true) return;
-    try {
-      await MobileApiService.procurementRequest(
-        'receivings/${row['id']}/verify-settlement',
-        {
-          'confirmNoUnrecordedPayments': true,
-          'notes': 'Manager confirmed all historical supplier payments entered',
-        },
-      );
-      await _load();
-    } catch (e) {
-      if (mounted) setState(() => _error = '$e');
-    }
   }
 }
 
@@ -968,19 +955,22 @@ Future<bool?> _confirmInventoryAction(
   required String confirmLabel,
 }) => showDialog<bool>(
   context: context,
-  builder: (context) => AlertDialog(
-    title: Text(title),
-    content: Text(message),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context, false),
-        child: const Text('გაუქმება'),
-      ),
-      FilledButton(
-        onPressed: () => Navigator.pop(context, true),
-        child: Text(confirmLabel),
-      ),
-    ],
+  builder: (context) => Theme(
+    data: inventoryTheme(context),
+    child: AlertDialog(
+      title: Text(title),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('გაუქმება'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(confirmLabel),
+        ),
+      ],
+    ),
   ),
 );
 
@@ -991,8 +981,10 @@ class InventoryIngredientPicker extends StatefulWidget {
     super.key,
     required this.items,
     this.title = 'ინგრედიენტის დამატება',
+    this.onCreate,
   });
   final List<StockItem> items;
+  final Future<StockItem?> Function(String name)? onCreate;
   @override
   State<InventoryIngredientPicker> createState() => _IngredientPickerState();
 }
@@ -1011,15 +1003,17 @@ class _IngredientPickerState extends State<InventoryIngredientPicker> {
           children: [
             TextField(
               key: const Key('ingredient-search'),
-              decoration: _adminInput('ინგრედიენტის ძებნა'),
-              onChanged: (v) => setState(() => _query = v.toLowerCase()),
+              decoration: _adminInput('პროდუქტის ძებნა'),
+              onChanged: (v) => setState(() => _query = v),
             ),
             const SizedBox(height: 16),
             Expanded(
               child: ListView(
                 children: [
                   for (final item in widget.items.where(
-                    (i) => i.isActive && i.name.toLowerCase().contains(_query),
+                    (i) =>
+                        i.isActive &&
+                        i.name.toLowerCase().contains(_query.toLowerCase()),
                   ))
                     ListTile(
                       title: Text(item.name),
@@ -1027,10 +1021,12 @@ class _IngredientPickerState extends State<InventoryIngredientPicker> {
                       onTap: () => Navigator.pop(context, item),
                     ),
                   if (!widget.items.any(
-                    (i) => i.isActive && i.name.toLowerCase().contains(_query),
+                    (i) =>
+                        i.isActive &&
+                        i.name.toLowerCase().contains(_query.toLowerCase()),
                   ))
                     const Text(
-                      'ვერ მოიძებნა. დახურეთ ძებნა და აირჩიეთ ახალი ნედლეულის შექმნა.',
+                      'პროდუქტი ვერ მოიძებნა. შეცვალეთ ძებნა ან შექმენით ახალი.',
                     ),
                 ],
               ),
@@ -1039,6 +1035,16 @@ class _IngredientPickerState extends State<InventoryIngredientPicker> {
         ),
       ),
       actions: [
+        if (widget.onCreate != null)
+          FilledButton.icon(
+            key: const Key('receiving-create-product'),
+            icon: const Icon(Icons.add),
+            label: const Text('ახალი პროდუქტი'),
+            onPressed: () async {
+              final item = await widget.onCreate!(_query.trim());
+              if (item != null && context.mounted) Navigator.pop(context, item);
+            },
+          ),
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('დახურვა'),
@@ -1052,9 +1058,11 @@ class IngredientQuickDialog extends StatefulWidget {
   const IngredientQuickDialog({
     super.key,
     this.initialName = '',
+    this.receivingProduct = false,
     this.classification = StockItemClassification.food,
   });
   final String initialName;
+  final bool receivingProduct;
   final StockItemClassification classification;
   @override
   State<IngredientQuickDialog> createState() => _IngredientQuickState();
@@ -1064,11 +1072,16 @@ class _IngredientQuickState extends State<IngredientQuickDialog> {
   final _requestId = const Uuid().v4();
   late final _name = TextEditingController(text: widget.initialName);
   InventoryUnit _unit = InventoryUnit.kg;
+  late StockItemClassification _classification = widget.classification;
+  bool _packaged = false;
+  InventoryUnit _package = InventoryUnit.pack;
+  final _ratio = TextEditingController();
   bool _busy = false;
   String? _error;
   @override
   void dispose() {
     _name.dispose();
+    _ratio.dispose();
     super.dispose();
   }
 
@@ -1076,6 +1089,17 @@ class _IngredientQuickState extends State<IngredientQuickDialog> {
     if (_name.text.trim().isEmpty) {
       setState(() => _error = 'შეიყვანეთ დასახელება');
       return;
+    }
+    if (_packaged) {
+      try {
+        if (InventoryDecimal.parse(_ratio.text).raw <= BigInt.zero)
+          throw const FormatException();
+      } on FormatException {
+        setState(
+          () => _error = 'შეიყვანეთ შეფუთვაში რაოდენობა — ნულზე მეტი რიცხვი',
+        );
+        return;
+      }
     }
     setState(() {
       _busy = true;
@@ -1087,7 +1111,16 @@ class _IngredientQuickState extends State<IngredientQuickDialog> {
         name: _name.text.trim(),
         baseUnit: _unit,
         isActive: true,
-        classification: widget.classification,
+        classification: _classification,
+        purchaseUnits: _packaged
+            ? [
+                StockItemPurchaseUnit(
+                  id: '',
+                  unit: _package,
+                  baseUnitMultiplier: _ratio.text.trim().replaceAll(',', '.'),
+                ),
+              ]
+            : null,
       );
       if (mounted) Navigator.pop(context, item);
     } catch (e) {
@@ -1103,7 +1136,9 @@ class _IngredientQuickState extends State<IngredientQuickDialog> {
   Widget build(BuildContext context) => Theme(
     data: inventoryTheme(context),
     child: AlertDialog(
-      title: const Text('ახალი ნედლეული'),
+      title: Text(
+        widget.receivingProduct ? 'ახალი პროდუქტი' : 'ახალი ნედლეული',
+      ),
       content: SizedBox(
         width: 440,
         child: SingleChildScrollView(
@@ -1111,27 +1146,94 @@ class _IngredientQuickState extends State<IngredientQuickDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
+                key: const Key('new-product-name'),
                 controller: _name,
                 decoration: _adminInput('დასახელება'),
                 enabled: !_busy,
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<InventoryUnit>(
-                initialValue: _unit,
-                decoration: _adminInput('როგორ ვითვლით?'),
-                items: [
+              if (widget.receivingProduct) ...[
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    for (final value in StockItemClassification.values)
+                      ChoiceChip(
+                        label: Text(
+                          value == StockItemClassification.food
+                              ? 'საკვები / ინგრედიენტი'
+                              : 'სასმელი',
+                        ),
+                        selected: _classification == value,
+                        onSelected: _busy
+                            ? null
+                            : (_) => setState(() => _classification = value),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+              ],
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text('როგორ ვითვლით მარაგს?'),
+              ),
+              Wrap(
+                spacing: 8,
+                children: [
                   for (final unit in [
                     InventoryUnit.kg,
+                    InventoryUnit.g,
                     InventoryUnit.liter,
+                    InventoryUnit.ml,
                     InventoryUnit.piece,
                   ])
-                    DropdownMenuItem(
-                      value: unit,
-                      child: Text(_unitShort(unit)),
+                    ChoiceChip(
+                      key: ValueKey('new-product-unit-${unit.wireValue}'),
+                      label: Text(_unitShort(unit)),
+                      selected: _unit == unit,
+                      onSelected: _busy
+                          ? null
+                          : (_) => setState(() => _unit = unit),
                     ),
                 ],
-                onChanged: _busy ? null : (v) => setState(() => _unit = v!),
               ),
+              if (widget.receivingProduct) ...[
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('შეფუთვით ვიღებთ'),
+                  value: _packaged,
+                  onChanged: _busy
+                      ? null
+                      : (v) => setState(() => _packaged = v),
+                ),
+                if (_packaged) ...[
+                  DropdownButtonFormField<InventoryUnit>(
+                    initialValue: _package,
+                    decoration: _adminInput('შეფუთვა'),
+                    items: [
+                      for (final u in [
+                        InventoryUnit.pack,
+                        InventoryUnit.box,
+                        InventoryUnit.keg,
+                      ])
+                        DropdownMenuItem(value: u, child: Text(_unitShort(u))),
+                    ],
+                    onChanged: _busy
+                        ? null
+                        : (v) => setState(() => _package = v!),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    key: const Key('new-product-package-ratio'),
+                    controller: _ratio,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: _adminInput(
+                      '1 ${_unitShort(_package)} = რამდენი ${_unitShort(_unit)}?',
+                    ),
+                  ),
+                ],
+              ],
               if (_error != null)
                 Text(_error!, style: TextStyle(color: AdminTheme.bad)),
             ],

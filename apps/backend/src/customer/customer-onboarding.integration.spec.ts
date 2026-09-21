@@ -1,3 +1,7 @@
+import {
+  ManagerVenueProfileController,
+  DeviceVenueProfileController,
+} from '../venue-profile/venue-profile.controller';
 import 'reflect-metadata';
 jest.mock('uuid', () => ({ v4: () => require('node:crypto').randomUUID() }));
 import { randomUUID } from 'node:crypto';
@@ -98,6 +102,8 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
       const module = await Test.createTestingModule({
         imports: [PassportModule],
         controllers: [
+          ManagerVenueProfileController,
+          DeviceVenueProfileController,
           CustomerAuthController,
           CustomerController,
           PlatformOnboardingController,
@@ -342,6 +348,67 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
       expect(events).toHaveLength(1);
       expect(JSON.stringify(events)).not.toContain('481259');
     });
+    it('shares validated profiles across owner, Manager and Device without crossing Venues', async () => {
+      const [a, b] = owners;
+      const profile = {
+        name: 'ახალი რესტორანი',
+        branchName: 'ვაკე',
+        address: 'თბილისი, ჭავჭავაძის 12',
+        phone: '+995 555 123456',
+        legalId: '123456789',
+      };
+      await http()
+        .put(`/customer/venues/${b.venue.id}/profile`)
+        .set(bearer(a.token))
+        .send(profile)
+        .expect(404);
+      await http()
+        .put(`/customer/venues/${a.venue.id}/profile`)
+        .set(bearer(a.token))
+        .send(profile)
+        .expect(200);
+      const read = (o: any) =>
+        http().get('/mobile/venue-profile').set(bearer(o.managerToken));
+      expect((await read(a).expect(200)).body).toMatchObject(profile);
+      expect((await read(b).expect(200)).body.branchName).toBeNull();
+      await http()
+        .put('/mobile/venue-profile')
+        .set(bearer(a.managerToken))
+        .send({ ...profile, branchName: 'საბურთალო', venueId: b.venue.id })
+        .expect(200);
+      const runtime = await http()
+        .get('/edge/runtime-config')
+        .set('X-POS-Sync-Key', a.credential)
+        .expect(200);
+      expect(runtime.body.venue.branchName).toBe('საბურთალო');
+      await http()
+        .put('/edge/venue-profile')
+        .set('X-POS-Sync-Key', a.credential)
+        .send({ ...profile, branchName: 'დიდუბე', venueId: b.venue.id })
+        .expect(200);
+      expect((await read(a).expect(200)).body.branchName).toBe('დიდუბე');
+      expect((await read(b).expect(200)).body.branchName).toBeNull();
+      await http()
+        .put('/mobile/venue-profile')
+        .set(bearer(a.managerToken))
+        .send({ ...profile, name: '  ' })
+        .expect(400);
+      await http()
+        .put('/edge/venue-profile')
+        .set('X-POS-Sync-Key', a.credential)
+        .send({ ...profile, address: 'x'.repeat(301) })
+        .expect(400);
+      await http()
+        .put('/mobile/venue-profile')
+        .set(bearer(a.token))
+        .send(profile)
+        .expect(401);
+      expect(
+        await db.auditEventLog.count({
+          where: { venueId: a.venue.id, action: 'VENUE_PROFILE_CHANGED' },
+        }),
+      ).toBe(3);
+    });
     it('cancels codes and re-resolves disabled owners, with bounded login attempts', async () => {
       const [a, b] = owners;
       const code = (
@@ -375,12 +442,10 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
       let last = 0;
       for (let i = 0; i < 12; i++)
         last = (
-          await http()
-            .post('/customer/auth/login')
-            .send({
-              email: 'unknown@test.invalid',
-              password: 'incorrect password',
-            })
+          await http().post('/customer/auth/login').send({
+            email: 'unknown@test.invalid',
+            password: 'incorrect password',
+          })
         ).status;
       expect(last).toBe(429);
     });

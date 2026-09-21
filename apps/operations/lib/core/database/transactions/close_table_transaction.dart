@@ -109,7 +109,7 @@ class CloseTableTransaction {
     double? subtotalAmount,
     Map<String, dynamic>? finalTransaction,
   }) => UpdateReadiness.track(
-    'run',
+    'closeTable',
     () => _updateTrackedRun(
       orderId: orderId,
       money: money,

@@ -11,6 +11,7 @@ import { DeviceEnrollmentService } from '../edge/device-enrollment.service';
 import { requireText } from '../platform/platform-validation';
 import type { CustomerPrincipal } from './customer-auth';
 import type { ControlActor } from '../platform/control-actor';
+import { profileInput, saveProfile } from '../venue-profile/venue-profile';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -27,6 +28,17 @@ export class CustomerService {
     });
     if (!venue) throw new NotFoundException('Restaurant not found');
     return venue;
+  }
+  async profile(
+    actor: CustomerPrincipal,
+    id: string,
+    body: Record<string, unknown>,
+  ) {
+    await this.venue(actor, id);
+    return saveProfile(this.db, id, body, {
+      id: actor.customerAccountId,
+      source: 'CUSTOMER',
+    });
   }
   async portal(actor: CustomerPrincipal) {
     const account = await this.db.customerAccount.findUniqueOrThrow({
@@ -90,6 +102,11 @@ export class CustomerService {
       venue: {
         id: venue.id,
         name: venue.name,
+        branchName: venue.branchName,
+        address: venue.address,
+        phone: venue.phone,
+        legalId: venue.legalId,
+        profileUpdatedAt: venue.profileUpdatedAt,
         status: venue.status,
         activeOperationalDeviceId: venue.activeOperationalDeviceId,
         loginCode: venue.loginCode,
@@ -161,7 +178,8 @@ export class CustomerService {
       const venue = await tx.venue.create({
         data: {
           organizationId: actor.organizationId,
-          name,
+          ...profileInput({ ...body, name }),
+          profileUpdatedAt: new Date(),
           timezone,
           currency,
           subscription: {

@@ -1,0 +1,12 @@
+<!-- Vynic Manager app mark: the POS icon plus one stem. Off-white #F7F6F4
+     ground, near-black #111112 strokes; the V sits at the POS icon's exact
+     coordinates and the stem drops from its exit terminal. Geometry mirrored in
+     generate_app_icons.py — change both together. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <rect width="100" height="100" fill="#F7F6F4"/>
+  <g transform="translate(12.9 12.9) scale(0.742)" fill="none" stroke="#111112" stroke-linecap="round">
+    <path d="M22 26 L52 72" stroke-width="19"/>
+    <path d="M52 72 L84 18" stroke-width="11"/>
+    <path d="M84 18 L84 70" stroke-width="11"/>
+  </g>
+</svg>

@@ -1416,10 +1416,8 @@ class PosHomeUtilityBar extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: narrow ? 8 : 16),
-                if (!layoutClass.isCompactWidth) ...[
-                  _BusinessDayChip(label: _formatBusinessDate(businessDate)),
-                  const SizedBox(width: 8),
-                ],
+                _BusinessDayChip(label: _formatBusinessDate(businessDate)),
+                const SizedBox(width: 8),
                 _ClockChip(compact: narrow),
                 SizedBox(width: narrow ? 6 : 10),
                 _LanguageButton(
@@ -1441,16 +1439,6 @@ class PosHomeUtilityBar extends StatelessWidget {
               ],
             ),
           ),
-          if (layoutClass.isCompactWidth)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: _BusinessDayChip(
-                  label: _formatBusinessDate(businessDate),
-                ),
-              ),
-            ),
         ],
       ),
     );

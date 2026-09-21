@@ -1,6 +1,7 @@
 import 'package:vynic/core/contracts/manager_login.dart';
 import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 import 'dart:async';
+import 'package:vynic/core/services/pos/update/pos_updater.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -52,6 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void addDigit(String digit) {
+    if (_isLoading) return;
     if (_pin.value.length >= 6) return;
     _pin.value = _pin.value + digit;
 
@@ -69,6 +71,20 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _authenticateUser() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    try {
+      await PosUpdater.instance.waitForStartup();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      unawaited(
+        showErrorToast(context, 'გაშვება ვერ დასრულდა. სცადეთ ხელახლა.'),
+      );
+      return;
+    }
+    if (!mounted) return;
+    // Re-read after verification; a cached match must not bypass a PIN change.
     final user = DatabaseService.authenticateByPin(_pin.value);
 
     if (user != null) {
@@ -78,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => _landing(user)),
+        MaterialPageRoute(builder: (context) => _landing(context, user)),
       );
 
       // Defer credential sync until after the transition.
@@ -101,10 +117,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void clearPin() {
+    if (_isLoading) return;
     _pin.value = '';
   }
 
   void deleteDigit() {
+    if (_isLoading) return;
     if (_pin.value.isNotEmpty) {
       _pin.value = _pin.value.substring(0, _pin.value.length - 1);
     }
@@ -250,13 +268,14 @@ class _LoginScreenState extends State<LoginScreen> {
   /// gets one question first. Every other login goes straight to work —
   /// `isSetupComplete` is set at init for any install that already has data,
   /// so an update never sends anyone through this.
-  Widget _landing(User user) {
+  Widget _landing(BuildContext landingContext, User user) {
     if (DatabaseService.isSetupComplete()) {
       return HomeScreen(user: user);
     }
     return VenueSetupScreen(
       onCompleted: () {
-        final navigator = Navigator.of(context);
+        if (!landingContext.mounted) return;
+        final navigator = Navigator.of(landingContext);
         if (!navigator.mounted) return;
         navigator.pushReplacement(
           MaterialPageRoute(builder: (_) => HomeScreen(user: user)),
@@ -304,30 +323,38 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
     return Scaffold(
-      body: LoginDesktopView(
-        pin: _pin,
-        isLoading: _isLoading,
-        workDate: DatabaseService.getCurrentDate(),
-        now: _now,
-        onDigitPressed: addDigit,
-        onClearPressed: clearPin,
-        onDeletePressed: deleteDigit,
-        onLoginPressed: _authenticateUser,
-        showCompanionApp: isMobile && widget.companionAppBuilder != null,
-        onCompanionAppPressed: isMobile && widget.companionAppBuilder != null
-            ? _launchCompanionApp
-            : null,
-        // Support has to work when the venue cannot sign in — a forgotten
-        // admin PIN is the case the recovery tool exists for, and routing it
-        // through the admin panel would put it behind the thing that is lost.
-        onBrandLongPress: () => DeveloperScreen.unlockAndOpen(context),
-        // A terminal with no Cloud identity has nothing to hide behind a
-        // manager PIN: it cannot sync, and the person standing in front of it
-        // is the person setting it up. Once enrolled, this is gone and
-        // re-enrolment lives in Settings → Connection where it belongs.
-        onConnectToVynicPressed: PosEnrollmentService.needsEnrollment
-            ? _openEnrollment
-            : null,
+      body: ListenableBuilder(
+        listenable: PosUpdater.instance,
+        builder: (context, _) => LoginDesktopView(
+          version: PosUpdater.instance.currentVersion,
+          pin: _pin,
+          isLoading: _isLoading,
+          workDate: DatabaseService.getCurrentDate(),
+          now: _now,
+          onDigitPressed: addDigit,
+          onClearPressed: clearPin,
+          onDeletePressed: deleteDigit,
+          onLoginPressed: _authenticateUser,
+          showCompanionApp: isMobile && widget.companionAppBuilder != null,
+          onCompanionAppPressed: isMobile && widget.companionAppBuilder != null
+              ? _launchCompanionApp
+              : null,
+          // Support has to work when the venue cannot sign in — a forgotten
+          // admin PIN is the case the recovery tool exists for, and routing it
+          // through the admin panel would put it behind the thing that is lost.
+          onBrandLongPress: () {
+            if (!PosUpdater.instance.inputHeld)
+              DeveloperScreen.unlockAndOpen(context);
+          },
+          showQuitAction: !kIsWeb && Platform.isWindows,
+          // A terminal with no Cloud identity has nothing to hide behind a
+          // manager PIN: it cannot sync, and the person standing in front of it
+          // is the person setting it up. Once enrolled, this is gone and
+          // re-enrolment lives in Settings → Connection where it belongs.
+          onConnectToVynicPressed: PosEnrollmentService.needsEnrollment
+              ? _openEnrollment
+              : null,
+        ),
       ),
     );
   }

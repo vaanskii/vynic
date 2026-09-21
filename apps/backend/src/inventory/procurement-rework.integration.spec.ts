@@ -338,6 +338,18 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
     expect((await balance(stock.stockItemId)).currentCost.inventoryValue).toBe(
       '0.000000000000',
     );
+    const history = await payments.list(a, supplier.id);
+    expect(history.outstanding).toBe('0.00');
+    expect(history.receivings).toHaveLength(1);
+    expect(history.receivings[0]).toMatchObject({
+      id: paid,
+      status: 'CANCELLED',
+      remaining: '0.00',
+    });
+    expect(history.receivings[0].payments.map((p) => p.amount).sort()).toEqual([
+      '-10.00',
+      '10.00',
+    ]);
   });
   it('server Venue blocks foreign Menu, stock, recipe, payment and debt access', async () => {
     const supplier = await inventory.createSupplier(a, { name: 'Tenant A' }),
@@ -565,5 +577,62 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         components: [{ stockItemId: first.id, quantity: '25', unit: 'g' }],
       });
     expect((await inventory.getStockItem(a, first.id)).usedBy).toHaveLength(2);
+  });
+  it('receiving creates packaged stock without supplier setup and retries atomically', async () => {
+    const input = {
+      requestId: randomUUID(),
+      name: 'Inline water',
+      baseUnit: 'piece',
+      classification: 'BEVERAGE',
+      purchaseUnits: [{ unit: 'pack', baseUnitMultiplier: '10' }],
+    };
+    const [first, retry] = await Promise.all([
+      inventory.createStockItem(a, input),
+      inventory.createStockItem(a, input),
+    ]);
+    expect(retry.id).toBe(first.id);
+    expect(first.supplierIds).toEqual([]);
+    expect(first.purchaseUnits).toHaveLength(1);
+    expect(
+      (
+        await inventory.createStockItem(a, {
+          ...input,
+          purchaseUnits: [{ unit: 'pack', baseUnitMultiplier: '10.000000' }],
+        })
+      ).id,
+    ).toBe(first.id);
+    await expect(
+      inventory.createStockItem(a, {
+        ...input,
+        purchaseUnits: [{ unit: 'pack', baseUnitMultiplier: '12' }],
+      }),
+    ).rejects.toThrow();
+    await expect(
+      inventory.createStockItem(a, { ...input, purchaseUnits: [] }),
+    ).rejects.toThrow();
+    const otherVenue = await inventory.createStockItem(b, input);
+    expect(otherVenue.id).not.toBe(first.id);
+    const receipt = await receiving.createDraft(a, {
+      requestId: randomUUID(),
+      sourceType: 'SELF_PURCHASE',
+      documentDate: '2026-09-10',
+      businessDate: '2026-09-10',
+      lines: [
+        {
+          stockItemId: first.id,
+          enteredQuantity: '10',
+          enteredUnit: 'pack',
+          priceBasis: 'base',
+          unitPurchaseCost: '1.20',
+        },
+      ],
+    });
+    await receiving.post(a, receipt.id);
+    expect((await inventory.getStockItem(a, first.id)).currentStock).toBe(
+      '100.000',
+    );
+    expect((await receiving.detail(a, receipt.id)).documentTotal).toBe(
+      '120.00',
+    );
   });
 });

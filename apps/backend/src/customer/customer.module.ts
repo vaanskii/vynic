@@ -1,3 +1,7 @@
+import {
+  ManagerVenueProfileController,
+  DeviceVenueProfileController,
+} from '../venue-profile/venue-profile.controller';
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { PlatformModule } from '../platform/platform.module';
@@ -28,6 +32,8 @@ import {
     EdgeDeviceGuard,
   ],
   controllers: [
+    ManagerVenueProfileController,
+    DeviceVenueProfileController,
     CustomerAuthController,
     CustomerController,
     PlatformOnboardingController,

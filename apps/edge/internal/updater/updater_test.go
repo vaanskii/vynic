@@ -311,10 +311,12 @@ func TestIPCAuthorizationAndWrongProcess(t *testing.T) {
 	}
 }
 func TestArchivePaths(t *testing.T) {
-	for _, name := range []string{"../escape", "C:/evil.exe", "a\\evil", "CON", "file:ads", "a. /x"} {
+	for _, name := range []string{"../escape", "C:/evil.exe", "a\\evil", "CON", "file:ads", "a. /x", "COM¹.txt", "LPT²", "sub/COM³", "control\x01.dat"} {
 		t.Run(name, func(t *testing.T) {
 			var b bytes.Buffer
 			z := zip.NewWriter(&b)
+			exe, _ := z.Create(Executable)
+			_, _ = exe.Write([]byte("test only"))
 			w, _ := z.Create(name)
 			_, _ = w.Write([]byte("x"))
 			_ = z.Close()

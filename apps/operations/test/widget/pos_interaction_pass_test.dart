@@ -199,23 +199,13 @@ void main() {
         await tester.tap(find.text(digit));
         await tester.pump();
       }
-      expect(
-        tester
-            .widget<FilledButton>(find.widgetWithText(FilledButton, 'შესვლა'))
-            .onPressed,
-        isNotNull,
-      );
+      expect(find.text('შესვლა'), findsNothing);
       await language(tester, 'en');
       expect(find.text('Terminal locked'), findsOneWidget);
       expect(find.byTooltip('Backspace'), findsOneWidget);
       await tester.tap(find.byTooltip('Clear'));
       await tester.pump();
-      expect(
-        tester
-            .widget<FilledButton>(find.widgetWithText(FilledButton, 'Sign in'))
-            .onPressed,
-        isNull,
-      );
+      expect(find.text('Sign in'), findsNothing);
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();
     },

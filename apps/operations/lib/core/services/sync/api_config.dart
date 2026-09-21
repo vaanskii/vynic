@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'local_lab_api.dart';
 import 'package:flutter/foundation.dart';
 import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
 import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
@@ -19,7 +20,13 @@ class ApiConfig {
     if (!allowDeveloperOverride) {
       final uri = Uri.tryParse(configuredUrl);
       if (uri == null ||
-          uri.scheme != 'https' ||
+          (uri.scheme != 'https' &&
+              !permitsLocalLabApi(
+                uri,
+                environment: environment,
+                enabled: const bool.fromEnvironment('VYNIC_LOCAL_WINDOWS_LAB'),
+                windows: !kIsWeb && Platform.isWindows,
+              )) ||
           uri.host.isEmpty ||
           uri.userInfo.isNotEmpty ||
           uri.hasQuery ||

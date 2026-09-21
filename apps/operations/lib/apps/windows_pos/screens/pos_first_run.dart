@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
+import 'package:vynic/apps/windows_pos/widgets/update/pos_update_ui.dart';
 import 'package:vynic/core/services/edge/pos_enrollment_service.dart';
 import 'package:vynic/core/services/sync/api_config.dart';
 import 'package:vynic/core/services/database_service.dart';
@@ -35,7 +38,8 @@ class _PosFirstRunState extends State<PosFirstRun> {
           if (DatabaseService.userBox?.isNotEmpty ?? false) {
             return const LoginScreen();
           }
-          return const Scaffold(
+          return Scaffold(
+            appBar: _updateBar(),
             body: SafeArea(
               child: Center(
                 child: Padding(
@@ -55,6 +59,7 @@ class _PosFirstRunState extends State<PosFirstRun> {
       );
     }
     return Scaffold(
+      appBar: _updateBar(),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -137,4 +142,16 @@ class _PosFirstRunState extends State<PosFirstRun> {
       ),
     );
   }
+
+  PreferredSizeWidget? _updateBar() => !kIsWeb && Platform.isWindows
+      ? AppBar(
+          actions: [
+            TextButton.icon(
+              onPressed: () => showPosUpdateDialog(context),
+              icon: const Icon(Icons.system_update_alt),
+              label: const Text('პროგრამის განახლება'),
+            ),
+          ],
+        )
+      : null;
 }

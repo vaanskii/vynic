@@ -55,31 +55,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_pin.value.length >= 6) return;
     _pin.value = _pin.value + digit;
 
-    // Disable auto-login on mobile to allow access to the "Companion App" button
-    final bool isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
-    if (!isMobile && _pin.value.length >= 4) {
-      _checkPinMatch();
-    }
-  }
-
-  void _checkPinMatch() {
-    // Check if the current PIN matches any user
-    final user = DatabaseService.authenticateByPin(_pin.value);
-
-    if (user != null) {
-      // Authentication successful — navigate immediately for a snappy feel.
-      setState(() {
-        _isLoading = true;
-      });
-
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => _landing(user)),
-      );
-
-      // Push staff credentials + flush pending changes AFTER the transition,
-      // so the heavy serialization never competes with the screen animation.
-      _schedulePostLoginSync();
-    }
+    // Authentication is explicit: touch Sign in or hardware Enter. A prefix
+    // matching a shorter staff PIN must not submit while a longer PIN is typed.
   }
 
   /// Fires the manager-data sync a moment after login so the heavy payload

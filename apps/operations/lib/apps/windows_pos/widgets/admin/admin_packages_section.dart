@@ -1,3 +1,4 @@
+import 'package:vynic/core/widgets/pos_on_screen_text_field.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -9,8 +10,6 @@ import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
-import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_language.dart';
-import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 import 'package:vynic/apps/windows_pos/screens/order_detail_screen.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 
@@ -676,22 +675,10 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                       style: TextStyle(color: _textMuted),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
+                    PosOnScreenTextField(
                       controller: nameController,
                       style: const TextStyle(color: _textPrimary),
-                      readOnly: true,
-                      onTap: () async {
-                        await showPosKeyboardInputSheet(
-                          context: dialogContext,
-                          controller: nameController,
-                          initialLanguage: PosKeyboardLanguage.georgian,
-                          title: 'პაკეტის ასლი',
-                        );
-                        if (!dialogContext.mounted) return;
-                        setStateDialog(() {
-                          errorMessage = null;
-                        });
-                      },
+
                       decoration: const InputDecoration(
                         labelText: 'პაკეტის ასლი',
                         labelStyle: TextStyle(color: _textMuted),
@@ -1372,42 +1359,6 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
               );
             }
 
-            Future<void> openTextKeyboard({
-              required TextEditingController controller,
-              required String title,
-            }) async {
-              await showPosKeyboardInputSheet(
-                context: dialogContext,
-                controller: controller,
-                initialLanguage: PosKeyboardLanguage.georgian,
-                title: title,
-              );
-              if (!dialogContext.mounted) return;
-              setDialogState(() {});
-            }
-
-            Future<void> openNumberKeyboard({
-              required TextEditingController controller,
-              required String title,
-              required bool allowDecimal,
-              required int maxDecimalPlaces,
-            }) async {
-              final updated = await showPosNumberKeyboardInputSheet(
-                context: dialogContext,
-                title: title,
-                initialValue: controller.text,
-                allowDecimal: allowDecimal,
-                maxDecimalPlaces: maxDecimalPlaces,
-                maxDigits: 9,
-              );
-              if (updated == null || !dialogContext.mounted) return;
-              controller.text = updated;
-              controller.selection = TextSelection.collapsed(
-                offset: controller.text.length,
-              );
-              setDialogState(() {});
-            }
-
             double calculateSubtotal() {
               return workingItems.fold<double>(
                 0,
@@ -1664,13 +1615,9 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  TextField(
+                                  PosOnScreenTextField(
                                     controller: nameController,
-                                    readOnly: true,
-                                    onTap: () => openTextKeyboard(
-                                      controller: nameController,
-                                      title: 'პაკეტის სახელი',
-                                    ),
+
                                     style: const TextStyle(color: _textPrimary),
                                     decoration: buildFieldDecoration(
                                       label: 'პაკეტის სახელი',
@@ -1678,13 +1625,9 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                                     ),
                                   ),
                                   const SizedBox(height: 16),
-                                  TextField(
+                                  PosOnScreenTextField(
                                     controller: descriptionController,
-                                    readOnly: true,
-                                    onTap: () => openTextKeyboard(
-                                      controller: descriptionController,
-                                      title: 'აღწერა',
-                                    ),
+
                                     style: const TextStyle(color: _textPrimary),
                                     maxLines: 2,
                                     decoration: buildFieldDecoration(
@@ -1696,15 +1639,11 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                                   Row(
                                     children: [
                                       Expanded(
-                                        child: TextField(
+                                        child: PosOnScreenTextField(
                                           controller: priceController,
-                                          readOnly: true,
-                                          onTap: () => openNumberKeyboard(
-                                            controller: priceController,
-                                            title: 'ერთ ადამიანზე ფასი',
-                                            allowDecimal: true,
-                                            maxDecimalPlaces: 2,
-                                          ),
+                                          mode: PosInputMode.decimal,
+                                          maxDigits: 9,
+
                                           style: const TextStyle(
                                             color: _textPrimary,
                                           ),
@@ -1718,15 +1657,11 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                                       ),
                                       const SizedBox(width: 16),
                                       Expanded(
-                                        child: TextField(
+                                        child: PosOnScreenTextField(
                                           controller: servingSizeController,
-                                          readOnly: true,
-                                          onTap: () => openNumberKeyboard(
-                                            controller: servingSizeController,
-                                            title: 'სტუმრების რაოდენობა',
-                                            allowDecimal: false,
-                                            maxDecimalPlaces: 0,
-                                          ),
+                                          mode: PosInputMode.number,
+                                          maxDigits: 9,
+
                                           style: const TextStyle(
                                             color: _textPrimary,
                                           ),
@@ -2272,19 +2207,10 @@ class _AdminPackagesSectionState extends State<AdminPackagesSection> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-                            child: TextField(
+                            child: PosOnScreenTextField(
                               controller: searchController,
-                              readOnly: true,
-                              onTap: () async {
-                                await showPosKeyboardInputSheet(
-                                  context: dialogContext,
-                                  controller: searchController,
-                                  initialLanguage: PosKeyboardLanguage.georgian,
-                                  title: 'პროდუქტების ძიება',
-                                );
-                                if (!dialogContext.mounted) return;
-                                setDialogState(() {});
-                              },
+                              onChanged: (_) => setDialogState(() {}),
+
                               style: const TextStyle(color: _textPrimary),
                               decoration: InputDecoration(
                                 labelText: 'პროდუქტების ძიება',

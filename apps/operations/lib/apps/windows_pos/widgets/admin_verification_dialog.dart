@@ -1,3 +1,4 @@
+import 'package:vynic/core/widgets/pos_text.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
@@ -21,11 +22,6 @@ class _AdminVerificationDialogState extends State<AdminVerificationDialog> {
         _enteredPin += number;
         _errorMessage = '';
       });
-
-      // Auto-verify when 6 digits entered
-      if (_enteredPin.length == 6) {
-        _verifyPin();
-      }
     }
   }
 
@@ -72,7 +68,7 @@ class _AdminVerificationDialogState extends State<AdminVerificationDialog> {
           children: [
             const Icon(Icons.lock_outline, color: Color(0xFFC0AD7B), size: 48),
             const SizedBox(height: 16),
-            const Text(
+            const PosText(
               'ადმინ ავტორიზაცია',
               style: TextStyle(
                 color: Colors.white,
@@ -81,7 +77,7 @@ class _AdminVerificationDialogState extends State<AdminVerificationDialog> {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            const PosText(
               'შეიყვანეთ ადმინის PIN კოდი',
               style: TextStyle(color: Colors.white70, fontSize: 14),
             ),
@@ -106,7 +102,7 @@ class _AdminVerificationDialogState extends State<AdminVerificationDialog> {
                     ),
                   ),
                   child: Center(
-                    child: Text(
+                    child: PosText(
                       index < _enteredPin.length ? '●' : '',
                       style: const TextStyle(
                         color: Color(0xFFC0AD7B),
@@ -119,118 +115,31 @@ class _AdminVerificationDialogState extends State<AdminVerificationDialog> {
             ),
             if (_errorMessage.isNotEmpty) ...[
               const SizedBox(height: 16),
-              Text(
+              PosText(
                 _errorMessage,
                 style: const TextStyle(color: Colors.red, fontSize: 14),
               ),
             ],
             const SizedBox(height: 24),
             // PIN pad
-            Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    PinButton(
-                      number: '1',
-                      onPressed: () => _onNumberPressed('1'),
-                    ),
-                    const SizedBox(width: 12),
-                    PinButton(
-                      number: '2',
-                      onPressed: () => _onNumberPressed('2'),
-                    ),
-                    const SizedBox(width: 12),
-                    PinButton(
-                      number: '3',
-                      onPressed: () => _onNumberPressed('3'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    PinButton(
-                      number: '4',
-                      onPressed: () => _onNumberPressed('4'),
-                    ),
-                    const SizedBox(width: 12),
-                    PinButton(
-                      number: '5',
-                      onPressed: () => _onNumberPressed('5'),
-                    ),
-                    const SizedBox(width: 12),
-                    PinButton(
-                      number: '6',
-                      onPressed: () => _onNumberPressed('6'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    PinButton(
-                      number: '7',
-                      onPressed: () => _onNumberPressed('7'),
-                    ),
-                    const SizedBox(width: 12),
-                    PinButton(
-                      number: '8',
-                      onPressed: () => _onNumberPressed('8'),
-                    ),
-                    const SizedBox(width: 12),
-                    PinButton(
-                      number: '9',
-                      onPressed: () => _onNumberPressed('9'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(width: 72, height: 72), // Empty space
-                    const SizedBox(width: 12),
-                    PinButton(
-                      number: '0',
-                      onPressed: () => _onNumberPressed('0'),
-                    ),
-                    const SizedBox(width: 12),
-                    // Backspace button
-                    Material(
-                      color: const Color(0xFF1a1a1a),
-                      borderRadius: BorderRadius.circular(12),
-                      child: InkWell(
-                        onTap: _onBackspacePressed,
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          width: 72,
-                          height: 72,
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: const Color(0xFF444444),
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.backspace_outlined,
-                            color: Colors.white70,
-                            size: 28,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            PinPad(
+              authentication: true,
+              onDigitPressed: _onNumberPressed,
+              onDeletePressed: _onBackspacePressed,
+              onClearPressed: () => setState(() {
+                _enteredPin = '';
+                _errorMessage = '';
+              }),
+              onSubmit: _verifyPin,
             ),
             const SizedBox(height: 24),
+            FilledButton(
+              onPressed: _enteredPin.length >= 4 ? _verifyPin : null,
+              child: const PosText('დადასტურება'),
+            ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text(
+              child: const PosText(
                 'გაუქმება',
                 style: TextStyle(color: Colors.grey, fontSize: 16),
               ),

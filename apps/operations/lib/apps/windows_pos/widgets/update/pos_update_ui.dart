@@ -1,3 +1,4 @@
+import 'package:vynic/core/widgets/pos_text.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/services/pos/update/pos_updater.dart';
@@ -29,12 +30,12 @@ class PosUpdateSettings extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              PosText(
                 'პროგრამის განახლება',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
-              Text(
+              PosText(
                 u.configured
                     ? (u.localBlock ??
                           updateLabels[u.status] ??
@@ -42,7 +43,7 @@ class PosUpdateSettings extends StatelessWidget {
                     : 'განახლების სერვისი მიუწვდომელია',
               ),
               if (u.version.isNotEmpty || u.state['current'] != null)
-                Text(
+                PosText(
                   u.status == 'ROLLED_BACK' || u.status == 'UP_TO_DATE'
                       ? (u.state['current'] as String? ?? u.version)
                       : u.version,
@@ -64,12 +65,12 @@ class PosUpdateSettings extends StatelessWidget {
                           u.status == 'BLOCKED')
                         FilledButton(
                           onPressed: () => unawaited(u.installNow()),
-                          child: const Text('განახლება ახლა'),
+                          child: const PosText('განახლება ახლა'),
                         ),
                       if (!u.inputHeld)
                         TextButton(
                           onPressed: () => unawaited(u.check()),
-                          child: const Text('შემოწმება'),
+                          child: const PosText('შემოწმება'),
                         ),
                     ],
                   ),
@@ -128,22 +129,22 @@ class _PosUpdateHostState extends State<PosUpdateHost> {
           context: context,
           barrierDismissible: false,
           builder: (context) => AlertDialog(
-            title: const Text('ახალი ვერსია ხელმისაწვდომია'),
-            content: Text(u.version),
+            title: const PosText('ახალი ვერსია ხელმისაწვდომია'),
+            content: PosText(u.version),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
                   unawaited(u.later());
                 },
-                child: const Text('მოგვიანებით'),
+                child: const PosText('მოგვიანებით'),
               ),
               FilledButton(
                 onPressed: () {
                   Navigator.pop(context);
                   unawaited(u.installNow());
                 },
-                child: const Text('განახლება ახლა'),
+                child: const PosText('განახლება ახლა'),
               ),
             ],
           ),
@@ -169,7 +170,7 @@ class _PosUpdateHostState extends State<PosUpdateHost> {
                 children: [
                   const CircularProgressIndicator(),
                   const SizedBox(height: 20),
-                  Text(
+                  PosText(
                     u.probation
                         ? 'პროგრამა მზადდება'
                         : updateLabels['INSTALLING']!,
@@ -178,7 +179,7 @@ class _PosUpdateHostState extends State<PosUpdateHost> {
                   if (u.installing)
                     TextButton(
                       onPressed: () => unawaited(u.installNow()),
-                      child: const Text('სტატუსის შემოწმება'),
+                      child: const PosText('სტატუსის შემოწმება'),
                     ),
                 ],
               ),
@@ -195,7 +196,7 @@ class _PosUpdateHostState extends State<PosUpdateHost> {
             borderRadius: BorderRadius.circular(12),
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Text(u.localBlock!),
+              child: PosText(u.localBlock!),
             ),
           ),
         ),

@@ -1,3 +1,4 @@
+import 'package:vynic/core/widgets/pos_text.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -226,7 +227,7 @@ class HomeTablesDashboardSection extends StatelessWidget {
             ),
             _RailSection(
               title: 'NEEDS ATTENTION',
-              trailing: Text(
+              trailing: PosText(
                 '${alerts.length}',
                 style: TextStyle(
                   color: alerts.isEmpty
@@ -255,7 +256,7 @@ class HomeTablesDashboardSection extends StatelessWidget {
                 borderRadius: VynicRadius.smAll,
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  child: Text(
+                  child: PosText(
                     'ყველა',
                     style: TextStyle(
                       color: VynicFloorTokens.accentBadgeText,
@@ -388,7 +389,7 @@ class HomeTablesDashboardSection extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(
+              child: PosText(
                 '$tableNumbers • იხსნება...',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -454,7 +455,7 @@ class HomeTablesDashboardSection extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    const PosText(
                       'არჩეული მაგიდები',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -465,7 +466,7 @@ class HomeTablesDashboardSection extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 3),
-                    const Text(
+                    const PosText(
                       'გააგრძელეთ მენიუში შეკვეთის შესაქმნელად',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -506,7 +507,7 @@ class HomeTablesDashboardSection extends StatelessWidget {
               ),
             ),
             icon: const Icon(Icons.restaurant_menu_rounded, size: 18),
-            label: const Text(
+            label: const PosText(
               'მენიუში გადასვლა',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -676,7 +677,7 @@ class _BottomServiceButton extends StatelessWidget {
                 size: 20,
               ),
               const SizedBox(width: 10),
-              const Text(
+              const PosText(
                 'SERVICE RIGHT NOW',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -717,7 +718,7 @@ class _BottomServiceMetric extends StatelessWidget {
         borderRadius: VynicRadius.smAll,
         border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
       ),
-      child: Text(
+      child: PosText(
         metric.value,
         style: const TextStyle(
           color: Colors.white,
@@ -803,7 +804,7 @@ class _FloorTab extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
+            PosText(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -829,7 +830,7 @@ class _FloorTab extends StatelessWidget {
                   VynicFloorTokens.badgeRadius,
                 ),
               ),
-              child: Text(
+              child: PosText(
                 count,
                 style: TextStyle(
                   color: selected
@@ -876,7 +877,7 @@ class _StatusLegend extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 7),
-              Text(
+              PosText(
                 entry.$2,
                 style: const TextStyle(
                   fontSize: 12.5,
@@ -907,7 +908,7 @@ class _RailSection extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: Text(
+              child: PosText(
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -991,7 +992,7 @@ class _RailMetric extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
+            PosText(
               metric.label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -1053,7 +1054,7 @@ class _AttentionCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
+                child: PosText(
                   item.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -1064,7 +1065,7 @@ class _AttentionCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Text(
+              PosText(
                 item.time,
                 style: const TextStyle(
                   color: VynicColors.textMuted,
@@ -1075,7 +1076,7 @@ class _AttentionCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 3),
-          Text(
+          PosText(
             item.detail,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -1144,7 +1145,7 @@ class _ReservationRailCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Text(
+              PosText(
                 reservation.reservationTime,
                 style: const TextStyle(
                   color: VynicColors.textPrimary,
@@ -1158,7 +1159,7 @@ class _ReservationRailCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
+                child: PosText(
                   detail.isEmpty ? 'მაგიდა არ არის არჩეული' : detail,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -1171,7 +1172,7 @@ class _ReservationRailCard extends StatelessWidget {
               ),
               InkWell(
                 onTap: onViewAll,
-                child: const Text(
+                child: const PosText(
                   'სუფრაზე',
                   style: TextStyle(
                     color: VynicColors.accent,
@@ -1195,7 +1196,7 @@ class _RailEmptyText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
+    return PosText(
       text,
       style: const TextStyle(
         color: VynicColors.neutral,
@@ -1237,7 +1238,7 @@ class _OverviewLine extends StatelessWidget {
         const SizedBox(width: 7),
         SizedBox(
           width: 70,
-          child: Text(
+          child: PosText(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

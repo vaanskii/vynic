@@ -1,8 +1,7 @@
+import 'package:vynic/core/widgets/pos_on_screen_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
-import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_language.dart';
-import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 
 /// Text field used by the admin forms. Tapping it opens the POS on-screen
 /// keyboard (alphanumeric or numeric) rather than the platform keyboard.
@@ -36,43 +35,16 @@ class AdminPosTextField extends StatelessWidget {
         keyboardType.index == TextInputType.number.index &&
         keyboardType.decimal == true;
 
-    return TextField(
+    return PosOnScreenTextField(
       controller: controller,
       enabled: enabled,
-      readOnly: enabled,
-      keyboardType: keyboardType,
+      mode: allowsDecimal
+          ? PosInputMode.decimal
+          : usesNumberKeyboard
+          ? PosInputMode.number
+          : PosInputMode.text,
       style: const TextStyle(color: AdminDesign.text),
       onChanged: onChanged,
-      onTap: !enabled
-          ? null
-          : () async {
-              String? updated;
-              if (usesNumberKeyboard) {
-                updated = await showPosNumberKeyboardInputSheet(
-                  context: context,
-                  initialValue: controller.text,
-                  title: label,
-                  allowDecimal: allowsDecimal,
-                  allowQuestionMark: keyboardType == TextInputType.phone,
-                );
-              } else {
-                updated = await showPosKeyboardInputSheet(
-                  context: context,
-                  controller: controller,
-                  initialLanguage: PosKeyboardLanguage.georgian,
-                  title: label,
-                );
-              }
-
-              if (updated == null) return;
-              if (controller.text != updated) {
-                controller.value = TextEditingValue(
-                  text: updated,
-                  selection: TextSelection.collapsed(offset: updated.length),
-                );
-              }
-              onChanged?.call(controller.text);
-            },
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,

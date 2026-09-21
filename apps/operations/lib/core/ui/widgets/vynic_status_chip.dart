@@ -1,3 +1,4 @@
+import 'package:vynic/core/widgets/pos_text.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/ui/vynic_radius.dart';
 import 'package:vynic/core/ui/vynic_spacing.dart';
@@ -52,7 +53,7 @@ class VynicStatusChip extends StatelessWidget {
             const SizedBox(width: VynicSpacing.xxs + 1),
           ],
           Flexible(
-            child: Text(
+            child: PosText(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

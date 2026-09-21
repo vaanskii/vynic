@@ -1,3 +1,5 @@
+import 'package:vynic/core/widgets/pos_text.dart';
+import 'package:vynic/core/widgets/pos_on_screen_text_field.dart';
 import 'package:vynic/core/models/feature_keys.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -19,6 +21,13 @@ class _AdminInventoryState extends State<AdminInventorySection> {
   String? _status;
   StockItemClassification? _classification;
   String _query = '';
+  final _search = TextEditingController();
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
   List<Map<String, dynamic>> _rows(Object? raw) => raw is List
       ? raw.whereType<Map>().map((r) => Map<String, dynamic>.from(r)).toList()
       : [];
@@ -27,7 +36,7 @@ class _AdminInventoryState extends State<AdminInventorySection> {
   Widget build(BuildContext context) {
     final box = DatabaseCore.inventoryBox;
     if (box == null)
-      return const Center(child: Text('მარაგები ჯერ არ ჩამოტვირთულა'));
+      return const Center(child: PosText('მარაგები ჯერ არ ჩამოტვირთულა'));
     return ValueListenableBuilder(
       valueListenable: box.listenable(keys: [InventoryRepository.catalogKey]),
       builder: (context, _, child) => _content(context),
@@ -54,14 +63,14 @@ class _AdminInventoryState extends State<AdminInventorySection> {
       key: const Key('pos-inventory'),
       padding: const EdgeInsets.all(VynicSpacing.lg),
       children: [
-        Text('მარაგები', style: Theme.of(context).textTheme.headlineSmall),
+        PosText('მარაგები', style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: VynicSpacing.xs),
-        Text(
+        PosText(
           refreshed == null
               ? 'მარაგები ჯერ არ ჩამოტვირთულა'
               : 'ბოლო განახლება: ${refreshed.toLocal().toString().split(".").first}',
         ),
-        const Text(
+        const PosText(
           'მონაცემები ბოლო განახლების დროისთვის. ცვლილებები შეიტანეთ მენეჯერის აპში.',
         ),
         const SizedBox(height: VynicSpacing.md),
@@ -72,7 +81,7 @@ class _AdminInventoryState extends State<AdminInventorySection> {
             ChoiceChip(
               labelStyle: Theme.of(context).textTheme.bodyMedium,
               materialTapTargetSize: MaterialTapTargetSize.padded,
-              label: const Text('ყველა პროდუქტი'),
+              label: const PosText('ყველა პროდუქტი'),
               selected: _status == null,
               onSelected: (_) => setState(() => _status = null),
             ),
@@ -80,7 +89,7 @@ class _AdminInventoryState extends State<AdminInventorySection> {
               ChoiceChip(
                 labelStyle: Theme.of(context).textTheme.bodyMedium,
                 materialTapTargetSize: MaterialTapTargetSize.padded,
-                label: Text(
+                label: PosText(
                   '${status == 'LOW' ? 'დაბალი მარაგი' : 'უარყოფითი მარაგი'} (${items.where((i) => i.isActive && i.stockStatus == status).length})',
                 ),
                 selected: _status == status,
@@ -89,7 +98,8 @@ class _AdminInventoryState extends State<AdminInventorySection> {
           ],
         ),
         const SizedBox(height: VynicSpacing.sm),
-        TextField(
+        PosOnScreenTextField(
+          controller: _search,
           decoration: const InputDecoration(
             labelText: 'პროდუქტის ძებნა',
             prefixIcon: Icon(Icons.search),
@@ -104,7 +114,7 @@ class _AdminInventoryState extends State<AdminInventorySection> {
             ChoiceChip(
               labelStyle: Theme.of(context).textTheme.bodyMedium,
               materialTapTargetSize: MaterialTapTargetSize.padded,
-              label: const Text('ყველა'),
+              label: const PosText('ყველა'),
               selected: _classification == null,
               onSelected: (_) => setState(() => _classification = null),
             ),
@@ -112,7 +122,7 @@ class _AdminInventoryState extends State<AdminInventorySection> {
               ChoiceChip(
                 labelStyle: Theme.of(context).textTheme.bodyMedium,
                 materialTapTargetSize: MaterialTapTargetSize.padded,
-                label: Text(value.label),
+                label: PosText(value.label),
                 selected: _classification == value,
                 onSelected: (_) => setState(() => _classification = value),
               ),
@@ -122,7 +132,7 @@ class _AdminInventoryState extends State<AdminInventorySection> {
         if (filtered.isEmpty)
           const Padding(
             padding: EdgeInsets.all(16),
-            child: Text('შესაბამისი პროდუქტი ვერ მოიძებნა'),
+            child: PosText('შესაბამისი პროდუქტი ვერ მოიძებნა'),
           ),
         for (final item in filtered)
           Card(
@@ -130,7 +140,7 @@ class _AdminInventoryState extends State<AdminInventorySection> {
               key: ValueKey('pos-stock-${item.id}'),
               contentPadding: const EdgeInsets.all(VynicSpacing.md),
               title: Text(item.name),
-              subtitle: Text(
+              subtitle: PosText(
                 '${item.currentStock} ${item.baseUnit.label} · ${_statusLabel(item)}',
               ),
               trailing: const Icon(Icons.chevron_right),
@@ -147,30 +157,30 @@ class _AdminInventoryState extends State<AdminInventorySection> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
+                          PosText(
                             '${item.currentStock} ${item.baseUnit.label}',
                             style: Theme.of(context).textTheme.headlineSmall,
                           ),
-                          Text(_statusLabel(item)),
+                          PosText(_statusLabel(item)),
                           if ((inspection?['costsByItem'] as Map?)?[item.id]
                               case final Map cost) ...[
-                            Text(
+                            PosText(
                               'მარაგის საშუალო ფასი: ${cost['unitCost'] ?? '—'} ₾ / ${item.baseUnit.label}',
                             ),
-                            Text(
+                            PosText(
                               'მარაგის ღირებულება: ${cost['inventoryValue'] ?? '—'} ₾',
                             ),
                             if (cost['status'] == 'PROVISIONAL')
-                              const Text('შეფასება წინასწარია'),
+                              const PosText('შეფასება წინასწარია'),
                           ],
                           const SizedBox(height: 24),
-                          const Text('გამოიყენება მენიუში'),
+                          const PosText('გამოიყენება მენიუში'),
                           if (!recipes.any(
                             (r) => r.components.any(
                               (c) => c.stockItemId == item.id,
                             ),
                           ))
-                            const Text('აქტიური მიბმა არ არის'),
+                            const PosText('აქტიური მიბმა არ არის'),
                           for (final recipe in recipes.where(
                             (r) => r.components.any(
                               (c) => c.stockItemId == item.id,
@@ -178,15 +188,17 @@ class _AdminInventoryState extends State<AdminInventorySection> {
                           ))
                             ListTile(
                               contentPadding: EdgeInsets.zero,
-                              title: Text(
+                              title: PosText(
                                 '${recipe.menuItemName}${recipe.variantLabel == null ? '' : ' · ${recipe.variantLabel}'}',
                               ),
-                              subtitle: const Text('აქტიური რეცეპტი / მიბმა'),
+                              subtitle: const PosText(
+                                'აქტიური რეცეპტი / მიბმა',
+                              ),
                             ),
                           const SizedBox(height: 24),
-                          const Text('ბოლო მოძრაობები (მაქს. 20)'),
+                          const PosText('ბოლო მოძრაობები (მაქს. 20)'),
                           if (inspection == null)
-                            const Text(
+                            const PosText(
                               'მოძრაობების ჩასატვირთად საჭიროა განახლება',
                             ),
                           for (final row in _rows(
@@ -197,10 +209,10 @@ class _AdminInventoryState extends State<AdminInventorySection> {
                                 final m = StockMovement.fromJson(row);
                                 return ListTile(
                                   contentPadding: EdgeInsets.zero,
-                                  title: Text(
+                                  title: PosText(
                                     '${m.quantityDeltaBase} ${m.baseUnit.label} · ${m.movementType.label}',
                                   ),
-                                  subtitle: Text(
+                                  subtitle: PosText(
                                     '${m.businessDate} · ${m.actorName}',
                                   ),
                                 );
@@ -213,7 +225,7 @@ class _AdminInventoryState extends State<AdminInventorySection> {
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: Text(
+                      child: PosText(
                         'დახურვა',
                         style: Theme.of(context).textTheme.labelLarge,
                       ),
@@ -225,35 +237,35 @@ class _AdminInventoryState extends State<AdminInventorySection> {
           ),
         const SizedBox(height: VynicSpacing.lg),
         ExpansionTile(
-          title: const Text('დღის მიღებები'),
-          subtitle: Text(
+          title: const PosText('დღის მიღებები'),
+          subtitle: PosText(
             day == null
                 ? 'განახლება საჭიროა'
                 : '${procurement?['businessDate']} · ${day['total']} ₾ · ${day['count']} მიღება',
           ),
           children: [
-            const ListTile(title: Text('ბოლო 100 დადასტურებული მიღება')),
+            const ListTile(title: PosText('ბოლო 100 დადასტურებული მიღება')),
             if (procurement != null) ...[
-              Text(
+              PosText(
                 'მომწოდებლებს გადახდილი: ${((procurement['supplierPayments'] as Map?)?['businessDay'] as Map?)?['total'] ?? '—'} ₾',
               ),
-              Text(
+              PosText(
                 'დღის მიღებების დავალიანება: ${procurement['newUnpaidBalance'] ?? '—'} ₾',
               ),
             ],
             for (final r in _rows(inspection?['receivings']))
               ListTile(
-                title: Text('${r['supplierNameSnapshot']}'),
-                subtitle: Text('${r['documentTotal']} ₾'),
+                title: PosText('${r['supplierNameSnapshot']}'),
+                subtitle: PosText('${r['documentTotal']} ₾'),
               ),
           ],
         ),
         ExpansionTile(
-          title: const Text('რეცეპტები და მიბმები'),
+          title: const PosText('რეცეპტები და მიბმები'),
           children: [
             if (inspection == null)
               const ListTile(
-                title: Text(
+                title: PosText(
                   'რეცეპტების სტატუსის ჩასატვირთად საჭიროა განახლება',
                 ),
               ),
@@ -265,7 +277,7 @@ class _AdminInventoryState extends State<AdminInventorySection> {
                     children: [
                       ListTile(
                         title: Text(item.name),
-                        subtitle: Text(
+                        subtitle: PosText(
                           item.recipe?.isActive == true
                               ? 'მიბმულია'
                               : 'მიბმა არ არის',
@@ -273,8 +285,8 @@ class _AdminInventoryState extends State<AdminInventorySection> {
                       ),
                       for (final variant in item.variants)
                         ListTile(
-                          title: Text('${item.name} · ${variant.size}'),
-                          subtitle: Text(
+                          title: PosText('${item.name} · ${variant.size}'),
+                          subtitle: PosText(
                             variant.recipe?.isActive == true
                                 ? 'მიბმულია'
                                 : 'მიბმა არ არის',
@@ -287,8 +299,8 @@ class _AdminInventoryState extends State<AdminInventorySection> {
           ],
         ),
         ExpansionTile(
-          title: const Text('მიუბმელი გაყიდული პროდუქტები'),
-          subtitle: Text(
+          title: const PosText('მიუბმელი გაყიდული პროდუქტები'),
+          subtitle: PosText(
             inspection == null
                 ? 'განახლება საჭიროა'
                 : '${inspection['unmappedCount']} პროდუქტი · გაყიდვის დროს მიბმა არ ჰქონდა',
@@ -296,7 +308,7 @@ class _AdminInventoryState extends State<AdminInventorySection> {
           children: [
             for (final row in _rows(inspection?['unmapped']))
               ListTile(
-                title: Text(
+                title: PosText(
                   '${row['itemName']}${row['variantName'] == null ? '' : ' · ${row['variantName']}'}',
                 ),
               ),

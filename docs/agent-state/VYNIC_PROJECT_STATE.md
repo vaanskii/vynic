@@ -44,6 +44,25 @@ current transport status.
 
 ## Current Phase
 
+- POS touch input shares TEXT/NUMBER/DECIMAL/PIN modes, controller-backed fields,
+  one text keyboard and one numeric/PIN pad. Login, lock and Staff authentication
+  pads remain available when the optional operational keyboard is off. PIN digits
+  update masked displays immediately; submission is explicit by action/Enter.
+  Reservations, Menu, Packages, settings and Inventory search edit their actual
+  controllers live; keyboard docks keep the focused field visible. Standalone
+  prompts own one visible input, while form keyboards have no second text box.
+  Inventory remains read-only apart from search/filter controls. Management Center
+  persists `posOnScreenInputEnabled` (default on); Manager does not load it.
+  The POS locale observes the persisted language above its Navigator, with SDK
+  locale delegates and a shared UI catalog for navigation, authentication, input,
+  settings and the affected operational surfaces. Open routes/dialogs update without
+  discarding drafts. Menu's language action uses the same persisted setting.
+  Quit uses a responsive Vynic modal and the existing safe shutdown coordinator.
+  Login/lock date and time sit at the right edge; Home keeps a neutral work-date
+  indicator visible at compact/fullscreen widths. Regression proof:
+  `test/widget/pos_interaction_pass_test.dart` under `apps/operations/`.
+
+
 - Windows POS uses native borderless fullscreen with monitor/DPI refitting;
   Manager keeps its normal window. Settings and Alt+F4 share confirmed clean Quit:
   the existing readiness barrier excludes active transactions/startup probation,

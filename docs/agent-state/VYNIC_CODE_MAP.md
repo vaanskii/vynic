@@ -15,6 +15,8 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## POS / Operations Shell
 
+- POS runtime locale: `apps/operations/lib/core/services/pos/pos_locale.dart`, UI catalog `pos_strings.dart`, `core/widgets/pos_text.dart`; shared work-date/clock: `apps/windows_pos/widgets/shared/pos_work_date.dart`; interaction/layout proof: `apps/operations/test/widget/pos_interaction_pass_test.dart`.
+
 - Fixed product entrypoints: `apps/operations/lib/main_manager.dart`, `main_pos.dart`; POS bootstrap: `startup_pos.dart`; isolated native builds: `apps/operations/tool/product.py`
 - Windows POS screens: `apps/operations/lib/apps/windows_pos/screens/`
 - Windows POS widgets: `apps/operations/lib/apps/windows_pos/widgets/`

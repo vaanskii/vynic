@@ -1,3 +1,6 @@
+import 'package:vynic/apps/windows_pos/widgets/shared/pos_work_date.dart';
+import 'package:vynic/core/widgets/pos_text.dart';
+import 'package:vynic/core/widgets/pin_button.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
@@ -43,7 +46,6 @@ class _StaffLockScreenState extends State<_StaffLockScreen> {
       _pin += d;
       _error = false;
     });
-    if (_pin.length >= 4) _tryUnlock();
   }
 
   void _deleteDigit() {
@@ -76,71 +78,98 @@ class _StaffLockScreenState extends State<_StaffLockScreen> {
       canPop: false,
       child: Scaffold(
         backgroundColor: _navy,
-        body: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(vertical: 28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.lock_rounded, color: _accent, size: 46),
-                const SizedBox(height: 14),
-                const Text(
-                  'ტერმინალი ჩაკეტილია',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                  ),
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: PosWorkDate(
+                  date: DatabaseService.getCurrentDate(),
+                  dark: true,
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'გასაგრძელებლად შეიყვანეთ PIN კოდი',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.62),
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 26),
-                _buildDots(),
-                SizedBox(
-                  height: 24,
-                  child: _error
-                      ? const Center(
-                          child: Text(
-                            'არასწორი PIN კოდი',
-                            style: TextStyle(
-                              color: Color(0xFFFF8A8A),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        )
-                      : null,
-                ),
-                const SizedBox(height: 8),
-                _buildPad(),
-                const SizedBox(height: 22),
-                // The single full-logout entry point in the app. Logging out
-                // only returns to the login screen (which itself needs a PIN),
-                // so it never exposes data.
-                TextButton.icon(
-                  onPressed: SessionLock.logout,
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFFFF8A8A),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 10,
-                    ),
-                  ),
-                  icon: const Icon(Icons.logout_rounded, size: 19),
-                  label: const Text(
-                    'სრული გასვლა',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+            Expanded(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 28,
+                    horizontal: 16,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.lock_rounded, color: _accent, size: 46),
+                      const SizedBox(height: 14),
+                      const PosText(
+                        'ტერმინალი ჩაკეტილია',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      PosText(
+                        'გასაგრძელებლად შეიყვანეთ PIN კოდი',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.62),
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 26),
+                      _buildDots(),
+                      SizedBox(
+                        height: 24,
+                        child: _error
+                            ? const Center(
+                                child: PosText(
+                                  'არასწორი PIN კოდი',
+                                  style: TextStyle(
+                                    color: Color(0xFFFF8A8A),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              )
+                            : null,
+                      ),
+                      const SizedBox(height: 8),
+                      _buildPad(),
+                      const SizedBox(height: 12),
+                      FilledButton(
+                        onPressed: _pin.length >= 4 ? _tryUnlock : null,
+                        child: const PosText('შესვლა'),
+                      ),
+                      const SizedBox(height: 22),
+                      // The single full-logout entry point in the app. Logging out
+                      // only returns to the login screen (which itself needs a PIN),
+                      // so it never exposes data.
+                      TextButton.icon(
+                        onPressed: SessionLock.logout,
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFFFF8A8A),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 10,
+                          ),
+                        ),
+                        icon: const Icon(Icons.logout_rounded, size: 19),
+                        label: const PosText(
+                          'სრული გასვლა',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -168,58 +197,14 @@ class _StaffLockScreenState extends State<_StaffLockScreen> {
     );
   }
 
-  Widget _buildPad() {
-    final keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
-    return SizedBox(
-      width: 280,
-      child: Column(
-        children: [
-          for (var row = 0; row < 3; row++)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (var col = 0; col < 3; col++)
-                  _padButton(keys[row * 3 + col]),
-              ],
-            ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(width: 84, height: 84),
-              _padButton('0'),
-              _padButton('⌫', isDelete: true),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _padButton(String label, {bool isDelete = false}) {
-    return Padding(
-      padding: const EdgeInsets.all(7),
-      child: InkWell(
-        onTap: () => isDelete ? _deleteDigit() : _addDigit(label),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: 70,
-          height: 70,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-          ),
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget _buildPad() => PinPad(
+    authentication: true,
+    onDigitPressed: _addDigit,
+    onDeletePressed: _deleteDigit,
+    onClearPressed: () => setState(() {
+      _pin = '';
+      _error = false;
+    }),
+    onSubmit: _tryUnlock,
+  );
 }

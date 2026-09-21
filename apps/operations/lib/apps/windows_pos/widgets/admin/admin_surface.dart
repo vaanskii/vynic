@@ -1,3 +1,4 @@
+import 'package:vynic/core/widgets/pos_text.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/windows_pos/widgets/shared/pos_surface.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
@@ -430,7 +431,7 @@ class AdminTag extends StatelessWidget {
             Icon(icon, size: 13, color: tone.text),
             const SizedBox(width: 5),
           ],
-          Text(
+          PosText(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

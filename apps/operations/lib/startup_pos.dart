@@ -1,3 +1,6 @@
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:vynic/core/services/pos/pos_locale.dart';
+import 'package:vynic/core/services/pos/pos_input_settings.dart';
 import 'dart:io' show Platform;
 import 'package:vynic/core/services/pos/pos_quit.dart';
 import 'package:vynic/apps/windows_pos/widgets/pos_quit_action.dart';
@@ -35,6 +38,7 @@ Future<void> startPos() async {
   if (Platform.isWindows) PosQuit.enableWindowsTracking();
   await EdgeDeviceCredentialStore.load();
   await PosDisplaySettingsController.loadFromStorage();
+  PosInputSettings.load();
   await PrinterService.initialize();
   await PosUpdater.instance.initialize();
   runApp(const PosApp());
@@ -84,34 +88,41 @@ class _PosAppState extends State<PosApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Vynic POS',
-      navigatorKey: navigatorKey,
-      debugShowCheckedModeBanner: false,
-      // App-wide activity detector: any pointer interaction resets the POS idle
-      // auto-lock countdown. No-op until SessionLock is armed (POS login), so it
-      // costs nothing on the mobile manager app.
-      builder: (context, child) {
-        final activityAwareChild = Listener(
-          behavior: HitTestBehavior.translucent,
-          onPointerDown: (_) => SessionLock.recordActivity(),
-          onPointerSignal: (_) => SessionLock.recordActivity(),
-          child: child ?? const SizedBox.shrink(),
-        );
-        return ValueListenableBuilder(
-          valueListenable: PosDisplaySettingsController.settings,
-          builder: (context, settings, _) {
-            return PosScaledSurface(
-              scale: settings.scaleFactor,
-              child: PosUpdateHost(
-                navigatorKey: navigatorKey,
-                child: activityAwareChild,
-              ),
+    return PosLocaleHost(
+      child: Builder(
+        builder: (context) => MaterialApp(
+          locale: Locale(PosLocale.code(context)),
+          supportedLocales: const [Locale('ka'), Locale('en')],
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          title: 'Vynic POS',
+          navigatorKey: navigatorKey,
+          debugShowCheckedModeBanner: false,
+          // App-wide activity detector: any pointer interaction resets the POS idle
+          // auto-lock countdown. No-op until SessionLock is armed (POS login), so it
+          // costs nothing on the mobile manager app.
+          builder: (context, child) {
+            final activityAwareChild = Listener(
+              behavior: HitTestBehavior.translucent,
+              onPointerDown: (_) => SessionLock.recordActivity(),
+              onPointerSignal: (_) => SessionLock.recordActivity(),
+              child: child ?? const SizedBox.shrink(),
+            );
+            return ValueListenableBuilder(
+              valueListenable: PosDisplaySettingsController.settings,
+              builder: (context, settings, _) {
+                return PosScaledSurface(
+                  scale: settings.scaleFactor,
+                  child: PosUpdateHost(
+                    navigatorKey: navigatorKey,
+                    child: PosInputScope(child: activityAwareChild),
+                  ),
+                );
+              },
             );
           },
-        );
-      },
-      home: const PosFirstRun(),
+          home: const PosFirstRun(),
+        ),
+      ),
     );
   }
 }

@@ -80,6 +80,17 @@ class SettingsRepository {
 
   static const Uuid _uuid = Uuid();
 
+  static bool getPosOnScreenInputEnabled() =>
+      _settingsBox?.get('posOnScreenInputEnabled') != false;
+
+  static Future<void> setPosOnScreenInputEnabled(bool value) =>
+      UpdateReadiness.track('setPosOnScreenInputEnabled', () async {
+        final box = _settingsBox;
+        if (box == null) throw StateError('POS settings are not open');
+        await box.put('posOnScreenInputEnabled', value);
+        await box.flush();
+      });
+
   static Box? get _settingsBox => DatabaseCore.settingsBox;
 
   /// Seeds first-run defaults into the settings box. Called from

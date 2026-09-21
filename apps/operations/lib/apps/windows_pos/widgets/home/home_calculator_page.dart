@@ -761,6 +761,7 @@ class _HomeCalculatorPageState extends State<HomeCalculatorPage> {
     TextEditingController controller,
   ) async {
     return showPosKeyboardInputSheet(
+      standalone: true,
       context: context,
       controller: controller,
       initialLanguage: PosKeyboardLanguage.fromCode(

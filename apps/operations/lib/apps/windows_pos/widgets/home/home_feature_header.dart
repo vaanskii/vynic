@@ -1,3 +1,4 @@
+import 'package:vynic/core/widgets/pos_text.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -231,7 +232,7 @@ class _DirectNavigationItem extends StatelessWidget {
                       color: Color(0xFFEF4444),
                       shape: BoxShape.circle,
                     ),
-                    child: Text(
+                    child: PosText(
                       destination.badgeCount! > 9
                           ? '9+'
                           : '${destination.badgeCount}',
@@ -247,7 +248,7 @@ class _DirectNavigationItem extends StatelessWidget {
           ),
           const SizedBox(width: 9),
           Flexible(
-            child: Text(
+            child: PosText(
               destination.label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -289,7 +290,7 @@ class _HeaderMetaLine extends StatelessWidget {
         children: [
           Icon(icon, color: Colors.white70, size: 13),
           const SizedBox(width: 5),
-          Text(
+          PosText(
             label,
             style: const TextStyle(
               color: Colors.white,
@@ -330,7 +331,7 @@ class _NotificationButton extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
-                child: Text(
+                child: PosText(
                   unreadCount > 9 ? '9+' : '$unreadCount',
                   style: const TextStyle(
                     color: Color(0xFF1B2A36),

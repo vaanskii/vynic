@@ -1344,71 +1344,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       }
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              PinButton(number: '1', onPressed: () => addDigit('1')),
-              const SizedBox(width: 12),
-              PinButton(number: '2', onPressed: () => addDigit('2')),
-              const SizedBox(width: 12),
-              PinButton(number: '3', onPressed: () => addDigit('3')),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              PinButton(number: '4', onPressed: () => addDigit('4')),
-              const SizedBox(width: 12),
-              PinButton(number: '5', onPressed: () => addDigit('5')),
-              const SizedBox(width: 12),
-              PinButton(number: '6', onPressed: () => addDigit('6')),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              PinButton(number: '7', onPressed: () => addDigit('7')),
-              const SizedBox(width: 12),
-              PinButton(number: '8', onPressed: () => addDigit('8')),
-              const SizedBox(width: 12),
-              PinButton(number: '9', onPressed: () => addDigit('9')),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              PinButton(number: '.', onPressed: () => addDigit('.')),
-              const SizedBox(width: 12),
-              PinButton(number: '0', onPressed: () => addDigit('0')),
-              const SizedBox(width: 12),
-              PinButton(number: '⌫', onPressed: backspace, isSpecial: true),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (allowNegative) ...[
-                PinButton(
-                  number: '+/-',
-                  onPressed: toggleSign,
-                  isSpecial: true,
-                ),
-                const SizedBox(width: 12),
-              ],
-              PinButton(number: 'Clear', onPressed: clear, isSpecial: true),
-            ],
-          ),
-        ],
-      ),
+    return PinPad(
+      onDigitPressed: addDigit,
+      onClearPressed: clear,
+      onDeletePressed: backspace,
+      showDecimalButton: true,
+      onToggleSign: allowNegative ? toggleSign : null,
     );
   }
 
@@ -1693,6 +1634,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
     try {
       final name = await showPosKeyboardInputSheet(
+        standalone: true,
         context: context,
         controller: controller,
         title: 'ვისთვის არის გატანა?',
@@ -2574,7 +2516,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
-  Future<void> _startTableClosureFlow() => UpdateReadiness.track('payment/close', () => _startTableClosureFlowTracked());
+  Future<void> _startTableClosureFlow() => UpdateReadiness.track(
+    'payment/close',
+    () => _startTableClosureFlowTracked(),
+  );
 
   Future<void> _startTableClosureFlowTracked() async {
     if (_order == null) {
@@ -2625,7 +2570,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     await _finalizeTableClosure(currentOrder, selection);
   }
 
-  Future<void> _startNonFiscalClosureFlow() => UpdateReadiness.track('payment/close', () => _startNonFiscalClosureFlowTracked());
+  Future<void> _startNonFiscalClosureFlow() => UpdateReadiness.track(
+    'payment/close',
+    () => _startNonFiscalClosureFlowTracked(),
+  );
 
   Future<void> _startNonFiscalClosureFlowTracked() async {
     if (!widget.user.canCloseTablesNonFiscal) {

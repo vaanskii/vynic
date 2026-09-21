@@ -75,6 +75,7 @@ class _VenueIdentityPanelState extends State<VenueIdentityPanel> {
     final controller = TextEditingController(text: current);
     try {
       final entered = await showPosKeyboardInputSheet(
+        standalone: true,
         context: context,
         controller: controller,
         title: title,

@@ -1,5 +1,8 @@
-import 'package:vynic/apps/windows_pos/widgets/pos_quit_action.dart';
 import 'package:vynic/apps/windows_pos/widgets/update/pos_update_ui.dart';
+import 'package:vynic/apps/windows_pos/widgets/pos_quit_action.dart';
+import 'package:vynic/core/database/repositories/settings_repository.dart';
+import 'package:vynic/core/widgets/pos_text.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/pos_input_settings_tile.dart';
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
@@ -131,6 +134,7 @@ class AdminSettingsSection extends StatelessWidget {
                     const SizedBox(height: 14),
                     _buildStatusStrip(),
                     const SizedBox(height: 16),
+                    const PosInputSettingsTile(),
                     const PosUpdateSettings(),
                     const SizedBox(height: 12),
                     const PosQuitAction(),
@@ -182,7 +186,7 @@ class AdminSettingsSection extends StatelessWidget {
                           'აირჩიეთ ნაგულისხმევი ენა მენიუს, კლავიატურისა და ბეჭდური ჩეკებისთვის.',
                     ),
                     const SizedBox(height: 12),
-                    _buildLocalizationCard(),
+                    _buildLocalizationCard(context),
                     const SizedBox(height: 18),
                     _buildSettingsHeader(
                       icon: Icons.backup_outlined,
@@ -224,8 +228,8 @@ class AdminSettingsSection extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'პარამეტრები',
+                PosText(
+                  'რესტორნის პარამეტრები',
                   style: TextStyle(
                     color: _textPrimary,
                     fontSize: 24,
@@ -233,7 +237,7 @@ class AdminSettingsSection extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 3),
-                Text(
+                PosText(
                   'რესტორნის კონფიგურაცია, უსაფრთხოება და წვდომის უფლებები.',
                   style: TextStyle(color: _textMuted, fontSize: 13),
                 ),
@@ -328,7 +332,7 @@ class AdminSettingsSection extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                PosText(
                   title,
                   style: const TextStyle(
                     color: _textPrimary,
@@ -338,7 +342,7 @@ class AdminSettingsSection extends StatelessWidget {
                 ),
                 if (subtitle != null) ...[
                   const SizedBox(height: 3),
-                  Text(
+                  PosText(
                     subtitle,
                     style: const TextStyle(color: _textMuted, fontSize: 13),
                   ),
@@ -376,7 +380,7 @@ class AdminSettingsSection extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                PosText(
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -398,7 +402,7 @@ class AdminSettingsSection extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
+                PosText(
                   helper,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -431,7 +435,7 @@ class AdminSettingsSection extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 16),
           const SizedBox(width: 7),
-          Text(
+          PosText(
             label,
             style: TextStyle(
               color: color,
@@ -475,7 +479,7 @@ class AdminSettingsSection extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             const Expanded(
-              child: Text(
+              child: PosText(
                 'ცვლილებები ინახება შესაბამის ბლოკში. ტექსტისა და ციფრების ველები იყენებს ახალ POS კლავიატურას.',
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -505,7 +509,7 @@ class AdminSettingsSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            const PosText(
               'ნაგულისხმევი საკომისიო',
               style: TextStyle(
                 color: _textPrimary,
@@ -523,7 +527,7 @@ class AdminSettingsSection extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
+                  child: PosText(
                     serviceFeeEnabledByDefault
                         ? 'საკომისიო ავტომატურად ემატება ახალ შეკვეთებს.'
                         : 'საკომისიო ნაგულისხმევად გამორთულია ახალი შეკვეთებისთვის.',
@@ -544,14 +548,14 @@ class AdminSettingsSection extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Text(
+            PosText(
               'მიმდინარე განაკვეთი: $serviceFeePercentDisplay% (გამოიყენება ჩეკებსა და ანგარიშებში).',
               style: const TextStyle(color: _textMuted, fontSize: 12),
             ),
             const SizedBox(height: 20),
             const Divider(height: 1, color: _borderColor),
             const SizedBox(height: 20),
-            const Text(
+            const PosText(
               'ჩეკზე ასახვა',
               style: TextStyle(
                 color: _textPrimary,
@@ -569,7 +573,7 @@ class AdminSettingsSection extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
+                  child: PosText(
                     receiptServiceFeeLineVisible
                         ? 'ჩეკზე საკომისიო ცალკე ხაზად იბეჭდება.'
                         : 'ჩეკზე საკომისიოს ცალკე ხაზი არ იბეჭდება — თანხა ჯამშია.',
@@ -579,14 +583,14 @@ class AdminSettingsSection extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            const Text(
+            const PosText(
               'მხოლოდ ჩეკის ვიზუალი იცვლება — ჯამური თანხა და ანგარიშები უცვლელია.',
               style: TextStyle(color: _textMuted, fontSize: 12),
             ),
             const SizedBox(height: 20),
             const Divider(height: 1, color: _borderColor),
             const SizedBox(height: 20),
-            const Text(
+            const PosText(
               'დახურვის ჩეკზე ასახვა',
               style: TextStyle(
                 color: _textPrimary,
@@ -604,7 +608,7 @@ class AdminSettingsSection extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
+                  child: PosText(
                     closeReceiptServiceFeeLineVisible
                         ? 'მაგიდის დახურვის ჩეკზე საკომისიო ცალკე ხაზად იბეჭდება.'
                         : 'მაგიდის დახურვის ჩეკზე საკომისიოს ცალკე ხაზი არ იბეჭდება.',
@@ -614,7 +618,7 @@ class AdminSettingsSection extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            const Text(
+            const PosText(
               'ეს ეხება მხოლოდ იმ ჩეკს, რომელიც მაგიდის დახურვისას იბეჭდება '
               '(ნაღდი, ბარათი ან გაყოფილი გადახდა). ჯამური თანხა უცვლელია.',
               style: TextStyle(color: _textMuted, fontSize: 12),
@@ -630,7 +634,7 @@ class AdminSettingsSection extends StatelessWidget {
                         : onSaveServiceFeeSettings,
                     style: AdminFormButtons.primary(),
                     icon: const Icon(Icons.check_circle_outline, size: 20),
-                    label: Text(
+                    label: PosText(
                       isSavingServiceFee
                           ? 'შენახვა...'
                           : 'საკომისიოს განახლება',
@@ -666,7 +670,7 @@ class AdminSettingsSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            const PosText(
               'გაუქმების დადასტურების პაროლი',
               style: TextStyle(
                 color: _textPrimary,
@@ -686,7 +690,7 @@ class AdminSettingsSection extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
+                  child: PosText(
                     cancellationPasswordUpdatedAt != null
                         ? '$statusLabel ბოლოს განახლდა ${formatRelativeTime(cancellationPasswordUpdatedAt!)} (${formatDateTimeDisplay(cancellationPasswordUpdatedAt!)}).'
                         : statusLabel,
@@ -739,7 +743,7 @@ class AdminSettingsSection extends StatelessWidget {
                         : onSaveCancellationPassword,
                     style: AdminFormButtons.primary(),
                     icon: const Icon(Icons.save),
-                    label: Text(
+                    label: PosText(
                       isSavingCancellationPassword
                           ? 'შენახვა...'
                           : isCancellationPasswordSet
@@ -781,7 +785,7 @@ class AdminSettingsSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Text(
+                  child: PosText(
                     modeTitle,
                     style: const TextStyle(
                       color: _textPrimary,
@@ -802,7 +806,7 @@ class AdminSettingsSection extends StatelessWidget {
                         : AdminDesign.border,
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: Text(
+                  child: PosText(
                     restrictTableCloseToOwner ? 'ON' : 'OFF',
                     style: const TextStyle(
                       color: _textPrimary,
@@ -813,7 +817,7 @@ class AdminSettingsSection extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            Text(
+            PosText(
               modeDescription,
               style: const TextStyle(color: _textMuted, fontSize: 13),
             ),
@@ -826,7 +830,7 @@ class AdminSettingsSection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: _borderColor),
               ),
-              child: const Text(
+              child: const PosText(
                 'მაგალითი: ჩართულ რეჟიმში, ოფიციანტი A-ს გახსნილ მაგიდას ოფიციანტი B ვერ დახურავს.',
                 style: TextStyle(
                   color: _textPrimary,
@@ -854,7 +858,7 @@ class AdminSettingsSection extends StatelessWidget {
                         : onSaveTableOwnershipSettings,
                     style: AdminFormButtons.primary(),
                     icon: const Icon(Icons.check_circle_outline, size: 20),
-                    label: Text(
+                    label: PosText(
                       isSavingTableOwnershipSettings
                           ? 'შენახვა...'
                           : 'პარამეტრის შენახვა',
@@ -869,7 +873,7 @@ class AdminSettingsSection extends StatelessWidget {
     );
   }
 
-  Widget _buildLocalizationCard() {
+  Widget _buildLocalizationCard(BuildContext context) {
     return Card(
       color: _cardColor,
       shape: RoundedRectangleBorder(
@@ -893,12 +897,24 @@ class AdminSettingsSection extends StatelessWidget {
                 ),
               ),
               items: const [
-                DropdownMenuItem(value: 'ka', child: Text('Georgian (KA)')),
-                DropdownMenuItem(value: 'en', child: Text('English (EN)')),
+                DropdownMenuItem(value: 'ka', child: PosText('Georgian (KA)')),
+                DropdownMenuItem(value: 'en', child: PosText('English (EN)')),
               ],
-              onChanged: (value) {
+              onChanged: (value) async {
                 if (value != null) {
-                  onDefaultLanguageSettingChanged(value);
+                  try {
+                    await SettingsRepository.setDefaultLanguage(value);
+                    onDefaultLanguageSettingChanged(value);
+                  } catch (_) {
+                    if (context.mounted)
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: PosText(
+                            'პარამეტრის შენახვა ვერ მოხერხდა. სცადეთ ხელახლა.',
+                          ),
+                        ),
+                      );
+                  }
                 }
               },
             ),
@@ -913,7 +929,7 @@ class AdminSettingsSection extends StatelessWidget {
                         : onSaveLocalizationSettings,
                     style: AdminFormButtons.primary(),
                     icon: const Icon(Icons.check_circle_outline, size: 20),
-                    label: Text(
+                    label: PosText(
                       isSavingLocalization
                           ? 'შენახვა...'
                           : 'ენის პარამეტრის შენახვა',

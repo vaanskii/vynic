@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/pos_locale.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -203,6 +204,17 @@ class _MenuScreenState extends State<MenuScreen> {
   MenuSubcategory? _selectedSubcategory;
   bool _isLoading = true;
   late String _currentLanguage;
+  String? _observedLocale;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final scope = context.dependOnInheritedWidgetOfExactType<PosLocale>();
+    if (scope != null && scope.language != _observedLocale) {
+      _observedLocale = scope.language;
+      _currentLanguage = scope.language;
+    }
+  }
+
   late double _serviceFeeRate;
   late bool _serviceFeeDefaultEnabled;
   bool _existingOrderIsTakeAway = false;
@@ -611,10 +623,24 @@ class _MenuScreenState extends State<MenuScreen> {
     });
   }
 
-  void _toggleLanguage() {
-    setState(() {
-      _currentLanguage = _currentLanguage == 'ka' ? 'en' : 'ka';
-    });
+  Future<void> _toggleLanguage() async {
+    final next = _currentLanguage == 'ka' ? 'en' : 'ka';
+    try {
+      await DatabaseService.setDefaultLanguage(next);
+      if (mounted) setState(() => _currentLanguage = next);
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              PosLocale.tr(
+                context,
+                'პარამეტრის შენახვა ვერ მოხერხდა. სცადეთ ხელახლა.',
+              )!,
+            ),
+          ),
+        );
+    }
   }
 
   void _scrollItemsToTop() {

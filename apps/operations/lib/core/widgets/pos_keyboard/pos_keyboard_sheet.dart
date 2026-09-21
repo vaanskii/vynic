@@ -1,4 +1,9 @@
+import 'package:vynic/core/widgets/pos_text.dart';
+import 'package:vynic/core/services/pos/pos_locale.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/core/services/pos/pos_input_settings.dart';
+import 'package:vynic/core/widgets/pin_button.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_language.dart';
 
@@ -7,12 +12,16 @@ Future<void> showPosKeyboardSheet({
   required TextEditingController controller,
   PosKeyboardLanguage initialLanguage = PosKeyboardLanguage.georgian,
   String? title,
+  bool standalone = false,
+  bool followLocale = true,
 }) async {
   await showPosKeyboardInputSheet(
     context: context,
     controller: controller,
     initialLanguage: initialLanguage,
     title: title,
+    standalone: standalone,
+    followLocale: followLocale,
   );
 }
 
@@ -21,7 +30,35 @@ Future<String?> showPosKeyboardInputSheet({
   required TextEditingController controller,
   PosKeyboardLanguage initialLanguage = PosKeyboardLanguage.georgian,
   String? title,
+  bool standalone = false,
+  bool followLocale = true,
 }) async {
+  if (!PosInputSettings.useOnScreen(context)) {
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: PosText(title ?? 'ტექსტის შეყვანა'),
+        content: SizedBox(
+          width: 480,
+          child: TextField(
+            controller: controller,
+            autofocus: true,
+            onSubmitted: (_) => Navigator.pop(context, controller.text.trim()),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const PosText('გაუქმება'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const PosText('შენახვა'),
+          ),
+        ],
+      ),
+    );
+  }
   final screenWidth = MediaQuery.sizeOf(context).width;
 
   return showModalBottomSheet<String>(
@@ -38,14 +75,18 @@ Future<String?> showPosKeyboardInputSheet({
         Navigator.pop(sheetContext, controller.text.trim());
       }
 
-      return SizedBox(
-        width: MediaQuery.sizeOf(sheetContext).width,
-        child: PosKeyboard(
-          controller: controller,
-          initialLanguage: initialLanguage,
-          title: title,
-          onClose: closeWithValue,
-          onEnter: closeWithValue,
+      return _KeyboardDock(
+        child: SizedBox(
+          width: MediaQuery.sizeOf(sheetContext).width,
+          child: PosKeyboard(
+            controller: controller,
+            initialLanguage: initialLanguage,
+            title: title,
+            showPreview: standalone,
+            followLocale: followLocale,
+            onClose: closeWithValue,
+            onEnter: closeWithValue,
+          ),
         ),
       );
     },
@@ -55,46 +96,45 @@ Future<String?> showPosKeyboardInputSheet({
 Future<String?> showPosNumberKeyboardInputSheet({
   required BuildContext context,
   required String initialValue,
+  TextEditingController? controller,
   required String title,
   int maxDigits = 15,
+  bool pin = false,
   bool allowDecimal = false,
   bool allowQuestionMark = false,
   int maxDecimalPlaces = 2,
 }) async {
   final screenWidth = MediaQuery.sizeOf(context).width;
-  var value = initialValue.trim();
+  final editing =
+      controller ?? TextEditingController(text: initialValue.trim());
+  void changed(String next) {
+    editing.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: next.length),
+    );
+  }
 
   String? nextValueAfterDigit(String currentValue, String digit) {
-    if (digit == '?') {
-      if (!allowQuestionMark) return null;
-      return '?';
-    }
-
-    if (digit == '.') {
-      if (!allowDecimal ||
-          maxDecimalPlaces == 0 ||
-          currentValue.contains('.')) {
-        return null;
-      }
-      return currentValue.isEmpty ? '0.' : '$currentValue.';
-    }
-
-    if (currentValue == '?') {
-      return digit;
-    }
-
-    final proposed = currentValue.isEmpty || currentValue == '0'
+    if (digit == '?') return allowQuestionMark ? '?' : null;
+    if (digit == '.' && (!allowDecimal || maxDecimalPlaces == 0 || pin))
+      return null;
+    final selection = editing.selection;
+    final start = selection.isValid
+        ? selection.start.clamp(0, currentValue.length)
+        : currentValue.length;
+    final end = selection.isValid
+        ? selection.end.clamp(start, currentValue.length)
+        : currentValue.length;
+    var proposed = currentValue == '?'
         ? digit
-        : '$currentValue$digit';
-    final digitsOnly = proposed.replaceAll('.', '');
-    if (digitsOnly.length > maxDigits) return null;
-
-    if (allowDecimal && proposed.contains('.')) {
-      final parts = proposed.split('.');
-      if (parts.length > 1 && parts.last.length > maxDecimalPlaces) {
-        return null;
-      }
-    }
+        : currentValue.replaceRange(start, end, digit);
+    if (proposed == '.') proposed = '0.';
+    if ('.'.allMatches(proposed).length > 1 ||
+        proposed.replaceAll('.', '').length > maxDigits)
+      return null;
+    if (proposed.contains('.') &&
+        proposed.split('.').last.length > maxDecimalPlaces)
+      return null;
     return proposed;
   }
 
@@ -107,38 +147,31 @@ Future<String?> showPosNumberKeyboardInputSheet({
     elevation: 0,
     enableDrag: false,
     constraints: BoxConstraints(minWidth: screenWidth, maxWidth: screenWidth),
-    builder: (sheetContext) {
-      return StatefulBuilder(
-        builder: (context, setSheetState) {
-          return _PosNumberKeyboardSheet(
-            title: title,
-            value: value,
-            allowDecimal: allowDecimal,
-            allowQuestionMark: allowQuestionMark,
-            onDigit: (digit) {
-              setSheetState(() {
-                final next = nextValueAfterDigit(value, digit);
-                if (next != null) value = next;
-              });
-            },
-            onDelete: () {
-              setSheetState(() {
-                if (value.isNotEmpty) {
-                  value = value.substring(0, value.length - 1);
-                }
-              });
-            },
-            onClear: () {
-              setSheetState(() {
-                value = '';
-              });
-            },
-            onClose: () => Navigator.pop(sheetContext),
-            onSave: () => Navigator.pop(sheetContext, value.trim()),
-          );
-        },
-      );
-    },
+    builder: (sheetContext) => ValueListenableBuilder<TextEditingValue>(
+      valueListenable: editing,
+      builder: (context, value, _) => _KeyboardDock(
+        onDisposed: controller == null ? editing.dispose : null,
+        child: _PosNumberKeyboardSheet(
+          title: title,
+          value: value.text,
+          pin: pin,
+          showValue: controller == null,
+          allowDecimal: allowDecimal,
+          allowQuestionMark: allowQuestionMark,
+          onDigit: (digit) {
+            final next = nextValueAfterDigit(editing.text, digit);
+            if (next != null) changed(next);
+          },
+          onDelete: () {
+            if (editing.text.isNotEmpty)
+              changed(editing.text.substring(0, editing.text.length - 1));
+          },
+          onClear: () => changed(''),
+          onClose: () => Navigator.pop(sheetContext),
+          onSave: () => Navigator.pop(sheetContext, editing.text.trim()),
+        ),
+      ),
+    ),
   );
 }
 
@@ -146,6 +179,8 @@ class _PosNumberKeyboardSheet extends StatelessWidget {
   const _PosNumberKeyboardSheet({
     required this.title,
     required this.value,
+    this.pin = false,
+    this.showValue = true,
     required this.allowDecimal,
     required this.allowQuestionMark,
     required this.onDigit,
@@ -160,13 +195,13 @@ class _PosNumberKeyboardSheet extends StatelessWidget {
   static const Color _border = Color(0xFFE5E7EB);
   static const Color _text = Color(0xFF111827);
   static const Color _muted = Color(0xFF6B7280);
-  static const Color _accent = Color(0xFF14B8A6);
-  static const Color _accentDark = Color(0xFF0F766E);
-  static const Color _danger = Color(0xFFFEE2E2);
-  static const Color _dangerText = Color(0xFFB91C1C);
+  static const Color _accent = VynicFloorTokens.accentStrong;
+  static const Color _accentDark = VynicFloorTokens.accentStrong;
 
   final String title;
   final String value;
+  final bool pin;
+  final bool showValue;
   final bool allowDecimal;
   final bool allowQuestionMark;
   final ValueChanged<String> onDigit;
@@ -212,7 +247,7 @@ class _PosNumberKeyboardSheet extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Text(
+                      child: PosText(
                         title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -226,14 +261,14 @@ class _PosNumberKeyboardSheet extends StatelessWidget {
                     TextButton.icon(
                       onPressed: onSave,
                       icon: const Icon(Icons.check_circle_outline),
-                      label: const Text('შენახვა'),
+                      label: const PosText('შენახვა'),
                       style: TextButton.styleFrom(
                         foregroundColor: _accentDark,
                         textStyle: const TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ),
                     IconButton(
-                      tooltip: 'დახურვა',
+                      tooltip: PosLocale.tr(context, 'დახურვა'),
                       onPressed: onClose,
                       icon: const Icon(Icons.close),
                       color: _muted,
@@ -241,78 +276,44 @@ class _PosNumberKeyboardSheet extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 10),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _surface,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: _border),
-                  ),
-                  child: Text(
-                    value.isEmpty
-                        ? (allowQuestionMark
-                              ? 'დააჭირეთ ციფრებს ან ?'
-                              : 'დააჭირეთ ციფრებს შესაყვანად')
-                        : value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: value.isEmpty ? _muted : _text,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
+                if (showValue)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _surface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: _border),
+                    ),
+                    child: PosText(
+                      value.isEmpty
+                          ? (allowQuestionMark
+                                ? 'დააჭირეთ ციფრებს ან ?'
+                                : 'დააჭირეთ ციფრებს შესაყვანად')
+                          : pin
+                          ? '•' * value.length
+                          : value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: value.isEmpty ? _muted : _text,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
-                ),
                 const SizedBox(height: 10),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 460),
-                  child: GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                    childAspectRatio: 2.15,
-                    children: [
-                      for (final digit in const [
-                        '1',
-                        '2',
-                        '3',
-                        '4',
-                        '5',
-                        '6',
-                        '7',
-                        '8',
-                        '9',
-                      ])
-                        _NumberKey(label: digit, onTap: () => onDigit(digit)),
-                      _NumberKey(
-                        label: allowDecimal
-                            ? '.'
-                            : (allowQuestionMark ? '?' : 'Clear'),
-                        background: allowDecimal || allowQuestionMark
-                            ? null
-                            : _danger,
-                        foreground: allowDecimal || allowQuestionMark
-                            ? null
-                            : _dangerText,
-                        onTap: allowDecimal
-                            ? () => onDigit('.')
-                            : (allowQuestionMark
-                                  ? () => onDigit('?')
-                                  : onClear),
-                      ),
-                      _NumberKey(label: '0', onTap: () => onDigit('0')),
-                      _NumberKey(
-                        icon: Icons.backspace_outlined,
-                        onTap: onDelete,
-                      ),
-                    ],
-                  ),
+                PinPad(
+                  authentication: pin,
+                  onDigitPressed: onDigit,
+                  onDeletePressed: onDelete,
+                  onClearPressed: onClear,
+                  onSubmit: onSave,
+                  showDecimalButton: allowDecimal,
+                  showQuestionButton: allowQuestionMark,
                 ),
               ],
             ),
@@ -323,53 +324,34 @@ class _PosNumberKeyboardSheet extends StatelessWidget {
   }
 }
 
-class _NumberKey extends StatelessWidget {
-  const _NumberKey({
-    required this.onTap,
-    this.label,
-    this.icon,
-    this.background,
-    this.foreground,
-  });
+class _KeyboardDock extends StatefulWidget {
+  const _KeyboardDock({required this.child, this.onDisposed});
+  final VoidCallback? onDisposed;
+  final Widget child;
+  @override
+  State<_KeyboardDock> createState() => _KeyboardDockState();
+}
 
-  static const Color _border = Color(0xFFE5E7EB);
-  static const Color _text = Color(0xFF111827);
-  static const Color _surface = Color(0xFFF9FAFB);
-  static const Color _accent = Color(0xFF14B8A6);
-
-  final String? label;
-  final IconData? icon;
-  final VoidCallback onTap;
-  final Color? background;
-  final Color? foreground;
+class _KeyboardDockState extends State<_KeyboardDock> {
+  @override
+  void dispose() {
+    widget.onDisposed?.call();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      PosInputSettings.keyboardHeight.value = 0;
+    });
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final fg = foreground ?? _text;
-    return Material(
-      color: background ?? _surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: _border),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        splashColor: _accent.withValues(alpha: 0.14),
-        highlightColor: _accent.withValues(alpha: 0.08),
-        child: Center(
-          child: icon != null
-              ? Icon(icon, color: fg, size: 21)
-              : Text(
-                  label ?? '',
-                  style: TextStyle(
-                    color: fg,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-        ),
-      ),
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted)
+        PosInputSettings.keyboardHeight.value = context.size?.height ?? 0;
+    });
+    return MediaQuery.removeViewInsets(
+      context: context,
+      removeBottom: true,
+      child: widget.child,
     );
   }
 }

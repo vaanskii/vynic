@@ -1,3 +1,4 @@
+import 'package:vynic/core/widgets/pos_text.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -8,8 +9,6 @@ import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
-import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_language.dart';
-import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 import 'package:vynic/core/widgets/pos_on_screen_text_field.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 
@@ -169,7 +168,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              PosText(
                 'მენიუ',
                 style: TextStyle(
                   color: _textPrimary,
@@ -178,7 +177,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 ),
               ),
               const SizedBox(height: 2),
-              const Text(
+              const PosText(
                 'მართეთ კატეგორიები, პროდუქტები, ფასები და სამზარეულოს მარშრუტები.',
                 style: TextStyle(color: _textMuted, fontSize: 13),
               ),
@@ -274,7 +273,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                       size: 21,
                     ),
                     SizedBox(width: 9),
-                    Text(
+                    PosText(
                       'მენიუს პროდუქტები',
                       style: TextStyle(
                         color: _textPrimary,
@@ -343,7 +342,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 children: [
                   Icon(Icons.search_off, size: 36, color: _textMuted),
                   SizedBox(height: 10),
-                  Text(
+                  PosText(
                     'პროდუქტი ვერ მოიძებნა',
                     style: TextStyle(color: _textMuted, fontSize: 14),
                   ),
@@ -366,7 +365,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 color: _surfaceColor,
                 border: Border(top: BorderSide(color: _borderColor)),
               ),
-              child: Text(
+              child: PosText(
                 '${rows.length} პროდუქტი',
                 style: const TextStyle(
                   color: _textMuted,
@@ -388,16 +387,19 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
         children: [
           Expanded(
             flex: 5,
-            child: Text('დასახელება', style: _MenuTableHeader.style),
+            child: PosText('დასახელება', style: _MenuTableHeader.style),
           ),
           Expanded(
             flex: 4,
-            child: Text('კატეგორია', style: _MenuTableHeader.style),
+            child: PosText('კატეგორია', style: _MenuTableHeader.style),
           ),
-          Expanded(flex: 3, child: Text('ფასი', style: _MenuTableHeader.style)),
           Expanded(
             flex: 3,
-            child: Text('სამზარეულო', style: _MenuTableHeader.style),
+            child: PosText('ფასი', style: _MenuTableHeader.style),
+          ),
+          Expanded(
+            flex: 3,
+            child: PosText('სამზარეულო', style: _MenuTableHeader.style),
           ),
           SizedBox(width: 42),
         ],
@@ -452,7 +454,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
           child: ListTile(
             dense: true,
             leading: Icon(Icons.edit_outlined),
-            title: Text('რედაქტირება'),
+            title: PosText('რედაქტირება'),
           ),
         ),
         PopupMenuItem(
@@ -460,7 +462,10 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
           child: ListTile(
             dense: true,
             leading: Icon(Icons.delete_outline, color: AdminDesign.danger),
-            title: Text('წაშლა', style: TextStyle(color: AdminDesign.danger)),
+            title: PosText(
+              'წაშლა',
+              style: TextStyle(color: AdminDesign.danger),
+            ),
           ),
         ),
       ],
@@ -494,12 +499,12 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                     ),
                   ),
                   const SizedBox(height: 3),
-                  Text(
+                  PosText(
                     '${row.categoryName} • $price',
                     style: const TextStyle(color: _textMuted, fontSize: 11),
                   ),
                   const SizedBox(height: 3),
-                  Text(
+                  PosText(
                     row.item.sendToKitchen
                         ? 'სამზარეულო ჩართული'
                         : 'სამზარეულო გამორთული',
@@ -546,7 +551,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
           ),
           Expanded(
             flex: 4,
-            child: Text(
+            child: PosText(
               row.subcategoryName == null
                   ? row.categoryName
                   : '${row.categoryName} / ${row.subcategoryName}',
@@ -557,7 +562,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
           ),
           Expanded(
             flex: 3,
-            child: Text(
+            child: PosText(
               price,
               style: const TextStyle(
                 color: _textPrimary,
@@ -568,7 +573,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
           ),
           Expanded(
             flex: 3,
-            child: Text(
+            child: PosText(
               row.item.sendToKitchen ? 'ჩართული' : 'გამორთული',
               style: TextStyle(
                 color: kitchenColor,
@@ -626,7 +631,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   children: [
                     Icon(Icons.folder_outlined, color: _textPrimary, size: 21),
                     SizedBox(width: 9),
-                    Text(
+                    PosText(
                       'კატეგორიები',
                       style: TextStyle(
                         color: _textPrimary,
@@ -669,7 +674,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 children: [
                   Icon(Icons.star_outline, color: _textPrimary, size: 21),
                   SizedBox(width: 9),
-                  Text(
+                  PosText(
                     'მიმოხილვა',
                     style: TextStyle(
                       color: _textPrimary,
@@ -713,7 +718,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                                     ),
                                   ),
                                   const SizedBox(height: 2),
-                                  Text(
+                                  PosText(
                                     _priceLabel(row.item),
                                     style: const TextStyle(
                                       color: _textMuted,
@@ -770,7 +775,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(
+              child: PosText(
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -781,7 +786,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 ),
               ),
             ),
-            Text(
+            PosText(
               '$count',
               style: const TextStyle(
                 color: _textMuted,
@@ -825,7 +830,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 : () => _showAddItemDialog(selectedIndex),
             style: AdminDesign.primaryButtonStyle(),
             icon: const Icon(Icons.add_circle_outline, size: 19),
-            label: const Text(
+            label: const PosText(
               'ახალი პროდუქტი',
               style: TextStyle(fontWeight: FontWeight.w700),
             ),
@@ -834,7 +839,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             onPressed: () => _showCategoryManagementDialog(categories),
             style: AdminDesign.outlineButtonStyle(),
             icon: const Icon(Icons.folder_copy_outlined, size: 19),
-            label: const Text('კატეგორიების მართვა'),
+            label: const PosText('კატეგორიების მართვა'),
           );
           if (compact) {
             if (constraints.maxWidth < 520) {
@@ -856,7 +861,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
               const Icon(Icons.info_outline, color: _primaryColor, size: 20),
               const SizedBox(width: 9),
               const Expanded(
-                child: Text(
+                child: PosText(
                   'ცვლილებები ინახება მენიუს რედაქტირების დასრულებისთანავე.',
                   style: TextStyle(color: _textMuted, fontSize: 12),
                 ),
@@ -902,7 +907,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                       ),
                       const SizedBox(width: 10),
                       const Expanded(
-                        child: Text(
+                        child: PosText(
                           'კატეგორიების მართვა',
                           style: TextStyle(
                             color: _textPrimary,
@@ -923,7 +928,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 Expanded(
                   child: categories.isEmpty
                       ? const Center(
-                          child: Text(
+                          child: PosText(
                             'კატეგორიები ჯერ არ არის',
                             style: TextStyle(color: _textMuted),
                           ),
@@ -954,7 +959,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
-                                subtitle: Text(
+                                subtitle: PosText(
                                   '${subcategories.length} ქვეკატეგორია',
                                   style: const TextStyle(
                                     color: _textMuted,
@@ -987,15 +992,15 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                                   itemBuilder: (context) => const [
                                     PopupMenuItem(
                                       value: 'edit',
-                                      child: Text('რედაქტირება'),
+                                      child: PosText('რედაქტირება'),
                                     ),
                                     PopupMenuItem(
                                       value: 'subcategory',
-                                      child: Text('ქვეკატეგორიის დამატება'),
+                                      child: PosText('ქვეკატეგორიის დამატება'),
                                     ),
                                     PopupMenuItem(
                                       value: 'delete',
-                                      child: Text(
+                                      child: PosText(
                                         'წაშლა',
                                         style: TextStyle(
                                           color: AdminDesign.danger,
@@ -1008,7 +1013,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                                   if (subcategories.isEmpty)
                                     const Padding(
                                       padding: EdgeInsets.all(12),
-                                      child: Text(
+                                      child: PosText(
                                         'ქვეკატეგორიები არ არის',
                                         style: TextStyle(
                                           color: _textMuted,
@@ -1079,17 +1084,17 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                                               itemBuilder: (context) => const [
                                                 PopupMenuItem(
                                                   value: 'item',
-                                                  child: Text(
+                                                  child: PosText(
                                                     'პროდუქტის დამატება',
                                                   ),
                                                 ),
                                                 PopupMenuItem(
                                                   value: 'edit',
-                                                  child: Text('რედაქტირება'),
+                                                  child: PosText('რედაქტირება'),
                                                 ),
                                                 PopupMenuItem(
                                                   value: 'delete',
-                                                  child: Text(
+                                                  child: PosText(
                                                     'წაშლა',
                                                     style: TextStyle(
                                                       color: AdminDesign.danger,
@@ -1121,7 +1126,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                     },
                     style: AdminDesign.primaryButtonStyle(),
                     icon: const Icon(Icons.create_new_folder_outlined),
-                    label: const Text('ახალი კატეგორია'),
+                    label: const PosText('ახალი კატეგორია'),
                   ),
                 ),
               ],
@@ -1236,19 +1241,19 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
               if (itemNameEn.isNotEmpty)
                 Text(itemNameEn, style: const TextStyle(color: _textMuted)),
               if (hasVariants)
-                Text(
+                PosText(
                   '${item.variants!.length} ვარიანტი',
                   style: const TextStyle(color: _primaryColor, fontSize: 12),
                 )
               else if (item.price != null)
-                Text(
+                PosText(
                   '₾${item.price!.toStringAsFixed(2)}',
                   style: const TextStyle(
                     color: _primaryColor,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-              Text(
+              PosText(
                 item.sendToKitchen
                     ? 'იგზავნება სამზარეულოში'
                     : 'სამზარეულო გამორთულია',
@@ -1334,7 +1339,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 6),
-          child: Text(
+          child: PosText(
             isMobile
                 ? '$itemCount ერთეული'
                 : '$itemCount ერთეული • სლაგი: ${category.slug} • სამზარეულო: ${category.sendToKitchen ? 'ჩართული' : 'გამორთული'}',
@@ -1382,7 +1387,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                       foregroundColor: Colors.white,
                     ),
                     icon: const Icon(Icons.add),
-                    label: const Text('პროდუქტის დამატება'),
+                    label: const PosText('პროდუქტის დამატება'),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -1395,7 +1400,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                       side: const BorderSide(color: _borderColor),
                     ),
                     icon: const Icon(Icons.category),
-                    label: const Text('ქვეკატეგორიის დამატება'),
+                    label: const PosText('ქვეკატეგორიის დამატება'),
                   ),
                 ),
               ],
@@ -1410,7 +1415,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   foregroundColor: Colors.white,
                 ),
                 icon: const Icon(Icons.add),
-                label: const Text('პროდუქტის დამატება'),
+                label: const PosText('პროდუქტის დამატება'),
               ),
             ),
             const SizedBox(height: 16),
@@ -1423,7 +1428,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   side: const BorderSide(color: _borderColor),
                 ),
                 icon: const Icon(Icons.category),
-                label: const Text('ქვეკატეგორიის დამატება'),
+                label: const PosText('ქვეკატეგორიის დამატება'),
               ),
             ),
           ],
@@ -1431,7 +1436,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
           if (!hasAnyItems)
             const Padding(
               padding: EdgeInsets.all(24.0),
-              child: Text(
+              child: PosText(
                 'ამ კატეგორიაში ჯერ არ არის პროდუქტები',
                 style: TextStyle(color: _textMuted),
                 textAlign: TextAlign.center,
@@ -1439,7 +1444,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             )
           else ...[
             if (hasCategoryItems) ...[
-              const Text(
+              const PosText(
                 'ძირითადი პროდუქტები',
                 style: TextStyle(
                   color: _textMuted,
@@ -1466,7 +1471,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             ],
             if (hasSubcategoryItems) ...[
               if (hasCategoryItems) const SizedBox(height: 16),
-              const Text(
+              const PosText(
                 'ქვეკატეგორიები',
                 style: TextStyle(
                   color: _textMuted,
@@ -1573,7 +1578,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                               foregroundColor: Colors.white,
                             ),
                             icon: const Icon(Icons.add),
-                            label: const Text('პროდუქტის დამატება'),
+                            label: const PosText('პროდუქტის დამატება'),
                           ),
                         ),
                       ),
@@ -1581,7 +1586,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                       if (subcategory.items.isEmpty)
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 12),
-                          child: Text(
+                          child: PosText(
                             'ქვეკატეგორიაში პროდუქტები არ არის',
                             style: TextStyle(color: _textMuted),
                           ),
@@ -1649,67 +1654,22 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
     bool allowDecimalInput = false,
     int numberPadDecimalDigits = 2,
   }) {
-    Future<void> openVirtualInput() async {
-      final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
-      if (isMobile) return;
-
-      String? updatedValue;
-      final fieldTitle = keyboardTitle ?? label;
-
-      if (enableNumberPad) {
-        updatedValue = await _showFullScreenPhonePad(
-          title: fieldTitle,
-          initialValue: controller.text,
-          maxDigits: numberPadMaxDigits ?? 9,
-          allowDecimal: allowDecimalInput,
-          maxDecimalPlaces: numberPadDecimalDigits,
-        );
-      } else if (enableTextKeyboard) {
-        updatedValue = await _showFullScreenNameKeyboard(
-          initialValue: controller.text,
-          language: keyboardLanguage ?? _keyboardLanguageForField(fieldTitle),
-        );
-      }
-
-      if (updatedValue != null) {
-        controller.text = updatedValue;
-        controller.selection = TextSelection.collapsed(
-          offset: controller.text.length,
-        );
-        onChanged?.call(updatedValue);
+    return PosOnScreenTextField(
+      controller: controller,
+      decoration: _dialogInputDecoration(label),
+      style: const TextStyle(color: _textPrimary),
+      mode: enableNumberPad
+          ? (allowDecimalInput ? PosInputMode.decimal : PosInputMode.number)
+          : PosInputMode.text,
+      keyboardLanguage:
+          keyboardLanguage ?? _keyboardLanguageForField(keyboardTitle ?? label),
+      maxDigits: numberPadMaxDigits ?? 9,
+      maxDecimalPlaces: numberPadDecimalDigits,
+      inputFormatters: inputFormatters,
+      onChanged: (value) {
+        onChanged?.call(value);
         dialogSetState?.call(() {});
-      }
-    }
-
-    final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
-    final useVirtualInput =
-        (enableTextKeyboard || enableNumberPad) && !isMobile;
-
-    if (!useVirtualInput) {
-      return TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        inputFormatters: inputFormatters,
-        style: const TextStyle(color: _textPrimary),
-        decoration: _dialogInputDecoration(label),
-        onChanged: onChanged,
-      );
-    }
-
-    return InkWell(
-      onTap: openVirtualInput,
-      borderRadius: BorderRadius.circular(12),
-      child: IgnorePointer(
-        child: TextField(
-          controller: controller,
-          readOnly: true,
-          keyboardType: keyboardType,
-          inputFormatters: inputFormatters,
-          style: const TextStyle(color: _textPrimary),
-          decoration: _dialogInputDecoration(label),
-          onChanged: onChanged,
-        ),
-      ),
+      },
     );
   }
 
@@ -1754,7 +1714,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
         borderRadius: BorderRadius.circular(AdminDesign.radius),
         side: const BorderSide(color: _borderColor),
       ),
-      title: Text(
+      title: PosText(
         title,
         style: const TextStyle(
           color: _textPrimary,
@@ -1779,7 +1739,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
         foregroundColor: _textMuted,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
-      child: const Text(
+      child: const PosText(
         'გაუქმება',
         style: TextStyle(fontWeight: FontWeight.w600),
       ),
@@ -1824,9 +1784,9 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: TextField(
+          child: PosOnScreenTextField(
             controller: controller,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            mode: PosInputMode.decimal,
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$')),
             ],
@@ -1847,43 +1807,6 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
           ),
         ),
       ],
-    );
-  }
-
-  Future<String?> _showFullScreenNameKeyboard({
-    required String initialValue,
-    required String language,
-  }) async {
-    final controller = TextEditingController(text: initialValue);
-    controller.selection = TextSelection.collapsed(
-      offset: controller.text.length,
-    );
-
-    try {
-      return await showPosKeyboardInputSheet(
-        context: context,
-        controller: controller,
-        initialLanguage: PosKeyboardLanguage.fromCode(language),
-      );
-    } finally {
-      controller.dispose();
-    }
-  }
-
-  Future<String?> _showFullScreenPhonePad({
-    required String title,
-    required String initialValue,
-    int maxDigits = 15,
-    bool allowDecimal = false,
-    int maxDecimalPlaces = 2,
-  }) async {
-    return showPosNumberKeyboardInputSheet(
-      context: context,
-      title: title,
-      initialValue: initialValue,
-      maxDigits: maxDigits,
-      allowDecimal: allowDecimal,
-      maxDecimalPlaces: maxDecimalPlaces,
     );
   }
 
@@ -1942,14 +1865,14 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 const SizedBox(height: 16),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text(
+                  title: const PosText(
                     'პროდუქტები იგზავნება სამზარეულოში',
                     style: TextStyle(
                       color: _textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  subtitle: const Text(
+                  subtitle: const PosText(
                     'გამორთეთ ბარის/სასმელი კატეგორიებისთვის',
                     style: TextStyle(color: _textMuted, fontSize: 12),
                   ),
@@ -1993,7 +1916,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('დამატება'),
+              child: const PosText('დამატება'),
             ),
           ],
         ),
@@ -2049,14 +1972,14 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 const SizedBox(height: 16),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text(
+                  title: const PosText(
                     'პროდუქტები იგზავნება სამზარეულოში',
                     style: TextStyle(
                       color: _textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  subtitle: const Text(
+                  subtitle: const PosText(
                     'ვრცელდება ამ კატეგორიის ყველა პროდუქტზე',
                     style: TextStyle(color: _textMuted, fontSize: 12),
                   ),
@@ -2100,7 +2023,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('განახლება'),
+              child: const PosText('განახლება'),
             ),
           ],
         ),
@@ -2113,25 +2036,25 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AdminDesign.text,
-        title: const Text(
+        title: const PosText(
           'კატეგორიის წაშლა',
           style: TextStyle(color: Colors.white),
         ),
-        content: Text(
+        content: PosText(
           'დარწმუნებული ხართ, რომ გსურთ „$name“ წაშლა?\nამ კატეგორიის ყველა პროდუქტიც წაიშლება.',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('გაუქმება'),
+            child: const PosText('გაუქმება'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
               backgroundColor: AdminDesign.danger,
             ),
-            child: const Text('წაშლა'),
+            child: const PosText('წაშლა'),
           ),
         ],
       ),
@@ -2222,7 +2145,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('დამატება'),
+              child: const PosText('დამატება'),
             ),
           ],
         ),
@@ -2311,7 +2234,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('განახლება'),
+              child: const PosText('განახლება'),
             ),
           ],
         ),
@@ -2328,25 +2251,25 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AdminDesign.text,
-        title: const Text(
+        title: const PosText(
           'ქვეკატეგორიის წაშლა',
           style: TextStyle(color: Colors.white),
         ),
-        content: Text(
+        content: PosText(
           'დარწმუნებული ხართ, რომ გსურთ „$name“ წაშლა?\nამ ქვეკატეგორიის ყველა პროდუქტიც წაიშლება.',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('გაუქმება'),
+            child: const PosText('გაუქმება'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
               backgroundColor: AdminDesign.danger,
             ),
-            child: const Text('წაშლა'),
+            child: const PosText('წაშლა'),
           ),
         ],
       ),
@@ -2403,14 +2326,14 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 const SizedBox(height: 16),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text(
+                  title: const PosText(
                     'პროდუქტი იგზავნება სამზარეულოში',
                     style: TextStyle(
                       color: _textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  subtitle: Text(
+                  subtitle: PosText(
                     category == null
                         ? 'აკონტროლებს სამზარეულოში გაგზავნას'
                         : 'ნაგულისხმევი: ${category.sendToKitchen ? 'ჩართული' : 'გამორთული'} (ამ კატეგორიის მიხედვით)',
@@ -2427,7 +2350,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 const SizedBox(height: 16),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text(
+                  title: const PosText(
                     'აქვს ვარიანტები?',
                     style: TextStyle(
                       color: _textPrimary,
@@ -2459,7 +2382,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                         final variant = entry.value;
                         return ListTile(
                           contentPadding: EdgeInsets.zero,
-                          title: Text(
+                          title: PosText(
                             '${variant.size}ml - ₾${variant.price.toStringAsFixed(2)}',
                             style: const TextStyle(color: _textPrimary),
                           ),
@@ -2486,7 +2409,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                                 });
                               }),
                           icon: const Icon(Icons.add),
-                          label: const Text('ვარიანტის დამატება'),
+                          label: const PosText('ვარიანტის დამატება'),
                           style: TextButton.styleFrom(
                             foregroundColor: _secondaryColor,
                           ),
@@ -2532,7 +2455,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('დამატება'),
+              child: const PosText('დამატება'),
             ),
           ],
         ),
@@ -2580,14 +2503,14 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 const SizedBox(height: 16),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text(
+                  title: const PosText(
                     'პროდუქტი იგზავნება სამზარეულოში',
                     style: TextStyle(
                       color: _textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  subtitle: Text(
+                  subtitle: PosText(
                     category == null
                         ? 'აკონტროლებს სამზარეულოში გაგზავნას'
                         : 'ნაგულისხმევი: ${category.sendToKitchen ? 'ჩართული' : 'გამორთული'} (ამ კატეგორიის მიხედვით)',
@@ -2604,7 +2527,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 const SizedBox(height: 16),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text(
+                  title: const PosText(
                     'აქვს ვარიანტები?',
                     style: TextStyle(
                       color: _textPrimary,
@@ -2636,7 +2559,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                         final variant = entry.value;
                         return ListTile(
                           contentPadding: EdgeInsets.zero,
-                          title: Text(
+                          title: PosText(
                             '${variant.size}ml - ₾${variant.price.toStringAsFixed(2)}',
                             style: const TextStyle(color: _textPrimary),
                           ),
@@ -2663,7 +2586,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                                 });
                               }),
                           icon: const Icon(Icons.add),
-                          label: const Text('ვარიანტის დამატება'),
+                          label: const PosText('ვარიანტის დამატება'),
                           style: TextButton.styleFrom(
                             foregroundColor: _secondaryColor,
                           ),
@@ -2710,7 +2633,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('დამატება'),
+              child: const PosText('დამატება'),
             ),
           ],
         ),
@@ -2762,14 +2685,14 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 const SizedBox(height: 16),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text(
+                  title: const PosText(
                     'პროდუქტი იგზავნება სამზარეულოში',
                     style: TextStyle(
                       color: _textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  subtitle: const Text(
+                  subtitle: const PosText(
                     'გამორთეთ ბარის პროდუქტებისთვის',
                     style: TextStyle(color: _textMuted, fontSize: 12),
                   ),
@@ -2784,7 +2707,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 const SizedBox(height: 16),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text(
+                  title: const PosText(
                     'აქვს ვარიანტები?',
                     style: TextStyle(
                       color: _textPrimary,
@@ -2816,7 +2739,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                         final variant = entry.value;
                         return ListTile(
                           contentPadding: EdgeInsets.zero,
-                          title: Text(
+                          title: PosText(
                             '${variant.size}ml - ₾${variant.price.toStringAsFixed(2)}',
                             style: const TextStyle(color: _textPrimary),
                           ),
@@ -2843,7 +2766,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                                 });
                               }),
                           icon: const Icon(Icons.add),
-                          label: const Text('ვარიანტის დამატება'),
+                          label: const PosText('ვარიანტის დამატება'),
                           style: TextButton.styleFrom(
                             foregroundColor: _secondaryColor,
                           ),
@@ -2891,7 +2814,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('განახლება'),
+              child: const PosText('განახლება'),
             ),
           ],
         ),
@@ -2909,25 +2832,25 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AdminDesign.text,
-        title: const Text(
+        title: const PosText(
           'პროდუქტის წაშლა',
           style: TextStyle(color: Colors.white),
         ),
-        content: Text(
+        content: PosText(
           'დარწმუნებული ხართ, რომ გსურთ „$name“ წაშლა?',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('გაუქმება'),
+            child: const PosText('გაუქმება'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
               backgroundColor: AdminDesign.danger,
             ),
-            child: const Text('წაშლა'),
+            child: const PosText('წაშლა'),
           ),
         ],
       ),
@@ -2991,14 +2914,14 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 const SizedBox(height: 16),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text(
+                  title: const PosText(
                     'პროდუქტი იგზავნება სამზარეულოში',
                     style: TextStyle(
                       color: _textPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  subtitle: const Text(
+                  subtitle: const PosText(
                     'გამორთეთ ბარის პროდუქტებისთვის',
                     style: TextStyle(color: _textMuted, fontSize: 12),
                   ),
@@ -3013,7 +2936,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 const SizedBox(height: 16),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text(
+                  title: const PosText(
                     'აქვს ვარიანტები?',
                     style: TextStyle(
                       color: _textPrimary,
@@ -3045,7 +2968,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                         final variant = entry.value;
                         return ListTile(
                           contentPadding: EdgeInsets.zero,
-                          title: Text(
+                          title: PosText(
                             '${variant.size}ml - ₾${variant.price.toStringAsFixed(2)}',
                             style: const TextStyle(color: _textPrimary),
                           ),
@@ -3072,7 +2995,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                                 });
                               }),
                           icon: const Icon(Icons.add),
-                          label: const Text('ვარიანტის დამატება'),
+                          label: const PosText('ვარიანტის დამატება'),
                           style: TextButton.styleFrom(
                             foregroundColor: _secondaryColor,
                           ),
@@ -3119,7 +3042,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('განახლება'),
+              child: const PosText('განახლება'),
             ),
           ],
         ),
@@ -3136,25 +3059,25 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AdminDesign.text,
-        title: const Text(
+        title: const PosText(
           'პროდუქტის წაშლა',
           style: TextStyle(color: Colors.white),
         ),
-        content: Text(
+        content: PosText(
           'დარწმუნებული ხართ, რომ გსურთ „$name“ წაშლა?',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('გაუქმება'),
+            child: const PosText('გაუქმება'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
               backgroundColor: AdminDesign.danger,
             ),
-            child: const Text('წაშლა'),
+            child: const PosText('წაშლა'),
           ),
         ],
       ),
@@ -3239,7 +3162,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text(
+            child: const PosText(
               'დამატება',
               style: TextStyle(fontWeight: FontWeight.w700),
             ),
@@ -3316,7 +3239,7 @@ class _MenuKpiCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                PosText(
                   data.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -3325,7 +3248,7 @@ class _MenuKpiCard extends StatelessWidget {
                     fontSize: compact ? 10 : 11,
                   ),
                 ),
-                Text(
+                PosText(
                   '${data.value}',
                   style: const TextStyle(
                     color: AdminDesign.text,

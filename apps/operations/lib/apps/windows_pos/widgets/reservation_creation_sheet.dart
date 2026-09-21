@@ -1,3 +1,5 @@
+import 'package:vynic/core/widgets/pos_on_screen_text_field.dart';
+import 'package:vynic/core/widgets/pos_text.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -5,8 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
-import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
-import 'on_screen_keyboard.dart';
 import 'time_entry_pad.dart';
 
 // The sheet used to carry its own slate-and-blue palette, which read as a
@@ -14,14 +14,12 @@ import 'time_entry_pad.dart';
 // same tokens as the order detail and floor screens, so „დეტალების შეცვლა"
 // looks like it belongs to the page behind it.
 const Color _reservationAccent = VynicFloorTokens.accentStrong;
-const Color _reservationAccentSoft = VynicFloorTokens.accentText;
 const Color _reservationSurface = VynicFloorTokens.panel;
 const Color _reservationSurfaceAlt = VynicFloorTokens.metricFill;
 const Color _reservationOutline = VynicFloorTokens.panelBorder;
 const Color _reservationLabel = VynicFloorTokens.textMuted;
 const Color _reservationMuted = VynicFloorTokens.textFaint;
 const Color _reservationTextPrimary = VynicFloorTokens.text;
-const double _reservationKeyboardHeight = 380;
 
 class ReservationCreationSheet extends StatefulWidget {
   final VoidCallback? onCancel;
@@ -58,8 +56,6 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _timeController = TextEditingController();
   final TextEditingController _guestsController = TextEditingController();
-
-  TextEditingController? _activeController;
 
   DateTime _selectedDate = _normalizeDate(DatabaseService.getCurrentDate());
   late final String _initialName;
@@ -120,55 +116,13 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
     super.dispose();
   }
 
-  void _setActiveField(TextEditingController controller) {
-    FocusScope.of(context).unfocus();
-    setState(() {
-      _activeController = controller;
-    });
-    controller.selection = TextSelection.collapsed(
-      offset: controller.text.length,
-    );
-  }
-
-  void _closeKeyboard() {
-    setState(() {
-      _activeController = null;
-    });
-  }
-
   String _digitsOnly(String value) {
     final trimmed = value.trim();
     if (trimmed == '?') return '?';
     return trimmed.replaceAll(RegExp(r'\D+'), '');
   }
 
-  Future<void> _openPhoneKeyboard() async {
-    _closeKeyboard();
-
-    final updated = await showPosNumberKeyboardInputSheet(
-      context: context,
-      initialValue: _phoneController.text,
-      title: 'ტელეფონის ნომერი',
-      maxDigits: 15,
-      allowQuestionMark: true,
-    );
-
-    if (!mounted || updated == null) {
-      return;
-    }
-
-    final sanitized = _digitsOnly(updated);
-    setState(() {
-      _phoneController.value = TextEditingValue(
-        text: sanitized,
-        selection: TextSelection.collapsed(offset: sanitized.length),
-      );
-    });
-  }
-
   Future<void> _selectTime() async {
-    _closeKeyboard();
-
     final result = await showDialog<String>(
       context: context,
       barrierDismissible: false,
@@ -269,18 +223,18 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: _reservationSurface,
-        title: const Text(
+        title: const PosText(
           'დახურვის დადასტურება',
           style: TextStyle(color: _reservationTextPrimary),
         ),
-        content: const Text(
+        content: const PosText(
           'ცვლილებები არ არის შენახული. ნამდვილად გსურთ დახურვა?',
           style: TextStyle(color: _reservationLabel),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('გაგრძელება'),
+            child: const PosText('გაგრძელება'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
@@ -288,7 +242,7 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: const Text('დახურვა'),
+            child: const PosText('დახურვა'),
           ),
         ],
       ),
@@ -311,10 +265,6 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final double dynamicBottomPadding = _activeController != null
-        ? _reservationKeyboardHeight + 48
-        : 24;
-
     return Material(
       color: Colors.transparent,
       child: Container(
@@ -347,7 +297,7 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
+                    PosText(
                       widget.title,
                       style: const TextStyle(
                         color: _reservationAccent,
@@ -368,12 +318,7 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
                 child: Stack(
                   children: [
                     SingleChildScrollView(
-                      padding: EdgeInsets.fromLTRB(
-                        24,
-                        24,
-                        24,
-                        dynamicBottomPadding,
-                      ),
+                      padding: EdgeInsets.fromLTRB(24, 24, 24, 24),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -381,7 +326,6 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
                           const SizedBox(height: 8),
                           InkWell(
                             onTap: () async {
-                              _closeKeyboard();
                               final today = _normalizeDate(
                                 DatabaseService.getCurrentDate(),
                               );
@@ -440,7 +384,7 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
                                     color: _reservationAccent,
                                   ),
                                   const SizedBox(width: 12),
-                                  Text(
+                                  PosText(
                                     '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
                                     style: const TextStyle(
                                       color: _reservationTextPrimary,
@@ -468,7 +412,6 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
                             controller: _nameController,
                             hint: 'შეიყვანეთ სახელი',
                             icon: Icons.person,
-                            onTap: () => _setActiveField(_nameController),
                           ),
                           const SizedBox(height: 20),
                           _buildLabel('ტელეფონი'),
@@ -477,7 +420,6 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
                             controller: _phoneController,
                             hint: 'შეიყვანეთ ტელეფონის ნომერი',
                             icon: Icons.phone,
-                            onTap: _openPhoneKeyboard,
                           ),
                           const SizedBox(height: 20),
                           _buildLabel('სტუმრების რაოდენობა'),
@@ -486,7 +428,6 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
                             controller: _guestsController,
                             hint: 'შეიყვანეთ სტუმრების რაოდენობა',
                             icon: Icons.groups_2_outlined,
-                            onTap: () => _setActiveField(_guestsController),
                           ),
                           const SizedBox(height: 20),
                           _buildLabel('შენიშვნები'),
@@ -496,76 +437,10 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
                             hint: 'დამატებითი ინფორმაცია...',
                             icon: Icons.note,
                             maxLines: 3,
-                            onTap: () => _setActiveField(_notesController),
                           ),
                         ],
                       ),
                     ),
-                    if (_activeController != null)
-                      Positioned(
-                        left: 24,
-                        right: 24,
-                        bottom: 12,
-                        child: Material(
-                          elevation: 6,
-                          borderRadius: BorderRadius.circular(14),
-                          clipBehavior: Clip.antiAlias,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: _reservationSurfaceAlt,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: _reservationOutline),
-                            ),
-                            child: Column(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.keyboard_outlined,
-                                        size: 18,
-                                        color: _reservationMuted,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        _activeController == _nameController
-                                            ? 'სტუმრის სახელი'
-                                            : _activeController ==
-                                                  _phoneController
-                                            ? 'ტელეფონი'
-                                            : _activeController ==
-                                                  _guestsController
-                                            ? 'სტუმრების რაოდენობა'
-                                            : 'შენიშვნები',
-                                        style: const TextStyle(
-                                          color: _reservationLabel,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      IconButton(
-                                        onPressed: _closeKeyboard,
-                                        icon: const Icon(Icons.close, size: 18),
-                                        color: _reservationMuted,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                OnScreenKeyboard(
-                                  controller: _activeController!,
-                                  language: 'ka',
-                                  onClose: _closeKeyboard,
-                                  showHeader: false,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
                   ],
                 ),
               ),
@@ -588,7 +463,7 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
                           vertical: 12,
                         ),
                       ),
-                      child: const Text('გაუქმება'),
+                      child: const PosText('გაუქმება'),
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
@@ -605,7 +480,7 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
                           vertical: 12,
                         ),
                       ),
-                      child: Text(widget.confirmLabel),
+                      child: PosText(widget.confirmLabel),
                     ),
                   ],
                 ),
@@ -618,7 +493,7 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
   }
 
   Widget _buildLabel(String text) {
-    return Text(
+    return PosText(
       text,
       style: const TextStyle(
         color: _reservationLabel,
@@ -633,84 +508,32 @@ class _ReservationCreationSheetState extends State<ReservationCreationSheet> {
     required TextEditingController controller,
     required String hint,
     required IconData icon,
-    required VoidCallback onTap,
+    VoidCallback? onTap,
     int maxLines = 1,
   }) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: ValueListenableBuilder<TextEditingValue>(
-        valueListenable: controller,
-        builder: (context, value, _) {
-          final isActive = _activeController == controller;
-          final displayText = value.text;
-          final isEmpty = displayText.isEmpty;
-
-          return AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-            decoration: BoxDecoration(
-              color: _reservationSurface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isActive ? _reservationAccent : _reservationOutline,
-                width: isActive ? 2 : 1,
-              ),
-              boxShadow: isActive
-                  ? [
-                      BoxShadow(
-                        color: _reservationAccentSoft.withValues(alpha: 0.16),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
-                      ),
-                    ]
-                  : const [
-                      BoxShadow(
-                        color: Color(0x11000000),
-                        blurRadius: 12,
-                        offset: Offset(0, 6),
-                      ),
-                    ],
-            ),
-            child: Row(
-              crossAxisAlignment: maxLines > 1
-                  ? CrossAxisAlignment.start
-                  : CrossAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  color: isActive ? _reservationAccent : _reservationMuted,
-                  size: 22,
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Text(
-                    isEmpty ? hint : displayText,
-                    style: TextStyle(
-                      color: isEmpty
-                          ? _reservationMuted
-                          : _reservationTextPrimary,
-                      fontSize: 17,
-                      height: maxLines > 1 ? 1.4 : 1.2,
-                    ),
-                    maxLines: maxLines,
-                    overflow: maxLines == 1
-                        ? TextOverflow.ellipsis
-                        : TextOverflow.visible,
-                  ),
-                ),
-                if (isActive)
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 2,
-                    height: maxLines > 1 ? 32 : 22,
-                    margin: const EdgeInsets.only(left: 8),
-                    color: _reservationAccent,
-                  ),
-              ],
-            ),
-          );
-        },
+    if (controller == _timeController) {
+      return TextField(
+        controller: controller,
+        readOnly: true,
+        onTap: onTap,
+        decoration: InputDecoration(
+          hintText: hint,
+          prefixIcon: Icon(icon),
+          border: const OutlineInputBorder(),
+        ),
+      );
+    }
+    return PosOnScreenTextField(
+      controller: controller,
+      maxLines: maxLines,
+      allowQuestionMark: controller == _phoneController,
+      mode: controller == _phoneController || controller == _guestsController
+          ? PosInputMode.number
+          : PosInputMode.text,
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixIcon: Icon(icon),
+        border: const OutlineInputBorder(),
       ),
     );
   }

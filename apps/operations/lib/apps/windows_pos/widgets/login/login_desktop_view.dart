@@ -1,3 +1,9 @@
+import 'package:vynic/apps/windows_pos/widgets/shared/pos_work_date.dart';
+import 'package:vynic/core/widgets/pos_text.dart';
+import 'package:vynic/core/widgets/pin_button.dart';
+import 'package:vynic/apps/windows_pos/widgets/pos_quit_action.dart';
+import 'package:vynic/core/database/database_core.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/services/database_service.dart';
@@ -32,6 +38,8 @@ class LoginDesktopView extends StatelessWidget {
     this.onCompanionAppPressed,
     this.onBrandLongPress,
     this.onConnectToVynicPressed,
+    this.version = '',
+    this.showQuitAction = false,
   });
 
   /// Listenable so a keystroke only rebuilds the PIN dots + login button,
@@ -54,6 +62,10 @@ class LoginDesktopView extends StatelessWidget {
   /// manager PIN. It disappears the moment the terminal is enrolled.
   final VoidCallback? onConnectToVynicPressed;
 
+  /// Installed release, distinct from a downloaded update candidate.
+  final String version;
+  final bool showQuitAction;
+
   /// Long press on the top-bar wordmark. The hidden way into the developer
   /// tools, deliberately unlabelled — see [DeveloperScreen].
   final VoidCallback? onBrandLongPress;
@@ -64,34 +76,17 @@ class LoginDesktopView extends StatelessWidget {
   static const _accentSoft = VynicFloorTokens.accentSoft;
   static const _line = VynicFloorTokens.panelBorder;
 
-  String _twoDigits(int value) => value.toString().padLeft(2, '0');
-
-  String _timeLabel(DateTime value) {
-    final hour = value.hour % 12 == 0 ? 12 : value.hour % 12;
-    return '$hour:${_twoDigits(value.minute)} ${value.hour >= 12 ? 'PM' : 'AM'}';
-  }
-
-  String _dateLabel(DateTime value) {
-    const months = [
-      'იანვარი',
-      'თებერვალი',
-      'მარტი',
-      'აპრილი',
-      'მაისი',
-      'ივნისი',
-      'ივლისი',
-      'აგვისტო',
-      'სექტემბერი',
-      'ოქტომბერი',
-      'ნოემბერი',
-      'დეკემბერი',
-    ];
-    return '${value.day} ${months[value.month - 1]}, ${value.year}';
-  }
+  String _dateLabel(DateTime value) =>
+      '${value.day.toString().padLeft(2, '0')}.${value.month.toString().padLeft(2, '0')}.${value.year}';
 
   @override
   Widget build(BuildContext context) {
-    return _buildScaffold();
+    final box = DatabaseCore.settingsBox;
+    if (box == null) return _buildScaffold();
+    return ValueListenableBuilder(
+      valueListenable: box.listenable(keys: ['venueName']),
+      builder: (_, __, ___) => _buildScaffold(),
+    );
   }
 
   Widget _buildScaffold() {
@@ -171,78 +166,55 @@ class LoginDesktopView extends StatelessWidget {
     );
   }
 
-  Widget _buildTopBar() {
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: const BoxDecoration(
-        color: VynicFloorTokens.panel,
-        border: Border(bottom: BorderSide(color: _line)),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 620;
-          return Row(
+  Widget _buildTopBar() => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+    decoration: const BoxDecoration(
+      color: VynicFloorTokens.panel,
+      border: Border(bottom: BorderSide(color: _line)),
+    ),
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final brand = GestureDetector(
+          onLongPress: onBrandLongPress,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onLongPress: onBrandLongPress,
-                child: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.asset(
-                        'assets/logo/vynic-logo.png',
-                        width: 28,
-                        height: 28,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Text(
-                      'Vynic POS',
-                      style: TextStyle(
-                        color: _ink,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              if (!compact) ...[
-                Flexible(
-                  child: Text(
-                    'სამუშაო თარიღი: ${_dateLabel(workDate)}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: _muted, fontSize: 13),
-                  ),
-                ),
-                Container(
-                  width: 1,
-                  height: 20,
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  color: _line,
-                ),
-              ],
-              const Icon(Icons.schedule_rounded, color: _muted, size: 18),
-              const SizedBox(width: 7),
-              Text(
-                _timeLabel(now),
-                style: const TextStyle(
+              Image.asset('assets/logo/vynic-logo.png', width: 28, height: 28),
+              const SizedBox(width: 10),
+              const Text(
+                'Vynic POS',
+                style: TextStyle(
                   color: _ink,
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: FontWeight.w700,
                 ),
               ),
             ],
+          ),
+        );
+        final date = PosWorkDate(date: workDate, now: now);
+        if (constraints.maxWidth <
+            600 * MediaQuery.textScalerOf(context).scale(1)) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Align(alignment: Alignment.centerLeft, child: brand),
+              const SizedBox(height: 8),
+              Align(alignment: Alignment.centerRight, child: date),
+            ],
           );
-        },
-      ),
-    );
-  }
+        }
+        return Row(
+          children: [
+            Expanded(
+              child: Align(alignment: Alignment.centerLeft, child: brand),
+            ),
+            date,
+          ],
+        );
+      },
+    ),
+  );
 
   Widget _buildIdentityPanel({bool compact = false, bool dense = false}) {
     return Column(
@@ -276,7 +248,7 @@ class LoginDesktopView extends StatelessWidget {
             if (!compact) ...[
               const SizedBox(width: 16),
               const Expanded(
-                child: Text(
+                child: PosText(
                   'რესტორნის მართვის სისტემა',
                   style: TextStyle(
                     color: _muted,
@@ -289,7 +261,7 @@ class LoginDesktopView extends StatelessWidget {
           ],
         ),
         SizedBox(height: dense ? 10 : 18),
-        Text(
+        PosText(
           'Vynic POS',
           textAlign: compact ? TextAlign.center : TextAlign.left,
           style: TextStyle(
@@ -317,25 +289,48 @@ class LoginDesktopView extends StatelessWidget {
             ),
           ),
         SizedBox(height: dense ? 8 : 12),
-        Text(
+        PosText(
           'შედით PIN კოდით და გააგრძელეთ მაგიდების, შეკვეთებისა და მენიუს მართვა.',
           textAlign: compact ? TextAlign.center : TextAlign.left,
           style: const TextStyle(color: _muted, fontSize: 14, height: 1.45),
         ),
         SizedBox(height: dense ? 14 : 24),
-        _InfoTile(
-          icon: Icons.storefront_outlined,
-          label: 'ფილიალი',
-          value: 'მთავარი ფილიალი',
-          dense: dense,
-        ),
+        if (DatabaseCore.settingsBox case final box?)
+          ValueListenableBuilder(
+            valueListenable: box.listenable(
+              keys: ['venueBranchName', 'venueAddress'],
+            ),
+            builder: (context, box, _) => Column(
+              children: [
+                if ((box.get('venueBranchName') as String? ?? '').isNotEmpty)
+                  _InfoTile(
+                    icon: Icons.storefront_outlined,
+                    label: 'ფილიალი',
+                    value: box.get('venueBranchName') as String,
+                    dense: dense,
+                  ),
+                if ((box.get('venueAddress') as String? ?? '').isNotEmpty)
+                  _InfoTile(
+                    icon: Icons.location_on_outlined,
+                    label: 'მისამართი',
+                    value: box.get('venueAddress') as String,
+                    dense: dense,
+                  ),
+              ],
+            ),
+          ),
         SizedBox(height: dense ? 4 : 7),
-        _InfoTile(
-          icon: Icons.desktop_windows_outlined,
-          label: 'ტერმინალი',
-          value: 'POS-01',
-          dense: dense,
-        ),
+        if (DatabaseCore.settingsBox case final box?)
+          ValueListenableBuilder(
+            valueListenable: box.listenable(keys: ['enrolledDeviceName']),
+            builder: (context, box, _) => _InfoTile(
+              icon: Icons.desktop_windows_outlined,
+              label: 'ტერმინალი',
+              value:
+                  box.get('enrolledDeviceName') as String? ?? 'დაუკავშირებელი',
+              dense: dense,
+            ),
+          ),
         SizedBox(height: dense ? 4 : 7),
         _InfoTile(
           icon: Icons.calendar_month_outlined,
@@ -378,7 +373,7 @@ class LoginDesktopView extends StatelessWidget {
           ),
         ),
         SizedBox(height: dense ? 10 : 16),
-        Text(
+        PosText(
           'PIN კოდი',
           textAlign: TextAlign.center,
           style: TextStyle(
@@ -388,7 +383,7 @@ class LoginDesktopView extends StatelessWidget {
           ),
         ),
         SizedBox(height: dense ? 4 : 8),
-        const Text(
+        const PosText(
           'შეიყვანეთ თანამშრომლის PIN',
           textAlign: TextAlign.center,
           style: TextStyle(color: _muted, fontSize: 13),
@@ -462,7 +457,7 @@ class LoginDesktopView extends StatelessWidget {
                       ),
                     )
                   : const Icon(Icons.lock_outline_rounded, size: 21),
-              label: Text(
+              label: PosText(
                 isLoading ? 'მოწმდება...' : 'შესვლა',
                 style: const TextStyle(
                   fontSize: 17,
@@ -477,7 +472,7 @@ class LoginDesktopView extends StatelessWidget {
           TextButton.icon(
             onPressed: isLoading ? null : onCompanionAppPressed,
             icon: const Icon(Icons.admin_panel_settings_outlined),
-            label: const Text('მენეჯერის აპი'),
+            label: const PosText('მენეჯერის აპი'),
           ),
         ],
         if (onConnectToVynicPressed != null) ...[
@@ -485,69 +480,34 @@ class LoginDesktopView extends StatelessWidget {
           TextButton.icon(
             onPressed: isLoading ? null : onConnectToVynicPressed,
             icon: const Icon(Icons.link, size: 18),
-            label: const Text('Connect this POS to Vynic'),
+            label: const PosText('Connect this POS to Vynic'),
           ),
         ],
+        if (showQuitAction) ...[
+          const SizedBox(height: 8),
+          const PosQuitAction(),
+        ],
+        const SizedBox(height: 12),
+        PosText(
+          'ვერსია {version}',
+          values: {'version': version.isEmpty ? '—' : version},
+          style: const TextStyle(color: _muted, fontSize: 12),
+        ),
       ],
     );
   }
 
-  Widget _buildKeypad(bool dense) {
-    final rows = [
-      ['1', '2', '3'],
-      ['4', '5', '6'],
-      ['7', '8', '9'],
-    ];
-    final double hGap = dense ? 8 : 10;
-    final double vGap = dense ? 8 : 10;
-
-    Widget keyRow(List<Widget> cells) {
-      final children = <Widget>[];
-      for (var i = 0; i < cells.length; i++) {
-        children.add(Expanded(child: cells[i]));
-        if (i != cells.length - 1) children.add(SizedBox(width: hGap));
-      }
-      return Row(children: children);
-    }
-
-    final rowWidgets = <Widget>[];
-    for (final row in rows) {
-      rowWidgets.add(
-        keyRow([
-          for (final digit in row)
-            _KeypadButton(
-              label: digit,
-              dense: dense,
-              onTap: () => onDigitPressed(digit),
-            ),
-        ]),
-      );
-      rowWidgets.add(SizedBox(height: vGap));
-    }
-    rowWidgets.add(
-      keyRow([
-        _KeypadButton(
-          label: 'გასუფთავება',
-          icon: Icons.clear_all_rounded,
-          dense: dense,
-          onTap: onClearPressed,
-        ),
-        _KeypadButton(
-          label: '0',
-          dense: dense,
-          onTap: () => onDigitPressed('0'),
-        ),
-        _KeypadButton(
-          label: 'წაშლა',
-          icon: Icons.backspace_rounded,
-          dense: dense,
-          onTap: onDeletePressed,
-        ),
-      ]),
-    );
-
-    return Column(mainAxisSize: MainAxisSize.min, children: rowWidgets);
-  }
+  Widget _buildKeypad(bool dense) => PinPad(
+    authentication: true,
+    dense: dense,
+    enabled: !isLoading,
+    onDigitPressed: onDigitPressed,
+    onClearPressed: onClearPressed,
+    onDeletePressed: onDeletePressed,
+    onSubmit: () {
+      if (pin.value.length >= 4) onLoginPressed?.call();
+    },
+  );
 }
 
 class _LoginPanelSurface extends StatelessWidget {
@@ -632,7 +592,7 @@ class _InfoTile extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                PosText(
                   label,
                   style: const TextStyle(
                     color: LoginDesktopView._muted,
@@ -663,64 +623,6 @@ class _InfoTile extends StatelessWidget {
               ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _KeypadButton extends StatelessWidget {
-  const _KeypadButton({
-    required this.label,
-    required this.onTap,
-    this.icon,
-    this.dense = false,
-  });
-
-  final String label;
-  final VoidCallback onTap;
-  final IconData? icon;
-  final bool dense;
-
-  @override
-  Widget build(BuildContext context) {
-    final Widget content = icon == null
-        ? Text(
-            label,
-            style: TextStyle(
-              fontSize: dense ? 18 : 20,
-              fontWeight: FontWeight.w700,
-            ),
-          )
-        : Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: dense ? 16 : 18),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          );
-
-    return SizedBox(
-      height: dense ? 44 : 52,
-      child: OutlinedButton(
-        onPressed: onTap,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: LoginDesktopView._ink,
-          backgroundColor: VynicFloorTokens.canvas,
-          side: const BorderSide(color: VynicFloorTokens.panelBorder),
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-        child: FittedBox(fit: BoxFit.scaleDown, child: content),
       ),
     );
   }

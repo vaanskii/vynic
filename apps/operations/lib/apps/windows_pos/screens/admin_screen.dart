@@ -1,3 +1,4 @@
+import 'package:vynic/core/widgets/pos_text.dart';
 import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/database/repositories/inventory_repository.dart';
 import 'package:vynic/core/models/feature_keys.dart';
@@ -471,7 +472,7 @@ class _AdminScreenState extends State<AdminScreen> {
         return StatefulBuilder(
           builder: (context, setLocalState) {
             return AlertDialog(
-              title: const Text('თვეების კორექცია'),
+              title: const PosText('თვეების კორექცია'),
               content: SizedBox(
                 width: 560,
                 child: SingleChildScrollView(
@@ -505,7 +506,7 @@ class _AdminScreenState extends State<AdminScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              PosText(
                                 '${_getGeorgianMonthName(m.month)} ${m.year}',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w700,
@@ -546,7 +547,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                 ],
                               ),
                               const SizedBox(height: 6),
-                              Text(
+                              PosText(
                                 '${isProfit ? 'წმინდა მოგება' : 'წმინდა ზარალი'}: ${_currencyFormatter.format(summary.netProfit)}',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
@@ -567,7 +568,7 @@ class _AdminScreenState extends State<AdminScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('გაუქმება'),
+                  child: const PosText('გაუქმება'),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -585,7 +586,7 @@ class _AdminScreenState extends State<AdminScreen> {
                     }
                     Navigator.pop(ctx, {'lease': leaseMap, 'staff': staffMap});
                   },
-                  child: const Text('შენახვა'),
+                  child: const PosText('შენახვა'),
                 ),
               ],
             );
@@ -1491,7 +1492,7 @@ class _AdminScreenState extends State<AdminScreen> {
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
       child: Row(
         children: [
-          Text(
+          PosText(
             label,
             style: const TextStyle(
               color: _sidebarMuted,
@@ -1545,7 +1546,7 @@ class _AdminScreenState extends State<AdminScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  const PosText(
                     'Vynic',
                     style: TextStyle(
                       color: VynicFloorTokens.text,
@@ -1556,7 +1557,7 @@ class _AdminScreenState extends State<AdminScreen> {
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      const Text(
+                      const PosText(
                         'მართვის ცენტრი',
                         style: TextStyle(
                           color: _sidebarMuted,
@@ -1637,7 +1638,7 @@ class _AdminScreenState extends State<AdminScreen> {
             child: Icon(icon, color: iconColor, size: 18),
           ),
           const SizedBox(width: 10),
-          Expanded(child: Text(title, style: textStyle)),
+          Expanded(child: PosText(title, style: textStyle)),
         ],
       ),
     );
@@ -2413,7 +2414,7 @@ class _AdminScreenState extends State<AdminScreen> {
                         ),
                         const SizedBox(width: 12),
                         const Expanded(
-                          child: Text(
+                          child: PosText(
                             'აღდგენა დასრულდა',
                             style: TextStyle(
                               color: AdminDesign.text,
@@ -2433,7 +2434,7 @@ class _AdminScreenState extends State<AdminScreen> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: AdminDesign.border),
                       ),
-                      child: Text(
+                      child: PosText(
                         'სარეზერვო ასლი აღდგენილია (DB v${DatabaseService.dbVersion}). მონაცემების სრულად განახლებისთვის აპი გადაიყვანება ავტორიზაციაზე.',
                         style: const TextStyle(
                           color: AdminDesign.muted,
@@ -2459,7 +2460,7 @@ class _AdminScreenState extends State<AdminScreen> {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        child: const Text('გაგრძელება'),
+                        child: const PosText('გაგრძელება'),
                       ),
                     ),
                   ],
@@ -2578,7 +2579,7 @@ class _AdminScreenState extends State<AdminScreen> {
                       ),
                       const SizedBox(width: 10),
                       const Expanded(
-                        child: Text(
+                        child: PosText(
                           'აირჩიე ბიზნეს თარიღი',
                           style: TextStyle(
                             color: AdminDesign.text,
@@ -2686,7 +2687,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                                     ),
                                                     const SizedBox(width: 12),
                                                     const Expanded(
-                                                      child: Text(
+                                                      child: PosText(
                                                         'თარიღის დადასტურება',
                                                         style: TextStyle(
                                                           color: Color(
@@ -2746,7 +2747,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                                               CrossAxisAlignment
                                                                   .start,
                                                           children: [
-                                                            Text(
+                                                            PosText(
                                                               'მიმდინარე',
                                                               style: TextStyle(
                                                                 color: Colors
@@ -2761,7 +2762,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                                             const SizedBox(
                                                               height: 2,
                                                             ),
-                                                            Text(
+                                                            PosText(
                                                               georgianCur,
                                                               style: const TextStyle(
                                                                 color: Color(
@@ -2790,7 +2791,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                                               CrossAxisAlignment
                                                                   .end,
                                                           children: [
-                                                            Text(
+                                                            PosText(
                                                               'გადასვლა',
                                                               style: TextStyle(
                                                                 color: Colors
@@ -2805,7 +2806,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                                             const SizedBox(
                                                               height: 2,
                                                             ),
-                                                            Text(
+                                                            PosText(
                                                               georgianTgt,
                                                               style: const TextStyle(
                                                                 color: Color(
@@ -2824,7 +2825,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                                   ),
                                                 ),
                                                 const SizedBox(height: 12),
-                                                const Text(
+                                                const PosText(
                                                   'ეს ქმედება გახსნის არჩეულ ბიზნეს დღეს, რათა შეძლო შეკვეთების და ჯავშნების კორექტირება.',
                                                   style: TextStyle(
                                                     color: AdminDesign.muted,
@@ -2864,7 +2865,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                                                 ),
                                                           ),
                                                         ),
-                                                        child: const Text(
+                                                        child: const PosText(
                                                           'გაუქმება',
                                                         ),
                                                       ),
@@ -2895,7 +2896,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                                           ),
                                                           elevation: 0,
                                                         ),
-                                                        child: const Text(
+                                                        child: const PosText(
                                                           'დადასტურება',
                                                         ),
                                                       ),
@@ -2971,7 +2972,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
+                                      PosText(
                                         georgianLabel,
                                         style: TextStyle(
                                           color: isCurrentDate
@@ -2982,7 +2983,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                         ),
                                       ),
                                       const SizedBox(height: 2),
-                                      Text(
+                                      PosText(
                                         technicalLabel,
                                         style: const TextStyle(
                                           color: AdminDesign.muted,
@@ -3003,7 +3004,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                       color: AdminDesign.accentDark,
                                       borderRadius: BorderRadius.circular(20),
                                     ),
-                                    child: const Text(
+                                    child: const PosText(
                                       'მიმდინარე',
                                       style: TextStyle(
                                         color: Colors.white,
@@ -3042,7 +3043,7 @@ class _AdminScreenState extends State<AdminScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('გაუქმება'),
+                    child: const PosText('გაუქმება'),
                   ),
                 ),
               ],
@@ -3103,7 +3104,7 @@ class _AdminScreenState extends State<AdminScreen> {
                       ),
                       const SizedBox(width: 12),
                       const Expanded(
-                        child: Text(
+                        child: PosText(
                           'თარიღის დადასტურება',
                           style: TextStyle(
                             color: AdminDesign.text,
@@ -3140,7 +3141,7 @@ class _AdminScreenState extends State<AdminScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              PosText(
                                 'მიმდინარე',
                                 style: TextStyle(
                                   color: AdminDesign.muted,
@@ -3149,7 +3150,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                 ),
                               ),
                               const SizedBox(height: 2),
-                              Text(
+                              PosText(
                                 georgianCurrent,
                                 style: const TextStyle(
                                   color: AdminDesign.muted,
@@ -3169,7 +3170,7 @@ class _AdminScreenState extends State<AdminScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text(
+                              PosText(
                                 'გადასვლა',
                                 style: TextStyle(
                                   color: AdminDesign.muted,
@@ -3178,7 +3179,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                 ),
                               ),
                               const SizedBox(height: 2),
-                              Text(
+                              PosText(
                                 georgianTarget,
                                 style: const TextStyle(
                                   color: AdminDesign.accentDark,
@@ -3193,7 +3194,7 @@ class _AdminScreenState extends State<AdminScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
+                  const PosText(
                     'ეს ქმედება გახსნის არჩეულ ბიზნეს დღეს, რათა შეძლო შეკვეთების და ჯავშნების კორექტირება.',
                     style: TextStyle(
                       color: AdminDesign.muted,
@@ -3219,7 +3220,7 @@ class _AdminScreenState extends State<AdminScreen> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          child: const Text('გაუქმება'),
+                          child: const PosText('გაუქმება'),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -3236,7 +3237,7 @@ class _AdminScreenState extends State<AdminScreen> {
                             ),
                             elevation: 0,
                           ),
-                          child: const Text('დადასტურება'),
+                          child: const PosText('დადასტურება'),
                         ),
                       ),
                     ],
@@ -3627,12 +3628,15 @@ class _AdminScreenState extends State<AdminScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              title: Text(title, style: const TextStyle(color: Colors.white)),
+              title: PosText(
+                title,
+                style: const TextStyle(color: Colors.white),
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
+                  PosText(
                     description,
                     style: const TextStyle(color: Colors.white70),
                   ),
@@ -3655,7 +3659,7 @@ class _AdminScreenState extends State<AdminScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text(
+                  child: const PosText(
                     'დახურვა',
                     style: TextStyle(color: AdminDesign.muted),
                   ),
@@ -3669,7 +3673,7 @@ class _AdminScreenState extends State<AdminScreen> {
                         ? AdminDesign.danger
                         : AdminDesign.accentDark,
                   ),
-                  child: Text(confirmLabel),
+                  child: PosText(confirmLabel),
                 ),
               ],
             );
@@ -3710,18 +3714,18 @@ class _AdminScreenState extends State<AdminScreen> {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AdminDesign.text,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
+        title: const PosText(
           'მაგიდაზე დაბრუნება',
           style: TextStyle(color: Colors.white),
         ),
-        content: Text(
+        content: PosText(
           'დარწმუნებული ხართ, რომ გსურთ შეკვეთის (#$orderId) დაბრუნება აქტიურ მაგიდაზე?',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text(
+            child: const PosText(
               'გაუქმება',
               style: TextStyle(color: AdminDesign.muted),
             ),
@@ -3731,7 +3735,7 @@ class _AdminScreenState extends State<AdminScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AdminDesign.accentDark,
             ),
-            child: const Text('დაბრუნება'),
+            child: const PosText('დაბრუნება'),
           ),
         ],
       ),
@@ -3904,7 +3908,7 @@ class _AdminScreenState extends State<AdminScreen> {
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () => Navigator.of(context).pop(),
               ),
-              title: Text(
+              title: PosText(
                 _titleFor(_selectedSection),
                 style: const TextStyle(
                   color: VynicFloorTokens.text,

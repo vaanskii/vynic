@@ -1,3 +1,4 @@
+import 'package:vynic/core/widgets/pos_text.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -32,6 +33,7 @@ class HomeTakeAwaySection extends StatefulWidget {
   });
 
   final User user;
+
   /// The day's takeaway orders. Built from `Order` — see [TakeawayTickets].
   final List<TakeawayTicket> tickets;
   final Future<void> Function() onRefreshRequested;
@@ -322,17 +324,17 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('შეკვეთის გაუქმება'),
-        content: Text('${ticket.orderNumber} გაუქმდეს?'),
+        title: const PosText('შეკვეთის გაუქმება'),
+        content: PosText('${ticket.orderNumber} გაუქმდეს?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('არა'),
+            child: const PosText('არა'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: FilledButton.styleFrom(backgroundColor: _danger),
-            child: const Text('გაუქმება'),
+            child: const PosText('გაუქმება'),
           ),
         ],
       ),
@@ -503,7 +505,6 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
       ),
     );
   }
-
 
   List<String> _buildTakeAwayFinalReceiptLines(
     Order order,
@@ -710,7 +711,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
+                  child: PosText(
                     'შეკვეთები (${tickets.length})',
                     style: TextStyle(
                       color: widget.textPrimary,
@@ -802,7 +803,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
+                      PosText(
                         orderNumber,
                         style: TextStyle(
                           color: widget.textPrimary.withValues(alpha: 0.78),
@@ -817,7 +818,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
+                    PosText(
                       '₾${totalAmount.toStringAsFixed(2)}',
                       style: TextStyle(
                         color: widget.textPrimary,
@@ -837,7 +838,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                 Icon(Icons.schedule, size: 15, color: widget.mutedText),
                 const SizedBox(width: 5),
                 Expanded(
-                  child: Text(
+                  child: PosText(
                     '${_formatTakeAwayDate(ticket.createdAt)}, ${ticket.pickupTime ?? _formatClock(ticket.createdAt)}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -851,7 +852,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                   color: widget.mutedText,
                 ),
                 const SizedBox(width: 5),
-                Text(
+                PosText(
                   '$itemCount პროდუქტი',
                   style: TextStyle(color: widget.mutedText, fontSize: 12),
                 ),
@@ -899,7 +900,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                       Row(
                         children: [
                           Flexible(
-                            child: Text(
+                            child: PosText(
                               ticket.orderNumber,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -924,7 +925,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                           ),
                           const SizedBox(width: 6),
                           Expanded(
-                            child: Text(
+                            child: PosText(
                               'შექმნილია: ${_formatTakeAwayDate(ticket.createdAt)}, ${_formatClock(ticket.createdAt)}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -991,8 +992,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                           child: _buildDetailInfoBlock(
                             icon: Icons.shopping_bag_outlined,
                             title: 'პროდუქტები',
-                            subtitle:
-                                '${ticket.itemCount} პოზიცია',
+                            subtitle: '${ticket.itemCount} პოზიცია',
                           ),
                         ),
                       ],
@@ -1053,7 +1053,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
           if (items.isEmpty)
             Padding(
               padding: const EdgeInsets.all(28),
-              child: Text(
+              child: PosText(
                 'პროდუქტები ჯერ არ არის დამატებული',
                 style: TextStyle(color: widget.mutedText, fontSize: 15),
               ),
@@ -1102,7 +1102,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                     ),
                     Expanded(
                       flex: 2,
-                      child: Text(
+                      child: PosText(
                         '${item.quantity}',
                         style: TextStyle(
                           color: widget.textPrimary,
@@ -1113,7 +1113,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                     ),
                     Expanded(
                       flex: 2,
-                      child: Text(
+                      child: PosText(
                         '₾${item.unitPrice.toStringAsFixed(2)}',
                         style: TextStyle(
                           color: widget.textPrimary,
@@ -1123,7 +1123,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                     ),
                     Expanded(
                       flex: 2,
-                      child: Text(
+                      child: PosText(
                         '₾${item.total.toStringAsFixed(2)}',
                         textAlign: TextAlign.right,
                         style: TextStyle(
@@ -1178,7 +1178,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
           Row(
             children: [
               Expanded(
-                child: Text(
+                child: PosText(
                   'სულ',
                   style: TextStyle(
                     color: widget.textPrimary,
@@ -1187,7 +1187,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                   ),
                 ),
               ),
-              Text(
+              PosText(
                 '₾${itemTotal.toStringAsFixed(2)}',
                 style: TextStyle(
                   color: widget.textPrimary,
@@ -1215,7 +1215,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              PosText(
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -1226,7 +1226,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                 ),
               ),
               const SizedBox(height: 3),
-              Text(
+              PosText(
                 subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -1296,7 +1296,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
   }
 
   Widget _buildTableHeader(String label) {
-    return Text(
+    return PosText(
       label,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
@@ -1377,7 +1377,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
             color: widget.mutedText.withValues(alpha: 0.7),
           ),
           const SizedBox(height: 16),
-          const Text(
+          const PosText(
             'ჯერ არ არის გატანის შეკვეთები',
             style: TextStyle(
               color: Color(0xFF1F2937),
@@ -1386,7 +1386,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
+          PosText(
             'დაამატე ახალი გატანის შეკვეთა, რომ სია შეივსოს.',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -1578,7 +1578,7 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
+                                PosText(
                                   'ახალი გატანის შეკვეთა',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -1589,7 +1589,7 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
                                   ),
                                 ),
                                 SizedBox(height: 3),
-                                Text(
+                                PosText(
                                   'გატანის დეტალები',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -1634,7 +1634,7 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
                               iconColor: _accent,
                               child: Row(
                                 children: [
-                                  Text(
+                                  PosText(
                                     _formatDisplayTime(_selectedTime),
                                     style: const TextStyle(
                                       color: _textPrimary,
@@ -1699,7 +1699,7 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
   }
 
   Widget _buildLabel(String text) {
-    return Text(
+    return PosText(
       text,
       style: const TextStyle(
         color: _label,
@@ -1724,7 +1724,7 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              PosText(
                 _waitHere ? 'აქ დაელოდება ჩართულია' : 'ნომერი',
                 style: TextStyle(
                   color: isEmpty ? _muted : _accent,
@@ -1737,7 +1737,7 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
                 constraints: const BoxConstraints(minHeight: 28),
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: Text(
+                  child: PosText(
                     _waitHere
                         ? 'ნომრის ველი გამორთულია'
                         : (isEmpty ? 'ჩაწერეთ ნომერი' : value.text),
@@ -1775,7 +1775,7 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
           ),
           const SizedBox(width: 10),
           const Expanded(
-            child: Text(
+            child: PosText(
               'აქ დაელოდება',
               style: TextStyle(
                 color: _textPrimary,

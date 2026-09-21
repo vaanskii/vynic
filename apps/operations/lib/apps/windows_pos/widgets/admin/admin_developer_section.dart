@@ -8,6 +8,7 @@ import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/database/repositories/backup_repository.dart';
 import 'package:vynic/core/database/repositories/user_repository.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/services/security/developer_access.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 
@@ -78,16 +79,21 @@ class _AdminDeveloperSectionState extends State<AdminDeveloperSection> {
     // An absolute time rather than a countdown: it needs no ticking timer to
     // stay honest, and „until 19:42" is what you actually want to know.
     final expiry = DeveloperAccess.expiresAt?.toLocal();
-    final expiryLabel = expiry == null
+    final expiryLabel = DeveloperAccess.isDevelopmentUnlocked
+        ? 'development build'
+        : expiry == null
         ? 'locked'
         : 'until ${DateFormat('HH:mm').format(expiry)}';
 
     return AdminSectionHeader(
       icon: Icons.engineering_outlined,
       title: 'Developer tools',
-      subtitle:
-          'Signed session on terminal ${DeveloperAccess.terminalIdShort}. '
-          'Every action here is written to the audit log.',
+      subtitle: DeveloperAccess.isDevelopmentUnlocked
+          ? 'Development build on terminal ${DeveloperAccess.terminalIdShort}: '
+                'unlocked without a token. '
+                'Every action here is written to the audit log.'
+          : 'Signed session on terminal ${DeveloperAccess.terminalIdShort}. '
+                'Every action here is written to the audit log.',
       badge: AdminStatusBadge(
         icon: Icons.timer_outlined,
         label: expiryLabel,
@@ -95,14 +101,16 @@ class _AdminDeveloperSectionState extends State<AdminDeveloperSection> {
         background: AdminDesign.accentSoft,
         border: AdminDesign.accentSoftBorder,
       ),
-      action: OutlinedButton.icon(
-        onPressed: () {
-          DeveloperAccess.lock();
-        },
-        style: AdminDesign.outlineButtonStyle(),
-        icon: const Icon(Icons.lock_outline, size: 18),
-        label: const Text('Lock now'),
-      ),
+      action: DeveloperAccess.isDevelopmentUnlocked
+          ? null
+          : OutlinedButton.icon(
+              onPressed: () {
+                DeveloperAccess.lock();
+              },
+              style: AdminDesign.outlineButtonStyle(),
+              icon: const Icon(Icons.lock_outline, size: 18),
+              label: const Text('Lock now'),
+            ),
     );
   }
 
@@ -372,6 +380,8 @@ class _AdminDeveloperSectionState extends State<AdminDeveloperSection> {
     final ok = await UserRepository.updateUserPinByUsername(
       username: username,
       pinCode: newPin,
+      actorId: 'developer',
+      source: AuditSource.developer,
     );
     if (!mounted) return;
 

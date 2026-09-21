@@ -24,13 +24,14 @@ class TableModelAdapter extends TypeAdapter<TableModel> {
       reservedBy: fields[4] as String?,
       activeOrderId: fields[5] as int?,
       reservationId: fields[6] as String?,
+      edgeRevision: fields[7] == null ? 0 : fields[7] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, TableModel obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.tableNumber)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class TableModelAdapter extends TypeAdapter<TableModel> {
       ..writeByte(5)
       ..write(obj.activeOrderId)
       ..writeByte(6)
-      ..write(obj.reservationId);
+      ..write(obj.reservationId)
+      ..writeByte(7)
+      ..write(obj.edgeRevision);
   }
 
   @override

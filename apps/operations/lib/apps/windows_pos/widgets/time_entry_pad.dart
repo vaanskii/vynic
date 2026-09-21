@@ -1,3 +1,4 @@
+import 'package:vynic/core/widgets/pos_text.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/widgets/pin_button.dart';
 
@@ -92,7 +93,7 @@ class _TimeEntryDialogState extends State<TimeEntryDialog> {
     return AlertDialog(
       backgroundColor: _timeSurface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: const Text(
+      title: const PosText(
         'დროის შეყვანა',
         style: TextStyle(
           color: _timeAccent,
@@ -114,7 +115,7 @@ class _TimeEntryDialogState extends State<TimeEntryDialog> {
                 border: Border.all(color: _timeOutline),
               ),
               child: Center(
-                child: Text(
+                child: PosText(
                   _timeInput.isEmpty ? 'HH:MM' : _timeInput,
                   style: TextStyle(
                     color: _timeInput.isEmpty ? _timeMuted : _timeText,
@@ -135,8 +136,10 @@ class _TimeEntryDialogState extends State<TimeEntryDialog> {
               ),
             ),
             const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            Wrap(
+              alignment: WrapAlignment.end,
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
@@ -147,9 +150,11 @@ class _TimeEntryDialogState extends State<TimeEntryDialog> {
                       vertical: 12,
                     ),
                   ),
-                  child: const Text('გაუქმება', style: TextStyle(fontSize: 16)),
+                  child: const PosText(
+                    'გაუქმება',
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
-                const SizedBox(width: 16),
                 ElevatedButton(
                   onPressed: _isValidTime()
                       ? () => Navigator.of(context).pop(_timeInput)
@@ -165,7 +170,7 @@ class _TimeEntryDialogState extends State<TimeEntryDialog> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text(
+                  child: const PosText(
                     'დადასტურება',
                     style: TextStyle(
                       fontSize: 16,

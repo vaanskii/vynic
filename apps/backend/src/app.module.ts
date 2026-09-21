@@ -1,3 +1,7 @@
+import { CustomerModule } from './customer/customer.module';
+import { FinanceController } from './finance/finance.controller';
+import { PayrollService } from './finance/payroll.service';
+import { ObligationsService } from './finance/obligations.service';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -7,8 +11,10 @@ import { AuthModule } from './auth/auth.module';
 import { PosSyncGuard } from './auth/pos-sync.guard';
 import { EdgeTransportModule } from './edge/edge-transport.module';
 import { EntitlementsModule } from './entitlements/entitlements.module';
+import { InventoryModule } from './inventory/inventory.module';
 import { MobileController } from './mobile/mobile.controller';
 import { MobileUsersService } from './mobile/services/mobile-users.service';
+import { MobileAuditLogService } from './mobile/services/mobile-audit-log.service';
 import { MobileReportsService } from './mobile/services/mobile-reports.service';
 import { MobileDevicesService } from './mobile/services/mobile-devices.service';
 import { MobileMenuService } from './mobile/services/mobile-menu.service';
@@ -16,6 +22,7 @@ import { MobileMutationSupport } from './mobile/services/mobile-mutation-support
 import { MobileReservationsService } from './mobile/services/mobile-reservations.service';
 import { MobileDashboardService } from './mobile/services/mobile-dashboard.service';
 import { MobileOrdersService } from './mobile/services/mobile-orders.service';
+import { MobileSaleLedgerService } from './mobile/services/mobile-sale-ledger.service';
 import { PlatformModule } from './platform/platform.module';
 import { PosCallbackModule } from './pos/pos-callback.module';
 import { PosCommandModule } from './pos/pos-command.module';
@@ -32,17 +39,20 @@ import { ReservationSyncService } from './pos/sync/snapshot/reservation-sync.ser
 import { StaffSyncService } from './pos/sync/snapshot/staff-sync.service';
 import { SyncBroadcastService } from './pos/sync/snapshot/sync-broadcast.service';
 import { TableSyncService } from './pos/sync/snapshot/table-sync.service';
+import { SaleLedgerSyncService } from './pos/sync/snapshot/sale-ledger-sync.service';
 import { RealtimeModule } from './realtime/realtime.module';
 import { WebsiteModule } from './website/website.module';
 
 @Module({
   imports: [
+    CustomerModule,
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
     PrismaModule,
     BootstrapModule,
     AuthModule,
     EntitlementsModule,
+    InventoryModule,
     EdgeTransportModule,
     PlatformModule,
     RealtimeModule,
@@ -50,7 +60,12 @@ import { WebsiteModule } from './website/website.module';
     PosCommandModule,
     WebsiteModule,
   ],
-  controllers: [AppController, MobileController, SyncController],
+  controllers: [
+    FinanceController,
+    AppController,
+    MobileController,
+    SyncController,
+  ],
   providers: [
     AppService,
     PosSyncGuard,
@@ -63,15 +78,20 @@ import { WebsiteModule } from './website/website.module';
     ReservationSyncService,
     StaffSyncService,
     BusinessDaySyncService,
+    SaleLedgerSyncService,
     SyncBroadcastService,
     MobileUsersService,
+    MobileAuditLogService,
     MobileReportsService,
     MobileDevicesService,
     MobileMenuService,
     MobileMutationSupport,
     MobileReservationsService,
     MobileDashboardService,
+    PayrollService,
+    ObligationsService,
     MobileOrdersService,
+    MobileSaleLedgerService,
   ],
 })
 export class AppModule {}

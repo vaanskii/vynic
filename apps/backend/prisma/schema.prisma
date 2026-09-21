@@ -63,66 +63,85 @@ model Order {
 }
 
 model OrderItem {
-  id       String @id @default(uuid())
-  orderId  String
-  name     String
-  quantity Int
-  price    Float
-  order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id         String  @id @default(uuid())
+  orderId    String
+  name       String
+  quantity   Int
+  price      Float
+  menuItemId String?
+  variantId  String?
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@schema("pos")
 }
 
 model MenuCategory {
-  id            String            @id @default(uuid())
-  venueId       String
-  slug          String
-  nameKa        String
-  nameEn        String
-  sendToKitchen Boolean           @default(true)
-  sortOrder     Int               @default(0)
-  updatedAt     DateTime          @updatedAt
-  items         MenuItem[]
-  subcategories MenuSubcategory[]
-  venue         Venue             @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  id                String            @id @default(uuid())
+  venueId           String
+  posMenuCategoryId String?
+  slug              String
+  nameKa            String
+  nameEn            String
+  sendToKitchen     Boolean           @default(true)
+  sortOrder         Int               @default(0)
+  updatedAt         DateTime          @updatedAt
+  items             MenuItem[]
+  subcategories     MenuSubcategory[]
+  venue             Venue             @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
   @@unique([venueId, slug])
+  @@unique([venueId, posMenuCategoryId])
   @@index([venueId])
   @@schema("pos")
 }
 
 model MenuSubcategory {
-  id         String       @id @default(uuid())
-  slug       String
-  nameKa     String
-  nameEn     String
-  categoryId String
-  sortOrder  Int          @default(0)
-  updatedAt  DateTime     @updatedAt
-  items      MenuItem[]
-  category   MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  id                   String       @id @default(uuid())
+  slug                 String
+  nameKa               String
+  nameEn               String
+  categoryId           String
+  posMenuSubcategoryId String?
+  sortOrder            Int          @default(0)
+  updatedAt            DateTime     @updatedAt
+  items                MenuItem[]
+  category             MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@unique([slug, categoryId])
+  @@unique([categoryId, posMenuSubcategoryId])
   @@schema("pos")
 }
 
 model MenuItem {
-  id            String            @id @default(uuid())
-  venueId       String
-  categoryId    String?
-  nameKa        String
-  nameEn        String
-  price         Float
-  sendToKitchen Boolean           @default(true)
-  sortOrder     Int               @default(0)
-  updatedAt     DateTime          @updatedAt
-  subcategoryId String?
-  category      MenuCategory?     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  subcategory   MenuSubcategory?  @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
-  variants      MenuItemVariant[]
-  venue         Venue             @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  id                 String                  @id @default(uuid())
+  venueId            String
+  categoryId         String?
+  /// The item's own id on the POS, which owns menu identity. Ingestion matches
+  /// on it first, so a rename or a move updates this row instead of creating a
+  /// second product and orphaning the old one — which is what matching on
+  /// `nameEn` under a parent used to do. Null for rows mirrored before the POS
+  /// sent an id; the first snapshot from a POS that does adopts them in place
+  /// rather than duplicating them.
+  ///
+  /// [id] stays the Cloud row key and the public menu-item identifier the
+  /// website already hands out in pre-order payloads. This is the business
+  /// identity beside it, not a replacement for it.
+  posMenuItemId      String?
+  nameKa             String
+  nameEn             String
+  price              Float
+  sendToKitchen      Boolean                 @default(true)
+  sortOrder          Int                     @default(0)
+  updatedAt          DateTime                @updatedAt
+  subcategoryId      String?
+  category           MenuCategory?           @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  subcategory        MenuSubcategory?        @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
+  variants           MenuItemVariant[]
+  venue              Venue                   @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  consumptionRecipes MenuConsumptionRecipe[]
 
+  @@unique([venueId, posMenuItemId])
   @@index([venueId])
   @@index([categoryId])
   @@index([subcategoryId])
@@ -130,12 +149,15 @@ model MenuItem {
 }
 
 model MenuItemVariant {
-  id         String   @id @default(uuid())
-  menuItemId String
-  size       Float
-  price      Float
-  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  id                 String                  @id @default(uuid())
+  menuItemId         String
+  posMenuVariantId   String?
+  size               Float
+  price              Float
+  menuItem           MenuItem                @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  consumptionRecipes MenuConsumptionRecipe[]
 
+  @@unique([menuItemId, posMenuVariantId])
   @@index([menuItemId])
   @@schema("pos")
 }
@@ -164,7 +186,547 @@ model Expense {
   @@schema("pos")
 }
 
+/// One durable ingredient, packaged product, or other inventory identity.
+/// Quantity is deliberately absent: StockMovement becomes the authoritative
+/// history in Inventory Step 2. Until then clients present a derived zero.
+enum StockItemClassification {
+  FOOD
+  BEVERAGE
+  @@schema("pos")
+}
+
+model StockItem {
+  id           String   @id @default(uuid())
+  venueId      String
+  name         String
+  /// Normalized to upper case by InventoryService before persistence.
+  sku          String?
+  classification StockItemClassification @default(FOOD)
+  baseUnit     String
+  minimumStock Decimal? @db.Decimal(18, 3)
+  isActive     Boolean  @default(true)
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  venue        Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  creationRequestId         String?
+  @@unique([venueId, creationRequestId])
+  supplierProducts          SupplierProduct[]
+  purchaseUnits             StockItemPurchaseUnit[]
+  receivingLines            ReceivingLine[]
+  movements                 StockMovement[]
+  saleConsumptionComponents SaleConsumptionComponent[]
+  consumptionComponents     MenuConsumptionComponent[]
+
+  @@unique([venueId, id])
+  @@unique([venueId, sku])
+  @@index([venueId, isActive, name])
+  @@schema("pos")
+}
+
+/// A Venue-owned supplier. Rows are disabled rather than deleted so future
+/// receiving records can retain a stable reference to their counterparty.
+model Supplier {
+  id        String   @id @default(uuid())
+  venueId   String
+  name      String
+  taxId     String?
+  phone     String?
+  email     String?
+  address   String?
+  notes     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  supplierProducts SupplierProduct[]
+  receivings Receiving[]
+
+  @@unique([venueId, id])
+
+  @@index([venueId, isActive, name])
+  @@schema("pos")
+}
+
+/// A reusable supplier catalog. No Receiving depends on this link.
+model SupplierProduct {
+  venueId String
+  supplierId String
+  stockItemId String
+  createdAt DateTime @default(now())
+  supplier Supplier @relation(fields: [venueId, supplierId], references: [venueId, id], onDelete: Cascade)
+  stockItem StockItem @relation(fields: [venueId, stockItemId], references: [venueId, id], onDelete: Cascade)
+  @@id([venueId, supplierId, stockItemId])
+  @@index([venueId, stockItemId])
+  @@schema("pos")
+}
+
+/// One item-specific purchasing package, e.g. "1 box = 24 bottle".
+///
+/// Count labels are deliberately never globalised: one venue's box holds 24
+/// bottles of lemonade and 6 of wine. The ratio therefore belongs to the Stock
+/// Item, never to the unit. Mass and volume still convert globally and need no
+/// row here.
+model StockItemPurchaseUnit {
+  id                 String    @id @default(uuid())
+  venueId            String
+  stockItemId        String
+  /// Purchasing label. Never equal to the Stock Item's own base unit.
+  unit               String
+  /// How many base units one `unit` contains. Strictly positive.
+  baseUnitMultiplier Decimal   @db.Decimal(18, 6)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  venue              Venue     @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  stockItem          StockItem @relation(fields: [stockItemId], references: [id], onDelete: Cascade)
+
+  @@unique([stockItemId, unit])
+  @@index([venueId, stockItemId])
+  @@schema("pos")
+}
+
+enum ReceivingStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+
+  @@schema("pos")
+}
+
+/// One procurement document: what arrived, from whom, on what waybill.
+///
+/// A DRAFT is working paper and moves no stock. POSTED freezes the document and
+/// is the only state that has produced StockMovements. CANCELLED keeps both the
+/// document and its original movements and adds reversals beside them, because
+/// this is financial history rather than an editable balance.
+model Receiving {
+  id                   String          @id @default(uuid())
+  venueId              String
+  supplierId           String?
+  /// Display truth frozen at creation. A later Supplier rename must not
+  /// rewrite what this document said when it was received.
+  supplierNameSnapshot String
+  sourceType           String          @default("SUPPLIER")
+  waybillNumber        String?
+  invoiceNumber        String?
+  /// Document date as `YYYY-MM-DD`, the same shape as a business date.
+  documentDate         String
+  businessDate         String
+  receivedAt           DateTime
+  status               ReceivingStatus @default(DRAFT)
+  notes                String?
+  /// SUM(line.lineTotal), maintained exactly on every write.
+  documentTotal        Decimal         @default(0) @db.Decimal(18, 2)
+  createdById          String
+  createdByName        String
+  postedById           String?
+  postedByName         String?
+  postedAt             DateTime?
+  cancelledById        String?
+  cancelledByName      String?
+  cancelledAt          DateTime?
+  cancellationReason   String?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  venue                Venue           @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  supplier             Supplier?       @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  lines                ReceivingLine[]
+  movements            StockMovement[]
+  creationRequestId    String?
+  creationFingerprint  String?
+  @@unique([venueId, creationRequestId])
+  payments             SupplierPayment[]
+  dueDate              String?
+  paymentHistoryKnown  Boolean @default(true)
+
+  @@unique([venueId, id])
+  @@index([venueId, businessDate, createdAt, id])
+  @@index([venueId, documentDate, createdAt, id])
+  @@index([venueId, status, documentDate])
+  @@index([venueId, supplierId, documentDate])
+  @@index([venueId, waybillNumber])
+  @@schema("pos")
+}
+
+/// A frozen purchase snapshot for one Stock Item on one Receiving.
+///
+/// `stockItemId` is the durable identity; `stockItemNameSnapshot` is historical
+/// display context only. Both the entered figures and the base-unit figures are
+/// kept, so the document still reads as it was written ("10 box") while the
+/// ledger works in one unit ("240 bottle").
+model ReceivingLine {
+  id                    String          @id @default(uuid())
+  receivingId           String
+  lineSequence          Int
+  stockItemId           String
+  stockItemNameSnapshot String
+  enteredQuantity       Decimal         @db.Decimal(18, 3)
+  enteredUnit           String
+  baseQuantity          Decimal         @db.Decimal(18, 3)
+  baseUnit              String
+  /// Purchase cost of one `enteredUnit`.
+  unitPurchaseCost      Decimal         @db.Decimal(18, 4)
+  /// enteredQuantity x unitPurchaseCost, rounded half-up to exact GEL.
+  lineTotal             Decimal         @db.Decimal(18, 2)
+  /// lineTotal / baseQuantity. Preserved for later weighted-average costing;
+  /// Step 2 computes no running valuation from it.
+  effectiveBaseUnitCost Decimal         @db.Decimal(18, 6)
+  notes                 String?
+  receiving             Receiving       @relation(fields: [receivingId], references: [id], onDelete: Cascade)
+  stockItem             StockItem       @relation(fields: [stockItemId], references: [id], onDelete: Restrict)
+  movements             StockMovement[]
+
+  @@unique([receivingId, lineSequence])
+  @@index([stockItemId])
+  @@schema("pos")
+}
+
+enum StockMovementType {
+  RECEIVING
+  RECEIVING_REVERSAL
+  CONSUMPTION
+  CONSUMPTION_REVERSAL
+
+  @@schema("pos")
+}
+
+/// The authoritative quantity ledger. Current stock is SUM(quantityDeltaBase)
+/// and is never stored as an editable balance.
+///
+/// Rows are history: a posted movement is never edited into a different number.
+/// A correction is an explicit reversing movement beside the original. Later
+/// steps may add WASTE / STOCKTAKE; consumption and restore use the same ledger.
+model StockMovement {
+  id                     String                    @id @default(uuid())
+  venueId                String
+  stockItemId            String
+  movementType           StockMovementType
+  /// Signed change in the Stock Item's own base unit.
+  quantityDeltaBase      Decimal                   @db.Decimal(21, 6)
+  baseUnit               String
+  costPerBaseUnit        Decimal? @db.Decimal(30, 12)
+  inventoryValueDelta    Decimal? @db.Decimal(30, 12)
+  valuationStatus        String @default("UNVALUED")
+  valuationSequence      BigInt @unique @default(autoincrement())
+  consumptionComponentId String?
+  consumptionComponent   SaleConsumptionComponent? @relation(fields: [consumptionComponentId], references: [id], onDelete: Restrict)
+  receivingId            String?
+  receivingLineId        String?
+  /// Set on a reversal. Unique, so a repeated cancellation cannot reverse the
+  /// same movement twice even under concurrency.
+  reversalOfMovementId   String?                   @unique
+  businessDate           String
+  effectiveAt            DateTime
+  actorId                String
+  actorName              String
+  source                 String
+  createdAt              DateTime                  @default(now())
+  details                Json?
+  venue                  Venue                     @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  stockItem              StockItem                 @relation(fields: [stockItemId], references: [id], onDelete: Restrict)
+  receiving              Receiving?                @relation(fields: [receivingId], references: [id], onDelete: Restrict)
+  receivingLine          ReceivingLine?            @relation(fields: [receivingLineId], references: [id], onDelete: Restrict)
+
+  /// One movement of each kind per Receiving line, enforced by the database.
+  /// Future movement kinds carry a null `receivingLineId`, which PostgreSQL
+  /// treats as distinct, so they are unconstrained by this index.
+  @@unique([consumptionComponentId, movementType])
+  @@unique([receivingLineId, movementType])
+  @@index([venueId, stockItemId, createdAt, id])
+  @@index([venueId, receivingId])
+  @@index([venueId, movementType, businessDate])
+  @@schema("pos")
+}
+
+/// What one sold Menu Item is expected to consume from stock.
+///
+/// One generalized definition covers all three shapes a restaurant has: a
+/// bottled product consumes 1 bottle of itself, a draft beer consumes 0.5 L of
+/// a keg-filled tank, and khinkali consume four ingredients. They differ only
+/// in how many components they carry, so they are deliberately not three
+/// systems.
+///
+/// This model defines consumption; it moves no stock. Editing a recipe today
+/// never rewrites what a past sale consumed — Step 4 snapshots [id] and
+/// [revision] at sale time rather than joining this row back later.
+model MenuConsumptionRecipe {
+  id                   String   @id @default(uuid())
+  venueId              String
+  menuItemId           String
+  /// Null when the Menu Item has no meaningful variants.
+  variantId            String?
+  /// `variantId ?? ''`, maintained by the service.
+  ///
+  /// PostgreSQL treats NULLs as distinct, so a unique index over a nullable
+  /// `variantId` would happily allow two definitions for the same unvaried
+  /// Menu Item. This non-null discriminator is what makes "one definition per
+  /// Menu Item + variant" a database rule rather than an application hope.
+  variantKey           String
+  /// Display context frozen at write time; identity stays [menuItemId].
+  menuItemNameSnapshot String
+  variantLabelSnapshot String?
+  /// How many sold units the component quantities describe. 1 is the normal
+  /// per-unit definition; 100 lets a kitchen enter a khinkali batch.
+  yieldQuantity        Decimal  @default(1) @db.Decimal(18, 3)
+  isActive             Boolean  @default(true)
+  notes                String?
+  /// Bumped on every saved change, so a Step 4 consumption snapshot can name
+  /// exactly which definition it used.
+  revision             Int      @default(1)
+  createdById          String
+  createdByName        String
+  updatedById          String
+  updatedByName        String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  venue      Venue                      @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  menuItem   MenuItem                   @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  variant    MenuItemVariant?           @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  components MenuConsumptionComponent[]
+
+  @@unique([menuItemId, variantKey])
+  @@index([venueId, isActive])
+  @@index([venueId, menuItemId])
+  @@schema("pos")
+}
+
+/// One Stock Item a recipe consumes.
+///
+/// The recipe may be entered in any unit compatible with the item's own
+/// dimension ("35 g" of an item held in kg). [baseQuantity] normalizes that to
+/// the item's base unit, and [baseQuantityPerUnit] divides it by the recipe
+/// yield, so a later step reads one authoritative per-sale-unit number and
+/// never re-derives it.
+model MenuConsumptionComponent {
+  id                    String   @id @default(uuid())
+  venueId               String
+  recipeId              String
+  stockItemId           String
+  /// Historical/editor context. The durable identity is [stockItemId].
+  stockItemNameSnapshot String
+  /// As entered, for the whole recipe yield.
+  quantity              Decimal  @db.Decimal(18, 3)
+  unit                  String
+  /// [quantity] in the Stock Item's own base unit, for the whole yield.
+  baseQuantity          Decimal  @db.Decimal(18, 3)
+  baseUnit              String
+  /// baseQuantity / yieldQuantity. Theoretical consumption for one sold unit;
+  /// pour loss and trimming waste are a later step and are not modelled here.
+  baseQuantityPerUnit   Decimal  @db.Decimal(18, 6)
+  sequence              Int
+  notes                 String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  venue     Venue                 @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  recipe    MenuConsumptionRecipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  stockItem StockItem             @relation(fields: [stockItemId], references: [id], onDelete: Restrict)
+
+  @@unique([recipeId, sequence])
+  @@index([venueId, stockItemId])
+  @@schema("pos")
+}
+
+/// Immutable POS close-time inventory intent. No historical Sale backfill.
+model SaleConsumption {
+  id                 String                @id @default(uuid())
+  venueId            String
+  posSaleId          String
+  closureId          String
+  orderId            Int
+  businessDate       String
+  closedAt           DateTime
+  catalogGeneratedAt String?
+  policy             String
+  snapshot           Json
+  reversedAt         DateTime?
+  createdAt          DateTime              @default(now())
+  venue              Venue                 @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  lines              SaleConsumptionLine[]
+
+  @@unique([venueId, posSaleId])
+  @@unique([venueId, closureId])
+  @@index([venueId, businessDate, id])
+  @@schema("pos")
+}
+
+model SaleConsumptionLine {
+  id             String                     @id @default(uuid())
+  venueId        String
+  consumptionId  String
+  lineSeq        Int
+  menuItemId     String?
+  variantId      String?
+  itemName       String
+  variantName    String?
+  soldQuantity   Int
+  status         String
+  reason         String?
+  recipeId       String?
+  recipeRevision Int?
+  venue          Venue                      @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  consumption    SaleConsumption            @relation(fields: [consumptionId], references: [id], onDelete: Restrict)
+  components     SaleConsumptionComponent[]
+
+  @@unique([consumptionId, lineSeq])
+  @@index([venueId, status])
+  @@schema("pos")
+}
+
+model SaleConsumptionComponent {
+  id                    String              @id @default(uuid())
+  venueId               String
+  lineId                String
+  stockItemId           String
+  stockItemNameSnapshot String
+  baseQuantityPerUnit   Decimal             @db.Decimal(18, 6)
+  totalBaseQuantity     Decimal             @db.Decimal(21, 6)
+  baseUnit              String
+  venue                 Venue               @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  line                  SaleConsumptionLine @relation(fields: [lineId], references: [id], onDelete: Restrict)
+  stockItem             StockItem           @relation(fields: [stockItemId], references: [id], onDelete: Restrict)
+  movements             StockMovement[]
+
+  @@unique([lineId, stockItemId])
+  @@index([venueId, stockItemId])
+  @@schema("pos")
+}
+
+/// Durable Cloud mirror of one genuine Sale retained by the POS.
+///
+/// The POS remains the operational/offline transaction authority. Monetary
+/// values cross the sync boundary as fixed-scale decimal strings and are
+/// persisted exactly; this model never derives historical prices from the
+/// mutable Menu mirror.
+model CloudSale {
+  id                 String        @id @default(uuid())
+  venueId            String
+  posSaleId          String
+  posOrderId         Int
+  closureId          String?
+  businessDate       String
+  createdAt          DateTime
+  closedAt           DateTime
+  gross              Decimal       @db.Decimal(18, 2)
+  subtotal           Decimal       @db.Decimal(18, 2)
+  serviceFee         Decimal       @db.Decimal(18, 2)
+  discount           Decimal       @db.Decimal(18, 2)
+  manualAdjustment   Decimal       @db.Decimal(18, 2)
+  advanceApplied     Decimal       @db.Decimal(18, 2)
+  amountDueNow       Decimal       @db.Decimal(18, 2)
+  collectedNow       Decimal       @db.Decimal(18, 2)
+  paymentMethod      String
+  customPaymentLabel String?
+  isFiscal           Boolean
+  isCancelled        Boolean       @default(false)
+  cancelledAt        DateTime?
+  cancelledBy        String?
+  cancellationReason String?
+  restoredToOrder    Boolean       @default(false)
+  restoredAt         DateTime?
+  restoredBy         String?
+  createdBy          String
+  closedById         String?
+  tableNumbers       String[]
+  floor              String
+  sourceRevision     Int
+  sourceUpdatedAt    DateTime
+  syncedAt           DateTime      @updatedAt
+  venue              Venue         @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  lines              SaleLine[]
+  payments           SalePayment[]
+
+  @@unique([venueId, posSaleId])
+  @@unique([venueId, closureId])
+  @@index([venueId, businessDate, closedAt, id])
+  @@index([venueId, businessDate, paymentMethod])
+  @@index([venueId, closedById, businessDate])
+  @@schema("pos")
+}
+
+/// Frozen transaction-time line snapshot. menuItemId/variantId are the POS
+/// business identities established by the complete Menu identity migration;
+/// null means the line was manual/unlinked and is never inferred from a name.
+model SaleLine {
+  id          String    @id @default(uuid())
+  saleId      String
+  lineSeq     Int
+  menuItemId  String?
+  variantId   String?
+  itemName    String
+  variantName String?
+  quantity    Int
+  unitPrice   Decimal   @db.Decimal(18, 2)
+  lineTotal   Decimal   @db.Decimal(18, 2)
+  comment     String?
+  sale        CloudSale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@unique([saleId, lineSeq])
+  @@index([menuItemId])
+  @@index([variantId])
+  @@schema("pos")
+}
+
+/// One durable tender/advance component of a Sale.
+model SalePayment {
+  id     String    @id @default(uuid())
+  saleId String
+  method String
+  amount Decimal   @db.Decimal(18, 2)
+  sale   CloudSale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@unique([saleId, method])
+  @@index([method])
+  @@schema("pos")
+}
+
+enum SaleLedgerCompleteness {
+  COMPLETE
+  PARTIAL
+  LEGACY_SUMMARY_ONLY
+
+  @@schema("pos")
+}
+
+enum SaleLedgerReconciliation {
+  MATCHED
+  MISMATCH
+  INCOMPLETE
+  LEGACY_ONLY
+
+  @@schema("pos")
+}
+
+/// Per-business-day proof of whether the per-Sale mirror is safe to use as a
+/// complete financial source. A day is COMPLETE only after the POS says its
+/// bounded upload has no outstanding revisions and Cloud independently
+/// re-derives the same Sale count and revenue.
+model SaleLedgerDay {
+  id                 String                   @id @default(uuid())
+  venueId            String
+  businessDate       String
+  completeness       SaleLedgerCompleteness
+  reconciliation     SaleLedgerReconciliation
+  expectedSaleCount  Int?
+  expectedRevenue    Decimal?                 @db.Decimal(18, 2)
+  ledgerSaleCount    Int
+  ledgerRevenue      Decimal                  @db.Decimal(18, 2)
+  legacyRevenue      Decimal?                 @db.Decimal(18, 2)
+  declaredCompleteAt DateTime?
+  lastSyncedAt       DateTime
+  venue              Venue                    @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@unique([venueId, businessDate])
+  @@index([venueId, completeness, businessDate])
+  @@schema("pos")
+}
+
 model Staff {
+  platformManaged Boolean @default(false)
+  displayName String?
   id        String    @id @default(uuid())
   venueId   String
   username  String
@@ -175,6 +737,10 @@ model Staff {
   updatedAt DateTime  @updatedAt
   venue     Venue     @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  compensations  StaffCompensation[]
+  payrollPeriods PayrollPeriod[]
+
+  @@unique([venueId, id])
   @@unique([venueId, username])
   @@index([venueId])
   @@schema("pos")
@@ -194,29 +760,29 @@ model Staff {
 /// that does not send reservations yet leaves the mirror alone rather than
 /// emptying it.
 model PosReservation {
-  id               String   @id @default(uuid())
+  id               String    @id @default(uuid())
   venueId          String
   /// The reservation's identity on the POS, which owns it.
   posReservationId String
   customerName     String
-  customerPhone    String   @default("")
+  customerPhone    String    @default("")
   /// Legacy integer table codes, the form the website availability rules use.
   tableNumbers     Int[]
   /// Lossless floor/number references, where the POS build sends them.
   tableRefs        String[]
   reservationDate  DateTime
   reservationTime  String
-  numberOfGuests   Int      @default(0)
+  numberOfGuests   Int       @default(0)
   notes            String?
   status           String
   createdBy        String?
-  isTakeAway       Boolean  @default(false)
+  isTakeAway       Boolean   @default(false)
   /// Set when this record is the POS's bookkeeping for a walk-in or takeaway
   /// order rather than a real booking.
   linkedOrderId    Int?
   posCreatedAt     DateTime?
-  syncedAt         DateTime @updatedAt
-  venue            Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  syncedAt         DateTime  @updatedAt
+  venue            Venue     @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
   @@unique([venueId, posReservationId])
   @@index([venueId, reservationDate])
@@ -244,13 +810,24 @@ model AuditReport {
   /// send one — both are treated as "revision unknown", which makes the next
   /// push rewrite the row rather than skip it.
   syncRevision String?
+  /// What kind of Order this report describes: `WALK_IN`, `TAKEAWAY`,
+  /// `PACKAGE` or `RESERVATION`, derived at ingestion from the report's own
+  /// creation event. Query metadata only — the events remain the semantics.
+  /// Null for a report opened before creation events existed, where nothing
+  /// durable says what kind of Order it was; `floor` is a display string a
+  /// floor-plan edit can change, so it is not used as evidence.
+  orderKind    String?
   updatedAt    DateTime     @updatedAt
   events       AuditEvent[]
   venue        Venue        @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
   @@unique([venueId, reportId])
   @@index([venueId])
-  @@index([posOrderId])
+  /// `posOrderId` only identifies an Order inside a Venue, so the lookup that
+  /// matters — this Venue's report for this POS order — is the composite one.
+  /// It is deliberately not a foreign key to `Order`: Close Day removes the
+  /// operational row and the audit has to outlive it.
+  @@index([venueId, posOrderId])
   @@index([status])
   @@schema("pos")
 }
@@ -258,18 +835,37 @@ model AuditReport {
 model AuditEvent {
   id          String      @id @default(uuid())
   reportId    String
+  /// The owning Venue, copied from `report.venueId` at ingestion — which took
+  /// it from the authenticated Device or Staff, never from the payload.
+  ///
+  /// Denormalized on purpose and deliberately not a relation: tenancy is
+  /// already enforced by the report's own foreign key, and a second constraint
+  /// on the hot ingest path would be checked once per event for no added
+  /// authority. It exists so an event-level query can be Venue-scoped and
+  /// indexed without a join. Null on rows written before this column existed.
+  venueId     String?
   type        String
   itemName    String
   previousQty Int
   newQty      Int
   waiterId    String
   waiterName  String
+  /// When the event happened. Temporal metadata, not the ordering key: a
+  /// creation event and the lines written with it share one instant.
   eventTime   DateTime
   note        String?
+  details     Json?
+  /// The report-scoped ordinal the POS assigned when it appended this event.
+  /// This is the timeline's order. Zero-based, and only positional for a POS
+  /// build that predates POS-owned sequences.
   seq         Int         @default(0)
   report      AuditReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
-  @@index([reportId])
+  /// The timeline read: one report's events in order. Also serves lookups by
+  /// `reportId` alone, so no separate single-column index is kept.
+  @@index([reportId, seq])
+  /// Cross-order event queries inside one Venue ("every CLOSE this month").
+  @@index([venueId, type, eventTime])
   @@schema("pos")
 }
 
@@ -278,14 +874,34 @@ model AuditEventLog {
   venueId    String
   action     String
   userId     String
+  /// What kind of thing this row is about: `STAFF`, `MENU_ITEM`,
+  /// `MENU_CATEGORY`, `PACKAGE`, `EXPENSE`, `CLOSE_DAY`, `BACKUP`,
+  /// `RESERVATION`, `ORDER`, `SALE`, `BUSINESS_DATE`, `SETTINGS`,
+  /// `DEVELOPER`, `STOCK_ITEM`, `SUPPLIER`.
+  ///
+  /// Null for every row written before entity identity existed, and for an
+  /// action the derivation cannot classify. Historical rows are not rewritten:
+  /// the reader translates an entity filter into the actions that mean it, so
+  /// an old row is still found by what it is.
+  entityType String?
+  /// Which one, inside this Venue: a staff username, a menu path, an expense
+  /// id, a business date. Null when the action names no single subject.
+  entityId   String?
   data       Json
   deviceType String
   createdAt  DateTime @default(now())
   venue      Venue    @relation(fields: [venueId], references: [id], onDelete: Restrict)
 
+  /// The default global feed: this Venue's recent activity, newest first.
   @@index([venueId, createdAt])
   @@index([createdAt])
   @@index([action])
+  /// "What happened to this kind of thing here", and — with `entityId` — the
+  /// history of one staff member or one menu item.
+  @@index([venueId, entityType, entityId, createdAt])
+  /// "Every price change here this month". `action` alone is already indexed
+  /// globally; this is the Venue-scoped, time-ordered form the reader uses.
+  @@index([venueId, action, createdAt])
   @@schema("pos")
 }
 
@@ -409,6 +1025,7 @@ enum PlatformUserStatus {
 /// roles, which are a different domain entirely.
 enum PlatformRole {
   SUPER_ADMIN
+  SUPPORT_READONLY
 
   @@schema("pos")
 }
@@ -509,6 +1126,7 @@ model Organization {
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  accounts CustomerAccount[]
   venues    Venue[]
 
   @@schema("pos")
@@ -516,39 +1134,69 @@ model Organization {
 
 /// One physical restaurant/location owned by an Organization.
 model Venue {
-  id                String                 @id @default(uuid())
-  organizationId    String
-  name              String
-  status            VenueStatus            @default(ACTIVE)
-  timezone          String
-  currency          String
-  createdAt         DateTime               @default(now())
-  updatedAt         DateTime               @updatedAt
-  organization      Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  devices           Device[]
-  tables            Table[]
-  orders            Order[]
-  menuCategories    MenuCategory[]
-  menuItems         MenuItem[]
-  expenses          Expense[]
-  staff             Staff[]
-  auditReports      AuditReport[]
-  posReservations   PosReservation[]
-  auditEventLogs    AuditEventLog[]
-  dailySnapshots    DailySnapshot[]
-  settings          Setting[]
-  callbackOutbox    PosCallbackOutbox[]
-  quickOrderDrafts  QuickOrderDraft[]
-  notifications     ManagerNotification[]
-  pushDevices       PushDevice[]
-  planAssignment    VenuePlanAssignment?
-  featureOverrides  VenueFeatureOverride[]
-  websiteConfig     VenueWebsiteConfig?
-  domains           VenueDomain[]
-  websiteTables     WebsiteTable[]
-  websiteBookings   WebsiteReservation[]
-  edgeCommands      EdgeCommand[]
-  deviceEnrollments DeviceEnrollment[]
+  edgeFoundations EdgeFoundationInstallation[]
+  activeOperationalDeviceId String? @unique
+  activeOperationalDevice Device? @relation("OperationalPrimary", fields: [activeOperationalDeviceId], references: [id], onDelete: SetNull)
+  branchName                String?
+  address                   String?
+  phone                     String?
+  legalId                   String?
+  profileUpdatedAt          DateTime?
+  loginCode                 String                     @unique @default(dbgenerated("('venue-'::text || substr(md5((random())::text), 1, 12))"))
+  id                        String                     @id @default(uuid())
+  organizationId            String
+  name                      String
+  status                    VenueStatus                @default(ACTIVE)
+  timezone                  String
+  currency                  String
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+  organization              Organization               @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  devices                   Device[]
+  tables                    Table[]
+  orders                    Order[]
+  menuCategories            MenuCategory[]
+  menuItems                 MenuItem[]
+  expenses                  Expense[]
+  compensations             StaffCompensation[]
+  payrollPeriods            PayrollPeriod[]
+  payrollPayments           PayrollPayment[]
+  payrollAccruals           PayrollAccrual[]
+  financialObligations      FinancialObligation[]
+  obligationCycles          ObligationCycle[]
+  obligationReserves        ObligationReserveEntry[]
+  obligationPayments        ObligationPayment[]
+  stockItems                StockItem[]
+  suppliers                 Supplier[]
+  cloudSales                CloudSale[]
+  saleLedgerDays            SaleLedgerDay[]
+  staff                     Staff[]
+  auditReports              AuditReport[]
+  posReservations           PosReservation[]
+  auditEventLogs            AuditEventLog[]
+  dailySnapshots            DailySnapshot[]
+  settings                  Setting[]
+  callbackOutbox            PosCallbackOutbox[]
+  quickOrderDrafts          QuickOrderDraft[]
+  notifications             ManagerNotification[]
+  pushDevices               PushDevice[]
+  subscription              VenueSubscription?
+  planAssignment            VenuePlanAssignment?
+  featureOverrides          VenueFeatureOverride[]
+  websiteConfig             VenueWebsiteConfig?
+  domains                   VenueDomain[]
+  websiteTables             WebsiteTable[]
+  websiteBookings           WebsiteReservation[]
+  edgeCommands              EdgeCommand[]
+  deviceEnrollments         DeviceEnrollment[]
+  receivings                Receiving[]
+  stockMovements            StockMovement[]
+  purchaseUnits             StockItemPurchaseUnit[]
+  saleConsumptions          SaleConsumption[]
+  saleConsumptionLines      SaleConsumptionLine[]
+  consumptionRecipes        MenuConsumptionRecipe[]
+  saleConsumptionComponents SaleConsumptionComponent[]
+  consumptionComponents     MenuConsumptionComponent[]
 
   @@index([organizationId])
   @@schema("pos")
@@ -558,6 +1206,7 @@ model Venue {
 /// The raw credential secret is issued once; only its Argon2id verifier is
 /// persisted. Its Venue is the authoritative tenant boundary for POS auth.
 model Device {
+  operationalVenue Venue? @relation("OperationalPrimary")
   id             String       @id @default(uuid())
   venueId        String
   installationId String       @unique
@@ -565,6 +1214,8 @@ model Device {
   platform       String
   credentialHash String
   status         DeviceStatus @default(ACTIVE)
+  firstSyncAt    DateTime?
+  runtimeConfig Json?
   lastSeenAt     DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -616,13 +1267,15 @@ model DeviceEnrollment {
   redeemedInstallationId  String?
   deviceId                String?
   cancelledAt             DateTime?
-  createdByPlatformUserId String
+  createdByPlatformUserId String?
+  createdByCustomerAccountId String?
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
 
   venue     Venue        @relation(fields: [venueId], references: [id], onDelete: Cascade)
   device    Device?      @relation(fields: [deviceId], references: [id], onDelete: SetNull)
-  createdBy PlatformUser @relation(fields: [createdByPlatformUserId], references: [id], onDelete: Restrict)
+  customerActor CustomerAccount? @relation(fields: [createdByCustomerAccountId], references: [id], onDelete: Restrict)
+  createdBy PlatformUser? @relation(fields: [createdByPlatformUserId], references: [id], onDelete: Restrict)
 
   @@index([venueId, createdAt])
   @@index([expiresAt])
@@ -966,4 +1619,289 @@ model WebsiteReservationTable {
   @@unique([reservationId, tableId])
   @@map("reservation_tables")
   @@schema("website")
+}
+
+
+enum CompensationType {
+  MONTHLY_FIXED
+  DAILY_FIXED
+  MANUAL
+
+  @@schema("pos")
+}
+
+enum FinancialObligationType {
+  RENT
+  BANK_LOAN
+  LEASE
+  UTILITY
+  OTHER
+
+  @@schema("pos")
+}
+
+/// Effective-month rules. Opened periods freeze their rule; only unopened future rules may be edited.
+model StaffCompensation {
+  id               String           @id @default(uuid())
+  venueId          String
+  staffId          String
+  compensationType CompensationType
+  amount           Decimal          @db.Decimal(18, 2)
+  effectiveFrom    String
+  isActive         Boolean          @default(true)
+  notes            String?
+  createdAt        DateTime         @default(now())
+  actorId          String
+  actorName        String
+  venue            Venue            @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  staff            Staff            @relation(fields: [venueId, staffId], references: [venueId, id], onDelete: Restrict)
+
+  @@unique([venueId, staffId, effectiveFrom])
+  @@schema("pos")
+}
+
+/// Frozen monthly rule; expected is fixed target plus explicit daily/manual accruals.
+model PayrollPeriod {
+  id               String           @id @default(uuid())
+  venueId          String
+  staffId          String
+  staffName        String
+  periodMonth      String
+  compensationType CompensationType
+  rate             Decimal          @db.Decimal(18, 2)
+  targetAmount     Decimal          @db.Decimal(18, 2)
+  createdAt        DateTime         @default(now())
+  venue            Venue            @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  staff            Staff            @relation(fields: [venueId, staffId], references: [venueId, id], onDelete: Restrict)
+  payments         PayrollPayment[]
+  accruals         PayrollAccrual[]
+
+  @@unique([venueId, staffId, periodMonth])
+  @@unique([venueId, id])
+  @@schema("pos")
+}
+
+model PayrollAccrual {
+  id              String        @id
+  venueId         String
+  payrollPeriodId String
+  payableDate     String?
+  amount          Decimal       @db.Decimal(18, 2)
+  /// Signed, append-only adjustments reference the unique original payable day.
+  dayEntryId      String?
+  worked          Boolean?
+  dayEntry        PayrollAccrual? @relation("PayrollDayAdjustments", fields: [venueId, payrollPeriodId, dayEntryId], references: [venueId, payrollPeriodId, id], onDelete: Restrict, onUpdate: NoAction)
+  dayAdjustments  PayrollAccrual[] @relation("PayrollDayAdjustments")
+  notes           String?
+  actorId         String
+  actorName       String
+  createdAt       DateTime      @default(now())
+  venue           Venue         @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  period          PayrollPeriod @relation(fields: [venueId, payrollPeriodId], references: [venueId, id], onDelete: Restrict)
+
+  @@unique([payrollPeriodId, payableDate])
+  @@unique([venueId, payrollPeriodId, id])
+  @@index([venueId, payrollPeriodId])
+  @@schema("pos")
+}
+
+model PayrollPayment {
+  id              String        @id
+  venueId         String
+  payrollPeriodId String
+  amount          Decimal       @db.Decimal(18, 2)
+  businessDate    String
+  paymentDate     String
+  notes           String?
+  actorId         String
+  actorName       String
+  createdAt       DateTime      @default(now())
+  venue           Venue         @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  period          PayrollPeriod @relation(fields: [venueId, payrollPeriodId], references: [venueId, id], onDelete: Restrict)
+
+  @@index([venueId, businessDate])
+  @@schema("pos")
+}
+
+model FinancialObligation {
+  id                  String                  @id @default(uuid())
+  venueId             String
+  name                String
+  type                FinancialObligationType
+  monthlyAmount       Decimal                 @db.Decimal(18, 2)
+  materializedThrough String?
+  dueDay              Int
+  startsOn            String
+  endsOn              String?
+  isActive            Boolean                 @default(true)
+  notes               String?
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+  venue               Venue                   @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  cycles              ObligationCycle[]
+
+  @@unique([venueId, id])
+  @@index([venueId, isActive])
+  @@schema("pos")
+}
+
+model ObligationCycle {
+  id           String                   @id @default(uuid())
+  venueId      String
+  obligationId String
+  name         String
+  type         FinancialObligationType
+  periodMonth  String
+  targetAmount Decimal                  @db.Decimal(18, 2)
+  dueDate      String
+  createdAt    DateTime                 @default(now())
+  venue        Venue                    @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  obligation   FinancialObligation      @relation(fields: [venueId, obligationId], references: [venueId, id], onDelete: Restrict)
+  reserves     ObligationReserveEntry[]
+  payments     ObligationPayment[]
+
+  @@unique([venueId, obligationId, periodMonth])
+  @@unique([venueId, id])
+  @@schema("pos")
+}
+
+model ObligationReserveEntry {
+  id                String          @id
+  venueId           String
+  obligationCycleId String
+  amount            Decimal         @db.Decimal(18, 2)
+  businessDate      String
+  notes             String?
+  actorId           String
+  actorName         String
+  createdAt         DateTime        @default(now())
+  venue             Venue           @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  cycle             ObligationCycle @relation(fields: [venueId, obligationCycleId], references: [venueId, id], onDelete: Restrict)
+
+  @@index([venueId, businessDate])
+  @@schema("pos")
+}
+
+model ObligationPayment {
+  id                String          @id
+  venueId           String
+  obligationCycleId String
+  amount            Decimal         @db.Decimal(18, 2)
+  reserveConsumed   Decimal         @db.Decimal(18, 2)
+  businessDate      String
+  paymentDate       String
+  notes             String?
+  actorId           String
+  actorName         String
+  createdAt         DateTime        @default(now())
+  venue             Venue           @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  cycle             ObligationCycle @relation(fields: [venueId, obligationCycleId], references: [venueId, id], onDelete: Restrict)
+
+  @@index([venueId, businessDate])
+  @@schema("pos")
+}
+
+/// Append-only actual supplier disbursements, allocated to one frozen receipt.
+model SupplierPayment {
+  id String @id @default(uuid())
+  venueId String
+  receivingId String
+  requestId String
+  amount Decimal @db.Decimal(18, 2)
+  paymentDate String
+  businessDate String
+  method String
+  actorId String
+  actorName String
+  notes String?
+  reference String?
+  reversalOfId String? @unique
+  reversalOf SupplierPayment? @relation("SupplierPaymentReversal",fields:[reversalOfId],references:[id],onDelete:NoAction,onUpdate:NoAction,map:"SupplierPayment_reversal_fkey")
+  reversal SupplierPayment? @relation("SupplierPaymentReversal")
+  createdAt DateTime @default(now())
+  receiving Receiving @relation(fields: [venueId, receivingId], references: [venueId, id], onDelete: Restrict, map:"SupplierPayment_receiving_fkey")
+  @@unique([venueId, requestId])
+  @@index([venueId, businessDate])
+  @@schema("pos")
+}
+
+// Missing row preserves pre-Phase-2 access; new Venues receive an explicit trial.
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  SUSPENDED
+  CANCELLED
+  @@schema("pos")
+}
+
+model VenueSubscription {
+  venueId String @id
+  status SubscriptionStatus @default(TRIAL)
+  startedAt DateTime?
+  trialEndsAt DateTime?
+  currentPeriodEndsAt DateTime?
+  suspendedAt DateTime?
+  cancelledAt DateTime?
+  note String?
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  @@schema("pos")
+}
+
+
+model CustomerAccount {
+  id String @id @default(uuid())
+  organizationId String
+  email String @unique
+  displayName String
+  passwordHash String
+  isActive Boolean @default(true)
+  emailVerifiedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  enrollments DeviceEnrollment[]
+  auditEvents CustomerAuditEvent[]
+  @@index([organizationId])
+  @@schema("pos")
+}
+
+model CustomerAuditEvent {
+  id String @id @default(uuid())
+  customerAccountId String
+  action String
+  targetType String
+  targetId String
+  metadata Json?
+  createdAt DateTime @default(now())
+  actor CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  @@index([customerAccountId, createdAt])
+  @@index([targetId, createdAt])
+  @@schema("pos")
+}
+
+model OnboardingPolicy {
+  id String @id @default("default")
+  enabled Boolean @default(false)
+  trialPlanId String?
+  trialDays Int @default(14)
+  releaseLinks Json?
+  updatedAt DateTime @updatedAt
+  @@schema("pos")
+}
+
+/// Foundation identity only. Never a Device or an operational authority lease.
+model EdgeFoundationInstallation {
+  id String @id
+  venueId String
+  publicKey String @unique
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Restrict)
+
+  @@index([venueId])
+  @@schema("pos")
 }

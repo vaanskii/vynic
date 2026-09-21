@@ -1,3 +1,8 @@
+import 'package:vynic/core/models/sale_visibility.dart';
+import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
+import 'finance_planning_screen.dart';
+import 'package:vynic/apps/mobile_app/presentation/screens/mobile_admin_screen.dart';
+import 'package:vynic/core/models/expense_category.dart';
 import 'package:vynic/apps/mobile_app/presentation/widgets/mobile_glass_ui.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -20,7 +25,14 @@ String _gel(num v) => '₾${_money.format(v)}';
 
 class FinancialsScreen extends StatefulWidget {
   final User user;
-  const FinancialsScreen({super.key, required this.user});
+  final Future<Map<String, dynamic>> Function()? loadData;
+  final Future<Map<String, dynamic>> Function(String id)? loadSale;
+  const FinancialsScreen({
+    super.key,
+    required this.user,
+    this.loadData,
+    this.loadSale,
+  });
 
   @override
   State<FinancialsScreen> createState() => _FinancialsScreenState();
@@ -32,7 +44,8 @@ class _FinancialsScreenState extends State<FinancialsScreen>
   bool _isLoading = true;
   String? _error;
   bool _isAddingExpense = false;
-  bool _isApplyingSalaries = false;
+  bool _isLoadingMoreSales = false;
+  String? _salesCursor;
 
   late final AnimationController _animController;
 
@@ -41,10 +54,6 @@ class _FinancialsScreenState extends State<FinancialsScreen>
       TextEditingController();
   final TextEditingController _expenseAmountController =
       TextEditingController();
-  final TextEditingController _staffNameController = TextEditingController();
-  final TextEditingController _staffSalaryController = TextEditingController();
-
-  final List<_SalaryItem> _salaryItems = [];
 
   @override
   void initState() {
@@ -62,17 +71,41 @@ class _FinancialsScreenState extends State<FinancialsScreen>
     _categoryController.dispose();
     _expenseDescriptionController.dispose();
     _expenseAmountController.dispose();
-    _staffNameController.dispose();
-    _staffSalaryController.dispose();
     super.dispose();
   }
 
   Future<void> _loadFinancials() async {
     try {
+      if (widget.loadData != null) {
+        final data = await widget.loadData!();
+        if (mounted) {
+          setState(() {
+            _data = data;
+            _salesCursor = data['nextCursor']?.toString();
+            _isLoading = false;
+            _error = null;
+          });
+          if (_animController.value == 0) _animController.forward();
+        }
+        return;
+      }
       final data = await MobileApiService.getFinancials();
+      final results = await Future.wait([
+        MobileApiService.getFinancialSummary(),
+        MobileApiService.getSales(),
+        MobileApiService.getProductAnalytics(),
+        MobileApiService.getSaleStaffAnalytics(),
+      ]);
+      data['ledgerSummary'] = results[0];
+      data['sales'] = results[1]['sales'] ?? const [];
+      data['saleHistoryProvenance'] = results[1]['provenance'];
+      data['saleHistoryWarning'] = results[1]['warning'];
+      data['products'] = results[2]['byRevenue'] ?? const [];
+      data['saleStaff'] = results[3]['staff'] ?? const [];
       if (mounted) {
         setState(() {
           _data = data;
+          _salesCursor = results[1]['nextCursor']?.toString();
           _isLoading = false;
           _error = null;
         });
@@ -85,6 +118,53 @@ class _FinancialsScreenState extends State<FinancialsScreen>
           _error = 'სერვერთან კავშირი ვერ დამყარდა';
         });
       }
+    }
+  }
+
+  double _number(Object? value) =>
+      value is num ? value.toDouble() : double.tryParse('$value') ?? 0;
+
+  List<Map<String, dynamic>> _maps(Object? value) => value is List
+      ? value
+            .whereType<Map>()
+            .map((row) => Map<String, dynamic>.from(row))
+            .toList()
+      : <Map<String, dynamic>>[];
+
+  Future<void> _loadMoreSales() async {
+    final cursor = _salesCursor;
+    if (cursor == null || _isLoadingMoreSales) return;
+    setState(() => _isLoadingMoreSales = true);
+    try {
+      final page = await MobileApiService.getSales(cursor: cursor);
+      if (!mounted) return;
+      setState(() {
+        final current = _maps(_data?['sales']);
+        current.addAll(_maps(page['sales']));
+        _data?['sales'] = current;
+        _salesCursor = page['nextCursor']?.toString();
+      });
+    } catch (_) {
+      _toast('გაყიდვების შემდეგი გვერდი ვერ ჩაიტვირთა', error: true);
+    } finally {
+      if (mounted) setState(() => _isLoadingMoreSales = false);
+    }
+  }
+
+  Future<void> _openSale(String id) async {
+    try {
+      final sale = widget.loadSale != null
+          ? await widget.loadSale!(id)
+          : await MobileApiService.getSale(id);
+      if (!mounted) return;
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => _SaleDetailSheet(sale: sale),
+      );
+    } catch (_) {
+      _toast('გაყიდვის დეტალები ვერ ჩაიტვირთა', error: true);
     }
   }
 
@@ -121,6 +201,14 @@ class _FinancialsScreenState extends State<FinancialsScreen>
 
   Future<void> _addExpense() async {
     final category = _categoryController.text.trim();
+    if (ExpenseCategory.isProcurement(category)) {
+      _toast('შესყიდვა დაამატეთ მარაგებში — დღიური მიღება', error: true);
+      return;
+    }
+    if (ExpenseCategory.isSalary(category)) {
+      _toast('ხელფასი დაამატეთ ფინანსებში — ხელფასები', error: true);
+      return;
+    }
     final description = _expenseDescriptionController.text.trim();
     final amount = double.tryParse(_expenseAmountController.text.trim());
     if (category.isEmpty ||
@@ -154,47 +242,6 @@ class _FinancialsScreenState extends State<FinancialsScreen>
       await _loadFinancials();
     } catch (_) {
       _toast('ხარჯის წაშლა ვერ მოხერხდა', error: true);
-    }
-  }
-
-  void _addSalaryDraft() {
-    final name = _staffNameController.text.trim();
-    final salary = double.tryParse(_staffSalaryController.text.trim());
-    if (name.isEmpty || salary == null || salary <= 0) {
-      _toast('შეავსეთ სახელი და ხელფასი სწორად', error: true);
-      return;
-    }
-    setState(() {
-      _salaryItems.add(_SalaryItem(name: name, amount: salary));
-      _staffNameController.clear();
-      _staffSalaryController.clear();
-    });
-  }
-
-  Future<void> _applySelectedSalaries() async {
-    final selected = _salaryItems.where((e) => e.selected).toList();
-    if (selected.isEmpty) {
-      _toast('მონიშნეთ მინიმუმ ერთი თანამშრომელი', error: true);
-      return;
-    }
-    setState(() => _isApplyingSalaries = true);
-    try {
-      for (final item in selected) {
-        await MobileApiService.createExpense(
-          description: item.name,
-          amount: item.amount,
-          category: 'პერსონალი',
-        );
-      }
-      setState(() {
-        _salaryItems.removeWhere((item) => item.selected);
-      });
-      await _loadFinancials();
-      _toast('მონიშნული ხელფასები დაემატა ხარჯებში');
-    } catch (_) {
-      _toast('ხელფასების დამატება ვერ მოხერხდა', error: true);
-    } finally {
-      if (mounted) setState(() => _isApplyingSalaries = false);
     }
   }
 
@@ -261,14 +308,18 @@ class _FinancialsScreenState extends State<FinancialsScreen>
   );
 
   Widget _buildContent() {
-    final double revenue = (_data!['revenue'] ?? 0).toDouble();
-    final double expenses = (_data!['expenses'] ?? 0).toDouble();
+    final ledger = _data!['ledgerSummary'] is Map
+        ? Map<String, dynamic>.from(_data!['ledgerSummary'] as Map)
+        : <String, dynamic>{};
+    final double revenue = ledger.isNotEmpty
+        ? _number(ledger['revenue'])
+        : _number(_data!['revenue']);
+    final double expenses = _number(
+      _data!['totalOutflows'] ?? _data!['expenses'],
+    );
     final double profit = revenue - expenses;
     final double cash = (_data!['cashRevenue'] ?? 0).toDouble();
     final double card = (_data!['cardRevenue'] ?? 0).toDouble();
-    final selectedSalariesTotal = _salaryItems
-        .where((e) => e.selected)
-        .fold<double>(0, (sum, e) => sum + e.amount);
 
     return RefreshIndicator(
       color: MobileGlassTheme.primary,
@@ -286,6 +337,11 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _fade(0.0, _buildHeader()),
+                  if (ledger['warning'] != null)
+                    _fade(
+                      0.05,
+                      _buildHistoryNotice(ledger['warning'].toString()),
+                    ),
                   _fade(
                     0.1,
                     Padding(
@@ -294,15 +350,29 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                     ),
                   ),
                   SizedBox(height: 28),
+                  if (ManagerEntitlements.has(FeatureKeys.inventory))
+                    _buildProcurement(),
+                  const SizedBox(height: 16),
+                  _buildPlanningLinks(),
+                  const SizedBox(height: 24),
                   _fade(0.2, _buildPaymentCard(cash, card)),
                   SizedBox(height: 28),
-                  _fade(0.3, _buildExpenseBreakdownCard()),
+                  _fade(0.25, _buildLedgerPaymentCard(ledger)),
                   SizedBox(height: 28),
-                  _fade(0.4, _buildExpenseComposer()),
+                  _fade(0.3, _buildSalesHistory()),
                   SizedBox(height: 28),
-                  _fade(0.5, _buildSalaryPlanner(selectedSalariesTotal)),
+                  _fade(0.35, _buildProductAnalytics()),
                   SizedBox(height: 28),
-                  _fade(0.6, _buildExpenseLog()),
+                  _fade(0.4, _buildStaffAnalytics()),
+                  SizedBox(height: 28),
+                  _fade(0.45, _buildLifecycleActivity(ledger)),
+                  SizedBox(height: 28),
+                  _fade(0.5, _buildExpenseBreakdownCard()),
+                  SizedBox(height: 28),
+                  _fade(0.6, _buildExpenseComposer()),
+                  SizedBox(height: 28),
+
+                  _fade(0.8, _buildExpenseLog()),
                 ],
               ),
             ),
@@ -322,15 +392,20 @@ class _FinancialsScreenState extends State<FinancialsScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'ფინანსები',
-            style: TextStyle(
-              color: MobileGlassTheme.textPrimary,
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              letterSpacing: -0.5,
+          Expanded(
+            child: Text(
+              'ფინანსები',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: MobileGlassTheme.textPrimary,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                letterSpacing: -0.5,
+              ),
             ),
           ),
+          const SizedBox(width: 12),
           _GlassCard(
             onTap: _loadFinancials,
             borderRadius: BorderRadius.circular(20),
@@ -383,7 +458,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      positive ? 'წმინდა მოგება (დღეს)' : 'ზარალი (დღეს)',
+                      'გაყიდვები − გასავლები',
                       style: TextStyle(
                         color: MobileGlassTheme.textSecondary,
                         fontSize: 14,
@@ -394,7 +469,9 @@ class _FinancialsScreenState extends State<FinancialsScreen>
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        _gel(profit.abs()),
+                        _data?['differenceExact'] != null
+                            ? '₾${_data!["differenceExact"]}'
+                            : _gel(profit.abs()),
                         style: TextStyle(
                           color: MobileGlassTheme.textPrimary,
                           fontSize: 36,
@@ -449,8 +526,10 @@ class _FinancialsScreenState extends State<FinancialsScreen>
             children: [
               Expanded(
                 child: _MiniStatBlock(
-                  title: 'შემოსავალი',
-                  amount: _gel(revenue),
+                  title: 'გაყიდვები',
+                  amount: _data?['revenueExact'] != null
+                      ? '₾${_data!["revenueExact"]}'
+                      : _gel(revenue),
                   color: MobileGlassTheme.good,
                   icon: Icons.arrow_downward_rounded,
                 ),
@@ -463,7 +542,9 @@ class _FinancialsScreenState extends State<FinancialsScreen>
               Expanded(
                 child: _MiniStatBlock(
                   title: 'ხარჯი',
-                  amount: _gel(expenses),
+                  amount: _data?['totalOutflows'] != null
+                      ? '₾${_data!["totalOutflows"]}'
+                      : _gel(expenses),
                   color: MobileGlassTheme.bad,
                   icon: Icons.arrow_upward_rounded,
                 ),
@@ -514,7 +595,7 @@ class _FinancialsScreenState extends State<FinancialsScreen>
             children: [
               _legendDot(MobileGlassTheme.bad, 'ხარჯი'),
               SizedBox(width: 16),
-              _legendDot(MobileGlassTheme.good, 'მოგება'),
+              _legendDot(MobileGlassTheme.good, 'სხვაობა'),
             ],
           ),
         ],
@@ -537,6 +618,343 @@ class _FinancialsScreenState extends State<FinancialsScreen>
           style: TextStyle(color: MobileGlassTheme.textSecondary, fontSize: 12),
         ),
       ],
+    );
+  }
+
+  Widget _buildHistoryNotice(String message) => Padding(
+    padding: const EdgeInsets.fromLTRB(24, 0, 24, 18),
+    child: _GlassCard(
+      borderRadius: BorderRadius.circular(18),
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.info_outline_rounded,
+            color: MobileGlassTheme.warn,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: MobileGlassTheme.textSecondary,
+                height: 1.35,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _buildLedgerPaymentCard(Map<String, dynamic> ledger) {
+    final rows = <(String, double, Color)>[
+      ('TBC', _number(ledger['tbcCollected']), const Color(0xFF38BDF8)),
+      ('BOG', _number(ledger['bogCollected']), const Color(0xFFF59E0B)),
+      ('ავანსი', _number(ledger['advanceApplied']), const Color(0xFF8B5CF6)),
+    ];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionHeader(title: 'ბარათები და ავანსი'),
+          const SizedBox(height: 16),
+          _GlassCard(
+            borderRadius: BorderRadius.circular(24),
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              children: [
+                for (var i = 0; i < rows.length; i++) ...[
+                  if (i > 0) const Divider(height: 22),
+                  Row(
+                    children: [
+                      Container(
+                        width: 9,
+                        height: 9,
+                        decoration: BoxDecoration(
+                          color: rows[i].$3,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        rows[i].$1,
+                        style: TextStyle(color: MobileGlassTheme.textPrimary),
+                      ),
+                      const Spacer(),
+                      Text(
+                        _gel(rows[i].$2),
+                        style: TextStyle(
+                          color: MobileGlassTheme.textPrimary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSalesHistory() {
+    final sales = _maps(_data?['sales'])
+        .where(
+          (sale) => SaleVisibility.visible(
+            sale,
+            nonFiscalEnabled: ManagerEntitlements.has(
+              FeatureKeys.nonFiscalClose,
+            ),
+          ),
+        )
+        .toList();
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionHeader(title: 'გაყიდვების ისტორია'),
+          const SizedBox(height: 16),
+          _GlassCard(
+            borderRadius: BorderRadius.circular(24),
+            padding: EdgeInsets.zero,
+            child: sales.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.all(22),
+                    child: Text(
+                      'ამ პერიოდში დეტალური გაყიდვები არ არის',
+                      style: TextStyle(color: MobileGlassTheme.textSecondary),
+                    ),
+                  )
+                : Column(
+                    children: [
+                      for (var i = 0; i < sales.length; i++) ...[
+                        if (i > 0) const Divider(height: 1),
+                        _saleRow(sales[i]),
+                      ],
+                    ],
+                  ),
+          ),
+          if (_salesCursor != null)
+            TextButton(
+              onPressed: _isLoadingMoreSales ? null : _loadMoreSales,
+              child: Text(_isLoadingMoreSales ? 'იტვირთება…' : 'მეტის ნახვა'),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _saleRow(Map<String, dynamic> sale) {
+    final closedAt = DateTime.tryParse(sale['closedAt']?.toString() ?? '');
+    final time = closedAt == null
+        ? '—'
+        : DateFormat('HH:mm').format(closedAt.toLocal());
+    final status = sale['isCancelled'] == true
+        ? 'VOIDED'
+        : sale['restoredToOrder'] == true
+        ? 'RESTORED'
+        : sale['isFiscal'] == false
+        ? 'INTERNAL'
+        : null;
+    return InkWell(
+      key: ValueKey('sale-${sale['id']}'),
+      onTap: () => _openSale(sale['id'].toString()),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 48,
+              child: Text(
+                time,
+                style: TextStyle(color: MobileGlassTheme.textSecondary),
+              ),
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Order #${sale['posOrderId']}',
+                    style: TextStyle(
+                      color: MobileGlassTheme.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    status ?? (sale['paymentMethod'] ?? '—').toString(),
+                    style: TextStyle(
+                      color: status == null
+                          ? MobileGlassTheme.textSecondary
+                          : MobileGlassTheme.warn,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              _gel(_number(sale['gross'])),
+              style: TextStyle(
+                color: MobileGlassTheme.textPrimary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: MobileGlassTheme.textSecondary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductAnalytics() => _buildRankedSection(
+    title: 'ტოპ პროდუქტები',
+    rows: _maps(_data?['products']).take(5).toList(),
+    label: (row) => [
+      row['name'],
+      if ((row['variantName']?.toString() ?? '').isNotEmpty) row['variantName'],
+    ].join(' · '),
+    value: (row) => '${row['quantity']} ×  ${_gel(_number(row['revenue']))}',
+    empty: 'პროდუქტის მონაცემები ჯერ არ არის',
+  );
+
+  Widget _buildStaffAnalytics() => _buildRankedSection(
+    title: 'თანამშრომლების შედეგები',
+    rows: _maps(_data?['saleStaff']).take(5).toList(),
+    label: (row) => row['staffName']?.toString() ?? 'უცნობი / სისტემა',
+    value: (row) =>
+        '${row['saleCount']} გაყიდვა · ${_gel(_number(row['revenue']))} · საშუალო ${_gel(_number(row['averageSale']))}',
+    empty: 'სანდო თანამშრომლის ატრიბუცია ჯერ არ არის',
+  );
+
+  Widget _buildRankedSection({
+    required String title,
+    required List<Map<String, dynamic>> rows,
+    required String Function(Map<String, dynamic>) label,
+    required String Function(Map<String, dynamic>) value,
+    required String empty,
+  }) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 24),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader(title: title),
+        const SizedBox(height: 16),
+        _GlassCard(
+          borderRadius: BorderRadius.circular(24),
+          padding: const EdgeInsets.all(18),
+          child: rows.isEmpty
+              ? Text(
+                  empty,
+                  style: TextStyle(color: MobileGlassTheme.textSecondary),
+                )
+              : Column(
+                  children: [
+                    for (var i = 0; i < rows.length; i++) ...[
+                      if (i > 0) const Divider(height: 22),
+                      Row(
+                        children: [
+                          Text(
+                            '${i + 1}',
+                            style: TextStyle(
+                              color: MobileGlassTheme.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              label(rows[i]),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: MobileGlassTheme.textPrimary,
+                              ),
+                            ),
+                          ),
+                          Flexible(
+                            child: Text(
+                              value(rows[i]),
+                              maxLines: 2,
+                              textAlign: TextAlign.end,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: MobileGlassTheme.textPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _buildLifecycleActivity(Map<String, dynamic> ledger) {
+    final entries = [
+      ('გაუქმებული', (ledger['voidedCount'] as num?)?.toInt() ?? 0),
+      ('აღდგენილი', (ledger['restoredCount'] as num?)?.toInt() ?? 0),
+      if (ManagerEntitlements.has(FeatureKeys.nonFiscalClose))
+        ('შიდა დახურვა', (ledger['internalCount'] as num?)?.toInt() ?? 0),
+    ];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionHeader(title: 'გაუქმება და აღდგენა'),
+          const SizedBox(height: 16),
+          _GlassCard(
+            borderRadius: BorderRadius.circular(24),
+            padding: const EdgeInsets.all(18),
+            child: Row(
+              children: [
+                for (var i = 0; i < entries.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Text(
+                          '${entries[i].$2}',
+                          style: TextStyle(
+                            color: MobileGlassTheme.textPrimary,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        Text(
+                          entries[i].$1,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: MobileGlassTheme.textSecondary,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -680,6 +1098,83 @@ class _FinancialsScreenState extends State<FinancialsScreen>
     );
   }
 
+  Widget _buildProcurement() {
+    final procurement = _data?['procurement'] as Map?;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: _GlassCard(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const _SectionHeader(title: 'შესყიდვები'),
+            if (procurement == null)
+              const Text('შესყიდვების მონაცემები მიუწვდომელია'),
+            if (procurement != null) ...[
+              for (final entry in [
+                ('calendarDay', 'დღევანდელი შესყიდვები'),
+                ('businessDay', 'სამუშაო დღის შესყიდვები'),
+                ('calendarMonth', 'ამ თვის შესყიდვები'),
+              ])
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    spacing: 16,
+                    children: [
+                      Text(entry.$2),
+                      Text('${(procurement[entry.$1] as Map)['total']} ₾'),
+                    ],
+                  ),
+                ),
+              Text(
+                'სამუშაო დღე: ${procurement['businessDate']} · თვე: ${procurement['month']}',
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                key: const Key('financials-receiving'),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => InventoryScreen(
+                      section: 2,
+                      businessDate: procurement['businessDate'] as String?,
+                    ),
+                  ),
+                ),
+                icon: const Icon(Icons.receipt_long_outlined),
+                label: const Text('დღიური მიღება'),
+              ),
+            ],
+            Text(
+              'მომწოდებლებს დღეს გადახდილი: ${((procurement?['supplierPayments'] as Map?)?['calendarDay'] as Map?)?['total'] ?? '—'} ₾',
+            ),
+            Text(
+              'მომწოდებლის დავალიანება: ${procurement?['outstanding'] ?? '—'} ₾',
+            ),
+            Text(
+              'შესამოწმებელი ძველი ნაშთი: ${procurement?['unverified'] ?? '—'} ₾',
+            ),
+            const Divider(height: 32),
+            Text(
+              'სხვა ხარჯები: ${_data?['otherExpenses'] ?? _data?['expenses'] ?? '—'} ₾',
+            ),
+            Text('ხელფასები: ${_data?['salaryPayments'] ?? '—'} ₾'),
+            if (_data?['legacySalaryPayments'] != null)
+              Text(
+                'მათ შორის ძველი ჩანაწერები: ${_data!['legacySalaryPayments']} ₾',
+              ),
+            Text(
+              'ვალდებულებების გადახდები: ${_data?['obligationPayments'] ?? '—'} ₾',
+            ),
+            Text('სულ გასავლები: ${_data?['totalOutflows'] ?? '—'} ₾'),
+            const SizedBox(height: 8),
+            const Text('გასავლებში შედის მომწოდებელთან გადახდილი თანხა.'),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ── Add-expense composer ──────────────────────────────────────────────
   Widget _buildExpenseComposer() {
     return Padding(
@@ -687,14 +1182,14 @@ class _FinancialsScreenState extends State<FinancialsScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionHeader(title: 'ახალი ხარჯი'),
+          const _SectionHeader(title: 'სხვა ხარჯის დამატება'),
           SizedBox(height: 16),
           _GlassCard(
             borderRadius: BorderRadius.circular(24),
             padding: const EdgeInsets.all(18),
             child: Column(
               children: [
-                _darkField(_categoryController, 'კატეგორია (მაგ: ბაზარი)'),
+                _darkField(_categoryController, 'კატეგორია (მაგ: ტრანსპორტი)'),
                 SizedBox(height: 12),
                 _darkField(_expenseDescriptionController, 'აღწერა'),
                 SizedBox(height: 12),
@@ -712,145 +1207,37 @@ class _FinancialsScreenState extends State<FinancialsScreen>
     );
   }
 
-  // ── Salary planner ────────────────────────────────────────────────────
-  Widget _buildSalaryPlanner(double selectedSalariesTotal) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _SectionHeader(title: 'პერსონალის ხელფასები'),
-          SizedBox(height: 16),
-          _GlassCard(
-            borderRadius: BorderRadius.circular(24),
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'დაამატეთ სახელი და ხელფასი, შემდეგ მონიშნულები ერთიანად ჩასვით ხარჯებში.',
-                  style: TextStyle(
-                    color: MobileGlassTheme.textSecondary,
-                    fontSize: 12,
-                  ),
+  Widget _buildPlanningLinks() => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 24),
+    child: Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        for (final entry in [
+          if (ManagerEntitlements.has(FeatureKeys.payroll))
+            (false, 'ხელფასები', Icons.people_outline),
+          if (ManagerEntitlements.has(FeatureKeys.financialPlanning))
+            (true, 'ყოველთვიური ვალდებულებები', Icons.event_repeat),
+        ])
+          OutlinedButton.icon(
+            key: ValueKey(
+              entry.$1 ? 'financials-obligations' : 'financials-payroll',
+            ),
+            style: OutlinedButton.styleFrom(minimumSize: const Size(48, 48)),
+            onPressed: () async {
+              await Navigator.of(context).push<void>(
+                MaterialPageRoute(
+                  builder: (_) => FinancePlanningScreen(obligations: entry.$1),
                 ),
-                SizedBox(height: 14),
-                _darkField(_staffNameController, 'სახელი'),
-                SizedBox(height: 12),
-                _darkField(_staffSalaryController, 'ხელფასი', number: true),
-                SizedBox(height: 12),
-                _outlineButton(label: 'სიაში დამატება', onTap: _addSalaryDraft),
-                if (_salaryItems.isNotEmpty) ...[
-                  SizedBox(height: 14),
-                  for (var idx = 0; idx < _salaryItems.length; idx++)
-                    _buildSalaryRow(idx, _salaryItems[idx]),
-                  SizedBox(height: 8),
-                  Divider(color: MobileGlassTheme.border(0.12)),
-                  SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'მონიშნული ჯამი',
-                        style: TextStyle(
-                          color: MobileGlassTheme.textSecondary,
-                          fontSize: 13,
-                        ),
-                      ),
-                      Text(
-                        _gel(selectedSalariesTotal),
-                        style: TextStyle(
-                          color: MobileGlassTheme.textPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 12),
-                  _primaryButton(
-                    label: _isApplyingSalaries
-                        ? 'ინახება...'
-                        : 'მონიშნულის ხარჯებში დამატება',
-                    onTap: _isApplyingSalaries ? null : _applySelectedSalaries,
-                  ),
-                ],
-              ],
-            ),
+              );
+              if (mounted) await _loadFinancials();
+            },
+            icon: Icon(entry.$3),
+            label: Text(entry.$2),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSalaryRow(int idx, _SalaryItem item) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => setState(
-              () => _salaryItems[idx] = item.copyWith(selected: !item.selected),
-            ),
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: item.selected
-                    ? MobileGlassTheme.primary
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(7),
-                border: Border.all(
-                  color: item.selected
-                      ? MobileGlassTheme.primary
-                      : Colors.white.withValues(alpha: 0.25),
-                ),
-              ),
-              child: item.selected
-                  ? Icon(
-                      Icons.check_rounded,
-                      size: 16,
-                      color: MobileGlassTheme.textPrimary,
-                    )
-                  : null,
-            ),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.name,
-                  style: TextStyle(
-                    color: MobileGlassTheme.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  _gel(item.amount),
-                  style: TextStyle(
-                    color: MobileGlassTheme.textSecondary,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          GestureDetector(
-            onTap: () => setState(() => _salaryItems.removeAt(idx)),
-            behavior: HitTestBehavior.opaque,
-            child: Icon(
-              Icons.delete_outline_rounded,
-              size: 20,
-              color: Colors.white.withValues(alpha: 0.4),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+      ],
+    ),
+  );
 
   // ── Expense history ───────────────────────────────────────────────────
   Widget _buildExpenseLog() {
@@ -946,18 +1333,19 @@ class _FinancialsScreenState extends State<FinancialsScreen>
               fontSize: 14,
             ),
           ),
-          GestureDetector(
-            onTap: () => _deleteExpense((e['id'] ?? '').toString()),
-            behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: Icon(
-                Icons.close_rounded,
-                size: 18,
-                color: Colors.white.withValues(alpha: 0.35),
+          if (!ExpenseCategory.isSalary(e['category']))
+            GestureDetector(
+              onTap: () => _deleteExpense((e['id'] ?? '').toString()),
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 18,
+                  color: Colors.white.withValues(alpha: 0.35),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -1022,46 +1410,218 @@ class _FinancialsScreenState extends State<FinancialsScreen>
       ),
     );
   }
+}
 
-  Widget _outlineButton({required String label, required VoidCallback onTap}) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton(
-        onPressed: onTap,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: MobileGlassTheme.accentText,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          side: BorderSide(
-            color: MobileGlassTheme.primary.withValues(alpha: 0.5),
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
+class _SaleDetailSheet extends StatelessWidget {
+  const _SaleDetailSheet({required this.sale});
+
+  final Map<String, dynamic> sale;
+
+  double _number(Object? value) =>
+      value is num ? value.toDouble() : double.tryParse('$value') ?? 0;
+
+  List<Map<String, dynamic>> _maps(Object? value) => value is List
+      ? value
+            .whereType<Map>()
+            .map((row) => Map<String, dynamic>.from(row))
+            .toList()
+      : <Map<String, dynamic>>[];
+
+  @override
+  Widget build(BuildContext context) {
+    final lines = _maps(sale['lines']);
+    final payments = _maps(sale['payments']);
+    final audit = sale['auditLink'] is Map
+        ? Map<String, dynamic>.from(sale['auditLink'] as Map)
+        : null;
+    final state = sale['isCancelled'] == true
+        ? 'VOIDED'
+        : sale['restoredToOrder'] == true
+        ? 'RESTORED'
+        : sale['isFiscal'] == false
+        ? 'INTERNAL'
+        : 'FISCAL';
+    return DraggableScrollableSheet(
+      initialChildSize: 0.84,
+      minChildSize: 0.5,
+      maxChildSize: 0.96,
+      builder: (context, controller) => Container(
+        decoration: BoxDecoration(
+          color: MobileGlassTheme.data.scaffoldBackground,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
-        child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        child: ListView(
+          controller: controller,
+          padding: const EdgeInsets.fromLTRB(22, 12, 22, 36),
+          children: [
+            Center(
+              child: Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: MobileGlassTheme.border(0.25),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Order #${sale['posOrderId']}',
+                    style: TextStyle(
+                      color: MobileGlassTheme.textPrimary,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Text(
+                  state,
+                  style: TextStyle(
+                    color: state == 'FISCAL'
+                        ? MobileGlassTheme.good
+                        : MobileGlassTheme.warn,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '${sale['businessDate']} · ${sale['floor']} · ${(sale['tableNumbers'] as List?)?.join(', ') ?? '—'}',
+              style: TextStyle(color: MobileGlassTheme.textSecondary),
+            ),
+            const SizedBox(height: 22),
+            _detailCard(
+              children: [
+                _detailRow('Closed at', sale['closedAt']?.toString() ?? '—'),
+                _detailRow('Gross', _gel(_number(sale['gross']))),
+                _detailRow('Advance', _gel(_number(sale['advanceApplied']))),
+                _detailRow('Amount due', _gel(_number(sale['amountDueNow']))),
+                _detailRow(
+                  'Collected now',
+                  _gel(_number(sale['collectedNow'])),
+                ),
+                _detailRow(
+                  'Staff',
+                  sale['closedById']?.toString() ?? 'Unknown / system',
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            Text(
+              'Items',
+              style: TextStyle(
+                color: MobileGlassTheme.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 10),
+            _detailCard(
+              children: lines.isEmpty
+                  ? [
+                      Text(
+                        'No frozen line detail',
+                        style: TextStyle(color: MobileGlassTheme.textSecondary),
+                      ),
+                    ]
+                  : [
+                      for (final line in lines)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 7),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '${line['quantity']} × ${line['itemName']}'
+                                  '${(line['variantName']?.toString() ?? '').isEmpty ? '' : ' · ${line['variantName']}'}',
+                                  style: TextStyle(
+                                    color: MobileGlassTheme.textPrimary,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                '${_gel(_number(line['unitPrice']))}  ${_gel(_number(line['lineTotal']))}',
+                                style: TextStyle(
+                                  color: MobileGlassTheme.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+            ),
+            const SizedBox(height: 18),
+            Text(
+              'Payments',
+              style: TextStyle(
+                color: MobileGlassTheme.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 10),
+            _detailCard(
+              children: [
+                for (final payment in payments)
+                  _detailRow(
+                    payment['method']?.toString() ?? 'other',
+                    _gel(_number(payment['amount'])),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            _detailCard(
+              children: [
+                _detailRow('Sale ID', sale['posSaleId']?.toString() ?? '—'),
+                _detailRow('Closure ID', sale['closureId']?.toString() ?? '—'),
+                _detailRow(
+                  'Audit report',
+                  audit?['reportId']?.toString() ?? 'Unavailable',
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
-}
 
-class _SalaryItem {
-  final String name;
-  final double amount;
-  final bool selected;
+  Widget _detailCard({required List<Widget> children}) => _GlassCard(
+    borderRadius: BorderRadius.circular(20),
+    padding: const EdgeInsets.all(16),
+    child: Column(children: children),
+  );
 
-  const _SalaryItem({
-    required this.name,
-    required this.amount,
-    this.selected = true,
-  });
-
-  _SalaryItem copyWith({String? name, double? amount, bool? selected}) {
-    return _SalaryItem(
-      name: name ?? this.name,
-      amount: amount ?? this.amount,
-      selected: selected ?? this.selected,
-    );
-  }
+  Widget _detailRow(String label, String value) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 5),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(color: MobileGlassTheme.textSecondary),
+          ),
+        ),
+        Flexible(
+          child: SelectableText(
+            value,
+            textAlign: TextAlign.end,
+            style: TextStyle(
+              color: MobileGlassTheme.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 /// ------------------------------------------------------------------

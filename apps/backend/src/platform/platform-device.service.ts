@@ -1,3 +1,4 @@
+import { replaceOperationalDevice } from '../edge/operational-authority';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { DeviceStatus } from '@prisma/client';
@@ -99,11 +100,37 @@ export class PlatformDeviceService {
 
   async listDevices(venueId: string) {
     await this.directory.requireVenue(venueId);
-    return this.prisma.device.findMany({
+    const venue = await this.prisma.venue.findUniqueOrThrow({
+      where: { id: venueId },
+      select: { activeOperationalDeviceId: true },
+    });
+    const devices = await this.prisma.device.findMany({
       where: { venueId },
       select: DEVICE_FIELDS,
       orderBy: [{ displayName: 'asc' }, { id: 'asc' }],
     });
+    return devices.map((device) => ({
+      ...device,
+      isOperationalPrimary: device.id === venue.activeOperationalDeviceId,
+      activeOperationalDeviceId: venue.activeOperationalDeviceId,
+    }));
+  }
+
+  async selectPrimary(
+    actor: PlatformPrincipal,
+    venueId: string,
+    deviceId: string,
+    expectedDeviceId: string | null,
+    reason: string,
+  ) {
+    return replaceOperationalDevice(
+      this.prisma,
+      actor,
+      venueId,
+      deviceId,
+      expectedDeviceId,
+      reason,
+    );
   }
 
   async getDevice(venueId: string, deviceId: string) {

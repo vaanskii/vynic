@@ -47,7 +47,7 @@ void _registerAdapters() {
   }
 }
 
-MenuItemDB _item(String ka, double? price) => MenuItemDB(
+MenuItemDB _item(String ka, double? price) => MenuItemDB.create(
   translationsEn: {'name': ka},
   translationsKa: {'name': ka},
   price: price,
@@ -66,7 +66,7 @@ Future<void> _seed() async {
   await DatabaseCore.settingsBox!.put('defaultIncludeServiceFee', true);
 
   await DatabaseCore.menuBox!.add(
-    MenuCategoryDB(
+    MenuCategoryDB.create(
       slug: 'hot',
       translationsEn: {'name': 'Hot dishes'},
       translationsKa: {'name': 'ცხელი კერძები'},
@@ -79,13 +79,13 @@ Future<void> _seed() async {
         _item('ბადრიჯანი ნიგვზით', 14),
       ],
       subcategories: [
-        MenuSubcategoryDB(
+        MenuSubcategoryDB.create(
           slug: 'grill',
           translationsEn: {'name': 'Grill'},
           translationsKa: {'name': 'მწვადეული'},
           items: [_item('მწვადი ცხვრის', 22)],
         ),
-        MenuSubcategoryDB(
+        MenuSubcategoryDB.create(
           slug: 'stew',
           translationsEn: {'name': 'Stews'},
           translationsKa: {'name': 'შემწვარი და მოხარშული'},
@@ -95,23 +95,23 @@ Future<void> _seed() async {
     ),
   );
   await DatabaseCore.menuBox!.add(
-    MenuCategoryDB(
+    MenuCategoryDB.create(
       slug: 'drinks',
       translationsEn: {'name': 'Drinks'},
       translationsKa: {'name': 'სასმელები'},
       items: [
         _item('საფერავი 0.75', 42),
         _item('ბორჯომი 0.5', 3),
-        MenuItemDB(
+        MenuItemDB.create(
           translationsEn: const {'name': 'Draft beer'},
           translationsKa: const {'name': 'მოსაწური ლუდი'},
           variants: [
-            MenuVariantDB(size: 0.25, price: 4),
-            MenuVariantDB(size: 0.33, price: 5),
-            MenuVariantDB(size: 0.5, price: 7),
-            MenuVariantDB(size: 1, price: 12),
-            MenuVariantDB(size: 1.5, price: 17),
-            MenuVariantDB(size: 2, price: 22),
+            MenuVariantDB.create(size: 0.25, price: 4),
+            MenuVariantDB.create(size: 0.33, price: 5),
+            MenuVariantDB.create(size: 0.5, price: 7),
+            MenuVariantDB.create(size: 1, price: 12),
+            MenuVariantDB.create(size: 1.5, price: 17),
+            MenuVariantDB.create(size: 2, price: 22),
           ],
         ),
       ],
@@ -252,6 +252,50 @@ void main() {
     _registerAdapters();
     await _seed();
     MenuService.clearCache();
+  });
+
+  testWidgets('saved category appears in the open menu without restart', (
+    tester,
+  ) async {
+    await _pumpEmpty(tester, const Size(1440, 900));
+    expect(find.text('ახალი კატეგორია'), findsNothing);
+    await tester.runAsync(() async {
+      await DatabaseCore.menuBox!.add(
+        MenuCategoryDB(
+          slug: 'live-category',
+          translationsEn: {'name': 'Live category'},
+          translationsKa: {'name': 'ახალი კატეგორია'},
+        ),
+      );
+    });
+    await tester.pumpAndSettle();
+    expect(find.text('ახალი კატეგორია'), findsWidgets);
+    await tester.tap(find.text('ახალი კატეგორია').first);
+    await tester.pumpAndSettle();
+    await tester.runAsync(() async {
+      final row = DatabaseCore.menuBox!.values.firstWhere(
+        (c) => c.slug == 'live-category',
+      );
+      row.items = [
+        MenuItemDB(
+          translationsEn: {'name': 'Live item'},
+          translationsKa: {'name': 'ახალი კერძი'},
+          price: 12,
+        ),
+      ];
+      await row.save();
+    });
+    await tester.pumpAndSettle();
+    expect(find.text('ახალი კერძი'), findsWidgets);
+
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.runAsync(() async {
+      final row = DatabaseCore.menuBox!.values.firstWhere(
+        (c) => c.slug == 'live-category',
+      );
+      await row.delete();
+    });
   });
 
   tearDownAll(() async {

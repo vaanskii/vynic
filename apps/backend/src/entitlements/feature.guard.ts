@@ -40,11 +40,10 @@ export class FeatureGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredFeature = this.reflector.getAllAndOverride<string>(
-      REQUIRED_FEATURE_KEY,
-      [context.getHandler(), context.getClass()],
-    );
-    if (!requiredFeature) return true;
+    const requiredFeatures = [context.getClass(), context.getHandler()]
+      .map((target) => this.reflector.get<string>(REQUIRED_FEATURE_KEY, target))
+      .filter((key): key is string => !!key);
+    if (!requiredFeatures.length) return true;
 
     const request = context
       .switchToHttp()
@@ -56,12 +55,14 @@ export class FeatureGuard implements CanActivate {
       );
     }
 
-    if (
-      !(await this.entitlements.hasFeature(tenant.venueId, requiredFeature))
-    ) {
-      throw new ForbiddenException(
-        `This venue is not entitled to ${requiredFeature}`,
-      );
+    for (const requiredFeature of new Set(requiredFeatures)) {
+      if (
+        !(await this.entitlements.hasFeature(tenant.venueId, requiredFeature))
+      ) {
+        throw new ForbiddenException(
+          `This venue is not entitled to ${requiredFeature}`,
+        );
+      }
     }
     return true;
   }

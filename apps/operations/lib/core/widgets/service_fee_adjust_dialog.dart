@@ -151,7 +151,7 @@ class _ServiceFeeAdjustDialogState extends State<ServiceFeeAdjustDialog> {
     return TextField(
       controller: _percentageController,
       enabled: _includeServiceFee,
-      readOnly: shouldUsePosOnScreenKeyboard(),
+      readOnly: shouldUsePosOnScreenKeyboard(context),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [
         FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
@@ -323,7 +323,7 @@ class _ServiceFeeAdjustDialogState extends State<ServiceFeeAdjustDialog> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Expanded(
-                          child: shouldUsePosOnScreenKeyboard()
+                          child: shouldUsePosOnScreenKeyboard(context)
                               ? InkWell(
                                   onTap: _openPercentageKeyboard,
                                   borderRadius: BorderRadius.circular(12),

@@ -130,18 +130,23 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
 
       final categories = rawMenu.map((cat) {
         return MenuCategoryDB(
+          id: cat['id'] as String?,
           slug: cat['slug'],
           translationsEn: {'name': cat['nameEn']},
           translationsKa: {'name': cat['nameKa']},
           sendToKitchen: cat['sendToKitchen'] ?? true,
           items: (cat['items'] as List<dynamic>).map((it) {
             return MenuItemDB(
+              // Read-only view of the Cloud mirror; the id comes from the POS
+              // and is carried through rather than invented here.
+              id: it['id'] as String?,
               translationsEn: {'name': it['nameEn']},
               translationsKa: {'name': it['nameKa']},
               price: (it['price'] as num).toDouble(),
               sendToKitchen: it['sendToKitchen'] ?? true,
               variants: (it['variants'] as List<dynamic>?)?.map((v) {
                 return MenuVariantDB(
+                  id: v['id'] as String?,
                   size: (v['size'] as num).toDouble(),
                   price: (v['price'] as num).toDouble(),
                 );
@@ -150,17 +155,20 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
           }).toList(),
           subcategories: (cat['subcategories'] as List<dynamic>?)?.map((sub) {
             return MenuSubcategoryDB(
+              id: sub['id'] as String?,
               slug: sub['slug'],
               translationsEn: {'name': sub['nameEn']},
               translationsKa: {'name': sub['nameKa']},
               items: (sub['items'] as List<dynamic>).map((it) {
                 return MenuItemDB(
+                  id: it['id'] as String?,
                   translationsEn: {'name': it['nameEn']},
                   translationsKa: {'name': it['nameKa']},
                   price: (it['price'] as num).toDouble(),
                   sendToKitchen: it['sendToKitchen'] ?? true,
                   variants: (it['variants'] as List<dynamic>?)?.map((v) {
                     return MenuVariantDB(
+                      id: v['id'] as String?,
                       size: (v['size'] as num).toDouble(),
                       price: (v['price'] as num).toDouble(),
                     );
@@ -219,6 +227,8 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
           quantity: newQty,
           total: item.unitPrice * newQty,
           comment: item.comment,
+          menuItemId: item.menuItemId,
+          variantId: item.variantId,
         );
       } else {
         _order!.items.removeAt(index);
@@ -262,6 +272,8 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
             quantity: existing.quantity + quantity,
             total: existing.unitPrice * (existing.quantity + quantity),
             comment: existing.comment,
+            menuItemId: existing.menuItemId,
+            variantId: existing.variantId,
           ),
         );
       } else {
@@ -273,6 +285,8 @@ class _OrderEditorScreenState extends State<OrderEditorScreen> {
             unitPrice: price,
             quantity: quantity,
             total: price * quantity,
+            menuItemId: menuItem.id,
+            variantId: variant?.id,
           ),
         );
       }

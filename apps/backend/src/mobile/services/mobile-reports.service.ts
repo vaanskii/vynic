@@ -1,10 +1,9 @@
+import { isProcurementCategory } from '../util/expense-category';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { normalizeAuditEventType } from '../../pos/audit/audit-event-type';
 import {
-  businessDateWhere,
   nextDay,
-  normalizePaymentType,
   parseBusinessDateStart,
   todayStart,
 } from '../util/mobile-date.util';
@@ -76,9 +75,13 @@ export class MobileReportsService {
       closedById: r.closedById ?? null,
       closedByName: r.closedByName ?? null,
       locked: r.locked,
+      orderKind: r.orderKind ?? null,
       updatedAt: (r.updatedAt as Date).toISOString(),
       events: (r.events ?? []).map((ev: any) => ({
         type: normalizeAuditEventType(ev.type, ev.previousQty, ev.newQty),
+        // The POS's own ordinal. Sent so the Manager orders the timeline by
+        // the sequence the POS assigned rather than by a timestamp that ties.
+        sequence: ev.seq,
         itemName: ev.itemName,
         previousQty: ev.previousQty,
         newQty: ev.newQty,
@@ -86,6 +89,9 @@ export class MobileReportsService {
         waiterName: ev.waiterName,
         timestamp: (ev.eventTime as Date).toISOString(),
         note: ev.note ?? null,
+        // Structured close/creation details; the Manager renders payment
+        // semantics from these rather than from the note.
+        details: ev.details ?? null,
       })),
     }));
   }
@@ -97,31 +103,25 @@ export class MobileReportsService {
   ) {
     const now = new Date();
     let from: Date;
-    let where: any;
+    let through: Date | null = null;
     let currentBusinessDate: string | null = null;
 
     if (period === 'all') {
       from = new Date(0);
-      where = { status: { not: 'cancelled' } };
     } else if (period === 'week') {
       from = new Date(now);
       from.setDate(from.getDate() - 7);
       from.setHours(0, 0, 0, 0);
-      where = { createdAt: { gte: from }, status: { not: 'cancelled' } };
     } else if (period === 'month') {
       const monthMatch = month?.match(/^(\d{4})-(\d{2})$/);
       if (monthMatch) {
         const y = Number(monthMatch[1]);
         const m = Number(monthMatch[2]);
         from = new Date(y, m - 1, 1);
-        const to = new Date(y, m, 1);
-        where = {
-          createdAt: { gte: from, lt: to },
-          status: { not: 'cancelled' },
-        };
+        through = new Date(y, m, 1);
       } else {
         from = new Date(now.getFullYear(), now.getMonth(), 1);
-        where = { createdAt: { gte: from }, status: { not: 'cancelled' } };
+        through = new Date(now.getFullYear(), now.getMonth() + 1, 1);
       }
     } else {
       // today = current business date
@@ -134,57 +134,30 @@ export class MobileReportsService {
         businessDateSetting?.value ?? todayStart().toISOString().split('T')[0];
       currentBusinessDate = resolvedBusinessDate;
       from = parseBusinessDateStart(resolvedBusinessDate);
-      where = {
-        venueId: tenant.venueId,
-        ...businessDateWhere(resolvedBusinessDate),
-        status: { not: 'cancelled' },
-      };
     }
 
-    where.venueId = tenant.venueId;
-
-    const [orders, byWaiter, expenses] = await Promise.all([
-      this.prisma.order.findMany({
-        where,
-        include: { items: true },
-      }),
-      this.prisma.order.groupBy({
-        by: ['waiterName'],
-        where,
-        _sum: { totalAmount: true },
-        _count: { id: true },
-      }),
-      this.prisma.expense.findMany({
-        where:
-          period === 'today' && currentBusinessDate
-            ? {
-                venueId: tenant.venueId,
-                createdAt: {
-                  gte: parseBusinessDateStart(currentBusinessDate),
-                  lt: nextDay(parseBusinessDateStart(currentBusinessDate)),
-                },
-              }
-            : {
-                venueId: tenant.venueId,
-                createdAt: { gte: from },
+    const expenseRows = await this.prisma.expense.findMany({
+      where:
+        period === 'today' && currentBusinessDate
+          ? {
+              venueId: tenant.venueId,
+              createdAt: {
+                gte: parseBusinessDateStart(currentBusinessDate),
+                lt: nextDay(parseBusinessDateStart(currentBusinessDate)),
               },
-        select: { amount: true, category: true },
-      }),
-    ]);
+            }
+          : {
+              venueId: tenant.venueId,
+              createdAt:
+                through == null ? { gte: from } : { gte: from, lt: through },
+            },
+      select: { amount: true, category: true },
+    });
 
-    const r = (n: number) => Math.round(n * 100) / 100;
-    const totalRev = orders.reduce((s, o) => s + Number(o.totalAmount), 0);
-    const paymentBreakdown: Record<string, number> = {};
-    for (const o of orders) {
-      const key = normalizePaymentType((o as any).paymentType);
-      paymentBreakdown[key] =
-        (paymentBreakdown[key] ?? 0) + Number(o.totalAmount);
-    }
-    const cashRev = paymentBreakdown['cash'] ?? 0;
-    const cardRev = Object.entries(paymentBreakdown).reduce(
-      (sum, [key, amount]) => (key.startsWith('card') ? sum + amount : sum),
-      0,
+    const expenses = expenseRows.filter(
+      (row) => !isProcurementCategory(row.category),
     );
+    const r = (n: number) => Math.round(n * 100) / 100;
     const totalExpenses = expenses.reduce(
       (sum, e) => sum + Number(e.amount),
       0,
@@ -198,13 +171,13 @@ export class MobileReportsService {
       );
     }
 
-    let effectiveTotalRevenue = totalRev;
-    let effectiveOrderCount = orders.length;
-    let effectiveCashRevenue = cashRev;
-    let effectiveCardRevenue = cardRev;
-    let effectivePaymentBreakdown: Record<string, number> = {
-      ...paymentBreakdown,
-    };
+    // Revenue is unavailable until a POS Sale-derived summary exists. A raw
+    // Order cannot prove fiscality, completed closure, reversal state, or gross.
+    let effectiveTotalRevenue = 0;
+    let effectiveOrderCount = 0;
+    let effectiveCashRevenue = 0;
+    let effectiveCardRevenue = 0;
+    let effectivePaymentBreakdown: Record<string, number> = {};
     let effectiveTopItems: Array<{
       name: string;
       qty: number;
@@ -226,24 +199,16 @@ export class MobileReportsService {
             cardRevenue?: number;
             paymentBreakdown?: Record<string, number>;
           };
-          effectiveTotalRevenue = Number(
-            summary.totalRevenue ?? effectiveTotalRevenue,
+          effectiveTotalRevenue = Number(summary.totalRevenue ?? 0);
+          effectiveOrderCount = Number(summary.orderCount ?? 0);
+          effectiveCashRevenue = Number(summary.cashRevenue ?? 0);
+          effectiveCardRevenue = Number(summary.cardRevenue ?? 0);
+          effectivePaymentBreakdown = summary.paymentBreakdown ?? {};
+        } catch (error) {
+          console.warn(
+            `[MobileReports] Invalid Sale-derived summary for ${currentBusinessDate}; revenue unavailable.`,
+            error,
           );
-          effectiveOrderCount = Number(
-            summary.orderCount ?? effectiveOrderCount,
-          );
-          effectiveCashRevenue = Number(
-            summary.cashRevenue ?? effectiveCashRevenue,
-          );
-          effectiveCardRevenue = Number(
-            summary.cardRevenue ?? effectiveCardRevenue,
-          );
-          effectivePaymentBreakdown = {
-            ...effectivePaymentBreakdown,
-            ...(summary.paymentBreakdown ?? {}),
-          };
-        } catch {
-          // Ignore malformed summary and keep DB-derived fallback values.
         }
       }
     }
@@ -262,32 +227,48 @@ export class MobileReportsService {
             paymentBreakdown?: Record<string, number>;
             topItems?: Array<{ name: string; qty: number; revenue: number }>;
           };
-          effectiveTotalRevenue = Number(
-            summary.totalRevenue ?? effectiveTotalRevenue,
-          );
-          effectiveOrderCount = Number(
-            summary.orderCount ?? effectiveOrderCount,
-          );
-          effectiveCashRevenue = Number(
-            summary.cashRevenue ?? effectiveCashRevenue,
-          );
-          effectiveCardRevenue = Number(
-            summary.cardRevenue ?? effectiveCardRevenue,
-          );
+          effectiveTotalRevenue = Number(summary.totalRevenue ?? 0);
+          effectiveOrderCount = Number(summary.orderCount ?? 0);
+          effectiveCashRevenue = Number(summary.cashRevenue ?? 0);
+          effectiveCardRevenue = Number(summary.cardRevenue ?? 0);
           effectiveTopItems = Array.isArray(summary.topItems)
             ? summary.topItems
             : null;
-          effectivePaymentBreakdown = {
-            ...effectivePaymentBreakdown,
-            ...(summary.paymentBreakdown ?? {}),
-          };
-        } catch {
-          // Ignore malformed summary and keep DB-derived fallback values.
+          effectivePaymentBreakdown = summary.paymentBreakdown ?? {};
+        } catch (error) {
+          console.warn(
+            '[MobileReports] Invalid all-time Sale-derived summary; revenue unavailable.',
+            error,
+          );
         }
       }
     }
 
-    if (period === 'month' && month && /^\d{4}-\d{2}$/.test(month)) {
+    if (period === 'month' || period === 'week') {
+      const historyIndexSetting = await (this.prisma as any).setting.findUnique(
+        {
+          where: settingIdentity(tenant, 'salesSummary:history_index'),
+          select: { value: true },
+        },
+      );
+      let indexedDates: Set<string> | null = null;
+      if (historyIndexSetting?.value) {
+        try {
+          const parsed = JSON.parse(historyIndexSetting.value) as unknown;
+          if (Array.isArray(parsed)) {
+            indexedDates = new Set(
+              parsed
+                .map(String)
+                .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date)),
+            );
+          }
+        } catch (error) {
+          console.warn(
+            '[MobileReports] Invalid sales-history index; using valid summary rows only.',
+            error,
+          );
+        }
+      }
       const summaryRows = await (this.prisma as any).setting.findMany({
         where: {
           venueId: tenant.venueId,
@@ -295,22 +276,44 @@ export class MobileReportsService {
         },
         select: { key: true, value: true },
       });
-      const monthRows = summaryRows
-        .filter((s: any) => s.key.startsWith(`salesSummary:${month}-`))
+      const localDateKey = (date: Date) =>
+        [
+          date.getFullYear().toString().padStart(4, '0'),
+          (date.getMonth() + 1).toString().padStart(2, '0'),
+          date.getDate().toString().padStart(2, '0'),
+        ].join('-');
+      const fromDateKey = localDateKey(from);
+      const throughDateKey = localDateKey(now);
+      const monthPrefix =
+        period === 'month'
+          ? `${month && /^\d{4}-\d{2}$/.test(month) ? month : fromDateKey.slice(0, 7)}-`
+          : null;
+      const periodRows = summaryRows
+        .filter((setting: any) => {
+          const date = String(setting.key).replace('salesSummary:', '');
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+          if (indexedDates != null && !indexedDates.has(date)) return false;
+          if (monthPrefix != null) return date.startsWith(monthPrefix);
+          return date >= fromDateKey && date <= throughDateKey;
+        })
         .map((s: any) => {
           try {
             return JSON.parse(s.value);
-          } catch {
+          } catch (error) {
+            console.warn(
+              `[MobileReports] Invalid Sale-derived history summary ${s.key}; row unavailable.`,
+              error,
+            );
             return null;
           }
         })
         .filter((x: any) => x != null);
-      if (monthRows.length > 0) {
+      if (periodRows.length > 0) {
         let totalRevenue = 0;
         let orderCount = 0;
         const pb: Record<string, number> = {};
         const itemMap = new Map<string, { qty: number; revenue: number }>();
-        for (const row of monthRows) {
+        for (const row of periodRows) {
           totalRevenue += Number(row.totalRevenue ?? 0);
           orderCount += Number(row.orderCount ?? 0);
           const pbd = (row.paymentBreakdown ?? {}) as Record<string, number>;
@@ -345,22 +348,6 @@ export class MobileReportsService {
       }
     }
 
-    // Per-item aggregation
-    const itemMap = new Map<string, { qty: number; revenue: number }>();
-    for (const o of orders) {
-      for (const it of (o as any).items ?? []) {
-        const cur = itemMap.get(it.name) ?? { qty: 0, revenue: 0 };
-        itemMap.set(it.name, {
-          qty: cur.qty + it.quantity,
-          revenue: cur.revenue + it.quantity * Number(it.price),
-        });
-      }
-    }
-
-    const allItemsSorted = Array.from(itemMap.entries())
-      .sort((a, b) => b[1].revenue - a[1].revenue)
-      .map(([name, s]) => ({ name, qty: s.qty, revenue: r(s.revenue) }));
-
     const topItems =
       effectiveTopItems != null && effectiveTopItems.length > 0
         ? effectiveTopItems
@@ -370,7 +357,7 @@ export class MobileReportsService {
               revenue: r(Number(it.revenue ?? 0)),
             }))
             .slice(0, 10)
-        : allItemsSorted.slice(0, 10);
+        : [];
 
     // Build category mapping so mobile report can expand sold items by categories.
     const menuItems = await (this.prisma as any).menuItem.findMany({
@@ -397,7 +384,7 @@ export class MobileReportsService {
             qty: Number(it.qty ?? 0),
             revenue: r(Number(it.revenue ?? 0)),
           }))
-        : allItemsSorted;
+        : [];
 
     const topItemsWithCategory = itemsForCategoryGrouping.map((it) => {
       const key = (it.name ?? '').trim().toLowerCase();
@@ -463,19 +450,20 @@ export class MobileReportsService {
       ),
       topItems,
       topItemsByCategory,
-      byWaiter: byWaiter.map((w) => ({
-        waiterName: w.waiterName,
-        totalSales: r(Number(w._sum.totalAmount ?? 0)),
-        orderCount: w._count.id,
-      })),
+      // The current Cloud Order mirror cannot prove Sale revenue semantics per
+      // waiter. Return unavailable rather than manufacturing a revenue rank.
+      byWaiter: [],
     };
   }
 
   async getSalesDaily(tenant: TenantContext, month?: string) {
-    const expenses = await this.prisma.expense.findMany({
+    const expenseRows = await this.prisma.expense.findMany({
       where: { venueId: tenant.venueId },
-      select: { amount: true, createdAt: true },
+      select: { amount: true, createdAt: true, category: true },
     });
+    const expenses = expenseRows.filter(
+      (row) => !isProcurementCategory(row.category),
+    );
     const expensesByDate = new Map<string, number>();
     const dateKey = (d: Date) => {
       const y = d.getFullYear().toString().padStart(4, '0');
@@ -510,103 +498,51 @@ export class MobileReportsService {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
       try {
         summaryByDate.set(date, JSON.parse(s.value));
-      } catch {
-        // ignore malformed
+      } catch (error) {
+        console.warn(
+          `[MobileReports] Invalid Sale-derived history summary ${s.key}; row unavailable.`,
+          error,
+        );
       }
     }
 
-    const orders = await this.prisma.order.findMany({
-      where: { venueId: tenant.venueId },
-      select: {
-        businessDate: true,
-        status: true,
-        totalAmount: true,
-        paymentType: true,
-        createdAt: true,
-      },
-    });
-    const byDate = new Map<
-      string,
-      {
-        totalOrders: number;
-        cancelledOrders: number;
-        nonCancelledTotal: number;
-        paymentBreakdown: Record<string, number>;
-      }
-    >();
-    const dateFromOrder = (o: any) =>
-      (o.businessDate && o.businessDate.trim().length > 0
-        ? o.businessDate
-        : (o.createdAt as Date).toISOString().split('T')[0]) as string;
-    for (const o of orders) {
-      const date = dateFromOrder(o);
-      const cur = byDate.get(date) ?? {
-        totalOrders: 0,
-        cancelledOrders: 0,
-        nonCancelledTotal: 0,
-        paymentBreakdown: {},
-      };
-      cur.totalOrders += 1;
-      const isCancelled = (o.status ?? '').toLowerCase() === 'cancelled';
-      if (isCancelled) {
-        cur.cancelledOrders += 1;
-      } else {
-        const amount = Number(o.totalAmount ?? 0);
-        cur.nonCancelledTotal += amount;
-        const method = normalizePaymentType((o as any).paymentType);
-        cur.paymentBreakdown[method] =
-          (cur.paymentBreakdown[method] ?? 0) + amount;
-      }
-      byDate.set(date, cur);
-    }
-
-    const allDates = new Set<string>([
-      ...Array.from(summaryByDate.keys()),
-      ...Array.from(byDate.keys()),
-    ]);
+    let allDates: Set<string> | null = null;
     if (historyIndexSetting?.value) {
       try {
-        const indexedDates = JSON.parse(historyIndexSetting.value) as string[];
-        for (const d of indexedDates) allDates.add(d);
-      } catch {
-        // ignore malformed index
+        const indexedDates = JSON.parse(historyIndexSetting.value) as unknown;
+        if (Array.isArray(indexedDates)) {
+          allDates = new Set(
+            indexedDates
+              .map(String)
+              .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date)),
+          );
+        }
+      } catch (error) {
+        console.warn(
+          '[MobileReports] Invalid sales-history index; using valid summary rows only.',
+          error,
+        );
       }
     }
+    allDates ??= new Set<string>(Array.from(summaryByDate.keys()));
     let rows = Array.from(allDates).map((date) => {
       const summary = summaryByDate.get(date);
-      const fallback = byDate.get(date) ?? {
-        totalOrders: 0,
-        cancelledOrders: 0,
-        nonCancelledTotal: 0,
-        paymentBreakdown: {},
-      };
+      const totalRevenue = Number(summary?.totalRevenue ?? 0);
+      const totalExpenses = Number(
+        summary?.totalExpenses ?? expensesByDate.get(date) ?? 0,
+      );
       return {
         date,
-        totalRevenue: Number(
-          summary?.totalRevenue ?? fallback.nonCancelledTotal ?? 0,
-        ),
-        closedOrders: Number(
-          summary?.orderCount ??
-            fallback.totalOrders - fallback.cancelledOrders,
-        ),
-        cancelledOrders: fallback.cancelledOrders,
-        totalOrders: fallback.totalOrders,
-        paymentBreakdown:
-          summary?.paymentBreakdown ?? fallback.paymentBreakdown,
+        totalRevenue,
+        closedOrders: Number(summary?.orderCount ?? 0),
+        cancelledOrders: Number(summary?.cancelledOrders ?? 0),
+        totalOrders: Number(summary?.totalOrders ?? 0),
+        paymentBreakdown: summary?.paymentBreakdown ?? {},
         closedTables: Array.isArray(summary?.closedTables)
           ? summary.closedTables
           : [],
-        totalExpenses:
-          Math.round(
-            Number(summary?.totalExpenses ?? expensesByDate.get(date) ?? 0) *
-              100,
-          ) / 100,
-        profit:
-          Math.round(
-            (Number(summary?.totalRevenue ?? fallback.nonCancelledTotal ?? 0) -
-              Number(summary?.totalExpenses ?? expensesByDate.get(date) ?? 0)) *
-              100,
-          ) / 100,
+        totalExpenses: Math.round(totalExpenses * 100) / 100,
+        profit: Math.round((totalRevenue - totalExpenses) * 100) / 100,
       };
     });
     if (month && /^\d{4}-\d{2}$/.test(month)) {
@@ -617,33 +553,35 @@ export class MobileReportsService {
   }
 
   async getTopItems(tenant: TenantContext, limit: number) {
-    const today = todayStart();
-    const items = await (this.prisma as any).orderItem.findMany({
-      where: {
-        order: {
-          venueId: tenant.venueId,
-          createdAt: { gte: today },
-        },
-      },
-      select: { name: true, quantity: true, price: true },
+    const businessDateSetting = await (this.prisma as any).setting.findUnique({
+      where: settingIdentity(tenant, 'currentBusinessDate'),
     });
+    const businessDate =
+      businessDateSetting?.value ?? todayStart().toISOString().split('T')[0];
+    const summarySetting = await (this.prisma as any).setting.findUnique({
+      where: settingIdentity(tenant, `salesSummary:${businessDate}`),
+    });
+    if (!summarySetting?.value) return [];
 
-    const map = new Map<string, { qty: number; revenue: number }>();
-    for (const item of items) {
-      const cur = map.get(item.name) ?? { qty: 0, revenue: 0 };
-      map.set(item.name, {
-        qty: cur.qty + item.quantity,
-        revenue: cur.revenue + item.quantity * Number(item.price),
-      });
+    try {
+      const summary = JSON.parse(summarySetting.value) as {
+        topItems?: Array<{ name: string; qty: number; revenue: number }>;
+      };
+      if (!Array.isArray(summary.topItems)) return [];
+      return summary.topItems
+        .map((item) => ({
+          name: String(item.name ?? ''),
+          qty: Number(item.qty ?? 0),
+          revenue: Math.round(Number(item.revenue ?? 0) * 100) / 100,
+        }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, Math.min(limit, 50));
+    } catch (error) {
+      console.warn(
+        `[MobileReports] Invalid Sale-derived top-items summary for ${businessDate}; revenue unavailable.`,
+        error,
+      );
+      return [];
     }
-
-    return Array.from(map.entries())
-      .sort((a, b) => b[1].revenue - a[1].revenue)
-      .slice(0, Math.min(limit, 50))
-      .map(([name, stats]) => ({
-        name,
-        qty: stats.qty,
-        revenue: Math.round(stats.revenue * 100) / 100,
-      }));
   }
 }

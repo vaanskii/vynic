@@ -1,0 +1,10 @@
+// Generated from packages/contracts/schema/manager-login.contract.json. Do not edit.
+export const managerLoginContract = {
+  "version": 1,
+  "path": "/auth/mobile-login",
+  "venueCodeField": "venueCode",
+  "pinField": "pin",
+  "rolloutVenueCode": "vankisi",
+  "legacyMaximumDeadline": "2026-12-01T00:00:00Z",
+  "venueCodePattern": "^[a-z0-9][a-z0-9-]{2,31}$"
+} as const;

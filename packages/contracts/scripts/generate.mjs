@@ -827,7 +827,18 @@ const ts = renderTs();
 const edgeTs = renderEdgeTs();
 const edgeDart = renderEdgeDart();
 
+const managerLogin = JSON.parse(readFileSync(join(PKG, 'schema', 'manager-login.contract.json'), 'utf8'));
+const managerBanner = '// Generated from packages/contracts/schema/manager-login.contract.json. Do not edit.\n';
+const managerTs = managerBanner + `export const managerLoginContract = ${JSON.stringify(managerLogin, null, 2)} as const;\n`;
+const managerDart = managerBanner + 'abstract final class ManagerLoginContract {\n' +
+  Object.entries(managerLogin).map(([key, value]) =>
+    typeof value === 'number' ? `  static const ${key} = ${value};` : `  static const ${key} = r'${value}';`).join('\n') + '\n}\n';
+
 const outputs = [
+  { path: join(PKG, 'generated/typescript/manager-login.ts'), body: managerTs },
+  { path: join(REPO, 'apps/backend/src/shared/contracts/manager-login.ts'), body: managerTs },
+  { path: join(PKG, 'generated/dart/manager_login.dart'), body: managerDart },
+  { path: join(REPO, 'apps/operations/lib/core/contracts/manager_login.dart'), body: managerDart },
   { path: DART_OUT, body: dart },
   { path: DART_APP_OUT, body: dart },
   { path: TS_OUT, body: ts },

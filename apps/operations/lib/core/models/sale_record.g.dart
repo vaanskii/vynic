@@ -22,13 +22,15 @@ class SaleRecordItemAdapter extends TypeAdapter<SaleRecordItem> {
       unitPrice: fields[2] as double,
       total: fields[3] as double,
       comment: fields[4] as String?,
+      menuItemId: fields[5] as String?,
+      variantId: fields[6] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, SaleRecordItem obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.itemName)
       ..writeByte(1)
@@ -38,7 +40,11 @@ class SaleRecordItemAdapter extends TypeAdapter<SaleRecordItem> {
       ..writeByte(3)
       ..write(obj.total)
       ..writeByte(4)
-      ..write(obj.comment);
+      ..write(obj.comment)
+      ..writeByte(5)
+      ..write(obj.menuItemId)
+      ..writeByte(6)
+      ..write(obj.variantId);
   }
 
   @override
@@ -84,27 +90,30 @@ class SaleRecordAdapter extends TypeAdapter<SaleRecord> {
       businessDate: fields[18] as String,
       isCancelled: fields[19] as bool,
       cancelledAt: fields[20] as DateTime?,
+      cancelledBy: fields[27] as String?,
+      cancellationReason: fields[28] as String?,
       isFiscal: fields[21] as bool,
       restoredToOrder: fields[22] as bool,
       restoredAt: fields[23] as DateTime?,
       restoredBy: fields[24] as String?,
       tipAmount: fields[25] as double,
       closedById: fields[26] as String?,
-      cancelledBy: fields[27] as String?,
-      cancellationReason: fields[28] as String?,
-      recordType: (fields[29] as String?) ?? SaleRecord.recordTypeSale,
+      recordType: fields[29] == null ? 'sale' : fields[29] as String,
       grossSaleAmount: fields[30] as double?,
-      advanceApplied: (fields[31] as double?) ?? 0.0,
+      advanceApplied: fields[31] == null ? 0.0 : fields[31] as double,
       collectedNow: fields[32] as double?,
       appliedToClosureId: fields[33] as String?,
       advanceReceiptId: fields[34] as String?,
+      posSaleId: fields[35] as String?,
+      ledgerRevision: fields[36] as int?,
+      ledgerUpdatedAt: fields[37] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, SaleRecord obj) {
     writer
-      ..writeByte(35)
+      ..writeByte(38)
       ..writeByte(0)
       ..write(obj.closureId)
       ..writeByte(1)
@@ -147,6 +156,10 @@ class SaleRecordAdapter extends TypeAdapter<SaleRecord> {
       ..write(obj.isCancelled)
       ..writeByte(20)
       ..write(obj.cancelledAt)
+      ..writeByte(27)
+      ..write(obj.cancelledBy)
+      ..writeByte(28)
+      ..write(obj.cancellationReason)
       ..writeByte(21)
       ..write(obj.isFiscal)
       ..writeByte(22)
@@ -159,10 +172,6 @@ class SaleRecordAdapter extends TypeAdapter<SaleRecord> {
       ..write(obj.tipAmount)
       ..writeByte(26)
       ..write(obj.closedById)
-      ..writeByte(27)
-      ..write(obj.cancelledBy)
-      ..writeByte(28)
-      ..write(obj.cancellationReason)
       ..writeByte(29)
       ..write(obj.recordType)
       ..writeByte(30)
@@ -174,7 +183,13 @@ class SaleRecordAdapter extends TypeAdapter<SaleRecord> {
       ..writeByte(33)
       ..write(obj.appliedToClosureId)
       ..writeByte(34)
-      ..write(obj.advanceReceiptId);
+      ..write(obj.advanceReceiptId)
+      ..writeByte(35)
+      ..write(obj.posSaleId)
+      ..writeByte(36)
+      ..write(obj.ledgerRevision)
+      ..writeByte(37)
+      ..write(obj.ledgerUpdatedAt);
   }
 
   @override

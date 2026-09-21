@@ -1,3 +1,4 @@
+import 'package:vynic/core/widgets/pos_text.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -109,7 +110,10 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
   Future<void> _openAddStaffDialog() async {
     final created = await showDialog<bool>(
       context: context,
-      builder: (context) => _AddStaffDialog(waiterOnly: _waitersOnlyAdmin),
+      builder: (context) => _AddStaffDialog(
+        actorId: widget.user.username,
+        waiterOnly: _waitersOnlyAdmin,
+      ),
     );
     if (created == true && mounted) _refreshList();
   }
@@ -228,7 +232,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                PosText(
                   'სუპერვაიზერის შეზღუდვები',
                   style: TextStyle(
                     color: noticeTitle,
@@ -237,7 +241,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
+                PosText(
                   'ამ განყოფილებაში შეგიძლიათ მხოლოდ ოფიციანტების მართვა:\n'
                   '• ახალი თანამშრომლის დამატება — მხოლოდ ოფიციანტის როლით\n'
                   '• სიაში ჩანს მხოლოდ ოფიციანტები\n'
@@ -278,7 +282,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              PosText(
                 'პერსონალი',
                 style: TextStyle(
                   color: _staffText,
@@ -287,7 +291,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
                 ),
               ),
               const SizedBox(height: 2),
-              Text(
+              PosText(
                 _waitersOnlyAdmin
                     ? 'ოფიციანტების დამატება და PIN-ების მართვა.'
                     : 'მართეთ თანამშრომლები, როლები და PIN-ები.',
@@ -404,7 +408,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
                     ),
                     SizedBox(width: 9),
                     Flexible(
-                      child: Text(
+                      child: PosText(
                         'თანამშრომლების სია',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -506,7 +510,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
                     color: _staffMuted,
                   ),
                   SizedBox(height: 10),
-                  Text(
+                  PosText(
                     'თანამშრომელი ვერ მოიძებნა',
                     style: TextStyle(color: _staffMuted, fontSize: 14),
                   ),
@@ -536,7 +540,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
                 color: _staffSurface,
                 border: Border(top: BorderSide(color: _staffBorder)),
               ),
-              child: Text(
+              child: PosText(
                 '${users.length} ჩანაწერი',
                 style: const TextStyle(
                   color: _staffMuted,
@@ -560,11 +564,17 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
             flex: 5,
             child: Padding(
               padding: EdgeInsets.only(left: 44),
-              child: Text('სახელი', style: _staffTableHeaderStyle),
+              child: PosText('სახელი', style: _staffTableHeaderStyle),
             ),
           ),
-          Expanded(flex: 4, child: Text('როლი', style: _staffTableHeaderStyle)),
-          Expanded(flex: 4, child: Text('PIN', style: _staffTableHeaderStyle)),
+          Expanded(
+            flex: 4,
+            child: PosText('როლი', style: _staffTableHeaderStyle),
+          ),
+          Expanded(
+            flex: 4,
+            child: PosText('PIN', style: _staffTableHeaderStyle),
+          ),
           SizedBox(width: 42),
         ],
       ),
@@ -577,13 +587,19 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
       initialValue: _listFilter,
       onSelected: (value) => setState(() => _listFilter = value),
       itemBuilder: (context) => const [
-        PopupMenuItem(value: _StaffListFilter.all, child: Text('ყველა')),
-        PopupMenuItem(value: _StaffListFilter.manager, child: Text('მენეჯერი')),
+        PopupMenuItem(value: _StaffListFilter.all, child: PosText('ყველა')),
+        PopupMenuItem(
+          value: _StaffListFilter.manager,
+          child: PosText('მენეჯერი'),
+        ),
         PopupMenuItem(
           value: _StaffListFilter.supervisor,
-          child: Text('სუპერვაიზერი'),
+          child: PosText('სუპერვაიზერი'),
         ),
-        PopupMenuItem(value: _StaffListFilter.waiter, child: Text('ოფიციანტი')),
+        PopupMenuItem(
+          value: _StaffListFilter.waiter,
+          child: PosText('ოფიციანტი'),
+        ),
       ],
       child: Container(
         height: 42,
@@ -601,7 +617,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
             const Icon(Icons.filter_alt_outlined, size: 18, color: _staffText),
             if (!iconOnly) ...[
               const SizedBox(width: 7),
-              const Text(
+              const PosText(
                 'ფილტრი',
                 style: TextStyle(
                   color: _staffText,
@@ -629,7 +645,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
                   Icon(Icons.security_outlined, color: _staffText, size: 21),
                   SizedBox(width: 9),
                   Expanded(
-                    child: Text(
+                    child: PosText(
                       'როლები და წვდომა',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -677,7 +693,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
               Icon(Icons.info_outline, color: _staffPrimary, size: 20),
               SizedBox(width: 10),
               Expanded(
-                child: Text(
+                child: PosText(
                   'PIN კოდი უნიკალური უნდა იყოს. მენეჯერი მართავს ყველა როლს, სუპერვაიზერი კი მხოლოდ ოფიციანტებს.',
                   style: TextStyle(
                     color: _staffMuted,
@@ -707,7 +723,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
             onPressed: _openAddStaffDialog,
             style: AdminDesign.primaryButtonStyle(),
             icon: const Icon(Icons.person_add_alt_1, size: 19),
-            label: Text(
+            label: PosText(
               _waitersOnlyAdmin ? 'ახალი ოფიციანტი' : 'ახალი თანამშრომელი',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
@@ -720,7 +736,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
               const Icon(Icons.info_outline, color: _staffPrimary, size: 20),
               const SizedBox(width: 9),
               const Expanded(
-                child: Text(
+                child: PosText(
                   'ყველა ცვლილება ინახება მოქმედების დასრულებისთანავე.',
                   style: TextStyle(color: _staffMuted, fontSize: 12),
                 ),
@@ -746,6 +762,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
     final ok = await DatabaseService.renameUserByUsername(
       oldUsername: user.username,
       newUsername: newName,
+      actorId: widget.user.username,
     );
     if (!ok) {
       unawaited(
@@ -769,6 +786,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
     final ok = await DatabaseService.updateUserPinByUsername(
       username: user.username,
       pinCode: newPin,
+      actorId: widget.user.username,
     );
     if (!ok) {
       unawaited(showErrorToast(context, 'PIN-ის შენახვა ვერ მოხერხდა'));
@@ -795,6 +813,7 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
     final ok = await DatabaseService.updateUserRoleByUsername(
       username: user.username,
       role: role,
+      actorId: widget.user.username,
     );
     if (!mounted) return;
     if (!ok) {
@@ -819,29 +838,32 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: _staffCard,
-        title: const Text('წაშლა', style: TextStyle(color: _staffText)),
-        content: Text(
+        title: const PosText('წაშლა', style: TextStyle(color: _staffText)),
+        content: PosText(
           'დარწმუნებული ხართ, რომ გსურთ „${user.username}“ წაშლა?',
           style: const TextStyle(color: _staffMuted),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('გაუქმება'),
+            child: const PosText('გაუქმება'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: AdminDesign.danger,
             ),
-            child: const Text('წაშლა'),
+            child: const PosText('წაშლა'),
           ),
         ],
       ),
     );
     if (confirmed != true || !mounted) return;
 
-    final deleted = await DatabaseService.deleteUserByUsername(user.username);
+    final deleted = await DatabaseService.deleteUserByUsername(
+      user.username,
+      actorId: widget.user.username,
+    );
     if (!deleted) {
       unawaited(showErrorToast(context, 'ბოლო მენეჯერის წაშლა არ შეიძლება'));
       return;
@@ -858,7 +880,10 @@ class _AdminStaffSectionState extends State<AdminStaffSection> {
 }
 
 class _AddStaffDialog extends StatefulWidget {
-  const _AddStaffDialog({this.waiterOnly = false});
+  const _AddStaffDialog({required this.actorId, this.waiterOnly = false});
+
+  /// The operator who opened this dialog; the audit row's actor.
+  final String actorId;
 
   final bool waiterOnly;
 
@@ -902,7 +927,7 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
+                    const PosText(
                       'PIN კოდი',
                       style: TextStyle(
                         color: _staffText,
@@ -919,8 +944,8 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
                         border: Border.all(color: _staffBorder),
                       ),
                       child: Center(
-                        child: Text(
-                          tempPin.isEmpty ? '------' : tempPin.padRight(6, '-'),
+                        child: PosText(
+                          '•' * tempPin.length + '—' * (6 - tempPin.length),
                           style: const TextStyle(
                             color: _staffText,
                             fontSize: 28,
@@ -931,13 +956,21 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    _PinPad(
-                      onDigit: (d) {
+                    PinPad(
+                      authentication: true,
+                      onSubmit: () {
+                        if (tempPin.length == 6) {
+                          setState(() => _pinCode = tempPin);
+                          Navigator.pop(dialogContext);
+                        }
+                      },
+                      onClearPressed: () => setDialogState(() => tempPin = ''),
+                      onDigitPressed: (d) {
                         if (tempPin.length < 6) {
                           setDialogState(() => tempPin += d);
                         }
                       },
-                      onBackspace: () {
+                      onDeletePressed: () {
                         if (tempPin.isNotEmpty) {
                           setDialogState(
                             () => tempPin = tempPin.substring(
@@ -954,7 +987,7 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
                         Expanded(
                           child: OutlinedButton(
                             onPressed: () => Navigator.pop(dialogContext),
-                            child: const Text('გაუქმება'),
+                            child: const PosText('გაუქმება'),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -970,7 +1003,7 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
                               backgroundColor: _staffAccent,
                               foregroundColor: Colors.white,
                             ),
-                            child: const Text('შენახვა'),
+                            child: const PosText('შენახვა'),
                           ),
                         ),
                       ],
@@ -1007,6 +1040,7 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
       username: username,
       pinCode: _pinCode,
       role: role,
+      actorId: widget.actorId,
     );
     if (!mounted) return;
 
@@ -1035,7 +1069,7 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: selected ? _staffAccent : _staffBorder),
         ),
-        child: Text(
+        child: PosText(
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
@@ -1088,7 +1122,7 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
+                    child: PosText(
                       widget.waiterOnly
                           ? 'ახალი ოფიციანტი'
                           : 'ახალი თანამშრომელი',
@@ -1112,13 +1146,13 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text('სახელი', style: _staffFieldLabel),
+                      const PosText('სახელი', style: _staffFieldLabel),
                       const SizedBox(height: 8),
                       PosOnScreenTextField(
                         controller: _usernameController,
                         style: const TextStyle(color: _staffText),
                         decoration: _staffInputDecoration(
-                          shouldUsePosOnScreenKeyboard()
+                          shouldUsePosOnScreenKeyboard(context)
                               ? 'დააჭირეთ სახელის შესაყვანად'
                               : 'მაგ. გიორგი',
                         ),
@@ -1128,7 +1162,7 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
                       ),
                       if (!widget.waiterOnly) ...[
                         const SizedBox(height: 16),
-                        const Text('როლი', style: _staffFieldLabel),
+                        const PosText('როლი', style: _staffFieldLabel),
                         const SizedBox(height: 8),
                         LayoutBuilder(
                           builder: (context, constraints) {
@@ -1169,7 +1203,7 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
                         ),
                       ],
                       const SizedBox(height: 16),
-                      const Text('PIN (6 ციფრი)', style: _staffFieldLabel),
+                      const PosText('PIN (6 ციფრი)', style: _staffFieldLabel),
                       const SizedBox(height: 8),
                       InkWell(
                         onTap: _showPinPicker,
@@ -1185,10 +1219,10 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(
+                              PosText(
                                 _pinCode.isEmpty
                                     ? '------'
-                                    : _pinCode.padRight(6, '•'),
+                                    : '•' * _pinCode.length,
                                 style: const TextStyle(
                                   color: _staffText,
                                   fontSize: 22,
@@ -1212,7 +1246,7 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('გაუქმება'),
+                      child: const PosText('გაუქმება'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1221,7 +1255,7 @@ class _AddStaffDialogState extends State<_AddStaffDialog> {
                     child: ElevatedButton.icon(
                       onPressed: _createStaff,
                       icon: const Icon(Icons.check_circle_outline),
-                      label: const Text(
+                      label: const PosText(
                         'დამატება',
                         style: TextStyle(
                           fontSize: 16,
@@ -1319,7 +1353,7 @@ class _KpiChip extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                PosText(
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -1329,7 +1363,7 @@ class _KpiChip extends StatelessWidget {
                     height: 1.15,
                   ),
                 ),
-                Text(
+                PosText(
                   '$value',
                   style: const TextStyle(
                     color: _staffText,
@@ -1393,7 +1427,7 @@ class _EditStaffNameDialogState extends State<_EditStaffNameDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              const PosText(
                 'სახელის შეცვლა',
                 style: TextStyle(
                   color: _staffText,
@@ -1402,13 +1436,13 @@ class _EditStaffNameDialogState extends State<_EditStaffNameDialog> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text('სახელი', style: _staffFieldLabel),
+              const PosText('სახელი', style: _staffFieldLabel),
               const SizedBox(height: 8),
               PosOnScreenTextField(
                 controller: _nameController,
                 style: const TextStyle(color: _staffText),
                 decoration: _staffInputDecoration(
-                  shouldUsePosOnScreenKeyboard()
+                  shouldUsePosOnScreenKeyboard(context)
                       ? 'დააჭირეთ სახელის შესაყვანად'
                       : 'სახელი',
                 ),
@@ -1419,7 +1453,7 @@ class _EditStaffNameDialogState extends State<_EditStaffNameDialog> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('გაუქმება'),
+                      child: const PosText('გაუქმება'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1430,7 +1464,7 @@ class _EditStaffNameDialogState extends State<_EditStaffNameDialog> {
                         backgroundColor: _staffAccent,
                         foregroundColor: Colors.white,
                       ),
-                      child: const Text('შენახვა'),
+                      child: const PosText('შენახვა'),
                     ),
                   ),
                 ],
@@ -1488,7 +1522,7 @@ class _ChangeRoleDialogState extends State<_ChangeRoleDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
+              PosText(
                 'როლის შეცვლა • ${widget.user.username}',
                 style: const TextStyle(
                   color: _staffText,
@@ -1497,7 +1531,7 @@ class _ChangeRoleDialogState extends State<_ChangeRoleDialog> {
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
+              const PosText(
                 'აირჩიეთ თანამშრომლის ახალი წვდომის დონე.',
                 style: TextStyle(color: _staffMuted, fontSize: 12),
               ),
@@ -1548,7 +1582,7 @@ class _ChangeRoleDialogState extends State<_ChangeRoleDialog> {
                                     : _staffBorder,
                               ),
                             ),
-                            child: Text(
+                            child: PosText(
                               StaffRole.labelKa(role),
                               textAlign: TextAlign.center,
                               style: TextStyle(
@@ -1570,7 +1604,7 @@ class _ChangeRoleDialogState extends State<_ChangeRoleDialog> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('გაუქმება'),
+                      child: const PosText('გაუქმება'),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -1578,7 +1612,7 @@ class _ChangeRoleDialogState extends State<_ChangeRoleDialog> {
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(context, _selectedRole),
                       style: AdminDesign.primaryButtonStyle(),
-                      child: const Text('შენახვა'),
+                      child: const PosText('შენახვა'),
                     ),
                   ),
                 ],
@@ -1671,7 +1705,7 @@ class _StaffUserTile extends StatelessWidget {
                     child: ListTile(
                       dense: true,
                       leading: Icon(Icons.edit_outlined),
-                      title: Text('სახელის შეცვლა'),
+                      title: PosText('სახელის შეცვლა'),
                     ),
                   ),
                   const PopupMenuItem(
@@ -1679,7 +1713,7 @@ class _StaffUserTile extends StatelessWidget {
                     child: ListTile(
                       dense: true,
                       leading: Icon(Icons.pin_outlined),
-                      title: Text('PIN-ის შეცვლა'),
+                      title: PosText('PIN-ის შეცვლა'),
                     ),
                   ),
                   if (canChangeRole)
@@ -1688,7 +1722,7 @@ class _StaffUserTile extends StatelessWidget {
                       child: ListTile(
                         dense: true,
                         leading: Icon(Icons.manage_accounts_outlined),
-                        title: Text('როლის შეცვლა'),
+                        title: PosText('როლის შეცვლა'),
                       ),
                     ),
                   if (canDelete)
@@ -1700,7 +1734,7 @@ class _StaffUserTile extends StatelessWidget {
                           Icons.delete_outline,
                           color: AdminDesign.danger,
                         ),
-                        title: Text(
+                        title: PosText(
                           'წაშლა',
                           style: TextStyle(color: AdminDesign.danger),
                         ),
@@ -1735,7 +1769,7 @@ class _StaffUserTile extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 3),
-                      Text(
+                      PosText(
                         user.roleLabelKa,
                         style: const TextStyle(
                           color: _staffMuted,
@@ -1743,7 +1777,7 @@ class _StaffUserTile extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Text(
+                      PosText(
                         showPin ? 'PIN: ${user.pinCode}' : 'PIN დაცულია',
                         style: const TextStyle(
                           color: _staffText,
@@ -1800,7 +1834,7 @@ class _StaffUserTile extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Flexible(
-                          child: Text(
+                          child: PosText(
                             user.roleLabelKa,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -1821,7 +1855,7 @@ class _StaffUserTile extends StatelessWidget {
               ),
               Expanded(
                 flex: 4,
-                child: Text(
+                child: PosText(
                   showPin ? user.pinCode : '••••••',
                   style: const TextStyle(
                     color: _staffText,
@@ -1879,7 +1913,7 @@ class _RoleAccessTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                PosText(
                   title,
                   style: const TextStyle(
                     color: _staffText,
@@ -1888,7 +1922,7 @@ class _RoleAccessTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 3),
-                Text(
+                PosText(
                   description,
                   style: const TextStyle(
                     color: _staffMuted,
@@ -1901,42 +1935,6 @@ class _RoleAccessTile extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _PinPad extends StatelessWidget {
-  const _PinPad({required this.onDigit, required this.onBackspace});
-
-  final ValueChanged<String> onDigit;
-  final VoidCallback onBackspace;
-
-  @override
-  Widget build(BuildContext context) {
-    Widget row(List<String> keys) => Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        for (var i = 0; i < keys.length; i++) ...[
-          if (i > 0) const SizedBox(width: 10),
-          PinButton(
-            number: keys[i],
-            onPressed: keys[i] == '⌫' ? onBackspace : () => onDigit(keys[i]),
-            isSpecial: keys[i] == '⌫',
-          ),
-        ],
-      ],
-    );
-
-    return Column(
-      children: [
-        row(['1', '2', '3']),
-        const SizedBox(height: 10),
-        row(['4', '5', '6']),
-        const SizedBox(height: 10),
-        row(['7', '8', '9']),
-        const SizedBox(height: 10),
-        row(['', '0', '⌫']),
-      ],
     );
   }
 }
@@ -2011,7 +2009,7 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
                 size: 40,
               ),
               const SizedBox(height: 12),
-              Text(
+              PosText(
                 'PIN — ${widget.user.username}',
                 style: const TextStyle(
                   fontSize: 20,
@@ -2020,8 +2018,8 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
                 ),
               ),
               const SizedBox(height: 20),
-              Text(
-                _enteredPin.padRight(6, '•'),
+              PosText(
+                '•' * _enteredPin.length + '—' * (6 - _enteredPin.length),
                 style: const TextStyle(
                   fontSize: 24,
                   letterSpacing: 8,
@@ -2030,15 +2028,21 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
               ),
               if (_errorMessage.isNotEmpty) ...[
                 const SizedBox(height: 8),
-                Text(
+                PosText(
                   _errorMessage,
                   style: const TextStyle(color: AdminDesign.danger),
                 ),
               ],
               const SizedBox(height: 16),
-              _PinPad(
-                onDigit: _onNumberPressed,
-                onBackspace: _onBackspacePressed,
+              PinPad(
+                authentication: true,
+                onDigitPressed: _onNumberPressed,
+                onDeletePressed: _onBackspacePressed,
+                onClearPressed: () => setState(() {
+                  _enteredPin = '';
+                  _errorMessage = '';
+                }),
+                onSubmit: _onConfirm,
               ),
               const SizedBox(height: 16),
               Row(
@@ -2046,7 +2050,7 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('გაუქმება'),
+                      child: const PosText('გაუქმება'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -2054,7 +2058,7 @@ class _ChangePinDialogState extends State<_ChangePinDialog> {
                     child: ElevatedButton(
                       onPressed: _onConfirm,
                       style: AdminDesign.primaryButtonStyle(),
-                      child: const Text('შენახვა'),
+                      child: const PosText('შენახვა'),
                     ),
                   ),
                 ],

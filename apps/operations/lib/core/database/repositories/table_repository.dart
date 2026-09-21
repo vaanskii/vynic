@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'dart:async';
 import 'dart:developer' as developer;
 
@@ -75,6 +76,13 @@ class TableRepository {
 
   static Future<void> saveActiveRestaurantTableLayout(
     RestaurantTableLayout layout,
+  ) => UpdateReadiness.track(
+    'saveActiveRestaurantTableLayout',
+    () => _updateTrackedSaveActiveRestaurantTableLayout(layout),
+  );
+
+  static Future<void> _updateTrackedSaveActiveRestaurantTableLayout(
+    RestaurantTableLayout layout,
   ) async {
     final currentLayout = getRestaurantTableLayout();
     final canonicalLayout = layout.withCanonicalTableIds(
@@ -115,7 +123,12 @@ class TableRepository {
   /// objects refer to those definitions by ID. Upgrading that existing ID is
   /// therefore additive: Hive table state, orders and reservations keep using
   /// their floor/number aliases while sync gains an immutable UUID.
-  static Future<void> ensureCanonicalTableIdentity() async {
+  static Future<void> ensureCanonicalTableIdentity() => UpdateReadiness.track(
+    'ensureCanonicalTableIdentity',
+    () => _updateTrackedEnsureCanonicalTableIdentity(),
+  );
+
+  static Future<void> _updateTrackedEnsureCanonicalTableIdentity() async {
     final layout = getRestaurantTableLayout();
     final canonicalLayout = layout.withCanonicalTableIds(
       generateId: (_) => _uuid.v4(),
@@ -126,7 +139,13 @@ class TableRepository {
     await SettingsRepository.saveActiveTableLayout(canonicalLayout);
   }
 
-  static Future<void> clearActiveRestaurantTableLayout() async {
+  static Future<void> clearActiveRestaurantTableLayout() =>
+      UpdateReadiness.track(
+        'clearActiveRestaurantTableLayout',
+        () => _updateTrackedClearActiveRestaurantTableLayout(),
+      );
+
+  static Future<void> _updateTrackedClearActiveRestaurantTableLayout() async {
     final previous = getRestaurantTableLayout();
     await SettingsRepository.clearActiveTableLayout();
     final reset = getRestaurantTableLayout().withCanonicalTableIds(
@@ -166,7 +185,12 @@ class TableRepository {
   }
 
   // Initialize default tables
-  static Future<void> initializeTables() async {
+  static Future<void> initializeTables() => UpdateReadiness.track(
+    'initializeTables',
+    () => _updateTrackedInitializeTables(),
+  );
+
+  static Future<void> _updateTrackedInitializeTables() async {
     for (final tableDefinition in getRestaurantTableLayout().tables) {
       final table = TableModel(
         tableNumber: tableDefinition.legacyTableNumber,
@@ -177,7 +201,12 @@ class TableRepository {
     }
   }
 
-  static Future<void> ensureTableLayoutConsistency() async {
+  static Future<void> ensureTableLayoutConsistency() => UpdateReadiness.track(
+    'ensureTableLayoutConsistency',
+    () => _updateTrackedEnsureTableLayoutConsistency(),
+  );
+
+  static Future<void> _updateTrackedEnsureTableLayoutConsistency() async {
     if (DatabaseCore.tableBox == null) {
       return;
     }
@@ -273,6 +302,23 @@ class TableRepository {
     required String username,
     required int orderId,
     String? reservationId,
+  }) => UpdateReadiness.track(
+    'reserveTable',
+    () => _updateTrackedReserveTable(
+      tableNumber: tableNumber,
+      floor: floor,
+      username: username,
+      orderId: orderId,
+      reservationId: reservationId,
+    ),
+  );
+
+  static Future<void> _updateTrackedReserveTable({
+    required String tableNumber,
+    required String floor,
+    required String username,
+    required int orderId,
+    String? reservationId,
   }) async {
     final table = getTable(tableNumber, floor);
     if (table != null) {
@@ -299,6 +345,21 @@ class TableRepository {
     required String floor,
     required String username,
     required String reservationId,
+  }) => UpdateReadiness.track(
+    'reserveTableForReservation',
+    () => _updateTrackedReserveTableForReservation(
+      tableNumber: tableNumber,
+      floor: floor,
+      username: username,
+      reservationId: reservationId,
+    ),
+  );
+
+  static Future<void> _updateTrackedReserveTableForReservation({
+    required String tableNumber,
+    required String floor,
+    required String username,
+    required String reservationId,
   }) async {
     final table = getTable(tableNumber, floor);
     if (table != null) {
@@ -320,6 +381,14 @@ class TableRepository {
 
   // Free a table
   static Future<void> freeTable({
+    required String tableNumber,
+    required String floor,
+  }) => UpdateReadiness.track(
+    'freeTable',
+    () => _updateTrackedFreeTable(tableNumber: tableNumber, floor: floor),
+  );
+
+  static Future<void> _updateTrackedFreeTable({
     required String tableNumber,
     required String floor,
   }) async {
@@ -510,7 +579,14 @@ class TableRepository {
         .toList();
   }
 
-  static Future<List<Map<String, dynamic>>> releaseStaleReservedTables() async {
+  static Future<List<Map<String, dynamic>>> releaseStaleReservedTables() =>
+      UpdateReadiness.track(
+        'releaseStaleReservedTables',
+        () => _updateTrackedReleaseStaleReservedTables(),
+      );
+
+  static Future<List<Map<String, dynamic>>>
+  _updateTrackedReleaseStaleReservedTables() async {
     if (DatabaseCore.tableBox == null) {
       return const [];
     }
@@ -533,7 +609,14 @@ class TableRepository {
     return released;
   }
 
-  static Future<void> syncTableReservationsForCurrentDate() async {
+  static Future<void> syncTableReservationsForCurrentDate() =>
+      UpdateReadiness.track(
+        'syncTableReservationsForCurrentDate',
+        () => _updateTrackedSyncTableReservationsForCurrentDate(),
+      );
+
+  static Future<void>
+  _updateTrackedSyncTableReservationsForCurrentDate() async {
     if (DatabaseCore.tableBox == null || DatabaseCore.orderBox == null) {
       return;
     }

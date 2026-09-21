@@ -1,4 +1,8 @@
 import {
+  lockOperationalVenue,
+  operationalDatabase,
+} from '../edge/operational-authority';
+import {
   Injectable,
   Logger,
   OnModuleDestroy,
@@ -173,7 +177,26 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
       }
 
       for (const row of due) {
-        await this.attemptRow(row);
+        await this.prisma.$transaction(
+          async (tx) => {
+            await lockOperationalVenue(tx, row.venueId);
+            if (await tx.device.count({ where: { venueId: row.venueId } })) {
+              await tx.posCallbackOutbox.update({
+                where: { id: row.id },
+                data: {
+                  status: 'failed',
+                  lastError: 'primary_pos_enrolled_reconcile_legacy_work',
+                },
+              });
+              return;
+            }
+            await new PosOutboxService(
+              operationalDatabase(tx),
+              this.posCallback,
+            ).attemptRow(row);
+          },
+          { timeout: 120000 },
+        );
       }
       await this.pruneDelivered(tenant);
     } catch (e) {
@@ -184,6 +207,7 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async attemptRow(row: {
+    venueId: string;
     id: string;
     endpoint: string;
     payload: unknown;
@@ -206,7 +230,7 @@ export class PosOutboxService implements OnModuleInit, OnModuleDestroy {
       // device that originated the edit (the original window likely expired
       // while the change sat queued for an offline POS).
       if (row.posOrderId !== null && Number.isFinite(row.posOrderId)) {
-        suppressPosEchoForOrder(row.posOrderId);
+        suppressPosEchoForOrder(row, row.posOrderId);
       }
       return;
     }

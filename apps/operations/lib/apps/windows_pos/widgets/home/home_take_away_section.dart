@@ -1,3 +1,4 @@
+import 'package:vynic/core/widgets/pos_text.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -6,8 +7,10 @@ import 'package:flutter/material.dart';
 
 import 'package:vynic/apps/windows_pos/widgets/shared/pos_surface.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
+import 'package:vynic/core/database/transactions/cancel_order_transaction.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/order.dart';
-import 'package:vynic/core/models/reservation.dart';
+import 'package:vynic/core/models/takeaway_order.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/apps/windows_pos/screens/menu_screen.dart';
 import 'package:vynic/apps/windows_pos/screens/order_detail_screen.dart';
@@ -21,7 +24,7 @@ class HomeTakeAwaySection extends StatefulWidget {
   const HomeTakeAwaySection({
     super.key,
     required this.user,
-    required this.takeAwayReservations,
+    required this.tickets,
     required this.onRefreshRequested,
     required this.primaryColor,
     required this.secondaryColor,
@@ -30,7 +33,9 @@ class HomeTakeAwaySection extends StatefulWidget {
   });
 
   final User user;
-  final List<Reservation> takeAwayReservations;
+
+  /// The day's takeaway orders. Built from `Order` — see [TakeawayTickets].
+  final List<TakeawayTicket> tickets;
   final Future<void> Function() onRefreshRequested;
   final Color primaryColor;
   final Color secondaryColor;
@@ -42,7 +47,7 @@ class HomeTakeAwaySection extends StatefulWidget {
 }
 
 class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
-  String? _selectedReservationId;
+  int? _selectedOrderId;
 
   /// Which pane a narrow window is showing: 0 = the queue, 1 = the selected
   /// take-away. Wide windows show both and ignore this.
@@ -59,42 +64,32 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
   static const Color _surfaceAlt = VynicFloorTokens.metricFill;
   static const Color _outline = VynicFloorTokens.panelBorder;
 
+  /// What a takeaway is called when no guest name was taken with the order.
+  static const String _takeAwayGuestFallback = 'გატანის სტუმარი';
+
   @override
   Widget build(BuildContext context) {
-    final orderedTakeaways = [...widget.takeAwayReservations]
-      ..sort((a, b) {
-        final orderIdComparison = (b.linkedOrderId ?? 0).compareTo(
-          a.linkedOrderId ?? 0,
-        );
-        if (orderIdComparison != 0) {
-          return orderIdComparison;
-        }
-
-        final createdAtComparison = b.createdAt.compareTo(a.createdAt);
-        if (createdAtComparison != 0) {
-          return createdAtComparison;
-        }
-
-        return b.id.compareTo(a.id);
-      });
-    final activeCount = widget.takeAwayReservations
-        .where((reservation) => reservation.status != 'completed')
+    // Already newest-first from the source; the panel does not re-sort.
+    final orderedTakeaways = widget.tickets;
+    final now = DateTime.now();
+    final activeCount = orderedTakeaways
+        .where((ticket) => ticket.isActive)
         .length;
-    final completedCount = widget.takeAwayReservations
-        .where((reservation) => reservation.status == 'completed')
+    final completedCount = orderedTakeaways
+        .where((ticket) => ticket.isCompleted)
         .length;
-    final delayedCount = widget.takeAwayReservations
-        .where(_isTakeAwayDelayed)
+    final delayedCount = orderedTakeaways
+        .where((ticket) => ticket.isDelayedAt(now))
         .length;
-    final totalAmount = widget.takeAwayReservations.fold<double>(
+    final totalAmount = orderedTakeaways.fold<double>(
       0,
-      (sum, reservation) => sum + _calculateTakeAwayTotal(reservation),
+      (sum, ticket) => sum + ticket.total,
     );
 
-    Reservation? selectedReservation;
+    TakeawayTicket? selectedTicket;
     if (orderedTakeaways.isNotEmpty) {
-      selectedReservation = orderedTakeaways.firstWhere(
-        (reservation) => reservation.id == _selectedReservationId,
+      selectedTicket = orderedTakeaways.firstWhere(
+        (ticket) => ticket.orderId == _selectedOrderId,
         orElse: () => orderedTakeaways.first,
       );
     }
@@ -139,8 +134,8 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                   Expanded(
                     child: _narrowPane == 0
                         ? _buildTakeAwayQueuePanel(
-                            reservations: orderedTakeaways,
-                            selectedReservation: selectedReservation,
+                            tickets: orderedTakeaways,
+                            selectedTicket: selectedTicket,
                             compact: true,
                           )
                         : Column(
@@ -148,13 +143,13 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                             children: [
                               Expanded(
                                 child: _buildTakeAwayDetailPanel(
-                                  reservation: selectedReservation,
+                                  ticket: selectedTicket,
                                   compact: true,
                                 ),
                               ),
-                              if (selectedReservation != null) ...[
+                              if (selectedTicket != null) ...[
                                 const SizedBox(height: 12),
-                                _buildTakeAwayActionRail(selectedReservation),
+                                _buildTakeAwayActionRail(selectedTicket),
                               ],
                             ],
                           ),
@@ -189,23 +184,23 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                       // gives up its wider setting to pay for it.
                       width: constraints.maxWidth < 1400 ? 340 : 380,
                       child: _buildTakeAwayQueuePanel(
-                        reservations: orderedTakeaways,
-                        selectedReservation: selectedReservation,
+                        tickets: orderedTakeaways,
+                        selectedTicket: selectedTicket,
                         compact: false,
                       ),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
                       child: _buildTakeAwayDetailPanel(
-                        reservation: selectedReservation,
+                        ticket: selectedTicket,
                         compact: false,
                       ),
                     ),
-                    if (selectedReservation != null) ...[
+                    if (selectedTicket != null) ...[
                       const SizedBox(width: 14),
                       SizedBox(
                         width: 250,
-                        child: _buildTakeAwayActionRail(selectedReservation),
+                        child: _buildTakeAwayActionRail(selectedTicket),
                       ),
                     ],
                   ],
@@ -318,32 +313,28 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
     return 'გატანა - $preview';
   }
 
-  Future<void> _cancelTakeAwayOrder(Reservation reservation) async {
+  Future<void> _cancelTakeAwayOrder(TakeawayTicket ticket) async {
     if (!widget.user.isManager) {
       unawaited(showErrorToast(context, 'გაუქმება მხოლოდ მენეჯერს შეუძლია'));
       return;
     }
 
-    final orderId = reservation.linkedOrderId;
-    if (orderId == null) {
-      unawaited(showErrorToast(context, 'შეკვეთა ჯერ არ არის შექმნილი'));
-      return;
-    }
+    final orderId = ticket.orderId;
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('შეკვეთის გაუქმება'),
-        content: Text('${_takeAwayOrderNumber(reservation)} გაუქმდეს?'),
+        title: const PosText('შეკვეთის გაუქმება'),
+        content: PosText('${ticket.orderNumber} გაუქმდეს?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('არა'),
+            child: const PosText('არა'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             style: FilledButton.styleFrom(backgroundColor: _danger),
-            child: const Text('გაუქმება'),
+            child: const PosText('გაუქმება'),
           ),
         ],
       ),
@@ -353,11 +344,32 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
       return;
     }
 
-    await DatabaseService.updateOrderStatus(
+    // Same routine as the detail screen: the Order stays as history with a
+    // typed cancellation event and a non-revenue record. No physical table
+    // is involved for a Takeaway.
+    final outcome = await DatabaseService.cancelOrder(
       orderId: orderId,
-      status: 'cancelled',
+      actorId: widget.user.username,
+      actorName: widget.user.username,
+      source: AuditSource.pos,
+      reason: 'Takeaway cancelled from the home panel',
+      approvedBy: widget.user.username,
     );
-    await DatabaseService.cancelReservationByOrderId(orderId);
+    if (!mounted) return;
+    if (outcome == CancelOrderOutcome.notCancellable) {
+      unawaited(
+        showErrorToast(
+          context,
+          'დახურული შეკვეთის გაუქმება შეუძლებელია — ჯერ აღადგინეთ.',
+        ),
+      );
+      return;
+    }
+    if (outcome == CancelOrderOutcome.failed ||
+        outcome == CancelOrderOutcome.notFound) {
+      unawaited(showErrorToast(context, 'შეკვეთის გაუქმება ვერ მოხერხდა'));
+      return;
+    }
     await widget.onRefreshRequested();
 
     if (!mounted) {
@@ -368,13 +380,10 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
     unawaited(showSuccessToast(context, 'შეკვეთა გაუქმდა'));
   }
 
-  Future<void> _closeTakeAwayOrder(Reservation reservation) async {
-    final orderId = reservation.linkedOrderId;
-    if (orderId == null) {
-      unawaited(showErrorToast(context, 'შეკვეთა ჯერ არ არის შექმნილი'));
-      return;
-    }
-
+  Future<void> _closeTakeAwayOrder(TakeawayTicket ticket) async {
+    final orderId = ticket.orderId;
+    // Re-read rather than closing the copy the panel was built with: the
+    // order may have been edited on the detail screen since.
     final order = DatabaseService.getOrder(orderId);
     if (order == null) {
       unawaited(showErrorToast(context, 'შეკვეთა ვერ მოიძებნა'));
@@ -497,17 +506,6 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
     );
   }
 
-  bool _isTakeAwayFinalized(Reservation reservation) {
-    final orderStatus = _linkedOrderForReservation(
-      reservation,
-    )?.status.toLowerCase();
-    final status = orderStatus ?? reservation.status.toLowerCase();
-    return status == 'completed' ||
-        status == 'paid' ||
-        status == 'closed' ||
-        status == 'cancelled';
-  }
-
   List<String> _buildTakeAwayFinalReceiptLines(
     Order order,
     TablePaymentSelection selection,
@@ -542,12 +540,8 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
     return '$datePart $timePart';
   }
 
-  void _openTakeAwayOrderDetails(Reservation reservation) {
-    final orderId = reservation.linkedOrderId;
-    if (orderId == null) {
-      unawaited(showErrorToast(context, 'შეკვეთა ჯერ არ არის შექმნილი'));
-      return;
-    }
+  void _openTakeAwayOrderDetails(TakeawayTicket ticket) {
+    final orderId = ticket.orderId;
 
     Navigator.push(
       context,
@@ -635,7 +629,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
         icon: Icons.payments_outlined,
         label: 'დღიური შემოსავალი',
         value: '₾${totalAmount.toStringAsFixed(2)}',
-        helper: '${widget.takeAwayReservations.length} შეკვეთა',
+        helper: '${widget.tickets.length} შეკვეთა',
         color: VynicFloorTokens.text,
       ),
     ];
@@ -700,8 +694,8 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
   }
 
   Widget _buildTakeAwayQueuePanel({
-    required List<Reservation> reservations,
-    required Reservation? selectedReservation,
+    required List<TakeawayTicket> tickets,
+    required TakeawayTicket? selectedTicket,
     required bool compact,
   }) {
     return Container(
@@ -717,8 +711,8 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
-                    'შეკვეთები (${reservations.length})',
+                  child: PosText(
+                    'შეკვეთები (${tickets.length})',
                     style: TextStyle(
                       color: widget.textPrimary,
                       fontSize: 15,
@@ -735,19 +729,19 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
           // to render every card in a plain Column, which only worked
           // while the whole section sat inside an outer scroll view;
           // in a height-bounded pane it overflowed.
-          if (reservations.isEmpty)
+          if (tickets.isEmpty)
             Expanded(child: _buildTakeAwayEmptyState())
           else
             Expanded(
               child: ListView.separated(
                 padding: const EdgeInsets.all(12),
-                itemCount: reservations.length,
+                itemCount: tickets.length,
                 separatorBuilder: (context, index) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
-                  final reservation = reservations[index];
+                  final ticket = tickets[index];
                   return _buildQueueCard(
-                    reservation: reservation,
-                    selected: reservation.id == selectedReservation?.id,
+                    ticket: ticket,
+                    selected: ticket.orderId == selectedTicket?.orderId,
                     compact: false,
                   );
                 },
@@ -759,21 +753,21 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
   }
 
   Widget _buildQueueCard({
-    required Reservation reservation,
+    required TakeawayTicket ticket,
     required bool selected,
     required bool compact,
   }) {
-    final statusColor = _takeAwayStatusColor(reservation.status);
-    final statusLabel = _takeAwayStatusLabel(reservation.status);
-    final itemCount = _calculateTakeAwayItems(reservation);
-    final totalAmount = _calculateTakeAwayTotal(reservation);
-    final customerName = _takeAwayCustomerName(reservation);
-    final orderNumber = _takeAwayOrderNumber(reservation);
+    final statusColor = _takeAwayStatusColor(ticket.status);
+    final statusLabel = _takeAwayStatusLabel(ticket.status);
+    final itemCount = ticket.itemCount;
+    final totalAmount = ticket.total;
+    final customerName = ticket.customerName(_takeAwayGuestFallback);
+    final orderNumber = ticket.orderNumber;
 
     return InkWell(
       borderRadius: BorderRadius.circular(8),
       onTap: () => setState(() {
-        _selectedReservationId = reservation.id;
+        _selectedOrderId = ticket.orderId;
         // On a narrow window, picking one is a request to see it.
         _narrowPane = 1;
       }),
@@ -809,7 +803,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
+                      PosText(
                         orderNumber,
                         style: TextStyle(
                           color: widget.textPrimary.withValues(alpha: 0.78),
@@ -824,7 +818,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
+                    PosText(
                       '₾${totalAmount.toStringAsFixed(2)}',
                       style: TextStyle(
                         color: widget.textPrimary,
@@ -844,8 +838,8 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                 Icon(Icons.schedule, size: 15, color: widget.mutedText),
                 const SizedBox(width: 5),
                 Expanded(
-                  child: Text(
-                    '${_formatTakeAwayDate(reservation.reservationDate)}, ${reservation.reservationTime}',
+                  child: PosText(
+                    '${_formatTakeAwayDate(ticket.createdAt)}, ${ticket.pickupTime ?? _formatClock(ticket.createdAt)}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: widget.mutedText, fontSize: 12),
@@ -858,7 +852,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                   color: widget.mutedText,
                 ),
                 const SizedBox(width: 5),
-                Text(
+                PosText(
                   '$itemCount პროდუქტი',
                   style: TextStyle(color: widget.mutedText, fontSize: 12),
                 ),
@@ -871,19 +865,20 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
   }
 
   Widget _buildTakeAwayDetailPanel({
-    required Reservation? reservation,
+    required TakeawayTicket? ticket,
     required bool compact,
   }) {
-    if (reservation == null) {
+    if (ticket == null) {
       return _buildTakeAwayEmptyState();
     }
 
-    final statusColor = _takeAwayStatusColor(reservation.status);
-    final statusLabel = _takeAwayStatusLabel(reservation.status);
-    final items = _takeAwayItems(reservation);
-    final itemTotal = _calculateTakeAwayTotal(reservation);
-    final phone = reservation.customerPhone.trim();
-    final notes = reservation.notes?.trim();
+    final statusColor = _takeAwayStatusColor(ticket.status);
+    final statusLabel = _takeAwayStatusLabel(ticket.status);
+    final items = ticket.items;
+    final itemTotal = ticket.total;
+    final phone = ticket.customerPhone ?? '';
+    final notes = ticket.notes;
+    final pickupTime = ticket.pickupTime ?? _formatClock(ticket.createdAt);
 
     return Container(
       decoration: BoxDecoration(
@@ -905,8 +900,8 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                       Row(
                         children: [
                           Flexible(
-                            child: Text(
-                              _takeAwayOrderNumber(reservation),
+                            child: PosText(
+                              ticket.orderNumber,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -930,8 +925,8 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                           ),
                           const SizedBox(width: 6),
                           Expanded(
-                            child: Text(
-                              'შექმნილია: ${_formatTakeAwayDate(reservation.createdAt)}, ${_formatClock(reservation.createdAt)}',
+                            child: PosText(
+                              'შექმნილია: ${_formatTakeAwayDate(ticket.createdAt)}, ${_formatClock(ticket.createdAt)}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -961,14 +956,14 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                       children: [
                         _buildDetailInfoBlock(
                           icon: Icons.person_outline,
-                          title: _takeAwayCustomerName(reservation),
+                          title: ticket.customerName(_takeAwayGuestFallback),
                           subtitle: phone.isEmpty ? 'ტელეფონი არ არის' : phone,
                         ),
                         const SizedBox(height: 10),
                         _buildDetailInfoBlock(
                           icon: Icons.timer_outlined,
                           title: 'გატანის დრო',
-                          subtitle: reservation.reservationTime,
+                          subtitle: pickupTime,
                         ),
                       ],
                     )
@@ -978,7 +973,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                         Expanded(
                           child: _buildDetailInfoBlock(
                             icon: Icons.person_outline,
-                            title: _takeAwayCustomerName(reservation),
+                            title: ticket.customerName(_takeAwayGuestFallback),
                             subtitle: phone.isEmpty
                                 ? 'ტელეფონი არ არის'
                                 : phone,
@@ -989,7 +984,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                           child: _buildDetailInfoBlock(
                             icon: Icons.timer_outlined,
                             title: 'გატანის დრო',
-                            subtitle: reservation.reservationTime,
+                            subtitle: pickupTime,
                           ),
                         ),
                         const SizedBox(width: 14),
@@ -997,8 +992,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                           child: _buildDetailInfoBlock(
                             icon: Icons.shopping_bag_outlined,
                             title: 'პროდუქტები',
-                            subtitle:
-                                '${_calculateTakeAwayItems(reservation)} პოზიცია',
+                            subtitle: '${ticket.itemCount} პოზიცია',
                           ),
                         ),
                       ],
@@ -1059,7 +1053,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
           if (items.isEmpty)
             Padding(
               padding: const EdgeInsets.all(28),
-              child: Text(
+              child: PosText(
                 'პროდუქტები ჯერ არ არის დამატებული',
                 style: TextStyle(color: widget.mutedText, fontSize: 15),
               ),
@@ -1108,7 +1102,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                     ),
                     Expanded(
                       flex: 2,
-                      child: Text(
+                      child: PosText(
                         '${item.quantity}',
                         style: TextStyle(
                           color: widget.textPrimary,
@@ -1119,7 +1113,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                     ),
                     Expanded(
                       flex: 2,
-                      child: Text(
+                      child: PosText(
                         '₾${item.unitPrice.toStringAsFixed(2)}',
                         style: TextStyle(
                           color: widget.textPrimary,
@@ -1129,7 +1123,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                     ),
                     Expanded(
                       flex: 2,
-                      child: Text(
+                      child: PosText(
                         '₾${item.total.toStringAsFixed(2)}',
                         textAlign: TextAlign.right,
                         style: TextStyle(
@@ -1184,7 +1178,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
           Row(
             children: [
               Expanded(
-                child: Text(
+                child: PosText(
                   'სულ',
                   style: TextStyle(
                     color: widget.textPrimary,
@@ -1193,7 +1187,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                   ),
                 ),
               ),
-              Text(
+              PosText(
                 '₾${itemTotal.toStringAsFixed(2)}',
                 style: TextStyle(
                   color: widget.textPrimary,
@@ -1221,7 +1215,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              PosText(
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -1232,7 +1226,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
                 ),
               ),
               const SizedBox(height: 3),
-              Text(
+              PosText(
                 subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -1258,19 +1252,20 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
   /// These used to be a row of buttons under the preview, which meant the
   /// detail and the actions competed for the same strip of width and the row
   /// reflowed as the window changed.
-  Widget _buildTakeAwayActionRail(Reservation? reservation) {
-    if (reservation == null) {
+  Widget _buildTakeAwayActionRail(TakeawayTicket? ticket) {
+    if (ticket == null) {
       return const SizedBox.shrink();
     }
-    final hasOrder = reservation.linkedOrderId != null;
-    final open = hasOrder && !_isTakeAwayFinalized(reservation);
+    // The ticket *is* the order now: details always open, and the ticket's own
+    // status says whether there is still anything to close or cancel.
+    final open = !ticket.isFinalized;
 
     final buttons = <Widget>[
       PosActionButton(
         label: 'სრული დეტალები',
         icon: Icons.manage_search_outlined,
         expand: true,
-        onTap: hasOrder ? () => _openTakeAwayOrderDetails(reservation) : null,
+        onTap: () => _openTakeAwayOrderDetails(ticket),
       ),
       // Closing takes the money, so it reads as the money tone rather than
       // sharing a red with „გაუქმება".
@@ -1279,7 +1274,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
         icon: Icons.check_circle_outline,
         tone: PosActionTone.money,
         expand: true,
-        onTap: open ? () => _closeTakeAwayOrder(reservation) : null,
+        onTap: open ? () => _closeTakeAwayOrder(ticket) : null,
       ),
       if (widget.user.isManager)
         PosActionButton(
@@ -1287,7 +1282,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
           icon: Icons.cancel_outlined,
           tone: PosActionTone.danger,
           expand: true,
-          onTap: open ? () => _cancelTakeAwayOrder(reservation) : null,
+          onTap: open ? () => _cancelTakeAwayOrder(ticket) : null,
         ),
     ];
 
@@ -1301,7 +1296,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
   }
 
   Widget _buildTableHeader(String label) {
-    return Text(
+    return PosText(
       label,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
@@ -1313,84 +1308,12 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
     );
   }
 
-  bool _isTakeAwayDelayed(Reservation reservation) {
-    if (reservation.status == 'completed' ||
-        reservation.status == 'cancelled') {
-      return false;
-    }
-    final parts = reservation.reservationTime.split(':');
-    if (parts.length < 2) return false;
-    final hour = int.tryParse(parts[0]);
-    final minute = int.tryParse(parts[1]);
-    if (hour == null || minute == null) return false;
-    final pickupDateTime = DateTime(
-      reservation.reservationDate.year,
-      reservation.reservationDate.month,
-      reservation.reservationDate.day,
-      hour,
-      minute,
-    );
-    return pickupDateTime.isBefore(DateTime.now());
-  }
-
-  String _takeAwayCustomerName(Reservation reservation) {
-    final name = reservation.customerName.trim();
-    if (name.isNotEmpty) return name;
-    final notes = reservation.notes?.trim();
-    if (notes != null && notes.isNotEmpty) return notes;
-    return 'გატანის სტუმარი';
-  }
-
-  String _takeAwayOrderNumber(Reservation reservation) {
-    final linkedOrderId = reservation.linkedOrderId;
-    if (linkedOrderId != null) {
-      return '#TA-${linkedOrderId.toString().padLeft(4, '0')}';
-    }
-    final compactId = reservation.id.replaceAll(RegExp(r'[^0-9A-Za-z]+'), '');
-    final suffix = compactId.length > 4
-        ? compactId.substring(compactId.length - 4)
-        : compactId.padLeft(4, '0');
-    return '#TA-$suffix';
-  }
-
   String _formatTakeAwayDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}';
   }
 
   String _formatClock(DateTime date) {
     return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-  }
-
-  int _calculateTakeAwayItems(Reservation reservation) {
-    return _takeAwayItems(
-      reservation,
-    ).fold<int>(0, (sum, item) => sum + item.quantity);
-  }
-
-  double _calculateTakeAwayTotal(Reservation reservation) {
-    final order = _linkedOrderForReservation(reservation);
-    if (order != null) {
-      return order.totalAmount;
-    }
-    return _takeAwayItems(
-      reservation,
-    ).fold<double>(0, (sum, item) => sum + item.total);
-  }
-
-  List<OrderItem> _takeAwayItems(Reservation reservation) {
-    final order = _linkedOrderForReservation(reservation);
-    if (order != null) {
-      return [...order.packageItems, ...order.items];
-    }
-    return reservation.preOrderItems ?? const <OrderItem>[];
-  }
-
-  Order? _linkedOrderForReservation(Reservation reservation) {
-    final orderId = reservation.linkedOrderId;
-    if (orderId == null) {
-      return null;
-    }
-    return DatabaseService.getOrder(orderId);
   }
 
   Color _takeAwayStatusColor(String status) {
@@ -1454,7 +1377,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
             color: widget.mutedText.withValues(alpha: 0.7),
           ),
           const SizedBox(height: 16),
-          const Text(
+          const PosText(
             'ჯერ არ არის გატანის შეკვეთები',
             style: TextStyle(
               color: Color(0xFF1F2937),
@@ -1463,7 +1386,7 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
+          PosText(
             'დაამატე ახალი გატანის შეკვეთა, რომ სია შეივსოს.',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -1655,7 +1578,7 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
+                                PosText(
                                   'ახალი გატანის შეკვეთა',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -1666,7 +1589,7 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
                                   ),
                                 ),
                                 SizedBox(height: 3),
-                                Text(
+                                PosText(
                                   'გატანის დეტალები',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -1711,7 +1634,7 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
                               iconColor: _accent,
                               child: Row(
                                 children: [
-                                  Text(
+                                  PosText(
                                     _formatDisplayTime(_selectedTime),
                                     style: const TextStyle(
                                       color: _textPrimary,
@@ -1776,7 +1699,7 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
   }
 
   Widget _buildLabel(String text) {
-    return Text(
+    return PosText(
       text,
       style: const TextStyle(
         color: _label,
@@ -1801,7 +1724,7 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              PosText(
                 _waitHere ? 'აქ დაელოდება ჩართულია' : 'ნომერი',
                 style: TextStyle(
                   color: isEmpty ? _muted : _accent,
@@ -1814,7 +1737,7 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
                 constraints: const BoxConstraints(minHeight: 28),
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: Text(
+                  child: PosText(
                     _waitHere
                         ? 'ნომრის ველი გამორთულია'
                         : (isEmpty ? 'ჩაწერეთ ნომერი' : value.text),
@@ -1852,7 +1775,7 @@ class _TakeAwayDetailsSheetState extends State<_TakeAwayDetailsSheet> {
           ),
           const SizedBox(width: 10),
           const Expanded(
-            child: Text(
+            child: PosText(
               'აქ დაელოდება',
               style: TextStyle(
                 color: _textPrimary,

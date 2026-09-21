@@ -1,3 +1,7 @@
+import { UseInterceptors } from '@nestjs/common';
+import { CommercialProjectionInterceptor } from '../entitlements/commercial-projection.interceptor';
+import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
+import { SaleConsumptionService } from '../inventory/sale-consumption.service';
 import {
   Controller,
   Get,
@@ -14,7 +18,11 @@ import {
   Req,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ManagerTenant } from '../auth/manager-auth-context';
+import {
+  ManagerAuth,
+  ManagerTenant,
+  type ManagerAuthContext,
+} from '../auth/manager-auth-context';
 import type { TenantContext } from '../tenancy/tenant-context';
 import { FeatureGuard } from '../entitlements/feature.guard';
 import { FeatureKeys } from '../entitlements/feature-keys';
@@ -23,6 +31,8 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { StaffRole } from '../staff/staff-role';
 import { MobileUsersService } from './services/mobile-users.service';
+import { MobileAuditLogService } from './services/mobile-audit-log.service';
+import type { AuditLogQuery } from './services/mobile-audit-log.service';
 import { MobileReportsService } from './services/mobile-reports.service';
 import { MobileDevicesService } from './services/mobile-devices.service';
 import { MobileMenuService } from './services/mobile-menu.service';
@@ -30,24 +40,344 @@ import { MobileMutationSupport } from './services/mobile-mutation-support.servic
 import { MobileReservationsService } from './services/mobile-reservations.service';
 import { MobileDashboardService } from './services/mobile-dashboard.service';
 import { MobileOrdersService } from './services/mobile-orders.service';
+import { MobileSaleLedgerService } from './services/mobile-sale-ledger.service';
+import {
+  InventoryService,
+  type StockItemInput,
+  type SupplierInput,
+} from '../inventory/inventory.service';
+import {
+  ReceivingService,
+  type ReceivingInput,
+} from '../inventory/receiving.service';
+import { RecipeService, type RecipeInput } from '../inventory/recipe.service';
 
 // ─── Controller ───────────────────────────────────────────────────────────────
 
+@UseInterceptors(CommercialProjectionInterceptor)
 @Controller('mobile')
 @UseGuards(JwtAuthGuard, RolesGuard, FeatureGuard)
 @Roles(StaffRole.MANAGER)
 @RequiresFeature(FeatureKeys.MANAGER_APP)
 export class MobileController {
   constructor(
+    private readonly entitlements: VenueEntitlementsService,
     private readonly users: MobileUsersService,
     private readonly reports: MobileReportsService,
+    private readonly auditLog: MobileAuditLogService,
     private readonly devices: MobileDevicesService,
     private readonly menu: MobileMenuService,
     private readonly mutationSupport: MobileMutationSupport,
     private readonly reservations: MobileReservationsService,
     private readonly dashboard: MobileDashboardService,
     private readonly orders: MobileOrdersService,
+    private readonly saleLedger: MobileSaleLedgerService,
+    private readonly inventory: InventoryService,
+    private readonly consumption: SaleConsumptionService,
+    private readonly receiving: ReceivingService,
+    private readonly recipes: RecipeService,
   ) {}
+
+  @Get('entitlements')
+  entitlementsSnapshot(@ManagerTenant() tenant: TenantContext) {
+    return this.entitlements.snapshot(tenant.venueId);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/consumptions')
+  consumptions(
+    @ManagerTenant() tenant: TenantContext,
+    @Query() query: { from?: string; to?: string; unmapped?: string },
+  ) {
+    return this.consumption.list(tenant, query);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/consumptions/:id')
+  consumptionDetail(
+    @ManagerTenant() tenant: TenantContext,
+    @Param('id') id: string,
+  ) {
+    return this.consumption.detail(tenant, id);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/overview')
+  getInventoryOverview(@ManagerTenant() tenant: TenantContext) {
+    return this.inventory.overview(tenant);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/units')
+  getInventoryUnits() {
+    return this.inventory.getUnits();
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/stock-items')
+  getStockItems(
+    @ManagerTenant() tenant: TenantContext,
+    @Query('q') search?: string,
+  ) {
+    return this.inventory.listStockItems(tenant, search, true);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Post('inventory/stock-items')
+  createStockItem(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Body() payload: StockItemInput,
+  ) {
+    return this.inventory.createStockItem(actor, payload);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Patch('inventory/stock-items/:id')
+  updateStockItem(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Body() payload: StockItemInput,
+  ) {
+    return this.inventory.updateStockItem(actor, id, payload);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/stock-items/:id')
+  getStockItem(
+    @ManagerTenant() tenant: TenantContext,
+    @Param('id') id: string,
+  ) {
+    return this.inventory.getStockItem(tenant, id);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/suppliers')
+  getSuppliers(
+    @ManagerTenant() tenant: TenantContext,
+    @Query('q') search?: string,
+  ) {
+    return this.inventory.listSuppliers(tenant, search);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/suppliers/:id')
+  async inventorySupplierDetail(
+    @ManagerTenant() tenant: TenantContext,
+    @Param('id') id: string,
+  ) {
+    return this.inventory.supplierDetail(tenant, id);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Post('inventory/suppliers/:id/items')
+  addSuppliedItem(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Body() input: unknown,
+  ) {
+    return this.inventory.addSuppliedItem(actor, id, input);
+  }
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Post('inventory/suppliers/:id/products/:stockItemId')
+  async linkSupplierProduct(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Param('stockItemId') stockItemId: string,
+  ) {
+    return this.inventory.setSupplierProduct(actor, id, stockItemId, true);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Delete('inventory/suppliers/:id/products/:stockItemId')
+  async unlinkSupplierProduct(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Param('stockItemId') stockItemId: string,
+  ) {
+    return this.inventory.setSupplierProduct(actor, id, stockItemId, false);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Post('inventory/suppliers')
+  createSupplier(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Body() payload: SupplierInput,
+  ) {
+    return this.inventory.createSupplier(actor, payload);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Patch('inventory/suppliers/:id')
+  updateSupplier(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Body() payload: SupplierInput,
+  ) {
+    return this.inventory.updateSupplier(actor, id, payload);
+  }
+
+  // ── Receiving / waybills ──────────────────────────────────────────────
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Post('inventory/receivings/:id/payments/:paymentId/reverse')
+  reverseSupplierPayment(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Param('paymentId') paymentId: string,
+    @Body() input: unknown,
+  ) {
+    return this.receiving.reversePayment(actor, id, paymentId, input);
+  }
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Post('inventory/receivings/:id/verify-settlement')
+  verifySupplierSettlement(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Body() input: unknown,
+  ) {
+    return this.receiving.verifyPayments(actor, id, input);
+  }
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/payables')
+  supplierPayables(
+    @ManagerTenant() tenant: TenantContext,
+    @Query('supplierId') supplierId?: string,
+  ) {
+    return this.receiving.payments(tenant, supplierId);
+  }
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Post('inventory/receivings/:id/payments')
+  supplierPayment(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Body() input: unknown,
+  ) {
+    return this.receiving.recordPayment(actor, id, input);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/receivings')
+  listReceivings(
+    @ManagerTenant() tenant: TenantContext,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('supplierId') supplierId?: string,
+    @Query('status') status?: string,
+    @Query('q') search?: string,
+    @Query('take') take?: string,
+    @Query('cursor') cursor?: string,
+  ) {
+    return this.receiving.list(tenant, {
+      from,
+      to,
+      supplierId,
+      status,
+      search,
+      take: take ? Number(take) : undefined,
+      cursor,
+    });
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/receivings/:id')
+  getReceiving(
+    @ManagerTenant() tenant: TenantContext,
+    @Param('id') id: string,
+  ) {
+    return this.receiving.detail(tenant, id);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Post('inventory/receivings')
+  createReceiving(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Body() payload: ReceivingInput,
+  ) {
+    return this.receiving.createDraft(actor, payload);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Patch('inventory/receivings/:id')
+  updateReceiving(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Body() payload: ReceivingInput,
+  ) {
+    return this.receiving.updateDraft(actor, id, payload);
+  }
+
+  /** Drafts only. A posted document is cancelled, never deleted. */
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Delete('inventory/receivings/:id')
+  deleteReceiving(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+  ) {
+    return this.receiving.deleteDraft(actor, id);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Post('inventory/receivings/:id/post')
+  postReceiving(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+  ) {
+    return this.receiving.post(actor, id);
+  }
+
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Post('inventory/receivings/:id/cancel')
+  cancelReceiving(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+    @Body() payload: { reason?: unknown } = {},
+  ) {
+    return this.receiving.cancel(actor, id, payload?.reason);
+  }
+
+  // ── Recipes / technological cards ─────────────────────────────────────
+
+  /** Menu-oriented: every Menu Item, marked configured or not. */
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/recipes')
+  listRecipeMenuItems(
+    @ManagerTenant() tenant: TenantContext,
+    @Query('q') search?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.recipes.listMenuItems(tenant, { search, status });
+  }
+
+  /** The definition for one Menu Item, or null when none is configured. */
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Get('inventory/recipes/menu-item/:menuItemId')
+  getRecipe(
+    @ManagerTenant() tenant: TenantContext,
+    @Param('menuItemId') menuItemId: string,
+    @Query('variantId') variantId?: string,
+  ) {
+    return this.recipes.detail(tenant, menuItemId, variantId);
+  }
+
+  /** Creates or replaces the one definition for this Menu Item + variant. */
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Post('inventory/recipes')
+  saveRecipe(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Body() payload: RecipeInput,
+  ) {
+    return this.recipes.save(actor, payload);
+  }
+
+  /** Stops applying a definition without deleting what it said. */
+  @RequiresFeature(FeatureKeys.INVENTORY)
+  @Post('inventory/recipes/:id/disable')
+  disableRecipe(
+    @ManagerAuth() actor: ManagerAuthContext,
+    @Param('id') id: string,
+  ) {
+    return this.recipes.disable(actor, id);
+  }
 
   // GET /mobile/restaurant-settings
   @Get('restaurant-settings')
@@ -128,6 +458,60 @@ export class MobileController {
     return this.dashboard.getFinancials(tenant);
   }
 
+  /** Exact, provenance-bearing Cloud Sale ledger summary. */
+  @Get('financial-summary')
+  async getFinancialSummary(
+    @ManagerTenant() tenant: TenantContext,
+    @Query() query: { from?: string; to?: string },
+  ) {
+    return this.saleLedger.getSummary(tenant, query);
+  }
+
+  /** Keyset-paginated frozen Sale history. */
+  @Get('sales')
+  async getSales(
+    @ManagerTenant() tenant: TenantContext,
+    @Query()
+    query: {
+      from?: string;
+      to?: string;
+      cursor?: string;
+      limit?: string;
+      paymentMethod?: string;
+      staffId?: string;
+      fiscal?: string;
+      state?: string;
+      menuItemId?: string;
+      variantId?: string;
+    },
+  ) {
+    return this.saleLedger.listSales(tenant, query);
+  }
+
+  @Get('sales/:id')
+  async getSale(
+    @ManagerTenant() tenant: TenantContext,
+    @Param('id') id: string,
+  ) {
+    return this.saleLedger.getSale(tenant, id);
+  }
+
+  @Get('product-analytics')
+  async getProductAnalytics(
+    @ManagerTenant() tenant: TenantContext,
+    @Query() query: { from?: string; to?: string; limit?: string },
+  ) {
+    return this.saleLedger.getProducts(tenant, query);
+  }
+
+  @Get('sale-staff-analytics')
+  async getSaleStaffAnalytics(
+    @ManagerTenant() tenant: TenantContext,
+    @Query() query: { from?: string; to?: string },
+  ) {
+    return this.saleLedger.getStaff(tenant, query);
+  }
+
   // POST /mobile/expenses
   @Post('expenses')
   async createExpense(
@@ -164,6 +548,7 @@ export class MobileController {
   }
 
   // GET /mobile/reservations?date=YYYY-MM-DD
+  @RequiresFeature(FeatureKeys.MANAGER_RESERVATIONS)
   @Get('reservations')
   async getReservations(
     @ManagerTenant() tenant: TenantContext,
@@ -173,6 +558,7 @@ export class MobileController {
   }
 
   // POST /mobile/reservations
+  @RequiresFeature(FeatureKeys.MANAGER_RESERVATIONS)
   @Post('reservations')
   async createReservation(
     @ManagerTenant() tenant: TenantContext,
@@ -199,6 +585,7 @@ export class MobileController {
   }
 
   // POST /mobile/reservations/:id/status
+  @RequiresFeature(FeatureKeys.MANAGER_RESERVATIONS)
   @Post('reservations/:id/status')
   async updateReservationStatus(
     @ManagerTenant() tenant: TenantContext,
@@ -215,6 +602,7 @@ export class MobileController {
   }
 
   // DELETE /mobile/reservations/:id
+  @RequiresFeature(FeatureKeys.MANAGER_RESERVATIONS)
   @Delete('reservations/:id')
   async deleteReservation(
     @ManagerTenant() tenant: TenantContext,
@@ -227,6 +615,7 @@ export class MobileController {
   // POST /mobile/reservations/:id/print-check
   // Manager-triggered: relays a print request to the Windows POS, which is the
   // only print host. No realtime broadcast — printing is not a data mutation.
+  @RequiresFeature(FeatureKeys.MANAGER_RESERVATIONS)
   @Post('reservations/:id/print-check')
   async printReservationCheck(
     @ManagerTenant() tenant: TenantContext,
@@ -309,7 +698,7 @@ export class MobileController {
     return this.orders.createWalkInOrder(tenant, monitoringSocketId, body);
   }
 
-  // DELETE /mobile/takeaway-orders/:id — fully remove a takeaway order from DB and POS
+  // DELETE /mobile/takeaway-orders/:id — cancel a takeaway order on Cloud and POS (kept as history)
   @Delete('takeaway-orders/:id')
   async deleteTakeawayOrder(
     @ManagerTenant() tenant: TenantContext,
@@ -393,6 +782,34 @@ export class MobileController {
     @Query('all') allStr?: string,
   ) {
     return this.reports.getAuditLog(tenant, yearStr, monthStr, status, allStr);
+  }
+
+  /**
+   * GET /mobile/audit-log
+   *
+   * The venue-wide audit feed: staff, menu, packages, expenses, close day,
+   * backups, settings and the business date — everything that is not the
+   * lifecycle of one Order, which `/mobile/audit` already serves as its own
+   * ordered report.
+   *
+   * Newest first, keyset-paginated through `cursor`. Every filter is applied
+   * inside the authenticated Staff's Venue; there is no way to ask for
+   * another's.
+   */
+  @RequiresFeature(FeatureKeys.ADVANCED_AUDIT)
+  @Get('audit-log')
+  async getGlobalAuditLog(
+    @ManagerTenant() tenant: TenantContext,
+    @Query() query: AuditLogQuery,
+  ) {
+    return this.auditLog.getAuditLog(tenant, query);
+  }
+
+  /** The actions and entity types this Venue has actually recorded. */
+  @RequiresFeature(FeatureKeys.ADVANCED_AUDIT)
+  @Get('audit-log/facets')
+  async getGlobalAuditLogFacets(@ManagerTenant() tenant: TenantContext) {
+    return this.auditLog.getAuditLogFacets(tenant);
   }
 
   // GET /mobile/sales-report?period=today|week|month

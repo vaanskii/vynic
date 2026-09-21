@@ -1,3 +1,4 @@
+import '../../models/manager_venue_selection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:vynic/core/services/manager_app/manager_dashboard_appearance.dart';
@@ -11,6 +12,32 @@ class ManagerAppPreferences {
   static const _backendUrlKey = 'backend_url_override';
 
   static Box? _box;
+  static ManagerVenueSelection? selectedVenue(String origin) {
+    final value = _box?.get('selected_venue');
+    if (value is! Map || value['origin'] != origin) return null;
+    try {
+      return ManagerVenueSelection.fromMap(value, origin: origin);
+    } on FormatException {
+      return null;
+    } on TypeError {
+      return null;
+    }
+  }
+
+  static Future<void> rememberVenue(ManagerVenueSelection venue) async {
+    if (_box == null)
+      throw StateError('Manager preferences are not initialized');
+    await _box!.put('selected_venue', venue.toMap());
+  }
+
+  static Future<void> clearVenue() async {
+    await _box?.deleteAll(['selected_venue', 'login_venue_code']);
+  }
+
+  static String? get loginVenueCode => _box?.get('login_venue_code') as String?;
+  static Future<void> setLoginVenueCode(String code) async {
+    await _box?.put('login_venue_code', code);
+  }
 
   static final ValueNotifier<ManagerDashboardAppearance> dashboardAppearance =
       ValueNotifier(ManagerDashboardAppearance.light);

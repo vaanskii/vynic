@@ -1,3 +1,4 @@
+import 'package:vynic/core/widgets/pin_button.dart';
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
@@ -392,58 +393,14 @@ class _AdminPrintersSectionState extends State<AdminPrintersSection> {
     );
   }
 
-  Widget _buildKeypad() {
-    final keys = <_PrinterKey>[
-      _PrinterKey.text('1'),
-      _PrinterKey.text('2'),
-      _PrinterKey.text('3'),
-      _PrinterKey.text('4'),
-      _PrinterKey.text('5'),
-      _PrinterKey.text('6'),
-      _PrinterKey.text('7'),
-      _PrinterKey.text('8'),
-      _PrinterKey.text('9'),
-      _PrinterKey.text('.'),
-      _PrinterKey.text('0'),
-      _PrinterKey.icon(Icons.backspace_outlined, 'delete'),
-    ];
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: keys.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-        childAspectRatio: 1.55,
-      ),
-      itemBuilder: (context, index) {
-        final key = keys[index];
-        return OutlinedButton(
-          onPressed: _isBusy ? null : () => _handleKey(key),
-          style: OutlinedButton.styleFrom(
-            padding: EdgeInsets.zero,
-            backgroundColor: Colors.white,
-            foregroundColor: _text,
-            side: const BorderSide(color: _border),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          child: key.icon == null
-              ? Text(
-                  key.value,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                )
-              : Icon(key.icon, size: 19),
-        );
-      },
-    );
-  }
+  Widget _buildKeypad() => PinPad(
+    enabled: !_isBusy,
+    showDecimalButton: true,
+    onDigitPressed: (key) => _handleKey(_PrinterKey.text(key)),
+    onDeletePressed: () =>
+        _handleKey(_PrinterKey.icon(Icons.backspace_outlined, 'delete')),
+    onClearPressed: () => _activeController.clear(),
+  );
 
   Widget _buildActionBar() {
     return Row(

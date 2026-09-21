@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/pos_input_settings.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -466,6 +467,11 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
           itemName: pkgItem.itemName,
           unitPrice: pkgItem.unitPrice,
           baseQuantity: pkgItem.quantity,
+          menuItemId:
+              orderItemsByKey[pkgItem.itemKey]?.menuItemId ??
+              pkgItem.menuItemId,
+          variantId:
+              orderItemsByKey[pkgItem.itemKey]?.variantId ?? pkgItem.variantId,
           quantity:
               orderItemsByKey[pkgItem.itemKey]?.quantity ??
               _calculateScaledQuantity(
@@ -485,6 +491,8 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
             unitPrice: orderItem.unitPrice,
             baseQuantity: null,
             quantity: orderItem.quantity,
+            menuItemId: orderItem.menuItemId,
+            variantId: orderItem.variantId,
           ),
         );
       }
@@ -641,6 +649,8 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
                           unitPrice: option.unitPrice,
                           baseQuantity: null,
                           quantity: entry.value,
+                          menuItemId: option.menuItemId,
+                          variantId: option.variantId,
                         ),
                       );
                     }
@@ -1053,6 +1063,8 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
                                           unitPrice: item.unitPrice,
                                           quantity: item.quantity,
                                           total: item.unitPrice * item.quantity,
+                                          menuItemId: item.menuItemId,
+                                          variantId: item.variantId,
                                         ),
                                       )
                                       .toList();
@@ -1139,6 +1151,8 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
             categoryLabel: categoryLabel,
             subcategoryLabel: subcategoryLabel,
             orderIndex: orderIndex++,
+            menuItemId: item.id,
+            variantId: variant?.id,
           ),
         );
       }
@@ -1446,10 +1460,12 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
                           padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
                           child: TextField(
                             controller: searchController,
-                            readOnly: true,
+                            readOnly: PosInputSettings.useOnScreen(context),
                             onTap: () {
                               setStateDialog(() {
-                                keyboardVisible = true;
+                                keyboardVisible = PosInputSettings.useOnScreen(
+                                  context,
+                                );
                               });
                             },
                             decoration: InputDecoration(
@@ -1692,7 +1708,8 @@ class _OrderDetailContentSectionState extends State<OrderDetailContentSection> {
                         ),
                       ],
                     ),
-                    if (keyboardVisible)
+                    if (keyboardVisible &&
+                        PosInputSettings.useOnScreen(context))
                       Positioned(
                         left: 16,
                         right: 16,
@@ -2054,6 +2071,8 @@ class _AdjustablePackageItem {
     required this.unitPrice,
     this.baseQuantity,
     required this.quantity,
+    this.menuItemId,
+    this.variantId,
   });
 
   final String itemKey;
@@ -2061,6 +2080,8 @@ class _AdjustablePackageItem {
   final double unitPrice;
   final int? baseQuantity;
   int quantity;
+  final String? menuItemId;
+  final String? variantId;
 
   double get total => unitPrice * quantity;
 }
@@ -2073,6 +2094,8 @@ class _MenuItemOption {
     required this.categoryKey,
     required this.categoryLabel,
     required this.orderIndex,
+    required this.menuItemId,
+    required this.variantId,
     this.subcategoryLabel,
   });
 
@@ -2083,4 +2106,6 @@ class _MenuItemOption {
   final String categoryLabel;
   final String? subcategoryLabel;
   final int orderIndex;
+  final String? menuItemId;
+  final String? variantId;
 }

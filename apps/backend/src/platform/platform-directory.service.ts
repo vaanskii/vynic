@@ -27,6 +27,7 @@ const ORGANIZATION_FIELDS = {
 } as const;
 
 const VENUE_FIELDS = {
+  loginCode: true,
   id: true,
   organizationId: true,
   name: true,
@@ -169,6 +170,7 @@ export class PlatformDirectoryService {
         name: input.name,
         timezone: input.timezone,
         currency: input.currency,
+        subscription: { create: { status: 'TRIAL', startedAt: new Date() } },
       },
       select: VENUE_FIELDS,
     });

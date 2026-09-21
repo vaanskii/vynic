@@ -1,10 +1,11 @@
+import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 
 part 'package.g.dart';
 
 @HiveType(typeId: 11)
-class Package extends HiveObject {
+class Package extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(0)
   String packageId;
 
@@ -20,7 +21,7 @@ class Package extends HiveObject {
   @HiveField(4)
   double pricePerPerson;
 
-  @HiveField(5)
+  @HiveField(5, defaultValue: true)
   bool isActive;
 
   @HiveField(6)
@@ -29,7 +30,7 @@ class Package extends HiveObject {
   @HiveField(7)
   String createdBy;
 
-  @HiveField(8)
+  @HiveField(8, defaultValue: 1)
   int servingSize;
 
   @HiveField(9)
@@ -76,7 +77,7 @@ class Package extends HiveObject {
 }
 
 @HiveType(typeId: 12)
-class PackageItem extends HiveObject {
+class PackageItem extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(0)
   String itemKey; // Format: "categorySlug|itemName" or "categorySlug|itemName|variantSize"
 
@@ -89,11 +90,20 @@ class PackageItem extends HiveObject {
   @HiveField(3)
   double unitPrice;
 
+  /// Traceability to the live menu; never used to refresh this frozen line.
+  @HiveField(4)
+  String? menuItemId;
+
+  @HiveField(5)
+  String? variantId;
+
   PackageItem({
     required this.itemKey,
     required this.itemName,
     required this.quantity,
     required this.unitPrice,
+    this.menuItemId,
+    this.variantId,
   });
 
   double get total => unitPrice * quantity;

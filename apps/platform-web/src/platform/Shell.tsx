@@ -18,8 +18,10 @@ import vynicLogo from "../assets/vynic-logo.png";
 import { useAuth } from "./auth";
 
 const navigation = [
+  { label: "Onboarding", to: "/admin/onboarding", icon: Buildings },
   { label: "Overview", to: "/admin", icon: SquaresFour, end: true },
   { label: "Organizations", to: "/admin/organizations", icon: Buildings },
+  { label: "Platform users", to: "/admin/users", icon: Buildings },
   { label: "Venues", to: "/admin/venues", icon: Storefront },
 ];
 
@@ -40,7 +42,8 @@ const groups = [
   },
   {
     label: "Activity",
-    items: [{ label: "Audit log", to: "/admin/audit", icon: ClockCounterClockwise }],
+    items: [{ label: "Audit log", to: "/admin/audit", icon: ClockCounterClockwise },
+    ],
   },
 ];
 
@@ -50,7 +53,8 @@ export function Shell() {
   const [accountOpen, setAccountOpen] = useState(false);
   const location = useLocation();
 
-  const item = ({ label, to, icon: Icon, end }: (typeof navigation)[number]) => (
+  const item = ({ label, to, icon: Icon, end,
+  }: (typeof navigation)[number]) => (
     <NavLink
       key={to}
       to={to}
@@ -87,7 +91,9 @@ export function Shell() {
         </nav>
         <a className="platform-sidebar__product-link" href="/">View Vynic site</a>
       </aside>
-      {open ? <button className="platform-sidebar__scrim" aria-label="Close navigation" onClick={() => setOpen(false)} /> : null}
+      {open ? (
+        <button className="platform-sidebar__scrim" aria-label="Close navigation" onClick={() => setOpen(false)} />
+      ) : null}
 
       <div className="platform-shell__main">
         <header className="platform-topbar">

@@ -248,15 +248,18 @@ export class WebsitePosReservationBridgeService {
         status: 'confirmed',
         isTakeAway: false,
         preOrderItems,
+        // Provenance for the POS audit trail; additive and ignored by
+        // builds that predate it.
+        source: 'website',
       },
       // Stable per booking: a second attempt to push the same website
       // reservation is the same intent, not a second booking.
       idempotencyKey: `RESERVATION_CREATE:website:${reservation.id}`,
     });
 
-    suppressPosEchoForReservation(posReservationId);
+    suppressPosEchoForReservation(tenant, posReservationId);
 
-    this.gateway.broadcastUpdate('data_updated', {
+    this.gateway.broadcastUpdate(tenant, 'data_updated', {
       type: 'reservations',
       action: 'created',
       source: 'website',
@@ -284,10 +287,16 @@ export class WebsitePosReservationBridgeService {
     try {
       await this.posCommands.dispatch(tenant, {
         type: EdgeCommandTypes.RESERVATION_STATUS_UPDATE,
-        payload: { reservationId: id, status: 'cancelled' },
+        payload: {
+          reservationId: id,
+          status: 'cancelled',
+          updatedBy: 'website',
+          source: 'website',
+          reason: 'Cancelled on the website',
+        },
         idempotencyKey: `RESERVATION_STATUS_UPDATE:website-cancel:${id}`,
       });
-      this.gateway.broadcastUpdate('data_updated', {
+      this.gateway.broadcastUpdate(tenant, 'data_updated', {
         type: 'reservations',
         action: 'cancelled',
         source: 'website',
@@ -333,12 +342,16 @@ export class WebsitePosReservationBridgeService {
       const quantity = Math.max(1, Math.floor(Number(entry.quantity) || 1));
       const price = Number(entry.price) || 0;
       let name = String(entry.name ?? '').trim();
+      let menuItemId: string | null = null;
       if (!name && id) {
         const menuItem = await this.menuService.getMenuItemById(tenant, id);
         name =
           menuItem?.nameEn ??
           menuItem?.translations?.find((t) => t.language === 'en')?.name ??
           id;
+      }
+      if (id) {
+        menuItemId = await this.menuService.getPosItemIdByCloudId(tenant, id);
       }
       if (!name) continue;
       items.push({
@@ -348,6 +361,7 @@ export class WebsitePosReservationBridgeService {
         quantity,
         total: price * quantity,
         comment: null,
+        ...(menuItemId ? { menuItemId } : {}),
       });
     }
     return items;

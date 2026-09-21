@@ -1,3 +1,7 @@
+import 'package:vynic/core/services/pos/pos_input_settings.dart';
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
+import 'package:vynic/core/database/repositories/inventory_repository.dart';
+import 'package:vynic/core/models/feature_keys.dart';
 import 'dart:async';
 import 'dart:developer' as developer;
 
@@ -7,7 +11,8 @@ import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/pos_permission.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/table_ref.dart';
-import 'package:vynic/core/models/audit_report.dart';
+import 'package:vynic/core/database/transactions/cancel_order_transaction.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/services/audit/money_audit.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
@@ -20,6 +25,8 @@ import 'package:vynic/core/widgets/pin_button.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_sheet.dart';
 import 'package:vynic/core/services/pos/table_payment_service.dart';
 import 'package:vynic/core/services/pos/order_item_transfer.dart';
+import 'package:vynic/core/services/edge/orders_tables/shadow.dart';
+import 'package:vynic/core/services/edge/orders_tables/pos_shadow_projection.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/core/utils/table_naming.dart';
 import 'package:vynic/apps/windows_pos/widgets/order/order_detail_content_section.dart';
@@ -152,8 +159,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
+  void _onFeatureRefresh() {
+    if (mounted) setState(() {});
+  }
+
   bool _canNonFiscalCloseTable(Order order, String status) {
-    if (!widget.user.canCloseTablesNonFiscal) {
+    if (!widget.user.canCloseTablesNonFiscal ||
+        !InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose)) {
       return false;
     }
     if (_isFinalizedStatus(status)) {
@@ -398,17 +410,19 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         ? guestCountRaw
         : reservation.numberOfGuests;
 
-    reservation.customerName = (result['customerName'] as String? ?? '').trim();
-    reservation.customerPhone = (result['customerPhone'] as String? ?? '')
-        .trim();
     final notes = (result['notes'] as String?)?.trim();
-    reservation.notes = notes != null && notes.isNotEmpty ? notes : null;
-    reservation.reservationDate = selectedDate;
-    reservation.reservationTime =
-        '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}';
-    reservation.numberOfGuests = guestCount;
-
-    await reservation.save();
+    await DatabaseService.updateReservationDetails(
+      reservation.id,
+      customerName: (result['customerName'] as String? ?? '').trim(),
+      customerPhone: (result['customerPhone'] as String? ?? '').trim(),
+      notes: notes,
+      clearNotes: notes == null || notes.isEmpty,
+      reservationDate: selectedDate,
+      reservationTime:
+          '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}',
+      numberOfGuests: guestCount,
+      actorId: widget.user.username,
+    );
 
     if (!mounted) {
       return;
@@ -421,6 +435,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   @override
   void initState() {
     super.initState();
+    InventoryRepository.featureRevision.addListener(_onFeatureRefresh);
     _mobileHighlightItemKeys = PosChangeHighlightService.takeForOrder(
       widget.orderId,
     );
@@ -432,6 +447,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   @override
   void dispose() {
+    InventoryRepository.featureRevision.removeListener(_onFeatureRefresh);
     _syncEventsSub?.cancel();
     PosLiveRefresh.generation.removeListener(_onExternalOrderChange);
     super.dispose();
@@ -962,7 +978,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     const SizedBox(height: 12),
                     TextField(
                       controller: controller,
-                      readOnly: true,
+                      readOnly: PosInputSettings.useOnScreen(context),
                       style: const TextStyle(
                         color: Color(0xFF0F172A),
                         fontSize: 26,
@@ -1201,7 +1217,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     const SizedBox(height: 12),
                     TextField(
                       controller: controller,
-                      readOnly: true,
+                      readOnly: PosInputSettings.useOnScreen(context),
                       style: const TextStyle(
                         color: Color(0xFF0F172A),
                         fontSize: 26,
@@ -1338,71 +1354,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       }
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              PinButton(number: '1', onPressed: () => addDigit('1')),
-              const SizedBox(width: 12),
-              PinButton(number: '2', onPressed: () => addDigit('2')),
-              const SizedBox(width: 12),
-              PinButton(number: '3', onPressed: () => addDigit('3')),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              PinButton(number: '4', onPressed: () => addDigit('4')),
-              const SizedBox(width: 12),
-              PinButton(number: '5', onPressed: () => addDigit('5')),
-              const SizedBox(width: 12),
-              PinButton(number: '6', onPressed: () => addDigit('6')),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              PinButton(number: '7', onPressed: () => addDigit('7')),
-              const SizedBox(width: 12),
-              PinButton(number: '8', onPressed: () => addDigit('8')),
-              const SizedBox(width: 12),
-              PinButton(number: '9', onPressed: () => addDigit('9')),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              PinButton(number: '.', onPressed: () => addDigit('.')),
-              const SizedBox(width: 12),
-              PinButton(number: '0', onPressed: () => addDigit('0')),
-              const SizedBox(width: 12),
-              PinButton(number: '⌫', onPressed: backspace, isSpecial: true),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (allowNegative) ...[
-                PinButton(
-                  number: '+/-',
-                  onPressed: toggleSign,
-                  isSpecial: true,
-                ),
-                const SizedBox(width: 12),
-              ],
-              PinButton(number: 'Clear', onPressed: clear, isSpecial: true),
-            ],
-          ),
-        ],
-      ),
+    return PinPad(
+      onDigitPressed: addDigit,
+      onClearPressed: clear,
+      onDeletePressed: backspace,
+      showDecimalButton: true,
+      onToggleSign: allowNegative ? toggleSign : null,
     );
   }
 
@@ -1487,7 +1444,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     // see `OrderItemTransfer.releaseEmptiedOrder`.
     var released = false;
     if (result.sourceLeftEmpty) {
-      await OrderItemTransfer.releaseEmptiedOrder(order);
+      await OrderItemTransfer.releaseEmptiedOrder(
+        order,
+        user: widget.user,
+        destination: destination,
+      );
       released = true;
     }
 
@@ -1683,6 +1644,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
     try {
       final name = await showPosKeyboardInputSheet(
+        standalone: true,
         context: context,
         controller: controller,
         title: 'ვისთვის არის გატანა?',
@@ -1734,10 +1696,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   /// What an order is called on screen.
   ///
-  /// A take-away's customer lives on its linked reservation, not on the order —
-  /// `Order.customerName` is populated from the server and is empty for one
-  /// opened here. Reading it alone made every take-away in the picker read
-  /// „გატანა", so there was no way to tell which one you were choosing.
+  /// New takeaways own the customer name on Order. The Reservation lookup is
+  /// retained only for historical orders written before that Hive field.
   static String _moveLabel(Order order) {
     if (!OrderDetailCommonHelpers.isTakeAway(order)) {
       return TableNaming.orderTables(order);
@@ -2032,31 +1992,51 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       toFloor ??= parts[1];
     }
 
-    if (toFloor == null) return;
+    final targetFloor = toFloor;
+    if (targetFloor == null) return;
 
     // Apply the change in memory
     _order!.tableNumbers = toTableNumbers;
-    _order!.floor = toFloor;
+    _order!.floor = targetFloor;
     _order!.updatedAt = DatabaseService.getCurrentDateTime();
 
     try {
-      // Save order changes
-      await DatabaseService.updateOrder(_order!);
+      await OrderTableShadow.observe(
+        proposed: () => PosShadowProjection.moved(
+          _order!,
+          fromTables,
+          fromFloor,
+          proposed: true,
+        ),
+        actual: () => PosShadowProjection.moved(
+          _order!,
+          fromTables,
+          fromFloor,
+          proposed: false,
+        ),
+        operation: () async {
+          // Save order changes
+          await DatabaseService.updateOrder(_order!);
 
-      // Free all previously occupied tables
-      for (final oldNum in fromTables) {
-        await DatabaseService.freeTable(tableNumber: oldNum, floor: fromFloor);
-      }
+          // Free all previously occupied tables
+          for (final oldNum in fromTables) {
+            await DatabaseService.freeTable(
+              tableNumber: oldNum,
+              floor: fromFloor,
+            );
+          }
 
-      // Reserve all new tables
-      for (final newNum in toTableNumbers) {
-        await DatabaseService.reserveTable(
-          tableNumber: newNum,
-          floor: toFloor,
-          username: _order!.createdBy,
-          orderId: _order!.orderId,
-        );
-      }
+          // Reserve all new tables
+          for (final newNum in toTableNumbers) {
+            await DatabaseService.reserveTable(
+              tableNumber: newNum,
+              floor: targetFloor,
+              username: _order!.createdBy,
+              orderId: _order!.orderId,
+            );
+          }
+        },
+      );
 
       // Also update any linked reservation if it exists
       if (_linkedReservation != null) {
@@ -2064,13 +2044,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           final tableRefs = [
             for (final n in toTableNumbers)
               if (int.tryParse(n) != null)
-                TableRef(floor: toFloor, tableNumber: n),
+                TableRef(floor: targetFloor, tableNumber: n),
           ];
 
           await DatabaseService.updateReservationTables(
             _linkedReservation!.id,
             const [],
             tableRefs: tableRefs,
+            actorId: widget.user.username,
           );
         } catch (e) {
           debugPrint('Note: Linked reservation table update failed: $e');
@@ -2500,107 +2481,57 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
 
     if (confirmed == true) {
-      final cancelledOrder = _order!;
       final logComment = commentText.isEmpty
           ? 'Order cancelled after cancellation password confirmation.'
           : commentText;
 
-      final totalQuantity = _order!.items.fold<int>(
-        0,
-        (sum, item) => sum + item.quantity,
+      // The cancellation itself — audit event, locked report, non-revenue
+      // record, reservation, Order status and table — is one routine shared
+      // with the Takeaway panel and the Manager commands.
+      final outcome = await DatabaseService.cancelOrder(
+        orderId: _order!.orderId,
+        actorId: waiterName,
+        actorName: waiterName,
+        source: AuditSource.pos,
+        reason: logComment,
+        approvedBy: approvedBy,
       );
-      final noteParts = <String>[];
-      if (logComment.isNotEmpty) {
-        noteParts.add(logComment);
-      }
-      if (approvedBy.trim().isNotEmpty) {
-        noteParts.add('Approved by ${approvedBy.trim()}');
-      }
-      final closerId = (approvedBy.trim().isNotEmpty)
-          ? approvedBy.trim()
-          : waiterName;
-      final cancellationEvent = AuditEvent(
-        type: AuditEventType.cancelTable,
-        itemName: 'ORDER',
-        previousQty: totalQuantity,
-        newQty: 0,
-        waiterId: waiterName,
-        waiterName: waiterName,
-        timestamp: DatabaseService.getCurrentDateTime(),
-        note: noteParts.join(' • '),
-      );
+      if (!mounted) return;
 
-      try {
-        await DatabaseService.appendOrderAuditEvents(
-          orderId: _order!.orderId,
-          events: [cancellationEvent],
-          statusOverride: AuditReportStatus.cancelled,
-          lockReport: true,
-          closedById: closerId,
-          closedByName: closerId,
-        );
-      } catch (e) {
-        final message = e.toString().toLowerCase();
-        if (!message.contains('locked')) {
-          rethrow;
-        }
-        if (mounted) {
-          unawaited(
-            showPosToast(
-              context: context,
-              message: 'აუდიტის ჩანაწერი უკვე დახურულია, გაუქმება გაგრძელდება.',
-              style: PosToastStyle.info,
-            ),
+      switch (outcome) {
+        case CancelOrderOutcome.cancelled:
+        case CancelOrderOutcome.alreadyCancelled:
+          break;
+        case CancelOrderOutcome.notFound:
+          await showErrorToast(context, 'შეკვეთა ვერ მოიძებნა');
+          return;
+        case CancelOrderOutcome.notCancellable:
+          await showErrorToast(
+            context,
+            'დახურული შეკვეთის გაუქმება შეუძლებელია — ჯერ აღადგინეთ.',
           );
-        }
+          return;
+        case CancelOrderOutcome.failed:
+          await showErrorToast(context, 'შეკვეთის გაუქმება ვერ მოხერხდა');
+          return;
       }
 
-      final cancelledSaleItems = <OrderItem>[
-        ...cancelledOrder.packageItems,
-        ...cancelledOrder.items,
-      ];
-      final cancelledSubtotal = _calculateOrderSubtotal(cancelledOrder);
-      final cancelledServiceFee = cancelledOrder.getServiceFee();
-      final cancelledClosedAt = DatabaseService.getCurrentDateTime();
-
-      await DatabaseService.saveSaleRecord(
-        orderId: cancelledOrder.orderId,
-        tableNumbers: cancelledOrder.tableNumbers,
-        floor: cancelledOrder.floor,
-        items: cancelledSaleItems,
-        totalAmount: cancelledOrder.totalAmount,
-        paymentMethod: 'cancelled',
-        paymentBreakdown: null,
-        createdBy: cancelledOrder.createdBy,
-        createdAt: cancelledOrder.createdAt,
-        closedAt: cancelledClosedAt,
-        includeServiceFee: cancelledOrder.includeServiceFee,
-        discountAmount: cancelledOrder.discountAmount,
-        advanceApplied: cancelledOrder.effectiveAdvanceAmount,
-        grossSaleAmount: cancelledOrder.grossAmount,
-        collectedNow: 0.0,
-        advanceAmount: 0.0,
-        subtotalAmount: cancelledSubtotal,
-        manualAdjustmentAmount: cancelledOrder.manualAdjustmentAmount,
-        finalTransaction: {
-          'type': 'cancelled_order',
-          'orderId': cancelledOrder.orderId,
-          'subtotal': double.parse(cancelledSubtotal.toStringAsFixed(2)),
-          'serviceFee': double.parse(cancelledServiceFee.toStringAsFixed(2)),
-          'total': double.parse(cancelledOrder.totalAmount.toStringAsFixed(2)),
-          'comment': commentText,
-          'isFiscal': false,
-        },
-        isFiscal: false,
-        isCancelled: true,
-        cancelledAt: cancelledClosedAt,
-      );
-
-      await _updateStatus('cancelled');
+      _loadOrder();
+      _popToHomeWithResult(<String, dynamic>{
+        'status': 'closed',
+        'orderId': widget.orderId,
+        'message': 'შეკვეთა გაუქმდა',
+        'isFiscal': false,
+      });
     }
   }
 
-  Future<void> _startTableClosureFlow() async {
+  Future<void> _startTableClosureFlow() => UpdateReadiness.track(
+    'payment/close',
+    () => _startTableClosureFlowTracked(),
+  );
+
+  Future<void> _startTableClosureFlowTracked() async {
     if (_order == null) {
       return;
     }
@@ -2649,7 +2580,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     await _finalizeTableClosure(currentOrder, selection);
   }
 
-  Future<void> _startNonFiscalClosureFlow() async {
+  Future<void> _startNonFiscalClosureFlow() => UpdateReadiness.track(
+    'payment/close',
+    () => _startNonFiscalClosureFlowTracked(),
+  );
+
+  Future<void> _startNonFiscalClosureFlowTracked() async {
+    if (!InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose)) {
+      unawaited(showErrorToast(context, 'არაფისკალური დახურვა გამორთულია'));
+      return;
+    }
     if (!widget.user.canCloseTablesNonFiscal) {
       unawaited(
         showErrorToast(context, 'არაფისკალური დახურვა მხოლოდ მენეჯერს შეუძლია'),
@@ -2797,28 +2737,23 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       return;
     }
 
-    final autoCashSelection = TablePaymentSelection(
-      method: TablePaymentMethod.cash,
-      cashAmount: double.parse(currentOrder.totalAmount.toStringAsFixed(2)),
-      bankAmount: 0,
-    );
-
-    await _finalizeNonFiscalClosure(currentOrder, autoCashSelection);
+    await _finalizeNonFiscalClosure(currentOrder);
   }
 
-  Future<void> _finalizeNonFiscalClosure(
-    Order order,
-    TablePaymentSelection? selection,
-  ) async {
+  Future<void> _finalizeNonFiscalClosure(Order order) async {
+    if (!InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose)) {
+      unawaited(showErrorToast(context, 'არაფისკალური დახურვა გამორთულია'));
+      return;
+    }
     final saleItems = <OrderItem>[...order.packageItems, ...order.items];
     final subtotal = _calculateOrderSubtotal(order);
     final serviceFee = order.getServiceFee();
     final closedAt = DatabaseService.getCurrentDateTime();
 
-    final saleBreakdown = TableClosureHelper.buildSaleBreakdown(selection);
+    const saleBreakdown = <String, double>{};
     final finalTransaction = TableClosureHelper.buildFinalTransactionRecord(
       order: order,
-      selection: selection,
+      selection: null,
       paymentBreakdown: saleBreakdown,
       subtotal: subtotal,
       serviceFee: serviceFee,
@@ -2830,15 +2765,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     // paid one — same closure identity, same journal, same recovery — and is
     // kept out of revenue by `isFiscal: false` rather than by taking a
     // different code path.
-    final money = ClosureMoney.fromOrder(
-      order,
-      collectedNow: order.totalAmount,
-    );
+    final money = ClosureMoney.fromOrder(order, collectedNow: 0);
     final result = await DatabaseService.closeTable(
       orderId: order.orderId,
       money: money,
       paymentMethod: 'non-fiscal',
-      tenderBreakdown: saleBreakdown ?? const {},
+      tenderBreakdown: saleBreakdown,
       closedById: widget.user.username,
       closedByName: widget.user.username,
       isFiscal: false,
@@ -3150,34 +3082,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       status: newStatus,
     );
 
-    // Update associated reservation status
-    if (newStatus == 'cancelled' && _order != null) {
-      // Mark reservation as cancelled
-      final currentDate = DatabaseService.getCurrentDate();
-      final dateString = currentDate.toIso8601String().split('T')[0];
-
-      final allReservations = DatabaseService.getAllReservations();
-      for (var reservation in allReservations) {
-        final resDateString = reservation.reservationDate
-            .toIso8601String()
-            .split('T')[0];
-        // linkedOrderId is the marker; the notes match only covers legacy
-        // records written before it existed.
-        final matchesLinked = reservation.linkedOrderId == widget.orderId;
-        final matchesLegacyNote =
-            reservation.notes != null &&
-            reservation.notes!.contains('Order #${widget.orderId}');
-        if (resDateString == dateString &&
-            (matchesLinked || matchesLegacyNote)) {
-          await DatabaseService.updateReservationStatus(
-            reservation.id,
-            'cancelled',
-          );
-          break;
-        }
-      }
-    }
-
     // If confirming order, print kitchen check (instant, non-blocking)
     if (newStatus == 'confirmed' && _order != null) {
       final kitchenItems = _buildKitchenCheckLines(_order!);
@@ -3202,19 +3106,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
     _loadOrder();
 
-    // After cancellation, return to previous screen using the same payload
-    // shape as table-close flows so parent screens handle it consistently.
     final normalizedStatus = newStatus.toLowerCase();
-    if (normalizedStatus == 'cancelled') {
-      _popToHomeWithResult(<String, dynamic>{
-        'status': 'closed',
-        'orderId': widget.orderId,
-        'message': 'შეკვეთა გაუქმდა',
-        'isFiscal': false,
-      });
-      return;
-    }
-
     if (normalizedStatus == 'paid') {
       if (mounted) {
         Navigator.of(context).pop();
@@ -3292,8 +3184,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     if (reservation == null || guests < 1) {
       return;
     }
-    reservation.numberOfGuests = guests;
-    await reservation.save();
+    await DatabaseService.updateReservationDetails(
+      reservation.id,
+      numberOfGuests: guests,
+      actorId: widget.user.username,
+    );
     if (!mounted) {
       return;
     }

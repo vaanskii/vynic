@@ -1,3 +1,4 @@
+import 'package:vynic/core/widgets/pos_text.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/ui/vynic_colors.dart';
 import 'package:vynic/core/ui/vynic_radius.dart';
@@ -43,7 +44,7 @@ class VynicSectionHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              PosText(
                 title,
                 style: VynicTextStyles.heading,
                 maxLines: 2,
@@ -51,7 +52,7 @@ class VynicSectionHeader extends StatelessWidget {
               ),
               if (subtitle != null) ...[
                 const SizedBox(height: 2),
-                Text(
+                PosText(
                   subtitle!,
                   style: VynicTextStyles.label,
                   maxLines: 3,

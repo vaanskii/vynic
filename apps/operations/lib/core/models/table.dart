@@ -1,10 +1,11 @@
+import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'package:hive/hive.dart';
 import 'table_operational_status.dart';
 
 part 'table.g.dart';
 
 @HiveType(typeId: 2)
-class TableModel extends HiveObject {
+class TableModel extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(0)
   String tableNumber;
 
@@ -26,6 +27,9 @@ class TableModel extends HiveObject {
   @HiveField(6)
   String? reservationId; // Reference to the reservation (if table is reserved for a reservation)
 
+  @HiveField(7, defaultValue: 0)
+  int edgeRevision;
+
   double? currentBill; // Only used for mobile monitoring API
 
   TableModel({
@@ -36,6 +40,7 @@ class TableModel extends HiveObject {
     this.reservedBy,
     this.activeOrderId,
     this.reservationId,
+    this.edgeRevision = 0,
   });
 
   // Helper method to get display name
@@ -83,6 +88,7 @@ class TableModel extends HiveObject {
         json['isOccupied'] == true ||
         activeOrderId != null;
     return TableModel(
+      edgeRevision: json['edgeRevision'] as int? ?? 0,
       tableNumber: json['tableNumber'] ?? '',
       floor: json['floor'] ?? '',
       isReserved: isReserved,
@@ -97,6 +103,7 @@ class TableModel extends HiveObject {
 
   Map<String, dynamic> toJson() {
     return {
+      'edgeRevision': edgeRevision,
       'tableNumber': tableNumber,
       'floor': floor,
       'isReserved': isReserved,

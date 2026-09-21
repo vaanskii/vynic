@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { Injectable } from '@nestjs/common';
 import {
   createCipheriv,
@@ -7,7 +8,6 @@ import {
 } from 'crypto';
 import { PrismaService } from '../prisma.service';
 import { requireEnv } from '../shared/require-env';
-import { BOOTSTRAP_VENUE_ID } from './legacy-pos-tenant.service';
 import type { TenantContext } from './pos-auth-context';
 
 type PinMap = Record<string, string>;
@@ -23,6 +23,18 @@ type PinMap = Record<string, string>;
  * Backward compatible: legacy cleartext-JSON rows are read transparently and
  * re-encrypted on the next write. Single source of truth for both the mobile
  * users service and the POS staff sync.
+ *
+ * ## The Venue is required, never defaulted
+ *
+ * The map is stored per Venue, in that Venue's own `setting` row. Both callers
+ * already hold a server-resolved tenant — a Manager's Venue comes from their
+ * Staff row, a POS's from its Device credential — so there is no caller that
+ * has to guess. An optional tenant defaulting to the bootstrap Venue only ever
+ * produced a wrong answer: the manager app wrote one Venue's PINs into the
+ * bootstrap Venue's row while staff sync read and wrote the real one, so the
+ * two disagreed about the same credential. A missing or blank Venue is a
+ * programming error here and is raised as one rather than being served the
+ * bootstrap Venue's PINs.
  */
 @Injectable()
 export class StaffPinVault {
@@ -40,9 +52,12 @@ export class StaffPinVault {
   }
 
   /** Decrypt + parse the stored PIN map (handles legacy cleartext rows). */
-  async read(tenant?: Pick<TenantContext, 'venueId'>): Promise<PinMap> {
-    const venueId = tenant?.venueId ?? BOOTSTRAP_VENUE_ID;
-    const row = await (this.prisma as any).setting.findUnique({
+  async read(
+    tenant: Pick<TenantContext, 'venueId'>,
+    db: Prisma.TransactionClient = this.prisma,
+  ): Promise<PinMap> {
+    const venueId = StaffPinVault.venueOf(tenant);
+    const row = await db.setting.findUnique({
       where: {
         venueId_key: { venueId, key: StaffPinVault.SETTING_KEY },
       },
@@ -64,17 +79,35 @@ export class StaffPinVault {
   /** Encrypt + persist the PIN map. */
   async write(
     map: PinMap,
-    tenant?: Pick<TenantContext, 'venueId'>,
+    tenant: Pick<TenantContext, 'venueId'>,
+    db: Prisma.TransactionClient = this.prisma,
   ): Promise<void> {
-    const venueId = tenant?.venueId ?? BOOTSTRAP_VENUE_ID;
+    const venueId = StaffPinVault.venueOf(tenant);
     const value = this.encrypt(JSON.stringify(map));
-    await (this.prisma as any).setting.upsert({
+    await db.setting.upsert({
       where: {
         venueId_key: { venueId, key: StaffPinVault.SETTING_KEY },
       },
       update: { value },
       create: { venueId, key: StaffPinVault.SETTING_KEY, value },
     });
+  }
+
+  /**
+   * The Venue this access belongs to.
+   *
+   * Refuses rather than substitutes: reading or writing staff credentials under
+   * a Venue nobody established is a cross-tenant answer, and the caller cannot
+   * tell it apart from a correct one.
+   */
+  private static venueOf(tenant: Pick<TenantContext, 'venueId'>): string {
+    const venueId = tenant?.venueId?.trim();
+    if (!venueId) {
+      throw new Error(
+        'StaffPinVault requires an authenticated Venue; none was resolved.',
+      );
+    }
+    return venueId;
   }
 
   private encrypt(text: string): string {

@@ -1,3 +1,4 @@
+import 'package:vynic/core/widgets/pos_text.dart';
 import 'package:flutter/material.dart';
 import 'package:vynic/core/ui/vynic_colors.dart';
 import 'package:vynic/core/ui/vynic_radius.dart';
@@ -98,7 +99,7 @@ class VynicButton extends StatelessWidget {
           const SizedBox(width: VynicSpacing.xs),
         ],
         Flexible(
-          child: Text(
+          child: PosText(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

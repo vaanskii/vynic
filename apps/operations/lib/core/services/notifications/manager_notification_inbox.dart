@@ -11,6 +11,15 @@ import 'package:vynic/core/services/notifications/notification_message_copy.dart
 class ManagerNotificationInbox {
   ManagerNotificationInbox._();
 
+  static void resetSession() {
+    for (final timer in _serviceFeeNotifyTimers.values) {
+      timer.cancel();
+    }
+    _serviceFeeNotifyTimers.clear();
+    _serviceFeeNotifyPending.clear();
+    AppNotificationHistoryStore.instance.clear();
+  }
+
   static const Duration _serviceFeeNotifyQuiet = Duration(milliseconds: 2500);
   static final Map<int, Timer> _serviceFeeNotifyTimers = {};
   static final Map<int, _PendingServiceFeeNotify> _serviceFeeNotifyPending = {};
@@ -190,7 +199,7 @@ class ManagerNotificationInbox {
           _add(
             dedupeId: nid,
             title: 'გატანა',
-            message: 'შეკვეთა წაიშალა${id != null ? ' #$id' : ''}',
+            message: 'შეკვეთა გაუქმდა${id != null ? ' #$id' : ''}',
             source: source,
             meta: payloadMap,
           );

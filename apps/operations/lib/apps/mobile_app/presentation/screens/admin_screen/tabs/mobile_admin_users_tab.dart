@@ -477,41 +477,50 @@ class _UserCard extends StatelessWidget {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'PIN: ${(user['pinCode'] ?? '').toString()}',
+                    user['platformManaged'] == true
+                        ? 'წვდომას მართავს პლატფორმა'
+                        : 'PIN: ${(user['pinCode'] ?? '').toString()}',
                     style: TextStyle(fontSize: 12, color: AdminTheme.textDim),
                   ),
                 ],
               ),
             ),
-            PopupMenuButton<String>(
-              tooltip: 'მოქმედებები',
-              icon: Icon(Icons.more_vert, color: AdminTheme.textMuted),
-              onSelected: (value) {
-                switch (value) {
-                  case 'name':
-                    onEditName();
-                    return;
-                  case 'pin':
-                    onChangePin();
-                    return;
-                  case 'role':
-                    onChangeRole();
-                    return;
-                  case 'delete':
-                    onDelete();
-                    return;
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'name',
-                  child: Text('სახელის შეცვლა'),
-                ),
-                const PopupMenuItem(value: 'pin', child: Text('PIN-ის შეცვლა')),
-                const PopupMenuItem(value: 'role', child: Text('როლის შეცვლა')),
-                const PopupMenuItem(value: 'delete', child: Text('წაშლა')),
-              ],
-            ),
+            if (user['platformManaged'] != true)
+              PopupMenuButton<String>(
+                tooltip: 'მოქმედებები',
+                icon: Icon(Icons.more_vert, color: AdminTheme.textMuted),
+                onSelected: (value) {
+                  switch (value) {
+                    case 'name':
+                      onEditName();
+                      return;
+                    case 'pin':
+                      onChangePin();
+                      return;
+                    case 'role':
+                      onChangeRole();
+                      return;
+                    case 'delete':
+                      onDelete();
+                      return;
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'name',
+                    child: Text('სახელის შეცვლა'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'pin',
+                    child: Text('PIN-ის შეცვლა'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'role',
+                    child: Text('როლის შეცვლა'),
+                  ),
+                  const PopupMenuItem(value: 'delete', child: Text('წაშლა')),
+                ],
+              ),
           ],
         ),
       ),

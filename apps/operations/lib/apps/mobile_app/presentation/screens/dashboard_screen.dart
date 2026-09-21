@@ -1,3 +1,7 @@
+import 'package:vynic/core/services/manager_app/mobile_api_service.dart';
+import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
+import '../widgets/financial_planning_card.dart';
+import 'package:vynic/apps/mobile_app/presentation/widgets/inventory_summary_card.dart';
 import 'dart:async';
 import 'dart:ui';
 
@@ -336,7 +340,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                   child: RefreshIndicator(
                     color: theme.primary,
                     backgroundColor: theme.refreshIndicatorBackground,
-                    onRefresh: _controller.loadAll,
+                    onRefresh: () async {
+                      await MobileApiService.refreshEntitlements();
+                      await _controller.loadAll();
+                    },
                     child: CustomScrollView(
                       physics: const AlwaysScrollableScrollPhysics(
                         parent: BouncingScrollPhysics(),
@@ -344,7 +351,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       slivers: [
                         SliverToBoxAdapter(
                           child: Padding(
-                            padding: const EdgeInsets.only(bottom: 120),
+                            padding: const EdgeInsets.only(bottom: 24),
                             child: state.loading && state.metrics == null
                                 ? _DashboardSkeleton()
                                 : LayoutBuilder(
@@ -398,7 +405,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                         onTapTables: () =>
                                             widget.onNavigateTab?.call(1),
                                         onTapReservations: () =>
-                                            widget.onNavigateTab?.call(3),
+                                            widget.onNavigateTab?.call(4),
                                       );
                                       final tables = _TablesOverviewStrip(
                                         metrics: metrics,
@@ -417,7 +424,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                           color: context.dash.info,
                                         ),
                                         onReservations: () =>
-                                            widget.onNavigateTab?.call(3),
+                                            widget.onNavigateTab?.call(4),
                                         onAnnouncement: () => _toast(
                                           'შეტყობინების გაგზავნა მალე დაემატება',
                                           color: context.dash.info,
@@ -456,6 +463,24 @@ class _DashboardScreenState extends State<DashboardScreen>
                                             fade(0.15, hero),
                                             const SizedBox(height: 16),
                                             fade(0.25, secondary),
+                                            const SizedBox(height: 16),
+                                            if (ManagerEntitlements.has(
+                                              FeatureKeys.inventory,
+                                            ))
+                                              InventorySummaryCard(
+                                                onOpenInventory:
+                                                    widget.onNavigateTab == null
+                                                    ? null
+                                                    : () =>
+                                                          widget.onNavigateTab!(
+                                                            3,
+                                                          ),
+                                              ),
+                                            const SizedBox(height: 12),
+                                            if (ManagerEntitlements.has(
+                                              FeatureKeys.financialPlanning,
+                                            ))
+                                              const FinancialPlanningCard(),
                                             const SizedBox(height: 28),
                                             fade(0.32, pulse),
                                             const SizedBox(height: 28),
@@ -496,6 +521,23 @@ class _DashboardScreenState extends State<DashboardScreen>
                                                 fade(0.0, header),
                                                 const SizedBox(height: 20),
                                                 fade(0.04, aiCard),
+                                                const SizedBox(height: 20),
+                                                if (ManagerEntitlements.has(
+                                                  FeatureKeys.inventory,
+                                                ))
+                                                  InventorySummaryCard(
+                                                    onOpenInventory:
+                                                        widget.onNavigateTab ==
+                                                            null
+                                                        ? null
+                                                        : () => widget
+                                                              .onNavigateTab!(3),
+                                                  ),
+                                                const SizedBox(height: 12),
+                                                if (ManagerEntitlements.has(
+                                                  FeatureKeys.financialPlanning,
+                                                ))
+                                                  const FinancialPlanningCard(),
                                                 const SizedBox(height: 20),
                                                 grid,
                                                 const SizedBox(height: 28),
@@ -988,6 +1030,31 @@ class _PaymentChip extends StatelessWidget {
   }
 }
 
+class _LedgerProviderChip extends StatelessWidget {
+  const _LedgerProviderChip({required this.label, required this.amount});
+
+  final String label;
+  final double amount;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+    decoration: BoxDecoration(
+      color: context.dash.info.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: context.dash.info.withValues(alpha: 0.18)),
+    ),
+    child: Text(
+      '$label ${_gelExact(amount)}',
+      style: TextStyle(
+        color: context.dash.info,
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+  );
+}
+
 class _TablesOverviewStrip extends StatelessWidget {
   final ManagerDashboardMetrics metrics;
   final VoidCallback onTap;
@@ -1180,6 +1247,25 @@ class _HeroRevenueCard extends StatelessWidget {
                         fontSize: 11,
                       ),
                     ),
+                    if (metrics.financialWarning != null) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: context.dash.warn.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          metrics.financialWarning!,
+                          style: TextStyle(
+                            color: context.dash.textSecondary,
+                            fontSize: 11,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
                     SizedBox(height: 14),
                     _RevenueSplitRow(
                       icon: Icons.check_circle_outline_rounded,
@@ -1187,7 +1273,8 @@ class _HeroRevenueCard extends StatelessWidget {
                       amount: closed,
                       color: context.dash.good,
                     ),
-                    if (metrics.nonFiscalClosedRevenue > 0.005) ...[
+                    if (ManagerEntitlements.has(FeatureKeys.nonFiscalClose) &&
+                        metrics.nonFiscalClosedRevenue > 0.005) ...[
                       SizedBox(height: 8),
                       _RevenueSplitRow(
                         icon: Icons.receipt_long_rounded,
@@ -1281,6 +1368,32 @@ class _HeroRevenueCard extends StatelessWidget {
                                 color: context.dash.info,
                                 icon: Icons.credit_card_rounded,
                               ),
+                            ),
+                        ],
+                      ),
+                    ],
+                    if (metrics.tbcRevenue > 0 ||
+                        metrics.bogRevenue > 0 ||
+                        metrics.advanceApplied > 0) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          if (metrics.tbcRevenue > 0)
+                            _LedgerProviderChip(
+                              label: 'TBC',
+                              amount: metrics.tbcRevenue,
+                            ),
+                          if (metrics.bogRevenue > 0)
+                            _LedgerProviderChip(
+                              label: 'BOG',
+                              amount: metrics.bogRevenue,
+                            ),
+                          if (metrics.advanceApplied > 0)
+                            _LedgerProviderChip(
+                              label: 'ავანსი',
+                              amount: metrics.advanceApplied,
                             ),
                         ],
                       ),
@@ -1497,7 +1610,8 @@ class _ManagerPulseCard extends StatelessWidget {
     }
 
     final upcoming = _upcomingReservations();
-    if (upcoming.isNotEmpty) {
+    if (ManagerEntitlements.has(FeatureKeys.managerReservations) &&
+        upcoming.isNotEmpty) {
       items.add(
         _PulseItem(
           icon: Icons.event_available_rounded,
@@ -1506,7 +1620,8 @@ class _ManagerPulseCard extends StatelessWidget {
           onTap: onTapReservations,
         ),
       );
-    } else if (reservations.isEmpty) {
+    } else if (ManagerEntitlements.has(FeatureKeys.managerReservations) &&
+        reservations.isEmpty) {
       items.add(
         _PulseItem(
           icon: Icons.event_busy_rounded,
@@ -1631,12 +1746,15 @@ class _ManagerPulseCard extends StatelessWidget {
                         onTapTables,
                       ),
                       SizedBox(height: 8),
-                      _miniStat(
-                        context,
-                        'რეზერვაციები',
-                        '${reservations.length}',
-                        onTapReservations,
-                      ),
+                      if (ManagerEntitlements.has(
+                        FeatureKeys.managerReservations,
+                      ))
+                        _miniStat(
+                          context,
+                          'რეზერვაციები',
+                          '${reservations.length}',
+                          onTapReservations,
+                        ),
                     ],
                   ),
                 ),
@@ -2148,12 +2266,13 @@ class _QuickActionsSection extends StatelessWidget {
         context.dash.bad,
         onExportPdf,
       ),
-      _QuickAction(
-        'რეზ.\nგახსნა',
-        Icons.event_seat_rounded,
-        context.dash.info,
-        onReservations,
-      ),
+      if (ManagerEntitlements.has(FeatureKeys.managerReservations))
+        _QuickAction(
+          'რეზ.\nგახსნა',
+          Icons.event_seat_rounded,
+          context.dash.info,
+          onReservations,
+        ),
       _QuickAction(
         'შეტყობ.\nგაგზ.',
         Icons.campaign_outlined,

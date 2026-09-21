@@ -147,19 +147,20 @@ class _AdminPosEnrollmentPanelState extends State<AdminPosEnrollmentPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextField(
-          controller: _addressController,
-          enabled: !_connecting,
-          decoration: InputDecoration(
-            labelText: 'Server address',
-            hintText: 'http://10.10.10.3:3000',
-            helperText: '10.10.10.3 becomes http://10.10.10.3:3000',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AdminDesign.radius),
+        if (ApiConfig.allowDeveloperOverride)
+          TextField(
+            controller: _addressController,
+            enabled: !_connecting,
+            decoration: InputDecoration(
+              labelText: 'Server address',
+              hintText: 'http://10.10.10.3:3000',
+              helperText: '10.10.10.3 becomes http://10.10.10.3:3000',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AdminDesign.radius),
+              ),
+              isDense: true,
             ),
-            isDense: true,
           ),
-        ),
         const SizedBox(height: 12),
         TextField(
           controller: _codeController,
@@ -215,7 +216,9 @@ class _AdminPosEnrollmentPanelState extends State<AdminPosEnrollmentPanel> {
     });
 
     final result = await _service.enroll(
-      serverAddress: _addressController.text,
+      serverAddress: ApiConfig.allowDeveloperOverride
+          ? _addressController.text
+          : ApiConfig.baseUrl,
       code: _codeController.text,
     );
     if (!mounted) return;

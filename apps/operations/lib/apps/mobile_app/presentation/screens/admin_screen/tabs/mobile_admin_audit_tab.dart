@@ -705,8 +705,32 @@ class _AuditReportCard extends StatelessWidget {
         return 'რაოდენობის შემცირება';
       case AuditEventType.deleteItem:
         return 'წაშლა';
+      case AuditEventType.close:
+        return 'ფისკალური დახურვა';
+      case AuditEventType.internalClose:
+        return 'არაფისკალური დახურვა';
+      case AuditEventType.restore:
+        return 'შეკვეთის აღდგენა';
       case AuditEventType.cancelTable:
         return 'გაუქმება';
+      case AuditEventType.createWalkIn:
+        return 'მაგიდის გახსნა';
+      case AuditEventType.createTakeaway:
+        return 'გატანის შეკვეთის შექმნა';
+      case AuditEventType.applyPackage:
+        return 'პაკეტის მინიჭება';
+      case AuditEventType.activateReservation:
+        return 'ჯავშნის აქტივაცია';
+      case AuditEventType.moveItems:
+        return 'პოზიციების გადატანა';
+      case AuditEventType.transferClose:
+        return 'დახურვა გადატანით';
+      case AuditEventType.recordAdvance:
+        return 'ავანსის აღრიცხვა';
+      case AuditEventType.adjustOrder:
+        return 'შეკვეთის კორექცია';
+      case AuditEventType.voidSale:
+        return 'გაყიდვის გაუქმება';
       case AuditEventType.custom:
         return 'ჩანაწერი';
     }
@@ -724,7 +748,9 @@ class _AuditDetailDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final events = report.sortedEvents;
+    // Chronological, matching the POS: an Order's report is that Order's
+    // story, ordered by the sequence the POS assigned.
+    final events = report.orderedEvents;
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 24),
       backgroundColor: AdminTheme.surfaceElevated,
@@ -835,7 +861,9 @@ class _AuditDetailDialog extends StatelessWidget {
                         separatorBuilder: (_, __) => SizedBox(height: 6),
                         itemBuilder: (_, i) => _EventTile(
                           event: events[i],
-                          seq: events.length - i,
+                          // The event's own place in the timeline, shown
+                          // one-based. The list is already in that order.
+                          seq: (events[i].sequence ?? i) + 1,
                         ),
                       ),
               ),
@@ -895,7 +923,29 @@ class _EventTile extends StatelessWidget {
         return const Color(0xFFD97706);
       case AuditEventType.deleteItem:
         return const Color(0xFFDC2626);
+      case AuditEventType.close:
+        return const Color(0xFF16A34A);
+      case AuditEventType.internalClose:
+        return const Color(0xFF475569);
+      case AuditEventType.restore:
+        return const Color(0xFFD97706);
       case AuditEventType.cancelTable:
+        return const Color(0xFFB91C1C);
+      case AuditEventType.createWalkIn:
+      case AuditEventType.createTakeaway:
+      case AuditEventType.activateReservation:
+        return const Color(0xFF2563EB);
+      case AuditEventType.applyPackage:
+        return const Color(0xFF7C3AED);
+      case AuditEventType.moveItems:
+        return const Color(0xFF0891B2);
+      case AuditEventType.transferClose:
+        return const Color(0xFF475569);
+      case AuditEventType.recordAdvance:
+        return const Color(0xFF0891B2);
+      case AuditEventType.adjustOrder:
+        return const Color(0xFFD97706);
+      case AuditEventType.voidSale:
         return const Color(0xFFB91C1C);
       case AuditEventType.custom:
         return const Color(0xFF475569);
@@ -910,8 +960,32 @@ class _EventTile extends StatelessWidget {
         return Icons.remove_circle_outline;
       case AuditEventType.deleteItem:
         return Icons.delete_outline;
+      case AuditEventType.close:
+        return Icons.point_of_sale_outlined;
+      case AuditEventType.internalClose:
+        return Icons.do_not_disturb_on_outlined;
+      case AuditEventType.restore:
+        return Icons.settings_backup_restore;
       case AuditEventType.cancelTable:
         return Icons.block;
+      case AuditEventType.createWalkIn:
+        return Icons.table_restaurant_outlined;
+      case AuditEventType.createTakeaway:
+        return Icons.shopping_bag_outlined;
+      case AuditEventType.applyPackage:
+        return Icons.inventory_2_outlined;
+      case AuditEventType.activateReservation:
+        return Icons.event_available_outlined;
+      case AuditEventType.moveItems:
+        return Icons.swap_horiz;
+      case AuditEventType.transferClose:
+        return Icons.output_outlined;
+      case AuditEventType.recordAdvance:
+        return Icons.savings_outlined;
+      case AuditEventType.adjustOrder:
+        return Icons.tune;
+      case AuditEventType.voidSale:
+        return Icons.money_off_csred_outlined;
       case AuditEventType.custom:
         return Icons.info_outline;
     }
@@ -925,8 +999,32 @@ class _EventTile extends StatelessWidget {
         return 'რაოდენობის შემცირება';
       case AuditEventType.deleteItem:
         return 'პოზ. წაშლა';
+      case AuditEventType.close:
+        return 'ფისკალური დახურვა';
+      case AuditEventType.internalClose:
+        return 'არაფისკალური დახურვა';
+      case AuditEventType.restore:
+        return 'შეკვეთის აღდგენა';
       case AuditEventType.cancelTable:
         return 'მაგიდის გაუქმება';
+      case AuditEventType.createWalkIn:
+        return 'მაგიდის გახსნა';
+      case AuditEventType.createTakeaway:
+        return 'გატანის შეკვეთის შექმნა';
+      case AuditEventType.applyPackage:
+        return 'პაკეტის მინიჭება';
+      case AuditEventType.activateReservation:
+        return 'ჯავშნის აქტივაცია';
+      case AuditEventType.moveItems:
+        return 'პოზიციების გადატანა';
+      case AuditEventType.transferClose:
+        return 'დახურვა გადატანით';
+      case AuditEventType.recordAdvance:
+        return 'ავანსის აღრიცხვა';
+      case AuditEventType.adjustOrder:
+        return 'შეკვეთის კორექცია';
+      case AuditEventType.voidSale:
+        return 'გაყიდვის გაუქმება';
       case AuditEventType.custom:
         return 'ჩანაწერი';
     }
@@ -985,9 +1083,13 @@ class _EventTile extends StatelessWidget {
             children: [
               _metaChip('Operator', '${event.waiterName} (${event.waiterId})'),
               _metaChip('Qty', '${event.previousQty} → ${event.newQty}'),
+              // Payment semantics come from the structured close details,
+              // never from the free-text note.
+              for (final chip in CloseEventPresentation.chips(event))
+                _metaChip(chip.label, chip.value),
             ],
           ),
-          if (event.note != null && event.note!.isNotEmpty) ...[
+          if (CloseEventPresentation.displayNote(event) != null) ...[
             SizedBox(height: 6),
             Container(
               width: double.infinity,
@@ -998,7 +1100,7 @@ class _EventTile extends StatelessWidget {
                 border: Border.all(color: AdminTheme.border),
               ),
               child: Text(
-                event.note!,
+                CloseEventPresentation.displayNote(event)!,
                 style: TextStyle(color: AdminTheme.textMuted, fontSize: 12),
               ),
             ),

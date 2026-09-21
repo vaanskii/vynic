@@ -1,4 +1,6 @@
-import { Inject, forwardRef } from '@nestjs/common';
+import { ManagerTenantService } from '../auth/manager-tenant.service';
+import type { TenantContext } from '../tenancy/tenant-context';
+import { Inject, forwardRef, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
   WebSocketGateway,
@@ -48,6 +50,7 @@ export class MonitoringGateway
   constructor(
     private readonly jwtService: JwtService,
     private readonly presence: PresenceService,
+    private readonly managerTenant: ManagerTenantService,
     @Inject(forwardRef(() => HybridNotificationService))
     private readonly hybrid: HybridNotificationService,
   ) {}
@@ -72,13 +75,22 @@ export class MonitoringGateway
           return next(new Error('unauthorized'));
         }
         const decoded = await this.jwtService.verifyAsync<{
-          username: string;
-          role: string;
+          sub: string;
+          exp: number;
         }>(token);
-        socket.data.username = decoded.username;
-        socket.data.role = decoded.role;
-        socket.join('managers');
-        this.presence.addSocket(decoded.username, socket.id);
+        const principal = await this.managerTenant.resolveByStaffId(
+          decoded.sub,
+          true,
+        );
+        if (!principal || !Number.isFinite(decoded.exp))
+          return next(new Error('unauthorized'));
+        socket.data = { ...principal, expiresAt: decoded.exp * 1000 };
+        await socket.join(this.managerRoom(principal.venueId));
+        this.presence.addSocket(
+          principal.venueId,
+          principal.username,
+          socket.id,
+        );
         next();
       } catch {
         next(new Error('unauthorized'));
@@ -97,17 +109,51 @@ export class MonitoringGateway
   }
 
   broadcastUpdate<T = unknown>(
+    tenant: TenantContext,
     type: WsEventType,
     payload: T,
     options?: BroadcastOptions,
   ): void {
-    void this.hybrid.deliver(type, payload, options);
+    if (!tenant?.venueId) throw new Error('Realtime requires a resolved Venue');
+    void this.hybrid
+      .deliver(type, payload, { ...options, venueId: tenant.venueId })
+      .catch((error: unknown) =>
+        new Logger(MonitoringGateway.name).error(
+          'Realtime delivery failed',
+          error,
+        ),
+      );
   }
 
   /**
    * Low-level emit used after hybrid persistence / FCM routing.
    */
-  emitEnvelope<T>(event: WsEvent<T>, options?: BroadcastOptions): void {
+  private managerRoom(venueId: string): string {
+    if (!venueId) throw new Error('Realtime requires a resolved Venue');
+    return `managers:${venueId}`;
+  }
+
+  async emitEnvelope<T>(
+    event: WsEvent<T>,
+    options: BroadcastOptions & { venueId: string },
+  ): Promise<void> {
+    const room = this.managerRoom(options.venueId);
+    // Existing connections cannot retain access after disable, reassignment or expiry.
+    for (const socket of await this.server.in(room).fetchSockets()) {
+      const principal = await this.managerTenant.resolveByStaffId(
+        socket.data.staffId,
+        true,
+      );
+      if (
+        !principal ||
+        principal.venueId !== options.venueId ||
+        principal.username !== socket.data.username ||
+        Date.now() >= socket.data.expiresAt
+      ) {
+        this.presence.removeSocket(socket.id);
+        socket.disconnect(true);
+      }
+    }
     const exclude = (options?.excludeSocketIds ?? [])
       .map((s) => String(s).trim())
       .filter((s) => s.length > 0);
@@ -116,8 +162,8 @@ export class MonitoringGateway
     // every connected socket. `except` drops the socket(s) that originated the
     // change so the acting device isn't echoed.
     const target = exclude.length
-      ? this.server.to('managers').except(exclude)
-      : this.server.to('managers');
+      ? this.server.to(room).except(exclude)
+      : this.server.to(room);
 
     target.emit(event.type, event);
     if (event.type !== 'data_updated') {

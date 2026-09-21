@@ -447,7 +447,10 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
           FeatureKeys.MANAGER_APP,
         ]),
       );
-      expect(productB.effectiveFeatures).toEqual([FeatureKeys.POS]);
+      expect(productB.effectiveFeatures).toEqual([
+        FeatureKeys.NON_FISCAL_CLOSE,
+        FeatureKeys.POS,
+      ]);
     });
 
     it('an override changes what the production guard enforces', async () => {
@@ -455,7 +458,7 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
       // check must agree, because they read the same resolver.
       const featureGuard = (venueId: string) =>
         new FeatureGuard(
-          { getAllAndOverride: () => FeatureKeys.MANAGER_APP } as never,
+          { get: () => FeatureKeys.MANAGER_APP } as never,
           entitlements,
         ).canActivate({
           getHandler: () => () => undefined,
@@ -490,7 +493,10 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
       );
 
       expect(product.overrides).toEqual([]);
-      expect(product.effectiveFeatures).toEqual([FeatureKeys.POS]);
+      expect(product.effectiveFeatures).toEqual([
+        FeatureKeys.NON_FISCAL_CLOSE,
+        FeatureKeys.POS,
+      ]);
     });
 
     it('a disabling override wins over the plan', async () => {

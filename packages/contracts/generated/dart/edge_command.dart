@@ -54,7 +54,7 @@ class EdgeCommandTypes {
   /// Payload:
   /// - `posOrderId`: int, the order's POS identity
   /// - `updatedBy`: string?, who the Manager identified itself as
-  /// - `items`: array of {itemName, quantity, unitPrice, itemKey?, comment?}
+  /// - `items`: array of {itemName, quantity, unitPrice, itemKey?, comment?, menuItemId?, variantId?}
   /// - `totalAmount`: number?
   /// - `includeServiceFee`: bool?
   ///
@@ -88,7 +88,7 @@ class EdgeCommandTypes {
   /// - `pickupTime`: string
   /// - `waiterName`: string
   /// - `businessDate`: string?, YYYY-MM-DD
-  /// - `items`: array of {itemName, quantity, unitPrice, comment?}
+  /// - `items`: array of {itemName, quantity, unitPrice, comment?, menuItemId?, variantId?}
   /// - `totalAmount`: number
   static const String takeawayOrderUpsert = 'TAKEAWAY_ORDER_UPSERT';
 
@@ -103,7 +103,7 @@ class EdgeCommandTypes {
   /// - `waiterName`: string
   /// - `guestCount`: int
   /// - `businessDate`: string?, YYYY-MM-DD
-  /// - `items`: array of {itemName, quantity, unitPrice, comment?}
+  /// - `items`: array of {itemName, quantity, unitPrice, comment?, menuItemId?, variantId?}
   /// - `totalAmount`: number
   static const String dineInOrderUpsert = 'DINE_IN_ORDER_UPSERT';
 
@@ -176,7 +176,7 @@ class EdgeCommandTypes {
   ///
   /// Payload:
   /// - `displayName`: string?
-  /// - `items`: array of {itemName, quantity, unitPrice, total?, comment?}
+  /// - `items`: array of {itemName, quantity, unitPrice, total?, comment?, menuItemId?, variantId?}
   /// - `subtotal`: number
   /// - `serviceFeeAmount`: number
   /// - `total`: number
@@ -203,12 +203,15 @@ class EdgeCommandTypes {
 
   /// Add a staff user to the POS.
   ///
-  /// Idempotency: The goal state is 'this username exists with this role and PIN'. Cloud has already refused a duplicate username before enqueueing, so a username that exists locally means the command has landed before; the handler reconciles the role and PIN and succeeds.
+  /// Idempotency: The goal state is 'this username exists with this role and PIN'. Cloud has already refused a duplicate username before enqueueing, so a username that exists locally means the command has landed before; the handler reconciles the role and PIN and succeeds. Platform-managed commands carry staffId, platformAction and platformRevision. Persist the greatest successfully applied revision; ignore older delivery. Platform disable retains the local Staff row and prevents subsequent PIN login, including the last Manager. Requires the Phase 2 POS build before Platform access administration is enabled.
   ///
   /// Payload:
   /// - `username`: string
   /// - `pinCode`: string
   /// - `role`: string
+  /// - `staffId`: string?, Cloud Staff identity for Platform-managed access
+  /// - `platformAction`: string?, create|reset|disable
+  /// - `platformRevision`: int?, monotonic Platform Staff revision; older revisions must be ignored
   static const String staffCreate = 'STAFF_CREATE';
 
   /// Set a staff user's PIN.
@@ -240,10 +243,13 @@ class EdgeCommandTypes {
 
   /// Remove a staff user from the POS.
   ///
-  /// Idempotency: The goal state is 'this username is gone'; already absent satisfies it.
+  /// Idempotency: The goal state is 'this username is gone'; already absent satisfies it. Platform-managed commands carry staffId, platformAction and platformRevision. Persist the greatest successfully applied revision; ignore older delivery. Platform disable retains the local Staff row and prevents subsequent PIN login, including the last Manager. Requires the Phase 2 POS build before Platform access administration is enabled.
   ///
   /// Payload:
   /// - `username`: string
+  /// - `staffId`: string?, Cloud Staff identity for Platform-managed access
+  /// - `platformAction`: string?, create|reset|disable
+  /// - `platformRevision`: int?, monotonic Platform Staff revision; older revisions must be ignored
   static const String staffDelete = 'STAFF_DELETE';
 
   static const Set<String> all = <String>{

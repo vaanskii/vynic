@@ -1,10 +1,15 @@
+import 'package:vynic/core/database/repositories/inventory_repository.dart';
+import 'package:vynic/core/models/feature_keys.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
+import 'package:vynic/core/database/transactions/cancel_order_transaction.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/models/takeaway_order.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/sync/manager_sync_service.dart';
@@ -443,7 +448,8 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
               'მომსახურების საფასურით',
               '${s.serviceFeeOrders} შეკვეთა',
             ),
-            if (s.nonFiscalCount > 0)
+            if (InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose) &&
+                s.nonFiscalCount > 0)
               _buildSummaryLine(
                 'არაფისკალური (ჯამში არ შედის)',
                 '${s.nonFiscalCount} · ₾${s.nonFiscalTotal.toStringAsFixed(2)}',
@@ -593,13 +599,10 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
       return order.createdAt.toIso8601String().split('T')[0] == dateKey;
     }).toList();
     final openOrderIds = openOrders.map((o) => o.orderId).toSet();
-    final openTakeAwayOrders = openOrders.where(_isTakeAwayOrder).toList();
-
-    final openTakeAwayReservations =
-        DatabaseService.getTakeAwayReservationsForDate(businessDate).where((r) {
-          final status = r.status.toLowerCase();
-          return status != 'completed' && status != 'cancelled';
-        }).toList();
+    final openTakeAwayOrders = TakeawayTickets.activeForBusinessDate(
+      orders: openOrders,
+      businessDate: businessDate,
+    );
 
     final reservedTables = DatabaseService.getAllTables().where((table) {
       if (!table.isReserved) return false;
@@ -628,14 +631,6 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
         blockingDetail: '${openTakeAwayOrders.length} შეკვეთა დაუხურავია',
         clearDetail: 'გატანის ღია შეკვეთა არ არის',
         count: openTakeAwayOrders.length,
-      ),
-      _ReadinessItem(
-        icon: Icons.assignment_outlined,
-        title: 'გატანის რეზერვაციები',
-        blockingDetail:
-            '${openTakeAwayReservations.length} რეზერვაცია დასრულებული არ არის',
-        clearDetail: 'ყველა რეზერვაცია დასრულებულია',
-        count: openTakeAwayReservations.length,
       ),
       _ReadinessItem(
         icon: Icons.event_seat,
@@ -1005,19 +1000,6 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
     );
   }
 
-  bool _isTakeAwayOrder(Order order) {
-    final floorLabel = order.floor.toLowerCase();
-    if (floorLabel == 'takeaway' ||
-        floorLabel == 'take-away' ||
-        floorLabel.contains('take away')) {
-      return true;
-    }
-    return order.tableNumbers.any((table) {
-      final normalized = table.toLowerCase();
-      return normalized.startsWith('ta-') || normalized.contains('take away');
-    });
-  }
-
   bool _isFiscalSale(Map<String, dynamic> sale) {
     final isFiscal = sale['isFiscal'];
     if (isFiscal is bool) {
@@ -1043,7 +1025,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
         return false;
       }
 
-      if (_isTakeAwayOrder(order)) {
+      if (isTakeawayOrder(order)) {
         return false;
       }
 
@@ -1054,26 +1036,34 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
     return openOrders;
   }
 
-  Future<bool> _deleteOrderPermanently(int orderId) async {
+  /// Cancels an Order that is keeping the day open.
+  ///
+  /// This used to delete the Order together with its audit report. Repairing
+  /// a stuck Close Day is an ordinary administrative action, and the record
+  /// of what was on the table — and who removed it — has to survive it. The
+  /// Order is cancelled through the same routine as every other cancellation:
+  /// it stays as history with a typed event and a non-revenue record.
+  Future<bool> _cancelOpenOrder(int orderId) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AdminDesign.text,
         title: const Row(
           children: [
-            Icon(Icons.delete_forever, color: AdminDesign.danger, size: 30),
+            Icon(Icons.block, color: AdminDesign.danger, size: 30),
             SizedBox(width: 12),
-            Text('შეკვეთის წაშლა', style: TextStyle(color: Colors.white)),
+            Text('შეკვეთის გაუქმება', style: TextStyle(color: Colors.white)),
           ],
         ),
         content: Text(
-          'შეკვეთა #$orderId წაიშლება და მაგიდები გათავისუფლდება. მოქმედება შეუქცევადია.',
+          'შეკვეთა #$orderId გაუქმდება და მაგიდები გათავისუფლდება. '
+          'შეკვეთის ისტორია შენარჩუნდება.',
           style: const TextStyle(color: Colors.white70, fontSize: 15),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('გაუქმება', style: TextStyle(fontSize: 16)),
+            child: const Text('უკან', style: TextStyle(fontSize: 16)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
@@ -1093,27 +1083,45 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
       return false;
     }
 
-    final success = await DatabaseService.deleteOrderAndCleanup(
+    final outcome = await DatabaseService.cancelOrder(
       orderId: orderId,
-      deletedBy: widget.user.username,
+      actorId: widget.user.username,
+      actorName: widget.user.username,
+      source: AuditSource.pos,
+      reason: 'Close Day repair: open order cancelled by administrator',
+      approvedBy: widget.user.username,
     );
 
     if (!mounted) return false;
 
-    if (success) {
-      unawaited(
-        showSuccessToast(
-          context,
-          'შეკვეთა #$orderId წაიშალა და მაგიდები გათავისუფლდა',
-        ),
-      );
-      setState(() {});
-      return true;
-    } else {
-      unawaited(
-        showErrorToast(context, 'შეკვეთის წაშლა ვერ მოხერხდა. სცადეთ თავიდან.'),
-      );
-      return false;
+    switch (outcome) {
+      case CancelOrderOutcome.cancelled:
+      case CancelOrderOutcome.alreadyCancelled:
+        unawaited(
+          showSuccessToast(
+            context,
+            'შეკვეთა #$orderId გაუქმდა და მაგიდები გათავისუფლდა',
+          ),
+        );
+        setState(() {});
+        return true;
+      case CancelOrderOutcome.notCancellable:
+        unawaited(
+          showErrorToast(
+            context,
+            'შეკვეთა #$orderId უკვე დახურულია და დღის დახურვას არ აფერხებს.',
+          ),
+        );
+        return false;
+      case CancelOrderOutcome.notFound:
+      case CancelOrderOutcome.failed:
+        unawaited(
+          showErrorToast(
+            context,
+            'შეკვეთის გაუქმება ვერ მოხერხდა. სცადეთ თავიდან.',
+          ),
+        );
+        return false;
     }
   }
 
@@ -1255,10 +1263,9 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                                 (order) => _buildOpenOrderRow(
                                   order,
                                   onDelete: () async {
-                                    final deleted =
-                                        await _deleteOrderPermanently(
-                                          order.orderId,
-                                        );
+                                    final deleted = await _cancelOpenOrder(
+                                      order.orderId,
+                                    );
                                     if (!deleted || !mounted) {
                                       return;
                                     }
@@ -1359,7 +1366,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                 ),
               ),
               child: const Text(
-                'წაშლა',
+                'გაუქმება',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
               ),
             ),
@@ -1441,10 +1448,11 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
         'დღეს მიღებული ავანსი: ₾${advancesTakenToday.toStringAsFixed(2)}',
       );
       report.writeln('დღეს ინკასირებული: ₾${collected.toStringAsFixed(2)}');
-      report.writeln(
-        'არაფისკალური დახურვები (ჯამში არ შედის): '
-        '₾${nonFiscalTotal.toStringAsFixed(2)}',
-      );
+      if (InventoryRepository.hasFeature(FeatureKeys.nonFiscalClose))
+        report.writeln(
+          'არაფისკალური დახურვები (ჯამში არ შედის): '
+          '₾${nonFiscalTotal.toStringAsFixed(2)}',
+        );
       report.writeln();
 
       double cardTbcTotal = 0;
@@ -1649,12 +1657,14 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                 await Future.delayed(const Duration(milliseconds: 450));
 
                 final openTableOrders = openOrders.where((order) {
-                  if (_isTakeAwayOrder(order)) return false;
+                  if (isTakeawayOrder(order)) return false;
                   return order.tableNumbers.any((t) => t.trim().isNotEmpty);
                 }).toList();
-                final openTakeAwayOrders = openOrders
-                    .where(_isTakeAwayOrder)
-                    .toList();
+                final openTakeAwayOrders =
+                    TakeawayTickets.activeForBusinessDate(
+                      orders: openOrders,
+                      businessDate: currentDate,
+                    );
 
                 if (openTableOrders.isNotEmpty ||
                     openTakeAwayOrders.isNotEmpty) {
@@ -1693,13 +1703,6 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
 
                 await DatabaseService.releaseStaleReservedTables();
 
-                final openTakeAwayReservations =
-                    DatabaseService.getTakeAwayReservationsForDate(
-                      currentDate,
-                    ).where((r) {
-                      final s = r.status.toLowerCase();
-                      return s != 'completed' && s != 'cancelled';
-                    }).toList();
                 final reservedTables = DatabaseService.getAllTables().where((
                   table,
                 ) {
@@ -1710,19 +1713,9 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                   return true;
                 }).toList();
 
-                if (openTakeAwayReservations.isNotEmpty ||
-                    reservedTables.isNotEmpty) {
+                if (reservedTables.isNotEmpty) {
                   await Future.delayed(const Duration(milliseconds: 300));
                   final reasons = <_BlockReason>[];
-                  if (openTakeAwayReservations.isNotEmpty) {
-                    reasons.add(
-                      _BlockReason(
-                        Icons.assignment_outlined,
-                        'გატანის რეზერვაციები',
-                        '${openTakeAwayReservations.length} რეზერვაცია დასრულებული არ არის',
-                      ),
-                    );
-                  }
                   if (reservedTables.isNotEmpty) {
                     reasons.add(
                       _BlockReason(
@@ -1743,7 +1736,10 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
 
                 // ── Step 3: save sales / close ──
                 if (ctx.mounted) setS(() => step = 3);
-                final closeFuture = DatabaseService.closeDay();
+                final closeFuture = DatabaseService.closeDay(
+                  actorId: widget.user.username,
+                  actorName: widget.user.username,
+                );
                 await Future.delayed(const Duration(milliseconds: 500));
 
                 // ── Step 4: advance day ──

@@ -1,15 +1,20 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'dart:developer' as developer;
 
 import 'package:vynic/core/models/audit_report.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/closure_money.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/order_status.dart';
-import 'package:vynic/core/models/reservation_status.dart';
+import 'package:vynic/core/models/takeaway_order.dart';
+import 'package:vynic/core/services/sync/sync_events.dart';
+import 'package:vynic/core/utils/payment_utils.dart';
 
 import '../database_core.dart';
 import '../repositories/audit_repository.dart';
 import '../repositories/business_day_repository.dart';
 import '../repositories/closure_journal_repository.dart';
+import '../repositories/reservation_repository.dart';
 import '../repositories/sales_repository.dart';
 import '../repositories/table_repository.dart';
 
@@ -86,11 +91,41 @@ class CloseTableTransaction {
 
   /// Closes [orderId], or reports that it is already closed.
   ///
-  /// [money] must reconcile: gross equals advance plus balance due, and the
-  /// tender settles the balance. A closure that does not reconcile writes
-  /// nothing at all — the guest was charged one number and a different one
-  /// would have been booked.
+  /// [money] must reconcile: gross equals advance plus balance due, and a
+  /// fiscal tender settles the balance. An internal close preserves gross and
+  /// advance but normalizes current collection to zero. A fiscal closure that
+  /// does not reconcile writes nothing at all — the guest was charged one
+  /// number and a different one would have been booked.
   static Future<ClosureResult> run({
+    required int orderId,
+    required ClosureMoney money,
+    required String paymentMethod,
+    required Map<String, double> tenderBreakdown,
+    required String closedById,
+    required bool isFiscal,
+    String? closedByName,
+    String? customPaymentLabel,
+    List<OrderItem>? saleItems,
+    double? subtotalAmount,
+    Map<String, dynamic>? finalTransaction,
+  }) => UpdateReadiness.track(
+    'closeTable',
+    () => _updateTrackedRun(
+      orderId: orderId,
+      money: money,
+      paymentMethod: paymentMethod,
+      tenderBreakdown: tenderBreakdown,
+      closedById: closedById,
+      isFiscal: isFiscal,
+      closedByName: closedByName,
+      customPaymentLabel: customPaymentLabel,
+      saleItems: saleItems,
+      subtotalAmount: subtotalAmount,
+      finalTransaction: finalTransaction,
+    ),
+  );
+
+  static Future<ClosureResult> _updateTrackedRun({
     required int orderId,
     required ClosureMoney money,
     required String paymentMethod,
@@ -132,7 +167,38 @@ class CloseTableTransaction {
       return const ClosureResult(outcome: ClosureOutcome.orderNotFound);
     }
 
-    final mismatch = money.describeMismatch();
+    // Internal closure preserves the order's operational value while making
+    // no claim that money changed hands. Normalize at this authoritative
+    // boundary so an older caller that still supplies an automatic cash
+    // selection cannot persist false collection metadata.
+    final effectiveMoney = isFiscal
+        ? money
+        : ClosureMoney(
+            gross: money.gross,
+            advanceApplied: money.advanceApplied,
+            collectedNow: 0,
+          );
+    final effectivePaymentMethod = isFiscal
+        ? paymentMethod
+        : PaymentUtils.methodNonFiscal;
+    final effectiveTenderBreakdown = isFiscal
+        ? tenderBreakdown
+        : const <String, double>{};
+    final effectiveFinalTransaction = isFiscal
+        ? finalTransaction
+        : <String, dynamic>{
+            ...?finalTransaction,
+            'isFiscal': false,
+            'paymentMethod': PaymentUtils.methodNonFiscal,
+            'paymentBreakdown': const <String, double>{},
+            'cashAmount': 0.0,
+            'cardAmount': 0.0,
+            'collectedNow': 0.0,
+          };
+
+    final mismatch = effectiveMoney.describeMismatch(
+      requireCurrentCollection: isFiscal,
+    );
     if (mismatch != null) {
       developer.log(
         'Closure refused for order #$orderId: $mismatch',
@@ -154,12 +220,12 @@ class CloseTableTransaction {
         customPaymentLabel: customPaymentLabel,
         saleItems: saleItems ?? _defaultSaleItems(order),
         subtotalAmount: subtotalAmount,
-        finalTransaction: finalTransaction,
+        finalTransaction: effectiveFinalTransaction,
       );
       return ClosureResult(
         outcome: resumed ? ClosureOutcome.resumed : ClosureOutcome.failed,
         closureId: existing.closureId,
-        money: money,
+        money: effectiveMoney,
       );
     }
 
@@ -181,12 +247,15 @@ class CloseTableTransaction {
       phase: ClosurePhase.started,
       businessDate: businessDate,
       isFiscal: isFiscal,
-      grossSaleAmount: money.gross,
-      advanceApplied: money.advanceApplied,
-      collectedNow: money.collectedNow,
-      paymentMethod: paymentMethod,
-      paymentBreakdown: money.breakdownWithAdvance(tenderBreakdown),
+      grossSaleAmount: effectiveMoney.gross,
+      advanceApplied: effectiveMoney.advanceApplied,
+      collectedNow: effectiveMoney.collectedNow,
+      paymentMethod: effectivePaymentMethod,
+      paymentBreakdown: effectiveMoney.breakdownWithAdvance(
+        effectiveTenderBreakdown,
+      ),
       actorId: closedById,
+      actorName: closedByName,
       startedAt: DateTime.now(),
       advanceReceiptId: order.advanceReceiptId,
     );
@@ -200,13 +269,13 @@ class CloseTableTransaction {
       customPaymentLabel: customPaymentLabel,
       saleItems: saleItems ?? _defaultSaleItems(order),
       subtotalAmount: subtotalAmount,
-      finalTransaction: finalTransaction,
+      finalTransaction: effectiveFinalTransaction,
     );
 
     return ClosureResult(
       outcome: done ? ClosureOutcome.closed : ClosureOutcome.failed,
       closureId: closureId,
-      money: money,
+      money: effectiveMoney,
     );
   }
 
@@ -237,6 +306,7 @@ class CloseTableTransaction {
       if (!current.phase.isAtLeast(ClosurePhase.saleWritten)) {
         final closedAt = BusinessDayRepository.getCurrentDateTime();
         final key = await SalesRepository.saveSaleRecord(
+          captureConsumption: true,
           orderId: order.orderId,
           tableNumbers: order.tableNumbers,
           floor: order.floor,
@@ -279,79 +349,13 @@ class CloseTableTransaction {
         );
       }
 
-      // ── 2. The advance receipt is now spent. Idempotent.
-      final receiptId = current.advanceReceiptId;
-      if (receiptId != null && current.advanceApplied > 0) {
-        await SalesRepository.markAdvanceReceiptApplied(
-          receiptId: receiptId,
-          closureId: current.closureId,
-        );
-      }
-
-      // ── 3. The order. Repeating this is a no-op.
-      order.statusEnum = OrderStatus.closed;
-      order.paymentMethod = current.isFiscal
-          ? current.paymentMethod
-          : 'non-fiscal';
-      final closureTimestamp = BusinessDayRepository.getCurrentDateTime();
-      order.closedAt ??= closureTimestamp;
-      order.updatedAt = closureTimestamp;
-      await order.save();
-
-      // ── 4. The floor. Freeing a free table is a no-op.
-      for (final tableNumber in order.tableNumbers) {
-        await TableRepository.freeTable(
-          tableNumber: tableNumber,
-          floor: order.floor,
-        );
-      }
-
-      // ── 5. The reservation.
-      await _completeLinkedReservation(order.orderId);
-
-      // ── 6. The audit trail. Appending to a locked report throws; that is
-      // the second attempt finding the first one's work, not a failure.
-      final closingEvent = AuditEvent(
-        type: AuditEventType.cancelTable,
-        itemName: 'ORDER',
-        previousQty: 0,
-        newQty: 0,
-        waiterId: closedById,
-        waiterName: closedByName ?? closedById,
-        timestamp: order.closedAt ?? closureTimestamp,
-        note: _closureNote(
-          isFiscal: current.isFiscal,
-          paymentMethod: current.paymentMethod,
-          customPaymentLabel: customPaymentLabel,
-          money: current,
-        ),
+      return completeExistingSale(
+        entry: current,
+        order: order,
+        saleRecordKey: current.saleRecordKey,
+        closedByName: closedByName,
+        customPaymentLabel: customPaymentLabel,
       );
-      try {
-        await AuditRepository.appendOrderAuditEvents(
-          orderId: order.orderId,
-          events: [closingEvent],
-          statusOverride: AuditReportStatus.closed,
-          lockReport: true,
-          closedById: closedById,
-          closedByName: closedByName ?? closedById,
-        );
-      } catch (e) {
-        developer.log(
-          'Audit report append failed for closure ${current.closureId}: $e',
-        );
-      }
-
-      // ── 7. The derived daily figure, recomputed from the records.
-      await BusinessDayRepository.refreshDailySalesTotalForDate(
-        BusinessDayRepository.getCurrentDate(),
-      );
-
-      await ClosureJournalRepository.advance(
-        current,
-        phase: ClosurePhase.completed,
-        completedAt: DateTime.now(),
-      );
-      return true;
     } catch (e, stack) {
       developer.log(
         'Closure ${entry.closureId} failed: $e',
@@ -361,6 +365,222 @@ class CloseTableTransaction {
       );
       return false;
     }
+  }
+
+  /// Completes a closure whose Sale already exists without writing the Sale.
+  ///
+  /// Normal close and startup recovery share this exact routine. The journal
+  /// advances to [ClosurePhase.postSaleEffectsCompleted] only after the
+  /// advance receipt, Order, physical Table, genuine linked Reservation, and
+  /// typed audit report are all durable. A retry before that marker safely
+  /// replays the same effects; a retry after it skips them.
+  ///
+  /// [source] says which mechanism is finishing the closure. A normal close is
+  /// [AuditSource.pos]; startup recovery passes [AuditSource.systemRecovery]
+  /// with [recoveryAction] so the typed close event records that the operator
+  /// started it and the system completed it. The event type is unchanged
+  /// either way, and a closure already finalized is never re-stamped.
+  static Future<bool> completeExistingSale({
+    required ClosureJournalEntry entry,
+    required Order order,
+    Object? saleRecordKey,
+    String? closedByName,
+    String? customPaymentLabel,
+    AuditSource source = AuditSource.pos,
+    String? recoveryAction,
+  }) => UpdateReadiness.track(
+    'completeExistingSale',
+    () => _updateTrackedCompleteExistingSale(
+      entry: entry,
+      order: order,
+      saleRecordKey: saleRecordKey,
+      closedByName: closedByName,
+      customPaymentLabel: customPaymentLabel,
+      source: source,
+      recoveryAction: recoveryAction,
+    ),
+  );
+
+  static Future<bool> _updateTrackedCompleteExistingSale({
+    required ClosureJournalEntry entry,
+    required Order order,
+    Object? saleRecordKey,
+    String? closedByName,
+    String? customPaymentLabel,
+    AuditSource source = AuditSource.pos,
+    String? recoveryAction,
+  }) async {
+    try {
+      var current = ClosureJournalRepository.find(entry.closureId) ?? entry;
+      final existingSaleKey =
+          saleRecordKey ??
+          current.saleRecordKey ??
+          SalesRepository.findSaleKeyByClosureId(current.closureId);
+      if (existingSaleKey == null) {
+        developer.log(
+          'Closure ${current.closureId}: existing Sale disappeared before '
+          'post-Sale completion',
+          name: 'close_table',
+        );
+        return false;
+      }
+
+      if (!current.phase.isAtLeast(ClosurePhase.saleWritten) ||
+          current.saleRecordKey == null) {
+        current = await ClosureJournalRepository.advance(
+          current,
+          phase: ClosurePhase.saleWritten,
+          saleRecordKey: existingSaleKey,
+        );
+      }
+
+      if (!current.phase.isAtLeast(ClosurePhase.postSaleEffectsCompleted)) {
+        await _applyPostSaleEffects(
+          current: current,
+          order: order,
+          saleRecordKey: existingSaleKey,
+          closedByName: closedByName,
+          customPaymentLabel: customPaymentLabel,
+          source: source,
+          recoveryAction: recoveryAction,
+        );
+        current = await ClosureJournalRepository.advance(
+          current,
+          phase: ClosurePhase.postSaleEffectsCompleted,
+        );
+      }
+
+      if (!current.phase.isAtLeast(ClosurePhase.completed)) {
+        await BusinessDayRepository.refreshDailySalesTotalForDate(
+          BusinessDayRepository.getCurrentDate(),
+        );
+        await ClosureJournalRepository.advance(
+          current,
+          phase: ClosurePhase.completed,
+          completedAt: DateTime.now(),
+        );
+        SyncHub.notify(
+          SyncEvent(
+            type: SyncEventType.orders,
+            action: 'closed',
+            payload: {'orderId': order.orderId, 'status': 'closed'},
+          ),
+        );
+      }
+      return true;
+    } catch (e, stack) {
+      developer.log(
+        'Closure ${entry.closureId} post-Sale completion failed: $e',
+        error: e,
+        stackTrace: stack,
+        name: 'close_table',
+      );
+      return false;
+    }
+  }
+
+  static Future<void> _applyPostSaleEffects({
+    required ClosureJournalEntry current,
+    required Order order,
+    required Object saleRecordKey,
+    String? closedByName,
+    String? customPaymentLabel,
+    required AuditSource source,
+    String? recoveryAction,
+  }) async {
+    final rawSale = DatabaseCore.salesBox?.get(saleRecordKey);
+    final sale = rawSale is Map ? rawSale : null;
+    final saleClosedAt = DateTime.tryParse(sale?['closedAt']?.toString() ?? '');
+    final closureTimestamp =
+        order.closedAt ?? saleClosedAt ?? current.startedAt;
+    final effectiveActorId = current.actorId.trim().isEmpty
+        ? 'system'
+        : current.actorId;
+    final journalActorName = current.actorName?.trim();
+    final effectiveActorName = closedByName?.trim().isNotEmpty == true
+        ? closedByName!.trim()
+        : journalActorName?.isNotEmpty == true
+        ? journalActorName!
+        : effectiveActorId;
+    final saleCustomLabel = sale?['customPaymentLabel']?.toString().trim();
+    final effectiveCustomPaymentLabel =
+        customPaymentLabel?.trim().isNotEmpty == true
+        ? customPaymentLabel!.trim()
+        : saleCustomLabel?.isNotEmpty == true
+        ? saleCustomLabel
+        : null;
+
+    // The advance receipt is now spent. Reapplying the same closure id is a
+    // no-op and does not alter the already-written Sale.
+    final receiptId = current.advanceReceiptId;
+    if (receiptId != null && current.advanceApplied > 0) {
+      await SalesRepository.markAdvanceReceiptApplied(
+        receiptId: receiptId,
+        closureId: current.closureId,
+      );
+    }
+
+    order.statusEnum = OrderStatus.closed;
+    order.paymentMethod = current.isFiscal
+        ? current.paymentMethod
+        : PaymentUtils.methodNonFiscal;
+    order.closedAt ??= closureTimestamp;
+    order.updatedAt = closureTimestamp;
+    order.closureId = current.closureId;
+    await order.save();
+
+    // Takeaway uses a synthetic `TA-` table identity and must not mutate the
+    // physical floor. Package and Walk-In table orders follow the normal path.
+    if (!isTakeawayOrder(order)) {
+      for (final tableNumber in order.tableNumbers) {
+        await TableRepository.freeTable(
+          tableNumber: tableNumber,
+          floor: order.floor,
+        );
+      }
+    }
+
+    await ReservationRepository.completeReservationByOrderId(
+      order.orderId,
+      failOnError: true,
+      actorId: effectiveActorId,
+      actorName: effectiveActorName,
+      source: source,
+      reason: 'Order closed',
+    );
+
+    final closingEvent = AuditEvent(
+      type: current.isFiscal
+          ? AuditEventType.close
+          : AuditEventType.internalClose,
+      itemName: 'ORDER',
+      previousQty: 0,
+      newQty: 0,
+      waiterId: effectiveActorId,
+      waiterName: effectiveActorName,
+      timestamp: closureTimestamp,
+      note: _closureNote(
+        isFiscal: current.isFiscal,
+        paymentMethod: current.paymentMethod,
+        customPaymentLabel: effectiveCustomPaymentLabel,
+        money: current,
+      ),
+      details: _closureDetails(
+        order: order,
+        money: current,
+        actorId: effectiveActorId,
+        actorName: effectiveActorName,
+        customPaymentLabel: effectiveCustomPaymentLabel,
+        source: source,
+        recoveryAction: recoveryAction,
+      ),
+    );
+    await AuditRepository.finalizeOrderClosureAudit(
+      orderId: order.orderId,
+      closingEvent: closingEvent,
+      closedById: effectiveActorId,
+      closedByName: effectiveActorName,
+    );
   }
 
   static String _closureNote({
@@ -380,25 +600,61 @@ class CloseTableTransaction {
         'collected ${money.collectedNow.toStringAsFixed(2)}';
   }
 
-  static Future<void> _completeLinkedReservation(int orderId) async {
-    final dateString = BusinessDayRepository.dateKey(
-      BusinessDayRepository.getCurrentDate(),
-    );
-    for (final reservation in DatabaseCore.reservationBox!.values) {
-      final resDateString = BusinessDayRepository.dateKey(
-        reservation.reservationDate,
-      );
-      final matchesLinked = reservation.linkedOrderId == orderId;
-      final matchesLegacyNote =
-          reservation.notes != null &&
-          reservation.notes!.contains('Order #$orderId');
-      if (resDateString == dateString && (matchesLinked || matchesLegacyNote)) {
-        if (reservation.statusEnum != ReservationStatus.completed) {
-          reservation.statusEnum = ReservationStatus.completed;
-          await reservation.save();
-        }
-        return;
-      }
-    }
+  static Map<String, dynamic> _closureDetails({
+    required Order order,
+    required ClosureJournalEntry money,
+    required String actorId,
+    required String actorName,
+    String? customPaymentLabel,
+    required AuditSource source,
+    String? recoveryAction,
+  }) {
+    final cashAmount = money.isFiscal
+        ? (money.paymentBreakdown[PaymentUtils.methodCash] ?? 0.0)
+        : 0.0;
+    final cardAmount = money.isFiscal
+        ? money.paymentBreakdown.entries
+              .where((entry) => entry.key.startsWith('card'))
+              .fold<double>(0, (sum, entry) => sum + entry.value)
+        : 0.0;
+
+    return <String, dynamic>{
+      'orderId': order.orderId,
+      'tableNumbers': List<String>.from(order.tableNumbers),
+      'tableRefs': order.tableNumbers
+          .map((tableNumber) => '${order.floor}/$tableNumber')
+          .toList(growable: false),
+      'floor': order.floor,
+      'actorId': actorId,
+      'actorName': actorName,
+      // The actor is who initiated the closure; the source is what completed
+      // it. They differ only when startup recovery finished the job.
+      AuditSource.detailsKey: source.wireValue,
+      if (recoveryAction != null && recoveryAction.isNotEmpty)
+        'recoveryAction': recoveryAction,
+      'businessDate': money.businessDate,
+      'closureId': money.closureId,
+      // Names the genuine booking this close settles, so the reservation
+      // timeline and the Order report point at each other.
+      if (ReservationRepository.findLinkedBooking(order.orderId) != null)
+        'reservationId': ReservationRepository.findLinkedBooking(
+          order.orderId,
+        )!.id,
+      'isFiscal': money.isFiscal,
+      'grossAmount': money.grossSaleAmount,
+      'paymentMethod': money.isFiscal
+          ? money.paymentMethod
+          : PaymentUtils.methodNonFiscal,
+      'paymentBreakdown': Map<String, double>.from(money.paymentBreakdown),
+      'cashAmount': cashAmount,
+      'cardAmount': cardAmount,
+      'advanceApplied': money.advanceApplied,
+      'collectedNow': money.collectedNow,
+      'serviceFee': order.getServiceFee(),
+      'discountAmount': order.discountAmount,
+      'manualAdjustmentAmount': order.manualAdjustmentAmount,
+      if (customPaymentLabel != null && customPaymentLabel.isNotEmpty)
+        'customPaymentLabel': customPaymentLabel,
+    };
   }
 }

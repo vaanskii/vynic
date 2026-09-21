@@ -3,9 +3,15 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../prisma.service';
 import { MonitoringGateway } from '../../../realtime/monitoring.gateway';
 import { normalizeAuditEventType } from '../../audit/audit-event-type';
+import {
+  deriveAuditLogEntity,
+  isAuditLogEntityType,
+} from '../../audit/audit-log-entity';
+import { deriveOrderKind } from '../../audit/audit-order-kind';
 import { isPosAuditBroadcastSuppressed } from '../../sync-echo-guard';
 import { AuditEventLogSync } from '../sync-payload';
 import type { TenantContext } from '../../../auth/pos-auth-context';
+import { SyncTimer } from '../sync-timing';
 
 /** One line of an audit report's history, as the POS records it. */
 export interface AuditEventSync {
@@ -17,6 +23,9 @@ export interface AuditEventSync {
   waiterName?: string;
   timestamp?: string;
   note?: string | null;
+  details?: unknown;
+  /** The POS's own ordinal for this event within its report. */
+  sequence?: number;
 }
 
 /** One report the POS says it holds, and the revision of it being offered. */
@@ -63,8 +72,15 @@ const LARGE_BATCH_WARNING_THRESHOLD = 500;
  * ## Reports
  *
  * A report is a full replacement of itself: the POS owns the event list, so its
- * events are deleted and rewritten with `seq` carrying the POS's ordering. That
- * makes any re-push idempotent, which is what lets delivery be retried freely.
+ * events are deleted and rewritten. That makes any re-push idempotent, which is
+ * what lets delivery be retried freely.
+ *
+ * The POS also owns their *order*. Each event carries a `sequence` it was
+ * assigned when it was appended, and that number is written straight into
+ * `seq`; the array position is only a fallback for a POS build that predates
+ * it. Inferring order from arrival position made the timeline depend on how the
+ * sender happened to serialize a batch, which for events sharing one timestamp
+ * was not a decision anybody made.
  *
  * Since Step 6C the POS sends only the reports whose content changed, each with
  * a `revision`. This service persists the report, stores that revision, and
@@ -102,7 +118,18 @@ export class IngestAuditReportsService {
     private readonly gateway: MonitoringGateway,
   ) {}
 
+  private atomic = false;
+  private afterCommit?: Array<() => Promise<void>>;
+
+  withDatabase(db: PrismaService, afterCommit: Array<() => Promise<void>>) {
+    const service = new IngestAuditReportsService(db, this.gateway);
+    service.atomic = true;
+    service.afterCommit = afterCommit;
+    return service;
+  }
+
   async ingestReports(body: IngestAuditReportsBody, tenant: TenantContext) {
+    const timing = new SyncTimer();
     const reports = Array.isArray(body?.reports) ? body.reports : [];
     const acknowledged: AuditReportAcknowledgement[] = [];
 
@@ -120,43 +147,57 @@ export class IngestAuditReportsService {
 
     let upserted = 0;
     let unchanged = 0;
-    for (const report of reports) {
-      const reportId =
-        typeof report?.reportId === 'string' ? report.reportId.trim() : '';
-      if (!reportId) continue;
+    await timing.phase('persist', async () => {
+      for (const report of reports) {
+        const reportId =
+          typeof report?.reportId === 'string' ? report.reportId.trim() : '';
+        if (!reportId) continue;
 
-      const revision =
-        typeof report.revision === 'string' && report.revision.length > 0
-          ? report.revision
-          : null;
+        const revision =
+          typeof report.revision === 'string' && report.revision.length > 0
+            ? report.revision
+            : null;
 
-      try {
-        const skipped = await this.persistReport(
-          tenant.venueId,
-          reportId,
-          revision,
-          report,
-        );
-        if (skipped) {
-          unchanged += 1;
-        } else {
-          upserted += 1;
+        try {
+          const skipped = await this.persistReport(
+            tenant.venueId,
+            reportId,
+            revision,
+            report,
+          );
+          if (skipped) {
+            unchanged += 1;
+          } else {
+            upserted += 1;
+          }
+          // Acknowledged means persisted. A report that threw is deliberately
+          // absent, so the POS keeps it dirty and offers it again.
+          acknowledged.push({ reportId, revision });
+        } catch (error) {
+          if (this.atomic) throw error;
+          console.warn(
+            `[SyncAudit] Report ${reportId} failed: ${(error as Error).message}`,
+          );
         }
-        // Acknowledged means persisted. A report that threw is deliberately
-        // absent, so the POS keeps it dirty and offers it again.
-        acknowledged.push({ reportId, revision });
-      } catch (error) {
-        console.warn(
-          `[SyncAudit] Report ${reportId} failed: ${(error as Error).message}`,
-        );
       }
+    });
+
+    await timing.phase('reconcile', () =>
+      this.reconcile(tenant, body, reports),
+    );
+
+    if (upserted > 0 && !isPosAuditBroadcastSuppressed(tenant)) {
+      const notify = async () => {
+        this.gateway.broadcastUpdate(tenant, 'audit_updated', {
+          count: upserted,
+        });
+      };
+      if (this.afterCommit) this.afterCommit.push(notify);
+      else await notify();
     }
 
-    await this.reconcile(tenant, body, reports);
-
-    if (upserted > 0 && !isPosAuditBroadcastSuppressed()) {
-      this.gateway.broadcastUpdate('audit_updated', { count: upserted });
-    }
+    timing.note(`written=${upserted} unchanged=${unchanged}`);
+    timing.log('Backend/audit');
 
     return {
       success: true,
@@ -193,6 +234,10 @@ export class IngestAuditReportsService {
       return true;
     }
 
+    const events: AuditEventSync[] = Array.isArray(r.events)
+      ? (r.events as AuditEventSync[])
+      : [];
+
     const fields = {
       posOrderId: typeof r.orderId === 'number' ? r.orderId : 0,
       tableNumbers: Array.isArray(r.tableNumbers)
@@ -209,6 +254,7 @@ export class IngestAuditReportsService {
       locked: r.locked === true,
       syncRevision: revision,
       updatedAt: r.updatedAt ? new Date(r.updatedAt as string) : new Date(),
+      orderKind: deriveOrderKind(events),
     };
 
     const dbReport = await this.prisma.auditReport.upsert({
@@ -221,13 +267,20 @@ export class IngestAuditReportsService {
       where: { reportId: dbReport.id },
     });
 
-    const events: AuditEventSync[] = Array.isArray(r.events)
-      ? (r.events as AuditEventSync[])
-      : [];
     if (events.length > 0) {
+      // The POS's own ordinals when it sends a complete set, array position
+      // otherwise. Mixing the two within one report would interleave two
+      // different numbering schemes, so it is all or nothing.
+      const posOwnsOrder = events.every(
+        (ev) => Number.isInteger(ev.sequence) && (ev.sequence as number) >= 0,
+      );
       await this.prisma.auditEvent.createMany({
-        data: events.map((ev, seq) => ({
+        data: events.map((ev, index) => ({
           reportId: dbReport.id,
+          // Copied from the report this event belongs to, which took it from
+          // the authenticated principal. The payload's own idea of a Venue is
+          // never consulted here or anywhere else in this file.
+          venueId,
           type: normalizeAuditEventType(ev.type, ev.previousQty, ev.newQty),
           itemName: ev.itemName ?? '',
           previousQty: ev.previousQty ?? 0,
@@ -236,7 +289,8 @@ export class IngestAuditReportsService {
           waiterName: ev.waiterName ?? '',
           eventTime: ev.timestamp ? new Date(ev.timestamp) : new Date(),
           note: ev.note ?? null,
-          seq,
+          details: (ev.details ?? undefined) as Prisma.InputJsonValue,
+          seq: posOwnsOrder ? (ev.sequence as number) : index,
         })),
       });
     }
@@ -316,12 +370,30 @@ export class IngestAuditReportsService {
           select: { id: true },
         });
         if (!existing) {
+          // The POS names the row's subject when it knows it. An older build
+          // does not send the columns at all, so the entity is derived from
+          // the action and the row's own details instead — deterministic, and
+          // null rather than a guess when the action is not one we classify.
+          const declaredType = isAuditLogEntityType(log.entityType)
+            ? log.entityType.toUpperCase()
+            : null;
+          const derived = deriveAuditLogEntity(log.action, log.data);
+          const entityType = declaredType ?? derived.entityType;
+          // The id belongs to whichever type won: pairing a declared type with
+          // a derived id would describe a subject nobody claimed.
+          const entityId =
+            declaredType !== null
+              ? (log.entityId ?? '').toString().trim() || null
+              : derived.entityId;
           await this.prisma.auditEventLog.create({
             data: {
               id: log.id,
+              // From the authenticated Device, never from the payload.
               venueId: tenant.venueId,
               action: log.action,
               userId: log.userId,
+              entityType,
+              entityId,
               data: (log.data ?? {}) as Prisma.InputJsonValue,
               deviceType: log.deviceType,
               createdAt: log.createdAt ? new Date(log.createdAt) : new Date(),
@@ -330,6 +402,7 @@ export class IngestAuditReportsService {
         }
         count++;
       } catch (e) {
+        if (this.atomic) throw e;
         // Log error but continue with other logs
         console.warn(
           `[Sync] Error upserting audit log ${log.id}:`,

@@ -34,6 +34,7 @@ export class ReservationSyncService {
   async sync(
     tenant: Pick<TenantContext, 'venueId'>,
     reservations: ReservationSync[] | undefined,
+    failOnError = false,
   ): Promise<void> {
     if (!Array.isArray(reservations)) return;
 
@@ -86,6 +87,7 @@ export class ReservationSyncService {
         });
         seen.add(posReservationId);
       } catch (error) {
+        if (failOnError) throw error;
         // One malformed reservation must not cost the rest of the snapshot.
         this.logger.warn(
           `Reservation ${posReservationId} failed: ${(error as Error).message}`,

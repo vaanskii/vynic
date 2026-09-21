@@ -82,6 +82,8 @@
 .platform-button { display: inline-flex; min-height: 38px; align-items: center; justify-content: center; gap: 7px; padding: 8px 13px; border: 1px solid transparent; border-radius: 8px; font-size: 12px; font-weight: 700; line-height: 1; transition: .16s ease; }
 .platform-button:focus-visible, .platform-icon-button:focus-visible, .platform-input:focus-visible, .platform-nav__item:focus-visible { outline: 2px solid var(--platform-accent); outline-offset: 2px; }
 .platform-button:disabled { opacity: .55; }
+.platform-button__spinner { width: 14px; height: 14px; flex-shrink: 0; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: platform-spin .8s linear infinite; }
+.platform-button[aria-busy="true"] { cursor: progress; }
 .platform-button--primary { background: var(--platform-accent); color: #fff; box-shadow: 0 8px 20px rgba(111,71,117,.19); }
 .platform-button--primary:hover:not(:disabled) { background: var(--platform-accent-dark); }
 .platform-button--secondary { border-color: var(--platform-border-strong); background: var(--platform-surface); color: var(--platform-ink); }
@@ -214,7 +216,7 @@
 .platform-feature-row__copy span { color: var(--platform-muted); font-size: 9px !important; }
 .platform-feature-row__copy p { margin: 2px 0 0; color: var(--platform-muted); font-size: 10px; }
 .platform-feature-actions { display: flex; gap: 3px; }
-.platform-feature-actions .platform-button { min-height: 32px; padding: 6px 9px; font-size: 10px; }
+.platform-feature-actions .platform-button { white-space: normal; min-height: 36px; padding: 6px 9px; font-size: 10px; }
 .platform-product-warning { margin-top: 16px; }
 .platform-mode-control { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
 .platform-table__primary strong { display: flex; align-items: center; gap: 6px; }
@@ -313,5 +315,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .platform-spinner { animation-duration: 1.8s; }
+  .platform-button__spinner { animation: none; }
   .platform-sidebar, .platform-button, .platform-nav__item { transition: none; }
 }
+
+.platform-feature-dependencies { display: block; margin-bottom: 16px; }
+.platform-feature-dependencies ul { margin: 6px 0 0; padding-left: 20px; font-size: 12px; line-height: 1.6; }

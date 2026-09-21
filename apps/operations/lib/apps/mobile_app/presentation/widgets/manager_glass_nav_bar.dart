@@ -31,7 +31,7 @@ class ManagerNavItem {
 }
 
 class _ManagerGlassNavBarState extends State<ManagerGlassNavBar> {
-  static const _radius = 34.0;
+  static const _radius = 16.0;
 
   bool _scrubbing = false;
   double _barWidth = 0;
@@ -112,25 +112,31 @@ class _ManagerGlassNavBarState extends State<ManagerGlassNavBar> {
       valueListenable: ManagerAppPreferences.dashboardAppearance,
       builder: (context, appearance, _) {
         final nav = DashboardThemeData.forAppearance(appearance).nav;
-        return SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(_radius),
-                boxShadow: [
-                  BoxShadow(
-                    color: nav.outerShadow,
-                    blurRadius: 20,
-                    spreadRadius: 0,
-                    offset: const Offset(0, 6),
+        return Center(
+          heightFactor: 1,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(_radius),
+                    boxShadow: [
+                      BoxShadow(
+                        color: nav.outerShadow,
+                        blurRadius: 20,
+                        spreadRadius: 0,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(_radius),
-                child: _barSurface(nav),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(_radius),
+                    child: _barSurface(nav),
+                  ),
+                ),
               ),
             ),
           ),
@@ -151,7 +157,7 @@ class _ManagerGlassNavBarState extends State<ManagerGlassNavBar> {
       onHorizontalDragEnd: (_) => _endScrub(),
       onHorizontalDragCancel: _endScrub,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
         decoration: BoxDecoration(
           color: nav.barGradientBottom,
           borderRadius: BorderRadius.circular(_radius),
@@ -223,19 +229,42 @@ class _ManagerGlassNavBarState extends State<ManagerGlassNavBar> {
 
                     return Expanded(
                       child: GestureDetector(
+                        key: ValueKey('manager-nav-${item.label}'),
                         onTap: () {
                           HapticFeedback.selectionClick();
                           widget.onTap(index);
                         },
                         behavior: HitTestBehavior.opaque,
                         child: SizedBox(
-                          height: 44,
+                          height: 68,
                           child: Tooltip(
                             message: item.label,
-                            child: Icon(
-                              item.icon,
-                              size: iconSize,
-                              color: iconColor,
+                            child: Semantics(
+                              label: item.label,
+                              selected: widget.selectedIndex == index,
+                              button: true,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    item.icon,
+                                    size: iconSize,
+                                    color: iconColor,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    item.label,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: iconColor,
+                                      fontSize: 10,
+                                      height: 1.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -250,4 +279,25 @@ class _ManagerGlassNavBarState extends State<ManagerGlassNavBar> {
       ),
     );
   }
+}
+
+/// Reserves the real navigation height for every tab, including nested scaffolds.
+/// Lists must not rely on guessed trailing padding to remain tappable.
+class ManagerNavigationFrame extends StatelessWidget {
+  const ManagerNavigationFrame({
+    super.key,
+    this.backgroundColor,
+    required this.body,
+    required this.bottomNavigationBar,
+  });
+  final Color? backgroundColor;
+  final Widget body;
+  final Widget bottomNavigationBar;
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: backgroundColor,
+    extendBody: false,
+    body: body,
+    bottomNavigationBar: bottomNavigationBar,
+  );
 }

@@ -187,7 +187,7 @@ describeDatabase('Cloud → POS command dispatch (PostgreSQL)', () => {
     }
   });
 
-  it('goes back to the LAN when the Venue’s only terminal is revoked', async () => {
+  it('keeps work in Edge when the only terminal is revoked', async () => {
     const issued = await credentials.issueCredential({
       venueId: unenrolledVenueId,
       installationId: `a7000000-0000-4000-8000-${suffix}`,
@@ -203,8 +203,12 @@ describeDatabase('Cloud → POS command dispatch (PostgreSQL)', () => {
         type: EdgeCommandTypes.ORDER_CANCEL,
         payload: { posOrderId: 9 },
       });
-      // A revoked device cannot claim, so queueing for it would strand the work.
-      expect(delivery.transport).toBe('legacy');
+      // Missing authority requires an operator; legacy fallback cannot bypass it.
+      expect(delivery.transport).toBe('edge');
+      expect(delivery.status).toBe('QUEUED');
+      await prisma.edgeCommand.deleteMany({
+        where: { venueId: unenrolledVenueId },
+      });
     } finally {
       await prisma.device.delete({ where: { id: issued.deviceId } });
     }

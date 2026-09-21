@@ -1,3 +1,6 @@
+import 'package:vynic/core/services/pos/pos_locale.dart';
+import 'package:vynic/core/services/pos/pos_input_settings.dart';
+import 'package:vynic/core/database/database_core.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -85,6 +88,8 @@ class _CartEntry {
   final double unitPrice;
   int quantity;
   String? comment; // Item-specific comment
+  final String? menuItemId;
+  final String? variantId;
 
   _CartEntry({
     required this.key,
@@ -92,6 +97,8 @@ class _CartEntry {
     required this.unitPrice,
     required this.quantity,
     this.comment,
+    this.menuItemId,
+    this.variantId,
   });
 
   double get total => unitPrice * quantity;
@@ -199,6 +206,17 @@ class _MenuScreenState extends State<MenuScreen> {
   MenuSubcategory? _selectedSubcategory;
   bool _isLoading = true;
   late String _currentLanguage;
+  String? _observedLocale;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final scope = context.dependOnInheritedWidgetOfExactType<PosLocale>();
+    if (scope != null && scope.language != _observedLocale) {
+      _observedLocale = scope.language;
+      _currentLanguage = scope.language;
+    }
+  }
+
   late double _serviceFeeRate;
   late bool _serviceFeeDefaultEnabled;
   bool _existingOrderIsTakeAway = false;
@@ -476,6 +494,12 @@ class _MenuScreenState extends State<MenuScreen> {
           waiterName: username,
           timestamp: timestamp,
           note: noteSegments.isEmpty ? null : noteSegments.join(' • '),
+          details: <String, dynamic>{
+            if ((nextItem?.menuItemId ?? prevItem?.menuItemId) != null)
+              'menuItemId': nextItem?.menuItemId ?? prevItem?.menuItemId,
+            if ((nextItem?.variantId ?? prevItem?.variantId) != null)
+              'variantId': nextItem?.variantId ?? prevItem?.variantId,
+          },
         ),
       );
     }
@@ -516,6 +540,9 @@ class _MenuScreenState extends State<MenuScreen> {
     }
     _loadInitialPreOrderItems();
     _loadMenu();
+    _menuChanges = DatabaseCore.menuBox?.watch().listen(
+      (_) => unawaited(_loadMenu()),
+    );
     _loadExistingOrder();
     if (widget.existingOrderId == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -543,6 +570,8 @@ class _MenuScreenState extends State<MenuScreen> {
         unitPrice: item.unitPrice,
         quantity: item.quantity,
         comment: item.comment,
+        menuItemId: item.menuItemId,
+        variantId: item.variantId,
       );
     }
     _captureInitialCartSnapshot(force: true);
@@ -568,6 +597,8 @@ class _MenuScreenState extends State<MenuScreen> {
               unitPrice: item.unitPrice,
               quantity: item.quantity,
               comment: item.comment,
+              menuItemId: item.menuItemId,
+              variantId: item.variantId,
             );
           }
         });
@@ -579,6 +610,7 @@ class _MenuScreenState extends State<MenuScreen> {
 
   @override
   void dispose() {
+    _menuChanges?.cancel();
     _categoryScrollController.dispose();
     _subcategoryScrollController.dispose();
     _itemsScrollController.dispose();
@@ -586,21 +618,43 @@ class _MenuScreenState extends State<MenuScreen> {
     super.dispose();
   }
 
+  StreamSubscription<dynamic>? _menuChanges;
+
   Future<void> _loadMenu() async {
     final categories = await MenuService.loadMenu();
+    if (!mounted) return;
+    final selectedSlug = _selectedCategory?.slug;
     setState(() {
       _categories = categories;
       _isLoading = false;
+      _selectedSubcategory = null;
+      if (_categories.isEmpty) _selectedCategory = null;
       if (_categories.isNotEmpty) {
-        _selectedCategory = _categories[0];
+        _selectedCategory =
+            _categories.where((c) => c.slug == selectedSlug).firstOrNull ??
+            _categories[0];
       }
     });
   }
 
-  void _toggleLanguage() {
-    setState(() {
-      _currentLanguage = _currentLanguage == 'ka' ? 'en' : 'ka';
-    });
+  Future<void> _toggleLanguage() async {
+    final next = _currentLanguage == 'ka' ? 'en' : 'ka';
+    try {
+      await DatabaseService.setDefaultLanguage(next);
+      if (mounted) setState(() => _currentLanguage = next);
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              PosLocale.tr(
+                context,
+                'პარამეტრის შენახვა ვერ მოხერხდა. სცადეთ ხელახლა.',
+              )!,
+            ),
+          ),
+        );
+    }
   }
 
   void _scrollItemsToTop() {
@@ -633,9 +687,11 @@ class _MenuScreenState extends State<MenuScreen> {
     String key,
     String name,
     double unitPrice,
-    int qty, [
+    int qty, {
     String? comment,
-  ]) {
+    String? menuItemId,
+    String? variantId,
+  }) {
     setState(() {
       if (_cart.containsKey(key)) {
         _cart[key]!.quantity += qty;
@@ -650,6 +706,8 @@ class _MenuScreenState extends State<MenuScreen> {
           unitPrice: unitPrice,
           quantity: qty,
           comment: comment,
+          menuItemId: menuItemId,
+          variantId: variantId,
         );
       }
     });
@@ -675,6 +733,8 @@ class _MenuScreenState extends State<MenuScreen> {
             quantity: cartEntry.quantity,
             total: cartEntry.total,
             comment: cartEntry.comment,
+            menuItemId: cartEntry.menuItemId,
+            variantId: cartEntry.variantId,
           ),
         )
         .toList();
@@ -690,6 +750,8 @@ class _MenuScreenState extends State<MenuScreen> {
           unitPrice: item.unitPrice,
           quantity: item.quantity,
           comment: item.comment,
+          menuItemId: item.menuItemId,
+          variantId: item.variantId,
         );
       }
       _selectedQuickOrderDraftId = draft.id;
@@ -712,6 +774,8 @@ class _MenuScreenState extends State<MenuScreen> {
           quantity: cartEntry.quantity,
           total: cartEntry.total,
           comment: cartEntry.comment,
+          menuItemId: cartEntry.menuItemId,
+          variantId: cartEntry.variantId,
         );
       }).toList();
 
@@ -731,6 +795,8 @@ class _MenuScreenState extends State<MenuScreen> {
           quantity: cartEntry.quantity,
           total: cartEntry.total,
           comment: cartEntry.comment,
+          menuItemId: cartEntry.menuItemId,
+          variantId: cartEntry.variantId,
         );
       }).toList();
 
@@ -840,6 +906,8 @@ class _MenuScreenState extends State<MenuScreen> {
           quantity: cartEntry.quantity,
           total: cartEntry.total,
           comment: cartEntry.comment,
+          menuItemId: cartEntry.menuItemId,
+          variantId: cartEntry.variantId,
         );
       }).toList();
 
@@ -1139,14 +1207,6 @@ class _MenuScreenState extends State<MenuScreen> {
             }
           }
 
-          // Clear existing items and add new ones
-          existingOrder.items.clear();
-          existingOrder.items.addAll(orderItems);
-          _existingOrderIsTakeAway = _isTakeAwayOrder(existingOrder);
-          existingOrder.includeServiceFee = _shouldIncludeServiceFee;
-          existingOrder.recalculateTotal();
-          existingOrder.updatedAt = DatabaseService.getCurrentDateTime();
-
           orderId = existingOrder.orderId;
 
           if (auditEvents.isNotEmpty) {
@@ -1155,6 +1215,14 @@ class _MenuScreenState extends State<MenuScreen> {
               events: auditEvents,
             );
           }
+
+          // Clear existing items and add new ones
+          existingOrder.items.clear();
+          existingOrder.items.addAll(orderItems);
+          _existingOrderIsTakeAway = _isTakeAwayOrder(existingOrder);
+          existingOrder.includeServiceFee = _shouldIncludeServiceFee;
+          existingOrder.recalculateTotal();
+          existingOrder.updatedAt = DatabaseService.getCurrentDateTime();
 
           await DatabaseService.updateOrder(existingOrder);
 
@@ -1624,8 +1692,12 @@ class _MenuScreenState extends State<MenuScreen> {
       height: 42,
       child: TextField(
         controller: _searchController,
-        readOnly: true, // Make read-only to prevent system keyboard
-        onTap: _openSearchKeyboard,
+        readOnly: PosInputSettings.useOnScreen(
+          context,
+        ), // Make read-only to prevent system keyboard
+        onTap: PosInputSettings.useOnScreen(context)
+            ? _openSearchKeyboard
+            : null,
         style: const TextStyle(color: _menuTextPrimary, fontSize: 15),
         decoration: InputDecoration(
           hintText: _currentLanguage == 'en'
@@ -1895,6 +1967,8 @@ class _MenuScreenState extends State<MenuScreen> {
             '$itemName - $variantLabel',
             selectedVariant.price,
             qty,
+            menuItemId: item.id,
+            variantId: selectedVariant.id,
           );
           _clearSearch();
         }
@@ -1909,7 +1983,13 @@ class _MenuScreenState extends State<MenuScreen> {
       );
 
       if (qty != null && qty > 0 && mounted) {
-        _addToCartEntry(itemName, itemName, item.price ?? 0.0, qty);
+        _addToCartEntry(
+          itemName,
+          itemName,
+          item.price ?? 0.0,
+          qty,
+          menuItemId: item.id,
+        );
         _clearSearch();
       }
     }
@@ -2708,8 +2788,9 @@ class _CommentDialog extends StatefulWidget {
 
 class _CommentDialogState extends State<_CommentDialog> {
   late final TextEditingController _controller;
-  bool _showKeyboard = true; // Show keyboard by default for touch screen
-  String _currentLanguage = 'ka'; // Default to Georgian
+  bool _showKeyboard = PosInputSettings
+      .showKeyboard; // Show keyboard by default for touch screen
+  final String _currentLanguage = 'ka'; // Default to Georgian
 
   @override
   void initState() {
@@ -2764,7 +2845,9 @@ class _CommentDialogState extends State<_CommentDialog> {
                 const SizedBox(height: 14),
                 TextField(
                   controller: _controller,
-                  readOnly: true, // Prevent system keyboard
+                  readOnly: PosInputSettings.useOnScreen(
+                    context,
+                  ), // Prevent system keyboard
                   maxLines: 3,
                   style: const TextStyle(color: _menuTextPrimary, fontSize: 15),
                   decoration: InputDecoration(
@@ -2818,115 +2901,21 @@ class _CommentDialogState extends State<_CommentDialog> {
               ],
             ),
           ),
-          if (_showKeyboard)
-            Container(
-              color: _menuCardColor,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: const BoxDecoration(
-                      color: _menuSurfaceColor,
-                      border: Border(
-                        top: BorderSide(color: _menuBorderColor),
-                        bottom: BorderSide(color: _menuBorderColor),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            _KeyboardLanguageTab(
-                              label: 'ქართული',
-                              selected: _currentLanguage == 'ka',
-                              onTap: () =>
-                                  setState(() => _currentLanguage = 'ka'),
-                            ),
-                            const SizedBox(width: 8),
-                            _KeyboardLanguageTab(
-                              label: 'English',
-                              selected: _currentLanguage == 'en',
-                              onTap: () =>
-                                  setState(() => _currentLanguage = 'en'),
-                            ),
-                          ],
-                        ),
-                        IconButton(
-                          onPressed: () =>
-                              setState(() => _showKeyboard = false),
-                          icon: const Icon(
-                            Icons.keyboard_hide,
-                            color: _menuTextMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  OnScreenKeyboard(
-                    controller: _controller,
-                    language: _currentLanguage,
-                    onClose: () {
-                      setState(() {
-                        _showKeyboard = false;
-                      });
-                    },
-                    onEnter: () {
-                      final text = _controller.text.trim();
-                      Navigator.pop(context, text.isEmpty ? null : text);
-                    },
-                  ),
-                ],
-              ),
+          if (_showKeyboard && PosInputSettings.useOnScreen(context))
+            OnScreenKeyboard(
+              controller: _controller,
+              language: _currentLanguage,
+              onClose: () {
+                setState(() {
+                  _showKeyboard = false;
+                });
+              },
+              onEnter: () {
+                final text = _controller.text.trim();
+                Navigator.pop(context, text.isEmpty ? null : text);
+              },
             ),
         ],
-      ),
-    );
-  }
-}
-
-/// Which layout the on-screen keyboard is showing. A tab, not a text button —
-/// the selected one has to be visible at a glance from across a counter.
-class _KeyboardLanguageTab extends StatelessWidget {
-  const _KeyboardLanguageTab({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: selected ? _menuAccentSoft : Colors.transparent,
-      borderRadius: BorderRadius.circular(9),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(9),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(9),
-            border: Border.all(
-              color: selected ? _menuAccentSoftBorder : Colors.transparent,
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: selected ? _menuAccent : _menuTextMuted,
-              fontSize: 13,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-            ),
-          ),
-        ),
       ),
     );
   }

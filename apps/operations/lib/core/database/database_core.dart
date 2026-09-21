@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'dart:io';
 
 import 'package:hive_flutter/hive_flutter.dart';
@@ -35,6 +36,7 @@ class DatabaseCore {
   static const String reservationBoxName = 'reservations';
   static const String quickOrderBoxName = 'quickOrders';
   static const String closureJournalBoxName = 'closureJournal';
+  static const String inventoryBoxName = 'inventoryCatalog';
 
   static Box<User>? userBox;
   static Box<TableModel>? tableBox;
@@ -53,6 +55,7 @@ class DatabaseCore {
   /// `ClosureJournalRepository` — Hive has no cross-box transaction, so this
   /// is what makes an interrupted close a known state instead of wreckage.
   static Box? closureJournalBox;
+  static Box? inventoryBox;
   static Box? metaBox;
 
   static late String dataDirectoryPath;
@@ -63,7 +66,7 @@ class DatabaseCore {
   ///
   /// Seeding of defaults (admin user, tables, menu, settings) stays with the
   /// owning repositories / the façade's `init()`.
-  static Future<void> open() async {
+  static Future<Directory> _resolveDefaultDirectory() async {
     // Resolve an application-owned storage directory. On Windows we avoid the
     // OneDrive-synced Documents folder to prevent lock conflicts.
     final baseDirectory = Platform.isWindows
@@ -112,6 +115,19 @@ class DatabaseCore {
       }
     }
 
+    return dataDirectory;
+  }
+
+  static Future<void> open({String? managedDataDirectory}) async {
+    final dataDirectory = managedDataDirectory == null
+        ? await _resolveDefaultDirectory()
+        : Directory(managedDataDirectory);
+    if (managedDataDirectory != null &&
+        (!dataDirectory.isAbsolute || !await dataDirectory.exists())) {
+      throw StateError(
+        'The managed restaurant data directory is unavailable; refusing to initialize empty data.',
+      );
+    }
     dataDirectoryPath = dataDirectory.path;
 
     // Initialize Hive with custom path unique per machine to avoid shared locks
@@ -133,22 +149,29 @@ class DatabaseCore {
     Hive.registerAdapter(SaleRecordAdapter());
     Hive.registerAdapter(SaleRecordItemAdapter());
 
-    metaBox = await Hive.openBox(metaBoxName);
+    metaBox = UpdateTrackedBox(await Hive.openBox(metaBoxName));
 
     // Open boxes
-    userBox = await Hive.openBox<User>(userBoxName);
-    tableBox = await Hive.openBox<TableModel>(tableBoxName);
-    orderBox = await Hive.openBox<Order>(orderBoxName);
-    packageBox = await Hive.openBox<Package>(packageBoxName);
-    menuBox = await Hive.openBox<MenuCategoryDB>(menuBoxName);
-    settingsBox = await Hive.openBox(settingsBoxName);
-    salesBox = await Hive.openBox(salesBoxName);
-    expenseBox = await Hive.openBox(expenseBoxName);
-    auditLogBox = await Hive.openBox(auditLogBoxName);
-    errorLogBox = await Hive.openBox(errorLogBoxName);
-    reservationBox = await Hive.openBox<Reservation>(reservationBoxName);
-    quickOrderBox = await Hive.openBox<QuickOrderDraft>(quickOrderBoxName);
-    closureJournalBox = await Hive.openBox(closureJournalBoxName);
+    userBox = UpdateTrackedBox(await Hive.openBox<User>(userBoxName));
+    tableBox = UpdateTrackedBox(await Hive.openBox<TableModel>(tableBoxName));
+    orderBox = UpdateTrackedBox(await Hive.openBox<Order>(orderBoxName));
+    packageBox = UpdateTrackedBox(await Hive.openBox<Package>(packageBoxName));
+    menuBox = UpdateTrackedBox(await Hive.openBox<MenuCategoryDB>(menuBoxName));
+    settingsBox = UpdateTrackedBox(await Hive.openBox(settingsBoxName));
+    salesBox = UpdateTrackedBox(await Hive.openBox(salesBoxName));
+    expenseBox = UpdateTrackedBox(await Hive.openBox(expenseBoxName));
+    auditLogBox = UpdateTrackedBox(await Hive.openBox(auditLogBoxName));
+    errorLogBox = UpdateTrackedBox(await Hive.openBox(errorLogBoxName));
+    reservationBox = UpdateTrackedBox(
+      await Hive.openBox<Reservation>(reservationBoxName),
+    );
+    quickOrderBox = UpdateTrackedBox(
+      await Hive.openBox<QuickOrderDraft>(quickOrderBoxName),
+    );
+    closureJournalBox = UpdateTrackedBox(
+      await Hive.openBox(closureJournalBoxName),
+    );
+    inventoryBox = UpdateTrackedBox(await Hive.openBox(inventoryBoxName));
 
     // Run schema migrations before seeding defaults.
     final migrationContext = HiveMigrationContext(

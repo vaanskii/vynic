@@ -47,11 +47,11 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
-          'შეკვეთის წაშლა',
+          'შეკვეთის გაუქმება',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         content: Text(
-          'გატანის შეკვეთა #${order.orderId} სრულად წაიშლება ბაზიდან და ვინდოუს აპიდანაც. ეს ქმედება შეუქცევადია.',
+          'გატანის შეკვეთა #${order.orderId} გაუქმდება ვინდოუს აპშიც. ისტორია და აუდიტი შენარჩუნდება.',
         ),
         actions: [
           TextButton(
@@ -63,7 +63,7 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
             style: TextButton.styleFrom(
               foregroundColor: const Color(0xFFEF4444),
             ),
-            child: Text('წაშლა'),
+            child: Text('გაუქმება'),
           ),
         ],
       ),
@@ -72,7 +72,7 @@ extension _LiveStatusTakeawayView on _LiveStatusScreenState {
     try {
       await MobileApiService.deleteTakeawayOrder(order.orderId);
       if (!mounted) return;
-      _showStatusToast('შეკვეთა წაშლილია');
+      _showStatusToast('შეკვეთა გაუქმდა');
       _loadTakeaway();
     } catch (e) {
       if (!mounted) return;

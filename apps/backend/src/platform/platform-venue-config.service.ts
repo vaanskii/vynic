@@ -107,6 +107,7 @@ export class PlatformVenueConfigService {
         updatedAt: row.updatedAt,
       })),
       effectiveFeatures,
+      commercialAccess: await this.entitlements.commercialAccess(venueId),
       website,
     };
   }
@@ -156,18 +157,31 @@ export class PlatformVenueConfigService {
     await this.directory.requireVenue(venueId);
     const feature = await this.requireFeature(featureKey);
 
-    await this.prisma.venueFeatureOverride.upsert({
-      where: { venueId_featureId: { venueId, featureId: feature.id } },
-      create: { venueId, featureId: feature.id, effect, note: note ?? null },
-      update: { effect, note: note ?? null },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
+      const before = await tx.venueFeatureOverride.findUnique({
+        where: { venueId_featureId: { venueId, featureId: feature.id } },
+      });
+      await tx.venueFeatureOverride.upsert({
+        where: { venueId_featureId: { venueId, featureId: feature.id } },
+        create: { venueId, featureId: feature.id, effect, note: note ?? null },
+        update: { effect, note: note ?? null },
+      });
+      await tx.platformAuditEvent.create({
+        data: {
+          platformUserId: actor.platformUserId,
+          action: PlatformAuditAction.FEATURE_OVERRIDE_SET,
+          targetType: 'Venue',
+          targetId: venueId,
+          metadata: {
+            featureKey: feature.key,
+            from: before?.effect ?? 'INHERIT',
+            to: effect,
+            note: note ?? null,
+          },
+        },
+      });
     });
-
-    await this.audit.record(
-      actor,
-      PlatformAuditAction.FEATURE_OVERRIDE_SET,
-      { type: 'Venue', id: venueId },
-      { featureKey: feature.key, effect, note: note ?? null },
-    );
     return this.readProduct(venueId);
   }
 
@@ -180,17 +194,29 @@ export class PlatformVenueConfigService {
     await this.directory.requireVenue(venueId);
     const feature = await this.requireFeature(featureKey);
 
-    const deleted = await this.prisma.venueFeatureOverride.deleteMany({
-      where: { venueId, featureId: feature.id },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
+      const before = await tx.venueFeatureOverride.findUnique({
+        where: { venueId_featureId: { venueId, featureId: feature.id } },
+      });
+      await tx.venueFeatureOverride.deleteMany({
+        where: { venueId, featureId: feature.id },
+      });
+      if (before)
+        await tx.platformAuditEvent.create({
+          data: {
+            platformUserId: actor.platformUserId,
+            action: PlatformAuditAction.FEATURE_OVERRIDE_REMOVED,
+            targetType: 'Venue',
+            targetId: venueId,
+            metadata: {
+              featureKey: feature.key,
+              from: before.effect,
+              to: 'INHERIT',
+            },
+          },
+        });
     });
-    if (deleted.count > 0) {
-      await this.audit.record(
-        actor,
-        PlatformAuditAction.FEATURE_OVERRIDE_REMOVED,
-        { type: 'Venue', id: venueId },
-        { featureKey: feature.key },
-      );
-    }
     return this.readProduct(venueId);
   }
 

@@ -1,6 +1,7 @@
+import { withOperationalAuthority } from '../edge/operational-authority';
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { DeviceStatus, EdgeCommandStatus } from '@prisma/client';
+import { EdgeCommandStatus } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { EdgeCommandService } from '../edge/edge-command.service';
 import { PosCallbackClient } from './pos-callback.client';
@@ -205,15 +206,14 @@ export class PosCommandDispatcher {
   }
 
   /**
-   * Whether this Venue has a terminal that can claim work.
+   * Whether this Venue has any Device history.
    *
-   * The queue is useless without one: an `EdgeCommand` for a Venue whose only
-   * POS authenticates with the legacy shared key would sit `PENDING` forever,
-   * because that key resolves no Device and the Edge endpoints refuse it.
+   * A disabled or ambiguous primary leaves work pending for an operator. It
+   * must never reactivate a saved legacy callback to an unselected terminal.
    */
   private async hasEnrolledDevice(venueId: string): Promise<boolean> {
     const device = await this.prisma.device.findFirst({
-      where: { venueId, status: DeviceStatus.ACTIVE },
+      where: { venueId },
       select: { id: true },
     });
     return device !== null;
@@ -266,9 +266,10 @@ export class PosCommandDispatcher {
     }
 
     if (isPrintCommand(command.type)) {
-      const result = await this.posCallback.deliverToPos(
-        endpoint,
-        command.payload,
+      const result = await withOperationalAuthority(
+        this.prisma,
+        { venueId: tenant.venueId, deviceId: null },
+        () => this.posCallback.deliverToPos(endpoint, command.payload),
       );
       return {
         transport: 'legacy',

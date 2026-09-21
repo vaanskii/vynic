@@ -20,6 +20,9 @@
 /// each type, applied at the boundary that needs it.
 library;
 
+import 'package:vynic/core/database/database_core.dart';
+import 'package:vynic/core/database/repositories/user_repository.dart';
+
 import 'package:vynic/core/contracts/edge_command.dart';
 import 'package:vynic/core/services/edge/edge_command_handler.dart';
 import 'package:vynic/core/services/pos/pos_command_applier.dart';
@@ -172,7 +175,10 @@ class StaffCreateEdgeHandler extends _AppliedEdgeCommandHandler {
   String get type => EdgeCommandTypes.staffCreate;
   @override
   Future<PosCommandOutcome> apply(Map<String, dynamic> p) =>
-      PosCommandApplier.createStaff(p, treatExistingAsDone: true);
+      _applyPlatformStaff(
+        p,
+        () => PosCommandApplier.createStaff(p, treatExistingAsDone: true),
+      );
 }
 
 class StaffPinUpdateEdgeHandler extends _AppliedEdgeCommandHandler {
@@ -208,7 +214,10 @@ class StaffDeleteEdgeHandler extends _AppliedEdgeCommandHandler {
   String get type => EdgeCommandTypes.staffDelete;
   @override
   Future<PosCommandOutcome> apply(Map<String, dynamic> p) =>
-      PosCommandApplier.deleteStaff(p, treatMissingAsDone: true);
+      _applyPlatformStaff(
+        p,
+        () => PosCommandApplier.deleteStaff(p, treatMissingAsDone: true),
+      );
 }
 
 /// Every restaurant operation this build can execute on Cloud's behalf.
@@ -235,3 +244,34 @@ const List<EdgeCommandHandler> posEdgeCommandHandlers = <EdgeCommandHandler>[
   StaffRenameEdgeHandler(),
   StaffDeleteEdgeHandler(),
 ];
+
+// Per-Staff monotonic intent protects reset/disable from delayed older commands.
+// The Edge executor runs handlers serially. Persist only after success; a crash
+// before the watermark write safely repeats the convergent operation.
+Future<PosCommandOutcome> _applyPlatformStaff(
+  Map<String, dynamic> payload,
+  Future<PosCommandOutcome> Function() apply,
+) async {
+  final revision = payload['platformRevision'];
+  final staffId = payload['staffId'];
+  if (revision is! int || staffId is! String) return apply();
+  final box = DatabaseCore.settingsBox;
+  if (box == null)
+    return const PosCommandOutcome.failed('staff_revision_store_unavailable');
+  final key = 'platform_staff_revision:$staffId';
+  final previous = box.get(key) as int? ?? 0;
+  if (revision < previous)
+    return const PosCommandOutcome.success(code: 'superseded');
+  // Platform disable retains the local identity, even for the last Manager.
+  // Existing local operations can finish; the disabled PIN cannot start a new session.
+  final disable = payload['platformAction'] == 'disable';
+  final outcome = disable ? const PosCommandOutcome.success() : await apply();
+  if (outcome.ok) {
+    await UserRepository.setPlatformAccess(
+      payload['username'] as String,
+      disabled: disable,
+    );
+    await box.put(key, revision);
+  }
+  return outcome;
+}

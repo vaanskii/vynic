@@ -3,23 +3,23 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'dart:io';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/models/table.dart';
-import 'dart:developer' as developer;
 import 'dart:typed_data';
-
-import 'package:flutter/services.dart' show rootBundle;
 
 import 'package:vynic/core/models/receipt_header_layout.dart';
 import 'package:vynic/core/models/table_layout.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/reservation.dart';
+import 'package:vynic/core/models/takeaway_order.dart';
 import 'package:vynic/core/models/table_ref.dart';
 import 'package:vynic/core/models/quick_order_draft.dart';
 import 'package:vynic/core/models/package.dart';
 import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/pos_display_settings.dart';
 import 'package:vynic/core/database/repositories/audit_repository.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/database/transactions/activate_reservation_transaction.dart';
+import 'package:vynic/core/database/transactions/cancel_order_transaction.dart';
 import 'package:vynic/core/database/transactions/close_day_transaction.dart';
 import 'package:vynic/core/database/transactions/close_table_transaction.dart';
 import 'package:vynic/core/models/closure_money.dart';
@@ -185,6 +185,7 @@ class DatabaseService {
     required int servingSize,
     bool? isActive,
     List<String>? allowedTables,
+    String actorId = 'unknown',
   }) => PackageRepository.updatePackage(
     packageId: packageId,
     name: name,
@@ -194,17 +195,22 @@ class DatabaseService {
     servingSize: servingSize,
     isActive: isActive,
     allowedTables: allowedTables,
+    actorId: actorId,
   );
 
-  static Future<void> deletePackage(String packageId) =>
-      PackageRepository.deletePackage(packageId);
+  static Future<void> deletePackage(
+    String packageId, {
+    String actorId = 'unknown',
+  }) => PackageRepository.deletePackage(packageId, actorId: actorId);
 
   static Future<void> setPackageActive({
     required String packageId,
     required bool isActive,
+    String actorId = 'unknown',
   }) => PackageRepository.setPackageActive(
     packageId: packageId,
     isActive: isActive,
+    actorId: actorId,
   );
 
   static bool shouldCategorySendToKitchenByDefault(
@@ -218,10 +224,13 @@ class DatabaseService {
   );
 
   // Initialize Hive and create default admin user
-  static Future<void> init() async {
+  static Future<void> init({
+    bool createBootstrapManager = true,
+    String? managedDataDirectory,
+  }) async {
     // Storage bootstrap: data directory, Hive init, adapters, boxes,
     // schema migrations.
-    await DatabaseCore.open();
+    await DatabaseCore.open(managedDataDirectory: managedDataDirectory);
 
     await _migrateLegacyStaffRoles();
 
@@ -229,44 +238,11 @@ class DatabaseService {
     // language, monthly-report inputs).
     await SettingsRepository.seedDefaults();
 
-    // A terminal being switched on for the very first time, as opposed to one
-    // being updated. „Fresh" means nothing has ever been entered here: no
-    // staff, no tables, no menu.
-    //
-    // The distinction matters because everything below used to run
-    // unconditionally, so a venue unboxing a POS inherited this restaurant's
-    // nine tables, four VIP booths and entire menu, and had to delete them one
-    // by one before it could enter its own.
-    final isFreshInstall =
-        !SettingsRepository.isSetupComplete() &&
-        _userBox!.isEmpty &&
-        _tableBox!.isEmpty &&
-        _menuBox!.isEmpty;
-
-    if (_userBox!.isEmpty) {
+    // Persist setup state before Staff can arrive through Edge. Restarting an
+    // unfinished installation must never turn it into a legacy restaurant.
+    await initializeVenueSetup();
+    if (_userBox!.isEmpty && createBootstrapManager) {
       await createDefaultAdmin();
-    }
-
-    if (isFreshInstall) {
-      // No tables and no menu: the venue enters its own. The empty plan is
-      // *saved*, not merely defaulted to — `getRestaurantTableLayout()` falls
-      // back to the built-in thirteen-table layout when nothing is stored, and
-      // an unconfigured terminal would otherwise draw a floor plan full of
-      // tables that do not exist here.
-      await SettingsRepository.saveActiveTableLayout(
-        RestaurantTableLayouts.emptyVenue,
-      );
-    } else {
-      // An existing terminal. Anything missing is backfilled exactly as before,
-      // and it is marked configured so it is never sent through setup.
-      if (_tableBox!.isEmpty) {
-        await TableRepository.initializeTables();
-      }
-      if (_menuBox!.isEmpty) {
-        await MenuRepository.initializeMenuFromJson();
-      }
-      await adoptLegacyVenueHeader();
-      await SettingsRepository.markSetupComplete();
     }
 
     await TableRepository.ensureCanonicalTableIdentity();
@@ -334,8 +310,17 @@ class DatabaseService {
     required String username,
     required String pinCode,
     required String role,
-  }) =>
-      UserRepository.addUser(username: username, pinCode: pinCode, role: role);
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) => UserRepository.addUser(
+    username: username,
+    pinCode: pinCode,
+    role: role,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+  );
 
   // Check if a PIN code already exists
   static bool isPinCodeExists(String pinCode) =>
@@ -363,29 +348,59 @@ class DatabaseService {
   static Future<bool> renameUserByUsername({
     required String oldUsername,
     required String newUsername,
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) => UserRepository.renameUserByUsername(
     oldUsername: oldUsername,
     newUsername: newUsername,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
   );
 
   static Future<bool> updateUserPinByUsername({
     required String username,
     required String pinCode,
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) => UserRepository.updateUserPinByUsername(
     username: username,
     pinCode: pinCode,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
   );
 
   static Future<bool> updateUserRoleByUsername({
     required String username,
     required String role,
-  }) => UserRepository.updateUserRoleByUsername(username: username, role: role);
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) => UserRepository.updateUserRoleByUsername(
+    username: username,
+    role: role,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+  );
 
   // Delete user
   static Future<void> deleteUser(User user) => UserRepository.deleteUser(user);
 
-  static Future<bool> deleteUserByUsername(String username) =>
-      UserRepository.deleteUserByUsername(username);
+  static Future<bool> deleteUserByUsername(
+    String username, {
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) => UserRepository.deleteUserByUsername(
+    username,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+  );
 
   // Get users box
   static Box<User>? get userBox => _userBox;
@@ -463,48 +478,22 @@ class DatabaseService {
   static Future<void> saveReceiptHeaderLayout(ReceiptHeaderLayout layout) =>
       SettingsRepository.saveReceiptHeaderLayout(layout);
 
-  /// Keeps a terminal printing exactly what it printed yesterday.
-  ///
-  /// The venue's name, street, phone and logo were literals in the renderers
-  /// and an asset in the bundle. Moving them into settings emptied the header
-  /// on every terminal that already existed — the receipts would simply have
-  /// lost their top. This copies the old values in once, for installs that
-  /// predate the setting, so nothing changes for them until someone edits it.
-  ///
-  /// A fresh install never reaches this: it has no header to preserve, and
-  /// inheriting another restaurant's address is the bug this whole change is
-  /// about.
-  static Future<void> adoptLegacyVenueHeader() async {
-    if (SettingsRepository.getVenueName().isEmpty) {
-      await SettingsRepository.setVenueName('RESTAURANT VANKISI');
+  /// Keeps unfinished setup across restarts and preserves existing stored data.
+  /// Missing identity and logo fields stay empty; no restaurant defaults are copied.
+  static Future<void> initializeVenueSetup() async {
+    if (SettingsRepository.isSetupComplete()) return;
+    final started = DatabaseCore.settingsBox!.get('venueSetupStarted') == true;
+    if (!started && (_tableBox!.isNotEmpty || _menuBox!.isNotEmpty)) {
+      // Preserve an existing operational installation exactly as stored.
+      // Missing identity/logo is never permission to borrow another venue's.
+      await SettingsRepository.markSetupComplete();
+      return;
     }
-    if (SettingsRepository.getVenueAddress().isEmpty) {
-      await SettingsRepository.setVenueAddress('ალექსანდრე პუშკინის ქ. N51');
-    }
-    if (SettingsRepository.getVenuePhone().isEmpty) {
-      await SettingsRepository.setVenuePhone('+995 599 98 93 76');
-    }
-    // Same reasoning for the identification code the monthly report used to
-    // hardcode. A terminal that already existed keeps printing what it
-    // printed; a fresh install gets nothing and says so on the report until
-    // its own code is entered.
-    if (SettingsRepository.getVenueLegalId().isEmpty) {
-      await SettingsRepository.setVenueLegalId('436687168');
-    }
-    if (SettingsRepository.getVenueLogoPng() == null) {
-      try {
-        final data = await rootBundle.load('assets/black-logo.png');
-        await SettingsRepository.setVenueLogoPng(
-          data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
-        );
-      } catch (error, stackTrace) {
-        developer.log(
-          'Legacy receipt logo could not be adopted',
-          error: error,
-          stackTrace: stackTrace,
-          name: 'DatabaseService',
-        );
-      }
+    if (!started) {
+      await DatabaseCore.settingsBox!.put('venueSetupStarted', true);
+      await SettingsRepository.saveActiveTableLayout(
+        RestaurantTableLayouts.emptyVenue,
+      );
     }
   }
 
@@ -513,8 +502,19 @@ class DatabaseService {
   static Future<void> markSetupComplete() =>
       SettingsRepository.markSetupComplete();
 
-  static Future<bool> completeReservationForOrder(int orderId) =>
-      ReservationRepository.completeReservationByOrderId(orderId);
+  static Future<bool> completeReservationForOrder(
+    int orderId, {
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+    String? reason,
+  }) => ReservationRepository.completeReservationByOrderId(
+    orderId,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+    reason: reason,
+  );
 
   static Future<void> freeTable({
     required String tableNumber,
@@ -542,14 +542,14 @@ class DatabaseService {
     required String createdBy,
     required List<OrderItem> items,
     bool? includeServiceFee,
-    bool createReservationRecord = true,
+    AuditSource source = AuditSource.pos,
   }) => OrderRepository.createOrder(
     tableNumbers: tableNumbers,
     floor: floor,
     createdBy: createdBy,
     items: items,
     includeServiceFee: includeServiceFee,
-    createReservationRecord: createReservationRecord,
+    source: source,
   );
 
   static Future<Order> createTakeAwayOrder({
@@ -559,6 +559,7 @@ class DatabaseService {
     String? notes,
     required List<OrderItem> items,
     required String createdBy,
+    AuditSource source = AuditSource.pos,
   }) => OrderRepository.createTakeAwayOrder(
     customerName: customerName,
     customerPhone: customerPhone,
@@ -566,6 +567,7 @@ class DatabaseService {
     notes: notes,
     items: items,
     createdBy: createdBy,
+    source: source,
   );
 
   static Future<Order?> upsertMobileTakeawayOrder({
@@ -608,12 +610,14 @@ class DatabaseService {
     required String floor,
     required int guestCount,
     required String createdBy,
+    AuditSource source = AuditSource.pos,
   }) => OrderRepository.createOrderForPackage(
     package: package,
     tableNumbers: tableNumbers,
     floor: floor,
     guestCount: guestCount,
     createdBy: createdBy,
+    source: source,
   );
 
   static Order? getOrder(int orderId) => OrderRepository.getOrder(orderId);
@@ -635,24 +639,21 @@ class DatabaseService {
     required String status,
   }) => OrderRepository.updateOrderStatus(orderId: orderId, status: status);
 
-  static Future<bool> deleteOrderAndCleanup({
+  /// The one cancellation routine. See [CancelOrderTransaction].
+  static Future<CancelOrderOutcome> cancelOrder({
     required int orderId,
-    required String deletedBy,
-    bool cancelLinkedReservation = true,
-  }) => OrderRepository.deleteOrderAndCleanup(
+    required String actorId,
+    String? actorName,
+    required AuditSource source,
+    String? reason,
+    String? approvedBy,
+  }) => CancelOrderTransaction.run(
     orderId: orderId,
-    deletedBy: deletedBy,
-    cancelLinkedReservation: cancelLinkedReservation,
-  );
-
-  static Future<int> deleteOpenOrdersForDate({
-    required DateTime date,
-    required String deletedBy,
-    bool includeTakeAway = true,
-  }) => OrderRepository.deleteOpenOrdersForDate(
-    date: date,
-    deletedBy: deletedBy,
-    includeTakeAway: includeTakeAway,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+    reason: reason,
+    approvedBy: approvedBy,
   );
 
   static Future<void> addItemToOrder({
@@ -695,11 +696,13 @@ class DatabaseService {
     required String nameEn,
     required String nameKa,
     bool? sendToKitchen,
+    String actorId = 'unknown',
   }) => MenuRepository.addCategory(
     slug: slug,
     nameEn: nameEn,
     nameKa: nameKa,
     sendToKitchen: sendToKitchen,
+    actorId: actorId,
   );
 
   static Future<bool> updateCategory({
@@ -708,16 +711,18 @@ class DatabaseService {
     required String nameEn,
     required String nameKa,
     bool? sendToKitchen,
+    String actorId = 'unknown',
   }) => MenuRepository.updateCategory(
     index: index,
     slug: slug,
     nameEn: nameEn,
     nameKa: nameKa,
     sendToKitchen: sendToKitchen,
+    actorId: actorId,
   );
 
-  static Future<bool> deleteCategory(int index) =>
-      MenuRepository.deleteCategory(index);
+  static Future<bool> deleteCategory(int index, {String actorId = 'unknown'}) =>
+      MenuRepository.deleteCategory(index, actorId: actorId);
 
   static Future<bool> addItemToCategory({
     required int categoryIndex,
@@ -726,6 +731,7 @@ class DatabaseService {
     double? price,
     List<MenuVariantDB>? variants,
     bool? sendToKitchen,
+    String actorId = 'unknown',
   }) => MenuRepository.addItemToCategory(
     categoryIndex: categoryIndex,
     nameEn: nameEn,
@@ -733,6 +739,7 @@ class DatabaseService {
     price: price,
     variants: variants,
     sendToKitchen: sendToKitchen,
+    actorId: actorId,
   );
 
   static Future<bool> updateItemInCategory({
@@ -743,6 +750,7 @@ class DatabaseService {
     double? price,
     List<MenuVariantDB>? variants,
     bool? sendToKitchen,
+    String actorId = 'unknown',
   }) => MenuRepository.updateItemInCategory(
     categoryIndex: categoryIndex,
     itemIndex: itemIndex,
@@ -751,14 +759,17 @@ class DatabaseService {
     price: price,
     variants: variants,
     sendToKitchen: sendToKitchen,
+    actorId: actorId,
   );
 
   static Future<bool> deleteItemFromCategory({
     required int categoryIndex,
     required int itemIndex,
+    String actorId = 'unknown',
   }) => MenuRepository.deleteItemFromCategory(
     categoryIndex: categoryIndex,
     itemIndex: itemIndex,
+    actorId: actorId,
   );
 
   static Future<bool> addSubcategory({
@@ -766,11 +777,13 @@ class DatabaseService {
     required String slug,
     required String nameEn,
     required String nameKa,
+    String actorId = 'unknown',
   }) => MenuRepository.addSubcategory(
     categoryIndex: categoryIndex,
     slug: slug,
     nameEn: nameEn,
     nameKa: nameKa,
+    actorId: actorId,
   );
 
   static Future<bool> updateSubcategory({
@@ -779,20 +792,24 @@ class DatabaseService {
     required String slug,
     required String nameEn,
     required String nameKa,
+    String actorId = 'unknown',
   }) => MenuRepository.updateSubcategory(
     categoryIndex: categoryIndex,
     subcategoryIndex: subcategoryIndex,
     slug: slug,
     nameEn: nameEn,
     nameKa: nameKa,
+    actorId: actorId,
   );
 
   static Future<bool> deleteSubcategory({
     required int categoryIndex,
     required int subcategoryIndex,
+    String actorId = 'unknown',
   }) => MenuRepository.deleteSubcategory(
     categoryIndex: categoryIndex,
     subcategoryIndex: subcategoryIndex,
+    actorId: actorId,
   );
 
   static Future<bool> addItemToSubcategory({
@@ -803,6 +820,7 @@ class DatabaseService {
     double? price,
     List<MenuVariantDB>? variants,
     bool? sendToKitchen,
+    String actorId = 'unknown',
   }) => MenuRepository.addItemToSubcategory(
     categoryIndex: categoryIndex,
     subcategoryIndex: subcategoryIndex,
@@ -811,6 +829,7 @@ class DatabaseService {
     price: price,
     variants: variants,
     sendToKitchen: sendToKitchen,
+    actorId: actorId,
   );
 
   static Future<bool> updateItemInSubcategory({
@@ -822,6 +841,7 @@ class DatabaseService {
     double? price,
     List<MenuVariantDB>? variants,
     bool? sendToKitchen,
+    String actorId = 'unknown',
   }) => MenuRepository.updateItemInSubcategory(
     categoryIndex: categoryIndex,
     subcategoryIndex: subcategoryIndex,
@@ -831,16 +851,19 @@ class DatabaseService {
     price: price,
     variants: variants,
     sendToKitchen: sendToKitchen,
+    actorId: actorId,
   );
 
   static Future<bool> deleteItemFromSubcategory({
     required int categoryIndex,
     required int subcategoryIndex,
     required int itemIndex,
+    String actorId = 'unknown',
   }) => MenuRepository.deleteItemFromSubcategory(
     categoryIndex: categoryIndex,
     subcategoryIndex: subcategoryIndex,
     itemIndex: itemIndex,
+    actorId: actorId,
   );
 
   // ==================== DATE MANAGEMENT METHODS ====================
@@ -1088,8 +1111,10 @@ class DatabaseService {
   static Future<void> replaceReservationsFromJson(List<dynamic> payload) =>
       BackupRepository.replaceReservationsFromJson(payload);
 
-  static Future<String> createReservationFromJson(Map<String, dynamic> json) =>
-      BackupRepository.createReservationFromJson(json);
+  static Future<String> createReservationFromJson(
+    Map<String, dynamic> json, {
+    AuditSource source = AuditSource.manager,
+  }) => BackupRepository.createReservationFromJson(json, source: source);
 
   static Map<String, dynamic>? getReservationById(String reservationId) =>
       BackupRepository.getReservationById(reservationId);
@@ -1107,25 +1132,45 @@ class DatabaseService {
     File backupFile, {
     bool clearExisting = true,
     bool backupBeforeRestore = true,
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) => BackupRepository.restoreDataBackupFromFile(
     backupFile,
     clearExisting: clearExisting,
     backupBeforeRestore: backupBeforeRestore,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
   );
 
   static Future<void> restoreDataBackupFromJson(
     String jsonString, {
     bool clearExisting = true,
     bool backupBeforeRestore = true,
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) => BackupRepository.restoreDataBackupFromJson(
     jsonString,
     clearExisting: clearExisting,
     backupBeforeRestore: backupBeforeRestore,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
   );
 
   // Close current day and move to next date
   /// Closes the business day. See [CloseDayTransaction].
-  static Future<bool> closeDay() => CloseDayTransaction.run();
+  static Future<bool> closeDay({
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) => CloseDayTransaction.run(
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+  );
 
   // Get date in Georgian format
   static String getGeorgianFormattedDate(DateTime date) =>
@@ -1262,6 +1307,9 @@ class DatabaseService {
     DateTime? createdAt,
     String? businessDate,
     String? sourceId,
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) => SalesRepository.saveExpenseRecord(
     description: description,
     amount: amount,
@@ -1270,6 +1318,9 @@ class DatabaseService {
     createdAt: createdAt,
     businessDate: businessDate,
     sourceId: sourceId,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
   );
 
   static List<Map<String, dynamic>> getExpensesForDate(String date) =>
@@ -1395,6 +1446,7 @@ class DatabaseService {
     bool isTakeAway = false,
     int? linkedOrderId,
     String status = 'pending',
+    AuditSource source = AuditSource.pos,
   }) => ReservationRepository.createReservation(
     customerName: customerName,
     customerPhone: customerPhone,
@@ -1409,6 +1461,7 @@ class DatabaseService {
     isTakeAway: isTakeAway,
     linkedOrderId: linkedOrderId,
     status: status,
+    source: source,
   );
 
   static List<Reservation> getAllReservations() =>
@@ -1424,14 +1477,67 @@ class DatabaseService {
   static List<Reservation> getTableBlockingReservationsForDate(DateTime date) =>
       ReservationRepository.getTableBlockingReservationsForDate(date);
 
-  static Future<bool> cancelReservationByOrderId(int orderId) =>
-      ReservationRepository.cancelReservationByOrderId(orderId);
+  static Future<bool> cancelReservationByOrderId(
+    int orderId, {
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+    String? reason,
+  }) => ReservationRepository.cancelReservationByOrderId(
+    orderId,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+    reason: reason,
+  );
 
   static Reservation? findReservationForOrder(Order order) =>
       ReservationRepository.findReservationForOrder(order);
 
   static List<Reservation> getTakeAwayReservationsForDate(DateTime date) =>
       ReservationRepository.getTakeAwayReservationsForDate(date);
+
+  /// The day's takeaway orders, as the home panel shows them.
+  ///
+  /// Built from orders, including their guest and pickup fields. Legacy
+  /// bookkeeping reservations are consulted only to fill fields missing from
+  /// an order written by an older build; they never control the list, money,
+  /// status or actions.
+  static List<TakeawayTicket> getTakeawayTicketsForDate(DateTime date) {
+    final orders = OrderRepository.getAllOrders();
+    final legacyOrderIds = orders
+        .where(isTakeawayOrder)
+        .where(
+          (order) =>
+              order.customerName.trim().isEmpty &&
+              order.customerPhone.trim().isEmpty &&
+              order.pickupTime.trim().isEmpty,
+        )
+        .map((order) => order.orderId)
+        .toSet();
+    final contacts = <int, TakeawayContact>{};
+    if (legacyOrderIds.isNotEmpty) {
+      for (final reservation
+          in ReservationRepository.getTakeAwayReservationsForDate(date)) {
+        final orderId = reservation.linkedOrderId;
+        if (orderId == null || !legacyOrderIds.contains(orderId)) continue;
+        contacts.putIfAbsent(
+          orderId,
+          () => TakeawayContact(
+            customerName: reservation.customerName,
+            customerPhone: reservation.customerPhone,
+            pickupTime: reservation.reservationTime,
+            notes: reservation.notes,
+          ),
+        );
+      }
+    }
+    return TakeawayTickets.forBusinessDate(
+      orders: orders,
+      businessDate: date,
+      contactFor: (orderId) => contacts[orderId],
+    );
+  }
 
   static List<Reservation> getReservationsByStatus(String status) =>
       ReservationRepository.getReservationsByStatus(status);
@@ -1444,25 +1550,74 @@ class DatabaseService {
 
   static Future<void> updateReservationStatus(
     String reservationId,
-    String newStatus,
-  ) => ReservationRepository.updateReservationStatus(reservationId, newStatus);
+    String newStatus, {
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+    String? reason,
+  }) => ReservationRepository.updateReservationStatus(
+    reservationId,
+    newStatus,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+    reason: reason,
+  );
+
+  static Future<bool> updateReservationDetails(
+    String reservationId, {
+    String? customerName,
+    String? customerPhone,
+    String? notes,
+    bool clearNotes = false,
+    DateTime? reservationDate,
+    String? reservationTime,
+    int? numberOfGuests,
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) => ReservationRepository.updateReservationDetails(
+    reservationId,
+    customerName: customerName,
+    customerPhone: customerPhone,
+    notes: notes,
+    clearNotes: clearNotes,
+    reservationDate: reservationDate,
+    reservationTime: reservationTime,
+    numberOfGuests: numberOfGuests,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+  );
 
   static Future<void> updateReservationPreOrderItems(
     String reservationId,
-    List<OrderItem> updatedItems,
-  ) => ReservationRepository.updateReservationPreOrderItems(
+    List<OrderItem> updatedItems, {
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) => ReservationRepository.updateReservationPreOrderItems(
     reservationId,
     updatedItems,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
   );
 
   static Future<void> updateReservationTables(
     String reservationId,
     List<int> tableNumbers, {
     List<TableRef>? tableRefs,
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) => ReservationRepository.updateReservationTables(
     reservationId,
     tableNumbers,
     tableRefs: tableRefs,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
   );
 
   /// Activates a reservation by creating (or re-linking) its order and
@@ -1475,8 +1630,19 @@ class DatabaseService {
     activatedBy: activatedBy,
   );
 
-  static Future<void> deleteReservation(String reservationId) =>
-      ReservationRepository.deleteReservation(reservationId);
+  static Future<void> deleteReservation(
+    String reservationId, {
+    String actorId = 'system',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+    String? reason,
+  }) => ReservationRepository.deleteReservation(
+    reservationId,
+    actorId: actorId,
+    actorName: actorName,
+    source: source,
+    reason: reason,
+  );
 
   static bool areTablesAvailableForReservation({
     required List<int> tableNumbers,

@@ -56,13 +56,11 @@ class FirebaseMessagingService {
   Future<void> _handlePushNotificationsToken() async {
     final token = await FirebaseMessaging.instance.getToken();
     if (token != null && token.isNotEmpty) {
-      debugPrint('FCM Token: $token');
       await _registerTokenWithBackend(token);
     }
 
     FirebaseMessaging.instance.onTokenRefresh
         .listen((fcmToken) async {
-          debugPrint('FCM Token refreshed: $fcmToken');
           await _registerTokenWithBackend(fcmToken);
         })
         .onError((error) {
@@ -85,6 +83,9 @@ class FirebaseMessagingService {
       await MobileApiService.unregisterPushDevice(token);
     } catch (error) {
       debugPrint('Failed to unregister FCM token: $error');
+    } finally {
+      // Invalidate the old registration even if its backend logout request failed.
+      await FirebaseMessaging.instance.deleteToken();
     }
   }
 

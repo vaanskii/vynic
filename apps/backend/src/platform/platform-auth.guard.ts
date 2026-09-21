@@ -1,5 +1,6 @@
 import {
   CanActivate,
+  ForbiddenException,
   ExecutionContext,
   Injectable,
   UnauthorizedException,
@@ -8,6 +9,7 @@ import type { PlatformAuthenticatedRequest } from './platform-auth-context';
 import { PlatformAuthService } from './platform-auth.service';
 
 interface BearerRequest extends PlatformAuthenticatedRequest {
+  method: string;
   headers: Record<string, string | string[] | undefined>;
 }
 
@@ -40,6 +42,12 @@ export class PlatformAuthGuard implements CanActivate {
       throw new UnauthorizedException('Platform authentication required');
     }
 
+    if (
+      principal.role === 'SUPPORT_READONLY' &&
+      !['GET', 'HEAD', 'OPTIONS'].includes(request.method)
+    ) {
+      throw new ForbiddenException('Support access is read-only');
+    }
     request.platformPrincipal = principal;
     return true;
   }

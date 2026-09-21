@@ -1,4 +1,5 @@
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/utils/payment_utils.dart';
 
 /// What a table closure is worth, split four ways.
 ///
@@ -71,16 +72,45 @@ class ClosureMoney {
   /// `grossSaleAmount`, and their `totalAmount` *was* the balance, so gross
   /// falls back to it and the advance to zero. That is what those records
   /// meant, and it keeps historical rows readable.
+  ///
+  /// The `collectedNow` fallback is narrower than the other two. `gross -
+  /// advance` is what a *fiscal* close collected, and it is the right answer
+  /// for a legacy row that genuinely took tender. It is the wrong answer — and
+  /// an untrue one — for a row that collected nothing by definition: a
+  /// cancelled Order and an internal close both book a Sale whose whole point
+  /// is that no money changed hands. Those read as zero, which is what they
+  /// always meant.
   factory ClosureMoney.fromSaleMap(Map<dynamic, dynamic> sale) {
     final advance =
         _num(sale['advanceApplied']) ?? _num(sale['advanceAmount']) ?? 0.0;
     final total = _num(sale['totalAmount']) ?? _num(sale['total']) ?? 0.0;
     final gross = _num(sale['grossSaleAmount']) ?? total;
+    final stored = _num(sale['collectedNow']);
+    final collected =
+        stored ?? (collectedNothing(sale) ? 0.0 : gross - advance);
     return ClosureMoney(
       gross: _round(gross),
       advanceApplied: _round(advance),
-      collectedNow: _round(_num(sale['collectedNow']) ?? (gross - advance)),
+      collectedNow: _round(collected),
     );
+  }
+
+  /// Whether a stored Sale record took no tender at all, by definition.
+  ///
+  /// Three independent markers, because a record written before one of them
+  /// existed may still carry another: a cancellation flag, a non-fiscal flag,
+  /// and the sentinel `paymentMethod` those paths write instead of a tender
+  /// name. Only consulted when the durable `collectedNow` field is absent — a
+  /// raw reader preserves a stated value. Sale Ledger wire normalization then
+  /// overrides it with semantic zero for non-fiscal/cancelled Sales.
+  static bool collectedNothing(Map<dynamic, dynamic> sale) {
+    if (sale['isCancelled'] == true) return true;
+    if (sale['isFiscal'] == false) return true;
+    final method = sale['paymentMethod']?.toString();
+    // `split` is not a tender key, but its cash/card parts did collect money.
+    // Only lifecycle sentinels imply zero collection for a legacy record.
+    return method == PaymentUtils.methodCancelled ||
+        method == PaymentUtils.methodNonFiscal;
   }
 
   /// `null` when the split is internally consistent, otherwise why it is not.
@@ -88,13 +118,18 @@ class ClosureMoney {
   /// Two separate claims are checked, because they fail for different
   /// reasons: the identity is a modelling error, a tender shortfall is an
   /// operator or dialog error.
-  String? describeMismatch({double tolerance = 0.01}) {
+  String? describeMismatch({
+    double tolerance = 0.01,
+    bool requireCurrentCollection = true,
+  }) {
     final identity = _round(gross - (advanceApplied + amountDueNow));
     if (identity.abs() > tolerance) {
       return 'gross ${gross.toStringAsFixed(2)} does not equal advance '
           '${advanceApplied.toStringAsFixed(2)} + due '
           '${amountDueNow.toStringAsFixed(2)}';
     }
+    if (!requireCurrentCollection) return null;
+
     final settled = _round(collectedNow - amountDueNow);
     if (settled.abs() > tolerance) {
       return 'tender ${collectedNow.toStringAsFixed(2)} does not settle the '

@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/edge/pos_edge_command_handlers.dart';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -107,6 +108,57 @@ void main() {
     await Hive.close();
     tempDir.deleteSync(recursive: true);
   });
+
+  test(
+    'Platform create/reset/disable resists replay and delayed older commands',
+    () async {
+      const create = StaffCreateEdgeHandler();
+      const remove = StaffDeleteEdgeHandler();
+      final payload = <String, dynamic>{
+        'username': 'phase2',
+        'pinCode': '483921',
+        'role': 'manager',
+        'staffId': 'phase2-manager',
+        'platformRevision': 1,
+      };
+      expect((await create.apply(payload)).ok, isTrue);
+      expect((await create.apply(payload)).ok, isTrue);
+      expect(
+        UserRepository.getAllUsers().where((u) => u.username == 'phase2'),
+        hasLength(1),
+      );
+      expect(
+        (await create.apply({
+          ...payload,
+          'pinCode': '692481',
+          'platformRevision': 2,
+        })).ok,
+        isTrue,
+      );
+      await create.apply(payload);
+      expect(
+        UserRepository.getAllUsers()
+            .singleWhere((u) => u.username == 'phase2')
+            .pinCode,
+        '692481',
+      );
+      expect(
+        (await remove.apply({
+          ...payload,
+          'platformRevision': 3,
+          'platformAction': 'disable',
+        })).ok,
+        isTrue,
+      );
+      await create.apply({...payload, 'platformRevision': 2});
+      expect(
+        UserRepository.getAllUsers().where((u) => u.username == 'phase2'),
+        isEmpty,
+      );
+      expect(UserRepository.getUserByUsername('phase2'), isNotNull);
+      expect(UserRepository.authenticateByPin('692481'), isNull);
+    },
+  );
 
   group('reservation creation', () {
     // Cloud allocates a 16-digit numeric id; the POS mints 13-digit ones, so
@@ -348,6 +400,71 @@ void main() {
   });
 
   group('orders', () {
+    test('Takeaway command stores and updates Order-owned metadata', () async {
+      final first =
+          await PosCommandApplier.upsertTakeawayOrder(<String, dynamic>{
+            'posOrderId': 4300,
+            'customerName': 'Edge Guest',
+            'pickupTime': '18:30',
+            'waiterName': 'Nino',
+            'items': <Map<String, dynamic>>[],
+          });
+      final second =
+          await PosCommandApplier.upsertTakeawayOrder(<String, dynamic>{
+            'posOrderId': 4300,
+            'customerName': 'Updated Edge Guest',
+            'pickupTime': '18:45',
+            'waiterName': 'Nino',
+            'items': <Map<String, dynamic>>[],
+          });
+
+      final stored = DatabaseCore.orderBox!.values.single;
+      expect(first.ok, isTrue);
+      expect(second.ok, isTrue);
+      expect(stored.customerName, 'Updated Edge Guest');
+      expect(stored.pickupTime, '18:45');
+      // The Edge contract does not carry a phone, so compatibility is an
+      // empty value rather than fabricated data.
+      expect(stored.customerPhone, isEmpty);
+      expect(DatabaseCore.reservationBox!.values, isEmpty);
+    });
+
+    test(
+      'Edge Walk-In command occupies a table without a Reservation',
+      () async {
+        await DatabaseCore.tableBox!.add(
+          TableModel(tableNumber: '7', floor: 'first'),
+        );
+
+        final first = await PosCommandApplier.upsertDineInOrder(
+          <String, dynamic>{
+            'posOrderId': 4301,
+            'tableNumbers': <String>['7'],
+            'floor': 'first',
+            'waiterName': 'Nino',
+            'guestCount': 3,
+            'items': <Map<String, dynamic>>[],
+          },
+        );
+        final second = await PosCommandApplier.upsertDineInOrder(
+          <String, dynamic>{
+            'posOrderId': 4301,
+            'tableNumbers': <String>['7'],
+            'floor': 'first',
+            'waiterName': 'Nino',
+            'guestCount': 3,
+            'items': <Map<String, dynamic>>[],
+          },
+        );
+
+        expect(first.ok, isTrue);
+        expect(second.ok, isTrue);
+        expect(DatabaseCore.orderBox!.values, hasLength(1));
+        expect(DatabaseCore.tableBox!.values.single.activeOrderId, 4301);
+        expect(DatabaseCore.reservationBox!.values, isEmpty);
+      },
+    );
+
     test('a cancel delivered twice reports done, not missing', () async {
       // The order does not exist here at all, which is what a redelivery finds
       // after the first one removed it. A 404 would turn a duplicate into a

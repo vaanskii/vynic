@@ -187,6 +187,139 @@ describeDatabase('Incremental audit sync (PostgreSQL)', () => {
     expect(rows[0]._count.events).toBe(2);
   });
 
+  it('preserves closure semantics and structured money details', async () => {
+    const closure = {
+      ...report('audit_report_order_close', 'rev-close'),
+      status: 'CLOSED',
+      locked: true,
+      events: [
+        {
+          type: 'CLOSE',
+          itemName: 'ORDER',
+          previousQty: 0,
+          newQty: 0,
+          waiterId: 'staff-1',
+          waiterName: 'Nino',
+          timestamp: '2026-09-01T18:05:00.000Z',
+          details: {
+            closureId: 'closure-42',
+            grossAmount: 100,
+            cashAmount: 40,
+            cardAmount: 60,
+            collectedNow: 100,
+          },
+        },
+        {
+          type: 'RESTORE',
+          itemName: 'ORDER',
+          previousQty: 0,
+          newQty: 0,
+          waiterId: 'staff-1',
+          waiterName: 'Nino',
+          timestamp: '2026-09-01T18:10:00.000Z',
+          details: {
+            originalClosureId: 'closure-42',
+            originalSaleId: '17',
+            restoredGrossAmount: 100,
+            originalIsFiscal: true,
+          },
+        },
+        {
+          type: 'CLOSE',
+          itemName: 'ORDER',
+          previousQty: 0,
+          newQty: 0,
+          waiterId: 'staff-1',
+          waiterName: 'Nino',
+          timestamp: '2026-09-01T18:15:00.000Z',
+          details: {
+            closureId: 'closure-43',
+            grossAmount: 100,
+            cardAmount: 100,
+            collectedNow: 100,
+          },
+        },
+      ],
+    };
+
+    await ingest.ingestReports({ reports: [closure] }, tenantA);
+
+    const events = await prisma.auditEvent.findMany({
+      where: { report: { venueId: venueAId, reportId: closure.reportId } },
+      orderBy: { seq: 'asc' },
+    });
+    expect(events.map((event) => event.type)).toEqual([
+      'CLOSE',
+      'RESTORE',
+      'CLOSE',
+    ]);
+    expect(events[0].details).toEqual(closure.events[0].details);
+    expect(events[1].details).toEqual(closure.events[1].details);
+    expect(events[2].details).toEqual(closure.events[2].details);
+  });
+
+  it("stores the POS's sequence, the Venue and the Order kind", async () => {
+    // Everything at one instant, offered in an order that is not the
+    // timeline's, so nothing but `sequence` can put it back together.
+    const instant = '2026-09-05T10:00:00.000Z';
+    const lines = Array.from({ length: 40 }, (_unused, index) => ({
+      type: 'ADD_ITEM',
+      itemName: `Item ${index}`,
+      previousQty: 0,
+      newQty: 1,
+      waiterId: 'staff-1',
+      waiterName: 'Nino',
+      timestamp: instant,
+      sequence: index + 1,
+    }));
+    const creation = {
+      type: 'CREATE_WALKIN',
+      itemName: 'ORDER',
+      previousQty: 0,
+      newQty: 0,
+      waiterId: 'staff-1',
+      waiterName: 'Nino',
+      timestamp: instant,
+      sequence: 0,
+      details: { orderId: 42, orderKind: 'PACKAGE', source: 'POS' },
+    };
+
+    await ingest.ingestReports(
+      {
+        reports: [
+          {
+            ...report('audit_report_order_seq', 'rev-seq'),
+            events: [...lines, creation],
+          },
+        ],
+      },
+      tenantA,
+    );
+
+    const stored = await prisma.auditReport.findUnique({
+      where: {
+        venueId_reportId: {
+          venueId: venueAId,
+          reportId: 'audit_report_order_seq',
+        },
+      },
+      include: { events: { orderBy: { seq: 'asc' } } },
+    });
+
+    // Derived from the report's own creation event, not from `floor`.
+    expect(stored?.orderKind).toBe('PACKAGE');
+    expect(stored?.events).toHaveLength(41);
+    expect(stored?.events[0].type).toBe('CREATE_WALKIN');
+    expect(stored?.events.map((event) => event.seq)).toEqual(
+      Array.from({ length: 41 }, (_unused, index) => index),
+    );
+    // Copied down from the report, which took it from the authenticated
+    // principal — the payload never carried a Venue at all.
+    expect(
+      stored?.events.every((event) => event.venueId === venueAId),
+    ).toBe(true);
+  });
+
   it('keeps the same reportId in two Venues as two separate reports', async () => {
     await ingest.ingestReports(
       { reports: [report('audit_report_order_9', 'rev-a')] },

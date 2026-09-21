@@ -1,3 +1,4 @@
+import { CommercialProjectionInterceptor } from './commercial-projection.interceptor';
 import { Module } from '@nestjs/common';
 import { FeatureGuard } from './feature.guard';
 import { VenueEntitlementsService } from './venue-entitlements.service';
@@ -7,7 +8,15 @@ import { VenueEntitlementsService } from './venue-entitlements.service';
  * it owns no operational data and no synchronization path depends on it.
  */
 @Module({
-  providers: [VenueEntitlementsService, FeatureGuard],
-  exports: [VenueEntitlementsService, FeatureGuard],
+  providers: [
+    CommercialProjectionInterceptor,
+    VenueEntitlementsService,
+    FeatureGuard,
+  ],
+  exports: [
+    CommercialProjectionInterceptor,
+    VenueEntitlementsService,
+    FeatureGuard,
+  ],
 })
 export class EntitlementsModule {}

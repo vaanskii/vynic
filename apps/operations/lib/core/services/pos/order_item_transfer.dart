@@ -10,10 +10,19 @@
 /// wrong is not a visual bug.
 library;
 
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
+
+import 'dart:developer' as developer;
+import '../edge/orders_tables/shadow.dart';
+import '../edge/orders_tables/pos_shadow_projection.dart';
+
 import 'package:vynic/core/models/audit_report.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/order_status.dart';
+import 'package:vynic/core/models/takeaway_order.dart';
 import 'package:vynic/core/models/user.dart';
+import 'package:vynic/core/services/audit/order_audit_details.dart';
 import 'package:vynic/core/services/database_service.dart';
 
 /// Which line to take from, and how many of it.
@@ -54,6 +63,8 @@ class OrderTransferLine {
     required this.quantity,
     required this.amount,
     this.comment,
+    this.menuItemId,
+    this.variantId,
   });
 
   final String itemName;
@@ -62,6 +73,8 @@ class OrderTransferLine {
   /// The money that moved with it, in GEL.
   final double amount;
   final String? comment;
+  final String? menuItemId;
+  final String? variantId;
 }
 
 /// What a transfer did, or why it did nothing.
@@ -182,6 +195,8 @@ abstract final class OrderItemTransfer {
           quantity: quantity,
           amount: movedAmount,
           comment: line.comment,
+          menuItemId: line.menuItemId,
+          variantId: line.variantId,
         ),
       );
 
@@ -216,6 +231,28 @@ abstract final class OrderItemTransfer {
     required User user,
     required String sourceLabel,
     required String destinationLabel,
+    AuditSource auditSource = AuditSource.pos,
+  }) => UpdateReadiness.track(
+    'apply',
+    () => _updateTrackedApply(
+      source: source,
+      destination: destination,
+      moves: moves,
+      user: user,
+      sourceLabel: sourceLabel,
+      destinationLabel: destinationLabel,
+      auditSource: auditSource,
+    ),
+  );
+
+  static Future<OrderTransferResult> _updateTrackedApply({
+    required Order source,
+    required Order destination,
+    required List<OrderItemMove> moves,
+    required User user,
+    required String sourceLabel,
+    required String destinationLabel,
+    AuditSource auditSource = AuditSource.pos,
   }) async {
     // Work on copies so a refusal — or a failed write — cannot leave the
     // in-memory orders half-moved behind the operator's back.
@@ -229,21 +266,54 @@ abstract final class OrderItemTransfer {
     );
     if (!result.ok) return result;
 
-    source.items = sourceDraft.items;
-    destination.items = destinationDraft.items;
-
-    await DatabaseService.updateOrder(destination);
-    await DatabaseService.updateOrder(source);
+    await OrderTableShadow.observe(
+      proposed: () =>
+          PosShadowProjection.orders([sourceDraft, destinationDraft]),
+      actual: () => PosShadowProjection.orders([source, destination]),
+      operation: () async {
+        source.items = sourceDraft.items;
+        destination.items = destinationDraft.items;
+        await DatabaseService.updateOrder(destination);
+        await DatabaseService.updateOrder(source);
+      },
+    );
 
     final now = DatabaseService.getCurrentDateTime();
+    final movedAmount = result.totalAmount;
+    Map<String, dynamic> moveDetails({
+      required Order own,
+      required String direction,
+      required OrderTransferLine line,
+    }) => <String, dynamic>{
+      ...OrderAuditDetails.base(
+        order: own,
+        orderKind: _kindOf(own),
+        source: auditSource,
+        actorId: user.username,
+      ),
+      'direction': direction,
+      'fromOrderId': source.orderId,
+      'toOrderId': destination.orderId,
+      'fromTableRefs': OrderAuditDetails.tableRefs(source),
+      'toTableRefs': OrderAuditDetails.tableRefs(destination),
+      'quantity': line.quantity,
+      'amount': line.amount,
+      'transferAmount': movedAmount,
+      if (line.comment != null && line.comment!.trim().isNotEmpty)
+        'comment': line.comment!.trim(),
+      if (line.menuItemId != null) 'menuItemId': line.menuItemId,
+      if (line.variantId != null) 'variantId': line.variantId,
+    };
+
+    // One typed MOVE_ITEMS per line on each side. The quantities still say
+    // which way the line went, so a build that predates the type reads the
+    // same rows as an add on one bill and a removal on the other.
     await DatabaseService.appendOrderAuditEvents(
       orderId: destination.orderId,
       events: [
         for (final line in result.moved)
           AuditEvent(
-            // The existing vocabulary, deliberately: a new enum value would
-            // not round-trip through reports written by older builds.
-            type: AuditEventType.addItem,
+            type: AuditEventType.moveItems,
             itemName: line.itemName,
             previousQty: 0,
             newQty: line.quantity,
@@ -251,6 +321,7 @@ abstract final class OrderItemTransfer {
             waiterName: user.username,
             timestamp: now,
             note: 'გადმოტანილია — $sourceLabel',
+            details: moveDetails(own: destination, direction: 'IN', line: line),
           ),
       ],
     );
@@ -259,7 +330,7 @@ abstract final class OrderItemTransfer {
       events: [
         for (final line in result.moved)
           AuditEvent(
-            type: AuditEventType.reduceQty,
+            type: AuditEventType.moveItems,
             itemName: line.itemName,
             previousQty: line.quantity,
             newQty: 0,
@@ -267,6 +338,7 @@ abstract final class OrderItemTransfer {
             waiterName: user.username,
             timestamp: now,
             note: 'გადატანილია — $destinationLabel',
+            details: moveDetails(own: source, direction: 'OUT', line: line),
           ),
       ],
     );
@@ -288,10 +360,33 @@ abstract final class OrderItemTransfer {
   /// table's bill. Recording a cancellation would inflate the venue's void rate
   /// for a move between two tables.
   ///
-  /// The trail is not lost — the audit report already carries a line per item
-  /// saying where it went, written by [apply].
-  static Future<void> releaseEmptiedOrder(Order order) async {
+  /// The report is closed with a typed `TRANSFER_CLOSE` and locked, so the
+  /// trail ends the way the Order did instead of staying open forever.
+  /// [destination] is the Order the last items went to, when known.
+  static Future<void> releaseEmptiedOrder(
+    Order order, {
+    required User user,
+    Order? destination,
+    AuditSource auditSource = AuditSource.pos,
+  }) => UpdateReadiness.track(
+    'releaseEmptiedOrder',
+    () => _updateTrackedReleaseEmptiedOrder(
+      order,
+      user: user,
+      destination: destination,
+      auditSource: auditSource,
+    ),
+  );
+
+  static Future<void> _updateTrackedReleaseEmptiedOrder(
+    Order order, {
+    required User user,
+    Order? destination,
+    AuditSource auditSource = AuditSource.pos,
+  }) async {
     if (order.items.isNotEmpty || order.packageItems.isNotEmpty) return;
+    // Already closed or cancelled: nothing to release, and no second event.
+    if (_isFinalized(order.status)) return;
 
     for (final tableNumber in order.tableNumbers) {
       await DatabaseService.freeTable(
@@ -310,7 +405,84 @@ abstract final class OrderItemTransfer {
 
     // A booking whose party moved is finished, not cancelled — and a booking
     // left `confirmed` against a closed order is what stops the day closing.
-    await DatabaseService.completeReservationForOrder(order.orderId);
+    await DatabaseService.completeReservationForOrder(
+      order.orderId,
+      actorId: user.username,
+      source: auditSource,
+      reason: 'Order emptied by transfer',
+    );
+
+    await _appendTransferClose(
+      order: order,
+      destination: destination,
+      user: user,
+      auditSource: auditSource,
+    );
+  }
+
+  static Future<void> _appendTransferClose({
+    required Order order,
+    required Order? destination,
+    required User user,
+    required AuditSource auditSource,
+  }) async {
+    final existing = DatabaseService.getAuditReport(order.orderId);
+    if (existing != null &&
+        existing.events.any((e) => e.type == AuditEventType.transferClose)) {
+      return;
+    }
+    final event = AuditEvent(
+      type: AuditEventType.transferClose,
+      itemName: OrderAuditDetails.orderItemName,
+      previousQty: 0,
+      newQty: 0,
+      waiterId: user.username,
+      waiterName: user.username,
+      timestamp: order.closedAt ?? DatabaseService.getCurrentDateTime(),
+      note: destination != null
+          ? 'ყველა პოზიცია გადატანილია — შეკვეთა #${destination.orderId}'
+          : 'ყველა პოზიცია გადატანილია',
+      details: <String, dynamic>{
+        ...OrderAuditDetails.base(
+          order: order,
+          orderKind: _kindOf(order),
+          source: auditSource,
+          actorId: user.username,
+        ),
+        'closeReason': 'EMPTIED_BY_TRANSFER',
+        'isFiscal': false,
+        'grossAmount': 0.0,
+        'collectedNow': 0.0,
+        if (destination != null) 'transferredToOrderId': destination.orderId,
+        if (destination != null)
+          'transferredToTableRefs': OrderAuditDetails.tableRefs(destination),
+      },
+    );
+    try {
+      await DatabaseService.appendOrderAuditEvents(
+        orderId: order.orderId,
+        events: [event],
+        statusOverride: AuditReportStatus.closed,
+        lockReport: true,
+        closedById: user.username,
+        closedByName: user.username,
+      );
+    } on StateError catch (e) {
+      if (!e.toString().toLowerCase().contains('locked')) rethrow;
+      developer.log(
+        'Audit report for order ${order.orderId} is locked; transfer close '
+        'not recorded',
+        name: 'order_item_transfer',
+      );
+    }
+  }
+
+  static String _kindOf(Order order) {
+    if (order.packageId?.trim().isNotEmpty == true) {
+      return OrderAuditDetails.package;
+    }
+    if (isTakeawayOrder(order)) return OrderAuditDetails.takeaway;
+    return OrderAuditDetails.walkIn;
   }
 
   /// Adds [quantity] of [line] to [destination], stacking onto a line that is
@@ -327,6 +499,8 @@ abstract final class OrderItemTransfer {
     final comment = _normalizeComment(line.comment);
     for (final existing in destination.items) {
       if (existing.itemKey == line.itemKey &&
+          existing.menuItemId == line.menuItemId &&
+          existing.variantId == line.variantId &&
           _normalizeComment(existing.comment) == comment) {
         existing.quantity += quantity;
         existing.total = double.parse(
@@ -337,12 +511,16 @@ abstract final class OrderItemTransfer {
     }
     destination.items.add(
       OrderItem(
+        // A full unmerged move keeps line identity; a split creates a new line.
+        lineUuid: quantity == line.quantity ? line.lineUuid : null,
         itemKey: line.itemKey,
         itemName: line.itemName,
         unitPrice: line.unitPrice,
         quantity: quantity,
         total: amount,
         comment: line.comment,
+        menuItemId: line.menuItemId,
+        variantId: line.variantId,
       ),
     );
   }

@@ -1,3 +1,7 @@
+import {
+  lockOperationalVenue,
+  selectFirstOperationalDevice,
+} from '../edge/operational-authority';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { DeviceStatus, VenueStatus } from '@prisma/client';
@@ -76,15 +80,20 @@ export class DeviceCredentialService {
     const deviceId = randomUUID();
     const { secret, credentialHash } = await this.mintCredentialMaterial();
 
-    await this.prisma.device.create({
-      data: {
-        id: deviceId,
-        venueId: input.venueId,
-        installationId: input.installationId,
-        displayName: input.displayName,
-        platform: input.platform,
-        credentialHash,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      await lockOperationalVenue(tx, input.venueId);
+      await tx.device.create({
+        data: {
+          id: deviceId,
+          venueId: input.venueId,
+          installationId: input.installationId,
+          displayName: input.displayName,
+          platform: input.platform,
+          credentialHash,
+        },
+      });
+
+      await selectFirstOperationalDevice(tx, input.venueId, deviceId);
     });
 
     return {

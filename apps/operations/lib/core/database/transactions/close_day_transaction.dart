@@ -1,5 +1,10 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
+import 'package:vynic/core/services/audit/global_audit.dart';
+import 'package:vynic/core/services/audit/reservation_audit.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'dart:developer' as developer;
 
+import 'package:vynic/core/models/reservation_classification.dart';
 import 'package:vynic/core/models/reservation_status.dart';
 import 'package:vynic/core/utils/reservation_table_availability.dart';
 
@@ -11,13 +16,101 @@ import '../repositories/table_repository.dart';
 /// Closes the business day.
 ///
 /// Multi-step flow (all-or-nothing from the operator's point of view):
-/// guards (no active orders, no pending takeaways, no live table locks) →
+/// guards (no active orders or live table locks) →
 /// finalize reservations → remember the operated date → advance the business
 /// date → reset the daily sales total → purge closed orders → free tables.
 class CloseDayTransaction {
   CloseDayTransaction._();
 
-  static Future<bool> run() async {
+  /// Moves every genuine booking dated on or before [currentDateString] to
+  /// its terminal state: `completed` when it was seated, `no-show` otherwise.
+  ///
+  /// Each transition is written to the Reservation timeline as the system's
+  /// own action — nobody pressed a button on a specific booking, Close Day
+  /// did — so the actor is `system` and the source `SYSTEM`. Bookings already
+  /// final only lose a dangling Order link and write nothing.
+  static Future<({int completed, int noShow})> finalizeReservationsForDay(
+    String currentDateString,
+  ) => UpdateReadiness.track(
+    'finalizeReservationsForDay',
+    () => _updateTrackedFinalizeReservationsForDay(currentDateString),
+  );
+
+  static Future<({int completed, int noShow})>
+  _updateTrackedFinalizeReservationsForDay(String currentDateString) async {
+    var completedReservations = 0;
+    var noShowReservations = 0;
+    for (final reservation in DatabaseCore.reservationBox!.values) {
+      if (!ReservationClassification.isRealAdvanceBooking(reservation)) {
+        continue;
+      }
+      final resDateString = reservation.reservationDate.toIso8601String().split(
+        'T',
+      )[0];
+      if (resDateString.compareTo(currentDateString) > 0) {
+        continue; // future booking — leave untouched
+      }
+      if (reservation.statusEnum.isFinal) {
+        if (reservation.linkedOrderId != null) {
+          // Its order is deleted below — do not keep a dangling id.
+          reservation.linkedOrderId = null;
+          await reservation.save();
+        }
+        continue;
+      }
+      final wasActivated =
+          reservation.linkedOrderId != null ||
+          reservation.statusEnum == ReservationStatus.inProgress;
+      final previousStatus = reservation.status;
+      final linkedOrderId = reservation.linkedOrderId;
+      reservation.statusEnum = wasActivated
+          ? ReservationStatus.completed
+          : ReservationStatus.noShow;
+      reservation.linkedOrderId = null;
+      await reservation.save();
+      await ReservationAudit.log(
+        action: wasActivated
+            ? ReservationAuditAction.complete
+            : ReservationAuditAction.noShow,
+        reservation: reservation,
+        actorId: 'system',
+        source: AuditSource.system,
+        previousStatus: previousStatus,
+        newStatus: reservation.status,
+        reason: 'Close Day',
+        extra: {if (linkedOrderId != null) 'orderId': linkedOrderId},
+      );
+      if (wasActivated) {
+        completedReservations++;
+      } else {
+        noShowReservations++;
+      }
+    }
+    return (completed: completedReservations, noShow: noShowReservations);
+  }
+
+  /// [actorId] is the operator who pressed Close Day. The transaction itself
+  /// is an automatic process — it finalizes bookings nobody touched — so the
+  /// reservation transitions inside it stay `system`/`SYSTEM`, while the day
+  /// closing is attributed to the person who asked for it.
+  static Future<bool> run({
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) => UpdateReadiness.track(
+    'closeDay',
+    () => _updateTrackedRun(
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+    ),
+  );
+
+  static Future<bool> _updateTrackedRun({
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) async {
     try {
       developer.log('========================================');
       developer.log('CLOSE DAY - Starting checks');
@@ -80,36 +173,23 @@ class CloseDayTransaction {
           developer.log('    Notes: ${reservation.notes ?? "none"}');
         }
 
-        return false;
-      }
-
-      final pendingTakeAwayReservations = DatabaseCore.reservationBox!.values
-          .where((reservation) {
-            if (!reservation.isTakeAway) {
-              return false;
-            }
-            final reservationDateString = reservation.reservationDate
-                .toIso8601String()
-                .split('T')[0];
-            if (reservationDateString != currentDateString) {
-              return false;
-            }
-            final status = reservation.status.toLowerCase();
-            return status != 'completed' && status != 'cancelled';
-          })
-          .toList();
-
-      if (pendingTakeAwayReservations.isNotEmpty) {
-        developer.log(
-          '❌ CANNOT CLOSE DAY - Pending takeaway reservations found:',
+        await GlobalAudit.closeDayBlocked(
+          businessDate: currentDateString,
+          blockedBy: 'ACTIVE_ORDERS',
+          blockers: [
+            for (final order in activeOrders)
+              <String, dynamic>{
+                'orderId': order.orderId,
+                'tableNumbers': order.tableNumbers,
+                'floor': order.floor,
+                'status': order.status,
+                'createdBy': order.createdBy,
+              },
+          ],
+          actorId: actorId,
+          actorName: actorName,
+          source: source,
         );
-        for (final reservation in pendingTakeAwayReservations) {
-          developer.log(
-            '  - ${reservation.customerName} (${reservation.status})',
-          );
-          developer.log('    Time: ${reservation.reservationTime}');
-          developer.log('    Created by: ${reservation.createdBy}');
-        }
         return false;
       }
 
@@ -143,53 +223,39 @@ class CloseDayTransaction {
             developer.log('    Reservation ID: ${table.reservationId}');
           }
         }
+        await GlobalAudit.closeDayBlocked(
+          businessDate: currentDateString,
+          blockedBy: 'RESERVED_TABLES',
+          blockers: [
+            for (final table in reservedTables)
+              <String, dynamic>{
+                'tableNumber': table.tableNumber,
+                'floor': table.floor,
+                if (table.reservedBy != null) 'reservedBy': table.reservedBy,
+                if (table.activeOrderId != null)
+                  'activeOrderId': table.activeOrderId,
+                if (table.reservationId != null)
+                  'reservationId': table.reservationId,
+              },
+          ],
+          actorId: actorId,
+          actorName: actorName,
+          source: source,
+        );
         return false;
       }
 
       developer.log('✅ No active orders found - proceeding with day closure');
 
-      // Finalize dine-in reservations for the closed day (and any earlier
+      // Finalize genuine reservations for the closed day (and any earlier
       // stragglers) so nothing stays 'in-progress' with a linkedOrderId
-      // pointing at an order deleted below. Activated bookings become
-      // 'completed'; never-activated past bookings become 'no-show'.
+      // pointing at an order deleted below. Historical bookkeeping rows are
+      // local history, not bookings, and remain untouched.
       // See docs/VYNIC_PROJECT_PLAN.md §2 (root cause 3).
-      var completedReservations = 0;
-      var noShowReservations = 0;
-      for (final reservation in DatabaseCore.reservationBox!.values) {
-        if (reservation.isTakeAway) {
-          continue; // today's pending takeaways already blocked closing above
-        }
-        final resDateString = reservation.reservationDate
-            .toIso8601String()
-            .split('T')[0];
-        if (resDateString.compareTo(currentDateString) > 0) {
-          continue; // future booking — leave untouched
-        }
-        if (reservation.statusEnum.isFinal) {
-          if (reservation.linkedOrderId != null) {
-            // Its order is deleted below — do not keep a dangling id.
-            reservation.linkedOrderId = null;
-            await reservation.save();
-          }
-          continue;
-        }
-        final wasActivated =
-            reservation.linkedOrderId != null ||
-            reservation.statusEnum == ReservationStatus.inProgress;
-        reservation.statusEnum = wasActivated
-            ? ReservationStatus.completed
-            : ReservationStatus.noShow;
-        reservation.linkedOrderId = null;
-        await reservation.save();
-        if (wasActivated) {
-          completedReservations++;
-        } else {
-          noShowReservations++;
-        }
-      }
+      final finalized = await finalizeReservationsForDay(currentDateString);
       developer.log(
-        'Finalized reservations: $completedReservations completed, '
-        '$noShowReservations no-show',
+        'Finalized reservations: ${finalized.completed} completed, '
+        '${finalized.noShow} no-show',
       );
 
       // Persist the day being closed so empty days (without sales) are still
@@ -209,12 +275,15 @@ class CloseDayTransaction {
       // Reset daily sales total for new day
       await SalesRepository.resetDailySalesTotal();
 
-      // Clear all closed orders from active orders
+      // Clear all closed orders from active orders. Their Sale is the durable
+      // record; the Order row is operational state for the day that just ended.
+      var archivedOrders = 0;
       final orderKeys = DatabaseCore.orderBox!.keys.toList();
       for (final key in orderKeys) {
         final order = DatabaseCore.orderBox!.get(key);
         if (order?.status == 'closed') {
           await DatabaseCore.orderBox!.delete(key);
+          archivedOrders++;
         }
       }
 
@@ -234,11 +303,24 @@ class CloseDayTransaction {
 
       developer.log('Freed $freedTables tables');
 
+      await GlobalAudit.closeDayCompleted(
+        businessDateClosed: currentDateString,
+        nextBusinessDate: nextDate.toIso8601String().split('T')[0],
+        reservationsCompleted: finalized.completed,
+        reservationsNoShow: finalized.noShow,
+        ordersArchived: archivedOrders,
+        tablesFreed: freedTables,
+        actorId: actorId,
+        actorName: actorName,
+        source: source,
+      );
+
       developer.log('✅ Day closed successfully');
       developer.log('========================================');
 
       return true;
     } catch (e) {
+      if (UpdateReadiness.enabled) UpdateReadiness.failure = e.toString();
       developer.log('❌ Error closing day: $e');
       return false;
     }

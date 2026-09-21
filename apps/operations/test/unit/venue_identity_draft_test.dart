@@ -130,6 +130,21 @@ void main() {
     });
   });
 
+  test(
+    'an idle profile draft receives remote changes while unsaved edits are retained',
+    () async {
+      final draft = VenueIdentityDraft(watchProfile: true);
+      await DatabaseCore.settingsBox!.put('venueBranchName', 'ვაკე');
+      await Future<void>.delayed(Duration.zero);
+      expect(draft.branchName, 'ვაკე');
+      draft.branchName = 'ჩემი ცვლილება';
+      await DatabaseCore.settingsBox!.put('venueBranchName', 'საბურთალო');
+      await Future<void>.delayed(Duration.zero);
+      expect(draft.branchName, 'ჩემი ცვლილება');
+      draft.dispose();
+    },
+  );
+
   group('surviving a backup', () {
     test('a logo written out as a JSON list is read back as bytes', () async {
       // This is how it comes back off a restore: the settings box is

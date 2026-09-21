@@ -1,35 +1,26 @@
 import { Injectable } from '@nestjs/common';
 
-/**
- * Tracks manager mobile sockets authenticated via JWT (username → socket ids).
- */
+/** Presence uses Venue + username, never a globally ambiguous username. */
 @Injectable()
 export class PresenceService {
-  private readonly usernameToSockets = new Map<string, Set<string>>();
+  private readonly sockets = new Map<
+    string,
+    { venueId: string; username: string }
+  >();
 
-  addSocket(username: string, socketId: string): void {
-    let set = this.usernameToSockets.get(username);
-    if (!set) {
-      set = new Set();
-      this.usernameToSockets.set(username, set);
-    }
-    set.add(socketId);
+  addSocket(venueId: string, username: string, socketId: string): void {
+    this.sockets.set(socketId, { venueId, username });
   }
 
   removeSocket(socketId: string): void {
-    for (const [user, set] of this.usernameToSockets) {
-      if (set.delete(socketId) && set.size === 0) {
-        this.usernameToSockets.delete(user);
-      }
-    }
+    this.sockets.delete(socketId);
   }
 
-  isOnline(username: string): boolean {
-    return (this.usernameToSockets.get(username)?.size ?? 0) > 0;
-  }
-
-  /** Usernames that currently have ≥1 authenticated socket connection. */
-  getOnlineStaffUsernames(): Set<string> {
-    return new Set(this.usernameToSockets.keys());
+  getOnlineStaffUsernames(venueId: string): Set<string> {
+    return new Set(
+      [...this.sockets.values()]
+        .filter((s) => s.venueId === venueId)
+        .map((s) => s.username),
+    );
   }
 }

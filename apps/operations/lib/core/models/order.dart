@@ -1,9 +1,11 @@
+import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'package:hive/hive.dart';
 import 'order_status.dart';
+import 'package:uuid/uuid.dart';
 part 'order.g.dart';
 
 @HiveType(typeId: 3)
-class OrderItem extends HiveObject {
+class OrderItem extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(0)
   String itemKey; // e.g., "Beer - 0.5L" or "Khinkali"
 
@@ -22,6 +24,18 @@ class OrderItem extends HiveObject {
   @HiveField(5)
   String? comment; // Special instructions (e.g., "No onions", "Extra spicy")
 
+  /// Stable POS menu identity, when this line came from a real menu item.
+  /// Snapshot name/price fields above remain the transactional truth.
+  @HiveField(6)
+  String? menuItemId;
+
+  /// Stable identity of the selected concrete variant, when applicable.
+  @HiveField(7)
+  String? variantId;
+
+  @HiveField(8)
+  String? lineUuid;
+
   OrderItem({
     required this.itemKey,
     required this.itemName,
@@ -29,7 +43,10 @@ class OrderItem extends HiveObject {
     required this.quantity,
     required this.total,
     this.comment,
-  });
+    this.menuItemId,
+    this.variantId,
+    String? lineUuid,
+  }) : lineUuid = lineUuid ?? const Uuid().v4();
 
   OrderItem clone() {
     return OrderItem(
@@ -39,6 +56,9 @@ class OrderItem extends HiveObject {
       quantity: quantity,
       total: total,
       comment: comment,
+      menuItemId: menuItemId,
+      variantId: variantId,
+      lineUuid: lineUuid,
     );
   }
 
@@ -51,23 +71,29 @@ class OrderItem extends HiveObject {
       total: (json['total'] ?? (json['quantity'] ?? 0) * (json['price'] ?? 0.0))
           .toDouble(),
       comment: json['comment'],
+      menuItemId: json['menuItemId'] as String?,
+      variantId: json['variantId'] as String?,
+      lineUuid: json['lineUuid'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'lineUuid': lineUuid,
       'itemKey': itemKey,
       'itemName': itemName,
       'unitPrice': unitPrice,
       'quantity': quantity,
       'total': total,
       'comment': comment,
+      if (menuItemId != null) 'menuItemId': menuItemId,
+      if (variantId != null) 'variantId': variantId,
     };
   }
 }
 
 @HiveType(typeId: 4)
-class Order extends HiveObject {
+class Order extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(0)
   int orderId;
 
@@ -104,7 +130,7 @@ class Order extends HiveObject {
   @HiveField(11)
   DateTime? closedAt; // When the order was closed/paid
 
-  @HiveField(12)
+  @HiveField(12, defaultValue: 0.0)
   double discountAmount; // Discount in GEL
 
   @HiveField(13)
@@ -113,20 +139,20 @@ class Order extends HiveObject {
   @HiveField(14)
   String? packageName; // Cached package name
 
-  @HiveField(15)
+  @HiveField(15, defaultValue: 0.0)
   double packagePrice; // Fixed package price (no service fee applied)
 
   @HiveField(16)
   List<OrderItem> packageItems; // Items from package (read-only for waiters)
 
-  @HiveField(17)
+  @HiveField(17, defaultValue: 0.0)
   double packageUnitPrice; // Price per guest for the package
 
-  @HiveField(18)
+  @HiveField(18, defaultValue: 0)
   int packageGuestCount; // Number of guests covered by the package
 
   static DateTime Function()? timestampResolver;
-  @HiveField(19)
+  @HiveField(19, defaultValue: 0.0)
   double manualAdjustmentAmount; // Manual adjustments applied to the order total
 
   @HiveField(20)
@@ -150,7 +176,7 @@ class Order extends HiveObject {
   /// owes, an advance reduces only what is left to *collect*. Both subtract
   /// from [totalAmount], but only the discount reduces the value of the sale.
   /// Migration v6 moved every stored advance out of `discountAmount`.
-  @HiveField(23)
+  @HiveField(23, defaultValue: 0.0)
   double advanceAmount;
 
   /// The business date (`YYYY-MM-DD`) the advance was taken on, which is not
@@ -163,10 +189,27 @@ class Order extends HiveObject {
   @HiveField(25)
   String? advanceReceiptId;
 
-  // Not persisted in Hive — populated from server for takeaway orders
+  /// Guest details owned by a takeaway order.
+  ///
+  /// These are additive fields: orders written by older builds read them as
+  /// empty strings, allowing the UI to fall back to the legacy bookkeeping
+  /// reservation when one exists.
+  @HiveField(26, defaultValue: '')
   String customerName;
+
+  @HiveField(27, defaultValue: '')
   String customerPhone;
+
+  /// `HH:mm`, when the guest said they would collect the takeaway.
+  @HiveField(28, defaultValue: '')
   String pickupTime;
+
+  /// Edge identity is independent of the legacy local display number.
+  @HiveField(29)
+  String? orderUuid;
+
+  @HiveField(30, defaultValue: 0)
+  int edgeRevision;
 
   static double Function()? serviceFeeRateResolver;
 
@@ -200,10 +243,15 @@ class Order extends HiveObject {
     this.customerPhone = '',
     this.pickupTime = '',
     this.customerName = '',
-  }) : packageItems = packageItems ?? [];
+    String? orderUuid,
+    this.edgeRevision = 0,
+  }) : orderUuid = orderUuid ?? const Uuid().v4(),
+       packageItems = packageItems ?? [];
 
   Order clone() {
     return Order(
+      orderUuid: orderUuid,
+      edgeRevision: edgeRevision,
       orderId: orderId,
       tableNumbers: List.from(tableNumbers),
       floor: floor,
@@ -244,6 +292,8 @@ class Order extends HiveObject {
         [];
 
     return Order(
+      orderUuid: json['orderUuid'] as String?,
+      edgeRevision: json['edgeRevision'] as int? ?? 0,
       orderId: json['posOrderId'] ?? json['orderId'] ?? 0,
       tableNumbers:
           (json['tableNumbers'] as List<dynamic>?)
@@ -287,6 +337,8 @@ class Order extends HiveObject {
 
   Map<String, dynamic> toJson() {
     return {
+      'orderUuid': orderUuid,
+      'edgeRevision': edgeRevision,
       'orderId': orderId,
       'posOrderId': orderId,
       'tableNumbers': tableNumbers,
@@ -314,6 +366,9 @@ class Order extends HiveObject {
       'advanceAmount': advanceAmount,
       'advanceCollectedOn': advanceCollectedOn,
       'advanceReceiptId': advanceReceiptId,
+      'customerName': customerName,
+      'customerPhone': customerPhone,
+      'pickupTime': pickupTime,
     };
   }
 

@@ -1,4 +1,6 @@
 import 'reflect-metadata';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 
 // Named stubs: the guard assertions below compare class names, and the real
 // modules drag in the firebase-admin / uuid (ESM) chain ts-jest can't load.
@@ -14,6 +16,14 @@ jest.mock('../../auth/jwt-auth.guard', () => ({
 }));
 jest.mock('../../auth/roles.guard', () => ({
   RolesGuard: class RolesGuard {},
+}));
+
+jest.mock('../../edge/operational-authority', () => ({
+  withOperationalAuthority: (
+    db: unknown,
+    _auth: unknown,
+    work: (db: unknown) => unknown,
+  ) => work(db),
 }));
 
 import { RequestMethod } from '@nestjs/common';
@@ -33,6 +43,7 @@ type CtorArgs = ConstructorParameters<typeof SyncController>;
 
 interface Stubs {
   controller: SyncController;
+  markSync: jest.Mock;
   execute: jest.Mock;
   ingestReports: jest.Mock;
   ingestEventLogs: jest.Mock;
@@ -57,13 +68,23 @@ function makeController(): Stubs {
     Promise.resolve({ success: true, count: 2 }),
   );
   const restore = jest.fn(() => Promise.resolve());
+  const markSync = jest.fn().mockResolvedValue({ count: 1 });
   const controller = new SyncController(
-    {} as unknown as CtorArgs[0],
+    { device: { updateMany: markSync } } as unknown as CtorArgs[0],
     { execute } as unknown as CtorArgs[1],
-    { ingestReports, ingestEventLogs } as unknown as CtorArgs[2],
+    {
+      withDatabase: () => ({ ingestReports, ingestEventLogs }),
+    } as unknown as CtorArgs[2],
     { restore } as unknown as CtorArgs[3],
   );
-  return { controller, execute, ingestReports, ingestEventLogs, restore };
+  return {
+    controller,
+    markSync,
+    execute,
+    ingestReports,
+    ingestEventLogs,
+    restore,
+  };
 }
 
 function routeOf(method: keyof SyncController): {
@@ -96,12 +117,29 @@ describe('SyncController — route table', () => {
     });
   });
 
-  it('exposes GET /sync/diff behind the manager JWT guards', () => {
-    expect(routeOf('getDiff')).toEqual({
-      path: 'diff',
-      verb: RequestMethod.GET,
-      guards: ['JwtAuthGuard', 'RolesGuard'],
-    });
+  it('removes the unused Manager diff route', () => {
+    expect('getDiff' in SyncController.prototype).toBe(false);
+    for (const key of Object.getOwnPropertyNames(SyncController.prototype)) {
+      const method = SyncController.prototype[key];
+      if (typeof method === 'function')
+        expect(Reflect.getMetadata('path', method)).not.toBe('diff');
+    }
+  });
+
+  it('has no Flutter diff route or wrapper caller dependency', () => {
+    const root = resolve(__dirname, '../../../../operations/lib');
+    function inspect(directory: string) {
+      for (const entry of readdirSync(directory, { withFileTypes: true })) {
+        const path = join(directory, entry.name);
+        if (entry.isDirectory()) inspect(path);
+        else if (entry.name.endsWith('.dart')) {
+          const source = readFileSync(path, 'utf8');
+          expect(source).not.toContain('/sync/diff');
+          expect(source).not.toMatch(/MobileApiService\.getDiff\s*\(/);
+        }
+      }
+    }
+    inspect(root);
   });
 
   it('exposes POST /sync/manager-data behind the POS sync guard', () => {
@@ -143,7 +181,12 @@ describe('SyncController — delegation', () => {
     await controller.syncManagerData(body, authContext);
 
     expect(execute).toHaveBeenCalledTimes(1);
-    expect(execute).toHaveBeenCalledWith(body, authContext);
+    expect(execute).toHaveBeenCalledWith(
+      body,
+      authContext,
+      expect.anything(),
+      expect.any(Array),
+    );
     expect((execute.mock.calls as unknown[][])[0][0]).toBe(body);
   });
 
@@ -179,7 +222,12 @@ describe('SyncController — delegation', () => {
 
     await controller.syncManagerData(body, authContext);
 
-    expect(execute).toHaveBeenCalledWith(body, authContext);
+    expect(execute).toHaveBeenCalledWith(
+      body,
+      authContext,
+      expect.anything(),
+      expect.any(Array),
+    );
     expect((execute.mock.calls as unknown[][])[0][1]).not.toBe(body);
     expect((execute.mock.calls as unknown[][])[0][1]).toMatchObject({
       venueId: 'verified-venue',
@@ -230,5 +278,29 @@ describe('SyncController — delegation', () => {
     expect(new Date(result.serverTime).toString()).not.toBe('Invalid Date');
     expect(execute).not.toHaveBeenCalled();
     expect(restore).not.toHaveBeenCalled();
+  });
+});
+
+describe('first complete Device sync readiness', () => {
+  it('records only the authenticated Device after full success', async () => {
+    const { controller, markSync } = makeController();
+    await controller.syncManagerData(
+      { venueId: 'forged' } as any,
+      AUTH_CONTEXT,
+    );
+    expect(markSync).toHaveBeenCalledWith({
+      where: { id: 'device-a', venueId: 'venue-a', firstSyncAt: null },
+      data: { firstSyncAt: expect.any(Date) },
+    });
+  });
+  it('does not mark realtime snapshots or failed ingestion ready', async () => {
+    const { controller, markSync, execute } = makeController();
+    await controller.syncManagerData({ realtimeOnly: true }, AUTH_CONTEXT);
+    expect(markSync).not.toHaveBeenCalled();
+    execute.mockRejectedValueOnce(new Error('snapshot failed'));
+    await expect(controller.syncManagerData({}, AUTH_CONTEXT)).rejects.toThrow(
+      'snapshot failed',
+    );
+    expect(markSync).not.toHaveBeenCalled();
   });
 });

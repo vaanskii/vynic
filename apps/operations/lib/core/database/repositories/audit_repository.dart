@@ -10,6 +10,8 @@ import 'package:vynic/core/services/audit/audit_event_service.dart';
 import 'business_day_repository.dart';
 import '../database_core.dart';
 import 'order_repository.dart';
+import 'closure_journal_repository.dart';
+import '../../models/order_status.dart';
 
 /// Order audit reports and the admin action log.
 class AuditRepository {
@@ -30,6 +32,35 @@ class AuditRepository {
 
   static String buildAuditReportKey(int orderId) =>
       '$_auditReportKeyPrefix$orderId';
+
+  /// [existing] followed by [appended], with every appended event numbered
+  /// from the next free sequence.
+  ///
+  /// A report's timeline only grows at the end: a `RESTORE` after a `CLOSE`,
+  /// a re-close after that, a `VOID_SALE` on a locked report. Numbering from
+  /// the highest sequence in use rather than from the list length means a
+  /// report that was reopened, appended to and written back keeps climbing
+  /// instead of reusing a number.
+  ///
+  /// [existing] is renumbered only when it is not numbered at all, which is
+  /// the legacy case [AuditReport.fromMap] has usually already resolved.
+  static List<AuditEvent> _appendedInSequence(
+    List<AuditEvent> existing,
+    List<AuditEvent> appended,
+  ) {
+    final base = existing.every((event) => event.sequence != null)
+        ? existing
+        : orderReportEvents(existing);
+    var next = 0;
+    for (final event in base) {
+      final sequence = event.sequence;
+      if (sequence != null && sequence >= next) next = sequence + 1;
+    }
+    return <AuditEvent>[
+      ...base,
+      for (final event in appended) event.copyWith(sequence: next++),
+    ];
+  }
 
   static AuditReport? _parseAuditReport(dynamic raw) {
     if (raw is AuditReport) {
@@ -182,6 +213,12 @@ class AuditRepository {
         continue;
       }
 
+      // Table labels describe the opening snapshot, not current occupancy.
+      // A moved/restored live Order can legitimately share that old table set.
+      final order = OrderRepository.getOrder(report.orderId);
+      if (order != null && !OrderStatus.fromStorage(order.status).isTerminal)
+        continue;
+
       final updated = report.copyWith(
         status: AuditReportStatus.closed,
         locked: true,
@@ -243,8 +280,12 @@ class AuditRepository {
       );
       final keeper = reports.first;
       final stale = reports.skip(1);
+      var finalized = 0;
 
       for (final report in stale) {
+        final order = OrderRepository.getOrder(report.orderId);
+        if (order != null && !OrderStatus.fromStorage(order.status).isTerminal)
+          continue;
         final closedBy = report.closedByName ?? report.openedByName;
         final closedId = report.closedById ?? report.openedById;
         final fixed = report.copyWith(
@@ -256,12 +297,14 @@ class AuditRepository {
           updatedAt: now,
         );
         await DatabaseCore.auditLogBox!.put(fixed.reportId, fixed.toMap());
+        finalized++;
         changed = true;
       }
 
-      debugPrint(
-        '[AuditCleanup] ${reports.length - 1} stale OPEN reports closed for ${entry.key}, kept order #${keeper.orderId}.',
-      );
+      if (finalized > 0)
+        debugPrint(
+          '[AuditCleanup] $finalized stale OPEN reports closed for ${entry.key}, kept order #${keeper.orderId}.',
+        );
     }
 
     await DatabaseCore.settingsBox!.put(cleanupKey, true);
@@ -364,10 +407,13 @@ class AuditRepository {
         continue;
       }
 
-      events.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      // Derived rows have no stored sequence of their own, so they are given
+      // one here: stable by timestamp, then numbered, exactly as a legacy
+      // report is reconstructed.
+      final orderedEvents = orderReportEvents(events);
 
-      final firstEvent = events.first;
-      final lastEvent = events.last;
+      final firstEvent = orderedEvents.first;
+      final lastEvent = orderedEvents.last;
 
       final referenceDetails = logs.lastWhere(
         (log) => log['details'] is Map,
@@ -394,7 +440,7 @@ class AuditRepository {
           openedByName: firstEvent.waiterName,
           openedAt: firstEvent.timestamp,
           status: status,
-          events: List<AuditEvent>.unmodifiable(events),
+          events: orderedEvents,
           updatedAt: lastEvent.timestamp,
           closedAt: isCancelled ? lastEvent.timestamp : null,
           closedById: isCancelled ? lastEvent.waiterId : null,
@@ -415,8 +461,34 @@ class AuditRepository {
         return AuditEventType.reduceQty;
       case 'remove_item':
         return AuditEventType.deleteItem;
+      case 'close_table':
+        return AuditEventType.close;
+      case 'internal_close':
+        return AuditEventType.internalClose;
+      case 'restore_table':
+      case 'reopen_table':
+      case 'sale_restored_to_order':
+        return AuditEventType.restore;
       case 'cancel_table':
         return AuditEventType.cancelTable;
+      case 'create_walkin':
+        return AuditEventType.createWalkIn;
+      case 'create_takeaway':
+        return AuditEventType.createTakeaway;
+      case 'apply_package':
+        return AuditEventType.applyPackage;
+      case 'activate_reservation':
+        return AuditEventType.activateReservation;
+      case 'move_items':
+        return AuditEventType.moveItems;
+      case 'transfer_close':
+        return AuditEventType.transferClose;
+      case 'record_advance':
+        return AuditEventType.recordAdvance;
+      case 'adjust_order':
+        return AuditEventType.adjustOrder;
+      case 'void_sale':
+        return AuditEventType.voidSale;
       case 'custom':
         return AuditEventType.custom;
     }
@@ -476,6 +548,76 @@ class AuditRepository {
     return const [];
   }
 
+  /// Repairs only the old table-based cleanup's synthetic lock. A real
+  /// closure/cancellation, a Sale, or a live closure journal stays authoritative.
+  static Future<AuditReport> _repairCleanupLock(AuditReport report) async {
+    final order = OrderRepository.getOrder(report.orderId);
+    if (order == null ||
+        !report.locked ||
+        report.status != AuditReportStatus.closed ||
+        DatabaseCore.salesBox == null ||
+        DatabaseCore.closureJournalBox == null)
+      return report;
+    final status = OrderStatus.fromStorage(order.status);
+    if (status == OrderStatus.unknown ||
+        status.isTerminal ||
+        order.closureId != null ||
+        ClosureJournalRepository.findByOrderId(order.orderId) != null)
+      return report;
+    const terminalEvents = {
+      AuditEventType.close,
+      AuditEventType.internalClose,
+      AuditEventType.cancelTable,
+      AuditEventType.transferClose,
+      AuditEventType.voidSale,
+    };
+    if (report.events.isEmpty ||
+        report.events.any((e) => terminalEvents.contains(e.type)))
+      return report;
+    if (DatabaseCore.salesBox!.values.any(
+      (raw) =>
+          raw is Map && raw['orderId']?.toString() == order.orderId.toString(),
+    ))
+      return report;
+    final now = BusinessDayRepository.getCurrentDateTime();
+    final repair = AuditEvent(
+      type: AuditEventType.custom,
+      itemName: 'ORDER',
+      previousQty: 0,
+      newQty: 0,
+      waiterId: 'system',
+      waiterName: 'System',
+      timestamp: now,
+      note: 'ღია შეკვეთის აუდიტის არასწორი ბლოკირება გასწორდა',
+      details: {
+        'reason': 'open_order_cleanup_lock_repair',
+        'previousClosedAt': report.closedAt?.toIso8601String(),
+        'previousClosedById': report.closedById,
+      },
+    );
+    final repaired = AuditReport(
+      reportId: report.reportId,
+      orderId: report.orderId,
+      tableNumbers: report.tableNumbers,
+      floor: report.floor,
+      openedById: report.openedById,
+      openedByName: report.openedByName,
+      openedAt: report.openedAt,
+      status: AuditReportStatus.open,
+      events: _appendedInSequence(report.events, [repair]),
+      updatedAt: now,
+      locked: false,
+    );
+    await saveAuditReport(repaired);
+    return repaired;
+  }
+
+  /// Appends [events] to the Order's report.
+  ///
+  /// A locked report refuses new events, because a settled or cancelled Order
+  /// is history. [allowLocked] is the one exception, for accountability
+  /// events that by definition happen after the close — a Sale void — and
+  /// it never changes the report's status or lock.
   static Future<void> appendOrderAuditEvents({
     required int orderId,
     required List<AuditEvent> events,
@@ -483,6 +625,7 @@ class AuditRepository {
     bool lockReport = false,
     String? closedById,
     String? closedByName,
+    bool allowLocked = false,
   }) async {
     if (events.isEmpty && !lockReport) {
       return;
@@ -494,13 +637,19 @@ class AuditRepository {
       orderSnapshot: orderSnapshot,
     );
 
-    if (report.locked) {
+    if (report.locked && !allowLocked) {
+      report = await _repairCleanupLock(report);
+    }
+    if (report.locked && !allowLocked) {
       throw StateError('Audit report for order $orderId is locked');
     }
 
-    final mergedEvents = <AuditEvent>[...report.events, ...events]
-      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
-    final updatedEvents = List<AuditEvent>.unmodifiable(mergedEvents);
+    // Appended, not merged. A creation event and its first ADD_ITEM rows share
+    // one timestamp on purpose, so the order they arrive in is the only record
+    // of the order they happened in — re-sorting by time would discard it.
+    final updatedEvents = List<AuditEvent>.unmodifiable(
+      _appendedInSequence(report.events, events),
+    );
     final updatedAt = BusinessDayRepository.getCurrentDateTime();
 
     final updatedReport = report.copyWith(
@@ -530,6 +679,147 @@ class AuditRepository {
     _onAuditChanged?.call();
   }
 
+  /// Appends and locks one typed closure event, or proves that exact closure
+  /// was already finalized.
+  ///
+  /// The closure journal can be replayed after any post-Sale write. In
+  /// particular, a process may die after this method's single report write but
+  /// before the journal advances. Matching by the durable closure id makes
+  /// that retry a no-op instead of a second `CLOSE`/`INTERNAL_CLOSE` event.
+  static Future<void> finalizeOrderClosureAudit({
+    required int orderId,
+    required AuditEvent closingEvent,
+    required String closedById,
+    required String closedByName,
+  }) async {
+    if (closingEvent.type != AuditEventType.close &&
+        closingEvent.type != AuditEventType.internalClose) {
+      throw ArgumentError.value(
+        closingEvent.type,
+        'closingEvent.type',
+        'must be CLOSE or INTERNAL_CLOSE',
+      );
+    }
+
+    final closureId = closingEvent.details?['closureId']?.toString().trim();
+    if (closureId == null || closureId.isEmpty) {
+      throw ArgumentError.value(
+        closureId,
+        'closingEvent.details.closureId',
+        'must identify the closure being finalized',
+      );
+    }
+
+    final orderSnapshot = OrderRepository.getOrder(orderId);
+    final report = await ensureAuditReport(
+      orderId: orderId,
+      orderSnapshot: orderSnapshot,
+    );
+    final closureEvents = report.events
+        .where((event) {
+          if (event.type != AuditEventType.close &&
+              event.type != AuditEventType.internalClose) {
+            return false;
+          }
+          return event.details?['closureId']?.toString() == closureId;
+        })
+        .toList(growable: false);
+
+    if (closureEvents.any((event) => event.type != closingEvent.type)) {
+      throw StateError(
+        'Audit report for order $orderId already records closure $closureId '
+        'with a different closure type',
+      );
+    }
+    if (closureEvents.length > 1) {
+      throw StateError(
+        'Audit report for order $orderId already contains duplicate events '
+        'for closure $closureId',
+      );
+    }
+
+    if (report.locked) {
+      if (closureEvents.length == 1 &&
+          report.status == AuditReportStatus.closed) {
+        return;
+      }
+      throw StateError(
+        'Audit report for order $orderId is locked without exactly one '
+        'matching closure $closureId event',
+      );
+    }
+
+    await appendOrderAuditEvents(
+      orderId: orderId,
+      events: closureEvents.isEmpty ? [closingEvent] : const [],
+      statusOverride: AuditReportStatus.closed,
+      lockReport: true,
+      closedById: closedById,
+      closedByName: closedByName,
+    );
+  }
+
+  /// Reopens a completed order's report and records the restore in the same
+  /// lifecycle that holds its original close.
+  ///
+  /// A report is locked when an order closes, so the normal append path cannot
+  /// represent `CLOSE -> RESTORE -> CLOSE`. Restore is the one operation that
+  /// deliberately unlocks it. The original close event is retained, and the
+  /// restore event is de-duplicated by original closure/sale identity so a
+  /// repeated repository call cannot manufacture a second reversal.
+  static Future<void> reopenOrderAuditReport({
+    required int orderId,
+    required AuditEvent restoreEvent,
+  }) async {
+    if (restoreEvent.type != AuditEventType.restore) {
+      throw ArgumentError.value(
+        restoreEvent.type,
+        'restoreEvent.type',
+        'must be AuditEventType.restore',
+      );
+    }
+
+    final orderSnapshot = OrderRepository.getOrder(orderId);
+    final report = await ensureAuditReport(
+      orderId: orderId,
+      orderSnapshot: orderSnapshot,
+    );
+    final closureId = restoreEvent.details?['originalClosureId']?.toString();
+    final saleId = restoreEvent.details?['originalSaleId']?.toString();
+    final alreadyRecorded = report.events.any((event) {
+      if (event.type != AuditEventType.restore) return false;
+      final details = event.details;
+      if (closureId != null && closureId.isNotEmpty) {
+        return details?['originalClosureId']?.toString() == closureId;
+      }
+      if (saleId != null && saleId.isNotEmpty) {
+        return details?['originalSaleId']?.toString() == saleId;
+      }
+      return false;
+    });
+
+    final events = _appendedInSequence(report.events, [
+      if (!alreadyRecorded) restoreEvent,
+    ]);
+    final updatedAt = BusinessDayRepository.getCurrentDateTime();
+    final reopened = AuditReport(
+      reportId: report.reportId,
+      orderId: report.orderId,
+      tableNumbers: report.tableNumbers,
+      floor: report.floor,
+      openedById: report.openedById,
+      openedByName: report.openedByName,
+      openedAt: report.openedAt,
+      status: AuditReportStatus.open,
+      events: List<AuditEvent>.unmodifiable(events),
+      updatedAt: updatedAt,
+      locked: false,
+    );
+
+    await DatabaseCore.auditLogBox!.put(reopened.reportId, reopened.toMap());
+    _onAuditChanged?.call();
+  }
+
   static String _legacyActionForEvent(AuditEventType type) {
     switch (type) {
       case AuditEventType.addItem:
@@ -538,8 +828,32 @@ class AuditRepository {
         return 'reduce_quantity';
       case AuditEventType.deleteItem:
         return 'remove_item';
+      case AuditEventType.close:
+        return 'close_table';
+      case AuditEventType.internalClose:
+        return 'internal_close';
+      case AuditEventType.restore:
+        return 'restore_table';
       case AuditEventType.cancelTable:
         return 'cancel_table';
+      case AuditEventType.createWalkIn:
+        return 'create_walkin';
+      case AuditEventType.createTakeaway:
+        return 'create_takeaway';
+      case AuditEventType.applyPackage:
+        return 'apply_package';
+      case AuditEventType.activateReservation:
+        return 'activate_reservation';
+      case AuditEventType.moveItems:
+        return 'move_items';
+      case AuditEventType.transferClose:
+        return 'transfer_close';
+      case AuditEventType.recordAdvance:
+        return 'record_advance';
+      case AuditEventType.adjustOrder:
+        return 'adjust_order';
+      case AuditEventType.voidSale:
+        return 'void_sale';
       case AuditEventType.custom:
         return 'custom';
     }
@@ -768,9 +1082,13 @@ class AuditRepository {
           .toList();
     }
 
-    filtered.sort(
-      (a, b) => (b['timestamp'] as String).compareTo(a['timestamp'] as String),
-    );
+    // A legacy row restored from an older backup can carry no timestamp at
+    // all. Sort it last rather than throwing and losing the whole listing.
+    filtered.sort((a, b) {
+      final left = (a['timestamp'] as String?) ?? '';
+      final right = (b['timestamp'] as String?) ?? '';
+      return right.compareTo(left);
+    });
 
     return filtered;
   }

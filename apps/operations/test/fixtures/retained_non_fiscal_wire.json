@@ -1,0 +1,45 @@
+{
+  "posSaleId": "88fe2803-d7ff-4b95-99cd-7a3ab902cca1",
+  "posOrderId": 1764,
+  "closureId": "ac74dba1-cc90-4e3c-8963-8577b1696292",
+  "businessDate": "2026-06-22",
+  "createdAt": "2026-06-22T12:02:37.981",
+  "closedAt": "2026-06-22T21:24:54.840295",
+  "gross": "176.00",
+  "subtotal": "160.00",
+  "serviceFee": "16.00",
+  "discount": "0.00",
+  "manualAdjustment": "0.00",
+  "advanceApplied": "0.00",
+  "amountDueNow": "176.00",
+  "collectedNow": "0.00",
+  "paymentMethod": "non-fiscal",
+  "isFiscal": false,
+  "isCancelled": false,
+  "restoredToOrder": false,
+  "createdBy": "fixture-operator",
+  "closedById": "fixture-closer",
+  "tableNumbers": [
+    "1"
+  ],
+  "floor": "first",
+  "revision": 1,
+  "sourceUpdatedAt": "2026-06-22T21:24:54.840295",
+  "lines": [
+    {
+      "lineSeq": 0,
+      "itemName": "ფხალეულის დაფა",
+      "quantity": 5,
+      "unitPrice": "19.00",
+      "lineTotal": "95.00"
+    },
+    {
+      "lineSeq": 1,
+      "itemName": "საცივი",
+      "quantity": 5,
+      "unitPrice": "13.00",
+      "lineTotal": "65.00"
+    }
+  ],
+  "payments": []
+}

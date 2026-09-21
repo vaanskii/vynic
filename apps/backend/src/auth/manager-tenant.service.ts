@@ -1,3 +1,6 @@
+import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
+import { FeatureKeys } from '../entitlements/feature-keys';
+import { commercialAccessAllowed } from '../entitlements/subscription-policy';
 import { Injectable } from '@nestjs/common';
 import { VenueStatus } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
@@ -23,7 +26,10 @@ import type { ManagerAuthContext } from './manager-auth-context';
 export class ManagerTenantService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async resolveByStaffId(staffId: string): Promise<ManagerAuthContext | null> {
+  async resolveByStaffId(
+    staffId: string,
+    requireProduct = false,
+  ): Promise<ManagerAuthContext | null> {
     if (!staffId) return null;
 
     const staff = await this.prisma.staff.findUnique({
@@ -33,18 +39,35 @@ export class ManagerTenantService {
         username: true,
         role: true,
         isActive: true,
-        venue: { select: { id: true, organizationId: true, status: true } },
+        venue: {
+          select: {
+            id: true,
+            organizationId: true,
+            status: true,
+            subscription: { select: { status: true } },
+          },
+        },
       },
     });
 
     if (
       !staff ||
       !staff.isActive ||
+      !commercialAccessAllowed(staff.venue.subscription?.status) ||
       !isMobileAppStaffRole(staff.role) ||
       staff.venue.status !== VenueStatus.ACTIVE
     ) {
       return null;
     }
+
+    if (
+      requireProduct &&
+      !(await new VenueEntitlementsService(this.prisma).hasFeature(
+        staff.venue.id,
+        FeatureKeys.MANAGER_APP,
+      ))
+    )
+      return null;
 
     return {
       staffId: staff.id,

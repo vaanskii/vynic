@@ -216,7 +216,7 @@ export function buildManagerPushCopy(
       const id = asOrderId(p?.posOrderId);
       return {
         title: 'გატანა',
-        body: id !== null ? `შეკვეთა წაიშალა #${id}` : 'შეკვეთა წაიშალა',
+        body: id !== null ? `შეკვეთა გაუქმდა #${id}` : 'შეკვეთა გაუქმდა',
       };
     }
     case 'orders_bulk_touch': {

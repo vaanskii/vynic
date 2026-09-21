@@ -1,7 +1,20 @@
+import 'package:vynic/core/models/sale_visibility.dart';
+import '../../widgets/venue_profile_card.dart';
+import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
+import 'package:vynic/core/models/inventory_decimal.dart';
+import 'package:uuid/uuid.dart';
+import 'package:vynic/apps/mobile_app/presentation/screens/consumption_history_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/core/ui/vynic_spacing.dart';
 import 'package:intl/intl.dart';
+import 'package:vynic/core/services/audit/close_event_presentation.dart';
 import 'package:vynic/core/models/audit_report.dart';
+import 'package:vynic/core/models/global_audit_entry.dart';
+import 'package:vynic/core/models/inventory.dart';
+import 'package:vynic/core/services/audit/global_audit.dart';
 import 'package:vynic/core/models/monitoring.dart';
+import 'package:vynic/core/models/menu_recipe.dart';
+import 'package:vynic/core/models/receiving.dart';
 import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/sync/api_config.dart';
@@ -18,6 +31,12 @@ part 'tabs/mobile_admin_users_tab.dart';
 part 'tabs/mobile_admin_sales_tab.dart';
 part 'tabs/mobile_admin_report_tab.dart';
 part 'tabs/mobile_admin_audit_tab.dart';
+part 'tabs/mobile_admin_activity_tab.dart';
+part 'tabs/mobile_admin_inventory_tab.dart';
+part 'tabs/mobile_admin_receiving.dart';
+part 'tabs/mobile_admin_procurement.dart';
+part 'tabs/mobile_admin_payables.dart';
+part 'tabs/mobile_admin_recipes.dart';
 part 'tabs/mobile_admin_settings_tab.dart';
 part 'shared/mobile_admin_shared_widgets.dart';
 
@@ -31,6 +50,15 @@ class MobileAdminScreen extends StatefulWidget {
     required this.user,
     required this.onLogout,
   });
+
+  static const adminTabs = <({String label, IconData icon})>[
+    (label: 'ანგარიში', icon: Icons.analytics_outlined),
+    (label: 'გაყიდვები', icon: Icons.receipt_long_outlined),
+    (label: 'აუდიტი', icon: Icons.fact_check_outlined),
+    (label: 'აქტივობა', icon: Icons.history_outlined),
+    (label: 'გუნდი', icon: Icons.people_outline),
+    (label: 'პარამეტრები', icon: Icons.settings_outlined),
+  ];
 
   @override
   State<MobileAdminScreen> createState() => _MobileAdminScreenState();
@@ -87,19 +115,20 @@ class MobileAdminScreen extends StatefulWidget {
 class _MobileAdminScreenState extends State<MobileAdminScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabs;
-
-  static const _tabDefs = <({String label, IconData icon})>[
-    (label: 'ანგარიში', icon: Icons.analytics_outlined),
-    (label: 'გაყიდვები', icon: Icons.receipt_long_outlined),
-    (label: 'აუდიტი', icon: Icons.fact_check_outlined),
-    (label: 'გუნდი', icon: Icons.people_outline),
-    (label: 'პარამეტრები', icon: Icons.settings_outlined),
+  int _activeTab = 0;
+  late final _visibleTabs = [
+    for (final entry in MobileAdminScreen.adminTabs.indexed)
+      if (entry.$1 != 3 || ManagerEntitlements.has(FeatureKeys.advancedAudit))
+        entry.$2,
   ];
 
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: _tabDefs.length, vsync: this);
+    _tabs = TabController(length: _visibleTabs.length, vsync: this);
+    _tabs.addListener(() {
+      if (_activeTab != _tabs.index) setState(() => _activeTab = _tabs.index);
+    });
   }
 
   @override
@@ -180,7 +209,7 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
                   fontWeight: FontWeight.w500,
                 ),
                 tabs: [
-                  for (final t in _tabDefs)
+                  for (final t in _visibleTabs)
                     Tab(
                       height: 48,
                       child: Row(
@@ -199,11 +228,19 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
               child: TabBarView(
                 controller: _tabs,
                 children: [
-                  _ReportTab(),
-                  _SalesTab(),
-                  _AuditTab(),
-                  _UsersTab(currentUser: widget.user),
-                  _SettingsTab(user: widget.user, onLogout: widget.onLogout),
+                  for (final entry in <Widget>[
+                    _ReportTab(),
+                    _SalesTab(),
+                    _AuditTab(),
+                    if (ManagerEntitlements.has(FeatureKeys.advancedAudit))
+                      _ActivityTab(),
+                    _UsersTab(currentUser: widget.user),
+                    _SettingsTab(user: widget.user, onLogout: widget.onLogout),
+                  ].indexed)
+                    AdminTabViewport(
+                      active: _activeTab == entry.$1,
+                      child: entry.$2,
+                    ),
                 ],
               ),
             ),
@@ -212,4 +249,43 @@ class _MobileAdminScreenState extends State<MobileAdminScreen>
       ),
     );
   }
+}
+
+/// Preserve loaded tab state while returning every vertical viewport to its start.
+class AdminTabViewport extends StatefulWidget {
+  const AdminTabViewport({
+    super.key,
+    required this.active,
+    required this.child,
+  });
+  final bool active;
+  final Widget child;
+  @override
+  State<AdminTabViewport> createState() => _AdminTabViewportState();
+}
+
+class _AdminTabViewportState extends State<AdminTabViewport> {
+  @override
+  void didUpdateWidget(AdminTabViewport oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active && !oldWidget.active) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !widget.active) return;
+        void reset(Element element) {
+          if (element is StatefulElement && element.state is ScrollableState) {
+            final position = (element.state as ScrollableState).position;
+            if (axisDirectionToAxis(position.axisDirection) == Axis.vertical &&
+                position.hasContentDimensions)
+              position.jumpTo(position.minScrollExtent);
+          }
+          element.visitChildren(reset);
+        }
+
+        context.visitChildElements(reset);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

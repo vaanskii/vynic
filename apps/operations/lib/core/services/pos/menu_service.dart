@@ -6,9 +6,6 @@ class MenuService {
   static List<MenuCategory>? _cachedCategories;
 
   static Future<List<MenuCategory>> loadMenu() async {
-    if (_cachedCategories != null) {
-      return _cachedCategories!;
-    }
 
     try {
       // Load from database
@@ -58,6 +55,7 @@ class MenuService {
   // Convert MenuItemDB to MenuItem
   static MenuItem _convertToMenuItem(MenuItemDB itemDB) {
     return MenuItem(
+      id: itemDB.id,
       translations: {
         'en': Translation(name: itemDB.translationsEn['name'] ?? ''),
         'ka': Translation(name: itemDB.translationsKa['name'] ?? ''),
@@ -72,7 +70,11 @@ class MenuService {
 
   // Convert MenuVariantDB to MenuVariant
   static MenuVariant _convertToMenuVariant(MenuVariantDB variantDB) {
-    return MenuVariant(size: variantDB.size, price: variantDB.price);
+    return MenuVariant(
+      id: variantDB.id,
+      size: variantDB.size,
+      price: variantDB.price,
+    );
   }
 
   static void clearCache() {

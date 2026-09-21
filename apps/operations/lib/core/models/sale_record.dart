@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'package:hive/hive.dart';
 
 part 'sale_record.g.dart';
@@ -6,7 +7,7 @@ part 'sale_record.g.dart';
 /// `{itemName, quantity, unitPrice, total}` written by
 /// `SalesRepository.saveSaleRecord`.
 @HiveType(typeId: 16)
-class SaleRecordItem extends HiveObject {
+class SaleRecordItem extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(0)
   String itemName;
 
@@ -22,12 +23,20 @@ class SaleRecordItem extends HiveObject {
   @HiveField(4)
   String? comment;
 
+  @HiveField(5)
+  String? menuItemId;
+
+  @HiveField(6)
+  String? variantId;
+
   SaleRecordItem({
     required this.itemName,
     required this.quantity,
     required this.unitPrice,
     required this.total,
     this.comment,
+    this.menuItemId,
+    this.variantId,
   });
 
   /// Tolerant of both the sale-record shape (`itemName`/`unitPrice`) and the
@@ -45,6 +54,8 @@ class SaleRecordItem extends HiveObject {
       unitPrice: unitPrice,
       total: total ?? unitPrice * quantity,
       comment: map['comment']?.toString(),
+      menuItemId: map['menuItemId']?.toString(),
+      variantId: map['variantId']?.toString(),
     );
   }
 
@@ -55,6 +66,8 @@ class SaleRecordItem extends HiveObject {
       'unitPrice': unitPrice,
       'total': total,
       if (comment != null) 'comment': comment,
+      if (menuItemId != null) 'menuItemId': menuItemId,
+      if (variantId != null) 'variantId': variantId,
     };
   }
 }
@@ -62,16 +75,11 @@ class SaleRecordItem extends HiveObject {
 /// Typed sale record — the schema counterpart of the legacy `Map` records in
 /// the Hive `sales` box (see `SalesRepository.saveSaleRecord`).
 ///
-/// Task 1 scope (docs/VYNIC_ROADMAP.md): schema only. Nothing writes
-/// [SaleRecord] instances yet; the payment path keeps writing legacy maps.
-/// [toMap]/[fromMap] guarantee a lossless round trip with that legacy shape
-/// so later tasks can dual-write and union-read without behavior change.
-///
-/// [closureId] is the future idempotency key for atomic table closure
-/// (docs/VYNIC_ARCHITECTURE_PLAN.md §1). It is nullable because every
-/// record written before that flow exists has no closure id.
+/// The payment path still writes map records for compatibility; [toMap] and
+/// [fromMap] keep this typed form lossless for both retained legacy rows and
+/// current closure/ledger fields.
 @HiveType(typeId: 15)
-class SaleRecord extends HiveObject {
+class SaleRecord extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(0)
   String? closureId;
 
@@ -169,7 +177,7 @@ class SaleRecord extends HiveObject {
   /// and what every record written before Phase 1B is. `advance_receipt` for
   /// money taken against a future closure, which is collected cash but not
   /// revenue and must never be summed as either twice.
-  @HiveField(29)
+  @HiveField(29, defaultValue: recordTypeSale)
   String recordType;
 
   /// The value of the completed sale, advance included.
@@ -181,7 +189,7 @@ class SaleRecord extends HiveObject {
   double? grossSaleAmount;
 
   /// Money collected before this closure and spent against it.
-  @HiveField(31)
+  @HiveField(31, defaultValue: 0.0)
   double advanceApplied;
 
   /// What the tender at the table actually came to.
@@ -197,6 +205,17 @@ class SaleRecord extends HiveObject {
   /// amount updates the receipt instead of writing a second one.
   @HiveField(34)
   String? advanceReceiptId;
+
+  /// Backup-stable POS business identity used by the Cloud mirror.
+  @HiveField(35)
+  String? posSaleId;
+
+  /// Monotonic local lifecycle revision acknowledged by Cloud.
+  @HiveField(36)
+  int? ledgerRevision;
+
+  @HiveField(37)
+  DateTime? ledgerUpdatedAt;
 
   SaleRecord({
     this.closureId,
@@ -234,6 +253,9 @@ class SaleRecord extends HiveObject {
     this.collectedNow,
     this.appliedToClosureId,
     this.advanceReceiptId,
+    this.posSaleId,
+    this.ledgerRevision,
+    this.ledgerUpdatedAt,
   });
 
   /// A closed order.
@@ -314,6 +336,9 @@ class SaleRecord extends HiveObject {
       collectedNow: (map['collectedNow'] as num?)?.toDouble(),
       appliedToClosureId: map['appliedToClosureId']?.toString(),
       advanceReceiptId: map['advanceReceiptId']?.toString(),
+      posSaleId: map['posSaleId']?.toString(),
+      ledgerRevision: (map['ledgerRevision'] as num?)?.toInt(),
+      ledgerUpdatedAt: _tryParseDate(map['ledgerUpdatedAt']),
     );
   }
 
@@ -364,6 +389,10 @@ class SaleRecord extends HiveObject {
       if (collectedNow != null) 'collectedNow': collectedNow,
       if (appliedToClosureId != null) 'appliedToClosureId': appliedToClosureId,
       if (advanceReceiptId != null) 'advanceReceiptId': advanceReceiptId,
+      if (posSaleId != null) 'posSaleId': posSaleId,
+      if (ledgerRevision != null) 'ledgerRevision': ledgerRevision,
+      if (ledgerUpdatedAt != null)
+        'ledgerUpdatedAt': ledgerUpdatedAt!.toIso8601String(),
       if (tipAmount != 0.0) 'tipAmount': tipAmount,
       if (closedById != null) 'closedById': closedById,
     };

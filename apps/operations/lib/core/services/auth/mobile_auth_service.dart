@@ -1,3 +1,9 @@
+import '../../models/manager_venue_selection.dart';
+import 'package:vynic/core/services/manager_app/manager_entitlements.dart';
+import 'package:vynic/core/services/notifications/manager_notification_inbox.dart';
+import 'package:vynic/core/contracts/manager_login.dart';
+import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
+import 'package:vynic/core/services/manager_app/mobile_cache_service.dart';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -26,22 +32,57 @@ enum MobileAuthError { invalidPin, networkError, serverError, accessDenied }
 /// Authenticates the manager against the backend (/auth/mobile-login).
 /// Falls back to cached token for offline access.
 class MobileAuthService {
+  static Future<ManagerVenueSelection> resolveVenue(
+    String value, {
+    http.Client? client,
+  }) async {
+    final code = value.trim().toLowerCase();
+    final origin = ApiConfig.baseUrl;
+    try {
+      final response = await (client?.post ?? http.post)(
+        Uri.parse('$origin/auth/manager-venue'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'venueCode': code}),
+      ).timeout(const Duration(seconds: 10));
+      if (response.statusCode != 200) throw MobileAuthError.accessDenied;
+      final venue = ManagerVenueSelection.fromMap(
+        jsonDecode(response.body) as Map,
+        origin: origin,
+      );
+      if (venue.code != code) throw MobileAuthError.accessDenied;
+      return venue;
+    } on MobileAuthError {
+      rethrow;
+    } catch (_) {
+      throw MobileAuthError.networkError;
+    }
+  }
+
   /// Attempt to authenticate with the backend.
   /// Returns a [MobileLoginResult] on success.
   /// Throws a [MobileAuthError] on failure.
-  static Future<MobileLoginResult> login(String pin) async {
+  static Future<MobileLoginResult> login(
+    String pin, {
+    required String venueCode,
+    http.Client? client,
+  }) async {
+    final code = venueCode.trim().toLowerCase();
     try {
-      final uri = Uri.parse('${ApiConfig.baseUrl}/auth/mobile-login');
-      final response = await http
-          .post(
-            uri,
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({'pin': pin}),
-          )
-          .timeout(const Duration(seconds: 10));
+      final uri = Uri.parse('${ApiConfig.baseUrl}${ManagerLoginContract.path}');
+      final response = await (client?.post ?? http.post)(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          ManagerLoginContract.pinField: pin,
+          ManagerLoginContract.venueCodeField: code,
+        }),
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body) as Map<String, dynamic>;
+        if (body[ManagerLoginContract.venueCodeField] != code) {
+          throw MobileAuthError.accessDenied;
+        }
         final result = MobileLoginResult(
           accessToken: body['access_token'] as String,
           role: body['role'] as String,
@@ -54,8 +95,16 @@ class MobileAuthService {
           throw MobileAuthError.accessDenied;
         }
 
+        // Retire the old device registration before associating this handset with a new session.
+        await FirebaseMessagingService.instance()
+            .unregisterCurrentTokenFromBackend();
+        // A new login never inherits cached restaurant data from an older session.
+        await MobileCacheService.clear();
+        ManagerNotificationInbox.resetSession();
+        await ManagerAppPreferences.setLoginVenueCode(code);
         // Persist token
         await AuthTokenService.saveToken(
+          venueCode: code,
           token: result.accessToken,
           role: result.role,
           username: result.username,
@@ -72,14 +121,17 @@ class MobileAuthService {
     } on MobileAuthError {
       rethrow;
     } catch (e) {
-      debugPrint('[MobileAuth] Network error (${ApiConfig.baseUrl}): $e');
+      debugPrint('[MobileAuth] Login request failed');
       throw MobileAuthError.networkError;
     }
   }
 
   /// Try to use a cached token for offline access.
   /// Returns the username from the token if valid (or stale within grace period).
-  static OfflineAuthResult? tryOfflineAccess() {
+  static OfflineAuthResult? tryOfflineAccess({String? venueCode}) {
+    if (venueCode != null &&
+        AuthTokenService.venueCode != venueCode.trim().toLowerCase())
+      return null;
     final role = AuthTokenService.role ?? '';
     if (!StaffRole.isMobileApiRole(role)) {
       return null;
@@ -103,15 +155,21 @@ class MobileAuthService {
   }
 
   static Future<void> logout() async {
-    await FirebaseMessagingService.instance()
-        .unregisterCurrentTokenFromBackend();
-    await AuthTokenService.clearToken();
+    ManagerEntitlements.clear();
+    try {
+      await FirebaseMessagingService.instance()
+          .unregisterCurrentTokenFromBackend();
+    } finally {
+      await AuthTokenService.clearToken();
+      await MobileCacheService.clear();
+      ManagerNotificationInbox.resetSession();
+    }
   }
 
   static String errorMessage(MobileAuthError error) {
     switch (error) {
       case MobileAuthError.invalidPin:
-        return 'არასწორი PIN კოდი';
+        return 'არასწორი რესტორნის კოდი ან PIN';
       case MobileAuthError.networkError:
         return 'სერვერთან კავშირი ვერ დამყარდა';
       case MobileAuthError.serverError:

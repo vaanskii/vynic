@@ -18,6 +18,7 @@ class AuthTokenService {
   // ── Write ──────────────────────────────────────────────────────────────────
 
   static Future<void> saveToken({
+    String? venueCode,
     required String token,
     required String role,
     required String username,
@@ -28,6 +29,7 @@ class AuthTokenService {
         .add(Duration(seconds: expiresInSeconds))
         .toIso8601String();
     await Future.wait([
+      _box!.put('venue_code', venueCode),
       _box!.put(_tokenKey, token),
       _box!.put(_roleKey, role),
       _box!.put(_usernameKey, username),
@@ -37,6 +39,7 @@ class AuthTokenService {
 
   // ── Read ───────────────────────────────────────────────────────────────────
 
+  static String? get venueCode => _box?.get('venue_code') as String?;
   static String? get token => _box?.get(_tokenKey) as String?;
   static String? get role => _box?.get(_roleKey) as String?;
   static String? get username => _box?.get(_usernameKey) as String?;
@@ -74,6 +77,12 @@ class AuthTokenService {
   // ── Delete ─────────────────────────────────────────────────────────────────
 
   static Future<void> clearToken() async {
-    await _box?.deleteAll([_tokenKey, _roleKey, _usernameKey, _expiresAtKey]);
+    await _box?.deleteAll([
+      _tokenKey,
+      _roleKey,
+      _usernameKey,
+      _expiresAtKey,
+      'venue_code',
+    ]);
   }
 }

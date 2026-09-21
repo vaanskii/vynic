@@ -1,4 +1,7 @@
+import 'package:vynic/core/contracts/manager_login.dart';
+import 'package:vynic/core/services/manager_app/manager_app_preferences.dart';
 import 'dart:async';
+import 'package:vynic/core/services/pos/update/pos_updater.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -50,34 +53,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void addDigit(String digit) {
+    if (_isLoading) return;
     if (_pin.value.length >= 6) return;
     _pin.value = _pin.value + digit;
 
-    // Disable auto-login on mobile to allow access to the "Companion App" button
-    final bool isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
-    if (!isMobile && _pin.value.length >= 4) {
-      _checkPinMatch();
-    }
-  }
-
-  void _checkPinMatch() {
-    // Check if the current PIN matches any user
-    final user = DatabaseService.authenticateByPin(_pin.value);
-
-    if (user != null) {
-      // Authentication successful — navigate immediately for a snappy feel.
-      setState(() {
-        _isLoading = true;
-      });
-
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => _landing(user)),
-      );
-
-      // Push staff credentials + flush pending changes AFTER the transition,
-      // so the heavy serialization never competes with the screen animation.
-      _schedulePostLoginSync();
-    }
+    // Authentication is explicit: touch Sign in or hardware Enter. A prefix
+    // matching a shorter staff PIN must not submit while a longer PIN is typed.
   }
 
   /// Fires the manager-data sync a moment after login so the heavy payload
@@ -90,6 +71,20 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _authenticateUser() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    try {
+      await PosUpdater.instance.waitForStartup();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      unawaited(
+        showErrorToast(context, 'გაშვება ვერ დასრულდა. სცადეთ ხელახლა.'),
+      );
+      return;
+    }
+    if (!mounted) return;
+    // Re-read after verification; a cached match must not bypass a PIN change.
     final user = DatabaseService.authenticateByPin(_pin.value);
 
     if (user != null) {
@@ -99,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => _landing(user)),
+        MaterialPageRoute(builder: (context) => _landing(context, user)),
       );
 
       // Defer credential sync until after the transition.
@@ -122,10 +117,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void clearPin() {
+    if (_isLoading) return;
     _pin.value = '';
   }
 
   void deleteDigit() {
+    if (_isLoading) return;
     if (_pin.value.isNotEmpty) {
       _pin.value = _pin.value.substring(0, _pin.value.length - 1);
     }
@@ -145,26 +142,62 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    final codeController = TextEditingController(
+      text:
+          ManagerAppPreferences.loginVenueCode ??
+          ManagerLoginContract.rolloutVenueCode,
+    );
+    final venueCode = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('რესტორანი'),
+        content: TextField(
+          controller: codeController,
+          autofocus: true,
+          autocorrect: false,
+          maxLength: 32,
+          decoration: const InputDecoration(labelText: 'რესტორნის კოდი'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('გაუქმება'),
+          ),
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(ctx, codeController.text.trim().toLowerCase()),
+            child: const Text('შესვლა'),
+          ),
+        ],
+      ),
+    );
+    codeController.dispose();
+    if (venueCode == null || !mounted) return;
     setState(() => _isLoading = true);
 
     // Build a minimal User object to pass to the shell
     User? shellUser;
 
     try {
-      final result = await MobileAuthService.login(_pin.value);
+      final result = await MobileAuthService.login(
+        _pin.value,
+        venueCode: venueCode,
+      );
       shellUser = User(
         username: result.username,
-        pinCode: _pin.value,
+        pinCode: '',
         role: StaffRole.fromApi(result.role),
       );
     } on MobileAuthError catch (e) {
       if (e == MobileAuthError.networkError) {
         // Try cached token (offline fallback)
-        final offline = MobileAuthService.tryOfflineAccess();
+        final offline = MobileAuthService.tryOfflineAccess(
+          venueCode: venueCode,
+        );
         if (offline != null) {
           shellUser = User(
             username: offline.username,
-            pinCode: _pin.value,
+            pinCode: '',
             role: StaffRole.fromApi(offline.role),
           );
           if (offline.isStale && mounted) {
@@ -181,33 +214,6 @@ class _LoginScreenState extends State<LoginScreen> {
             unawaited(
               showErrorToast(context, 'სერვერთან კავშირი ვერ დამყარდა'),
             );
-          }
-          return;
-        }
-      } else if (e == MobileAuthError.invalidPin) {
-        // Backend Staff table may be empty (first run / DB reset).
-        // Fall back to local DB — only valid when the POS runs on this device.
-        final localUser = DatabaseService.authenticateByPin(_pin.value);
-        if (localUser != null && localUser.canUseManagerMobileApp) {
-          // Sync staff to backend FIRST (awaited), then retry login to get JWT.
-          await ManagerSyncService.syncToManagerApp();
-          try {
-            final retryResult = await MobileAuthService.login(_pin.value);
-            shellUser = User(
-              username: retryResult.username,
-              pinCode: _pin.value,
-              role: StaffRole.fromApi(retryResult.role),
-            );
-          } catch (_) {
-            // Sync succeeded but login still failed — enter with local user,
-            // all API calls will gracefully fall back to cache.
-            shellUser = localUser;
-          }
-        } else {
-          if (mounted) {
-            setState(() => _isLoading = false);
-            unawaited(showErrorToast(context, 'არასწორი PIN კოდი'));
-            clearPin();
           }
           return;
         }
@@ -262,13 +268,14 @@ class _LoginScreenState extends State<LoginScreen> {
   /// gets one question first. Every other login goes straight to work —
   /// `isSetupComplete` is set at init for any install that already has data,
   /// so an update never sends anyone through this.
-  Widget _landing(User user) {
+  Widget _landing(BuildContext landingContext, User user) {
     if (DatabaseService.isSetupComplete()) {
       return HomeScreen(user: user);
     }
     return VenueSetupScreen(
       onCompleted: () {
-        final navigator = Navigator.of(context);
+        if (!landingContext.mounted) return;
+        final navigator = Navigator.of(landingContext);
         if (!navigator.mounted) return;
         navigator.pushReplacement(
           MaterialPageRoute(builder: (_) => HomeScreen(user: user)),
@@ -316,30 +323,38 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
     return Scaffold(
-      body: LoginDesktopView(
-        pin: _pin,
-        isLoading: _isLoading,
-        workDate: DatabaseService.getCurrentDate(),
-        now: _now,
-        onDigitPressed: addDigit,
-        onClearPressed: clearPin,
-        onDeletePressed: deleteDigit,
-        onLoginPressed: _authenticateUser,
-        showCompanionApp: isMobile && widget.companionAppBuilder != null,
-        onCompanionAppPressed: isMobile && widget.companionAppBuilder != null
-            ? _launchCompanionApp
-            : null,
-        // Support has to work when the venue cannot sign in — a forgotten
-        // admin PIN is the case the recovery tool exists for, and routing it
-        // through the admin panel would put it behind the thing that is lost.
-        onBrandLongPress: () => DeveloperScreen.unlockAndOpen(context),
-        // A terminal with no Cloud identity has nothing to hide behind a
-        // manager PIN: it cannot sync, and the person standing in front of it
-        // is the person setting it up. Once enrolled, this is gone and
-        // re-enrolment lives in Settings → Connection where it belongs.
-        onConnectToVynicPressed: PosEnrollmentService.needsEnrollment
-            ? _openEnrollment
-            : null,
+      body: ListenableBuilder(
+        listenable: PosUpdater.instance,
+        builder: (context, _) => LoginDesktopView(
+          version: PosUpdater.instance.currentVersion,
+          pin: _pin,
+          isLoading: _isLoading,
+          workDate: DatabaseService.getCurrentDate(),
+          now: _now,
+          onDigitPressed: addDigit,
+          onClearPressed: clearPin,
+          onDeletePressed: deleteDigit,
+          onLoginPressed: _authenticateUser,
+          showCompanionApp: isMobile && widget.companionAppBuilder != null,
+          onCompanionAppPressed: isMobile && widget.companionAppBuilder != null
+              ? _launchCompanionApp
+              : null,
+          // Support has to work when the venue cannot sign in — a forgotten
+          // admin PIN is the case the recovery tool exists for, and routing it
+          // through the admin panel would put it behind the thing that is lost.
+          onBrandLongPress: () {
+            if (!PosUpdater.instance.inputHeld)
+              DeveloperScreen.unlockAndOpen(context);
+          },
+          showQuitAction: !kIsWeb && Platform.isWindows,
+          // A terminal with no Cloud identity has nothing to hide behind a
+          // manager PIN: it cannot sync, and the person standing in front of it
+          // is the person setting it up. Once enrolled, this is gone and
+          // re-enrolment lives in Settings → Connection where it belongs.
+          onConnectToVynicPressed: PosEnrollmentService.needsEnrollment
+              ? _openEnrollment
+              : null,
+        ),
       ),
     );
   }

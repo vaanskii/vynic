@@ -16,6 +16,7 @@ import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/core/services/security/developer_access.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
+import 'package:vynic/core/models/audit_source.dart';
 
 /// The developer tools as a screen of their own, reachable from the login
 /// screen without signing in.
@@ -160,7 +161,11 @@ class _DeveloperScreenState extends State<DeveloperScreen> {
 
     setState(() => _isRestoringBackup = true);
     try {
-      await DatabaseService.restoreDataBackupFromFile(backupFile);
+      await DatabaseService.restoreDataBackupFromFile(
+        backupFile,
+        actorId: 'developer',
+        source: AuditSource.developer,
+      );
       if (!mounted) return;
       setState(() => _lastRestorePath = resolvedPath);
       unawaited(

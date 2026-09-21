@@ -23,13 +23,14 @@ class MenuCategoryDBAdapter extends TypeAdapter<MenuCategoryDB> {
       items: (fields[3] as List?)?.cast<MenuItemDB>(),
       subcategories: (fields[4] as List?)?.cast<MenuSubcategoryDB>(),
       sendToKitchen: fields[5] as bool,
+      id: fields[6] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, MenuCategoryDB obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.slug)
       ..writeByte(1)
@@ -41,7 +42,9 @@ class MenuCategoryDBAdapter extends TypeAdapter<MenuCategoryDB> {
       ..writeByte(4)
       ..write(obj.subcategories)
       ..writeByte(5)
-      ..write(obj.sendToKitchen);
+      ..write(obj.sendToKitchen)
+      ..writeByte(6)
+      ..write(obj.id);
   }
 
   @override
@@ -70,13 +73,14 @@ class MenuSubcategoryDBAdapter extends TypeAdapter<MenuSubcategoryDB> {
       translationsEn: (fields[1] as Map).cast<String, String>(),
       translationsKa: (fields[2] as Map).cast<String, String>(),
       items: (fields[3] as List).cast<MenuItemDB>(),
+      id: fields[4] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, MenuSubcategoryDB obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.slug)
       ..writeByte(1)
@@ -84,7 +88,9 @@ class MenuSubcategoryDBAdapter extends TypeAdapter<MenuSubcategoryDB> {
       ..writeByte(2)
       ..write(obj.translationsKa)
       ..writeByte(3)
-      ..write(obj.items);
+      ..write(obj.items)
+      ..writeByte(4)
+      ..write(obj.id);
   }
 
   @override
@@ -114,13 +120,14 @@ class MenuItemDBAdapter extends TypeAdapter<MenuItemDB> {
       price: fields[2] as double?,
       variants: (fields[3] as List?)?.cast<MenuVariantDB>(),
       sendToKitchen: fields[4] as bool,
+      id: fields[5] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, MenuItemDB obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.translationsEn)
       ..writeByte(1)
@@ -130,7 +137,9 @@ class MenuItemDBAdapter extends TypeAdapter<MenuItemDB> {
       ..writeByte(3)
       ..write(obj.variants)
       ..writeByte(4)
-      ..write(obj.sendToKitchen);
+      ..write(obj.sendToKitchen)
+      ..writeByte(5)
+      ..write(obj.id);
   }
 
   @override
@@ -154,17 +163,23 @@ class MenuVariantDBAdapter extends TypeAdapter<MenuVariantDB> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return MenuVariantDB(size: fields[0] as double, price: fields[1] as double);
+    return MenuVariantDB(
+      size: fields[0] as double,
+      price: fields[1] as double,
+      id: fields[2] as String?,
+    );
   }
 
   @override
   void write(BinaryWriter writer, MenuVariantDB obj) {
     writer
-      ..writeByte(2)
+      ..writeByte(3)
       ..writeByte(0)
       ..write(obj.size)
       ..writeByte(1)
-      ..write(obj.price);
+      ..write(obj.price)
+      ..writeByte(2)
+      ..write(obj.id);
   }
 
   @override

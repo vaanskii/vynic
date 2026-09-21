@@ -168,16 +168,27 @@ void main() {
     expect(sourceReport, isNotNull);
     expect(destinationReport, isNotNull);
 
+    // A typed move on each side, with the quantities still saying which way
+    // the line went so an older reader degrades to remove / add.
     final left = sourceReport!.events.single;
-    expect(left.type, AuditEventType.reduceQty);
+    expect(left.type, AuditEventType.moveItems);
     expect(left.itemName, 'საფერავი');
+    expect(left.previousQty, 2);
+    expect(left.newQty, 0);
     expect(left.note, contains('მაგიდა 12'));
     expect(left.waiterName, 'გიორგი');
+    expect(left.details, containsPair('direction', 'OUT'));
+    expect(left.details, containsPair('fromOrderId', 1));
+    expect(left.details, containsPair('toOrderId', 2));
+    expect(left.details, containsPair('source', 'POS'));
 
     final arrived = destinationReport!.events.single;
-    expect(arrived.type, AuditEventType.addItem);
+    expect(arrived.type, AuditEventType.moveItems);
+    expect(arrived.previousQty, 0);
     expect(arrived.newQty, 2);
     expect(arrived.note, contains('მაგიდა 7'));
+    expect(arrived.details, containsPair('direction', 'IN'));
+    expect(arrived.details, containsPair('amount', 84.0));
   });
 
   test('a refusal writes nothing at all', () async {
@@ -278,7 +289,11 @@ void main() {
         sourceLabel: 'მაგიდა 7',
         destinationLabel: 'მაგიდა 12',
       );
-      await OrderItemTransfer.releaseEmptiedOrder(order);
+      await OrderItemTransfer.releaseEmptiedOrder(
+        order,
+        user: _user,
+        destination: destination,
+      );
 
       final table = DatabaseCore.tableBox!.values.single;
       expect(table.isReserved, isFalse);
@@ -302,7 +317,11 @@ void main() {
           sourceLabel: 'მაგიდა 7',
           destinationLabel: 'მაგიდა 12',
         );
-        await OrderItemTransfer.releaseEmptiedOrder(order);
+        await OrderItemTransfer.releaseEmptiedOrder(
+          order,
+          user: _user,
+          destination: destination,
+        );
 
         expect(DatabaseCore.salesBox!.isEmpty, isTrue);
       },
@@ -320,7 +339,11 @@ void main() {
         sourceLabel: 'მაგიდა 7',
         destinationLabel: 'მაგიდა 12',
       );
-      await OrderItemTransfer.releaseEmptiedOrder(order);
+      await OrderItemTransfer.releaseEmptiedOrder(
+        order,
+        user: _user,
+        destination: destination,
+      );
 
       final saved = DatabaseService.getOrder(1)!;
       expect(saved.status, isNot('cancelled'));
@@ -343,11 +366,67 @@ void main() {
         sourceLabel: 'მაგიდა 7',
         destinationLabel: 'მაგიდა 12',
       );
-      await OrderItemTransfer.releaseEmptiedOrder(order);
+      await OrderItemTransfer.releaseEmptiedOrder(
+        order,
+        user: _user,
+        destination: destination,
+      );
 
       final reservation = DatabaseCore.reservationBox!.values.single;
       expect(reservation.statusEnum, ReservationStatus.completed);
     });
+
+    test(
+      'ends its report with TRANSFER_CLOSE, locked, and nothing more',
+      () async {
+        // The trail used to stop at the last line leaving, with the report left
+        // OPEN and unlocked forever. Now it ends the way the Order did.
+        final order = await seedOccupiedTable();
+        final destination = await _seedOrder(id: 2, tables: ['12'], items: []);
+
+        await OrderItemTransfer.apply(
+          source: order,
+          destination: destination,
+          moves: const [(index: 0, quantity: 4)],
+          user: _user,
+          sourceLabel: 'მაგიდა 7',
+          destinationLabel: 'მაგიდა 12',
+        );
+        await OrderItemTransfer.releaseEmptiedOrder(
+          order,
+          user: _user,
+          destination: destination,
+        );
+        // A second release changes nothing.
+        await OrderItemTransfer.releaseEmptiedOrder(
+          DatabaseService.getOrder(1)!,
+          user: _user,
+          destination: destination,
+        );
+
+        final report = DatabaseService.getAuditReport(1)!;
+        expect(report.status, AuditReportStatus.closed);
+        expect(report.locked, isTrue);
+        expect(report.closedByName, 'გიორგი');
+        final closing = report.events.last;
+        expect(closing.type, AuditEventType.transferClose);
+        expect(
+          report.events.where((e) => e.type == AuditEventType.transferClose),
+          hasLength(1),
+        );
+        expect(
+          closing.details,
+          containsPair('closeReason', 'EMPTIED_BY_TRANSFER'),
+        );
+        expect(closing.details, containsPair('transferredToOrderId', 2));
+        expect(closing.details, containsPair('isFiscal', false));
+        expect(closing.details, containsPair('grossAmount', 0.0));
+        expect(closing.details, containsPair('source', 'POS'));
+        expect(closing.details, containsPair('actorId', 'გიორგი'));
+        expect(closing.note, contains('#2'));
+        expect(DatabaseCore.salesBox!.isEmpty, isTrue);
+      },
+    );
 
     test('a partly emptied order is left alone', () async {
       // Only a whole bill moving frees the table. Half of one is still a party
@@ -363,7 +442,11 @@ void main() {
         sourceLabel: 'მაგიდა 7',
         destinationLabel: 'მაგიდა 12',
       );
-      await OrderItemTransfer.releaseEmptiedOrder(order);
+      await OrderItemTransfer.releaseEmptiedOrder(
+        order,
+        user: _user,
+        destination: destination,
+      );
 
       expect(DatabaseCore.tableBox!.values.single.isReserved, isTrue);
       expect(

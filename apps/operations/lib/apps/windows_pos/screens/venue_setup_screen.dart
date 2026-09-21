@@ -30,6 +30,7 @@ class VenueSetupScreen extends StatefulWidget {
 class _VenueSetupScreenState extends State<VenueSetupScreen> {
   final VenueIdentityDraft _draft = VenueIdentityDraft();
   bool _saving = false;
+  String? _error;
 
   @override
   void initState() {
@@ -52,10 +53,24 @@ class _VenueSetupScreenState extends State<VenueSetupScreen> {
   /// press two, and there is nothing on this screen worth keeping unsaved.
   Future<void> _finish() async {
     if (_saving || !_draft.hasName) return;
-    setState(() => _saving = true);
-    await _draft.save();
-    await DatabaseService.markSetupComplete();
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      await _draft.save();
+      await DatabaseService.markSetupComplete();
+    } catch (error, stack) {
+      debugPrint('Venue setup save failed: $error\n$stack');
+      if (mounted)
+        setState(() {
+          _saving = false;
+          _error = 'შენახვა ვერ მოხერხდა. სცადეთ ხელახლა.';
+        });
+      return;
+    }
     if (!mounted) return;
+    setState(() => _saving = false);
     widget.onCompleted();
   }
 
@@ -89,7 +104,8 @@ class _VenueSetupScreenState extends State<VenueSetupScreen> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'სახელი და ლოგო ჩეკის თავში დაიბეჭდება. '
+                    'დასაწყებად მხოლოდ რესტორნის სახელი შეიყვანეთ. '
+                    'ლოგოს მოგვიანებით პარამეტრებიდან დაამატებთ. '
                     'მაგიდები, მენიუ და პრინტერები ცარიელია — '
                     'მათ პარამეტრებიდან დაამატებთ.',
                     style: TextStyle(
@@ -105,8 +121,11 @@ class _VenueSetupScreenState extends State<VenueSetupScreen> {
                     draft: _draft,
                     showAddressAndPhone: false,
                     showSaveButton: false,
+                    showLogo: false,
                   ),
                   const SizedBox(height: 20),
+                  if (_error != null)
+                    Text(_error!, style: const TextStyle(color: Colors.red)),
                   PosPrimaryButton(
                     label: 'დაწყება',
                     icon: Icons.arrow_forward,

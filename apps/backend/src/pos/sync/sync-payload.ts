@@ -36,7 +36,7 @@ export interface OrderSync {
   customerName?: string;
   customerPhone?: string;
   pickupTime?: string;
-  items?: any[];
+  items?: OrderItemSync[];
   includeServiceFee?: boolean;
   discountAmount?: number;
   /**
@@ -49,6 +49,51 @@ export interface OrderSync {
   customServiceFeePercentage?: number;
   /** ISO timestamp of the order's last local edit on the POS (LWW conflict resolution). */
   updatedAt?: string;
+}
+
+export interface OrderItemSync {
+  name?: string;
+  itemName?: string;
+  itemKey?: string;
+  quantity: number;
+  price?: number;
+  unitPrice?: number;
+  comment?: string | null;
+  menuItemId?: string | null;
+  variantId?: string | null;
+}
+
+export interface MenuVariantSync {
+  id?: string;
+  size: number;
+  price: number;
+}
+
+export interface MenuItemSync {
+  id?: string;
+  nameKa: string;
+  nameEn: string;
+  price: number;
+  sendToKitchen?: boolean;
+  variants?: MenuVariantSync[];
+}
+
+export interface MenuSubcategorySync {
+  id?: string;
+  slug: string;
+  nameKa: string;
+  nameEn: string;
+  items?: MenuItemSync[];
+}
+
+export interface MenuCategorySync {
+  id?: string;
+  slug: string;
+  nameKa: string;
+  nameEn: string;
+  sendToKitchen?: boolean;
+  items?: MenuItemSync[];
+  subcategories?: MenuSubcategorySync[];
 }
 
 export interface ExpenseSync {
@@ -106,17 +151,98 @@ export interface AuditEventLogSync {
   id: string;
   action: string;
   userId: string;
+  /**
+   * What the row is about. Absent on every POS build that predates entity
+   * identity, where the backend derives it from the action instead.
+   */
+  entityType?: string | null;
+  entityId?: string | null;
   data: any;
   deviceType: string;
   createdAt: string;
+}
+
+/** Fixed two-decimal wire value, for example `"12.30"`. */
+export type LedgerMoneySync = string;
+
+export interface SaleLineSync {
+  lineSeq: number;
+  menuItemId?: string | null;
+  variantId?: string | null;
+  itemName: string;
+  variantName?: string | null;
+  quantity: number;
+  unitPrice: LedgerMoneySync;
+  lineTotal: LedgerMoneySync;
+  comment?: string | null;
+}
+
+export interface SalePaymentSync {
+  method: string;
+  amount: LedgerMoneySync;
+}
+
+/** One genuine retained POS Sale; never synthesized from an aggregate. */
+export interface SaleLedgerSync {
+  /** Ignored for tenancy. Present only to prove payload tenant hints are inert. */
+  venueId?: string;
+  posSaleId: string;
+  posOrderId: number;
+  closureId?: string | null;
+  businessDate: string;
+  createdAt: string;
+  closedAt: string;
+  gross: LedgerMoneySync;
+  subtotal: LedgerMoneySync;
+  serviceFee: LedgerMoneySync;
+  discount: LedgerMoneySync;
+  manualAdjustment: LedgerMoneySync;
+  advanceApplied: LedgerMoneySync;
+  amountDueNow: LedgerMoneySync;
+  collectedNow: LedgerMoneySync;
+  paymentMethod: string;
+  customPaymentLabel?: string | null;
+  isFiscal: boolean;
+  isCancelled: boolean;
+  cancelledAt?: string | null;
+  cancelledBy?: string | null;
+  cancellationReason?: string | null;
+  restoredToOrder: boolean;
+  restoredAt?: string | null;
+  restoredBy?: string | null;
+  createdBy: string;
+  closedById?: string | null;
+  tableNumbers: string[];
+  floor: string;
+  revision: number;
+  sourceUpdatedAt: string;
+  lines: SaleLineSync[];
+  payments: SalePaymentSync[];
+}
+
+export interface SaleLedgerDaySync {
+  businessDate: string;
+  expectedSaleCount?: number;
+  expectedRevenue?: LedgerMoneySync;
+  legacyRevenue?: LedgerMoneySync;
+  /** True only after every retained Sale revision for this date was ACKed. */
+  uploadComplete: boolean;
+  /** Aggregate-only dates are explicitly classified and never backfilled. */
+  legacySummaryOnly?: boolean;
 }
 
 export interface SyncPayload {
   tables?: TableSync[];
   orders?: OrderSync[];
   expenses?: ExpenseSync[];
-  menu?: any[];
+  menu?: MenuCategorySync[];
+  /** Enables destructive reconciliation only for clients with full node ids. */
+  menuIdentityVersion?: number;
   staff?: StaffSync[];
+  /** Bounded asynchronous upload of genuine retained local Sale records. */
+  saleLedger?: SaleLedgerSync[];
+  /** Per-day completeness claims independently reconciled by Cloud. */
+  saleLedgerDays?: SaleLedgerDaySync[];
   /**
    * Every reservation the POS holds. Absent on builds predating Step 6C, and
    * absent from the `realtimeOnly` fast path.

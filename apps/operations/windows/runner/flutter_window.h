@@ -23,6 +23,12 @@ class FlutterWindow : public Win32Window {
                          LPARAM const lparam) noexcept override;
 
  private:
+#ifdef VYNIC_POS_FULLSCREEN
+  void AddTrayIcon();
+  void RemoveTrayIcon();
+  void ShowFromTray();
+  bool tray_added_ = false;
+#endif
   // The project to run.
   flutter::DartProject project_;
 

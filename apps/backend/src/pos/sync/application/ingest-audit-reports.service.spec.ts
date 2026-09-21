@@ -96,6 +96,272 @@ describe('IngestAuditReportsService tenant scoping', () => {
       data: { id: 'log-1', venueId: 'venue-a' },
     });
   });
+
+  it('stores the entity a POS names on the row', async () => {
+    const auditEventLog = {
+      findFirst: jest.fn<Promise<null>, [unknown]>(() => Promise.resolve(null)),
+      create: jest.fn<Promise<{ id: string }>, [unknown]>(() =>
+        Promise.resolve({ id: 'log-1' }),
+      ),
+    };
+    const service = new IngestAuditReportsService(
+      { auditEventLog } as never,
+      { broadcastUpdate: jest.fn() } as never,
+    );
+
+    await service.ingestEventLogs(
+      {
+        logs: [
+          {
+            id: 'log-1',
+            action: 'STAFF_ROLE_CHANGED',
+            userId: 'avtandil',
+            entityType: 'STAFF',
+            entityId: 'nika',
+            data: { staffName: 'nika' },
+            deviceType: 'windows',
+            createdAt: '2026-09-05T10:00:00.000Z',
+          },
+        ],
+      },
+      TENANT,
+    );
+
+    expect(auditEventLog.create.mock.calls[0][0]).toMatchObject({
+      data: { entityType: 'STAFF', entityId: 'nika' },
+    });
+  });
+
+  it('derives the entity for an older POS build that sends none', async () => {
+    const auditEventLog = {
+      findFirst: jest.fn<Promise<null>, [unknown]>(() => Promise.resolve(null)),
+      create: jest.fn<Promise<{ id: string }>, [unknown]>(() =>
+        Promise.resolve({ id: 'log-1' }),
+      ),
+    };
+    const service = new IngestAuditReportsService(
+      { auditEventLog } as never,
+      { broadcastUpdate: jest.fn() } as never,
+    );
+
+    await service.ingestEventLogs(
+      {
+        logs: [
+          {
+            id: 'log-1',
+            action: 'ADVANCE_RECORDED',
+            userId: 'nino',
+            data: { orderId: 42, newAmount: 40 },
+            deviceType: 'windows',
+            createdAt: '2026-09-05T10:00:00.000Z',
+          },
+          {
+            id: 'log-2',
+            action: 'SOMETHING_THIS_BUILD_HAS_NEVER_HEARD_OF',
+            userId: 'nino',
+            data: { orderId: 42 },
+            deviceType: 'windows',
+            createdAt: '2026-09-05T10:01:00.000Z',
+          },
+        ],
+      },
+      TENANT,
+    );
+
+    expect(auditEventLog.create.mock.calls[0][0]).toMatchObject({
+      data: { entityType: 'ORDER', entityId: '42' },
+    });
+    // An action outside the registry is stored unclassified rather than filed
+    // under whatever looked closest.
+    expect(auditEventLog.create.mock.calls[1][0]).toMatchObject({
+      data: { entityType: null, entityId: null },
+    });
+  });
+});
+
+describe('IngestAuditReportsService event ordering and tenancy', () => {
+  /** A creation event and the lines written with it, all at one instant. */
+  function creationBatch(instant = '2026-09-05T10:00:00.000Z') {
+    return [
+      {
+        type: 'CREATE_WALKIN',
+        itemName: 'ORDER',
+        previousQty: 0,
+        newQty: 0,
+        waiterId: 'nino',
+        waiterName: 'Nino',
+        timestamp: instant,
+        sequence: 0,
+        details: { orderId: 12, orderKind: 'WALK_IN' },
+      },
+      ...Array.from({ length: 40 }, (_unused, index) => ({
+        type: 'ADD_ITEM',
+        itemName: `Item ${index}`,
+        previousQty: 0,
+        newQty: 1,
+        waiterId: 'nino',
+        waiterName: 'Nino',
+        timestamp: instant,
+        sequence: index + 1,
+      })),
+    ];
+  }
+
+  async function ingest(report: Record<string, unknown>) {
+    const auditReport = auditReportDouble();
+    const auditEvent = auditEventDouble();
+    const service = new IngestAuditReportsService(
+      { auditReport, auditEvent } as never,
+      { broadcastUpdate: jest.fn() } as never,
+    );
+    await service.ingestReports({ reports: [report] }, TENANT);
+    return { auditReport, auditEvent };
+  }
+
+  it("writes the POS's own sequence into seq rather than arrival position", async () => {
+    // Offered out of order on purpose: arrival position would number the
+    // close as 0, and the timeline would open with it.
+    const { auditEvent } = await ingest({
+      reportId: 'report-1',
+      orderId: 12,
+      events: [
+        {
+          type: 'CLOSE',
+          itemName: 'ORDER',
+          previousQty: 0,
+          newQty: 0,
+          timestamp: '2026-09-05T12:00:00.000Z',
+          sequence: 2,
+        },
+        {
+          type: 'CREATE_WALKIN',
+          itemName: 'ORDER',
+          previousQty: 0,
+          newQty: 0,
+          timestamp: '2026-09-05T10:00:00.000Z',
+          sequence: 0,
+        },
+        {
+          type: 'ADD_ITEM',
+          itemName: 'Khinkali',
+          previousQty: 0,
+          newQty: 3,
+          timestamp: '2026-09-05T10:00:00.000Z',
+          sequence: 1,
+        },
+      ],
+    });
+
+    const written = auditEvent.createMany.mock.calls[0][0] as {
+      data: Array<{ type: string; seq: number }>;
+    };
+    expect(
+      written.data.map((event) => [event.type, event.seq]),
+    ).toEqual([
+      ['CLOSE', 2],
+      ['CREATE_WALKIN', 0],
+      ['ADD_ITEM', 1],
+    ]);
+  });
+
+  it('keeps a 41-event same-instant batch in the order the POS numbered', async () => {
+    const { auditEvent } = await ingest({
+      reportId: 'report-1',
+      orderId: 12,
+      events: creationBatch(),
+    });
+
+    const written = auditEvent.createMany.mock.calls[0][0] as {
+      data: Array<{ type: string; seq: number }>;
+    };
+    expect(written.data).toHaveLength(41);
+    expect(written.data.map((event) => event.seq)).toEqual(
+      Array.from({ length: 41 }, (_unused, index) => index),
+    );
+    expect(written.data[0].type).toBe('CREATE_WALKIN');
+  });
+
+  it('falls back to array position for a POS that sends no sequence', async () => {
+    const { auditEvent } = await ingest({
+      reportId: 'report-1',
+      orderId: 12,
+      events: [
+        { type: 'ADD_ITEM', previousQty: 0, newQty: 1 },
+        { type: 'CLOSE' },
+      ],
+    });
+
+    const written = auditEvent.createMany.mock.calls[0][0] as {
+      data: Array<{ seq: number }>;
+    };
+    expect(written.data.map((event) => event.seq)).toEqual([0, 1]);
+  });
+
+  it('numbers by position when only some events carry a sequence', async () => {
+    // Two numbering schemes in one report would interleave; it is all or
+    // nothing.
+    const { auditEvent } = await ingest({
+      reportId: 'report-1',
+      orderId: 12,
+      events: [
+        { type: 'CREATE_WALKIN', sequence: 5 },
+        { type: 'ADD_ITEM', previousQty: 0, newQty: 1 },
+      ],
+    });
+
+    const written = auditEvent.createMany.mock.calls[0][0] as {
+      data: Array<{ seq: number }>;
+    };
+    expect(written.data.map((event) => event.seq)).toEqual([0, 1]);
+  });
+
+  it('stamps every event with the authenticated Venue, never the payload', async () => {
+    const { auditEvent } = await ingest({
+      reportId: 'report-1',
+      orderId: 12,
+      // A payload claiming another Venue must change nothing.
+      venueId: 'venue-somebody-else',
+      events: [
+        {
+          type: 'CREATE_WALKIN',
+          sequence: 0,
+          details: { venueId: 'venue-somebody-else' },
+        },
+      ],
+    });
+
+    const written = auditEvent.createMany.mock.calls[0][0] as {
+      data: Array<{ venueId: string }>;
+    };
+    expect(written.data.map((event) => event.venueId)).toEqual(['venue-a']);
+  });
+
+  it('derives the report Order kind from its own creation event', async () => {
+    const { auditReport } = await ingest({
+      reportId: 'report-1',
+      orderId: 12,
+      events: creationBatch(),
+    });
+
+    expect(auditReport.upsert.mock.calls[0][0]).toMatchObject({
+      create: { orderKind: 'WALK_IN' },
+      update: { orderKind: 'WALK_IN' },
+    });
+  });
+
+  it('leaves orderKind null for a report with no creation event', async () => {
+    const { auditReport } = await ingest({
+      reportId: 'legacy_report_order_9',
+      orderId: 9,
+      floor: 'takeaway',
+      events: [{ type: 'ADD_ITEM', previousQty: 0, newQty: 1 }],
+    });
+
+    // `floor` says takeaway, and is still not evidence.
+    expect(auditReport.upsert.mock.calls[0][0]).toMatchObject({
+      create: { orderKind: null },
+    });
+  });
 });
 
 describe('IngestAuditReportsService incremental acknowledgment', () => {

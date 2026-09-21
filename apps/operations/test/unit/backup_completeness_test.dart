@@ -7,6 +7,7 @@ import 'package:hive/hive.dart';
 
 import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/database/repositories/backup_repository.dart';
+import 'package:vynic/core/database/repositories/inventory_repository.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/package.dart';
@@ -52,7 +53,17 @@ void _registerAdapters() {
   if (!Hive.isAdapterRegistered(2)) Hive.registerAdapter(TableModelAdapter());
   if (!Hive.isAdapterRegistered(3)) Hive.registerAdapter(OrderItemAdapter());
   if (!Hive.isAdapterRegistered(4)) Hive.registerAdapter(OrderAdapter());
+  if (!Hive.isAdapterRegistered(5)) {
+    Hive.registerAdapter(MenuCategoryDBAdapter());
+    Hive.registerAdapter(MenuSubcategoryDBAdapter());
+    Hive.registerAdapter(MenuItemDBAdapter());
+    Hive.registerAdapter(MenuVariantDBAdapter());
+  }
   if (!Hive.isAdapterRegistered(9)) Hive.registerAdapter(ReservationAdapter());
+  if (!Hive.isAdapterRegistered(11)) {
+    Hive.registerAdapter(PackageAdapter());
+    Hive.registerAdapter(PackageItemAdapter());
+  }
 }
 
 Future<void> _openBoxes() async {
@@ -69,6 +80,7 @@ Future<void> _openBoxes() async {
   DatabaseCore.auditLogBox = await Hive.openBox('bk_audit');
   DatabaseCore.errorLogBox = await Hive.openBox('bk_errors');
   DatabaseCore.metaBox = await Hive.openBox('bk_meta');
+  DatabaseCore.inventoryBox = await Hive.openBox('bk_inventory');
 }
 
 Future<Map<String, dynamic>> _backupPayload() async {
@@ -78,6 +90,51 @@ Future<Map<String, dynamic>> _backupPayload() async {
 }
 
 void main() {
+  test(
+    'pending consumption snapshot and reversal survive backup restore without Cloud movements',
+    () async {
+      final snapshot = {
+        'version': 1,
+        'policy': 'FISCAL_CLOSE',
+        'lines': [
+          {
+            'lineSeq': 0,
+            'recipeId': 'recipe-1',
+            'recipeRevision': 3,
+            'components': [
+              {
+                'stockItemId': 'beef',
+                'baseQuantityPerUnit': '0.035000',
+                'totalBaseQuantity': '0.350000',
+              },
+            ],
+          },
+        ],
+      };
+      await DatabaseCore.salesBox!.add({
+        'posSaleId': 'offline-sale',
+        'orderId': 1,
+        'recordType': 'sale',
+        'closureId': 'offline-close',
+        'inventoryConsumption': snapshot,
+        'inventoryConsumptionAck': 1,
+        'restoredToOrder': true,
+        'restoredAt': '2026-09-05T12:00:00Z',
+      });
+      final payload = await _backupPayload();
+      expect(payload.containsKey('stockMovements'), false);
+      await BackupRepository.restoreDataBackupFromJson(
+        jsonEncode(payload),
+        backupBeforeRestore: false,
+        clearExisting: true,
+      );
+      final restored = DatabaseCore.salesBox!.values.whereType<Map>().single;
+      expect(restored['inventoryConsumption'], snapshot);
+      expect(restored['inventoryConsumptionAck'], 1);
+      expect(restored['restoredToOrder'], true);
+    },
+  );
+
   setUpAll(() async {
     // The curated settings block reads printer defaults through dotenv.
     dotenv.loadFromString(envString: 'POS_ENV=test');
@@ -105,6 +162,40 @@ void main() {
     await DatabaseCore.settingsBox!.put('serviceFeePercent', 10.0);
   });
 
+  test('the backup records the key each audit row was stored under', () async {
+    // Restore has to put an audit row back where the code reads it from: a
+    // report under `audit_report_order_<id>`, a legacy action log under
+    // `legacy_event_<micros>`. The old payload carried values only, so a
+    // restore had nowhere to put them and appended instead — filing a report
+    // where nothing looks for it and hiding legacy logs from the audit screen.
+    await DatabaseCore.auditLogBox!.clear();
+    await DatabaseCore.auditLogBox!.put('audit_report_order_7', {
+      'reportId': 'audit_report_order_7',
+      'orderId': 7,
+      'status': 'CLOSED',
+      'events': const <Map<String, dynamic>>[],
+    });
+    await DatabaseCore.auditLogBox!.put('legacy_event_1756000000111000', {
+      'actionType': 'add_item',
+      'performedBy': 'Nino',
+      'timestamp': '2026-08-01T10:00:00.000',
+      'details': const {'orderId': 7},
+    });
+
+    final payload = await _backupPayload();
+    final rows = payload['auditLog'] as List;
+    final keys = payload['auditLogKeys'] as List;
+
+    expect(keys, hasLength(rows.length));
+    expect(keys, contains('audit_report_order_7'));
+    expect(keys, contains('legacy_event_1756000000111000'));
+    // Index-aligned, so row i belongs at key i.
+    final index = keys.indexOf('audit_report_order_7');
+    expect((rows[index] as Map)['reportId'], 'audit_report_order_7');
+
+    await DatabaseCore.auditLogBox!.clear();
+  });
+
   test('every box in the database has a slot in the backup', () async {
     final payload = await _backupPayload();
 
@@ -119,6 +210,7 @@ void main() {
       'reservations',
       'quickOrders',
       'menu',
+      'inventoryCatalog',
       'sales',
       'expenses',
       'auditLog',
@@ -128,6 +220,37 @@ void main() {
       expect(payload.containsKey(section), isTrue, reason: section);
     }
   });
+
+  test('Inventory projection keeps stable identities through backup restore', () async {
+    await InventoryRepository.replaceCatalog({
+      'generatedAt': '2026-09-05T10:00:00Z',
+      'stockItems': [
+        {
+          'id': 'stock-stable-1',
+          'name': 'Flour',
+          'baseUnit': 'kg',
+          'createdAt': '2026-09-05T10:00:00Z',
+          'updatedAt': '2026-09-05T10:00:00Z',
+        },
+      ],
+      'suppliers': [
+        {
+          'id': 'supplier-stable-1',
+          'name': 'Mill',
+          'createdAt': '2026-09-05T10:00:00Z',
+          'updatedAt': '2026-09-05T10:00:00Z',
+        },
+      ],
+    });
+    final payload = await _backupPayload();
+    await DatabaseCore.inventoryBox!.clear();
+
+    await BackupRepository.restoreDataBackupFromJson(jsonEncode(payload));
+
+      expect(InventoryRepository.getStockItems().single.id, 'stock-stable-1');
+      expect(InventoryRepository.getSuppliers().single.id, 'supplier-stable-1');
+    },
+  );
 
   test('default backup path uses the resolved database directory', () async {
     final backup = await BackupRepository.createDataBackup();
@@ -185,6 +308,94 @@ void main() {
       );
     }
   });
+
+  test(
+    'order and package line menu identities survive backup restore',
+    () async {
+      await DatabaseCore.orderBox!.clear();
+      await DatabaseCore.packageBox!.clear();
+      final order = Order(
+        orderId: 17,
+        tableNumbers: const ['4'],
+        floor: 'first',
+        items: [
+          OrderItem(
+            itemKey: 'lemonade|0.5',
+            itemName: 'Lemonade 0.5L',
+            unitPrice: 5,
+            quantity: 2,
+            total: 10,
+            menuItemId: 'menu-lemonade',
+            variantId: 'variant-half-litre',
+          ),
+        ],
+        totalAmount: 10,
+        createdAt: DateTime(2026, 8, 22, 12),
+        createdBy: 'Nino',
+        packageId: 'package-banquet',
+        packageItems: [
+          OrderItem(
+            itemKey: 'water|1',
+            itemName: 'Water 1L',
+            unitPrice: 3,
+            quantity: 1,
+            total: 3,
+            menuItemId: 'menu-water',
+            variantId: 'variant-one-litre',
+          ),
+        ],
+      );
+      final package = Package(
+        packageId: 'package-banquet',
+        name: 'Banquet',
+        items: [
+          PackageItem(
+            itemKey: 'water|1',
+            itemName: 'Water 1L',
+            quantity: 1,
+            unitPrice: 3,
+            menuItemId: 'menu-water',
+            variantId: 'variant-one-litre',
+          ),
+        ],
+        pricePerPerson: 40,
+        createdAt: DateTime(2026, 8, 22),
+        createdBy: 'Nino',
+        servingSize: 10,
+      );
+      await DatabaseCore.orderBox!.put(order.orderId, order);
+      await DatabaseCore.packageBox!.put(package.packageId, package);
+
+      final payload = await _backupPayload();
+      final orderJson = (payload['orders'] as List).single as Map;
+      final packageJson = (payload['packages'] as List).single as Map;
+      expect(
+        (orderJson['items'] as List).single['menuItemId'],
+        'menu-lemonade',
+      );
+      expect(
+        (orderJson['packageItems'] as List).single['variantId'],
+        'variant-one-litre',
+      );
+      expect((packageJson['items'] as List).single['menuItemId'], 'menu-water');
+
+      await DatabaseCore.orderBox!.clear();
+      await DatabaseCore.packageBox!.clear();
+      await BackupRepository.restoreDataBackupFromJson(
+        jsonEncode(payload),
+        backupBeforeRestore: false,
+      );
+
+      final restoredOrder = DatabaseCore.orderBox!.values.single;
+      final restoredPackage = DatabaseCore.packageBox!.values.single;
+      expect(restoredOrder.items.single.menuItemId, 'menu-lemonade');
+      expect(restoredOrder.items.single.variantId, 'variant-half-litre');
+      expect(restoredOrder.packageItems.single.menuItemId, 'menu-water');
+      expect(restoredOrder.packageItems.single.variantId, 'variant-one-litre');
+      expect(restoredPackage.items.single.menuItemId, 'menu-water');
+      expect(restoredPackage.items.single.variantId, 'variant-one-litre');
+    },
+  );
 
   test('the payload is plain JSON all the way down', () async {
     // Written with JsonEncoder, so anything unencodable would throw at backup

@@ -1,3 +1,4 @@
+import 'package:vynic/core/database/repositories/inventory_repository.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -206,6 +207,46 @@ void main() {
       ),
     );
   });
+
+  testWidgets(
+    'non-fiscal sales cards react to feature changes without deleting history',
+    (tester) async {
+      await tester.runAsync(
+        () => InventoryRepository.applyRuntimeFeatures([
+          'POS',
+          'NON_FISCAL_CLOSE',
+        ]),
+      );
+      await _render(
+        tester,
+        'sales-feature',
+        AdminSalesSection(
+          onReprintSaleReceipt: (_) async {},
+          onReprintFullSaleReceipt: (_) async {},
+          onConfirmCancelSale: (_) async {},
+          onRestoreClosedSale: (_) async {},
+        ),
+      );
+      expect(find.text('არაფისკალური თანხა'), findsWidgets);
+      final originalCount = DatabaseCore.salesBox!.length;
+      await tester.runAsync(
+        () => InventoryRepository.applyRuntimeFeatures(['POS']),
+      );
+      await tester.pump();
+      expect(find.text('არაფისკალური თანხა'), findsNothing);
+      expect(find.text('არაფისკალური წილი'), findsNothing);
+      expect(DatabaseCore.salesBox!.length, originalCount);
+      await tester.runAsync(
+        () => InventoryRepository.applyRuntimeFeatures([
+          'POS',
+          'NON_FISCAL_CLOSE',
+        ]),
+      );
+      await tester.pump();
+      expect(find.text('არაფისკალური თანხა'), findsWidgets);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
 
   testWidgets('display', (tester) async {
     await _render(

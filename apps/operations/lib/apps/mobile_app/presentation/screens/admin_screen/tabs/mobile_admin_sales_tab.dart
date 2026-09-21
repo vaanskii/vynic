@@ -114,6 +114,7 @@ class _SalesTabState extends State<_SalesTab>
   }
 
   Widget _buildDayCard(Map<String, dynamic> row) {
+    final showNonFiscal = ManagerEntitlements.has(FeatureKeys.nonFiscalClose);
     final date = (row['date'] ?? '').toString();
     final totalRevenue = (row['totalRevenue'] as num?)?.toDouble() ?? 0;
     final totalOrders = (row['totalOrders'] as num?)?.toInt() ?? 0;
@@ -128,10 +129,20 @@ class _SalesTabState extends State<_SalesTab>
     final closedTables = ((row['closedTables'] as List?) ?? [])
         .whereType<Map>()
         .map((e) => Map<String, dynamic>.from(e))
+        .where(
+          (sale) =>
+              SaleVisibility.visible(sale, nonFiscalEnabled: showNonFiscal),
+        )
         .toList();
     final nonFiscalAmount = _nonFiscalFromBreakdown(breakdown);
-    final entries = breakdown.entries.toList()
-      ..sort((a, b) => (b.value as num).compareTo(a.value as num));
+    final entries =
+        breakdown.entries
+            .where(
+              (entry) =>
+                  showNonFiscal || !SaleVisibility.nonFiscalPayment(entry.key),
+            )
+            .toList()
+          ..sort((a, b) => (b.value as num).compareTo(a.value as num));
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -153,11 +164,11 @@ class _SalesTabState extends State<_SalesTab>
               ),
             ),
             subtitle: Text(
-              'დახურული $closedOrders / გაუქმებული $cancelledOrders / სულ $totalOrders • ${_adminGel(totalRevenue)}\nხარჯი: ${_adminGel(totalExpenses)} • მოგება: ${_adminGel(profit)}\nარაფისკალური დახურული: ${_adminGel(nonFiscalAmount)}',
+              'დახურული $closedOrders / გაუქმებული $cancelledOrders / სულ $totalOrders • ${_adminGel(totalRevenue)}\nხარჯი: ${_adminGel(totalExpenses)} • მოგება: ${_adminGel(profit)}${showNonFiscal ? '\nარაფისკალური დახურული: ${_adminGel(nonFiscalAmount)}' : ''}',
               style: TextStyle(fontSize: 12, color: AdminTheme.textMuted),
             ),
             children: [
-              if (nonFiscalAmount > 0)
+              if (showNonFiscal && nonFiscalAmount > 0)
                 Container(
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.symmetric(

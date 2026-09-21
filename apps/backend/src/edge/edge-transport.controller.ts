@@ -1,7 +1,13 @@
+import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
+import { FeatureKeys } from '../entitlements/feature-keys';
+import { withoutProfitability } from '../entitlements/commercial-projection';
+import { SaleConsumptionService } from '../inventory/sale-consumption.service';
 import {
   BadRequestException,
   Body,
   Controller,
+  Get,
+  Query,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -9,6 +15,7 @@ import { EDGE_COMMAND_CONTRACT_VERSION } from '../shared/contracts/edge-command'
 import { EdgeCommandService } from './edge-command.service';
 import { EdgeDevice, type EdgeDeviceContext } from './edge-device-context';
 import { EdgeDeviceGuard } from './edge-device.guard';
+import { InventoryService } from '../inventory/inventory.service';
 
 interface ClaimBody {
   limit?: number;
@@ -35,7 +42,49 @@ interface AcknowledgeBody {
 @Controller('edge')
 @UseGuards(EdgeDeviceGuard)
 export class EdgeTransportController {
-  constructor(private readonly commands: EdgeCommandService) {}
+  constructor(
+    private readonly entitlements: VenueEntitlementsService,
+    private readonly commands: EdgeCommandService,
+    private readonly inventory: InventoryService,
+    private readonly consumption: SaleConsumptionService,
+  ) {}
+
+  /**
+   * Complete Cloud-authoritative Inventory projection for this Device's Venue.
+   * The Device cannot name a Venue; EdgeDeviceGuard derived it from the
+   * credential before this method runs.
+   */
+  @Post('inventory/consumption')
+  consume(@EdgeDevice() device: EdgeDeviceContext, @Body() body: unknown) {
+    return this.consumption.applyFromDevice(device, body);
+  }
+
+  @Get('inventory/catalog')
+  async inventoryCatalog(
+    @EdgeDevice() device: EdgeDeviceContext,
+    @Query('version') version?: string,
+  ) {
+    const features = await this.entitlements.effectiveFeatures(device.venueId);
+    if (!features.includes(FeatureKeys.INVENTORY))
+      return {
+        version: version === '5' ? 5 : version === '4' ? 4 : 3,
+        generatedAt: new Date().toISOString(),
+        features,
+        stockItems: [],
+        suppliers: [],
+        recipes: [],
+      };
+    const catalog = await this.inventory.getCatalog(
+      device,
+      version === '5' ? 5 : version === '4' ? 4 : 3,
+    );
+    return {
+      ...(features.includes(FeatureKeys.PROFITABILITY)
+        ? catalog
+        : withoutProfitability(catalog)),
+      features,
+    };
+  }
 
   /** What work is waiting for this Edge, and a lease on each item returned. */
   @Post('commands/claim')

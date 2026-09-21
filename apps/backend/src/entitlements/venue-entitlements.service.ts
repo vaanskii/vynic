@@ -1,7 +1,9 @@
+import { profileSelect } from '../venue-profile/venue-profile';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { WebsiteMode } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { resolveEffectiveFeatures } from './effective-features';
+import { commercialAccessAllowed } from './subscription-policy';
 import { FeatureKeys } from './feature-keys';
 
 /**
@@ -60,7 +62,39 @@ export class VenueEntitlementsService {
   }
 
   async hasFeature(venueId: string, featureKey: string): Promise<boolean> {
+    if (
+      featureKey !== FeatureKeys.POS &&
+      !(await this.commercialAccess(venueId))
+    )
+      return false;
     return (await this.effectiveFeatures(venueId)).includes(featureKey);
+  }
+
+  async commercialAccess(venueId: string): Promise<boolean> {
+    const row = await this.prisma.venueSubscription.findUnique({
+      where: { venueId },
+    });
+    return commercialAccessAllowed(row?.status);
+  }
+
+  async snapshot(venueId: string) {
+    const [features, subscription] = await Promise.all([
+      this.effectiveFeatures(venueId),
+      this.prisma.venueSubscription.findUnique({
+        where: { venueId },
+        select: { status: true, trialEndsAt: true, currentPeriodEndsAt: true },
+      }),
+    ]);
+    const profile = await this.prisma.venue.findUniqueOrThrow({
+      where: { id: venueId },
+      select: profileSelect,
+    });
+    return {
+      profile,
+      features,
+      subscription,
+      commercialAccess: commercialAccessAllowed(subscription?.status),
+    };
   }
 
   async websiteAccess(venueId: string): Promise<VenueWebsiteAccess> {
@@ -69,13 +103,15 @@ export class VenueEntitlementsService {
     const planFeatureKeys =
       venue.planAssignment?.plan.features.map(({ feature }) => feature.key) ??
       [];
-    const entitled = resolveEffectiveFeatures(
-      planFeatureKeys,
-      venue.featureOverrides.map(({ feature, effect }) => ({
-        key: feature.key,
-        effect,
-      })),
-    ).includes(FeatureKeys.WEBSITE);
+    const entitled =
+      commercialAccessAllowed(venue.subscription?.status) &&
+      resolveEffectiveFeatures(
+        planFeatureKeys,
+        venue.featureOverrides.map(({ feature, effect }) => ({
+          key: feature.key,
+          effect,
+        })),
+      ).includes(FeatureKeys.WEBSITE);
 
     const configuredMode = venue.websiteConfig?.mode ?? WebsiteMode.NONE;
 
@@ -99,6 +135,7 @@ export class VenueEntitlementsService {
     const venue = await this.prisma.venue.findUnique({
       where: { id: venueId },
       select: {
+        subscription: { select: { status: true } },
         planAssignment: {
           select: {
             plan: {

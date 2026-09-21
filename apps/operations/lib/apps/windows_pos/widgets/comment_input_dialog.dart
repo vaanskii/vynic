@@ -1,3 +1,5 @@
+import 'package:vynic/core/widgets/pos_text.dart';
+import 'package:vynic/core/services/pos/pos_input_settings.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -21,7 +23,7 @@ class CommentInputDialog extends StatefulWidget {
 class _CommentInputDialogState extends State<CommentInputDialog> {
   final TextEditingController _controller = TextEditingController();
   bool _showKeyboard = false;
-  String _currentLanguage = 'ka'; // Default to Georgian
+  final String _currentLanguage = 'ka'; // Default to Georgian
 
   @override
   void dispose() {
@@ -72,7 +74,7 @@ class _CommentInputDialogState extends State<CommentInputDialog> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
+                      child: PosText(
                         widget.title,
                         style: const TextStyle(
                           color: Colors.white,
@@ -87,7 +89,7 @@ class _CommentInputDialogState extends State<CommentInputDialog> {
                 // Text field
                 TextField(
                   controller: _controller,
-                  readOnly: true,
+                  readOnly: PosInputSettings.useOnScreen(context),
                   maxLines: 3,
                   style: const TextStyle(color: Colors.white, fontSize: 16),
                   decoration: InputDecoration(
@@ -113,7 +115,7 @@ class _CommentInputDialogState extends State<CommentInputDialog> {
                   ),
                   onTap: () {
                     setState(() {
-                      _showKeyboard = true;
+                      _showKeyboard = PosInputSettings.useOnScreen(context);
                     });
                   },
                 ),
@@ -123,7 +125,7 @@ class _CommentInputDialogState extends State<CommentInputDialog> {
                   children: [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text(
+                      child: const PosText(
                         'გაუქმება',
                         style: TextStyle(color: Colors.grey, fontSize: 16),
                       ),
@@ -138,7 +140,7 @@ class _CommentInputDialogState extends State<CommentInputDialog> {
                           vertical: 12,
                         ),
                       ),
-                      child: const Text(
+                      child: const PosText(
                         'დადასტურება',
                         style: TextStyle(
                           color: Colors.white,
@@ -153,78 +155,16 @@ class _CommentInputDialogState extends State<CommentInputDialog> {
             ),
           ),
           // Keyboard
-          if (_showKeyboard)
-            Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFF1a1a1a),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Language toggle
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          _currentLanguage == 'ka' ? 'ქართული' : 'English',
-                          style: const TextStyle(
-                            color: Color(0xFFC0AD7B),
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  _currentLanguage = _currentLanguage == 'ka'
-                                      ? 'en'
-                                      : 'ka';
-                                });
-                              },
-                              child: const Icon(
-                                Icons.language,
-                                color: Color(0xFFC0AD7B),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  _showKeyboard = false;
-                                });
-                              },
-                              child: const Icon(
-                                Icons.keyboard_hide,
-                                color: Colors.white70,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  OnScreenKeyboard(
-                    controller: _controller,
-                    language: _currentLanguage,
-                    onClose: () {
-                      setState(() {
-                        _showKeyboard = false;
-                      });
-                    },
-                    onEnter: _submit,
-                  ),
-                ],
-              ),
+          if (_showKeyboard && PosInputSettings.useOnScreen(context))
+            OnScreenKeyboard(
+              controller: _controller,
+              language: _currentLanguage,
+              onClose: () {
+                setState(() {
+                  _showKeyboard = false;
+                });
+              },
+              onEnter: _submit,
             ),
         ],
       ),

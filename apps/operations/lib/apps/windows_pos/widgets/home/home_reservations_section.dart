@@ -1,3 +1,4 @@
+import 'package:vynic/core/widgets/pos_text.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -357,7 +358,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
+                  child: PosText(
                     'დაჯავშნები (${reservations.length})',
                     style: TextStyle(
                       color: widget.textPrimary,
@@ -443,7 +444,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
+                      PosText(
                         '${reservation.numberOfGuests} სტუმარი',
                         style: TextStyle(
                           color: widget.textPrimary.withValues(alpha: 0.78),
@@ -458,7 +459,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
+                    PosText(
                       '₾${total.toStringAsFixed(2)}',
                       style: TextStyle(
                         color: widget.textPrimary,
@@ -478,7 +479,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
                 Icon(Icons.schedule, size: 15, color: widget.mutedText),
                 const SizedBox(width: 5),
                 Expanded(
-                  child: Text(
+                  child: PosText(
                     '${_formatDate(reservation.reservationDate)}, ${reservation.reservationTime}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -492,7 +493,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
                   color: widget.mutedText,
                 ),
                 const SizedBox(width: 5),
-                Text(
+                PosText(
                   '$itemCount პოზიცია',
                   style: TextStyle(color: widget.mutedText, fontSize: 12),
                 ),
@@ -571,7 +572,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
                           ),
                           const SizedBox(width: 6),
                           Expanded(
-                            child: Text(
+                            child: PosText(
                               '${_formatDate(reservation.reservationDate)}, ${reservation.reservationTime}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -894,7 +895,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
           if (items.isEmpty)
             Padding(
               padding: const EdgeInsets.all(28),
-              child: Text(
+              child: PosText(
                 'წინასწარი შეკვეთა ჯერ არ არის',
                 style: TextStyle(color: widget.mutedText, fontSize: 15),
               ),
@@ -941,7 +942,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
                     ),
                     Expanded(
                       flex: 2,
-                      child: Text(
+                      child: PosText(
                         '${item.quantity}',
                         style: TextStyle(
                           color: widget.textPrimary,
@@ -952,7 +953,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
                     ),
                     Expanded(
                       flex: 2,
-                      child: Text(
+                      child: PosText(
                         '₾${item.unitPrice.toStringAsFixed(2)}',
                         style: TextStyle(
                           color: widget.textPrimary,
@@ -962,7 +963,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
                     ),
                     Expanded(
                       flex: 2,
-                      child: Text(
+                      child: PosText(
                         '₾${item.total.toStringAsFixed(2)}',
                         textAlign: TextAlign.right,
                         style: TextStyle(
@@ -1035,7 +1036,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
           Row(
             children: [
               Expanded(
-                child: Text(
+                child: PosText(
                   'სულ',
                   style: TextStyle(
                     color: widget.textPrimary,
@@ -1044,7 +1045,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
                   ),
                 ),
               ),
-              Text(
+              PosText(
                 '₾${total.toStringAsFixed(2)}',
                 style: TextStyle(
                   color: widget.textPrimary,
@@ -1063,7 +1064,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
     return Row(
       children: [
         Expanded(
-          child: Text(
+          child: PosText(
             label,
             style: TextStyle(
               color: muted ? widget.mutedText : widget.textPrimary,
@@ -1072,7 +1073,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
             ),
           ),
         ),
-        Text(
+        PosText(
           '₾${value.toStringAsFixed(2)}',
           style: TextStyle(
             color: widget.textPrimary,
@@ -1097,7 +1098,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              PosText(
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -1108,7 +1109,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
                 ),
               ),
               const SizedBox(height: 3),
-              Text(
+              PosText(
                 subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -1129,7 +1130,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
   }
 
   Widget _buildTableHeader(String label) {
-    return Text(
+    return PosText(
       label,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
@@ -1160,7 +1161,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
             color: widget.mutedText.withValues(alpha: 0.6),
           ),
           const SizedBox(height: 14),
-          Text(
+          PosText(
             'რეზერვაციები არ არის',
             style: TextStyle(
               color: widget.textPrimary,
@@ -1169,7 +1170,7 @@ class _HomeReservationsSectionState extends State<HomeReservationsSection> {
             ),
           ),
           const SizedBox(height: 6),
-          Text(
+          PosText(
             'დადასტურებული დაჯავშნები აქ გამოჩნდება',
             textAlign: TextAlign.center,
             style: TextStyle(color: widget.mutedText, fontSize: 13),

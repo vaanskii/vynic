@@ -54,30 +54,39 @@ export class MobileMenuService {
       orderBy: { sortOrder: 'asc' },
     });
     return cats.map((cat: any) => ({
+      id: cat.posMenuCategoryId ?? null,
       slug: cat.slug,
       nameEn: cat.nameEn,
       nameKa: cat.nameKa,
       sendToKitchen: cat.sendToKitchen,
       items: (cat.items ?? []).map((it: any) => ({
+        // The POS's own item identity, so the manager app names the same
+        // product the POS and the audit feed name. Null for a row mirrored
+        // before the POS sent one.
+        id: it.posMenuItemId ?? null,
         nameEn: it.nameEn,
         nameKa: it.nameKa,
         price: Math.round(it.price * 100) / 100,
         sendToKitchen: it.sendToKitchen,
         variants: (it.variants ?? []).map((v: any) => ({
+          id: v.posMenuVariantId ?? null,
           size: v.size,
           price: v.price,
         })),
       })),
       subcategories: (cat.subcategories ?? []).map((sub: any) => ({
+        id: sub.posMenuSubcategoryId ?? null,
         slug: sub.slug,
         nameEn: sub.nameEn,
         nameKa: sub.nameKa,
         items: (sub.items ?? []).map((it: any) => ({
+          id: it.posMenuItemId ?? null,
           nameEn: it.nameEn,
           nameKa: it.nameKa,
           price: Math.round(it.price * 100) / 100,
           sendToKitchen: it.sendToKitchen,
           variants: (it.variants ?? []).map((v: any) => ({
+            id: v.posMenuVariantId ?? null,
             size: v.size,
             price: v.price,
           })),
@@ -196,7 +205,12 @@ export class MobileMenuService {
       });
     }
 
-    this.gateway.broadcastUpdate('data_updated', { type: 'all' }, excludeOpts);
+    this.gateway.broadcastUpdate(
+      tenant,
+      'data_updated',
+      { type: 'all' },
+      excludeOpts,
+    );
     return { success: true, id: dbDraft.draftId };
   }
 
@@ -208,7 +222,12 @@ export class MobileMenuService {
     await (this.prisma as any).quickOrderDraft.delete({
       where: quickOrderDraftIdentity(tenant, id),
     });
-    this.gateway.broadcastUpdate('data_updated', { type: 'all' }, excludeOpts);
+    this.gateway.broadcastUpdate(
+      tenant,
+      'data_updated',
+      { type: 'all' },
+      excludeOpts,
+    );
     return { success: true };
   }
 
@@ -276,7 +295,12 @@ export class MobileMenuService {
       });
     }
 
-    this.gateway.broadcastUpdate('data_updated', { type: 'all' }, excludeOpts);
+    this.gateway.broadcastUpdate(
+      tenant,
+      'data_updated',
+      { type: 'all' },
+      excludeOpts,
+    );
     return { success: true, id: existing.draftId };
   }
 

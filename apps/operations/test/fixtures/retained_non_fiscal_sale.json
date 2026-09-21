@@ -1,0 +1,82 @@
+{
+  "orderId": 1764,
+  "tableNumbers": [
+    "1"
+  ],
+  "floor": "first",
+  "items": [
+    {
+      "itemName": "ფხალეულის დაფა",
+      "quantity": 5,
+      "unitPrice": 19.0,
+      "total": 95.0
+    },
+    {
+      "itemName": "საცივი",
+      "quantity": 5,
+      "unitPrice": 13.0,
+      "total": 65.0
+    }
+  ],
+  "totalAmount": 176.0,
+  "total": 176.0,
+  "paymentMethod": "non-fiscal",
+  "paymentBreakdown": {
+    "cash": 176.0
+  },
+  "customPaymentLabel": null,
+  "createdBy": "fixture-operator",
+  "createdAt": "2026-06-22T12:02:37.981",
+  "closedAt": "2026-06-22T21:24:54.840295",
+  "includeServiceFee": true,
+  "discountAmount": 0.0,
+  "advanceAmount": 0.0,
+  "subtotalAmount": 160.0,
+  "manualAdjustmentAmount": 0.0,
+  "finalTransaction": {
+    "tableId": "1",
+    "tableNumbers": [
+      "1"
+    ],
+    "orderId": 1764,
+    "items": [
+      {
+        "name": "ფხალეულის დაფა",
+        "quantity": 5,
+        "unitPrice": 19.0,
+        "total": 95.0
+      },
+      {
+        "name": "საცივი",
+        "quantity": 5,
+        "unitPrice": 13.0,
+        "total": 65.0
+      }
+    ],
+    "subtotal": 160.0,
+    "total": 176.0,
+    "serviceFee": 16.0,
+    "discount": 0.0,
+    "manualAdjustment": 0.0,
+    "paymentBreakdown": {
+      "cash": 176.0
+    },
+    "bankProvider": null,
+    "closedAt": "2026-06-22T21:24:54.838742",
+    "createdBy": "fixture-operator",
+    "isFiscal": false
+  },
+  "date": "2026-06-22",
+  "isCancelled": false,
+  "isFiscal": false,
+  "restoredToOrder": false,
+  "recordType": "sale",
+  "grossSaleAmount": 176.0,
+  "advanceApplied": 0.0,
+  "collectedNow": 176.0,
+  "closureId": "ac74dba1-cc90-4e3c-8963-8577b1696292",
+  "closedById": "fixture-closer",
+  "posSaleId": "88fe2803-d7ff-4b95-99cd-7a3ab902cca1",
+  "ledgerRevision": 1,
+  "ledgerUpdatedAt": "2026-06-22T21:24:54.840295"
+}

@@ -1,4 +1,9 @@
 import {
+  lockOperationalVenue,
+  selectFirstOperationalDevice,
+} from './operational-authority';
+import type { ControlActor } from '../platform/control-actor';
+import {
   BadRequestException,
   ConflictException,
   Injectable,
@@ -158,7 +163,7 @@ export class DeviceEnrollmentService {
 
   /** Mints an invitation for one Venue, and hands back its code once. */
   async create(
-    actor: { platformUserId: string },
+    actor: ControlActor,
     venueId: string,
     input: CreateEnrollmentInput,
   ): Promise<CreatedEnrollment> {
@@ -185,6 +190,7 @@ export class DeviceEnrollmentService {
             platform: input.platform,
             expiresAt,
             createdByPlatformUserId: actor.platformUserId,
+            createdByCustomerAccountId: actor.customerAccountId,
           },
           select: {
             id: true,
@@ -249,11 +255,7 @@ export class DeviceEnrollmentService {
    * over the wrong channel has to be killable now, not in twenty minutes. A
    * spent one is left alone — cancelling it would rewrite what happened.
    */
-  async cancel(
-    actor: { platformUserId: string },
-    venueId: string,
-    enrollmentId: string,
-  ) {
+  async cancel(actor: ControlActor, venueId: string, enrollmentId: string) {
     const existing = await this.requireEnrollment(venueId, enrollmentId);
     if (existing.redeemedAt) {
       throw new ConflictException(
@@ -335,6 +337,7 @@ export class DeviceEnrollmentService {
         deviceId: true,
         cancelledAt: true,
         createdByPlatformUserId: true,
+        createdByCustomerAccountId: true,
       },
     });
 
@@ -444,7 +447,9 @@ export class DeviceEnrollmentService {
     });
 
     await this.audit.record(
-      { platformUserId: enrollment.createdByPlatformUserId },
+      enrollment.createdByCustomerAccountId
+        ? { customerAccountId: enrollment.createdByCustomerAccountId }
+        : { platformUserId: enrollment.createdByPlatformUserId! },
       PlatformAuditAction.DEVICE_ENROLLMENT_REDEEMED,
       { type: 'Device', id: device.id },
       {
@@ -484,6 +489,7 @@ export class DeviceEnrollmentService {
       await this.credentials.mintCredentialMaterial();
 
     const device = await this.prisma.$transaction(async (tx) => {
+      await lockOperationalVenue(tx, enrollment.venueId);
       // The single-use guarantee. Two terminals racing the same code: exactly
       // one update matches, and the loser creates nothing.
       const claimed = await tx.deviceEnrollment.updateMany({
@@ -530,6 +536,9 @@ export class DeviceEnrollmentService {
         where: { id: enrollment.id },
         data: { deviceId: written.id },
       });
+      if (!existing) {
+        await selectFirstOperationalDevice(tx, enrollment.venueId, written.id);
+      }
       return written;
     });
 
@@ -541,7 +550,9 @@ export class DeviceEnrollmentService {
     }
 
     await this.audit.record(
-      { platformUserId: enrollment.createdByPlatformUserId },
+      enrollment.createdByCustomerAccountId
+        ? { customerAccountId: enrollment.createdByCustomerAccountId }
+        : { platformUserId: enrollment.createdByPlatformUserId! },
       PlatformAuditAction.DEVICE_ENROLLMENT_REDEEMED,
       { type: 'Device', id: device.id },
       {
@@ -605,7 +616,9 @@ export class DeviceEnrollmentService {
 
   private async recordFailure(enrollment: LoadedEnrollment, reason: string) {
     await this.audit.record(
-      { platformUserId: enrollment.createdByPlatformUserId },
+      enrollment.createdByCustomerAccountId
+        ? { customerAccountId: enrollment.createdByCustomerAccountId }
+        : { platformUserId: enrollment.createdByPlatformUserId! },
       PlatformAuditAction.DEVICE_ENROLLMENT_FAILED,
       { type: 'Venue', id: enrollment.venueId },
       { enrollmentId: enrollment.id, reason, attemptedBy: 'device' },
@@ -668,7 +681,8 @@ interface LoadedEnrollment {
   redeemedInstallationId: string | null;
   deviceId: string | null;
   cancelledAt: Date | null;
-  createdByPlatformUserId: string;
+  createdByPlatformUserId: string | null;
+  createdByCustomerAccountId?: string | null;
 }
 
 interface LoadedVenue {

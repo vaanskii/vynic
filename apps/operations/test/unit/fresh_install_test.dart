@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'package:vynic/core/database/database_core.dart';
+import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/database/repositories/settings_repository.dart';
 import 'package:vynic/core/database/repositories/table_repository.dart';
 import 'package:vynic/core/database/repositories/user_repository.dart';
@@ -106,6 +107,33 @@ void main() {
     DatabaseCore.menuBox = null;
     if (_tempDir.existsSync()) _tempDir.deleteSync(recursive: true);
   });
+
+  test(
+    'unfinished setup survives Staff delivery and restart without legacy identity',
+    () async {
+      await DatabaseService.initializeVenueSetup();
+      await DatabaseCore.userBox!.add(
+        User(username: 'new-manager', pinCode: '123456', role: 'manager'),
+      );
+      await Hive.close();
+      await _openBoxes();
+      await DatabaseService.initializeVenueSetup();
+      expect(DatabaseService.isSetupComplete(), isFalse);
+      expect(DatabaseService.getVenueName(), isEmpty);
+      expect(DatabaseService.getVenueAddress(), isEmpty);
+      expect(DatabaseService.getVenueLogoPng(), isNull);
+      expect(DatabaseCore.menuBox!.isEmpty, isTrue);
+      expect(DatabaseCore.tableBox!.isEmpty, isTrue);
+      await DatabaseService.setVenueName('My restaurant');
+      await DatabaseService.markSetupComplete();
+      await Hive.close();
+      await _openBoxes();
+      await DatabaseService.initializeVenueSetup();
+      expect(DatabaseService.isSetupComplete(), isTrue);
+      expect(DatabaseService.getVenueName(), 'My restaurant');
+      expect(DatabaseService.getVenueLogoPng(), isNull);
+    },
+  );
 
   group('a machine that has never run the POS', () {
     test('is recognised as fresh', () {

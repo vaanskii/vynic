@@ -34,11 +34,22 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        val keyPath = System.getenv("VYNIC_ANDROID_KEYSTORE")
+        if (keyPath != null) {
+            create("release") {
+                storeFile = file(keyPath)
+                storePassword = System.getenv("VYNIC_ANDROID_STORE_PASSWORD")
+                keyAlias = System.getenv("VYNIC_ANDROID_KEY_ALIAS")
+                keyPassword = System.getenv("VYNIC_ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // No debug signature masquerading as a production release.
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 }

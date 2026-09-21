@@ -1,3 +1,4 @@
+import 'manager_entitlements.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -12,6 +13,10 @@ import 'package:vynic/core/services/manager_app/pos_command_delivery.dart';
 import 'package:vynic/core/services/manager_app/mobile_cache_service.dart';
 import 'package:vynic/core/services/sync/mobile_edit_echo_guard.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
+import 'package:vynic/core/models/global_audit_entry.dart';
+import 'package:vynic/core/models/inventory.dart';
+import 'package:vynic/core/models/receiving.dart';
+import 'package:vynic/core/models/menu_recipe.dart';
 
 /// Production-grade mobile API service.
 ///
@@ -24,6 +29,13 @@ class MobileApiService {
 
   static const int _maxRetries = 3;
   static const Duration _timeout = Duration(seconds: 12);
+
+  // Network exceptions may contain endpoint/IP details. Keep them out of release UI.
+  static Never _throwNetworkError(Object error, StackTrace stack) {
+    if (ApiConfig.allowDeveloperOverride)
+      Error.throwWithStackTrace(error, stack);
+    throw Exception('სერვერთან კავშირი ვერ დამყარდა. გადაამოწმეთ ინტერნეტი.');
+  }
 
   // ── Internal HTTP helpers ──────────────────────────────────────────────────
 
@@ -39,6 +51,38 @@ class MobileApiService {
     return map;
   }
 
+  static Future<void> saveVenueProfile(Map<String, dynamic> profile) async {
+    final response = await http
+        .put(
+          Uri.parse('$_base/mobile/venue-profile'),
+          headers: _headers,
+          body: jsonEncode(profile),
+        )
+        .timeout(_timeout)
+        .catchError(_throwNetworkError);
+    if (response.statusCode != 200)
+      throw Exception('პროფილი ვერ შეინახა (${response.statusCode})');
+    ManagerEntitlements.profile.value =
+        jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  static Future<void> refreshEntitlements() async {
+    final session = AuthTokenService.authHeader['Authorization'];
+    final response = await _get('/mobile/entitlements');
+    if (session != AuthTokenService.authHeader['Authorization']) return;
+    if (response.statusCode != 200) {
+      ManagerEntitlements.clear();
+      await MobileCacheService.clear();
+      throw Exception('წვდომა ვერ განახლდა (${response.statusCode})');
+    }
+    final old = ManagerEntitlements.features.value;
+    ManagerEntitlements.apply(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+    if (!setEquals(old, ManagerEntitlements.features.value))
+      await MobileCacheService.clear();
+  }
+
   /// GET with retry + exponential backoff.
   static Future<http.Response> _get(String path) async {
     final uri = Uri.parse('$_base$path');
@@ -48,7 +92,8 @@ class MobileApiService {
       try {
         final response = await http
             .get(uri, headers: _headers)
-            .timeout(_timeout);
+            .timeout(_timeout)
+            .catchError(_throwNetworkError);
         return response;
       } on SocketException catch (e) {
         lastError = e;
@@ -77,7 +122,8 @@ class MobileApiService {
     final uri = Uri.parse('$_base$path');
     return http
         .post(uri, headers: _headers, body: jsonEncode(body))
-        .timeout(_timeout);
+        .timeout(_timeout)
+        .catchError(_throwNetworkError);
   }
 
   static Future<http.Response> _patch(
@@ -87,12 +133,16 @@ class MobileApiService {
     final uri = Uri.parse('$_base$path');
     return http
         .patch(uri, headers: _headers, body: jsonEncode(body))
-        .timeout(_timeout);
+        .timeout(_timeout)
+        .catchError(_throwNetworkError);
   }
 
   static Future<http.Response> _delete(String path) async {
     final uri = Uri.parse('$_base$path');
-    return http.delete(uri, headers: _headers).timeout(_timeout);
+    return http
+        .delete(uri, headers: _headers)
+        .timeout(_timeout)
+        .catchError(_throwNetworkError);
   }
 
   /// Registers FCM device token (JWT required). Server uses it for offline push only.
@@ -279,7 +329,8 @@ class MobileApiService {
     final uri = Uri.parse('$_base/mobile/takeaway-orders/$posOrderId');
     final response = await http
         .delete(uri, headers: _headers)
-        .timeout(_timeout);
+        .timeout(_timeout)
+        .catchError(_throwNetworkError);
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception('deleteTakeawayOrder failed: ${response.statusCode}');
     }
@@ -394,6 +445,33 @@ class MobileApiService {
 
   // ── Financials ─────────────────────────────────────────────────────────────
 
+  /// Finance mutations carry a caller-generated UUID, retained across retries.
+  /// Cloud confirms persistence; no optimistic/offline financial writes.
+  static Future<Map<String, dynamic>> financeRead(String path) async {
+    final response = await _get('/mobile/finance/$path');
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+    }
+    throw Exception('მონაცემები ვერ ჩაიტვირთა (${response.statusCode})');
+  }
+
+  static Future<void> financeWrite(
+    String path,
+    Map<String, dynamic> data, {
+    bool update = false,
+  }) async {
+    final response = update
+        ? await _patch('/mobile/finance/$path', data)
+        : await _post('/mobile/finance/$path', data);
+    if (response.statusCode >= 200 && response.statusCode < 300) return;
+    final decoded = jsonDecode(response.body);
+    throw Exception(
+      decoded is Map
+          ? decoded['message'] ?? 'შენახვა ვერ მოხერხდა'
+          : 'შენახვა ვერ მოხერხდა (${response.statusCode})',
+    );
+  }
+
   static Future<Map<String, dynamic>> getFinancials() async {
     try {
       final response = await _get('/mobile/financials');
@@ -409,6 +487,89 @@ class MobileApiService {
       if (cached != null) return cached;
       rethrow;
     }
+  }
+
+  static Future<Map<String, dynamic>> getFinancialSummary({
+    String? from,
+    String? to,
+  }) async {
+    final params = <String, String>{
+      if (from != null) 'from': from,
+      if (to != null) 'to': to,
+    };
+    final suffix = params.isEmpty
+        ? ''
+        : '?${Uri(queryParameters: params).query}';
+    final response = await _get('/mobile/financial-summary$suffix');
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+    }
+    throw Exception('getFinancialSummary failed: ${response.statusCode}');
+  }
+
+  static Future<Map<String, dynamic>> getSales({
+    String? from,
+    String? to,
+    String? cursor,
+    int limit = 30,
+  }) async {
+    final params = <String, String>{
+      'limit': '$limit',
+      if (from != null) 'from': from,
+      if (to != null) 'to': to,
+      if (cursor != null) 'cursor': cursor,
+    };
+    final response = await _get(
+      '/mobile/sales?${Uri(queryParameters: params).query}',
+    );
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+    }
+    throw Exception('getSales failed: ${response.statusCode}');
+  }
+
+  static Future<Map<String, dynamic>> getSale(String id) async {
+    final response = await _get('/mobile/sales/${Uri.encodeComponent(id)}');
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+    }
+    throw Exception('getSale failed: ${response.statusCode}');
+  }
+
+  static Future<Map<String, dynamic>> getProductAnalytics({
+    String? from,
+    String? to,
+  }) async {
+    final params = <String, String>{
+      if (from != null) 'from': from,
+      if (to != null) 'to': to,
+    };
+    final suffix = params.isEmpty
+        ? ''
+        : '?${Uri(queryParameters: params).query}';
+    final response = await _get('/mobile/product-analytics$suffix');
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+    }
+    throw Exception('getProductAnalytics failed: ${response.statusCode}');
+  }
+
+  static Future<Map<String, dynamic>> getSaleStaffAnalytics({
+    String? from,
+    String? to,
+  }) async {
+    final params = <String, String>{
+      if (from != null) 'from': from,
+      if (to != null) 'to': to,
+    };
+    final suffix = params.isEmpty
+        ? ''
+        : '?${Uri(queryParameters: params).query}';
+    final response = await _get('/mobile/sale-staff-analytics$suffix');
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+    }
+    throw Exception('getSaleStaffAnalytics failed: ${response.statusCode}');
   }
 
   static Future<Map<String, dynamic>> createExpense({
@@ -657,6 +818,423 @@ class MobileApiService {
 
   // ── Users (admin panel) ───────────────────────────────────────────────────
 
+  static Future<Map<String, dynamic>> getInventoryOverview() async {
+    final response = await _get('/mobile/inventory/overview');
+    if (response.statusCode != 200)
+      throw Exception('მარაგების მიმოხილვა ვერ ჩაიტვირთა');
+    return Map<String, dynamic>.from(json.decode(response.body) as Map);
+  }
+
+  static Future<List<StockItem>> getStockItems({String? search}) async {
+    final query = search == null || search.trim().isEmpty
+        ? ''
+        : '?q=${Uri.encodeQueryComponent(search.trim())}';
+    final response = await _get('/mobile/inventory/stock-items$query');
+    if (response.statusCode != 200) {
+      throw Exception(_apiError('Stock items', response));
+    }
+    return (jsonDecode(response.body) as List)
+        .whereType<Map>()
+        .map((row) => StockItem.fromJson(Map<String, dynamic>.from(row)))
+        .toList(growable: false);
+  }
+
+  static Future<StockItem> saveStockItem({
+    String? id,
+    String? requestId,
+    required String name,
+    String? sku,
+    required InventoryUnit baseUnit,
+    double? minimumStock,
+    String? notes,
+    required bool isActive,
+    StockItemClassification? classification,
+    List<String>? supplierIds,
+    List<StockItemPurchaseUnit>? purchaseUnits,
+  }) async {
+    final payload = <String, dynamic>{
+      if (requestId != null) 'requestId': requestId,
+      'name': name,
+      'sku': sku,
+      'baseUnit': baseUnit.wireValue,
+      if (classification != null) 'classification': classification.wireValue,
+      if (supplierIds != null) 'supplierIds': supplierIds,
+      'minimumStock': minimumStock,
+      'notes': notes,
+      'isActive': isActive,
+      // Omitted entirely when the caller is not editing packaging, so a save
+      // that says nothing about purchase units cannot silently clear them.
+      if (purchaseUnits != null)
+        'purchaseUnits': [
+          for (final unit in purchaseUnits)
+            {
+              'unit': unit.unit.wireValue,
+              'baseUnitMultiplier': unit.baseUnitMultiplier,
+            },
+        ],
+    };
+    final response = id == null
+        ? await _post('/mobile/inventory/stock-items', payload)
+        : await _patch('/mobile/inventory/stock-items/$id', payload);
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(_apiError('Stock item', response));
+    }
+    return StockItem.fromJson(
+      Map<String, dynamic>.from(jsonDecode(response.body) as Map),
+    );
+  }
+
+  /// One Stock Item with its derived balance and recent ledger movements.
+  static Future<void> setStockItemActive(String id, bool active) async {
+    final response = await _patch(
+      '/mobile/inventory/stock-items/${Uri.encodeComponent(id)}',
+      {'isActive': active},
+    );
+    if (response.statusCode != 200)
+      throw Exception(_apiError('პროდუქტის სტატუსი', response));
+  }
+
+  static Future<StockItemDetail> getStockItem(String id) async {
+    final response = await _get(
+      '/mobile/inventory/stock-items/${Uri.encodeComponent(id)}',
+    );
+    if (response.statusCode != 200) {
+      throw Exception(_apiError('Stock item', response));
+    }
+    return StockItemDetail.fromJson(
+      Map<String, dynamic>.from(jsonDecode(response.body) as Map),
+    );
+  }
+
+  static Future<List<Supplier>> getSuppliers({String? search}) async {
+    final query = search == null || search.trim().isEmpty
+        ? ''
+        : '?q=${Uri.encodeQueryComponent(search.trim())}';
+    final response = await _get('/mobile/inventory/suppliers$query');
+    if (response.statusCode != 200) {
+      throw Exception(_apiError('Suppliers', response));
+    }
+    return (jsonDecode(response.body) as List)
+        .whereType<Map>()
+        .map((row) => Supplier.fromJson(Map<String, dynamic>.from(row)))
+        .toList(growable: false);
+  }
+
+  static Future<Supplier> saveSupplier({
+    String? id,
+    required String name,
+    String? taxId,
+    String? phone,
+    String? email,
+    String? address,
+    String? notes,
+    required bool isActive,
+  }) async {
+    final payload = <String, dynamic>{
+      'name': name,
+      'taxId': taxId,
+      'phone': phone,
+      'email': email,
+      'address': address,
+      'notes': notes,
+      'isActive': isActive,
+    };
+    final response = id == null
+        ? await _post('/mobile/inventory/suppliers', payload)
+        : await _patch('/mobile/inventory/suppliers/$id', payload);
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(_apiError('Supplier', response));
+    }
+    return Supplier.fromJson(
+      Map<String, dynamic>.from(jsonDecode(response.body) as Map),
+    );
+  }
+
+  static Future<Map<String, dynamic>> getSupplierDetail(String id) async {
+    final response = await _get(
+      '/mobile/inventory/suppliers/${Uri.encodeComponent(id)}',
+    );
+    if (response.statusCode != 200)
+      throw Exception(_apiError('მომწოდებელი', response));
+    return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+  }
+
+  static Future<Map<String, dynamic>> procurementRequest(
+    String path, [
+    Map<String, dynamic>? payload,
+  ]) async {
+    final response = payload == null
+        ? await _get('/mobile/inventory/$path')
+        : await _post('/mobile/inventory/$path', payload);
+    if (response.statusCode != 200 && response.statusCode != 201)
+      throw Exception(_apiError('მარაგები', response));
+    return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+  }
+
+  static Future<void> setSupplierProduct(
+    String supplierId,
+    String stockItemId,
+    bool linked,
+  ) async {
+    final path =
+        '/mobile/inventory/suppliers/${Uri.encodeComponent(supplierId)}/products/${Uri.encodeComponent(stockItemId)}';
+    final response = linked ? await _post(path, {}) : await _delete(path);
+    if (response.statusCode != 200 && response.statusCode != 201)
+      throw Exception(_apiError('მომწოდებლის პროდუქტი', response));
+  }
+
+  // ── Receiving / waybills ──────────────────────────────────────────────
+
+  static Future<ReceivingPage> getReceivings({
+    String? from,
+    String? to,
+    String? supplierId,
+    String? status,
+    String? search,
+    int? take,
+    String? cursor,
+  }) async {
+    final params = <String, String>{
+      if (from != null && from.isNotEmpty) 'from': from,
+      if (to != null && to.isNotEmpty) 'to': to,
+      if (supplierId != null && supplierId.isNotEmpty) 'supplierId': supplierId,
+      if (status != null && status.isNotEmpty) 'status': status,
+      if (search != null && search.trim().isNotEmpty) 'q': search.trim(),
+      if (take != null) 'take': '$take',
+      if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+    };
+    final query = params.isEmpty
+        ? ''
+        : '?${params.entries.map((entry) => '${entry.key}=${Uri.encodeQueryComponent(entry.value)}').join('&')}';
+    final response = await _get('/mobile/inventory/receivings$query');
+    if (response.statusCode != 200) {
+      throw Exception(_apiError('Receivings', response));
+    }
+    return ReceivingPage.fromJson(
+      Map<String, dynamic>.from(jsonDecode(response.body) as Map),
+    );
+  }
+
+  static Future<Receiving> getReceiving(String id) async {
+    final response = await _get(
+      '/mobile/inventory/receivings/${Uri.encodeComponent(id)}',
+    );
+    if (response.statusCode != 200) {
+      throw Exception(_apiError('Receiving', response));
+    }
+    return _receiving(response);
+  }
+
+  /// Creates or replaces a draft. Cloud refuses to edit anything else, so a
+  /// posted document can never be rewritten through this path.
+  static Future<Receiving> saveReceivingDraft({
+    String? id,
+    String? requestId,
+    String? dueDate,
+    required String supplierId,
+    String sourceType = 'SUPPLIER',
+    String? sourceLabel,
+    required String documentDate,
+    String? businessDate,
+    String? waybillNumber,
+    String? invoiceNumber,
+    String? notes,
+    DateTime? receivedAt,
+    required List<Map<String, dynamic>> lines,
+  }) async {
+    final payload = <String, dynamic>{
+      if (requestId != null) 'requestId': requestId,
+      if (dueDate != null && dueDate.isNotEmpty) 'dueDate': dueDate,
+      'supplierId': sourceType == 'SELF_PURCHASE' ? null : supplierId,
+      'sourceType': sourceType,
+      if (sourceLabel != null) 'sourceLabel': sourceLabel,
+      'documentDate': documentDate,
+      if (businessDate != null) 'businessDate': businessDate,
+      'waybillNumber': waybillNumber,
+      'invoiceNumber': invoiceNumber,
+      'notes': notes,
+      if (receivedAt != null)
+        'receivedAt': receivedAt.toUtc().toIso8601String(),
+      'lines': lines,
+    };
+    final response = id == null
+        ? await _post('/mobile/inventory/receivings', payload)
+        : await _patch(
+            '/mobile/inventory/receivings/${Uri.encodeComponent(id)}',
+            payload,
+          );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(_apiError('Receiving', response));
+    }
+    return _receiving(response);
+  }
+
+  static Future<void> deleteReceivingDraft(String id) async {
+    final response = await _delete(
+      '/mobile/inventory/receivings/${Uri.encodeComponent(id)}',
+    );
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      throw Exception(_apiError('Receiving', response));
+    }
+  }
+
+  /// Posting is idempotent server-side; a redelivered request returns the
+  /// same document rather than moving stock again.
+  static Future<Receiving> postReceiving(String id) async {
+    final response = await _post(
+      '/mobile/inventory/receivings/${Uri.encodeComponent(id)}/post',
+      const <String, dynamic>{},
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(_apiError('Receiving', response));
+    }
+    return _receiving(response);
+  }
+
+  static Future<Receiving> cancelReceiving(String id, {String? reason}) async {
+    final response = await _post(
+      '/mobile/inventory/receivings/${Uri.encodeComponent(id)}/cancel',
+      <String, dynamic>{'reason': reason},
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(_apiError('Receiving', response));
+    }
+    return _receiving(response);
+  }
+
+  // ── Recipes / technological cards ─────────────────────────────────────
+
+  /// Menu-oriented: every Menu Item, marked configured or not.
+  static Future<List<Map<String, dynamic>>> getConsumptions({
+    String? from,
+    String? to,
+    bool unmapped = false,
+  }) async {
+    final query = Uri(
+      queryParameters: {
+        'unmapped': '$unmapped',
+        if (from != null) 'from': from,
+        if (to != null) 'to': to,
+      },
+    ).query;
+    final response = await _get('/mobile/inventory/consumptions?$query');
+    if (response.statusCode != 200)
+      throw Exception(_apiError('Consumption history', response));
+    return (jsonDecode(response.body) as List)
+        .map((r) => Map<String, dynamic>.from(r as Map))
+        .toList();
+  }
+
+  static Future<Map<String, dynamic>> getConsumption(String id) async {
+    final response = await _get(
+      '/mobile/inventory/consumptions/${Uri.encodeComponent(id)}',
+    );
+    if (response.statusCode != 200)
+      throw Exception(_apiError('Consumption detail', response));
+    return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+  }
+
+  static Future<List<RecipeMenuItem>> getRecipeMenuItems({
+    String? search,
+    String? status,
+  }) async {
+    final params = <String, String>{
+      if (search != null && search.trim().isNotEmpty) 'q': search.trim(),
+      if (status != null && status.isNotEmpty) 'status': status,
+    };
+    final query = params.isEmpty
+        ? ''
+        : '?${params.entries.map((entry) => '${entry.key}=${Uri.encodeQueryComponent(entry.value)}').join('&')}';
+    final response = await _get('/mobile/inventory/recipes$query');
+    if (response.statusCode != 200) {
+      throw Exception(_apiError('Recipes', response));
+    }
+    return (jsonDecode(response.body) as List)
+        .whereType<Map>()
+        .map((row) => RecipeMenuItem.fromJson(Map<String, dynamic>.from(row)))
+        .toList(growable: false);
+  }
+
+  /// The definition for one product. `recipe` is null when none is configured.
+  static Future<MenuRecipeDetail> getRecipe(
+    String menuItemId, {
+    String? variantId,
+  }) async {
+    final query = variantId == null || variantId.isEmpty
+        ? ''
+        : '?variantId=${Uri.encodeQueryComponent(variantId)}';
+    final response = await _get(
+      '/mobile/inventory/recipes/menu-item/${Uri.encodeComponent(menuItemId)}$query',
+    );
+    if (response.statusCode != 200) {
+      throw Exception(_apiError('Recipe', response));
+    }
+    return MenuRecipeDetail.fromJson(
+      Map<String, dynamic>.from(jsonDecode(response.body) as Map),
+    );
+  }
+
+  /// Creates or replaces the one definition for this Menu Item + variant.
+  /// Components are a declared set: sending them without an ingredient is how
+  /// that ingredient is removed.
+  static Future<MenuRecipe> saveRecipe({
+    required String menuItemId,
+    String? variantId,
+    String? yieldQuantity,
+    String? notes,
+    required List<Map<String, dynamic>> components,
+  }) async {
+    final response = await _post('/mobile/inventory/recipes', <String, dynamic>{
+      'menuItemId': menuItemId,
+      'variantId': variantId,
+      if (yieldQuantity != null) 'yieldQuantity': yieldQuantity,
+      'notes': notes,
+      'components': components,
+    });
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(_apiError('Recipe', response));
+    }
+    return MenuRecipe.fromJson(
+      Map<String, dynamic>.from(jsonDecode(response.body) as Map),
+    );
+  }
+
+  /// Stops applying a definition. Cloud keeps the card; disabling is
+  /// idempotent, so a repeated request changes nothing.
+  static Future<MenuRecipe> disableRecipe(String id) async {
+    final response = await _post(
+      '/mobile/inventory/recipes/${Uri.encodeComponent(id)}/disable',
+      const <String, dynamic>{},
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(_apiError('Recipe', response));
+    }
+    return MenuRecipe.fromJson(
+      Map<String, dynamic>.from(jsonDecode(response.body) as Map),
+    );
+  }
+
+  static Receiving _receiving(http.Response response) {
+    return Receiving.fromJson(
+      Map<String, dynamic>.from(jsonDecode(response.body) as Map),
+    );
+  }
+
+  static String _apiError(String fallback, http.Response response) {
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map && decoded['message'] != null) {
+        final message = decoded['message'];
+        return message is List ? message.join(', ') : message.toString();
+      }
+    } catch (error) {
+      debugPrint('[Manager API] Could not decode error response: $error');
+    }
+    return '$fallback request failed (${response.statusCode})';
+  }
+
+  // ── Users (admin panel) ───────────────────────────────────────────────────
+
   static Future<List<dynamic>> getUsers() async {
     final response = await _get('/mobile/users');
     if (response.statusCode == 200) {
@@ -754,6 +1332,77 @@ class MobileApiService {
     throw Exception('Status ${response.statusCode}');
   }
 
+  /// The venue-wide audit feed: staff, menu, packages, expenses, close day,
+  /// backups, settings and the business date.
+  ///
+  /// Newest first and keyset-paginated — pass the previous response's
+  /// `nextCursor` to continue rather than an offset, so a row written while
+  /// the manager scrolls cannot shift the window.
+  static Future<({List<GlobalAuditEntry> items, String? nextCursor})>
+  getGlobalAuditLog({
+    String? from,
+    String? to,
+    String? action,
+    String? entityType,
+    String? entityId,
+    String? actor,
+    int limit = 50,
+    String? cursor,
+  }) async {
+    final params = <String, String>{
+      'limit': '$limit',
+      if (from != null && from.isNotEmpty) 'from': from,
+      if (to != null && to.isNotEmpty) 'to': to,
+      if (action != null && action.isNotEmpty) 'action': action,
+      if (entityType != null && entityType.isNotEmpty) 'entityType': entityType,
+      if (entityId != null && entityId.isNotEmpty) 'entityId': entityId,
+      if (actor != null && actor.isNotEmpty) 'actor': actor,
+      if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+    };
+    final query = params.entries
+        .map(
+          (e) =>
+              '${Uri.encodeQueryComponent(e.key)}='
+              '${Uri.encodeQueryComponent(e.value)}',
+        )
+        .join('&');
+    final response = await _get('/mobile/audit-log?$query');
+    if (response.statusCode != 200) {
+      throw Exception('Status ${response.statusCode}');
+    }
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final items = (body['items'] as List? ?? const [])
+        .whereType<Map>()
+        .map(
+          (row) => GlobalAuditEntry.fromCloud(Map<String, dynamic>.from(row)),
+        )
+        .toList(growable: false);
+    return (items: items, nextCursor: body['nextCursor'] as String?);
+  }
+
+  /// The actions and entity types this Venue has actually recorded, for the
+  /// filter chips. Offering a filter that can only ever return nothing is
+  /// worse than offering none.
+  static Future<({List<String> actions, List<String> entityTypes})>
+  getGlobalAuditLogFacets() async {
+    final response = await _get('/mobile/audit-log/facets');
+    if (response.statusCode != 200) {
+      throw Exception('Status ${response.statusCode}');
+    }
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    return (
+      actions: (body['actions'] as List? ?? const [])
+          .whereType<Map>()
+          .map((row) => (row['action'] ?? '').toString())
+          .where((action) => action.isNotEmpty)
+          .toList(growable: false),
+      entityTypes: (body['entityTypes'] as List? ?? const [])
+          .map((value) => value.toString())
+          .where((value) => value.isNotEmpty)
+          .toList(growable: false),
+    );
+  }
+
   // ── Sales report ──────────────────────────────────────────────────────────
 
   static Future<Map<String, dynamic>> getSalesReport({
@@ -802,33 +1451,5 @@ class MobileApiService {
       if (cached != null) return cached;
       rethrow;
     }
-  }
-
-  // ── Diff sync ──────────────────────────────────────────────────────────────
-
-  /// Fetches only records updated since `since` (ISO string).
-  /// Uses GET /sync/diff?since=ISO.
-  static Future<Map<String, dynamic>> getDiff({String? since}) async {
-    final sinceParam = since ?? MobileCacheService.lastServerTime ?? '';
-    final path =
-        '/sync/diff${sinceParam.isNotEmpty ? '?since=${Uri.encodeComponent(sinceParam)}' : ''}';
-    final response = await _get(path);
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      // Apply table diff to cache
-      if (data['tables'] is List) {
-        final tables = (data['tables'] as List)
-            .whereType<Map<String, dynamic>>()
-            .toList();
-        await MobileCacheService.applyTableDiff(tables);
-      }
-      if (data['serverTime'] is String) {
-        await MobileCacheService.setLastServerTime(
-          data['serverTime'] as String,
-        );
-      }
-      return data;
-    }
-    throw Exception('Diff failed: ${response.statusCode}');
   }
 }

@@ -39,6 +39,14 @@ export interface PaginatedOrders {
   hasMore: boolean;
 }
 
+type MobileOrderLine = {
+  itemName: string;
+  unitPrice: number;
+  quantity: number;
+  menuItemId?: string | null;
+  variantId?: string | null;
+};
+
 /**
  * Order endpoints for the mobile manager app: dine-in order list/detail/edit/
  * cancel plus takeaway and walk-in order creation
@@ -191,6 +199,8 @@ export class MobileOrdersService {
           name: item.itemName ?? item.name ?? '',
           quantity: item.quantity ?? 1,
           price: item.unitPrice ?? item.price ?? 0,
+          menuItemId: item.menuItemId ?? null,
+          variantId: item.variantId ?? null,
         },
       });
     }
@@ -262,7 +272,7 @@ export class MobileOrdersService {
     const performerName =
       performer.length > 0 ? performer : 'მობილური მენეჯერი';
     const posOrderId = Number(id);
-    this.mutationSupport.registerMobileMutationEchoGuard(posOrderId);
+    this.mutationSupport.registerMobileMutationEchoGuard(tenant, posOrderId);
 
     const auditEvents = buildAuditEventsForOrderDiff({
       previousItems: previousItems.map((it) => ({
@@ -285,6 +295,7 @@ export class MobileOrdersService {
         events: auditEvents,
       });
       this.gateway.broadcastUpdate(
+        tenant,
         'audit_updated',
         { count: auditEvents.length, source: 'mobile', posOrderId },
         this.mutationSupport.wsExcludeOpts(monitoringSocketId),
@@ -292,6 +303,7 @@ export class MobileOrdersService {
     }
 
     this.gateway.broadcastUpdate(
+      tenant,
       'order_updated',
       { posOrderId, source: 'mobile_manager' },
       this.mutationSupport.wsExcludeOpts(monitoringSocketId),
@@ -314,6 +326,7 @@ export class MobileOrdersService {
           : 'სერვისის საფასური გამორთულია'
         : 'თანხა განახლდა';
       this.gateway.broadcastUpdate(
+        tenant,
         'orders_bulk_touch',
         {
           touches: [
@@ -332,6 +345,7 @@ export class MobileOrdersService {
         this.mutationSupport.wsExcludeOpts(monitoringSocketId),
       );
       this.gateway.broadcastUpdate(
+        tenant,
         'table_updated',
         { source: 'mobile_manager' },
         this.mutationSupport.wsExcludeOpts(monitoringSocketId),
@@ -354,6 +368,8 @@ export class MobileOrdersService {
           total: (it.unitPrice ?? it.price ?? 0) * (it.quantity ?? 1),
           itemKey: it.itemKey ?? it.itemName ?? it.name ?? '',
           itemName: it.itemName ?? it.name ?? '',
+          menuItemId: it.menuItemId ?? null,
+          variantId: it.variantId ?? null,
         })),
         totalAmount: newTotal > 0 ? newTotal : 0,
         includeServiceFee,
@@ -410,15 +426,22 @@ export class MobileOrdersService {
       });
     }
 
-    const existing = await prisma.auditEvent.findMany({
+    // Continue from the highest ordinal in use, not from the row count. `seq`
+    // is the POS's own sequence now, so counting rows would collide with it the
+    // moment a report's numbering is not a gapless 0..n-1.
+    const highest = await prisma.auditEvent.findFirst({
       where: { reportId: dbReport.id },
-      orderBy: { seq: 'asc' },
+      orderBy: { seq: 'desc' },
+      select: { seq: true },
     });
-    const startSeq = existing.length;
+    const startSeq = highest ? (highest.seq as number) + 1 : 0;
 
     await prisma.auditEvent.createMany({
       data: events.map((ev, seq) => ({
         reportId: dbReport.id,
+        // From the authenticated Staff's Venue, the same context the report
+        // above was resolved with. Never from the request body.
+        venueId: tenant.venueId,
         type: normalizeAuditEventType(ev.type, ev.previousQty, ev.newQty),
         itemName: ev.itemName,
         previousQty: ev.previousQty,
@@ -427,6 +450,7 @@ export class MobileOrdersService {
         waiterName: ev.waiterName,
         eventTime: now,
         note: ev.note ?? null,
+        details: ev.details ?? undefined,
         seq: startSeq + seq,
       })),
     });
@@ -448,7 +472,7 @@ export class MobileOrdersService {
     });
     if (!order) return { success: false, error: 'order_not_found' };
 
-    this.mutationSupport.registerMobileMutationEchoGuard(posOrderId);
+    this.mutationSupport.registerMobileMutationEchoGuard(tenant, posOrderId);
 
     // Capture which tables this order held before we release them, so the
     // cancellation notification can say which table was freed.
@@ -479,6 +503,7 @@ export class MobileOrdersService {
     });
 
     this.gateway.broadcastUpdate(
+      tenant,
       'order_cancelled',
       {
         posOrderId,
@@ -540,7 +565,7 @@ export class MobileOrdersService {
       customerName: string;
       pickupTime: string;
       waiterName: string;
-      items: { itemName: string; unitPrice: number; quantity: number }[];
+      items: MobileOrderLine[];
     },
   ) {
     // Resolve current business date
@@ -560,7 +585,7 @@ export class MobileOrdersService {
     let order: any;
     for (let attempt = 0; ; attempt++) {
       const candidateId = await this.allocateMobileOrderId(tenant);
-      this.mutationSupport.registerMobileMutationEchoGuard(candidateId);
+      this.mutationSupport.registerMobileMutationEchoGuard(tenant, candidateId);
       try {
         order = await this.prisma.order.create({
           data: {
@@ -580,6 +605,8 @@ export class MobileOrdersService {
                 name: it.itemName,
                 quantity: it.quantity,
                 price: it.unitPrice,
+                menuItemId: it.menuItemId ?? null,
+                variantId: it.variantId ?? null,
               })),
             },
           },
@@ -594,6 +621,7 @@ export class MobileOrdersService {
     const nextId = order.posOrderId;
 
     this.gateway.broadcastUpdate(
+      tenant,
       'takeaway_created',
       {
         posOrderId: nextId,
@@ -631,6 +659,8 @@ export class MobileOrdersService {
         itemName: it.name,
         unitPrice: it.price,
         quantity: it.quantity,
+        menuItemId: it.menuItemId,
+        variantId: it.variantId,
       })),
     };
   }
@@ -643,7 +673,7 @@ export class MobileOrdersService {
       floor: string;
       waiterName: string;
       guestCount?: number;
-      items: { itemName: string; unitPrice: number; quantity: number }[];
+      items: MobileOrderLine[];
     },
   ) {
     const floor = (body.floor ?? 'first').toString().trim() || 'first';
@@ -681,12 +711,16 @@ export class MobileOrdersService {
     for (let attempt = 0; ; attempt++) {
       const candidateId = await this.allocateMobileOrderId(tenant);
       // Suppress echo for the order and every reserved table.
-      this.mutationSupport.registerMobileMutationEchoGuard(candidateId);
+      this.mutationSupport.registerMobileMutationEchoGuard(tenant, candidateId);
       for (const tableNumber of tableNumbers) {
-        this.mutationSupport.registerMobileMutationEchoGuard(candidateId, {
-          tableNumber,
-          floor,
-        });
+        this.mutationSupport.registerMobileMutationEchoGuard(
+          tenant,
+          candidateId,
+          {
+            tableNumber,
+            floor,
+          },
+        );
       }
       try {
         order = await this.prisma.order.create({
@@ -706,6 +740,8 @@ export class MobileOrdersService {
                 name: it.itemName,
                 quantity: it.quantity,
                 price: it.unitPrice,
+                menuItemId: it.menuItemId ?? null,
+                variantId: it.variantId ?? null,
               })),
             },
           },
@@ -746,6 +782,7 @@ export class MobileOrdersService {
     }
 
     this.gateway.broadcastUpdate(
+      tenant,
       'order_created',
       {
         posOrderId: nextId,
@@ -757,6 +794,7 @@ export class MobileOrdersService {
       this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
     this.gateway.broadcastUpdate(
+      tenant,
       'table_updated',
       { source: 'mobile' },
       this.mutationSupport.wsExcludeOpts(monitoringSocketId),
@@ -791,6 +829,8 @@ export class MobileOrdersService {
         itemName: it.name,
         unitPrice: it.price,
         quantity: it.quantity,
+        menuItemId: it.menuItemId,
+        variantId: it.variantId,
       })),
     };
   }
@@ -806,17 +846,28 @@ export class MobileOrdersService {
     });
     if (!order) return { success: false, error: 'order_not_found' };
 
-    this.mutationSupport.registerMobileMutationEchoGuard(posOrderId);
+    this.mutationSupport.registerMobileMutationEchoGuard(tenant, posOrderId);
 
-    await this.prisma.order.delete({ where: { id: order.id } });
+    // The Cloud row is the mirror of a POS Order that is about to be
+    // cancelled, not erased: the POS keeps the Order and its audit report and
+    // the next snapshot would re-mirror it as cancelled anyway. Deleting the
+    // row here only made it vanish until then.
+    if (order.status !== 'cancelled') {
+      await this.prisma.order.update({
+        where: { id: order.id },
+        data: { status: 'cancelled' },
+      });
+    }
 
     this.gateway.broadcastUpdate(
+      tenant,
       'takeaway_deleted',
       { posOrderId },
       this.mutationSupport.wsExcludeOpts(monitoringSocketId),
     );
 
-    // A takeaway order is removed outright rather than left cancelled.
+    // ORDER_CANCEL is a cancellation on the POS: typed CANCEL_TABLE event,
+    // locked report, non-fiscal cancelled Sale, Order kept.
     const posDelivery = await this.posCommands.dispatch(tenant, {
       type: EdgeCommandTypes.ORDER_CANCEL,
       payload: { posOrderId },
@@ -881,6 +932,8 @@ export class MobileOrdersService {
         unitPrice: Math.round(Number(it.price) * 100) / 100,
         quantity: it.quantity,
         total: Math.round(Number(it.price) * it.quantity * 100) / 100,
+        menuItemId: it.menuItemId,
+        variantId: it.variantId,
       })),
     }));
   }

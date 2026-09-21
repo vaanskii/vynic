@@ -1,4 +1,4 @@
-export type PlatformRole = "SUPER_ADMIN";
+export type PlatformRole = "SUPER_ADMIN" | "SUPPORT_READONLY";
 export type VenueStatus = "ACTIVE" | "DISABLED";
 export type DeviceStatus = "ACTIVE" | "DISABLED" | "REVOKED";
 export type DomainStatus = "ACTIVE" | "DISABLED";
@@ -35,6 +35,7 @@ export interface Organization {
 }
 
 export interface Venue {
+  loginCode: string;
   id: string;
   organizationId: string;
   name: string;
@@ -61,6 +62,7 @@ export interface Plan {
 }
 
 export interface ProductState {
+  commercialAccess?: boolean;
   venueId: string;
   plan: Pick<Plan, "id" | "key" | "name" | "status"> | null;
   planAssignedAt: string | null;
@@ -92,6 +94,8 @@ export interface VenueDomain {
 }
 
 export interface Device {
+  isOperationalPrimary: boolean;
+  activeOperationalDeviceId: string | null;
   id: string;
   venueId: string;
   installationId: string;
@@ -174,4 +178,33 @@ export interface EdgeCommandStatus {
   updatedAt: string;
   claimedBy: { id: string; displayName: string } | null;
   device: { id: string; displayName: string } | null;
+}
+
+export type SubscriptionStatus =
+  | "TRIAL"
+  | "ACTIVE"
+  | "PAST_DUE"
+  | "SUSPENDED"
+  | "CANCELLED";
+export interface VenueSubscription {
+  status: SubscriptionStatus;
+  startedAt: string | null;
+  trialEndsAt: string | null;
+  currentPeriodEndsAt: string | null;
+  note: string | null;
+}
+export interface ManagerAccess {
+  delivery?: { id: string; status: string; resultCode: string | null } | null;
+  id: string;
+  username: string;
+  displayName: string | null;
+  role: "MANAGER" | "ADMIN";
+  isActive: boolean;
+}
+export interface PlatformUserRow {
+  id: string;
+  email: string;
+  displayName: string;
+  role: PlatformRole;
+  status: "ACTIVE" | "DISABLED";
 }

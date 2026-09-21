@@ -2,7 +2,49 @@ import 'package:collection/collection.dart';
 
 enum AuditReportStatus { open, closed, cancelled }
 
-enum AuditEventType { addItem, reduceQty, deleteItem, cancelTable, custom }
+enum AuditEventType {
+  addItem,
+  reduceQty,
+  deleteItem,
+  close,
+  internalClose,
+  restore,
+  cancelTable,
+
+  /// The Order was opened as an ordinary table order (Walk-In), or as the
+  /// carrier of a Package (`details.orderKind == 'PACKAGE'`).
+  createWalkIn,
+
+  /// The Order was opened as a Takeaway ticket.
+  createTakeaway,
+
+  /// A Package was applied to the Order; `details` carries the package fields.
+  applyPackage,
+
+  /// The Order was opened by activating a genuine advance booking.
+  activateReservation,
+
+  /// Items moved between two open Orders; one event per line on each report,
+  /// `details.direction` says which side this is.
+  moveItems,
+
+  /// The Order closed because a transfer took every item off it. No Sale was
+  /// written: the food is on the other Order's bill.
+  transferClose,
+
+  /// An advance was taken against the Order or its amount changed. The
+  /// receipt is the durable money record; this is its visible trail.
+  recordAdvance,
+
+  /// A money field on the open Order changed: `details.field` names it
+  /// (`manualAdjustment`, `serviceFee`) with `previousValue` / `newValue`.
+  adjustOrder,
+
+  /// A written Sale was voided after the close. Distinct from a cancelled
+  /// Order: the Sale existed.
+  voidSale,
+  custom,
+}
 
 AuditReportStatus _statusFromString(String? raw) {
   switch (raw) {
@@ -33,9 +75,57 @@ AuditEventType auditEventTypeFromString(String? raw) {
     case 'REMOVE_ITEM':
     case 'REMOVEITEM':
       return AuditEventType.deleteItem;
+    case 'CLOSE':
+    case 'CLOSED':
+      return AuditEventType.close;
+    case 'INTERNAL_CLOSE':
+    case 'NON_FISCAL_CLOSE':
+    case 'NONFISCAL_CLOSE':
+      return AuditEventType.internalClose;
+    case 'RESTORE':
+    case 'RESTORED':
+    case 'REOPEN':
+    case 'REOPENED':
+    case 'SALE_RESTORED_TO_ORDER':
+      return AuditEventType.restore;
     case 'CANCEL_TABLE':
     case 'CANCELTABLE':
       return AuditEventType.cancelTable;
+    case 'CREATE_WALKIN':
+    case 'CREATE_WALK_IN':
+    case 'CREATEWALKIN':
+      return AuditEventType.createWalkIn;
+    case 'CREATE_TAKEAWAY':
+    case 'CREATE_TAKE_AWAY':
+    case 'CREATETAKEAWAY':
+      return AuditEventType.createTakeaway;
+    case 'APPLY_PACKAGE':
+    case 'APPLYPACKAGE':
+      return AuditEventType.applyPackage;
+    case 'ACTIVATE_RESERVATION':
+    case 'ACTIVATERESERVATION':
+      return AuditEventType.activateReservation;
+    case 'MOVE_ITEMS':
+    case 'MOVE_ITEM':
+    case 'MOVEITEMS':
+      return AuditEventType.moveItems;
+    case 'TRANSFER_CLOSE':
+    case 'TRANSFERCLOSE':
+    case 'EMPTIED_BY_TRANSFER':
+      return AuditEventType.transferClose;
+    case 'RECORD_ADVANCE':
+    case 'RECORDADVANCE':
+    case 'ADVANCE_RECORDED':
+      return AuditEventType.recordAdvance;
+    case 'ADJUST_ORDER':
+    case 'ADJUSTORDER':
+    case 'ORDER_ADJUSTED':
+      return AuditEventType.adjustOrder;
+    case 'VOID_SALE':
+    case 'VOIDSALE':
+    case 'SALE_VOIDED':
+    case 'SALE_CANCELLED':
+      return AuditEventType.voidSale;
     default:
       break;
   }
@@ -48,6 +138,19 @@ AuditEventType auditEventTypeFromString(String? raw) {
     case 'remove_item':
     case 'delete_item':
       return AuditEventType.deleteItem;
+    case 'close':
+    case 'closed':
+      return AuditEventType.close;
+    case 'internal_close':
+    case 'non_fiscal_close':
+    case 'non-fiscal_close':
+      return AuditEventType.internalClose;
+    case 'restore':
+    case 'restored':
+    case 'reopen':
+    case 'reopened':
+    case 'sale_restored_to_order':
+      return AuditEventType.restore;
     case 'cancel_table':
       return AuditEventType.cancelTable;
     default:
@@ -76,8 +179,32 @@ String auditEventTypeToString(AuditEventType type) {
       return 'REDUCE_QTY';
     case AuditEventType.deleteItem:
       return 'DELETE_ITEM';
+    case AuditEventType.close:
+      return 'CLOSE';
+    case AuditEventType.internalClose:
+      return 'INTERNAL_CLOSE';
+    case AuditEventType.restore:
+      return 'RESTORE';
     case AuditEventType.cancelTable:
       return 'CANCEL_TABLE';
+    case AuditEventType.createWalkIn:
+      return 'CREATE_WALKIN';
+    case AuditEventType.createTakeaway:
+      return 'CREATE_TAKEAWAY';
+    case AuditEventType.applyPackage:
+      return 'APPLY_PACKAGE';
+    case AuditEventType.activateReservation:
+      return 'ACTIVATE_RESERVATION';
+    case AuditEventType.moveItems:
+      return 'MOVE_ITEMS';
+    case AuditEventType.transferClose:
+      return 'TRANSFER_CLOSE';
+    case AuditEventType.recordAdvance:
+      return 'RECORD_ADVANCE';
+    case AuditEventType.adjustOrder:
+      return 'ADJUST_ORDER';
+    case AuditEventType.voidSale:
+      return 'VOID_SALE';
     case AuditEventType.custom:
       return 'CUSTOM';
   }
@@ -105,6 +232,45 @@ DateTime? parseAuditTimestamp(Object? raw) {
   return DateTime.tryParse(trimmed);
 }
 
+/// Puts a report's events into the one order the timeline actually has.
+///
+/// `sequence` is the authority. When every event carries one the list is
+/// merge-sorted by it and the stored numbers are kept, so reading a report
+/// twice produces byte-identical content and its sync revision can settle.
+///
+/// A report written before sequences existed has none. Its stored array is
+/// already the order the writer produced, so that array is the best available
+/// reconstruction: it is merge-sorted by timestamp (stable, so events that tie
+/// keep the order they were stored in) and numbered from zero in memory. The
+/// numbers are persisted the next time the report is legitimately written or
+/// pushed; nothing rewrites history eagerly.
+///
+/// What this cannot recover: a legacy report whose tied events were *already*
+/// permuted by the unstable timestamp sort this replaces. Their stored order is
+/// now the only evidence of their order, so it is preserved as found rather
+/// than guessed at.
+List<AuditEvent> orderReportEvents(List<AuditEvent> events) {
+  if (events.isEmpty) return const <AuditEvent>[];
+
+  final ordered = List<AuditEvent>.of(events);
+  if (ordered.every((event) => event.sequence != null)) {
+    mergeSort<AuditEvent>(
+      ordered,
+      compare: (a, b) => a.sequence!.compareTo(b.sequence!),
+    );
+    return List<AuditEvent>.unmodifiable(ordered);
+  }
+
+  mergeSort<AuditEvent>(
+    ordered,
+    compare: (a, b) => a.timestamp.compareTo(b.timestamp),
+  );
+  return List<AuditEvent>.unmodifiable([
+    for (var i = 0; i < ordered.length; i++)
+      ordered[i].copyWith(sequence: i),
+  ]);
+}
+
 class AuditEvent {
   const AuditEvent({
     required this.type,
@@ -115,6 +281,8 @@ class AuditEvent {
     required this.waiterName,
     required this.timestamp,
     this.note,
+    this.details,
+    this.sequence,
   });
 
   final AuditEventType type;
@@ -125,6 +293,21 @@ class AuditEvent {
   final String waiterName;
   final DateTime timestamp;
   final String? note;
+  final Map<String, dynamic>? details;
+
+  /// This event's place in its report's timeline, assigned once when the event
+  /// is appended and never recomputed.
+  ///
+  /// [timestamp] cannot carry the order. A creation event and the initial
+  /// `ADD_ITEM` rows that follow it are written at the same instant on
+  /// purpose, so ordering by time leaves them tied — and resolving a tie by
+  /// sorting is not an ordering at all, it is whatever the sort happens to do.
+  ///
+  /// Null means "not placed in a report yet": an event a caller has just
+  /// constructed, or one decoded from a row written before sequences existed.
+  /// [AuditReport.fromMap] resolves the second case in memory, so every event
+  /// reachable through a report carries one.
+  final int? sequence;
 
   AuditEvent copyWith({
     AuditEventType? type,
@@ -135,6 +318,8 @@ class AuditEvent {
     String? waiterName,
     DateTime? timestamp,
     String? note,
+    Map<String, dynamic>? details,
+    int? sequence,
   }) {
     return AuditEvent(
       type: type ?? this.type,
@@ -145,6 +330,8 @@ class AuditEvent {
       waiterName: waiterName ?? this.waiterName,
       timestamp: timestamp ?? this.timestamp,
       note: note ?? this.note,
+      details: details ?? this.details,
+      sequence: sequence ?? this.sequence,
     );
   }
 
@@ -157,7 +344,9 @@ class AuditEvent {
       'waiterId': waiterId,
       'waiterName': waiterName,
       'timestamp': timestamp.toIso8601String(),
+      if (sequence != null) 'sequence': sequence,
       if (note != null && note!.isNotEmpty) 'note': note,
+      if (details != null && details!.isNotEmpty) 'details': details,
     };
   }
 
@@ -183,6 +372,10 @@ class AuditEvent {
         fallbackTimestamp ??
         unknownAuditTimestamp;
     final note = (map['note'] as String?)?.trim();
+    final details = map['details'] is Map
+        ? Map<String, dynamic>.from(map['details'] as Map)
+        : null;
+    final storedSequence = (map['sequence'] as num?)?.toInt();
 
     return AuditEvent(
       type: type,
@@ -193,6 +386,12 @@ class AuditEvent {
       waiterName: waiterName,
       timestamp: timestamp,
       note: note?.isEmpty == true ? null : note,
+      details: details,
+      // A negative value is not an ordinal; treat it as absent so the report
+      // falls back to the legacy reconstruction rather than trusting it.
+      sequence: (storedSequence != null && storedSequence >= 0)
+          ? storedSequence
+          : null,
     );
   }
 }
@@ -264,9 +463,16 @@ class AuditReport {
     );
   }
 
-  List<AuditEvent> get sortedEvents {
-    return events.sorted((a, b) => b.timestamp.compareTo(a.timestamp));
-  }
+  /// The timeline in report order: oldest first, `sequence` ascending.
+  List<AuditEvent> get orderedEvents => orderReportEvents(events);
+
+  /// The timeline newest first, for the audit screens.
+  ///
+  /// This is the canonical order reversed, not an independent sort. Sorting
+  /// descending by timestamp is what let two events written in the same
+  /// instant swap places on screen.
+  List<AuditEvent> get sortedEvents =>
+      orderedEvents.reversed.toList(growable: false);
 
   Map<String, dynamic> toMap() {
     return {
@@ -326,13 +532,16 @@ class AuditReport {
         closedAt ??
         unknownAuditTimestamp;
 
-    final events = <AuditEvent>[
+    // Decode in stored order, then let `sequence` decide the timeline.
+    // Sorting by timestamp here is what allowed a creation event and the
+    // initial lines written at the same instant to change places.
+    final events = orderReportEvents(<AuditEvent>[
       for (var i = 0; i < rawEvents.length; i++)
         AuditEvent.fromMap(
           rawEvents[i].cast<String, dynamic>(),
           fallbackTimestamp: anchor,
         ),
-    ]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    ]);
 
     final openedAt = storedOpenedAt ?? anchor;
     final updatedAt =

@@ -1,4 +1,7 @@
+import 'package:vynic/core/services/pos/pos_locale.dart';
+import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:flutter/material.dart';
+import 'package:vynic/core/services/pos/pos_input_settings.dart';
 import 'package:vynic/core/widgets/pos_keyboard/pos_keyboard_language.dart';
 
 class PosKeyboard extends StatefulWidget {
@@ -9,6 +12,9 @@ class PosKeyboard extends StatefulWidget {
     required this.onClose,
     this.onEnter,
     this.title,
+    this.showHeader = true,
+    this.showPreview = false,
+    this.followLocale = true,
   });
 
   final TextEditingController controller;
@@ -16,6 +22,9 @@ class PosKeyboard extends StatefulWidget {
   final VoidCallback onClose;
   final VoidCallback? onEnter;
   final String? title;
+  final bool showHeader;
+  final bool showPreview;
+  final bool followLocale;
 
   @override
   State<PosKeyboard> createState() => _PosKeyboardState();
@@ -27,8 +36,8 @@ class _PosKeyboardState extends State<PosKeyboard> {
   static const Color _border = Color(0xFFE5E7EB);
   static const Color _text = Color(0xFF111827);
   static const Color _muted = Color(0xFF6B7280);
-  static const Color _accent = Color(0xFF14B8A6);
-  static const Color _accentDark = Color(0xFF0F766E);
+  static const Color _accent = VynicFloorTokens.accentStrong;
+  static const Color _accentDark = VynicFloorTokens.accentStrong;
   static const Color _danger = Color(0xFFFEE2E2);
   static const Color _dangerText = Color(0xFFB91C1C);
 
@@ -57,6 +66,21 @@ class _PosKeyboardState extends State<PosKeyboard> {
   ];
 
   late PosKeyboardLanguage _language;
+  String? _appLanguage;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final scope = context.dependOnInheritedWidgetOfExactType<PosLocale>();
+    if (widget.followLocale &&
+        scope != null &&
+        scope.language != _appLanguage) {
+      _appLanguage = scope.language;
+      _language = PosKeyboardLanguage.fromCode(scope.language);
+      _shift = false;
+      _caps = false;
+    }
+  }
+
   bool _shift = false;
   bool _caps = false;
 
@@ -67,7 +91,18 @@ class _PosKeyboardState extends State<PosKeyboard> {
   }
 
   @override
+  void didUpdateWidget(covariant PosKeyboard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialLanguage != widget.initialLanguage) {
+      _language = widget.initialLanguage;
+      _shift = false;
+      _caps = false;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (!PosInputSettings.useOnScreen(context)) return const SizedBox.shrink();
     final layout = _language == PosKeyboardLanguage.english
         ? _englishLayout
         : _georgianLayout;
@@ -94,9 +129,13 @@ class _PosKeyboardState extends State<PosKeyboard> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildHeader(),
+                if (widget.showHeader) _buildHeader(),
                 const SizedBox(height: 10),
-                _KeyboardPreview(controller: widget.controller),
+                if (widget.showPreview)
+                  _KeyboardPreview(
+                    controller: widget.controller,
+                    title: widget.title,
+                  ),
                 const SizedBox(height: 10),
                 LayoutBuilder(
                   builder: (context, constraints) {
@@ -138,7 +177,7 @@ class _PosKeyboardState extends State<PosKeyboard> {
         const SizedBox(width: 10),
         Expanded(
           child: Text(
-            widget.title ?? 'კლავიატურა',
+            PosLocale.tr(context, widget.title ?? 'კლავიატურა')!,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -161,7 +200,7 @@ class _PosKeyboardState extends State<PosKeyboard> {
         ),
         const SizedBox(width: 8),
         IconButton(
-          tooltip: 'დახურვა',
+          tooltip: PosLocale.tr(context, 'დახურვა'),
           onPressed: widget.onClose,
           icon: const Icon(Icons.close),
           color: _muted,
@@ -260,7 +299,7 @@ class _PosKeyboardState extends State<PosKeyboard> {
             padding: const EdgeInsets.symmetric(horizontal: 3),
             child: _KeyboardButton(
               width: letterWidth * 1.7,
-              label: 'Enter',
+              label: PosLocale.tr(context, 'შეყვანა')!,
               background: _accentDark,
               foreground: Colors.white,
               onTap: _enter,
@@ -281,7 +320,8 @@ class _PosKeyboardState extends State<PosKeyboard> {
         children: [
           _bottomKey(
             width: 76,
-            label: 'Clear',
+            label: PosLocale.tr(context, 'გასუფთავება')!,
+            icon: Icons.clear_all_rounded,
             background: _danger,
             foreground: _dangerText,
             onTap: _clear,
@@ -290,7 +330,7 @@ class _PosKeyboardState extends State<PosKeyboard> {
           _bottomKey(width: 54, label: '.', onTap: () => _insertRaw('.')),
           _bottomKey(
             width: spaceWidth,
-            label: 'Space',
+            label: PosLocale.tr(context, 'გამოტოვება')!,
             icon: Icons.space_bar,
             onTap: () => _insertRaw(' '),
           ),
@@ -381,38 +421,25 @@ class _PosKeyboardState extends State<PosKeyboard> {
   void _insertRaw(String value) {
     final selection = _selection();
     final text = widget.controller.text;
-    widget.controller.text = text.replaceRange(
-      selection.start,
-      selection.end,
-      value,
-    );
-    widget.controller.selection = TextSelection.collapsed(
-      offset: selection.start + value.length,
+    widget.controller.value = TextEditingValue(
+      text: text.replaceRange(selection.start, selection.end, value),
+      selection: TextSelection.collapsed(
+        offset: selection.start + value.length,
+      ),
     );
   }
 
   void _backspace() {
     final selection = _selection();
     final text = widget.controller.text;
-    if (selection.start != selection.end) {
-      widget.controller.text = text.replaceRange(
-        selection.start,
-        selection.end,
-        '',
-      );
-      widget.controller.selection = TextSelection.collapsed(
-        offset: selection.start,
-      );
-      return;
-    }
-    if (selection.start == 0) return;
-    widget.controller.text = text.replaceRange(
-      selection.start - 1,
-      selection.start,
-      '',
-    );
-    widget.controller.selection = TextSelection.collapsed(
-      offset: selection.start - 1,
+    if (selection.isCollapsed && selection.start == 0) return;
+    final start = selection.isCollapsed
+        ? selection.start -
+              text.substring(0, selection.start).characters.last.length
+        : selection.start;
+    widget.controller.value = TextEditingValue(
+      text: text.replaceRange(start, selection.end, ''),
+      selection: TextSelection.collapsed(offset: start),
     );
   }
 
@@ -455,38 +482,23 @@ class _PosKeyboardState extends State<PosKeyboard> {
 }
 
 class _KeyboardPreview extends StatelessWidget {
-  const _KeyboardPreview({required this.controller});
+  const _KeyboardPreview({required this.controller, this.title});
+  final String? title;
 
   final TextEditingController controller;
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, _) {
-        final text = controller.text.trim();
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF6F7F9),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-          ),
-          child: Text(
-            text.isEmpty ? 'შეიყვანეთ ტექსტი' : text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: text.isEmpty
-                  ? const Color(0xFF6B7280)
-                  : const Color(0xFF111827),
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        );
-      },
+    return TextField(
+      controller: controller,
+      autofocus: true,
+      decoration: InputDecoration(
+        hintText: title,
+        filled: true,
+        fillColor: Color(0xFFF6F7F9),
+        border: OutlineInputBorder(),
+        isDense: true,
+      ),
     );
   }
 }
@@ -545,7 +557,7 @@ class _LanguageChip extends StatelessWidget {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF0F766E) : Colors.transparent,
+          color: selected ? VynicFloorTokens.accentStrong : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Text(
@@ -603,12 +615,16 @@ class _KeyboardButton extends StatelessWidget {
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
+          canRequestFocus: false,
           onTap: onTap,
           splashColor: _PosKeyboardState._accent.withValues(alpha: 0.14),
           highlightColor: _PosKeyboardState._accent.withValues(alpha: 0.08),
           child: Center(
             child: icon != null
-                ? Icon(icon, color: fg, size: 20)
+                ? Tooltip(
+                    message: label ?? '',
+                    child: Icon(icon, color: fg, size: 20),
+                  )
                 : Text(
                     label ?? '',
                     maxLines: 1,

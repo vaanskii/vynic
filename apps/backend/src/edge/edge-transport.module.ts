@@ -1,3 +1,4 @@
+import { EntitlementsModule } from '../entitlements/entitlements.module';
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { PlatformAuditModule } from '../platform/platform-audit.module';
@@ -7,6 +8,7 @@ import { EdgeCommandService } from './edge-command.service';
 import { EdgeDeviceGuard } from './edge-device.guard';
 import { EdgeTransportController } from './edge-transport.controller';
 import { EnrollmentRateLimiter } from './enrollment-rate-limiter';
+import { InventoryModule } from '../inventory/inventory.module';
 
 /**
  * Cloud ↔ Edge transport, and how a terminal gets onto it.
@@ -21,7 +23,12 @@ import { EnrollmentRateLimiter } from './enrollment-rate-limiter';
  * invitations; the reverse import would be a cycle.
  */
 @Module({
-  imports: [AuthModule, PlatformAuditModule],
+  imports: [
+    EntitlementsModule,
+    AuthModule,
+    PlatformAuditModule,
+    InventoryModule,
+  ],
   controllers: [EdgeTransportController, DeviceEnrollmentController],
   providers: [
     EdgeCommandService,
@@ -29,6 +36,6 @@ import { EnrollmentRateLimiter } from './enrollment-rate-limiter';
     DeviceEnrollmentService,
     EnrollmentRateLimiter,
   ],
-  exports: [EdgeCommandService, DeviceEnrollmentService],
+  exports: [EdgeCommandService, DeviceEnrollmentService, InventoryModule],
 })
 export class EdgeTransportModule {}

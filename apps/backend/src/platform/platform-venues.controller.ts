@@ -300,6 +300,33 @@ export class PlatformVenuesController {
     return this.devices.listDevices(requireUuid(venueId, 'venueId'));
   }
 
+  @Put(':venueId/operational-primary')
+  async selectOperationalPrimary(
+    @PlatformActor() actor: PlatformPrincipal,
+    @Param('venueId') venueId: string,
+    @Body()
+    body: {
+      deviceId?: unknown;
+      expectedDeviceId?: unknown;
+      reason?: unknown;
+      previousPosStopped?: unknown;
+    },
+  ) {
+    if (body.previousPosStopped !== true)
+      throw new BadRequestException(
+        'Stop the previous POS and verify the replacement data before switching.',
+      );
+    return this.devices.selectPrimary(
+      actor,
+      requireUuid(venueId, 'venueId'),
+      requireUuid(body.deviceId, 'deviceId'),
+      body.expectedDeviceId === null
+        ? null
+        : requireUuid(body.expectedDeviceId, 'expectedDeviceId'),
+      requireText(body.reason, 'reason', { max: 500 }),
+    );
+  }
+
   @Get(':venueId/devices/:deviceId')
   async readDevice(
     @Param('venueId') venueId: string,

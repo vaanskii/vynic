@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Phase 2A SHADOW ProjectionEntity.document",
+  "description": "JSON structural contract. Identity equality, unique live line IDs and bidirectional Order/Table occupancy are additionally validated transactionally by Edge. Flutter retains all business calculation. A tombstone has empty document bytes.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/order"
+    },
+    {
+      "$ref": "#/$defs/table"
+    }
+  ],
+  "$defs": {
+    "order": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "orderUuid": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "orderId": {
+          "type": "integer"
+        },
+        "floor": {
+          "type": "string"
+        },
+        "tableIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "uniqueItems": true
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "lineUuid",
+              "itemKey",
+              "itemName",
+              "unitPrice",
+              "quantity",
+              "total"
+            ],
+            "properties": {
+              "lineUuid": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "itemKey": {
+                "type": "string"
+              },
+              "itemName": {
+                "type": "string"
+              },
+              "unitPrice": {
+                "type": "number"
+              },
+              "quantity": {
+                "type": "integer"
+              },
+              "total": {
+                "type": "number"
+              },
+              "comment": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "menuItemId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "variantId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "status": {
+          "enum": [
+            "pending",
+            "confirmed"
+          ]
+        },
+        "totalAmount": {
+          "type": "number"
+        },
+        "includeServiceFee": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO 8601 local timestamp or RFC3339, as produced by Dart DateTime.toIso8601String."
+        },
+        "createdBy": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "orderUuid",
+        "orderId",
+        "floor",
+        "tableIds",
+        "items",
+        "status",
+        "totalAmount",
+        "includeServiceFee",
+        "createdAt",
+        "createdBy"
+      ]
+    },
+    "table": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tableId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "floor": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tableNumber": {
+          "type": "string",
+          "minLength": 1
+        },
+        "activeOrderUuid": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "tableId",
+        "floor",
+        "tableNumber",
+        "activeOrderUuid"
+      ]
+    }
+  }
+}

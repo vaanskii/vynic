@@ -8,7 +8,10 @@ jest.mock('../../../auth/pos-sync.guard', () => ({ PosSyncGuard: class {} }));
 jest.mock('../../../auth/jwt-auth.guard', () => ({ JwtAuthGuard: class {} }));
 jest.mock('../../../auth/roles.guard', () => ({ RolesGuard: class {} }));
 
-import { IngestPosSnapshotService } from './ingest-pos-snapshot.service';
+import {
+  IngestPosSnapshotService,
+  type SnapshotIngestResult,
+} from './ingest-pos-snapshot.service';
 import { PosConnectionRegistry } from '../pos-connection.registry';
 import { BusinessDaySyncService } from '../snapshot/business-day-sync.service';
 import { MenuSyncService } from '../snapshot/menu-sync.service';
@@ -109,7 +112,7 @@ interface Harness {
   broadcasts: Broadcast[];
   kickPending: jest.Mock;
   vaultWrite: jest.Mock;
-  sync: (payload: Snapshot) => Promise<{ success: boolean; syncedAt: string }>;
+  sync: (payload: Snapshot) => Promise<SnapshotIngestResult>;
 }
 
 const AUTH_CONTEXT = {
@@ -152,15 +155,23 @@ function makeHarness(overrides: Record<string, Override> = {}): Harness {
   const prisma = new Proxy<Record<string, Record<string, PrismaMethod>>>(
     {},
     {
-      get: (_target, model) =>
-        typeof model === 'symbol' ? undefined : modelProxy(model),
+      get: (_target, model) => {
+        if (typeof model === 'symbol') return undefined;
+        if (model === '$queryRaw') return async () => [];
+        if (model === '$transaction') {
+          return (callback: (db: unknown) => unknown) => callback(prisma);
+        }
+        return modelProxy(model);
+      },
     },
   );
 
-  const broadcastUpdate = jest.fn((event: string, payload: unknown) => {
-    broadcasts.push({ event, payload });
-    trace.push(`ws:${event}`);
-  });
+  const broadcastUpdate = jest.fn(
+    (_tenant: unknown, event: string, payload: unknown) => {
+      broadcasts.push({ event, payload });
+      trace.push(`ws:${event}`);
+    },
+  );
   const kickPending = jest.fn(() => Promise.resolve());
   const vaultRead = jest.fn(() => Promise.resolve({}));
   const vaultWrite = jest.fn(() => Promise.resolve());
@@ -285,7 +296,9 @@ describe('POST /sync/manager-data — authenticated Venue authority', () => {
 
     const tableUpsert = h.calls.find((c) => c.key === 'table.upsert');
     const orderUpsert = h.calls.find((c) => c.key === 'order.upsert');
-    const categoryUpsert = h.calls.find((c) => c.key === 'menuCategory.upsert');
+    const categoryLookup = h.calls.find(
+      (c) => c.key === 'menuCategory.findFirst',
+    );
     const itemCreate = h.calls.find((c) => c.key === 'menuItem.create');
     const staffUpsert = h.calls.find((c) => c.key === 'staff.upsert');
     const expenseCreate = h.calls.find((c) => c.key === 'expense.create');
@@ -298,9 +311,7 @@ describe('POST /sync/manager-data — authenticated Venue authority', () => {
       'venue-a',
     );
     expect(at(orderUpsert?.arg, 'create', 'venueId')).toBe('venue-a');
-    expect(at(categoryUpsert?.arg, 'where', 'venueId_slug', 'venueId')).toBe(
-      'venue-a',
-    );
+    expect(at(categoryLookup?.arg, 'where', 'venueId')).toBe('venue-a');
     expect(at(itemCreate?.arg, 'data', 'venueId')).toBe('venue-a');
     expect(at(staffUpsert?.arg, 'where', 'venueId_username', 'venueId')).toBe(
       'venue-a',
@@ -382,11 +393,7 @@ describe('POST /sync/manager-data — full snapshot side-effect order', () => {
       'db:order.deleteMany',
       // 5. Expenses.
       'db:expense.create',
-      // 6. Aggregate broadcasts come AFTER all of the above.
-      'ws:order_updated',
-      'ws:table_updated',
-      'ws:data_updated',
-      // 7. Business-day tracking.
+      // 6. Business-day tracking precedes success notifications.
       'db:setting.findUnique',
       'db:setting.upsert',
       'db:setting.findUnique',
@@ -397,6 +404,9 @@ describe('POST /sync/manager-data — full snapshot side-effect order', () => {
       'db:setting.upsert', // restaurant:serviceFeeEnabled
       'db:setting.upsert', // dailySalesTotal:<date>
       'db:setting.upsert', // openTablesPayable:<date>
+      'ws:order_updated',
+      'ws:table_updated',
+      'ws:data_updated',
     ]);
   });
 
@@ -687,7 +697,13 @@ describe('POST /sync/manager-data — order sync and table linking', () => {
     const update = h.calls.find((c) => c.key === 'order.update');
     expect(at(update?.arg, 'data', 'items', 'deleteMany')).toEqual({});
     expect(at(update?.arg, 'data', 'items', 'create')).toEqual([
-      { name: 'Tea', quantity: 2, price: 15 },
+      {
+        name: 'Tea',
+        quantity: 2,
+        price: 15,
+        menuItemId: null,
+        variantId: null,
+      },
     ]);
   });
 
@@ -941,7 +957,7 @@ describe('POST /sync/manager-data — order deletion reconciliation', () => {
 });
 
 describe('POST /sync/manager-data — menu sync', () => {
-  it('upserts categories, subcategories and items and rewrites variants in place', async () => {
+  it('upserts categories, subcategories, items and variants in place', async () => {
     const h = makeHarness();
 
     await h.sync({
@@ -972,11 +988,13 @@ describe('POST /sync/manager-data — menu sync', () => {
     });
 
     expect(h.trace).toEqual([
-      'db:menuCategory.upsert',
-      'db:menuSubcategory.upsert',
+      'db:menuCategory.findFirst',
+      'db:menuCategory.create',
+      'db:menuSubcategory.findFirst',
+      'db:menuSubcategory.create',
       'db:menuItem.findFirst',
       'db:menuItem.create',
-      'db:menuItemVariant.deleteMany',
+      'db:menuItemVariant.findFirst',
       'db:menuItemVariant.create',
       'db:menuItem.findFirst',
       'db:menuItem.create',
@@ -1022,8 +1040,8 @@ describe('POST /sync/manager-data — menu sync', () => {
     });
 
     const cats = h.calls
-      .filter((c) => c.key === 'menuCategory.upsert')
-      .map((c) => at(c.arg, 'update', 'sortOrder'));
+      .filter((c) => c.key === 'menuCategory.create')
+      .map((c) => at(c.arg, 'data', 'sortOrder'));
     expect(cats).toEqual([0, 1]);
     const items = h.calls
       .filter((c) => c.key === 'menuItem.create')
@@ -1048,6 +1066,7 @@ describe('POST /sync/manager-data — staff sync', () => {
     expect(h.vaultWrite).toHaveBeenCalledWith(
       { mary: '1234' },
       expect.objectContaining({ venueId: 'venue-a' }),
+      expect.anything(),
     );
   });
 
@@ -1068,17 +1087,35 @@ describe('POST /sync/manager-data — staff sync', () => {
     expect(h.vaultWrite).not.toHaveBeenCalled();
   });
 
-  it('refuses to create an unknown member that arrives without a pin', async () => {
+  it('refuses to create an unknown member that arrives without a pin, and asks for its PIN back', async () => {
     const h = makeHarness({
       'staff.findUnique': () => null,
       'staff.findMany': () => [],
     });
 
-    await h.sync({ staff: [{ username: 'ghost', role: 'WAITER' }] });
+    const result = await h.sync({
+      staff: [{ username: 'ghost', role: 'WAITER' }],
+    });
 
     const keys = callKeys(h.calls);
     expect(keys).not.toContain('staff.upsert');
     expect(keys).not.toContain('staff.update');
+    // The POS answers this by carrying that member's PIN next snapshot, which
+    // is how a re-provisioned server recollects the credentials it lost.
+    expect(result.staffNeedingPin).toEqual(['ghost']);
+  });
+
+  it('leaves staffNeedingPin off the response when nothing is missing', async () => {
+    const h = makeHarness({
+      'staff.findUnique': () => ({ username: 'mary' }),
+      'staff.findMany': () => [{ username: 'mary' }],
+    });
+
+    const result = await h.sync({
+      staff: [{ username: 'mary', role: 'WAITER' }],
+    });
+
+    expect(result.staffNeedingPin).toBeUndefined();
   });
 
   it('does not issue a delete when every server member is still present', async () => {
@@ -1133,7 +1170,7 @@ describe('POST /sync/manager-data — realtime hints and echo suppression', () =
   });
 
   it('drops an order hint whose echo is suppressed', async () => {
-    suppressPosEchoForOrder(4242);
+    suppressPosEchoForOrder(AUTH_CONTEXT, 4242);
     const h = makeHarness();
 
     await h.sync({ touchedOrderHints: [{ posOrderId: 4242 }] });
@@ -1209,7 +1246,7 @@ describe('POST /sync/manager-data — realtime hints and echo suppression', () =
   });
 
   it('drops a table hint whose echo is suppressed', async () => {
-    suppressPosEchoForTable('9', 'first');
+    suppressPosEchoForTable(AUTH_CONTEXT, '9', 'first');
     const h = makeHarness();
 
     await h.sync({
@@ -1245,7 +1282,7 @@ describe('POST /sync/manager-data — realtime hints and echo suppression', () =
   });
 
   it('drops a reservation hint whose echo is suppressed', async () => {
-    suppressPosEchoForReservation('r-echo');
+    suppressPosEchoForReservation(AUTH_CONTEXT, 'r-echo');
     const h = makeHarness();
 
     await h.sync({ touchedReservationHints: [{ reservationId: 'r-echo' }] });
@@ -1273,15 +1310,15 @@ describe('POST /sync/manager-data — business day rollover', () => {
     expect(h.trace).toEqual([
       'db:table.count',
       'db:table.upsert', // the POS snapshot is applied first…
-      'ws:table_updated',
-      'ws:data_updated',
       'db:setting.findUnique', // currentBusinessDate
       'db:setting.upsert',
       'db:setting.findUnique', // businessDayOpenedAt:<date>
       'db:setting.upsert',
       'db:table.updateMany', // …and only then is the floor wiped
-      'ws:day_closed',
       'db:setting.upsert', // openTablesPayable:<date>
+      'ws:table_updated',
+      'ws:data_updated',
+      'ws:day_closed',
     ]);
 
     const wipe = h.calls.find((c) => c.key === 'table.updateMany');

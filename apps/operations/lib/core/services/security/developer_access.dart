@@ -5,10 +5,12 @@ import 'package:cryptography/cryptography.dart';
 import 'package:flutter/foundation.dart';
 import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/services/audit/audit_event_service.dart';
+import 'package:vynic/core/services/audit/global_audit.dart';
 import 'package:vynic/core/services/security/developer_code_format.dart';
 import 'package:vynic/core/services/security/developer_otp.dart';
 import 'package:vynic/core/services/security/developer_otp_chain.dart';
 import 'package:vynic/core/services/security/developer_public_key.dart';
+import 'package:vynic/core/services/sync/api_config.dart';
 
 /// The capabilities a developer token can carry.
 ///
@@ -127,8 +129,21 @@ class DeveloperAccess {
   static String get _publicKeyBase64 =>
       publicKeyOverride ?? kDeveloperPublicKeyBase64;
 
+  /// Development shortcut: `vynic-pos` / `vynic-manager` pass
+  /// `--dart-define=VYNIC_DEVELOPER_UNLOCK=true`, which holds the panel open
+  /// with every scope and no expiry, so a developer never types a code into
+  /// their own machine. It is inert unless the build is also a debug
+  /// development build, so the define changes nothing on a release build.
+  static const _developmentUnlockRequested = bool.fromEnvironment(
+    'VYNIC_DEVELOPER_UNLOCK',
+  );
+  static bool get isDevelopmentUnlocked =>
+      _developmentUnlockRequested && ApiConfig.allowDeveloperOverride;
+
   /// Rebuilds the admin chrome when the panel locks or unlocks.
-  static final ValueNotifier<bool> unlocked = ValueNotifier<bool>(false);
+  static final ValueNotifier<bool> unlocked = ValueNotifier<bool>(
+    isDevelopmentUnlocked,
+  );
 
   static DateTime? _expiresAt;
   static List<String> _scopes = const [];
@@ -209,6 +224,7 @@ class DeveloperAccess {
   static String get terminalIdShort => terminalId;
 
   static bool get isUnlocked {
+    if (isDevelopmentUnlocked) return true;
     final expiry = _expiresAt;
     if (expiry == null) return false;
     if (_now().isAfter(expiry)) {
@@ -220,10 +236,11 @@ class DeveloperAccess {
 
   static DateTime? get expiresAt => _expiresAt;
 
-  static List<String> get grantedScopes => List.unmodifiable(_scopes);
+  static List<String> get grantedScopes =>
+      List.unmodifiable(isDevelopmentUnlocked ? DeveloperScope.all : _scopes);
 
   /// Whether the current session may perform [scope].
-  static bool can(String scope) => isUnlocked && _scopes.contains(scope);
+  static bool can(String scope) => isUnlocked && grantedScopes.contains(scope);
 
   /// Verifies a signed token and, if it holds up, opens the panel.
   static Future<DeveloperUnlockResult> unlock(String rawToken) async {
@@ -406,7 +423,8 @@ class DeveloperAccess {
   static String? otpTipOverride;
 
   static void lock({String reason = 'manual'}) {
-    if (_expiresAt == null) return;
+    // A development build has nothing to lock back to.
+    if (isDevelopmentUnlocked || _expiresAt == null) return;
     _expiresAt = null;
     _scopes = const [];
     _tokenId = null;
@@ -425,7 +443,10 @@ class DeveloperAccess {
   }) async {
     await AuditEventService.logEvent(
       action: 'developer.$action',
-      userId: 'developer:${_tokenId ?? 'none'}',
+      userId:
+          'developer:${_tokenId ?? (isDevelopmentUnlocked ? 'development' : 'none')}',
+      entityType: GlobalAuditEntity.developer,
+      entityId: _tokenId,
       data: {...data, 'terminal': terminalIdShort},
     );
   }

@@ -1,10 +1,11 @@
+import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'package:hive/hive.dart';
 import 'package:vynic/core/models/staff_role.dart';
 
 part 'user.g.dart';
 
 @HiveType(typeId: 0)
-class User extends HiveObject {
+class User extends HiveObject with UpdateTrackedHiveObject {
   @HiveField(0)
   String username;
 

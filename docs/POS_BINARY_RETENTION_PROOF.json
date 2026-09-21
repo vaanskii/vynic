@@ -1,0 +1,125 @@
+{
+  "proof": "Windows POS bounded binary retention on macOS",
+  "layout": [
+    "current",
+    "staging",
+    "rollback"
+  ],
+  "steadyState": "current only; one deferred candidate may remain in staging until explicit install",
+  "stabilization": {
+    "initialHealthSeconds": 90,
+    "probationSeconds": 30,
+    "maxHeartbeatGapSeconds": 10
+  },
+  "go": {
+    "race": true,
+    "topLevelPassed": 58,
+    "testRecordsPassed": 146,
+    "failures": [],
+    "nativeVet": true,
+    "windowsVet": true,
+    "modTidyDiff": "empty"
+  },
+  "crossBuilds": {
+    "VynicEdge": {
+      "target": "windows/amd64",
+      "bytes": 27140608,
+      "sha256": "a29d485dbbd898a428aa9c446d4e7fb247da0485a81e6a5d71907370cf676939",
+      "productionSigned": false
+    },
+    "VynicSetup": {
+      "target": "windows/amd64",
+      "bytes": 17627136,
+      "sha256": "8c329e6761959abe50567ae8063482d0e6bc7bb9f6657eb86ecdf50ca0235897",
+      "productionSigned": false,
+      "subsystem": "GUI",
+      "executionLevel": "asInvoker",
+      "distribution": "unusable example.invalid with public fixture key"
+    }
+  },
+  "hiveRecovery": {
+    "proof": "Windows POS updater data recovery on macOS",
+    "independentPids": [
+      38893,
+      38940,
+      38978
+    ],
+    "checks": [
+      "open Order/Table are READY",
+      "flushed Hive survives abrupt process exit",
+      "new release reopens same durable UUIDs and occupancy",
+      "rollback release reopens same data without restoring it",
+      "durable pending Cloud outbox remains"
+    ],
+    "state": {
+      "readiness": "READY",
+      "order": {
+        "orderUuid": "f81c44d7-bf0d-4248-9b90-fdcd1aac9b3e",
+        "edgeRevision": 0,
+        "orderId": 7,
+        "posOrderId": 7,
+        "tableNumbers": [
+          "1"
+        ],
+        "floor": "first",
+        "items": [
+          {
+            "lineUuid": "ffb252d7-a8f8-4a86-bbcb-eaab48b37cd5",
+            "itemKey": "tea",
+            "itemName": "Tea",
+            "unitPrice": 4.0,
+            "quantity": 2,
+            "total": 8.0,
+            "comment": null
+          }
+        ],
+        "totalAmount": 8.0,
+        "createdAt": "2026-09-20T00:00:00.000Z",
+        "createdBy": "proof",
+        "waiterName": "proof",
+        "status": "confirmed",
+        "updatedAt": null,
+        "includeServiceFee": false,
+        "paymentMethod": null,
+        "closedAt": null,
+        "discountAmount": 0.0,
+        "packageId": null,
+        "packageName": null,
+        "packagePrice": 0.0,
+        "packageUnitPrice": 0.0,
+        "packageGuestCount": 0,
+        "manualAdjustmentAmount": 0.0,
+        "openedByUserId": null,
+        "customServiceFeePercentage": null,
+        "closureId": null,
+        "advanceAmount": 0.0,
+        "advanceCollectedOn": null,
+        "advanceReceiptId": null,
+        "customerName": "",
+        "customerPhone": "",
+        "pickupTime": ""
+      },
+      "table": {
+        "edgeRevision": 0,
+        "tableNumber": "1",
+        "floor": "first",
+        "isReserved": true,
+        "reservedAt": null,
+        "reservedBy": null,
+        "activeOrderId": 7,
+        "reservationId": null,
+        "currentBill": null
+      },
+      "pendingCloud": {
+        "id": "stable-outbox-id",
+        "status": "pending"
+      }
+    },
+    "windowsArtifactExecuted": false
+  },
+  "windowsArtifactExecuted": false,
+  "nativeWindowsQualified": false,
+  "deployed": false,
+  "edgeSelfUpdate": false,
+  "businessAuthorityChanged": false
+}

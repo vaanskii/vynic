@@ -1,3 +1,5 @@
+import 'package:vynic/core/services/pos/pos_locale.dart';
+import 'package:vynic/core/widgets/pos_text.dart';
 import 'dart:async';
 import 'dart:math' show min;
 
@@ -9,7 +11,6 @@ import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/reservation_context.dart';
 import 'package:vynic/core/services/database_service.dart';
-import 'package:vynic/core/services/sync/sync_events.dart';
 import 'package:vynic/core/services/sync/pos_live_refresh.dart';
 import 'package:vynic/core/services/sync/monitoring_socket_service.dart';
 import 'package:vynic/core/services/sync/connection_status_service.dart';
@@ -27,7 +28,6 @@ import 'package:vynic/core/utils/reservation_table_availability.dart';
 import 'package:vynic/core/ui/vynic_colors.dart';
 import 'package:vynic/core/ui/vynic_floor_tokens.dart';
 import 'package:vynic/core/ui/vynic_radius.dart';
-import 'package:vynic/core/ui/vynic_status_tokens.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_tables_dashboard_section.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_calculator_page.dart';
 import 'package:vynic/apps/windows_pos/widgets/home/home_reservation_menu_preview.dart';
@@ -82,7 +82,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final FocusNode _shortcutFocusNode = FocusNode(debugLabel: 'home-shortcuts');
   String? _lastToastNotificationId;
   bool _notificationsPanelOpen = false;
-  StreamSubscription<SyncEvent>? _syncEventsSub;
   Timer? _syncRefreshDebounce;
   Timer? _syncRefreshFollowUp;
   Timer? _syncRefreshFinalFollowUp;
@@ -94,7 +93,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onLiveDataChanged() {
     if (!mounted) return;
-    _scheduleLiveRefresh();
+    // SyncHub events are emitted after the local Hive write they describe, so
+    // the offline-first UI can read the committed state immediately. Delayed
+    // retries are reserved for remote signals that may race local ingest.
+    unawaited(_refreshTables());
   }
 
   /// Locks the terminal full-screen until a PIN is entered (manual, from the
@@ -132,9 +134,6 @@ class _HomeScreenState extends State<HomeScreen> {
     AppNotificationHistoryStore.instance.entries.addListener(
       _onNotificationEntriesChanged,
     );
-    // Live-refresh the floor plan / reservations when data changes locally
-    // (e.g. mobile walk-in, cancellation, or reservation arriving via ingest).
-    _syncEventsSub = SyncHub.events.listen(_onSyncEvent);
     // The WebSocket push (which also drives the toast notification) is the most
     // reliable cross-device signal: it bumps on every server-side change, even
     // when the local ingest write races behind it. Refresh on it too.
@@ -151,26 +150,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     MonitoringSocketService.updateCounter.removeListener(_onRemoteUpdateSignal);
     SessionLock.resetToLanding.removeListener(_onSwitchResetToLanding);
-    _syncEventsSub?.cancel();
     _syncRefreshDebounce?.cancel();
     _syncRefreshFollowUp?.cancel();
     _syncRefreshFinalFollowUp?.cancel();
     _shortcutFocusNode.dispose();
     super.dispose();
-  }
-
-  void _onSyncEvent(SyncEvent event) {
-    if (!mounted) return;
-    switch (event.type) {
-      case SyncEventType.tables:
-      case SyncEventType.orders:
-      case SyncEventType.reservations:
-        break;
-      case SyncEventType.menu:
-      case SyncEventType.connection:
-        return;
-    }
-    _scheduleLiveRefresh();
   }
 
   void _onRemoteUpdateSignal() {
@@ -304,7 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     children: [
                       const SizedBox(width: 8),
-                      const Text(
+                      const PosText(
                         'შეტყობინებები',
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
@@ -404,11 +388,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   int _countActiveTakeAways(DateTime date) {
-    final reservations = DatabaseService.getTakeAwayReservationsForDate(date);
-    return reservations.where((reservation) {
-      final status = reservation.status.toLowerCase();
-      return status != 'completed' && status != 'cancelled';
-    }).length;
+    return DatabaseService.getTakeawayTicketsForDate(
+      date,
+    ).where((ticket) => ticket.isActive).length;
   }
 
   double _calculateOpenedTablesAmount(DateTime date) {
@@ -533,7 +515,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Column(
                     children: [
-                      _HomeUtilityBar(
+                      PosHomeUtilityBar(
                         businessDate: currentDate,
                         activeLabel: _destinations[activeIndex].label,
                         username: _user.username,
@@ -620,12 +602,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildTodayTakeAwayPage() {
     final today = DatabaseService.getCurrentDate();
-    final takeAwayReservations = DatabaseService.getTakeAwayReservationsForDate(
-      today,
-    );
     return HomeTakeAwaySection(
       user: _user,
-      takeAwayReservations: takeAwayReservations,
+      tickets: DatabaseService.getTakeawayTicketsForDate(today),
       onRefreshRequested: _refreshTables,
       primaryColor: _primaryColor,
       secondaryColor: _secondaryColor,
@@ -751,6 +730,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await DatabaseService.updateReservationPreOrderItems(
       reservation.id,
       selectedItems,
+      actorId: _user.username,
     );
 
     if (!mounted) {
@@ -791,18 +771,18 @@ class _HomeScreenState extends State<HomeScreen> {
         '${selectedTime.hour.toString().padLeft(2, '0')}:'
         '${selectedTime.minute.toString().padLeft(2, '0')}';
 
-    reservation.customerName = (result['customerName'] as String? ?? '').trim();
-    reservation.customerPhone = (result['customerPhone'] as String? ?? '')
-        .trim();
     final notes = (result['notes'] as String?)?.trim();
-    reservation.notes = notes != null && notes.isNotEmpty ? notes : null;
-    reservation.reservationDate = selectedDate;
-    reservation.reservationTime = timeString;
-    reservation.numberOfGuests = HomeReservationsHelper.extractGuestCount(
-      result,
+    await DatabaseService.updateReservationDetails(
+      reservation.id,
+      customerName: (result['customerName'] as String? ?? '').trim(),
+      customerPhone: (result['customerPhone'] as String? ?? '').trim(),
+      notes: notes,
+      clearNotes: notes == null || notes.isEmpty,
+      reservationDate: selectedDate,
+      reservationTime: timeString,
+      numberOfGuests: HomeReservationsHelper.extractGuestCount(result),
+      actorId: _user.username,
     );
-
-    await reservation.save();
 
     if (!mounted) {
       return;
@@ -856,6 +836,7 @@ class _HomeScreenState extends State<HomeScreen> {
         reservation.id,
         const [],
         tableRefs: selected,
+        actorId: _user.username,
       );
       final result = await DatabaseService.activateReservation(
         reservationId: reservation.id,
@@ -1261,7 +1242,7 @@ class _HomeNavigationTab extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
+            PosText(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -1293,6 +1274,7 @@ class _HomeNavigationTab extends StatelessWidget {
                 ),
                 child: Text(
                   badgeCount! > 9 ? '9+' : '$badgeCount',
+                  key: label == 'გატანები' ? homeTakeawayCountKey : null,
                   style: const TextStyle(
                     color: VynicFloorTokens.text,
                     fontSize: 11,
@@ -1307,6 +1289,8 @@ class _HomeNavigationTab extends StatelessWidget {
     );
   }
 }
+
+const Key homeTakeawayCountKey = Key('home-takeaway-count');
 
 class _TopAdminButton extends StatelessWidget {
   const _TopAdminButton({
@@ -1332,16 +1316,17 @@ class _TopAdminButton extends StatelessWidget {
       ),
       child: narrow
           ? const Icon(Icons.settings_outlined, size: 17)
-          : const Text(
-              'პარამეტრები',
+          : const PosText(
+              'მართვის ცენტრი',
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
     );
   }
 }
 
-class _HomeUtilityBar extends StatelessWidget {
-  const _HomeUtilityBar({
+class PosHomeUtilityBar extends StatelessWidget {
+  const PosHomeUtilityBar({
+    super.key,
     required this.businessDate,
     required this.activeLabel,
     required this.username,
@@ -1375,100 +1360,92 @@ class _HomeUtilityBar extends StatelessWidget {
     final narrow = layoutClass.isXs;
     final hideSecondary = layoutClass.isCompactWidth || fullscreenPosMode;
     return Container(
-      height: compact ? 58 : 64,
+      constraints: BoxConstraints(minHeight: compact ? 58 : 64),
       padding: EdgeInsets.symmetric(horizontal: narrow ? 12 : 20),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: VynicColors.border)),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: VynicColors.accentSoft,
-              borderRadius: BorderRadius.circular(9),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: VynicColors.accentSoft,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  padding: const EdgeInsets.all(5),
+                  child: Image.asset(
+                    'assets/logo/vynic-logo.png',
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                if (!narrow) ...[
+                  const PosText(
+                    'Vynic POS',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: VynicColors.textPrimary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Container(width: 1, height: 24, color: VynicColors.border),
+                  const SizedBox(width: 14),
+                ],
+                Expanded(
+                  child: PosText(
+                    activeLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: VynicColors.neutral,
+                      fontSize: narrow ? 13 : 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                SizedBox(width: narrow ? 8 : 16),
+                _BusinessDayChip(label: _formatBusinessDate(businessDate)),
+                const SizedBox(width: 8),
+                _ClockChip(compact: narrow),
+                SizedBox(width: narrow ? 6 : 10),
+                _LanguageButton(
+                  code: PosLocale.code(context).toUpperCase(),
+                  onTap: onLanguageTap,
+                ),
+                SizedBox(width: narrow ? 6 : 8),
+                _NotificationUtilityButton(
+                  unreadCount: unreadCount,
+                  onTap: onNotificationTap,
+                ),
+                SizedBox(width: narrow ? 6 : 10),
+                _EmployeeChip(
+                  username: username,
+                  roleLabel: hideSecondary ? '' : roleLabel,
+                  compact: narrow,
+                  onTap: onLockTap,
+                ),
+              ],
             ),
-            padding: const EdgeInsets.all(5),
-            child: Image.asset(
-              'assets/logo/vynic-logo.png',
-              fit: BoxFit.contain,
-            ),
-          ),
-          const SizedBox(width: 10),
-          if (!narrow) ...[
-            const Text(
-              'Vynic POS',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: VynicColors.textPrimary,
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Container(width: 1, height: 24, color: VynicColors.border),
-            const SizedBox(width: 14),
-          ],
-          Expanded(
-            child: Text(
-              activeLabel,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: VynicColors.neutral,
-                fontSize: narrow ? 13 : 15,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          SizedBox(width: narrow ? 8 : 16),
-          if (!fullscreenPosMode && !hideSecondary) ...[
-            _BusinessDayChip(label: _formatBusinessDate(businessDate)),
-            const SizedBox(width: 8),
-          ],
-          _ConnectionChip(compact: narrow),
-          SizedBox(width: narrow ? 6 : 10),
-          _ClockChip(compact: narrow),
-          SizedBox(width: narrow ? 6 : 10),
-          _LanguageButton(code: languageCode, onTap: onLanguageTap),
-          SizedBox(width: narrow ? 6 : 8),
-          _NotificationUtilityButton(
-            unreadCount: unreadCount,
-            onTap: onNotificationTap,
-          ),
-          SizedBox(width: narrow ? 6 : 10),
-          _EmployeeChip(
-            username: username,
-            roleLabel: hideSecondary ? '' : roleLabel,
-            compact: narrow,
-            onTap: onLockTap,
           ),
         ],
       ),
     );
   }
 
-  static String _formatBusinessDate(DateTime date) {
-    const months = [
-      'იან',
-      'თებ',
-      'მარ',
-      'აპრ',
-      'მაი',
-      'ივნ',
-      'ივლ',
-      'აგვ',
-      'სექ',
-      'ოქტ',
-      'ნოე',
-      'დეკ',
-    ];
-    return '${date.day} ${months[date.month - 1]}';
-  }
+  static String _formatBusinessDate(DateTime date) =>
+      '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
 }
 
 class _ClockChip extends StatelessWidget {
@@ -1481,7 +1458,7 @@ class _ClockChip extends StatelessWidget {
     final now = DateTime.now();
     final label =
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-    return Text(
+    return PosText(
       label,
       style: TextStyle(
         color: VynicColors.textPrimary,
@@ -1501,12 +1478,13 @@ class _BusinessDayChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 34,
+      key: const ValueKey('home-work-date'),
+      constraints: const BoxConstraints(minHeight: 34),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: VynicColors.warningSoft,
+        color: VynicFloorTokens.accentSoft,
         borderRadius: VynicRadius.smAll,
-        border: Border.all(color: VynicColors.warningBorder),
+        border: Border.all(color: VynicFloorTokens.panelBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1515,17 +1493,17 @@ class _BusinessDayChip extends StatelessWidget {
             width: 7,
             height: 7,
             decoration: const BoxDecoration(
-              color: Color(0xFFD7A72C),
+              color: VynicFloorTokens.accentStrong,
               shape: BoxShape.circle,
             ),
           ),
           const SizedBox(width: 8),
-          Text(
+          PosText(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: VynicColors.warningText,
+              color: VynicFloorTokens.accentText,
               fontSize: 12,
               fontWeight: FontWeight.w900,
             ),
@@ -1533,95 +1511,6 @@ class _BusinessDayChip extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class _ConnectionChip extends StatelessWidget {
-  const _ConnectionChip({required this.compact});
-
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder<BackendConnectionState>(
-      valueListenable: ConnectionStatusService.backendState,
-      builder: (context, state, _) {
-        return ValueListenableBuilder<bool>(
-          valueListenable: ConnectionStatusService.hasPendingLocalChanges,
-          builder: (context, pending, _) {
-            final presentation = _connectionPresentation(state, pending);
-            final token = VynicStatusTokens.ofTone(presentation.tone);
-            return Container(
-              height: 34,
-              padding: EdgeInsets.symmetric(horizontal: compact ? 9 : 10),
-              decoration: BoxDecoration(
-                color: token.background,
-                borderRadius: VynicRadius.smAll,
-                border: Border.all(color: token.border),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(presentation.icon, size: 16, color: token.text),
-                  if (!compact) ...[
-                    const SizedBox(width: 7),
-                    Text(
-                      presentation.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: token.text,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  ({String label, IconData icon, VynicStatusTone tone}) _connectionPresentation(
-    BackendConnectionState state,
-    bool pending,
-  ) {
-    if (pending && state != BackendConnectionState.offline) {
-      return (
-        label: 'რიგშია',
-        icon: Icons.cloud_upload_outlined,
-        tone: VynicStatusTone.warning,
-      );
-    }
-    switch (state) {
-      case BackendConnectionState.syncing:
-        return (
-          label: 'სინქი',
-          icon: Icons.sync_rounded,
-          tone: VynicStatusTone.info,
-        );
-      case BackendConnectionState.connected:
-        return (
-          label: 'სინქრონულია',
-          icon: Icons.cloud_done_outlined,
-          tone: VynicStatusTone.success,
-        );
-      case BackendConnectionState.offline:
-        return (
-          label: 'ოფლაინი',
-          icon: Icons.cloud_off_outlined,
-          tone: VynicStatusTone.warning,
-        );
-      case BackendConnectionState.idle:
-        return (
-          label: 'ლოკალური',
-          icon: Icons.storage_outlined,
-          tone: VynicStatusTone.neutral,
-        );
-    }
   }
 }
 
@@ -1654,7 +1543,7 @@ class _LanguageButton extends StatelessWidget {
                 color: VynicColors.textMuted,
               ),
               const SizedBox(width: 7),
-              Text(
+              PosText(
                 code,
                 style: const TextStyle(
                   color: VynicColors.textPrimary,
@@ -1763,7 +1652,7 @@ class _EmployeeChip extends StatelessWidget {
                   color: VynicColors.accentSoft,
                   borderRadius: BorderRadius.circular(7),
                 ),
-                child: Text(
+                child: PosText(
                   initials,
                   maxLines: 1,
                   overflow: TextOverflow.clip,
@@ -1793,7 +1682,7 @@ class _EmployeeChip extends StatelessWidget {
                         ),
                       ),
                       if (roleLabel.isNotEmpty)
-                        Text(
+                        PosText(
                           roleLabel,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -1830,7 +1719,7 @@ class _MiniBadge extends StatelessWidget {
         color: VynicColors.danger,
         shape: BoxShape.circle,
       ),
-      child: Text(
+      child: PosText(
         count > 9 ? '9+' : '$count',
         style: const TextStyle(
           color: Colors.white,

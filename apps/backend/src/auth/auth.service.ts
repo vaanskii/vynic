@@ -1,16 +1,19 @@
+import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
+import { FeatureKeys } from '../entitlements/feature-keys';
+import { commercialAccessAllowed } from '../entitlements/subscription-policy';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { StaffRole as StaffRoleEnum } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import * as bcrypt from 'bcrypt';
 import {
-  isMobileAppStaffRole,
   MOBILE_APP_STAFF_ROLES,
   normalizeStaffRole,
 } from '../staff/staff-role';
-import { LEGACY_MANAGER_TENANT } from '../tenancy/legacy-manager-tenant';
+import { managerLoginContract } from '../shared/contracts/manager-login';
 
 export interface MobileLoginResult {
+  venueCode: string;
   access_token: string;
   role: string;
   username: string;
@@ -24,56 +27,106 @@ export class AuthService {
     private readonly jwt: JwtService,
   ) {}
 
-  /**
-   * Authenticates manager mobile app users by PIN (manager only).
-   *
-   * The candidate search is still confined to the bootstrap Venue, and that is
-   * a deliberate transitional limit rather than an oversight. A bare PIN
-   * carries no venue discriminator, so widening this scan across Venues would
-   * mean a PIN that happens to collide with another restaurant's manager could
-   * authenticate into the wrong tenant. Multi-venue Manager login therefore
-   * needs a venue-discriminating credential first — see
-   * docs/MANAGER_TENANT_AUTH.md.
-   *
-   * The Venue on the resulting session is nonetheless read from the matched
-   * Staff row rather than assumed, so the authority is already the server-owned
-   * Staff/Venue relationship. Only the search scope is transitional.
-   */
-  async mobileLogin(pin: string): Promise<MobileLoginResult> {
-    if (!pin || pin.length < 4) {
-      throw new UnauthorizedException('Invalid PIN format');
-    }
+  /** Public identifier lookup: never returns Staff, credentials or a session. */
+  async resolveManagerVenue(value: unknown) {
+    const code = typeof value === 'string' ? value.trim().toLowerCase() : '';
+    if (!new RegExp(managerLoginContract.venueCodePattern).test(code))
+      throw new UnauthorizedException('Restaurant unavailable');
+    const venue = await this.prisma.venue.findUnique({
+      where: { loginCode: code },
+      include: { subscription: true },
+    });
+    if (
+      !venue ||
+      venue.status !== 'ACTIVE' ||
+      !commercialAccessAllowed(venue.subscription?.status) ||
+      !(await new VenueEntitlementsService(this.prisma).hasFeature(
+        venue.id,
+        FeatureKeys.MANAGER_APP,
+      ))
+    )
+      throw new UnauthorizedException('Restaurant unavailable');
+    // Optional profile fields are additive; older Venues need only a name/code.
+    const profile = venue as typeof venue & {
+      branchName?: string | null;
+      address?: string | null;
+    };
+    return {
+      id: venue.id,
+      code: venue.loginCode,
+      name: venue.name,
+      branchName: profile.branchName ?? null,
+      address: profile.address ?? null,
+    };
+  }
 
+  /** Venue is selected before any PIN comparisons; duplicate matches fail closed. */
+  async mobileLogin(
+    pin: string,
+    venueCode?: string,
+  ): Promise<MobileLoginResult> {
+    if (typeof pin !== 'string' || !/^\d{4,6}$/.test(pin)) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    let code: string;
+    if (venueCode === undefined) {
+      // Explicit, deadline-bounded support for already deployed PIN-only clients.
+      const deadline = Date.parse(process.env.MANAGER_LEGACY_LOGIN_UNTIL ?? '');
+      if (
+        !Number.isFinite(deadline) ||
+        Date.now() >= deadline ||
+        deadline > Date.parse(managerLoginContract.legacyMaximumDeadline)
+      ) {
+        throw new UnauthorizedException(
+          'Restaurant code required; update Manager',
+        );
+      }
+      code = managerLoginContract.rolloutVenueCode;
+    } else {
+      if (typeof venueCode !== 'string')
+        throw new UnauthorizedException('Invalid credentials');
+      code = venueCode.trim().toLowerCase();
+    }
+    if (!new RegExp(managerLoginContract.venueCodePattern).test(code)) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    const venue = await this.prisma.venue.findUnique({
+      where: { loginCode: code },
+      include: { subscription: true },
+    });
+    if (
+      !venue ||
+      venue.status !== 'ACTIVE' ||
+      !commercialAccessAllowed(venue.subscription?.status)
+    )
+      throw new UnauthorizedException('Invalid credentials');
     const candidates = await this.prisma.staff.findMany({
       where: {
-        venueId: LEGACY_MANAGER_TENANT.venueId,
+        venueId: venue.id,
         role: { in: MOBILE_APP_STAFF_ROLES as StaffRoleEnum[] },
         isActive: true,
       },
       select: { id: true, username: true, role: true, pinHash: true },
     });
-
+    const matches: typeof candidates = [];
     for (const staff of candidates) {
-      const match = await bcrypt.compare(pin, staff.pinHash);
-      if (match) {
-        const role = normalizeStaffRole(staff.role);
-        if (!isMobileAppStaffRole(staff.role)) continue;
-        const payload = {
-          sub: staff.id,
-          username: staff.username,
-          role,
-        };
-        const expiresIn = 24 * 60 * 60; // 24 h in seconds
-        return {
-          access_token: this.jwt.sign(payload, { expiresIn }),
-          role,
-          username: staff.username,
-          expiresIn,
-        };
-      }
+      if (await bcrypt.compare(pin, staff.pinHash)) matches.push(staff);
     }
-
-    throw new UnauthorizedException('Invalid PIN');
+    if (matches.length !== 1)
+      throw new UnauthorizedException('Invalid credentials');
+    const staff = matches[0];
+    const role = normalizeStaffRole(staff.role);
+    const expiresIn = 24 * 60 * 60;
+    return {
+      access_token: this.jwt.sign(
+        { sub: staff.id, username: staff.username, role },
+        { expiresIn },
+      ),
+      role,
+      username: staff.username,
+      expiresIn,
+      venueCode: venue.loginCode,
+    };
   }
 
   /** Hash a plain PIN for storage. */

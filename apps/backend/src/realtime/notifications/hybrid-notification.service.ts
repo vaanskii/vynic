@@ -1,3 +1,5 @@
+import { VenueEntitlementsService } from '../../entitlements/venue-entitlements.service';
+import { FeatureKeys } from '../../entitlements/feature-keys';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { getApps, initializeApp, applicationDefault } from 'firebase-admin/app';
@@ -12,8 +14,7 @@ import {
   getServiceFeeCoalesceKey,
   ServiceFeeNotificationCoalescer,
 } from './manager-notification-coalesce';
-import type { BroadcastOptions, WsEvent, WsEventType } from '../ws-events';
-import { LEGACY_MANAGER_TENANT } from '../../tenancy/legacy-manager-tenant';
+import type { VenueBroadcastOptions, WsEvent, WsEventType } from '../ws-events';
 
 @Injectable()
 export class HybridNotificationService {
@@ -22,7 +23,10 @@ export class HybridNotificationService {
   private _fcmEnabled = false;
   private readonly serviceFeeCoalescer = new ServiceFeeNotificationCoalescer(
     defaultServiceFeeCoalesceMs,
-    (type, payload, options) => this.deliverPersisted(type, payload, options),
+    (type, payload, options) =>
+      this.deliverPersisted(type, payload, options).catch((error: unknown) => {
+        this.logger.error('Coalesced notification delivery failed', error);
+      }),
   );
 
   constructor(
@@ -39,14 +43,21 @@ export class HybridNotificationService {
   async deliver(
     type: WsEventType,
     payload: unknown,
-    options?: BroadcastOptions,
+    options: VenueBroadcastOptions,
   ): Promise<void> {
+    if (!options?.venueId)
+      throw new Error('Notification requires a resolved Venue');
     const timestamp = new Date().toISOString();
     const coalesceKey = getServiceFeeCoalesceKey(type, payload);
 
     if (coalesceKey) {
-      this.gateway.emitEnvelope({ type, payload, timestamp }, options);
-      this.serviceFeeCoalescer.schedule(coalesceKey, type, payload, options);
+      await this.gateway.emitEnvelope({ type, payload, timestamp }, options);
+      this.serviceFeeCoalescer.schedule(
+        `${options.venueId}:${coalesceKey}`,
+        type,
+        payload,
+        options,
+      );
       return;
     }
 
@@ -56,7 +67,7 @@ export class HybridNotificationService {
   private async deliverPersisted(
     type: WsEventType,
     payload: unknown,
-    options?: BroadcastOptions,
+    options: VenueBroadcastOptions,
   ): Promise<void> {
     const notificationId = uuidv4();
     const timestamp = new Date().toISOString();
@@ -70,13 +81,19 @@ export class HybridNotificationService {
     const pushCopy = buildManagerPushCopy(type, payload);
 
     try {
-      if (pushCopy) {
+      if (
+        pushCopy &&
+        (await new VenueEntitlementsService(this.prisma).hasFeature(
+          options.venueId,
+          FeatureKeys.MANAGER_APP,
+        ))
+      ) {
         await this.prisma.managerNotification.create({
           data: {
             id: notificationId,
             // Deliveries are addressed by staff username, which is only unique
             // inside a Venue, so the notification itself carries the owner.
-            venueId: LEGACY_MANAGER_TENANT.venueId,
+            venueId: options.venueId,
             wsType: type,
             title: pushCopy.title,
             body: pushCopy.body,
@@ -87,16 +104,26 @@ export class HybridNotificationService {
 
         const managers = await this.prisma.staff.findMany({
           where: {
-            venueId: LEGACY_MANAGER_TENANT.venueId,
+            venueId: options.venueId,
             isActive: true,
+            venue: {
+              OR: [
+                { subscription: { is: null } },
+                {
+                  subscription: {
+                    status: { in: ['TRIAL', 'ACTIVE', 'PAST_DUE'] },
+                  },
+                },
+              ],
+            },
             role: {
-              in: [StaffRole.ADMIN, StaffRole.MANAGER, StaffRole.SUPERVISOR],
+              in: [StaffRole.ADMIN, StaffRole.MANAGER],
             },
           },
           select: { username: true },
         });
 
-        const online = this.presence.getOnlineStaffUsernames();
+        const online = this.presence.getOnlineStaffUsernames(options.venueId);
         const deliveryRows = managers.map((m) => ({
           notificationId,
           staffUsername: m.username,
@@ -112,6 +139,7 @@ export class HybridNotificationService {
 
         try {
           await this.sendFcmToOfflineManagers({
+            venueId: options.venueId,
             notificationId,
             envelope,
             title: pushCopy.title,
@@ -129,7 +157,7 @@ export class HybridNotificationService {
       );
     }
 
-    this.gateway.emitEnvelope(envelope, options);
+    await this.gateway.emitEnvelope(envelope, options);
   }
 
   private ensureFcmInitialized(): boolean {
@@ -153,6 +181,7 @@ export class HybridNotificationService {
   }
 
   private async sendFcmToOfflineManagers(params: {
+    venueId: string;
     notificationId: string;
     envelope: WsEvent & { notificationId: string };
     title: string;
@@ -168,7 +197,11 @@ export class HybridNotificationService {
     if (offlineManagers.length === 0) return;
 
     const devices = await this.prisma.pushDevice.findMany({
-      where: { staffUsername: { in: offlineManagers } },
+      where: {
+        venueId: params.venueId,
+        staffUsername: { in: offlineManagers },
+        venue: { status: 'ACTIVE' },
+      },
       select: { fcmToken: true, staffUsername: true },
     });
     if (devices.length === 0) return;
@@ -231,7 +264,11 @@ export class HybridNotificationService {
       });
       if (invalidTokens.length > 0) {
         await this.prisma.pushDevice.deleteMany({
-          where: { fcmToken: { in: invalidTokens } },
+          where: {
+            venueId: params.venueId,
+            staffUsername: { in: offlineManagers },
+            fcmToken: { in: invalidTokens },
+          },
         });
       }
     }

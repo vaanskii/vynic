@@ -6,10 +6,15 @@ import 'package:vynic/core/services/sync/connection_status_service.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/sync/api_config.dart';
 import 'package:vynic/core/services/sync/audit_sync_state.dart';
+import 'package:vynic/core/services/sync/staff_credential_sync_state.dart';
+import 'package:vynic/core/services/sync/sale_ledger_sync_state.dart';
+import 'package:vynic/core/services/sync/manager_sales_history_builder.dart';
+import 'package:vynic/core/services/sync/sync_timing.dart';
 import 'package:vynic/core/services/sync/pos_callback_config.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
+import 'package:vynic/core/database/repositories/menu_repository.dart';
 import 'package:vynic/core/models/order.dart';
-import 'package:vynic/core/models/staff_role.dart';
+import 'package:vynic/core/models/reservation_classification.dart';
 import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
 import 'package:vynic/core/utils/payment_utils.dart';
 import 'package:vynic/core/contracts/table_identity.dart' as table_identity;
@@ -63,7 +68,23 @@ class ManagerSyncService {
 
   static const Duration _pendingFlushInterval = Duration(seconds: 30);
 
+  /// Monotonic reading of when the oldest currently-unpushed local change
+  /// arrived, or null when everything local has been pushed.
+  ///
+  /// This is what makes the wait before a sync measurable. A POS edit does not
+  /// push: it marks pending and the periodic flush picks it up, so the delay
+  /// between the two is real time a manager is looking at stale data, and it
+  /// belongs in the timing summary rather than being invisible.
+  static int? _pendingSinceMicros;
+
+  /// Records a local change as unpushed, and when it happened.
+  static void _markPendingLocalChange() {
+    _pendingSinceMicros ??= SyncTiming.nowMicros();
+    ConnectionStatusService.markPendingLocalChange();
+  }
+
   static void initialize() {
+    if (_shuttingDown) return;
     ConnectionStatusService.initialize();
 
     // Always wire Hive changes to pending sync status.
@@ -73,12 +94,8 @@ class ManagerSyncService {
         _previousOnLocalChange?.call(event);
         _onLocalHiveChange(event);
       };
-      DatabaseService.registerAuditChangedCallback(
-        ConnectionStatusService.markPendingLocalChange,
-      );
-      DatabaseService.registerUsersChangedCallback(() {
-        ConnectionStatusService.markPendingLocalChange();
-      });
+      DatabaseService.registerAuditChangedCallback(_markPendingLocalChange);
+      DatabaseService.registerUsersChangedCallback(_markPendingLocalChange);
       _hooksRegistered = true;
     }
 
@@ -112,7 +129,7 @@ class ManagerSyncService {
   }
 
   static void _onLocalHiveChange(SyncEvent event) {
-    ConnectionStatusService.markPendingLocalChange();
+    _markPendingLocalChange();
 
     if (event.type == SyncEventType.tables) {
       final payload = event.payload;
@@ -264,6 +281,7 @@ class ManagerSyncService {
 
   static void dispose() {
     _startupSyncScheduled = false;
+    _pendingSinceMicros = null;
     _pendingFlushTimer?.cancel();
     _pendingFlushTimer = null;
     _pendingFlushInFlight = false;
@@ -271,7 +289,7 @@ class ManagerSyncService {
 
   /// Marks that local POS data should be pushed on the next manual sync.
   static void syncToManagerAppDebounced() {
-    ConnectionStatusService.markPendingLocalChange();
+    _markPendingLocalChange();
   }
 
   static Future<bool> testBackendConnection({
@@ -308,12 +326,12 @@ class ManagerSyncService {
 
   /// Manual-first mode: local changes mark pending instead of auto-pushing.
   static void syncRealtimeToManagerAppDebounced() {
-    ConnectionStatusService.markPendingLocalChange();
+    _markPendingLocalChange();
   }
 
   /// Manual-first mode: service-fee changes mark pending instead of auto-pushing.
   static void _syncServiceFeeToManagerDebounced() {
-    ConnectionStatusService.markPendingLocalChange();
+    _markPendingLocalChange();
   }
 
   static Future<void> syncRealtimeToManagerApp() async {
@@ -332,8 +350,17 @@ class ManagerSyncService {
   /// overlapping pushes made the server delete and recreate the same order's
   /// lines twice over, which surfaced on the manager app as duplicated items.
   static Future<void>? _inFlight;
+  static bool _shuttingDown = false;
+
+  /// Stop this POS's mirror worker; pending durable work resumes next launch.
+  static Future<void> shutdown() async {
+    _shuttingDown = true;
+    dispose();
+    await _inFlight;
+  }
 
   static Future<void> syncToManagerApp() {
+    if (_shuttingDown) return Future<void>.value();
     final running = _inFlight;
     if (running != null) {
       // Coalesce: the push already running carries the same local state.
@@ -346,7 +373,68 @@ class ManagerSyncService {
     });
   }
 
+  /// Builds the Order portion of a POS snapshot without consulting
+  /// Reservation storage. Takeaway guest and pickup metadata is Order-owned.
+  @visibleForTesting
+  static List<Map<String, dynamic>> buildOrdersSyncPayload({
+    required Iterable<Order> orders,
+    required DateTime businessDate,
+  }) {
+    return orders
+        .where(
+          (order) =>
+              order.createdAt.year == businessDate.year &&
+              order.createdAt.month == businessDate.month &&
+              order.createdAt.day == businessDate.day,
+        )
+        .map((order) {
+          final tableIds = _canonicalTableIdsForOrder(order);
+          return <String, dynamic>{
+            'posOrderId': order.orderId,
+            'status': order.status,
+            // Last local-edit time — lets the server resolve same-order
+            // conflicts by last-write-wins against a queued mobile change.
+            'updatedAt': (order.updatedAt ?? order.createdAt).toIso8601String(),
+            'totalAmount': order.totalAmount,
+            'paymentType': (order.paymentMethod ?? 'cash')
+                .toString()
+                .toLowerCase(),
+            'waiterName': order.createdBy,
+            'tableNumbers': order.tableNumbers
+                .map((table) => table.toString())
+                .toList(),
+            if (tableIds != null) 'tableIds': tableIds,
+            'floor': order.floor,
+            'customerName': order.customerName,
+            'customerPhone': order.customerPhone,
+            'pickupTime': order.pickupTime,
+            'includeServiceFee': order.includeServiceFee,
+            'discountAmount': order.discountAmount,
+            // Signed operator override of the bill total. Without it the
+            // Cloud's totalAmount cannot be reconciled against its own item
+            // lines, discount and service fee.
+            'manualAdjustmentAmount': order.manualAdjustmentAmount,
+            'serviceFeePercent': (order.customServiceFeePercentage ?? 10.0),
+            'items': order.items
+                .map(
+                  (item) => {
+                    'name': item.itemName,
+                    'quantity': item.quantity,
+                    'price': item.unitPrice,
+                    if (item.menuItemId != null) 'menuItemId': item.menuItemId,
+                    if (item.variantId != null) 'variantId': item.variantId,
+                  },
+                )
+                .toList(),
+          };
+        })
+        .toList();
+  }
+
   static Future<void> _syncToManagerApp() async {
+    // Measurement starts where the work does, carrying how long the oldest
+    // unpushed change waited to get here.
+    final timing = SyncTiming.begin(pendingSinceMicros: _pendingSinceMicros);
     try {
       // 1. Prepare Today's Orders (needed to enrich table occupancy)
       final allOrders = DatabaseService.getAllOrders();
@@ -358,70 +446,11 @@ class ManagerSyncService {
           '${businessDate.month.toString().padLeft(2, '0')}-'
           '${businessDate.day.toString().padLeft(2, '0')}';
       final allReservations = DatabaseService.getAllReservations();
-      final todayOrders = allOrders
-          .where((o) {
-            return o.createdAt.year == businessDate.year &&
-                o.createdAt.month == businessDate.month &&
-                o.createdAt.day == businessDate.day;
-          })
-          .map((o) {
-            // For takeaway orders, join the linked reservation for customer details
-            String customerName = '';
-            String pickupTime = '';
-            String? orderBusinessDate;
-            if (o.floor == 'takeaway') {
-              final reservation = allReservations
-                  .where((r) => r.isTakeAway && r.linkedOrderId == o.orderId)
-                  .firstOrNull;
-              customerName = reservation?.customerName ?? '';
-              pickupTime = reservation?.reservationTime ?? '';
-              // Use reservation date as the authoritative business date for this order.
-              // This matches exactly what Windows POS uses to filter takeaways.
-              if (reservation != null) {
-                final rd = reservation.reservationDate;
-                orderBusinessDate =
-                    '${rd.year.toString().padLeft(4, '0')}-'
-                    '${rd.month.toString().padLeft(2, '0')}-'
-                    '${rd.day.toString().padLeft(2, '0')}';
-              }
-            }
-            final tableIds = _canonicalTableIdsForOrder(o);
-            return {
-              'posOrderId': o.orderId,
-              'status': o.status,
-              // Last local-edit time — lets the server resolve same-order
-              // conflicts by last-write-wins against a queued mobile change.
-              'updatedAt': (o.updatedAt ?? o.createdAt).toIso8601String(),
-              'totalAmount': o.totalAmount,
-              'paymentType': (o.paymentMethod ?? 'cash')
-                  .toString()
-                  .toLowerCase(),
-              'waiterName': o.createdBy,
-              'tableNumbers': o.tableNumbers.map((e) => e.toString()).toList(),
-              if (tableIds != null) 'tableIds': tableIds,
-              'floor': o.floor,
-              if (orderBusinessDate != null) 'businessDate': orderBusinessDate,
-              'customerName': customerName,
-              'pickupTime': pickupTime,
-              'includeServiceFee': o.includeServiceFee,
-              'discountAmount': o.discountAmount,
-              // Signed operator override of the bill total. Without it the
-              // Cloud's totalAmount cannot be reconciled against its own item
-              // lines, discount and service fee.
-              'manualAdjustmentAmount': o.manualAdjustmentAmount,
-              'serviceFeePercent': (o.customServiceFeePercentage ?? 10.0),
-              'items': o.items
-                  .map(
-                    (it) => {
-                      'name': it.itemName,
-                      'quantity': it.quantity,
-                      'price': it.unitPrice,
-                    },
-                  )
-                  .toList(),
-            };
-          })
-          .toList();
+      final todayOrders = buildOrdersSyncPayload(
+        orders: allOrders,
+        businessDate: businessDate,
+      );
+      timing.mark('orders');
 
       final tables = _buildTablesSyncPayload(allOrders, businessDate);
       final orderMaps = todayOrders
@@ -436,6 +465,7 @@ class ManagerSyncService {
       );
       final touchedReservationHints = _drainReservationHints();
       final reservedInPayload = tables.where(_isTableOccupiedRaw).length;
+      timing.mark('tables');
 
       // Only sum bills on tables that are actually occupied right now.
       final openTablesPayable = tables
@@ -479,14 +509,20 @@ class ManagerSyncService {
           '($reservedInPayload reserved), ${todayOrders.length} orders, '
           'tableHints=${touchedTableHints.length}.',
         );
+        timing.mark('payload');
         ConnectionStatusService.markAttempt();
+        final body = await compute(_encodeManagerPayload, payload);
+        timing.payloadBytes = body.length;
+        timing.mark('encode');
         final response = await http.post(
           Uri.parse('$serverUrl/sync/manager-data'),
           headers: ApiConfig.posSyncHeaders,
-          body: await compute(_encodeManagerPayload, payload),
+          body: body,
         );
+        timing.mark('http');
         if (response.statusCode == 200 || response.statusCode == 201) {
           debugPrint('[ManagerSync] Realtime OK (${response.statusCode})');
+          _pendingSinceMicros = null;
           await ConnectionStatusService.markSuccess();
         } else {
           debugPrint(
@@ -496,12 +532,13 @@ class ManagerSyncService {
             'Realtime sync failed (${response.statusCode}): ${response.body}',
           );
         }
-        unawaited(_syncAuditReports());
+        _runAuditSyncTimed(timing, 'POS/realtime');
         return;
       }
 
       // 2.1 Prepare Sales Summary from local closed-sales records.
       // This is the authoritative source for payment-method analytics.
+      await SaleLedgerSyncState.ensureSaleIdentities();
       final todaysSales = DatabaseService.getSalesForDate(businessDateString);
       final paymentBreakdown = <String, double>{};
       final totalRevenue = DatabaseService.grossSalesTotalForDate(
@@ -511,9 +548,6 @@ class ManagerSyncService {
       for (final sale in todaysSales) {
         final isCancelled = sale['isCancelled'] == true;
         final restoredToOrder = sale['restoredToOrder'] == true;
-        if (isCancelled || restoredToOrder) {
-          continue;
-        }
         // A deposit taken today against an order that has not closed yet is
         // its own thing: cash in the drawer, not revenue and not an internal
         // closure. It used to fall into the `non-fiscal` bucket, which made
@@ -525,10 +559,13 @@ class ManagerSyncService {
           continue;
         }
         final totalAmount = DatabaseService.saleGrossOf(sale);
-        final isFiscal = sale['isFiscal'] != false;
-        if (!isFiscal) {
-          paymentBreakdown['non-fiscal'] =
-              (paymentBreakdown['non-fiscal'] ?? 0) + totalAmount;
+        if (!DatabaseService.saleCountsAsRevenue(sale)) {
+          if (!isCancelled && !restoredToOrder && sale['isFiscal'] == false) {
+            // Kept as a separately labelled operational figure. It is never
+            // added to revenue, fiscal payment totals, or order count.
+            paymentBreakdown['non-fiscal'] =
+                (paymentBreakdown['non-fiscal'] ?? 0) + totalAmount;
+          }
           continue;
         }
         fiscalOrderCount += 1;
@@ -567,15 +604,17 @@ class ManagerSyncService {
 
       // 2.2 Prepare all-time sales summary from local sales history.
       final allSales = DatabaseService.getAllSales();
+      final saleLedger = SaleLedgerSyncState.buildBatch(allSales);
+      final saleLedgerDays = SaleLedgerSyncState.buildDayDeclarations(
+        allRecords: allSales,
+        currentBusinessDate: businessDateString,
+      );
       final allTimeBreakdown = <String, double>{};
       double allTimeTotalRevenue = 0;
       int allTimeOrderCount = 0;
       for (final sale in allSales) {
         final isCancelled = sale['isCancelled'] == true;
         final restoredToOrder = sale['restoredToOrder'] == true;
-        if (isCancelled || restoredToOrder) {
-          continue;
-        }
         if (DatabaseService.saleIsAdvanceReceipt(sale)) {
           final amount = (sale['totalAmount'] as num?)?.toDouble() ?? 0.0;
           allTimeBreakdown['advance-received'] =
@@ -583,13 +622,14 @@ class ManagerSyncService {
           continue;
         }
         final totalAmount = DatabaseService.saleGrossOf(sale);
-        final isFiscal = sale['isFiscal'] != false;
-        if (!isFiscal) {
+        if (!DatabaseService.saleCountsAsRevenue(sale)) {
           // Internal closures get their own bucket and stay out of revenue —
           // they used to be added to the all-time total, which is exactly the
           // leak the daily and Z figures were careful to avoid.
-          allTimeBreakdown['non-fiscal'] =
-              (allTimeBreakdown['non-fiscal'] ?? 0) + totalAmount;
+          if (!isCancelled && !restoredToOrder && sale['isFiscal'] == false) {
+            allTimeBreakdown['non-fiscal'] =
+                (allTimeBreakdown['non-fiscal'] ?? 0) + totalAmount;
+          }
           continue;
         }
         allTimeTotalRevenue += totalAmount;
@@ -659,200 +699,25 @@ class ManagerSyncService {
         'topItems': topItems.take(20).toList(),
       };
 
-      // 2.3 Prepare per-day sales history (source of truth for mobile month filters).
-      final salesHistoryByDate = <String, Map<String, dynamic>>{};
-      for (final sale in allSales) {
-        final date = (sale['date'] as String?)?.trim();
-        if (date == null || date.isEmpty) continue;
-        final bucket = salesHistoryByDate.putIfAbsent(
-          date,
-          () => {
-            'date': date,
-            'totalRevenue': 0.0,
-            'orderCount': 0,
-            'totalOrders': 0,
-            'cancelledOrders': 0,
-            'cashRevenue': 0.0,
-            'cardRevenue': 0.0,
-            'paymentBreakdown': <String, double>{},
-            'topItems': <Map<String, dynamic>>[],
-            'closedTables': <Map<String, dynamic>>[],
-            'advanceReceived': 0.0,
-          },
-        );
-        // A deposit receipt is not an order and must not be counted as one,
-        // in the order count or the revenue.
-        if (DatabaseService.saleIsAdvanceReceipt(sale)) {
-          final amount = (sale['totalAmount'] as num?)?.toDouble() ?? 0.0;
-          bucket['advanceReceived'] =
-              ((bucket['advanceReceived'] as num?)?.toDouble() ?? 0.0) + amount;
-          continue;
-        }
+      timing.mark('sales');
 
-        bucket['totalOrders'] = (bucket['totalOrders'] as int) + 1;
+      // 2.3 Prepare per-day sales history from exactly the same Sale predicate
+      // as every other revenue total. Raw Orders are not revenue evidence.
+      final salesHistoryByDate = ManagerSalesHistoryBuilder.build(
+        sales: allSales,
+        expenseTotalForDate: DatabaseService.getExpenseTotalForDate,
+      );
 
-        final isCancelled = sale['isCancelled'] == true;
-        final restoredToOrder = sale['restoredToOrder'] == true;
-        if (isCancelled) {
-          bucket['cancelledOrders'] = (bucket['cancelledOrders'] as int) + 1;
-          continue;
-        }
-        if (restoredToOrder) {
-          continue;
-        }
-
-        // Gross: an order settled partly by a deposit is worth what the guest
-        // consumed, and the deposit rides in its payment breakdown so the
-        // split still adds up.
-        final totalAmount = DatabaseService.saleGrossOf(sale);
-        bucket['totalRevenue'] =
-            (bucket['totalRevenue'] as double) + totalAmount;
-        bucket['orderCount'] = (bucket['orderCount'] as int) + 1;
-
-        final rawTableNumbers = (sale['tableNumbers'] as List?) ?? const [];
-        final tableValues = rawTableNumbers
-            .map((e) => e.toString().trim())
-            .where((e) => e.isNotEmpty)
-            .toList();
-        final fallbackTable = (sale['tableNumber'] as String?)?.trim() ?? '';
-        final floor = (sale['floor'] as String?)?.trim() ?? 'first';
-        final orderId = (sale['orderId'] as num?)?.toInt();
-        final closedAt = (sale['closedAt'] as String?)?.trim() ?? '';
-        final closedTables = (bucket['closedTables'] as List)
-            .whereType<Map>()
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList();
-        final label = tableValues.isNotEmpty
-            ? tableValues.join(', ')
-            : (fallbackTable.isNotEmpty ? fallbackTable : '#${orderId ?? 0}');
-        final isFiscal = sale['isFiscal'] != false;
-        final salePaymentBreakdown = <String, double>{};
-        if (!isFiscal) {
-          salePaymentBreakdown['non-fiscal'] = totalAmount;
-        } else {
-          final saleBreakdown = PaymentUtils.extractBreakdown(sale);
-          saleBreakdown.forEach((key, amount) {
-            salePaymentBreakdown[key] =
-                (salePaymentBreakdown[key] ?? 0) + amount;
-          });
-        }
-        final rawClosedItems = (sale['items'] as List?) ?? const [];
-        final normalizedItems = rawClosedItems.whereType<Map>().map((rawItem) {
-          final item = Map<String, dynamic>.from(rawItem);
-          final qty = (item['quantity'] as num?)?.toInt() ?? 0;
-          final unitPrice =
-              (item['unitPrice'] as num?)?.toDouble() ??
-              (item['price'] as num?)?.toDouble() ??
-              0.0;
-          return {
-            'name': (item['itemName'] ?? item['name'] ?? '').toString(),
-            'qty': qty,
-            'unitPrice': double.parse(unitPrice.toStringAsFixed(2)),
-            'total': double.parse((qty * unitPrice).toStringAsFixed(2)),
-          };
-        }).toList();
-        closedTables.add({
-          'orderId': orderId,
-          'tableLabel': label,
-          'tableNumbers': tableValues,
-          'floor': floor,
-          'isFiscal': isFiscal,
-          'totalAmount': double.parse(totalAmount.toStringAsFixed(2)),
-          'closedAt': closedAt,
-          'paymentBreakdown': salePaymentBreakdown.map(
-            (key, value) =>
-                MapEntry(key, double.parse(value.toStringAsFixed(2))),
-          ),
-          'items': normalizedItems,
-        });
-        bucket['closedTables'] = closedTables;
-
-        final paymentBreakdown = (bucket['paymentBreakdown'] as Map)
-            .cast<String, double>();
-        if (!isFiscal) {
-          paymentBreakdown['non-fiscal'] =
-              (paymentBreakdown['non-fiscal'] ?? 0) + totalAmount;
-        } else {
-          final breakdown = PaymentUtils.extractBreakdown(sale);
-          breakdown.forEach((key, amount) {
-            paymentBreakdown[key] = (paymentBreakdown[key] ?? 0) + amount;
-          });
-        }
-
-        final itemAgg = <String, Map<String, double>>{};
-        final existingItems = (bucket['topItems'] as List)
-            .whereType<Map>()
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList();
-        for (final it in existingItems) {
-          final name = (it['name'] as String?) ?? '';
-          if (name.isEmpty) continue;
-          itemAgg[name] = {
-            'qty': (it['qty'] as num?)?.toDouble() ?? 0,
-            'revenue': (it['revenue'] as num?)?.toDouble() ?? 0,
-          };
-        }
-        final rawItems = (sale['items'] as List?) ?? const [];
-        for (final rawItem in rawItems) {
-          if (rawItem is! Map) continue;
-          final item = Map<String, dynamic>.from(rawItem);
-          final name = (item['itemName'] as String?)?.trim();
-          if (name == null || name.isEmpty) continue;
-          final qty = (item['quantity'] as num?)?.toDouble() ?? 0.0;
-          final unitPrice =
-              (item['unitPrice'] as num?)?.toDouble() ??
-              (item['price'] as num?)?.toDouble() ??
-              0.0;
-          final revenue = qty * unitPrice;
-          final cur = itemAgg[name] ?? {'qty': 0, 'revenue': 0};
-          cur['qty'] = (cur['qty'] ?? 0) + qty;
-          cur['revenue'] = (cur['revenue'] ?? 0) + revenue;
-          itemAgg[name] = cur;
-        }
-        final sortedItems =
-            itemAgg.entries
-                .map(
-                  (entry) => {
-                    'name': entry.key,
-                    'qty': (entry.value['qty'] ?? 0).round(),
-                    'revenue': double.parse(
-                      (entry.value['revenue'] ?? 0).toStringAsFixed(2),
-                    ),
-                  },
-                )
-                .toList()
-              ..sort(
-                (a, b) => ((b['revenue'] as num?) ?? 0).compareTo(
-                  (a['revenue'] as num?) ?? 0,
-                ),
-              );
-        bucket['topItems'] = sortedItems.take(300).toList();
-      }
-
-      for (final entry in salesHistoryByDate.entries) {
-        final b = entry.value;
-        final pb = (b['paymentBreakdown'] as Map).cast<String, double>();
-        pb.forEach((k, v) => pb[k] = double.parse(v.toStringAsFixed(2)));
-        b['paymentBreakdown'] = pb;
-        b['cashRevenue'] = pb['cash'] ?? 0.0;
-        b['cardRevenue'] = pb.entries.fold<double>(
-          0,
-          (sum, e) => e.key.startsWith('card') ? sum + e.value : sum,
-        );
-        b['totalRevenue'] = double.parse(
-          (b['totalRevenue'] as double).toStringAsFixed(2),
-        );
-        final expenseTotal = DatabaseService.getExpenseTotalForDate(entry.key);
-        b['totalExpenses'] = double.parse(expenseTotal.toStringAsFixed(2));
-        b['profit'] = double.parse(
-          ((b['totalRevenue'] as double) - expenseTotal).toStringAsFixed(2),
-        );
-      }
+      timing.mark('reports');
 
       // 3. Sync Menu
+      // The reconciliation flag is safe only when the snapshot is complete.
+      // Repair any legacy/restored id-less nodes before we claim authority.
+      await MenuRepository.ensureStableMenuIds();
       final menu = DatabaseService.getAllMenuCategories()
           .map(
             (cat) => {
+              if (cat.id != null) 'id': cat.id,
               'slug': cat.slug,
               'nameKa': cat.translationsKa['name'] ?? '',
               'nameEn': cat.translationsEn['name'] ?? '',
@@ -861,6 +726,10 @@ class ManagerSyncService {
                   cat.items
                       ?.map(
                         (it) => {
+                          // Identity first: Cloud matches the mirror row on
+                          // this, so a rename updates the product instead of
+                          // creating a second one under the new name.
+                          if (it.id != null) 'id': it.id,
                           'nameKa': it.translationsKa['name'] ?? '',
                           'nameEn': it.translationsEn['name'] ?? '',
                           'price': it.price ?? 0.0,
@@ -868,7 +737,11 @@ class ManagerSyncService {
                           'variants':
                               it.variants
                                   ?.map(
-                                    (v) => {'size': v.size, 'price': v.price},
+                                    (v) => {
+                                      if (v.id != null) 'id': v.id,
+                                      'size': v.size,
+                                      'price': v.price,
+                                    },
                                   )
                                   .toList() ??
                               [],
@@ -880,12 +753,14 @@ class ManagerSyncService {
                   cat.subcategories
                       ?.map(
                         (sub) => {
+                          if (sub.id != null) 'id': sub.id,
                           'slug': sub.slug,
                           'nameKa': sub.translationsKa['name'] ?? '',
                           'nameEn': sub.translationsEn['name'] ?? '',
                           'items': sub.items
                               .map(
                                 (it) => {
+                                  if (it.id != null) 'id': it.id,
                                   'nameKa': it.translationsKa['name'] ?? '',
                                   'nameEn': it.translationsEn['name'] ?? '',
                                   'price': it.price ?? 0.0,
@@ -894,6 +769,7 @@ class ManagerSyncService {
                                       it.variants
                                           ?.map(
                                             (v) => {
+                                              if (v.id != null) 'id': v.id,
                                               'size': v.size,
                                               'price': v.price,
                                             },
@@ -911,17 +787,22 @@ class ManagerSyncService {
           )
           .toList();
 
-      // 4. Sync Staff — PIN + role required for mobile login (server stores bcrypt hash).
-      final allUsers = DatabaseService.getAllUsers();
-      final staffList = allUsers
-          .map(
-            (u) => {
-              'username': u.username,
-              'pin': u.pinCode,
-              'role': _staffRoleForSync(u.role),
-            },
-          )
-          .toList();
+      timing.mark('menu');
+
+      // 4. Sync Staff — identity and role every time, a PIN only when the
+      // backend has not acknowledged the one this member currently has.
+      //
+      // Sending every PIN on every snapshot made the server re-run bcrypt cost
+      // 12 over credentials it already held, which dominated ingest. What is
+      // still required is unchanged: a member the server has never seen, and
+      // any PIN that actually changed, arrive with their PIN.
+      await StaffCredentialSyncState.open();
+      final staffSelection = StaffCredentialSyncState.selectStaff(
+        DatabaseService.getAllUsers(),
+      );
+      final staffList = staffSelection.entries;
+
+      timing.mark('staff');
 
       // 5. Sync QuickOrderDrafts (Counted Menus)
       final quickOrders = DatabaseService.getQuickOrderDrafts()
@@ -950,7 +831,46 @@ class ManagerSyncService {
           )
           .toList();
 
+      timing.mark('quick');
+
       // 6. Prepare Payload
+      //
+      // Expenses and reservations are built here rather than inside the map
+      // literal so each has a measurable cost of its own; the values and the
+      // order they are read in are unchanged.
+      final expenseRecords = DatabaseService.getAllExpenseRecords()
+          .where((e) => (e['id'] as String?)?.trim().isNotEmpty == true)
+          .map(
+            (e) => {
+              'id': (e['id'] as String).trim(),
+              'description': (e['description'] as String?) ?? '',
+              'amount': (e['amount'] as num?)?.toDouble() ?? 0.0,
+              'category': (e['category'] as String?) ?? '',
+              'paymentType': (e['paymentType'] as String?) ?? 'cash',
+              if (e['createdAt'] != null) 'createdAt': e['createdAt'],
+              if (e['date'] != null) 'businessDate': e['date'],
+            },
+          )
+          .toList();
+      timing.mark('expenses');
+
+      // Cloud holds bookings, not the reservation box. Every order-creation
+      // path also writes a row here — walk-in, takeaway, and package through
+      // the walk-in default — and none of Cloud's consumers want them: the
+      // Manager list and the website availability rules both discard them on
+      // read today. Sending them only to have them filtered is what makes this
+      // the most expensive phase of a sync that changed no booking at all.
+      //
+      // The rows stay in Hive untouched; this narrows the projection, not the
+      // history.
+      final reservationProjection = ReservationClassification.projectForCloud(
+        allReservations,
+      );
+      final reservationPayload = reservationProjection.bookings
+          .map(DatabaseService.serializeReservationForSync)
+          .toList();
+      debugPrint(reservationProjection.summaryLine);
+      timing.mark('reservations');
 
       final payload = {
         'tables': tables,
@@ -962,34 +882,23 @@ class ManagerSyncService {
         if (touchedReservationHints.isNotEmpty)
           'touchedReservationHints': touchedReservationHints,
         'menu': menu,
+        // Signals that every persisted menu node has a stable id and this is a
+        // complete authoritative projection, so Cloud may reconcile omissions.
+        'menuIdentityVersion': 1,
         // Real expense records, not an empty list beside a derived profit
         // figure. Each carries its POS-side id so re-sending the same record
         // updates it instead of adding a second one.
-        'expenses': DatabaseService.getAllExpenseRecords()
-            .where((e) => (e['id'] as String?)?.trim().isNotEmpty == true)
-            .map(
-              (e) => {
-                'id': (e['id'] as String).trim(),
-                'description': (e['description'] as String?) ?? '',
-                'amount': (e['amount'] as num?)?.toDouble() ?? 0.0,
-                'category': (e['category'] as String?) ?? '',
-                'paymentType': (e['paymentType'] as String?) ?? 'cash',
-                if (e['createdAt'] != null) 'createdAt': e['createdAt'],
-                if (e['date'] != null) 'businessDate': e['date'],
-              },
-            )
-            .toList(),
+        'expenses': expenseRecords,
         'staff': staffList,
-        // Every reservation this POS holds.
+        // Every advance booking this POS holds — not every row in its
+        // reservation box; see the projection above.
         //
         // Cloud used to ask for these over the LAN, one request at a time, from
         // whichever backend needed them — which meant a manager's reservation
         // list and the public website's availability page both waited on this
         // machine being awake. Since Step 6C they read a Cloud mirror instead,
         // and this is what fills it. The POS is still the one that owns them.
-        'reservations': DatabaseService.getAllReservations()
-            .map(DatabaseService.serializeReservationForSync)
-            .toList(),
+        'reservations': reservationPayload,
         'quickOrders': quickOrders,
         'syncedAt': DateTime.now().toIso8601String(),
         // Send current business date so the backend knows which calendar day
@@ -1001,6 +910,10 @@ class ManagerSyncService {
         'salesSummary': salesSummary,
         'salesAllTimeSummary': salesAllTimeSummary,
         'salesHistoryByDate': salesHistoryByDate,
+        // Genuine retained Sales only. This bounded, revision-ACKed backlog is
+        // an asynchronous mirror; failure never participates in table close.
+        'saleLedger': saleLedger,
+        'saleLedgerDays': saleLedgerDays,
         'openTablesPayable': double.parse(openTablesPayable.toStringAsFixed(2)),
         'settings': {
           'serviceFeePercent': DatabaseService.getServiceFeePercentage(),
@@ -1026,7 +939,7 @@ class ManagerSyncService {
           .where((t) => t['isReserved'] == true || t['activeOrderId'] != null)
           .toList();
       debugPrint(
-        '[ManagerSync] Sending ${tables.length} tables, ${reservedTables.length} reserved, ${todayOrders.length} orders, ${staffList.length} staff.',
+        '[ManagerSync] Sending ${tables.length} tables, ${reservedTables.length} reserved, ${todayOrders.length} orders, ${staffList.length} staff (${staffSelection.pinCount} with a PIN).',
       );
       for (final t in reservedTables) {
         debugPrint(
@@ -1034,13 +947,19 @@ class ManagerSyncService {
         );
       }
 
+      timing.mark('payload');
+
       // 5. Send to NestJS
       ConnectionStatusService.markAttempt();
+      final body = await compute(_encodeManagerPayload, payload);
+      timing.payloadBytes = body.length;
+      timing.mark('encode');
       final response = await http.post(
         Uri.parse('$serverUrl/sync/manager-data'),
         headers: ApiConfig.posSyncHeaders,
-        body: await compute(_encodeManagerPayload, payload),
+        body: body,
       );
+      timing.mark('http');
 
       if (response.statusCode != 201 && response.statusCode != 200) {
         debugPrint(
@@ -1054,17 +973,43 @@ class ManagerSyncService {
           '[ManagerSync] OK → $serverUrl '
           'callback=${payload['posCallbackUrl'] ?? "missing"}',
         );
+        _pendingSinceMicros = null;
+        await _acknowledgeStaffCredentials(staffSelection, response.body);
+        final ledgerAckSupported =
+            await SaleLedgerSyncState.acknowledgeResponse(response.body);
         await ConnectionStatusService.markSuccess();
+        if (ledgerAckSupported && saleLedger.isNotEmpty) {
+          // One follow-up full snapshot advances the next bounded batch and,
+          // after the final ACK, lets closed-day completeness be proven.
+          _markPendingLocalChange();
+        }
       }
 
       // 6. Sync Audit Reports (fire-and-forget — best effort)
-      unawaited(_syncAuditReports());
+      _runAuditSyncTimed(timing, 'POS');
     } catch (e) {
       debugPrint(
         'Manager Sync Error (cannot reach $serverUrl — is NestJS running on port 3000?): $e',
       );
       ConnectionStatusService.markFailure(e);
+      timing.log('POS/failed');
     }
+  }
+
+  /// Starts the audit push without waiting for it, and prints the one-line
+  /// timing summary once it lands.
+  ///
+  /// The audit push has always been fire-and-forget — the snapshot does not
+  /// depend on it and a slow audit must not hold the sync open — so this keeps
+  /// it unawaited. Attaching the summary to its completion is only so the line
+  /// can carry an audit figure; the caller still returns immediately.
+  static void _runAuditSyncTimed(SyncTiming timing, String source) {
+    unawaited(
+      _syncAuditReports().whenComplete(() {
+        timing.mark('audit');
+        timing.log(source);
+      }),
+    );
   }
 
   /// How many audit reports one request may carry.
@@ -1330,6 +1275,8 @@ class ManagerSyncService {
           unitPrice: price,
           quantity: qty,
           total: price * qty,
+          menuItemId: m['menuItemId'] as String?,
+          variantId: m['variantId'] as String?,
         ),
       );
     }
@@ -1792,8 +1739,45 @@ class ManagerSyncService {
     return touched;
   }
 
-  /// Maps Hive user roles to backend [StaffRole] enum values.
-  static String _staffRoleForSync(String role) {
-    return StaffRole.toApi(role);
+  /// Records which staff credentials the accepted snapshot acknowledged, and
+  /// forgets any the backend says it still has no credential for.
+  ///
+  /// Runs only after the server accepted the push, so a failed sync leaves
+  /// every credential it carried unacknowledged and the next one carries them
+  /// again.
+  static Future<void> _acknowledgeStaffCredentials(
+    StaffSnapshotSelection selection,
+    String responseBody,
+  ) async {
+    await StaffCredentialSyncState.markAccepted(selection.credentialsSent);
+    await StaffCredentialSyncState.pruneUnknown(selection.knownUsernames);
+    final needsPin = _staffNeedingPin(responseBody);
+    if (needsPin.isNotEmpty) {
+      debugPrint(
+        '[ManagerSync] Backend holds no credential for ${needsPin.length} '
+        'staff member(s); the next snapshot will carry their PINs.',
+      );
+      await StaffCredentialSyncState.forget(needsPin);
+    }
+  }
+
+  /// The usernames the backend reported it could not create for want of a PIN.
+  ///
+  /// Absent from an older backend's response, which is silence rather than
+  /// "none" — and silence is what the POS assumed before this existed.
+  static List<String> _staffNeedingPin(String responseBody) {
+    try {
+      final decoded = jsonDecode(responseBody);
+      if (decoded is! Map) return const <String>[];
+      final raw = decoded['staffNeedingPin'];
+      if (raw is! List) return const <String>[];
+      return raw
+          .whereType<String>()
+          .map((username) => username.trim())
+          .where((username) => username.isNotEmpty)
+          .toList();
+    } catch (_) {
+      return const <String>[];
+    }
   }
 }

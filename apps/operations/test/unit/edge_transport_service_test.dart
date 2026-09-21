@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:async';
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -17,7 +19,8 @@ import 'package:vynic/core/services/edge/noop_edge_command_handler.dart';
 /// mode that reaches the till.
 void main() {
   late Directory directory;
-  const credential = 'vynic-device-v1.11111111-1111-4111-8111-111111111111.'
+  const credential =
+      'vynic-device-v1.11111111-1111-4111-8111-111111111111.'
       'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 
   Map<String, dynamic> envelope(
@@ -73,6 +76,67 @@ void main() {
     'contractVersion': edgeCommandContractVersion,
     'commands': commands,
   });
+
+  test(
+    'actual command execution blocks update, durable acknowledgment does not',
+    () async {
+      UpdateReadiness.enabled = true;
+      UpdateReadiness.startupReady = true;
+      UpdateReadiness.frozen = false;
+      UpdateReadiness.failure = null;
+      UpdateReadiness.recoveryChecks.clear();
+      final entered = Completer<void>();
+      final finish = Completer<void>();
+      final ackEntered = Completer<void>();
+      final ack = Completer<http.Response>();
+      final service = serviceWith((request) async {
+        if (request.url.path.endsWith('/claim')) {
+          return http.Response(claimBody([envelope('held')]), 200);
+        }
+        ackEntered.complete();
+        return ack.future;
+      }, handlers: [_WaitingHandler(entered, finish)]);
+      await service.start();
+      final poll = service.pollOnce();
+      await entered.future;
+      expect(UpdateReadiness.evaluate().status, 'BLOCKED');
+      expect(UpdateReadiness.activeOperations, contains('Cloud command'));
+      finish.complete();
+      await ackEntered.future;
+      expect(UpdateReadiness.evaluate().status, 'READY');
+      ack.complete(http.Response('{}', 200));
+      await poll;
+      await service.stop();
+      UpdateReadiness.enabled = false;
+    },
+  );
+
+  test(
+    'Cloud network wait does not block freeze; a late claim cannot execute',
+    () async {
+      UpdateReadiness.enabled = true;
+      UpdateReadiness.startupReady = true;
+      UpdateReadiness.frozen = false;
+      UpdateReadiness.failure = null;
+      UpdateReadiness.recoveryChecks.clear();
+      final response = Completer<http.Response>();
+      var executed = 0;
+      final service = serviceWith(
+        (_) => response.future,
+        handlers: [_CountingHandler(() => executed++)],
+      );
+      await service.start();
+      final poll = service.pollOnce();
+      expect(UpdateReadiness.evaluate().status, 'READY');
+      expect(await UpdateReadiness.freeze(() async {}), isNull);
+      response.complete(http.Response(claimBody([envelope('late')]), 200));
+      await poll;
+      expect(executed, 0);
+      UpdateReadiness.frozen = false;
+      await service.stop();
+      UpdateReadiness.enabled = false;
+    },
+  );
 
   group('claim, execute, acknowledge', () {
     test('runs a NOOP and reports it succeeded', () async {
@@ -181,26 +245,29 @@ void main() {
       await service.stop();
     });
 
-    test('reports an unknown command type without executing anything', () async {
-      final acks = <Map<String, dynamic>>[];
-      final service = serviceWith((request) async {
-        if (request.url.path.endsWith('/claim')) {
-          return http.Response(
-            claimBody([envelope('c1', type: 'PRINT_ORDER_CHECK')]),
-            200,
-          );
-        }
-        acks.add(json.decode(request.body) as Map<String, dynamic>);
-        return http.Response('{}', 201);
-      });
+    test(
+      'reports an unknown command type without executing anything',
+      () async {
+        final acks = <Map<String, dynamic>>[];
+        final service = serviceWith((request) async {
+          if (request.url.path.endsWith('/claim')) {
+            return http.Response(
+              claimBody([envelope('c1', type: 'PRINT_ORDER_CHECK')]),
+              200,
+            );
+          }
+          acks.add(json.decode(request.body) as Map<String, dynamic>);
+          return http.Response('{}', 201);
+        });
 
-      await service.start();
-      final summary = await service.pollOnce();
+        await service.start();
+        final summary = await service.pollOnce();
 
-      expect(summary.skippedUnsupported, 1);
-      expect(acks.single['code'], 'unsupported_command_type');
-      await service.stop();
-    });
+        expect(summary.skippedUnsupported, 1);
+        expect(acks.single['code'], 'unsupported_command_type');
+        await service.stop();
+      },
+    );
   });
 
   group('lifecycle', () {
@@ -321,4 +388,18 @@ class _ThrowingHandler implements EdgeCommandHandler {
 
 class _Offline implements Exception {
   const _Offline();
+}
+
+class _WaitingHandler implements EdgeCommandHandler {
+  _WaitingHandler(this.entered, this.finish);
+  final Completer<void> entered;
+  final Completer<void> finish;
+  @override
+  String get type => EdgeCommandTypes.noop;
+  @override
+  Future<EdgeCommandResult> execute(EdgeCommandEnvelope command) async {
+    entered.complete();
+    await finish.future;
+    return EdgeCommandResult.succeeded(command.commandId);
+  }
 }

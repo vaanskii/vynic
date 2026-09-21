@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:vynic/core/services/edge/sale_consumption_sync_service.dart';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:vynic/core/database/database_core.dart';
@@ -15,6 +17,7 @@ import 'package:vynic/core/models/sale_record.dart';
 import 'package:vynic/core/models/table.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/pos/closure_recovery_service.dart';
+import 'package:vynic/core/services/sync/sync_events.dart';
 
 /// Money Integrity 1B: what a table closure is worth, how many times it can
 /// happen, and what survives a crash in the middle of one.
@@ -181,6 +184,102 @@ void main() {
   });
 
   group('normal close', () {
+    test(
+      'an Order-only Walk-In closes, frees its table and publishes locally',
+      () async {
+        final order = await seedOrder(orderId: 43, itemTotal: 25);
+        final table = TableModel(tableNumber: '1', floor: 'first')
+          ..reserve('waiter', order.orderId);
+        await DatabaseCore.tableBox!.put('first-1', table);
+        final completedEvent = SyncHub.events.firstWhere(
+          (event) =>
+              event.type == SyncEventType.orders &&
+              event.action == 'closed' &&
+              event.payload?['orderId'] == order.orderId,
+        );
+
+        final result = await CloseTableTransaction.run(
+          orderId: order.orderId,
+          money: ClosureMoney.fromOrder(order, collectedNow: 25),
+          paymentMethod: 'cash',
+          tenderBreakdown: const {'cash': 25},
+          closedById: 'manager',
+          isFiscal: true,
+        );
+
+        expect(result.outcome, ClosureOutcome.closed);
+        expect((await completedEvent).payload?['status'], 'closed');
+        expect(DatabaseCore.tableBox!.values.single.activeOrderId, isNull);
+        expect(DatabaseCore.tableBox!.values.single.isReserved, isFalse);
+        expect(DatabaseCore.reservationBox!.values, isEmpty);
+      },
+    );
+
+    test('an Order-only Takeaway closes without a Reservation row', () async {
+      final order = await seedOrder(orderId: 44, itemTotal: 25);
+      order.floor = 'takeaway';
+      order.tableNumbers = const ['TA-44'];
+      order.customerName = 'Takeaway Guest';
+      order.customerPhone = '+995555111222';
+      order.pickupTime = '18:30';
+      await order.save();
+
+      expect(DatabaseCore.reservationBox!.values, isEmpty);
+      final result = await CloseTableTransaction.run(
+        orderId: order.orderId,
+        money: ClosureMoney.fromOrder(order, collectedNow: 25),
+        paymentMethod: 'cash',
+        tenderBreakdown: const {'cash': 25},
+        closedById: 'manager',
+        isFiscal: true,
+      );
+
+      expect(result.outcome, ClosureOutcome.closed);
+      expect(DatabaseCore.orderBox!.values.single.status, 'closed');
+      expect(closedSales(today), hasLength(1));
+      expect(DatabaseCore.reservationBox!.values, isEmpty);
+    });
+
+    test(
+      'an Order-only Package preserves its fields through payment',
+      () async {
+        final order = await seedOrder(orderId: 45, itemTotal: 1);
+        order.items = const [];
+        order.packageId = 'pkg-1';
+        order.packageName = 'ბანკეტი';
+        order.packageGuestCount = 10;
+        order.packageUnitPrice = 40;
+        order.packagePrice = 400;
+        order.packageItems = [
+          OrderItem(
+            itemKey: 'salad',
+            itemName: 'სალათი',
+            unitPrice: 4,
+            quantity: 2,
+            total: 8,
+          ),
+        ];
+        order.recalculateTotal(serviceFeeRate: 0);
+        await order.save();
+
+        final result = await CloseTableTransaction.run(
+          orderId: order.orderId,
+          money: ClosureMoney.fromOrder(order, collectedNow: 400),
+          paymentMethod: 'cash',
+          tenderBreakdown: const {'cash': 400},
+          closedById: 'manager',
+          isFiscal: true,
+        );
+
+        expect(result.outcome, ClosureOutcome.closed);
+        expect(order.packageId, 'pkg-1');
+        expect(order.packagePrice, 400);
+        expect(order.packageGuestCount, 10);
+        expect(closedSales(today).single['totalAmount'], 400);
+        expect(DatabaseCore.reservationBox!.values, isEmpty);
+      },
+    );
+
     test('a 900 order books exactly one 900 sale', () async {
       final order = await seedOrder(itemTotal: 900);
 
@@ -539,6 +638,10 @@ void main() {
         today,
       ).firstWhere((s) => s['orderId'] == 2);
       expect(internalSale['isFiscal'], isFalse);
+      expect(internalSale['paymentMethod'], 'non-fiscal');
+      expect(internalSale['grossSaleAmount'], 300);
+      expect(internalSale['collectedNow'], 0);
+      expect(internalSale['paymentBreakdown'], isEmpty);
       expect(SalesRepository.countsAsRevenue(internalSale), isFalse);
     });
 
@@ -565,6 +668,47 @@ void main() {
       expect(second.outcome, ClosureOutcome.alreadyClosed);
       expect(closedSales(today), hasLength(1));
     });
+
+    test(
+      'remains operationally restorable with zero collection metadata',
+      () async {
+        final internal = await seedOrder(orderId: 3, itemTotal: 300);
+        final table = TableModel(tableNumber: '1', floor: 'first')
+          ..reserve('waiter', internal.orderId);
+        await DatabaseCore.tableBox!.put('first-1', table);
+
+        final result = await CloseTableTransaction.run(
+          orderId: internal.orderId,
+          money: ClosureMoney.fromOrder(internal, collectedNow: 300),
+          paymentMethod: 'cash',
+          tenderBreakdown: const {'cash': 300},
+          closedById: 'manager',
+          isFiscal: false,
+        );
+        final sale = closedSales(today).single;
+
+        final restored = await SalesRepository.restoreClosedOrderFromSale(
+          recordKey: sale['recordKey'],
+          restoredBy: 'manager',
+        );
+
+        expect(restored, isTrue);
+        expect(sale['grossSaleAmount'], 300);
+        expect(sale['collectedNow'], 0);
+        expect(sale['paymentBreakdown'], isEmpty);
+        expect(
+          ClosureJournalRepository.find(result.closureId!)!.isReversed,
+          isTrue,
+        );
+        final reopened = DatabaseCore.orderBox!.get(internal.orderId)!;
+        expect(reopened.status, 'confirmed');
+        expect(reopened.closureId, isNull);
+        expect(
+          DatabaseCore.tableBox!.values.single.activeOrderId,
+          internal.orderId,
+        );
+      },
+    );
   });
 
   group('void', () {
@@ -598,6 +742,56 @@ void main() {
       },
     );
   });
+
+  test(
+    'offline close atomically freezes inventory intent; recovery, restore and re-close preserve it',
+    () async {
+      final order = await seedOrder(itemTotal: 100);
+      final close = await CloseTableTransaction.run(
+        orderId: order.orderId,
+        money: ClosureMoney.fromOrder(order, collectedNow: 100),
+        paymentMethod: 'cash',
+        tenderBreakdown: const {'cash': 100},
+        closedById: 'manager',
+        isFiscal: true,
+      );
+      expect(close.isSuccess, true);
+      final key = SalesRepository.findSaleKeyByClosureId(close.closureId!)!;
+      final original = Map<String, dynamic>.from(
+        DatabaseCore.salesBox!.get(key) as Map,
+      );
+      final snapshot = original['inventoryConsumption'];
+      expect(snapshot, isNotNull);
+      expect(SaleConsumptionSyncService.pending(), hasLength(1));
+      // No Cloud request took part in completing the Sale or freeing the table.
+      expect(DatabaseCore.orderBox!.get(order.orderId)!.status, 'closed');
+      await ClosureRecoveryService.recoverPending();
+      expect(DatabaseCore.salesBox!.get(key)['inventoryConsumption'], snapshot);
+      expect(
+        await SalesRepository.restoreClosedOrderFromSale(
+          recordKey: key,
+          restoredBy: 'manager',
+        ),
+        true,
+      );
+      final restored = DatabaseCore.salesBox!.get(key) as Map;
+      expect(restored['inventoryConsumption'], snapshot);
+      expect(SaleConsumptionSyncService.revision(restored), 2);
+      final reopened = DatabaseCore.orderBox!.get(order.orderId)!;
+      final reclose = await CloseTableTransaction.run(
+        orderId: reopened.orderId,
+        money: ClosureMoney.fromOrder(reopened, collectedNow: 100),
+        paymentMethod: 'cash',
+        tenderBreakdown: const {'cash': 100},
+        closedById: 'manager',
+        isFiscal: true,
+      );
+      expect(reclose.isSuccess, true);
+      expect(reclose.closureId, isNot(close.closureId));
+      expect(SaleConsumptionSyncService.pending(), hasLength(2));
+      expect(DatabaseCore.salesBox!.get(key)['inventoryConsumption'], snapshot);
+    },
+  );
 
   group('restore then re-close', () {
     test('books one sale, not two, and keeps the advance once', () async {
@@ -721,7 +915,7 @@ void main() {
         isFiscal: true,
       );
 
-      // An internal closure — money moved, but not into revenue.
+      // An internal closure preserves operational gross, but moves no money.
       final c = await seedOrder(orderId: 3, itemTotal: 300);
       await CloseTableTransaction.run(
         orderId: 3,

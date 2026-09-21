@@ -16,6 +16,7 @@ import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/quick_order_draft.dart';
 import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/table.dart';
+import 'package:vynic/core/models/takeaway_order.dart';
 import 'package:vynic/core/models/user.dart';
 
 /// The four home sections — დათვლა, გატანები, რეზერვაცია and X — against a
@@ -55,7 +56,7 @@ List<OrderItem> _items() => [
 ];
 
 late List<Reservation> _reservations;
-late List<Reservation> _takeaways;
+late List<TakeawayTicket> _takeaways;
 late List<QuickOrderDraft> _drafts;
 
 Future<void> _seed() async {
@@ -85,25 +86,9 @@ Future<void> _seed() async {
       ),
   ];
 
-  _takeaways = [
-    for (var i = 0; i < 3; i++)
-      Reservation(
-        id: 't$i',
-        customerName: 'გიორგი მაისურაძე',
-        customerPhone: '577 00 11 2$i',
-        tableNumbers: const [],
-        reservationDate: now,
-        reservationTime: '20:1$i',
-        numberOfGuests: 1,
-        createdAt: now,
-        createdBy: 'giorgi',
-        status: i == 2 ? 'completed' : 'pending',
-        isTakeAway: true,
-        linkedOrderId: 100 + i,
-        preOrderItems: _items(),
-      ),
-  ];
-  for (var i = 0; i < _takeaways.length; i++) {
+  // The takeaway panel reads orders now, so the fixture is orders. The guest
+  // details it cannot carry are supplied the way the screen supplies them.
+  for (var i = 0; i < 3; i++) {
     await DatabaseCore.orderBox!.put(
       100 + i,
       Order(
@@ -114,9 +99,20 @@ Future<void> _seed() async {
         totalAmount: 109,
         createdBy: 'giorgi',
         createdAt: now,
-      )..status = 'served',
+      )..status = i == 2 ? 'closed' : 'served',
     );
   }
+  _takeaways = [
+    for (var i = 0; i < 3; i++)
+      TakeawayTicket(
+        order: DatabaseCore.orderBox!.get(100 + i)!,
+        contact: TakeawayContact(
+          customerName: 'გიორგი მაისურაძე',
+          customerPhone: '577 00 11 2$i',
+          pickupTime: '20:1$i',
+        ),
+      ),
+  ];
 
   _drafts = [
     for (var i = 0; i < 3; i++)
@@ -173,7 +169,7 @@ Widget _calculator() => HomeCalculatorSection(
 
 Widget _takeAway() => HomeTakeAwaySection(
   user: _user,
-  takeAwayReservations: _takeaways,
+  tickets: _takeaways,
   onRefreshRequested: () async {},
   primaryColor: const Color(0xFF1E3A8A),
   secondaryColor: const Color(0xFF2563EB),

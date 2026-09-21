@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -23,6 +24,13 @@ import type { TenantContext } from '../../tenancy/tenant-context';
  * Extracted verbatim from MobileController as the first service-split pilot;
  * behavior is unchanged. The controller keeps the route decorators and
  * delegates to these methods.
+ *
+ * Every method takes the Venue the request authenticated into — resolved from
+ * the caller's own Staff row, never from anything they sent — and every store
+ * it touches is addressed with it, the PIN vault included. The vault used to be
+ * the exception: it was read and written with no tenant at all, which meant a
+ * manager of any Venue but the bootstrap one edited PINs in the bootstrap
+ * Venue's vault while POS staff sync used their real one.
  */
 @Injectable()
 export class MobileUsersService {
@@ -52,11 +60,12 @@ export class MobileUsersService {
   }
 
   async getUsers(tenant: TenantContext) {
-    const pinsMap = await this.pinVault.read();
+    const pinsMap = await this.pinVault.read(tenant);
     const staff = await this.prisma.staff.findMany({
       where: { venueId: tenant.venueId },
       orderBy: [{ role: 'asc' }, { username: 'asc' }],
       select: {
+        platformManaged: true,
         id: true,
         username: true,
         role: true,
@@ -67,7 +76,7 @@ export class MobileUsersService {
     });
     return staff.map((u: any) => ({
       ...u,
-      pinCode: pinsMap[u.username] ?? '',
+      pinCode: u.platformManaged ? '' : (pinsMap[u.username] ?? ''),
     }));
   }
 
@@ -107,6 +116,7 @@ export class MobileUsersService {
         isActive: true,
       },
       select: {
+        platformManaged: true,
         id: true,
         username: true,
         role: true,
@@ -115,9 +125,9 @@ export class MobileUsersService {
         updatedAt: true,
       },
     });
-    const pinsMap = await this.pinVault.read();
+    const pinsMap = await this.pinVault.read(tenant);
     pinsMap[username] = pinCode;
-    await this.pinVault.write(pinsMap);
+    await this.pinVault.write(pinsMap, tenant);
     const posDelivery = await this.dispatchStaffCommand(
       tenant,
       EdgeCommandTypes.STAFF_CREATE,
@@ -139,6 +149,7 @@ export class MobileUsersService {
     const existing = await (this.prisma as any).staff.findUnique({
       where: staffIdentity(tenant, username),
       select: {
+        platformManaged: true,
         id: true,
         role: true,
         isActive: true,
@@ -146,6 +157,10 @@ export class MobileUsersService {
         updatedAt: true,
       },
     });
+    if (existing?.platformManaged)
+      throw new ForbiddenException(
+        'This Manager access is controlled by Platform',
+      );
     if (!existing) {
       throw new NotFoundException('User not found');
     }
@@ -154,9 +169,9 @@ export class MobileUsersService {
       where: staffIdentity(tenant, username),
       data: { pinHash },
     });
-    const pinsMap = await this.pinVault.read();
+    const pinsMap = await this.pinVault.read(tenant);
     pinsMap[username] = pinCode;
-    await this.pinVault.write(pinsMap);
+    await this.pinVault.write(pinsMap, tenant);
     const posDelivery = await this.dispatchStaffCommand(
       tenant,
       EdgeCommandTypes.STAFF_PIN_UPDATE,
@@ -189,8 +204,12 @@ export class MobileUsersService {
 
     const existing = await (this.prisma as any).staff.findUnique({
       where: staffIdentity(tenant, username),
-      select: { id: true, role: true, isActive: true },
+      select: { platformManaged: true, id: true, role: true, isActive: true },
     });
+    if (existing?.platformManaged)
+      throw new ForbiddenException(
+        'This Manager access is controlled by Platform',
+      );
     if (!existing) {
       throw new NotFoundException('User not found');
     }
@@ -215,6 +234,7 @@ export class MobileUsersService {
       where: staffIdentity(tenant, username),
       data: { role },
       select: {
+        platformManaged: true,
         id: true,
         username: true,
         role: true,
@@ -247,6 +267,7 @@ export class MobileUsersService {
     const existing = await (this.prisma as any).staff.findUnique({
       where: staffIdentity(tenant, oldUsername),
       select: {
+        platformManaged: true,
         id: true,
         role: true,
         isActive: true,
@@ -254,6 +275,10 @@ export class MobileUsersService {
         updatedAt: true,
       },
     });
+    if (existing?.platformManaged)
+      throw new ForbiddenException(
+        'This Manager access is controlled by Platform',
+      );
     if (!existing) {
       throw new NotFoundException('User not found');
     }
@@ -268,6 +293,7 @@ export class MobileUsersService {
       where: staffIdentity(tenant, oldUsername),
       data: { username: newUsername },
       select: {
+        platformManaged: true,
         id: true,
         username: true,
         role: true,
@@ -276,12 +302,12 @@ export class MobileUsersService {
         updatedAt: true,
       },
     });
-    const pinsMap = await this.pinVault.read();
+    const pinsMap = await this.pinVault.read(tenant);
     const pinCode = pinsMap[oldUsername] ?? '';
     if (pinCode) {
       delete pinsMap[oldUsername];
       pinsMap[newUsername] = pinCode;
-      await this.pinVault.write(pinsMap);
+      await this.pinVault.write(pinsMap, tenant);
     }
     const posDelivery = await this.dispatchStaffCommand(
       tenant,
@@ -295,8 +321,17 @@ export class MobileUsersService {
     const username = (usernameParam ?? '').trim();
     const existing = await (this.prisma as any).staff.findUnique({
       where: staffIdentity(tenant, username),
-      select: { id: true, role: true },
+      select: {
+        platformManaged: true,
+        id: true,
+        role: true,
+        _count: { select: { compensations: true, payrollPeriods: true } },
+      },
     });
+    if (existing?.platformManaged)
+      throw new ForbiddenException(
+        'This Manager access is controlled by Platform',
+      );
     if (!existing) {
       throw new NotFoundException('User not found');
     }
@@ -312,12 +347,22 @@ export class MobileUsersService {
         throw new BadRequestException('Cannot delete the last manager');
       }
     }
-    await (this.prisma as any).staff.delete({
-      where: staffIdentity(tenant, username),
-    });
-    const pinsMap = await this.pinVault.read();
+    if (
+      (existing._count?.compensations ?? 0) > 0 ||
+      (existing._count?.payrollPeriods ?? 0) > 0
+    ) {
+      await this.prisma.staff.update({
+        where: staffIdentity(tenant, username),
+        data: { isActive: false },
+      });
+    } else {
+      await this.prisma.staff.delete({
+        where: staffIdentity(tenant, username),
+      });
+    }
+    const pinsMap = await this.pinVault.read(tenant);
     delete pinsMap[username];
-    await this.pinVault.write(pinsMap);
+    await this.pinVault.write(pinsMap, tenant);
     const posDelivery = await this.dispatchStaffCommand(
       tenant,
       EdgeCommandTypes.STAFF_DELETE,

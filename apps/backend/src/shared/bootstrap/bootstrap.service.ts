@@ -16,9 +16,17 @@ export class BootstrapService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    await this.seedWebsiteTables();
-    await this.seedWebsiteAdminIfConfigured();
-    await this.reportMenuStatus();
+    const legacyVenue = await this.prisma.venue.findUnique({
+      where: { id: LEGACY_MANAGER_TENANT.venueId },
+      select: { id: true },
+    });
+    if (legacyVenue) {
+      await this.seedWebsiteTables();
+      await this.seedWebsiteAdminIfConfigured();
+      await this.reportMenuStatus();
+    } else {
+      this.logger.log('Legacy Venue absent — skipping legacy website setup.');
+    }
     this.logEnvGaps();
   }
 
@@ -128,7 +136,7 @@ export class BootstrapService implements OnModuleInit {
       'API_URL',
     ];
     const missing = optionalWebsite.filter(
-      (key) => !this.config.get(key)?.trim(),
+      (key) => !this.config.get<string>(key)?.trim(),
     );
     if (missing.length > 0) {
       this.logger.warn(

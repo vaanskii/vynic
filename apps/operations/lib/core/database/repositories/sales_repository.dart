@@ -1,15 +1,28 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
+import 'package:vynic/core/models/expense_category.dart';
 import 'dart:developer' as developer;
 
+import 'package:vynic/core/services/pos/sale_consumption_snapshot.dart';
+
 import 'package:uuid/uuid.dart';
+import 'package:vynic/core/models/audit_report.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/order_status.dart';
+import 'package:vynic/core/models/reservation_classification.dart';
+import 'package:vynic/core/models/reservation_status.dart';
+import 'package:vynic/core/models/audit_source.dart';
+import 'package:vynic/core/services/audit/reservation_audit.dart';
 import 'package:vynic/core/models/sale_record.dart';
+import 'package:vynic/core/models/takeaway_order.dart';
+import 'package:vynic/core/services/sync/sale_ledger_sync_state.dart';
 
+import 'package:vynic/core/services/audit/global_audit.dart';
 import 'package:vynic/core/services/audit/money_audit.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'business_day_repository.dart';
 import 'closure_journal_repository.dart';
 import '../database_core.dart';
+import 'audit_repository.dart';
 import 'order_repository.dart';
 import 'settings_repository.dart';
 import 'table_repository.dart';
@@ -92,6 +105,70 @@ class SalesRepository {
     double? collectedNow,
     String? businessDate,
     String? advanceReceiptId,
+    bool captureConsumption = false,
+  }) => UpdateReadiness.track(
+    'saveSaleRecord',
+    () => _updateTrackedSaveSaleRecord(
+      orderId: orderId,
+      tableNumbers: tableNumbers,
+      floor: floor,
+      items: items,
+      totalAmount: totalAmount,
+      paymentMethod: paymentMethod,
+      paymentBreakdown: paymentBreakdown,
+      customPaymentLabel: customPaymentLabel,
+      createdBy: createdBy,
+      createdAt: createdAt,
+      closedAt: closedAt,
+      includeServiceFee: includeServiceFee,
+      discountAmount: discountAmount,
+      advanceAmount: advanceAmount,
+      subtotalAmount: subtotalAmount,
+      manualAdjustmentAmount: manualAdjustmentAmount,
+      finalTransaction: finalTransaction,
+      isFiscal: isFiscal,
+      isCancelled: isCancelled,
+      cancelledAt: cancelledAt,
+      closureId: closureId,
+      closedById: closedById,
+      grossSaleAmount: grossSaleAmount,
+      advanceApplied: advanceApplied,
+      collectedNow: collectedNow,
+      businessDate: businessDate,
+      advanceReceiptId: advanceReceiptId,
+      captureConsumption: captureConsumption,
+    ),
+  );
+
+  static Future<Object?> _updateTrackedSaveSaleRecord({
+    required int orderId,
+    required List<String> tableNumbers,
+    required String floor,
+    required List<OrderItem> items,
+    required double totalAmount,
+    required String paymentMethod,
+    Map<String, double>? paymentBreakdown,
+    String? customPaymentLabel,
+    required String createdBy,
+    required DateTime createdAt,
+    required DateTime closedAt,
+    required bool includeServiceFee,
+    double discountAmount = 0.0,
+    double advanceAmount = 0.0,
+    double? subtotalAmount,
+    double? manualAdjustmentAmount,
+    Map<String, dynamic>? finalTransaction,
+    bool isFiscal = true,
+    bool isCancelled = false,
+    DateTime? cancelledAt,
+    String? closureId,
+    String? closedById,
+    double? grossSaleAmount,
+    double advanceApplied = 0.0,
+    double? collectedNow,
+    String? businessDate,
+    String? advanceReceiptId,
+    bool captureConsumption = false,
   }) async {
     try {
       if (closureId != null) {
@@ -102,6 +179,11 @@ class SalesRepository {
       }
 
       final saleRecord = {
+        // POS-owned identity survives restart and backup/restore. The Hive key
+        // does not, and closureId is absent on retained legacy Sales.
+        'posSaleId': _uuid.v4(),
+        'ledgerRevision': 1,
+        'ledgerUpdatedAt': closedAt.toIso8601String(),
         'orderId': orderId,
         'tableNumbers': tableNumbers,
         'floor': floor,
@@ -112,6 +194,9 @@ class SalesRepository {
                 'quantity': item.quantity,
                 'unitPrice': item.unitPrice,
                 'total': item.total,
+                if (item.comment != null) 'comment': item.comment,
+                if (item.menuItemId != null) 'menuItemId': item.menuItemId,
+                if (item.variantId != null) 'variantId': item.variantId,
               },
             )
             .toList(),
@@ -142,6 +227,11 @@ class SalesRepository {
         'isFiscal': isFiscal,
         'restoredToOrder': false,
         'recordType': SaleRecord.recordTypeSale,
+        if (captureConsumption && !isCancelled)
+          'inventoryConsumption': SaleConsumptionSnapshot.capture(
+            items,
+            isFiscal,
+          ),
         // The value of the sale, advance included. Records written before
         // Phase 1B have no such field and their `totalAmount` was the balance
         // — readers fall back, which is what those records meant.
@@ -158,6 +248,7 @@ class SalesRepository {
 
       return await DatabaseCore.salesBox!.add(saleRecord);
     } catch (e) {
+      if (UpdateReadiness.enabled) UpdateReadiness.failure = e.toString();
       developer.log('Error saving sale record: $e');
       return null;
     }
@@ -194,6 +285,23 @@ class SalesRepository {
   /// Idempotent on [receiptId]: editing the amount rewrites the same receipt
   /// rather than adding a second one. Returns the receipt id.
   static Future<String?> recordAdvanceReceipt({
+    required int orderId,
+    required double amount,
+    required String collectedBy,
+    String? receiptId,
+    String? businessDate,
+  }) => UpdateReadiness.track(
+    'recordAdvanceReceipt',
+    () => _updateTrackedRecordAdvanceReceipt(
+      orderId: orderId,
+      amount: amount,
+      collectedBy: collectedBy,
+      receiptId: receiptId,
+      businessDate: businessDate,
+    ),
+  );
+
+  static Future<String?> _updateTrackedRecordAdvanceReceipt({
     required int orderId,
     required double amount,
     required String collectedBy,
@@ -278,6 +386,17 @@ class SalesRepository {
   }
 
   static Future<void> markAdvanceReceiptApplied({
+    required String receiptId,
+    required String closureId,
+  }) => UpdateReadiness.track(
+    'markAdvanceReceiptApplied',
+    () => _updateTrackedMarkAdvanceReceiptApplied(
+      receiptId: receiptId,
+      closureId: closureId,
+    ),
+  );
+
+  static Future<void> _updateTrackedMarkAdvanceReceiptApplied({
     required String receiptId,
     required String closureId,
   }) async {
@@ -367,7 +486,40 @@ class SalesRepository {
     DateTime? createdAt,
     String? businessDate,
     String? sourceId,
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
+  }) => UpdateReadiness.track(
+    'saveExpenseRecord',
+    () => _updateTrackedSaveExpenseRecord(
+      description: description,
+      amount: amount,
+      category: category,
+      paymentType: paymentType,
+      createdAt: createdAt,
+      businessDate: businessDate,
+      sourceId: sourceId,
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+    ),
+  );
+
+  static Future<Map<String, dynamic>> _updateTrackedSaveExpenseRecord({
+    required String description,
+    required double amount,
+    required String category,
+    String paymentType = 'cash',
+    DateTime? createdAt,
+    String? businessDate,
+    String? sourceId,
+    String actorId = 'unknown',
+    String? actorName,
+    AuditSource source = AuditSource.pos,
   }) async {
+    if (ExpenseCategory.isProcurement(category)) {
+      throw ArgumentError('შესყიდვა დაამატეთ მარაგებში — დღიური მიღება');
+    }
     final now = createdAt ?? BusinessDayRepository.getCurrentDateTime();
     final date =
         businessDate ??
@@ -390,9 +542,22 @@ class SalesRepository {
     final existingKey = _expenseKeyForId(record['id'] as String);
     if (existingKey != null) {
       await DatabaseCore.expenseBox!.put(existingKey, record);
+      // The same expense arriving twice is one expense. Auditing the
+      // redelivery would claim a second one was created.
       return record;
     }
     await DatabaseCore.expenseBox!.add(record);
+    await GlobalAudit.expenseCreated(
+      expenseId: record['id'] as String,
+      amount: record['amount'] as double,
+      category: record['category'] as String,
+      description: record['description'] as String,
+      paymentType: record['paymentType'] as String,
+      businessDate: date,
+      actorId: actorId,
+      actorName: actorName,
+      source: source,
+    );
     return record;
   }
 
@@ -415,7 +580,12 @@ class SalesRepository {
   /// ingestion keys on this id to stay idempotent, so a record without one
   /// would either be dropped or duplicated on every sync. Runs once at
   /// startup and is a no-op afterwards.
-  static Future<int> ensureExpenseIdentities() async {
+  static Future<int> ensureExpenseIdentities() => UpdateReadiness.track(
+    'ensureExpenseIdentities',
+    () => _updateTrackedEnsureExpenseIdentities(),
+  );
+
+  static Future<int> _updateTrackedEnsureExpenseIdentities() async {
     final box = DatabaseCore.expenseBox;
     if (box == null) return 0;
     var backfilled = 0;
@@ -439,6 +609,7 @@ class SalesRepository {
       if (raw is! Map) continue;
       final data = Map<String, dynamic>.from(raw);
       if ((data['date'] as String?) != date) continue;
+      if (ExpenseCategory.isProcurement(data['category'])) continue;
       data['recordKey'] = key;
       entries.add(data);
     }
@@ -463,6 +634,7 @@ class SalesRepository {
       final raw = DatabaseCore.expenseBox!.get(key);
       if (raw is! Map) continue;
       final data = Map<String, dynamic>.from(raw);
+      if (ExpenseCategory.isProcurement(data['category'])) continue;
       data['recordKey'] = key;
       entries.add(data);
     }
@@ -525,6 +697,21 @@ class SalesRepository {
     required String cancelledBy,
     required String reason,
     bool allowHistorical = false,
+  }) => UpdateReadiness.track(
+    'cancelSaleRecord',
+    () => _updateTrackedCancelSaleRecord(
+      recordKey: recordKey,
+      cancelledBy: cancelledBy,
+      reason: reason,
+      allowHistorical: allowHistorical,
+    ),
+  );
+
+  static Future<SaleCancellationOutcome> _updateTrackedCancelSaleRecord({
+    required dynamic recordKey,
+    required String cancelledBy,
+    required String reason,
+    bool allowHistorical = false,
   }) async {
     final trimmedReason = reason.trim();
     if (trimmedReason.isEmpty) {
@@ -553,11 +740,12 @@ class SalesRepository {
         return SaleCancellationOutcome.historicalNotPermitted;
       }
 
+      final cancelledAt = BusinessDayRepository.getCurrentDateTime();
       updated['isCancelled'] = true;
-      updated['cancelledAt'] = BusinessDayRepository.getCurrentDateTime()
-          .toIso8601String();
+      updated['cancelledAt'] = cancelledAt.toIso8601String();
       updated['cancelledBy'] = actor;
       updated['cancellationReason'] = trimmedReason;
+      SaleLedgerSyncState.markLifecycleChanged(updated, cancelledAt);
       await DatabaseCore.salesBox!.put(recordKey, updated);
 
       if (dateString.isNotEmpty) {
@@ -576,16 +764,30 @@ class SalesRepository {
             0.0,
         reason: trimmedReason,
         historical: isHistorical,
+        saleId: recordKey.toString(),
+        closureId: updated['closureId']?.toString(),
       );
 
       return SaleCancellationOutcome.cancelled;
     } catch (e) {
+      if (UpdateReadiness.enabled) UpdateReadiness.failure = e.toString();
       developer.log('Error cancelling sale record: $e');
       return SaleCancellationOutcome.failed;
     }
   }
 
   static Future<bool> restoreClosedOrderFromSale({
+    required dynamic recordKey,
+    required String restoredBy,
+  }) => UpdateReadiness.track(
+    'restoreClosedOrderFromSale',
+    () => _updateTrackedRestoreClosedOrderFromSale(
+      recordKey: recordKey,
+      restoredBy: restoredBy,
+    ),
+  );
+
+  static Future<bool> _updateTrackedRestoreClosedOrderFromSale({
     required dynamic recordKey,
     required String restoredBy,
   }) async {
@@ -623,14 +825,33 @@ class SalesRepository {
         return false;
       }
 
+      Order? order = OrderRepository.getOrder(orderId);
+
       final saleFloor = (sale['floor'] as String?)?.trim().isNotEmpty == true
           ? (sale['floor'] as String).trim()
           : 'first';
+      final normalizedSaleFloor = saleFloor.toLowerCase();
+      final isTakeaway = order != null
+          ? isTakeawayOrder(order)
+          : normalizedSaleFloor == 'take-away' ||
+                normalizedSaleFloor.contains('takeaway') ||
+                normalizedSaleFloor.contains('take away') ||
+                ((sale['tableNumbers'] as List?) ?? const []).any(
+                  (table) =>
+                      table.toString().trim().toUpperCase().startsWith('TA-'),
+                );
 
       final saleTableNumbers = <String>[];
       final seenSaleTables = <String>{};
       final rawTables = (sale['tableNumbers'] as List?) ?? const [];
       for (final raw in rawTables) {
+        if (isTakeaway) {
+          final tableNumber = raw.toString().trim();
+          if (tableNumber.isNotEmpty && seenSaleTables.add(tableNumber)) {
+            saleTableNumbers.add(tableNumber);
+          }
+          continue;
+        }
         final normalized = TableRepository.normalizeTableIdentifier(
           raw.toString(),
           saleFloor,
@@ -648,11 +869,10 @@ class SalesRepository {
           saleTableNumbers.add(normalized);
         }
       }
-      if (saleTableNumbers.isEmpty) {
+      if (!isTakeaway && saleTableNumbers.isEmpty) {
         return false;
       }
 
-      Order? order = OrderRepository.getOrder(orderId);
       final targetFloor = order?.floor ?? saleFloor;
       final targetTables = order?.tableNumbers.isNotEmpty == true
           ? List<String>.from(order!.tableNumbers)
@@ -666,20 +886,31 @@ class SalesRepository {
         }
       }
 
-      for (final tableNumber in targetTables) {
-        final table = TableRepository.getTable(tableNumber, targetFloor);
-        if (table == null) {
-          continue;
-        }
+      if (!isTakeaway) {
+        for (final tableNumber in targetTables) {
+          final table = TableRepository.getTable(tableNumber, targetFloor);
+          if (table == null) {
+            continue;
+          }
 
-        final occupiedByAnotherOrder =
-            table.isReserved &&
-            table.activeOrderId != null &&
-            table.activeOrderId != orderId;
-        if (occupiedByAnotherOrder) {
-          return false;
+          final occupiedByAnotherOrder =
+              table.isReserved &&
+              table.activeOrderId != null &&
+              table.activeOrderId != orderId;
+          if (occupiedByAnotherOrder) {
+            return false;
+          }
         }
       }
+
+      final linkedReservations = DatabaseCore.reservationBox!.values.where(
+        (reservation) =>
+            reservation.linkedOrderId == orderId &&
+            ReservationClassification.isRealAdvanceBooking(reservation),
+      );
+      final linkedReservation = linkedReservations.isEmpty
+          ? null
+          : linkedReservations.first;
 
       final restoreTimestamp = BusinessDayRepository.getCurrentDateTime();
 
@@ -727,6 +958,8 @@ class SalesRepository {
               quantity: quantity,
               total: double.parse(total.toStringAsFixed(2)),
               comment: raw['comment']?.toString(),
+              menuItemId: raw['menuItemId']?.toString(),
+              variantId: raw['variantId']?.toString(),
             ),
           );
         }
@@ -765,18 +998,21 @@ class SalesRepository {
         }
       }
 
-      for (final tableNumber in targetTables) {
-        final table = TableRepository.getTable(tableNumber, targetFloor);
-        if (table == null) {
-          continue;
-        }
+      if (!isTakeaway) {
+        for (final tableNumber in targetTables) {
+          final table = TableRepository.getTable(tableNumber, targetFloor);
+          if (table == null) {
+            continue;
+          }
 
-        await TableRepository.reserveTable(
-          tableNumber: tableNumber,
-          floor: targetFloor,
-          username: restoredBy,
-          orderId: orderId,
-        );
+          await TableRepository.reserveTable(
+            tableNumber: tableNumber,
+            floor: targetFloor,
+            username: restoredBy,
+            orderId: orderId,
+            reservationId: linkedReservation?.id,
+          );
+        }
       }
 
       order.statusEnum = OrderStatus.confirmed;
@@ -789,6 +1025,33 @@ class SalesRepository {
       // it would make the next close look like a retry of the reversed one.
       order.closureId = null;
       await order.save();
+
+      if (linkedReservation != null &&
+          linkedReservation.statusEnum == ReservationStatus.completed) {
+        final previousReservationStatus = linkedReservation.status;
+        linkedReservation.statusEnum = ReservationStatus.inProgress;
+        await linkedReservation.save();
+        await ReservationAudit.log(
+          action: ReservationAuditAction.update,
+          reservation: linkedReservation,
+          actorId: restoredBy,
+          source: AuditSource.pos,
+          previousStatus: previousReservationStatus,
+          newStatus: linkedReservation.status,
+          reason: 'Order restored',
+          extra: {'orderId': orderId},
+        );
+        SyncHub.notify(
+          SyncEvent(
+            type: SyncEventType.reservations,
+            action: 'restored',
+            payload: {
+              'reservationId': linkedReservation.id,
+              'orderId': orderId,
+            },
+          ),
+        );
+      }
 
       SyncHub.notify(
         SyncEvent(
@@ -803,7 +1066,11 @@ class SalesRepository {
         ..remove('cancelledAt')
         ..['restoredToOrder'] = true
         ..['restoredAt'] = restoreTimestamp.toIso8601String()
+        ..['inventoryRestoreBusinessDate'] = BusinessDayRepository.dateKey(
+          BusinessDayRepository.getCurrentDate(),
+        )
         ..['restoredBy'] = restoredBy;
+      SaleLedgerSyncState.markLifecycleChanged(updatedSale, restoreTimestamp);
       await DatabaseCore.salesBox!.put(recordKey, updatedSale);
 
       // The deposit is unspent again: it is held against an open order once
@@ -817,21 +1084,64 @@ class SalesRepository {
         BusinessDayRepository.getCurrentDate(),
       );
 
+      final restoredGross =
+          (sale['grossSaleAmount'] as num?)?.toDouble() ??
+          (sale['totalAmount'] as num?)?.toDouble() ??
+          0.0;
+      final restoreEvent = AuditEvent(
+        type: AuditEventType.restore,
+        itemName: 'ORDER',
+        previousQty: 0,
+        newQty: 0,
+        waiterId: restoredBy,
+        waiterName: restoredBy,
+        timestamp: restoreTimestamp,
+        note: 'Order restored and reopened',
+        details: <String, dynamic>{
+          'orderId': orderId,
+          if (closureId != null && closureId.isNotEmpty)
+            'originalClosureId': closureId,
+          'originalSaleId':
+              sale['posSaleId']?.toString() ?? recordKey.toString(),
+          'actorId': restoredBy,
+          'actorName': restoredBy,
+          'businessDate': saleDate,
+          'tableNumbers': List<String>.from(targetTables),
+          'tableRefs': targetTables
+              .map((tableNumber) => '$targetFloor/$tableNumber')
+              .toList(growable: false),
+          'floor': targetFloor,
+          'restoredGrossAmount': restoredGross,
+          'originalIsFiscal': sale['isFiscal'] != false,
+          'advanceAmount': restoredAdvance,
+        },
+      );
+      await AuditRepository.reopenOrderAuditReport(
+        orderId: orderId,
+        restoreEvent: restoreEvent,
+      );
+
       await MoneyAudit.saleRestoredToOrder(
         actorId: restoredBy,
         orderId: orderId,
         businessDate: saleDate,
-        totalAmount: (sale['totalAmount'] as num?)?.toDouble() ?? 0.0,
+        totalAmount: restoredGross,
       );
       return true;
     } catch (e) {
+      if (UpdateReadiness.enabled) UpdateReadiness.failure = e.toString();
       developer.log('Error restoring sale record to order: $e');
       return false;
     }
   }
 
   // Reset daily sales total (called when closing day)
-  static Future<void> resetDailySalesTotal() async {
+  static Future<void> resetDailySalesTotal() => UpdateReadiness.track(
+    'resetDailySalesTotal',
+    () => _updateTrackedResetDailySalesTotal(),
+  );
+
+  static Future<void> _updateTrackedResetDailySalesTotal() async {
     await DatabaseCore.settingsBox!.put('dailySalesTotal', 0.0);
   }
 }

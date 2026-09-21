@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_surface.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:vynic/core/models/audit_report.dart';
+import 'package:vynic/core/services/audit/close_event_presentation.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
 
@@ -295,6 +296,7 @@ class AdminAuditLogSection extends StatelessWidget {
                                 SizedBox(
                                   width: 210,
                                   child: DropdownButtonFormField<DateTime>(
+                                    isExpanded: true,
                                     value: monthOptions.firstWhere(
                                       (month) =>
                                           month.year ==
@@ -330,7 +332,11 @@ class AdminAuditLogSection extends StatelessWidget {
                                           '${_getGeorgianMonthName(monthDate.month)} ${monthDate.year}';
                                       return DropdownMenuItem<DateTime>(
                                         value: monthDate,
-                                        child: Text(label),
+                                        child: Text(
+                                          label,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       );
                                     }).toList(),
                                     onChanged: (value) {
@@ -767,7 +773,11 @@ class AdminAuditLogSection extends StatelessWidget {
       barrierColor: Colors.black45,
       builder: (context) {
         final isMobile = MediaQuery.of(context).size.width < 600;
-        final events = report.sortedEvents;
+        // One Order's report reads as the story of that Order: opened, then
+        // what happened to it, then closed. Chronological by the POS-assigned
+        // sequence, never by timestamp — a creation event and the lines
+        // written with it share one instant on purpose.
+        final events = report.orderedEvents;
         return Dialog(
           insetPadding: isMobile
               ? const EdgeInsets.symmetric(horizontal: 10, vertical: 20)
@@ -871,7 +881,15 @@ class AdminAuditLogSection extends StatelessWidget {
                             separatorBuilder: (_, __) =>
                                 const SizedBox(height: 6),
                             itemBuilder: (context, index) =>
-                                _buildAuditEventTile(events[index], index),
+                                _buildAuditEventTile(
+                                  events[index],
+                                  // The event's own ordinal. The list order
+                                  // already matches it; the index is the
+                                  // fallback only for a report written before
+                                  // sequences existed, which
+                                  // `orderedEvents` has already numbered.
+                                  events[index].sequence ?? index,
+                                ),
                           ),
                   ),
                 ],
@@ -883,7 +901,9 @@ class AdminAuditLogSection extends StatelessWidget {
     );
   }
 
-  Widget _buildAuditEventTile(AuditEvent event, int sequence) {
+  /// [ordinal] is the event's zero-based place in the report's timeline; it
+  /// is shown one-based, so the event that opened the Order reads as step 1.
+  Widget _buildAuditEventTile(AuditEvent event, int ordinal) {
     final icon = _auditEventIcon(event.type);
     final color = _auditEventColor(event.type);
     final label = _auditEventLabel(event.type);
@@ -913,7 +933,7 @@ class AdminAuditLogSection extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '$sequence. $label • ${event.itemName}',
+                  '${ordinal + 1}. $label • ${event.itemName}',
                   style: const TextStyle(
                     color: _text,
                     fontSize: 13,
@@ -934,9 +954,13 @@ class AdminAuditLogSection extends StatelessWidget {
             children: [
               _metaChip('Operator', '${event.waiterName} (${event.waiterId})'),
               _metaChip('Qty', '${event.previousQty} → ${event.newQty}'),
+              // Payment semantics come from the structured close details,
+              // never from the free-text note.
+              for (final chip in CloseEventPresentation.chips(event))
+                _metaChip(chip.label, chip.value),
             ],
           ),
-          if (event.note != null && event.note!.isNotEmpty) ...[
+          if (CloseEventPresentation.displayNote(event) != null) ...[
             const SizedBox(height: 6),
             Container(
               width: double.infinity,
@@ -947,7 +971,7 @@ class AdminAuditLogSection extends StatelessWidget {
                 border: Border.all(color: _border),
               ),
               child: Text(
-                event.note!,
+                CloseEventPresentation.displayNote(event)!,
                 style: const TextStyle(color: _muted, fontSize: 12),
               ),
             ),
@@ -987,8 +1011,32 @@ class AdminAuditLogSection extends StatelessWidget {
         return Icons.remove_circle_outline;
       case AuditEventType.deleteItem:
         return Icons.delete_outline;
+      case AuditEventType.close:
+        return Icons.point_of_sale_outlined;
+      case AuditEventType.internalClose:
+        return Icons.do_not_disturb_on_outlined;
+      case AuditEventType.restore:
+        return Icons.settings_backup_restore;
       case AuditEventType.cancelTable:
         return Icons.block;
+      case AuditEventType.createWalkIn:
+        return Icons.table_restaurant_outlined;
+      case AuditEventType.createTakeaway:
+        return Icons.shopping_bag_outlined;
+      case AuditEventType.applyPackage:
+        return Icons.inventory_2_outlined;
+      case AuditEventType.activateReservation:
+        return Icons.event_available_outlined;
+      case AuditEventType.moveItems:
+        return Icons.swap_horiz;
+      case AuditEventType.transferClose:
+        return Icons.output_outlined;
+      case AuditEventType.recordAdvance:
+        return Icons.savings_outlined;
+      case AuditEventType.adjustOrder:
+        return Icons.tune;
+      case AuditEventType.voidSale:
+        return Icons.money_off_csred_outlined;
       case AuditEventType.custom:
         return Icons.info_outline;
     }
@@ -1002,7 +1050,29 @@ class AdminAuditLogSection extends StatelessWidget {
         return AdminTones.warningText;
       case AuditEventType.deleteItem:
         return AdminDesign.danger;
+      case AuditEventType.close:
+        return AdminTones.successText;
+      case AuditEventType.internalClose:
+        return AdminDesign.muted;
+      case AuditEventType.restore:
+        return AdminTones.warningText;
       case AuditEventType.cancelTable:
+        return AdminDesign.danger;
+      case AuditEventType.createWalkIn:
+      case AuditEventType.createTakeaway:
+      case AuditEventType.activateReservation:
+        return AdminTones.infoText;
+      case AuditEventType.applyPackage:
+        return AdminTones.accentText;
+      case AuditEventType.moveItems:
+        return AdminTones.infoText;
+      case AuditEventType.transferClose:
+        return AdminDesign.muted;
+      case AuditEventType.recordAdvance:
+        return AdminTones.infoText;
+      case AuditEventType.adjustOrder:
+        return AdminTones.warningText;
+      case AuditEventType.voidSale:
         return AdminDesign.danger;
       case AuditEventType.custom:
         return AdminDesign.muted;
@@ -1017,8 +1087,32 @@ class AdminAuditLogSection extends StatelessWidget {
         return 'რაოდენობის შემცირება';
       case AuditEventType.deleteItem:
         return 'პოზიციის წაშლა';
+      case AuditEventType.close:
+        return 'ფისკალური დახურვა';
+      case AuditEventType.internalClose:
+        return 'არაფისკალური დახურვა';
+      case AuditEventType.restore:
+        return 'შეკვეთის აღდგენა';
       case AuditEventType.cancelTable:
-        return 'მაგიდის დახურვა';
+        return 'მაგიდის გაუქმება';
+      case AuditEventType.createWalkIn:
+        return 'მაგიდის გახსნა';
+      case AuditEventType.createTakeaway:
+        return 'გატანის შეკვეთის შექმნა';
+      case AuditEventType.applyPackage:
+        return 'პაკეტის მინიჭება';
+      case AuditEventType.activateReservation:
+        return 'ჯავშნის აქტივაცია';
+      case AuditEventType.moveItems:
+        return 'პოზიციების გადატანა';
+      case AuditEventType.transferClose:
+        return 'დახურვა გადატანით';
+      case AuditEventType.recordAdvance:
+        return 'ავანსის აღრიცხვა';
+      case AuditEventType.adjustOrder:
+        return 'შეკვეთის კორექცია';
+      case AuditEventType.voidSale:
+        return 'გაყიდვის გაუქმება';
       case AuditEventType.custom:
         return 'ჩანაწერი';
     }

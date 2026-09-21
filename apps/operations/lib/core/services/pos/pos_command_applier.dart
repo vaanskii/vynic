@@ -1,5 +1,9 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'package:flutter/foundation.dart';
+import 'package:vynic/core/database/transactions/cancel_order_transaction.dart';
+import 'package:vynic/core/models/audit_source.dart';
 import 'package:vynic/core/models/order.dart';
+import 'package:vynic/core/models/order_status.dart';
 import 'package:vynic/core/models/staff_role.dart';
 import 'package:vynic/core/services/audit/audit_order_diff_service.dart';
 import 'package:vynic/core/services/audit/money_audit.dart';
@@ -113,7 +117,12 @@ class PosCommandApplier {
   /// writes the same values. The audit diff is taken against what is stored, so
   /// a replay produces no events, and [MoneyAudit] already declines to record a
   /// service-fee change that did not move.
-  static Future<PosCommandOutcome> updateOrder(Map<String, dynamic> p) async {
+  static Future<PosCommandOutcome> updateOrder(Map<String, dynamic> p) =>
+      UpdateReadiness.track('updateOrder', () => _updateTrackedUpdateOrder(p));
+
+  static Future<PosCommandOutcome> _updateTrackedUpdateOrder(
+    Map<String, dynamic> p,
+  ) async {
     final posOrderId = _int(p['posOrderId']);
     if (posOrderId == null) {
       return const PosCommandOutcome.invalid('posOrderId_required');
@@ -170,6 +179,7 @@ class PosCommandApplier {
       newIncluded: order.includeServiceFee,
       previousTotal: prevTotal,
       newTotal: order.totalAmount,
+      source: AuditSource.manager,
     );
 
     final message = orderChangeMessage(
@@ -207,32 +217,79 @@ class PosCommandApplier {
   static Future<PosCommandOutcome> cancelOrder(
     Map<String, dynamic> p, {
     bool treatMissingAsDone = false,
+  }) => UpdateReadiness.track(
+    'cancelOrder',
+    () => _updateTrackedCancelOrder(p, treatMissingAsDone: treatMissingAsDone),
+  );
+
+  static Future<PosCommandOutcome> _updateTrackedCancelOrder(
+    Map<String, dynamic> p, {
+    bool treatMissingAsDone = false,
   }) async {
     final posOrderId = _int(p['posOrderId']);
     if (posOrderId == null) {
       return const PosCommandOutcome.invalid('posOrderId_required');
     }
-    // Capture the tables before the order (and its cleanup) removes them.
+    // `ORDER_CANCEL` used to erase the Order and its audit report. A Manager
+    // cancelling an order is a cancellation like any other: the Order stays,
+    // marked cancelled, with its typed audit event and non-revenue record.
+    return _cancelThroughTransaction(
+      p,
+      posOrderId: posOrderId,
+      treatMissingAsDone: treatMissingAsDone,
+    );
+  }
+
+  /// The single cancellation lifecycle, for both command spellings.
+  ///
+  /// Convergent: an Order that is already cancelled is left exactly as it is,
+  /// so a redelivery adds no second event, record or reservation transition.
+  static Future<PosCommandOutcome> _cancelThroughTransaction(
+    Map<String, dynamic> p, {
+    required int posOrderId,
+    required bool treatMissingAsDone,
+  }) async {
     final existing = DatabaseService.getOrder(posOrderId);
     final tableSeg = existing != null
         ? formatTablesSegment(existing.tableNumbers, existing.floor)
         : '';
-    final ok = await DatabaseService.deleteOrderAndCleanup(
+    final actor = _actor(p['cancelledBy'] ?? p['updatedBy'] ?? p['waiterName']);
+    final reason = _string(p['reason'] ?? p['comment']);
+
+    final outcome = await DatabaseService.cancelOrder(
       orderId: posOrderId,
-      deletedBy: defaultActor,
+      actorId: actor,
+      actorName: actor,
+      source: AuditSource.manager,
+      reason: reason.isEmpty ? null : reason,
     );
-    if (!ok) {
-      if (!treatMissingAsDone) {
-        return const PosCommandOutcome.missing('order_not_found');
-      }
-      return const PosCommandOutcome.success(code: 'already_absent');
+
+    switch (outcome) {
+      case CancelOrderOutcome.notFound:
+        if (!treatMissingAsDone) {
+          return const PosCommandOutcome.missing('order_not_found');
+        }
+        return const PosCommandOutcome.success(code: 'already_absent');
+      case CancelOrderOutcome.alreadyCancelled:
+        return const PosCommandOutcome.success(code: 'already_cancelled');
+      case CancelOrderOutcome.notCancellable:
+        return const PosCommandOutcome.conflicting(
+          'order_closed',
+          detail: 'A closed order must be restored before it is cancelled',
+        );
+      case CancelOrderOutcome.failed:
+        return const PosCommandOutcome.failed('cancel_failed');
+      case CancelOrderOutcome.cancelled:
+        break;
     }
+
     _notify(
       message: tableSeg.isNotEmpty
           ? 'შეკვეთა #$posOrderId გაუქმდა — $tableSeg'
-          : 'შეკვეთა #$posOrderId წაიშალა',
+          : 'შეკვეთა #$posOrderId გაუქმდა',
       meta: {
         'posOrderId': posOrderId,
+        'status': 'cancelled',
         if (tableSeg.isNotEmpty)
           'tableLabel': existing!.tableNumbers.join(', '),
       },
@@ -241,8 +298,21 @@ class PosCommandApplier {
     return const PosCommandOutcome.success();
   }
 
-  /// Set an order's status. Convergent by assignment.
-  static Future<PosCommandOutcome> updateOrderStatus(
+  /// Set an order's status.
+  ///
+  /// Validated before anything is written, through the one
+  /// [RemoteOrderStatusRule] both transports share. A status this system does
+  /// not recognize is refused rather than persisted, a legacy or fiscal status
+  /// is refused rather than assigned, a cancellation is delegated to the
+  /// cancellation transaction, and a request the Order already satisfies is a
+  /// clean no-op — so a redelivery converges without writing twice.
+  static Future<PosCommandOutcome> updateOrderStatus(Map<String, dynamic> p) =>
+      UpdateReadiness.track(
+        'updateOrderStatus',
+        () => _updateTrackedUpdateOrderStatus(p),
+      );
+
+  static Future<PosCommandOutcome> _updateTrackedUpdateOrderStatus(
     Map<String, dynamic> p,
   ) async {
     final posOrderId = _int(p['posOrderId']);
@@ -250,33 +320,76 @@ class PosCommandApplier {
     if (posOrderId == null || status.isEmpty) {
       return const PosCommandOutcome.invalid('posOrderId_and_status_required');
     }
-    // Capture tables before the status change frees them (paid/cancelled).
+
     final existing = DatabaseService.getOrder(posOrderId);
-    final tableSeg = existing != null
-        ? formatTablesSegment(existing.tableNumbers, existing.floor)
-        : '';
+    final decision = RemoteOrderStatusRule.decide(
+      requested: status,
+      current: existing == null
+          ? OrderStatus.unknown
+          : OrderStatus.fromStorage(existing.status),
+    );
+
+    // Cancellation first: it is the one target that is meaningful even when
+    // the Order is missing, because the transaction decides what that means.
+    if (decision == RemoteOrderStatusDecision.cancelThroughTransaction) {
+      return _cancelThroughTransaction(
+        p,
+        posOrderId: posOrderId,
+        treatMissingAsDone: false,
+      );
+    }
+
+    switch (decision) {
+      case RemoteOrderStatusDecision.unknownStatus:
+        return PosCommandOutcome.invalid(
+          'unsupported_status',
+          detail:
+              '"$status" is not an order status this POS stores. '
+              'Nothing was changed.',
+        );
+      case RemoteOrderStatusDecision.notRemotelyAssignable:
+        return PosCommandOutcome.invalid(
+          'status_not_remotely_assignable',
+          detail:
+              '"$status" cannot be set remotely. A close is a fiscal '
+              'transaction, and "preparing"/"served" are historical values '
+              'this system no longer writes.',
+        );
+      case RemoteOrderStatusDecision.orderIsTerminal:
+        return const PosCommandOutcome.conflicting(
+          'order_terminal',
+          detail:
+              'A closed or cancelled order is not reopened by a status '
+              'string; restore it first.',
+        );
+      case RemoteOrderStatusDecision.alreadyInState:
+        // Convergent: the goal state already holds, so this is a success with
+        // no second write and no second notification.
+        return const PosCommandOutcome.success(code: 'already_in_state');
+      case RemoteOrderStatusDecision.assign:
+        break;
+      case RemoteOrderStatusDecision.cancelThroughTransaction:
+        // Handled above.
+        break;
+    }
+
+    if (existing == null) {
+      return const PosCommandOutcome.missing('order_not_found');
+    }
+
+    final tableSeg = formatTablesSegment(existing.tableNumbers, existing.floor);
     await DatabaseService.updateOrderStatus(
       orderId: posOrderId,
       status: status,
     );
-    final isCancelled = status.toLowerCase() == 'cancelled';
-    final String message;
-    if (isCancelled) {
-      message = tableSeg.isNotEmpty
-          ? 'შეკვეთა #$posOrderId გაუქმდა — $tableSeg'
-          : 'შეკვეთა #$posOrderId გაუქმდა';
-    } else {
-      message = tableSeg.isNotEmpty
-          ? 'შეკვეთა #$posOrderId — სტატუსი: $status ($tableSeg)'
-          : 'შეკვეთა #$posOrderId — სტატუსი: $status';
-    }
     _notify(
-      message: message,
+      message: tableSeg.isNotEmpty
+          ? 'შეკვეთა #$posOrderId — სტატუსი: $status ($tableSeg)'
+          : 'შეკვეთა #$posOrderId — სტატუსი: $status',
       meta: {
         'posOrderId': posOrderId,
         'status': status,
-        if (tableSeg.isNotEmpty)
-          'tableLabel': existing!.tableNumbers.join(', '),
+        if (tableSeg.isNotEmpty) 'tableLabel': existing.tableNumbers.join(', '),
       },
     );
     scheduleCloudSync();
@@ -289,6 +402,13 @@ class PosCommandApplier {
   /// so a redelivery updates the one order. The kitchen check is sent only when
   /// the order was not already here, which is what stops a replay reprinting it.
   static Future<PosCommandOutcome> upsertTakeawayOrder(
+    Map<String, dynamic> p,
+  ) => UpdateReadiness.track(
+    'upsertTakeawayOrder',
+    () => _updateTrackedUpsertTakeawayOrder(p),
+  );
+
+  static Future<PosCommandOutcome> _updateTrackedUpsertTakeawayOrder(
     Map<String, dynamic> p,
   ) async {
     final posOrderId = _int(p['posOrderId']);
@@ -340,7 +460,13 @@ class PosCommandApplier {
   /// Create or update a Cloud-originated walk-in dine-in order.
   ///
   /// Convergent for the same reason as [upsertTakeawayOrder].
-  static Future<PosCommandOutcome> upsertDineInOrder(
+  static Future<PosCommandOutcome> upsertDineInOrder(Map<String, dynamic> p) =>
+      UpdateReadiness.track(
+        'upsertDineInOrder',
+        () => _updateTrackedUpsertDineInOrder(p),
+      );
+
+  static Future<PosCommandOutcome> _updateTrackedUpsertDineInOrder(
     Map<String, dynamic> p,
   ) async {
     final posOrderId = _int(p['posOrderId']);
@@ -407,7 +533,13 @@ class PosCommandApplier {
   ///
   /// Not convergent, and not pretended to be. Its protection against a repeated
   /// delivery is the Edge execution journal.
-  static Future<PosCommandOutcome> printOrderCheck(
+  static Future<PosCommandOutcome> printOrderCheck(Map<String, dynamic> p) =>
+      UpdateReadiness.track(
+        'printOrderCheck',
+        () => _updateTrackedPrintOrderCheck(p),
+      );
+
+  static Future<PosCommandOutcome> _updateTrackedPrintOrderCheck(
     Map<String, dynamic> p,
   ) async {
     final posOrderId = _int(p['posOrderId']);
@@ -504,6 +636,13 @@ class PosCommandApplier {
   /// uses when a reservation is created locally.
   static Future<PosCommandOutcome> printReservationCheck(
     Map<String, dynamic> p,
+  ) => UpdateReadiness.track(
+    'printReservationCheck',
+    () => _updateTrackedPrintReservationCheck(p),
+  );
+
+  static Future<PosCommandOutcome> _updateTrackedPrintReservationCheck(
+    Map<String, dynamic> p,
   ) async {
     final reservationId = _string(p['reservationId']);
     if (reservationId.isEmpty) {
@@ -553,7 +692,13 @@ class PosCommandApplier {
   /// Counted menus live in Cloud rather than POS Hive — a Manager creates them
   /// there and the POS has never seen one — so the whole draft travels in the
   /// command rather than being looked up.
-  static Future<PosCommandOutcome> printCountedMenu(
+  static Future<PosCommandOutcome> printCountedMenu(Map<String, dynamic> p) =>
+      UpdateReadiness.track(
+        'printCountedMenu',
+        () => _updateTrackedPrintCountedMenu(p),
+      );
+
+  static Future<PosCommandOutcome> _updateTrackedPrintCountedMenu(
     Map<String, dynamic> p,
   ) async {
     final rawItems = (p['items'] as List?) ?? const [];
@@ -608,7 +753,13 @@ class PosCommandApplier {
   /// where identity had to move for at-least-once delivery to be survivable.
   /// A reservation already carrying that id is reported as created, because it
   /// was: by the delivery before this one.
-  static Future<PosCommandOutcome> createReservation(
+  static Future<PosCommandOutcome> createReservation(Map<String, dynamic> p) =>
+      UpdateReadiness.track(
+        'createReservation',
+        () => _updateTrackedCreateReservation(p),
+      );
+
+  static Future<PosCommandOutcome> _updateTrackedCreateReservation(
     Map<String, dynamic> p,
   ) async {
     try {
@@ -625,6 +776,7 @@ class PosCommandApplier {
 
       final id = await DatabaseService.createReservationFromJson(
         <String, dynamic>{...p, if (requestedId.isNotEmpty) 'id': requestedId},
+        source: _reservationSource(p),
       );
       final reservation = DatabaseService.getReservationById(id);
       final customerName = _string(
@@ -668,6 +820,13 @@ class PosCommandApplier {
   /// Set a reservation's status. Convergent by assignment.
   static Future<PosCommandOutcome> updateReservationStatus(
     Map<String, dynamic> p,
+  ) => UpdateReadiness.track(
+    'updateReservationStatus',
+    () => _updateTrackedUpdateReservationStatus(p),
+  );
+
+  static Future<PosCommandOutcome> _updateTrackedUpdateReservationStatus(
+    Map<String, dynamic> p,
   ) async {
     final reservationId = _string(p['reservationId']);
     final status = _string(p['status']);
@@ -676,7 +835,13 @@ class PosCommandApplier {
         'reservationId_and_status_required',
       );
     }
-    await DatabaseService.updateReservationStatus(reservationId, status);
+    await DatabaseService.updateReservationStatus(
+      reservationId,
+      status,
+      actorId: _actor(p['updatedBy'] ?? p['cancelledBy'] ?? p['waiterName']),
+      source: _reservationSource(p),
+      reason: _string(p['reason']),
+    );
     _notify(
       message: 'რეზერვაცია — სტატუსი: $status',
       meta: {'reservationId': reservationId, 'status': status},
@@ -689,16 +854,39 @@ class PosCommandApplier {
   ///
   /// Convergent: the goal state is "this reservation is gone", which an absent
   /// reservation already satisfies.
-  static Future<PosCommandOutcome> deleteReservation(
+  static Future<PosCommandOutcome> deleteReservation(Map<String, dynamic> p) =>
+      UpdateReadiness.track(
+        'deleteReservation',
+        () => _updateTrackedDeleteReservation(p),
+      );
+
+  static Future<PosCommandOutcome> _updateTrackedDeleteReservation(
     Map<String, dynamic> p,
   ) async {
     final reservationId = _string(p['reservationId']);
     if (reservationId.isEmpty) {
       return const PosCommandOutcome.invalid('reservationId_required');
     }
-    await DatabaseService.deleteReservation(reservationId);
+    await DatabaseService.deleteReservation(
+      reservationId,
+      actorId: _actor(p['deletedBy'] ?? p['updatedBy']),
+      source: _reservationSource(p),
+      reason: _string(p['reason']),
+    );
     scheduleCloudSync();
     return const PosCommandOutcome.success();
+  }
+
+  /// Which channel a Cloud-relayed reservation command came from. The
+  /// website bridge marks its commands; everything else through this path is
+  /// the Manager app, whichever transport delivered it.
+  static AuditSource _reservationSource(Map<String, dynamic> p) {
+    final source = _string(p['source']).toLowerCase();
+    final createdBy = _string(p['createdBy']).toLowerCase();
+    if (source == 'website' || createdBy == 'website') {
+      return AuditSource.website;
+    }
+    return AuditSource.manager;
   }
 
   // ── Expenses ───────────────────────────────────────────────────────────────
@@ -708,7 +896,15 @@ class PosCommandApplier {
   /// Convergent because Cloud allocates the id and the local write upserts on
   /// it. Appending was the old behaviour, and it meant one retried delivery
   /// showed up as two expenses in a restaurant's day.
-  static Future<PosCommandOutcome> createExpense(Map<String, dynamic> p) async {
+  static Future<PosCommandOutcome> createExpense(Map<String, dynamic> p) =>
+      UpdateReadiness.track(
+        'createExpense',
+        () => _updateTrackedCreateExpense(p),
+      );
+
+  static Future<PosCommandOutcome> _updateTrackedCreateExpense(
+    Map<String, dynamic> p,
+  ) async {
     final description = _string(p['description']);
     final amount = _double(p['amount']) ?? 0;
     if (description.isEmpty || amount <= 0) {
@@ -725,6 +921,8 @@ class PosCommandApplier {
           : null,
       businessDate: p['businessDate'] as String?,
       sourceId: p['id'] as String?,
+      actorId: _actor(p['performedBy'] ?? p['createdBy']),
+      source: AuditSource.manager,
     );
     scheduleCloudSync();
     return PosCommandOutcome.success(
@@ -743,6 +941,15 @@ class PosCommandApplier {
   static Future<PosCommandOutcome> createStaff(
     Map<String, dynamic> p, {
     bool treatExistingAsDone = false,
+  }) => UpdateReadiness.track(
+    'createStaff',
+    () =>
+        _updateTrackedCreateStaff(p, treatExistingAsDone: treatExistingAsDone),
+  );
+
+  static Future<PosCommandOutcome> _updateTrackedCreateStaff(
+    Map<String, dynamic> p, {
+    bool treatExistingAsDone = false,
   }) async {
     final username = _string(p['username']);
     final pinCode = _string(p['pinCode'] ?? p['pin']);
@@ -752,10 +959,13 @@ class PosCommandApplier {
     final role = StaffRole.normalizeClient(
       _string(p['role'], fallback: 'waiter'),
     );
+    final actor = _staffActor(p);
     final ok = await DatabaseService.addUser(
       username: username,
       pinCode: pinCode,
       role: role,
+      actorId: actor,
+      source: AuditSource.manager,
     );
     if (ok) {
       scheduleCloudSync();
@@ -776,14 +986,22 @@ class PosCommandApplier {
       // most likely. Repeating will not resolve it.
       return const PosCommandOutcome.conflicting('user_exists_or_pin_taken');
     }
-    await DatabaseService.updateUserPinByUsername(
+    final pinUpdated = await DatabaseService.updateUserPinByUsername(
       username: username,
       pinCode: pinCode,
+      actorId: actor,
+      source: AuditSource.manager,
     );
-    await DatabaseService.updateUserRoleByUsername(
+    if (!pinUpdated)
+      return const PosCommandOutcome.conflicting('pin_update_failed');
+    final roleUpdated = await DatabaseService.updateUserRoleByUsername(
       username: username,
       role: role,
+      actorId: actor,
+      source: AuditSource.manager,
     );
+    if (!roleUpdated)
+      return const PosCommandOutcome.conflicting('role_update_failed');
     scheduleCloudSync();
     return PosCommandOutcome.success(
       code: 'already_exists',
@@ -794,7 +1012,13 @@ class PosCommandApplier {
   }
 
   /// Set a staff user's PIN. Convergent by assignment.
-  static Future<PosCommandOutcome> updateStaffPin(
+  static Future<PosCommandOutcome> updateStaffPin(Map<String, dynamic> p) =>
+      UpdateReadiness.track(
+        'updateStaffPin',
+        () => _updateTrackedUpdateStaffPin(p),
+      );
+
+  static Future<PosCommandOutcome> _updateTrackedUpdateStaffPin(
     Map<String, dynamic> p,
   ) async {
     final username = _string(p['username']);
@@ -805,6 +1029,8 @@ class PosCommandApplier {
     final ok = await DatabaseService.updateUserPinByUsername(
       username: username,
       pinCode: pinCode,
+      actorId: _staffActor(p),
+      source: AuditSource.manager,
     );
     if (!ok) return const PosCommandOutcome.missing('update_failed');
     scheduleCloudSync();
@@ -812,7 +1038,13 @@ class PosCommandApplier {
   }
 
   /// Set a staff user's role. Convergent by assignment.
-  static Future<PosCommandOutcome> updateStaffRole(
+  static Future<PosCommandOutcome> updateStaffRole(Map<String, dynamic> p) =>
+      UpdateReadiness.track(
+        'updateStaffRole',
+        () => _updateTrackedUpdateStaffRole(p),
+      );
+
+  static Future<PosCommandOutcome> _updateTrackedUpdateStaffRole(
     Map<String, dynamic> p,
   ) async {
     final username = _string(p['username']);
@@ -824,6 +1056,8 @@ class PosCommandApplier {
     final ok = await DatabaseService.updateUserRoleByUsername(
       username: username,
       role: role,
+      actorId: _staffActor(p),
+      source: AuditSource.manager,
     );
     if (!ok) return const PosCommandOutcome.conflicting('role_update_failed');
     scheduleCloudSync();
@@ -840,6 +1074,14 @@ class PosCommandApplier {
   /// not". A redelivery finds exactly that and succeeds without touching
   /// anything.
   static Future<PosCommandOutcome> renameStaff(
+    Map<String, dynamic> p, {
+    bool treatRenamedAsDone = false,
+  }) => UpdateReadiness.track(
+    'renameStaff',
+    () => _updateTrackedRenameStaff(p, treatRenamedAsDone: treatRenamedAsDone),
+  );
+
+  static Future<PosCommandOutcome> _updateTrackedRenameStaff(
     Map<String, dynamic> p, {
     bool treatRenamedAsDone = false,
   }) async {
@@ -861,6 +1103,8 @@ class PosCommandApplier {
     final ok = await DatabaseService.renameUserByUsername(
       oldUsername: oldUsername,
       newUsername: newUsername,
+      actorId: _staffActor(p),
+      source: AuditSource.manager,
     );
     if (!ok) return const PosCommandOutcome.conflicting('rename_failed');
     scheduleCloudSync();
@@ -878,6 +1122,14 @@ class PosCommandApplier {
   static Future<PosCommandOutcome> deleteStaff(
     Map<String, dynamic> p, {
     bool treatMissingAsDone = false,
+  }) => UpdateReadiness.track(
+    'deleteStaff',
+    () => _updateTrackedDeleteStaff(p, treatMissingAsDone: treatMissingAsDone),
+  );
+
+  static Future<PosCommandOutcome> _updateTrackedDeleteStaff(
+    Map<String, dynamic> p, {
+    bool treatMissingAsDone = false,
   }) async {
     final username = _string(p['username']);
     if (username.isEmpty) {
@@ -887,7 +1139,11 @@ class PosCommandApplier {
         DatabaseService.getUserByUsername(username) == null) {
       return const PosCommandOutcome.success(code: 'already_absent');
     }
-    final ok = await DatabaseService.deleteUserByUsername(username);
+    final ok = await DatabaseService.deleteUserByUsername(
+      username,
+      actorId: _staffActor(p),
+      source: AuditSource.manager,
+    );
     if (!ok) return const PosCommandOutcome.conflicting('delete_failed');
     scheduleCloudSync();
     return const PosCommandOutcome.success();
@@ -948,6 +1204,8 @@ class PosCommandApplier {
           quantity: qty,
           total: unitPrice * qty,
           comment: map['comment'] as String?,
+          menuItemId: map['menuItemId'] as String?,
+          variantId: map['variantId'] as String?,
         ),
       );
     }
@@ -1053,6 +1311,15 @@ class PosCommandApplier {
   }
 
   static String _actor(Object? raw) => _string(raw, fallback: defaultActor);
+
+  /// Who a Cloud-originated staff change is attributed to.
+  ///
+  /// The staff commands carry no operator identity in the contract, so there
+  /// is usually nobody to name. [defaultActor] says "a Manager app request"
+  /// rather than inventing a person; a payload that does identify one is
+  /// honoured. The channel is recorded separately as `source=MANAGER`.
+  static String _staffActor(Map<String, dynamic> p) =>
+      _actor(p['performedBy'] ?? p['actorName'] ?? p['updatedBy']);
 
   static List<String> _stringList(Object? raw) {
     if (raw is! List) return const [];

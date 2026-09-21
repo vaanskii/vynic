@@ -1,11 +1,15 @@
+import 'package:vynic/core/database/database_core.dart';
+import 'runtime_config_sync.dart';
 import 'dart:async';
 import 'dart:io';
+import 'package:vynic/core/services/pos/update/pos_updater.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
 import 'package:vynic/core/services/edge/edge_enrollment_client.dart';
 import 'package:vynic/core/services/edge/edge_transport_service.dart';
+import 'package:vynic/core/services/edge/inventory_projection_sync_service.dart';
 import 'package:vynic/core/services/sync/api_config.dart';
 
 /// How far an enrollment attempt got.
@@ -82,6 +86,14 @@ class PosEnrollmentService {
     required String serverAddress,
     required String code,
   }) async {
+    try {
+      await PosUpdater.instance.waitForStartup();
+    } catch (_) {
+      return const PosEnrollmentResult(
+        PosEnrollmentStatus.serverError,
+        message: 'გაშვება ვერ დასრულდა. სცადეთ ხელახლა.',
+      );
+    }
     final baseUrl = ApiConfig.normalizeEditableBackendUrl(serverAddress);
     if (baseUrl == null) {
       return const PosEnrollmentResult(
@@ -135,17 +147,25 @@ class PosEnrollmentService {
       );
     }
 
+    await DatabaseCore.settingsBox?.put(
+      'enrolledDeviceName',
+      result.deviceName,
+    );
+
     final effectiveUrl = _resolveBackendUrl(
       enrolledThrough: baseUrl,
       offered: result.apiBaseUrl,
     );
-    await DatabaseService.saveBackendUrlOverride(effectiveUrl);
+    if (ApiConfig.allowDeveloperOverride)
+      await DatabaseService.saveBackendUrlOverride(effectiveUrl);
     ApiConfig.resetResolvedUrlLog();
 
     // Polling is off on an unenrolled terminal, so it has to be told to begin.
     // Not awaited for its result: an unreachable Cloud is not a failed
     // enrollment, and the credential is already safely on disk.
     unawaited(EdgeTransportService.instance().start());
+    unawaited(InventoryProjectionSyncService.instance().start());
+    unawaited(RuntimeConfigSync.instance.start());
 
     return PosEnrollmentResult(
       PosEnrollmentStatus.connected,

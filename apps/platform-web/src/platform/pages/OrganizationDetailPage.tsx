@@ -1,3 +1,4 @@
+import { VenueManagerAccess } from "./venue/VenueManagerAccess";
 import { useState } from "react";
 import { PencilSimple } from "@phosphor-icons/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,6 +30,7 @@ export function OrganizationDetailPage() {
     <Panel title="Venues" description="Locations owned by this organization.">
       {organization.venues?.length ? <Table><thead><tr><th>Venue</th><th>Status</th><th>Timezone</th><th>Currency</th><th aria-label="Actions" /></tr></thead><tbody>{organization.venues.map((venue) => <tr key={venue.id}><td><div className="platform-table__primary"><strong>{venue.name}</strong><small>{venue.id}</small></div></td><td><StatusBadge value={venue.status} /></td><td>{venue.timezone}</td><td>{venue.currency}</td><td><div className="platform-table__actions"><Link className="platform-text-link" to={`/admin/venues/${venue.id}`}>Open</Link></div></td></tr>)}</tbody></Table> : <EmptyState title="No venues in this organization" body="Create a venue from the Venues directory and assign it to this organization." action={<Link className="platform-text-link" to="/admin/venues">Go to Venues</Link>} />}
     </Panel>
+    {organization.venues?.map((venue) => <VenueManagerAccess key={venue.id} venue={venue} />)}
     <Dialog open={editOpen} onOpenChange={setEditOpen} title="Edit organization" footer={<><Button onClick={() => setEditOpen(false)}>Cancel</Button><Button tone="primary" type="submit" form="edit-organization" disabled={update.isPending}>Save changes</Button></>}>
       <form id="edit-organization" className="platform-form" onSubmit={(event) => { event.preventDefault(); update.mutate(); }}><Field label="Organization name"><Input value={name} onChange={(event) => setName(event.target.value)} required maxLength={200} /></Field><FormError>{update.error ? errorMessage(update.error) : undefined}</FormError></form>
     </Dialog>

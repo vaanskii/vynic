@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'dart:async';
 import 'dart:math';
 
@@ -106,7 +107,10 @@ class EdgeTransportService {
   /// A POS with no credential is not an error and not a degraded state: it is
   /// every installation that has not been provisioned yet, and it must start
   /// and run exactly as it always did.
-  Future<void> start() async {
+  Future<void> start() =>
+      UpdateReadiness.track('start', () => _updateTrackedStart());
+
+  Future<void> _updateTrackedStart() async {
     if (_running) return;
     if (!EdgeDeviceCredentialStore.isLoaded) {
       await EdgeDeviceCredentialStore.load();
@@ -128,10 +132,27 @@ class EdgeTransportService {
   }
 
   /// Stops polling. Safe to call when never started.
-  Future<void> stop() async {
+  Future<void> stop() =>
+      UpdateReadiness.track('stop', () => _updateTrackedStop());
+
+  Future<void> _updateTrackedStop() async {
     _running = false;
     _timer?.cancel();
     _timer = null;
+    await EdgeCommandJournal.close();
+  }
+
+  /// Final process shutdown, after the readiness barrier excludes new work.
+  /// Unlike stop(), this must not acquire an operational admission token.
+  Future<void> shutdown() async {
+    _running = false;
+    _timer?.cancel();
+    _timer = null;
+    _client.close();
+    while (_polling) {
+      await Future<void>.delayed(const Duration(milliseconds: 25));
+    }
+    await EdgeCommandJournal.flushForUpdate();
     await EdgeCommandJournal.close();
   }
 
@@ -139,7 +160,9 @@ class EdgeTransportService {
   ///
   /// Re-entrant calls are refused rather than queued: two claims in flight would
   /// take two leases on the same work for no benefit.
-  Future<EdgePollSummary> pollOnce() async {
+  Future<EdgePollSummary> pollOnce() => _updateTrackedPollOnce();
+
+  Future<EdgePollSummary> _updateTrackedPollOnce() async {
     if (_polling) {
       return const EdgePollSummary(outcome: EdgeTransportOutcome.ok);
     }
@@ -175,7 +198,13 @@ class EdgeTransportService {
     var acknowledged = 0;
 
     for (final command in response.commands) {
-      final result = await _handle(command);
+      // Network waits and durable acknowledgments are not business mutations.
+      // Recheck after claim: a freeze may have happened while Cloud responded.
+      if (UpdateReadiness.enabled && UpdateReadiness.frozen) break;
+      final result = await UpdateReadiness.track(
+        'Cloud command',
+        () => _handle(command),
+      );
       switch (result.kind) {
         case _HandledKind.executed:
           executed += 1;
@@ -306,6 +335,10 @@ class EdgeTransportService {
     if (!_running) return;
     _timer = Timer(delay, () async {
       if (!_running) return;
+      if (UpdateReadiness.enabled && UpdateReadiness.frozen) {
+        _schedule(idleInterval);
+        return;
+      }
       final summary = await pollOnce();
       _schedule(_nextDelay(summary));
     });

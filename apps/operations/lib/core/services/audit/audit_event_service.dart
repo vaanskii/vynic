@@ -32,14 +32,23 @@ class AuditEventService {
 
   /// Appends a new event to the local immutable queue.
   /// Every action in the app should call this.
+  ///
+  /// [entityType] and [entityId] say what the row is about, so a reader can
+  /// answer "what happened to this staff member" without parsing [data]. They
+  /// are optional: a caller that names no single subject omits them, and every
+  /// row written before they existed simply has none.
   static Future<void> logEvent({
     required String action,
     required String userId,
+    String? entityType,
+    String? entityId,
     Map<String, dynamic> data = const {},
   }) async {
     final event = AuditEventLog(
       action: action,
       userId: userId,
+      entityType: entityType,
+      entityId: entityId,
       data: data,
       deviceType: kIsWeb
           ? 'web'

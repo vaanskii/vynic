@@ -24,3 +24,7 @@ export interface WsEvent<T = unknown> {
 export interface BroadcastOptions {
   excludeSocketIds?: string[];
 }
+
+export interface VenueBroadcastOptions extends BroadcastOptions {
+  venueId: string;
+}

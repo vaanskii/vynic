@@ -1,3 +1,9 @@
+import {
+  EdgeFoundationController,
+  EdgeFoundationService,
+} from '../edge-foundation/edge-foundation';
+import { PlatformCommercialController } from './platform-commercial.controller';
+import { PlatformCommercialService } from './platform-commercial.service';
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { EdgeTransportModule } from '../edge/edge-transport.module';
@@ -29,18 +35,22 @@ import { PlatformVenuesController } from './platform-venues.controller';
     PlatformAuditModule,
   ],
   controllers: [
+    EdgeFoundationController,
+    PlatformCommercialController,
     PlatformAuthController,
     PlatformOrganizationsController,
     PlatformVenuesController,
     PlatformCatalogController,
   ],
   providers: [
+    EdgeFoundationService,
+    PlatformCommercialService,
     PlatformAuthService,
     PlatformAuthGuard,
     PlatformDirectoryService,
     PlatformVenueConfigService,
     PlatformDeviceService,
   ],
-  exports: [PlatformAuthService],
+  exports: [PlatformAuthService, PlatformAuthGuard, PlatformCommercialService],
 })
 export class PlatformModule {}

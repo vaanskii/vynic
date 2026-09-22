@@ -12,6 +12,7 @@ import { requireText } from '../platform/platform-validation';
 import type { CustomerPrincipal } from './customer-auth';
 import type { ControlActor } from '../platform/control-actor';
 import { profileInput, saveProfile } from '../venue-profile/venue-profile';
+import { initializeWebsite } from './onboarding-website';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -24,7 +25,14 @@ export class CustomerService {
   ) {}
   async venue(actor: CustomerPrincipal, id: string) {
     const venue = await this.db.venue.findFirst({
-      where: { id, organizationId: actor.organizationId },
+      where: {
+        id,
+        organization: {
+          memberships: {
+            some: { customerAccountId: actor.customerAccountId, role: 'OWNER' },
+          },
+        },
+      },
     });
     if (!venue) throw new NotFoundException('Restaurant not found');
     return venue;
@@ -46,7 +54,13 @@ export class CustomerService {
       select: { email: true, displayName: true, emailVerifiedAt: true },
     });
     const venues = await this.db.venue.findMany({
-      where: { organizationId: actor.organizationId },
+      where: {
+        organization: {
+          memberships: {
+            some: { customerAccountId: actor.customerAccountId, role: 'OWNER' },
+          },
+        },
+      },
       select: { id: true },
     });
     const policy = await this.db.onboardingPolicy.findUnique({
@@ -54,6 +68,15 @@ export class CustomerService {
     });
     return {
       account,
+      organizations: await this.db.organization.findMany({
+        where: {
+          memberships: {
+            some: { customerAccountId: actor.customerAccountId, role: 'OWNER' },
+          },
+        },
+        select: { id: true, name: true },
+        orderBy: { createdAt: 'asc' },
+      }),
       venues: await Promise.all(venues.map((v) => this.status(v.id))),
       releaseLinks: policy?.releaseLinks ?? {},
     };
@@ -63,17 +86,22 @@ export class CustomerService {
       where: { id },
       include: {
         subscription: true,
+        websiteConfig: { select: { mode: true, status: true } },
         organization: {
           select: {
             id: true,
             name: true,
-            accounts: {
+            memberships: {
               select: {
-                id: true,
-                email: true,
-                displayName: true,
-                emailVerifiedAt: true,
-                isActive: true,
+                account: {
+                  select: {
+                    id: true,
+                    email: true,
+                    displayName: true,
+                    emailVerifiedAt: true,
+                    isActive: true,
+                  },
+                },
               },
             },
           },
@@ -113,19 +141,32 @@ export class CustomerService {
         timezone: venue.timezone,
         currency: venue.currency,
       },
-      organization: venue.organization,
+      organization: {
+        id: venue.organization.id,
+        name: venue.organization.name,
+        accounts: venue.organization.memberships.map((m) => m.account),
+      },
+      website: venue.websiteConfig,
       subscription: venue.subscription && {
         status: venue.subscription.status,
         trialEndsAt: venue.subscription.trialEndsAt,
       },
       features: await this.entitlements.effectiveFeatures(id),
       managers,
-      devices: devices.map((device) => ({ ...device, isOperationalPrimary: device.id === venue.activeOperationalDeviceId })),
+      devices: devices.map((device) => ({
+        ...device,
+        isOperationalPrimary: device.id === venue.activeOperationalDeviceId,
+      })),
       enrollments: enrollment,
       ready:
         venue.status === 'ACTIVE' &&
         managers.some((m) => m.isActive) &&
-        devices.some((d) => d.id === venue.activeOperationalDeviceId && d.status === 'ACTIVE' && d.firstSyncAt),
+        devices.some(
+          (d) =>
+            d.id === venue.activeOperationalDeviceId &&
+            d.status === 'ACTIVE' &&
+            d.firstSyncAt,
+        ),
       checklist: {
         restaurant: true,
         manager: managers.some((m) => m.isActive),
@@ -160,11 +201,28 @@ export class CustomerService {
     if (!/^[A-Z]{3}$/.test(currency))
       throw new BadRequestException('Currency must be an ISO code');
     return this.db.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT "id" FROM "pos"."Organization" WHERE "id"=${actor.organizationId} FOR UPDATE`;
-      const existing = await tx.venue.findFirst({
-        where: { organizationId: actor.organizationId },
+      const memberships = await tx.organizationMembership.findMany({
+        where: {
+          customerAccountId: actor.customerAccountId,
+          role: 'OWNER',
+          ...(body.organizationId
+            ? {
+                organizationId: requireText(
+                  body.organizationId,
+                  'organizationId',
+                ),
+              }
+            : {}),
+        },
       });
-      if (existing) return existing; // One restaurant per pilot owner; request retry is convergent.
+      if (memberships.length !== 1)
+        throw new BadRequestException('Choose an Organization you own');
+      const organizationId = memberships[0].organizationId;
+      await tx.$queryRaw`SELECT "id" FROM "pos"."Organization" WHERE "id"=${organizationId} FOR UPDATE`;
+      const existing = await tx.venue.findFirst({
+        where: { organizationId },
+      });
+      if (existing) return existing; // One restaurant per pilot Organization; request retry is convergent.
       const policy = await tx.onboardingPolicy.findUnique({
         where: { id: 'default' },
       });
@@ -177,7 +235,7 @@ export class CustomerService {
         throw new ServiceUnavailableException('Trial plan is not configured');
       const venue = await tx.venue.create({
         data: {
-          organizationId: actor.organizationId,
+          organizationId,
           ...profileInput({ ...body, name }),
           profileUpdatedAt: new Date(),
           timezone,
@@ -192,6 +250,7 @@ export class CustomerService {
           planAssignment: { create: { planId: plan.id } },
         },
       });
+      await initializeWebsite(tx, venue.id, policy.defaultWebsiteMode);
       await tx.customerAuditEvent.create({
         data: {
           customerAccountId: actor.customerAccountId,

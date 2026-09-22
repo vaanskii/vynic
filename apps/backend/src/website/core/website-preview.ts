@@ -68,12 +68,19 @@ export class WebsitePreviewTokens {
         throw new Error('Wrong principal');
       const account = await this.db.customerAccount.findUnique({
         where: { id: claims.sub },
-        select: { id: true, isActive: true, organizationId: true },
+        select: { id: true, isActive: true },
       });
       if (!account?.isActive) throw new Error('Inactive account');
       // Re-proved, not trusted from the token: a Venue can change hands.
       const venue = await this.db.venue.findFirst({
-        where: { id: claims.venueId, organizationId: account.organizationId },
+        where: {
+          id: claims.venueId,
+          organization: {
+            memberships: {
+              some: { customerAccountId: account.id, role: 'OWNER' },
+            },
+          },
+        },
         select: { id: true },
       });
       if (!venue) throw new Error('Venue is not owned by this account');

@@ -1128,6 +1128,8 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   accounts CustomerAccount[]
+  memberships OrganizationMembership[]
+  ownerInvitations OwnerInvitation[]
   venues    Venue[]
 
   @@schema("pos")
@@ -1905,7 +1907,8 @@ model VenueSubscription {
 
 model CustomerAccount {
   id String @id @default(uuid())
-  organizationId String
+  // Legacy signup provenance only; memberships are the access authority.
+  organizationId String?
   email String @unique
   displayName String
   passwordHash String
@@ -1913,7 +1916,9 @@ model CustomerAccount {
   emailVerifiedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  memberships OrganizationMembership[]
+  acceptedInvitations OwnerInvitation[]
   enrollments DeviceEnrollment[]
   auditEvents CustomerAuditEvent[]
   @@index([organizationId])
@@ -1939,6 +1944,7 @@ model OnboardingPolicy {
   enabled Boolean @default(false)
   trialPlanId String?
   trialDays Int @default(14)
+  defaultWebsiteMode OnboardingWebsiteMode @default(NONE)
   releaseLinks Json?
   updatedAt DateTime @updatedAt
   @@schema("pos")
@@ -1971,5 +1977,47 @@ model PaymentIntegration {
   reservations WebsiteReservation[]
   @@unique([venueId, provider, revision])
   @@unique([id, venueId])
+  @@schema("pos")
+}
+
+enum OrganizationRole {
+  OWNER
+  @@schema("pos")
+}
+
+enum OnboardingWebsiteMode {
+  NONE
+  SAAS
+  @@schema("pos")
+}
+
+model OrganizationMembership {
+  customerAccountId String
+  organizationId String
+  role OrganizationRole @default(OWNER)
+  createdAt DateTime @default(now())
+  account CustomerAccount @relation(fields: [customerAccountId], references: [id], onDelete: Restrict)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  @@id([customerAccountId, organizationId])
+  @@index([organizationId])
+  @@schema("pos")
+}
+
+model OwnerInvitation {
+  id String @id @default(uuid())
+  organizationId String
+  email String
+  role OrganizationRole @default(OWNER)
+  tokenHash String @unique
+  expiresAt DateTime
+  acceptedAt DateTime?
+  acceptedById String?
+  revokedAt DateTime?
+  createdBy String
+  revokedBy String?
+  createdAt DateTime @default(now())
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  acceptedBy CustomerAccount? @relation(fields: [acceptedById], references: [id], onDelete: Restrict)
+  @@index([organizationId, email])
   @@schema("pos")
 }

@@ -82,6 +82,7 @@ const url = process.env.W1_TEST_DATABASE_URL;
       const owner = await db.customerAccount.create({
         data: {
           organizationId: org.id,
+            memberships: { create: { organizationId: org.id, role: "OWNER" } },
           email: `${suffix}-${tag}@test.invalid`,
           passwordHash: 'unused',
           displayName: 'Test Owner',

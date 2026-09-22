@@ -189,13 +189,17 @@ async function seedWebsiteW3() {
           },
         });
       }
+      await db.organizationMembership.upsert({
+        where: { customerAccountId_organizationId: { customerAccountId: account.id, organizationId: account.organizationId! } },
+        create: { customerAccountId: account.id, organizationId: account.organizationId!, role: 'OWNER' }, update: {},
+      });
       let venue = await db.venue.findFirst({
         where: { organizationId: account.organizationId },
       });
       if (!venue)
         venue = await db.venue.create({
           data: {
-            organizationId: account.organizationId,
+            organizationId: account.organizationId!,
             name: fixture.name,
             address: fixture.address ?? null,
             phone: fixture.phone ?? null,

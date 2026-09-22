@@ -102,6 +102,7 @@ const url = process.env.W3_TEST_DATABASE_URL;
         const owner = await db.customerAccount.create({
           data: {
             organizationId: org.id,
+            memberships: { create: { organizationId: org.id, role: "OWNER" } },
             email: `website-${i}-${tag}@test.invalid`,
             displayName: 'Owner',
             passwordHash: 'unused',

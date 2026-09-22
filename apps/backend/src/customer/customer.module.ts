@@ -1,3 +1,8 @@
+import { OwnerInvitationsService } from './owner-invitations.service';
+import {
+  PlatformOwnerInvitationsController,
+  CustomerOwnerInvitationsController,
+} from './owner-invitations.controller';
 import { WebsiteCoreModule } from '../website/core/website-core.module';
 import { CustomerWebsiteController } from './customer-website.controller';
 import { PaymentIntegrationsModule } from '../payment-integrations/payment-integrations.module';
@@ -34,6 +39,7 @@ import {
     EntitlementsModule,
   ],
   providers: [
+    OwnerInvitationsService,
     CustomerAuth,
     CustomerGuard,
     CustomerService,
@@ -41,6 +47,8 @@ import {
     EdgeDeviceGuard,
   ],
   controllers: [
+    PlatformOwnerInvitationsController,
+    CustomerOwnerInvitationsController,
     CustomerWebsiteController,
     CustomerPaymentsController,
     PlatformPaymentsController,

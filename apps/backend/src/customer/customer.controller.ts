@@ -133,6 +133,13 @@ export class PlatformOnboardingController {
       Number(body.trialDays) > 90
     )
       throw new BadRequestException('Invalid trial policy');
+    if (
+      body.defaultWebsiteMode !== undefined &&
+      !['NONE', 'SAAS'].includes(String(body.defaultWebsiteMode))
+    )
+      throw new BadRequestException(
+        'Default website mode must be NONE or SAAS',
+      );
     const trialPlanId =
       typeof body.trialPlanId === 'string' ? body.trialPlanId : null;
     if (body.enabled && !trialPlanId)
@@ -192,6 +199,9 @@ export class PlatformOnboardingController {
         trialDays: Number(body.trialDays),
         trialPlanId,
         releaseLinks,
+        defaultWebsiteMode: (body.defaultWebsiteMode ??
+          before?.defaultWebsiteMode ??
+          'NONE') as 'NONE' | 'SAAS',
       };
       const after = await tx.onboardingPolicy.upsert({
         where: { id: 'default' },

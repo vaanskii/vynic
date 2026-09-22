@@ -1,0 +1,5 @@
+# Per-page indexability is decided by the runtime robots meta tag, which stays
+# noindex for drafts, custom-product hosts and unpublished restaurants. This
+# file only keeps the owner preview route out of crawling entirely.
+User-agent: *
+Disallow: /preview

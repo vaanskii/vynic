@@ -630,8 +630,9 @@ current transport status.
   separately configured site, not automatic SaaS site provisioning.
 - Venue Policy is documented in `docs/VENUE_POLICY_PLAN.md` but not implemented.
   Current operational switches/settings remain local to the POS.
-- Custom restaurant roles/permissions, SaaS billing, and per-Venue
-  payment integration configuration do not exist.
+- Custom restaurant roles/permissions and SaaS billing do not exist.
+- Website W1 provides encrypted, versioned Venue BOG integrations, owner settings,
+  Platform status inspection and independent ONLINE_PAYMENTS access.
 
 ## Website State
 
@@ -641,11 +642,15 @@ current transport status.
 - Payment callbacks derive Venue from the server-owned reservation.
 - The Vankisi site remains `CUSTOM`. The generic data-driven `SAAS` restaurant
   frontend and custom-site runtime/deployment control are not implemented.
-- The current process-wide BOG merchant integration belongs to the custom
-  Vankisi deployment, not the unbuilt SaaS website product. It is not a SaaS
-  tenancy template. Future SaaS operational work follows Website -> Cloud ->
-  durable Venue command -> Edge -> POS; payment callbacks and merchant authority
-  remain Cloud-side and website payments do not move through Go Edge.
+- BOG credentials and return origins are encrypted per Venue using the deployment
+  PAYMENT_INTEGRATION_MASTER_KEY. New payments require ONLINE_PAYMENTS and an
+  enabled integration; reservations retain the original encrypted revision. Browser
+  creation/status uses Host authority; signed callbacks use stored payment identity
+  and remain Cloud-side after disconnect or entitlement removal. Controlled legacy
+  import is explicit, audited, idempotent and never runs in Prisma migrations.
+  See `docs/WEBSITE_PHASE_W1.md` for rollout and disposable two-Venue proof.
+- Future SaaS operational work follows Website -> Cloud -> durable Venue command
+  -> Edge -> POS; payment callbacks do not move through Go Edge.
 
 ## Current Transport and Sync State
 
@@ -826,8 +831,7 @@ current transport status.
 - General Restaurant Backoffice, Venue Policy, custom roles/RBAC, Inventory
   historical Sale COGS / realized Gross Profit / Waste / Stocktake / inventory variance / expected
   yield and pour loss, cash management,
-  reservation holds, generic SaaS venue web, SaaS billing, and per-Venue
-  payment credentials.
+  reservation holds, generic SaaS venue web and SaaS billing.
 - Physical printer-test command, lower-latency Edge long polling, OS
   keychain credential storage and production Venue-local multi-POS authority
   (Phase 2A is shadow/isolated proof only).
@@ -836,8 +840,9 @@ current transport status.
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260923120000_edge_foundation`.
+  `20260924120000_venue_payment_integrations`.
 - Immediately preceding state migrations:
+  `20260923120000_edge_foundation`,
   `20260922120000_operational_primary`,
   `20260921120000_venue_profile`,
   `20260920120000_non_fiscal_close_feature`,

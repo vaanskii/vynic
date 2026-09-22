@@ -287,6 +287,8 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Backend website module: `apps/backend/src/website/`
 - Host resolution: `apps/backend/src/website/tenancy/`
 - Current tenancy reference: `docs/PUBLIC_TENANCY.md`
+- Venue payment configuration/encryption: `apps/backend/src/payment-integrations/`; owner/Platform routes: `apps/backend/src/customer/customer-payments.controller.ts`; owner form: `apps/platform-web/src/customer/PaymentSettings.tsx`.
+- W1 migration/import/validation: `docs/WEBSITE_PHASE_W1.md`, `apps/backend/scripts/import-bog-integration.ts`, `apps/backend/src/payment-integrations/payment-integrations.integration.spec.ts`.
 
 ## Prisma / Database
 

@@ -23,6 +23,7 @@ const featureNames: Record<string, string> = {
   POS: "გაყიდვების სისტემა",
   PROFITABILITY: "მომგებიანობა",
   WEBSITE: "რესტორნის ვებგვერდი",
+  ONLINE_PAYMENTS: "ონლაინ გადახდები",
   NON_FISCAL_CLOSE: "არაფისკალური დახურვა",
 };
 const featureName = (feature: { key: string; name: string }) =>

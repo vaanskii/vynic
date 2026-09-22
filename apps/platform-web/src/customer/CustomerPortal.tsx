@@ -1,3 +1,4 @@
+import { PaymentSettings } from "./PaymentSettings";
 import { useEffect, useState } from "react";
 import { customerApi, customerLogout, hasCustomerSession } from "./api";
 import "./customer.css";
@@ -334,6 +335,7 @@ export function CustomerPortal() {
                 <button disabled={busy}>პროფილის შენახვა</button>
               </form>
             </section>
+            <PaymentSettings key={id} venueId={id} />
             <div className="customer-columns">
               <section>
                 <h2>გამოწერა</h2>

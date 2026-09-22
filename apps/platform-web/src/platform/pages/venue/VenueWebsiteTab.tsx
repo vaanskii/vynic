@@ -17,6 +17,7 @@ type DomainAction = { domain: VenueDomain; kind: "status" | "release"; nextStatu
 
 export function VenueWebsiteTab({ venueId }: { venueId: string }) {
   const queryClient = useQueryClient();
+  const payments = useQuery({ queryKey: ["payments", venueId], queryFn: () => platformApi.paymentStatus(venueId) });
   const product = useQuery({ queryKey: ["product", venueId], queryFn: () => platformApi.product(venueId) });
   const domains = useQuery({ queryKey: ["domains", venueId], queryFn: () => platformApi.domains(venueId) });
   const [mode, setMode] = useState<WebsiteMode | "">("");
@@ -39,6 +40,9 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
   const selectedMode = mode || website.configuredMode;
 
   return <>
+    <Panel title="Online payments · Bank of Georgia" description="Manage ONLINE_PAYMENTS in Product access. Restaurant owners configure credentials in their portal.">
+      {payments.isPending ? <p>Loading payment configuration…</p> : payments.isError ? <ErrorState error="Could not load payment configuration" retry={() => { void payments.refetch(); }} /> : <p>{payments.data.configured ? "Configured" : "Not configured"} · ONLINE_PAYMENTS {payments.data.entitled ? "enabled" : "disabled"}</p>}
+    </Panel>
     {feedback ? <div className="platform-feedback platform-feedback--success" role="status">{feedback}</div> : null}
     {!website.consistent ? <div className="platform-callout"><WarningCircle size={20} /><div><strong>Website entitlement and configuration disagree</strong><p>Configured mode is {website.configuredMode}, but effective mode is {website.effectiveMode}. Review the two settings before publishing a hostname.</p></div></div> : null}
     <div className="platform-grid platform-grid--2 platform-section-gap">

@@ -96,6 +96,7 @@ export const authApi = {
 };
 
 export const platformApi = {
+  paymentStatus: (venueId: string) => request<{ configured: boolean; entitled: boolean }>(`/platform/venues/${venueId}/payments/bog`),
   subscription: (id: string) =>
     request<VenueSubscription | null>(`/platform/venues/${id}/subscription`),
   setSubscription: (id: string, body: Partial<VenueSubscription>) =>

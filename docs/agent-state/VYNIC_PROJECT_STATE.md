@@ -662,7 +662,12 @@ current transport status.
 - W3 implements the generic SaaS website product: `apps/restaurant-web` with a
   `themeKey` registry and one production `classic` theme, bilingual ka/en, a
   website presentation layer over the operational menu, owner preview of the
-  real frontend, and a sectioned Customer Portal editor. Content is schema
+  real frontend, and an eight-section Georgian owner editor separated from
+  restaurant profile and Manager/POS/printer setup. SEO and exact map pins use
+  progressive disclosure; map visibility defaults on and follows the current
+  Venue Profile address unless an exact link is supplied. The additive `showMap`
+  flag preserves hidden-map intent without duplicating the address. Disabled
+  ONLINE_PAYMENTS removes owner payment configuration. Content is schema
   version 2; stored rows are completed from defaults on read, so older published
   snapshots keep rendering. Public bootstrap/menu are `private, no-cache` with
   ETag revalidation, preview is `private, no-store` and `noindex`, and only a

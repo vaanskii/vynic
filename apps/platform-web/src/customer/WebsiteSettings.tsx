@@ -27,6 +27,7 @@ export type WebsiteContent = {
   seoDescription: string;
   contactEmail: string;
   mapUrl: string;
+  showMap?: boolean;
   footerNote: string;
   workingHours: { day: number; opens: string; closes: string }[];
   socials: { label: string; url: string }[];
@@ -72,23 +73,29 @@ const themeNames: Record<string, string> = { classic: "კლასიკურ�
  * sections are addressable and the draft is shared across all of them.
  */
 const sections = [
-  ["general", "ზოგადი"],
-  ["hero", "მთავარი ბლოკი"],
+  ["hero", "მთავარი"],
   ["about", "ჩვენ შესახებ"],
-  ["theme", "თემა"],
   ["menu", "მენიუ"],
-  ["gallery", "გალერეა"],
+  ["gallery", "ფოტოები"],
   ["hours", "სამუშაო საათები"],
-  ["socials", "ბმულები"],
-  ["seo", "საძიებო სისტემები"],
-  ["publishing", "პუბლიკაცია"],
+  ["contact", "კონტაქტი"],
+  ["theme", "დიზაინი"],
+  ["publishing", "გამოქვეყნება"],
 ] as const;
 type SectionKey = (typeof sections)[number][0];
 
-export function WebsiteSettings({ venueId }: { venueId: string }) {
+export function WebsiteSettings({
+  venueId,
+  address,
+  onEditProfile,
+}: {
+  venueId: string;
+  address?: string | null;
+  onEditProfile?: () => void;
+}) {
   const [settings, setSettings] = useState<Settings>();
   const [draft, setDraft] = useState<WebsiteContent>();
-  const [section, setSection] = useState<SectionKey>("general");
+  const [section, setSection] = useState<SectionKey>("hero");
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -123,6 +130,25 @@ export function WebsiteSettings({ venueId }: { venueId: string }) {
 
   const act = async (kind: "save" | "publish") => {
     if (!settings || !draft) return;
+    if (kind === "save") {
+      const links = [draft.mapUrl, ...draft.socials.map((s) => s.url)].filter(
+        Boolean,
+      );
+      const valid = links.every((value) => {
+        try {
+          const url = new URL(normalizeLink(value));
+          return url.protocol === "https:" && !url.username && !url.password;
+        } catch {
+          return false;
+        }
+      });
+      if (!valid) {
+        setError(
+          "ბმული ვერ ამოვიცანით. გახსენით გვერდი და ხელახლა დააკოპირეთ მისი ბმული.",
+        );
+        return;
+      }
+    }
     setBusy(true);
     setError("");
     setMessage("");
@@ -132,7 +158,18 @@ export function WebsiteSettings({ venueId }: { venueId: string }) {
           `${path}/${kind === "save" ? "draft" : "publish"}`,
           {
             expectedRevision: settings.revision,
-            ...(kind === "save" ? { content: draft } : {}),
+            ...(kind === "save"
+              ? {
+                  content: {
+                    ...draft,
+                    mapUrl: normalizeLink(draft.mapUrl),
+                    socials: draft.socials.map((s) => ({
+                      ...s,
+                      url: normalizeLink(s.url),
+                    })),
+                  },
+                }
+              : {}),
           },
           kind === "save" ? "PUT" : "POST",
         ),
@@ -187,10 +224,18 @@ export function WebsiteSettings({ venueId }: { venueId: string }) {
 
   const saas = settings?.mode === "SAAS" && !!draft;
   return (
-    <section aria-labelledby="website-settings-title">
+    <section
+      className="website-workspace"
+      aria-labelledby="website-settings-title"
+    >
       <h2 id="website-settings-title">ვებსაიტი</h2>
       {!settings && !error && <p role="status">იტვირთება…</p>}
       {settings && <Status settings={settings} />}
+      {dirty && (
+        <p className="website-unsaved" role="status">
+          შეუნახავი ცვლილებები
+        </p>
+      )}
 
       {saas && draft && settings && (
         <>
@@ -214,58 +259,9 @@ export function WebsiteSettings({ venueId }: { venueId: string }) {
               void act("save");
             }}
           >
-            {section === "general" && (
-              <fieldset disabled={busy}>
-                <legend>ზოგადი</legend>
-                <label>
-                  მისამართის სახელი
-                  <input
-                    required
-                    maxLength={48}
-                    pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-                    value={draft.slug}
-                    onChange={(e) => edit({ slug: e.target.value })}
-                  />
-                </label>
-                <small>
-                  {draft.slug || "restaurant"}.{settings.baseDomain || "…"}
-                </small>
-                <label>
-                  საკონტაქტო ელფოსტა
-                  <input
-                    type="email"
-                    maxLength={254}
-                    value={draft.contactEmail}
-                    onChange={(e) => edit({ contactEmail: e.target.value })}
-                  />
-                </label>
-                <label>
-                  რუკის ბმული (https://)
-                  <input
-                    type="url"
-                    maxLength={2048}
-                    value={draft.mapUrl}
-                    onChange={(e) => edit({ mapUrl: e.target.value })}
-                  />
-                </label>
-                <label>
-                  ქვედა კოლონტიტულის ტექსტი
-                  <input
-                    maxLength={240}
-                    value={draft.footerNote}
-                    onChange={(e) => edit({ footerNote: e.target.value })}
-                  />
-                </label>
-                <p>
-                  რესტორნის სახელი, ფილიალი, მისამართი და ტელეფონი აღებულია
-                  რესტორნის პროფილიდან და აქ არ დუბლირდება.
-                </p>
-              </fieldset>
-            )}
-
             {section === "hero" && (
               <fieldset disabled={busy}>
-                <legend>მთავარი ბლოკი</legend>
+                <legend>მთავარი</legend>
                 <label>
                   მთავარი სათაური
                   <input
@@ -317,7 +313,7 @@ export function WebsiteSettings({ venueId }: { venueId: string }) {
 
             {section === "theme" && (
               <fieldset disabled={busy}>
-                <legend>თემა</legend>
+                <legend>დიზაინი</legend>
                 <label>
                   თემა
                   <select
@@ -371,7 +367,7 @@ export function WebsiteSettings({ venueId }: { venueId: string }) {
 
             {section === "gallery" && (
               <fieldset disabled={busy}>
-                <legend>გალერეა</legend>
+                <legend>ფოტოები</legend>
                 {draft.gallery.map((photo, i) => (
                   <div className="website-entry" key={i}>
                     <MediaField
@@ -421,7 +417,7 @@ export function WebsiteSettings({ venueId }: { venueId: string }) {
                     edit({ gallery: [...draft.gallery, { url: "", alt: "" }] })
                   }
                 >
-                  ფოტოს დამატება
+                  ფოტოების დამატება
                 </button>
               </fieldset>
             )}
@@ -486,92 +482,225 @@ export function WebsiteSettings({ venueId }: { venueId: string }) {
               </fieldset>
             )}
 
-            {section === "socials" && (
+            {section === "contact" && (
               <fieldset disabled={busy}>
-                <legend>სოციალური ბმულები</legend>
-                {draft.socials.map((social, i) => (
-                  <div className="website-entry" key={i}>
-                    <label>
-                      ბმულის სახელი
-                      <input
-                        required
-                        maxLength={40}
-                        value={social.label}
-                        onChange={(e) =>
-                          edit({
-                            socials: draft.socials.map((s, j) =>
-                              i === j ? { ...s, label: e.target.value } : s,
-                            ),
-                          })
-                        }
-                      />
-                    </label>
-                    <label>
-                      ბმული (https://)
-                      <input
-                        type="url"
-                        required
-                        maxLength={2048}
-                        value={social.url}
-                        onChange={(e) =>
-                          edit({
-                            socials: draft.socials.map((s, j) =>
-                              i === j ? { ...s, url: e.target.value } : s,
-                            ),
-                          })
-                        }
-                      />
-                    </label>
+                <legend>კონტაქტი</legend>
+                <div className="website-profile-address">
+                  <strong>რესტორნის მისამართი</strong>
+                  <p>{address || "მისამართი ჯერ არ არის დამატებული."}</p>
+                  {onEditProfile && (
                     <button
                       type="button"
                       className="secondary"
-                      onClick={() =>
-                        edit({
-                          socials: draft.socials.filter((_, j) => i !== j),
-                        })
-                      }
+                      onClick={onEditProfile}
                     >
-                      ბმულის წაშლა
+                      პროფილში შეცვლა
                     </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  className="secondary"
-                  disabled={draft.socials.length >= 8}
-                  onClick={() =>
-                    edit({ socials: [...draft.socials, { label: "", url: "" }] })
-                  }
-                >
-                  ბმულის დამატება
-                </button>
+                  )}
+                </div>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={draft.showMap !== false}
+                    onChange={(e) => edit({ showMap: e.target.checked })}
+                  />
+                  რუკის ჩვენება
+                </label>
+                {draft.showMap !== false && (
+                  <>
+                    <p>რუკა რესტორნის მისამართის მიხედვით გაიხსნება.</p>
+                    <details>
+                      <summary>რუკაზე მდებარეობის დაზუსტება</summary>
+                      <label>
+                        Google Maps-ის ბმული
+                        <input
+                          maxLength={2048}
+                          value={draft.mapUrl}
+                          onChange={(e) => edit({ mapUrl: e.target.value })}
+                          onBlur={(e) =>
+                            edit({ mapUrl: normalizeLink(e.target.value) })
+                          }
+                        />
+                      </label>
+                      <small>
+                        ჩასვით Google Maps-იდან დაკოპირებული ბმული. ცარიელი ველი
+                        გამოიყენებს რესტორნის მისამართს.
+                      </small>
+                    </details>
+                  </>
+                )}
+                <label>
+                  საკონტაქტო ელფოსტა
+                  <input
+                    type="email"
+                    maxLength={254}
+                    value={draft.contactEmail}
+                    onChange={(e) => edit({ contactEmail: e.target.value })}
+                  />
+                </label>
+                {["Instagram", "Facebook", "TikTok", "ვებსაიტი"].map(
+                  (label) => {
+                    const social = draft.socials.find(
+                      (s) => s.label.toLowerCase() === label.toLowerCase(),
+                    );
+                    const update = (url: string) =>
+                      edit({
+                        socials: social
+                          ? draft.socials
+                              .map((s) => (s === social ? { ...s, url } : s))
+                              .filter((s) => s.url)
+                          : [...draft.socials, { label, url }].filter(
+                              (s) => s.url,
+                            ),
+                      });
+                    return (
+                      <label key={label}>
+                        {label}
+                        <input
+                          maxLength={2048}
+                          value={social?.url ?? ""}
+                          disabled={!social && draft.socials.length >= 8}
+                          onChange={(e) => update(e.target.value)}
+                          onBlur={(e) => update(normalizeLink(e.target.value))}
+                        />
+                      </label>
+                    );
+                  },
+                )}
+                <details>
+                  <summary>სხვა საკონტაქტო ბმულები</summary>
+                  {draft.socials.map((social, i) =>
+                    ["instagram", "facebook", "tiktok", "ვებსაიტი"].includes(
+                      social.label.toLowerCase(),
+                    ) ? null : (
+                      <div className="website-entry" key={i}>
+                        <label>
+                          სახელი
+                          <input
+                            maxLength={40}
+                            value={social.label}
+                            onChange={(e) =>
+                              edit({
+                                socials: draft.socials.map((s, j) =>
+                                  i === j ? { ...s, label: e.target.value } : s,
+                                ),
+                              })
+                            }
+                          />
+                        </label>
+                        <label>
+                          ბმული
+                          <input
+                            maxLength={2048}
+                            value={social.url}
+                            onChange={(e) =>
+                              edit({
+                                socials: draft.socials.map((s, j) =>
+                                  i === j ? { ...s, url: e.target.value } : s,
+                                ),
+                              })
+                            }
+                            onBlur={(e) =>
+                              edit({
+                                socials: draft.socials.map((s, j) =>
+                                  i === j
+                                    ? {
+                                        ...s,
+                                        url: normalizeLink(e.target.value),
+                                      }
+                                    : s,
+                                ),
+                              })
+                            }
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className="secondary"
+                          onClick={() =>
+                            edit({
+                              socials: draft.socials.filter((_, j) => i !== j),
+                            })
+                          }
+                        >
+                          ბმულის წაშლა
+                        </button>
+                      </div>
+                    ),
+                  )}
+                  <button
+                    type="button"
+                    className="secondary"
+                    disabled={draft.socials.length >= 8}
+                    onClick={() =>
+                      edit({
+                        socials: [
+                          ...draft.socials,
+                          { label: "კონტაქტი", url: "" },
+                        ],
+                      })
+                    }
+                  >
+                    ბმულის დამატება
+                  </button>
+                </details>
               </fieldset>
             )}
 
-            {section === "seo" && (
-              <fieldset disabled={busy}>
-                <legend>საძიებო ინფორმაცია</legend>
+            {section === "publishing" && (
+              <div className="website-publish-settings">
                 <label>
-                  სათაური საძიებო სისტემისთვის
+                  ვებსაიტის მისამართი
                   <input
-                    maxLength={160}
-                    value={draft.seoTitle}
-                    onChange={(e) => edit({ seoTitle: e.target.value })}
+                    required
+                    maxLength={48}
+                    pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+                    disabled={busy}
+                    value={draft.slug}
+                    onChange={(e) => edit({ slug: e.target.value })}
                   />
                 </label>
-                <label>
-                  მოკლე აღწერა
-                  <textarea
-                    maxLength={320}
-                    value={draft.seoDescription}
-                    onChange={(e) => edit({ seoDescription: e.target.value })}
-                  />
-                </label>
-                <p>
-                  მონახაზის წინასწარი ნახვა ყოველთვის დახურულია საძიებო
-                  სისტემებისთვის. გამოუქვეყნებელი საიტი არ იძებნება.
-                </p>
-              </fieldset>
+                <small>
+                  {draft.slug || "restaurant"}.{settings.baseDomain || "…"}
+                </small>
+
+                <details>
+                  <summary>დამატებითი პარამეტრები</summary>
+                  <fieldset disabled={busy}>
+                    <legend>საძიებო ინფორმაცია</legend>
+                    <label>
+                      სათაური საძიებო სისტემისთვის
+                      <input
+                        maxLength={160}
+                        value={draft.seoTitle}
+                        onChange={(e) => edit({ seoTitle: e.target.value })}
+                      />
+                    </label>
+                    <label>
+                      მოკლე აღწერა
+                      <textarea
+                        maxLength={320}
+                        value={draft.seoDescription}
+                        onChange={(e) =>
+                          edit({ seoDescription: e.target.value })
+                        }
+                      />
+                    </label>
+                    <p>
+                      მონახაზის წინასწარი ნახვა ყოველთვის დახურულია საძიებო
+                      სისტემებისთვის. გამოუქვეყნებელი საიტი არ იძებნება.
+                    </p>
+                    <label>
+                      ტექსტი გვერდის ბოლოში
+                      <input
+                        maxLength={240}
+                        value={draft.footerNote}
+                        onChange={(e) => edit({ footerNote: e.target.value })}
+                      />
+                    </label>
+                  </fieldset>
+                </details>
+              </div>
             )}
 
             {section !== "publishing" && (
@@ -602,7 +731,7 @@ export function WebsiteSettings({ venueId }: { venueId: string }) {
                   disabled={busy || dirty || !settings.revision}
                   onClick={() => void preview()}
                 >
-                  მონახაზის ნახვა
+                  საიტის ნახვა
                 </button>
                 <button
                   disabled={
@@ -617,9 +746,9 @@ export function WebsiteSettings({ venueId }: { venueId: string }) {
                 </button>
               </div>
               <p>
-                „მონახაზის ნახვა“ გახსნის რეალურ საიტს ახალ ფანჯარაში — ზუსტად
-                ისე, როგორც გამოქვეყნების შემდეგ გამოჩნდება. საჯარო გვერდი ამით
-                არ იცვლება.
+                „საიტის ნახვა“ გახსნის რეალურ საიტს ახალ ფანჯარაში — ზუსტად ისე,
+                როგორც გამოქვეყნების შემდეგ გამოჩნდება. საჯარო გვერდი ამით არ
+                იცვლება.
               </p>
             </div>
           )}
@@ -641,55 +770,41 @@ export function WebsiteSettings({ venueId }: { venueId: string }) {
 
 /** Saved state, public state and the difference between them, always visible. */
 function Status({ settings }: { settings: Settings }) {
-  return (
-    <>
+  if (settings.mode !== "SAAS")
+    return (
       <p>
-        ტიპი:{" "}
-        {
-          {
-            NONE: "გამორთული",
-            CUSTOM: "ინდივიდუალური",
-            SAAS: "Vynic ვებსაიტი",
-          }[settings.mode]
-        }
+        {settings.mode === "CUSTOM"
+          ? "ინდივიდუალური ვებსაიტი ცალკე იმართება."
+          : "ვებსაიტის ჩასართავად დაუკავშირდით Vynic-ს."}
       </p>
-      {settings.mode === "SAAS" ? (
-        <>
-          <p>
-            სტატუსი:{" "}
-            {settings.status === "PUBLISHED" ? "გამოქვეყნებულია" : "მონახაზი"}
-            {settings.hasUnpublishedChanges && " · გამოუქვეყნებელი ცვლილებები"}
-          </p>
-          <p>შენახული ვერსია: {settings.revision}</p>
-          {settings.publishedRevision && (
-            <p>
-              გამოქვეყნებული ვერსია: {settings.publishedRevision} ·{" "}
-              {new Date(settings.publishedAt!).toLocaleString("ka-GE")}
-            </p>
-          )}
-          {!settings.entitled && (
-            <p>
-              საჯარო ვებსაიტი გამორთულია. ჩასართავად დაუკავშირდით Vynic-ს.
-              მონახაზის შენახვა შესაძლებელია.
-            </p>
-          )}
-          {settings.domains.length > 0 && (
-            <p>მისამართები: {settings.domains.join(", ")}</p>
-          )}
-          <p>
-            რესტორნის სახელი, მისამართი და ტელეფონი აღებულია რესტორნის
-            პროფილიდან.
-          </p>
-        </>
-      ) : (
+    );
+  return (
+    <div className="website-status">
+      <strong>
+        {settings.status === "PUBLISHED" ? "გამოქვეყნებულია" : "მონახაზი"}
+      </strong>
+      {settings.hasUnpublishedChanges && (
+        <span> · გამოუქვეყნებელი ცვლილებები</span>
+      )}
+      {!settings.entitled && (
         <p>
-          {settings.mode === "CUSTOM"
-            ? "ინდივიდუალური ვებსაიტი ცალკე იმართება."
-            : "ვებსაიტის ჩასართავად დაუკავშირდით Vynic-ს."}
+          საჯარო ვებსაიტი გამორთულია. ჩასართავად დაუკავშირდით Vynic-ს. მონახაზის
+          შენახვა შესაძლებელია.
         </p>
       )}
-    </>
+    </div>
   );
+}
+
+function normalizeLink(value: string) {
+  const trimmed = value.trim();
+  if (
+    !trimmed ||
+    trimmed.startsWith("/media/") ||
+    /^[a-z][a-z0-9+.-]*:/i.test(trimmed)
+  )
+    return trimmed;
+  return `https://${trimmed}`;
 }
 
 /**
@@ -710,14 +825,28 @@ function MediaField({
   onChange: (value: string) => void;
   required?: boolean;
 }) {
+  const [failedImage, setFailedImage] = useState<string>();
   return (
     <label>
-      {label} (https:// ან /media/…)
+      {label}
+      {value &&
+        (failedImage === value ? (
+          <small>ფოტო ვერ ჩაიტვირთა. შეამოწმეთ ფოტოს ბმული.</small>
+        ) : (
+          <img
+            className="website-photo-preview"
+            src={value}
+            alt=""
+            onError={() => setFailedImage(value)}
+          />
+        ))}
       <input
+        placeholder="ჩასვით ფოტოს ბმული"
         maxLength={2048}
         required={required}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onBlur={(e) => onChange(normalizeLink(e.target.value))}
       />
     </label>
   );

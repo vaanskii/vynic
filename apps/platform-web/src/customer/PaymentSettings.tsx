@@ -18,6 +18,7 @@ export function PaymentSettings({ venueId }: { venueId: string }) {
   useEffect(() => {
     void load();
   }, [venueId]);
+  if (status && !status.entitled) return null;
   return (
     <section>
       <h2>ონლაინ გადახდები</h2>
@@ -28,12 +29,6 @@ export function PaymentSettings({ venueId }: { venueId: string }) {
             სტატუსი:{" "}
             {status.configured ? "დაკავშირებულია" : "არ არის დაკავშირებული"}
           </p>
-          {!status.entitled && (
-            <p>
-              ონლაინ გადახდების ჩასართავად დაუკავშირდით Vynic-ს. მონაცემების
-              შენახვა შესაძლებელია.
-            </p>
-          )}
           <p>
             შენახული საიდუმლო არ გამოჩნდება. ცვლილებისას შეიყვანეთ ორივე ახალი
             მონაცემი.

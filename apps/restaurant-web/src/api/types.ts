@@ -40,6 +40,7 @@ export interface WebsiteContent {
   seoDescription: string;
   contactEmail: string;
   mapUrl: string;
+  showMap?: boolean;
   footerNote: string;
   workingHours: WebsiteHours[];
   socials: { label: string; url: string }[];

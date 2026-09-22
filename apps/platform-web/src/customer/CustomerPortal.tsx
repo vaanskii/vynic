@@ -123,6 +123,7 @@ export function CustomerPortal() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [enrollment, setEnrollment] = useState<any>();
+  const [workspace, setWorkspace] = useState("website");
   const [step, setStep] = useState("manager");
   const [requestId, setRequestId] = useState(crypto.randomUUID());
   const [resetId, setResetId] = useState<string>();
@@ -330,7 +331,11 @@ export function CustomerPortal() {
               ელფოსტა: {portal.account.email}{" "}
               {!portal.account.emailVerifiedAt && "· დაუდასტურებელი"}
             </p>
-            <WebsiteSettings key={`website-${id}`} venueId={id} />
+            <nav aria-label="პორტალის განყოფილებები">
+              {[["website", "ვებსაიტი"], ["profile", "რესტორნის პროფილი"], ["setup", "რესტორნის გამართვა"]].map(([key, label]) => <button key={key} aria-current={workspace === key ? "page" : undefined} className={workspace === key ? "" : "secondary"} onClick={() => setWorkspace(key)}>{label}</button>)}
+            </nav>
+            <div hidden={workspace !== "website"}><WebsiteSettings key={`website-${id}`} venueId={id} address={venue.venue.address} onEditProfile={() => setWorkspace("profile")} /></div>
+            <div hidden={workspace !== "profile"}>
             <section>
               <h2>რესტორნის პროფილი</h2>
               <form key={id} onSubmit={(e) => {
@@ -344,7 +349,9 @@ export function CustomerPortal() {
               </form>
             </section>
 
-            <PaymentSettings key={id} venueId={id} />
+            </div>
+            <div hidden={workspace !== "setup"}>
+            {venue.features.includes("ONLINE_PAYMENTS") && <PaymentSettings key={id} venueId={id} />}
             <div className="customer-columns">
               <section>
                 <h2>გამოწერა</h2>
@@ -642,6 +649,7 @@ export function CustomerPortal() {
                 </button>
               </section>
             )}
+            </div>
           </>
         )}
       </main>

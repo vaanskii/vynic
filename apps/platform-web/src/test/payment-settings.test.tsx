@@ -46,6 +46,11 @@ describe("Owner payment settings", () => {
     expect(screen.queryByText("სტატუსი: არ არის დაკავშირებული")).toBeNull();
     call.mockResolvedValueOnce({ configured: false, entitled: false });
     await userEvent.click(screen.getByRole("button", { name: "ხელახლა ცდა" }));
-    await screen.findByText(/ონლაინ გადახდების ჩასართავად/);
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: "ონლაინ გადახდები" }),
+      ).toBeNull(),
+    );
+    expect(screen.queryByLabelText("Client ID")).toBeNull();
   });
 });

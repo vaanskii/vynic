@@ -65,6 +65,9 @@ describe("Customer onboarding", () => {
       );
       await user.click(screen.getByRole("button", { name: "გაგრძელება" }));
       expect(await screen.findByText("venue-a")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "კოდის კოპირება" })).toBeNull();
+      expect(api.call).not.toHaveBeenCalledWith("venues/venue-a/payments/bog");
+      await user.click(screen.getByRole("button", { name: "რესტორნის გამართვა" }));
       await user.click(screen.getByRole("button", { name: "კოდის კოპირება" }));
       expect(await navigator.clipboard.readText()).toBe("venue-a");
       expect(screen.queryByText("venue-b")).not.toBeInTheDocument();

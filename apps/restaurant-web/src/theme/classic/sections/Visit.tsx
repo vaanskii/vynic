@@ -21,6 +21,13 @@ export function Visit({
   strings: Strings;
 }) {
   const { profile, content } = site;
+  const mapUrl =
+    content.showMap === false
+      ? ""
+      : content.mapUrl ||
+        (profile.address
+          ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(profile.address)}`
+          : "");
   const rows = week(content.workingHours);
   const anyHours = content.workingHours.length > 0;
   const contacts = [
@@ -104,15 +111,11 @@ export function Visit({
                   </dd>
                 </div>
               ))}
-              {content.mapUrl && (
+              {mapUrl && (
                 <div>
                   <dt>{strings.contact.directions}</dt>
                   <dd>
-                    <a
-                      href={content.mapUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
+                    <a href={mapUrl} target="_blank" rel="noopener noreferrer">
                       {strings.contact.directions}
                     </a>
                   </dd>

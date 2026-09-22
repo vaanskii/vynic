@@ -230,8 +230,83 @@
   }
 }
 
-.owner-invitations { list-style: none; padding: 0; }
-.owner-invitations li { padding: 1rem 0; border-bottom: 1px solid #dce1e8; overflow-wrap: anywhere; }
-.invitation-result { padding: 1rem; border: 1px solid #b7c4bc; border-radius: 8px; margin: 1rem 0; }
-.customer details { margin-top: 1.5rem; }
-.customer summary { cursor: pointer; font-weight: 600; }
+.owner-invitations {
+  list-style: none;
+  padding: 0;
+}
+.owner-invitations li {
+  padding: 1rem 0;
+  border-bottom: 1px solid #dce1e8;
+  overflow-wrap: anywhere;
+}
+.invitation-result {
+  padding: 1rem;
+  border: 1px solid #b7c4bc;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+.customer details {
+  margin-top: 1.5rem;
+}
+.customer summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.website-workspace {
+  min-width: 0;
+}
+.website-status {
+  padding: 12px 0;
+  color: #4a5f59;
+}
+.website-status strong {
+  color: #244d40;
+}
+.website-publish-settings {
+  display: grid;
+  gap: 12px;
+}
+.website-photo-preview {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  background: #f5f4ef;
+}
+.website-profile-address {
+  padding: 16px;
+  background: #f5f4ef;
+}
+.customer .website-workspace fieldset {
+  border: 0;
+  padding: 20px 0;
+}
+.customer .website-workspace legend {
+  font-size: 20px;
+  font-weight: 650;
+}
+.customer .website-workspace nav {
+  border-bottom: 1px solid #d4ddd7;
+  padding-bottom: 18px;
+}
+.customer .website-workspace nav button {
+  border-color: transparent;
+}
+@media (max-width: 650px) {
+  .customer .website-workspace nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .customer .website-workspace nav button {
+    width: 100%;
+    padding: 10px 6px;
+    font-size: 14px;
+  }
+  .website-publishing .customer-row {
+    display: grid;
+    margin: 0;
+  }
+  .website-publishing .customer-row button {
+    width: 100%;
+  }
+}

@@ -150,7 +150,10 @@ export function WebsiteMenuEditor({
         </fieldset>
       ))}
       <div className="customer-row">
-        <button disabled={busy || disabled || !pending.length} onClick={() => void save()}>
+        <button
+          disabled={busy || disabled || !pending.length}
+          onClick={() => void save()}
+        >
           მენიუს ჩვენების შენახვა
         </button>
         {pending.length > 0 && <span>შეუნახავი: {pending.length}</span>}
@@ -211,25 +214,29 @@ function Rows({
               />
             </label>
             <label>
-              ფოტო (https:// ან /media/…)
+              ფოტო
               <input
                 maxLength={2048}
+                placeholder="ჩასვით ფოტოს ბმული"
                 value={current.imageUrl ?? ""}
                 onChange={(e) => edit(item, { imageUrl: e.target.value })}
               />
             </label>
-            <label>
-              რიგითობა
-              <input
-                type="number"
-                min={0}
-                max={100000}
-                value={current.sortOrder}
-                onChange={(e) =>
-                  edit(item, { sortOrder: Number(e.target.value) })
-                }
-              />
-            </label>
+            <details>
+              <summary>დამატებითი პარამეტრები</summary>
+              <label>
+                რიგითობა
+                <input
+                  type="number"
+                  min={0}
+                  max={100000}
+                  value={current.sortOrder}
+                  onChange={(e) =>
+                    edit(item, { sortOrder: Number(e.target.value) })
+                  }
+                />
+              </label>
+            </details>
           </div>
         );
       })}

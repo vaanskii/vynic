@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const call = vi.hoisted(() => vi.fn());
@@ -67,7 +67,13 @@ const ownerMenu = {
 };
 /** Switch sections, waiting for the settings load that renders the nav. */
 const open = async (name: string) =>
-  userEvent.setup().click(await screen.findByRole("button", { name }));
+  userEvent
+    .setup()
+    .click(
+      within(await screen.findByRole("navigation")).getByRole("button", {
+        name,
+      }),
+    );
 
 beforeEach(() => call.mockReset());
 
@@ -79,7 +85,7 @@ describe("Owner website workspace", () => {
     vi.stubGlobal("open", openWindow);
     render(<WebsiteSettings venueId="a" />);
 
-    await open("მთავარი ბლოკი");
+    await open("მთავარი");
     const title = await screen.findByLabelText("მთავარი სათაური");
     await user.clear(title);
     await user.type(title, "New title");
@@ -99,7 +105,7 @@ describe("Owner website workspace", () => {
       "PUT",
     );
 
-    await open("პუბლიკაცია");
+    await open("გამოქვეყნება");
     // The preview opens the real frontend with the token in the URL fragment,
     // which a browser never sends to a server.
     call.mockResolvedValueOnce({
@@ -107,7 +113,7 @@ describe("Owner website workspace", () => {
       expiresAt: "2026-09-22T10:30:00Z",
       previewOrigin: "http://restaurant-a.vynic.local:5175",
     });
-    await user.click(screen.getByRole("button", { name: "მონახაზის ნახვა" }));
+    await user.click(screen.getByRole("button", { name: "საიტის ნახვა" }));
     await waitFor(() =>
       expect(openWindow).toHaveBeenCalledWith(
         "http://restaurant-a.vynic.local:5175/preview#token=preview-token",
@@ -122,7 +128,9 @@ describe("Owner website workspace", () => {
       publishedRevision: 2,
       hasUnpublishedChanges: false,
     });
-    await user.click(screen.getByRole("button", { name: "გამოქვეყნება" }));
+    await user.click(
+      screen.getAllByRole("button", { name: "გამოქვეყნება" }).at(-1)!,
+    );
     await screen.findByText("ვებსაიტი გამოქვეყნებულია.");
     expect(call).toHaveBeenLastCalledWith(
       "venues/a/website/publish",
@@ -136,13 +144,13 @@ describe("Owner website workspace", () => {
     call.mockResolvedValueOnce(initial);
     const user = userEvent.setup();
     render(<WebsiteSettings venueId="a" />);
-    await open("მთავარი ბლოკი");
+    await open("მთავარი");
     await user.type(await screen.findByLabelText("მთავარი სათაური"), "!");
-    await open("პუბლიკაცია");
-    expect(screen.getByRole("button", { name: "გამოქვეყნება" })).toBeDisabled();
+    await open("გამოქვეყნება");
     expect(
-      screen.getByRole("button", { name: "მონახაზის ნახვა" }),
+      screen.getAllByRole("button", { name: "გამოქვეყნება" }).at(-1)!,
     ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "საიტის ნახვა" })).toBeDisabled();
   });
 
   it("edits website presentation without touching operational menu data", async () => {
@@ -191,7 +199,7 @@ describe("Owner website workspace", () => {
     call.mockResolvedValueOnce({ ...initial, mode: "CUSTOM" });
     const view = render(<WebsiteSettings venueId="c" />);
     await screen.findByText("ინდივიდუალური ვებსაიტი ცალკე იმართება.");
-    expect(screen.queryByRole("button", { name: "მთავარი ბლოკი" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "მთავარი" })).toBeNull();
     view.unmount();
 
     call.mockResolvedValueOnce({
@@ -200,15 +208,17 @@ describe("Owner website workspace", () => {
       hasUnpublishedChanges: true,
     });
     render(<WebsiteSettings venueId="b" />);
-    await open("პუბლიკაცია");
-    expect(screen.getByRole("button", { name: "გამოქვეყნება" })).toBeDisabled();
+    await open("გამოქვეყნება");
+    expect(
+      screen.getAllByRole("button", { name: "გამოქვეყნება" }).at(-1)!,
+    ).toBeDisabled();
   });
 
   it("retains edits on failure and offers reload after a revision conflict", async () => {
     call.mockResolvedValueOnce(initial);
     render(<WebsiteSettings venueId="a" />);
     const user = userEvent.setup();
-    await open("მთავარი ბლოკი");
+    await open("მთავარი");
     const title = await screen.findByLabelText("მთავარი სათაური");
     await user.type(title, " changed");
     call.mockRejectedValueOnce(new Error("conflict"));
@@ -216,7 +226,105 @@ describe("Owner website workspace", () => {
     await screen.findByRole("alert");
     expect(title).toHaveValue("Old title changed");
     call.mockResolvedValueOnce(initial);
-    await user.click(screen.getByRole("button", { name: "ფორმის გადატვირთვა" }));
+    await user.click(
+      screen.getByRole("button", { name: "ფორმის გადატვირთვა" }),
+    );
     await waitFor(() => expect(title).toHaveValue("Old title"));
+  });
+});
+
+describe("Owner-friendly controls", () => {
+  it("uses eight sections and hides technical options until requested", async () => {
+    call.mockResolvedValueOnce(initial);
+    render(<WebsiteSettings venueId="a" address="თბილისი, რუსთაველის 12" />);
+    const nav = await screen.findByRole("navigation");
+    expect(
+      within(nav)
+        .getAllByRole("button")
+        .map((b) => b.textContent),
+    ).toEqual([
+      "მთავარი",
+      "ჩვენ შესახებ",
+      "მენიუ",
+      "ფოტოები",
+      "სამუშაო საათები",
+      "კონტაქტი",
+      "დიზაინი",
+      "გამოქვეყნება",
+    ]);
+    await open("კონტაქტი");
+    expect(screen.getByText("თბილისი, რუსთაველის 12")).toBeVisible();
+    expect(
+      screen.getByRole("checkbox", { name: "რუკის ჩვენება" }),
+    ).toBeChecked();
+    expect(screen.getByLabelText("Google Maps-ის ბმული")).not.toBeVisible();
+    for (const name of ["Instagram", "Facebook", "TikTok", "ვებსაიტი"])
+      expect(screen.getByLabelText(name, { selector: "input" })).toBeVisible();
+    await userEvent.click(screen.getByText("რუკაზე მდებარეობის დაზუსტება"));
+    await userEvent.type(
+      screen.getByLabelText("Google Maps-ის ბმული"),
+      "maps.app.goo.gl/example",
+    );
+    await userEvent.tab();
+    expect(screen.getByLabelText("Google Maps-ის ბმული")).toHaveValue(
+      "https://maps.app.goo.gl/example",
+    );
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "რუკის ჩვენება" }),
+    );
+    call.mockResolvedValueOnce({
+      ...initial,
+      draft: {
+        ...draft,
+        showMap: false,
+        mapUrl: "https://maps.app.goo.gl/example",
+      },
+    });
+    await userEvent.click(
+      screen.getByRole("button", { name: "მონახაზის შენახვა" }),
+    );
+    await waitFor(() =>
+      expect(call).toHaveBeenLastCalledWith(
+        "venues/a/website/draft",
+        expect.objectContaining({
+          expectedRevision: 1,
+          content: expect.objectContaining({
+            showMap: false,
+            mapUrl: "https://maps.app.goo.gl/example",
+          }),
+        }),
+        "PUT",
+      ),
+    );
+    await open("გამოქვეყნება");
+    expect(screen.getByLabelText("ვებსაიტის მისამართი")).toBeVisible();
+    expect(
+      screen.getByLabelText("სათაური საძიებო სისტემისთვის"),
+    ).not.toBeVisible();
+    await userEvent.click(screen.getByText("დამატებითი პარამეტრები"));
+    expect(screen.getByLabelText("სათაური საძიებო სისტემისთვის")).toBeVisible();
+  });
+  it("edits opening hours with day and time controls and preserves overnight hours", async () => {
+    call.mockResolvedValueOnce(initial);
+    render(<WebsiteSettings venueId="a" />);
+    await open("სამუშაო საათები");
+    await userEvent.click(screen.getByLabelText("ორშაბათი"));
+    expect(screen.getByLabelText("გახსნა")).toHaveAttribute("type", "time");
+    expect(screen.getByLabelText("დახურვა")).toHaveValue("22:00");
+    await userEvent.clear(screen.getByLabelText("დახურვა"));
+    await userEvent.type(screen.getByLabelText("დახურვა"), "01:00");
+    call.mockResolvedValueOnce(initial);
+    await userEvent.click(
+      screen.getByRole("button", { name: "მონახაზის შენახვა" }),
+    );
+    expect(call).toHaveBeenLastCalledWith(
+      "venues/a/website/draft",
+      expect.objectContaining({
+        content: expect.objectContaining({
+          workingHours: [{ day: 1, opens: "10:00", closes: "01:00" }],
+        }),
+      }),
+      "PUT",
+    );
   });
 });

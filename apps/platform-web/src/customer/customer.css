@@ -199,3 +199,33 @@
     align-items: center;
   }
 }
+.website-menu-item {
+  display: grid;
+  gap: 10px;
+  padding: 14px 0;
+  border-bottom: 1px solid #d4ddd7;
+}
+.website-menu-item__operational {
+  font-size: 14px;
+  color: #4a5f59;
+}
+.website-publishing {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+.customer nav[aria-label="ვებსაიტის პარამეტრების განყოფილებები"] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0;
+}
+@media (min-width: 651px) {
+  .website-menu-item {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: start;
+  }
+  .website-menu-item > label:first-child {
+    grid-column: 1;
+  }
+}

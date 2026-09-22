@@ -243,11 +243,24 @@ exists, while still giving revision-based efficiency. Preview stays
 Four processes, none of which may touch `vankisi_database`:
 
 ```text
+backend                   :3000            apps/backend           npm run start:dev
 backend website harness   127.0.0.1:3102   apps/backend/scripts/serve-website-w3-local.ts
 restaurant-web (SAAS)     :5175            apps/restaurant-web    npm run dev
 platform-web (portal)     :5173            apps/platform-web      npm run dev
 venue-web (Vankisi)       :5174            apps/venue-web         npm run dev
 ```
+
+`restaurant-web` proxies `/api` to `http://127.0.0.1:3000` by default — the
+ordinary backend. The harness below is an alternative for the disposable
+fixture, selected explicitly:
+
+```sh
+VYNIC_WEBSITE_API=http://127.0.0.1:3102 npm run dev
+```
+
+Its port is pinned (`strictPort`), because the fixture URLs and
+`SAAS_WEBSITE_PREVIEW_ORIGIN` both name 5175; drifting to another port would
+make preview links open a dead address.
 
 ### Disposable database, from `apps/backend`
 
@@ -265,6 +278,10 @@ npx prisma generate
 node -r ts-node/register/transpile-only scripts/seed-website-w3-local.ts --confirm-local
 node -r ts-node/register/transpile-only scripts/serve-website-w3-local.ts --confirm-local
 ```
+
+Then run the frontend against it with
+`VYNIC_WEBSITE_API=http://127.0.0.1:3102 npm run dev`.
+
 
 Both scripts require the explicit `W3_TEST_DATABASE_URL` and the exact
 loopback/port/database before loading any application dependency. Seed is

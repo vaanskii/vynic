@@ -44,6 +44,15 @@ npm run lint
 npm run build
 ```
 
-`npm run dev` expects the website backend on `http://127.0.0.1:3102`; override
-with `VYNIC_WEBSITE_API`. The local four-Venue fixture, hostnames, owner
-credentials and preview flow are documented in `docs/WEBSITE_PHASE_W3.md`.
+`npm run dev` proxies `/api` to the ordinary backend on `http://127.0.0.1:3000`
+(`apps/backend`, `npm run start:dev`). To work against the disposable four-Venue
+fixture harness instead:
+
+```sh
+VYNIC_WEBSITE_API=http://127.0.0.1:3102 npm run dev
+```
+
+Against the real backend a hostname only renders if it is registered as an
+active `VenueDomain` for a published SAAS Venue; anything else is the
+unavailable page, which is the intended behaviour. The fixture, its hostnames,
+owner credentials and the preview flow are in `docs/WEBSITE_PHASE_W3.md`.

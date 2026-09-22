@@ -12,10 +12,14 @@ import { VenueEntitlementsService } from '../../entitlements/venue-entitlements.
 import { WebsiteTenantService } from '../tenancy/website-tenant.service';
 import { normalizeHostname, requestHostnames } from '../tenancy/website-host';
 import {
+  WEBSITE_SCHEMA_VERSION,
   emptyWebsiteContent,
+  readWebsiteContent,
   websiteContent,
   websiteMutation,
+  websiteThemeKeys,
 } from './website-content';
+import { WebsiteMenuService } from './website-menu.service';
 
 // Public identity is live Venue profile data, without legal/account fields.
 const publicProfile = {
@@ -33,6 +37,7 @@ export class WebsiteCoreService {
     private readonly access: VenueEntitlementsService,
     private readonly hosts: WebsiteTenantService,
     private readonly config: ConfigService,
+    private readonly menu: WebsiteMenuService,
   ) {}
   private baseDomain() {
     const raw = this.config.get<string>('SAAS_WEBSITE_BASE_DOMAIN');
@@ -59,6 +64,8 @@ export class WebsiteCoreService {
       }),
     ]);
     return {
+      schemaVersion: WEBSITE_SCHEMA_VERSION,
+      themeKeys: [...websiteThemeKeys],
       mode: access.configuredMode,
       entitled: access.entitled,
       status: row?.status ?? 'DRAFT',
@@ -67,7 +74,7 @@ export class WebsiteCoreService {
       publishedAt: row?.publishedAt ?? null,
       hasUnpublishedChanges:
         (row?.revision ?? 0) !== (row?.publishedRevision ?? 0),
-      draft: row?.draft ?? emptyWebsiteContent,
+      draft: row?.draft ? readWebsiteContent(row.draft) : emptyWebsiteContent,
       publishedSlug: row?.slug ?? null,
       baseDomain: this.config.get<string>('SAAS_WEBSITE_BASE_DOMAIN') ?? null,
       domains: domains.map((d) => d.hostname),
@@ -117,19 +124,41 @@ export class WebsiteCoreService {
     });
     return this.settings(venueId);
   }
+
+  /**
+   * The draft rendered exactly as publication would render it.
+   *
+   * Same builder as the public payload, so owner preview cannot drift into a
+   * flattering approximation of what Publish will actually produce.
+   */
   async preview(venueId: string) {
     const row = this.requireSaas(
       await this.db.venueWebsiteConfig.findUnique({ where: { venueId } }),
     );
-    return {
-      schemaVersion: 1,
-      mode: 'SAAS',
+    return this.payload(venueId, readWebsiteContent(row.draft), {
       preview: true,
       revision: row.revision,
       publishedAt: null,
-      profile: await this.profile(venueId),
-      content: row.draft ?? emptyWebsiteContent,
-    };
+    });
+  }
+
+  /** Draft preview redeemed through a preview token rather than a session. */
+  async previewBootstrap(venueId: string) {
+    const venue = await this.db.venue.findUnique({
+      where: { id: venueId },
+      select: { status: true },
+    });
+    if (venue?.status !== 'ACTIVE')
+      throw new NotFoundException('Website unavailable');
+    return this.preview(venueId);
+  }
+
+  /** The menu belonging to a draft preview, hidden items already removed. */
+  async previewMenu(venueId: string) {
+    const row = this.requireSaas(
+      await this.db.venueWebsiteConfig.findUnique({ where: { venueId } }),
+    );
+    return this.menuPayload(venueId, readWebsiteContent(row.draft));
   }
   async publish(venueId: string, body: unknown, customerAccountId: string) {
     const { expectedRevision } = websiteMutation(body, false);
@@ -147,7 +176,7 @@ export class WebsiteCoreService {
         if (!row.draft || !row.revision)
           throw new ConflictException('Save a draft before publishing');
         if (row.publishedRevision === row.revision) return;
-        const content = websiteContent(row.draft);
+        const content = websiteContent(readWebsiteContent(row.draft));
         if (!content.heroTitle)
           throw new ConflictException('A hero title is required to publish');
         const hostname = `${content.slug}.${this.baseDomain()}`;
@@ -204,7 +233,17 @@ export class WebsiteCoreService {
       },
     });
   }
-  async bootstrap(headers: Record<string, string | string[] | undefined>) {
+
+  /**
+   * The Venue a public request belongs to, from its host alone.
+   *
+   * Shared by every public generic route so bootstrap and menu can never
+   * disagree about which restaurant is being served, and so a client-supplied
+   * Venue id has nowhere to enter.
+   */
+  private async resolvePublicVenue(
+    headers: Record<string, string | string[] | undefined>,
+  ) {
     const trusted = ['1', 'true'].includes(
       (this.config.get<string>('TRUST_PROXY_HOST') ?? '').trim().toLowerCase(),
     );
@@ -218,15 +257,21 @@ export class WebsiteCoreService {
       { trustForwardedHost: false },
     )[0];
     const resolved = host ? await this.hosts.resolveByHostname(host) : null;
-    const unavailable = () => new NotFoundException('Website unavailable');
-    if (!resolved) throw unavailable();
+    if (!resolved) throw new NotFoundException('Website unavailable');
     const venueId = resolved.tenant.venueId;
     const access = await this.access.websiteAccess(venueId);
     if (!access.entitled || access.effectiveMode === 'NONE')
-      throw unavailable();
-    if (access.effectiveMode === 'CUSTOM')
-      return { schemaVersion: 1, mode: 'CUSTOM' };
-    // Only published fields are selected: draft cannot enter this response.
+      throw new NotFoundException('Website unavailable');
+    return { venueId, mode: access.effectiveMode };
+  }
+
+  /**
+   * The published row, or nothing at all.
+   *
+   * Only published columns are selected, so a draft has no path into a public
+   * response even if a future caller forgets to check the status itself.
+   */
+  private async publishedRow(venueId: string) {
     const row = await this.db.venueWebsiteConfig.findUnique({
       where: { venueId },
       select: {
@@ -238,15 +283,74 @@ export class WebsiteCoreService {
       },
     });
     if (row?.mode !== 'SAAS' || row.status !== 'PUBLISHED' || !row.published)
-      throw unavailable();
-    return {
-      schemaVersion: 1,
-      mode: 'SAAS',
+      throw new NotFoundException('Website unavailable');
+    return row;
+  }
+  async bootstrap(headers: Record<string, string | string[] | undefined>) {
+    const { venueId, mode } = await this.resolvePublicVenue(headers);
+    if (mode === 'CUSTOM')
+      return { schemaVersion: WEBSITE_SCHEMA_VERSION, mode: 'CUSTOM' };
+    const row = await this.publishedRow(venueId);
+    return this.payload(venueId, readWebsiteContent(row.published), {
       preview: false,
       revision: row.publishedRevision,
       publishedAt: row.publishedAt,
+    });
+  }
+
+  /** The published menu for whichever restaurant owns the requested host. */
+  async publicMenu(headers: Record<string, string | string[] | undefined>) {
+    const { venueId, mode } = await this.resolvePublicVenue(headers);
+    if (mode === 'CUSTOM') throw new NotFoundException('Website unavailable');
+    const row = await this.publishedRow(venueId);
+    return this.menuPayload(venueId, readWebsiteContent(row.published));
+  }
+
+  private async payload(
+    venueId: string,
+    content: ReturnType<typeof readWebsiteContent>,
+    state: {
+      preview: boolean;
+      revision: number | null;
+      publishedAt: Date | null;
+    },
+  ) {
+    return {
+      schemaVersion: WEBSITE_SCHEMA_VERSION,
+      mode: 'SAAS',
+      preview: state.preview,
+      revision: state.revision,
+      publishedAt: state.publishedAt,
       profile: await this.profile(venueId),
-      content: row.published,
+      content,
+    };
+  }
+
+  /**
+   * A menu response, including the owner's decision not to show one.
+   *
+   * `showMenu: false` answers with an explicitly empty menu instead of 404, so
+   * the frontend can tell "this restaurant does not publish a menu" apart from
+   * "this host has no website".
+   */
+  private async menuPayload(
+    venueId: string,
+    content: ReturnType<typeof readWebsiteContent>,
+  ) {
+    const venue = await this.profile(venueId);
+    if (!content.showMenu)
+      return {
+        schemaVersion: WEBSITE_SCHEMA_VERSION,
+        currency: venue.currency,
+        enabled: false,
+        categories: [],
+      };
+    const { categories } = await this.menu.publicMenu(venueId);
+    return {
+      schemaVersion: WEBSITE_SCHEMA_VERSION,
+      currency: venue.currency,
+      enabled: true,
+      categories,
     };
   }
 }

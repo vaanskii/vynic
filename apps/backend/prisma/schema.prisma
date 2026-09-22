@@ -140,6 +140,7 @@ model MenuItem {
   variants           MenuItemVariant[]
   venue              Venue                   @relation(fields: [venueId], references: [id], onDelete: Restrict)
   consumptionRecipes MenuConsumptionRecipe[]
+  websitePresentation MenuItemWebsitePresentation?
 
   @@unique([venueId, posMenuItemId])
   @@index([venueId])
@@ -1187,6 +1188,7 @@ model Venue {
   websiteConfig             VenueWebsiteConfig?
   domains                   VenueDomain[]
   websiteTables             WebsiteTable[]
+  menuWebsitePresentations  MenuItemWebsitePresentation[]
   websiteBookings           WebsiteReservation[]
   edgeCommands              EdgeCommand[]
   deviceEnrollments         DeviceEnrollment[]
@@ -1433,6 +1435,37 @@ model VenueWebsiteConfig {
   updatedAt DateTime    @updatedAt
   venue     Venue       @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
+  @@schema("pos")
+}
+
+/// How one operational [MenuItem] appears on the generic SaaS website.
+///
+/// This is presentation only. The item itself — its identity, its operational
+/// price, its category and its variants — stays owned by the POS/Cloud menu
+/// model, so the website never keeps a second restaurant menu that can drift
+/// from the one the kitchen and the till use.
+///
+/// The row is keyed by the menu item, cascades with it, and carries [venueId]
+/// so a presentation write can be scoped to one restaurant without joining
+/// through the item. Absence of a row means "visible under its operational
+/// name": a restaurant that has never opened the website editor still gets a
+/// complete menu, and the owner hides individual items explicitly.
+model MenuItemWebsitePresentation {
+  menuItemId       String   @id
+  venueId          String
+  visibleOnWebsite Boolean  @default(true)
+  /// Optional public name. Empty/null means the operational name is used.
+  displayName      String?
+  description      String?
+  /// HTTPS URL or deployment-managed `/media/...` path, never inline bytes.
+  imageUrl         String?
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  menuItem         MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  venue            Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@index([venueId])
   @@schema("pos")
 }
 

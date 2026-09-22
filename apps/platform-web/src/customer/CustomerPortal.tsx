@@ -1,3 +1,4 @@
+import { WebsiteSettings } from "./WebsiteSettings";
 import { PaymentSettings } from "./PaymentSettings";
 import { useEffect, useState } from "react";
 import { customerApi, customerLogout, hasCustomerSession } from "./api";
@@ -335,6 +336,7 @@ export function CustomerPortal() {
                 <button disabled={busy}>პროფილის შენახვა</button>
               </form>
             </section>
+            <WebsiteSettings key={`website-${id}`} venueId={id} />
             <PaymentSettings key={id} venueId={id} />
             <div className="customer-columns">
               <section>

@@ -640,8 +640,13 @@ current transport status.
   fails closed for unknown or disabled hosts.
 - `WebsiteUser` remains global; each `WebsiteReservation` is Venue-owned.
 - Payment callbacks derive Venue from the server-owned reservation.
-- The Vankisi site remains `CUSTOM`. The generic data-driven `SAAS` restaurant
-  frontend and custom-site runtime/deployment control are not implemented.
+- The Vankisi site remains `CUSTOM`. W2 extends VenueWebsiteConfig with private
+  drafts, explicit audited publication, revision conflicts and a Host-authorized
+  generic bootstrap. Owner website settings include authenticated content preview;
+  Platform still controls mode and WEBSITE entitlement. Venue profile remains the
+  public identity source. See `docs/WEBSITE_PHASE_W2.md` for the v1 contract and
+  disposable local A/B/CUSTOM proof. The separate `SAAS` restaurant frontend (W3)
+  and custom-site runtime/deployment control are not implemented.
 - BOG credentials and return origins are encrypted per Venue using the deployment
   PAYMENT_INTEGRATION_MASTER_KEY. New payments require ONLINE_PAYMENTS and an
   enabled integration; reservations retain the original encrypted revision. Browser
@@ -840,8 +845,9 @@ current transport status.
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260924120000_venue_payment_integrations`.
+  `20260925120000_website_core`.
 - Immediately preceding state migrations:
+  `20260924120000_venue_payment_integrations`,
   `20260923120000_edge_foundation`,
   `20260922120000_operational_primary`,
   `20260921120000_venue_profile`,

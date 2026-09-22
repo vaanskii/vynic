@@ -59,6 +59,7 @@
   gap: 8px;
   font-size: 15px;
 }
+.customer textarea,
 .customer input:not([type="checkbox"]) {
   display: block;
   width: 100%;
@@ -168,4 +169,33 @@
   border: 1px solid #8d9d97;
   background: white;
   color: #172e29;
+}
+
+.customer textarea {
+  resize: vertical;
+}
+.customer summary {
+  cursor: pointer;
+  padding: 12px 0;
+}
+.website-hours,
+.website-entry {
+  display: grid;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #d4ddd7;
+}
+.website-preview {
+  padding: 20px;
+  border-left: 3px solid #244d40;
+  background: #f5f4ef;
+}
+.website-prose {
+  white-space: pre-wrap;
+}
+@media (min-width: 651px) {
+  .website-hours {
+    grid-template-columns: 2fr 1fr 1fr;
+    align-items: center;
+  }
 }

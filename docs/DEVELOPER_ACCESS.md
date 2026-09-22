@@ -39,6 +39,17 @@ them.
 The gesture is not the security; the signature is. It only keeps the door out of
 a curious manager's way.
 
+### Development builds
+
+`vynic-pos` / `vynic-manager` (`apps/operations/tool/dev.zsh`) pass
+`--dart-define=VYNIC_DEVELOPER_UNLOCK=true`. In a debug `VYNIC_ENV=development`
+build that holds the panel open with every scope and no expiry, so nobody types
+a code into their own machine; the sidebar shows the developer group directly
+and actions are audited as `developer:development`. The define is inert outside
+a debug development build — a release build ignores it — and it is not passed
+by `product.py` or the release lab, so the token path is what every test build
+and every shipped build exercises.
+
 ## Getting a token
 
 Two ways to produce one. Both sign with the same private key, so the output is

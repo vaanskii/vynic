@@ -517,7 +517,7 @@ def publish_networks(a, build_setup=False):
         write(profile/'bootstrap.json',sign_bootstrap((public/'bootstrap.json').read_bytes()))
         if build_setup:
             go = a.go or shutil.which('go') or '/tmp/vynic-phase1-tools/go/bin/go'
-            run([sys.executable, EDGE/'tool/build-setup.py','--distribution',profile/'distribution.json','--out',profile/'VynicSetup.exe','--go',go,'--version','1.0.7.0'],env=environment(a))
+            run([sys.executable, EDGE/'tool/build-setup.py','--distribution',profile/'distribution.json','--out',profile/'VynicSetup.exe','--go',go,'--version','1.0.8.0'],env=environment(a))
         write(profile/'index.html','<h1>Vynic development lab</h1><p>'+ip+'</p><p><a href="bootstrap.json">Signed bootstrap</a></p><p><a href="VynicSetup.exe">VynicSetup.exe</a></p>')
     write(public/'networks/index.html', '<h1>Vynic development networks</h1>'+''.join('<p><a href="https://'+ip+':'+str(state['port'])+'/networks/'+ip+'/">'+ip+'</a></p>' for ip in LAB_IPS))
     print('Published signed network profiles: '+', '.join(LAB_IPS))

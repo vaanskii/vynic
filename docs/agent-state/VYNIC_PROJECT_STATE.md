@@ -88,7 +88,7 @@ current transport status.
   Cloud claim/ack network waits do not own mutation admission; command execution
   and journal completion do, with a freeze recheck after claim. Local release profiles trust both 10.10.10.3 and
   172.20.10.2; changing networks does not rewrite installed endpoints.
-  Local POS publication is 1.0.8 / signed release 9, including shared input controls;
+  Local POS publication is 1.0.12 / signed release 13, including shared input controls;
   the one-command Windows build and signed HTTPS verification passed. Installation remains explicit. See
   `docs/WINDOWS_POS_FULLSCREEN_QUIT.md`.
 
@@ -120,7 +120,10 @@ current transport status.
   The Go source now skips repeated stabilization for an already verified ordinary
   launch, while requiring a fresh authenticated data-ready heartbeat; install,
   repair and rollback still stabilize. The explicitly approved Windows lab
-  upgrade now pins Edge 1.0.1 / bootstrap 3; POS remains 1.0.7 / release 8.
+  upgrade now pins Edge 1.0.1 / bootstrap 3; POS publication is 1.0.12 / release 13.
+  The lab serves Setup 1.0.8.0 built from the committed native source on the
+  primary origin and both LAN profiles (reproducible; hashes in
+  `docs/WINDOWS_DEFENDER_REVIEW.md`); the served bytes scanned clean on the VM.
   A fresh Windows launch reached verified health in under one second (previously
   30 seconds), with restaurant data, Edge identity and POS binary verified unchanged.
   This was manual local maintenance, not an Edge self-update feature. POS binaries use
@@ -129,9 +132,10 @@ current transport status.
   Signed bootstrap metadata requires a layout-2-capable Edge; repair never changes
   its pinned baseline. Deferred updates stay staged. Authenticode-ready PE
   metadata/signing tools exist; production signing and
-  Windows qualification remain required. A reported Defender Bearfoos.A!ml
-  detection remains unclassified pending exact-hash Windows/Microsoft analysis;
-  see `docs/WINDOWS_DEFENDER_REVIEW.md`. See
+  Windows qualification remain required. The native Setup builds scan clean
+  under Defender on the lab VM and install/update/repair without detection;
+  the earlier PowerShell-era Bearfoos.A!ml detection stays unexplained because
+  its bytes were never hashed. See `docs/WINDOWS_DEFENDER_REVIEW.md`. See
   `docs/POS_WINDOWS_UPDATER.md` and `docs/WINDOWS_SETUP.md`.
 
 - Edge Phase 2A adds SHADOW Order/Table revisions, request idempotency, a durable
@@ -597,7 +601,10 @@ current transport status.
   Manager access and POS enrollment; email remains explicitly unverified.
 - POS/Manager use fixed product entrypoints and isolated native build metadata.
   Manager supports Windows/macOS/Android/iOS; POS production is Windows only,
-  with macOS debug development via `tool/dev.zsh` shortcuts. New builds
+  with macOS debug development via `tool/dev.zsh` shortcuts. Those shortcuts
+  stage a repository-shaped workspace so relative contract path dependencies
+  resolve, and open the POS developer panel without a token through
+  `VYNIC_DEVELOPER_UNLOCK`, which release and lab builds never pass. New builds
   use VYNIC_ENV/VYNIC_API_URL, ship no .env and read no shared POS sync key.
   Manager never initializes POS persistence/printing/ingest/sync.
   POS setup requires only a name and remains unfinished across restart/Staff

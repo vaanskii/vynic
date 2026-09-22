@@ -1,7 +1,8 @@
 # Future phase: generic SaaS restaurant website
 
-**Status: not built. Recorded so it is not confused with the existing custom
-site.**
+**Status: built in Website Phase W3 — see `WEBSITE_PHASE_W3.md` for what exists
+now. This document records the original requirement and the custom/generic
+distinction it was written to protect; it is not the current contract.**
 
 Step 4B2B built the backend half it will need and nothing more: a registered
 hostname resolves a Venue, and the public APIs are scoped to that Venue. The

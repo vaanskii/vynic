@@ -16,8 +16,9 @@ current transport status.
 - `apps/backend/` is the modular NestJS service over PostgreSQL through Prisma.
 - `apps/platform-web/` contains the public Vynic product site and the
   authenticated Platform Admin under `/admin`.
-- `apps/venue-web/` is the bespoke Vankisi customer website. It is not the
-  generic multi-Venue SaaS website.
+- `apps/venue-web/` is the bespoke Vankisi CUSTOM customer website.
+- `apps/restaurant-web/` is the generic multi-Venue SaaS restaurant website. One
+  build serves every SAAS Venue; the request Host decides which restaurant.
 - `packages/contracts/` owns the generated Cloud/Edge command, table-identity
   and Go/Dart foundation protobuf wire contracts.
 - `apps/edge/` provides the non-authoritative Go foundation and Phase 2A shadow
@@ -34,7 +35,10 @@ current transport status.
   Manager, Host -> VenueDomain -> Venue for public website requests, and booking
   identity -> Venue for payment callbacks.
 - `PlatformUser` is a separate cross-tenant principal. It is not Staff and has
-  no Venue membership.
+  no Venue membership. Platform sign-in is rate-limited per client IP and per
+  normalized email in 15-minute windows, before any account lookup, with the
+  same limits as owner sign-in; there is no Platform MFA, email recovery or
+  session revocation.
 - The staff plain-PIN vault (`staff:plain_pins`) is one encrypted `setting` row
   per Venue, and every read/write requires a resolved tenant. There is no
   bootstrap-Venue default: an unestablished Venue raises rather than being
@@ -640,13 +644,28 @@ current transport status.
   fails closed for unknown or disabled hosts.
 - `WebsiteUser` remains global; each `WebsiteReservation` is Venue-owned.
 - Payment callbacks derive Venue from the server-owned reservation.
-- The Vankisi site remains `CUSTOM`. W2 extends VenueWebsiteConfig with private
-  drafts, explicit audited publication, revision conflicts and a Host-authorized
-  generic bootstrap. Owner website settings include authenticated content preview;
-  Platform still controls mode and WEBSITE entitlement. Venue profile remains the
-  public identity source. See `docs/WEBSITE_PHASE_W2.md` for the v1 contract and
-  disposable local A/B/CUSTOM proof. The separate `SAAS` restaurant frontend (W3)
-  and custom-site runtime/deployment control are not implemented.
+- The Vankisi site remains `CUSTOM` and `apps/venue-web` is unchanged. W2
+  extends VenueWebsiteConfig with private drafts, explicit audited publication,
+  revision conflicts and a Host-authorized generic bootstrap; Platform still
+  controls mode and WEBSITE entitlement, and Venue profile remains the public
+  identity source. See `docs/WEBSITE_PHASE_W2.md` for the publication contract.
+- W3 implements the generic SaaS website product: `apps/restaurant-web` with a
+  `themeKey` registry and one production `classic` theme, bilingual ka/en, a
+  website presentation layer over the operational menu, owner preview of the
+  real frontend, and a sectioned Customer Portal editor. Content is schema
+  version 2; stored rows are completed from defaults on read, so older published
+  snapshots keep rendering. Public bootstrap/menu are `private, no-cache` with
+  ETag revalidation, preview is `private, no-store` and `noindex`, and only a
+  published public page is indexable. Media are HTTPS or deployment-managed
+  `/media/...` references, never inline bytes; production object storage, DNS,
+  TLS and SSR remain deployment-specific. See `docs/WEBSITE_PHASE_W3.md` for the
+  product boundary, local runbook and the four-Venue isolation proof.
+- `MenuItemWebsitePresentation` (migration `20260926120000_website_menu_presentation`)
+  decides whether and how an existing `MenuItem` appears publicly. No MenuItem is
+  duplicated, the row cascades with its item, an absent row means visible under
+  the operational name, and presentation writes are proved Venue-scoped. Core
+  menu authority remains POS/Cloud. Custom-site runtime/deployment control is
+  still not implemented.
 - BOG credentials and return origins are encrypted per Venue using the deployment
   PAYMENT_INTEGRATION_MASTER_KEY. New payments require ONLINE_PAYMENTS and an
   enabled integration; reservations retain the original encrypted revision. Browser
@@ -836,7 +855,10 @@ current transport status.
 - General Restaurant Backoffice, Venue Policy, custom roles/RBAC, Inventory
   historical Sale COGS / realized Gross Profit / Waste / Stocktake / inventory variance / expected
   yield and pour loss, cash management,
-  reservation holds, generic SaaS venue web and SaaS billing.
+  reservation holds and SaaS billing. SaaS website ordering, SaaS online
+  payments, generic customer accounts, additional themes, a page builder and
+  custom-domain DNS/TLS automation remain deferred; the read-only generic SaaS
+  website itself is implemented (W3).
 - Physical printer-test command, lower-latency Edge long polling, OS
   keychain credential storage and production Venue-local multi-POS authority
   (Phase 2A is shadow/isolated proof only).
@@ -845,7 +867,7 @@ current transport status.
 ## Current Migration Versions
 
 - Prisma migration tip:
-  `20260925120000_website_core`.
+  `20260925120000_website_core`, `20260926120000_website_menu_presentation`.
 - Immediately preceding state migrations:
   `20260924120000_venue_payment_integrations`,
   `20260923120000_edge_foundation`,

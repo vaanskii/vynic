@@ -114,6 +114,13 @@ reviews text/references; it does not pretend to be the future W3 renderer.
 
 ## Exact disposable local setup
 
+**Superseded by W3.** `seed-website-w2-local.ts` and `serve-website-w2-local.ts`
+were replaced by `seed-website-w3-local.ts` and `serve-website-w3-local.ts`
+rather than maintained in parallel; the disposable database and variable are now
+`vynic_w3_disposable` and `W3_TEST_DATABASE_URL`, and the fixture covers four
+Venues instead of three. Use `docs/WEBSITE_PHASE_W3.md` for the current
+commands. The W2 section below records what was validated at the time.
+
 Never use `vankisi_database`. Commands below are from `apps/backend`, using
 Homebrew PostgreSQL 17 on macOS. On another OS use equivalent PostgreSQL binaries.
 If the earlier W1 cluster is already listening on 55439, reuse that server and
@@ -197,6 +204,9 @@ granting W1 ONLINE_PAYMENTS. No runtime entitlement behavior changed. No live ba
 or production access is part of W2 validation.
 
 ## Exact W3 prerequisites
+
+All six are implemented; see `docs/WEBSITE_PHASE_W3.md`.
+
 
 1. Build the separate `apps/restaurant-web` consumer; preserve `apps/venue-web`
    and route CUSTOM away from the generic renderer. Handle v1 SAAS, CUSTOM and

@@ -1,3 +1,5 @@
+import { WebsiteLogoService } from './website-logo.service';
+import { WebsiteLogoController } from './website-logo.controller';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { WebsiteTenancyModule } from '../tenancy/website-tenancy.module';
@@ -7,8 +9,18 @@ import { WebsitePreviewTokens } from './website-preview';
 import { WebsiteCoreController } from './website-core.controller';
 @Module({
   imports: [WebsiteTenancyModule, JwtModule.register({})],
-  providers: [WebsiteCoreService, WebsiteMenuService, WebsitePreviewTokens],
-  controllers: [WebsiteCoreController],
-  exports: [WebsiteCoreService, WebsiteMenuService, WebsitePreviewTokens],
+  providers: [
+    WebsiteLogoService,
+    WebsiteCoreService,
+    WebsiteMenuService,
+    WebsitePreviewTokens,
+  ],
+  controllers: [WebsiteLogoController, WebsiteCoreController],
+  exports: [
+    WebsiteLogoService,
+    WebsiteCoreService,
+    WebsiteMenuService,
+    WebsitePreviewTokens,
+  ],
 })
 export class WebsiteCoreModule {}

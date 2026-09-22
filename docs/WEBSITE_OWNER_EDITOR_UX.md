@@ -18,7 +18,7 @@ Publishing offers საიტის ნახვა, მონახაზი�
 
 The only backend contract addition is optional-on-write `showMap`, defaulting to true for older content. The flag distinguishes a hidden map from an empty exact-pin field; `mapUrl` remains the optional override. The public SaaS renderer derives directions from the current profile address, never a duplicated draft address. No migration, tenancy change, schema-version bump, payment behavior change or CUSTOM/Vankisi edit is involved. Deploy the compatible backend before the editor that writes the flag.
 
-Photo entry remains link-based because the existing product has no upload pipeline. Missing link schemes are supplied for website contact links; invalid links return a human-readable error. Media hosting and file uploads are not added in this change.
+Gallery and hero photo entry remain link-based. Logo entry now uses the file picker described below. Missing link schemes are supplied for website contact links; invalid links return a human-readable error. General photo uploads are not added.
 
 ## Verification
 
@@ -30,3 +30,37 @@ Photo entry remains link-based because the existing product has no upload pipeli
 - Real Chromium checks at 390, 768 and 1440 px: all eight sections, no horizontal overflow, save/publish revision assertions, hidden setup flow and no disabled-payment requests. Screenshots reviewed for mobile contact/hours, tablet publishing and desktop editor/photos.
 
 Reproduce browser checks with a local platform-web Vite server and `node apps/platform-web/scripts/website-editor-qa.mjs`. The script intercepts customer APIs with disposable fixtures; it never saves a real venue. Optional environment variables: `QA_URL`, `QA_OUTPUT`, `PLAYWRIGHT_MODULE` (existing module path), `BROWSER_PATH` (Chromium executable). Default screenshots are written to `/tmp/vynic-website-editor-qa`.
+
+
+## Logo uploads
+
+Design now offers **ლოგოს ატვირთვა** with a native file picker, preview, replacement,
+removal, progress and retry. PNG, JPEG and WebP files up to 5 MB are supported.
+The owner endpoint checks ownership and SAAS mode before storing anything;
+Sharp decodes files, rejects SVG/unsupported or invalid content and excessive
+pixel counts, strips metadata, and emits WebP at at most 1024×1024. Multipart
+transport retains the customer bearer token and lets the browser set its boundary.
+The resulting reference changes only the local draft until normal revision-checked
+save and explicit publication. Removing/replacing a draft logo does not delete an
+asset still referenced by a published revision.
+
+Production setup:
+
+- Set `WEBSITE_MEDIA_DIR` to a writable persistent directory, backed up and shared
+  by all backend replicas. The production server fails explicitly if this setting
+  is absent. Development defaults to ignored `.data/website-media` under backend cwd.
+- Reverse-proxy `/media/website-logos/` to the backend from the portal, public SaaS
+  and preview origins. Both Vite configs include that proxy for local development;
+  existing sample media continue to be served by the frontends.
+- Assets are public raster logos with random immutable filenames, safe MIME headers
+  and one-year caching. No directory listing or original filename is exposed.
+  Host-based website content resolution, private draft APIs and CUSTOM behavior
+  are unchanged. Do not upload private documents as branding assets.
+- Storage retains replaced/abandoned uploads; automatic pruning and storage quotas
+  are not implemented. Any future cleanup must account for both draft and published
+  references. No database migration or content-schema change is required.
+
+Logo validation: 55 portal tests and 7 backend logo tests pass, including real
+multipart upload/download, image decoding, ownership/CUSTOM rejection, size/type
+limits, retries and old-logo retention. Browser QA exercises file selection,
+multipart requests, preview and draft publication at 390, 768 and 1440 px.

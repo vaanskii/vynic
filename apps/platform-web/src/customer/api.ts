@@ -12,10 +12,14 @@ export async function customerApi<T = any>(
   const response = await fetch(`${base}/customer/${path}`, {
     method: body === undefined ? "GET" : method,
     headers: {
-      "Content-Type": "application/json",
+      ...(body instanceof FormData
+        ? {}
+        : { "Content-Type": "application/json" }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    ...(body === undefined
+      ? {}
+      : { body: body instanceof FormData ? body : JSON.stringify(body) }),
   });
   const data = await response.json();
   if (!response.ok) {

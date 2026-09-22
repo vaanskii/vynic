@@ -1,5 +1,13 @@
+import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  WebsiteLogoService,
+  MAX_LOGO_BYTES,
+} from '../website/core/website-logo.service';
 import {
   Body,
+  ForbiddenException,
+  UploadedFile,
+  UseInterceptors,
   Controller,
   Get,
   Header,
@@ -31,7 +39,28 @@ export class CustomerWebsiteController {
     private readonly menu: WebsiteMenuService,
     private readonly previews: WebsitePreviewTokens,
     private readonly config: ConfigService,
+    private readonly logos: WebsiteLogoService,
   ) {}
+  @Post('logo')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: MAX_LOGO_BYTES, files: 1, fields: 0 },
+    }),
+  )
+  async uploadLogo(
+    @CustomerActor() actor: CustomerPrincipal,
+    @Param('venueId') id: string,
+    @UploadedFile() file?: { buffer: Buffer; size: number },
+  ) {
+    await this.owners.venue(actor, id);
+    const settings = await this.core.settings(id);
+    if (settings.mode !== 'SAAS')
+      throw new ForbiddenException(
+        'Generic website editing requires SAAS mode',
+      );
+    return this.logos.upload(file);
+  }
+
   @Get()
   @Header('Cache-Control', 'private, no-store')
   async settings(

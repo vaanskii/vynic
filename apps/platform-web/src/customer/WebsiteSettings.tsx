@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { customerApi } from "./api";
+import { LogoUpload } from "./LogoUpload";
 import { WebsiteMenuEditor } from "./WebsiteMenuEditor";
 
 /**
@@ -243,6 +244,7 @@ export function WebsiteSettings({
             {sections.map(([key, label]) => (
               <button
                 key={key}
+                disabled={busy}
                 type="button"
                 aria-current={section === key ? "true" : undefined}
                 className={section === key ? "" : "secondary"}
@@ -327,10 +329,11 @@ export function WebsiteSettings({
                     ))}
                   </select>
                 </label>
-                <MediaField
-                  label="ლოგო"
+                <LogoUpload
+                  venueId={venueId}
                   value={draft.logoUrl}
                   onChange={(logoUrl) => edit({ logoUrl })}
+                  onBusy={setBusy}
                 />
               </fieldset>
             )}

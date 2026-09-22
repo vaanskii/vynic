@@ -83,6 +83,15 @@ try {
         body: '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400"><rect width="800" height="400" fill="#e8e3d4"/><circle cx="400" cy="200" r="120" fill="#faf9f4"/><circle cx="400" cy="200" r="70" fill="#789567"/></svg>',
       }),
     );
+    await page.route("**/media/website-logos/*.webp", (route) =>
+      route.fulfill({
+        contentType: "image/png",
+        body: Buffer.from(
+          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=",
+          "base64",
+        ),
+      }),
+    );
     let settings = structuredClone(initial);
     let paymentRequests = 0;
     await page.route("**/customer/**", async (route) => {
@@ -118,7 +127,15 @@ try {
           ],
         };
       else if (path === "venues/qa/website") body = settings;
-      else if (path === "venues/qa/website/menu") body = { categories: [] };
+      else if (path === "venues/qa/website/logo") {
+        assert.match(
+          route.request().headers()["content-type"],
+          /multipart\/form-data; boundary=/,
+        );
+        body = {
+          url: "/media/website-logos/11111111-1111-1111-1111-111111111111.webp",
+        };
+      } else if (path === "venues/qa/website/menu") body = { categories: [] };
       else if (path === "venues/qa/website/draft") {
         const request = route.request().postDataJSON();
         assert.equal(request.expectedRevision, settings.revision);
@@ -186,6 +203,20 @@ try {
           .getByLabel("ფოტო", { exact: true })
           .fill("/media/tabla.jpg");
       }
+      if (name === "დიზაინი") {
+        await workspace
+          .getByLabel("ლოგოს ატვირთვა")
+          .setInputFiles({
+            name: "logo.png",
+            mimeType: "image/png",
+            buffer: Buffer.from(
+              "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=",
+              "base64",
+            ),
+          });
+        await workspace.getByRole("img", { name: "რესტორნის ლოგო" }).waitFor();
+        await workspace.getByRole("button", { name: "ლოგოს წაშლა" }).waitFor();
+      }
       if (name === "გამოქვეყნება") {
         assert.equal(
           await workspace
@@ -217,6 +248,10 @@ try {
     await workspace
       .getByText("მონახაზი შენახულია. საჯარო გვერდი არ შეცვლილა.")
       .waitFor();
+    assert.equal(
+      settings.draft.logoUrl,
+      "/media/website-logos/11111111-1111-1111-1111-111111111111.webp",
+    );
     assert.equal(settings.draft.heroTitle, "ტაბლა — ახალი სათაური");
     await workspace
       .getByRole("button", { name: "გამოქვეყნება", exact: true })

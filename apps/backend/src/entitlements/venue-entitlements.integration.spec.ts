@@ -123,12 +123,16 @@ describeDatabase('Venue product entitlements (PostgreSQL)', () => {
     await prisma.$disconnect();
   });
 
-  const managerModules = Object.values(FeatureKeys).filter(
-    (key) =>
-      ![POS, WEBSITE, MANAGER_APP, FeatureKeys.NON_FISCAL_CLOSE].includes(
-        key as any,
-      ),
-  );
+  // Only the modules explicitly bundled by the SaaS Phase 2 migration.
+  // Later features (including ONLINE_PAYMENTS) are not automatic plan grants.
+  const managerModules = [
+    FeatureKeys.INVENTORY,
+    FeatureKeys.PAYROLL,
+    FeatureKeys.FINANCIAL_PLANNING,
+    FeatureKeys.PROFITABILITY,
+    FeatureKeys.MANAGER_RESERVATIONS,
+    FeatureKeys.ADVANCED_AUDIT,
+  ];
   const bundled = (...keys: string[]) =>
     [...managerModules, 'NON_FISCAL_CLOSE', ...keys].sort();
 

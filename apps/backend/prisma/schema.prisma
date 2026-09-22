@@ -1409,9 +1409,24 @@ model VenueFeatureOverride {
   @@schema("pos")
 }
 
-/// How an entitled Venue's website is served. Separate from the WEBSITE
-/// entitlement, and separate from whether that website is actually deployed.
+/// Generic content publication; a published site may also have a newer draft.
+enum WebsitePublicationStatus {
+  DRAFT
+  PUBLISHED
+
+  @@schema("pos")
+}
+
+/// Website mode is separate from entitlement and frontend deployment.
+/// Only the published snapshot is public; profile identity stays on Venue.
 model VenueWebsiteConfig {
+  status            WebsitePublicationStatus @default(DRAFT)
+  slug              String? @unique
+  draft             Json?
+  revision          Int @default(0)
+  published         Json?
+  publishedRevision Int?
+  publishedAt       DateTime?
   venueId   String      @id
   mode      WebsiteMode @default(NONE)
   createdAt DateTime    @default(now())

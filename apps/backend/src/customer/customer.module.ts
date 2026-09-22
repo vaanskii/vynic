@@ -1,3 +1,5 @@
+import { WebsiteCoreModule } from '../website/core/website-core.module';
+import { CustomerWebsiteController } from './customer-website.controller';
 import { PaymentIntegrationsModule } from '../payment-integrations/payment-integrations.module';
 import {
   CustomerPaymentsController,
@@ -24,6 +26,7 @@ import {
 } from './customer.controller';
 @Module({
   imports: [
+    WebsiteCoreModule,
     PaymentIntegrationsModule,
     AuthModule,
     PlatformModule,
@@ -38,6 +41,7 @@ import {
     EdgeDeviceGuard,
   ],
   controllers: [
+    CustomerWebsiteController,
     CustomerPaymentsController,
     PlatformPaymentsController,
     ManagerVenueProfileController,

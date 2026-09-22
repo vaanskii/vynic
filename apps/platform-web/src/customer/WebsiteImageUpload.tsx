@@ -1,17 +1,35 @@
 import { useEffect, useRef, useState } from "react";
 import { customerApi } from "./api";
 
-export function LogoUpload({
+export function WebsiteImageUpload({
+  kind = "logo",
   venueId,
   value,
   onChange,
   onBusy,
 }: {
+  kind?: "logo" | "hero";
   venueId: string;
   value: string;
   onChange: (url: string) => void;
   onBusy: (busy: boolean) => void;
 }) {
+  const copy =
+    kind === "hero"
+      ? {
+          label: "მთავარი ფოტოს ატვირთვა",
+          alt: "მთავარი ფოტო",
+          remove: "მთავარი ფოტოს წაშლა",
+          loading: "ფოტო იტვირთება…",
+          error: "ფოტო ვერ აიტვირთა. სცადეთ სხვა ფოტო ან გაიმეორეთ ატვირთვა.",
+        }
+      : {
+          label: "ლოგოს ატვირთვა",
+          alt: "რესტორნის ლოგო",
+          remove: "ლოგოს წაშლა",
+          loading: "ლოგო იტვირთება…",
+          error: "ლოგო ვერ აიტვირთა. სცადეთ სხვა ფოტო ან გაიმეორეთ ატვირთვა.",
+        };
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const alive = useRef(true);
@@ -28,13 +46,15 @@ export function LogoUpload({
     <div className="website-logo-upload">
       {value && (
         <img
-          className="website-logo-preview"
+          className={
+            kind === "hero" ? "website-hero-preview" : "website-logo-preview"
+          }
           src={source}
-          alt="რესტორნის ლოგო"
+          alt={copy.alt}
         />
       )}
       <label className="website-upload-picker">
-        ლოგოს ატვირთვა
+        {copy.label}
         <input
           type="file"
           accept="image/png,image/jpeg,image/webp"
@@ -58,15 +78,12 @@ export function LogoUpload({
             onBusy(true);
             try {
               const result = await customerApi<{ url: string }>(
-                `venues/${venueId}/website/logo`,
+                `venues/${venueId}/website/${kind}`,
                 data,
               );
               if (alive.current) onChange(result.url);
             } catch {
-              if (alive.current)
-                setError(
-                  "ლოგო ვერ აიტვირთა. სცადეთ სხვა ფოტო ან გაიმეორეთ ატვირთვა.",
-                );
+              if (alive.current) setError(copy.error);
             } finally {
               if (alive.current) {
                 setUploading(false);
@@ -77,7 +94,7 @@ export function LogoUpload({
         />
       </label>
       <small>PNG, JPG ან WebP · მაქსიმუმ 5 მბ</small>
-      {uploading && <p role="status">ლოგო იტვირთება…</p>}
+      {uploading && <p role="status">{copy.loading}</p>}
       {error && <p role="alert">{error}</p>}
       {value && (
         <button
@@ -86,7 +103,7 @@ export function LogoUpload({
           disabled={uploading}
           onClick={() => onChange("")}
         >
-          ლოგოს წაშლა
+          {copy.remove}
         </button>
       )}
     </div>

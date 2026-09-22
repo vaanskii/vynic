@@ -348,3 +348,11 @@
   outline: 3px solid #d4a14a;
   outline-offset: 3px;
 }
+
+.website-hero-preview {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+  background: #f5f4ef;
+}

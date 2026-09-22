@@ -31,6 +31,22 @@ describe('Website logo storage', () => {
       height: 512,
     });
   });
+  it('keeps main photos large enough for desktop and preserves their proportions', async () => {
+    const buffer = await sharp({
+      create: { width: 3000, height: 1500, channels: 3, background: '#223344' },
+    })
+      .jpeg()
+      .toBuffer();
+    const uploaded = await service.upload(
+      { buffer, size: buffer.length },
+      'hero',
+    );
+    expect(
+      await sharp(
+        await service.read(uploaded.url.split('/').at(-1)!),
+      ).metadata(),
+    ).toMatchObject({ width: 2400, height: 1200, format: 'webp' });
+  });
   it('rejects fake images, active SVG, oversized files and traversal', async () => {
     for (const buffer of [
       Buffer.from('not a PNG'),

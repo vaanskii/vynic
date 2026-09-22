@@ -127,7 +127,9 @@ try {
           ],
         };
       else if (path === "venues/qa/website") body = settings;
-      else if (path === "venues/qa/website/logo") {
+      else if (
+        ["venues/qa/website/logo", "venues/qa/website/hero"].includes(path)
+      ) {
         assert.match(
           route.request().headers()["content-type"],
           /multipart\/form-data; boundary=/,
@@ -181,6 +183,16 @@ try {
         .getByRole("navigation")
         .getByRole("button", { name, exact: true })
         .click();
+      if (name === "მთავარი") {
+        await workspace
+          .getByLabel("მთავარი ფოტოს ატვირთვა")
+          .setInputFiles({
+            name: "restaurant.jpg",
+            mimeType: "image/jpeg",
+            buffer: Buffer.from("fixture-photo"),
+          });
+        await workspace.getByRole("img", { name: "მთავარი ფოტო" }).waitFor();
+      }
       if (name === "კონტაქტი") {
         assert.equal(
           await workspace.getByLabel("Google Maps-ის ბმული").isVisible(),
@@ -204,16 +216,14 @@ try {
           .fill("/media/tabla.jpg");
       }
       if (name === "დიზაინი") {
-        await workspace
-          .getByLabel("ლოგოს ატვირთვა")
-          .setInputFiles({
-            name: "logo.png",
-            mimeType: "image/png",
-            buffer: Buffer.from(
-              "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=",
-              "base64",
-            ),
-          });
+        await workspace.getByLabel("ლოგოს ატვირთვა").setInputFiles({
+          name: "logo.png",
+          mimeType: "image/png",
+          buffer: Buffer.from(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=",
+            "base64",
+          ),
+        });
         await workspace.getByRole("img", { name: "რესტორნის ლოგო" }).waitFor();
         await workspace.getByRole("button", { name: "ლოგოს წაშლა" }).waitFor();
       }
@@ -250,6 +260,10 @@ try {
       .waitFor();
     assert.equal(
       settings.draft.logoUrl,
+      "/media/website-logos/11111111-1111-1111-1111-111111111111.webp",
+    );
+    assert.equal(
+      settings.draft.heroImageUrl,
       "/media/website-logos/11111111-1111-1111-1111-111111111111.webp",
     );
     assert.equal(settings.draft.heroTitle, "ტაბლა — ახალი სათაური");

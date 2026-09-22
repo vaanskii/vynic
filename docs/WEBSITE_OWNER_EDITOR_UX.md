@@ -18,7 +18,7 @@ Publishing offers საიტის ნახვა, მონახაზი�
 
 The only backend contract addition is optional-on-write `showMap`, defaulting to true for older content. The flag distinguishes a hidden map from an empty exact-pin field; `mapUrl` remains the optional override. The public SaaS renderer derives directions from the current profile address, never a duplicated draft address. No migration, tenancy change, schema-version bump, payment behavior change or CUSTOM/Vankisi edit is involved. Deploy the compatible backend before the editor that writes the flag.
 
-Gallery and hero photo entry remain link-based. Logo entry now uses the file picker described below. Missing link schemes are supplied for website contact links; invalid links return a human-readable error. General photo uploads are not added.
+Gallery and about photo entry remain link-based. Logo and main-photo entry use the file picker described below. Missing link schemes are supplied for website contact links; invalid links return a human-readable error. General photo uploads are not added.
 
 ## Verification
 
@@ -64,3 +64,14 @@ Logo validation: 55 portal tests and 7 backend logo tests pass, including real
 multipart upload/download, image decoding, ownership/CUSTOM rejection, size/type
 limits, retries and old-logo retention. Browser QA exercises file selection,
 multipart requests, preview and draft publication at 390, 768 and 1440 px.
+
+
+### Main photo
+
+The მთავარი section now offers მთავარი ფოტოს ატვირთვა using the shared
+`WebsiteImageUpload` component. The ownership-checked `POST website/hero` endpoint
+uses the same 5 MB raster validation, storage and existing media proxy path.
+Main photos are resized proportionally to at most 2400×2400, while logos retain
+the 1024×1024 limit. Both keep their existing draft content fields and explicit
+save/publication. The legacy `/media/website-logos/` asset prefix remains in use
+so this addition needs no new storage or proxy configuration.

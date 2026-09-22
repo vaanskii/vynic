@@ -61,6 +61,26 @@ export class CustomerWebsiteController {
     return this.logos.upload(file);
   }
 
+  @Post('hero')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: MAX_LOGO_BYTES, files: 1, fields: 0 },
+    }),
+  )
+  async uploadHero(
+    @CustomerActor() actor: CustomerPrincipal,
+    @Param('venueId') id: string,
+    @UploadedFile() file?: { buffer: Buffer; size: number },
+  ) {
+    await this.owners.venue(actor, id);
+    const settings = await this.core.settings(id);
+    if (settings.mode !== 'SAAS')
+      throw new ForbiddenException(
+        'Generic website editing requires SAAS mode',
+      );
+    return this.logos.upload(file, 'hero');
+  }
+
   @Get()
   @Header('Cache-Control', 'private, no-store')
   async settings(

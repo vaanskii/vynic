@@ -672,11 +672,11 @@ current transport status.
   snapshots keep rendering. Public bootstrap/menu are `private, no-cache` with
   ETag revalidation, preview is `private, no-store` and `noindex`, and only a
   published public page is indexable. Media are HTTPS or deployment-managed
-  `/media/...` references, never inline bytes. Owners upload raster logos through
+  `/media/...` references, never inline bytes. Owners upload raster logos and main photos through
   an ownership-checked multipart endpoint; decoded/resized WebP assets use an
   explicit persistent `WEBSITE_MEDIA_DIR` in production and the
   `/media/website-logos/` reverse-proxy route. Uploads do not save or publish
-  content. Gallery/hero photos remain reference-based; object storage, DNS,
+  content. Gallery/about photos remain reference-based; object storage, DNS,
   TLS and SSR remain deployment-specific. See `docs/WEBSITE_PHASE_W3.md` for the
   product boundary, local runbook and the four-Venue isolation proof.
 - `MenuItemWebsitePresentation` (migration `20260926120000_website_menu_presentation`)

@@ -56,28 +56,31 @@ describe('Logo upload HTTP transport', () => {
     await app.close();
     await rm(root, { recursive: true, force: true });
   });
-  it('accepts multipart, persists WebP and serves the reference with safe headers', async () => {
-    const image = await sharp({
-      create: { width: 40, height: 20, channels: 4, background: '#224433' },
-    })
-      .png()
-      .toBuffer();
-    const uploaded = await request(app.getHttpServer())
-      .post('/customer/venues/a/website/logo')
-      .set('Authorization', 'Bearer fixture')
-      .attach('file', image, 'logo.png')
-      .expect(201);
-    const media = await request(app.getHttpServer())
-      .get(uploaded.body.url)
-      .expect(200)
-      .expect('Content-Type', 'image/webp')
-      .expect('X-Content-Type-Options', 'nosniff');
-    expect(await sharp(media.body).metadata()).toMatchObject({
-      format: 'webp',
-      width: 40,
-      height: 20,
-    });
-  });
+  it.each(['logo', 'hero'])(
+    'accepts multipart %s, persists WebP and serves safe headers',
+    async (kind) => {
+      const image = await sharp({
+        create: { width: 40, height: 20, channels: 4, background: '#224433' },
+      })
+        .png()
+        .toBuffer();
+      const uploaded = await request(app.getHttpServer())
+        .post(`/customer/venues/a/website/${kind}`)
+        .set('Authorization', 'Bearer fixture')
+        .attach('file', image, 'logo.png')
+        .expect(201);
+      const media = await request(app.getHttpServer())
+        .get(uploaded.body.url)
+        .expect(200)
+        .expect('Content-Type', 'image/webp')
+        .expect('X-Content-Type-Options', 'nosniff');
+      expect(await sharp(media.body).metadata()).toMatchObject({
+        format: 'webp',
+        width: 40,
+        height: 20,
+      });
+    },
+  );
   it('rejects unauthenticated, invalid and oversized uploads', async () => {
     await request(app.getHttpServer())
       .post('/customer/venues/a/website/logo')

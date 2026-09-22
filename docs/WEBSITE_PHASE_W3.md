@@ -187,7 +187,7 @@ Local development ships placeholder SVGs in
 `apps/restaurant-web/public/media/sample/`, served by the frontend's own origin.
 They are fixtures, not product assets.
 
-Owners can now upload PNG/JPEG/WebP logos through the authenticated website
+Owners can now upload PNG/JPEG/WebP logos and main photos through the authenticated website
 editor. The backend validates and re-encodes files as bounded WebP images and
 returns an immutable `/media/website-logos/<random-id>.webp` reference. Uploading
 does not save or publish the draft. Production requires a persistent
@@ -196,7 +196,7 @@ the backend on portal, public and preview origins. These are public logo assets;
 website content/bootstrap still requires the existing Host or preview authority.
 See `docs/WEBSITE_OWNER_EDITOR_UX.md` for deployment and retention details.
 
-Gallery and hero images remain references; there is no object-storage provider,
+Gallery and about images remain references; there is no object-storage provider,
 general gallery uploader or server-side fetching of external image URLs.
 
 ## SEO and page metadata

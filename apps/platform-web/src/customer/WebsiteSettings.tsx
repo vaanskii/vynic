@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { customerApi } from "./api";
-import { LogoUpload } from "./LogoUpload";
+import { WebsiteImageUpload } from "./WebsiteImageUpload";
 import { WebsiteMenuEditor } from "./WebsiteMenuEditor";
 
 /**
@@ -281,10 +281,12 @@ export function WebsiteSettings({
                     onChange={(e) => edit({ heroSubtitle: e.target.value })}
                   />
                 </label>
-                <MediaField
-                  label="მთავარი ფოტო"
+                <WebsiteImageUpload
+                  kind="hero"
+                  venueId={venueId}
                   value={draft.heroImageUrl}
                   onChange={(heroImageUrl) => edit({ heroImageUrl })}
+                  onBusy={setBusy}
                 />
               </fieldset>
             )}
@@ -329,7 +331,7 @@ export function WebsiteSettings({
                     ))}
                   </select>
                 </label>
-                <LogoUpload
+                <WebsiteImageUpload
                   venueId={venueId}
                   value={draft.logoUrl}
                   onChange={(logoUrl) => edit({ logoUrl })}
@@ -813,9 +815,8 @@ function normalizeLink(value: string) {
 /**
  * A media reference: an HTTPS address or a Vynic-hosted `/media/...` path.
  *
- * Deliberately a reference and not a file picker — no upload pipeline exists
- * yet, and storing image bytes in website content is exactly what the media
- * contract forbids. See `docs/WEBSITE_PHASE_W3.md`.
+ * Gallery/about images remain references. Logo and main-photo file pickers
+ * use WebsiteImageUpload; website content stores only their returned references.
  */
 function MediaField({
   label,

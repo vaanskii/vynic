@@ -12,7 +12,7 @@ import sharp from 'sharp';
 
 export const MAX_LOGO_BYTES = 5 * 1024 * 1024;
 
-/** Public logo assets, addressed by immutable, unguessable names; no original filenames. */
+/** Public website image assets (legacy logo URL prefix), addressed by immutable, unguessable names; no original filenames. */
 @Injectable()
 export class WebsiteLogoService {
   constructor(private readonly config: ConfigService) {}
@@ -26,7 +26,10 @@ export class WebsiteLogoService {
     return resolve(configured || '.data/website-media');
   }
 
-  async upload(file?: { buffer: Buffer; size: number }) {
+  async upload(
+    file?: { buffer: Buffer; size: number },
+    kind: 'logo' | 'hero' = 'logo',
+  ) {
     if (!file || !file.size || file.size > MAX_LOGO_BYTES)
       throw new BadRequestException('Choose an image up to 5 MB');
     let image: Buffer;
@@ -44,7 +47,10 @@ export class WebsiteLogoService {
       // Decode fully, discard metadata and active formats, constrain dimensions.
       image = await input
         .rotate()
-        .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
+        .resize(kind === 'hero' ? 2400 : 1024, kind === 'hero' ? 2400 : 1024, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
         .webp({ quality: 90 })
         .toBuffer();
     } catch {

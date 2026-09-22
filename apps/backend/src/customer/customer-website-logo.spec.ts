@@ -27,6 +27,18 @@ describe('Owner logo upload authority', () => {
     expect(owners.venue).toHaveBeenCalledWith(actor, 'venue-a');
     expect(logos.upload).toHaveBeenCalledTimes(1);
   });
+  it('uses the same ownership and CUSTOM safeguards for main photos', async () => {
+    owners.venue.mockRejectedValueOnce(new Error('Not found'));
+    await expect(controller.uploadHero(actor, 'venue-b')).rejects.toThrow();
+    expect(logos.upload).not.toHaveBeenCalled();
+    core.settings.mockResolvedValueOnce({ mode: 'CUSTOM' });
+    await expect(controller.uploadHero(actor, 'vankisi')).rejects.toThrow(
+      'SAAS',
+    );
+    expect(logos.upload).not.toHaveBeenCalled();
+    await controller.uploadHero(actor, 'venue-a');
+    expect(logos.upload).toHaveBeenCalledWith(undefined, 'hero');
+  });
   it('rejects another owner and CUSTOM sites before storage', async () => {
     owners.venue.mockRejectedValueOnce(new Error('Not found'));
     await expect(controller.uploadLogo(actor, 'venue-b')).rejects.toThrow();

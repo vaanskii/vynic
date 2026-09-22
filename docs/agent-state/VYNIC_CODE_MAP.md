@@ -288,7 +288,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Backend website module: `apps/backend/src/website/`
 - Host resolution: `apps/backend/src/website/tenancy/`
 - Generic Website Core/bootstrap/publication/preview/caching: `apps/backend/src/website/core/`; menu presentation: `apps/backend/src/website/core/website-menu.service.ts`; owner routes: `apps/backend/src/customer/customer-website.controller.ts`; owner editor: `apps/platform-web/src/customer/WebsiteSettings.tsx`, `apps/platform-web/src/customer/WebsiteMenuEditor.tsx`.
-- Owner logo uploads: `apps/platform-web/src/customer/LogoUpload.tsx`; owner endpoint in `customer-website.controller.ts`; raster storage/serving in `apps/backend/src/website/core/website-logo.service.ts` and `website-logo.controller.ts`. Deployment: `docs/WEBSITE_OWNER_EDITOR_UX.md`.
+- Owner logo/main-photo uploads: `apps/platform-web/src/customer/WebsiteImageUpload.tsx`; owner endpoint in `customer-website.controller.ts`; raster storage/serving in `apps/backend/src/website/core/website-logo.service.ts` and `website-logo.controller.ts`. Deployment: `docs/WEBSITE_OWNER_EDITOR_UX.md`.
 - Generic SaaS frontend: `apps/restaurant-web/` (theme registry `src/theme/registry.ts`, `classic` theme `src/theme/classic/`, metadata `src/seo/documentHead.ts`, transport `src/api/client.ts`).
 - W3 product, media/SEO/caching policy and local runbook: `docs/WEBSITE_PHASE_W3.md`; W2 contract and publication rules: `docs/WEBSITE_PHASE_W2.md`; disposable fixtures/harness: `apps/backend/scripts/seed-website-w3-local.ts`, `apps/backend/scripts/serve-website-w3-local.ts`.
 - Current tenancy reference: `docs/PUBLIC_TENANCY.md`

@@ -160,8 +160,10 @@ export class ReservationService {
       data.numberOfGuests ??
       tables.reduce((sum, table) => sum + table.capacity, 0);
 
+    const paymentIntegrationId = await this.bogService.preparePayment(tenant);
     const reservation = await this.prisma.websiteReservation.create({
       data: {
+        paymentIntegrationId,
         venueId: tenant.venueId,
         date: new Date(dayBounds(data.selectedDate).start),
         timeSlot: data.selectedTime,
@@ -185,6 +187,8 @@ export class ReservationService {
     });
 
     const bogOrder = await this.bogService.createOrder(
+      tenant,
+      paymentIntegrationId,
       reservation.id,
       reservation.totalAmount || 0,
       data.language || 'en',
@@ -377,6 +381,14 @@ export class ReservationService {
       throw new BadRequestException(`Reservation ${reservationId} not found`);
     }
 
+    if (
+      !paymentId ||
+      !existing.paymentIntegrationId ||
+      (existing.paymentId && existing.paymentId !== paymentId)
+    ) {
+      throw new BadRequestException('Payment reference mismatch');
+    }
+
     const tenant: TenantContext = {
       venueId: existing.venueId,
       organizationId: existing.venue.organizationId,
@@ -427,9 +439,10 @@ export class ReservationService {
 
   async getPaymentIdByReservationId(
     reservationId: string,
+    venueId: string,
   ): Promise<string | null> {
     const reservation = await this.prisma.websiteReservation.findUnique({
-      where: { id: reservationId },
+      where: { id: reservationId, venueId },
       select: { paymentId: true },
     });
     return reservation?.paymentId || null;

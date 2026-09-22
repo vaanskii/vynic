@@ -10,10 +10,9 @@ const CHECKS = [
   { key: 'POS_SYNC_API_KEY', required: true },
   { key: 'JWT_REFRESH_SECRET', required: false },
   { key: 'COOKIE_ENCRYPTION_KEY', required: true },
-  { key: 'BOG_CLIENT_ID', required: false },
-  { key: 'BOG_CLIENT_SECRET', required: false },
   { key: 'FRONTEND_URL', required: false },
   { key: 'API_URL', required: false },
+  { key: 'PAYMENT_INTEGRATION_MASTER_KEY', required: false },
   // Optional. Unset means an enrolling POS keeps the address it reached.
   { key: 'DEVICE_API_BASE_URL', required: false },
   // Website SUPER_ADMIN seed (optional).

@@ -1,42 +1,76 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  BadGatewayException,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import axios from 'axios';
 import * as crypto from 'crypto';
 import { MenuService } from '../menu/menu.service';
 import type { TenantContext } from '../../tenancy/tenant-context';
 
+import { PaymentIntegrationsService } from '../../payment-integrations/payment-integrations.service';
+import { PrismaService } from '../../prisma.service';
+
 @Injectable()
 export class BogService {
-  constructor(private readonly menuService: MenuService) {}
+  constructor(
+    private readonly menuService: MenuService,
+    private readonly integrations: PaymentIntegrationsService,
+    private readonly db: PrismaService,
+  ) {}
 
-  private clientId = process.env.BOG_CLIENT_ID;
-  private clientSecret = process.env.BOG_CLIENT_SECRET;
   private tokenUrl =
     'https://oauth2.bog.ge/auth/realms/bog/protocol/openid-connect/token';
   private orderUrl = 'https://api.bog.ge/payments/v1/ecommerce/orders';
 
-  async getAccessToken(): Promise<string> {
-    const auth = Buffer.from(`${this.clientId}:${this.clientSecret}`).toString(
-      'base64',
+  async getAccessToken(
+    venueId: string,
+    integrationId: string,
+  ): Promise<string> {
+    const { clientId, clientSecret } = await this.integrations.credentials(
+      venueId,
+      integrationId,
     );
-    const response = await axios.post(
-      this.tokenUrl,
-      'grant_type=client_credentials',
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization: `Basic ${auth}`,
+    try {
+      const auth = Buffer.from(`${clientId}:${clientSecret}`).toString(
+        'base64',
+      );
+      const response = await axios.post(
+        this.tokenUrl,
+        'grant_type=client_credentials',
+        {
+          timeout: 15000,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Authorization: `Basic ${auth}`,
+          },
         },
-      },
-    );
-    return response.data.access_token;
+      );
+      if (typeof response.data.access_token !== 'string') throw Error();
+      return response.data.access_token;
+    } catch {
+      throw new BadGatewayException('Payment provider authentication failed');
+    }
   }
 
   async createOrder(
+    tenant: TenantContext,
+    integrationId: string,
     reservationId: string,
     totalAmount: number,
     language = 'en',
   ) {
-    const token = await this.getAccessToken();
+    const current = await this.integrations.requireEnabled(tenant.venueId);
+    if (current.id !== integrationId)
+      throw new BadRequestException(
+        'Payment configuration changed; retry booking',
+      );
+    const token = await this.getAccessToken(tenant.venueId, integrationId);
+    const { returnOrigin } = await this.integrations.credentials(
+      tenant.venueId,
+      integrationId,
+    );
     const amountInGel = Math.max(totalAmount, 1);
     const apiUrl =
       process.env.API_URL || `http://127.0.0.1:${process.env.PORT ?? 3000}`;
@@ -57,32 +91,57 @@ export class BogService {
         ],
       },
       redirect_urls: {
-        success: `${process.env.FRONTEND_URL}/${language}/payment-success?reservation_id=${reservationId}`,
-        fail: `${process.env.FRONTEND_URL}/${language}/payment-fail?reservation_id=${reservationId}`,
+        success: `${returnOrigin}/${language}/payment-success?reservation_id=${reservationId}`,
+        fail: `${returnOrigin}/${language}/payment-fail?reservation_id=${reservationId}`,
       },
       ttl: 30,
     };
 
-    const response = await axios.post(this.orderUrl, body, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Accept-Language': 'ka',
-      },
-    });
+    try {
+      const response = await axios.post(this.orderUrl, body, {
+        timeout: 15000,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept-Language': 'ka',
+        },
+      });
 
-    return response.data;
+      return response.data;
+    } catch {
+      throw new BadGatewayException('Payment provider order failed');
+    }
   }
 
-  async getPaymentDetails(orderId: string) {
-    const token = await this.getAccessToken();
-    const response = await axios.get(
-      `https://api.bog.ge/payments/v1/receipt/${orderId}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      },
+  async getPaymentDetails(orderId: string, venueId: string) {
+    const reservation = await this.db.websiteReservation.findFirst({
+      where: { paymentId: orderId, venueId },
+    });
+    if (!reservation?.paymentIntegrationId)
+      throw new NotFoundException('Payment not found');
+    const token = await this.getAccessToken(
+      reservation.venueId,
+      reservation.paymentIntegrationId,
     );
-    return response.data;
+    try {
+      const response = await axios.get(
+        `https://api.bog.ge/payments/v1/receipt/${encodeURIComponent(orderId)}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 15000,
+        },
+      );
+      if (response.data.external_order_id !== reservation.id) throw Error();
+      return response.data;
+    } catch {
+      throw new BadGatewayException('Payment provider status failed');
+    }
+  }
+
+  async preparePayment(tenant: TenantContext) {
+    const row = await this.integrations.requireEnabled(tenant.venueId);
+    await this.integrations.credentials(tenant.venueId, row.id);
+    return row.id;
   }
 
   verifyCallbackSignature(requestBody: string, signature: string): boolean {

@@ -1,3 +1,8 @@
+import { PaymentIntegrationsModule } from '../payment-integrations/payment-integrations.module';
+import {
+  CustomerPaymentsController,
+  PlatformPaymentsController,
+} from './customer-payments.controller';
 import {
   ManagerVenueProfileController,
   DeviceVenueProfileController,
@@ -19,6 +24,7 @@ import {
 } from './customer.controller';
 @Module({
   imports: [
+    PaymentIntegrationsModule,
     AuthModule,
     PlatformModule,
     EdgeTransportModule,
@@ -32,6 +38,8 @@ import {
     EdgeDeviceGuard,
   ],
   controllers: [
+    CustomerPaymentsController,
+    PlatformPaymentsController,
     ManagerVenueProfileController,
     DeviceVenueProfileController,
     CustomerAuthController,

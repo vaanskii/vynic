@@ -130,8 +130,7 @@ export class BootstrapService implements OnModuleInit {
     const optionalWebsite = [
       'JWT_REFRESH_SECRET',
       'COOKIE_ENCRYPTION_KEY',
-      'BOG_CLIENT_ID',
-      'BOG_CLIENT_SECRET',
+      'PAYMENT_INTEGRATION_MASTER_KEY',
       'FRONTEND_URL',
       'API_URL',
     ];

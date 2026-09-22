@@ -74,7 +74,10 @@ describeDatabase('Public website tenant isolation (PostgreSQL)', () => {
       prisma,
       // Payment is a separate concern; an order that returns nothing leaves the
       // booking PENDING, exactly as an unpaid booking is today.
-      { createOrder: () => Promise.resolve(null) } as never,
+      {
+        preparePayment: () => Promise.resolve(null),
+        createOrder: () => Promise.resolve(null),
+      } as never,
       bridge,
     );
     users = new UserService(prisma);

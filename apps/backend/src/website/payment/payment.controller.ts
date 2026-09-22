@@ -24,12 +24,10 @@ import { ReservationService } from '../reservation/reservation.service';
 /**
  * Payment entry points.
  *
- * Only order creation comes from a browser on a restaurant's site, so only it
- * resolves a Venue from the host. The status checks and the bank's callback
- * arrive without one — a payment provider has no reason to know the website
- * hostname — so they take their tenant from the server-owned reservation the
- * provider reference names. Guarding them on a host would break payments
- * without adding any authority the reservation row does not already carry.
+ * Browser requests resolve their Venue from the registered website host.
+ * Receipt requests additionally require a payment stored for that Venue.
+ * Bank callbacks use signed server-owned reservation/payment references, without
+ * website entitlement checks, so in-flight payments settle after access changes.
  */
 @Controller('api/bog')
 export class BogController {
@@ -104,9 +102,16 @@ export class BogController {
   }
 
   @Get('check-status/:orderId')
-  async checkOrderStatus(@Param('orderId') orderId: string) {
+  @UseGuards(WebsiteTenantGuard)
+  async checkOrderStatus(
+    @WebsiteTenant() tenant: TenantContext,
+    @Param('orderId') orderId: string,
+  ) {
     try {
-      const paymentDetails = await this.bogService.getPaymentDetails(orderId);
+      const paymentDetails = await this.bogService.getPaymentDetails(
+        orderId,
+        tenant.venueId,
+      );
       const externalOrderId = paymentDetails.external_order_id;
       const status = paymentDetails.status || paymentDetails.order_status?.key;
       if (!externalOrderId) throw new Error('External order ID not found');
@@ -138,7 +143,8 @@ export class BogController {
         status: isSuccess ? 'CONFIRMED' : isFailed ? 'FAILED' : 'PENDING',
         reservation,
       };
-    } catch {
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
       throw new HttpException(
         'Failed to check order status',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -147,16 +153,22 @@ export class BogController {
   }
 
   @Get('check-reservation-status/:reservationId')
-  async checkReservationStatus(@Param('reservationId') reservationId: string) {
-    const paymentId =
-      await this.reservationService.getPaymentIdByReservationId(reservationId);
+  @UseGuards(WebsiteTenantGuard)
+  async checkReservationStatus(
+    @WebsiteTenant() tenant: TenantContext,
+    @Param('reservationId') reservationId: string,
+  ) {
+    const paymentId = await this.reservationService.getPaymentIdByReservationId(
+      reservationId,
+      tenant.venueId,
+    );
     if (!paymentId) {
       return {
         success: false,
         message: 'Payment ID not found for this reservation',
       };
     }
-    return this.checkOrderStatus(paymentId);
+    return this.checkOrderStatus(tenant, paymentId);
   }
 
   @Post('payment-callback')

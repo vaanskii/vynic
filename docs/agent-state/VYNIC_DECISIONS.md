@@ -146,9 +146,13 @@ identity or interrupting already-open operation. See `SAAS_PHASE2_CONTROL_PLANE.
 
 ## D017 — Customer owners have Organization-scoped authority
 
-**Decision:** CustomerAccount → Organization → Venue is separate from PlatformUser,
+**Decision:** CustomerAccount → OrganizationMembership(OWNER) → Organization → Venue
+is separate from PlatformUser,
 Staff and WebsiteUser. Signup creates new ownership; matching email/name never
-claims an existing restaurant. Customer mutations use CustomerAuditEvent.
+claims an existing restaurant. Platform-issued invitations attach membership only
+after single-use token validation and owner-created credentials or normal sign-in
+with the exact invited email. The legacy account Organization field is provenance,
+never access authority. Customer mutations use CustomerAuditEvent.
 **Implication:** Reuse Staff/enrollment operation bodies with explicit actor types;
 do not manufacture a Platform principal for customer work. Device printer config
 is pulled and cached locally. Build environment selects only the deployment,

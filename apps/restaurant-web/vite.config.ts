@@ -27,7 +27,7 @@ export default defineConfig({
     host: true,
     port: 5175,
     strictPort: true,
-    allowedHosts: [".vynic.local", "localhost", "127.0.0.1"],
+    allowedHosts: [".vynic.local", ".vynic.localhost", "localhost", "127.0.0.1"],
     proxy: {
       "/api": { target: apiTarget, changeOrigin: false },
     },
@@ -36,7 +36,7 @@ export default defineConfig({
     host: true,
     port: 5175,
     strictPort: true,
-    allowedHosts: [".vynic.local", "localhost", "127.0.0.1"],
+    allowedHosts: [".vynic.local", ".vynic.localhost", "localhost", "127.0.0.1"],
     proxy: {
       "/api": { target: apiTarget, changeOrigin: false },
     },

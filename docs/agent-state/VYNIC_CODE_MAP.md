@@ -161,6 +161,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Feature descriptions/dependency warnings: `apps/platform-web/src/platform/feature-guidance.ts`; non-fiscal display classification: `apps/operations/lib/core/models/sale_visibility.dart`.
 
 - Customer principal, portal/onboarding and operator pilot policy: `apps/backend/src/customer/`
+- Owner membership/invitations: apps/backend/src/customer/owner-invitations.service.ts and owner-invitations.controller.ts; acceptance UI: apps/platform-web/src/customer/AcceptInvitation.tsx. Runbook: docs/SAAS_OWNER_INVITATIONS.md; local server/browser/backfill proofs: apps/backend/scripts/*onboarding*.
 - Real two-customer proof: `apps/backend/src/customer/customer-onboarding.integration.spec.ts`
 - Public/customer UI: `apps/platform-web/src/customer/`; operator controls: `src/platform/pages/OnboardingPage.tsx`
 - POS first-run: `apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart`; printer pull/cache: `core/services/edge/runtime_config_sync.dart`

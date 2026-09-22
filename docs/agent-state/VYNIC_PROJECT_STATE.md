@@ -601,8 +601,18 @@ current transport status.
   are never returned by normal reads.
 - SaaS Phase 3 adds a limited CustomerAccount owner portal, separate from
   PlatformUser/Staff/WebsiteUser. Pilot signup is closed until Platform selects
-  an active trial plan and enables it. Owners create their own restaurant,
-  Manager access and POS enrollment; email remains explicitly unverified.
+  an active trial plan and enables it. CustomerAccount is the human identity;
+  OrganizationMembership grants OWNER access to one or more Organizations.
+  Signup creates both; the legacy nullable account Organization field is
+  provenance only. The additive backfill preserves existing pilot ownership.
+  Platform can prepare Organization/Venue/plan/subscription and issue a hashed,
+  expiring, single-use owner invitation without a password. Existing accounts
+  must sign in with the invited email; acceptance selects the prepared Venue.
+  Owners create their own restaurant, Manager access and POS enrollment; email
+  remains explicitly unverified. NONE/SAAS onboarding policy creates a SAAS draft
+  only with effective WEBSITE; CUSTOM is never automatic. The local 3000/5173/5175
+  harness uses vynic.localhost and disposable PostgreSQL. See
+  docs/SAAS_OWNER_INVITATIONS.md for security, rollout and reproducible proof.
 - POS/Manager use fixed product entrypoints and isolated native build metadata.
   Manager supports Windows/macOS/Android/iOS; POS production is Windows only,
   with macOS debug development via `tool/dev.zsh` shortcuts. Those shortcuts
@@ -866,7 +876,8 @@ current transport status.
 
 ## Current Migration Versions
 
-- Prisma migration tip:
+- Prisma migration tip: 20260927120000_organization_owner_invitations.
+- Prior website migrations:
   `20260925120000_website_core`, `20260926120000_website_menu_presentation`.
 - Immediately preceding state migrations:
   `20260924120000_venue_payment_integrations`,

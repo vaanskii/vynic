@@ -15,6 +15,11 @@ const CHECKS = [
   { key: 'PAYMENT_INTEGRATION_MASTER_KEY', required: false },
   // Optional. Unset means an enrolling POS keeps the address it reached.
   { key: 'DEVICE_API_BASE_URL', required: false },
+  // Generic SaaS website. Optional overall, but publishing a site fails closed
+  // without the base domain, and the portal cannot open a preview without the
+  // preview origin.
+  { key: 'SAAS_WEBSITE_BASE_DOMAIN', required: false },
+  { key: 'SAAS_WEBSITE_PREVIEW_ORIGIN', required: false },
   // Website SUPER_ADMIN seed (optional).
   { key: 'SUPER_ADMIN_PHONE', required: false },
   { key: 'SUPER_ADMIN_PASSWORD', required: false },

@@ -1,3 +1,4 @@
+import { AcceptInvitation } from "./customer/AcceptInvitation";
 import { OnboardingPage } from './platform/pages/OnboardingPage';
 import { CustomerPortal } from './customer/CustomerPortal';
 import { PlatformUsersPage } from "./platform/pages/PlatformUsersPage";
@@ -51,6 +52,7 @@ export function AppRoutes() {
       <Route path="/en" element={<LocaleProvider><HomePage /></LocaleProvider>} />
       <Route path="/ka" element={<LocaleProvider><HomePage /></LocaleProvider>} />
       <Route path="/start" element={<CustomerPortal />} />
+      <Route path="/portal/invite" element={<AcceptInvitation />} />
       <Route path="/portal" element={<CustomerPortal />} />
       <Route path="/login" element={<Navigate to="/admin/login" replace />} />
       <Route path="/admin/login" element={<LoginPage />} />

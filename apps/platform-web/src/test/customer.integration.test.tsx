@@ -1,3 +1,4 @@
+import { MemoryRouter } from "react-router-dom";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, it, expect, vi } from "vitest";
@@ -48,7 +49,7 @@ describe("Customer onboarding", () => {
             : [],
         };
       });
-      render(<CustomerPortal />);
+      render(<MemoryRouter><CustomerPortal /></MemoryRouter>);
       await user.type(screen.getByLabelText("სახელი"), "Owner");
       await user.type(screen.getByLabelText("ელფოსტა"), "owner@test.invalid");
       await user.type(

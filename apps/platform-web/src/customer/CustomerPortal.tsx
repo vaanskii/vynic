@@ -1,3 +1,4 @@
+import { useLocation } from "react-router-dom";
 import { WebsiteSettings } from "./WebsiteSettings";
 import { PaymentSettings } from "./PaymentSettings";
 import { useEffect, useState } from "react";
@@ -114,6 +115,8 @@ const downloads: Record<string, string> = {
   managerIos: "Vynic Manager · iOS",
 };
 export function CustomerPortal() {
+  const location = useLocation();
+  const [selectedVenue, setSelectedVenue] = useState<string | undefined>(location.state?.venueId);
   const [signedIn, setSignedIn] = useState(hasCustomerSession);
   const [signup, setSignup] = useState(true);
   const [portal, setPortal] = useState<any>();
@@ -166,7 +169,7 @@ export function CustomerPortal() {
       setBusy(false);
     }
   }
-  const venue = portal?.venues?.[0];
+  const venue = portal?.venues?.find((v: { venue: { id: string } }) => v.venue.id === selectedVenue) ?? portal?.venues?.[0];
   const id = venue?.venue.id;
   async function copy(value: string) {
     try {
@@ -320,10 +323,14 @@ export function CustomerPortal() {
           </section>
         ) : (
           <>
+            {portal.venues.length > 1 && <label>რესტორანი<select value={id} onChange={e => { setSelectedVenue(e.target.value); setEnrollment(undefined); setResetId(undefined); }}>
+              {portal.venues.map((v: { venue: { id: string; name: string }; organization?: { name: string } }) => <option key={v.venue.id} value={v.venue.id}>{v.organization?.name} · {v.venue.name}</option>)}
+            </select></label>}
             <p>
               ელფოსტა: {portal.account.email}{" "}
               {!portal.account.emailVerifiedAt && "· დაუდასტურებელი"}
             </p>
+            <WebsiteSettings key={`website-${id}`} venueId={id} />
             <section>
               <h2>რესტორნის პროფილი</h2>
               <form key={id} onSubmit={(e) => {
@@ -336,7 +343,7 @@ export function CustomerPortal() {
                 <button disabled={busy}>პროფილის შენახვა</button>
               </form>
             </section>
-            <WebsiteSettings key={`website-${id}`} venueId={id} />
+
             <PaymentSettings key={id} venueId={id} />
             <div className="customer-columns">
               <section>

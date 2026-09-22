@@ -289,6 +289,6 @@ export const platformApi = {
   },
 };
 
-export function platformOnboardingApi(path: string, body?: unknown): Promise<any> {
-  return request(`/platform/onboarding/${path}`, body === undefined ? {} : {method:'PUT',body:JSON.stringify(body)});
+export function platformOnboardingApi(path: string, body?: unknown, method = "PUT"): Promise<any> {
+  return request(`/platform/onboarding/${path}`, body === undefined ? {} : {method,body:JSON.stringify(body)});
 }

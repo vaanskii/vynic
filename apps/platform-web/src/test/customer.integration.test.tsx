@@ -15,20 +15,26 @@ beforeEach(() => {
 });
 describe("Customer onboarding", () => {
   it.each([360, 768, 1280])(
-    "signup and restaurant creation at %ipx",
+    "signup, three-field restaurant setup and manager access at %ipx",
     async (width) => {
       window.innerWidth = width;
+      vi.stubGlobal("scrollTo", vi.fn());
       const user = userEvent.setup();
       let hasVenue = false;
-      api.call.mockImplementation(async (path: string) => {
+      api.call.mockImplementation(async (path: string, body?: any) => {
         if (path === "auth/signup") return { access_token: "test" };
         if (path === "venues") {
           hasVenue = true;
           return { id: "venue-a" };
         }
+        if (path === "venues/venue-a/website")
+          return { mode: "NONE", entitled: false, revision: 0, draft: {} };
+        if (path === "venues/venue-a/managers") return { id: "m", ...body };
+        if (path !== "portal") throw new Error(`unexpected ${path}`);
         return {
           account: { email: "owner@test.invalid" },
           releaseLinks: {},
+          websiteBaseDomain: "vynic.localhost",
           venues: hasVenue
             ? [
                 {
@@ -63,14 +69,20 @@ describe("Customer onboarding", () => {
         await screen.findByLabelText("რესტორნის სახელი"),
         "My restaurant",
       );
+      expect(screen.getByText("my-restaurant.vynic.localhost")).toBeVisible();
+      await user.upload(
+        screen.getByLabelText("ლოგოს ატვირთვა"),
+        new File(["png"], "logo.png", { type: "image/png" }),
+      );
       await user.click(screen.getByRole("button", { name: "გაგრძელება" }));
-      expect(await screen.findByText("venue-a")).toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "კოდის კოპირება" })).toBeNull();
+      expect(
+        await screen.findByRole("heading", { name: "გამარჯობა, My restaurant" }),
+      ).toBeVisible();
+      expect(screen.queryByText("venue-a")).not.toBeInTheDocument();
       expect(api.call).not.toHaveBeenCalledWith("venues/venue-a/payments/bog");
-      await user.click(screen.getByRole("button", { name: "რესტორნის გამართვა" }));
+      await user.click(screen.getByRole("button", { name: "მენეჯერები" }));
       await user.click(screen.getByRole("button", { name: "კოდის კოპირება" }));
       expect(await navigator.clipboard.readText()).toBe("venue-a");
-      expect(screen.queryByText("venue-b")).not.toBeInTheDocument();
       expect(screen.queryByLabelText("პაროლი")).not.toBeInTheDocument();
       await user.type(screen.getByLabelText("მენეჯერის სახელი"), "Manager");
       await user.type(screen.getByLabelText("მომხმარებლის სახელი"), "manager");
@@ -84,11 +96,11 @@ describe("Customer onboarding", () => {
           expect.objectContaining({ pin: "482915", role: "MANAGER" }),
         ),
       );
-      expect(
-        await screen.findByText("Vynic POS · მხოლოდ Windows"),
-      ).toBeInTheDocument();
-      expect(screen.queryByLabelText("PIN")).not.toBeInTheDocument();
       expect(screen.getByText(/Vynic Manager · macOS —/)).toBeInTheDocument();
+      await user.click(
+        screen.getByRole("button", { name: "მოწყობილობები / POS" }),
+      );
+      expect(screen.getByText(/Vynic POS · Windows —/)).toBeInTheDocument();
     },
   );
   it("saves enabled flags and per-printer ports and reports delivery honestly", async () => {

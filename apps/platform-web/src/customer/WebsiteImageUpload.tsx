@@ -7,14 +7,17 @@ export function WebsiteImageUpload({
   value,
   onChange,
   onBusy,
+  labels,
 }: {
   kind?: "logo" | "hero";
   venueId: string;
   value: string;
   onChange: (url: string) => void;
   onBusy: (busy: boolean) => void;
+  /** Wording for photos that reuse an upload size, such as gallery or dishes. */
+  labels?: Partial<Record<"label" | "alt" | "remove", string>>;
 }) {
-  const copy =
+  const defaults =
     kind === "hero"
       ? {
           label: "მთავარი ფოტოს ატვირთვა",
@@ -30,6 +33,7 @@ export function WebsiteImageUpload({
           loading: "ლოგო იტვირთება…",
           error: "ლოგო ვერ აიტვირთა. სცადეთ სხვა ფოტო ან გაიმეორეთ ატვირთვა.",
         };
+  const copy = { ...defaults, ...labels };
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const alive = useRef(true);

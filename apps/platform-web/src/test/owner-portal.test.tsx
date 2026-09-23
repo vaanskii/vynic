@@ -1,0 +1,644 @@
+import { MemoryRouter } from "react-router-dom";
+import { render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+const api = vi.hoisted(() => ({ call: vi.fn(), session: vi.fn(() => true) }));
+vi.mock("../customer/api", () => ({
+  customerApi: api.call,
+  hasCustomerSession: api.session,
+  customerLogout: vi.fn(),
+}));
+import { CustomerPortal } from "../customer/CustomerPortal";
+import { suggestAddress } from "../customer/FirstRunSetup";
+import type { OwnerMenu, OwnerMenuItem } from "../customer/WebsiteMenuEditor";
+
+const draft = {
+  slug: "tabla",
+  themeKey: "classic",
+  logoUrl: "/media/website-logos/logo.webp",
+  heroTitle: "Tabla",
+  heroSubtitle: "",
+  heroImageUrl: "",
+  about: "",
+  aboutImageUrl: "",
+  showMenu: true,
+  menuHeading: "",
+  menuIntro: "",
+  seoTitle: "",
+  seoDescription: "",
+  contactEmail: "",
+  mapUrl: "",
+  footerNote: "",
+  workingHours: [] as { day: number; opens: string; closes: string }[],
+  socials: [],
+  gallery: [],
+};
+const website = (patch: Record<string, unknown> = {}) => ({
+  schemaVersion: 2,
+  themeKeys: ["classic"],
+  mode: "SAAS",
+  entitled: true,
+  status: "DRAFT",
+  revision: 1,
+  publishedRevision: null as number | null,
+  publishedAt: null,
+  hasUnpublishedChanges: true,
+  draft,
+  baseDomain: "vynic.localhost",
+  domains: [],
+  publishedSlug: null,
+  ...patch,
+});
+const venueStatus = (patch: Record<string, unknown> = {}) => ({
+  venue: {
+    id: "venue-a",
+    name: "Tabla",
+    address: null,
+    phone: null,
+    branchName: null,
+    legalId: null,
+    loginCode: "tabla-7",
+    timezone: "Asia/Tbilisi",
+    currency: "GEL",
+  },
+  plan: { name: "Starter" },
+  features: ["POS", "MANAGER_APP", "WEBSITE"],
+  subscription: { status: "TRIAL", trialEndsAt: "2026-10-23T00:00:00Z" },
+  managers: [],
+  devices: [],
+  enrollments: [],
+  checklist: { restaurant: true, manager: false, menu: false },
+  ready: false,
+  ...patch,
+});
+const ownerMenu: OwnerMenu = {
+  categories: [
+    {
+      id: "georgian",
+      slug: "georgian",
+      name: { ka: "ქართული კერძები", en: "Georgian" },
+      items: [],
+      subcategories: [
+        {
+          id: "dough",
+          slug: "dough",
+          name: { ka: "ცომეული", en: "Dough" },
+          items: [
+            {
+              menuItemId: "khinkali",
+              name: { ka: "ხინკალი", en: "Khinkali" },
+              price: 1.5,
+              variantCount: 0,
+              variants: [],
+              visibleOnWebsite: true,
+              displayName: null,
+              description: null,
+              imageUrl: null,
+              sortOrder: 0,
+              configured: false,
+            },
+            {
+              menuItemId: "khachapuri",
+              name: { ka: "ხაჭაპური", en: "Khachapuri" },
+              price: 18,
+              variantCount: 2,
+              variants: [
+                { id: "s", size: "S", price: 14 },
+                { id: "l", size: "L", price: 22 },
+              ],
+              visibleOnWebsite: true,
+              displayName: null,
+              description: null,
+              imageUrl: null,
+              sortOrder: 1,
+              configured: false,
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+/** A small in-memory Customer API; returns the calls for assertions. */
+function serve({
+  venues = [venueStatus()],
+  site = website(),
+  menu = ownerMenu,
+  taken = [] as string[],
+}: {
+  venues?: ReturnType<typeof venueStatus>[];
+  site?: ReturnType<typeof website>;
+  menu?: OwnerMenu;
+  taken?: string[];
+} = {}) {
+  const state = { venues, site, menu };
+  api.call.mockImplementation(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async (path: string, body?: any, method?: string) => {
+      if (path === "portal")
+        return {
+          account: { email: "owner@test.invalid" },
+          releaseLinks: {},
+          websiteBaseDomain: "vynic.localhost",
+          venues: state.venues,
+        };
+      if (path === "venues") {
+        state.venues = [
+          venueStatus({ venue: { ...venueStatus().venue, name: body.name } }),
+        ];
+        return { id: "venue-a" };
+      }
+      if (path.endsWith("/profile")) {
+        state.venues = [
+          venueStatus({ venue: { ...state.venues[0].venue, ...body } }),
+        ];
+        return body;
+      }
+      if (path.includes("/website/address/")) {
+        const slug = path.split("/").at(-1)!;
+        return { valid: true, available: !taken.includes(slug) };
+      }
+      if (path.endsWith("/website/logo") || path.endsWith("/website/hero"))
+        return { url: "/media/website-logos/new.webp" };
+      if (path.endsWith("/website/draft")) {
+        if (body.expectedRevision !== state.site.revision)
+          throw new Error("conflict");
+        state.site = {
+          ...state.site,
+          revision: state.site.revision + 1,
+          hasUnpublishedChanges: true,
+          draft: body.content,
+        };
+        return state.site;
+      }
+      if (path.endsWith("/website/publish")) {
+        state.site = {
+          ...state.site,
+          status: "PUBLISHED",
+          publishedRevision: state.site.revision,
+          hasUnpublishedChanges: false,
+        };
+        return state.site;
+      }
+      if (path.endsWith("/website/preview-session"))
+        return {
+          token: "preview-token",
+          expiresAt: "2026-09-23T10:30:00Z",
+          previewOrigin: "http://tabla.vynic.localhost:5175",
+        };
+      if (path.endsWith("/website/menu")) {
+        if (method === "PUT") {
+          const [row] = body.items;
+          const patch = (items: OwnerMenuItem[]) =>
+            items.map((i) =>
+              i.menuItemId === row.menuItemId ? { ...i, ...row } : i,
+            );
+          state.menu = {
+            categories: state.menu.categories.map((c) => ({
+              ...c,
+              items: patch(c.items),
+              subcategories: c.subcategories.map((s) => ({
+                ...s,
+                items: patch(s.items),
+              })),
+            })),
+          };
+        }
+        return state.menu;
+      }
+      if (path.endsWith("/website")) return state.site;
+      if (path.endsWith("/managers"))
+        return { id: "m1", displayName: body.displayName };
+      throw new Error(`unexpected ${path}`);
+    },
+  );
+  return state;
+}
+const renderPortal = (entry = "/portal") =>
+  render(
+    <MemoryRouter initialEntries={[entry]}>
+      <CustomerPortal />
+    </MemoryRouter>,
+  );
+const nav = async () =>
+  within(
+    await screen.findByRole("navigation", { name: "პორტალის განყოფილებები" }),
+  );
+const calls = (path: string) =>
+  api.call.mock.calls.filter(([p]) => p === path);
+
+beforeEach(() => {
+  api.call.mockReset();
+  api.session.mockReturnValue(true);
+  vi.stubGlobal("scrollTo", vi.fn());
+});
+
+describe("First-run setup", () => {
+  it("suggests a Latin address from a Georgian name", () => {
+    expect(suggestAddress("ტაბლა")).toBe("tabla");
+    expect(suggestAddress("Café Shavi Lomi!")).toBe("cafe-shavi-lomi");
+    expect(suggestAddress("ხაჭაპური & ღვინო")).toBe("khachapuri-ghvino");
+  });
+
+  it("requires only name, logo and address, then opens the dashboard", async () => {
+    const state = serve({
+      venues: [],
+      site: website({ revision: 0, draft: { ...draft, slug: "", logoUrl: "", heroTitle: "" } }),
+    });
+    const user = userEvent.setup();
+    renderPortal();
+
+    const form = await screen.findByRole("region", {
+      name: "შექმენით თქვენი რესტორანი",
+    });
+    // Nothing else is asked for before the portal.
+    expect(within(form).queryByLabelText(/^მისამართი/)).toBeNull();
+    expect(within(form).queryByLabelText(/ტელეფონი/)).toBeNull();
+    expect(within(form).getAllByRole("textbox")).toHaveLength(2);
+
+    await user.type(screen.getByLabelText("რესტორნის სახელი"), "ტაბლა");
+    expect(screen.getByLabelText("ვებსაიტის მისამართი")).toHaveValue("tabla");
+    expect(screen.getByText("tabla.vynic.localhost")).toBeInTheDocument();
+    expect(screen.queryByText(/slug|hostname|https:\/\//i)).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "გაგრძელება" }));
+    expect(await screen.findByText("ატვირთეთ რესტორნის ლოგო.")).toBeVisible();
+    expect(calls("venues")).toHaveLength(0);
+
+    await user.upload(
+      screen.getByLabelText("ლოგოს ატვირთვა"),
+      new File(["png"], "logo.png", { type: "image/png" }),
+    );
+    await user.click(screen.getByRole("button", { name: "გაგრძელება" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "გამარჯობა, ტაბლა" }),
+    ).toBeVisible();
+    expect(calls("venues")[0][1]).toEqual({ name: "ტაბლა" });
+    expect(calls("venues/venue-a/website/logo")[0][1]).toBeInstanceOf(FormData);
+    expect(state.site.draft).toMatchObject({
+      slug: "tabla",
+      logoUrl: "/media/website-logos/new.webp",
+      heroTitle: "ტაბლა",
+    });
+    expect(screen.getAllByText("tabla.vynic.localhost").length).toBeGreaterThan(0);
+    const steps = screen.getByRole("list", { name: "შემდეგი ნაბიჯები" });
+    for (const label of [
+      "ვებსაიტის ნახვა",
+      "მენიუს დამატება",
+      "სამუშაო საათების დამატება",
+      "მისამართის დამატება",
+      "ფოტოების დამატება",
+      "POS-ის დაკავშირება",
+      "მენეჯერის დამატება",
+    ])
+      expect(within(steps).getByText(label)).toBeInTheDocument();
+    expect(screen.getByText("Starter")).toBeInTheDocument();
+    expect(screen.getByText("მონახაზი")).toBeInTheDocument();
+  });
+
+  it("keeps the form when the address is taken and retries without duplicates", async () => {
+    const state = serve({
+      venues: [],
+      site: website({ revision: 0, draft: { ...draft, slug: "", logoUrl: "" } }),
+      taken: ["tabla"],
+    });
+    const user = userEvent.setup();
+    renderPortal();
+    await user.type(await screen.findByLabelText("რესტორნის სახელი"), "Tabla");
+    await user.upload(
+      screen.getByLabelText("ლოგოს ატვირთვა"),
+      new File(["png"], "logo.png", { type: "image/png" }),
+    );
+    await user.click(screen.getByRole("button", { name: "გაგრძელება" }));
+    expect(
+      await screen.findByText("ეს მისამართი უკვე დაკავებულია. სცადეთ სხვა."),
+    ).toBeVisible();
+    expect(calls("venues/venue-a/website/draft")).toHaveLength(0);
+
+    const address = screen.getByLabelText("ვებსაიტის მისამართი");
+    await user.clear(address);
+    await user.type(address, "Tabla Vake");
+    expect(address).toHaveValue("tablavake");
+    await user.click(screen.getByRole("button", { name: "გაგრძელება" }));
+    await screen.findByRole("heading", { name: "გამარჯობა, Tabla" });
+    expect(state.site.draft.slug).toBe("tablavake");
+  });
+
+  it("prefills an invited restaurant and keeps its prepared profile", async () => {
+    const invited = venueStatus({
+      venue: { ...venueStatus().venue, name: "Prepared", address: "Vake 1" },
+    });
+    const state = serve({
+      venues: [invited],
+      site: website({ revision: 0, draft: { ...draft, slug: "", logoUrl: "", heroTitle: "" } }),
+    });
+    const user = userEvent.setup();
+    renderPortal();
+    const name = await screen.findByLabelText("რესტორნის სახელი");
+    expect(name).toHaveValue("Prepared");
+    expect(screen.getByLabelText("ვებსაიტის მისამართი")).toHaveValue("prepared");
+    await user.clear(name);
+    await user.type(name, "Tabla");
+    await user.upload(
+      screen.getByLabelText("ლოგოს ატვირთვა"),
+      new File(["png"], "logo.png", { type: "image/png" }),
+    );
+    await user.click(screen.getByRole("button", { name: "გაგრძელება" }));
+    await screen.findByRole("heading", { name: "გამარჯობა, Tabla" });
+    expect(calls("venues")).toHaveLength(0);
+    expect(calls("venues/venue-a/profile")[0][1]).toMatchObject({
+      name: "Tabla",
+      address: "Vake 1",
+    });
+    expect(state.site.draft.slug).toBe("tabla");
+  });
+
+  it("skips website setup when the restaurant has no generic website", async () => {
+    serve({ site: website({ mode: "NONE", revision: 0 }) });
+    renderPortal();
+    expect(
+      await screen.findByRole("heading", { name: "გამარჯობა, Tabla" }),
+    ).toBeVisible();
+    expect(
+      screen.getByText("ვებსაიტი თქვენს პაკეტში ჯერ არ არის ჩართული."),
+    ).toBeVisible();
+    expect(screen.queryByText("ფოტოების დამატება")).toBeNull();
+  });
+});
+
+describe("Owner portal", () => {
+  it("offers one section per concern", async () => {
+    serve();
+    renderPortal();
+    expect(
+      (await nav()).getAllByRole("button").map((b) => b.textContent),
+    ).toEqual([
+      "მთავარი",
+      "რესტორნის პროფილი",
+      "ვებსაიტი",
+      "მენიუ",
+      "ფოტოები",
+      "სამუშაო საათები",
+      "ონლაინ გადახდები",
+      "მოწყობილობები / POS",
+      "მენეჯერები",
+      "გამოწერა",
+      "პარამეტრები",
+    ]);
+  });
+
+  it("keeps website edits across sections and saves, previews and publishes separately", async () => {
+    const state = serve();
+    const user = userEvent.setup();
+    const openWindow = vi.fn();
+    vi.stubGlobal("open", openWindow);
+    renderPortal("/portal?section=hours");
+
+    await user.click(await screen.findByLabelText("ორშაბათი"));
+    expect(screen.getByLabelText("გახსნა")).toHaveAttribute("type", "time");
+    await user.clear(screen.getByLabelText("დახურვა"));
+    await user.type(screen.getByLabelText("დახურვა"), "01:00");
+
+    await user.click((await nav()).getByRole("button", { name: "მთავარი" }));
+    expect(screen.getByText("შეუნახავი ცვლილებები")).toBeVisible();
+    expect(screen.getByRole("button", { name: "ვებსაიტის ნახვა" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "გამოქვეყნება" })).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "შენახვა" }));
+    await waitFor(() =>
+      expect(state.site.draft.workingHours).toEqual([
+        { day: 1, opens: "10:00", closes: "01:00" },
+      ]),
+    );
+    expect(calls("venues/venue-a/website/draft")[0][1].expectedRevision).toBe(1);
+
+    await user.click(screen.getByRole("button", { name: "ვებსაიტის ნახვა" }));
+    await waitFor(() =>
+      expect(openWindow).toHaveBeenCalledWith(
+        "http://tabla.vynic.localhost:5175/preview#token=preview-token",
+        "_blank",
+        "noopener,noreferrer",
+      ),
+    );
+    expect(state.site.status).toBe("DRAFT");
+
+    await user.click(screen.getByRole("button", { name: "გამოქვეყნება" }));
+    await screen.findByText("ვებსაიტი გამოქვეყნებულია.");
+    expect(calls("venues/venue-a/website/publish")[0][1]).toEqual({
+      expectedRevision: 2,
+    });
+    expect(screen.getAllByText("გამოქვეყნებულია")[0]).toBeVisible();
+  });
+
+  it("retains edits after a conflict and can discard them", async () => {
+    const state = serve();
+    const user = userEvent.setup();
+    renderPortal("/portal?section=website");
+    await user.click(
+      await screen.findByRole("button", { name: "მთავარი გვერდი" }),
+    );
+    const title = screen.getByLabelText("მთავარი სათაური");
+    await user.type(title, " changed");
+    state.site = { ...state.site, revision: 5 };
+    await user.click(screen.getByRole("button", { name: "შენახვა" }));
+    await screen.findByRole("alert");
+    expect(title).toHaveValue("Tabla changed");
+    await user.click(screen.getByRole("button", { name: "გაუქმება" }));
+    expect(title).toHaveValue("Tabla");
+  });
+
+  it("checks a new website address and hides search settings until asked", async () => {
+    serve({ taken: ["taken"] });
+    const user = userEvent.setup();
+    renderPortal("/portal?section=website");
+    const address = await screen.findByLabelText("ვებსაიტის მისამართი");
+    await user.clear(address);
+    await user.type(address, "taken");
+    expect(
+      await screen.findByText("ეს მისამართი უკვე დაკავებულია."),
+    ).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "დიზაინი" }));
+    expect(
+      screen.getByLabelText("სათაური ძიების შედეგებში"),
+    ).not.toBeVisible();
+    await user.click(screen.getByText("Google-ში გამოჩენა"));
+    expect(screen.getByLabelText("სათაური ძიების შედეგებში")).toBeVisible();
+  });
+
+  it("normalizes contact links and leaves the address to the profile", async () => {
+    const state = serve();
+    const user = userEvent.setup();
+    renderPortal("/portal?section=website");
+    await user.click(
+      await screen.findByRole("button", { name: "კონტაქტი და ბმულები" }),
+    );
+    expect(
+      screen.getByText("მისამართი ჯერ არ არის დამატებული."),
+    ).toBeVisible();
+    await user.type(
+      screen.getByLabelText("Instagram", { selector: "input" }),
+      "instagram.com/tabla",
+    );
+    await user.tab();
+    await user.click(screen.getByRole("button", { name: "შენახვა" }));
+    await waitFor(() =>
+      expect(state.site.draft.socials).toEqual([
+        { label: "Instagram", url: "https://instagram.com/tabla" },
+      ]),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "მისამართის დამატება" }),
+    );
+    expect(await screen.findByLabelText(/^მისამართი/)).toBeVisible();
+  });
+
+  it("disables publishing for an unentitled website and explains CUSTOM", async () => {
+    serve({ site: website({ entitled: false }) });
+    const view = renderPortal();
+    expect(
+      await screen.findByText("გამოქვეყნება თქვენს პაკეტში გამორთულია."),
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "გამოქვეყნება" })).toBeDisabled();
+    view.unmount();
+
+    serve({ site: website({ mode: "CUSTOM" }) });
+    renderPortal("/portal?section=website");
+    expect(
+      await screen.findByText("თქვენი ინდივიდუალური ვებსაიტი ცალკე იმართება"),
+    ).toBeVisible();
+  });
+});
+
+describe("Menu section", () => {
+  it("shows the POS hierarchy and saves presentation one item at a time", async () => {
+    const state = serve();
+    const user = userEvent.setup();
+    renderPortal("/portal?section=menu");
+
+    expect(await screen.findByText("ქართული კერძები")).toBeVisible();
+    expect(screen.getByText("ცომეული")).toBeVisible();
+    expect(screen.getByText("ხინკალი")).toBeVisible();
+    expect(screen.getByText("S · 14.00 ₾")).toBeVisible();
+    expect(screen.getByText("L · 22.00 ₾")).toBeVisible();
+    // Operational menu authoring stays in the POS.
+    expect(screen.queryByRole("button", { name: /კატეგორია/ })).toBeNull();
+
+    await user.click(
+      screen.getByRole("switch", { name: "ხინკალი — ვებსაიტზე ჩვენება" }),
+    );
+    await waitFor(() =>
+      expect(calls("venues/venue-a/website/menu").at(-1)).toEqual([
+        "venues/venue-a/website/menu",
+        {
+          items: [
+            {
+              menuItemId: "khinkali",
+              visibleOnWebsite: false,
+              displayName: null,
+              description: null,
+              imageUrl: null,
+              sortOrder: 0,
+            },
+          ],
+        },
+        "PUT",
+      ]),
+    );
+    expect(
+      screen.getByRole("switch", { name: "ხინკალი — ვებსაიტზე ჩვენება" }),
+    ).not.toBeChecked();
+
+    const [, edit] = screen.getAllByRole("button", { name: "რედაქტირება" });
+    await user.click(edit);
+    await user.type(screen.getByLabelText("აღწერა"), "ყველით");
+    await user.click(screen.getByRole("button", { name: "შენახვა" }));
+    await screen.findByText("„ხაჭაპური“ შენახულია.");
+    expect(
+      state.menu.categories[0].subcategories[0].items[1].description,
+    ).toBe("ყველით");
+    expect(screen.getByText(/ვებსაიტზე ჩანს/)).toHaveTextContent(
+      "ვებსაიტზე ჩანს 1 / 2 კერძი",
+    );
+  });
+
+  it("explains that an empty menu comes from the POS", async () => {
+    serve({ menu: { categories: [] } });
+    renderPortal("/portal?section=menu");
+    expect(await screen.findByText("მენიუ ჯერ ცარიელია")).toBeVisible();
+  });
+});
+
+describe("Operational sections", () => {
+  it("manages restaurant code and managers outside the website", async () => {
+    serve();
+    const user = userEvent.setup();
+    renderPortal("/portal?section=managers");
+    await user.click(
+      await screen.findByRole("button", { name: "კოდის კოპირება" }),
+    );
+    expect(await navigator.clipboard.readText()).toBe("tabla-7");
+    await user.type(screen.getByLabelText("მენეჯერის სახელი"), "Nino");
+    await user.type(screen.getByLabelText("მომხმარებლის სახელი"), "nino");
+    await user.type(screen.getByLabelText("PIN"), "482915");
+    await user.click(screen.getByRole("button", { name: "მენეჯერის შექმნა" }));
+    await waitFor(() =>
+      expect(calls("venues/venue-a/managers")[0][1]).toMatchObject({
+        pin: "482915",
+        role: "MANAGER",
+      }),
+    );
+    expect(calls("venues/venue-a/payments/bog")).toHaveLength(0);
+  });
+
+  it("shows plan and payment availability in their own sections", async () => {
+    serve();
+    const user = userEvent.setup();
+    renderPortal("/portal?section=subscription");
+    expect(await screen.findByText("Starter")).toBeVisible();
+    expect(screen.getByText(/საცდელი პერიოდი/)).toBeVisible();
+    await user.click((await nav()).getByRole("button", { name: "ონლაინ გადახდები" }));
+    expect(
+      screen.getByText("ონლაინ გადახდები თქვენს პაკეტში არ შედის"),
+    ).toBeVisible();
+    await user.click(
+      (await nav()).getByRole("button", { name: "მოწყობილობები / POS" }),
+    );
+    expect(screen.getByText(/Vynic POS · Windows —/)).toBeVisible();
+  });
+});
+
+describe("Mobile section menu", () => {
+  // jsdom does not evaluate the phone media query that reveals the burger, so
+  // it is found by what it controls rather than by its (hidden) name.
+  const burger = () =>
+    screen
+      .getAllByRole("button", { hidden: true })
+      .find((b) => b.getAttribute("aria-controls") === "portal-sections")!;
+  const sections = () =>
+    screen.getByRole("navigation", { name: "პორტალის განყოფილებები" });
+
+  it("opens the sections from a burger button and closes after choosing", async () => {
+    serve();
+    const user = userEvent.setup();
+    renderPortal();
+    await nav();
+    expect(burger()).toHaveAttribute("aria-label", "განყოფილებები · მთავარი");
+    expect(burger()).toHaveAttribute("aria-expanded", "false");
+    await user.click(burger());
+    expect(burger()).toHaveAttribute("aria-expanded", "true");
+    expect(sections()).toHaveClass("is-open");
+
+    await user.click(
+      within(sections()).getByRole("button", { name: "მენეჯერები" }),
+    );
+    expect(sections()).not.toHaveClass("is-open");
+    expect(burger()).toHaveAttribute("aria-label", "განყოფილებები · მენეჯერები");
+
+    await user.click(burger());
+    await user.keyboard("{Escape}");
+    expect(sections()).not.toHaveClass("is-open");
+    expect(burger()).toHaveAttribute("aria-expanded", "false");
+  });
+});

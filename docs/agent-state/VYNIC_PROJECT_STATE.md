@@ -662,8 +662,14 @@ current transport status.
 - W3 implements the generic SaaS website product: `apps/restaurant-web` with a
   `themeKey` registry and one production `classic` theme, bilingual ka/en, a
   website presentation layer over the operational menu, owner preview of the
-  real frontend, and an eight-section Georgian owner editor separated from
-  restaurant profile and Manager/POS/printer setup. SEO and exact map pins use
+  real frontend, and a sectioned Georgian owner portal. First-run setup
+  requires only restaurant name, logo and website address (SAAS; name only
+  otherwise); everything else is optional in dedicated sections (profile,
+  website, menu, photos, hours, payments, POS devices, managers, subscription,
+  settings) sharing one website draft with a save bar. The address check is
+  advisory; publication still claims the hostname. The menu section is the
+  POS category/subcategory/item/size tree with per-item website presentation;
+  menu authoring stays in the POS. SEO and exact map pins use
   progressive disclosure; map visibility defaults on and follows the current
   Venue Profile address unless an exact link is supplied. The additive `showMap`
   flag preserves hidden-map intent without duplicating the address. Disabled

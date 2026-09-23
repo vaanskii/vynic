@@ -157,7 +157,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## Customer Onboarding / Runtime Configuration
 
-- Shared Venue identity: `apps/backend/src/venue-profile/` (validated/audited Owner, Manager and Device writes); profile fields in Venue, migration `20260921120000_venue_profile`. POS cache/pending sync: `apps/operations/lib/core/services/edge/pos_venue_profile.dart`; Manager editor: `apps/operations/lib/apps/mobile_app/presentation/widgets/venue_profile_card.dart`. Owner editor: `apps/platform-web/src/customer/CustomerPortal.tsx`.
+- Shared Venue identity: `apps/backend/src/venue-profile/` (validated/audited Owner, Manager and Device writes); profile fields in Venue, migration `20260921120000_venue_profile`. POS cache/pending sync: `apps/operations/lib/core/services/edge/pos_venue_profile.dart`; Manager editor: `apps/operations/lib/apps/mobile_app/presentation/widgets/venue_profile_card.dart`. Owner editor: `apps/platform-web/src/customer/WebsiteSections.tsx` (ProfileSection).
 - Feature descriptions/dependency warnings: `apps/platform-web/src/platform/feature-guidance.ts`; non-fiscal display classification: `apps/operations/lib/core/models/sale_visibility.dart`.
 
 - Customer principal, portal/onboarding and operator pilot policy: `apps/backend/src/customer/`
@@ -287,7 +287,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - API client: `apps/venue-web/src/services/api.ts`
 - Backend website module: `apps/backend/src/website/`
 - Host resolution: `apps/backend/src/website/tenancy/`
-- Generic Website Core/bootstrap/publication/preview/caching: `apps/backend/src/website/core/`; menu presentation: `apps/backend/src/website/core/website-menu.service.ts`; owner routes: `apps/backend/src/customer/customer-website.controller.ts`; owner editor: `apps/platform-web/src/customer/WebsiteSettings.tsx`, `apps/platform-web/src/customer/WebsiteMenuEditor.tsx`.
+- Generic Website Core/bootstrap/publication/preview/caching: `apps/backend/src/website/core/`; menu presentation: `apps/backend/src/website/core/website-menu.service.ts`; owner routes: `apps/backend/src/customer/customer-website.controller.ts`; owner portal: entry/first-run `apps/platform-web/src/customer/CustomerPortal.tsx`, `FirstRunSetup.tsx`; shell/dashboard `OwnerPortal.tsx`; shared draft hook `useWebsite.ts`; sections `WebsiteSections.tsx`, `OperationsSections.tsx`; menu tree `WebsiteMenuEditor.tsx`; address check `WebsiteCoreService.addressAvailability`.
 - Owner logo/main-photo uploads: `apps/platform-web/src/customer/WebsiteImageUpload.tsx`; owner endpoint in `customer-website.controller.ts`; raster storage/serving in `apps/backend/src/website/core/website-logo.service.ts` and `website-logo.controller.ts`. Deployment: `docs/WEBSITE_OWNER_EDITOR_UX.md`.
 - Generic SaaS frontend: `apps/restaurant-web/` (theme registry `src/theme/registry.ts`, `classic` theme `src/theme/classic/`, metadata `src/seo/documentHead.ts`, transport `src/api/client.ts`).
 - W3 product, media/SEO/caching policy and local runbook: `docs/WEBSITE_PHASE_W3.md`; W2 contract and publication rules: `docs/WEBSITE_PHASE_W2.md`; disposable fixtures/harness: `apps/backend/scripts/seed-website-w3-local.ts`, `apps/backend/scripts/serve-website-w3-local.ts`.

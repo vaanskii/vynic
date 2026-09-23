@@ -81,7 +81,7 @@ const password = 'Local owner-created passphrase!';
     await owner
       .getByRole('button', { name: 'მოწვევის მიღება', exact: true })
       .click();
-    await owner.waitForURL(portal + '/portal');
+    await owner.waitForURL(portal + '/dashboard');
     await owner
       .getByRole('heading', { name: 'Assisted Table ' + stamp, exact: true })
       .waitFor();
@@ -171,7 +171,7 @@ const password = 'Local owner-created passphrase!';
       viewport: { width: 1280, height: 900 },
     });
     const self = await selfContext.newPage();
-    await self.goto(portal + '/portal');
+    await self.goto(portal + '/signup');
     await self.getByLabel('სახელი', { exact: true }).fill('Self Owner');
     await self
       .getByLabel('ელფოსტა', { exact: true })

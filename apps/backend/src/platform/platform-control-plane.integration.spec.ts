@@ -275,6 +275,21 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
       ).rejects.toBeInstanceOf(UnauthorizedException);
     });
 
+    it('refuses a customer account token', async () => {
+      // Owners sign in on the same product site, but their token is for the
+      // customer audience and never authenticates Platform Admin.
+      const customerToken = jwt.sign(
+        { sub: adminId, typ: 'CUSTOMER' },
+        { audience: 'vynic-customer', issuer: 'vynic' },
+      );
+
+      await expect(
+        guard.canActivate(
+          contextFor({ authorization: `Bearer ${customerToken}` }).context,
+        ),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
     it('refuses a token that claims the platform type but not the audience', async () => {
       const forged = jwt.sign({ sub: adminId, typ: 'PLATFORM' });
 

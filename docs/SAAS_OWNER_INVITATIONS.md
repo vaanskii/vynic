@@ -51,7 +51,8 @@ explicit; Platform retains mode authority.
 - Regeneration creates a fresh invitation and revokes previous unused links for
   that Organization/email. Accepted invitations cannot be changed; regeneration
   never undoes membership.
-- Links use /portal/invite#token=… so tokens never enter HTTP URLs. The portal
+- Links use /invite#token=… so tokens never enter HTTP URLs (older
+  /portal/invite#token=… links redirect there with the fragment intact). The page
   clears the fragment and keeps it only in memory; reload requires reopening the
   link. Tokens are submitted in bodies, never logged by this implementation.
   Deployments must not enable request-body logging for auth/invitation endpoints.

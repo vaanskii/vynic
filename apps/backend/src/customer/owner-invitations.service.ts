@@ -119,7 +119,7 @@ export class OwnerInvitationsService {
     });
     await this.audit(tx, actor, 'owner_invitation.created', invitation.id);
     // Only issuance returns the secret. Fragments never reach HTTP access logs.
-    return { invitation, invitationPath: '/portal/invite#token=' + token };
+    return { invitation, invitationPath: '/invite#token=' + token };
   }
 
   list() {

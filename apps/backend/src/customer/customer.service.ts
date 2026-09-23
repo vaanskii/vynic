@@ -2,8 +2,10 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  Optional,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma.service';
 import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
 import { PlatformCommercialService } from '../platform/platform-commercial.service';
@@ -22,6 +24,7 @@ export class CustomerService {
     private readonly entitlements: VenueEntitlementsService,
     private readonly commercial: PlatformCommercialService,
     private readonly enrollments: DeviceEnrollmentService,
+    @Optional() private readonly config?: ConfigService,
   ) {}
   async venue(actor: CustomerPrincipal, id: string) {
     const venue = await this.db.venue.findFirst({
@@ -79,6 +82,9 @@ export class CustomerService {
       }),
       venues: await Promise.all(venues.map((v) => this.status(v.id))),
       releaseLinks: policy?.releaseLinks ?? {},
+      // Lets first-run show the full website address before a Venue exists.
+      websiteBaseDomain:
+        this.config?.get<string>('SAAS_WEBSITE_BASE_DOMAIN') ?? null,
     };
   }
   async status(id: string) {
@@ -86,6 +92,7 @@ export class CustomerService {
       where: { id },
       include: {
         subscription: true,
+        planAssignment: { select: { plan: { select: { name: true } } } },
         websiteConfig: { select: { mode: true, status: true } },
         organization: {
           select: {
@@ -147,6 +154,7 @@ export class CustomerService {
         accounts: venue.organization.memberships.map((m) => m.account),
       },
       website: venue.websiteConfig,
+      plan: venue.planAssignment && { name: venue.planAssignment.plan.name },
       subscription: venue.subscription && {
         status: venue.subscription.status,
         trialEndsAt: venue.subscription.trialEndsAt,

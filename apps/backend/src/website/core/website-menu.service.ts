@@ -163,6 +163,11 @@ export class WebsiteMenuService {
       name: { ka: item.nameKa, en: item.nameEn },
       price: item.price,
       variantCount: item.variants.length,
+      variants: item.variants.map((variant) => ({
+        id: variant.id,
+        size: variant.size,
+        price: variant.price,
+      })),
       visibleOnWebsite: item.websitePresentation?.visibleOnWebsite ?? true,
       displayName: item.websitePresentation?.displayName ?? null,
       description: item.websitePresentation?.description ?? null,

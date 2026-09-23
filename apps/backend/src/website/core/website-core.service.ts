@@ -17,6 +17,7 @@ import {
   readWebsiteContent,
   websiteContent,
   websiteMutation,
+  websiteSlug,
   websiteThemeKeys,
 } from './website-content';
 import { WebsiteMenuService } from './website-menu.service';
@@ -78,6 +79,29 @@ export class WebsiteCoreService {
       publishedSlug: row?.slug ?? null,
       baseDomain: this.config.get<string>('SAAS_WEBSITE_BASE_DOMAIN') ?? null,
       domains: domains.map((d) => d.hostname),
+    };
+  }
+  /**
+   * Whether an address can be published for this Venue right now.
+   *
+   * Advisory only: the address is claimed atomically at publication, which
+   * remains the authority if two restaurants race for the same name.
+   */
+  async addressAvailability(venueId: string, value: unknown) {
+    let slug: string;
+    try {
+      slug = websiteSlug(value);
+    } catch {
+      return { valid: false, available: false };
+    }
+    const domain = await this.db.venueDomain.findUnique({
+      where: { hostname: `${slug}.${this.baseDomain()}` },
+      select: { venueId: true, status: true },
+    });
+    return {
+      valid: true,
+      available:
+        !domain || (domain.venueId === venueId && domain.status === 'ACTIVE'),
     };
   }
   private requireSaas(row: VenueWebsiteConfig | null) {

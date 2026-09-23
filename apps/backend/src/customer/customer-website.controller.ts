@@ -90,6 +90,17 @@ export class CustomerWebsiteController {
     await this.owners.venue(actor, id);
     return this.core.settings(id);
   }
+  /** Advisory check while the owner chooses a website address. */
+  @Get('address/:slug')
+  @Header('Cache-Control', 'private, no-store')
+  async address(
+    @CustomerActor() actor: CustomerPrincipal,
+    @Param('venueId') id: string,
+    @Param('slug') slug: string,
+  ) {
+    await this.owners.venue(actor, id);
+    return this.core.addressAvailability(id, slug);
+  }
   @Put('draft') async save(
     @CustomerActor() actor: CustomerPrincipal,
     @Param('venueId') id: string,

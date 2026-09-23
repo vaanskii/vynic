@@ -1,6 +1,8 @@
 import { AcceptInvitation } from "./customer/AcceptInvitation";
+import { CustomerAuthPage } from "./customer/CustomerAuthPage";
+import { CustomerDashboard } from "./customer/CustomerDashboard";
+import { PortalRedirect } from "./customer/dashboard-routes";
 import { OnboardingPage } from './platform/pages/OnboardingPage';
-import { CustomerPortal } from './customer/CustomerPortal';
 import { PlatformUsersPage } from "./platform/pages/PlatformUsersPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
@@ -51,10 +53,16 @@ export function AppRoutes() {
       <Route path="/product" element={<LocaleProvider><HomePage /></LocaleProvider>} />
       <Route path="/en" element={<LocaleProvider><HomePage /></LocaleProvider>} />
       <Route path="/ka" element={<LocaleProvider><HomePage /></LocaleProvider>} />
-      <Route path="/start" element={<CustomerPortal />} />
-      <Route path="/portal/invite" element={<AcceptInvitation />} />
-      <Route path="/portal" element={<CustomerPortal />} />
-      <Route path="/login" element={<Navigate to="/admin/login" replace />} />
+      <Route path="/features" element={<PublicSection id="product" />} />
+      <Route path="/pricing" element={<PublicSection id="contact" />} />
+      {/* Restaurant owners: CustomerAccount sessions only. */}
+      <Route path="/login" element={<CustomerAuthPage key="login" mode="login" />} />
+      <Route path="/signup" element={<CustomerAuthPage key="signup" mode="signup" />} />
+      <Route path="/invite/*" element={<AcceptInvitation />} />
+      <Route path="/dashboard/:section?" element={<CustomerDashboard />} />
+      <Route path="/start" element={<Navigate to="/signup" replace />} />
+      <Route path="/portal/*" element={<PortalRedirect />} />
+      {/* Vynic staff: PlatformUser sessions only. */}
       <Route path="/admin/login" element={<LoginPage />} />
       <Route path="/admin" element={<ProtectedRoute><Shell /></ProtectedRoute>}>
         <Route index element={<OverviewPage />} />
@@ -74,6 +82,11 @@ export function AppRoutes() {
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
+}
+
+/** Product pages are sections of the home page in the visitor's language. */
+function PublicSection({ id }: { id: string }) {
+  return <Navigate to={{ pathname: localeHref(preferredLocale()), hash: `#${id}` }} replace />;
 }
 
 function PublicHomeRedirect() {

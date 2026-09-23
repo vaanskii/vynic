@@ -3,10 +3,10 @@ import { customerApi } from "./api";
 import type { WebsiteSettings } from "./useWebsite";
 
 /**
- * The only blocking step before the owner portal: name, logo and address.
+ * The only blocking step before the owner dashboard: name, logo and address.
  *
  * Everything else — address, hours, photos, menu, POS — is optional and lives
- * in its own portal section. Each write here is convergent (restaurant creation
+ * in its own dashboard section. Each write here is convergent (restaurant creation
  * returns the existing one), so a failed step is retried from this same form
  * without creating duplicates.
  */

@@ -5,10 +5,10 @@ import { WebsiteMenuEditor } from "./WebsiteMenuEditor";
 import { normalizeLink, websiteAddress, type Website } from "./useWebsite";
 
 /**
- * Portal sections that edit the website draft.
+ * Dashboard sections that edit the website draft.
  *
  * They share one draft: edits made in any of them are saved together from the
- * portal's save bar, and nothing reaches visitors until the owner publishes.
+ * dashboard's save bar, and nothing reaches visitors until the owner publishes.
  */
 export const days = [
   "ორშაბათი",

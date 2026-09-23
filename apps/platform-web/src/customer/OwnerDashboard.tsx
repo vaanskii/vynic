@@ -1,5 +1,10 @@
 import { useRef, useState, type ReactNode } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import {
+  dashboardPath,
+  dashboardSections,
+  type DashboardSection,
+} from "./dashboard-routes";
 import {
   DevicesSection,
   ManagersSection,
@@ -22,29 +27,15 @@ import {
 import { websiteAddress, type Website } from "./useWebsite";
 
 /**
- * The owner portal after first-run setup. Keyed by restaurant, so switching
- * restaurants starts from a clean portal.
+ * The owner dashboard after first-run setup. Keyed by restaurant, so switching
+ * restaurants starts from a clean dashboard.
  *
- * One section per concern, addressable through `?section=` so a link or the
- * back button lands on the same place. Website sections share one draft and
- * one save bar; operational sections save on their own.
+ * One section per concern, each at its own /dashboard path (see
+ * dashboard-routes). Website sections share one draft and one save bar;
+ * operational sections save on their own.
  */
-export const portalSections = [
-  ["home", "მთავარი"],
-  ["profile", "რესტორნის პროფილი"],
-  ["website", "ვებსაიტი"],
-  ["menu", "მენიუ"],
-  ["photos", "ფოტოები"],
-  ["hours", "სამუშაო საათები"],
-  ["payments", "ონლაინ გადახდები"],
-  ["devices", "მოწყობილობები / POS"],
-  ["managers", "მენეჯერები"],
-  ["subscription", "გამოწერა"],
-  ["settings", "პარამეტრები"],
-] as const;
-export type PortalSection = (typeof portalSections)[number][0];
-
-export function OwnerPortal({
+export function OwnerDashboard({
+  section,
   portal,
   venue,
   website,
@@ -55,6 +46,7 @@ export function OwnerPortal({
   onLogout,
   venueSwitcher,
 }: {
+  section: DashboardSection;
   portal: Portal;
   venue: VenueStatus;
   website: Website;
@@ -65,12 +57,8 @@ export function OwnerPortal({
   onLogout: () => void;
   venueSwitcher?: ReactNode;
 }) {
-  const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const [enrollment, setEnrollment] = useState<IssuedEnrollment>();
-  const requested = params.get("section");
-  const section: PortalSection = portalSections.some(([k]) => k === requested)
-    ? (requested as PortalSection)
-    : "home";
   // Below 900px the sections live behind a burger button in a slide-in panel.
   const [menuOpen, setMenuOpen] = useState(false);
   const burger = useRef<HTMLButtonElement>(null);
@@ -87,12 +75,12 @@ export function OwnerPortal({
     setMenuOpen(false);
     burger.current?.focus();
   };
-  const go = (next: PortalSection) => {
-    setParams(next === "home" ? {} : { section: next });
+  const go = (next: DashboardSection) => {
+    navigate(dashboardPath(next));
     setMenuOpen(false);
     window.scrollTo?.({ top: 0 });
   };
-  const current = portalSections.find(([key]) => key === section)![1];
+  const current = dashboardSections.find(([key]) => key === section)![1];
 
   const common = {
     venue,
@@ -147,7 +135,7 @@ export function OwnerPortal({
           id="portal-sections"
           ref={navRef}
           className={menuOpen ? "is-open" : undefined}
-          aria-label="პორტალის განყოფილებები"
+          aria-label="მართვის პანელის განყოფილებები"
         >
           <div className="portal-drawer__head">
             <strong>{venue.venue.name}</strong>
@@ -160,7 +148,7 @@ export function OwnerPortal({
               ×
             </button>
           </div>
-          {portalSections.map(([key, label]) => (
+          {dashboardSections.map(([key, label]) => (
             <button
               key={key}
               type="button"
@@ -176,7 +164,7 @@ export function OwnerPortal({
         {section === "home" && (
           <Dashboard venue={venue} website={website} go={go} />
         )}
-        {section === "profile" && (
+        {section === "restaurant" && (
           <ProfileSection
             venue={venue.venue}
             website={website}
@@ -187,7 +175,7 @@ export function OwnerPortal({
           <WebsiteSection
             website={website}
             address={venue.venue.address}
-            onEditProfile={() => go("profile")}
+            onEditProfile={() => go("restaurant")}
           />
         )}
         {section === "menu" && <MenuSection website={website} />}
@@ -292,7 +280,7 @@ type Step = {
   label: string;
   hint: string;
   done: boolean;
-  section: PortalSection;
+  section: DashboardSection;
   website?: boolean;
 };
 
@@ -328,7 +316,7 @@ export function nextSteps(venue: VenueStatus, website: Website): Step[] {
       label: "მისამართის დამატება",
       hint: "მისამართი და რუკა გამოჩნდება საიტზე.",
       done: !!venue.venue.address,
-      section: "profile",
+      section: "restaurant",
     },
     {
       key: "photos",
@@ -363,7 +351,7 @@ function Dashboard({
 }: {
   venue: VenueStatus;
   website: Website;
-  go: (section: PortalSection) => void;
+  go: (section: DashboardSection) => void;
 }) {
   const settings = website.settings;
   const steps = nextSteps(venue, website);

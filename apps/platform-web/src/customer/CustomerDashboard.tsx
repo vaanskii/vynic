@@ -1,8 +1,11 @@
-import { useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import vynicLogo from "../assets/vynic-logo.png";
+import { LocaleProvider } from "../lib/i18n";
 import { customerApi, customerLogout, hasCustomerSession } from "./api";
+import { isDashboardSection } from "./dashboard-routes";
 import { FirstRunSetup } from "./FirstRunSetup";
-import { OwnerPortal } from "./OwnerPortal";
+import { OwnerDashboard } from "./OwnerDashboard";
 import { needsFirstRun, useWebsite } from "./useWebsite";
 import type { Portal } from "./portal-types";
 import "./customer.css";
@@ -10,17 +13,18 @@ import "./customer.css";
 export { PrinterForm } from "./OperationsSections";
 
 /**
- * Owner entry point: sign in, then either the three-field first-run setup or
- * the sectioned owner portal. Setup never asks for anything beyond the
- * restaurant name, logo and website address.
+ * The signed-in owner area at /dashboard/*: either the three-field first-run
+ * setup or the sectioned dashboard. Only a customer account session opens it;
+ * without one the owner is sent to /login and brought back afterwards.
  */
-export function CustomerPortal() {
+export function CustomerDashboard() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { section = "home" } = useParams();
   const [selectedVenue, setSelectedVenue] = useState<string | undefined>(
     location.state?.venueId,
   );
   const [signedIn, setSignedIn] = useState(hasCustomerSession);
-  const [signup, setSignup] = useState(true);
   const [portal, setPortal] = useState<Portal>();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -46,7 +50,7 @@ export function CustomerPortal() {
     if (!signedIn) return;
     void refresh().catch((e) => setError(e.message));
   }, [signedIn]);
-  // Live POS/Manager status for the portal; setup has nothing to poll.
+  // Live POS/Manager status for the dashboard; setup has nothing to poll.
   useEffect(() => {
     if (!signedIn || inSetup) return;
     const timer = setInterval(
@@ -69,106 +73,51 @@ export function CustomerPortal() {
   }
   const logout = () => {
     customerLogout();
-    setSignedIn(false);
-    setPortal(undefined);
+    navigate("/", { replace: true });
   };
 
-  const shell = (content: React.ReactNode, wide = false) => (
-    <div className="customer">
-      <header>
-        <a href="/ka" className="customer-brand">
-          Vynic
-        </a>
-        <span>{signedIn ? "რესტორნის პორტალი" : "თქვენი რესტორანი"}</span>
-        {signedIn && (
-          <button className="secondary" onClick={logout}>
-            გასვლა
-          </button>
-        )}
-      </header>
-      <main className={wide ? "is-wide" : undefined}>
-        {error && (
-          <p role="alert" className="customer-error">
-            {error}
-          </p>
-        )}
-        {content}
-      </main>
-    </div>
+  if (!signedIn)
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: `${location.pathname}${location.search}` }}
+      />
+    );
+  if (!isDashboardSection(section)) return <Navigate to="/dashboard" replace />;
+
+  const shell = (content: React.ReactNode) => (
+    <LocaleProvider locale="ka" title="მართვის პანელი | Vynic">
+      <div className="customer dashboard">
+        <header className="dashboard-header">
+          <Link to="/" className="dashboard-brand" aria-label="Vynic-ის მთავარი გვერდი">
+            <img src={vynicLogo} alt="" />
+            <span>Vynic</span>
+          </Link>
+          <span className="dashboard-title">მართვის პანელი</span>
+          <div className="dashboard-account">
+            {portal && (
+              <span className="dashboard-account__name">
+                {portal.account.displayName || portal.account.email}
+              </span>
+            )}
+            <button type="button" className="secondary" onClick={logout}>
+              გასვლა
+            </button>
+          </div>
+        </header>
+        <main className={inSetup || !portal ? undefined : "is-wide"}>
+          {error && (
+            <p role="alert" className="customer-error">
+              {error}
+            </p>
+          )}
+          {content}
+        </main>
+      </div>
+    </LocaleProvider>
   );
 
-  if (!signedIn)
-    return shell(
-      <>
-        <h1>დაიწყე Vynic-ის გამოყენება</h1>
-        <section className="customer-auth">
-          <p>ერთი ანგარიში თქვენი რესტორნის დასაკავშირებლად.</p>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const form = e.currentTarget;
-              const data = Object.fromEntries(new FormData(form));
-              void run(async () => {
-                await customerApi(`auth/${signup ? "signup" : "login"}`, data);
-                form.reset();
-                setSignedIn(true);
-              });
-            }}
-          >
-            {signup && (
-              <label>
-                სახელი
-                <input
-                  name="displayName"
-                  required
-                  maxLength={100}
-                  autoComplete="name"
-                />
-              </label>
-            )}
-            <label>
-              ელფოსტა
-              <input
-                name="email"
-                type="email"
-                required
-                maxLength={254}
-                autoComplete="email"
-              />
-            </label>
-            <label>
-              პაროლი
-              <input
-                name="password"
-                type="password"
-                required
-                minLength={signup ? 15 : 1}
-                maxLength={128}
-                autoComplete={signup ? "new-password" : "current-password"}
-              />
-            </label>
-            {signup && (
-              <p>
-                მინიმუმ 15 სიმბოლო. საცდელ ეტაპზე ელფოსტის დადასტურება და
-                პაროლის ავტომატური აღდგენა ჯერ არ არის ხელმისაწვდომი.
-              </p>
-            )}
-            <button disabled={busy}>
-              {signup ? "ანგარიშის შექმნა" : "შესვლა"}
-            </button>
-          </form>
-          <button
-            className="secondary"
-            onClick={() => {
-              setSignup(!signup);
-              setError("");
-            }}
-          >
-            {signup ? "უკვე გაქვთ ანგარიში? შესვლა" : "ახალი ანგარიშის შექმნა"}
-          </button>
-        </section>
-      </>,
-    );
   if (!portal || (venue && !website.loaded))
     return shell(<p role="status">იტვირთება…</p>);
   if (inSetup)
@@ -184,8 +133,9 @@ export function CustomerPortal() {
       />,
     );
   return shell(
-    <OwnerPortal
+    <OwnerDashboard
       key={venue!.venue.id}
+      section={section}
       portal={portal}
       venue={venue!}
       website={website}
@@ -212,6 +162,5 @@ export function CustomerPortal() {
         )
       }
     />,
-    true,
   );
 }

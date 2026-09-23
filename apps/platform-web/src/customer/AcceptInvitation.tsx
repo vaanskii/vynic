@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { customerApi, customerLogout, hasCustomerSession } from "./api";
-import "./customer.css";
+import { PublicFrame } from "./PublicFrame";
 
 type Invitation = {
   email: string;
@@ -10,8 +10,12 @@ type Invitation = {
 };
 export function AcceptInvitation() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [token] = useState(
-    () => new URLSearchParams(window.location.hash.slice(1)).get("token") ?? "",
+    () =>
+      new URLSearchParams(
+        (location.hash || window.location.hash).slice(1),
+      ).get("token") ?? "",
   );
   const [invitation, setInvitation] = useState<Invitation>();
   const [signedIn, setSignedIn] = useState(hasCustomerSession);
@@ -20,6 +24,7 @@ export function AcceptInvitation() {
   useEffect(() => {
     // Keep the invitation only in memory after opening; never in query strings or storage.
     window.history.replaceState(null, "", window.location.pathname);
+    if (location.hash) navigate(location.pathname, { replace: true });
     let active = true;
     customerApi<Invitation>("invitations/inspect", { token })
       .then((data) => {
@@ -48,7 +53,7 @@ export function AcceptInvitation() {
         existing ? "invitations/accept" : "invitations/register",
         { ...fields, token },
       );
-      navigate("/portal", {
+      navigate("/dashboard", {
         replace: true,
         state: { venueId: result.venueId },
       });
@@ -68,20 +73,20 @@ export function AcceptInvitation() {
     }
   }
   return (
-    <div className="customer">
-      <header>
-        <a className="customer-brand" href="/ka">
-          Vynic
-        </a>
-      </header>
-      <main>
+    <PublicFrame title="მოწვევა">
+      <section className="customer-auth">
+        <p className="customer-eyebrow">მოწვევა Vynic-ში</p>
         <h1>რესტორანზე წვდომის მიღება</h1>
-        {error && <p role="alert">{error}</p>}
+        {error && (
+          <p role="alert" className="customer-error">
+            {error}
+          </p>
+        )}
         {!invitation && !error && <p role="status">იტვირთება…</p>}
         {invitation && (
-          <section className="customer-auth">
+          <div className="customer-invite">
             <h2>{invitation.organizationName}</h2>
-            <p>{invitation.email}</p>
+            <p className="customer-hint">{invitation.email}</p>
             <p>
               {signedIn
                 ? "მიიღეთ მოწვევა თქვენი ანგარიშით."
@@ -124,7 +129,7 @@ export function AcceptInvitation() {
                 </label>
               )}
               {!signedIn && !invitation.existingAccount && (
-                <p>მინიმუმ 15 სიმბოლო.</p>
+                <p className="customer-hint">მინიმუმ 15 სიმბოლო.</p>
               )}
               <button disabled={busy}>
                 {busy ? "მუშავდება…" : "მოწვევის მიღება"}
@@ -143,12 +148,12 @@ export function AcceptInvitation() {
                 სხვა ანგარიშით შესვლა
               </button>
             )}
-          </section>
+          </div>
         )}
         {!invitation && error && (
           <p>მოითხოვეთ ახალი მოწვევა Vynic-ის ადმინისტრატორთან.</p>
         )}
-      </main>
-    </div>
+      </section>
+    </PublicFrame>
   );
 }

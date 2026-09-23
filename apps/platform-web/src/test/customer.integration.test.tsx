@@ -1,4 +1,4 @@
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, it, expect, vi } from "vitest";
@@ -8,7 +8,8 @@ vi.mock("../customer/api", () => ({
   hasCustomerSession: api.session,
   customerLogout: vi.fn(),
 }));
-import { CustomerPortal, PrinterForm } from "../customer/CustomerPortal";
+import { CustomerAuthPage } from "../customer/CustomerAuthPage";
+import { CustomerDashboard, PrinterForm } from "../customer/CustomerDashboard";
 beforeEach(() => {
   api.call.mockReset();
   api.session.mockReturnValue(false);
@@ -21,8 +22,13 @@ describe("Customer onboarding", () => {
       vi.stubGlobal("scrollTo", vi.fn());
       const user = userEvent.setup();
       let hasVenue = false;
+      let signedIn = false;
+      api.session.mockImplementation(() => signedIn);
       api.call.mockImplementation(async (path: string, body?: any) => {
-        if (path === "auth/signup") return { access_token: "test" };
+        if (path === "auth/signup") {
+          signedIn = true;
+          return { access_token: "test" };
+        }
         if (path === "venues") {
           hasVenue = true;
           return { id: "venue-a" };
@@ -55,7 +61,14 @@ describe("Customer onboarding", () => {
             : [],
         };
       });
-      render(<MemoryRouter><CustomerPortal /></MemoryRouter>);
+      render(
+        <MemoryRouter initialEntries={["/signup"]}>
+          <Routes>
+            <Route path="/signup" element={<CustomerAuthPage mode="signup" />} />
+            <Route path="/dashboard/:section?" element={<CustomerDashboard />} />
+          </Routes>
+        </MemoryRouter>,
+      );
       await user.type(screen.getByLabelText("სახელი"), "Owner");
       await user.type(screen.getByLabelText("ელფოსტა"), "owner@test.invalid");
       await user.type(

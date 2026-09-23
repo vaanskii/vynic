@@ -14,8 +14,13 @@ current transport status.
 - `apps/operations/` is one Flutter codebase for the offline-first desktop POS
   and the mobile/desktop Manager client.
 - `apps/backend/` is the modular NestJS service over PostgreSQL through Prisma.
-- `apps/platform-web/` contains the public Vynic product site and the
-  authenticated Platform Admin under `/admin`.
+- `apps/platform-web/` is one customer-facing product: the public Vynic site
+  (`/ka`, `/en`; `/features`, `/pricing` open home sections), owner sign-in
+  (`/login`, `/signup`, `/invite#token=…`) and the owner dashboard
+  (`/dashboard/<section>`), plus the internal Platform Admin under `/admin`
+  (sign-in `/admin/login`). Owner routes use only the CustomerAccount session
+  and Admin only the PlatformUser session. Old `/portal…` and `/start` links
+  redirect to their `/login`, `/signup`, `/invite` or `/dashboard` equivalents.
 - `apps/venue-web/` is the bespoke Vankisi CUSTOM customer website.
 - `apps/restaurant-web/` is the generic multi-Venue SaaS restaurant website. One
   build serves every SAAS Venue; the request Host decides which restaurant.
@@ -662,7 +667,8 @@ current transport status.
 - W3 implements the generic SaaS website product: `apps/restaurant-web` with a
   `themeKey` registry and one production `classic` theme, bilingual ka/en, a
   website presentation layer over the operational menu, owner preview of the
-  real frontend, and a sectioned Georgian owner portal. First-run setup
+  real frontend, and a sectioned Georgian owner dashboard at `/dashboard`
+  (one path per section; `restaurant` is the profile). First-run setup
   requires only restaurant name, logo and website address (SAAS; name only
   otherwise); everything else is optional in dedicated sections (profile,
   website, menu, photos, hours, payments, POS devices, managers, subscription,

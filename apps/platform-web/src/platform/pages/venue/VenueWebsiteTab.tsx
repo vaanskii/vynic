@@ -40,7 +40,7 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
   const selectedMode = mode || website.configuredMode;
 
   return <>
-    <Panel title="Online payments · Bank of Georgia" description="Manage ONLINE_PAYMENTS in Product access. Restaurant owners configure credentials in their portal.">
+    <Panel title="Online payments · Bank of Georgia" description="Manage ONLINE_PAYMENTS in Product access. Restaurant owners configure credentials in their dashboard.">
       {payments.isPending ? <p>Loading payment configuration…</p> : payments.isError ? <ErrorState error="Could not load payment configuration" retry={() => { void payments.refetch(); }} /> : <p>{payments.data.configured ? "Configured" : "Not configured"} · ONLINE_PAYMENTS {payments.data.entitled ? "enabled" : "disabled"}</p>}
     </Panel>
     {feedback ? <div className="platform-feedback platform-feedback--success" role="status">{feedback}</div> : null}

@@ -1,27 +1,41 @@
 import { List, X } from "@phosphor-icons/react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import vynicLogo from "../../assets/vynic-logo.png";
+import { hasCustomerSession } from "../../customer/api";
 import { localeHref, useLocale } from "../../lib/i18n";
-import { Button } from "../ui/Button";
+import { ButtonLink } from "../ui/Button";
 
+const focusRing =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-vynic-plum";
+
+/**
+ * Vynic product navigation. Visitors get sign-in and sign-up; an owner who is
+ * already signed in gets a direct way back to their dashboard.
+ */
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const { copy, locale } = useLocale();
+  const home = localeHref(locale);
+  const signedIn = hasCustomerSession();
   const navItems = [
-    {label: locale === "ka" ? "დაიწყე Vynic-ის გამოყენება" : "Get started", href: "/start"},
-    { label: copy.nav.product, href: "#product" },
-    { label: copy.nav.floorPlan, href: "#floor-plan" },
-    { label: copy.nav.reservations, href: "#reservations" },
-    { label: copy.nav.manager, href: "#manager" },
-    { label: copy.nav.contact, href: "#contact" },
+    { label: copy.nav.product, href: `${home}#product` },
+    { label: copy.nav.floorPlan, href: `${home}#floor-plan` },
+    { label: copy.nav.reservations, href: `${home}#reservations` },
+    { label: copy.nav.manager, href: `${home}#manager` },
+    { label: copy.nav.contact, href: `${home}#contact` },
   ];
+  const close = () => setOpen(false);
+  const primary = signedIn
+    ? { to: "/dashboard", label: copy.nav.dashboard }
+    : { to: "/signup", label: copy.nav.start };
 
   return (
     <header className="sticky top-0 z-30 border-b border-vynic-border/80 bg-vynic-background/92 backdrop-blur-xl">
-      <nav className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+      <nav className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <a
-          href={localeHref(locale)}
-          className="flex shrink-0 items-center gap-3 rounded-[8px] text-vynic-charcoal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-vynic-plum"
+          href={home}
+          className={`flex shrink-0 items-center gap-3 rounded-[8px] text-vynic-charcoal ${focusRing}`}
           aria-label={copy.nav.homeLabel}
         >
           <img className="h-8 w-8 rounded-[8px]" src={vynicLogo} alt="" />
@@ -37,35 +51,46 @@ export function Navbar() {
             <a
               key={item.href}
               href={item.href}
-              className="whitespace-nowrap text-sm font-medium text-vynic-muted transition hover:text-vynic-charcoal focus-visible:rounded-[8px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-vynic-plum"
+              className={`whitespace-nowrap text-sm font-medium text-vynic-muted transition hover:text-vynic-charcoal focus-visible:rounded-[8px] ${focusRing}`}
             >
               {item.label}
             </a>
           ))}
         </div>
 
-        <div className="hidden shrink-0 items-center gap-4 xl:flex">
+        <div className="flex min-w-0 shrink-0 items-center gap-3 xl:gap-4">
           <a
             href={localeHref(locale === "en" ? "ka" : "en")}
-            className="rounded-[8px] font-vynic-mono text-xs font-semibold text-vynic-muted transition hover:text-vynic-plum focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-vynic-plum"
+            className={`hidden rounded-[8px] font-vynic-mono text-xs font-semibold text-vynic-muted transition hover:text-vynic-plum xl:inline ${focusRing}`}
             aria-label="English / ქართული"
           >
             {locale.toUpperCase()} / {copy.nav.languageLabel}
           </a>
-          <Button href="#contact" className="min-h-9 px-4 py-2">
-            {copy.nav.bookDemo}
-          </Button>
+          {!signedIn && (
+            <Link
+              to="/login"
+              className={`whitespace-nowrap rounded-[8px] text-sm font-semibold text-vynic-charcoal transition hover:text-vynic-plum ${focusRing}`}
+            >
+              {copy.nav.login}
+            </Link>
+          )}
+          <ButtonLink
+            to={primary.to}
+            className="min-h-9 px-3 py-2 sm:px-4"
+            iconClassName="hidden sm:block"
+          >
+            {primary.label}
+          </ButtonLink>
+          <button
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[8px] border border-vynic-border bg-vynic-surface text-vynic-charcoal transition hover:border-vynic-plum focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vynic-plum xl:hidden"
+            type="button"
+            aria-label={open ? copy.nav.closeNav : copy.nav.openNav}
+            aria-expanded={open}
+            onClick={() => setOpen((value) => !value)}
+          >
+            {open ? <X size={20} weight="bold" /> : <List size={20} weight="bold" />}
+          </button>
         </div>
-
-        <button
-          className="inline-flex h-10 w-10 items-center justify-center rounded-[8px] border border-vynic-border bg-vynic-surface text-vynic-charcoal transition hover:border-vynic-plum focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vynic-plum xl:hidden"
-          type="button"
-          aria-label={open ? copy.nav.closeNav : copy.nav.openNav}
-          aria-expanded={open}
-          onClick={() => setOpen((value) => !value)}
-        >
-          {open ? <X size={20} weight="bold" /> : <List size={20} weight="bold" />}
-        </button>
       </nav>
 
       {open ? (
@@ -76,7 +101,7 @@ export function Navbar() {
                 key={item.href}
                 href={item.href}
                 className="rounded-[8px] px-3 py-3 text-base font-medium text-vynic-charcoal transition hover:bg-vynic-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vynic-plum"
-                onClick={() => setOpen(false)}
+                onClick={close}
               >
                 {item.label}
               </a>
@@ -85,9 +110,6 @@ export function Navbar() {
               <a href={localeHref(locale === "en" ? "ka" : "en")} className="font-vynic-mono text-xs font-semibold text-vynic-muted">
                 {locale.toUpperCase()} / {copy.nav.languageLabel}
               </a>
-              <Button href="#contact" onClick={() => setOpen(false)}>
-                {copy.nav.bookDemo}
-              </Button>
             </div>
           </div>
         </div>

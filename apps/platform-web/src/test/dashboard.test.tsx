@@ -1,4 +1,4 @@
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,7 +8,7 @@ vi.mock("../customer/api", () => ({
   hasCustomerSession: api.session,
   customerLogout: vi.fn(),
 }));
-import { CustomerPortal } from "../customer/CustomerPortal";
+import { CustomerDashboard } from "../customer/CustomerDashboard";
 import { suggestAddress } from "../customer/FirstRunSetup";
 import type { OwnerMenu, OwnerMenuItem } from "../customer/WebsiteMenuEditor";
 
@@ -215,15 +215,21 @@ function serve({
   );
   return state;
 }
-const renderPortal = (entry = "/portal") =>
+function Where() {
+  return <p data-testid="where">{useLocation().pathname}</p>;
+}
+const renderPortal = (entry = "/dashboard") =>
   render(
     <MemoryRouter initialEntries={[entry]}>
-      <CustomerPortal />
+      <Routes>
+        <Route path="/dashboard/:section?" element={<><CustomerDashboard /><Where /></>} />
+        <Route path="*" element={<Where />} />
+      </Routes>
     </MemoryRouter>,
   );
 const nav = async () =>
   within(
-    await screen.findByRole("navigation", { name: "პორტალის განყოფილებები" }),
+    await screen.findByRole("navigation", { name: "მართვის პანელის განყოფილებები" }),
   );
 const calls = (path: string) =>
   api.call.mock.calls.filter(([p]) => p === path);
@@ -394,7 +400,7 @@ describe("Owner portal", () => {
     const user = userEvent.setup();
     const openWindow = vi.fn();
     vi.stubGlobal("open", openWindow);
-    renderPortal("/portal?section=hours");
+    renderPortal("/dashboard/hours");
 
     await user.click(await screen.findByLabelText("ორშაბათი"));
     expect(screen.getByLabelText("გახსნა")).toHaveAttribute("type", "time");
@@ -435,7 +441,7 @@ describe("Owner portal", () => {
   it("retains edits after a conflict and can discard them", async () => {
     const state = serve();
     const user = userEvent.setup();
-    renderPortal("/portal?section=website");
+    renderPortal("/dashboard/website");
     await user.click(
       await screen.findByRole("button", { name: "მთავარი გვერდი" }),
     );
@@ -452,7 +458,7 @@ describe("Owner portal", () => {
   it("checks a new website address and hides search settings until asked", async () => {
     serve({ taken: ["taken"] });
     const user = userEvent.setup();
-    renderPortal("/portal?section=website");
+    renderPortal("/dashboard/website");
     const address = await screen.findByLabelText("ვებსაიტის მისამართი");
     await user.clear(address);
     await user.type(address, "taken");
@@ -470,7 +476,7 @@ describe("Owner portal", () => {
   it("normalizes contact links and leaves the address to the profile", async () => {
     const state = serve();
     const user = userEvent.setup();
-    renderPortal("/portal?section=website");
+    renderPortal("/dashboard/website");
     await user.click(
       await screen.findByRole("button", { name: "კონტაქტი და ბმულები" }),
     );
@@ -504,7 +510,7 @@ describe("Owner portal", () => {
     view.unmount();
 
     serve({ site: website({ mode: "CUSTOM" }) });
-    renderPortal("/portal?section=website");
+    renderPortal("/dashboard/website");
     expect(
       await screen.findByText("თქვენი ინდივიდუალური ვებსაიტი ცალკე იმართება"),
     ).toBeVisible();
@@ -515,7 +521,7 @@ describe("Menu section", () => {
   it("shows the POS hierarchy and saves presentation one item at a time", async () => {
     const state = serve();
     const user = userEvent.setup();
-    renderPortal("/portal?section=menu");
+    renderPortal("/dashboard/menu");
 
     expect(await screen.findByText("ქართული კერძები")).toBeVisible();
     expect(screen.getByText("ცომეული")).toBeVisible();
@@ -565,7 +571,7 @@ describe("Menu section", () => {
 
   it("explains that an empty menu comes from the POS", async () => {
     serve({ menu: { categories: [] } });
-    renderPortal("/portal?section=menu");
+    renderPortal("/dashboard/menu");
     expect(await screen.findByText("მენიუ ჯერ ცარიელია")).toBeVisible();
   });
 });
@@ -574,7 +580,7 @@ describe("Operational sections", () => {
   it("manages restaurant code and managers outside the website", async () => {
     serve();
     const user = userEvent.setup();
-    renderPortal("/portal?section=managers");
+    renderPortal("/dashboard/managers");
     await user.click(
       await screen.findByRole("button", { name: "კოდის კოპირება" }),
     );
@@ -595,7 +601,7 @@ describe("Operational sections", () => {
   it("shows plan and payment availability in their own sections", async () => {
     serve();
     const user = userEvent.setup();
-    renderPortal("/portal?section=subscription");
+    renderPortal("/dashboard/subscription");
     expect(await screen.findByText("Starter")).toBeVisible();
     expect(screen.getByText(/საცდელი პერიოდი/)).toBeVisible();
     await user.click((await nav()).getByRole("button", { name: "ონლაინ გადახდები" }));
@@ -617,7 +623,7 @@ describe("Mobile section menu", () => {
       .getAllByRole("button", { hidden: true })
       .find((b) => b.getAttribute("aria-controls") === "portal-sections")!;
   const sections = () =>
-    screen.getByRole("navigation", { name: "პორტალის განყოფილებები" });
+    screen.getByRole("navigation", { name: "მართვის პანელის განყოფილებები" });
 
   it("opens the sections from a burger button and closes after choosing", async () => {
     serve();
@@ -635,10 +641,60 @@ describe("Mobile section menu", () => {
     );
     expect(sections()).not.toHaveClass("is-open");
     expect(burger()).toHaveAttribute("aria-label", "განყოფილებები · მენეჯერები");
+    expect(screen.getByTestId("where")).toHaveTextContent("/dashboard/managers");
 
     await user.click(burger());
     await user.keyboard("{Escape}");
     expect(sections()).not.toHaveClass("is-open");
     expect(burger()).toHaveAttribute("aria-expanded", "false");
+  });
+});
+
+describe("Dashboard routes", () => {
+  it("opens a section straight from its address, as after a refresh", async () => {
+    serve();
+    renderPortal("/dashboard/restaurant");
+    expect(
+      await screen.findByRole("heading", { name: "რესტორნის პროფილი" }),
+    ).toBeVisible();
+    expect(
+      (await nav()).getByRole("button", { name: "რესტორნის პროფილი" }),
+    ).toHaveAttribute("aria-current", "page");
+  });
+
+  it("changes the address when the owner picks a section", async () => {
+    serve();
+    const user = userEvent.setup();
+    renderPortal();
+    await user.click((await nav()).getByRole("button", { name: "გამოწერა" }));
+    expect(screen.getByTestId("where")).toHaveTextContent("/dashboard/subscription");
+    await user.click((await nav()).getByRole("button", { name: "მთავარი" }));
+    expect(screen.getByTestId("where")).toHaveTextContent(/^\/dashboard$/);
+  });
+
+  it("sends an unknown section back to the dashboard home", async () => {
+    serve();
+    renderPortal("/dashboard/nope");
+    expect(
+      await screen.findByRole("heading", { name: "გამარჯობა, Tabla" }),
+    ).toBeVisible();
+    expect(screen.getByTestId("where")).toHaveTextContent(/^\/dashboard$/);
+  });
+
+  it("asks for sign-in without a customer session", async () => {
+    api.session.mockReturnValue(false);
+    renderPortal("/dashboard/menu");
+    expect(await screen.findByTestId("where")).toHaveTextContent("/login");
+    expect(api.call).not.toHaveBeenCalled();
+  });
+
+  it("returns to the Vynic site after logout", async () => {
+    serve();
+    const user = userEvent.setup();
+    renderPortal("/dashboard/settings");
+    const header = await screen.findByRole("banner");
+    expect(within(header).getByText("მართვის პანელი")).toBeVisible();
+    await user.click(within(header).getByRole("button", { name: "გასვლა" }));
+    expect(screen.getByTestId("where")).toHaveTextContent(/^\/$/);
   });
 });

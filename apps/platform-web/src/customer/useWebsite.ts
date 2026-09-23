@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { customerApi } from "./api";
 
 /**
- * The owner's website draft, shared by every portal section that edits it.
+ * The owner's website draft, shared by every dashboard section that edits it.
  *
  * Saving, reviewing and publishing stay three separate acts: a save changes
  * only the private draft, preview renders that draft in the real public

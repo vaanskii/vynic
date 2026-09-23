@@ -21,10 +21,10 @@ function Landing() {
 }
 function mount() {
   return render(
-    <MemoryRouter initialEntries={["/portal/invite"]}>
+    <MemoryRouter initialEntries={["/invite"]}>
       <Routes>
-        <Route path="/portal/invite" element={<AcceptInvitation />} />
-        <Route path="/portal" element={<Landing />} />
+        <Route path="/invite" element={<AcceptInvitation />} />
+        <Route path="/dashboard" element={<Landing />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -32,7 +32,7 @@ function mount() {
 beforeEach(() => {
   vi.clearAllMocks();
   api.session.mockReturnValue(false);
-  window.history.replaceState({}, "", "/portal/invite#token=test-token");
+  window.history.replaceState({}, "", "/invite#token=test-token");
 });
 describe("Owner invitation journey", () => {
   it("registers through the invitation and lands on the prepared Venue", async () => {
@@ -111,7 +111,7 @@ describe("Owner invitation journey", () => {
     const user = userEvent.setup();
     api.platform.mockImplementation(async (path: string) =>
       path === "customers"
-        ? { invitationPath: "/portal/invite#token=new-token" }
+        ? { invitationPath: "/invite#token=new-token" }
         : [],
     );
     render(
@@ -133,7 +133,7 @@ describe("Owner invitation journey", () => {
       expect(
         (screen.getByLabelText("Owner invitation link") as HTMLInputElement)
           .value,
-      ).toContain("/portal/invite#token=new-token"),
+      ).toContain("/invite#token=new-token"),
     );
     await user.click(
       screen.getByRole("button", { name: "Copy invitation link" }),

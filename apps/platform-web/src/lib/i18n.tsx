@@ -6,7 +6,7 @@ export type Locale = "en" | "ka";
 export const LOCALE_STORAGE_KEY = "vynic-site-locale";
 
 export type SiteCopy = {
-  nav: { product: string; floorPlan: string; reservations: string; manager: string; contact: string; bookDemo: string; languageLabel: string; serviceReady: string; homeLabel: string; openNav: string; closeNav: string };
+  nav: { product: string; floorPlan: string; reservations: string; manager: string; contact: string; bookDemo: string; languageLabel: string; serviceReady: string; homeLabel: string; openNav: string; closeNav: string; login: string; start: string; dashboard: string };
   hero: { eyebrow: string; title: string; body: string; seeScreens: string; facts: string[] };
   capabilities: Array<{ number: string; label: string; body: string }>;
   floor: { title: string; body: string };
@@ -20,7 +20,7 @@ export type SiteCopy = {
 };
 
 const en: SiteCopy = {
-  nav: { product: "Product", floorPlan: "Floor Plan", reservations: "Reservations", manager: "Manager App", contact: "Contact", bookDemo: "Book a Demo", languageLabel: "KA", serviceReady: "SERVICE READY", homeLabel: "Vynic home", openNav: "Open navigation", closeNav: "Close navigation" },
+  nav: { product: "Product", floorPlan: "Floor Plan", reservations: "Reservations", manager: "Manager App", contact: "Contact", bookDemo: "Book a Demo", languageLabel: "KA", serviceReady: "SERVICE READY", homeLabel: "Vynic home", openNav: "Open navigation", closeNav: "Close navigation", login: "Log in", start: "Get started", dashboard: "Dashboard" },
   hero: { eyebrow: "Restaurant operations POS", title: "Restaurant POS for the room as it runs", body: "Run tables, orders, reservations, payments, and manager visibility from one offline-first system that follows the shift.", seeScreens: "See Screens", facts: ["Floor first", "Offline ready", "GEL native"] },
   capabilities: [
     { number: "01", label: "Offline service", body: "Keep taking orders when the connection drops, then sync service state when it returns." },
@@ -51,7 +51,7 @@ const en: SiteCopy = {
 };
 
 const ka: SiteCopy = {
-  nav: { product: "პროდუქტი", floorPlan: "სართულის გეგმა", reservations: "რეზერვაციები", manager: "მენეჯერის აპი", contact: "კონტაქტი", bookDemo: "დემო დაჯავშნე", languageLabel: "EN", serviceReady: "სერვისი მზადაა", homeLabel: "Vynic-ის მთავარი", openNav: "ნავიგაციის გახსნა", closeNav: "ნავიგაციის დახურვა" },
+  nav: { product: "პროდუქტი", floorPlan: "სართულის გეგმა", reservations: "რეზერვაციები", manager: "მენეჯერის აპი", contact: "კონტაქტი", bookDemo: "დემო დაჯავშნე", languageLabel: "EN", serviceReady: "სერვისი მზადაა", homeLabel: "Vynic-ის მთავარი", openNav: "ნავიგაციის გახსნა", closeNav: "ნავიგაციის დახურვა", login: "შესვლა", start: "დაწყება", dashboard: "მართვის პანელი" },
   hero: { eyebrow: "რესტორნის ოპერაციების POS", title: "რესტორნის POS ოთახის რეალური მუშაობისთვის", body: "მართე მაგიდები, შეკვეთები, რეზერვაციები, გადახდები და მენეჯერის ხედვა ერთი offline-first სისტემიდან, რომელიც ცვლას მიჰყვება.", seeScreens: "ეკრანების ნახვა", facts: ["ჯერ სართული", "ოფლაინ მზადაა", "GEL-ზე მორგებული"] },
   capabilities: [{ number: "01", label: "ოფლაინ სერვისი", body: "მიიღე შეკვეთები კავშირის გაწყვეტისასაც და დაბრუნებისას სერვისის მდგომარეობა დაასინქრონე." }, { number: "02", label: "სამუშაო დღის დახურვა", body: "დახურე სამუშაო დღე ღია მაგიდების შემოწმებით, Z რეპორტით და GEL ჯამებით." }, { number: "03", label: "სართულის გეგმა", body: "მართე დარბაზი რეალური მაგიდებით, გაერთიანებული სტუმრებით, რეზერვაციებით და ცოცხალი სტატუსით." }, { number: "04", label: "რეზერვაციების მართვა", body: "სტუმრის დეტალები, მაგიდა და შენიშვნები ერთ სამუშაო სივრცეში შეინახე." }, { number: "05", label: "მენეჯერის მობილური", body: "მფლობელებს მაგიდების, რეზერვაციებისა და დღის მოძრაობის მოკლე ცოცხალი ხედვა მიეცი." }, { number: "06", label: "აუდიტის კვალი", body: "გაუქმება, დახურვა, თანამშრომელი და მენეჯერის მოქმედებები რესტორნის ჩანაწერს მიაბი." }, { number: "07", label: "ქართული ინტერფეისი", body: "დარბაზის გუნდმა POS და მენეჯერის ეკრანები ქართულად გამოიყენოს." }],
   floor: { title: "სართული ერთხელ დახაზე. სერვისი ყოველდღე მისგან მართე.", body: "მოაწყვე მაგიდები, ოთახის ობიექტები და სერვისის ზონები ერთ მკაფიო რედაქტორში. იგივე გეგმა ყოველი ცვლის სამუშაო ზედაპირი გახდება." },
@@ -300,16 +300,30 @@ export function localeHref(locale: Locale) {
 
 const LocaleContext = createContext<{ locale: Locale; copy: SiteCopy }>({ locale: "en", copy: en });
 
-export function LocaleProvider({ children }: { children: ReactNode }) {
+/**
+ * Public pages take their language from the path. Owner pages (sign-in,
+ * dashboard) are Georgian-first and pass `locale` and `title` explicitly, so
+ * they neither follow nor overwrite the visitor's saved site language.
+ */
+export function LocaleProvider({
+  children,
+  locale: fixed,
+  title,
+}: {
+  children: ReactNode;
+  locale?: Locale;
+  title?: string;
+}) {
   const { pathname } = useLocation();
-  const locale = localeFromPath(pathname);
+  const locale = fixed ?? localeFromPath(pathname);
   const value = useMemo(() => ({ locale, copy: getCopy(locale) }), [locale]);
 
   useEffect(() => {
     document.documentElement.lang = locale === "ka" ? "ka" : "en";
-    document.title = locale === "ka" ? "Vynic | რესტორნის POS" : "Vynic | Restaurant POS";
-    window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
-  }, [locale]);
+    document.title =
+      title ?? (locale === "ka" ? "Vynic | რესტორნის POS" : "Vynic | Restaurant POS");
+    if (!fixed) window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+  }, [locale, fixed, title]);
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }

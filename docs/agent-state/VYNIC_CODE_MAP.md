@@ -163,7 +163,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Customer principal, portal/onboarding and operator pilot policy: `apps/backend/src/customer/`
 - Owner membership/invitations: apps/backend/src/customer/owner-invitations.service.ts and owner-invitations.controller.ts; acceptance UI: apps/platform-web/src/customer/AcceptInvitation.tsx. Runbook: docs/SAAS_OWNER_INVITATIONS.md; local server/browser/backfill proofs: apps/backend/scripts/*onboarding*.
 - Real two-customer proof: `apps/backend/src/customer/customer-onboarding.integration.spec.ts`
-- Public/customer UI: `apps/platform-web/src/customer/`; operator controls: `src/platform/pages/OnboardingPage.tsx`
+- Public/customer UI: `apps/platform-web/src/customer/` (sign-in/sign-up `CustomerAuthPage.tsx` in `PublicFrame.tsx`; dashboard routes and `/portal` redirects `dashboard-routes.tsx`; public nav actions `src/components/layout/Navbar.tsx`); operator controls: `src/platform/pages/OnboardingPage.tsx`
 - POS first-run: `apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart`; printer pull/cache: `core/services/edge/runtime_config_sync.dart`
 - Canonical environment/build/runtime policy: `docs/SAAS_BUILD_RUNTIME_ONBOARDING.md`
 
@@ -276,7 +276,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## Platform Admin UI
 
-- Route shell: `apps/platform-web/src/App.tsx`, `apps/platform-web/src/platform/Shell.tsx`
+- Route shell (site, owner and Admin routes): `apps/platform-web/src/App.tsx`, `apps/platform-web/src/platform/Shell.tsx`
 - Auth/session/API: `apps/platform-web/src/platform/auth.tsx`, `apps/platform-web/src/platform/session.ts`, `apps/platform-web/src/platform/api.ts`
 - Pages: `apps/platform-web/src/platform/pages/`; Venue commercial/access controls: `venue/VenueCommercialTab.tsx`; Platform users: `PlatformUsersPage.tsx`
 - Integration tests: `apps/platform-web/src/test/`
@@ -287,7 +287,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - API client: `apps/venue-web/src/services/api.ts`
 - Backend website module: `apps/backend/src/website/`
 - Host resolution: `apps/backend/src/website/tenancy/`
-- Generic Website Core/bootstrap/publication/preview/caching: `apps/backend/src/website/core/`; menu presentation: `apps/backend/src/website/core/website-menu.service.ts`; owner routes: `apps/backend/src/customer/customer-website.controller.ts`; owner portal: entry/first-run `apps/platform-web/src/customer/CustomerPortal.tsx`, `FirstRunSetup.tsx`; shell/dashboard `OwnerPortal.tsx`; shared draft hook `useWebsite.ts`; sections `WebsiteSections.tsx`, `OperationsSections.tsx`; menu tree `WebsiteMenuEditor.tsx`; address check `WebsiteCoreService.addressAvailability`.
+- Generic Website Core/bootstrap/publication/preview/caching: `apps/backend/src/website/core/`; menu presentation: `apps/backend/src/website/core/website-menu.service.ts`; owner routes: `apps/backend/src/customer/customer-website.controller.ts`; owner dashboard: entry/header/first-run `apps/platform-web/src/customer/CustomerDashboard.tsx`, `FirstRunSetup.tsx`; sections shell/home `OwnerDashboard.tsx`; shared draft hook `useWebsite.ts`; sections `WebsiteSections.tsx`, `OperationsSections.tsx`; menu tree `WebsiteMenuEditor.tsx`; address check `WebsiteCoreService.addressAvailability`.
 - Owner logo/main-photo uploads: `apps/platform-web/src/customer/WebsiteImageUpload.tsx`; owner endpoint in `customer-website.controller.ts`; raster storage/serving in `apps/backend/src/website/core/website-logo.service.ts` and `website-logo.controller.ts`. Deployment: `docs/WEBSITE_OWNER_EDITOR_UX.md`.
 - Generic SaaS frontend: `apps/restaurant-web/` (theme registry `src/theme/registry.ts`, `classic` theme `src/theme/classic/`, metadata `src/seo/documentHead.ts`, transport `src/api/client.ts`).
 - W3 product, media/SEO/caching policy and local runbook: `docs/WEBSITE_PHASE_W3.md`; W2 contract and publication rules: `docs/WEBSITE_PHASE_W2.md`; disposable fixtures/harness: `apps/backend/scripts/seed-website-w3-local.ts`, `apps/backend/scripts/serve-website-w3-local.ts`.

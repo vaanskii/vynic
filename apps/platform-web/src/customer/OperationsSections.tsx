@@ -11,7 +11,7 @@ import type {
 } from "./portal-types";
 
 /**
- * Portal sections for running the restaurant: POS devices, Manager access,
+ * Dashboard sections for running the restaurant: POS devices, Manager access,
  * payments, subscription and account settings. Each is independent and
  * optional; none of them blocks the rest of the portal.
  */
@@ -163,7 +163,7 @@ export function DevicesSection({
   run: Run;
   refresh: () => Promise<void>;
   onError: (message: string) => void;
-  /** Kept by the portal so a fresh code survives switching sections. */
+  /** Kept by the dashboard so a fresh code survives switching sections. */
   enrollment?: IssuedEnrollment;
   setEnrollment: (enrollment: IssuedEnrollment) => void;
 }) {

@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowRight } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
+import { Link } from "react-router-dom";
 
 type ButtonVariant = "primary" | "secondary" | "plain";
 
@@ -69,5 +70,37 @@ export function Button({
         weight="bold"
       />
     </button>
+  );
+}
+
+/** A primary/secondary button that navigates inside the app without a reload. */
+export function ButtonLink({
+  children,
+  to,
+  variant = "primary",
+  icon,
+  className = "",
+  iconClassName = "",
+  onClick,
+}: CommonButtonProps & {
+  to: string;
+  className?: string;
+  iconClassName?: string;
+  onClick?: () => void;
+}) {
+  const IconComponent = icon ?? ArrowRight;
+  return (
+    <Link
+      className={`${baseClass} ${variantClass[variant]} ${className}`}
+      to={to}
+      onClick={onClick}
+    >
+      <span className="whitespace-nowrap">{children}</span>
+      <IconComponent
+        className={`shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 ${iconClassName}`}
+        size={17}
+        weight="bold"
+      />
+    </Link>
   );
 }

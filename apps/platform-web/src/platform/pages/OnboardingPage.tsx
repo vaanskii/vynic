@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { platformOnboardingApi, platformApi } from "../api";
 import { useAuth } from "../auth";
-import { PrinterForm } from "../../customer/CustomerPortal";
+import { PrinterForm } from "../../customer/CustomerDashboard";
 export function OnboardingPage() {
   const { venueId } = useParams();
   const auth = useAuth();

@@ -1,3 +1,4 @@
+import { CatalogEditor } from "./CatalogEditor";
 import { useEffect, useState, type ReactNode } from "react";
 import { customerApi } from "./api";
 import { WebsiteImageUpload } from "./WebsiteImageUpload";
@@ -603,15 +604,17 @@ function ContactFields({
 
 // ---------------------------------------------------------------- menu
 
-export function MenuSection({ website }: { website: Website }) {
+export function MenuSection({ website, onCatalogSaved }: { website: Website; onCatalogSaved?: () => void }) {
+  const [catalogVersion, setCatalogVersion] = useState(0);
   const draft = website.draft;
   const saas = editable(website);
   return (
     <>
       <SectionHeader
         title="მენიუ"
-        lead="კატეგორიები, კერძები, ფასები და ზომები იქმნება Vynic POS-ში და აქ ავტომატურად ჩანს. აქ წყვეტთ, რა და როგორ გამოჩნდეს ვებსაიტზე."
+        lead="მართეთ მენიუ და ვებსაიტზე მისი ჩვენება."
       />
+      <CatalogEditor venueId={website.venueId} onSaved={() => { setCatalogVersion(v => v + 1); onCatalogSaved?.(); }} />
       {saas && draft && (
         <section className="portal-card portal-card--inline">
           <label>
@@ -645,7 +648,7 @@ export function MenuSection({ website }: { website: Website }) {
         </section>
       )}
       <section className="portal-card">
-        <WebsiteMenuEditor
+        <WebsiteMenuEditor key={catalogVersion}
           venueId={website.venueId}
           disabled={website.busy}
           canUpload={saas}

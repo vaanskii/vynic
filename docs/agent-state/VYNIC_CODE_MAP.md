@@ -157,6 +157,8 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## Customer Onboarding / Runtime Configuration
 
+- Website-only catalog and frozen Device bootstrap: `apps/backend/src/customer/restaurant-foundation.service.ts`, `restaurant-foundation.controller.ts`; owner editor `apps/platform-web/src/customer/CatalogEditor.tsx`; isolated Hive staging `apps/operations/lib/core/services/edge/restaurant_foundation_import.dart`. Authority matrix/activation boundary: `docs/CLOUD_RESTAURANT_FOUNDATION.md`.
+
 - Shared Venue identity: `apps/backend/src/venue-profile/` (validated/audited Owner, Manager and Device writes); profile fields in Venue, migration `20260921120000_venue_profile`. POS cache/pending sync: `apps/operations/lib/core/services/edge/pos_venue_profile.dart`; Manager editor: `apps/operations/lib/apps/mobile_app/presentation/widgets/venue_profile_card.dart`. Owner editor: `apps/platform-web/src/customer/WebsiteSections.tsx` (ProfileSection).
 - Feature descriptions/dependency warnings: `apps/platform-web/src/platform/feature-guidance.ts`; non-fiscal display classification: `apps/operations/lib/core/models/sale_visibility.dart`.
 

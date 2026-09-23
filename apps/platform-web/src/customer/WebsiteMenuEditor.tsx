@@ -139,8 +139,7 @@ export function WebsiteMenuEditor({
       <div className="portal-empty">
         <strong>მენიუ ჯერ ცარიელია</strong>
         <p>
-          კატეგორიები და კერძები იქმნება Vynic POS-ში. POS-ის დაკავშირების
-          შემდეგ მენიუ აქ გამოჩნდება და აირჩევთ, რა გამოჩნდეს ვებსაიტზე.
+          ჯერ დაამატეთ კერძები რესტორნის მენიუში. შემდეგ აქ შეცვლით მათ აღწერას, ფოტოს და ვებსაიტზე ჩვენებას.
         </p>
       </div>
     );
@@ -251,7 +250,7 @@ function MenuRow({
         </label>
         <div className="menu-item__name">
           <strong>{item.displayName || name}</strong>
-          {item.displayName && <small>POS-ში: {name}</small>}
+          {item.displayName && <small>მენიუში: {name}</small>}
         </div>
         <div className="menu-item__price">
           {item.variants?.length ? (

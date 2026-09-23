@@ -53,6 +53,14 @@ current transport status.
 
 ## Current Phase
 
+- Website-only onboarding accepts a WEBSITE plan without POS/Manager. New such
+  Venues use CLOUD catalog authority; existing Venues remain POS by default.
+  Owner Dashboard authors the canonical catalog with revision/tenant fencing;
+  POS snapshots reject CLOUD catalogs. Device-bound bootstrap v1 freezes a
+  foundation snapshot and disposable Hive staging preserves it offline.
+  Production POS activation/authority handover remains disabled. See
+  `docs/CLOUD_RESTAURANT_FOUNDATION.md` for the domain matrix and proof boundary.
+
 - Local POS releases have a one-command Mac publisher:
   `apps/edge/tool/publish-local-pos.sh`. It uses the existing Parallels Windows VM,
   detects the active registered LAN, builds real Windows POS, transfers/validates
@@ -674,8 +682,9 @@ current transport status.
   website, menu, photos, hours, payments, POS devices, managers, subscription,
   settings) sharing one website draft with a save bar. The address check is
   advisory; publication still claims the hostname. The menu section is the
-  POS category/subcategory/item/size tree with per-item website presentation;
-  menu authoring stays in the POS. SEO and exact map pins use
+  canonical category/subcategory/item/size tree with separate website presentation;
+  CLOUD-authoritative Venues author it in the dashboard, while POS-authoritative
+  Venues retain their existing POS authoring. SEO and exact map pins use
   progressive disclosure; map visibility defaults on and follows the current
   Venue Profile address unless an exact link is supplied. The additive `showMap`
   flag preserves hidden-map intent without duplicating the address. Disabled
@@ -897,7 +906,7 @@ current transport status.
 
 ## Current Migration Versions
 
-- Prisma migration tip: 20260927120000_organization_owner_invitations.
+- Prisma migration tip: 20260928120000_restaurant_foundation.
 - Prior website migrations:
   `20260925120000_website_core`, `20260926120000_website_menu_presentation`.
 - Immediately preceding state migrations:

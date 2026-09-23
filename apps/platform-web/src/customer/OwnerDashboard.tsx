@@ -80,6 +80,12 @@ export function OwnerDashboard({
     setMenuOpen(false);
     window.scrollTo?.({ top: 0 });
   };
+  const available = (key: string) =>
+    key === "devices"
+      ? venue.features.includes("POS")
+      : key === "managers"
+        ? venue.features.includes("MANAGER_APP")
+        : true;
   const current = dashboardSections.find(([key]) => key === section)![1];
 
   const common = {
@@ -148,19 +154,28 @@ export function OwnerDashboard({
               ×
             </button>
           </div>
-          {dashboardSections.map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              aria-current={section === key ? "page" : undefined}
-              onClick={() => go(key)}
-            >
-              {label}
-            </button>
-          ))}
+          {dashboardSections
+            .filter(([key]) => available(key))
+            .map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                aria-current={section === key ? "page" : undefined}
+                onClick={() => go(key)}
+              >
+                {label}
+              </button>
+            ))}
         </nav>
       </aside>
       <div className="portal-main">
+        {!available(section) && (
+          <section className="portal-card">
+            <h2>{current}</h2>
+            <p>ამ პროდუქტის დასამატებლად განაახლეთ პაკეტი.</p>
+            <button onClick={() => go("subscription")}>პაკეტის ნახვა</button>
+          </section>
+        )}
         {section === "home" && (
           <Dashboard venue={venue} website={website} go={go} />
         )}
@@ -178,18 +193,20 @@ export function OwnerDashboard({
             onEditProfile={() => go("restaurant")}
           />
         )}
-        {section === "menu" && <MenuSection website={website} />}
+        {section === "menu" && <MenuSection website={website} onCatalogSaved={() => void run(refresh)} />}
         {section === "photos" && <PhotosSection website={website} />}
         {section === "hours" && <HoursSection website={website} />}
         {section === "payments" && <PaymentsSection venue={venue} />}
-        {section === "devices" && (
+        {section === "devices" && available(section) && (
           <DevicesSection
             {...common}
             enrollment={enrollment}
             setEnrollment={setEnrollment}
           />
         )}
-        {section === "managers" && <ManagersSection {...common} />}
+        {section === "managers" && available(section) && (
+          <ManagersSection {...common} />
+        )}
         {section === "subscription" && <SubscriptionSection venue={venue} />}
         {section === "settings" && (
           <SettingsSection
@@ -299,7 +316,10 @@ export function nextSteps(venue: VenueStatus, website: Website): Step[] {
     {
       key: "menu",
       label: "მენიუს დამატება",
-      hint: "მენიუ იქმნება POS-ში და ავტომატურად ჩანს საიტზე.",
+      hint:
+        venue.venue.menuAuthority === "CLOUD"
+          ? "დაამატეთ კატეგორიები, კერძები და ფასები."
+          : "მენიუ იქმნება POS-ში და ავტომატურად ჩანს საიტზე.",
       done: !!venue.checklist?.menu,
       section: "menu",
     },
@@ -341,7 +361,12 @@ export function nextSteps(venue: VenueStatus, website: Website): Step[] {
       section: "managers",
     },
   ];
-  return steps.filter((step) => saas || !step.website);
+  return steps.filter(
+    (step) =>
+      (saas || !step.website) &&
+      (step.key !== "pos" || venue.features.includes("POS")) &&
+      (step.key !== "manager" || venue.features.includes("MANAGER_APP")),
+  );
 }
 
 function Dashboard({

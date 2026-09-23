@@ -226,6 +226,16 @@ remain staged until explicit consent. Edge self-update requires a separate helpe
 and qualification, not an extension
 of POS update consent. See `docs/WINDOWS_SETUP.md`.
 
+## D023 — Catalog authority is explicit and enrollment is not handover
+
+**Decision:** Existing Venues default to POS menu authority; new Website-only
+Venues use CLOUD. One canonical catalog serves all channels. Owner catalog writes
+and POS snapshots enforce opposite authority under the Venue row lock.
+**Implication:** Device enrollment never changes menu authority. Bootstrap v1 is
+frozen, Device-bound and staged outside operational Hive; activation stays disabled
+until all local writers, availability/media projections and transition recovery
+are fenced. See `docs/CLOUD_RESTAURANT_FOUNDATION.md`.
+
 ## Maintenance
 
 Add an entry only when it prevents repeated architectural debate. Update or

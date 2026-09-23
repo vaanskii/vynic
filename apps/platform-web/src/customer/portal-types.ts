@@ -22,6 +22,7 @@ export type Manager = {
 };
 export type VenueStatus = {
   venue: {
+    menuAuthority?: "POS" | "CLOUD";
     id: string;
     name: string;
     branchName?: string | null;

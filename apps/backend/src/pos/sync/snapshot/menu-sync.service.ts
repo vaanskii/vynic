@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../prisma.service';
 import type { TenantContext } from '../../../auth/pos-auth-context';
@@ -295,6 +295,14 @@ export class MenuSyncService {
     menu: MenuCategorySync[],
     authoritativeIdentity: boolean,
   ): Promise<void> {
+    await db.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${tenant.venueId} FOR UPDATE`;
+    const venue = await db.venue.findUniqueOrThrow({
+      where: { id: tenant.venueId },
+    });
+    if (venue.menuAuthority !== 'POS')
+      throw new ConflictException(
+        'Cloud-authoritative catalog rejects POS snapshots',
+      );
     const categoryIds = new Set<string>();
     const subcategoryIds = new Set<string>();
     const itemIds = new Set<string>();

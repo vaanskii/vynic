@@ -8,6 +8,10 @@ const tenant: TenantContext = {
 
 function makeDatabase() {
   const db = {
+    $queryRaw: jest.fn().mockResolvedValue([]),
+    venue: {
+      findUniqueOrThrow: jest.fn().mockResolvedValue({ menuAuthority: 'POS' }),
+    },
     menuCategory: {
       findFirst: jest.fn(),
       create: jest.fn(),

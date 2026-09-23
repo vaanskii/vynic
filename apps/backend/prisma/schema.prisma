@@ -114,6 +114,7 @@ model MenuSubcategory {
 }
 
 model MenuItem {
+  enabled            Boolean                 @default(true)
   id                 String                  @id @default(uuid())
   venueId            String
   categoryId         String?
@@ -1135,8 +1136,18 @@ model Organization {
   @@schema("pos")
 }
 
+/// The sole operational catalog author. Enrollment does not change authority.
+enum MenuAuthority {
+  POS
+  CLOUD
+
+  @@schema("pos")
+}
+
 /// One physical restaurant/location owned by an Organization.
 model Venue {
+  menuAuthority             MenuAuthority              @default(POS)
+  catalogRevision           Int                        @default(0)
   paymentIntegrations PaymentIntegration[]
   edgeFoundations EdgeFoundationInstallation[]
   activeOperationalDeviceId String? @unique
@@ -1220,6 +1231,7 @@ model Device {
   credentialHash String
   status         DeviceStatus @default(ACTIVE)
   firstSyncAt    DateTime?
+  foundationBootstrap Json?
   runtimeConfig Json?
   lastSeenAt     DateTime?
   createdAt      DateTime     @default(now())
@@ -1970,7 +1982,7 @@ model PaymentIntegration {
   venueId String
   provider String
   revision Int
-  enabled Boolean @default(true)
+  enabled            Boolean                 @default(true)
   encryptedConfig String
   createdAt DateTime @default(now())
   venue Venue @relation(fields: [venueId], references: [id], onDelete: Restrict)

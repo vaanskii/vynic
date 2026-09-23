@@ -1,3 +1,4 @@
+import { WebsiteLogoService } from './website-logo.service';
 import 'reflect-metadata';
 jest.mock('uuid', () => ({ v4: () => require('node:crypto').randomUUID() }));
 import { randomUUID } from 'node:crypto';
@@ -97,7 +98,7 @@ const url = process.env.W3_TEST_DATABASE_URL;
       if (
         u.hostname !== '127.0.0.1' ||
         u.port !== '55439' ||
-        u.pathname !== '/vynic_w3_disposable'
+        !['/vynic_w3_disposable', '/vynic_foundation_phase3_disposable'].includes(u.pathname)
       )
         throw Error('Only the disposable website database is permitted');
       process.env.JWT_SECRET = 'website-w3-local-test-only';
@@ -188,6 +189,7 @@ const url = process.env.W3_TEST_DATABASE_URL;
       const mod = await Test.createTestingModule({
         controllers: [CustomerWebsiteController, WebsiteCoreController],
         providers: [
+          WebsiteLogoService,
           { provide: WebsiteCoreService, useValue: core },
           { provide: WebsiteMenuService, useValue: menus },
           {

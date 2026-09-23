@@ -1,3 +1,11 @@
+import { RestaurantFoundationService } from '../src/customer/restaurant-foundation.service';
+import {
+  CustomerCatalogController,
+  DeviceFoundationController,
+} from '../src/customer/restaurant-foundation.controller';
+import { DeviceEnrollmentController } from '../src/edge/device-enrollment.controller';
+import { WebsiteLogoService } from '../src/website/core/website-logo.service';
+import { WebsiteLogoController } from '../src/website/core/website-logo.controller';
 import 'reflect-metadata';
 import { Test } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
@@ -54,6 +62,10 @@ export async function onboardingApp(db: PrismaService) {
   });
   const module = await Test.createTestingModule({
     controllers: [
+      CustomerCatalogController,
+      DeviceFoundationController,
+      DeviceEnrollmentController,
+      WebsiteLogoController,
       CustomerAuthController,
       CustomerController,
       PlatformOnboardingController,
@@ -70,6 +82,8 @@ export async function onboardingApp(db: PrismaService) {
       PlatformPaymentsController,
     ],
     providers: [
+      RestaurantFoundationService,
+      WebsiteLogoService,
       { provide: PrismaService, useValue: db },
       { provide: ConfigService, useValue: config },
       JwtService,

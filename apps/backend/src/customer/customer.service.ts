@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   Optional,
@@ -133,8 +134,10 @@ export class CustomerService {
       this.db.cloudSale.count({ where: { venueId: id } }),
     ]);
     const enrollment = await this.enrollments.list(id);
+    const features = await this.entitlements.effectiveFeatures(id);
     return {
       venue: {
+        menuAuthority: venue.menuAuthority,
         id: venue.id,
         name: venue.name,
         branchName: venue.branchName,
@@ -159,7 +162,7 @@ export class CustomerService {
         status: venue.subscription.status,
         trialEndsAt: venue.subscription.trialEndsAt,
       },
-      features: await this.entitlements.effectiveFeatures(id),
+      features,
       managers,
       devices: devices.map((device) => ({
         ...device,
@@ -168,13 +171,15 @@ export class CustomerService {
       enrollments: enrollment,
       ready:
         venue.status === 'ACTIVE' &&
-        managers.some((m) => m.isActive) &&
-        devices.some(
-          (d) =>
-            d.id === venue.activeOperationalDeviceId &&
-            d.status === 'ACTIVE' &&
-            d.firstSyncAt,
-        ),
+        (!features.includes('MANAGER_APP') ||
+          managers.some((m) => m.isActive)) &&
+        (!features.includes('POS') ||
+          devices.some(
+            (d) =>
+              d.id === venue.activeOperationalDeviceId &&
+              d.status === 'ACTIVE' &&
+              d.firstSyncAt,
+          )),
       checklist: {
         restaurant: true,
         manager: managers.some((m) => m.isActive),
@@ -238,12 +243,18 @@ export class CustomerService {
         policy?.trialPlanId &&
         (await tx.plan.findFirst({
           where: { id: policy.trialPlanId, status: 'ACTIVE' },
+          include: { features: { include: { feature: true } } },
         }));
       if (!policy?.enabled || !plan)
         throw new ServiceUnavailableException('Trial plan is not configured');
+      const keys = plan.features.map((f) => f.feature.key);
+      if (!keys.includes('POS') && !keys.includes('WEBSITE'))
+        throw new ServiceUnavailableException('Plan requires POS or Website');
+      const cloud = keys.includes('WEBSITE') && !keys.includes('POS');
       const venue = await tx.venue.create({
         data: {
           organizationId,
+          menuAuthority: cloud ? 'CLOUD' : 'POS',
           ...profileInput({ ...body, name }),
           profileUpdatedAt: new Date(),
           timezone,
@@ -258,7 +269,11 @@ export class CustomerService {
           planAssignment: { create: { planId: plan.id } },
         },
       });
-      await initializeWebsite(tx, venue.id, policy.defaultWebsiteMode);
+      await initializeWebsite(
+        tx,
+        venue.id,
+        cloud ? 'SAAS' : policy.defaultWebsiteMode,
+      );
       await tx.customerAuditEvent.create({
         data: {
           customerAccountId: actor.customerAccountId,
@@ -278,10 +293,17 @@ export class CustomerService {
     staffId?: string,
   ) {
     await this.venue(actor, venueId);
+    if (
+      action !== 'disable' &&
+      !(await this.entitlements.hasFeature(venueId, 'MANAGER_APP'))
+    )
+      throw new ForbiddenException('Manager is not included in this plan');
     return this.commercial.managerAccess(actor, venueId, action, body, staffId);
   }
   async enrollment(actor: CustomerPrincipal, venueId: string) {
     await this.venue(actor, venueId);
+    if (!(await this.entitlements.hasFeature(venueId, 'POS')))
+      throw new ForbiddenException('POS is not included in this plan');
     return this.enrollments.create(actor, venueId, {
       displayName: 'Main POS',
       platform: 'WINDOWS',

@@ -158,11 +158,11 @@ export class PlatformOnboardingController {
       });
       const keys = features.map((f) => f.feature.key);
       if (
-        !keys.includes(FeatureKeys.POS) ||
-        !keys.includes(FeatureKeys.MANAGER_APP)
+        !keys.includes(FeatureKeys.POS) &&
+        !keys.includes(FeatureKeys.WEBSITE)
       )
         throw new BadRequestException(
-          'Onboarding trial must include POS and Manager',
+          'Onboarding trial must include POS or Website',
         );
     }
     const releaseLinks: Record<string, string> = {};

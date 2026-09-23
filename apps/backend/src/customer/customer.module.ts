@@ -1,3 +1,8 @@
+import { RestaurantFoundationService } from './restaurant-foundation.service';
+import {
+  CustomerCatalogController,
+  DeviceFoundationController,
+} from './restaurant-foundation.controller';
 import { OwnerInvitationsService } from './owner-invitations.service';
 import {
   PlatformOwnerInvitationsController,
@@ -39,6 +44,7 @@ import {
     EntitlementsModule,
   ],
   providers: [
+    RestaurantFoundationService,
     OwnerInvitationsService,
     CustomerAuth,
     CustomerGuard,
@@ -47,6 +53,8 @@ import {
     EdgeDeviceGuard,
   ],
   controllers: [
+    CustomerCatalogController,
+    DeviceFoundationController,
     PlatformOwnerInvitationsController,
     CustomerOwnerInvitationsController,
     CustomerWebsiteController,

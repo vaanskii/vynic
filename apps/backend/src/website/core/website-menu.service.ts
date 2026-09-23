@@ -21,6 +21,7 @@ const itemArgs = Prisma.validator<Prisma.MenuItemDefaultArgs>()({
     nameKa: true,
     nameEn: true,
     price: true,
+    enabled: true,
     sortOrder: true,
     subcategoryId: true,
     variants: {
@@ -102,7 +103,9 @@ export class WebsiteMenuService {
         const direct = category.items
           .filter((item) => !item.subcategoryId)
           .filter(
-            (item) => item.websitePresentation?.visibleOnWebsite !== false,
+            (item) =>
+              item.enabled !== false &&
+              item.websitePresentation?.visibleOnWebsite !== false,
           )
           .sort(byPosition)
           .map((item) => this.publicItem(item));
@@ -113,7 +116,9 @@ export class WebsiteMenuService {
             name: { ka: sub.nameKa, en: sub.nameEn },
             items: sub.items
               .filter(
-                (item) => item.websitePresentation?.visibleOnWebsite !== false,
+                (item) =>
+                  item.enabled !== false &&
+                  item.websitePresentation?.visibleOnWebsite !== false,
               )
               .sort(byPosition)
               .map((item) => this.publicItem(item)),

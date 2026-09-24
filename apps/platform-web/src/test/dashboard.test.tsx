@@ -34,6 +34,7 @@ const draft = {
   gallery: [],
 };
 const website = (patch: Record<string, unknown> = {}) => ({
+  mediaUploadAllowed: true,
   schemaVersion: 2,
   themeKeys: ["classic"],
   mode: "SAAS",
@@ -136,6 +137,7 @@ function serve({
   api.call.mockImplementation(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async (path: string, body?: any, method?: string) => {
+      if (path === "access-requests/plans") return [];
       if (path === "portal")
         return {
           account: { email: "owner@test.invalid" },
@@ -222,17 +224,26 @@ const renderPortal = (entry = "/dashboard") =>
   render(
     <MemoryRouter initialEntries={[entry]}>
       <Routes>
-        <Route path="/dashboard/:section?" element={<><CustomerDashboard /><Where /></>} />
+        <Route
+          path="/dashboard/:section?"
+          element={
+            <>
+              <CustomerDashboard />
+              <Where />
+            </>
+          }
+        />
         <Route path="*" element={<Where />} />
       </Routes>
     </MemoryRouter>,
   );
 const nav = async () =>
   within(
-    await screen.findByRole("navigation", { name: "მართვის პანელის განყოფილებები" }),
+    await screen.findByRole("navigation", {
+      name: "მართვის პანელის განყოფილებები",
+    }),
   );
-const calls = (path: string) =>
-  api.call.mock.calls.filter(([p]) => p === path);
+const calls = (path: string) => api.call.mock.calls.filter(([p]) => p === path);
 
 beforeEach(() => {
   api.call.mockReset();
@@ -247,72 +258,43 @@ describe("First-run setup", () => {
     expect(suggestAddress("ხაჭაპური & ღვინო")).toBe("khachapuri-ghvino");
   });
 
-  it("requires only name, logo and address, then opens the dashboard", async () => {
+  it("Website Trial setup requires name and address but no photo upload", async () => {
     const state = serve({
-      venues: [],
-      site: website({ revision: 0, draft: { ...draft, slug: "", logoUrl: "", heroTitle: "" } }),
+      site: website({
+        revision: 0,
+        mediaUploadAllowed: false,
+        draft: { ...draft, slug: "", logoUrl: "", heroTitle: "" },
+      }),
     });
     const user = userEvent.setup();
     renderPortal();
-
-    const form = await screen.findByRole("region", {
-      name: "შექმენით თქვენი რესტორანი",
-    });
-    // Nothing else is asked for before the portal.
-    expect(within(form).queryByLabelText(/^მისამართი/)).toBeNull();
-    expect(within(form).queryByLabelText(/ტელეფონი/)).toBeNull();
-    expect(within(form).getAllByRole("textbox")).toHaveLength(2);
-
-    await user.type(screen.getByLabelText("რესტორნის სახელი"), "ტაბლა");
-    expect(screen.getByLabelText("ვებსაიტის მისამართი")).toHaveValue("tabla");
-    expect(screen.getByText("tabla.vynic.localhost")).toBeInTheDocument();
-    expect(screen.queryByText(/slug|hostname|https:\/\//i)).toBeNull();
-
-    await user.click(screen.getByRole("button", { name: "გაგრძელება" }));
-    expect(await screen.findByText("ატვირთეთ რესტორნის ლოგო.")).toBeVisible();
-    expect(calls("venues")).toHaveLength(0);
-
-    await user.upload(
-      screen.getByLabelText("ლოგოს ატვირთვა"),
-      new File(["png"], "logo.png", { type: "image/png" }),
+    expect(await screen.findByLabelText("რესტორნის სახელი")).toHaveValue(
+      "Tabla",
     );
+    expect(screen.queryByLabelText("ლოგოს ატვირთვა")).toBeNull();
     await user.click(screen.getByRole("button", { name: "გაგრძელება" }));
-
     expect(
-      await screen.findByRole("heading", { name: "გამარჯობა, ტაბლა" }),
+      await screen.findByRole("heading", { name: "გამარჯობა, Tabla" }),
     ).toBeVisible();
-    expect(calls("venues")[0][1]).toEqual({ name: "ტაბლა" });
-    expect(calls("venues/venue-a/website/logo")[0][1]).toBeInstanceOf(FormData);
-    expect(state.site.draft).toMatchObject({
-      slug: "tabla",
-      logoUrl: "/media/website-logos/new.webp",
-      heroTitle: "ტაბლა",
-    });
-    expect(screen.getAllByText("tabla.vynic.localhost").length).toBeGreaterThan(0);
-    const steps = screen.getByRole("list", { name: "შემდეგი ნაბიჯები" });
-    for (const label of [
-      "ვებსაიტის ნახვა",
-      "მენიუს დამატება",
-      "სამუშაო საათების დამატება",
-      "მისამართის დამატება",
-      "ფოტოების დამატება",
-      "POS-ის დაკავშირება",
-      "მენეჯერის დამატება",
-    ])
-      expect(within(steps).getByText(label)).toBeInTheDocument();
-    expect(screen.getByText("Starter")).toBeInTheDocument();
-    expect(screen.getByText("მონახაზი")).toBeInTheDocument();
+    expect(state.site.draft.slug).toBe("tabla");
+    expect(state.site.draft.logoUrl).toBe("");
+    expect(calls("venues/venue-a/website/logo")).toHaveLength(0);
   });
 
   it("keeps the form when the address is taken and retries without duplicates", async () => {
     const state = serve({
-      venues: [],
-      site: website({ revision: 0, draft: { ...draft, slug: "", logoUrl: "" } }),
+      venues: [venueStatus()],
+      site: website({
+        revision: 0,
+        draft: { ...draft, slug: "", logoUrl: "" },
+      }),
       taken: ["tabla"],
     });
     const user = userEvent.setup();
     renderPortal();
-    await user.type(await screen.findByLabelText("რესტორნის სახელი"), "Tabla");
+    expect(await screen.findByLabelText("რესტორნის სახელი")).toHaveValue(
+      "Tabla",
+    );
     await user.upload(
       screen.getByLabelText("ლოგოს ატვირთვა"),
       new File(["png"], "logo.png", { type: "image/png" }),
@@ -338,13 +320,18 @@ describe("First-run setup", () => {
     });
     const state = serve({
       venues: [invited],
-      site: website({ revision: 0, draft: { ...draft, slug: "", logoUrl: "", heroTitle: "" } }),
+      site: website({
+        revision: 0,
+        draft: { ...draft, slug: "", logoUrl: "", heroTitle: "" },
+      }),
     });
     const user = userEvent.setup();
     renderPortal();
     const name = await screen.findByLabelText("რესტორნის სახელი");
     expect(name).toHaveValue("Prepared");
-    expect(screen.getByLabelText("ვებსაიტის მისამართი")).toHaveValue("prepared");
+    expect(screen.getByLabelText("ვებსაიტის მისამართი")).toHaveValue(
+      "prepared",
+    );
     await user.clear(name);
     await user.type(name, "Tabla");
     await user.upload(
@@ -387,7 +374,6 @@ describe("Owner portal", () => {
       "მენიუ",
       "ფოტოები",
       "სამუშაო საათები",
-      "ონლაინ გადახდები",
       "მოწყობილობები / POS",
       "მენეჯერები",
       "გამოწერა",
@@ -409,7 +395,9 @@ describe("Owner portal", () => {
 
     await user.click((await nav()).getByRole("button", { name: "მთავარი" }));
     expect(screen.getByText("შეუნახავი ცვლილებები")).toBeVisible();
-    expect(screen.getByRole("button", { name: "ვებსაიტის ნახვა" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "ვებსაიტის ნახვა" }),
+    ).toBeDisabled();
     expect(screen.getByRole("button", { name: "გამოქვეყნება" })).toBeDisabled();
 
     await user.click(screen.getByRole("button", { name: "შენახვა" }));
@@ -418,7 +406,9 @@ describe("Owner portal", () => {
         { day: 1, opens: "10:00", closes: "01:00" },
       ]),
     );
-    expect(calls("venues/venue-a/website/draft")[0][1].expectedRevision).toBe(1);
+    expect(calls("venues/venue-a/website/draft")[0][1].expectedRevision).toBe(
+      1,
+    );
 
     await user.click(screen.getByRole("button", { name: "ვებსაიტის ნახვა" }));
     await waitFor(() =>
@@ -466,9 +456,7 @@ describe("Owner portal", () => {
       await screen.findByText("ეს მისამართი უკვე დაკავებულია."),
     ).toBeVisible();
     await user.click(screen.getByRole("button", { name: "დიზაინი" }));
-    expect(
-      screen.getByLabelText("სათაური ძიების შედეგებში"),
-    ).not.toBeVisible();
+    expect(screen.getByLabelText("სათაური ძიების შედეგებში")).not.toBeVisible();
     await user.click(screen.getByText("Google-ში გამოჩენა"));
     expect(screen.getByLabelText("სათაური ძიების შედეგებში")).toBeVisible();
   });
@@ -480,9 +468,7 @@ describe("Owner portal", () => {
     await user.click(
       await screen.findByRole("button", { name: "კონტაქტი და ბმულები" }),
     );
-    expect(
-      screen.getByText("მისამართი ჯერ არ არის დამატებული."),
-    ).toBeVisible();
+    expect(screen.getByText("მისამართი ჯერ არ არის დამატებული.")).toBeVisible();
     await user.type(
       screen.getByLabelText("Instagram", { selector: "input" }),
       "instagram.com/tabla",
@@ -561,9 +547,9 @@ describe("Menu section", () => {
     await user.type(screen.getByLabelText("აღწერა"), "ყველით");
     await user.click(screen.getByRole("button", { name: "შენახვა" }));
     await screen.findByText("„ხაჭაპური“ შენახულია.");
-    expect(
-      state.menu.categories[0].subcategories[0].items[1].description,
-    ).toBe("ყველით");
+    expect(state.menu.categories[0].subcategories[0].items[1].description).toBe(
+      "ყველით",
+    );
     expect(screen.getByText(/ვებსაიტზე ჩანს/)).toHaveTextContent(
       "ვებსაიტზე ჩანს 1 / 2 კერძი",
     );
@@ -603,11 +589,10 @@ describe("Operational sections", () => {
     const user = userEvent.setup();
     renderPortal("/dashboard/subscription");
     expect(await screen.findByText("Starter")).toBeVisible();
-    expect(screen.getByText(/საცდელი პერიოდი/)).toBeVisible();
-    await user.click((await nav()).getByRole("button", { name: "ონლაინ გადახდები" }));
+    expect(screen.getByText(/^საცდელი პერიოდი/)).toBeVisible();
     expect(
-      screen.getByText("ონლაინ გადახდები თქვენს პაკეტში არ შედის"),
-    ).toBeVisible();
+      (await nav()).queryByRole("button", { name: "ონლაინ გადახდები" }),
+    ).toBeNull();
     await user.click(
       (await nav()).getByRole("button", { name: "მოწყობილობები / POS" }),
     );
@@ -640,8 +625,13 @@ describe("Mobile section menu", () => {
       within(sections()).getByRole("button", { name: "მენეჯერები" }),
     );
     expect(sections()).not.toHaveClass("is-open");
-    expect(burger()).toHaveAttribute("aria-label", "განყოფილებები · მენეჯერები");
-    expect(screen.getByTestId("where")).toHaveTextContent("/dashboard/managers");
+    expect(burger()).toHaveAttribute(
+      "aria-label",
+      "განყოფილებები · მენეჯერები",
+    );
+    expect(screen.getByTestId("where")).toHaveTextContent(
+      "/dashboard/managers",
+    );
 
     await user.click(burger());
     await user.keyboard("{Escape}");
@@ -667,7 +657,9 @@ describe("Dashboard routes", () => {
     const user = userEvent.setup();
     renderPortal();
     await user.click((await nav()).getByRole("button", { name: "გამოწერა" }));
-    expect(screen.getByTestId("where")).toHaveTextContent("/dashboard/subscription");
+    expect(screen.getByTestId("where")).toHaveTextContent(
+      "/dashboard/subscription",
+    );
     await user.click((await nav()).getByRole("button", { name: "მთავარი" }));
     expect(screen.getByTestId("where")).toHaveTextContent(/^\/dashboard$/);
   });

@@ -70,10 +70,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   if (response.status === 401) handleUnauthorized();
   if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as { message?: string | string[];
-    }
-      | null;
-    const details = Array.isArray(payload?.message) ? payload.message : undefined;
+    const payload = (await response.json().catch(() => null)) as {
+      message?: string | string[];
+    } | null;
+    const details = Array.isArray(payload?.message)
+      ? payload.message
+      : undefined;
     const message =
       (typeof payload?.message === "string" && payload.message) ||
       details?.[0] ||
@@ -96,10 +98,16 @@ export const authApi = {
 };
 
 export const platformApi = {
-  paymentStatus: (venueId: string) => request<{ configured: boolean; entitled: boolean }>(`/platform/venues/${venueId}/payments/bog`),
+  paymentStatus: (venueId: string) =>
+    request<{ configured: boolean; entitled: boolean }>(
+      `/platform/venues/${venueId}/payments/bog`,
+    ),
   subscription: (id: string) =>
     request<VenueSubscription | null>(`/platform/venues/${id}/subscription`),
-  setSubscription: (id: string, body: Partial<VenueSubscription>) =>
+  setSubscription: (
+    id: string,
+    body: Partial<VenueSubscription> & { planId?: string },
+  ) =>
     request<VenueSubscription>(`/platform/venues/${id}/subscription`, {
       method: "PUT",
       body: json(body),
@@ -145,13 +153,15 @@ export const platformApi = {
       method: "PATCH",
       body: json({ name }),
     }),
-  venues: (options: { limit?: number; offset?: number; organizationId?: string } = {},
+  venues: (
+    options: { limit?: number; offset?: number; organizationId?: string } = {},
   ) => {
     const search = new URLSearchParams({
       limit: String(options.limit ?? 50),
       offset: String(options.offset ?? 0),
     });
-    if (options.organizationId) search.set("organizationId", options.organizationId);
+    if (options.organizationId)
+      search.set("organizationId", options.organizationId);
     return request<Page<Venue>>(`/platform/venues?${search}`);
   },
   venue: (id: string) => request<Venue>(`/platform/venues/${id}`),
@@ -160,19 +170,37 @@ export const platformApi = {
     name: string;
     timezone: string;
     currency: string;
-  }) => request<Venue>("/platform/venues", { method: "POST", body: json(input) }),
-  updateVenue: (id: string, input: { name: string; timezone: string; currency: string },
+  }) =>
+    request<Venue>("/platform/venues", { method: "POST", body: json(input) }),
+  updateVenue: (
+    id: string,
+    input: { name: string; timezone: string; currency: string },
   ) =>
-    request<Venue>(`/platform/venues/${id}`, { method: "PATCH", body: json(input),
+    request<Venue>(`/platform/venues/${id}`, {
+      method: "PATCH",
+      body: json(input),
     }),
   setVenueStatus: (id: string, status: VenueStatus) =>
     request<Venue>(`/platform/venues/${id}/status`, {
       method: "PUT",
       body: json({ status }),
     }),
+  savePlan: (id: string | undefined, body: object) =>
+    request<Plan>(`/platform/plans${id ? `/${id}` : ""}`, {
+      method: id ? "PUT" : "POST",
+      body: json(body),
+    }),
   plans: () => request<Plan[]>("/platform/plans"),
-  ensureWebsitePlan: () => request<Plan[]>("/platform/plans/website-only", { method: "POST", body: json({}) }),
-  enableCloudMenu: (venueId: string, enabled: boolean) => request<ProductState>(`/platform/venues/${venueId}/menu-management/cloud`, { method: "PUT", body: json({ enabled }) }),
+  ensureWebsitePlan: () =>
+    request<Plan[]>("/platform/plans/website-only", {
+      method: "POST",
+      body: json({}),
+    }),
+  enableCloudMenu: (venueId: string, enabled: boolean) =>
+    request<ProductState>(`/platform/venues/${venueId}/menu-management/cloud`, {
+      method: "PUT",
+      body: json({ enabled }),
+    }),
   features: () => request<Feature[]>("/platform/features"),
   product: (venueId: string) =>
     request<ProductState>(`/platform/venues/${venueId}/product`),
@@ -187,15 +215,19 @@ export const platformApi = {
     effect: OverrideEffect,
     note?: string,
   ) =>
-    request<ProductState>(`/platform/venues/${venueId}/features/${featureKey}`, {
-      method: "PUT",
-      body: json({ effect, note }),
-    },
+    request<ProductState>(
+      `/platform/venues/${venueId}/features/${featureKey}`,
+      {
+        method: "PUT",
+        body: json({ effect, note }),
+      },
     ),
   clearFeatureOverride: (venueId: string, featureKey: string) =>
-    request<ProductState>(`/platform/venues/${venueId}/features/${featureKey}`, {
-      method: "DELETE",
-    },
+    request<ProductState>(
+      `/platform/venues/${venueId}/features/${featureKey}`,
+      {
+        method: "DELETE",
+      },
     ),
   setWebsiteMode: (venueId: string, mode: WebsiteMode) =>
     request<WebsiteAccess>(`/platform/venues/${venueId}/website`, {
@@ -210,15 +242,19 @@ export const platformApi = {
       body: json({ hostname }),
     }),
   setDomainStatus: (venueId: string, domainId: string, status: DomainStatus) =>
-    request<VenueDomain>(`/platform/venues/${venueId}/domains/${domainId}/status`, {
-      method: "PUT",
-      body: json({ status }),
-    },
+    request<VenueDomain>(
+      `/platform/venues/${venueId}/domains/${domainId}/status`,
+      {
+        method: "PUT",
+        body: json({ status }),
+      },
     ),
   releaseDomain: (venueId: string, domainId: string) =>
-    request<{ released: string }>(`/platform/venues/${venueId}/domains/${domainId}`, {
-      method: "DELETE",
-    },
+    request<{ released: string }>(
+      `/platform/venues/${venueId}/domains/${domainId}`,
+      {
+        method: "DELETE",
+      },
     ),
   enrollments: (venueId: string) =>
     request<DeviceEnrollment[]>(`/platform/venues/${venueId}/enrollments`),
@@ -283,7 +319,9 @@ export const platformApi = {
       `/platform/venues/${venueId}/test-command/${commandId}`,
     ),
   audit: (limit = 50, offset = 0, targetId?: string, venueId?: string) => {
-    const search = new URLSearchParams({ limit: String(limit), offset: String(offset),
+    const search = new URLSearchParams({
+      limit: String(limit),
+      offset: String(offset),
     });
     if (targetId) search.set("targetId", targetId);
     if (venueId) search.set("venueId", venueId);
@@ -291,6 +329,13 @@ export const platformApi = {
   },
 };
 
-export function platformOnboardingApi(path: string, body?: unknown, method = "PUT"): Promise<any> {
-  return request(`/platform/onboarding/${path}`, body === undefined ? {} : {method,body:JSON.stringify(body)});
+export function platformOnboardingApi(
+  path: string,
+  body?: unknown,
+  method = "PUT",
+): Promise<any> {
+  return request(
+    `/platform/onboarding/${path}`,
+    body === undefined ? {} : { method, body: JSON.stringify(body) },
+  );
 }

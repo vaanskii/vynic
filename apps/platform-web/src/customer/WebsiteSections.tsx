@@ -152,9 +152,7 @@ export function ProfileSection({
               void customerApi(`venues/${venue.id}/profile`, data, "PUT")
                 .then(onSaved)
                 .then(() => setMessage("პროფილი შენახულია."))
-                .catch(() =>
-                  setError("პროფილი ვერ შეინახა. შეამოწმეთ ველები."),
-                )
+                .catch(() => setError("პროფილი ვერ შეინახა. შეამოწმეთ ველები."))
                 .finally(() => setBusy(false));
             }}
           >
@@ -170,7 +168,12 @@ export function ProfileSection({
               </label>
               {(
                 [
-                  ["address", "მისამართი", 300, "მაგ. რუსთაველის გამზ. 12, თბილისი"],
+                  [
+                    "address",
+                    "მისამართი",
+                    300,
+                    "მაგ. რუსთაველის გამზ. 12, თბილისი",
+                  ],
                   ["phone", "ტელეფონი", 50, "+995 5XX XX XX XX"],
                   ["branchName", "ფილიალის სახელი", 100, ""],
                   ["legalId", "საიდენტიფიკაციო ნომერი", 50, ""],
@@ -192,7 +195,7 @@ export function ProfileSection({
             <p role="status">{message}</p>
           </form>
         </section>
-        {editable(website) && (
+        {editable(website) && website.settings?.mediaUploadAllowed && (
           <section className="portal-card">
             <h3>ლოგო</h3>
             <p>ჩანს ვებსაიტის თავში და ბრაუზერის ჩანართზე.</p>
@@ -272,9 +275,7 @@ export function WebsiteSection({
       </nav>
       <section className="portal-card">
         <fieldset disabled={website.busy}>
-          {tab === "address" && (
-            <AddressField website={website} />
-          )}
+          {tab === "address" && <AddressField website={website} />}
           {tab === "home" && (
             <>
               <label>
@@ -407,24 +408,24 @@ function AddressField({ website }: { website: Website }) {
     <>
       <label htmlFor="website-address">ვებსაიტის მისამართი</label>
       <span className="first-run__address">
-          <input
-            id="website-address"
-            aria-describedby="website-address-hint"
-            required
-            maxLength={48}
-            autoCapitalize="none"
-            spellCheck={false}
-            value={slug}
-            aria-invalid={check === "taken" || check === "invalid"}
-            onChange={(e) =>
-              website.edit({
-                slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""),
-              })
-            }
-          />
-          {settings.baseDomain && (
-            <span aria-hidden="true">.{settings.baseDomain}</span>
-          )}
+        <input
+          id="website-address"
+          aria-describedby="website-address-hint"
+          required
+          maxLength={48}
+          autoCapitalize="none"
+          spellCheck={false}
+          value={slug}
+          aria-invalid={check === "taken" || check === "invalid"}
+          onChange={(e) =>
+            website.edit({
+              slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""),
+            })
+          }
+        />
+        {settings.baseDomain && (
+          <span aria-hidden="true">.{settings.baseDomain}</span>
+        )}
       </span>
       <p
         id="website-address-hint"
@@ -567,7 +568,9 @@ function ContactFields({
                   onBlur={(e) =>
                     edit({
                       socials: draft.socials.map((s, j) =>
-                        i === j ? { ...s, url: normalizeLink(e.target.value) } : s,
+                        i === j
+                          ? { ...s, url: normalizeLink(e.target.value) }
+                          : s,
                       ),
                     })
                   }
@@ -604,7 +607,13 @@ function ContactFields({
 
 // ---------------------------------------------------------------- menu
 
-export function MenuSection({ website, onCatalogSaved }: { website: Website; onCatalogSaved?: () => void }) {
+export function MenuSection({
+  website,
+  onCatalogSaved,
+}: {
+  website: Website;
+  onCatalogSaved?: () => void;
+}) {
   const [catalogVersion, setCatalogVersion] = useState(0);
   const draft = website.draft;
   const saas = editable(website);
@@ -614,7 +623,13 @@ export function MenuSection({ website, onCatalogSaved }: { website: Website; onC
         title="მენიუ"
         lead="მართეთ მენიუ და ვებსაიტზე მისი ჩვენება."
       />
-      <CatalogEditor venueId={website.venueId} onSaved={() => { setCatalogVersion(v => v + 1); onCatalogSaved?.(); }} />
+      <CatalogEditor
+        venueId={website.venueId}
+        onSaved={() => {
+          setCatalogVersion((v) => v + 1);
+          onCatalogSaved?.();
+        }}
+      />
       {saas && draft && (
         <section className="portal-card portal-card--inline">
           <label>
@@ -648,7 +663,8 @@ export function MenuSection({ website, onCatalogSaved }: { website: Website; onC
         </section>
       )}
       <section className="portal-card">
-        <WebsiteMenuEditor key={catalogVersion}
+        <WebsiteMenuEditor
+          key={catalogVersion}
           venueId={website.venueId}
           disabled={website.busy}
           canUpload={saas}
@@ -661,6 +677,13 @@ export function MenuSection({ website, onCatalogSaved }: { website: Website; onC
 // ---------------------------------------------------------------- photos
 
 export function PhotosSection({ website }: { website: Website }) {
+  if (!website.settings?.mediaUploadAllowed)
+    return (
+      <section className="portal-card">
+        <h2>ფოტოები</h2>
+        <p>ფოტოების ატვირთვა ხელმისაწვდომია აქტიური ვებსაიტის პაკეტით.</p>
+      </section>
+    );
   if (!editable(website))
     return (
       <>
@@ -754,7 +777,9 @@ export function PhotosSection({ website }: { website: Website }) {
           )}
         <GalleryLink
           disabled={draft.gallery.length >= 20}
-          onAdd={(url) => edit({ gallery: [...draft.gallery, { url, alt: "" }] })}
+          onAdd={(url) =>
+            edit({ gallery: [...draft.gallery, { url, alt: "" }] })
+          }
         />
       </section>
     </>

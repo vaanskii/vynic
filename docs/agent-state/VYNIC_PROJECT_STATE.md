@@ -53,8 +53,10 @@ current transport status.
 
 ## Current Phase
 
-- Website-only onboarding accepts a WEBSITE plan without POS/Manager. New such
-  Venues use CLOUD catalog authority; existing Venues remain POS by default.
+- Commercial Access Hardening separates requests, owner approval and explicit
+  product assignment. New Venues start NO_PLAN, with Cloud menu editing off.
+  Website plans need no POS/Manager. Operators can admit empty Website Venues
+  to CLOUD catalog authority; existing operational authority is preserved.
   Admin Plans includes WEBSITE_ONLY (WEBSITE alone); Venue Product offers an
   audited Dashboard menu editing on/off control without acknowledgement.
   First enable checks for no devices, enrollment, catalog, or operational history.
@@ -600,10 +602,15 @@ current transport status.
   Manager consumes effective features; optional POS sections use cached catalog
   keys. Controller and route feature requirements intersect. Existing Manager
   plans/Vankisi retain all previously bundled modules at migration.
-- Manual VenueSubscription is separate from operational Venue status. Trial,
-  active and manually managed past-due grace allow commercial Cloud access;
-  suspended/cancelled deny Manager/Website access. POS critical/offline work and
-  Device sync remain independent. Dates do not auto-expire access.
+- Manual VenueSubscription is separate from operational Venue status. New shells
+  default to NO_PLAN with no commercial access. Only operator-assigned plans plus
+  ACTIVE, manually managed PAST_DUE grace, or an unexpired dated TRIAL grant
+  access. Expired/missing-end trials deny immediately and reconcile to SUSPENDED
+  with one SYSTEM audit, on reads and a 60-second sweep. Only pre-migration
+  missing-subscription Venues carry the server-owned legacy compatibility marker.
+  Suspended/cancelled clients receive no effective module keys. POS critical/offline
+  work, frozen inventory effects, enrolled Device sync and payment settlement stay
+  independent. See `docs/COMMERCIAL_ACCESS_HARDENING.md`.
 - Platform can create/reset/disable real Manager/Admin Staff with atomic audit,
   PIN-vault and durable Edge writes. Platform-managed rows resist stale POS sync;
   the Phase 2 POS handles revision ordering and retains disabled login identities.
@@ -616,20 +623,26 @@ current transport status.
   platform audit records. It can issue a fixed `NOOP` connection test.
 - Device credentials and enrollment codes are one-time values; verifier hashes
   are never returned by normal reads.
-- SaaS Phase 3 adds a limited CustomerAccount owner portal, separate from
-  PlatformUser/Staff/WebsiteUser. Pilot signup is closed until Platform selects
-  an active trial plan and enables it. CustomerAccount is the human identity;
-  OrganizationMembership grants OWNER access to one or more Organizations.
-  Signup creates both; the legacy nullable account Organization field is
-  provenance only. The additive backfill preserves existing pilot ownership.
-  Platform can prepare Organization/Venue/plan/subscription and issue a hashed,
-  expiring, single-use owner invitation without a password. Existing accounts
-  must sign in with the invited email; acceptance selects the prepared Venue.
-  Owners create their own restaurant, Manager access and POS enrollment; email
-  remains explicitly unverified. NONE/SAAS onboarding policy creates a SAAS draft
-  only with effective WEBSITE; CUSTOM is never automatic. The local 3000/5173/5175
-  harness uses vynic.localhost and disposable PostgreSQL. See
-  docs/SAAS_OWNER_INVITATIONS.md for security, rollout and reproducible proof.
+- CustomerAccount owner access is separate from PlatformUser/Staff/WebsiteUser.
+  Public `/signup` collects an access request without creating account, tenant,
+  session, plan or trial; the old signup POST is denied. Platform approval creates
+  a safe Organization/Venue shell and an owner invitation. Acceptance grants OWNER
+  membership and dashboard access, independently of product access. Existing
+  accounts use the same invited-email sign-in and membership flow. Platform can
+  explicitly prepare a chosen TRIAL/ACTIVE plan during assisted onboarding or
+  assign it later. Customers request trials; only operators select plan/end date,
+  extend, suspend or activate them. CustomerAccount.organizationId is provenance
+  only; live OrganizationMembership authorizes all owner operations.
+- Platform manages plan names/descriptions, prices/currency/period, retirement,
+  included features and Website media quotas. Deliberate plan changes snapshot the
+  agreed price; list-price edits and reselecting the same plan preserve agreements.
+  Historical unknown agreed prices remain NULL. Request review and commercial
+  mutations are audited; SUPPORT_READONLY cannot mutate.
+- NO_PLAN owner dashboards expose identity, account settings, subscription and
+  trial requests, plus locked Website/POS/Manager cards. Website/foundation,
+  payment configuration, Manager credentials and POS setup are gated on the
+  server. Internal Manager loginCode is hidden unless MANAGER_APP is effective.
+  Security disabling an existing Manager remains allowed after suspension.
 - POS/Manager use fixed product entrypoints and isolated native build metadata.
   Manager supports Windows/macOS/Android/iOS; POS production is Windows only,
   with macOS debug development via `tool/dev.zsh` shortcuts. Those shortcuts
@@ -644,7 +657,8 @@ current transport status.
   local cache. The owner portal configures printers without a developer token.
   Device names/features refresh every 10 seconds without restart; local menu
   changes refresh the open menu. NON_FISCAL_CLOSE adds a cached capability gate
-  alongside Staff permissions, with existing POS plans preserving prior access.
+  alongside Staff permissions. Plan grants are removed and rejected by the API,
+  resolver and database trigger; only explicit Venue overrides can enable it.
   First successful full sync records Device.firstSyncAt for onboarding readiness.
   See `docs/SAAS_BUILD_RUNTIME_ONBOARDING.md` for commands, rollout and limits.
 - Venue profile shares restaurant name, optional branch name/address/phone/legal ID
@@ -668,7 +682,11 @@ current transport status.
 ## Website State
 
 - Public APIs resolve registered hostnames through `VenueDomain`; production
-  fails closed for unknown or disabled hosts.
+  fails closed for unknown or disabled hosts. Effective WEBSITE is required to
+  claim/activate domains, edit/preview/publish content and serve SaaS or CUSTOM.
+  Losing access stops serving immediately; names are reserved for 30 days from
+  lifecycle reconciliation, then released with audit. Reactivation during grace
+  cancels retention; after release, republishing claims only an available address.
 - `WebsiteUser` remains global; each `WebsiteReservation` is Venue-owned.
 - Payment callbacks derive Venue from the server-owned reservation.
 - The Vankisi site remains `CUSTOM` and `apps/venue-web` is unchanged. W2
@@ -681,8 +699,8 @@ current transport status.
   website presentation layer over the operational menu, owner preview of the
   real frontend, and a sectioned Georgian owner dashboard at `/dashboard`
   (one path per section; `restaurant` is the profile). First-run setup
-  requires only restaurant name, logo and website address (SAAS; name only
-  otherwise); everything else is optional in dedicated sections (profile,
+  requires only restaurant name and website address (entitled SAAS; name only
+  otherwise); logo is optional; everything else is optional in dedicated sections (profile,
   website, menu, photos, hours, payments, POS devices, managers, subscription,
   settings) sharing one website draft with a save bar. The address check is
   advisory; publication still claims the hostname. The menu section is the
@@ -697,8 +715,12 @@ current transport status.
   snapshots keep rendering. Public bootstrap/menu are `private, no-cache` with
   ETag revalidation, preview is `private, no-store` and `noindex`, and only a
   published public page is indexable. Media are HTTPS or deployment-managed
-  `/media/...` references, never inline bytes. Owners upload raster logos and main photos through
-  an ownership-checked multipart endpoint; decoded/resized WebP assets use an
+  `/media/...` references, never inline bytes. Only ACTIVE Website customers upload raster logos/main photos; NO_PLAN and
+  TRIAL uploads are denied. Decoded WebP files have Venue ownership, purpose, byte
+  counts and reference retention; Plan file/byte quotas include unattached uploads.
+  Referenced older local files are adopted before uploads or during hourly cleanup.
+  Unused and crash-orphan files are collected after 24 hours; referenced draft,
+  published and menu media survive. Local storage uses an
   explicit persistent `WEBSITE_MEDIA_DIR` in production and the
   `/media/website-logos/` reverse-proxy route. Uploads do not save or publish
   content. Gallery/about photos remain reference-based; object storage, DNS,
@@ -910,7 +932,12 @@ current transport status.
 
 ## Current Migration Versions
 
-- Prisma migration tip: 20260930120000_cloud_menu_editing.
+- Prisma migration tip: `20261003120200_customer_trial_requests`.
+- Commercial access/media/pricing: `20261003120000_commercial_access_hardening`,
+  `20261003120100_no_plan_default`.
+- Preserved preceding migrations: `20261002120000_remove_non_fiscal_close_from_plans`,
+  `20261001120000_payment_integration_fk_on_update_cascade`,
+  `20260930120000_cloud_menu_editing`.
 - Prior product migration: `20260929120000_website_only_plan`.
 - Prior catalog migration: `20260928120000_restaurant_foundation`.
 - Prior website migrations:

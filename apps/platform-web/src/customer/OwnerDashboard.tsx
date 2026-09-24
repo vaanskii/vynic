@@ -80,12 +80,20 @@ export function OwnerDashboard({
     setMenuOpen(false);
     window.scrollTo?.({ top: 0 });
   };
-  const available = (key: string) =>
-    key === "devices"
-      ? venue.features.includes("POS")
-      : key === "managers"
-        ? venue.features.includes("MANAGER_APP")
-        : true;
+  const available = (key: string) => {
+    const feature = (
+      {
+        devices: "POS",
+        managers: "MANAGER_APP",
+        website: "WEBSITE",
+        menu: "WEBSITE",
+        hours: "WEBSITE",
+        photos: "WEBSITE",
+        payments: "ONLINE_PAYMENTS",
+      } as Record<string, string>
+    )[key];
+    return !feature || venue.features.includes(feature);
+  };
   const current = dashboardSections.find(([key]) => key === section)![1];
 
   const common = {
@@ -186,17 +194,28 @@ export function OwnerDashboard({
             onSaved={refresh}
           />
         )}
-        {section === "website" && (
+        {section === "website" && available(section) && (
           <WebsiteSection
             website={website}
             address={venue.venue.address}
             onEditProfile={() => go("restaurant")}
           />
         )}
-        {section === "menu" && <MenuSection website={website} onCatalogSaved={() => void run(refresh)} />}
-        {section === "photos" && <PhotosSection website={website} />}
-        {section === "hours" && <HoursSection website={website} />}
-        {section === "payments" && <PaymentsSection venue={venue} />}
+        {section === "menu" && available(section) && (
+          <MenuSection
+            website={website}
+            onCatalogSaved={() => void run(refresh)}
+          />
+        )}
+        {section === "photos" && available(section) && (
+          <PhotosSection website={website} />
+        )}
+        {section === "hours" && available(section) && (
+          <HoursSection website={website} />
+        )}
+        {section === "payments" && available(section) && (
+          <PaymentsSection venue={venue} />
+        )}
         {section === "devices" && available(section) && (
           <DevicesSection
             {...common}
@@ -303,7 +322,8 @@ type Step = {
 
 export function nextSteps(venue: VenueStatus, website: Website): Step[] {
   const draft = website.settings?.draft;
-  const saas = website.settings?.mode === "SAAS";
+  const saas =
+    venue.features.includes("WEBSITE") && website.settings?.mode === "SAAS";
   const steps: Step[] = [
     {
       key: "publish",
@@ -364,6 +384,9 @@ export function nextSteps(venue: VenueStatus, website: Website): Step[] {
   return steps.filter(
     (step) =>
       (saas || !step.website) &&
+      (step.key !== "menu" || venue.features.includes("WEBSITE")) &&
+      (step.key !== "photos" ||
+        website.settings?.mediaUploadAllowed === true) &&
       (step.key !== "pos" || venue.features.includes("POS")) &&
       (step.key !== "manager" || venue.features.includes("MANAGER_APP")),
   );
@@ -381,8 +404,30 @@ function Dashboard({
   const settings = website.settings;
   const steps = nextSteps(venue, website);
   const done = steps.filter((s) => s.done).length;
-  const percent = Math.round((done / steps.length) * 100);
+  const percent = steps.length ? Math.round((done / steps.length) * 100) : 0;
   const sub = venue.subscription;
+  if (
+    !venue.features.some((f) => ["WEBSITE", "POS", "MANAGER_APP"].includes(f))
+  )
+    return (
+      <>
+        <SectionHeader
+          title={`გამარჯობა, ${venue.venue.name}`}
+          lead="აქტიური პაკეტი ჯერ არ გაქვთ. თქვენი ანგარიში და რესტორნის ინფორმაცია ხელმისაწვდომია."
+        />
+        <div className="portal-grid">
+          {["ვებსაიტი", "POS", "მენეჯერის აპლიკაცია"].map((name) => (
+            <section key={name} className="portal-card">
+              <h3>{name}</h3>
+              <p>არ არის ჩართული</p>
+              <button onClick={() => go("subscription")}>
+                დაუკავშირდით Vynic-ს
+              </button>
+            </section>
+          ))}
+        </div>
+      </>
+    );
   return (
     <>
       <SectionHeader
@@ -392,7 +437,7 @@ function Dashboard({
       <div className="portal-overview">
         <section className="portal-card portal-card--website">
           <h3>ვებსაიტი</h3>
-          {settings?.mode === "SAAS" ? (
+          {venue.features.includes("WEBSITE") && settings?.mode === "SAAS" ? (
             <>
               <p className="portal-address">{websiteAddress(settings)}</p>
               <WebsiteStatus website={website} />
@@ -410,14 +455,14 @@ function Dashboard({
                 : "ვებსაიტი თქვენს პაკეტში ჯერ არ არის ჩართული."}
             </p>
           ) : (
-            <p role="status">იტვირთება…</p>
+            <p>ვებსაიტი არ არის ჩართული.</p>
           )}
         </section>
         <section className="portal-card">
           <h3>პაკეტი</h3>
           <p className="portal-stat">{venue.plan?.name ?? "—"}</p>
           <p>
-            {subscriptionLabels[sub?.status ?? "TRIAL"] ?? sub?.status}
+            {subscriptionLabels[sub?.status ?? "NO_PLAN"] ?? sub?.status}
             {sub?.trialEndsAt &&
               ` · ${new Date(sub.trialEndsAt).toLocaleDateString("ka-GE")}-მდე`}
           </p>

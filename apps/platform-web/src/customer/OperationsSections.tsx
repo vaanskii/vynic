@@ -1,3 +1,4 @@
+import { TrialRequest } from "./TrialRequest";
 import { useState } from "react";
 import { customerApi } from "./api";
 import { PaymentSettings } from "./PaymentSettings";
@@ -190,9 +191,7 @@ export function DevicesSection({
           {current && (
             <div className="portal-inset">
               <p className="customer-code">{current.code}</p>
-              <p>
-                ვადა: {new Date(current.expiresAt).toLocaleString("ka-GE")}
-              </p>
+              <p>ვადა: {new Date(current.expiresAt).toLocaleString("ka-GE")}</p>
               <button
                 className="secondary"
                 onClick={() => void copy(current.code, onError)}
@@ -246,7 +245,9 @@ export function DevicesSection({
         <section className="portal-card">
           <h3>დაკავშირებული მოწყობილობები</h3>
           {!venue.devices.length && (
-            <p className="portal-hint">ჯერ არცერთი POS არ არის დაკავშირებული.</p>
+            <p className="portal-hint">
+              ჯერ არცერთი POS არ არის დაკავშირებული.
+            </p>
           )}
           {!venue.venue.activeOperationalDeviceId &&
             venue.devices.length > 0 && (
@@ -512,6 +513,8 @@ export function PaymentsSection({ venue }: { venue: VenueStatus }) {
 // ---------------------------------------------------------------- subscription
 
 export const subscriptionLabels: Record<string, string> = {
+  NO_PLAN: "აქტიური პაკეტი არ გაქვთ",
+  LEGACY: "არსებული მომსახურება",
   TRIAL: "საცდელი პერიოდი",
   ACTIVE: "აქტიური",
   PAST_DUE: "გადახდა დაგვიანებულია",
@@ -541,7 +544,7 @@ export function SubscriptionSection({ venue }: { venue: VenueStatus }) {
           <h3>პაკეტი</h3>
           <p className="portal-stat">{venue.plan?.name ?? "—"}</p>
           <p>
-            {subscriptionLabels[sub?.status ?? "TRIAL"] ?? sub?.status}
+            {subscriptionLabels[sub?.status ?? "NO_PLAN"] ?? sub?.status}
             {sub?.trialEndsAt &&
               ` · ბოლო დღე: ${new Date(sub.trialEndsAt).toLocaleDateString("ka-GE")}`}
           </p>
@@ -558,6 +561,7 @@ export function SubscriptionSection({ venue }: { venue: VenueStatus }) {
           </ul>
         </section>
       </div>
+      <TrialRequest key={venue.venue.id} venueId={venue.venue.id} />
     </>
   );
 }

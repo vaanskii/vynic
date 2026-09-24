@@ -33,6 +33,7 @@ export type WebsiteContent = {
   gallery: { url: string; alt: string }[];
 };
 export type WebsiteSettings = {
+  mediaUploadAllowed?: boolean;
   schemaVersion: number;
   themeKeys: string[];
   mode: "NONE" | "CUSTOM" | "SAAS";
@@ -68,8 +69,7 @@ export function normalizeLink(value: string) {
 /** Whether the owner still has to finish the three first-run essentials. */
 export function needsFirstRun(settings?: WebsiteSettings) {
   return (
-    settings?.mode === "SAAS" &&
-    (!settings.revision || !settings.draft.slug || !settings.draft.logoUrl)
+    settings?.mode === "SAAS" && (!settings.revision || !settings.draft.slug)
   );
 }
 

@@ -148,7 +148,7 @@ identity or interrupting already-open operation. See `SAAS_PHASE2_CONTROL_PLANE.
 
 **Decision:** CustomerAccount → OrganizationMembership(OWNER) → Organization → Venue
 is separate from PlatformUser,
-Staff and WebsiteUser. Signup creates new ownership; matching email/name never
+Staff and WebsiteUser. Public requests grant no ownership; matching email/name never
 claims an existing restaurant. Platform-issued invitations attach membership only
 after single-use token validation and owner-created credentials or normal sign-in
 with the exact invited email. The legacy account Organization field is provenance,
@@ -228,8 +228,8 @@ of POS update consent. See `docs/WINDOWS_SETUP.md`.
 
 ## D023 — Catalog authority is explicit and enrollment is not handover
 
-**Decision:** Existing Venues default to POS menu authority; new Website-only
-Venues use CLOUD. One canonical catalog serves all channels. Owner catalog writes
+**Decision:** Existing Venues retain their menu authority. New shells default
+to POS with Cloud editing off; operators admit empty Website Venues to CLOUD. One canonical catalog serves all channels. Owner catalog writes
 and POS snapshots enforce opposite authority under the Venue row lock.
 **Implication:** Dashboard editing can be switched off independently; disabling
 editing retains CLOUD authority so POS snapshots cannot overwrite that catalog.
@@ -237,6 +237,20 @@ Device enrollment never changes menu authority. Bootstrap v1 is
 frozen, Device-bound and staged outside operational Hive; activation stays disabled
 until all local writers, availability/media projections and transition recovery
 are fenced. See `docs/CLOUD_RESTAURANT_FOUNDATION.md`.
+
+## D024 — Commercial access is separate from customer ownership
+
+**Decision:** New customer shells use NO_PLAN. Approval/invitation acceptance grants
+membership, never automatic products. Only operator assignments activate dated
+TRIAL or ACTIVE plans. Missing subscriptions grant compatibility only to rows marked
+by the migration; new missing rows fail closed. Effective features are suppressed
+when commercial access ends, while local POS completion, sync, frozen effects and
+server-owned payment settlement remain independent.
+**Reason:** Account creation, package selection and permission to operate a product
+are distinct decisions; an absent row must not become a new customer's free plan.
+**Implication:** Reuse the shared commercial resolver inside Venue-locked mutations.
+Trials expire server-side; domains have a 30-day reservation grace. Media requires
+ACTIVE Website access and quotas. See `docs/COMMERCIAL_ACCESS_HARDENING.md`.
 
 ## Maintenance
 

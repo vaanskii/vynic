@@ -1,3 +1,4 @@
+import { AccessRequest } from "./AccessRequest";
 import { useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { customerApi, hasCustomerSession } from "./api";
@@ -12,8 +13,8 @@ function returnPath(state: unknown) {
 }
 
 /**
- * Restaurant owner sign-in and sign-up on the Vynic site. Both end on the
- * dashboard, which runs first-time setup when the restaurant is not ready.
+ * Approved owners sign in to their dashboard. Public signup is an access
+ * request only; invitation acceptance and product assignment are separate.
  */
 export function CustomerAuthPage({ mode }: { mode: "login" | "signup" }) {
   const navigate = useNavigate();
@@ -22,6 +23,8 @@ export function CustomerAuthPage({ mode }: { mode: "login" | "signup" }) {
   const [busy, setBusy] = useState(false);
   const signup = mode === "signup";
   const title = signup ? "ანგარიშის შექმნა" : "შესვლა";
+
+  if (signup) return <AccessRequest />;
 
   if (hasCustomerSession())
     return <Navigate to={returnPath(location.state)} replace />;
@@ -104,7 +107,7 @@ export function CustomerAuthPage({ mode }: { mode: "login" | "signup" }) {
         <p className="customer-switch">
           {signup ? "უკვე გაქვთ ანგარიში? " : "ჯერ არ გაქვთ ანგარიში? "}
           <Link to={signup ? "/login" : "/signup"} state={location.state}>
-            {signup ? "შესვლა" : "ანგარიშის შექმნა"}
+            {signup ? "შესვლა" : "გამოსცადე Vynic"}
           </Link>
         </p>
       </section>

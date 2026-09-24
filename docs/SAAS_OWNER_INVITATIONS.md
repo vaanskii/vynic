@@ -14,24 +14,24 @@ authority. POS, Manager, Edge, Vankisi CUSTOM and BOG flows are unchanged.
 
 ## Flows and website default
 
-Self service remains /portal signup → account + Organization + OWNER membership →
-restaurant creation → policy plan + TRIAL. The one-Venue-per-Organization pilot
-restriction remains. Multi-Organization accounts specify a membership-authorized
-organizationId for restaurant creation.
+Public `/signup` stores an access request only; the legacy signup POST returns
+403. Platform reviews the request and approval atomically creates Organization,
+Venue(NO_PLAN) and an owner invitation. No plan, trial or domain is implicit.
+Accepted owners can access account/identity/subscription functions and request a
+trial. Operator approval selects the plan and future end date.
 
-Platform /admin/onboarding separates pilot policy, customer preparation and owner
-invitations. Preparation atomically creates Organization, Venue, plan assignment,
-TRIAL (1–90 days) or ACTIVE subscription, website setup and invitation. It works
-even when self-registration is closed. Platform Venue pages retain feature,
-subscription and website-mode controls before or after acceptance. Existing
-Organizations can also receive invitations.
+Platform `/admin/onboarding` retains assisted preparation and invitation controls.
+Preparation defaults to NO_PLAN; an operator can explicitly choose a plan and
+TRIAL (1–90 days) or ACTIVE. Later assignment/extension/suspension lives on the
+existing Venue commercial page. Existing Organizations can receive invitations.
+See `COMMERCIAL_ACCESS_HARDENING.md` for current commercial policy and proofs.
 
 New invitees choose their own name and 15–128-character password, using Argon2id
 and the current signup policy. Existing accounts must sign in normally and then
 accept with a Customer JWT whose normalized email exactly matches the invitation.
 Email matching alone grants nothing. Acceptance creates no Organization or Venue.
 The portal selects the prepared Venue, offers a selector for multiple restaurants,
-and shows the website editor before operational setup.
+and displays only effectively entitled product sections.
 
 OnboardingPolicy.defaultWebsiteMode uses a separate NONE/SAAS enum, default NONE.
 Only SAAS plus effective WEBSITE creates VenueWebsiteConfig(SAAS, DRAFT), inside
@@ -70,7 +70,7 @@ when an account already exists.
 | Method / path | Behavior |
 | --- | --- |
 | PUT /platform/onboarding/policy | Adds defaultWebsiteMode NONE/SAAS |
-| POST /platform/onboarding/customers | organizationName, name, email, planId, trialDays, subscriptionStatus TRIAL/ACTIVE |
+| POST /platform/onboarding/customers | organizationName, name, email, planId, trialDays, optional planId; subscriptionStatus NO_PLAN (default)/TRIAL/ACTIVE |
 | GET /platform/onboarding/organizations | Organizations and Venue references |
 | GET /platform/onboarding/invitations | Latest 200 records; no secrets |
 | POST /platform/onboarding/invitations | organizationId + email; one-time invitationPath |

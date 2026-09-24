@@ -1,10 +1,13 @@
 # Cloud Restaurant Foundation
 
-Website is independently sellable. An active onboarding plan must include POS
-or WEBSITE; Manager is required only by Manager workflows. New Website-without-POS
-Venues start with CLOUD menu authority and SAAS website configuration. Existing
-Venues default to POS. Assignment/override resolution remains the existing feature
-engine. Adding POS uses the same Venue and never changes menu authority.
+Website is independently sellable. New shells have NO_PLAN, POS menu authority,
+and cloudMenuEditingEnabled=false. Explicit operator Website trial/plan assignment
+plus SAAS setup can enable Cloud menu editing through the existing admission
+checks. WEBSITE and allowed commercial state are required for owner catalog
+reads/writes. POS-authoritative Venues remain protected; assigning a package never
+silently hands operational authority to Cloud. Existing stored authority/editing
+flags are preserved by migration. Adding POS uses the same Venue and never changes
+menu authority. See `COMMERCIAL_ACCESS_HARDENING.md` for access policy.
 
 ## Domain authority matrix
 

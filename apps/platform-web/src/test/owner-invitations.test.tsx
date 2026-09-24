@@ -110,9 +110,7 @@ describe("Owner invitation journey", () => {
   it("provides assisted creation and a copyable one-time link separately from invitation status", async () => {
     const user = userEvent.setup();
     api.platform.mockImplementation(async (path: string) =>
-      path === "customers"
-        ? { invitationPath: "/invite#token=new-token" }
-        : [],
+      path === "customers" ? { invitationPath: "/invite#token=new-token" } : [],
     );
     render(
       <MemoryRouter>
@@ -143,7 +141,7 @@ describe("Owner invitation journey", () => {
       "customers",
       expect.objectContaining({
         planId: "plan",
-        subscriptionStatus: "TRIAL",
+        subscriptionStatus: "NO_PLAN",
         trialDays: 14,
       }),
       "POST",

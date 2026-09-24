@@ -14,7 +14,7 @@ import { ErrorState, LoadingState } from "../../components/State";
 import { StatusBadge } from "../../components/StatusBadge";
 
 const actions: [SubscriptionStatus, string][] = [
-  ["TRIAL", "Start trial"],
+  ["TRIAL", "Start / extend trial"],
   ["ACTIVE", "Activate / Reactivate"],
   ["PAST_DUE", "Mark past due"],
   ["SUSPENDED", "Suspend"],
@@ -32,6 +32,8 @@ export function VenueCommercialTab({
   const { actor } = useAuth();
   const canEdit = actor?.role === "SUPER_ADMIN";
   const client = useQueryClient();
+  const plans = useQuery({ queryKey: ["plans"], queryFn: platformApi.plans });
+  const [planId, setPlanId] = useState("");
   const subscription = useQuery({
     queryKey: ["subscription", venueId],
     queryFn: () => platformApi.subscription(venueId),
@@ -43,9 +45,12 @@ export function VenueCommercialTab({
     refetchInterval: 15000,
     enabled: showAccess,
   });
-  const awaitingDelivery = managers.data?.some((staff) =>
-    staff.delivery && ["PENDING", "CLAIMED"].includes(staff.delivery.status),
-  ) ?? false;
+  const awaitingDelivery =
+    managers.data?.some(
+      (staff) =>
+        staff.delivery &&
+        ["PENDING", "CLAIMED"].includes(staff.delivery.status),
+    ) ?? false;
   const devices = useQuery({
     queryKey: ["devices", venueId],
     queryFn: () => platformApi.devices(venueId),
@@ -80,6 +85,7 @@ export function VenueCommercialTab({
     mutationFn: () =>
       platformApi.setSubscription(venueId, {
         status: nextStatus!,
+        ...(planId ? { planId } : {}),
         note,
         trialEndsAt: trialEndsAt || null,
         currentPeriodEndsAt: currentPeriodEndsAt || null,
@@ -149,7 +155,7 @@ export function VenueCommercialTab({
           title="Subscription"
           description="Controls Manager and Website access. Past due retains access during a manually managed grace period."
         >
-          <StatusBadge value={current?.status ?? "ACTIVE"} />
+          <StatusBadge value={current?.status ?? "NO_PLAN"} />
           <dl>
             <dt>Started</dt>
             <dd>
@@ -170,6 +176,21 @@ export function VenueCommercialTab({
           </dl>
           {canEdit && (
             <div className="platform-form">
+              <Field label="Plan">
+                <Select
+                  value={planId}
+                  onChange={(e) => setPlanId(e.target.value)}
+                >
+                  <option value="">Keep assigned plan</option>
+                  {plans.data
+                    ?.filter((p) => p.status === "ACTIVE")
+                    .map((p) => (
+                      <option value={p.id} key={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                </Select>
+              </Field>
               <Field label="Operator note">
                 <Input
                   value={note}
@@ -229,13 +250,42 @@ export function VenueCommercialTab({
             <div className="platform-callout" role="status">
               <div>
                 <strong>POS access is waiting for the Primary POS.</strong>
-                <p>Connecting another terminal does not make it Primary. If this is a replacement, select it explicitly under Devices after stopping the previous POS and checking the restaurant data.</p>
-                {devices.isPending ? <LoadingState label="Checking Primary POS" />
-                  : devices.error ? <ErrorState error={errorMessage(devices.error)} retry={() => void devices.refetch()} />
-                  : <p>{primary ? `Primary: ${primary.displayName} (${primary.id.slice(0, 8)}). ${primary.lastSeenAt ? formatRelativeTime(primary.lastSeenAt) : "Never connected"}.` : "No Primary POS is selected."}</p>}
+                <p>
+                  Connecting another terminal does not make it Primary. If this
+                  is a replacement, select it explicitly under Devices after
+                  stopping the previous POS and checking the restaurant data.
+                </p>
+                {devices.isPending ? (
+                  <LoadingState label="Checking Primary POS" />
+                ) : devices.error ? (
+                  <ErrorState
+                    error={errorMessage(devices.error)}
+                    retry={() => void devices.refetch()}
+                  />
+                ) : (
+                  <p>
+                    {primary
+                      ? `Primary: ${primary.displayName} (${primary.id.slice(0, 8)}). ${primary.lastSeenAt ? formatRelativeTime(primary.lastSeenAt) : "Never connected"}.`
+                      : "No Primary POS is selected."}
+                  </p>
+                )}
                 <div className="platform-page-header__actions">
-                  <Link className="platform-button platform-button--quiet" to={`/admin/venues/${venueId}/devices`}>Review POS devices</Link>
-                  <Button loading={managers.isFetching || devices.isFetching} loadingLabel="Checking delivery…" onClick={() => { void managers.refetch(); void devices.refetch(); }}>Check delivery</Button>
+                  <Link
+                    className="platform-button platform-button--quiet"
+                    to={`/admin/venues/${venueId}/devices`}
+                  >
+                    Review POS devices
+                  </Link>
+                  <Button
+                    loading={managers.isFetching || devices.isFetching}
+                    loadingLabel="Checking delivery…"
+                    onClick={() => {
+                      void managers.refetch();
+                      void devices.refetch();
+                    }}
+                  >
+                    Check delivery
+                  </Button>
                 </div>
               </div>
             </div>

@@ -1,5 +1,5 @@
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, it, expect, vi } from "vitest";
 const api = vi.hoisted(() => ({ call: vi.fn(), session: vi.fn(() => false) }));
@@ -16,106 +16,87 @@ beforeEach(() => {
 });
 describe("Customer onboarding", () => {
   it.each([360, 768, 1280])(
-    "signup, three-field restaurant setup and manager access at %ipx",
+    "requests access without a password or automatic session at %ipx",
     async (width) => {
       window.innerWidth = width;
-      vi.stubGlobal("scrollTo", vi.fn());
       const user = userEvent.setup();
-      let hasVenue = false;
-      let signedIn = false;
-      api.session.mockImplementation(() => signedIn);
-      api.call.mockImplementation(async (path: string, body?: any) => {
-        if (path === "auth/signup") {
-          signedIn = true;
-          return { access_token: "test" };
-        }
-        if (path === "venues") {
-          hasVenue = true;
-          return { id: "venue-a" };
-        }
-        if (path === "venues/venue-a/website")
-          return { mode: "NONE", entitled: false, revision: 0, draft: {} };
-        if (path === "venues/venue-a/managers") return { id: "m", ...body };
-        if (path !== "portal") throw new Error(`unexpected ${path}`);
-        return {
-          account: { email: "owner@test.invalid" },
-          releaseLinks: {},
-          websiteBaseDomain: "vynic.localhost",
-          venues: hasVenue
-            ? [
-                {
-                  venue: {
-                    id: "venue-a",
-                    name: "My restaurant",
-                    loginCode: "venue-a",
-                  },
-                  features: ["POS", "MANAGER_APP"],
-                  subscription: { status: "TRIAL" },
-                  managers: [],
-                  devices: [],
-                  enrollments: [],
-                  checklist: { restaurant: true },
-                  ready: false,
-                },
-              ]
-            : [],
-        };
-      });
+      api.call.mockImplementation(async (path: string) =>
+        path === "access-requests/plans" ? [] : { received: true },
+      );
       render(
-        <MemoryRouter initialEntries={["/signup"]}>
-          <Routes>
-            <Route path="/signup" element={<CustomerAuthPage mode="signup" />} />
-            <Route path="/dashboard/:section?" element={<CustomerDashboard />} />
-          </Routes>
+        <MemoryRouter>
+          <CustomerAuthPage mode="signup" />
         </MemoryRouter>,
       );
-      await user.type(screen.getByLabelText("სახელი"), "Owner");
+      await user.type(screen.getByLabelText("თქვენი სახელი"), "Owner");
+      await user.type(
+        screen.getByLabelText("რესტორნის / ბიზნესის სახელი"),
+        "Restaurant",
+      );
       await user.type(screen.getByLabelText("ელფოსტა"), "owner@test.invalid");
-      await user.type(
-        screen.getByLabelText("პაროლი"),
-        "a long test passphrase",
-      );
+      await user.type(screen.getByLabelText("ტელეფონი"), "555123456");
+      expect(screen.queryByLabelText("პაროლი")).toBeNull();
       await user.click(
-        screen.getByRole("button", { name: "ანგარიშის შექმნა" }),
+        screen.getByRole("button", { name: "განაცხადის გაგზავნა" }),
       );
-      await user.type(
-        await screen.findByLabelText("რესტორნის სახელი"),
-        "My restaurant",
+      expect(await screen.findByText("განაცხადი მიღებულია")).toBeVisible();
+      expect(api.call).toHaveBeenCalledWith(
+        "access-requests",
+        expect.objectContaining({
+          applicantName: "Owner",
+          businessName: "Restaurant",
+        }),
       );
-      expect(screen.getByText("my-restaurant.vynic.localhost")).toBeVisible();
-      await user.upload(
-        screen.getByLabelText("ლოგოს ატვირთვა"),
-        new File(["png"], "logo.png", { type: "image/png" }),
-      );
-      await user.click(screen.getByRole("button", { name: "გაგრძელება" }));
       expect(
-        await screen.findByRole("heading", { name: "გამარჯობა, My restaurant" }),
-      ).toBeVisible();
-      expect(screen.queryByText("venue-a")).not.toBeInTheDocument();
-      expect(api.call).not.toHaveBeenCalledWith("venues/venue-a/payments/bog");
-      await user.click(screen.getByRole("button", { name: "მენეჯერები" }));
-      await user.click(screen.getByRole("button", { name: "კოდის კოპირება" }));
-      expect(await navigator.clipboard.readText()).toBe("venue-a");
-      expect(screen.queryByLabelText("პაროლი")).not.toBeInTheDocument();
-      await user.type(screen.getByLabelText("მენეჯერის სახელი"), "Manager");
-      await user.type(screen.getByLabelText("მომხმარებლის სახელი"), "manager");
-      await user.type(screen.getByLabelText("PIN"), "482915");
-      await user.click(
-        screen.getByRole("button", { name: "მენეჯერის შექმნა" }),
-      );
-      await waitFor(() =>
-        expect(api.call).toHaveBeenCalledWith(
-          "venues/venue-a/managers",
-          expect.objectContaining({ pin: "482915", role: "MANAGER" }),
+        api.call.mock.calls.some(
+          (c) => c[0] === "auth/signup" || c[0] === "venues",
         ),
-      );
-      expect(screen.getByText(/Vynic Manager · macOS —/)).toBeInTheDocument();
-      await user.click(
-        screen.getByRole("button", { name: "მოწყობილობები / POS" }),
-      );
-      expect(screen.getByText(/Vynic POS · Windows —/)).toBeInTheDocument();
+      ).toBe(false);
     },
   );
+  it.each([
+    "website",
+    "menu",
+    "photos",
+    "hours",
+    "payments",
+    "managers",
+    "devices",
+  ])("NO_PLAN hides paid forms on direct %s routes", async (section) => {
+    api.session.mockReturnValue(true);
+    api.call.mockImplementation(async (path: string) => {
+      if (path !== "portal")
+        throw new Error("Unexpected paid request: " + path);
+      return {
+        account: { email: "owner@test.invalid" },
+        releaseLinks: {},
+        venues: [
+          {
+            venue: { id: "a", name: "Restaurant", loginCode: null },
+            features: [],
+            subscription: { status: "NO_PLAN" },
+            plan: null,
+            managers: [],
+            devices: [],
+            enrollments: [],
+            checklist: {},
+          },
+        ],
+      };
+    });
+    render(
+      <MemoryRouter initialEntries={["/dashboard/" + section]}>
+        <Routes>
+          <Route path="/dashboard/:section" element={<CustomerDashboard />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(
+      await screen.findByText("ამ პროდუქტის დასამატებლად განაახლეთ პაკეტი."),
+    ).toBeVisible();
+    expect(screen.queryByRole("textbox")).toBeNull();
+    expect(api.call.mock.calls.every((c) => c[0] === "portal")).toBe(true);
+  });
   it("saves enabled flags and per-printer ports and reports delivery honestly", async () => {
     const save = vi.fn().mockResolvedValue({});
     const user = userEvent.setup();

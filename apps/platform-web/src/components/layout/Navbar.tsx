@@ -10,7 +10,7 @@ const focusRing =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-vynic-plum";
 
 /**
- * Vynic product navigation. Visitors get sign-in and sign-up; an owner who is
+ * Vynic product navigation. Visitors can request access or sign in; an owner who is
  * already signed in gets a direct way back to their dashboard.
  */
 export function Navbar() {
@@ -28,7 +28,7 @@ export function Navbar() {
   const close = () => setOpen(false);
   const primary = signedIn
     ? { to: "/dashboard", label: copy.nav.dashboard }
-    : { to: "/signup", label: copy.nav.start };
+    : { to: "/signup", label: locale === "ka" ? "გამოსცადე Vynic" : "Try Vynic" };
 
   return (
     <header className="sticky top-0 z-30 border-b border-vynic-border/80 bg-vynic-background/92 backdrop-blur-xl">

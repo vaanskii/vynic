@@ -1,3 +1,4 @@
+import { AccessRequests } from "./AccessRequests";
 import { CustomerOnboarding } from "./CustomerOnboarding";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -30,6 +31,7 @@ export function OnboardingPage() {
       <main>
         <h1>{venueId ? "Restaurant onboarding" : "Customer onboarding"}</h1>
         {error && <p role="alert">{error}</p>}
+        {!venueId && <AccessRequests readonly={readonly} plans={plans} />}
         {venueId ? (
           data && (
             <>
@@ -83,7 +85,7 @@ export function OnboardingPage() {
           )
         ) : (
           <section>
-            <h2>Pilot policy</h2>
+            <h2>Release links and assisted setup</h2>
             <form
               key={data?.updatedAt ?? "new"}
               onSubmit={async (e) => {
@@ -116,56 +118,12 @@ export function OnboardingPage() {
               }}
             >
               <p>
-                Registration stays closed until an active trial plan is
-                selected. Email verification and automatic password recovery are
-                not available in this pilot.
+                Public signup is a request only. Approvals and product
+                assignments are separate operator actions.
               </p>
               <fieldset disabled={readonly || busy}>
-                <label>
-                  <input
-                    name="enabled"
-                    type="checkbox"
-                    defaultChecked={data?.enabled}
-                  />{" "}
-                  Open pilot registration
-                </label>
-                <label>
-                  Trial plan
-                  <select
-                    name="trialPlanId"
-                    defaultValue={data?.trialPlanId ?? ""}
-                  >
-                    <option value="">Choose plan</option>
-                    {plans.map((p) => (
-                      <option value={p.id} key={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Trial days
-                  <input
-                    type="number"
-                    name="trialDays"
-                    min={1}
-                    max={90}
-                    defaultValue={data?.trialDays ?? 14}
-                    required
-                  />
-                </label>
-                <label>
-                  Default website
-                  <select
-                    name="defaultWebsiteMode"
-                    defaultValue={data?.defaultWebsiteMode ?? "NONE"}
-                  >
-                    <option value="NONE">None</option>
-                    <option value="SAAS">
-                      SaaS draft when plan includes Website
-                    </option>
-                  </select>
-                </label>
+                <input type="hidden" name="trialDays" value="14" />
+                <input type="hidden" name="defaultWebsiteMode" value="NONE" />
                 {[
                   "posWindows",
                   "managerWindows",

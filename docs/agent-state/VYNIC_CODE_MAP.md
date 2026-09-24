@@ -271,7 +271,10 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 - Backend module/controllers/services: `apps/backend/src/platform/`; sign-in throttle: `platform-auth.controller.ts` over `../edge/enrollment-rate-limiter.ts` (unit spec beside it)
 - Principal/auth: `apps/backend/src/platform/platform-auth.service.ts`, `apps/backend/src/platform/platform-auth.guard.ts`
-- Entitlements: `apps/backend/src/entitlements/venue-entitlements.service.ts`
+- Entitlements and transaction guards: `apps/backend/src/entitlements/venue-entitlements.service.ts`, `commercial-state.ts`, `subscription-policy.ts`; expiry/domain retention: `commercial-lifecycle.service.ts`.
+- Access/trial requests and review: `apps/backend/src/customer/onboarding-requests.ts`; public form: `apps/platform-web/src/customer/AccessRequest.tsx`; owner trial request: `TrialRequest.tsx`; Platform review: `platform/pages/AccessRequests.tsx`.
+- Plan catalog/pricing and agreement snapshots: `apps/backend/src/platform/plan-catalog.service.ts`, `plan-assignment.ts`; UI: `apps/platform-web/src/platform/pages/PlansPage.tsx`.
+- Commercial milestone policy and reproducible validation: `docs/COMMERCIAL_ACCESS_HARDENING.md`; PostgreSQL proof: `apps/backend/src/customer/commercial-access.integration.spec.ts`; upgrade proof: `apps/backend/scripts/prove-commercial-upgrade.py`.
 - Manual subscriptions, Manager bootstrap/reset/disable and Platform users: `apps/backend/src/platform/platform-commercial.controller.ts`, `platform-commercial.service.ts`
 - Phase 2 policy and rollout: `docs/SAAS_PHASE2_CONTROL_PLANE.md`; proof: `apps/backend/src/platform/saas-phase2.integration.spec.ts`
 - API reference: `docs/PLATFORM_CONTROL_PLANE_API.md`
@@ -290,7 +293,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Backend website module: `apps/backend/src/website/`
 - Host resolution: `apps/backend/src/website/tenancy/`
 - Generic Website Core/bootstrap/publication/preview/caching: `apps/backend/src/website/core/`; menu presentation: `apps/backend/src/website/core/website-menu.service.ts`; owner routes: `apps/backend/src/customer/customer-website.controller.ts`; owner dashboard: entry/header/first-run `apps/platform-web/src/customer/CustomerDashboard.tsx`, `FirstRunSetup.tsx`; sections shell/home `OwnerDashboard.tsx`; shared draft hook `useWebsite.ts`; sections `WebsiteSections.tsx`, `OperationsSections.tsx`; menu tree `WebsiteMenuEditor.tsx`; address check `WebsiteCoreService.addressAvailability`.
-- Owner logo/main-photo uploads: `apps/platform-web/src/customer/WebsiteImageUpload.tsx`; owner endpoint in `customer-website.controller.ts`; raster storage/serving in `apps/backend/src/website/core/website-logo.service.ts` and `website-logo.controller.ts`. Deployment: `docs/WEBSITE_OWNER_EDITOR_UX.md`.
+- Owner logo/main-photo uploads: `apps/platform-web/src/customer/WebsiteImageUpload.tsx`; owner endpoint in `customer-website.controller.ts`; owned/quota-limited raster storage, adoption and cleanup in `apps/backend/src/website/core/website-logo.service.ts`; reference validation in `website-media.ts`; serving in `website-logo.controller.ts`. Deployment: `docs/WEBSITE_OWNER_EDITOR_UX.md`.
 - Generic SaaS frontend: `apps/restaurant-web/` (theme registry `src/theme/registry.ts`, `classic` theme `src/theme/classic/`, metadata `src/seo/documentHead.ts`, transport `src/api/client.ts`).
 - W3 product, media/SEO/caching policy and local runbook: `docs/WEBSITE_PHASE_W3.md`; W2 contract and publication rules: `docs/WEBSITE_PHASE_W2.md`; disposable fixtures/harness: `apps/backend/scripts/seed-website-w3-local.ts`, `apps/backend/scripts/serve-website-w3-local.ts`.
 - Current tenancy reference: `docs/PUBLIC_TENANCY.md`

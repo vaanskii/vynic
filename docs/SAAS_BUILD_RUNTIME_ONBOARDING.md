@@ -1,5 +1,10 @@
 # SaaS Phase 3 — Build identity, runtime configuration and onboarding
 
+> Current acquisition and commercial policy: see [Commercial Access Hardening](COMMERCIAL_ACCESS_HARDENING.md).
+> Public signup now collects requests; approval/invitation acceptance creates NO_PLAN
+> access. Older pilot signup/trial walkthroughs below are historical validation,
+> not the current activation flow. Password-policy WIP is separate from this milestone.
+
 This is the canonical build/configuration/onboarding guide. Phase 1 tenant auth,
 Phase 2 entitlements/subscriptions and offline POS authority remain in place.
 No billing processor, deployment, public release or production database change

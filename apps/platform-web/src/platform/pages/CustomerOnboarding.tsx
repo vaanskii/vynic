@@ -145,10 +145,8 @@ export function CustomerOnboarding({
               </label>
               <label>
                 Plan
-                <select name="planId" required defaultValue="">
-                  <option value="" disabled>
-                    Choose plan
-                  </option>
+                <select name="planId" defaultValue="">
+                  <option value="">No plan</option>
                   {plans
                     .filter(
                       (p) => p.status === undefined || p.status === "ACTIVE",
@@ -163,6 +161,7 @@ export function CustomerOnboarding({
               <label>
                 Subscription
                 <select name="subscriptionStatus">
+                  <option value="NO_PLAN">No plan — account only</option>
                   <option value="TRIAL">Trial</option>
                   <option value="ACTIVE">Active</option>
                 </select>

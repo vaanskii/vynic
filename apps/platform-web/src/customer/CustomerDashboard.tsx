@@ -1,4 +1,10 @@
-import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
+import {
+  Link,
+  Navigate,
+  useLocation,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 import { useEffect, useState } from "react";
 import vynicLogo from "../assets/vynic-logo.png";
 import { LocaleProvider } from "../lib/i18n";
@@ -43,8 +49,10 @@ export function CustomerDashboard() {
   const venue =
     portal?.venues.find((v) => v.venue.id === selectedVenue) ??
     portal?.venues[0];
-  const website = useWebsite(venue?.venue.id);
-  const inSetup = !!portal && (!venue || needsFirstRun(website.settings));
+  const hasWebsite = !!venue?.features.includes("WEBSITE");
+  const website = useWebsite(hasWebsite ? venue?.venue.id : undefined);
+  const inSetup =
+    !!portal && (!venue || (hasWebsite && needsFirstRun(website.settings)));
 
   useEffect(() => {
     if (!signedIn) return;
@@ -90,7 +98,11 @@ export function CustomerDashboard() {
     <LocaleProvider locale="ka" title="მართვის პანელი | Vynic">
       <div className="customer dashboard">
         <header className="dashboard-header">
-          <Link to="/" className="dashboard-brand" aria-label="Vynic-ის მთავარი გვერდი">
+          <Link
+            to="/"
+            className="dashboard-brand"
+            aria-label="Vynic-ის მთავარი გვერდი"
+          >
             <img src={vynicLogo} alt="" />
             <span>Vynic</span>
           </Link>
@@ -118,7 +130,7 @@ export function CustomerDashboard() {
     </LocaleProvider>
   );
 
-  if (!portal || (venue && !website.loaded))
+  if (!portal || (venue && hasWebsite && !website.loaded))
     return shell(<p role="status">იტვირთება…</p>);
   if (inSetup)
     return shell(

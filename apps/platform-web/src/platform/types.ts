@@ -54,6 +54,12 @@ export interface Feature {
 }
 
 export interface Plan {
+  description?: string | null;
+  priceMinor?: number;
+  currency?: string;
+  billingPeriod?: string;
+  mediaQuotaBytes?: number;
+  mediaQuotaFiles?: number;
   id: string;
   key: string;
   name: string;
@@ -62,10 +68,21 @@ export interface Plan {
 }
 
 export interface ProductState {
-  menuManagement?: { authority: "POS" | "CLOUD"; canEnableCloud: boolean; enabled: boolean; reason: string | null };
+  menuManagement?: {
+    authority: "POS" | "CLOUD";
+    canEnableCloud: boolean;
+    enabled: boolean;
+    reason: string | null;
+  };
   commercialAccess?: boolean;
   venueId: string;
   plan: Pick<Plan, "id" | "key" | "name" | "status"> | null;
+  agreedPrice?: {
+    priceMinor: number | null;
+    currency: string | null;
+    billingPeriod: string | null;
+  } | null;
+  planFeatures?: string[];
   planAssignedAt: string | null;
   overrides: Array<{
     featureKey: string;
@@ -156,7 +173,7 @@ export interface AuditEvent {
   targetId: string;
   metadata: Record<string, unknown> | null;
   createdAt: string;
-  actor: { id: string; email: string; displayName: string };
+  actor: { id: string; email: string; displayName: string } | null;
 }
 
 export interface QueuedCommand {
@@ -182,6 +199,7 @@ export interface EdgeCommandStatus {
 }
 
 export type SubscriptionStatus =
+  | "NO_PLAN"
   | "TRIAL"
   | "ACTIVE"
   | "PAST_DUE"

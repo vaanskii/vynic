@@ -20,10 +20,39 @@ type Venue = {
 };
 
 const georgian: Record<string, string> = {
-  ა: "a", ბ: "b", გ: "g", დ: "d", ე: "e", ვ: "v", ზ: "z", თ: "t", ი: "i",
-  კ: "k", ლ: "l", მ: "m", ნ: "n", ო: "o", პ: "p", ჟ: "zh", რ: "r", ს: "s",
-  ტ: "t", უ: "u", ფ: "p", ქ: "k", ღ: "gh", ყ: "q", შ: "sh", ჩ: "ch", ც: "ts",
-  ძ: "dz", წ: "ts", ჭ: "ch", ხ: "kh", ჯ: "j", ჰ: "h",
+  ა: "a",
+  ბ: "b",
+  გ: "g",
+  დ: "d",
+  ე: "e",
+  ვ: "v",
+  ზ: "z",
+  თ: "t",
+  ი: "i",
+  კ: "k",
+  ლ: "l",
+  მ: "m",
+  ნ: "n",
+  ო: "o",
+  პ: "p",
+  ჟ: "zh",
+  რ: "r",
+  ს: "s",
+  ტ: "t",
+  უ: "u",
+  ფ: "p",
+  ქ: "k",
+  ღ: "gh",
+  ყ: "q",
+  შ: "sh",
+  ჩ: "ch",
+  ც: "ts",
+  ძ: "dz",
+  წ: "ts",
+  ჭ: "ch",
+  ხ: "kh",
+  ჯ: "j",
+  ჰ: "h",
 };
 const SLUG = /^[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/;
 
@@ -81,8 +110,6 @@ export function FirstRunSetup({
   const existingLogo = website?.draft.logoUrl ?? "";
   const domain = baseDomain ?? website?.baseDomain;
 
-
-
   const logoSource =
     preview ??
     (existingLogo.startsWith("/media/")
@@ -94,8 +121,7 @@ export function FirstRunSetup({
     setAddressError("");
     const trimmed = name.trim();
     if (!trimmed) return setError("შეიყვანეთ რესტორნის სახელი.");
-    if (!file && !existingLogo) return setError("ატვირთეთ რესტორნის ლოგო.");
-    if (!SLUG.test(slug))
+    if (website?.mode === "SAAS" && !SLUG.test(slug))
       return setAddressError(
         "გამოიყენეთ ლათინური ასოები და ციფრები. სიტყვები შეგიძლიათ გამოყოთ ტირით.",
       );
@@ -103,8 +129,9 @@ export function FirstRunSetup({
     try {
       let venueId = venue?.id;
       if (!venueId) {
-        venueId = (await customerApi<{ id: string }>("venues", { name: trimmed }))
-          .id;
+        venueId = (
+          await customerApi<{ id: string }>("venues", { name: trimmed })
+        ).id;
       } else if (trimmed !== venue!.name) {
         // A profile write replaces every field, so carry the prepared ones.
         const { branchName, address, phone, legalId } = venue!;
@@ -114,13 +141,12 @@ export function FirstRunSetup({
           "PUT",
         );
       }
-      const settings =
-        website ??
-        (await customerApi<WebsiteSettings>(`venues/${venueId}/website`));
-      if (settings.mode === "SAAS") {
-        const address = await customerApi<{ valid: boolean; available: boolean }>(
-          `venues/${venueId}/website/address/${slug}`,
-        );
+      const settings = website;
+      if (settings?.mode === "SAAS") {
+        const address = await customerApi<{
+          valid: boolean;
+          available: boolean;
+        }>(`venues/${venueId}/website/address/${slug}`);
         if (!address.valid || !address.available) {
           setAddressError(
             address.valid
@@ -167,8 +193,8 @@ export function FirstRunSetup({
       <p className="first-run__eyebrow">Vynic · პირველი ნაბიჯი</p>
       <h1 id="first-run-title">შექმენით თქვენი რესტორანი</h1>
       <p className="first-run__lead">
-        სამი რამ და მზად ხართ. დანარჩენს — მენიუს, ფოტოებს, სამუშაო საათებს —
-        მოგვიანებით დაამატებთ.
+        დაამატეთ რესტორნის სახელი. ჩართული პროდუქტების გამართვას შემდეგ
+        გააგრძელებთ.
       </p>
       <form
         onSubmit={(e) => {
@@ -191,85 +217,94 @@ export function FirstRunSetup({
             />
           </label>
 
-          <div className="first-run__field">
-            <span id="first-run-logo">ლოგო</span>
-            <div className="first-run__logo">
-              <div className="first-run__logo-frame" aria-hidden={!logoSource}>
-                {logoSource ? (
-                  <img src={logoSource} alt="რესტორნის ლოგო" />
-                ) : (
-                  <span>{name.trim().slice(0, 1).toUpperCase() || "V"}</span>
-                )}
-              </div>
-              <div>
-                <label className="website-upload-picker">
-                  {logoSource ? "ლოგოს შეცვლა" : "ლოგოს ატვირთვა"}
-                  <input
-                    type="file"
-                    aria-describedby="first-run-logo"
-                    accept="image/png,image/jpeg,image/webp"
-                    onChange={(e) => {
-                      const next = e.currentTarget.files?.[0];
-                      e.currentTarget.value = "";
-                      if (!next) return;
-                      if (
-                        !["image/png", "image/jpeg", "image/webp"].includes(
-                          next.type,
-                        ) ||
-                        next.size > 5 * 1024 * 1024 ||
-                        !next.size
-                      )
-                        return setError(
-                          "აირჩიეთ PNG, JPG ან WebP ფოტო, მაქსიმუმ 5 მბ.",
-                        );
-                      setError("");
-                      if (previewRef.current)
-                        URL.revokeObjectURL(previewRef.current);
-                      previewRef.current = URL.createObjectURL?.(next);
-                      setLogo({ file: next, preview: previewRef.current });
-                    }}
-                  />
-                </label>
-                <small>PNG, JPG ან WebP · მაქსიმუმ 5 მბ</small>
+          {website?.mediaUploadAllowed && (
+            <div className="first-run__field">
+              <span id="first-run-logo">ლოგო · არასავალდებულო</span>
+              <div className="first-run__logo">
+                <div
+                  className="first-run__logo-frame"
+                  aria-hidden={!logoSource}
+                >
+                  {logoSource ? (
+                    <img src={logoSource} alt="რესტორნის ლოგო" />
+                  ) : (
+                    <span>{name.trim().slice(0, 1).toUpperCase() || "V"}</span>
+                  )}
+                </div>
+                <div>
+                  <label className="website-upload-picker">
+                    {logoSource ? "ლოგოს შეცვლა" : "ლოგოს ატვირთვა"}
+                    <input
+                      type="file"
+                      aria-describedby="first-run-logo"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={(e) => {
+                        const next = e.currentTarget.files?.[0];
+                        e.currentTarget.value = "";
+                        if (!next) return;
+                        if (
+                          !["image/png", "image/jpeg", "image/webp"].includes(
+                            next.type,
+                          ) ||
+                          next.size > 5 * 1024 * 1024 ||
+                          !next.size
+                        )
+                          return setError(
+                            "აირჩიეთ PNG, JPG ან WebP ფოტო, მაქსიმუმ 5 მბ.",
+                          );
+                        setError("");
+                        if (previewRef.current)
+                          URL.revokeObjectURL(previewRef.current);
+                        previewRef.current = URL.createObjectURL?.(next);
+                        setLogo({ file: next, preview: previewRef.current });
+                      }}
+                    />
+                  </label>
+                  <small>PNG, JPG ან WebP · მაქსიმუმ 5 მბ</small>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          <div className="first-run__field">
-            <label htmlFor="first-run-address">ვებსაიტის მისამართი</label>
-            <span className="first-run__address">
-              <input
-                id="first-run-address"
-                value={slug}
-                required
-                maxLength={48}
-                inputMode="url"
-                autoCapitalize="none"
-                spellCheck={false}
-                aria-invalid={!!addressError}
-                aria-describedby="first-run-address-hint"
-                onChange={(e) => {
-                  setSlugTouched(true);
-                  setAddressError("");
-                  setSlug(cleanAddress(e.target.value));
-                }}
-              />
-              {domain && <span aria-hidden="true">.{domain}</span>}
-            </span>
-          </div>
-          <p id="first-run-address-hint" className="first-run__hint">
-            {addressError ? (
-              <span role="alert">{addressError}</span>
-            ) : (
-              <>
-                თქვენი საიტი იქნება:{" "}
-                <strong>
-                  {slug || "restaurant"}
-                  {domain ? `.${domain}` : ""}
-                </strong>
-              </>
-            )}
-          </p>
+          {website?.mode === "SAAS" && (
+            <>
+              <div className="first-run__field">
+                <label htmlFor="first-run-address">ვებსაიტის მისამართი</label>
+                <span className="first-run__address">
+                  <input
+                    id="first-run-address"
+                    value={slug}
+                    required
+                    maxLength={48}
+                    inputMode="url"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    aria-invalid={!!addressError}
+                    aria-describedby="first-run-address-hint"
+                    onChange={(e) => {
+                      setSlugTouched(true);
+                      setAddressError("");
+                      setSlug(cleanAddress(e.target.value));
+                    }}
+                  />
+                  {domain && <span aria-hidden="true">.{domain}</span>}
+                </span>
+              </div>
+              <p id="first-run-address-hint" className="first-run__hint">
+                {addressError ? (
+                  <span role="alert">{addressError}</span>
+                ) : (
+                  <>
+                    თქვენი საიტი იქნება:{" "}
+                    <strong>
+                      {slug || "restaurant"}
+                      {domain ? `.${domain}` : ""}
+                    </strong>
+                  </>
+                )}
+              </p>
+            </>
+          )}
 
           {error && (
             <p role="alert" className="customer-error">

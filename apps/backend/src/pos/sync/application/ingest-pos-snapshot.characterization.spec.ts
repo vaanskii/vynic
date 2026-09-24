@@ -123,6 +123,14 @@ const AUTH_CONTEXT = {
 };
 
 function makeHarness(overrides: Record<string, Override> = {}): Harness {
+  overrides = {
+    'venue.findUniqueOrThrow': () => ({
+      id: AUTH_CONTEXT.venueId,
+      menuAuthority: 'POS',
+      catalogRevision: 0,
+    }),
+    ...overrides,
+  };
   const calls: Call[] = [];
   const trace: string[] = [];
   const broadcasts: Broadcast[] = [];
@@ -988,6 +996,7 @@ describe('POST /sync/manager-data — menu sync', () => {
     });
 
     expect(h.trace).toEqual([
+      'db:venue.findUniqueOrThrow',
       'db:menuCategory.findFirst',
       'db:menuCategory.create',
       'db:menuSubcategory.findFirst',

@@ -1,3 +1,6 @@
+import { requireCommercialFeature } from '../entitlements/commercial-state';
+import { CommercialLifecycleService } from '../entitlements/commercial-lifecycle.service';
+import { assignCommercialPlan } from './plan-assignment';
 import type { ControlActor } from './control-actor';
 import {
   BadRequestException,
@@ -91,6 +94,7 @@ export class PlatformCommercialService {
 
   async subscription(venueId: string) {
     await this.db.venue.findUniqueOrThrow({ where: { id: venueId } });
+    await new CommercialLifecycleService(this.db).reconcile(venueId);
     return this.db.venueSubscription.findUnique({ where: { venueId } });
   }
 
@@ -98,6 +102,7 @@ export class PlatformCommercialService {
     actor: PlatformPrincipal,
     venueId: string,
     body: Record<string, unknown>,
+    existingTx?: Prisma.TransactionClient,
   ) {
     const status = requireEnumValue(
       body.status,
@@ -107,7 +112,7 @@ export class PlatformCommercialService {
     const note = body.note
       ? requireText(body.note, 'note', { max: 1000 })
       : null;
-    return this.db.$transaction(async (tx) => {
+    const run = async (tx: Prisma.TransactionClient) => {
       await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
       if (
         !(await tx.venue.findUnique({
@@ -119,6 +124,23 @@ export class PlatformCommercialService {
       const before = await tx.venueSubscription.findUnique({
         where: { venueId },
       });
+      if (body.planId)
+        await assignCommercialPlan(
+          tx,
+          venueId,
+          requireText(body.planId, 'Plan'),
+        );
+      const assignment = await tx.venuePlanAssignment.findUnique({
+        where: { venueId },
+      });
+      if (['TRIAL', 'ACTIVE', 'PAST_DUE'].includes(status) && !assignment)
+        throw new BadRequestException('Assign a plan before activating access');
+      const trialEndsAt =
+        body.trialEndsAt !== undefined
+          ? date(body.trialEndsAt)
+          : before?.trialEndsAt;
+      if (status === 'TRIAL' && (!trialEndsAt || trialEndsAt <= new Date()))
+        throw new BadRequestException('Trial requires a future end date');
       const row = await tx.venueSubscription.upsert({
         where: { venueId },
         create: {
@@ -147,6 +169,7 @@ export class PlatformCommercialService {
         },
       });
       await audit(tx, actor, venueId, 'venue.subscription_changed', {
+        planId: assignment?.planId ?? null,
         from: before?.status ?? null,
         to: status,
         note,
@@ -154,7 +177,11 @@ export class PlatformCommercialService {
         currentPeriodEndsAt: row.currentPeriodEndsAt?.toISOString() ?? null,
       });
       return row;
-    });
+    };
+    if (existingTx) return run(existingTx);
+    const result = await this.db.$transaction(run);
+    await new CommercialLifecycleService(this.db).reconcile(venueId);
+    return result;
   }
 
   async managers(venueId: string) {
@@ -223,11 +250,18 @@ export class PlatformCommercialService {
             where: {
               id: actor.customerAccountId,
               isActive: true,
-              organization: { venues: { some: { id: venueId } } },
+              memberships: {
+                some: {
+                  role: 'OWNER',
+                  organization: { venues: { some: { id: venueId } } },
+                },
+              },
             },
           }))
         )
           throw new NotFoundException('Venue not found');
+        if (action !== 'disable')
+          await requireCommercialFeature(tx, venueId, 'MANAGER_APP');
         const idempotencyKey = `platform-staff:${requestId}`;
         const previous = await tx.edgeCommand.findUnique({
           where: { venueId_idempotencyKey: { venueId, idempotencyKey } },

@@ -1,3 +1,4 @@
+import { CommercialLifecycleService } from './commercial-lifecycle.service';
 import { CommercialProjectionInterceptor } from './commercial-projection.interceptor';
 import { Module } from '@nestjs/common';
 import { FeatureGuard } from './feature.guard';
@@ -9,6 +10,7 @@ import { VenueEntitlementsService } from './venue-entitlements.service';
  */
 @Module({
   providers: [
+    CommercialLifecycleService,
     CommercialProjectionInterceptor,
     VenueEntitlementsService,
     FeatureGuard,

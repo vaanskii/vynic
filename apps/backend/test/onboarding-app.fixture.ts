@@ -1,3 +1,10 @@
+import {
+  OnboardingRequestsService,
+  PublicAccessRequestsController,
+  PlatformAccessRequestsController,
+  CustomerTrialRequestsController,
+} from '../src/customer/onboarding-requests';
+import { PlanCatalogService } from '../src/platform/plan-catalog.service';
 import { RestaurantFoundationService } from '../src/customer/restaurant-foundation.service';
 import {
   CustomerCatalogController,
@@ -53,8 +60,9 @@ import { WebsitePreviewTokens } from '../src/website/core/website-preview';
 import { WebsiteTenantService } from '../src/website/tenancy/website-tenant.service';
 
 // Explicit dependency graph: real services, no operational workers, LAN calls or bank clients.
-export async function onboardingApp(db: PrismaService) {
+export async function onboardingApp(db: PrismaService, corsOrigin?: string) {
   const config = new ConfigService({
+    WEBSITE_MEDIA_DIR: '/tmp/vynic-foundation-test-media',
     PLATFORM_JWT_SECRET: process.env.JWT_SECRET,
     SAAS_WEBSITE_BASE_DOMAIN: 'vynic.localhost',
     SAAS_WEBSITE_PREVIEW_ORIGIN: 'http://preview.vynic.localhost:5175',
@@ -62,6 +70,9 @@ export async function onboardingApp(db: PrismaService) {
   });
   const module = await Test.createTestingModule({
     controllers: [
+      PublicAccessRequestsController,
+      PlatformAccessRequestsController,
+      CustomerTrialRequestsController,
       CustomerCatalogController,
       DeviceFoundationController,
       DeviceEnrollmentController,
@@ -82,6 +93,8 @@ export async function onboardingApp(db: PrismaService) {
       PlatformPaymentsController,
     ],
     providers: [
+      OnboardingRequestsService,
+      PlanCatalogService,
       RestaurantFoundationService,
       WebsiteLogoService,
       { provide: PrismaService, useValue: db },
@@ -110,6 +123,7 @@ export async function onboardingApp(db: PrismaService) {
     ],
   }).compile();
   const app = module.createNestApplication({ logger: false });
+  if (corsOrigin) app.enableCors({ origin: corsOrigin });
   await app.init();
   return app;
 }

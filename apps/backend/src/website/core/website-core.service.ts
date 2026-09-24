@@ -1,3 +1,5 @@
+import { validateMediaReferences } from './website-media';
+import { requireCommercialFeature } from '../../entitlements/commercial-state';
 import {
   ConflictException,
   ForbiddenException,
@@ -56,6 +58,7 @@ export class WebsiteCoreService {
     });
   }
   async settings(venueId: string) {
+    await requireCommercialFeature(this.db, venueId, 'WEBSITE');
     const [row, access, domains] = await Promise.all([
       this.db.venueWebsiteConfig.findUnique({ where: { venueId } }),
       this.access.websiteAccess(venueId),
@@ -65,6 +68,9 @@ export class WebsiteCoreService {
       }),
     ]);
     return {
+      mediaUploadAllowed:
+        (await this.db.venueSubscription.findUnique({ where: { venueId } }))
+          ?.status === 'ACTIVE',
       schemaVersion: WEBSITE_SCHEMA_VERSION,
       themeKeys: [...websiteThemeKeys],
       mode: access.configuredMode,
@@ -116,6 +122,8 @@ export class WebsiteCoreService {
     venueId: string,
     expected: number,
   ) {
+    await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
+    await requireCommercialFeature(tx, venueId, 'WEBSITE');
     // Also serializes with Platform mode changes.
     await tx.$queryRaw`SELECT "venueId" FROM "pos"."VenueWebsiteConfig" WHERE "venueId" = ${venueId} FOR UPDATE`;
     const row = this.requireSaas(
@@ -128,9 +136,14 @@ export class WebsiteCoreService {
     return row;
   }
   async save(venueId: string, body: unknown, customerAccountId: string) {
+    await requireCommercialFeature(this.db, venueId, 'WEBSITE');
     const input = websiteMutation(body, true);
     await this.db.$transaction(async (tx) => {
       const row = await this.locked(tx, venueId, input.expectedRevision);
+      await validateMediaReferences(tx, venueId, input.content, [
+        row.draft,
+        row.published,
+      ]);
       await tx.venueWebsiteConfig.update({
         where: { venueId },
         data: {
@@ -156,6 +169,7 @@ export class WebsiteCoreService {
    * flattering approximation of what Publish will actually produce.
    */
   async preview(venueId: string) {
+    await requireCommercialFeature(this.db, venueId, 'WEBSITE');
     const row = this.requireSaas(
       await this.db.venueWebsiteConfig.findUnique({ where: { venueId } }),
     );
@@ -179,6 +193,7 @@ export class WebsiteCoreService {
 
   /** The menu belonging to a draft preview, hidden items already removed. */
   async previewMenu(venueId: string) {
+    await requireCommercialFeature(this.db, venueId, 'WEBSITE');
     const row = this.requireSaas(
       await this.db.venueWebsiteConfig.findUnique({ where: { venueId } }),
     );
@@ -199,7 +214,6 @@ export class WebsiteCoreService {
           throw new ForbiddenException('Restaurant is inactive');
         if (!row.draft || !row.revision)
           throw new ConflictException('Save a draft before publishing');
-        if (row.publishedRevision === row.revision) return;
         const content = websiteContent(readWebsiteContent(row.draft));
         if (!content.heroTitle)
           throw new ConflictException('A hero title is required to publish');
@@ -210,6 +224,7 @@ export class WebsiteCoreService {
           (domain.venueId !== venueId || domain.status !== 'ACTIVE')
         )
           throw new ConflictException('Website address is unavailable');
+        if (domain && row.publishedRevision === row.revision) return;
         if (!domain)
           await tx.venueDomain.create({ data: { venueId, hostname } });
         await tx.venueWebsiteConfig.update({

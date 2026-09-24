@@ -1,3 +1,9 @@
+import {
+  OnboardingRequestsService,
+  PublicAccessRequestsController,
+  PlatformAccessRequestsController,
+  CustomerTrialRequestsController,
+} from './onboarding-requests';
 import { RestaurantFoundationService } from './restaurant-foundation.service';
 import {
   CustomerCatalogController,
@@ -44,6 +50,7 @@ import {
     EntitlementsModule,
   ],
   providers: [
+    OnboardingRequestsService,
     RestaurantFoundationService,
     OwnerInvitationsService,
     CustomerAuth,
@@ -53,6 +60,9 @@ import {
     EdgeDeviceGuard,
   ],
   controllers: [
+    PublicAccessRequestsController,
+    PlatformAccessRequestsController,
+    CustomerTrialRequestsController,
     CustomerCatalogController,
     DeviceFoundationController,
     PlatformOwnerInvitationsController,

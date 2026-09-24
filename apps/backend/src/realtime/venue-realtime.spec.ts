@@ -30,6 +30,7 @@ describe('Venue realtime boundaries', () => {
       venueSubscription: { findUnique: jest.fn(async () => null) },
       venue: {
         findUnique: jest.fn(async () => ({
+          legacyCommercialAccess: true,
           planAssignment: {
             plan: { features: [{ feature: { key: 'MANAGER_APP' } }] },
           },

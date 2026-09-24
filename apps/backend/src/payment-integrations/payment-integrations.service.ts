@@ -1,3 +1,4 @@
+import { requireCommercialFeature } from '../entitlements/commercial-state';
 import {
   BadRequestException,
   ForbiddenException,
@@ -174,9 +175,13 @@ export class PaymentIntegrationsService {
     actor: PaymentActor,
     importOnly = false,
   ) {
+    if (!importOnly)
+      await requireCommercialFeature(this.db, venueId, 'ONLINE_PAYMENTS');
     const config = await this.validate(venueId, body);
     await this.db.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id" = ${venueId} FOR UPDATE`;
+      if (!importOnly)
+        await requireCommercialFeature(tx, venueId, 'ONLINE_PAYMENTS');
       const previous = await tx.paymentIntegration.findFirst({
         where: { venueId, provider: 'BOG' },
         orderBy: { revision: 'desc' },

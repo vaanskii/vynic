@@ -52,7 +52,7 @@ describe('JwtStrategy', () => {
 
     expect(user.username).toBe('real-manager');
     expect(user.role).toBe('MANAGER');
-    expect(resolveByStaffId).toHaveBeenCalledWith('staff-1');
+    expect(resolveByStaffId).toHaveBeenCalledWith('staff-1', true);
   });
 
   it('rejects a token whose staff member no longer resolves', async () => {

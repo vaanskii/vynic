@@ -1,3 +1,4 @@
+import { commercialState } from '../entitlements/commercial-state';
 import { Prisma, OnboardingWebsiteMode } from '@prisma/client';
 import { resolveEffectiveFeatures } from '../entitlements/effective-features';
 
@@ -7,7 +8,11 @@ export async function initializeWebsite(
   venueId: string,
   mode: OnboardingWebsiteMode,
 ) {
-  if (mode !== 'SAAS') return;
+  if (
+    mode !== 'SAAS' ||
+    !(await commercialState(tx, venueId)).features.includes('WEBSITE')
+  )
+    return;
   const venue = await tx.venue.findUniqueOrThrow({
     where: { id: venueId },
     include: {

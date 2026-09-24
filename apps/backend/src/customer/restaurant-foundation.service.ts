@@ -1,3 +1,4 @@
+import { requireCommercialFeature } from '../entitlements/commercial-state';
 import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
 import {
   BadRequestException,
@@ -51,6 +52,7 @@ export class RestaurantFoundationService {
   ) {}
   async read(actor: CustomerPrincipal, venueId: string) {
     const venue = await this.owners.venue(actor, venueId);
+    await requireCommercialFeature(this.db, venueId, 'WEBSITE');
     return {
       authority: venue.menuAuthority,
       editingEnabled: venue.cloudMenuEditingEnabled,
@@ -78,6 +80,7 @@ export class RestaurantFoundationService {
       throw new BadRequestException('Catalog id must be a UUID');
     return this.db.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
+      await requireCommercialFeature(tx, venueId, 'WEBSITE');
       const venue = await tx.venue.findUniqueOrThrow({
         where: { id: venueId },
       });

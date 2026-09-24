@@ -39,7 +39,11 @@ export class AuthService {
     if (
       !venue ||
       venue.status !== 'ACTIVE' ||
-      !commercialAccessAllowed(venue.subscription?.status) ||
+      !commercialAccessAllowed(
+        venue.subscription?.status,
+        venue.subscription?.trialEndsAt,
+        venue.legacyCommercialAccess,
+      ) ||
       !(await new VenueEntitlementsService(this.prisma).hasFeature(
         venue.id,
         FeatureKeys.MANAGER_APP,
@@ -97,7 +101,15 @@ export class AuthService {
     if (
       !venue ||
       venue.status !== 'ACTIVE' ||
-      !commercialAccessAllowed(venue.subscription?.status)
+      !commercialAccessAllowed(
+        venue.subscription?.status,
+        venue.subscription?.trialEndsAt,
+        venue.legacyCommercialAccess,
+      ) ||
+      !(await new VenueEntitlementsService(this.prisma).hasFeature(
+        venue.id,
+        FeatureKeys.MANAGER_APP,
+      ))
     )
       throw new UnauthorizedException('Invalid credentials');
     const candidates = await this.prisma.staff.findMany({

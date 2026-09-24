@@ -1,3 +1,4 @@
+import { PlanCatalogService } from './plan-catalog.service';
 import {
   EdgeFoundationController,
   EdgeFoundationService,
@@ -43,6 +44,7 @@ import { PlatformVenuesController } from './platform-venues.controller';
     PlatformCatalogController,
   ],
   providers: [
+    PlanCatalogService,
     EdgeFoundationService,
     PlatformCommercialService,
     PlatformAuthService,

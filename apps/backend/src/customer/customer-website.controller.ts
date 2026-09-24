@@ -58,7 +58,7 @@ export class CustomerWebsiteController {
       throw new ForbiddenException(
         'Generic website editing requires SAAS mode',
       );
-    return this.logos.upload(file);
+    return this.logos.upload(id, file);
   }
 
   @Post('hero')
@@ -78,7 +78,7 @@ export class CustomerWebsiteController {
       throw new ForbiddenException(
         'Generic website editing requires SAAS mode',
       );
-    return this.logos.upload(file, 'hero');
+    return this.logos.upload(id, file, 'hero');
   }
 
   @Get()

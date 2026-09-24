@@ -19,6 +19,7 @@ function makeService(fixture: VenueProductFixture | null) {
         fixture === null
           ? null
           : {
+              legacyCommercialAccess: true,
               planAssignment: fixture.planFeatures
                 ? {
                     plan: {

@@ -1,3 +1,6 @@
+import { requireCommercialFeature } from '../entitlements/commercial-state';
+import { assignCommercialPlan } from './plan-assignment';
+import { CommercialLifecycleService } from '../entitlements/commercial-lifecycle.service';
 import { cloudMenuAdmission } from './cloud-menu-admission';
 import {
   BadRequestException,
@@ -26,6 +29,7 @@ const DOMAIN_FIELDS = {
   venueId: true,
   hostname: true,
   status: true,
+  releaseAfter: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -54,6 +58,12 @@ export class PlatformVenueConfigService {
         id: true,
         key: true,
         name: true,
+        description: true,
+        priceMinor: true,
+        currency: true,
+        billingPeriod: true,
+        mediaQuotaBytes: true,
+        mediaQuotaFiles: true,
         status: true,
         features: {
           select: { feature: { select: { key: true, name: true } } },
@@ -65,25 +75,65 @@ export class PlatformVenueConfigService {
   async ensureWebsitePlan(actor: PlatformPrincipal) {
     await this.prisma.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('vynic-website-only-plan'))`;
-      const existing = await tx.plan.findUnique({ where: { key: 'WEBSITE_ONLY' } });
+      const existing = await tx.plan.findUnique({
+        where: { key: 'WEBSITE_ONLY' },
+      });
       if (existing) return;
-      const feature = await tx.feature.findUniqueOrThrow({ where: { key: 'WEBSITE' } });
-      const plan = await tx.plan.create({ data: { key: 'WEBSITE_ONLY', name: 'Website only', features: { create: { featureId: feature.id } } } });
-      await tx.platformAuditEvent.create({ data: { platformUserId: actor.platformUserId, action: 'plan.website_only_created', targetType: 'Plan', targetId: plan.id } });
+      const feature = await tx.feature.findUniqueOrThrow({
+        where: { key: 'WEBSITE' },
+      });
+      const plan = await tx.plan.create({
+        data: {
+          key: 'WEBSITE_ONLY',
+          name: 'Website only',
+          features: { create: { featureId: feature.id } },
+        },
+      });
+      await tx.platformAuditEvent.create({
+        data: {
+          platformUserId: actor.platformUserId,
+          action: 'plan.website_only_created',
+          targetType: 'Plan',
+          targetId: plan.id,
+        },
+      });
     });
     return this.listPlans();
   }
 
-  async enableCloudMenu(actor: PlatformPrincipal, venueId: string, enabled: unknown) {
+  async enableCloudMenu(
+    actor: PlatformPrincipal,
+    venueId: string,
+    enabled: unknown,
+  ) {
     await this.directory.requireVenue(venueId);
-    if (typeof enabled !== 'boolean') throw new BadRequestException('enabled must be a boolean');
+    if (typeof enabled !== 'boolean')
+      throw new BadRequestException('enabled must be a boolean');
     await this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
+      if (enabled) await requireCommercialFeature(tx, venueId, 'WEBSITE');
       const admission = await cloudMenuAdmission(tx, venueId);
       if (admission.enabled === enabled) return;
-      if (enabled && !admission.canEnableCloud) throw new ConflictException(admission.reason!);
-      await tx.venue.update({ where: { id: venueId }, data: { ...(enabled ? { menuAuthority: 'CLOUD' as const } : {}), cloudMenuEditingEnabled: enabled } });
-      await tx.platformAuditEvent.create({ data: { platformUserId: actor.platformUserId, action: enabled ? 'venue.cloud_menu_enabled' : 'venue.cloud_menu_disabled', targetType: 'Venue', targetId: venueId, metadata: { from: admission.authority, enabled } } });
+      if (enabled && !admission.canEnableCloud)
+        throw new ConflictException(admission.reason!);
+      await tx.venue.update({
+        where: { id: venueId },
+        data: {
+          ...(enabled ? { menuAuthority: 'CLOUD' as const } : {}),
+          cloudMenuEditingEnabled: enabled,
+        },
+      });
+      await tx.platformAuditEvent.create({
+        data: {
+          platformUserId: actor.platformUserId,
+          action: enabled
+            ? 'venue.cloud_menu_enabled'
+            : 'venue.cloud_menu_disabled',
+          targetType: 'Venue',
+          targetId: venueId,
+          metadata: { from: admission.authority, enabled },
+        },
+      });
     });
     return this.readProduct(venueId);
   }
@@ -105,6 +155,9 @@ export class PlatformVenueConfigService {
           where: { venueId },
           select: {
             assignedAt: true,
+            agreedPriceMinor: true,
+            agreedCurrency: true,
+            agreedBillingPeriod: true,
             plan: { select: { id: true, key: true, name: true, status: true } },
           },
         }),
@@ -127,6 +180,14 @@ export class PlatformVenueConfigService {
       menuManagement: await cloudMenuAdmission(this.prisma, venueId),
       plan: assignment?.plan ?? null,
       planAssignedAt: assignment?.assignedAt ?? null,
+      agreedPrice: assignment
+        ? {
+            priceMinor: assignment.agreedPriceMinor,
+            currency: assignment.agreedCurrency,
+            billingPeriod: assignment.agreedBillingPeriod,
+          }
+        : null,
+      planFeatures: await this.entitlements.planFeatures(venueId),
       overrides: overrides.map((row) => ({
         featureKey: row.feature.key,
         featureName: row.feature.name,
@@ -153,18 +214,20 @@ export class PlatformVenueConfigService {
       select: { plan: { select: { key: true } } },
     });
 
-    await this.prisma.venuePlanAssignment.upsert({
-      where: { venueId },
-      create: { venueId, planId: plan.id },
-      update: { planId: plan.id, assignedAt: new Date() },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
+      await assignCommercialPlan(tx, venueId, planId);
+      await tx.platformAuditEvent.create({
+        data: {
+          platformUserId: actor.platformUserId,
+          action: PlatformAuditAction.PLAN_ASSIGNED,
+          targetType: 'Venue',
+          targetId: venueId,
+          metadata: { from: previous?.plan.key ?? null, to: plan.key },
+        },
+      });
     });
-
-    await this.audit.record(
-      actor,
-      PlatformAuditAction.PLAN_ASSIGNED,
-      { type: 'Venue', id: venueId },
-      { from: previous?.plan.key ?? null, to: plan.key },
-    );
+    await new CommercialLifecycleService(this.prisma).reconcile(venueId);
     return this.readProduct(venueId);
   }
 
@@ -304,23 +367,31 @@ export class PlatformVenueConfigService {
     rawHostname: string,
   ) {
     await this.directory.requireVenue(venueId);
+    await requireCommercialFeature(this.prisma, venueId, 'WEBSITE');
     const hostname = normalizeHostname(rawHostname);
     if (!hostname) {
       throw new BadRequestException('hostname is not a valid host');
     }
 
     try {
-      const domain = await this.prisma.venueDomain.create({
-        data: { venueId, hostname },
-        select: DOMAIN_FIELDS,
+      return await this.prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
+        await requireCommercialFeature(tx, venueId, 'WEBSITE');
+        const domain = await tx.venueDomain.create({
+          data: { venueId, hostname },
+          select: DOMAIN_FIELDS,
+        });
+        await tx.platformAuditEvent.create({
+          data: {
+            platformUserId: actor.platformUserId,
+            action: PlatformAuditAction.DOMAIN_REGISTERED,
+            targetType: 'Venue',
+            targetId: venueId,
+            metadata: { hostname, domainId: domain.id },
+          },
+        });
+        return domain;
       });
-      await this.audit.record(
-        actor,
-        PlatformAuditAction.DOMAIN_REGISTERED,
-        { type: 'Venue', id: venueId },
-        { hostname: domain.hostname, domainId: domain.id },
-      );
-      return domain;
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -342,19 +413,35 @@ export class PlatformVenueConfigService {
     domainId: string,
     status: VenueDomainStatus,
   ) {
-    const existing = await this.requireDomain(venueId, domainId);
-    const domain = await this.prisma.venueDomain.update({
-      where: { id: domainId },
-      data: { status },
-      select: DOMAIN_FIELDS,
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
+      if (status === 'ACTIVE')
+        await requireCommercialFeature(tx, venueId, 'WEBSITE');
+      const existing = await tx.venueDomain.findFirst({
+        where: { id: domainId, venueId },
+      });
+      if (!existing)
+        throw new NotFoundException('Domain not found for this venue');
+      const domain = await tx.venueDomain.update({
+        where: { id: domainId },
+        data: { status },
+        select: DOMAIN_FIELDS,
+      });
+      await tx.platformAuditEvent.create({
+        data: {
+          platformUserId: actor.platformUserId,
+          action: PlatformAuditAction.DOMAIN_STATUS_CHANGED,
+          targetType: 'Venue',
+          targetId: venueId,
+          metadata: {
+            hostname: domain.hostname,
+            from: existing.status,
+            to: status,
+          },
+        },
+      });
+      return domain;
     });
-    await this.audit.record(
-      actor,
-      PlatformAuditAction.DOMAIN_STATUS_CHANGED,
-      { type: 'Venue', id: venueId },
-      { hostname: domain.hostname, from: existing.status, to: domain.status },
-    );
-    return domain;
   }
 
   /** Releases the hostname so it can be registered again, by anyone. */

@@ -44,7 +44,8 @@ export class ManagerTenantService {
             id: true,
             organizationId: true,
             status: true,
-            subscription: { select: { status: true } },
+            legacyCommercialAccess: true,
+            subscription: { select: { status: true, trialEndsAt: true } },
           },
         },
       },
@@ -53,7 +54,11 @@ export class ManagerTenantService {
     if (
       !staff ||
       !staff.isActive ||
-      !commercialAccessAllowed(staff.venue.subscription?.status) ||
+      !commercialAccessAllowed(
+        staff.venue.subscription?.status,
+        staff.venue.subscription?.trialEndsAt,
+        staff.venue.legacyCommercialAccess,
+      ) ||
       !isMobileAppStaffRole(staff.role) ||
       staff.venue.status !== VenueStatus.ACTIVE
     ) {

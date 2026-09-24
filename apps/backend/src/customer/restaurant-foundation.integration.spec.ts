@@ -1,3 +1,5 @@
+import { OwnerInvitationsService } from './owner-invitations.service';
+import { PlatformVenueConfigService } from '../platform/platform-venue-config.service';
 import 'reflect-metadata';
 jest.mock('uuid', () => ({ v4: () => require('node:crypto').randomUUID() }));
 import { randomUUID } from 'node:crypto';
@@ -31,8 +33,12 @@ const url = process.env.FOUNDATION_TEST_DATABASE_URL;
       const parsed = new URL(url!);
       if (
         parsed.hostname !== '127.0.0.1' ||
-        parsed.port !== '55439' ||
-        parsed.pathname !== '/vynic_foundation_phase3_disposable'
+        !(
+          (parsed.port === '55439' &&
+            parsed.pathname === '/vynic_foundation_phase3_disposable') ||
+          (parsed.port === '55437' &&
+            parsed.pathname === '/vynic_commercial_test')
+        )
       )
         throw Error('Disposable foundation DB only');
       process.env.JWT_SECRET = 'foundation-test-signing-key';
@@ -66,22 +72,39 @@ const url = process.env.FOUNDATION_TEST_DATABASE_URL;
         },
       });
       app = await onboardingApp(db);
+      const admin = await db.platformUser.create({
+        data: {
+          email: `foundation-admin-${tag}@test.invalid`,
+          displayName: 'Operator',
+          passwordHash: 'unused',
+        },
+      });
+      const actor = { platformUserId: admin.id, role: 'SUPER_ADMIN' } as any;
       for (const label of ['a', 'b']) {
-        const signup = await http()
-          .post('/customer/auth/signup')
-          .send({
+        const prepared = await app
+          .get(OwnerInvitationsService)
+          .provision(actor, {
+            organizationName: `Foundation ${label}`,
+            name: `Foundation ${label}`,
             email: `${label}-${tag}@foundation.test.invalid`,
+            planId: plan.id,
+            subscriptionStatus: 'ACTIVE',
+          });
+        const accepted = await http()
+          .post('/customer/invitations/register')
+          .send({
+            token: prepared.invitationPath.split('=')[1],
             displayName: `Owner ${label}`,
             password: 'Foundation test password!',
           })
           .expect(201);
-        const token = signup.body.access_token;
-        const venue = await http()
-          .post('/customer/venues')
-          .set('Authorization', `Bearer ${token}`)
-          .send({ name: `Foundation ${label}` })
-          .expect(201);
-        owners.push({ token, id: venue.body.id });
+        await app
+          .get(PlatformVenueConfigService)
+          .enableCloudMenu(actor, prepared.venue.id, true);
+        owners.push({
+          token: accepted.body.access_token,
+          id: prepared.venue.id,
+        });
       }
     });
     afterAll(async () => {
@@ -89,13 +112,27 @@ const url = process.env.FOUNDATION_TEST_DATABASE_URL;
       await db?.$disconnect();
     });
     it('rejects owner catalog writes while Admin has disabled editing', async () => {
-      await db.venue.update({ where: { id: owners[0].id }, data: { cloudMenuEditingEnabled: false } });
+      await db.venue.update({
+        where: { id: owners[0].id },
+        data: { cloudMenuEditingEnabled: false },
+      });
       try {
         const read = await http().get(path('catalog')).set(auth()).expect(200);
         expect(read.body.editingEnabled).toBe(false);
-        await http().put(path('catalog/category')).set(auth()).send({ expectedRevision: read.body.revision, nameKa: 'დაბლოკილი', nameEn: 'Blocked' }).expect(409);
+        await http()
+          .put(path('catalog/category'))
+          .set(auth())
+          .send({
+            expectedRevision: read.body.revision,
+            nameKa: 'დაბლოკილი',
+            nameEn: 'Blocked',
+          })
+          .expect(409);
       } finally {
-        await db.venue.update({ where: { id: owners[0].id }, data: { cloudMenuEditingEnabled: true } });
+        await db.venue.update({
+          where: { id: owners[0].id },
+          data: { cloudMenuEditingEnabled: true },
+        });
       }
     });
     it('onboards without Device or Manager and permits profile editing', async () => {

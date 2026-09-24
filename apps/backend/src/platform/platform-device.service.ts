@@ -1,3 +1,4 @@
+import { requireCommercialFeature } from '../entitlements/commercial-state';
 import { replaceOperationalDevice } from '../edge/operational-authority';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
@@ -145,6 +146,7 @@ export class PlatformDeviceService {
   ): Promise<IssuedDeviceResponse> {
     await this.directory.requireVenue(venueId);
 
+    await requireCommercialFeature(this.prisma, venueId, 'POS');
     const installationId = input.installationId ?? randomUUID();
     const issued = await this.credentials.issueCredential({
       venueId,

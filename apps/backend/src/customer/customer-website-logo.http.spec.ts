@@ -1,3 +1,5 @@
+import { mediaDatabaseFixture } from '../website/core/website-media-test-fixture';
+import { PrismaService } from '../prisma.service';
 import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { INestApplication } from '@nestjs/common';
@@ -27,6 +29,7 @@ describe('Logo upload HTTP transport', () => {
       controllers: [CustomerWebsiteController, WebsiteLogoController],
       providers: [
         WebsiteLogoService,
+        { provide: PrismaService, useValue: mediaDatabaseFixture() },
         {
           provide: ConfigService,
           useValue: new ConfigService({ WEBSITE_MEDIA_DIR: root }),

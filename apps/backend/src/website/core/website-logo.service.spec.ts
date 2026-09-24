@@ -1,3 +1,4 @@
+import { mediaDatabaseFixture } from './website-media-test-fixture';
 import { ConfigService } from '@nestjs/config';
 import { mkdtemp, rm, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -12,6 +13,7 @@ describe('Website logo storage', () => {
     root = await mkdtemp(join(tmpdir(), 'vynic-logo-'));
     service = new WebsiteLogoService(
       new ConfigService({ WEBSITE_MEDIA_DIR: root }),
+      mediaDatabaseFixture(),
     );
   });
   afterEach(() => rm(root, { recursive: true, force: true }));
@@ -21,8 +23,14 @@ describe('Website logo storage', () => {
     })
       .png()
       .toBuffer();
-    const first = await service.upload({ buffer, size: buffer.length });
-    const second = await service.upload({ buffer, size: buffer.length });
+    const first = await service.upload('venue-a', {
+      buffer,
+      size: buffer.length,
+    });
+    const second = await service.upload('venue-a', {
+      buffer,
+      size: buffer.length,
+    });
     expect(first.url).not.toBe(second.url);
     const bytes = await service.read(first.url.split('/').at(-1)!);
     expect(await sharp(bytes).metadata()).toMatchObject({
@@ -38,6 +46,7 @@ describe('Website logo storage', () => {
       .jpeg()
       .toBuffer();
     const uploaded = await service.upload(
+      'venue-a',
       { buffer, size: buffer.length },
       'hero',
     );
@@ -55,10 +64,13 @@ describe('Website logo storage', () => {
       ),
     ])
       await expect(
-        service.upload({ buffer, size: buffer.length }),
+        service.upload('venue-a', { buffer, size: buffer.length }),
       ).rejects.toThrow('Choose a valid');
     await expect(
-      service.upload({ buffer: Buffer.alloc(1), size: MAX_LOGO_BYTES + 1 }),
+      service.upload('venue-a', {
+        buffer: Buffer.alloc(1),
+        size: MAX_LOGO_BYTES + 1,
+      }),
     ).rejects.toThrow('5 MB');
     await expect(service.read('../secret')).rejects.toThrow();
     expect(await readdir(root)).toEqual([]);
@@ -66,6 +78,7 @@ describe('Website logo storage', () => {
   it('requires explicit persistent storage in production', async () => {
     const prod = new WebsiteLogoService(
       new ConfigService({ NODE_ENV: 'production' }),
+      mediaDatabaseFixture(),
     );
     await expect(
       prod.read('11111111-1111-1111-1111-111111111111.webp'),

@@ -62,49 +62,10 @@ export class CustomerAuth {
     const password = customerPassword(body.password, signup);
     let user;
     if (signup) {
-      const policy = await this.db.onboardingPolicy.findUnique({
-        where: { id: 'default' },
-      });
-      if (!policy?.enabled || !policy.trialPlanId)
-        throw new HttpException('Pilot registration is not open yet.', 503);
-      const displayName = requireText(body.displayName, 'name', { max: 100 });
-      const passwordHash = await argon2.hash(password, {
-        type: argon2.argon2id,
-      });
-      try {
-        user = await this.db.$transaction(async (tx) => {
-          const org = await tx.organization.create({
-            data: { name: displayName },
-          });
-          const account = await tx.customerAccount.create({
-            data: {
-              organizationId: org.id,
-              email,
-              displayName,
-              passwordHash,
-              memberships: {
-                create: { organizationId: org.id, role: 'OWNER' },
-              },
-            },
-            select: fields,
-          });
-          await tx.customerAuditEvent.create({
-            data: {
-              customerAccountId: account.id,
-              action: 'account.created',
-              targetType: 'Organization',
-              targetId: org.id,
-            },
-          });
-          return account;
-        });
-      } catch (error) {
-        if ((error as { code?: string }).code === 'P2002')
-          throw new BadRequestException(
-            'Registration could not be completed. Try signing in.',
-          );
-        throw error;
-      }
+      throw new HttpException(
+        'Request access first. Approved owners join by invitation.',
+        403,
+      );
     } else {
       const row = await this.db.customerAccount.findUnique({
         where: { email },

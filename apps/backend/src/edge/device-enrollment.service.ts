@@ -1,3 +1,4 @@
+import { requireCommercialFeature } from '../entitlements/commercial-state';
 import {
   lockOperationalVenue,
   selectFirstOperationalDevice,
@@ -167,6 +168,7 @@ export class DeviceEnrollmentService {
     venueId: string,
     input: CreateEnrollmentInput,
   ): Promise<CreatedEnrollment> {
+    await requireCommercialFeature(this.prisma, venueId, 'POS');
     const ttl = Math.min(
       Math.max(input.ttlMinutes ?? ENROLLMENT_TTL_MINUTES, 5),
       24 * 60,
@@ -181,26 +183,30 @@ export class DeviceEnrollmentService {
         type: argon2.argon2id,
       });
       try {
-        const row = await this.prisma.deviceEnrollment.create({
-          data: {
-            venueId,
-            codeSelector: code.selector,
-            codeHash,
-            displayName: input.displayName,
-            platform: input.platform,
-            expiresAt,
-            createdByPlatformUserId: actor.platformUserId,
-            createdByCustomerAccountId: actor.customerAccountId,
-          },
-          select: {
-            id: true,
-            venueId: true,
-            displayName: true,
-            platform: true,
-            expiresAt: true,
-            redeemedAt: true,
-            cancelledAt: true,
-          },
+        const row = await this.prisma.$transaction(async (tx) => {
+          await lockOperationalVenue(tx, venueId);
+          await requireCommercialFeature(tx, venueId, 'POS');
+          return tx.deviceEnrollment.create({
+            data: {
+              venueId,
+              codeSelector: code.selector,
+              codeHash,
+              displayName: input.displayName,
+              platform: input.platform,
+              expiresAt,
+              createdByPlatformUserId: actor.platformUserId,
+              createdByCustomerAccountId: actor.customerAccountId,
+            },
+            select: {
+              id: true,
+              venueId: true,
+              displayName: true,
+              platform: true,
+              expiresAt: true,
+              redeemedAt: true,
+              cancelledAt: true,
+            },
+          });
         });
 
         await this.audit.record(
@@ -490,6 +496,7 @@ export class DeviceEnrollmentService {
 
     const device = await this.prisma.$transaction(async (tx) => {
       await lockOperationalVenue(tx, enrollment.venueId);
+      await requireCommercialFeature(tx, enrollment.venueId, 'POS');
       // The single-use guarantee. Two terminals racing the same code: exactly
       // one update matches, and the loser creates nothing.
       const claimed = await tx.deviceEnrollment.updateMany({

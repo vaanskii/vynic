@@ -62,8 +62,14 @@ const url = process.env.W3_TEST_DATABASE_URL;
       const u = new URL(url!);
       if (
         u.hostname !== '127.0.0.1' ||
-        u.port !== '55439' ||
-        !['/vynic_w3_disposable', '/vynic_foundation_phase3_disposable'].includes(u.pathname)
+        !(
+          (u.port === '55439' &&
+            [
+              '/vynic_w3_disposable',
+              '/vynic_foundation_phase3_disposable',
+            ].includes(u.pathname)) ||
+          (u.port === '55437' && u.pathname === '/vynic_commercial_test')
+        )
       )
         throw Error('Only the disposable website database is permitted');
       process.env.JWT_SECRET = 'website-local-test-only';
@@ -88,6 +94,7 @@ const url = process.env.W3_TEST_DATABASE_URL;
         venues.push(
           await db.venue.create({
             data: {
+              legacyCommercialAccess: true,
               organizationId: org.id,
               name: `Website restaurant ${i}`,
               address: 'Public address',
@@ -103,7 +110,7 @@ const url = process.env.W3_TEST_DATABASE_URL;
         const owner = await db.customerAccount.create({
           data: {
             organizationId: org.id,
-            memberships: { create: { organizationId: org.id, role: "OWNER" } },
+            memberships: { create: { organizationId: org.id, role: 'OWNER' } },
             email: `website-${i}-${tag}@test.invalid`,
             displayName: 'Owner',
             passwordHash: 'unused',
@@ -125,6 +132,7 @@ const url = process.env.W3_TEST_DATABASE_URL;
         controllers: [CustomerWebsiteController, WebsiteCoreController],
         providers: [
           WebsiteLogoService,
+          { provide: PrismaService, useValue: db },
           { provide: WebsiteCoreService, useValue: core },
           { provide: WebsiteMenuService, useValue: new WebsiteMenuService(db) },
           {
@@ -258,11 +266,11 @@ const url = process.env.W3_TEST_DATABASE_URL;
       });
       await publicGet(1).expect(404);
       await publish(1, 1).expect(403);
-      await save(1, 1, content(1, 'Offline draft')).expect(200);
+      await save(1, 1, content(1, 'Offline draft')).expect(403);
       await http()
         .get(`${path(1)}/preview`)
         .set(auth(1))
-        .expect(200);
+        .expect(403);
       await db.venueFeatureOverride.updateMany({
         where: { venueId: venues[1].id, featureId },
         data: { effect: 'ENABLED' },

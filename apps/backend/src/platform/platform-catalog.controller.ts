@@ -1,6 +1,16 @@
+import { PlanCatalogService } from './plan-catalog.service';
 import { PlatformActor } from './platform-auth-context';
 import type { PlatformPrincipal } from './platform-auth-context';
-import { Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Param,
+  Put,
+  Controller,
+  Get,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { PlatformAuthGuard } from './platform-auth.guard';
 import { PlatformAuditService } from './platform-audit.service';
 import { PlatformVenueConfigService } from './platform-venue-config.service';
@@ -11,9 +21,24 @@ import { readPage, requireUuid } from './platform-validation';
 @UseGuards(PlatformAuthGuard)
 export class PlatformCatalogController {
   constructor(
+    private readonly catalog: PlanCatalogService,
     private readonly config: PlatformVenueConfigService,
     private readonly audit: PlatformAuditService,
   ) {}
+
+  @Post('plans') createPlan(
+    @PlatformActor() actor: PlatformPrincipal,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.catalog.save(actor, undefined, body);
+  }
+  @Put('plans/:id') updatePlan(
+    @PlatformActor() actor: PlatformPrincipal,
+    @Param('id') id: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.catalog.save(actor, id, body);
+  }
 
   @Get('plans')
   async plans() {

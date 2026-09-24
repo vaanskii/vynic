@@ -1,3 +1,5 @@
+import { validateMediaReferences } from './website-media';
+import { requireCommercialFeature } from '../../entitlements/commercial-state';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
@@ -162,6 +164,7 @@ export class WebsiteMenuService {
    * Operational fields are read-only here; the editor writes presentation only.
    */
   async ownerMenu(venueId: string) {
+    await requireCommercialFeature(this.db, venueId, 'WEBSITE');
     const categories = await this.tree(venueId);
     const ownerItem = (item: MenuRow) => ({
       menuItemId: item.id,
@@ -211,15 +214,22 @@ export class WebsiteMenuService {
     body: unknown,
     customerAccountId: string,
   ) {
+    await requireCommercialFeature(this.db, venueId, 'WEBSITE');
     const rows = websiteMenuPresentationInput(body);
     if (rows.length)
       await this.db.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
+        await requireCommercialFeature(tx, venueId, 'WEBSITE');
         const owned = await tx.menuItem.findMany({
           where: { venueId, id: { in: rows.map((r) => r.menuItemId) } },
           select: { id: true },
         });
         if (owned.length !== rows.length)
           throw new BadRequestException('Unknown menu item');
+        const prior = await tx.menuItemWebsitePresentation.findMany({
+          where: { venueId },
+        });
+        await validateMediaReferences(tx, venueId, rows, prior);
         for (const row of rows) await this.upsert(tx, venueId, row);
         await tx.customerAuditEvent.create({
           data: {

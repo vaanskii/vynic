@@ -25,6 +25,7 @@ export class CustomerPaymentsController {
     @Param('venueId') id: string,
   ) {
     await this.owners.venue(actor, id);
+    await this.owners.requireFeature(id, 'ONLINE_PAYMENTS');
     return this.payments.status(id);
   }
   @Put() async save(

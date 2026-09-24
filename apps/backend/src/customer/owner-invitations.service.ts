@@ -84,7 +84,7 @@ export class OwnerInvitationsService {
       },
     });
   }
-  private async issue(
+  async issue(
     tx: Prisma.TransactionClient,
     actor: PlatformPrincipal,
     organizationId: string,
@@ -168,24 +168,31 @@ export class OwnerInvitationsService {
       return { revoked: true };
     });
   }
-  async provision(actor: PlatformPrincipal, body: Record<string, unknown>) {
+  async provision(
+    actor: PlatformPrincipal,
+    body: Record<string, unknown>,
+    existingTx?: Prisma.TransactionClient,
+  ) {
     const name = requireText(body.organizationName, 'Organization name', {
       max: 100,
     });
     const profile = profileInput(body);
     const email = this.email(body.email);
-    const planId = requireText(body.planId, 'Plan');
+    const planId = body.planId ? requireText(body.planId, 'Plan') : null;
     const trialDays = Number(body.trialDays ?? 14);
     if (!Number.isInteger(trialDays) || trialDays < 1 || trialDays > 90)
       throw new BadRequestException('Trial must be 1–90 days');
-    const status = body.subscriptionStatus ?? 'TRIAL';
-    if (status !== 'TRIAL' && status !== 'ACTIVE')
-      throw new BadRequestException('Choose Trial or Active');
-    return this.db.$transaction(async (tx) => {
+    const status = body.subscriptionStatus ?? 'NO_PLAN';
+    if (!['NO_PLAN', 'TRIAL', 'ACTIVE'].includes(String(status)))
+      throw new BadRequestException('Choose No plan, Trial or Active');
+    if (status !== 'NO_PLAN' && !planId)
+      throw new BadRequestException('Choose a plan explicitly');
+    const run = async (tx: Prisma.TransactionClient) => {
       const plan = await tx.plan.findFirst({
-        where: { id: planId, status: 'ACTIVE' },
+        where: { id: planId ?? undefined, status: 'ACTIVE' },
       });
-      if (!plan) throw new BadRequestException('Active plan required');
+      if (planId && !plan)
+        throw new BadRequestException('Active plan required');
       const org = await tx.organization.create({ data: { name } });
       const venue = await tx.venue.create({
         data: {
@@ -194,10 +201,21 @@ export class OwnerInvitationsService {
           timezone: 'Asia/Tbilisi',
           currency: 'GEL',
           profileUpdatedAt: new Date(),
-          planAssignment: { create: { planId } },
+          ...(planId && plan
+            ? {
+                planAssignment: {
+                  create: {
+                    planId,
+                    agreedPriceMinor: plan.priceMinor,
+                    agreedCurrency: plan.currency,
+                    agreedBillingPeriod: plan.billingPeriod,
+                  },
+                },
+              }
+            : {}),
           subscription: {
             create: {
-              status,
+              status: status as 'NO_PLAN' | 'TRIAL' | 'ACTIVE',
               startedAt: new Date(),
               updatedBy: actor.platformUserId,
               trialEndsAt:
@@ -234,7 +252,8 @@ export class OwnerInvitationsService {
         venue,
         ...(await this.issue(tx, actor, org.id, email)),
       };
-    });
+    };
+    return existingTx ? run(existingTx) : this.db.$transaction(run);
   }
   async inspect(body: Record<string, unknown>, ip: string) {
     this.throttle(ip);

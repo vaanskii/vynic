@@ -1,3 +1,4 @@
+import { requireCommercialFeature } from '../entitlements/commercial-state';
 import {
   BadRequestException,
   ForbiddenException,
@@ -27,6 +28,9 @@ export class CustomerService {
     private readonly enrollments: DeviceEnrollmentService,
     @Optional() private readonly config?: ConfigService,
   ) {}
+  async requireFeature(id: string, feature: string) {
+    return requireCommercialFeature(this.db, id, feature);
+  }
   async venue(actor: CustomerPrincipal, id: string) {
     const venue = await this.db.venue.findFirst({
       where: {
@@ -70,6 +74,8 @@ export class CustomerService {
     const policy = await this.db.onboardingPolicy.findUnique({
       where: { id: 'default' },
     });
+    const statuses = await Promise.all(venues.map((v) => this.status(v.id)));
+    const enabled = new Set(statuses.flatMap((v) => v.features));
     return {
       account,
       organizations: await this.db.organization.findMany({
@@ -81,14 +87,21 @@ export class CustomerService {
         select: { id: true, name: true },
         orderBy: { createdAt: 'asc' },
       }),
-      venues: await Promise.all(venues.map((v) => this.status(v.id))),
-      releaseLinks: policy?.releaseLinks ?? {},
+      venues: statuses,
+      releaseLinks: Object.fromEntries(
+        Object.entries(
+          (policy?.releaseLinks ?? {}) as Record<string, string>,
+        ).filter(([key]) =>
+          enabled.has(key.startsWith('pos') ? 'POS' : 'MANAGER_APP'),
+        ),
+      ),
       // Lets first-run show the full website address before a Venue exists.
       websiteBaseDomain:
         this.config?.get<string>('SAAS_WEBSITE_BASE_DOMAIN') ?? null,
     };
   }
   async status(id: string) {
+    const features = await this.entitlements.effectiveFeatures(id);
     const venue = await this.db.venue.findUniqueOrThrow({
       where: { id },
       include: {
@@ -134,7 +147,6 @@ export class CustomerService {
       this.db.cloudSale.count({ where: { venueId: id } }),
     ]);
     const enrollment = await this.enrollments.list(id);
-    const features = await this.entitlements.effectiveFeatures(id);
     return {
       venue: {
         menuAuthority: venue.menuAuthority,
@@ -147,7 +159,7 @@ export class CustomerService {
         profileUpdatedAt: venue.profileUpdatedAt,
         status: venue.status,
         activeOperationalDeviceId: venue.activeOperationalDeviceId,
-        loginCode: venue.loginCode,
+        loginCode: features.includes('MANAGER_APP') ? venue.loginCode : null,
         timezone: venue.timezone,
         currency: venue.currency,
       },
@@ -158,17 +170,22 @@ export class CustomerService {
       },
       website: venue.websiteConfig,
       plan: venue.planAssignment && { name: venue.planAssignment.plan.name },
-      subscription: venue.subscription && {
-        status: venue.subscription.status,
-        trialEndsAt: venue.subscription.trialEndsAt,
-      },
+      subscription: venue.subscription
+        ? {
+            status: venue.subscription.status,
+            trialEndsAt: venue.subscription.trialEndsAt,
+          }
+        : {
+            status: venue.legacyCommercialAccess ? 'LEGACY' : 'NO_PLAN',
+            trialEndsAt: null,
+          },
       features,
-      managers,
-      devices: devices.map((device) => ({
+      managers: features.includes('MANAGER_APP') ? managers : [],
+      devices: (features.includes('POS') ? devices : []).map((device) => ({
         ...device,
         isOperationalPrimary: device.id === venue.activeOperationalDeviceId,
       })),
-      enrollments: enrollment,
+      enrollments: features.includes('POS') ? enrollment : [],
       ready:
         venue.status === 'ACTIVE' &&
         (!features.includes('MANAGER_APP') ||
@@ -236,44 +253,16 @@ export class CustomerService {
         where: { organizationId },
       });
       if (existing) return existing; // One restaurant per pilot Organization; request retry is convergent.
-      const policy = await tx.onboardingPolicy.findUnique({
-        where: { id: 'default' },
-      });
-      const plan =
-        policy?.trialPlanId &&
-        (await tx.plan.findFirst({
-          where: { id: policy.trialPlanId, status: 'ACTIVE' },
-          include: { features: { include: { feature: true } } },
-        }));
-      if (!policy?.enabled || !plan)
-        throw new ServiceUnavailableException('Trial plan is not configured');
-      const keys = plan.features.map((f) => f.feature.key);
-      if (!keys.includes('POS') && !keys.includes('WEBSITE'))
-        throw new ServiceUnavailableException('Plan requires POS or Website');
-      const cloud = keys.includes('WEBSITE') && !keys.includes('POS');
       const venue = await tx.venue.create({
         data: {
           organizationId,
-          menuAuthority: cloud ? 'CLOUD' : 'POS',
           ...profileInput({ ...body, name }),
           profileUpdatedAt: new Date(),
           timezone,
           currency,
-          subscription: {
-            create: {
-              status: 'TRIAL',
-              startedAt: new Date(),
-              trialEndsAt: new Date(Date.now() + policy.trialDays * 86400000),
-            },
-          },
-          planAssignment: { create: { planId: plan.id } },
+          subscription: { create: { status: 'NO_PLAN' } },
         },
       });
-      await initializeWebsite(
-        tx,
-        venue.id,
-        cloud ? 'SAAS' : policy.defaultWebsiteMode,
-      );
       await tx.customerAuditEvent.create({
         data: {
           customerAccountId: actor.customerAccountId,
@@ -319,6 +308,9 @@ export class CustomerService {
     deviceId: string,
     body: Record<string, unknown>,
   ) {
+    if (actor.customerAccountId)
+      await this.venue({ customerAccountId: actor.customerAccountId }, venueId);
+    await requireCommercialFeature(this.db, venueId, 'POS');
     const printers = Object.fromEntries(
       ['kitchen', 'receipt'].map((key) => {
         const row = body[key] as Record<string, unknown> | undefined;
@@ -338,6 +330,7 @@ export class CustomerService {
       }),
     );
     return this.db.$transaction(async (tx) => {
+      await requireCommercialFeature(tx, venueId, 'POS');
       const device = await tx.device.findFirst({
         where: { id: deviceId, venueId },
       });

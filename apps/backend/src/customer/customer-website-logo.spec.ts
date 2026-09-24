@@ -37,7 +37,7 @@ describe('Owner logo upload authority', () => {
     );
     expect(logos.upload).not.toHaveBeenCalled();
     await controller.uploadHero(actor, 'venue-a');
-    expect(logos.upload).toHaveBeenCalledWith(undefined, 'hero');
+    expect(logos.upload).toHaveBeenCalledWith('venue-a', undefined, 'hero');
   });
   it('rejects another owner and CUSTOM sites before storage', async () => {
     owners.venue.mockRejectedValueOnce(new Error('Not found'));

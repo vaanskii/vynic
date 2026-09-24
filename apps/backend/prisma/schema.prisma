@@ -1066,14 +1066,14 @@ model PlatformUser {
 /// credential, never a hash.
 model PlatformAuditEvent {
   id             String   @id @default(uuid())
-  platformUserId String
+  platformUserId String?
   action         String
   targetType     String
   targetId       String
   metadata       Json?
   createdAt      DateTime @default(now())
 
-  actor PlatformUser @relation(fields: [platformUserId], references: [id], onDelete: Restrict)
+  actor PlatformUser? @relation(fields: [platformUserId], references: [id], onDelete: Restrict)
 
   @@index([platformUserId, createdAt])
   @@index([targetType, targetId, createdAt])
@@ -1146,7 +1146,9 @@ enum MenuAuthority {
 
 /// One physical restaurant/location owned by an Organization.
 model Venue {
-  cloudMenuEditingEnabled Boolean @default(true)
+  cloudMenuEditingEnabled Boolean @default(false)
+  legacyCommercialAccess Boolean @default(false)
+  mediaAssets WebsiteMediaAsset[]
   menuAuthority             MenuAuthority              @default(POS)
   catalogRevision           Int                        @default(0)
   paymentIntegrations PaymentIntegration[]
@@ -1371,6 +1373,12 @@ model Feature {
 /// A commercial package. Carries no application logic: nothing branches on a
 /// plan key, because code asks for features.
 model Plan {
+  description String?
+  priceMinor Int @default(0)
+  currency String @default("GEL")
+  billingPeriod String @default("MONTH")
+  mediaQuotaBytes Int @default(52428800)
+  mediaQuotaFiles Int @default(50)
   id        String     @id @default(uuid())
   key       String     @unique
   name      String
@@ -1398,6 +1406,9 @@ model PlanFeature {
 /// Which package a Venue currently has. Deliberately not a Subscription: no
 /// billing lifecycle has been decided, so none is modelled here.
 model VenuePlanAssignment {
+  agreedPriceMinor Int?
+  agreedCurrency String?
+  agreedBillingPeriod String?
   venueId    String   @id
   planId     String
   assignedAt DateTime @default(now())
@@ -1494,6 +1505,7 @@ model MenuItemWebsitePresentation {
 /// DNS records and TLS certificates are deployment concerns and deliberately
 /// not modelled here.
 model VenueDomain {
+  releaseAfter DateTime?
   id        String            @id @default(uuid())
   venueId   String
   hostname  String            @unique
@@ -1893,6 +1905,7 @@ model SupplierPayment {
 
 // Missing row preserves pre-Phase-2 access; new Venues receive an explicit trial.
 enum SubscriptionStatus {
+  NO_PLAN
   TRIAL
   ACTIVE
   PAST_DUE
@@ -1903,7 +1916,7 @@ enum SubscriptionStatus {
 
 model VenueSubscription {
   venueId String @id
-  status SubscriptionStatus @default(TRIAL)
+  status SubscriptionStatus @default(NO_PLAN)
   startedAt DateTime?
   trialEndsAt DateTime?
   currentPeriodEndsAt DateTime?
@@ -2032,5 +2045,44 @@ model OwnerInvitation {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   acceptedBy CustomerAccount? @relation(fields: [acceptedById], references: [id], onDelete: Restrict)
   @@index([organizationId, email])
+  @@schema("pos")
+}
+
+
+/// Public request only; approval reuses Organization/Venue/OwnerInvitation.
+model OnboardingRequest {
+  requestedVenueId String?
+  requestedByAccountId String?
+  id String @id @default(uuid())
+  applicantName String
+  businessName String
+  email String
+  phone String
+  requestedPlanId String?
+  note String?
+  status String @default("PENDING")
+  reviewedBy String?
+  reviewedAt DateTime?
+  reviewNote String?
+  approvedVenueId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([status, createdAt])
+  @@index([email, createdAt])
+  @@schema("pos")
+}
+
+/// Storage keys are backend-independent. Only decoded raster bytes are stored.
+model WebsiteMediaAsset {
+  id String @id @default(uuid())
+  venueId String
+  storageKey String @unique
+  purpose String
+  byteSize Int
+  createdAt DateTime @default(now())
+  unusedSince DateTime? @default(now())
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Restrict)
+  @@index([venueId])
+  @@index([unusedSince])
   @@schema("pos")
 }

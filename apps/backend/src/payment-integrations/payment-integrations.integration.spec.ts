@@ -53,8 +53,10 @@ const url = process.env.W1_TEST_DATABASE_URL;
     const u = new URL(url!);
     if (
       u.hostname !== '127.0.0.1' ||
-      u.port !== '55439' ||
-      u.pathname !== '/vynic_w1_disposable'
+      !(
+        (u.port === '55439' && u.pathname === '/vynic_w1_disposable') ||
+        (u.port === '55437' && u.pathname === '/vynic_commercial_test')
+      )
     )
       throw Error('Only isolated W1 database permitted');
     process.env.PAYMENT_INTEGRATION_MASTER_KEY = '12'.repeat(32);
@@ -70,6 +72,7 @@ const url = process.env.W1_TEST_DATABASE_URL;
       });
       const venue = await db.venue.create({
         data: {
+          legacyCommercialAccess: true,
           organizationId: org.id,
           name: `W1 ${suffix}`,
           timezone: 'Asia/Tbilisi',
@@ -82,7 +85,7 @@ const url = process.env.W1_TEST_DATABASE_URL;
       const owner = await db.customerAccount.create({
         data: {
           organizationId: org.id,
-            memberships: { create: { organizationId: org.id, role: "OWNER" } },
+          memberships: { create: { organizationId: org.id, role: 'OWNER' } },
           email: `${suffix}-${tag}@test.invalid`,
           passwordHash: 'unused',
           displayName: 'Test Owner',
@@ -179,6 +182,18 @@ const url = process.env.W1_TEST_DATABASE_URL;
       .set(auth(1))
       .send({})
       .expect(404);
+    for (const venue of venues)
+      await db.venueFeatureOverride.create({
+        data: {
+          venueId: venue.id,
+          featureId: (
+            await db.feature.findUniqueOrThrow({
+              where: { key: 'ONLINE_PAYMENTS' },
+            })
+          ).id,
+          effect: 'ENABLED',
+        },
+      });
     for (let i = 0; i < 2; i++) {
       const res = await http()
         .put(path(i))
@@ -209,6 +224,13 @@ const url = process.env.W1_TEST_DATABASE_URL;
     }
   });
   it('requires entitlement; CUSTOM Host selects credentials ignoring body venue', async () => {
+    await db.venueFeatureOverride.deleteMany({
+      where: {
+        venueId: { in: venues.map((v) => v.id) },
+        feature: { key: 'ONLINE_PAYMENTS' },
+      },
+    });
+    await http().put(path(0)).set(auth(0)).send(configs[0]).expect(403);
     await create(0).expect(403);
     expect(
       await db.websiteReservation.count({ where: { venueId: venues[0].id } }),
@@ -256,6 +278,10 @@ const url = process.env.W1_TEST_DATABASE_URL;
       .send({})
       .expect(201);
     await create(0).expect(403);
+    await db.venueFeatureOverride.updateMany({
+      where: { venueId: venues[0].id, feature: { key: 'ONLINE_PAYMENTS' } },
+      data: { effect: 'DISABLED' },
+    });
     (axios.get as jest.Mock).mockResolvedValue({
       data: { external_order_id: reservationId, status: 'completed' },
     });

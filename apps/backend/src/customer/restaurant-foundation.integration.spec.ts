@@ -88,6 +88,16 @@ const url = process.env.FOUNDATION_TEST_DATABASE_URL;
       await app?.close();
       await db?.$disconnect();
     });
+    it('rejects owner catalog writes while Admin has disabled editing', async () => {
+      await db.venue.update({ where: { id: owners[0].id }, data: { cloudMenuEditingEnabled: false } });
+      try {
+        const read = await http().get(path('catalog')).set(auth()).expect(200);
+        expect(read.body.editingEnabled).toBe(false);
+        await http().put(path('catalog/category')).set(auth()).send({ expectedRevision: read.body.revision, nameKa: 'დაბლოკილი', nameEn: 'Blocked' }).expect(409);
+      } finally {
+        await db.venue.update({ where: { id: owners[0].id }, data: { cloudMenuEditingEnabled: true } });
+      }
+    });
     it('onboards without Device or Manager and permits profile editing', async () => {
       const res = await http().get('/customer/portal').set(auth()).expect(200);
       expect(res.body.venues[0]).toMatchObject({

@@ -171,6 +171,8 @@ export const platformApi = {
       body: json({ status }),
     }),
   plans: () => request<Plan[]>("/platform/plans"),
+  ensureWebsitePlan: () => request<Plan[]>("/platform/plans/website-only", { method: "POST", body: json({}) }),
+  enableCloudMenu: (venueId: string, enabled: boolean) => request<ProductState>(`/platform/venues/${venueId}/menu-management/cloud`, { method: "PUT", body: json({ enabled }) }),
   features: () => request<Feature[]>("/platform/features"),
   product: (venueId: string) =>
     request<ProductState>(`/platform/venues/${venueId}/product`),

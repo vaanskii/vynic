@@ -133,16 +133,13 @@ describeDatabase('Venue product entitlements (PostgreSQL)', () => {
     FeatureKeys.MANAGER_RESERVATIONS,
     FeatureKeys.ADVANCED_AUDIT,
   ];
-  const bundled = (...keys: string[]) =>
-    [...managerModules, 'NON_FISCAL_CLOSE', ...keys].sort();
+  const bundled = (...keys: string[]) => [...managerModules, ...keys].sort();
 
   it('represents every package the business sells', async () => {
     await expect(entitlements.effectiveFeatures(posOnly)).resolves.toEqual([
-      'NON_FISCAL_CLOSE',
       POS,
     ]);
     await expect(entitlements.effectiveFeatures(posWebsite)).resolves.toEqual([
-      'NON_FISCAL_CLOSE',
       POS,
       WEBSITE,
     ]);
@@ -154,28 +151,31 @@ describeDatabase('Venue product entitlements (PostgreSQL)', () => {
     );
   });
 
-  it('can disable non-fiscal closing and restore plan inheritance independently', async () => {
+  it('grants non-fiscal closing per Venue without touching the plan', async () => {
+    // No plan bundles it any more, so it arrives only as an explicit grant
+    // and leaves again when that grant is cleared. A second Venue on the same
+    // plan must not pick it up.
     const feature = await featureId(FeatureKeys.NON_FISCAL_CLOSE);
-    expect(await entitlements.effectiveFeatures(posOnly)).toContain(
+    expect(await entitlements.effectiveFeatures(posOnly)).not.toContain(
       FeatureKeys.NON_FISCAL_CLOSE,
     );
     await prisma.venueFeatureOverride.create({
       data: {
         venueId: posOnly,
         featureId: feature,
-        effect: FeatureOverrideEffect.DISABLED,
+        effect: FeatureOverrideEffect.ENABLED,
       },
     });
-    expect(await entitlements.effectiveFeatures(posOnly)).not.toContain(
+    expect(await entitlements.effectiveFeatures(posOnly)).toContain(
       FeatureKeys.NON_FISCAL_CLOSE,
     );
-    expect(await entitlements.effectiveFeatures(otherOrgVenue)).toContain(
+    expect(await entitlements.effectiveFeatures(otherOrgVenue)).not.toContain(
       FeatureKeys.NON_FISCAL_CLOSE,
     );
     await prisma.venueFeatureOverride.deleteMany({
       where: { venueId: posOnly, featureId: feature },
     });
-    expect(await entitlements.effectiveFeatures(posOnly)).toContain(
+    expect(await entitlements.effectiveFeatures(posOnly)).not.toContain(
       FeatureKeys.NON_FISCAL_CLOSE,
     );
   });
@@ -192,8 +192,8 @@ describeDatabase('Venue product entitlements (PostgreSQL)', () => {
       entitlements.effectiveFeatures(otherOrgVenue),
     ]);
 
-    expect(a).toEqual(['NON_FISCAL_CLOSE', POS]);
-    expect(b).toEqual(['NON_FISCAL_CLOSE', POS]);
+    expect(a).toEqual([POS]);
+    expect(b).toEqual([POS]);
 
     await prisma.venueFeatureOverride.create({
       data: {
@@ -206,9 +206,8 @@ describeDatabase('Venue product entitlements (PostgreSQL)', () => {
 
     await expect(
       entitlements.effectiveFeatures(otherOrgVenue),
-    ).resolves.toEqual(['NON_FISCAL_CLOSE', POS, WEBSITE]);
+    ).resolves.toEqual([POS, WEBSITE]);
     await expect(entitlements.effectiveFeatures(posOnly)).resolves.toEqual([
-      'NON_FISCAL_CLOSE',
       POS,
     ]);
   });
@@ -221,8 +220,8 @@ describeDatabase('Venue product entitlements (PostgreSQL)', () => {
     );
 
     expect(packages).toEqual([
-      ['NON_FISCAL_CLOSE', POS],
-      ['NON_FISCAL_CLOSE', POS, WEBSITE],
+      [POS],
+      [POS, WEBSITE],
       bundled(MANAGER_APP, POS),
       bundled(MANAGER_APP, POS, WEBSITE),
     ]);
@@ -243,7 +242,6 @@ describeDatabase('Venue product entitlements (PostgreSQL)', () => {
 
     await expect(entitlements.effectiveFeatures(posOnly)).resolves.toEqual([
       MANAGER_APP,
-      'NON_FISCAL_CLOSE',
       POS,
     ]);
   });

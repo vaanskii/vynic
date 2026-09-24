@@ -1,4 +1,6 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { PlatformActor } from './platform-auth-context';
+import type { PlatformPrincipal } from './platform-auth-context';
+import { Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { PlatformAuthGuard } from './platform-auth.guard';
 import { PlatformAuditService } from './platform-audit.service';
 import { PlatformVenueConfigService } from './platform-venue-config.service';
@@ -16,6 +18,11 @@ export class PlatformCatalogController {
   @Get('plans')
   async plans() {
     return this.config.listPlans();
+  }
+
+  @Post('plans/website-only')
+  ensureWebsitePlan(@PlatformActor() actor: PlatformPrincipal) {
+    return this.config.ensureWebsitePlan(actor);
   }
 
   @Get('features')

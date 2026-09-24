@@ -58,6 +58,13 @@ export function VenueProductTab({ venueId }: { venueId: string }) {
     await queryClient.invalidateQueries({ queryKey: ["product", venueId] });
     await queryClient.invalidateQueries({ queryKey: ["venues"] });
   };
+  const enableCloudMenu = useMutation({
+    mutationFn: (enabled: boolean) => platformApi.enableCloudMenu(venueId, enabled),
+    onSuccess: async () => {
+      await refresh();
+      setFeedback("მენიუს მართვის პარამეტრი განახლდა.");
+    },
+  });
   const assignPlan = useMutation({
     mutationFn: () => platformApi.assignPlan(venueId, selectedPlanId),
     onSuccess: async () => {
@@ -141,6 +148,15 @@ export function VenueProductTab({ venueId }: { venueId: string }) {
           {feedback}
         </div>
       ) : null}
+      {state.menuManagement && <Panel title="მენიუს მართვა Dashboard-ში" description="კატეგორიების, კერძებისა და ფასების დამატება და რედაქტირება. გამორთვა შენახულ მენიუს არ შლის და ვებგვერდზე მის ჩვენებას არ აჩერებს.">
+        <StatusBadge value={state.menuManagement.enabled ? "ENABLED" : "DISABLED"}>{state.menuManagement.enabled ? "ჩართულია" : "გამორთულია"}</StatusBadge>
+        <div className="platform-feature-actions">
+          <Button tone={state.menuManagement.enabled ? "primary" : "secondary"} disabled={state.menuManagement.enabled || !state.menuManagement.canEnableCloud || enableCloudMenu.isPending} onClick={() => enableCloudMenu.mutate(true)}>ჩართვა</Button>
+          <Button tone={!state.menuManagement.enabled ? "danger" : "quiet"} disabled={!state.menuManagement.enabled || enableCloudMenu.isPending} onClick={() => enableCloudMenu.mutate(false)}>გამორთვა</Button>
+        </div>
+        {state.menuManagement.reason && <p role="status">{state.menuManagement.reason}</p>}
+        {enableCloudMenu.error && <p role="alert" className="platform-form-error">{errorMessage(enableCloudMenu.error)}</p>}
+      </Panel>}
       <div className="platform-grid platform-grid--sidebar">
         <Panel
           title="მინიჭებული პაკეტი"

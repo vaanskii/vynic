@@ -53,6 +53,7 @@ export class RestaurantFoundationService {
     const venue = await this.owners.venue(actor, venueId);
     return {
       authority: venue.menuAuthority,
+      editingEnabled: venue.cloudMenuEditingEnabled,
       revision: venue.catalogRevision,
       categories: await catalog(this.db, venueId),
     };
@@ -82,6 +83,8 @@ export class RestaurantFoundationService {
       });
       if (venue.menuAuthority !== 'CLOUD')
         throw new ConflictException('Menu is managed in POS');
+      if (!venue.cloudMenuEditingEnabled)
+        throw new ConflictException('Dashboard menu editing is disabled');
       if (body.expectedRevision !== venue.catalogRevision)
         throw new ConflictException('Menu changed. Reload before saving.');
       const named = () => ({

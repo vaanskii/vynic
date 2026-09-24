@@ -231,7 +231,9 @@ of POS update consent. See `docs/WINDOWS_SETUP.md`.
 **Decision:** Existing Venues default to POS menu authority; new Website-only
 Venues use CLOUD. One canonical catalog serves all channels. Owner catalog writes
 and POS snapshots enforce opposite authority under the Venue row lock.
-**Implication:** Device enrollment never changes menu authority. Bootstrap v1 is
+**Implication:** Dashboard editing can be switched off independently; disabling
+editing retains CLOUD authority so POS snapshots cannot overwrite that catalog.
+Device enrollment never changes menu authority. Bootstrap v1 is
 frozen, Device-bound and staged outside operational Hive; activation stays disabled
 until all local writers, availability/media projections and transition recovery
 are fenced. See `docs/CLOUD_RESTAURANT_FOUNDATION.md`.

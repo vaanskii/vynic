@@ -91,7 +91,7 @@ npm run platform-admin:create -- --email you@example.com --name "Your Name"
 - The password is **never** an argument — arguments land in shell history and the
   process table. It is prompted for with echo disabled and typed twice.
   `PLATFORM_ADMIN_PASSWORD` covers a non-interactive run.
-- Minimum 12 characters; hashed with Argon2id, the same primitive the rest of
+- Minimum 8 characters; hashed with Argon2id, the same primitive the rest of
   the backend uses.
 - **Refuses to touch an existing account.** Silently resetting a password from a
   script is how an account is taken over by whoever can run it twice. A

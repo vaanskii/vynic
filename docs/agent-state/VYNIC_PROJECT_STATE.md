@@ -55,6 +55,10 @@ current transport status.
 
 - Website-only onboarding accepts a WEBSITE plan without POS/Manager. New such
   Venues use CLOUD catalog authority; existing Venues remain POS by default.
+  Admin Plans includes WEBSITE_ONLY (WEBSITE alone); Venue Product offers an
+  audited Dashboard menu editing on/off control without acknowledgement.
+  First enable checks for no devices, enrollment, catalog, or operational history.
+  Disabling editing preserves Cloud authority, catalog and public presentation.
   Owner Dashboard authors the canonical catalog with revision/tenant fencing;
   POS snapshots reject CLOUD catalogs. Device-bound bootstrap v1 freezes a
   foundation snapshot and disposable Hive staging preserves it offline.
@@ -906,7 +910,9 @@ current transport status.
 
 ## Current Migration Versions
 
-- Prisma migration tip: 20260928120000_restaurant_foundation.
+- Prisma migration tip: 20260930120000_cloud_menu_editing.
+- Prior product migration: `20260929120000_website_only_plan`.
+- Prior catalog migration: `20260928120000_restaurant_foundation`.
 - Prior website migrations:
   `20260925120000_website_core`, `20260926120000_website_menu_presentation`.
 - Immediately preceding state migrations:

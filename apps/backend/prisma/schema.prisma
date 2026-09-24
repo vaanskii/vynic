@@ -1146,6 +1146,7 @@ enum MenuAuthority {
 
 /// One physical restaurant/location owned by an Organization.
 model Venue {
+  cloudMenuEditingEnabled Boolean @default(true)
   menuAuthority             MenuAuthority              @default(POS)
   catalogRevision           Int                        @default(0)
   paymentIntegrations PaymentIntegration[]

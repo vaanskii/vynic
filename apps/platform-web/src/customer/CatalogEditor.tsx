@@ -15,6 +15,7 @@ type Node = {
 };
 type Catalog = {
   authority: "POS" | "CLOUD";
+  editingEnabled?: boolean;
   revision: number;
   categories: Node[];
 };
@@ -61,6 +62,7 @@ export function CatalogEditor({
     return (
       <p className="portal-hint">მენიუს სტრუქტურა და ფასები იმართება POS-ში.</p>
     );
+  if (data.editingEnabled === false) return <p className="portal-hint">Dashboard-ში მენიუს რედაქტირება გამორთულია. ჩართვა შესაძლებელია Admin → Product გვერდიდან.</p>;
   const action = (label: string, value: Edit) => (
     <button
       type="button"

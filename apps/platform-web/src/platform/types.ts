@@ -62,6 +62,7 @@ export interface Plan {
 }
 
 export interface ProductState {
+  menuManagement?: { authority: "POS" | "CLOUD"; canEnableCloud: boolean; enabled: boolean; reason: string | null };
   commercialAccess?: boolean;
   venueId: string;
   plan: Pick<Plan, "id" | "key" | "name" | "status"> | null;

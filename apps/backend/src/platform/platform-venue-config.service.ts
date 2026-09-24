@@ -1,3 +1,4 @@
+import { cloudMenuAdmission } from './cloud-menu-admission';
 import {
   BadRequestException,
   ConflictException,
@@ -61,6 +62,32 @@ export class PlatformVenueConfigService {
     });
   }
 
+  async ensureWebsitePlan(actor: PlatformPrincipal) {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('vynic-website-only-plan'))`;
+      const existing = await tx.plan.findUnique({ where: { key: 'WEBSITE_ONLY' } });
+      if (existing) return;
+      const feature = await tx.feature.findUniqueOrThrow({ where: { key: 'WEBSITE' } });
+      const plan = await tx.plan.create({ data: { key: 'WEBSITE_ONLY', name: 'Website only', features: { create: { featureId: feature.id } } } });
+      await tx.platformAuditEvent.create({ data: { platformUserId: actor.platformUserId, action: 'plan.website_only_created', targetType: 'Plan', targetId: plan.id } });
+    });
+    return this.listPlans();
+  }
+
+  async enableCloudMenu(actor: PlatformPrincipal, venueId: string, enabled: unknown) {
+    await this.directory.requireVenue(venueId);
+    if (typeof enabled !== 'boolean') throw new BadRequestException('enabled must be a boolean');
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
+      const admission = await cloudMenuAdmission(tx, venueId);
+      if (admission.enabled === enabled) return;
+      if (enabled && !admission.canEnableCloud) throw new ConflictException(admission.reason!);
+      await tx.venue.update({ where: { id: venueId }, data: { ...(enabled ? { menuAuthority: 'CLOUD' as const } : {}), cloudMenuEditingEnabled: enabled } });
+      await tx.platformAuditEvent.create({ data: { platformUserId: actor.platformUserId, action: enabled ? 'venue.cloud_menu_enabled' : 'venue.cloud_menu_disabled', targetType: 'Venue', targetId: venueId, metadata: { from: admission.authority, enabled } } });
+    });
+    return this.readProduct(venueId);
+  }
+
   async listFeatures() {
     return this.prisma.feature.findMany({
       orderBy: { key: 'asc' },
@@ -97,6 +124,7 @@ export class PlatformVenueConfigService {
 
     return {
       venueId,
+      menuManagement: await cloudMenuAdmission(this.prisma, venueId),
       plan: assignment?.plan ?? null,
       planAssignedAt: assignment?.assignedAt ?? null,
       overrides: overrides.map((row) => ({

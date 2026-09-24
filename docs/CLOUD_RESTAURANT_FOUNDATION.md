@@ -159,3 +159,20 @@ Remaining work is the explicitly disabled production activation/authority handov
 complete local freshness inventory/writer fencing, offline receipt-media projection,
 and future table/layout/policy Backoffice domains. Staging is not a working POS
 bootstrap, and this milestone does not claim a Cloud-to-POS production cutover.
+
+## Admin setup
+
+The standard catalog includes `WEBSITE_ONLY` with only the WEBSITE feature.
+Migration `20260929120000_website_only_plan` seeds it; existing installations
+can also use **Admin → Plans → Add Website-only plan**, an idempotent, audited
+SUPER_ADMIN operation. Neither action reassigns existing venues.
+
+For a previously created but unused venue, open **Admin → Venues → Product →
+მენიუს მართვა Dashboard-ში**. Enable/disable acts directly without an
+acknowledgement checkbox. Disabling only stops owner catalog writes; it preserves
+the catalog, public presentation and CLOUD authority. Reenabling resumes editing.
+The server rechecks admission under the Venue lock, blocks CUSTOM websites,
+devices/enrollment history, catalogs and operational records, and audits the
+editing/authority change. This is not a migration path for an established POS.
+Plan assignment alone does not change menu authority. Cloud-to-POS production
+activation remains outside this milestone.

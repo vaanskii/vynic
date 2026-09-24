@@ -150,6 +150,11 @@ export class PlatformVenuesController {
     return this.config.readProduct(requireUuid(venueId, 'venueId'));
   }
 
+  @Put(':venueId/menu-management/cloud')
+  enableCloudMenu(@PlatformActor() actor: PlatformPrincipal, @Param('venueId') venueId: string, @Body() body: { enabled?: unknown }) {
+    return this.config.enableCloudMenu(actor, requireUuid(venueId, 'venueId'), body.enabled);
+  }
+
   @Put(':venueId/plan')
   async assignPlan(
     @PlatformActor() actor: PlatformPrincipal,

@@ -1,3 +1,4 @@
+import { assignHostname, lockHostnames } from '../provisioning/hostname';
 import { validateMediaReferences } from './website-media';
 import { requireCommercialFeature } from '../../entitlements/commercial-state';
 import {
@@ -60,18 +61,31 @@ export class WebsiteCoreService {
   }
   async settings(venueId: string) {
     await requireCommercialFeature(this.db, venueId, 'WEBSITE');
-    const [row, access, domains] = await Promise.all([
+    // Upgrade previously unassigned SaaS configurations once, under the same locks.
+    await this.db.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
+      await requireCommercialFeature(tx, venueId, 'WEBSITE');
+      await tx.$queryRaw`SELECT "venueId" FROM "pos"."VenueWebsiteConfig" WHERE "venueId"=${venueId} FOR UPDATE`;
+      const current = await tx.venueWebsiteConfig.findUnique({
+        where: { venueId },
+      });
+      if (current?.mode === 'SAAS' && !current.assignedSlug)
+        await assignHostname(tx, venueId);
+    });
+    const [row, access, domains, subscription] = await Promise.all([
       this.db.venueWebsiteConfig.findUnique({ where: { venueId } }),
       this.access.websiteAccess(venueId),
       this.db.venueDomain.findMany({
         where: { venueId, status: 'ACTIVE' },
         select: { hostname: true },
       }),
+      this.db.venueSubscription.findUnique({ where: { venueId } }),
     ]);
     return {
-      mediaUploadAllowed:
-        (await this.db.venueSubscription.findUnique({ where: { venueId } }))
-          ?.status === 'ACTIVE',
+      hostnameChangeAllowed:
+        access.configuredMode === 'SAAS' && subscription?.status === 'ACTIVE',
+      commercialStatus: subscription?.status ?? 'NO_PLAN',
+      mediaUploadAllowed: subscription?.status === 'ACTIVE',
       schemaVersion: WEBSITE_SCHEMA_VERSION,
       themeKeys: [...websiteThemeKeys],
       mode: access.configuredMode,
@@ -144,6 +158,10 @@ export class WebsiteCoreService {
     const input = websiteMutation(body, true);
     await this.db.$transaction(async (tx) => {
       const row = await this.locked(tx, venueId, input.expectedRevision);
+      if (!row.assignedSlug || input.content?.slug !== row.assignedSlug)
+        throw new ForbiddenException(
+          'Website address changes require Platform approval',
+        );
       await validateMediaReferences(tx, venueId, input.content, [
         row.draft,
         row.published,
@@ -219,8 +237,13 @@ export class WebsiteCoreService {
         if (!row.draft || !row.revision)
           throw new ConflictException('Save a draft before publishing');
         const content = websiteContent(readWebsiteContent(row.draft));
+        if (!row.assignedSlug || content.slug !== row.assignedSlug)
+          throw new ForbiddenException(
+            'Website address changes require Platform approval',
+          );
         if (!content.heroTitle)
           throw new ConflictException('A hero title is required to publish');
+        await lockHostnames(tx);
         const hostname = `${content.slug}.${this.baseDomain()}`;
         const domain = await tx.venueDomain.findUnique({ where: { hostname } });
         if (

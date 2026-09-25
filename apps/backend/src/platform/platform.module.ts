@@ -1,3 +1,5 @@
+import { WebsiteCoreModule } from '../website/core/website-core.module';
+import { PlatformHostnameController } from './platform-hostname.controller';
 import { PlanCatalogService } from './plan-catalog.service';
 import {
   EdgeFoundationController,
@@ -31,12 +33,14 @@ import { PlatformVenuesController } from './platform-venues.controller';
  */
 @Module({
   imports: [
+    WebsiteCoreModule,
     AuthModule,
     EntitlementsModule,
     EdgeTransportModule,
     PlatformAuditModule,
   ],
   controllers: [
+    PlatformHostnameController,
     EdgeFoundationController,
     PlatformCommercialController,
     PlatformAuthController,

@@ -1,3 +1,4 @@
+import { lockHostnames } from '../website/provisioning/hostname';
 import {
   commercialState,
   requireCommercialFeature,
@@ -181,6 +182,9 @@ export class PlatformVenueConfigService {
 
     return {
       venueId,
+      commercialStatus:
+        (await this.prisma.venueSubscription.findUnique({ where: { venueId } }))
+          ?.status ?? null,
       menuManagement: await cloudMenuAdmission(this.prisma, venueId),
       plan: assignment?.plan ?? null,
       planAssignedAt: assignment?.assignedAt ?? null,
@@ -201,7 +205,13 @@ export class PlatformVenueConfigService {
       })),
       effectiveFeatures,
       commercialAccess: await this.entitlements.commercialAccess(venueId),
-      website,
+      website: {
+        ...website,
+        provisioning: await this.prisma.venueWebsiteConfig.findUnique({
+          where: { venueId },
+          select: { status: true, assignedSlug: true, publishedAt: true },
+        }),
+      },
     };
   }
 
@@ -407,6 +417,7 @@ export class PlatformVenueConfigService {
       return await this.prisma.$transaction(async (tx) => {
         await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
         await requireCommercialFeature(tx, venueId, 'WEBSITE');
+        await lockHostnames(tx);
         const domain = await tx.venueDomain.create({
           data: { venueId, hostname },
           select: DOMAIN_FIELDS,

@@ -1,3 +1,4 @@
+import { HostnameRequestsService } from './hostname-requests';
 import { WebsiteLogoService } from './website-logo.service';
 import { WebsiteLogoController } from './website-logo.controller';
 import { Module } from '@nestjs/common';
@@ -10,6 +11,7 @@ import { WebsiteCoreController } from './website-core.controller';
 @Module({
   imports: [WebsiteTenancyModule, JwtModule.register({})],
   providers: [
+    HostnameRequestsService,
     WebsiteLogoService,
     WebsiteCoreService,
     WebsiteMenuService,
@@ -17,6 +19,7 @@ import { WebsiteCoreController } from './website-core.controller';
   ],
   controllers: [WebsiteLogoController, WebsiteCoreController],
   exports: [
+    HostnameRequestsService,
     WebsiteLogoService,
     WebsiteCoreService,
     WebsiteMenuService,

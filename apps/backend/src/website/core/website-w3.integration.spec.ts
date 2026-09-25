@@ -1,3 +1,4 @@
+import { HostnameRequestsService } from './hostname-requests';
 import { WebsiteLogoService } from './website-logo.service';
 import 'reflect-metadata';
 jest.mock('uuid', () => ({ v4: () => require('node:crypto').randomUUID() }));
@@ -139,7 +140,9 @@ const url = process.env.W3_TEST_DATABASE_URL;
             legalId: 'private-legal',
             timezone: 'Asia/Tbilisi',
             currency: 'GEL',
-            websiteConfig: { create: { mode: shape.mode } },
+            websiteConfig: {
+              create: { mode: shape.mode, assignedSlug: slug(i) },
+            },
             domains: { create: { hostname: host(i) } },
             featureOverrides: {
               create: {
@@ -199,6 +202,7 @@ const url = process.env.W3_TEST_DATABASE_URL;
       const mod = await Test.createTestingModule({
         controllers: [CustomerWebsiteController, WebsiteCoreController],
         providers: [
+          HostnameRequestsService,
           WebsiteLogoService,
           { provide: PrismaService, useValue: db },
           { provide: WebsiteCoreService, useValue: core },

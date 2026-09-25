@@ -68,6 +68,14 @@ async function serveWebsiteW3() {
     ],
     providers: [
       {
+        provide: require('../src/website/core/hostname-requests')
+          .HostnameRequestsService,
+        useValue:
+          new (require('../src/website/core/hostname-requests').HostnameRequestsService)(
+            db,
+          ),
+      },
+      {
         provide: WebsiteCoreService,
         useValue: new WebsiteCoreService(
           db,

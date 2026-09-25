@@ -1,3 +1,4 @@
+import { HostnameRequestsService } from '../website/core/hostname-requests';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   WebsiteLogoService,
@@ -34,6 +35,7 @@ import { WebsitePreviewTokens } from '../website/core/website-preview';
 @UseGuards(CustomerGuard)
 export class CustomerWebsiteController {
   constructor(
+    private readonly hostnames: HostnameRequestsService,
     private readonly owners: CustomerService,
     private readonly core: WebsiteCoreService,
     private readonly menu: WebsiteMenuService,
@@ -41,6 +43,23 @@ export class CustomerWebsiteController {
     private readonly config: ConfigService,
     private readonly logos: WebsiteLogoService,
   ) {}
+  @Get('hostname-requests')
+  async hostnameRequests(
+    @CustomerActor() actor: CustomerPrincipal,
+    @Param('venueId') id: string,
+  ) {
+    await this.owners.venue(actor, id);
+    return this.hostnames.list(id);
+  }
+  @Post('hostname-requests')
+  async requestHostname(
+    @CustomerActor() actor: CustomerPrincipal,
+    @Param('venueId') id: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    await this.owners.venue(actor, id);
+    return this.hostnames.create(id, actor.customerAccountId, body.slug);
+  }
   @Post('logo')
   @UseInterceptors(
     FileInterceptor('file', {

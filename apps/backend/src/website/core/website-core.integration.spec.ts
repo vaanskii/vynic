@@ -1,3 +1,4 @@
+import { HostnameRequestsService } from './hostname-requests';
 import { WebsiteLogoService } from './website-logo.service';
 import 'reflect-metadata';
 jest.mock('uuid', () => ({ v4: () => require('node:crypto').randomUUID() }));
@@ -101,7 +102,12 @@ const url = process.env.W3_TEST_DATABASE_URL;
               legalId: 'private-legal',
               timezone: 'Asia/Tbilisi',
               currency: 'GEL',
-              websiteConfig: { create: { mode: i === 2 ? 'CUSTOM' : 'SAAS' } },
+              websiteConfig: {
+                create: {
+                  mode: i === 2 ? 'CUSTOM' : 'SAAS',
+                  assignedSlug: content(i).slug,
+                },
+              },
               domains: { create: { hostname: host(i) } },
               featureOverrides: { create: { featureId, effect: 'ENABLED' } },
             },
@@ -131,6 +137,7 @@ const url = process.env.W3_TEST_DATABASE_URL;
       const mod = await Test.createTestingModule({
         controllers: [CustomerWebsiteController, WebsiteCoreController],
         providers: [
+          HostnameRequestsService,
           WebsiteLogoService,
           { provide: PrismaService, useValue: db },
           { provide: WebsiteCoreService, useValue: core },
@@ -295,8 +302,8 @@ const url = process.env.W3_TEST_DATABASE_URL;
       });
     });
     it('cannot claim another Venue domain/slug, failed publish leaves published state unchanged', async () => {
-      await save(0, 2, { ...content(0), slug: content(1).slug }).expect(200);
-      await publish(0, 3).expect(409);
+      await save(0, 2, { ...content(0), slug: content(1).slug }).expect(403);
+      await save(0, 2, content(0)).expect(200);
       expect((await publicGet(0)).body.content.heroTitle).toBe(
         'Private draft A',
       );
@@ -371,13 +378,13 @@ const url = process.env.W3_TEST_DATABASE_URL;
       await publish(1, 2).expect(403);
       await db.venueSubscription.delete({ where: { venueId: venues[1].id } });
     });
-    it('publish atomically claims a new subdomain and profiles remain sourced from Venue', async () => {
-      const c = { ...content(0), slug: `new-${tag}` };
+    it('publication preserves the assigned hostname and profiles remain sourced from Venue', async () => {
+      const c = content(0);
       await save(0, 4, c).expect(200);
       await http()
         .get('/api/website/bootstrap')
         .set('Host', `${c.slug}.vynic.local`)
-        .expect(404);
+        .expect(200);
       await publish(0, 5).expect(201);
       await db.venue.update({
         where: { id: venues[0].id },

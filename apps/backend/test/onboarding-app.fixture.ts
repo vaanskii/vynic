@@ -1,3 +1,5 @@
+import { HostnameRequestsService } from '../src/website/core/hostname-requests';
+import { PlatformHostnameController } from '../src/platform/platform-hostname.controller';
 import {
   OnboardingRequestsService,
   PublicAccessRequestsController,
@@ -60,7 +62,10 @@ import { WebsitePreviewTokens } from '../src/website/core/website-preview';
 import { WebsiteTenantService } from '../src/website/tenancy/website-tenant.service';
 
 // Explicit dependency graph: real services, no operational workers, LAN calls or bank clients.
-export async function onboardingApp(db: PrismaService, corsOrigin?: string) {
+export async function onboardingApp(
+  db: PrismaService,
+  corsOrigin?: string | string[],
+) {
   const config = new ConfigService({
     WEBSITE_MEDIA_DIR: '/tmp/vynic-foundation-test-media',
     PLATFORM_JWT_SECRET: process.env.JWT_SECRET,
@@ -83,6 +88,7 @@ export async function onboardingApp(db: PrismaService, corsOrigin?: string) {
       CustomerOwnerInvitationsController,
       PlatformOwnerInvitationsController,
       CustomerWebsiteController,
+      PlatformHostnameController,
       WebsiteCoreController,
       CustomerPaymentsController,
       PlatformAuthController,
@@ -115,6 +121,7 @@ export async function onboardingApp(db: PrismaService, corsOrigin?: string) {
       EdgeCommandService,
       EnrollmentRateLimiter,
       VenueEntitlementsService,
+      HostnameRequestsService,
       WebsiteCoreService,
       WebsiteMenuService,
       WebsitePreviewTokens,
@@ -122,7 +129,9 @@ export async function onboardingApp(db: PrismaService, corsOrigin?: string) {
       PaymentIntegrationsService,
     ],
   }).compile();
-  const app = module.createNestApplication({ logger: false });
+  const app = module.createNestApplication({
+    logger: process.env.DEBUG_HTTP_TESTS ? ['error'] : false,
+  });
   if (corsOrigin) app.enableCors({ origin: corsOrigin });
   await app.init();
   return app;

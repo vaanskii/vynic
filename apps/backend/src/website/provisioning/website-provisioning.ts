@@ -1,3 +1,4 @@
+import { assignHostname } from './hostname';
 import { BadRequestException } from '@nestjs/common';
 import { Prisma, VenueWebsiteConfig } from '@prisma/client';
 import { commercialState } from '../../entitlements/commercial-state';
@@ -69,7 +70,10 @@ export async function provisionWebsite(
       : requireWebsiteMode(requested);
   if (mode === 'SAAS' && !planFeatures.includes('POS'))
     await admitCloudMenu(tx, venueId, actor, source);
-  if (before?.mode === mode) return before;
+  if (before?.mode === mode)
+    return mode === 'SAAS'
+      ? assignHostname(tx, venueId, actor.platformUserId)
+      : before;
   const row = await tx.venueWebsiteConfig.upsert({
     where: { venueId },
     create: { venueId, mode },
@@ -84,7 +88,9 @@ export async function provisionWebsite(
       metadata: { from: before?.mode ?? 'NONE', to: mode, source },
     },
   });
-  return row;
+  return mode === 'SAAS'
+    ? assignHostname(tx, venueId, actor.platformUserId)
+    : row;
 }
 
 /**

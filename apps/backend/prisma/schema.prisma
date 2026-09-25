@@ -1201,6 +1201,7 @@ model Venue {
   subscription              VenueSubscription?
   planAssignment            VenuePlanAssignment?
   featureOverrides          VenueFeatureOverride[]
+  hostnameRequests          WebsiteHostnameRequest[]
   websiteConfig             VenueWebsiteConfig?
   domains                   VenueDomain[]
   websiteTables             WebsiteTable[]
@@ -1448,6 +1449,7 @@ enum WebsitePublicationStatus {
 /// Website mode is separate from entitlement and frontend deployment.
 /// Only the published snapshot is public; profile identity stays on Venue.
 model VenueWebsiteConfig {
+  assignedSlug      String? @unique
   status            WebsitePublicationStatus @default(DRAFT)
   slug              String? @unique
   draft             Json?
@@ -2139,5 +2141,21 @@ model SubscriptionBillingEvent {
   currency String
   receivedAt DateTime @default(now())
   @@unique([provider, eventId])
+  @@schema("pos")
+}
+
+model WebsiteHostnameRequest {
+  id String @id @default(uuid())
+  venueId String
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  requestedBy String
+  hostname String
+  slug String
+  status String @default("PENDING")
+  createdAt DateTime @default(now())
+  reviewedAt DateTime?
+  reviewedBy String?
+  reason String?
+  @@index([venueId, status])
   @@schema("pos")
 }

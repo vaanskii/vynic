@@ -116,11 +116,248 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
       posPlanId = (await db.plan.findUniqueOrThrow({ where: { key: 'POS' } }))
         .id;
     });
+    beforeEach(async () => {
+      await app.close();
+      app = await onboardingApp(db);
+    });
     afterAll(async () => {
       await app?.close();
       await db?.$disconnect();
     });
 
+    it('assigns stable collision-safe addresses and enforces paid review, concurrency, tenancy and shutdown', async () => {
+      const requested = await submit('ownership');
+      const prepared = (
+        await review(requested.id, {
+          planId: websitePlanId,
+          trialEndsAt: trialEndsAt(),
+          websiteMode: 'SAAS',
+        }).expect(201)
+      ).body.prepared;
+      const owner = await register(prepared.invitationPath);
+      const id = owner.venueId;
+      const path = `/customer/venues/${id}/website`;
+      const actions = (body: Record<string, unknown>) =>
+        http()
+          .post(`/platform/venues/${id}/subscription/actions`)
+          .set(bearer(admin))
+          .send({
+            reason: 'Disposable ownership proof',
+            confirm: true,
+            ...body,
+          });
+      const settings = (
+        await http().get(path).set(bearer(owner.access_token)).expect(200)
+      ).body;
+      expect(settings.draft.slug).toMatch(/^restaurantownership(?:-\d+)?$/);
+      expect(settings.hostnameChangeAllowed).toBe(false);
+      await http()
+        .post(path + '/hostname-requests')
+        .set(bearer(owner.access_token))
+        .send({ slug: 'trial-denied-' + tag })
+        .expect(403);
+      await http()
+        .put(path + '/draft')
+        .set(bearer(owner.access_token))
+        .send({
+          expectedRevision: settings.revision,
+          content: { ...settings.draft, slug: 'direct-denied' },
+        })
+        .expect(403);
+      await http()
+        .put(path + '/draft')
+        .set(bearer(owner.access_token))
+        .send({
+          expectedRevision: settings.revision,
+          content: {
+            ...settings.draft,
+            heroTitle: 'Retained content',
+            workingHours: [{ day: 1, opens: '10:00', closes: '22:00' }],
+          },
+        })
+        .expect(200);
+      await http()
+        .post(path + '/publish')
+        .set(bearer(owner.access_token))
+        .send({ expectedRevision: settings.revision + 1 })
+        .expect(201);
+      await db.venue.update({
+        where: { id },
+        data: { name: 'Changed Restaurant Name' },
+      });
+      expect(
+        (await http().get(path).set(bearer(owner.access_token))).body.draft
+          .slug,
+      ).toBe(settings.draft.slug);
+      const before = await db.venueSubscription.findUniqueOrThrow({
+        where: { venueId: id },
+      });
+      expect(before.startedAt).not.toBeNull();
+      const end = new Date(
+        before.trialEndsAt!.getTime() + 3600000,
+      ).toISOString();
+      await actions({ action: 'EXTEND_TRIAL', trialEndsAt: end }).expect(201);
+      expect(
+        (
+          await db.venueSubscription.findUniqueOrThrow({
+            where: { venueId: id },
+          })
+        ).startedAt,
+      ).toEqual(before.startedAt);
+      await actions({ action: 'END_TRIAL', confirm: false }).expect(400);
+      await actions({ action: 'END_TRIAL' }).expect(201);
+      await http().get(path).set(bearer(owner.access_token)).expect(403);
+      await http()
+        .get('/api/website/bootstrap')
+        .set('Host', settings.draft.slug + '.vynic.localhost')
+        .expect(404);
+      expect(
+        (
+          await db.venueWebsiteConfig.findUniqueOrThrow({
+            where: { venueId: id },
+          })
+        ).draft,
+      ).toMatchObject({ heroTitle: 'Retained content' });
+      await actions({
+        action: 'GRANT_ACTIVE',
+        planId: websitePlanId,
+        websiteMode: 'SAAS',
+      }).expect(201);
+      const responses = await Promise.all(
+        ['paid-a-', 'paid-b-'].map((prefix) =>
+          http()
+            .post(path + '/hostname-requests')
+            .set(bearer(owner.access_token))
+            .send({ slug: prefix + tag }),
+        ),
+      );
+      expect(responses.map((r) => r.status).sort()).toEqual([201, 409]);
+      const pending = responses.find((r) => r.status === 201)!.body;
+      expect(
+        (
+          await db.venueWebsiteConfig.findUniqueOrThrow({
+            where: { venueId: id },
+          })
+        ).assignedSlug,
+      ).toBe(settings.draft.slug);
+      // Competing Venue claims the desired hostname before approval: review fails atomically.
+      const other = await platformVenue('Other owner');
+      await db.venueDomain.create({
+        data: { venueId: other.id, hostname: pending.hostname },
+      });
+      const approve = () =>
+        http()
+          .post(`/platform/venues/${id}/hostname-requests/${pending.id}/review`)
+          .set(bearer(admin))
+          .send({ status: 'APPROVED', reason: 'Reviewed' });
+      await approve().expect(409);
+      await db.venueDomain.delete({ where: { hostname: pending.hostname } });
+      await approve().expect(201);
+      await approve().expect(409);
+      expect(
+        (
+          await db.venueWebsiteConfig.findUniqueOrThrow({
+            where: { venueId: id },
+          })
+        ).assignedSlug,
+      ).toBe(pending.slug);
+      expect(
+        await db.venueDomain.findUnique({
+          where: { hostname: pending.hostname },
+        }),
+      ).toMatchObject({ venueId: id });
+      expect(
+        await db.venueDomain.findUnique({
+          where: { hostname: settings.draft.slug + '.vynic.localhost' },
+        }),
+      ).toBeNull();
+      await http()
+        .get(`/customer/venues/${other.id}/website/hostname-requests`)
+        .set(bearer(owner.access_token))
+        .expect(404);
+      const next = (
+        await http()
+          .post(path + '/hostname-requests')
+          .set(bearer(owner.access_token))
+          .send({ slug: 'rejected-' + tag })
+          .expect(201)
+      ).body;
+      await http()
+        .post(`/platform/venues/${id}/hostname-requests/${next.id}/review`)
+        .set(bearer(admin))
+        .send({ status: 'REJECTED', reason: 'Not suitable' })
+        .expect(201);
+      const audits = await db.platformAuditEvent.findMany({
+        where: { targetId: id },
+      });
+      expect(audits.map((a) => a.action)).toEqual(
+        expect.arrayContaining([
+          'website.hostname_assigned',
+          'website.hostname_change_requested',
+          'website.hostname_change_approved',
+          'website.hostname_change_rejected',
+          'subscription.extend_trial',
+          'subscription.end_trial',
+        ]),
+      );
+    });
+
+    it('serializes generated name collisions without changing either Venue identity', async () => {
+      const first = await platformVenue('Restaurant Collision ' + tag);
+      const second = await platformVenue('Restaurant Collision ' + tag);
+      const results = await Promise.all(
+        [first, second].map((v) =>
+          http()
+            .post(`/platform/venues/${v.id}/subscription/actions`)
+            .set(bearer(admin))
+            .send({
+              action: 'TRIAL',
+              planId: websitePlanId,
+              websiteMode: 'SAAS',
+              trialEndsAt: trialEndsAt(),
+              reason: 'Concurrent generated names',
+            }),
+        ),
+      );
+      expect(results.map((r) => r.status)).toEqual([201, 201]);
+      const rows = await db.venueWebsiteConfig.findMany({
+        where: { venueId: { in: [first.id, second.id] } },
+      });
+      expect(new Set(rows.map((r) => r.assignedSlug)).size).toBe(2);
+      expect(rows.map((r) => r.assignedSlug).sort()).toEqual([
+        `restaurantcollision${tag}`,
+        `restaurantcollision${tag}-2`,
+      ]);
+    });
+
+    it('deduplicates public requests concurrently and customer Trial requests under the Venue lock', async () => {
+      const body = {
+        email: `duplicate-${tag}@test.invalid`,
+        applicantName: 'Owner',
+        businessName: 'Business',
+        phone: '555',
+      };
+      const results = await Promise.all(
+        [1, 2].map(() => http().post('/customer/access-requests').send(body)),
+      );
+      expect(results.map((r) => r.status).sort()).toEqual([201, 409]);
+      const requestRow = await submit('no-plan-duplicate');
+      const prepared = (
+        await review(requestRow.id, { outcome: 'NO_PLAN' }).expect(201)
+      ).body.prepared;
+      const owner = await register(prepared.invitationPath);
+      const path = `/customer/venues/${owner.venueId}/trial-requests`;
+      const trialResults = await Promise.all(
+        [1, 2].map(() =>
+          http().post(path).set(bearer(owner.access_token)).send({}),
+        ),
+      );
+      expect(trialResults.map((r) => r.status).sort()).toEqual([201, 409]);
+      expect(
+        (await http().get(path).set(bearer(owner.access_token)).expect(200))
+          .body.status,
+      ).toBe('PENDING');
+    });
     it('ships a Website-only plan with WEBSITE and neither POS nor Manager', async () => {
       const keys = (
         await db.planFeature.findMany({
@@ -245,7 +482,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
           expectedRevision: settings.revision,
           content: {
             ...emptyWebsiteContent,
-            slug: 'saas-' + tag,
+            slug: settings.draft.slug,
             workingHours: [{ day: 1, opens: '10:00', closes: '22:00' }],
           },
         })

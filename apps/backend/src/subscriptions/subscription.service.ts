@@ -111,6 +111,7 @@ export class SubscriptionService {
       const effective = await commercialState(tx, venueId);
       return {
         ...subscription,
+        serverTime: new Date().toISOString(),
         status:
           subscription?.status ?? (effective.allowed ? 'LEGACY' : 'NO_PLAN'),
         assignment,
@@ -235,6 +236,42 @@ export class SubscriptionService {
           break;
         }
 
+        case 'EXTEND_TRIAL': {
+          if (sub.status !== 'TRIAL')
+            throw new ConflictException('Only a current Trial can be extended');
+          const end = new Date(String(body.trialEndsAt));
+          if (
+            !Number.isFinite(end.getTime()) ||
+            end <= now ||
+            (sub.trialEndsAt && end <= sub.trialEndsAt)
+          )
+            throw new BadRequestException(
+              'Choose an end date after the current Trial end',
+            );
+          data = { trialEndsAt: end };
+          detail = {
+            before: sub.trialEndsAt?.toISOString() ?? null,
+            after: end.toISOString(),
+          };
+          break;
+        }
+        case 'END_TRIAL':
+          if (sub.status !== 'TRIAL')
+            throw new ConflictException('Only a current Trial can be ended');
+          if (body.confirm !== true)
+            throw new BadRequestException('Confirm ending Trial now');
+          data = {
+            status: 'CANCELLED',
+            trialEndsAt: now,
+            trialEndedAt: now,
+            cancelledAt: now,
+            ...clearPendingPlan,
+          };
+          detail = {
+            before: sub.trialEndsAt?.toISOString() ?? null,
+            after: now.toISOString(),
+          };
+          break;
         case 'TRIAL': {
           if (
             sub.billingManaged &&
@@ -257,6 +294,7 @@ export class SubscriptionService {
           );
           data = {
             status: 'TRIAL',
+            startedAt: sub.status === 'TRIAL' ? (sub.startedAt ?? now) : now,
             billingManaged: false,
             currentPeriodStart: null,
             currentPeriodEndsAt: null,
@@ -274,6 +312,8 @@ export class SubscriptionService {
           break;
         }
         case 'SUSPEND':
+          if (body.confirm !== true)
+            throw new BadRequestException('Confirm suspension');
           if (!['ACTIVE', 'TRIAL', 'PAST_DUE'].includes(sub.status))
             throw new ConflictException('Only current access can be suspended');
           data = {

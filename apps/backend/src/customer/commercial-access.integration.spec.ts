@@ -1,3 +1,4 @@
+import { HostnameRequestsService } from '../website/core/hostname-requests';
 import { SubscriptionService } from '../subscriptions/subscription.service';
 import 'reflect-metadata';
 jest.mock('uuid', () => ({ v4: () => require('node:crypto').randomUUID() }));
@@ -98,6 +99,7 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
       if (status === 'SUSPENDED')
         return lifecycle.action(actor, v.id, {
           action: 'SUSPEND',
+          confirm: true,
           reason: 'Regression fixture suspension',
         });
       if (existing?.billingManaged) {
@@ -277,6 +279,7 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
           PlatformCatalogController,
         ],
         providers: [
+          HostnameRequestsService,
           ...providers.map(([provide, useValue]) => ({ provide, useValue })),
           CustomerGuard,
         ],
@@ -465,7 +468,16 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
       await http()
         .put(`${base(a)}/website/draft`)
         .set(auth(a.token))
-        .send({ expectedRevision: 0, content: draft('website-' + tag) })
+        .send({
+          expectedRevision: 0,
+          content: draft(
+            (
+              await db.venueWebsiteConfig.findUniqueOrThrow({
+                where: { venueId: a.id },
+              })
+            ).assignedSlug!,
+          ),
+        })
         .expect(200);
       await http()
         .get(`${base(a)}/website/preview`)
@@ -515,7 +527,9 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
         }),
       ).toBe(1);
       await expect(
-        core.bootstrap({ host: `website-${tag}.vynic.test` }),
+        core.bootstrap({
+          host: `${(await db.venueWebsiteConfig.findUniqueOrThrow({ where: { venueId: a.id } })).assignedSlug}.vynic.test`,
+        }),
       ).rejects.toMatchObject({ status: 404 });
       const domain = await db.venueDomain.findFirstOrThrow({
         where: { venueId: a.id },
@@ -572,7 +586,16 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
         .set(auth(b.token))
         .send({
           expectedRevision: 0,
-          content: { ...draft('other-' + tag), logoUrl: uploaded.url },
+          content: {
+            ...draft(
+              (
+                await db.venueWebsiteConfig.findUniqueOrThrow({
+                  where: { venueId: b.id },
+                })
+              ).assignedSlug!,
+            ),
+            logoUrl: uploaded.url,
+          },
         })
         .expect(403);
       await db.plan.update({

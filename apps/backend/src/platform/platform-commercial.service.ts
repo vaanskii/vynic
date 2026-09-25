@@ -131,8 +131,11 @@ export class PlatformCommercialService {
         throw new ConflictException(
           'Use lifecycle actions for a billing agreement',
         );
-      if (['SUSPENDED', 'CANCELLED'].includes(status))
+      if (['SUSPENDED', 'CANCELLED'].includes(status)) {
         requireText(body.note, 'Operator reason', { max: 1000 });
+        if (body.confirm !== true)
+          throw new BadRequestException('Confirm immediate access change');
+      }
       if (body.planId)
         await assignCommercialPlan(
           tx,
@@ -195,6 +198,9 @@ export class PlatformCommercialService {
         },
         update: {
           status,
+          ...(status === 'TRIAL' && before?.status !== 'TRIAL'
+            ? { startedAt: now }
+            : {}),
           note,
           updatedBy: actor.platformUserId,
           ...(body.trialEndsAt !== undefined
@@ -207,6 +213,9 @@ export class PlatformCommercialService {
           cancelledAt: status === 'CANCELLED' ? new Date() : null,
           suspendedFrom: status === 'SUSPENDED' ? before?.status : null,
           version: { increment: 1 },
+          ...(status === 'CANCELLED' && before?.status === 'TRIAL'
+            ? { trialEndedAt: now, trialEndsAt: now }
+            : {}),
           ...paid,
         },
       });
@@ -215,6 +224,7 @@ export class PlatformCommercialService {
         from: before?.status ?? null,
         to: status,
         note,
+        previousTrialEndsAt: before?.trialEndsAt?.toISOString() ?? null,
         trialEndsAt: row.trialEndsAt?.toISOString() ?? null,
         currentPeriodEndsAt: row.currentPeriodEndsAt?.toISOString() ?? null,
       });

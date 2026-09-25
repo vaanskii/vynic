@@ -1,3 +1,4 @@
+import { HostnameRequestsService } from '../website/core/hostname-requests';
 import { mediaDatabaseFixture } from '../website/core/website-media-test-fixture';
 import { PrismaService } from '../prisma.service';
 import { Test } from '@nestjs/testing';
@@ -28,6 +29,7 @@ describe('Logo upload HTTP transport', () => {
     const module = await Test.createTestingModule({
       controllers: [CustomerWebsiteController, WebsiteLogoController],
       providers: [
+        { provide: HostnameRequestsService, useValue: {} },
         WebsiteLogoService,
         { provide: PrismaService, useValue: mediaDatabaseFixture() },
         {

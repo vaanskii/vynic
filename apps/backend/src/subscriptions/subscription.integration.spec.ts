@@ -122,7 +122,12 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
       service.action(
         operator,
         id,
-        { action, reason: 'Test operator reason', ...withMode(extra) },
+        {
+          action,
+          ...(action === 'SUSPEND' ? { confirm: true } : {}),
+          reason: 'Test operator reason',
+          ...withMode(extra),
+        },
         undefined,
         now,
       );

@@ -6,6 +6,7 @@ describe('Owner logo upload authority', () => {
   const core = { settings: jest.fn() };
   const logos = { upload: jest.fn() };
   const controller = new CustomerWebsiteController(
+    {} as any,
     owners as any,
     core as any,
     {} as any,

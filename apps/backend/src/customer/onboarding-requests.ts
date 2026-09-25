@@ -62,7 +62,16 @@ export class OnboardingRequestsService {
       }))
     )
       throw new BadRequestException('Plan unavailable');
-    await this.db.onboardingRequest.create({ data });
+    await this.db.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${email}, 219))::text`;
+      if (
+        await tx.onboardingRequest.findFirst({
+          where: { email, requestedVenueId: null, status: 'PENDING' },
+        })
+      )
+        throw new ConflictException('A request is already awaiting review');
+      await tx.onboardingRequest.create({ data });
+    });
     return { received: true }; // No account, tenant, domain, subscription or session created.
   }
   async requestTrial(
@@ -121,6 +130,13 @@ export class OnboardingRequestsService {
         },
       });
       return { received: true };
+    });
+  }
+  async pendingTrial(actor: CustomerPrincipal, venueId: string) {
+    await this.owners.venue(actor, venueId);
+    return this.db.onboardingRequest.findFirst({
+      where: { requestedVenueId: venueId, status: 'PENDING' },
+      select: { id: true, status: true },
     });
   }
   list() {
@@ -276,6 +292,12 @@ export class PlatformAccessRequestsController {
 @UseGuards(CustomerGuard)
 export class CustomerTrialRequestsController {
   constructor(private readonly service: OnboardingRequestsService) {}
+  @Get() pending(
+    @CustomerActor() actor: CustomerPrincipal,
+    @Param('venueId') id: string,
+  ) {
+    return this.service.pendingTrial(actor, id);
+  }
   @Post() submit(
     @CustomerActor() actor: CustomerPrincipal,
     @Param('venueId') id: string,

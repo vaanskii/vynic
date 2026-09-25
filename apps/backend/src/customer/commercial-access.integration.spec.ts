@@ -1,3 +1,4 @@
+import { SubscriptionService } from '../subscriptions/subscription.service';
 import 'reflect-metadata';
 jest.mock('uuid', () => ({ v4: () => require('node:crypto').randomUUID() }));
 import { randomUUID } from 'node:crypto';
@@ -83,12 +84,50 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
       heroTitle: 'Our restaurant',
     });
     const base = (v: any) => `/customer/venues/${v.id}`;
-    const assign = (v: any, plan: any, status = 'TRIAL') =>
-      http()
+    const assign = async (v: any, plan: any, status = 'TRIAL') => {
+      const lifecycle = new SubscriptionService(db);
+      const existing = await db.venueSubscription.findUnique({
+        where: { venueId: v.id },
+      });
+      if (status === 'SUSPENDED')
+        return lifecycle.action(actor, v.id, {
+          action: 'SUSPEND',
+          reason: 'Regression fixture suspension',
+        });
+      if (existing?.billingManaged) {
+        const assignment = await db.venuePlanAssignment.findUnique({
+          where: { venueId: v.id },
+        });
+        if (
+          status === 'ACTIVE' &&
+          existing.status === 'ACTIVE' &&
+          assignment?.planId === plan.id
+        )
+          return existing;
+        await lifecycle.action(actor, v.id, {
+          action: 'CANCEL_NOW',
+          confirm: true,
+          reason: 'End previous regression fixture agreement',
+        });
+        return lifecycle.action(actor, v.id, {
+          action: status === 'TRIAL' ? 'TRIAL' : 'GRANT_ACTIVE',
+          planId: plan.id,
+          trialEndsAt: future(),
+          confirm: true,
+          reason: 'Start next regression scenario',
+        });
+      }
+      return http()
         .put(`/platform/venues/${v.id}/subscription`)
         .set(auth(operator))
-        .send({ planId: plan.id, status, trialEndsAt: future() })
+        .send({
+          planId: plan.id,
+          status,
+          trialEndsAt: future(),
+          note: 'Regression fixture assignment',
+        })
         .expect(200);
+    };
     const prepare = async (label: string) => {
       const result = await invitations.provision(actor, {
         organizationName: label,
@@ -724,6 +763,7 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
         .expect(201);
     });
     it('trial extension/reactivation and suspension are audited; missing dates cannot grant trials', async () => {
+      await assign(a, websitePlan);
       await http()
         .put(`/platform/venues/${a.id}/subscription`)
         .set(auth(operator))
@@ -809,6 +849,112 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
       expect(await access.hasFeature(vankisi.id, 'NON_FISCAL_CLOSE')).toBe(
         false,
       );
+    });
+    it('HTTP billing boundary rejects owner payment claims, isolates tenants and accepts audited manual confirmation', async () => {
+      const v = await prepare('billing-http');
+      await http()
+        .get(`${base(v)}/subscription`)
+        .set(auth(v.token))
+        .expect(200);
+      await http()
+        .get(`${base(v)}/subscription`)
+        .set(auth(a.token))
+        .expect(404);
+      await http()
+        .post(`${base(v)}/subscription/actions`)
+        .set(auth(v.token))
+        .send({
+          action: 'GRANT_ACTIVE',
+          planId: websitePlan.id,
+          confirm: true,
+          reason: 'Forged',
+        })
+        .expect(403);
+      const quote = (
+        await http()
+          .post(`${base(v)}/subscription/quote`)
+          .set(auth(v.token))
+          .send({
+            planId: websitePlan.id,
+            paymentSucceeded: true,
+            eventTime: '2000-01-01',
+            amountMinor: 1,
+          })
+          .expect(201)
+      ).body;
+      expect(await access.effectiveFeatures(v.id)).toEqual([]);
+      await http()
+        .post(`${base(v)}/subscription/manual-success`)
+        .set(auth(v.token))
+        .send({ operationId: quote.id })
+        .expect(404);
+      await http()
+        .post(`/platform/venues/${v.id}/subscription/manual-success`)
+        .set(auth(v.token))
+        .send({ operationId: quote.id })
+        .expect(401);
+      await http()
+        .post(`/platform/venues/${v.id}/subscription/manual-success`)
+        .set(auth(operator))
+        .send({
+          operationId: quote.id,
+          confirm: true,
+          reason: 'Verified disposable payment',
+          reference: `test-receipt-${tag}`,
+        })
+        .expect(201);
+      expect(await access.effectiveFeatures(v.id)).toEqual(['WEBSITE']);
+      const state = (
+        await http()
+          .get(`${base(v)}/subscription`)
+          .set(auth(v.token))
+          .expect(200)
+      ).body;
+      expect(state.status).toBe('ACTIVE');
+      expect(state.billingManaged).toBe(true);
+      expect(state.history).toBeUndefined();
+      expect(new Date(state.currentPeriodStart).getUTCFullYear()).toBe(
+        new Date().getUTCFullYear(),
+      );
+      await http()
+        .post(`${base(v)}/subscription/actions`)
+        .set(auth(v.token))
+        .send({ action: 'SCHEDULE_CANCEL' })
+        .expect(201);
+      expect(await access.effectiveFeatures(v.id)).toEqual(['WEBSITE']);
+      await http()
+        .post(`${base(v)}/subscription/actions`)
+        .set(auth(v.token))
+        .send({ action: 'UNDO_CANCEL' })
+        .expect(201);
+    });
+    it('read-only support cannot quote, confirm money or mutate commercial access', async () => {
+      const support = await db.platformUser.create({
+        data: {
+          email: `readonly-${tag}@test.invalid`,
+          displayName: 'Support',
+          passwordHash: 'unused',
+          role: 'SUPPORT_READONLY',
+        },
+      });
+      const token = await new JwtService().signAsync(
+        { sub: support.id, typ: 'PLATFORM' },
+        {
+          secret: process.env.JWT_SECRET,
+          audience: 'vynic-platform',
+          issuer: 'vynic',
+        },
+      );
+      await http()
+        .get(`/platform/venues/${a.id}/subscription`)
+        .set(auth(token))
+        .expect(200);
+      for (const endpoint of ['actions', 'quote', 'manual-success'])
+        await http()
+          .post(`/platform/venues/${a.id}/subscription/${endpoint}`)
+          .set(auth(token))
+          .send({ action: 'SUSPEND', planId: websitePlan.id })
+          .expect(403);
     });
   },
 );

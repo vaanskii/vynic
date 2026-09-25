@@ -1,3 +1,4 @@
+import { SubscriptionService } from '../subscriptions/subscription.service';
 import { profileSelect } from '../venue-profile/venue-profile';
 import { FeatureKeys } from '../entitlements/feature-keys';
 import {
@@ -42,7 +43,33 @@ export class CustomerAuthController {
 @Controller('customer')
 @UseGuards(CustomerGuard)
 export class CustomerController {
-  constructor(private readonly service: CustomerService) {}
+  constructor(
+    private readonly service: CustomerService,
+    private readonly db: PrismaService,
+  ) {}
+  @Get('venues/:venueId/subscription') async subscription(
+    @CustomerActor() actor: CustomerPrincipal,
+    @Param('venueId') id: string,
+  ) {
+    await this.service.venue(actor, id);
+    return new SubscriptionService(this.db).snapshot(id, actor);
+  }
+  @Post('venues/:venueId/subscription/actions') async subscriptionAction(
+    @CustomerActor() actor: CustomerPrincipal,
+    @Param('venueId') id: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    await this.service.venue(actor, id);
+    return new SubscriptionService(this.db).action(actor, id, body);
+  }
+  @Post('venues/:venueId/subscription/quote') async subscriptionQuote(
+    @CustomerActor() actor: CustomerPrincipal,
+    @Param('venueId') id: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    await this.service.venue(actor, id);
+    return new SubscriptionService(this.db).quote(actor, id, body);
+  }
   @Get('portal') portal(@CustomerActor() actor: CustomerPrincipal) {
     return this.service.portal(actor);
   }

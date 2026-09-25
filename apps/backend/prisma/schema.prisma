@@ -1388,6 +1388,7 @@ model Plan {
 
   features    PlanFeature[]
   assignments VenuePlanAssignment[]
+  pendingSubscriptions VenueSubscription[] @relation("PendingSubscriptionPlan")
 
   @@schema("pos")
 }
@@ -1403,8 +1404,7 @@ model PlanFeature {
   @@schema("pos")
 }
 
-/// Which package a Venue currently has. Deliberately not a Subscription: no
-/// billing lifecycle has been decided, so none is modelled here.
+/// Current package and agreed-price snapshot, owned by VenueSubscription lifecycle.
 model VenuePlanAssignment {
   agreedPriceMinor Int?
   agreedCurrency String?
@@ -1903,7 +1903,7 @@ model SupplierPayment {
   @@schema("pos")
 }
 
-// Missing row preserves pre-Phase-2 access; new Venues receive an explicit trial.
+// New Venues start NO_PLAN. Legacy compatibility is explicitly migration-marked.
 enum SubscriptionStatus {
   NO_PLAN
   TRIAL
@@ -1920,6 +1920,21 @@ model VenueSubscription {
   startedAt DateTime?
   trialEndsAt DateTime?
   currentPeriodEndsAt DateTime?
+  currentPeriodStart DateTime?
+  billingAnchorAt DateTime?
+  // Old manual agreements keep their unknown terms; new paid activations are timed.
+  billingManaged Boolean @default(false)
+  version Int @default(0)
+  pendingPlanId String?
+  pendingPlan Plan? @relation("PendingSubscriptionPlan", fields: [pendingPlanId], references: [id], onDelete: Restrict)
+  pendingPriceMinor Int?
+  pendingCurrency String?
+  pendingBillingPeriod String?
+  pendingChangeAt DateTime?
+  cancelAtPeriodEnd Boolean @default(false)
+  suspendedFrom SubscriptionStatus?
+  paymentState String @default("NONE")
+  trialEndedAt DateTime?
   suspendedAt DateTime?
   cancelledAt DateTime?
   note String?
@@ -2084,5 +2099,45 @@ model WebsiteMediaAsset {
   venue Venue @relation(fields: [venueId], references: [id], onDelete: Restrict)
   @@index([venueId])
   @@index([unusedSince])
+  @@schema("pos")
+}
+
+/// Immutable server quote/payment work item; never a second access authority.
+model SubscriptionBillingOperation {
+  id String @id @default(uuid())
+  venueId String
+  kind String
+  state String @default("PENDING")
+  subscriptionVersion Int
+  planId String
+  planName String
+  priceMinor Int
+  currency String
+  billingPeriod String
+  amountMinor Int
+  quotedAt DateTime
+  expiresAt DateTime
+  periodStart DateTime?
+  periodEnd DateTime?
+  source String
+  reason String?
+  createdAt DateTime @default(now())
+  events SubscriptionBillingEvent[]
+  @@index([venueId, createdAt])
+  @@schema("pos")
+}
+
+/// Provider-neutral receipt ledger; provider + eventId enforces idempotency.
+model SubscriptionBillingEvent {
+  id String @id @default(uuid())
+  provider String
+  eventId String
+  operationId String
+  operation SubscriptionBillingOperation @relation(fields: [operationId], references: [id], onDelete: Restrict)
+  type String
+  amountMinor Int
+  currency String
+  receivedAt DateTime @default(now())
+  @@unique([provider, eventId])
   @@schema("pos")
 }

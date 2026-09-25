@@ -1,3 +1,4 @@
+import { commercialState } from '../entitlements/commercial-state';
 import { CustomerService } from './customer.service';
 import { CustomerActor, CustomerGuard } from './customer-auth';
 import type { CustomerPrincipal } from './customer-auth';
@@ -86,6 +87,9 @@ export class OnboardingRequestsService {
       throw new BadRequestException('Plan unavailable');
     return this.db.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
+      const state = await commercialState(tx, venueId);
+      if (state.allowed)
+        throw new ConflictException('This venue already has commercial access');
       if (
         await tx.onboardingRequest.findFirst({
           where: { requestedVenueId: venueId, status: 'PENDING' },
@@ -155,6 +159,21 @@ export class OnboardingRequestsService {
       });
       if (request.status !== 'PENDING')
         throw new ConflictException('Request already reviewed');
+      const outcome =
+        body.outcome ?? (request.requestedVenueId ? 'TRIAL' : 'NO_PLAN');
+      if (
+        body.status === 'APPROVED' &&
+        !['TRIAL', 'NO_PLAN'].includes(String(outcome))
+      )
+        throw new BadRequestException(
+          'Choose approval without package or with Trial',
+        );
+      if (
+        body.status === 'APPROVED' &&
+        outcome === 'TRIAL' &&
+        (!body.planId || !body.trialEndsAt)
+      )
+        throw new BadRequestException('Choose a trial plan and end date');
       const prepared =
         body.status === 'APPROVED' && !request.requestedVenueId
           ? await this.invitations.provision(
@@ -164,18 +183,21 @@ export class OnboardingRequestsService {
                 name: request.businessName,
                 phone: request.phone,
                 email: request.email,
-                // Approval alone never assigns a package. A separate explicit commercial action follows.
+                // Provision the shell and invitation in the same transaction as explicit trial approval.
                 subscriptionStatus: 'NO_PLAN',
               },
               tx,
             )
           : null;
-      if (body.status === 'APPROVED' && request.requestedVenueId) {
-        if (!body.planId || !body.trialEndsAt)
-          throw new BadRequestException('Choose a trial plan and end date');
+      const targetVenueId = prepared?.venue.id ?? request.requestedVenueId;
+      if (body.status === 'APPROVED' && targetVenueId && outcome === 'TRIAL') {
+        await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${targetVenueId} FOR UPDATE`;
+        const state = await commercialState(tx, targetVenueId);
+        if (state.allowed)
+          throw new ConflictException('Venue already has commercial access');
         await this.commercial.setSubscription(
           actor,
-          request.requestedVenueId,
+          targetVenueId,
           {
             status: 'TRIAL',
             planId: body.planId,
@@ -206,7 +228,9 @@ export class OnboardingRequestsService {
           targetId: id,
           metadata: {
             status: result.status,
-            venueId: prepared?.venue.id ?? null,
+            venueId: targetVenueId,
+            outcome: String(outcome),
+            planId: outcome === 'TRIAL' ? String(body.planId) : null,
             note: reviewNote,
           },
         },

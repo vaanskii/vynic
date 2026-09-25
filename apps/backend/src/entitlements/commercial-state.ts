@@ -33,6 +33,10 @@ export async function commercialState(
   const legacy = venue.legacyCommercialAccess && !venue.subscription;
   const allowed =
     (legacy || !!venue.planAssignment) &&
+    (!venue.subscription?.billingManaged ||
+      !['ACTIVE', 'PAST_DUE'].includes(venue.subscription.status) ||
+      (!!venue.subscription.currentPeriodEndsAt &&
+        venue.subscription.currentPeriodEndsAt > now)) &&
     commercialAccessAllowed(
       venue.subscription?.status,
       venue.subscription?.trialEndsAt,

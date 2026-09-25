@@ -1,3 +1,4 @@
+import { reconcileSubscription } from '../subscriptions/subscription-reconciliation';
 import { Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { PrismaService } from '../prisma.service';
@@ -12,31 +13,7 @@ export class CommercialLifecycleService {
   async reconcile(venueId: string, now = new Date()) {
     await this.db.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
-      const subscription = await tx.venueSubscription.findUnique({
-        where: { venueId },
-      });
-      if (
-        subscription?.status === 'TRIAL' &&
-        (!subscription.trialEndsAt || subscription.trialEndsAt <= now)
-      ) {
-        await tx.venueSubscription.update({
-          where: { venueId },
-          data: { status: 'SUSPENDED', suspendedAt: now, updatedBy: null },
-        });
-        await tx.platformAuditEvent.create({
-          data: {
-            action: 'venue.trial_expired',
-            targetType: 'Venue',
-            targetId: venueId,
-            metadata: {
-              from: 'TRIAL',
-              to: 'SUSPENDED',
-              trialEndsAt: subscription.trialEndsAt?.toISOString() ?? null,
-              source: 'SYSTEM',
-            },
-          },
-        });
-      }
+      await reconcileSubscription(tx, venueId, now);
       const state = await commercialState(tx, venueId, now);
       const eligible = state.features.includes('WEBSITE');
       for (const domain of await tx.venueDomain.findMany({
@@ -95,6 +72,13 @@ export class CommercialLifecycleService {
             subscription: {
               status: 'TRIAL',
               OR: [{ trialEndsAt: { lte: now } }, { trialEndsAt: null }],
+            },
+          },
+          {
+            subscription: {
+              billingManaged: true,
+              currentPeriodEndsAt: { lte: now },
+              status: { not: 'CANCELLED' },
             },
           },
           { domains: { some: {} } },

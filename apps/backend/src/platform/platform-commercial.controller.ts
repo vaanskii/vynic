@@ -1,3 +1,5 @@
+import { SubscriptionService } from '../subscriptions/subscription.service';
+import { PrismaService } from '../prisma.service';
 import {
   Body,
   Controller,
@@ -15,7 +17,43 @@ import { requireUuid } from './platform-validation';
 @Controller('platform')
 @UseGuards(PlatformAuthGuard)
 export class PlatformCommercialController {
-  constructor(private readonly service: PlatformCommercialService) {}
+  constructor(
+    private readonly service: PlatformCommercialService,
+    private readonly db: PrismaService,
+  ) {}
+  @Post('venues/:venueId/subscription/actions') action(
+    @PlatformActor() actor: PlatformPrincipal,
+    @Param('venueId') id: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return new SubscriptionService(this.db).action(
+      actor,
+      requireUuid(id, 'venueId'),
+      body,
+    );
+  }
+  @Post('venues/:venueId/subscription/quote') quote(
+    @PlatformActor() actor: PlatformPrincipal,
+    @Param('venueId') id: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return new SubscriptionService(this.db).quote(
+      actor,
+      requireUuid(id, 'venueId'),
+      body,
+    );
+  }
+  @Post('venues/:venueId/subscription/manual-success') manualSuccess(
+    @PlatformActor() actor: PlatformPrincipal,
+    @Param('venueId') id: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return new SubscriptionService(this.db).manualSuccess(
+      actor,
+      requireUuid(id, 'venueId'),
+      body,
+    );
+  }
   @Get('venues/:venueId/subscription') subscription(
     @Param('venueId') id: string,
   ) {

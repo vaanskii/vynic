@@ -97,8 +97,14 @@ const url = process.env.W3_TEST_DATABASE_URL;
       const u = new URL(url!);
       if (
         u.hostname !== '127.0.0.1' ||
-        u.port !== '55439' ||
-        !['/vynic_w3_disposable', '/vynic_foundation_phase3_disposable'].includes(u.pathname)
+        !(
+          (u.port === '55439' &&
+            [
+              '/vynic_w3_disposable',
+              '/vynic_foundation_phase3_disposable',
+            ].includes(u.pathname)) ||
+          (u.port === '55437' && u.pathname === '/vynic_commercial_test')
+        )
       )
         throw Error('Only the disposable website database is permitted');
       process.env.JWT_SECRET = 'website-w3-local-test-only';
@@ -124,6 +130,10 @@ const url = process.env.W3_TEST_DATABASE_URL;
         const venue = await db.venue.create({
           data: {
             organizationId: org.id,
+            subscription: { create: { status: 'ACTIVE' } },
+            planAssignment: {
+              create: { plan: { connect: { key: 'WEBSITE_ONLY' } } },
+            },
             name: `W3 ${shape.key.toUpperCase()}`,
             address: `${i} Test Street`,
             legalId: 'private-legal',
@@ -167,7 +177,7 @@ const url = process.env.W3_TEST_DATABASE_URL;
         const owner = await db.customerAccount.create({
           data: {
             organizationId: org.id,
-            memberships: { create: { organizationId: org.id, role: "OWNER" } },
+            memberships: { create: { organizationId: org.id, role: 'OWNER' } },
             email: `w3-${shape.key}-${tag}@test.invalid`,
             displayName: 'Owner',
             passwordHash: 'unused',
@@ -190,6 +200,7 @@ const url = process.env.W3_TEST_DATABASE_URL;
         controllers: [CustomerWebsiteController, WebsiteCoreController],
         providers: [
           WebsiteLogoService,
+          { provide: PrismaService, useValue: db },
           { provide: WebsiteCoreService, useValue: core },
           { provide: WebsiteMenuService, useValue: menus },
           {
@@ -403,7 +414,7 @@ const url = process.env.W3_TEST_DATABASE_URL;
         .expect(403);
     });
 
-    it('keeps an unentitled Venue off the public web even after a draft is prepared', async () => {
+    it('keeps an unentitled Venue off the public web and denies draft preparation', async () => {
       await publicGet(3).expect(404);
       await publicGet(3, 'menu').expect(404);
       // NONE mode is not generic editing at all.
@@ -412,7 +423,7 @@ const url = process.env.W3_TEST_DATABASE_URL;
         .set(auth(3))
         .send({ expectedRevision: 0, content: content(3) })
         .expect(403);
-      // With SAAS mode but no entitlement, drafting is allowed and publishing is not.
+      // Mode alone grants no product access: draft and publish both require entitlement.
       await db.venueWebsiteConfig.update({
         where: { venueId: venues[3].id },
         data: { mode: 'SAAS' },
@@ -422,7 +433,7 @@ const url = process.env.W3_TEST_DATABASE_URL;
           .put(`${path(3)}/draft`)
           .set(auth(3))
           .send({ expectedRevision: 0, content: content(3) })
-          .expect(200);
+          .expect(403);
         await http()
           .post(`${path(3)}/publish`)
           .set(auth(3))

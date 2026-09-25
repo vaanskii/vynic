@@ -216,6 +216,13 @@ export class PlatformVenueConfigService {
 
     await this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
+      const subscription = await tx.venueSubscription.findUnique({
+        where: { venueId },
+      });
+      if (subscription?.billingManaged)
+        throw new BadRequestException(
+          'Use subscription plan-change controls for a billing agreement',
+        );
       await assignCommercialPlan(tx, venueId, planId);
       await tx.platformAuditEvent.create({
         data: {

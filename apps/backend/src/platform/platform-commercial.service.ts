@@ -1,3 +1,5 @@
+import { SubscriptionService } from '../subscriptions/subscription.service';
+import { nextRenewal } from '../subscriptions/billing-policy';
 import { requireCommercialFeature } from '../entitlements/commercial-state';
 import { CommercialLifecycleService } from '../entitlements/commercial-lifecycle.service';
 import { assignCommercialPlan } from './plan-assignment';
@@ -95,7 +97,7 @@ export class PlatformCommercialService {
   async subscription(venueId: string) {
     await this.db.venue.findUniqueOrThrow({ where: { id: venueId } });
     await new CommercialLifecycleService(this.db).reconcile(venueId);
-    return this.db.venueSubscription.findUnique({ where: { venueId } });
+    return new SubscriptionService(this.db).snapshot(venueId);
   }
 
   async setSubscription(
@@ -124,6 +126,12 @@ export class PlatformCommercialService {
       const before = await tx.venueSubscription.findUnique({
         where: { venueId },
       });
+      if (before?.billingManaged)
+        throw new ConflictException(
+          'Use lifecycle actions for a billing agreement',
+        );
+      if (['SUSPENDED', 'CANCELLED'].includes(status))
+        requireText(body.note, 'Operator reason', { max: 1000 });
       if (body.planId)
         await assignCommercialPlan(
           tx,
@@ -141,6 +149,23 @@ export class PlatformCommercialService {
           : before?.trialEndsAt;
       if (status === 'TRIAL' && (!trialEndsAt || trialEndsAt <= new Date()))
         throw new BadRequestException('Trial requires a future end date');
+      const now = new Date();
+      const paid =
+        status === 'ACTIVE'
+          ? {
+              billingManaged: true,
+              billingAnchorAt: now,
+              currentPeriodStart: now,
+              currentPeriodEndsAt: nextRenewal(
+                now,
+                assignment!.agreedBillingPeriod ?? 'MONTH',
+                now,
+              ),
+              paymentState: 'MANUAL',
+              trialEndedAt:
+                before?.status === 'TRIAL' ? now : before?.trialEndedAt,
+            }
+          : {};
       const row = await tx.venueSubscription.upsert({
         where: { venueId },
         create: {
@@ -153,6 +178,7 @@ export class PlatformCommercialService {
           cancelledAt: status === 'CANCELLED' ? new Date() : null,
           trialEndsAt: date(body.trialEndsAt),
           currentPeriodEndsAt: date(body.currentPeriodEndsAt),
+          ...paid,
         },
         update: {
           status,
@@ -166,6 +192,9 @@ export class PlatformCommercialService {
             : {}),
           suspendedAt: status === 'SUSPENDED' ? new Date() : null,
           cancelledAt: status === 'CANCELLED' ? new Date() : null,
+          suspendedFrom: status === 'SUSPENDED' ? before?.status : null,
+          version: { increment: 1 },
+          ...paid,
         },
       });
       await audit(tx, actor, venueId, 'venue.subscription_changed', {

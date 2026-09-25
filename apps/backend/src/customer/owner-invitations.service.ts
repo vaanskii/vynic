@@ -1,3 +1,4 @@
+import { nextRenewal } from '../subscriptions/billing-policy';
 import {
   BadRequestException,
   ConflictException,
@@ -218,6 +219,19 @@ export class OwnerInvitationsService {
               status: status as 'NO_PLAN' | 'TRIAL' | 'ACTIVE',
               startedAt: new Date(),
               updatedBy: actor.platformUserId,
+              ...(status === 'ACTIVE'
+                ? {
+                    billingManaged: true,
+                    billingAnchorAt: new Date(),
+                    currentPeriodStart: new Date(),
+                    currentPeriodEndsAt: nextRenewal(
+                      new Date(),
+                      plan!.billingPeriod,
+                      new Date(),
+                    ),
+                    paymentState: 'MANUAL',
+                  }
+                : {}),
               trialEndsAt:
                 status === 'TRIAL'
                   ? new Date(Date.now() + trialDays * 86400000)

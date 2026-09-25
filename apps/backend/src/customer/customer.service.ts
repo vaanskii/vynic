@@ -174,6 +174,9 @@ export class CustomerService {
         ? {
             status: venue.subscription.status,
             trialEndsAt: venue.subscription.trialEndsAt,
+            currentPeriodStart: venue.subscription.currentPeriodStart,
+            currentPeriodEndsAt: venue.subscription.currentPeriodEndsAt,
+            cancelAtPeriodEnd: venue.subscription.cancelAtPeriodEnd,
           }
         : {
             status: venue.legacyCommercialAccess ? 'LEGACY' : 'NO_PLAN',

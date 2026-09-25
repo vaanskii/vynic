@@ -20,8 +20,11 @@ export class VenueEntitlementsService {
       where: { venueId },
     });
     if (
-      row?.status === 'TRIAL' &&
-      (!row.trialEndsAt || row.trialEndsAt <= new Date())
+      (row?.status === 'TRIAL' &&
+        (!row.trialEndsAt || row.trialEndsAt <= new Date())) ||
+      (row?.billingManaged &&
+        row.currentPeriodEndsAt &&
+        row.currentPeriodEndsAt <= new Date())
     )
       await new CommercialLifecycleService(this.prisma).reconcile(venueId);
     return commercialState(this.prisma, venueId);

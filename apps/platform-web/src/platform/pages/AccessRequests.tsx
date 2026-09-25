@@ -1,3 +1,4 @@
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { platformOnboardingApi } from "../api";
@@ -27,6 +28,36 @@ export function AccessRequests({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [link, setLink] = useState("");
+  const [minimumTrialDate] = useState(() =>
+    new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+  );
+  const [outcomes, setOutcomes] = useState<Record<string, string>>({});
+  const [review, setReview] = useState<{
+    row: Request;
+    body: Record<string, unknown>;
+    summary: string;
+  } | null>(null);
+  const confirm = async () => {
+    if (!review) return;
+    setBusy(true);
+    setError("");
+    setLink("");
+    try {
+      const result = await platformOnboardingApi(
+        `requests/${review.row.id}/review`,
+        review.body,
+        "POST",
+      );
+      if (result.prepared?.invitationPath)
+        setLink(new URL(result.prepared.invitationPath, location.origin).href);
+      await refresh();
+      setReview(null);
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
   const refresh = () => platformOnboardingApi("requests").then(setRows);
   useEffect(() => {
     void refresh().catch((e) => setError(e.message));
@@ -35,8 +66,9 @@ export function AccessRequests({
     <section>
       <h2>Customer and trial requests</h2>
       <p>
-        Customer approval creates an invitation. Assign product access
-        separately on the restaurant’s commercial page.
+        Choose access without a package or start the selected trial when
+        approving. The owner receives the approved access after accepting their
+        invitation.
       </p>
       {error && <p role="alert">{error}</p>}
       {link && (
@@ -89,34 +121,51 @@ export function AccessRequests({
                   const body = Object.fromEntries(
                     new FormData(e.currentTarget),
                   );
-                  setBusy(true);
+                  const outcome =
+                    outcomes[row.id] ??
+                    (row.requestedVenueId ? "TRIAL" : "NO_PLAN");
+                  const status = button.value;
                   setError("");
-                  setLink("");
-                  try {
-                    const result = await platformOnboardingApi(
-                      `requests/${row.id}/review`,
-                      { ...body, status: button.value },
-                      "POST",
-                    );
-                    if (result.prepared?.invitationPath)
-                      setLink(
-                        new URL(result.prepared.invitationPath, location.origin)
-                          .href,
-                      );
-                    await refresh();
-                  } catch (e) {
-                    setError((e as Error).message);
-                  } finally {
-                    setBusy(false);
-                  }
+                  setReview({
+                    row,
+                    body: { ...body, outcome, status },
+                    summary:
+                      status === "REJECTED"
+                        ? "The request will be rejected."
+                        : outcome === "TRIAL"
+                          ? `${plans.find((p) => p.id === body.planId)?.name ?? "Selected plan"} Trial · active until ${body.trialEndsAt}. Product access starts immediately.`
+                          : "No active package. The owner can sign in, but paid products remain locked.",
+                  });
                 }}
               >
                 <fieldset disabled={busy}>
-                  {row.requestedVenueId && (
+                  <label>
+                    Approval outcome
+                    <select
+                      name="outcome"
+                      value={
+                        outcomes[row.id] ??
+                        (row.requestedVenueId ? "TRIAL" : "NO_PLAN")
+                      }
+                      onChange={(e) =>
+                        setOutcomes({ ...outcomes, [row.id]: e.target.value })
+                      }
+                    >
+                      <option value="NO_PLAN">Approve without package</option>
+                      <option value="TRIAL">Approve with Trial</option>
+                    </select>
+                  </label>
+                  {(outcomes[row.id] ??
+                    (row.requestedVenueId ? "TRIAL" : "NO_PLAN")) ===
+                    "TRIAL" && (
                     <>
                       <label>
                         Approved trial plan
-                        <select name="planId" defaultValue="">
+                        <select
+                          name="planId"
+                          required
+                          defaultValue={row.requestedPlanId ?? ""}
+                        >
                           <option value="">Choose plan</option>
                           {plans
                             .filter((p) => p.status === "ACTIVE")
@@ -129,7 +178,12 @@ export function AccessRequests({
                       </label>
                       <label>
                         Trial ends
-                        <input name="trialEndsAt" type="date" />
+                        <input
+                          name="trialEndsAt"
+                          type="date"
+                          required
+                          min={minimumTrialDate}
+                        />
                       </label>
                     </>
                   )}
@@ -138,12 +192,12 @@ export function AccessRequests({
                     <input name="note" maxLength={1000} />
                   </label>
                   <div className="customer-row">
-                    <button value="APPROVED">
-                      {row.requestedVenueId
-                        ? "Approve trial"
-                        : "Approve customer"}
-                    </button>
-                    <button className="secondary" value="REJECTED">
+                    <button value="APPROVED">Review approval</button>
+                    <button
+                      className="secondary"
+                      value="REJECTED"
+                      formNoValidate
+                    >
                       Reject
                     </button>
                   </div>
@@ -153,6 +207,22 @@ export function AccessRequests({
           </article>
         ))
       )}
+      <ConfirmDialog
+        open={!!review}
+        onOpenChange={(open) => {
+          if (!open && !busy) setReview(null);
+        }}
+        title={
+          review?.body.status === "REJECTED"
+            ? "Reject request?"
+            : `Approve ${review?.row.businessName ?? "request"}?`
+        }
+        description={review?.summary ?? ""}
+        confirmLabel="Confirm review"
+        pending={busy}
+        error={error || undefined}
+        onConfirm={() => void confirm()}
+      />
     </section>
   );
 }

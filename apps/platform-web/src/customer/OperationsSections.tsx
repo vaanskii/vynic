@@ -1,4 +1,4 @@
-import { TrialRequest } from "./TrialRequest";
+export { SubscriptionSection } from "./SubscriptionSection";
 import { useState } from "react";
 import { customerApi } from "./api";
 import { PaymentSettings } from "./PaymentSettings";
@@ -521,51 +521,6 @@ export const subscriptionLabels: Record<string, string> = {
   SUSPENDED: "შეჩერებული",
   CANCELLED: "გაუქმებული",
 };
-const featureNames: Record<string, string> = {
-  POS: "გაყიდვების სისტემა (POS)",
-  MANAGER_APP: "მენეჯერის აპლიკაცია",
-  MANAGER_RESERVATIONS: "რეზერვაციები მენეჯერში",
-  INVENTORY: "მარაგები",
-  PAYROLL: "ხელფასები",
-  FINANCIAL_PLANNING: "ფინანსური დაგეგმვა",
-  ADVANCED_AUDIT: "აქტივობის ისტორია",
-  NON_FISCAL_CLOSE: "არაფისკალური დახურვა",
-  PROFITABILITY: "თვითღირებულება",
-  WEBSITE: "ვებსაიტი",
-  ONLINE_PAYMENTS: "ონლაინ გადახდები",
-};
-export function SubscriptionSection({ venue }: { venue: VenueStatus }) {
-  const sub = venue.subscription;
-  return (
-    <>
-      <SectionHeader title="გამოწერა" />
-      <div className="portal-grid">
-        <section className="portal-card">
-          <h3>პაკეტი</h3>
-          <p className="portal-stat">{venue.plan?.name ?? "—"}</p>
-          <p>
-            {subscriptionLabels[sub?.status ?? "NO_PLAN"] ?? sub?.status}
-            {sub?.trialEndsAt &&
-              ` · ბოლო დღე: ${new Date(sub.trialEndsAt).toLocaleDateString("ka-GE")}`}
-          </p>
-          <p className="portal-hint">
-            პაკეტის შესაცვლელად დაუკავშირდით Vynic-ს.
-          </p>
-        </section>
-        <section className="portal-card">
-          <h3>ჩართული შესაძლებლობები</h3>
-          <ul className="portal-features">
-            {venue.features.map((key) => (
-              <li key={key}>{featureNames[key] ?? key}</li>
-            ))}
-          </ul>
-        </section>
-      </div>
-      <TrialRequest key={venue.venue.id} venueId={venue.venue.id} />
-    </>
-  );
-}
-
 // ---------------------------------------------------------------- settings
 
 export function SettingsSection({

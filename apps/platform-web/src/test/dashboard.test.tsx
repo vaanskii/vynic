@@ -138,6 +138,7 @@ function serve({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async (path: string, body?: any, method?: string) => {
       if (path === "access-requests/plans") return [];
+      if (path.endsWith("/subscription")) return state.venues.find(v => path.includes(v.venue.id))?.subscription;
       if (path === "portal")
         return {
           account: { email: "owner@test.invalid" },
@@ -589,7 +590,7 @@ describe("Operational sections", () => {
     const user = userEvent.setup();
     renderPortal("/dashboard/subscription");
     expect(await screen.findByText("Starter")).toBeVisible();
-    expect(screen.getByText(/^საცდელი პერიოდი/)).toBeVisible();
+    expect(screen.getByText("საცდელი პერიოდი")).toBeVisible();
     expect(
       (await nav()).queryByRole("button", { name: "ონლაინ გადახდები" }),
     ).toBeNull();

@@ -1,0 +1,404 @@
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { platformApi } from "../../api";
+import { Button } from "../../components/Button";
+import { Field, Input, Select } from "../../components/Form";
+import { Panel } from "../../components/Page";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
+import { LoadingState, ErrorState } from "../../components/State";
+import { StatusBadge } from "../../components/StatusBadge";
+import { errorMessage } from "../../format";
+import { day, money, type BillingQuote } from "../../../subscriptions/types";
+
+export function SubscriptionPanel({
+  venueId,
+  canEdit,
+}: {
+  venueId: string;
+  canEdit: boolean;
+}) {
+  const client = useQueryClient();
+  const subscription = useQuery({
+    queryKey: ["subscription", venueId],
+    queryFn: () => platformApi.subscription(venueId),
+    refetchInterval: 60000,
+  });
+  const plans = useQuery({ queryKey: ["plans"], queryFn: platformApi.plans });
+  const [action, setAction] = useState("");
+  const [planId, setPlanId] = useState("");
+  const [end, setEnd] = useState("");
+  const [reason, setReason] = useState("");
+  const [reference, setReference] = useState("");
+  const [override, setOverride] = useState("");
+  const [quote, setQuote] = useState<BillingQuote | null>(null);
+  const [confirm, setConfirm] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  const refresh = async () => {
+    await Promise.all(
+      ["subscription", "product", "venue"].map((key) =>
+        client.invalidateQueries({ queryKey: [key, venueId] }),
+      ),
+    );
+  };
+  const preview = useMutation({
+    mutationFn: () =>
+      platformApi.subscriptionQuote(venueId, {
+        planId,
+        reason,
+        classification: override,
+      }),
+    onSuccess: (result) => {
+      setQuote(result);
+      setFeedback("");
+    },
+  });
+  const save = useMutation({
+    mutationFn: () =>
+      quote?.kind === "SCHEDULE_CHANGE"
+        ? platformApi.subscriptionAction(venueId, {
+            action: "SCHEDULE_CHANGE",
+            planId: quote.planId,
+            reason,
+            expectedPriceMinor: quote.priceMinor,
+            expectedCurrency: quote.currency,
+            expectedBillingPeriod: quote.billingPeriod,
+            expectedVersion: quote.subscriptionVersion,
+          })
+        : quote
+          ? platformApi.subscriptionPayment(venueId, {
+              operationId: quote.id,
+              reason,
+              reference,
+              confirm: true,
+            })
+          : platformApi.subscriptionAction(venueId, {
+              action,
+              planId,
+              trialEndsAt: end ? new Date(end).toISOString() : undefined,
+              reason,
+              classification: override,
+              confirm: true,
+            }),
+    onSuccess: async () => {
+      setConfirm(false);
+      setQuote(null);
+      setReference("");
+      setFeedback("Commercial access updated.");
+      await refresh();
+    },
+  });
+  if (subscription.isPending)
+    return <LoadingState label="Loading subscription" />;
+  if (subscription.error)
+    return (
+      <ErrorState
+        error={errorMessage(subscription.error)}
+        retry={() => void subscription.refetch()}
+      />
+    );
+  const sub = subscription.data;
+  const selected = plans.data?.find((plan) => plan.id === planId);
+  const current = sub?.assignment;
+  const summary = quote
+    ? quote.kind === "SCHEDULE_CHANGE"
+      ? `${quote.planName} starts ${day(quote.effectiveAt)}. Current features remain until then. Renewal: ${money(quote.priceMinor, quote.currency)} / ${quote.billingPeriod.toLowerCase()}.`
+      : `Confirm externally verified payment of ${money(quote.amountMinor, quote.currency)} for ${quote.planName}. ${quote.kind === "UPGRADE" ? `Renewal stays ${day(sub?.currentPeriodEndsAt)}.` : "The paid period begins on successful activation."}`
+    : action === "TRIAL"
+      ? `${selected?.name ?? "Selected plan"} Trial until ${day(end)}. Trial features are available immediately.`
+      : action === "GRANT_ACTIVE"
+        ? `Activate ${selected?.name ?? "selected plan"} now at ${money(selected?.priceMinor, selected?.currency)} per ${selected?.billingPeriod?.toLowerCase()}. This records a manual agreement, not a card payment.`
+        : action === "CANCEL_NOW"
+          ? "All commercial access ends now. Restaurant data and history are retained."
+          : action === "SUSPEND"
+            ? "Commercial access stops now. Local POS safe completion and settlement remain available."
+            : action === "SCHEDULE_CHANGE"
+              ? `${selected?.name ?? "Selected plan"} starts ${day(sub?.currentPeriodEndsAt)}. Current features remain until renewal.`
+              : action === "SCHEDULE_CANCEL"
+                ? `Access remains until ${day(sub?.currentPeriodEndsAt)}. No next renewal payment is due.`
+                : action === "RESUME"
+                  ? "Restore the current agreement only if its dates remain valid."
+                  : "Remove the scheduled change and keep the current agreement.";
+  const needsPlan = [
+    "TRIAL",
+    "GRANT_ACTIVE",
+    "QUOTE",
+    "SCHEDULE_CHANGE",
+  ].includes(action);
+  return (
+    <Panel
+      className="platform-subscription"
+      title="Subscription"
+      description="Current access, renewal and upcoming changes."
+    >
+      {feedback && (
+        <p
+          role="status"
+          className="platform-feedback platform-feedback--success"
+        >
+          {feedback}
+        </p>
+      )}
+      <StatusBadge value={sub?.status ?? "NO_PLAN"} />
+      <h3>{current?.plan.name ?? "No package assigned"}</h3>
+      <dl className="platform-subscription-facts">
+        <div>
+          <dt>Agreed renewal price</dt>
+          <dd>
+            {money(current?.agreedPriceMinor, current?.agreedCurrency)}{" "}
+            {current?.agreedBillingPeriod &&
+              `/ ${current.agreedBillingPeriod.toLowerCase()}`}
+          </dd>
+        </div>
+        <div>
+          <dt>
+            {sub?.status === "TRIAL"
+              ? "Trial active until"
+              : "Current period ends"}
+          </dt>
+          <dd>
+            {day(
+              sub?.status === "TRIAL"
+                ? sub.trialEndsAt
+                : sub?.currentPeriodEndsAt,
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt>Billing anchor</dt>
+          <dd>{day(sub?.billingAnchorAt)}</dd>
+        </div>
+        <div>
+          <dt>Payment state</dt>
+          <dd>
+            {sub?.paymentState === "MANUAL"
+              ? "Manual agreement"
+              : (sub?.paymentState ?? "Not configured")}
+          </dd>
+        </div>
+      </dl>
+      {sub?.pendingPlan && (
+        <div className="platform-callout platform-subscription-next">
+          <strong>Next: {sub.pendingPlan.name}</strong>
+          <p>
+            Starts {day(sub.pendingChangeAt)} ·{" "}
+            {money(sub.pendingPriceMinor, sub.pendingCurrency)} /{" "}
+            {sub.pendingBillingPeriod?.toLowerCase()}
+          </p>
+        </div>
+      )}
+      {sub?.cancelAtPeriodEnd && (
+        <p className="platform-callout">
+          Cancels {day(sub.currentPeriodEndsAt)}. Current features remain until
+          then.
+        </p>
+      )}
+      {!sub?.billingManaged && sub?.status === "ACTIVE" && (
+        <p>
+          Legacy manual agreement. Confirm billing terms before starting a
+          renewal schedule.
+        </p>
+      )}
+      {canEdit && (
+        <form
+          className="platform-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            save.reset();
+            preview.reset();
+            setFeedback("");
+            if (action === "QUOTE") preview.mutate();
+            else {
+              setQuote(null);
+              setConfirm(true);
+            }
+          }}
+        >
+          <Field label="Commercial action">
+            <Select
+              required
+              value={action}
+              onChange={(e) => {
+                setAction(e.target.value);
+                setQuote(null);
+                save.reset();
+                preview.reset();
+              }}
+            >
+              <option value="">Choose action</option>
+              <option value="TRIAL">Assign / extend / change Trial</option>
+              <option value="GRANT_ACTIVE">
+                Assign ACTIVE plan (manual agreement)
+              </option>
+              <option value="QUOTE">Purchase / upgrade / renewal quote</option>
+              <option value="SCHEDULE_CHANGE">
+                Schedule plan change at renewal
+              </option>
+              <option value="CANCEL_CHANGE">Cancel scheduled downgrade</option>
+              <option value="SCHEDULE_CANCEL">Schedule cancellation</option>
+              <option value="UNDO_CANCEL">Undo scheduled cancellation</option>
+              <option value="SUSPEND">Suspend immediately / end Trial</option>
+              <option value="RESUME">Resume</option>
+              <option value="CANCEL_NOW">Cancel immediately</option>
+            </Select>
+          </Field>
+          {needsPlan && (
+            <Field label="Plan">
+              <Select
+                required
+                value={planId}
+                onChange={(e) => {
+                  setPlanId(e.target.value);
+                  setQuote(null);
+                }}
+              >
+                <option value="">Choose plan</option>
+                {plans.data
+                  ?.filter(
+                    (p) => p.status === "ACTIVE" || p.id === current?.planId,
+                  )
+                  .map((p) => (
+                    <option value={p.id} key={p.id}>
+                      {p.name} · {money(p.priceMinor, p.currency)}
+                    </option>
+                  ))}
+              </Select>
+            </Field>
+          )}
+          {plans.error && (
+            <ErrorState
+              error={errorMessage(plans.error)}
+              retry={() => void plans.refetch()}
+            />
+          )}
+          {action === "TRIAL" && (
+            <Field label="Trial end date">
+              <Input
+                type="datetime-local"
+                required
+                value={end}
+                onChange={(e) => setEnd(e.target.value)}
+              />
+            </Field>
+          )}
+          {["QUOTE", "SCHEDULE_CHANGE"].includes(action) && (
+            <Field label="Mixed-package review">
+              <Select
+                value={override}
+                onChange={(e) => setOverride(e.target.value)}
+              >
+                <option value="">Use feature and price rules</option>
+                <option value="UPGRADE">Explicit immediate upgrade</option>
+                <option value="RENEWAL_CHANGE">
+                  Explicit change at renewal
+                </option>
+              </Select>
+            </Field>
+          )}
+          <Field label="Operator reason">
+            <Input
+              required
+              maxLength={1000}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+          </Field>
+          <Button
+            type="submit"
+            loading={preview.isPending}
+            tone={action === "CANCEL_NOW" ? "danger" : "primary"}
+          >
+            {action === "QUOTE" ? "Calculate quote" : "Review change"}
+          </Button>
+        </form>
+      )}
+      {preview.error && <p role="alert">{errorMessage(preview.error)}</p>}
+      {canEdit && quote && (
+        <div className="platform-callout">
+          <div>
+            <h3>{quote.planName}</h3>
+            <p>{summary}</p>
+            {quote.expiresAt && (
+              <p>
+                Quote expires {new Date(quote.expiresAt).toLocaleTimeString()}.
+              </p>
+            )}
+            {quote.kind !== "SCHEDULE_CHANGE" && (
+              <Field label="External payment reference">
+                <Input
+                  value={reference}
+                  onChange={(e) => setReference(e.target.value)}
+                  maxLength={200}
+                />
+              </Field>
+            )}
+            <Button
+              disabled={quote.kind !== "SCHEDULE_CHANGE" && !reference.trim()}
+              onClick={() => {
+                save.reset();
+                setConfirm(true);
+              }}
+            >
+              {quote.kind === "SCHEDULE_CHANGE"
+                ? "Review scheduled change"
+                : "Confirm manual payment…"}
+            </Button>
+          </div>
+        </div>
+      )}
+      {canEdit && !!sub?.operations?.length && !quote && (
+        <details>
+          <summary>Pending payment quotes</summary>
+          {sub.operations.map((op) => (
+            <p key={op.id}>
+              {op.planName} · {money(op.amountMinor, op.currency)}{" "}
+              <Button
+                onClick={() => {
+                  setQuote(op);
+                  setAction("QUOTE");
+                }}
+              >
+                Review payment
+              </Button>
+            </p>
+          ))}
+        </details>
+      )}
+      <details>
+        <summary>Commercial history</summary>
+        {sub?.history?.length ? (
+          <ol>
+            {sub.history.map((item) => (
+              <li key={item.id}>
+                {day(item.createdAt)} ·{" "}
+                {item.action
+                  .replace(/^subscription\.|^venue\./, "")
+                  .replaceAll("_", " ")}
+                {typeof item.metadata?.reason === "string" &&
+                  ` — ${item.metadata.reason}`}
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p>No lifecycle events yet.</p>
+        )}
+      </details>
+      <ConfirmDialog
+        open={confirm}
+        onOpenChange={(open) => {
+          if (!save.isPending) setConfirm(open);
+        }}
+        title="Confirm commercial change"
+        description={summary}
+        confirmLabel={
+          quote && quote.kind !== "SCHEDULE_CHANGE"
+            ? "Record verified payment"
+            : "Apply change"
+        }
+        danger={["CANCEL_NOW", "SUSPEND"].includes(action)}
+        pending={save.isPending}
+        error={save.error ? errorMessage(save.error) : undefined}
+        onConfirm={() => save.mutate()}
+      />
+    </Panel>
+  );
+}

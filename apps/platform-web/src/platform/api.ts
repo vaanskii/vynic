@@ -102,8 +102,14 @@ export const platformApi = {
     request<{ configured: boolean; entitled: boolean }>(
       `/platform/venues/${venueId}/payments/bog`,
     ),
+  subscriptionAction: (id: string, body: Record<string, unknown>) =>
+    request(`/platform/venues/${id}/subscription/actions`, { method: "POST", body: JSON.stringify(body) }),
+  subscriptionQuote: (id: string, body: Record<string, unknown>) =>
+    request<import("../subscriptions/types").BillingQuote>(`/platform/venues/${id}/subscription/quote`, { method: "POST", body: JSON.stringify(body) }),
+  subscriptionPayment: (id: string, body: Record<string, unknown>) =>
+    request(`/platform/venues/${id}/subscription/manual-success`, { method: "POST", body: JSON.stringify(body) }),
   subscription: (id: string) =>
-    request<VenueSubscription | null>(`/platform/venues/${id}/subscription`),
+    request<(VenueSubscription & import("../subscriptions/types").SubscriptionDetail) | null>(`/platform/venues/${id}/subscription`),
   setSubscription: (
     id: string,
     body: Partial<VenueSubscription> & { planId?: string },

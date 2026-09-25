@@ -226,7 +226,7 @@ export function OwnerDashboard({
         {section === "managers" && available(section) && (
           <ManagersSection {...common} />
         )}
-        {section === "subscription" && <SubscriptionSection venue={venue} />}
+        {section === "subscription" && <SubscriptionSection key={venue.venue.id} venue={venue} onChanged={refresh} />}
         {section === "settings" && (
           <SettingsSection
             account={portal.account}

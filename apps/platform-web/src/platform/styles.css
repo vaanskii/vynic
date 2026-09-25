@@ -321,3 +321,11 @@
 
 .platform-feature-dependencies { display: block; margin-bottom: 16px; }
 .platform-feature-dependencies ul { margin: 6px 0 0; padding-left: 20px; font-size: 12px; line-height: 1.6; }
+
+.platform-subscription-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; margin-block: 1.25rem; }
+.platform-subscription-facts dt { color: var(--platform-muted); font-size: .875rem; }
+.platform-subscription-facts dd { margin: .35rem 0 0; font-weight: 600; overflow-wrap: anywhere; }
+
+.platform-subscription-next { display: block; margin-bottom: 1.25rem; }
+.platform-subscription details { margin-top: 1.5rem; }
+@media (max-width: 640px) { .platform-subscription input, .platform-subscription select { font-size: 16px; } }

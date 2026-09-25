@@ -1,25 +1,18 @@
-import { useEffect, useState } from "react";
+import { SubscriptionPanel } from "./SubscriptionPanel";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { platformApi } from "../../api";
 import { useAuth } from "../../auth";
-import type { ManagerAccess, SubscriptionStatus } from "../../types";
-import { errorMessage, formatDateTime, formatRelativeTime } from "../../format";
+import type { ManagerAccess } from "../../types";
+import { errorMessage, formatRelativeTime } from "../../format";
 import { Button } from "../../components/Button";
 import { Field, Input, Select, FormError } from "../../components/Form";
 import { Panel } from "../../components/Page";
 import { Dialog } from "../../components/Dialog";
-import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { ErrorState, LoadingState } from "../../components/State";
 import { StatusBadge } from "../../components/StatusBadge";
 
-const actions: [SubscriptionStatus, string][] = [
-  ["TRIAL", "Start / extend trial"],
-  ["ACTIVE", "Activate / Reactivate"],
-  ["PAST_DUE", "Mark past due"],
-  ["SUSPENDED", "Suspend"],
-  ["CANCELLED", "Cancel subscription"],
-];
 export function VenueCommercialTab({
   venueId,
   accessOnly = false,
@@ -32,13 +25,6 @@ export function VenueCommercialTab({
   const { actor } = useAuth();
   const canEdit = actor?.role === "SUPER_ADMIN";
   const client = useQueryClient();
-  const plans = useQuery({ queryKey: ["plans"], queryFn: platformApi.plans });
-  const [planId, setPlanId] = useState("");
-  const subscription = useQuery({
-    queryKey: ["subscription", venueId],
-    queryFn: () => platformApi.subscription(venueId),
-    enabled: !accessOnly,
-  });
   const managers = useQuery({
     queryKey: ["managers", venueId],
     queryFn: () => platformApi.managers(venueId),
@@ -58,17 +44,6 @@ export function VenueCommercialTab({
     refetchInterval: 15000,
   });
   const primary = devices.data?.find((device) => device.isOperationalPrimary);
-  const [nextStatus, setNextStatus] = useState<SubscriptionStatus | null>(null);
-  const [note, setNote] = useState("");
-  const [trialEndsAt, setTrialEndsAt] = useState("");
-  const [currentPeriodEndsAt, setCurrentPeriodEndsAt] = useState("");
-  useEffect(() => {
-    setNote(subscription.data?.note ?? "");
-    setTrialEndsAt(subscription.data?.trialEndsAt?.slice(0, 10) ?? "");
-    setCurrentPeriodEndsAt(
-      subscription.data?.currentPeriodEndsAt?.slice(0, 10) ?? "",
-    );
-  }, [subscription.data]);
   const [access, setAccess] = useState<{
     action: "create" | "reset" | "disable";
     staff?: ManagerAccess;
@@ -81,22 +56,6 @@ export function VenueCommercialTab({
     pin: "",
   });
   const [feedback, setFeedback] = useState("");
-  const changeSubscription = useMutation({
-    mutationFn: () =>
-      platformApi.setSubscription(venueId, {
-        status: nextStatus!,
-        ...(planId ? { planId } : {}),
-        note,
-        trialEndsAt: trialEndsAt || null,
-        currentPeriodEndsAt: currentPeriodEndsAt || null,
-      }),
-    onSuccess: async () => {
-      setNextStatus(null);
-      await client.invalidateQueries({ queryKey: ["subscription", venueId] });
-      await client.invalidateQueries({ queryKey: ["product", venueId] });
-      setFeedback("Subscription updated.");
-    },
-  });
   const changeAccess = useMutation({
     mutationFn: () =>
       platformApi.managerAccess(
@@ -122,24 +81,15 @@ export function VenueCommercialTab({
     setForm({ displayName: "", username: "", role: "MANAGER", pin: "" });
     setAccess({ action, staff, requestId: crypto.randomUUID() });
   };
-  if (
-    (!accessOnly && subscription.isPending) ||
-    (showAccess && managers.isPending)
-  )
-    return <LoadingState label="Loading commercial access" />;
-  if ((!accessOnly && subscription.error) || (showAccess && managers.error))
+  if (showAccess && managers.isPending)
+    return <LoadingState label="Loading Manager access" />;
+  if (showAccess && managers.error)
     return (
       <ErrorState
-        error={errorMessage(
-          (!accessOnly && subscription.error) || managers.error,
-        )}
-        retry={() => {
-          void subscription.refetch();
-          void managers.refetch();
-        }}
+        error={errorMessage(managers.error)}
+        retry={() => void managers.refetch()}
       />
     );
-  const current = subscription.data;
   return (
     <>
       {feedback && (
@@ -150,92 +100,7 @@ export function VenueCommercialTab({
           {feedback}
         </p>
       )}
-      {!accessOnly && (
-        <Panel
-          title="Subscription"
-          description="Controls Manager and Website access. Past due retains access during a manually managed grace period."
-        >
-          <StatusBadge value={current?.status ?? "NO_PLAN"} />
-          <dl>
-            <dt>Started</dt>
-            <dd>
-              {current?.startedAt ? formatDateTime(current.startedAt) : "—"}
-            </dd>
-            <dt>Trial ends</dt>
-            <dd>
-              {current?.trialEndsAt ? formatDateTime(current.trialEndsAt) : "—"}
-            </dd>
-            <dt>Current period ends</dt>
-            <dd>
-              {current?.currentPeriodEndsAt
-                ? formatDateTime(current.currentPeriodEndsAt)
-                : "—"}
-            </dd>
-            <dt>Note</dt>
-            <dd>{current?.note || "—"}</dd>
-          </dl>
-          {canEdit && (
-            <div className="platform-form">
-              <Field label="Plan">
-                <Select
-                  value={planId}
-                  onChange={(e) => setPlanId(e.target.value)}
-                >
-                  <option value="">Keep assigned plan</option>
-                  {plans.data
-                    ?.filter((p) => p.status === "ACTIVE")
-                    .map((p) => (
-                      <option value={p.id} key={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                </Select>
-              </Field>
-              <Field label="Operator note">
-                <Input
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  maxLength={1000}
-                />
-              </Field>
-              <div className="platform-form-grid">
-                <Field label="Trial end date">
-                  <Input
-                    type="date"
-                    value={trialEndsAt}
-                    onChange={(e) => setTrialEndsAt(e.target.value)}
-                  />
-                </Field>
-                <Field label="Current period end date">
-                  <Input
-                    type="date"
-                    value={currentPeriodEndsAt}
-                    onChange={(e) => setCurrentPeriodEndsAt(e.target.value)}
-                  />
-                </Field>
-              </div>
-              <div className="platform-feature-actions">
-                {actions.map(([status, label]) => (
-                  <Button
-                    key={status}
-                    tone={
-                      status === "SUSPENDED" || status === "CANCELLED"
-                        ? "danger"
-                        : "secondary"
-                    }
-                    onClick={() => {
-                      changeSubscription.reset();
-                      setNextStatus(status);
-                    }}
-                  >
-                    {label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
-        </Panel>
-      )}
+      {!accessOnly && <SubscriptionPanel venueId={venueId} canEdit={canEdit} />}
       {showAccess && (
         <Panel
           title="Manager access"
@@ -332,23 +197,6 @@ export function VenueCommercialTab({
           </div>
         </Panel>
       )}
-      <ConfirmDialog
-        open={nextStatus !== null}
-        onOpenChange={(open) => {
-          if (!open) setNextStatus(null);
-        }}
-        title={`Set subscription to ${nextStatus}?`}
-        description="Suspended and cancelled subscriptions deny Manager and Website access. Local POS checkout, printing and day close continue."
-        confirmLabel="Update subscription"
-        danger={nextStatus === "SUSPENDED" || nextStatus === "CANCELLED"}
-        pending={changeSubscription.isPending}
-        error={
-          changeSubscription.error
-            ? errorMessage(changeSubscription.error)
-            : undefined
-        }
-        onConfirm={() => changeSubscription.mutate()}
-      />
       <Dialog
         open={access !== null}
         onOpenChange={(open) => {

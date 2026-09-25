@@ -81,14 +81,16 @@ describe("Commercial operator controls", () => {
       </MemoryRouter>,
     );
     await user.click(
-      await screen.findByRole("button", { name: "Approve customer" }),
+      await screen.findByRole("button", { name: "Review approval" }),
     );
+    await user.click(await screen.findByRole("button", { name: "Confirm review" }));
     expect(
       ((await screen.findByLabelText(/Owner invitation/)) as HTMLInputElement)
         .value,
     ).toContain("/invite#token=test-only");
     expect(api.requests.find((r) => r.method === "POST")?.body).toEqual({
       status: "APPROVED",
+      outcome: "NO_PLAN",
       note: "",
     });
     expect(
@@ -116,7 +118,8 @@ describe("Commercial operator controls", () => {
       ids.plan,
     );
     await user.type(screen.getByLabelText("Trial ends"), "2099-12-31");
-    await user.click(screen.getByRole("button", { name: "Approve trial" }));
+    await user.click(screen.getByRole("button", { name: "Review approval" }));
+    await user.click(await screen.findByRole("button", { name: "Confirm review" }));
     await waitFor(() =>
       expect(api.requests.find((r) => r.method === "POST")?.body).toMatchObject(
         { status: "APPROVED", planId: ids.plan, trialEndsAt: "2099-12-31" },

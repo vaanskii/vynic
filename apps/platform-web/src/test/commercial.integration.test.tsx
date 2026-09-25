@@ -9,6 +9,7 @@ describe("Phase 2 commercial controls", () => {
     let status = "ACTIVE";
     const api = installApi((req) => {
       if (req.url.pathname.endsWith("/product")) return { body: { ...product, effectiveFeatures: ["POS", "MANAGER_APP"] } };
+      if (req.url.pathname.endsWith("/subscription/actions")) { status = "SUSPENDED"; return { body: {} }; }
       if (req.url.pathname.endsWith("/subscription")) {
         if (req.method === "PUT") status = String(req.body?.status);
         return {
@@ -74,10 +75,12 @@ describe("Phase 2 commercial controls", () => {
         api.requests.some((r) => r.url.pathname.endsWith("/disable")),
       ).toBe(true),
     );
-    await user.click(screen.getByRole("button", { name: "Suspend" }));
+    await user.selectOptions(screen.getByLabelText("Commercial action"), "SUSPEND");
+    await user.type(screen.getByLabelText("Operator reason"), "Requested by owner");
+    await user.click(screen.getByRole("button", { name: "Review change" }));
     expect(api.requests.filter((r) => r.method === "PUT")).toHaveLength(0);
     await user.click(
-      await screen.findByRole("button", { name: "Update subscription" }),
+      await screen.findByRole("button", { name: "Apply change" }),
     );
     expect(await screen.findByText("SUSPENDED")).toBeVisible();
   });

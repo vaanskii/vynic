@@ -76,7 +76,7 @@ export class WebsiteCoreService {
       if (current?.mode === 'SAAS' && !current.assignedSlug)
         await assignHostname(tx, venueId);
     });
-    const [row, access, domains, subscription, pendingHostname] =
+    const [row, access, domains, subscription, pendingHostname, custom] =
       await Promise.all([
         this.db.venueWebsiteConfig.findUnique({ where: { venueId } }),
         this.access.websiteAccess(venueId),
@@ -88,6 +88,10 @@ export class WebsiteCoreService {
         this.db.websiteHostnameRequest.findFirst({
           where: { venueId, status: 'PENDING' },
           select: { hostname: true, createdAt: true },
+        }),
+        this.db.customWebsiteBinding.findUnique({
+          where: { venueId },
+          select: { status: true },
         }),
       ]);
     const base = this.config.get<string>('SAAS_WEBSITE_BASE_DOMAIN');
@@ -119,6 +123,12 @@ export class WebsiteCoreService {
       publishedSlug: row?.slug ?? null,
       baseDomain: this.config.get<string>('SAAS_WEBSITE_BASE_DOMAIN') ?? null,
       domains: domains.map((d) => d.hostname),
+      // Read-only for owners: implementation, frontend and domains are
+      // operator-managed for a CUSTOM site.
+      custom:
+        access.configuredMode === 'CUSTOM'
+          ? { status: custom?.status ?? 'NOT_CONFIGURED' }
+          : null,
     };
   }
   /**

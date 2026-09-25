@@ -313,7 +313,12 @@ export class ReservationService {
       });
     }
 
-    return results;
+    // Anonymous visitors need occupancy, not other guests' names or phones.
+    return results.map((row) => ({
+      ...row,
+      customerName: null,
+      customerPhone: null,
+    }));
   }
 
   private serializeWebsiteReservationForMap(reservation: {

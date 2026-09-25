@@ -18,7 +18,9 @@ import { FeatureGuard } from '../../entitlements/feature.guard';
 import { RequiresFeature } from '../../entitlements/requires-feature.decorator';
 import type { TenantContext } from '../../tenancy/tenant-context';
 import { WebsiteTenant } from '../tenancy/website-tenant-context';
+import { CustomWebsiteGuard } from '../tenancy/custom-website.guard';
 import { WebsiteTenantGuard } from '../tenancy/website-tenant.guard';
+import { WebsiteAuthService } from '../auth/auth.service';
 import { ReservationService } from '../reservation/reservation.service';
 
 /**
@@ -34,13 +36,15 @@ export class BogController {
   constructor(
     private readonly bogService: BogService,
     private readonly reservationService: ReservationService,
+    private readonly authService: WebsiteAuthService,
   ) {}
 
   @Post('create-order')
-  @UseGuards(WebsiteTenantGuard, FeatureGuard)
+  @UseGuards(WebsiteTenantGuard, FeatureGuard, CustomWebsiteGuard)
   @RequiresFeature(FeatureKeys.WEBSITE)
   async createOrder(
     @WebsiteTenant() tenant: TenantContext,
+    @Req() request: Request,
     @Body()
     body: {
       selectedTables: string[];
@@ -51,12 +55,14 @@ export class BogController {
       customerName?: string;
       customerEmail?: string;
       customerPhone?: string;
+      /** Ignored: the booking's account comes from the session cookie. */
       userId?: string;
       notes?: string;
       language?: string;
       numberOfGuests?: number;
     },
   ) {
+    const user = await this.authService.tryGetUserFromRequest(request);
     const validatedData = await this.bogService.validateAndCalculateOrder(
       tenant,
       {
@@ -78,7 +84,7 @@ export class BogController {
       customerName: body.customerName,
       customerEmail: body.customerEmail,
       customerPhone: body.customerPhone,
-      userId: body.userId,
+      userId: user?.id,
       notes: body.notes,
       language: body.language || 'en',
       numberOfGuests: body.numberOfGuests,

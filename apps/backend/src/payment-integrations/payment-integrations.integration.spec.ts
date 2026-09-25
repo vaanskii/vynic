@@ -21,6 +21,8 @@ import { BogService } from '../website/payment/payment.service';
 import { ReservationService } from '../website/reservation/reservation.service';
 import { MenuService } from '../website/menu/menu.service';
 import { WebsiteTenantService } from '../website/tenancy/website-tenant.service';
+import { WebsiteAuthService } from '../website/auth/auth.service';
+import { isFreshDisposableDatabase } from '../../test/disposable-database';
 const url = process.env.W1_TEST_DATABASE_URL;
 (url ? describe : describe.skip)('W1 disposable PostgreSQL / HTTP', () => {
   let db: PrismaService,
@@ -52,11 +54,12 @@ const url = process.env.W1_TEST_DATABASE_URL;
   beforeAll(async () => {
     const u = new URL(url!);
     if (
-      u.hostname !== '127.0.0.1' ||
-      !(
-        (u.port === '55439' && u.pathname === '/vynic_w1_disposable') ||
-        (u.port === '55437' && u.pathname === '/vynic_commercial_test')
-      )
+      !isFreshDisposableDatabase(u) &&
+      (u.hostname !== '127.0.0.1' ||
+        !(
+          (u.port === '55439' && u.pathname === '/vynic_w1_disposable') ||
+          (u.port === '55437' && u.pathname === '/vynic_commercial_test')
+        ))
     )
       throw Error('Only isolated W1 database permitted');
     process.env.PAYMENT_INTEGRATION_MASTER_KEY = '12'.repeat(32);
@@ -142,6 +145,11 @@ const url = process.env.W1_TEST_DATABASE_URL;
         },
         { provide: VenueEntitlementsService, useValue: entitlements },
         { provide: BogService, useValue: bog },
+        // Anonymous browser: bookings take their account from the session only.
+        {
+          provide: WebsiteAuthService,
+          useValue: { tryGetUserFromRequest: async () => null },
+        },
         {
           provide: ReservationService,
           useValue: new ReservationService(db, bog, bridge as never),

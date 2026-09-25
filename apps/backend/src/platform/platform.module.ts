@@ -1,4 +1,6 @@
 import { WebsiteCoreModule } from '../website/core/website-core.module';
+import { CustomWebsiteModule } from '../website/custom/custom-website.module';
+import { PlatformCustomWebsiteController } from './platform-custom-website.controller';
 import { PlatformHostnameController } from './platform-hostname.controller';
 import { PlanCatalogService } from './plan-catalog.service';
 import {
@@ -34,6 +36,7 @@ import { PlatformVenuesController } from './platform-venues.controller';
 @Module({
   imports: [
     WebsiteCoreModule,
+    CustomWebsiteModule,
     AuthModule,
     EntitlementsModule,
     EdgeTransportModule,
@@ -41,6 +44,7 @@ import { PlatformVenuesController } from './platform-venues.controller';
   ],
   controllers: [
     PlatformHostnameController,
+    PlatformCustomWebsiteController,
     EdgeFoundationController,
     PlatformCommercialController,
     PlatformAuthController,

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { EntitlementsModule } from '../../entitlements/entitlements.module';
+import { CustomWebsiteGuard } from './custom-website.guard';
 import { WebsiteTenantGuard } from './website-tenant.guard';
 import { WebsiteTenantService } from './website-tenant.service';
 
@@ -9,7 +10,12 @@ import { WebsiteTenantService } from './website-tenant.service';
  */
 @Module({
   imports: [EntitlementsModule],
-  providers: [WebsiteTenantService, WebsiteTenantGuard],
-  exports: [WebsiteTenantService, WebsiteTenantGuard, EntitlementsModule],
+  providers: [WebsiteTenantService, WebsiteTenantGuard, CustomWebsiteGuard],
+  exports: [
+    WebsiteTenantService,
+    WebsiteTenantGuard,
+    CustomWebsiteGuard,
+    EntitlementsModule,
+  ],
 })
 export class WebsiteTenancyModule {}

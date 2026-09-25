@@ -17,6 +17,7 @@ import { FeatureGuard } from '../../entitlements/feature.guard';
 import { RequiresFeature } from '../../entitlements/requires-feature.decorator';
 import type { TenantContext } from '../../tenancy/tenant-context';
 import { WebsiteTenant } from '../tenancy/website-tenant-context';
+import { CustomWebsiteGuard } from '../tenancy/custom-website.guard';
 import { WebsiteTenantGuard } from '../tenancy/website-tenant.guard';
 import { ReservationService } from './reservation.service';
 
@@ -29,6 +30,7 @@ interface CreateReservationDto {
   customerName?: string;
   customerEmail?: string;
   customerPhone?: string;
+  /** Ignored: the booking's account comes from the session cookie. */
   userId?: string;
   notes?: string;
   numberOfGuests?: number;
@@ -37,10 +39,11 @@ interface CreateReservationDto {
 /**
  * Public tables, availability and bookings for the restaurant that owns the
  * requested host. Every handler is scoped to that Venue; none of them accepts a
- * venue identifier from the caller.
+ * venue identifier from the caller. Bookings belong to the shared custom-site
+ * surface, so only a CUSTOM Venue's host is served.
  */
 @Controller('api/tables')
-@UseGuards(WebsiteTenantGuard, FeatureGuard)
+@UseGuards(WebsiteTenantGuard, FeatureGuard, CustomWebsiteGuard)
 @RequiresFeature(FeatureKeys.WEBSITE)
 export class TableController {
   constructor(
@@ -87,13 +90,22 @@ export class TableController {
   async createReservation(
     @WebsiteTenant() tenant: TenantContext,
     @Body() data: CreateReservationDto,
+    @Req() request: Request,
   ) {
-    return this.reservationService.createReservation(tenant, data);
+    // A browser-supplied account id would let anyone attach a booking to
+    // someone else's account; only the signed-in customer's own id is used.
+    const user = await this.authService.tryGetUserFromRequest(request);
+    return this.reservationService.createReservation(tenant, {
+      ...data,
+      userId: user?.id,
+    });
   }
 
   /**
    * Public map: returns table availability for the date (no login).
-   * SUPER_ADMIN with auth cookie: full reservation list for admin UI.
+   * SUPER_ADMIN with auth cookie: full reservation list for admin UI, only for
+   * the Venue that administrator is bound to — WebsiteUser is global, so the
+   * role alone must never open another restaurant's booking list.
    */
   @Get('reservations')
   async getReservationsForDate(
@@ -104,7 +116,10 @@ export class TableController {
     if (!date) throw new BadRequestException('Date parameter is required');
 
     const user = await this.authService.tryGetUserFromRequest(request);
-    if (user?.role === WebsiteUserRole.SUPER_ADMIN) {
+    if (
+      user?.role === WebsiteUserRole.SUPER_ADMIN &&
+      user.adminVenueId === tenant.venueId
+    ) {
       return this.reservationService.getReservationsForDate(tenant, date);
     }
 

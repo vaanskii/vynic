@@ -12,6 +12,7 @@ import { FeatureGuard } from '../../entitlements/feature.guard';
 import { RequiresFeature } from '../../entitlements/requires-feature.decorator';
 import type { TenantContext } from '../../tenancy/tenant-context';
 import { WebsiteTenant } from '../tenancy/website-tenant-context';
+import { CustomWebsiteGuard } from '../tenancy/custom-website.guard';
 import { WebsiteTenantGuard } from '../tenancy/website-tenant.guard';
 import { UserService } from './user.service';
 
@@ -33,7 +34,12 @@ export class UserController {
    * The customer's bookings at this restaurant. The account is global; the
    * bookings shown are the ones belonging to the Venue whose site this is.
    */
-  @UseGuards(WebsiteAuthGuard, WebsiteTenantGuard, FeatureGuard)
+  @UseGuards(
+    WebsiteAuthGuard,
+    WebsiteTenantGuard,
+    FeatureGuard,
+    CustomWebsiteGuard,
+  )
   @RequiresFeature(FeatureKeys.WEBSITE)
   @Get('reservations')
   async getUserReservations(

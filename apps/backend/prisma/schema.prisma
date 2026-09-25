@@ -1203,6 +1203,8 @@ model Venue {
   featureOverrides          VenueFeatureOverride[]
   hostnameRequests          WebsiteHostnameRequest[]
   websiteConfig             VenueWebsiteConfig?
+  customWebsite             CustomWebsiteBinding?
+  websiteAdmins             WebsiteUser[]
   domains                   VenueDomain[]
   websiteTables             WebsiteTable[]
   menuWebsitePresentations  MenuItemWebsitePresentation[]
@@ -1467,6 +1469,42 @@ model VenueWebsiteConfig {
   @@schema("pos")
 }
 
+/// Operator-tracked setup state of a CUSTOM website.
+///
+/// Tracking only: nothing in the repository deploys a custom frontend or issues
+/// DNS/TLS, so these states record what an operator verified, never what a
+/// machine did. A CUSTOM Venue without a binding row is "not configured".
+enum CustomWebsiteStatus {
+  SETUP_PENDING
+  READY
+  ACTIVE
+  ERROR
+
+  @@schema("pos")
+}
+
+/// Which custom frontend implementation serves a CUSTOM Venue, and how far its
+/// operator-managed setup has got.
+///
+/// Tenant authority stays Host -> VenueDomain -> Venue; `siteKey` is not an
+/// alternative to it. It names the frontend build that is supposed to be
+/// deployed on the Venue's domains (for example `vankisi-web`) so operators can
+/// see it and a shared client can refuse to render when the wrong build was
+/// attached to a domain. It is deliberately not unique: one custom design may
+/// serve several branches (Venues) of the same customer.
+model CustomWebsiteBinding {
+  venueId    String              @id
+  siteKey    String?
+  status     CustomWebsiteStatus @default(SETUP_PENDING)
+  statusNote String?
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  venue      Venue               @relation(fields: [venueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([siteKey])
+  @@schema("pos")
+}
+
 /// How one operational [MenuItem] appears on the generic SaaS website.
 ///
 /// This is presentation only. The item itself — its identity, its operational
@@ -1621,6 +1659,10 @@ model WebsiteUser {
   lastName  String?
   phone     String          @unique
   role      WebsiteUserRole @default(USER)
+  /// The one Venue a SUPER_ADMIN administers. WebsiteUser is global, so an
+  /// unbound administrator must not read any restaurant's booking list.
+  adminVenueId String?
+  adminVenue   Venue?  @relation(fields: [adminVenueId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
   hashedRefreshToken String?
   reservations       WebsiteReservation[]

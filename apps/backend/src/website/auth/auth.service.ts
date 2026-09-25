@@ -16,6 +16,8 @@ export type WebsiteAuthUser = {
   lastName: string | null;
   email: string | null;
   role: WebsiteUserRole;
+  /** The Venue a SUPER_ADMIN administers; null for customers. */
+  adminVenueId: string | null;
 };
 
 @Injectable()
@@ -138,6 +140,7 @@ export class WebsiteAuthService {
           lastName: true,
           email: true,
           role: true,
+          adminVenueId: true,
         },
       });
 

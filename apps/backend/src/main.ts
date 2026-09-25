@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
 import { isDevLanOrigin } from './dev-origins';
+import { isSameOriginRequest } from './website/tenancy/same-origin';
 
 function normalizeOrigin(origin: string): string {
   return origin.endsWith('/') ? origin.slice(0, -1) : origin;
@@ -44,23 +45,10 @@ async function bootstrap() {
   app.use(urlencoded({ extended: true, limit: '50mb' }));
   app.use(cookieParser());
 
-  app.enableCors({
-    origin: (origin: string | undefined, callback) => {
-      if (!origin) {
-        callback(null, true);
-        return;
-      }
-      const normalized = normalizeOrigin(origin);
-      if (allowedOrigins.has(normalized)) {
-        callback(null, true);
-        return;
-      }
-      if (!isProduction && isDevLanOrigin(normalized)) {
-        callback(null, true);
-        return;
-      }
-      callback(new Error(`Not allowed by CORS: ${origin}`), false);
-    },
+  const trustForwardedHost = ['1', 'true'].includes(
+    (process.env.TRUST_PROXY_HOST ?? '').trim().toLowerCase(),
+  );
+  const corsOptions = {
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
@@ -72,7 +60,33 @@ async function bootstrap() {
       'X-POS-Sync-Key',
       'x-connection-key',
     ],
-  });
+  };
+  // Explicit origins, development LAN clients, and requests a restaurant site
+  // sends to its own host (see isSameOriginRequest). Everything else is refused
+  // before a handler runs; there is no wildcard.
+  app.enableCors(
+    (
+      req: { headers: Record<string, string | string[] | undefined> },
+      callback: (error: Error | null, options?: object) => void,
+    ) => {
+      const origin =
+        typeof req.headers.origin === 'string' ? req.headers.origin : undefined;
+      if (!origin) {
+        callback(null, { ...corsOptions, origin: true });
+        return;
+      }
+      const normalized = normalizeOrigin(origin);
+      if (
+        allowedOrigins.has(normalized) ||
+        (!isProduction && isDevLanOrigin(normalized)) ||
+        isSameOriginRequest(origin, req.headers, { trustForwardedHost })
+      ) {
+        callback(null, { ...corsOptions, origin: true });
+        return;
+      }
+      callback(new Error(`Not allowed by CORS: ${origin}`));
+    },
+  );
 
   app.useGlobalPipes(
     new ValidationPipe({

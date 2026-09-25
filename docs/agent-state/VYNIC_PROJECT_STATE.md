@@ -732,8 +732,10 @@ current transport status.
   a collision-safe address with spaces removed. Existing assigned addresses never
   follow display-name changes. Only ACTIVE Website owners can submit one pending
   hostname request; Platform approval rechecks availability under lock and changes
-  the domain and draft/published identity atomically. Trial owners cannot request
-  changes; draft saves/publication cannot choose an address. The menu section is the
+  the domain and draft/published identity atomically, deleting the old SaaS
+  hostname (no redirect). Trial owners cannot request changes; draft
+  saves/publication cannot choose an address, and operator domain registration
+  refuses the SaaS namespace. See `docs/WEBSITE_SAAS_HOSTNAMES.md`. The menu section is the
   canonical category/subcategory/item/size tree with separate website presentation;
   CLOUD-authoritative Venues author it in the dashboard, while POS-authoritative
   Venues retain their existing POS authoring. SEO and exact map pins use
@@ -962,7 +964,8 @@ current transport status.
 
 ## Current Migration Versions
 
-- Prisma migration tip: `20261005120000_website_hostname_requests`.
+- Prisma migration tip: `20261006120000_hostname_request_current`.
+- Previous hostname migration: `20261005120000_website_hostname_requests`.
 - Previous lifecycle migration: `20261004120000_subscription_lifecycle`.
 - Previous acquisition migration: `20261003120200_customer_trial_requests`.
 - Commercial access/media/pricing: `20261003120000_commercial_access_hardening`,

@@ -1,3 +1,4 @@
+import { isFreshDisposableDatabase } from '../../test/disposable-database';
 import 'reflect-metadata';
 jest.mock('uuid', () => ({ v4: () => require('node:crypto').randomUUID() }));
 import { randomUUID } from 'node:crypto';
@@ -36,9 +37,10 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
     beforeAll(async () => {
       const target = new URL(url!);
       if (
-        target.hostname !== '127.0.0.1' ||
-        target.port !== '55437' ||
-        target.pathname !== '/vynic_commercial_test'
+        !isFreshDisposableDatabase(target) &&
+        (target.hostname !== '127.0.0.1' ||
+          target.port !== '55437' ||
+          target.pathname !== '/vynic_commercial_test')
       )
         throw Error('Disposable database only');
       process.env.JWT_SECRET = 'lifecycle-test-only';

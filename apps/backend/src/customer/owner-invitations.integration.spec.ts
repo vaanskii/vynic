@@ -1,3 +1,4 @@
+import { isFreshDisposableDatabase } from '../../test/disposable-database';
 import 'reflect-metadata';
 jest.mock('uuid', () => ({ v4: () => require('node:crypto').randomUUID() }));
 import { randomUUID, createHash } from 'node:crypto';
@@ -48,9 +49,10 @@ const url = process.env.ONBOARDING_TEST_DATABASE_URL;
     beforeAll(async () => {
       const parsed = new URL(url!);
       if (
-        parsed.hostname !== '127.0.0.1' ||
-        parsed.port !== '55439' ||
-        parsed.pathname !== '/vynic_onboarding_phase3_disposable'
+        !isFreshDisposableDatabase(parsed) &&
+        (parsed.hostname !== '127.0.0.1' ||
+          parsed.port !== '55439' ||
+          parsed.pathname !== '/vynic_onboarding_phase3_disposable')
       )
         throw Error('Disposable onboarding database required');
       process.env.JWT_SECRET = 'onboarding-test-signing-key';

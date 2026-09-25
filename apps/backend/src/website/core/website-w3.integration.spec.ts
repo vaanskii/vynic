@@ -1,3 +1,4 @@
+import { isFreshDisposableDatabase } from '../../../test/disposable-database';
 import { HostnameRequestsService } from './hostname-requests';
 import { WebsiteLogoService } from './website-logo.service';
 import 'reflect-metadata';
@@ -97,15 +98,16 @@ const url = process.env.W3_TEST_DATABASE_URL;
     beforeAll(async () => {
       const u = new URL(url!);
       if (
-        u.hostname !== '127.0.0.1' ||
-        !(
-          (u.port === '55439' &&
-            [
-              '/vynic_w3_disposable',
-              '/vynic_foundation_phase3_disposable',
-            ].includes(u.pathname)) ||
-          (u.port === '55437' && u.pathname === '/vynic_commercial_test')
-        )
+        !isFreshDisposableDatabase(u) &&
+        (u.hostname !== '127.0.0.1' ||
+          !(
+            (u.port === '55439' &&
+              [
+                '/vynic_w3_disposable',
+                '/vynic_foundation_phase3_disposable',
+              ].includes(u.pathname)) ||
+            (u.port === '55437' && u.pathname === '/vynic_commercial_test')
+          ))
       )
         throw Error('Only the disposable website database is permitted');
       process.env.JWT_SECRET = 'website-w3-local-test-only';

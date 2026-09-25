@@ -7,6 +7,7 @@ import { DeviceEnrollmentService } from './device-enrollment.service';
 import { EdgeCommandService } from './edge-command.service';
 import { EnrollmentRateLimiter } from './enrollment-rate-limiter';
 import { EdgeCommandTypes } from '../shared/contracts/edge-command';
+import { grantTrialPlan } from '../../test/commercial-access.fixture';
 
 const databaseUrl = process.env.TENANT_INTEGRATION_DATABASE_URL;
 const describeDatabase = databaseUrl ? describe : describe.skip;
@@ -99,6 +100,9 @@ describeDatabase('POS self-enrollment (PostgreSQL)', () => {
     ]);
     venueAId = venueA.id;
     venueBId = venueB.id;
+    // Issuing enrollment codes is POS setup: both restaurants hold POS.
+    await grantTrialPlan(prisma, venueAId, 'POS');
+    await grantTrialPlan(prisma, venueBId, 'POS');
   });
 
   afterAll(async () => {

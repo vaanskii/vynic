@@ -1,3 +1,4 @@
+import { isFreshDisposableDatabase } from '../../test/disposable-database';
 import { OwnerInvitationsService } from './owner-invitations.service';
 import { PlatformVenueConfigService } from '../platform/platform-venue-config.service';
 import 'reflect-metadata';
@@ -32,13 +33,14 @@ const url = process.env.FOUNDATION_TEST_DATABASE_URL;
     beforeAll(async () => {
       const parsed = new URL(url!);
       if (
-        parsed.hostname !== '127.0.0.1' ||
-        !(
-          (parsed.port === '55439' &&
-            parsed.pathname === '/vynic_foundation_phase3_disposable') ||
-          (parsed.port === '55437' &&
-            parsed.pathname === '/vynic_commercial_test')
-        )
+        !isFreshDisposableDatabase(parsed) &&
+        (parsed.hostname !== '127.0.0.1' ||
+          !(
+            (parsed.port === '55439' &&
+              parsed.pathname === '/vynic_foundation_phase3_disposable') ||
+            (parsed.port === '55437' &&
+              parsed.pathname === '/vynic_commercial_test')
+          ))
       )
         throw Error('Disposable foundation DB only');
       process.env.JWT_SECRET = 'foundation-test-signing-key';

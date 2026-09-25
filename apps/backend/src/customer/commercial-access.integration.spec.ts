@@ -1,3 +1,4 @@
+import { isFreshDisposableDatabase } from '../../test/disposable-database';
 import { HostnameRequestsService } from '../website/core/hostname-requests';
 import { SubscriptionService } from '../subscriptions/subscription.service';
 import 'reflect-metadata';
@@ -161,14 +162,18 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
     beforeAll(async () => {
       const target = new URL(url!);
       if (
-        target.hostname !== '127.0.0.1' ||
-        target.port !== '55437' ||
-        target.pathname !== '/vynic_commercial_test'
+        !isFreshDisposableDatabase(target) &&
+        (target.hostname !== '127.0.0.1' ||
+          target.port !== '55437' ||
+          target.pathname !== '/vynic_commercial_test')
       )
         throw Error('Only isolated commercial test database allowed');
       process.env.JWT_SECRET = 'commercial-test-only-signing-key';
       process.env.PLATFORM_JWT_SECRET = process.env.JWT_SECRET;
       process.env.COOKIE_ENCRYPTION_KEY = 'commercial-test-only-vault-key';
+      // One SaaS base domain, as in production where ConfigService and the
+      // hostname helpers both read it from the environment.
+      process.env.SAAS_WEBSITE_BASE_DOMAIN = 'vynic.test';
       process.env.PAYMENT_INTEGRATION_MASTER_KEY = Buffer.alloc(32, 7).toString(
         'base64',
       );

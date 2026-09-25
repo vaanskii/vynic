@@ -3,13 +3,14 @@ jest.mock('uuid', () => ({ v4: () => require('node:crypto').randomUUID() }));
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../prisma.service';
 import { onboardingApp } from '../../test/onboarding-app.fixture';
+import { isFreshDisposableDatabase } from '../../test/disposable-database';
 import { PlatformVenueConfigService } from './platform-venue-config.service';
 const url = process.env.FOUNDATION_TEST_DATABASE_URL;
 (url ? describe : describe.skip)('Cloud menu Admin (disposable PostgreSQL)', () => {
   let db: PrismaService, app: any, service: PlatformVenueConfigService, actor: any, venueId: string;
   beforeAll(async () => {
     const parsed = new URL(url!);
-    if (parsed.hostname !== '127.0.0.1' || parsed.port !== '55439' || parsed.pathname !== '/vynic_foundation_phase3_disposable') throw Error('Disposable foundation DB only');
+    if (!isFreshDisposableDatabase(parsed) && (parsed.hostname !== '127.0.0.1' || parsed.port !== '55439' || parsed.pathname !== '/vynic_foundation_phase3_disposable')) throw Error('Disposable foundation DB only');
     process.env.JWT_SECRET = 'foundation-test-signing-key';
     process.env.COOKIE_ENCRYPTION_KEY = 'foundation-test-cookie-key';
     db = new PrismaService({ datasourceUrl: url });

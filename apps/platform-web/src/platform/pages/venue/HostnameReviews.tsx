@@ -7,8 +7,22 @@ import { Button } from "../../components/Button";
 import { Field, Input } from "../../components/Form";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { ErrorState } from "../../components/State";
-import { errorMessage } from "../../format";
-export function HostnameReviews({ venueId }: { venueId: string }) {
+import { StatusBadge } from "../../components/StatusBadge";
+import { Table } from "../../components/Table";
+import { errorMessage, formatDateTime } from "../../format";
+/**
+ * Paid owners' SaaS address change requests. Approval re-checks availability
+ * on the server and moves the one SaaS binding; rejection changes nothing.
+ */
+export function HostnameReviews({
+  venueId,
+  saas,
+  currentHostname,
+}: {
+  venueId: string;
+  saas: boolean;
+  currentHostname: string | null;
+}) {
   const { actor } = useAuth();
   const client = useQueryClient();
   const requests = useQuery({
@@ -18,6 +32,7 @@ export function HostnameReviews({ venueId }: { venueId: string }) {
   const [status, setStatus] = useState("");
   const [reason, setReason] = useState("");
   const pending = requests.data?.find((r) => r.status === "PENDING");
+  const decided = requests.data?.filter((r) => r.status !== "PENDING") ?? [];
   const review = useMutation({
     mutationFn: () =>
       platformApi.reviewHostname(venueId, pending!.id, status, reason),
@@ -33,8 +48,12 @@ export function HostnameReviews({ venueId }: { venueId: string }) {
       );
     },
   });
+  if (!saas && requests.data?.length === 0) return null;
   return (
-    <Panel title="Hostname change request">
+    <Panel
+      title="Hostname change request"
+      description="Owners on an ACTIVE paid Website plan may ask for another SaaS address. Trials cannot."
+    >
       {requests.isPending ? (
         <p>Loading requests…</p>
       ) : requests.error ? (
@@ -45,8 +64,11 @@ export function HostnameReviews({ venueId }: { venueId: string }) {
       ) : pending ? (
         <>
           <p>
-            <strong>{pending.hostname}</strong> · PENDING
+            {pending.currentHostname ?? currentHostname ?? "—"} →{" "}
+            <strong>{pending.hostname}</strong> ·{" "}
+            <StatusBadge value="PENDING" />
           </p>
+          <p>Requested {formatDateTime(pending.createdAt)}</p>
           {actor?.role !== "SUPPORT_READONLY" && (
             <>
               <Field label="Review reason">
@@ -73,6 +95,32 @@ export function HostnameReviews({ venueId }: { venueId: string }) {
         </>
       ) : (
         <p>No pending hostname change.</p>
+      )}
+      {decided.length > 0 && (
+        <Table>
+          <thead>
+            <tr>
+              <th>Requested</th>
+              <th>From</th>
+              <th>Decision</th>
+              <th>Reviewed</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {decided.slice(0, 5).map((r) => (
+              <tr key={r.id}>
+                <td>{r.hostname}</td>
+                <td>{r.currentHostname ?? "—"}</td>
+                <td>
+                  <StatusBadge value={r.status} />
+                </td>
+                <td>{formatDateTime(r.reviewedAt)}</td>
+                <td>{r.reason ?? ""}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
       )}
       <ConfirmDialog
         open={!!status}

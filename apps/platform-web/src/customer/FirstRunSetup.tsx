@@ -189,8 +189,8 @@ export function FirstRunSetup({
             <div className="first-run__field">
               <span>თქვენი ვებსაიტის მისამართი</span>
               <strong>
-                {website.draft.slug}
-                {domain ? `.${domain}` : ""}
+                {website.hostname ??
+                  `${website.draft.slug}${domain ? `.${domain}` : ""}`}
               </strong>
               {website.commercialStatus === "TRIAL" && (
                 <p>

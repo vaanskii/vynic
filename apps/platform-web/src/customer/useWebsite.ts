@@ -34,6 +34,9 @@ export type WebsiteContent = {
 };
 export type WebsiteSettings = {
   commercialStatus?: string;
+  /** The server-owned SaaS address; null outside SAAS. */
+  hostname?: string | null;
+  pendingHostnameRequest?: { hostname: string; createdAt: string } | null;
   hostnameChangeAllowed?: boolean;
   mediaUploadAllowed?: boolean;
   schemaVersion: number;
@@ -76,8 +79,11 @@ export function needsFirstRun(settings?: WebsiteSettings) {
   );
 }
 
-export function websiteAddress(settings: WebsiteSettings, slug?: string) {
-  return `${slug || settings.draft.slug || "…"}.${settings.baseDomain || "…"}`;
+export function websiteAddress(settings: WebsiteSettings) {
+  return (
+    settings.hostname ??
+    `${settings.draft.slug || "…"}.${settings.baseDomain || "…"}`
+  );
 }
 
 export function useWebsite(venueId: string | undefined) {

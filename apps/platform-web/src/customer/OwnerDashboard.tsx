@@ -451,10 +451,17 @@ function Dashboard({
             <>
               <p className="portal-address">{websiteAddress(settings)}</p>
               <WebsiteStatus website={website} />
-              {settings.hostnameChangeAllowed && (
-                <button type="button" onClick={() => go("website")}>
-                  მისამართის შეცვლის მოთხოვნა
-                </button>
+              {settings.pendingHostnameRequest ? (
+                <p className="portal-hint" role="status">
+                  მისამართის შეცვლის მოთხოვნა განხილვაშია:{" "}
+                  {settings.pendingHostnameRequest.hostname}
+                </p>
+              ) : (
+                settings.hostnameChangeAllowed && (
+                  <button type="button" onClick={() => go("website")}>
+                    მისამართის შეცვლის მოთხოვნა
+                  </button>
+                )
               )}
               {!settings.entitled && (
                 <p className="portal-hint">

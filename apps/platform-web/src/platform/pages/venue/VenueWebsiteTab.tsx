@@ -98,10 +98,24 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
     return <LoadingState label="Loading website configuration" />;
   const website = product.data.website;
   const selectedMode = mode || website.configuredMode;
+  const assignedSlug = website.provisioning?.assignedSlug;
+  // The one SaaS binding; every other registered hostname is a custom domain.
+  const saasHostname =
+    website.configuredMode === "SAAS" && assignedSlug
+      ? (domains.data.find((d) => d.hostname.startsWith(`${assignedSlug}.`))
+          ?.hostname ?? null)
+      : null;
+  const isSaasDomain = (hostname: string) =>
+    !!assignedSlug && hostname.startsWith(`${assignedSlug}.`);
+  const customDomains = domains.data.filter((d) => !isSaasDomain(d.hostname));
 
   return (
     <>
-      <HostnameReviews venueId={venueId} />
+      <HostnameReviews
+        venueId={venueId}
+        saas={website.configuredMode === "SAAS"}
+        currentHostname={saasHostname}
+      />
       <Panel
         title="Online payments · Bank of Georgia"
         description="Manage ONLINE_PAYMENTS in Product access. Restaurant owners configure credentials in their dashboard."
@@ -199,10 +213,15 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
         <p>
           Current SaaS address:{" "}
           {website.configuredMode === "SAAS"
-            ? (domains.data.find((d) =>
-                d.hostname.startsWith(`${website.provisioning?.assignedSlug}.`),
-              )?.hostname ?? "Not assigned")
+            ? (saasHostname ??
+              (assignedSlug ? `${assignedSlug} (not bound)` : "Not assigned"))
             : "Not applicable"}
+        </p>
+        <p>
+          Custom domains:{" "}
+          {customDomains.length
+            ? customDomains.map((d) => d.hostname).join(", ")
+            : "None"}
         </p>
         <p>
           Publication: {website.provisioning?.status ?? "DRAFT"} ·{" "}
@@ -216,7 +235,7 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
       </Panel>
       <Panel
         title="Domains"
-        description="Hostnames are normalized and reserved by the backend. DNS and TLS are managed separately."
+        description="Register custom domains here. The SaaS address is assigned by provisioning and changed only through hostname review. DNS and TLS are managed separately."
         action={
           <Button tone="primary" onClick={() => setDomainOpen(true)}>
             <Plus size={16} /> Register domain
@@ -246,7 +265,12 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
                       <strong>
                         <Globe size={15} /> {domain.hostname}
                       </strong>
-                      <small>{domain.id}</small>
+                      <small>
+                        {isSaasDomain(domain.hostname)
+                          ? "SaaS address"
+                          : "Custom domain"}{" "}
+                        · {domain.id}
+                      </small>
                     </div>
                   </td>
                   <td>

@@ -83,11 +83,19 @@ TRUST_PROXY_HOST=true
 ```
 
 Only then is `X-Forwarded-Host` read, and only its first entry — the host the
-client actually asked for. Without that flag the header is ignored entirely,
+client actually asked for. When present it is the only candidate: an
+unregistered forwarded name does not fall back to the direct `Host` (the
+proxy's upstream name). Without that flag the header is ignored entirely,
 because any client can set it and would otherwise get to pick its own
-restaurant. A deployment that serves the API from a *separate* hostname (via
-`VITE_API_URL`) must register that hostname, since it is the one the backend
-sees.
+restaurant.
+
+Serving a website's API from a *separate* hostname (e.g. a frontend on Vercel
+calling `api.vynic.ge` via `VITE_API_URL`) is not supported: the backend would
+see the API's own Host, which cannot identify more than one restaurant, and
+website session cookies are SameSite=Strict. Every website is served behind a
+host-preserving same-origin `/api` proxy; see [CUSTOM_WEBSITES.md](CUSTOM_WEBSITES.md).
+Such same-origin requests pass CORS without per-domain configuration because
+their `Origin` equals their Host.
 
 Normalization refuses rather than repairs: a value carrying a scheme, path,
 query, fragment, userinfo, or whitespace resolves to nothing.
@@ -97,7 +105,9 @@ query, fragment, userinfo, or whitespace resolves to nothing.
 Local work happens on `localhost`, a loopback literal, or a LAN address — none
 of which can be a registered public domain. When `NODE_ENV !== 'production'` and
 the request host is one of those, resolution retries against `WEBSITE_DEV_HOST`
-(default `vankisi.localhost`).
+(default `vankisi.localhost`). A *named* `*.localhost` host
+(`custom-a.vynic.localhost`) is an explicit site choice and never falls back:
+unregistered, it resolves to nothing.
 
 It is transitional, it is environment-gated, and it applies only to addresses
 that cannot exist publicly. **Production fails closed on an unknown host** —
@@ -114,8 +124,8 @@ not how its tenant is established.
 |---|---|---|
 | Venue resolution | `VenueDomain` | `VenueDomain` |
 | Entitlement | `WEBSITE` | `WEBSITE` |
-| Public APIs | same | same |
-| Frontend | a bespoke build (today, `apps/venue-web/`) | one generic app, not yet built |
+| Public APIs | shared custom-site surface (`/api/website/custom/*`, bookings, payments, accounts) | generic `/api/website/*` |
+| Frontend | a bespoke build per client (`apps/venue-web/`, `apps/<client>-web`) | one generic app (`apps/restaurant-web`) |
 
 Nothing in the backend branches on `CUSTOM` vs `SAAS` to decide a tenant. The
 resolver returns `configuredMode` as information for a caller that needs it; the
@@ -123,6 +133,12 @@ question "may this Venue serve a website at all" is the `WEBSITE` entitlement,
 and `VenueEntitlementsService.websiteAccess()` reports the two together
 (`entitled`, `configuredMode`, `effectiveMode`, `consistent`). A configured mode
 that contradicts entitlement is reported, never silently rewritten.
+
+Which *surface* serves a Venue does depend on its effective mode: the
+custom-site routes (bookings, payments, `/api/menu`, `/api/website/custom/*`)
+serve only CUSTOM Venues (`CustomWebsiteGuard`), and the generic renderer's
+routes publish only SAAS ones. The tenant itself is still decided by the Host
+alone.
 
 ---
 
@@ -230,13 +246,15 @@ public product surface.
 
 | Endpoint | Host → Venue | `WEBSITE` | Notes |
 |---|---|---|---|
-| `GET /api/menu`, `GET /api/menu/:slug` | yes | yes | |
-| `GET /api/tables`, `/availability`, `/availability/:n` | yes | yes | |
-| `POST /api/tables/reservations` | yes | yes | Foreign table numbers are simply not found. |
-| `GET /api/tables/reservations` | yes | yes | Public map and SUPER_ADMIN list, both Venue-scoped. |
-| `POST /api/bog/create-order` | yes | yes | |
+| `GET /api/website/custom/bootstrap`, `/custom/menu` | yes | yes | CUSTOM only. |
+| `GET /api/menu`, `GET /api/menu/:slug` | yes | yes | CUSTOM only (Vankisi shape). |
+| `GET /api/tables`, `/availability`, `/availability/:n` | yes | yes | CUSTOM only. |
+| `POST /api/tables/reservations` | yes | yes | CUSTOM only. Foreign table numbers are simply not found; account from session cookie. |
+| `GET /api/tables/reservations` | yes | yes | CUSTOM only. Anonymous map without names/phones; full list only for a SUPER_ADMIN bound to this Venue. |
+| `POST /api/bog/create-order` | yes | yes | CUSTOM only; account from session cookie. |
 | `GET /api/bog/check-status/*`, `POST /api/bog/payment-callback` | no | no | Tenant from the reservation record. |
-| `GET /api/user/reservations` | yes | yes | Global account, Venue-scoped bookings. |
+| `GET /api/user/reservations` | yes | yes | CUSTOM only. Global account, Venue-scoped bookings. |
+| `GET /api/website/bootstrap`, `/menu` | yes | yes | Generic SaaS; a CUSTOM host gets only the mode marker. |
 | `GET/PATCH /api/user/profile` | no | no | Global customer identity. |
 | `POST /api/auth/*` | no | no | Global customer identity; reads no restaurant data. |
 | `POST /sync/*`, Device auth | **never** | **never** | Entitlement must not gate POS → Cloud sync. |

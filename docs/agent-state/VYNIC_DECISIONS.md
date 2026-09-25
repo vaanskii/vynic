@@ -88,8 +88,9 @@ reports use their respective fields and shared inclusion rules.
 
 ## D011 — Custom and SaaS websites stay distinct
 
-**Decision:** Vankisi remains a bespoke `CUSTOM` site; a future `SAAS` site is a
-separate data-driven frontend.
+**Decision:** Vankisi remains a bespoke `CUSTOM` site; the `SAAS` site
+(`apps/restaurant-web`) is a separate data-driven frontend. See D026 for how
+further CUSTOM sites are built.
 **Reason:** Custom layout/booking behavior is not generic product scaffolding.
 **Implication:** Both use Host -> Venue authority, but neither is silently
 converted into the other.
@@ -266,6 +267,22 @@ or alter an agreed billing schedule. Historical unknown terms must remain unknow
 provider events and keep restaurant merchant payments separate. Legacy manual grace
 is preserved until explicitly adopting dated terms. See
 `docs/COMMERCIAL_SUBSCRIPTION_LIFECYCLE.md`.
+
+## D026 — CUSTOM websites are frontends over one backend
+
+**Decision:** A CUSTOM website is a per-client static frontend served behind a
+host-preserving same-origin `/api` proxy to the shared NestJS backend. Tenancy
+stays Host -> VenueDomain -> Venue; `CustomWebsiteBinding.siteKey` records which
+frontend build serves the Venue (deployment identity, not authority) and the
+shared client refuses to render on a mismatch. Mode, frontend identity, domains
+and setup status are operator-only and audited. Custom-site public routes serve
+only CUSTOM Venues; capabilities derive from existing Features.
+**Reason:** Cross-origin API hosting loses the Host and SameSite cookies, and a
+browser-supplied Venue/site identity cannot be trusted; per-client backends
+would duplicate tenancy, menu, booking and payment logic.
+**Implication:** No per-customer backend, no Venue ids in frontends, no CORS
+allow-list per domain (same-origin rule), no `X-Venue-Id`-style headers. See
+`docs/CUSTOM_WEBSITES.md`.
 
 ## Maintenance
 

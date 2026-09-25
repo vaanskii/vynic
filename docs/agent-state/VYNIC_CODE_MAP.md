@@ -12,7 +12,9 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - NestJS/Prisma backend: `apps/backend/`
 - Vynic product site + Platform Admin: `apps/platform-web/`
 - Custom Vankisi website: `apps/venue-web/`
+- Generic SaaS restaurant website: `apps/restaurant-web/`
 - Shared generated contracts: `packages/contracts/`
+- Shared CUSTOM website client: `packages/website-client/`; custom site starter: `templates/custom-site/`
 - Architecture and state: `docs/`
 - SaaS readiness master audit and roadmap: `docs/SAAS_READINESS_AUDIT.md`
 
@@ -292,7 +294,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## Venue Website
 
-- App/pages: `apps/venue-web/src/App.tsx`, `apps/venue-web/src/pages/`
+- Vankisi CUSTOM app/pages: `apps/venue-web/src/App.tsx`, `apps/venue-web/src/pages/`
 - API client: `apps/venue-web/src/services/api.ts`
 - Backend website module: `apps/backend/src/website/`
 - Host resolution: `apps/backend/src/website/tenancy/`
@@ -302,6 +304,8 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Owner logo/main-photo uploads: `apps/platform-web/src/customer/WebsiteImageUpload.tsx`; owner endpoint in `customer-website.controller.ts`; owned/quota-limited raster storage, adoption and cleanup in `apps/backend/src/website/core/website-logo.service.ts`; reference validation in `website-media.ts`; serving in `website-logo.controller.ts`. Deployment: `docs/WEBSITE_OWNER_EDITOR_UX.md`.
 - Generic SaaS frontend: `apps/restaurant-web/` (theme registry `src/theme/registry.ts`, `classic` theme `src/theme/classic/`, metadata `src/seo/documentHead.ts`, transport `src/api/client.ts`).
 - W3 product, media/SEO/caching policy and local runbook: `docs/WEBSITE_PHASE_W3.md`; W2 contract and publication rules: `docs/WEBSITE_PHASE_W2.md`; disposable fixtures/harness: `apps/backend/scripts/seed-website-w3-local.ts`, `apps/backend/scripts/serve-website-w3-local.ts`.
+- CUSTOM websites (binding, public surface, operator workflow): `docs/CUSTOM_WEBSITES.md`; service/pure rules/public controller `apps/backend/src/website/custom/`; mode gate `website/tenancy/custom-website.guard.ts`; same-origin CORS rule `website/tenancy/same-origin.ts` (used by `src/main.ts`); Platform route `platform/platform-custom-website.controller.ts`, panel `apps/platform-web/src/platform/pages/venue/CustomWebsitePanel.tsx`; owner card `CustomWebsiteSummary` in `customer/WebsiteSections.tsx`; proof `website/custom/custom-website.integration.spec.ts`, local fixture `apps/backend/scripts/seed-custom-websites-local.ts`.
+- Custom frontend foundation: shared client `packages/website-client/`; starter `templates/custom-site/` (copy to `apps/<client>-web`).
 - Current tenancy reference: `docs/PUBLIC_TENANCY.md`
 - Venue payment configuration/encryption: `apps/backend/src/payment-integrations/`; owner/Platform routes: `apps/backend/src/customer/customer-payments.controller.ts`; owner form: `apps/platform-web/src/customer/PaymentSettings.tsx`.
 - W1 migration/import/validation: `docs/WEBSITE_PHASE_W1.md`, `apps/backend/scripts/import-bog-integration.ts`, `apps/backend/src/payment-integrations/payment-integrations.integration.spec.ts`.

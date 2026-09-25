@@ -22,7 +22,9 @@ current transport status.
   `/admin` and `/admin/*` addresses return to `/` on the same host. Owner routes use only the CustomerAccount session
   and Admin only the PlatformUser session. Old `/portal…`, `/signup` and `/start` links
   redirect to their `/login`, `/request-access`, `/invite` or `/dashboard` equivalents.
-- `apps/venue-web/` is the bespoke Vankisi CUSTOM customer website.
+- `apps/venue-web/` is the bespoke Vankisi CUSTOM customer website. Further
+  CUSTOM clients start from `templates/custom-site/` as `apps/<client>-web` over
+  the shared client `packages/website-client/`; one backend serves all of them.
 - `apps/restaurant-web/` is the generic multi-Venue SaaS restaurant website. One
   build serves every SAAS Venue; the request Host decides which restaurant.
 - `packages/contracts/` owns the generated Cloud/Edge command, table-identity
@@ -716,7 +718,24 @@ current transport status.
   (entitled but no mode), SAAS or CUSTOM; the dashboard never re-derives it.
 - `WebsiteUser` remains global; each `WebsiteReservation` is Venue-owned.
 - Payment callbacks derive Venue from the server-owned reservation.
-- The Vankisi site remains `CUSTOM` and `apps/venue-web` is unchanged. W2
+- CUSTOM websites are bespoke frontends over the one backend
+  (`docs/CUSTOM_WEBSITES.md`). `CustomWebsiteBinding` records the operator's
+  frontend identity (`siteKey`, not tenant authority) and tracking status
+  (none = NOT_CONFIGURED, SETUP_PENDING, READY, ACTIVE, ERROR); READY/ACTIVE
+  require effective WEBSITE, CUSTOM, a site key and an ACTIVE domain. Platform
+  `GET|PUT /platform/venues/:id/custom-website` and the Website-tab panel manage
+  it with audit; owners see a read-only status/domain card and keep Menu,
+  profile and payments. Custom-site public routes (`/api/website/custom/*`,
+  `/api/menu`, `/api/tables*`, `/api/bog/create-order`, `/api/user/reservations`)
+  serve only CUSTOM Venues; capabilities derive from WEBSITE/ONLINE_PAYMENTS,
+  the BOG integration and website tables. Bookings take the account only from
+  the session cookie, the anonymous booking map omits names/phones, and a
+  website SUPER_ADMIN reads only its bound `adminVenueId`. Sites must be served
+  behind a host-preserving same-origin `/api` proxy; CORS admits requests whose
+  Origin equals their Host, a trusted forwarded host is the sole authority, and
+  the development fallback applies only to anonymous local hosts. Hours/gallery
+  for CUSTOM remain frontend-owned. The existing Vankisi binding is backfilled
+  ACTIVE without a site key; `apps/venue-web` is unchanged. W2
   extends VenueWebsiteConfig with private drafts, explicit audited publication,
   revision conflicts and a Host-authorized generic bootstrap; Platform still
   controls mode and WEBSITE entitlement, and Venue profile remains the public
@@ -763,8 +782,8 @@ current transport status.
   decides whether and how an existing `MenuItem` appears publicly. No MenuItem is
   duplicated, the row cascades with its item, an absent row means visible under
   the operational name, and presentation writes are proved Venue-scoped. Core
-  menu authority remains POS/Cloud. Custom-site runtime/deployment control is
-  still not implemented.
+  menu authority remains POS/Cloud. Custom-site deployment, DNS/TLS and health
+  are manual; only operator-attested status exists.
 - BOG credentials and return origins are encrypted per Venue using the deployment
   PAYMENT_INTEGRATION_MASTER_KEY. New payments require ONLINE_PAYMENTS and an
   enabled integration; reservations retain the original encrypted revision. Browser
@@ -965,8 +984,9 @@ current transport status.
 
 ## Current Migration Versions
 
-- Prisma migration tip: `20261008120000_hostname_request_fk_on_update`.
-- Previous hostname migrations: `20261007120000_release_published_slug_reservation`,
+- Prisma migration tip: `20261009120000_custom_website_binding`.
+- Previous hostname migrations: `20261008120000_hostname_request_fk_on_update`,
+  `20261007120000_release_published_slug_reservation`,
   `20261006120000_hostname_request_current`,
   `20261005120000_website_hostname_requests`.
 - Previous lifecycle migration: `20261004120000_subscription_lifecycle`.

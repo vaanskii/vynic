@@ -42,7 +42,33 @@ export function SectionHeader({
   );
 }
 
-/** What to show when the generic website is not part of this restaurant. */
+const notices = {
+  NOT_ENTITLED: [
+    "ვებსაიტი თქვენს პაკეტში ჯერ არ არის ჩართული",
+    "ჩასართავად დაუკავშირდით Vynic-ს.",
+  ],
+  SETUP_PENDING: [
+    "ვებსაიტის მომზადება მიმდინარეობს",
+    "ვებსაიტი თქვენს პაკეტშია. Vynic-ის გუნდი ასრულებს მის გამართვას.",
+  ],
+  CUSTOM: [
+    "თქვენი ინდივიდუალური ვებსაიტი ცალკე იმართება",
+    "ცვლილებებისთვის დაუკავშირდით Vynic-ს.",
+  ],
+} as const;
+
+/** The server's website state, never re-derived from mode or features here. */
+export function WebsiteStateNotice({ state }: { state: keyof typeof notices }) {
+  const [title, detail] = notices[state];
+  return (
+    <div className="portal-empty" data-website-state={state}>
+      <strong>{title}</strong>
+      <p>{detail}</p>
+    </div>
+  );
+}
+
+/** What to show when the generic SaaS editor does not apply. */
 export function WebsiteUnavailable({ website }: { website: Website }) {
   if (!website.loaded) return <p role="status">იტვირთება…</p>;
   if (!website.settings)
@@ -52,19 +78,9 @@ export function WebsiteUnavailable({ website }: { website: Website }) {
         <button onClick={() => void website.load()}>ხელახლა ცდა</button>
       </p>
     );
+  const state = website.settings.state;
   return (
-    <div className="portal-empty">
-      <strong>
-        {website.settings.mode === "CUSTOM"
-          ? "თქვენი ინდივიდუალური ვებსაიტი ცალკე იმართება"
-          : "ვებსაიტი თქვენს პაკეტში ჯერ არ არის ჩართული"}
-      </strong>
-      <p>
-        {website.settings.mode === "CUSTOM"
-          ? "ცვლილებებისთვის დაუკავშირდით Vynic-ს."
-          : "ჩასართავად დაუკავშირდით Vynic-ს."}
-      </p>
-    </div>
+    <WebsiteStateNotice state={state === "SAAS" ? "SETUP_PENDING" : state} />
   );
 }
 const editable = (website: Website) =>

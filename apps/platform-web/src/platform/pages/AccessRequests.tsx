@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { platformOnboardingApi } from "../api";
 import type { Plan } from "../types";
+import {
+  WebsiteModeField,
+  planHasWebsite,
+} from "../components/WebsiteModeField";
 type Request = {
   id: string;
   applicantName: string;
@@ -33,6 +37,8 @@ export function AccessRequests({
     new Date(Date.now() + 86400000).toISOString().slice(0, 10),
   );
   const [outcomes, setOutcomes] = useState<Record<string, string>>({});
+  const [planChoices, setPlanChoices] = useState<Record<string, string>>({});
+  const [websiteModes, setWebsiteModes] = useState<Record<string, string>>({});
   const [review, setReview] = useState<{
     row: Request;
     body: Record<string, unknown>;
@@ -134,7 +140,7 @@ export function AccessRequests({
                       status === "REJECTED"
                         ? "The request will be rejected."
                         : outcome === "TRIAL"
-                          ? `${plans.find((p) => p.id === body.planId)?.name ?? "Selected plan"} Trial · active until ${body.trialEndsAt}. Product access starts immediately.`
+                          ? `${plans.find((p) => p.id === body.planId)?.name ?? "Selected plan"} Trial · active until ${body.trialEndsAt}. Product access starts immediately.${body.websiteMode ? ` Website: ${body.websiteMode === "CUSTOM" ? "custom, operator-managed" : "Vynic SaaS"}.` : ""}`
                           : "No active package. The owner can sign in, but paid products remain locked.",
                   });
                 }}
@@ -165,7 +171,15 @@ export function AccessRequests({
                         <select
                           name="planId"
                           required
-                          defaultValue={row.requestedPlanId ?? ""}
+                          value={
+                            planChoices[row.id] ?? row.requestedPlanId ?? ""
+                          }
+                          onChange={(e) =>
+                            setPlanChoices({
+                              ...planChoices,
+                              [row.id]: e.target.value,
+                            })
+                          }
                         >
                           <option value="">Choose plan</option>
                           {plans
@@ -177,6 +191,20 @@ export function AccessRequests({
                             ))}
                         </select>
                       </label>
+                      {planHasWebsite(
+                        plans.find(
+                          (p) =>
+                            p.id ===
+                            (planChoices[row.id] ?? row.requestedPlanId),
+                        ),
+                      ) && (
+                        <WebsiteModeField
+                          value={websiteModes[row.id] ?? ""}
+                          onChange={(mode) =>
+                            setWebsiteModes({ ...websiteModes, [row.id]: mode })
+                          }
+                        />
+                      )}
                       <label>
                         Trial ends
                         <input

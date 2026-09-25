@@ -11,6 +11,7 @@ import { PrismaService } from '../prisma.service';
 import { ControlActor } from '../platform/control-actor';
 import { requireText } from '../platform/platform-validation';
 import { assignCommercialPlan } from '../platform/plan-assignment';
+import { provisionWebsite } from '../website/provisioning/website-provisioning';
 import {
   classifyPlanChange,
   nextRenewal,
@@ -203,6 +204,13 @@ export class SubscriptionService {
               assignedAt: now,
             },
           });
+          await provisionWebsite(
+            tx,
+            venueId,
+            body.websiteMode,
+            actor,
+            'subscription.grant_active',
+          );
           data = {
             status: 'ACTIVE',
             billingManaged: true,
@@ -240,6 +248,13 @@ export class SubscriptionService {
             throw new BadRequestException('Trial requires a future end date');
           const planId = requireText(body.planId, 'Plan');
           await assignCommercialPlan(tx, venueId, planId);
+          await provisionWebsite(
+            tx,
+            venueId,
+            body.websiteMode,
+            actor,
+            'subscription.trial',
+          );
           data = {
             status: 'TRIAL',
             billingManaged: false,

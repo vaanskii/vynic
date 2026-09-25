@@ -23,6 +23,7 @@ import {
   websiteThemeKeys,
 } from './website-content';
 import { WebsiteMenuService } from './website-menu.service';
+import { websiteState } from '../provisioning/website-provisioning';
 
 // Public identity is live Venue profile data, without legal/account fields.
 const publicProfile = {
@@ -74,6 +75,9 @@ export class WebsiteCoreService {
       schemaVersion: WEBSITE_SCHEMA_VERSION,
       themeKeys: [...websiteThemeKeys],
       mode: access.configuredMode,
+      state: websiteState(access.entitled ? ['WEBSITE'] : [], {
+        mode: access.configuredMode,
+      }),
       entitled: access.entitled,
       status: row?.status ?? 'DRAFT',
       revision: row?.revision ?? 0,

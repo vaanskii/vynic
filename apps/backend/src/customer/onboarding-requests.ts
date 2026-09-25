@@ -1,5 +1,6 @@
 import { commercialState } from '../entitlements/commercial-state';
 import { CustomerService } from './customer.service';
+import { SubscriptionService } from '../subscriptions/subscription.service';
 import { CustomerActor, CustomerGuard } from './customer-auth';
 import type { CustomerPrincipal } from './customer-auth';
 import { PlatformCommercialService } from '../platform/platform-commercial.service';
@@ -195,14 +196,17 @@ export class OnboardingRequestsService {
         const state = await commercialState(tx, targetVenueId);
         if (state.allowed)
           throw new ConflictException('Venue already has commercial access');
-        await this.commercial.setSubscription(
+        // Same lifecycle action as a manual Platform Trial, so approval and
+        // manual assignment cannot provision differently.
+        await new SubscriptionService(this.db).action(
           actor,
           targetVenueId,
           {
-            status: 'TRIAL',
+            action: 'TRIAL',
             planId: body.planId,
             trialEndsAt: body.trialEndsAt,
-            note: body.note,
+            websiteMode: body.websiteMode,
+            reason: body.note || 'Access request approved',
           },
           tx,
         );

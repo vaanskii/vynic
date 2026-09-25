@@ -86,6 +86,12 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
     const base = (v: any) => `/customer/venues/${v.id}`;
     const assign = async (v: any, plan: any, status = 'TRIAL') => {
       const lifecycle = new SubscriptionService(db);
+      // Operators choose the website implementation whenever WEBSITE is sold.
+      const websiteMode = (await db.planFeature.count({
+        where: { planId: plan.id, feature: { key: 'WEBSITE' } },
+      }))
+        ? 'SAAS'
+        : undefined;
       const existing = await db.venueSubscription.findUnique({
         where: { venueId: v.id },
       });
@@ -115,6 +121,7 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
           trialEndsAt: future(),
           confirm: true,
           reason: 'Start next regression scenario',
+          websiteMode,
         });
       }
       return http()
@@ -125,6 +132,7 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
           status,
           trialEndsAt: future(),
           note: 'Regression fixture assignment',
+          websiteMode,
         })
         .expect(200);
     };
@@ -534,9 +542,14 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
         .send({ expectedRevision: 1 })
         .expect(201);
       expect(await db.venueDomain.count({ where: { venueId: a.id } })).toBe(1);
-      await db.venueWebsiteConfig.create({
-        data: { venueId: b.id, mode: 'SAAS' },
-      });
+      // Assignment provisioned B as SAAS already.
+      expect(
+        (
+          await db.venueWebsiteConfig.findUniqueOrThrow({
+            where: { venueId: b.id },
+          })
+        ).mode,
+      ).toBe('SAAS');
       const image = await sharp({
         create: { width: 32, height: 32, channels: 3, background: '#123456' },
       })

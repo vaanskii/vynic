@@ -38,6 +38,7 @@ export type WebsiteSettings = {
   themeKeys: string[];
   mode: "NONE" | "CUSTOM" | "SAAS";
   entitled: boolean;
+  state: "NOT_ENTITLED" | "SETUP_PENDING" | "SAAS" | "CUSTOM";
   status: "DRAFT" | "PUBLISHED";
   revision: number;
   publishedRevision: number | null;

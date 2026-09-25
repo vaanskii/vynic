@@ -2,7 +2,16 @@ import { publicSiteUrl } from "../../site-origins";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { platformOnboardingApi } from "../api";
-type Plan = { id: string; name: string; status?: string };
+import {
+  WebsiteModeField,
+  planHasWebsite,
+} from "../components/WebsiteModeField";
+type Plan = {
+  id: string;
+  name: string;
+  status?: string;
+  features?: Array<{ feature: { key: string; name: string } }>;
+};
 type Organization = {
   id: string;
   name: string;
@@ -24,6 +33,11 @@ export function CustomerOnboarding({
   readonly: boolean;
 }) {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [prepared, setPrepared] = useState({
+    planId: "",
+    status: "NO_PLAN",
+    websiteMode: "",
+  });
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -146,7 +160,13 @@ export function CustomerOnboarding({
               </label>
               <label>
                 Plan
-                <select name="planId" defaultValue="">
+                <select
+                  name="planId"
+                  value={prepared.planId}
+                  onChange={(e) =>
+                    setPrepared({ ...prepared, planId: e.target.value })
+                  }
+                >
                   <option value="">No plan</option>
                   {plans
                     .filter(
@@ -161,12 +181,27 @@ export function CustomerOnboarding({
               </label>
               <label>
                 Subscription
-                <select name="subscriptionStatus">
+                <select
+                  name="subscriptionStatus"
+                  value={prepared.status}
+                  onChange={(e) =>
+                    setPrepared({ ...prepared, status: e.target.value })
+                  }
+                >
                   <option value="NO_PLAN">No plan — account only</option>
                   <option value="TRIAL">Trial</option>
                   <option value="ACTIVE">Active</option>
                 </select>
               </label>
+              {prepared.status !== "NO_PLAN" &&
+                planHasWebsite(plans.find((p) => p.id === prepared.planId)) && (
+                  <WebsiteModeField
+                    value={prepared.websiteMode}
+                    onChange={(websiteMode) =>
+                      setPrepared({ ...prepared, websiteMode })
+                    }
+                  />
+                )}
               <label>
                 Trial days
                 <input

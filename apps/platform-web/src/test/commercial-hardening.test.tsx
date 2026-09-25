@@ -126,6 +126,48 @@ describe("Commercial operator controls", () => {
       ),
     );
   });
+  it("a Website trial approval requires and sends the operator's website implementation", async () => {
+    const api = installApi((req) => ({
+      body:
+        req.method === "GET" ? [{ ...lead, requestedVenueId: ids.venue }] : {},
+    }));
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <AccessRequests
+          readonly={false}
+          plans={[
+            {
+              id: ids.plan,
+              name: "Website only",
+              status: "ACTIVE",
+              features: [{ feature: { key: "WEBSITE", name: "Website" } }],
+            } as any,
+          ]}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByText("Website implementation")).toBeNull();
+    await user.selectOptions(
+      await screen.findByLabelText("Approved trial plan"),
+      ids.plan,
+    );
+    expect(screen.getByText("Website implementation")).toBeVisible();
+    expect(screen.getByLabelText("Vynic SaaS website")).toBeRequired();
+    await user.type(screen.getByLabelText("Trial ends"), "2099-12-31");
+    await user.click(screen.getByLabelText("Custom website (operator-managed)"));
+    await user.click(screen.getByRole("button", { name: "Review approval" }));
+    expect(
+      (await screen.findAllByText(/Website: custom, operator-managed\./))
+        .length,
+    ).toBeGreaterThan(0);
+    await user.click(screen.getByRole("button", { name: "Confirm review" }));
+    await waitFor(() =>
+      expect(api.requests.find((r) => r.method === "POST")?.body).toMatchObject(
+        { status: "APPROVED", planId: ids.plan, websiteMode: "CUSTOM" },
+      ),
+    );
+  });
   it("support can read requests and catalog but has no edit controls", async () => {
     installApi((req) =>
       req.url.pathname === "/platform/auth/me"

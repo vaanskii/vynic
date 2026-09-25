@@ -16,8 +16,8 @@ import { requireText } from '../platform/platform-validation';
 import type { CustomerPrincipal } from './customer-auth';
 import type { ControlActor } from '../platform/control-actor';
 import { profileInput, saveProfile } from '../venue-profile/venue-profile';
-import { initializeWebsite } from './onboarding-website';
 import { Prisma } from '@prisma/client';
+import { websiteState } from '../website/provisioning/website-provisioning';
 
 @Injectable()
 export class CustomerService {
@@ -169,6 +169,8 @@ export class CustomerService {
         accounts: venue.organization.memberships.map((m) => m.account),
       },
       website: venue.websiteConfig,
+      // The only website status the dashboard may branch on.
+      websiteState: websiteState(features, venue.websiteConfig),
       plan: venue.planAssignment && { name: venue.planAssignment.plan.name },
       subscription: venue.subscription
         ? {

@@ -1,3 +1,4 @@
+import { provisionWebsite } from '../website/provisioning/website-provisioning';
 import { SubscriptionService } from '../subscriptions/subscription.service';
 import { nextRenewal } from '../subscriptions/billing-policy';
 import { requireCommercialFeature } from '../entitlements/commercial-state';
@@ -143,6 +144,18 @@ export class PlatformCommercialService {
       });
       if (['TRIAL', 'ACTIVE', 'PAST_DUE'].includes(status) && !assignment)
         throw new BadRequestException('Assign a plan before activating access');
+      // Assigning a package that opens access provisions its website too.
+      if (
+        (body.planId || body.websiteMode) &&
+        ['TRIAL', 'ACTIVE'].includes(status)
+      )
+        await provisionWebsite(
+          tx,
+          venueId,
+          body.websiteMode,
+          actor,
+          'subscription.status_set',
+        );
       const trialEndsAt =
         body.trialEndsAt !== undefined
           ? date(body.trialEndsAt)

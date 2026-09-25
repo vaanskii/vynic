@@ -698,6 +698,14 @@ current transport status.
   Losing access stops serving immediately; names are reserved for 30 days from
   lifecycle reconciliation, then released with audit. Reactivation during grace
   cancels retention; after release, republishing claims only an available address.
+- WEBSITE entitlement (commercial right), WebsiteMode (operator-selected
+  implementation) and hostname binding are separate. Every Platform path that
+  assigns a WEBSITE plan with access (access-request Trial approval, lifecycle
+  TRIAL/GRANT_ACTIVE, legacy status PUT with a plan, prepared customers) calls
+  `provisionWebsite`, which requires an operator SAAS/CUSTOM choice unless one
+  is already provisioned. Owners have no WebsiteMode write path. Customer
+  projections expose a server `websiteState`: NOT_ENTITLED, SETUP_PENDING
+  (entitled but no mode), SAAS or CUSTOM; the dashboard never re-derives it.
 - `WebsiteUser` remains global; each `WebsiteReservation` is Venue-owned.
 - Payment callbacks derive Venue from the server-owned reservation.
 - The Vankisi site remains `CUSTOM` and `apps/venue-web` is unchanged. W2

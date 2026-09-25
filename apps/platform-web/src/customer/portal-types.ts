@@ -1,3 +1,4 @@
+export type WebsiteState = "NOT_ENTITLED" | "SETUP_PENDING" | "SAAS" | "CUSTOM";
 /** Shapes returned by `GET /customer/portal` (see CustomerService.status). */
 export type PrinterSettings = { host: string; port: number; enabled: boolean };
 export type RuntimeConfig = {
@@ -38,6 +39,8 @@ export type VenueStatus = {
   plan?: { name: string } | null;
   subscription?: { status: string; trialEndsAt?: string | null } | null;
   features: string[];
+  /** Server-derived; the only website status the dashboard branches on. */
+  websiteState?: WebsiteState;
   managers: Manager[];
   devices: Device[];
   enrollments: Enrollment[];

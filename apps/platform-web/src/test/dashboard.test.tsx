@@ -49,6 +49,13 @@ const website = (patch: Record<string, unknown> = {}) => ({
   domains: [],
   publishedSlug: null,
   ...patch,
+  // Mirrors the server: an entitled Venue without a mode is setup pending.
+  state:
+    (patch.state as string | undefined) ??
+    ({ SAAS: "SAAS", CUSTOM: "CUSTOM" } as Record<string, string>)[
+      String(patch.mode ?? "SAAS")
+    ] ??
+    "SETUP_PENDING",
 });
 const venueStatus = (patch: Record<string, unknown> = {}) => ({
   venue: {
@@ -133,6 +140,11 @@ function serve({
   menu?: OwnerMenu;
   taken?: string[];
 } = {}) {
+  // The portal projection carries the same server website state.
+  venues = venues.map((v) => ({
+    websiteState: v.features.includes("WEBSITE") ? site.state : "NOT_ENTITLED",
+    ...v,
+  }));
   const state = { venues, site, menu };
   api.call.mockImplementation(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -349,16 +361,31 @@ describe("First-run setup", () => {
     expect(state.site.draft.slug).toBe("tabla");
   });
 
-  it("skips website setup when the restaurant has no generic website", async () => {
+  it("shows setup pending, not 'not included', when Website is sold but not provisioned", async () => {
     serve({ site: website({ mode: "NONE", revision: 0 }) });
     renderPortal();
     expect(
       await screen.findByRole("heading", { name: "გამარჯობა, Tabla" }),
     ).toBeVisible();
     expect(
-      screen.getByText("ვებსაიტი თქვენს პაკეტში ჯერ არ არის ჩართული."),
+      screen.getByText("ვებსაიტის მომზადება მიმდინარეობს"),
     ).toBeVisible();
+    expect(
+      screen.queryByText("ვებსაიტი თქვენს პაკეტში ჯერ არ არის ჩართული"),
+    ).toBeNull();
     expect(screen.queryByText("ფოტოების დამატება")).toBeNull();
+  });
+
+  it("says Website is not included only when the package lacks it", async () => {
+    serve({
+      venues: [venueStatus({ features: ["POS", "MANAGER_APP"] })],
+      site: website({ mode: "NONE", revision: 0 }),
+    });
+    renderPortal();
+    expect(
+      await screen.findByText("ვებსაიტი თქვენს პაკეტში ჯერ არ არის ჩართული"),
+    ).toBeVisible();
+    expect(screen.queryByText("ვებსაიტის მომზადება მიმდინარეობს")).toBeNull();
   });
 });
 

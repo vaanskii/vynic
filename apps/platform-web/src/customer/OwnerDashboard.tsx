@@ -22,6 +22,7 @@ import {
   PublishActions,
   SectionHeader,
   WebsiteSection,
+  WebsiteStateNotice,
   WebsiteStatus,
 } from "./WebsiteSections";
 import { websiteAddress, type Website } from "./useWebsite";
@@ -437,7 +438,7 @@ function Dashboard({
       <div className="portal-overview">
         <section className="portal-card portal-card--website">
           <h3>ვებსაიტი</h3>
-          {venue.features.includes("WEBSITE") && settings?.mode === "SAAS" ? (
+          {venue.websiteState === "SAAS" && settings?.mode === "SAAS" ? (
             <>
               <p className="portal-address">{websiteAddress(settings)}</p>
               <WebsiteStatus website={website} />
@@ -448,14 +449,14 @@ function Dashboard({
               )}
               <PublishActions website={website} />
             </>
-          ) : settings ? (
-            <p className="portal-hint">
-              {settings.mode === "CUSTOM"
-                ? "ინდივიდუალური ვებსაიტი ცალკე იმართება."
-                : "ვებსაიტი თქვენს პაკეტში ჯერ არ არის ჩართული."}
-            </p>
           ) : (
-            <p>ვებსაიტი არ არის ჩართული.</p>
+            <WebsiteStateNotice
+              state={
+                venue.websiteState === "SAAS"
+                  ? "SETUP_PENDING"
+                  : (venue.websiteState ?? "NOT_ENTITLED")
+              }
+            />
           )}
         </section>
         <section className="portal-card">

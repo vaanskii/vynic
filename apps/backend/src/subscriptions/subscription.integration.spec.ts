@@ -108,11 +108,21 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
           subscription: { create: { status: 'NO_PLAN' } },
         },
       });
-    const action = (id: string, action: string, extra = {}, now = middle) =>
+    // Website-bearing assignments need the operator's implementation choice.
+    const withMode = (extra: { planId?: string }) =>
+      [website.id, full.id].includes(extra.planId)
+        ? { websiteMode: 'SAAS', ...extra }
+        : extra;
+    const action = (
+      id: string,
+      action: string,
+      extra: { planId?: string } = {},
+      now = middle,
+    ) =>
       service.action(
         operator,
         id,
-        { action, reason: 'Test operator reason', ...extra },
+        { action, reason: 'Test operator reason', ...withMode(extra) },
         undefined,
         now,
       );
@@ -160,6 +170,7 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
         status: 'APPROVED',
         outcome: 'TRIAL',
         planId: website.id,
+        websiteMode: 'SAAS',
         trialEndsAt: new Date(Date.now() + 86400000).toISOString(),
       });
       const id = result.prepared!.venue.id;
@@ -209,6 +220,7 @@ const url = process.env.COMMERCIAL_TEST_DATABASE_URL;
           status: 'APPROVED',
           outcome: 'TRIAL',
           planId: website.id,
+          websiteMode: 'SAAS',
           trialEndsAt: '2020-01-01',
         }),
       ).rejects.toThrow();

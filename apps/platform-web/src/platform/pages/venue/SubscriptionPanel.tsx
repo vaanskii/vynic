@@ -9,6 +9,10 @@ import { LoadingState, ErrorState } from "../../components/State";
 import { StatusBadge } from "../../components/StatusBadge";
 import { errorMessage } from "../../format";
 import { day, money, type BillingQuote } from "../../../subscriptions/types";
+import {
+  WebsiteModeField,
+  planHasWebsite,
+} from "../../components/WebsiteModeField";
 
 export function SubscriptionPanel({
   venueId,
@@ -26,6 +30,11 @@ export function SubscriptionPanel({
   const plans = useQuery({ queryKey: ["plans"], queryFn: platformApi.plans });
   const [action, setAction] = useState("");
   const [planId, setPlanId] = useState("");
+  const [websiteMode, setWebsiteMode] = useState("");
+  const product = useQuery({
+    queryKey: ["product", venueId],
+    queryFn: () => platformApi.product(venueId),
+  });
   const [end, setEnd] = useState("");
   const [reason, setReason] = useState("");
   const [reference, setReference] = useState("");
@@ -74,6 +83,8 @@ export function SubscriptionPanel({
           : platformApi.subscriptionAction(venueId, {
               action,
               planId,
+              websiteMode:
+                assignsWebsite && websiteMode ? websiteMode : undefined,
               trialEndsAt: end ? new Date(end).toISOString() : undefined,
               reason,
               classification: override,
@@ -98,15 +109,21 @@ export function SubscriptionPanel({
     );
   const sub = subscription.data;
   const selected = plans.data?.find((plan) => plan.id === planId);
+  const assignsWebsite =
+    ["TRIAL", "GRANT_ACTIVE"].includes(action) && planHasWebsite(selected);
+  const websiteSummary = assignsWebsite
+    ? ` Website: ${websiteMode === "CUSTOM" ? "custom, operator-managed" : websiteMode === "SAAS" ? "Vynic SaaS" : "keep current implementation"}.`
+    : "";
   const current = sub?.assignment;
+  const currentMode = product.data?.website.configuredMode;
   const summary = quote
     ? quote.kind === "SCHEDULE_CHANGE"
       ? `${quote.planName} starts ${day(quote.effectiveAt)}. Current features remain until then. Renewal: ${money(quote.priceMinor, quote.currency)} / ${quote.billingPeriod.toLowerCase()}.`
       : `Confirm externally verified payment of ${money(quote.amountMinor, quote.currency)} for ${quote.planName}. ${quote.kind === "UPGRADE" ? `Renewal stays ${day(sub?.currentPeriodEndsAt)}.` : "The paid period begins on successful activation."}`
     : action === "TRIAL"
-      ? `${selected?.name ?? "Selected plan"} Trial until ${day(end)}. Trial features are available immediately.`
+      ? `${selected?.name ?? "Selected plan"} Trial until ${day(end)}. Trial features are available immediately.${websiteSummary}`
       : action === "GRANT_ACTIVE"
-        ? `Activate ${selected?.name ?? "selected plan"} now at ${money(selected?.priceMinor, selected?.currency)} per ${selected?.billingPeriod?.toLowerCase()}. This records a manual agreement, not a card payment.`
+        ? `Activate ${selected?.name ?? "selected plan"} now at ${money(selected?.priceMinor, selected?.currency)} per ${selected?.billingPeriod?.toLowerCase()}. This records a manual agreement, not a card payment.${websiteSummary}`
         : action === "CANCEL_NOW"
           ? "All commercial access ends now. Restaurant data and history are retained."
           : action === "SUSPEND"
@@ -268,6 +285,13 @@ export function SubscriptionPanel({
             <ErrorState
               error={errorMessage(plans.error)}
               retry={() => void plans.refetch()}
+            />
+          )}
+          {assignsWebsite && (
+            <WebsiteModeField
+              current={currentMode}
+              value={websiteMode}
+              onChange={setWebsiteMode}
             />
           )}
           {action === "TRIAL" && (

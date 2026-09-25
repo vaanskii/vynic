@@ -19,7 +19,7 @@ import {
   customerPassword,
 } from './customer-auth';
 import { PlatformPrincipal } from '../platform/platform-auth-context';
-import { initializeWebsite } from './onboarding-website';
+import { provisionWebsite } from '../website/provisioning/website-provisioning';
 import { profileInput } from '../venue-profile/venue-profile';
 
 const hash = (token: string) =>
@@ -243,11 +243,16 @@ export class OwnerInvitationsService {
       const policy = await tx.onboardingPolicy.findUnique({
         where: { id: 'default' },
       });
-      await initializeWebsite(
-        tx,
-        venue.id,
-        policy?.defaultWebsiteMode ?? 'NONE',
-      );
+      // Operator choice first; the policy default only fills a SAAS gap.
+      if (status !== 'NO_PLAN')
+        await provisionWebsite(
+          tx,
+          venue.id,
+          body.websiteMode ??
+            (policy?.defaultWebsiteMode === 'SAAS' ? 'SAAS' : undefined),
+          actor,
+          'onboarding.customer_prepared',
+        );
       await tx.platformAuditEvent.create({
         data: {
           platformUserId: actor.platformUserId,

@@ -39,7 +39,12 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
 (url ? describe : describe.skip)(
   'Customer onboarding: two isolated owners, real HTTP and PostgreSQL',
   () => {
-    let db: PrismaService, app: any, operator: string;
+    let db: PrismaService,
+      app: any,
+      operator: string,
+      commercial: PlatformCommercialService,
+      admin: { id: string; email: string; displayName: string },
+      trialPlanId: string;
     const tag = randomUUID();
     const owners: any[] = [];
     const http = () => request(app.getHttpServer());
@@ -63,7 +68,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         limiter,
       );
       const entitlements = new VenueEntitlementsService(db);
-      const commercial = new PlatformCommercialService(db, vault);
+      commercial = new PlatformCommercialService(db, vault);
       const auth = new CustomerAuth(db, jwt, limiter);
       const service = new CustomerService(
         db,
@@ -76,7 +81,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         jwt,
         new ConfigService(),
       );
-      const admin = await db.platformUser.create({
+      admin = await db.platformUser.create({
         data: {
           email: `operator-${tag}@test.invalid`,
           displayName: 'Test operator',
@@ -139,14 +144,16 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         create: { enabled: false },
         update: { enabled: false },
       });
-      await http()
-        .post('/customer/auth/signup')
-        .send({
-          email: `closed-${tag}@test.invalid`,
-          displayName: 'Closed',
-          password: 'a sufficiently long password',
-        })
-        .expect(503);
+      const signup = () =>
+        http()
+          .post('/customer/auth/signup')
+          .send({
+            email: `closed-${tag}@test.invalid`,
+            displayName: 'Closed',
+            password: 'a sufficiently long password',
+          });
+      // Self-service signup is retired: access comes from operator review.
+      await signup().expect(403);
       const plan = await db.plan.create({
         data: {
           key: `pilot-${tag}`,
@@ -170,23 +177,44 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
           releaseLinks: {},
         })
         .expect(200);
+      // An enabled legacy policy does not reopen it.
+      await signup().expect(403);
+      expect(
+        await db.customerAccount.count({
+          where: { email: `closed-${tag}@test.invalid` },
+        }),
+      ).toBe(0);
+      trialPlanId = plan.id;
     });
-    it('signs up, creates restaurants, Managers, enrollment codes and independent Device credentials', async () => {
+    it('operator-provisioned owners create restaurants, Managers, enrollment codes and independent Device credentials', async () => {
       for (const letter of ['a', 'b']) {
         const credentials = {
-          displayName: `Owner ${letter}`,
           email: `${letter}-${tag}@test.invalid`,
           password: 'long customer test passphrase',
         };
-        const registered = (
+        // The state an approved access request + accepted invitation leaves.
+        const organization = await db.organization.create({
+          data: { name: `Owner ${letter} ${tag}` },
+        });
+        await db.customerAccount.create({
+          data: {
+            email: credentials.email,
+            displayName: `Owner ${letter}`,
+            passwordHash: await argon2.hash(credentials.password),
+            organizationId: organization.id,
+            memberships: {
+              create: { organizationId: organization.id, role: 'OWNER' },
+            },
+          },
+        });
+        const signedIn = (
           await http()
-            .post('/customer/auth/signup')
+            .post('/customer/auth/login')
             .send(credentials)
             .expect(201)
         ).body;
-        expect(registered.account.emailVerifiedAt).toBeNull();
-        expect(JSON.stringify(registered)).not.toContain('passwordHash');
-        const token = registered.access_token;
+        expect(JSON.stringify(signedIn)).not.toContain('passwordHash');
+        const token = signedIn.access_token;
         const venue = (
           await http()
             .post('/customer/venues')
@@ -206,6 +234,33 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
             .expect(201)
         ).body;
         expect(retry.id).toBe(venue.id);
+        // New Venues start without a package; only an operator opens a dated Trial.
+        await http()
+          .post(`/customer/venues/${venue.id}/managers`)
+          .set(bearer(token))
+          .send({
+            requestId: randomUUID(),
+            displayName: 'Too early',
+            username: 'early',
+            role: 'MANAGER',
+            pin: '481250',
+          })
+          .expect(403);
+        await commercial.setSubscription(
+          {
+            platformUserId: admin.id,
+            role: 'SUPER_ADMIN',
+            email: admin.email,
+            displayName: admin.displayName,
+          },
+          venue.id,
+          {
+            status: 'TRIAL',
+            planId: trialPlanId,
+            trialEndsAt: new Date(Date.now() + 14 * 86_400_000).toISOString(),
+            note: 'Disposable operator-approved trial',
+          },
+        );
         const manager = (
           await http()
             .post(`/customer/venues/${venue.id}/managers`)
@@ -273,8 +328,12 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
     });
     it('rejects cross-tenant portal, access, enrollment and printer requests and principal substitution', async () => {
       const [a, b] = owners;
-      const portal = (await http().get('/customer/portal').set(bearer(a.token)).expect(200)).body;
-      expect(portal.venues.map((entry: any) => entry.venue.loginCode)).toEqual([a.venue.loginCode]);
+      const portal = (
+        await http().get('/customer/portal').set(bearer(a.token)).expect(200)
+      ).body;
+      expect(portal.venues.map((entry: any) => entry.venue.loginCode)).toEqual([
+        a.venue.loginCode,
+      ]);
       expect(JSON.stringify(portal)).not.toContain(b.venue.loginCode);
       await http()
         .get(`/customer/venues/${b.venue.id}`)

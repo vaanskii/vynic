@@ -338,7 +338,22 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         await http()
           .put(`/platform/venues/${a.id}/subscription`)
           .set(bearer())
-          .send({ status, note: 'Disposable policy proof' })
+          .send({
+            status,
+            note: 'Disposable policy proof',
+            // Current commercial rules: a Trial needs an explicit future end,
+            // and an immediate loss of access needs confirmation.
+            ...(status === 'TRIAL'
+              ? {
+                  trialEndsAt: new Date(
+                    Date.now() + 14 * 86_400_000,
+                  ).toISOString(),
+                }
+              : {}),
+            ...(['SUSPENDED', 'CANCELLED'].includes(status)
+              ? { confirm: true }
+              : {}),
+          })
           .expect(200);
         const allowed = ['TRIAL', 'ACTIVE', 'PAST_DUE'].includes(status);
         await http()

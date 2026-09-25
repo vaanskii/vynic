@@ -1,6 +1,7 @@
 import {
   isSaasNamespace,
   lockHostnames,
+  releaseSaasIdentity,
 } from '../website/provisioning/hostname';
 import {
   commercialState,
@@ -501,7 +502,15 @@ export class PlatformVenueConfigService {
     domainId: string,
   ) {
     const existing = await this.requireDomain(venueId, domainId);
-    await this.prisma.venueDomain.delete({ where: { id: domainId } });
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
+      await tx.venueDomain.delete({ where: { id: domainId } });
+      // Releasing the SaaS binding also frees the name it reserved.
+      await releaseSaasIdentity(tx, venueId, existing.hostname, {
+        platformUserId: actor.platformUserId,
+        source: 'PLATFORM',
+      });
+    });
     await this.audit.record(
       actor,
       PlatformAuditAction.DOMAIN_RELEASED,

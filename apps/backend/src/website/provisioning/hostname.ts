@@ -206,11 +206,31 @@ export async function assignHostname(
     throw new ConflictException('Website address is unavailable');
   if (!existing) await tx.venueDomain.create({ data: { venueId, hostname } });
   const draft = row.draft ? readWebsiteContent(row.draft) : emptyWebsiteContent;
+  // After a released name is reassigned, a published site keeps one identity
+  // everywhere; open editors are fenced only when the name actually changed.
+  const renamed = !!row.published && draft.slug !== slug;
   const result = await tx.venueWebsiteConfig.update({
     where: { venueId },
     data: {
       assignedSlug: slug,
       draft: { ...draft, slug } as unknown as Prisma.InputJsonValue,
+      ...(row.published
+        ? {
+            slug,
+            published: {
+              ...readWebsiteContent(row.published),
+              slug,
+            } as unknown as Prisma.InputJsonValue,
+          }
+        : {}),
+      ...(renamed
+        ? {
+            revision: { increment: 1 },
+            ...(row.publishedRevision === row.revision
+              ? { publishedRevision: row.revision + 1 }
+              : {}),
+          }
+        : {}),
     },
   });
   await tx.platformAuditEvent.create({
@@ -226,4 +246,52 @@ export async function assignHostname(
     },
   });
   return result;
+}
+
+/**
+ * Frees the SaaS identity whose domain row is being released, in the same
+ * transaction, so the name becomes genuinely available to another Venue.
+ *
+ * A released binding leaves no reservation behind: the assigned name is
+ * cleared (the published `slug` mirror is history and reserves nothing), and a
+ * pending change request, whose current address no longer exists, is closed. Content and history remain;
+ * regaining Website access assigns a fresh address. Custom domains are ignored.
+ */
+export async function releaseSaasIdentity(
+  tx: Prisma.TransactionClient,
+  venueId: string,
+  hostname: string,
+  actor: { platformUserId?: string | null; source: 'PLATFORM' | 'SYSTEM' },
+) {
+  const base = configuredBaseDomain();
+  const config = await tx.venueWebsiteConfig.findUnique({ where: { venueId } });
+  if (!base || !config?.assignedSlug) return;
+  if (hostname !== `${config.assignedSlug}.${base}`) return;
+  await lockHostnames(tx);
+  await tx.venueWebsiteConfig.update({
+    where: { venueId },
+    data: { assignedSlug: null },
+  });
+  const closed = await tx.websiteHostnameRequest.updateMany({
+    where: { venueId, status: 'PENDING' },
+    data: {
+      status: 'REJECTED',
+      reviewedAt: new Date(),
+      reason: 'Closed automatically: the website address was released',
+    },
+  });
+  await tx.platformAuditEvent.create({
+    data: {
+      platformUserId: actor.platformUserId ?? null,
+      action: 'website.hostname_released',
+      targetType: 'Venue',
+      targetId: venueId,
+      metadata: {
+        hostname,
+        assignedSlug: config.assignedSlug,
+        closedRequests: closed.count,
+        source: actor.source,
+      },
+    },
+  });
 }

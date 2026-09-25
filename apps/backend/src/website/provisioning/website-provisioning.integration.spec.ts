@@ -7,6 +7,7 @@ import { PrismaService } from '../../prisma.service';
 import { VenueEntitlementsService } from '../../entitlements/venue-entitlements.service';
 import { onboardingApp } from '../../../test/onboarding-app.fixture';
 import { emptyWebsiteContent } from '../core/website-content';
+import { CommercialLifecycleService } from '../../entitlements/commercial-lifecycle.service';
 
 const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
 (url ? describe : describe.skip)(
@@ -515,6 +516,153 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         hostnameChangeAllowed: false,
       });
       await ask(custom, 'custom-change-' + tag).expect(403);
+    });
+
+    it('keeps a lapsed address reserved through grace, then lets another Venue reclaim it', async () => {
+      const name = `Reclaim Kitchen ${tag}`;
+      const lifecycle = new CommercialLifecycleService(db);
+      const owned = async (label: string) => {
+        const row = await submit(label);
+        const prepared = (
+          await review(row.id, { outcome: 'NO_PLAN' }).expect(201)
+        ).body.prepared;
+        const owner = await register(prepared.invitationPath);
+        await db.venue.update({ where: { id: owner.venueId }, data: { name } });
+        return owner;
+      };
+      const act = (venueId: string, body: Record<string, unknown>) =>
+        http()
+          .post(`/platform/venues/${venueId}/subscription/actions`)
+          .set(bearer(admin))
+          .send({ confirm: true, reason: 'Disposable reclaim', ...body });
+      const website = (o: { venueId: string; access_token: string }) =>
+        http()
+          .get(`/customer/venues/${o.venueId}/website`)
+          .set(bearer(o.access_token));
+      const ask = (
+        o: { venueId: string; access_token: string },
+        slug: string,
+      ) =>
+        http()
+          .post(`/customer/venues/${o.venueId}/website/hostname-requests`)
+          .set(bearer(o.access_token))
+          .send({ slug });
+      const a = await owned('reclaim-a');
+      await act(a.venueId, {
+        action: 'GRANT_ACTIVE',
+        planId: websitePlanId,
+        websiteMode: 'SAAS',
+      }).expect(201);
+      const first = (await website(a).expect(200)).body;
+      const stem = `reclaimkitchen${tag}`;
+      expect(first.hostname).toBe(`${stem}.vynic.localhost`);
+      const saved = (
+        await http()
+          .put(`/customer/venues/${a.venueId}/website/draft`)
+          .set(bearer(a.access_token))
+          .send({
+            expectedRevision: first.revision,
+            content: { ...first.draft, heroTitle: 'Reclaim' },
+          })
+          .expect(200)
+      ).body;
+      await http()
+        .post(`/customer/venues/${a.venueId}/website/publish`)
+        .set(bearer(a.access_token))
+        .send({ expectedRevision: saved.revision })
+        .expect(201);
+      await ask(a, `stale-${tag}`).expect(201);
+      await act(a.venueId, { action: 'SUSPEND' }).expect(201);
+      const lapsedAt = new Date();
+      await lifecycle.reconcile(a.venueId, lapsedAt);
+      const retained = await db.venueDomain.findUniqueOrThrow({
+        where: { hostname: first.hostname },
+      });
+      expect(retained.releaseAfter).not.toBeNull();
+
+      // During grace the name stays reserved, for assignment and requests.
+      const b = await owned('reclaim-b');
+      await act(b.venueId, {
+        action: 'GRANT_ACTIVE',
+        planId: websitePlanId,
+        websiteMode: 'SAAS',
+      }).expect(201);
+      expect((await website(b).expect(200)).body.hostname).toBe(
+        `${stem}-2.vynic.localhost`,
+      );
+      await ask(b, stem).expect(409);
+
+      await lifecycle.reconcile(
+        a.venueId,
+        new Date(retained.releaseAfter!.getTime() + 1),
+      );
+      const released = await db.venueWebsiteConfig.findUniqueOrThrow({
+        where: { venueId: a.venueId },
+      });
+      expect(released).toMatchObject({
+        assignedSlug: null,
+        status: 'PUBLISHED',
+      });
+      // Content and history remain; the stale pending request was closed.
+      expect(released.published).toMatchObject({ heroTitle: 'Reclaim' });
+      expect(
+        await db.websiteHostnameRequest.findFirstOrThrow({
+          where: { venueId: a.venueId, slug: `stale-${tag}` },
+        }),
+      ).toMatchObject({ status: 'REJECTED' });
+      expect(
+        await db.platformAuditEvent.findFirstOrThrow({
+          where: { targetId: a.venueId, action: 'website.hostname_released' },
+        }),
+      ).toMatchObject({
+        metadata: expect.objectContaining({
+          hostname: first.hostname,
+          closedRequests: 1,
+          source: 'SYSTEM',
+        }),
+      });
+
+      // Genuinely available: another Venue requests and is approved for it.
+      expect(
+        (
+          await http()
+            .get(`/customer/venues/${b.venueId}/website/address/${stem}`)
+            .set(bearer(b.access_token))
+            .expect(200)
+        ).body,
+      ).toMatchObject({ available: true });
+      const claim = (await ask(b, stem).expect(201)).body;
+      await http()
+        .post(
+          `/platform/venues/${b.venueId}/hostname-requests/${claim.id}/review`,
+        )
+        .set(bearer(admin))
+        .send({ status: 'APPROVED', reason: 'Released name' })
+        .expect(201);
+      expect(
+        await db.venueDomain.findUniqueOrThrow({
+          where: { hostname: first.hostname },
+        }),
+      ).toMatchObject({ venueId: b.venueId, status: 'ACTIVE' });
+
+      // The lapsed Venue returns with a fresh address and a consistent site.
+      await act(a.venueId, { action: 'RESUME' }).expect(201);
+      const back = (await website(a).expect(200)).body;
+      expect(back.hostname).toBe(`${stem}-2.vynic.localhost`);
+      expect(back.pendingHostnameRequest).toBeNull();
+      const restored = await db.venueWebsiteConfig.findUniqueOrThrow({
+        where: { venueId: a.venueId },
+      });
+      expect(restored).toMatchObject({
+        assignedSlug: `${stem}-2`,
+        slug: `${stem}-2`,
+        published: expect.objectContaining({ slug: `${stem}-2` }),
+      });
+      expect(back.hasUnpublishedChanges).toBe(false);
+      await http()
+        .get('/api/website/bootstrap')
+        .set('Host', back.hostname)
+        .expect(200);
     });
 
     it('deduplicates public requests concurrently and customer Trial requests under the Venue lock', async () => {

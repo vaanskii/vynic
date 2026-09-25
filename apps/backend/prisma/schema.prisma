@@ -1451,7 +1451,8 @@ enum WebsitePublicationStatus {
 model VenueWebsiteConfig {
   assignedSlug      String? @unique
   status            WebsitePublicationStatus @default(DRAFT)
-  slug              String? @unique
+  /// Name the last publication carried; history only. `assignedSlug` and VenueDomain reserve names.
+  slug              String?
   draft             Json?
   revision          Int @default(0)
   published         Json?

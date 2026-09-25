@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { PrismaService } from '../prisma.service';
 import { commercialState } from './commercial-state';
+import { releaseSaasIdentity } from '../website/provisioning/hostname';
 export const DOMAIN_GRACE_MS = 30 * 86400000;
 
 @Injectable()
@@ -59,6 +60,9 @@ export class CommercialLifecycleService {
               targetId: venueId,
               metadata: { hostname: domain.hostname, source: 'SYSTEM' },
             },
+          });
+          await releaseSaasIdentity(tx, venueId, domain.hostname, {
+            source: 'SYSTEM',
           });
         }
       }

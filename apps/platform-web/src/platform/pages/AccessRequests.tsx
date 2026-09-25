@@ -1,3 +1,4 @@
+import { publicSiteUrl } from "../../site-origins";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -49,7 +50,7 @@ export function AccessRequests({
         "POST",
       );
       if (result.prepared?.invitationPath)
-        setLink(new URL(result.prepared.invitationPath, location.origin).href);
+        setLink(publicSiteUrl(result.prepared.invitationPath));
       await refresh();
       setReview(null);
     } catch (error) {
@@ -108,7 +109,7 @@ export function AccessRequests({
             {row.note && <p>{row.note}</p>}
             {row.reviewNote && <p>Review note: {row.reviewNote}</p>}
             {row.approvedVenueId && (
-              <Link to={`/admin/venues/${row.approvedVenueId}/commercial`}>
+              <Link to={`/venues/${row.approvedVenueId}/commercial`}>
                 Manage plan and trial
               </Link>
             )}

@@ -43,7 +43,8 @@ export function PortalRedirect() {
   const query = params.toString() ? `?${params}` : "";
 
   let to: string;
-  if (rest === "login" || rest === "signup") to = `/${rest}`;
+  if (rest === "signup") to = "/request-access";
+  else if (rest === "login") to = "/login";
   else if (rest === "invite" || rest.startsWith("invite/")) to = `/${rest}`;
   else {
     const section = legacySections[rest || requested] ?? (rest || requested);

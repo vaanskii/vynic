@@ -1,6 +1,5 @@
 import { List, X } from "@phosphor-icons/react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import vynicLogo from "../../assets/vynic-logo.png";
 import { hasCustomerSession } from "../../customer/api";
 import { localeHref, useLocale } from "../../lib/i18n";
@@ -28,7 +27,10 @@ export function Navbar() {
   const close = () => setOpen(false);
   const primary = signedIn
     ? { to: "/dashboard", label: copy.nav.dashboard }
-    : { to: "/signup", label: locale === "ka" ? "გამოსცადე Vynic" : "Try Vynic" };
+    : {
+        to: "/request-access",
+        label: locale === "ka" ? "გამოსცადე Vynic" : "Try Vynic",
+      };
 
   return (
     <header className="sticky top-0 z-30 border-b border-vynic-border/80 bg-vynic-background/92 backdrop-blur-xl">
@@ -67,12 +69,9 @@ export function Navbar() {
             {locale.toUpperCase()} / {copy.nav.languageLabel}
           </a>
           {!signedIn && (
-            <Link
-              to="/login"
-              className={`whitespace-nowrap rounded-[8px] text-sm font-semibold text-vynic-charcoal transition hover:text-vynic-plum ${focusRing}`}
-            >
+            <a href="/login" className={`text-sm ${focusRing}`}>
               {copy.nav.login}
-            </Link>
+            </a>
           )}
           <ButtonLink
             to={primary.to}
@@ -88,7 +87,11 @@ export function Navbar() {
             aria-expanded={open}
             onClick={() => setOpen((value) => !value)}
           >
-            {open ? <X size={20} weight="bold" /> : <List size={20} weight="bold" />}
+            {open ? (
+              <X size={20} weight="bold" />
+            ) : (
+              <List size={20} weight="bold" />
+            )}
           </button>
         </div>
       </nav>
@@ -107,7 +110,10 @@ export function Navbar() {
               </a>
             ))}
             <div className="mt-2 flex flex-wrap items-center gap-3 border-t border-vynic-border pt-4">
-              <a href={localeHref(locale === "en" ? "ka" : "en")} className="font-vynic-mono text-xs font-semibold text-vynic-muted">
+              <a
+                href={localeHref(locale === "en" ? "ka" : "en")}
+                className="font-vynic-mono text-xs font-semibold text-vynic-muted"
+              >
                 {locale.toUpperCase()} / {copy.nav.languageLabel}
               </a>
             </div>

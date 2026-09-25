@@ -11,7 +11,7 @@ describe("Cloud menu Admin setup", () => {
       if (request.url.pathname.endsWith("/product")) return { body: { ...product, menuManagement: { authority: "CLOUD", enabled, canEnableCloud: true, reason: null } } };
     });
     const user = userEvent.setup();
-    renderPlatform(`/admin/venues/${ids.venue}/product`);
+    renderPlatform(`/venues/${ids.venue}/product`);
     const heading = await screen.findByRole("heading", { name: "მენიუს მართვა Dashboard-ში" });
     const panel = within(heading.closest("section")!);
     expect(screen.queryByRole("checkbox")).toBeNull();
@@ -24,7 +24,7 @@ describe("Cloud menu Admin setup", () => {
   });
   it("explains why a venue with POS history cannot switch", async () => {
     installApi(request => request.url.pathname.endsWith("/product") ? { body: { ...product, menuManagement: { authority: "POS", canEnableCloud: false, reason: "Existing POS devices." } } } : undefined);
-    renderPlatform(`/admin/venues/${ids.venue}/product`);
+    renderPlatform(`/venues/${ids.venue}/product`);
     expect(await screen.findByText(/Existing POS devices/)).toBeVisible();
     expect(screen.queryByRole("checkbox")).toBeNull();
   });
@@ -35,7 +35,7 @@ describe("Cloud menu Admin setup", () => {
       if (request.url.pathname === "/platform/plans") return { body: added ? [...plans, { ...plans[0], id: "website", key: "WEBSITE_ONLY", name: "Website only" }] : plans };
     });
     const user = userEvent.setup();
-    renderPlatform("/admin/plans");
+    renderPlatform("/plans");
     await user.click(await screen.findByRole("button", { name: "Add Website-only plan" }));
     await waitFor(() => expect(screen.getByText("WEBSITE_ONLY")).toBeVisible());
     expect(screen.queryByRole("button", { name: "Add Website-only plan" })).toBeNull();

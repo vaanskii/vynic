@@ -33,9 +33,9 @@ export function customerPassword(value: unknown, signup: boolean): string {
   if (
     typeof value !== 'string' ||
     value.length > 128 ||
-    value.length < (signup ? 15 : 1)
+    value.length < (signup ? 8 : 1)
   )
-    throw new BadRequestException('Password must be 15–128 characters');
+    throw new BadRequestException('Password must be 8–128 characters');
   return value;
 }
 

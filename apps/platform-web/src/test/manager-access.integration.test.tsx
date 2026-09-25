@@ -10,7 +10,7 @@ describe("Restaurant Code setup", () => {
       window.innerWidth = width;
       const user = userEvent.setup();
       const api = installApi();
-      renderPlatform(`/admin/venues/${ids.venue}`);
+      renderPlatform(`/venues/${ids.venue}`);
       expect(
         await screen.findByText("მენეჯერის აპლიკაცია გამორთულია"),
       ).toBeVisible();
@@ -31,7 +31,7 @@ describe("Restaurant Code setup", () => {
   it("Organization detail shows its Venue's existing code", async () => {
     const user = userEvent.setup();
     installApi();
-    renderPlatform(`/admin/organizations/${ids.organization}`);
+    renderPlatform(`/organizations/${ids.organization}`);
     expect(
       await screen.findByText("მენეჯერის აპლიკაცია გამორთულია"),
     ).toBeVisible();

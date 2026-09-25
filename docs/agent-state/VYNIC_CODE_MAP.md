@@ -157,6 +157,8 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## Customer Onboarding / Runtime Configuration
 
+- Local macOS data reset: `python3 scripts/reset-local-data.py --yes` backs up and clears `localhost:5432/vynic` restaurant/organization data, local POS stores/enrollment and website media; retains login accounts, product plans and migrations. Backups: `~/Library/Application Support/Vynic Reset Backups/`. Reopen POS and refresh the website afterward.
+
 - Website-only catalog and frozen Device bootstrap: `apps/backend/src/customer/restaurant-foundation.service.ts`, `restaurant-foundation.controller.ts`; owner editor `apps/platform-web/src/customer/CatalogEditor.tsx`; isolated Hive staging `apps/operations/lib/core/services/edge/restaurant_foundation_import.dart`. Authority matrix/activation boundary: `docs/CLOUD_RESTAURANT_FOUNDATION.md`.
 
 - Shared Venue identity: `apps/backend/src/venue-profile/` (validated/audited Owner, Manager and Device writes); profile fields in Venue, migration `20260921120000_venue_profile`. POS cache/pending sync: `apps/operations/lib/core/services/edge/pos_venue_profile.dart`; Manager editor: `apps/operations/lib/apps/mobile_app/presentation/widgets/venue_profile_card.dart`. Owner editor: `apps/platform-web/src/customer/WebsiteSections.tsx` (ProfileSection).
@@ -165,7 +167,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Customer principal, portal/onboarding and operator pilot policy: `apps/backend/src/customer/`
 - Owner membership/invitations: apps/backend/src/customer/owner-invitations.service.ts and owner-invitations.controller.ts; acceptance UI: apps/platform-web/src/customer/AcceptInvitation.tsx. Runbook: docs/SAAS_OWNER_INVITATIONS.md; local server/browser/backfill proofs: apps/backend/scripts/*onboarding*.
 - Real two-customer proof: `apps/backend/src/customer/customer-onboarding.integration.spec.ts`
-- Public/customer UI: `apps/platform-web/src/customer/` (sign-in/sign-up `CustomerAuthPage.tsx` in `PublicFrame.tsx`; dashboard routes and `/portal` redirects `dashboard-routes.tsx`; public nav actions `src/components/layout/Navbar.tsx`); operator controls: `src/platform/pages/OnboardingPage.tsx`
+- Public/customer UI: `apps/platform-web/src/customer/` (sign-in `CustomerAuthPage.tsx`, `/request-access` form `AccessRequest.tsx` + `access-request.css` in `PublicFrame.tsx`; dashboard routes and `/portal` redirects `dashboard-routes.tsx`; public nav actions `src/components/layout/Navbar.tsx`); operator controls: `src/platform/pages/OnboardingPage.tsx`
 - POS first-run: `apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart`; printer pull/cache: `core/services/edge/runtime_config_sync.dart`
 - Canonical environment/build/runtime policy: `docs/SAAS_BUILD_RUNTIME_ONBOARDING.md`
 
@@ -282,6 +284,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## Platform Admin UI
 
+- Admin host selection and public/invitation origins: `apps/platform-web/src/site-origins.ts`; local/production setup: `docs/PLATFORM_ADMIN_HOST.md`, `apps/platform-web/README.md`; backend local-origin policy: `apps/backend/src/dev-origins.ts`.
 - Route shell (site, owner and Admin routes): `apps/platform-web/src/App.tsx`, `apps/platform-web/src/platform/Shell.tsx`
 - Auth/session/API: `apps/platform-web/src/platform/auth.tsx`, `apps/platform-web/src/platform/session.ts`, `apps/platform-web/src/platform/api.ts`
 - Pages: `apps/platform-web/src/platform/pages/`; Venue commercial lifecycle: `venue/SubscriptionPanel.tsx`; Manager access: `venue/VenueCommercialTab.tsx`; owner subscription: `customer/SubscriptionSection.tsx`; Platform users: `PlatformUsersPage.tsx`

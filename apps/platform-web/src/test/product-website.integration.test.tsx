@@ -27,7 +27,7 @@ describe("venue product and website controls", () => {
       return undefined;
     });
     const user = userEvent.setup();
-    renderPlatform(`/admin/venues/${ids.venue}/product`);
+    renderPlatform(`/venues/${ids.venue}/product`);
 
     expect((await screen.findAllByText("პაკეტში შედის")).length).toBe(2);
     expect(screen.getByText("ინდივიდუალურად გამორთულია")).toBeVisible();
@@ -89,7 +89,7 @@ describe("venue product and website controls", () => {
           }
         : undefined,
     );
-    renderPlatform(`/admin/venues/${ids.venue}/website`);
+    renderPlatform(`/venues/${ids.venue}/website`);
     expect(
       await screen.findByText("Website entitlement and configuration disagree"),
     ).toBeVisible();
@@ -142,7 +142,7 @@ describe("venue product and website controls", () => {
       return undefined;
     });
     const user = userEvent.setup();
-    renderPlatform(`/admin/venues/${ids.venue}/website`);
+    renderPlatform(`/venues/${ids.venue}/website`);
     expect(await screen.findByText("vankisi.example")).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: "Register domain" }));

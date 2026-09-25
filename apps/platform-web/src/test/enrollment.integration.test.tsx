@@ -14,7 +14,7 @@ describe("POS enrollment", () => {
       return undefined;
     });
     const user = userEvent.setup();
-    renderPlatform(`/admin/venues/${ids.venue}/devices`);
+    renderPlatform(`/venues/${ids.venue}/devices`);
 
     await user.click(await screen.findByRole("button", { name: "Enrol a POS" }));
     const dialog = await screen.findByRole("dialog", { name: "Enrol a POS" });
@@ -41,7 +41,7 @@ describe("POS enrollment", () => {
           { ...enrollment, id: "cccc3333-cccc-4ccc-8ccc-cccccccccccc", codeSelector: "9TFR", displayName: "Kitchen POS", status: "EXPIRED" },
         ] }
       : undefined);
-    renderPlatform(`/admin/venues/${ids.venue}/devices`);
+    renderPlatform(`/venues/${ids.venue}/devices`);
 
     expect(await screen.findByText("Waiting for enrollment")).toBeVisible();
     expect(screen.getByText("Enrolled")).toBeVisible();
@@ -56,7 +56,7 @@ describe("POS enrollment", () => {
       ? { body: [enrollment] }
       : undefined);
     const user = userEvent.setup();
-    renderPlatform(`/admin/venues/${ids.venue}/devices`);
+    renderPlatform(`/venues/${ids.venue}/devices`);
 
     await user.click(await screen.findByRole("button", { name: "Cancel code" }));
     expect((await screen.findAllByText(/Nothing is removed/)).length).toBeGreaterThan(0);
@@ -70,7 +70,7 @@ describe("POS enrollment", () => {
       const api = installApi((request) => request.url.pathname.endsWith("/enrollments") && request.method === "GET"
         ? { body: [{ ...enrollment, status: "ENROLLED", redeemedAt: "2026-08-31T10:05:00.000Z" }] }
         : undefined);
-      renderPlatform(`/admin/venues/${ids.venue}/devices`);
+      renderPlatform(`/venues/${ids.venue}/devices`);
       await screen.findByText("Enrolled");
       const after = api.requests.filter((request) => request.url.pathname.endsWith("/enrollments")).length;
       await vi.advanceTimersByTimeAsync(20_000);
@@ -83,7 +83,7 @@ describe("POS enrollment", () => {
   it("frames revoke as a permanent credential invalidation, not a delete", async () => {
     installApi();
     const user = userEvent.setup();
-    renderPlatform(`/admin/venues/${ids.venue}/devices`);
+    renderPlatform(`/venues/${ids.venue}/devices`);
     await screen.findAllByText("Front POS");
     await user.click(screen.getByRole("button", { name: "Revoke" }));
     expect((await screen.findAllByText(/This is not a delete/)).length).toBeGreaterThan(0);

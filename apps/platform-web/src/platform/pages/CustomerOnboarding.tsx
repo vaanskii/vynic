@@ -1,3 +1,4 @@
+import { publicSiteUrl } from "../../site-origins";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { platformOnboardingApi } from "../api";
@@ -69,7 +70,7 @@ export function CustomerOnboarding({
     try {
       const result = await platformOnboardingApi(path, body, "POST");
       if (result.invitationPath)
-        setLink(new URL(result.invitationPath, window.location.origin).href);
+        setLink(publicSiteUrl(result.invitationPath));
       else setMessage("Invitation revoked.");
       await refresh();
     } catch (e) {
@@ -223,11 +224,11 @@ export function CustomerOnboarding({
                     <span key={v.id}>
                       {" "}
                       ·{" "}
-                      <Link to={`/admin/venues/${v.id}/commercial`}>
+                      <Link to={`/venues/${v.id}/commercial`}>
                         {v.name} — plan and features
                       </Link>{" "}
                       ·{" "}
-                      <Link to={`/admin/venues/${v.id}/website`}>
+                      <Link to={`/venues/${v.id}/website`}>
                         Website setup
                       </Link>
                     </span>

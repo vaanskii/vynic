@@ -43,7 +43,7 @@ describe("Phase 2 commercial controls", () => {
       return undefined;
     });
     const user = userEvent.setup();
-    renderPlatform(`/admin/venues/${ids.venue}/commercial`);
+    renderPlatform(`/venues/${ids.venue}/commercial`);
     await user.click(
       await screen.findByRole("button", { name: "Create Manager" }),
     );
@@ -94,7 +94,7 @@ describe("Phase 2 commercial controls", () => {
       if (req.url.pathname.endsWith("/managers")) return { body: [] };
       return undefined;
     });
-    renderPlatform(`/admin/venues/${ids.venue}/commercial`);
+    renderPlatform(`/venues/${ids.venue}/commercial`);
     expect(await screen.findByText("No Manager accounts yet.")).toBeVisible();
     expect(
       screen.queryByRole("button", { name: "Create Manager" }),

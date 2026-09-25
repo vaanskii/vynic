@@ -8,7 +8,7 @@ vi.mock("../customer/api", () => ({
   hasCustomerSession: api.session,
   customerLogout: vi.fn(),
 }));
-import { CustomerAuthPage } from "../customer/CustomerAuthPage";
+import { AccessRequest } from "../customer/AccessRequest";
 import { CustomerDashboard, PrinterForm } from "../customer/CustomerDashboard";
 beforeEach(() => {
   api.call.mockReset();
@@ -25,7 +25,7 @@ describe("Customer onboarding", () => {
       );
       render(
         <MemoryRouter>
-          <CustomerAuthPage mode="signup" />
+          <AccessRequest />
         </MemoryRouter>,
       );
       await user.type(screen.getByLabelText("თქვენი სახელი"), "Owner");
@@ -39,7 +39,7 @@ describe("Customer onboarding", () => {
       await user.click(
         screen.getByRole("button", { name: "განაცხადის გაგზავნა" }),
       );
-      expect(await screen.findByText("განაცხადი მიღებულია")).toBeVisible();
+      expect(await screen.findByText("განაცხადი მიღებულია")).toHaveFocus();
       expect(api.call).toHaveBeenCalledWith(
         "access-requests",
         expect.objectContaining({
@@ -54,6 +54,29 @@ describe("Customer onboarding", () => {
       ).toBe(false);
     },
   );
+  it("keeps the request editable after failure and accepts it without a plan list", async () => {
+    const user = userEvent.setup();
+    let attempts = 0;
+    api.call.mockImplementation(async (path: string) => {
+      if (path === "access-requests/plans") throw new Error("Unavailable");
+      if (++attempts === 1) throw new Error("გაგზავნა ვერ მოხერხდა. სცადეთ ხელახლა.");
+      return { received: true };
+    });
+    render(<MemoryRouter><AccessRequest /></MemoryRouter>);
+    expect(await screen.findByRole("status")).toHaveTextContent("პაკეტების სია ვერ ჩაიტვირთა");
+    await user.type(screen.getByLabelText("თქვენი სახელი"), "Nino");
+    await user.type(screen.getByLabelText("რესტორნის / ბიზნესის სახელი"), "Test restaurant");
+    await user.type(screen.getByLabelText("ელფოსტა"), "owner@test.invalid");
+    await user.type(screen.getByLabelText("ტელეფონი"), "555123456");
+    await user.click(screen.getByText("დამატებითი ინფორმაცია", { selector: "summary" }));
+    await user.type(screen.getByLabelText("დამატებითი ინფორმაცია"), "Website only");
+    await user.click(screen.getByRole("button", { name: "განაცხადის გაგზავნა" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("სცადეთ ხელახლა");
+    expect(screen.getByLabelText("თქვენი სახელი")).toHaveValue("Nino");
+    await user.click(screen.getByRole("button", { name: "განაცხადის გაგზავნა" }));
+    expect(await screen.findByRole("heading", { name: "განაცხადი მიღებულია" })).toHaveFocus();
+    expect(api.call).toHaveBeenLastCalledWith("access-requests", expect.objectContaining({ requestedPlanId: "", note: "Website only" }));
+  });
   it.each([
     "website",
     "menu",

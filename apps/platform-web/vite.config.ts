@@ -5,12 +5,21 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
+    host: "127.0.0.1",
     port: 5173,
     strictPort: true,
     proxy: {
       "/media/website-logos": "http://127.0.0.1:3000",
       "/customer": "http://127.0.0.1:3000",
       "/platform": "http://127.0.0.1:3000",
+    },
+  },
+  preview: {
+    host: "127.0.0.1",
+    proxy: {
+      "/platform": "http://127.0.0.1:3000",
+      "/customer": "http://127.0.0.1:3000",
+      "/media/website-logos": "http://127.0.0.1:3000",
     },
   },
   test: {

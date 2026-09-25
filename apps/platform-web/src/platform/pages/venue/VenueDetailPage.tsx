@@ -45,16 +45,16 @@ export function VenueDetailPage() {
     );
   const record = venue.data;
   const currentTab = tabs.includes(tab as (typeof tabs)[number]) ? tab : "overview";
-  if (currentTab !== tab) return <Navigate to={`/admin/venues/${venueId}`} replace />;
+  if (currentTab !== tab) return <Navigate to={`/venues/${venueId}`} replace />;
 
   return (
     <>
-    <NavLink to={`/admin/onboarding/${venueId}`}>Customer owner and onboarding</NavLink>
+    <NavLink to={`/onboarding/${venueId}`}>Customer owner and onboarding</NavLink>
     <PageHeader eyebrow={`${record.organization?.name ?? record.organizationId} / Venue`} title={record.name} description="Platform configuration and infrastructure for this location." actions={<><StatusBadge value={record.status} /><Button onClick={() => { setForm({ name: record.name, timezone: record.timezone, currency: record.currency,
                 }); setEditOpen(true); }}><PencilSimple size={16} /> Edit details</Button><Button tone={record.status === "ACTIVE" ? "danger" : "secondary"} onClick={() => setConfirmStatus(true)}><Power size={16} /> {" "}
               {record.status === "ACTIVE" ? "Disable" : "Enable"}</Button></>} />
     <nav className="platform-tabs" aria-label="Venue sections">{tabs.map((name) => (
-          <NavLink key={name} end={name === "overview"} className={({ isActive }) => (isActive ? "is-active" : "")} to={name === "overview" ? `/admin/venues/${venueId}` : `/admin/venues/${venueId}/${name}`}>{name[0].toUpperCase() + name.slice(1)}</NavLink>))}</nav>
+          <NavLink key={name} end={name === "overview"} className={({ isActive }) => (isActive ? "is-active" : "")} to={name === "overview" ? `/venues/${venueId}` : `/venues/${venueId}/${name}`}>{name[0].toUpperCase() + name.slice(1)}</NavLink>))}</nav>
     {feedback ? (
         <div className="platform-feedback platform-feedback--success" role="status">{feedback}</div>
       ) : null}

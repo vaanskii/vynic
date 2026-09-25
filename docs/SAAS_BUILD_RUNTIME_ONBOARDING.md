@@ -196,9 +196,7 @@ separate identities and JWT audiences/types. Tokens are re-resolved against acti
 CustomerAccount on every request.
 
 Public `/customer/auth/signup` and `/customer/auth/login` use normalized email,
-15–128 character signup passwords and per-IP/per-email throttling. This follows
-[OWASP authentication guidance](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)
-on password length and throttling. Limits use the existing in-process limiter:
+8–128 character signup passwords and per-IP/per-email throttling. Limits use the existing in-process limiter:
 20 attempts/IP and 10/email per 15 minutes. A distributed deployment needs shared
 rate limiting or an equivalent trusted edge limit. Configure trusted proxies
 explicitly; arbitrary forwarded headers are not authority.

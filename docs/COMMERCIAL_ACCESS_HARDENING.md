@@ -22,7 +22,7 @@ optional plan/note, review status/actor/time/note and approved Venue identity.
 Submission creates no account, session, tenant, subscription, plan, domain,
 Device enrollment, Manager credentials or media storage.
 
-`/signup` remains public as the request form. The old `POST /customer/auth/signup`
+`/request-access` is the public request form; `/signup` and `/start` redirect there. The old `POST /customer/auth/signup`
 refuses self-registration. Existing customer sign-in and invitations remain.
 Approval/review is transactional, serialized and audited. Re-review conflicts.
 

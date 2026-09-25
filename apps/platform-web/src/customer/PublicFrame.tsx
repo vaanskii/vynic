@@ -4,7 +4,7 @@ import { LocaleProvider } from "../lib/i18n";
 import "./customer.css";
 
 /**
- * Owner pages outside the dashboard (sign-in, sign-up, invitations) sit in
+ * Owner pages outside the dashboard (sign-in, access requests, invitations) sit in
  * the Vynic site itself: same navigation, background and type. Owner flows
  * are Georgian-first and do not change the visitor's saved site language.
  */

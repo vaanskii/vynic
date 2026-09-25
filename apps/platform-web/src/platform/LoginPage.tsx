@@ -1,3 +1,4 @@
+import { publicSiteUrl } from "../site-origins";
 import { useState } from "react";
 import { ArrowRight, LockKey, ShieldCheck } from "@phosphor-icons/react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
@@ -16,20 +17,23 @@ export function LoginPage() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  if (status === "authenticated") return <Navigate to="/admin" replace />;
-
   const destination =
     typeof location.state === "object" &&
     location.state &&
     "from" in location.state &&
-    typeof location.state.from === "string"
+    typeof location.state.from === "string" &&
+    /^\/(?!\/)/.test(location.state.from) &&
+    !location.state.from.includes("\\") &&
+    !location.state.from.startsWith("/login")
       ? location.state.from
-      : "/admin";
+      : "/";
+
+  if (status === "authenticated") return <Navigate to={destination} replace />;
 
   return (
     <main className="platform-login">
       <section className="platform-login__context" aria-label="Vynic platform">
-        <a className="platform-brand platform-brand--login" href="/">
+        <a className="platform-brand platform-brand--login" href={publicSiteUrl()}>
           <img src={vynicLogo} alt="" />
           <span>Vynic</span>
         </a>

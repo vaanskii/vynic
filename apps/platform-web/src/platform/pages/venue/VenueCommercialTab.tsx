@@ -137,7 +137,7 @@ export function VenueCommercialTab({
                 <div className="platform-page-header__actions">
                   <Link
                     className="platform-button platform-button--quiet"
-                    to={`/admin/venues/${venueId}/devices`}
+                    to={`/venues/${venueId}/devices`}
                   >
                     Review POS devices
                   </Link>

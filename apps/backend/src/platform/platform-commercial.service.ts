@@ -437,7 +437,7 @@ export class PlatformCommercialService {
       'role',
     );
     const passwordHash = await argon2.hash(
-      requireText(body.password, 'password', { min: 12, max: 200 }),
+      requireText(body.password, 'password', { min: 8, max: 200 }),
     );
     return this.db.$transaction(async (tx) => {
       const user = await tx.platformUser.create({

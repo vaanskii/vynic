@@ -16,11 +16,12 @@ current transport status.
 - `apps/backend/` is the modular NestJS service over PostgreSQL through Prisma.
 - `apps/platform-web/` is one customer-facing product: the public Vynic site
   (`/ka`, `/en`; `/features`, `/pricing` open home sections), owner sign-in
-  (`/login`, `/signup`, `/invite#token=…`) and the owner dashboard
-  (`/dashboard/<section>`), plus the internal Platform Admin under `/admin`
-  (sign-in `/admin/login`). Owner routes use only the CustomerAccount session
-  and Admin only the PlatformUser session. Old `/portal…` and `/start` links
-  redirect to their `/login`, `/signup`, `/invite` or `/dashboard` equivalents.
+  (`/login`, `/request-access`, `/invite#token=…`) and the owner dashboard
+  (`/dashboard/<section>`), plus the internal Platform Admin at `admin.vynic.ge`
+  (locally `admin.localhost:5173`, sign-in `/login` on that host). Old
+  `/admin` and `/admin/*` addresses return to `/` on the same host. Owner routes use only the CustomerAccount session
+  and Admin only the PlatformUser session. Old `/portal…`, `/signup` and `/start` links
+  redirect to their `/login`, `/request-access`, `/invite` or `/dashboard` equivalents.
 - `apps/venue-web/` is the bespoke Vankisi CUSTOM customer website.
 - `apps/restaurant-web/` is the generic multi-Venue SaaS restaurant website. One
   build serves every SAAS Venue; the request Host decides which restaurant.
@@ -629,7 +630,7 @@ current transport status.
 - Device credentials and enrollment codes are one-time values; verifier hashes
   are never returned by normal reads.
 - CustomerAccount owner access is separate from PlatformUser/Staff/WebsiteUser.
-  Public `/signup` collects an access request without creating account, tenant,
+  Public `/request-access` collects an access request without creating account, tenant,
   session, plan or trial; the old signup POST is denied. Platform approval creates
   a safe Organization/Venue shell and owner invitation, with an explicit choice of
   NO_PLAN or a selected dated Trial in the same transaction. Acceptance grants OWNER

@@ -118,7 +118,7 @@ export function AcceptInvitation() {
                     name="password"
                     type="password"
                     required
-                    minLength={invitation.existingAccount ? 1 : 15}
+                    minLength={invitation.existingAccount ? 1 : 8}
                     maxLength={128}
                     autoComplete={
                       invitation.existingAccount
@@ -129,7 +129,7 @@ export function AcceptInvitation() {
                 </label>
               )}
               {!signedIn && !invitation.existingAccount && (
-                <p className="customer-hint">მინიმუმ 15 სიმბოლო.</p>
+                <p className="customer-hint">მინიმუმ 8 სიმბოლო.</p>
               )}
               <button disabled={busy}>
                 {busy ? "მუშავდება…" : "მოწვევის მიღება"}

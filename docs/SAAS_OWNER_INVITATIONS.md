@@ -26,7 +26,7 @@ TRIAL (1–90 days) or ACTIVE. Later assignment/extension/suspension lives on th
 existing Venue commercial page. Existing Organizations can receive invitations.
 See `COMMERCIAL_ACCESS_HARDENING.md` for current commercial policy and proofs.
 
-New invitees choose their own name and 15–128-character password, using Argon2id
+New invitees choose their own name and 8–128-character password, using Argon2id
 and the current signup policy. Existing accounts must sign in normally and then
 accept with a Customer JWT whose normalized email exactly matches the invitation.
 Email matching alone grants nothing. Acceptance creates no Organization or Venue.

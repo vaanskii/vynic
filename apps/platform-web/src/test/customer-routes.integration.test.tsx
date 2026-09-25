@@ -10,7 +10,8 @@ import { LOCALE_STORAGE_KEY } from "../lib/i18n";
 import { platformSession } from "../platform/session";
 import {
   installApi,
-  renderPlatform,
+  renderPublic as renderPlatform,
+  renderPlatform as renderAdmin,
   type MockRequest,
 } from "./platform-test-utils";
 
@@ -119,6 +120,28 @@ describe("Vynic site to dashboard", () => {
     expect(await screen.findByText("განაცხადი მიღებულია")).toBeVisible();
     expect(hasCustomerSession()).toBe(false);
     expect(bearers(api.fetchMock, "/customer/portal")).toEqual([]);
+  });
+
+  it("switches account modes and allows password visibility without submitting", async () => {
+    const api = installApi(customerBackend([]));
+    const user = userEvent.setup();
+    renderPlatform("/login", { authenticated: false });
+    const password = await screen.findByLabelText("პაროლი");
+    await user.type(password, "example123");
+    await user.click(screen.getByRole("button", { name: "პაროლის ჩვენება" }));
+    expect(password).toHaveAttribute("type", "text");
+    await user.click(screen.getByRole("button", { name: "პაროლის დამალვა" }));
+    expect(password).toHaveAttribute("type", "password");
+    await user.click(
+      within(
+        screen.getByRole("navigation", { name: "ანგარიშზე წვდომა" }),
+      ).getByRole("link", { name: "გამოსცადე Vynic" }),
+    );
+    expect(await screen.findByLabelText("თქვენი სახელი")).toBeVisible();
+    expect(screen.queryByLabelText("პაროლი")).toBeNull();
+    expect(api.requests.some((request) => request.method === "POST")).toBe(
+      false,
+    );
   });
 
   it("signs an existing owner in and opens the dashboard", async () => {
@@ -230,7 +253,7 @@ describe("Owner and Platform Admin sessions stay separate", () => {
   it("does not let an owner session open Platform Admin", async () => {
     const api = installApi(customerBackend());
     await signInCustomer();
-    renderPlatform("/admin", { authenticated: false });
+    renderAdmin("/", { authenticated: false });
 
     expect(
       await screen.findByRole("heading", { name: "Sign in to Platform Admin" }),
@@ -244,6 +267,8 @@ describe("Old portal addresses", () => {
     ["/portal", "შესვლა"],
     ["/portal/login", "შესვლა"],
     ["/portal/signup", "გამოსცადე Vynic"],
+    ["/signup", "გამოსცადე Vynic"],
+    ["/request-access", "გამოსცადე Vynic"],
     ["/start", "გამოსცადე Vynic"],
   ])("sends %s to the matching page", async (from, heading) => {
     installApi(customerBackend());

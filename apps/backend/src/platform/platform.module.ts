@@ -8,6 +8,7 @@ import { PlatformCommercialService } from './platform-commercial.service';
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { EdgeTransportModule } from '../edge/edge-transport.module';
+import { EnrollmentRateLimiter } from '../edge/enrollment-rate-limiter';
 import { EntitlementsModule } from '../entitlements/entitlements.module';
 import { PlatformAuditModule } from './platform-audit.module';
 import { PlatformAuthController } from './platform-auth.controller';
@@ -46,6 +47,9 @@ import { PlatformVenuesController } from './platform-venues.controller';
   providers: [
     PlanCatalogService,
     EdgeFoundationService,
+    // Module-local like Customer's: Platform sign-in windows never share state
+    // with enrollment or owner sign-in.
+    EnrollmentRateLimiter,
     PlatformCommercialService,
     PlatformAuthService,
     PlatformAuthGuard,

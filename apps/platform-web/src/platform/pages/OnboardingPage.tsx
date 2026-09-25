@@ -54,7 +54,7 @@ export function OnboardingPage() {
                   </li>
                 ))}
               </ul>
-              <Link to={`/admin/venues/${venueId}/commercial`}>
+              <Link to={`/venues/${venueId}/commercial`}>
                 Manager and subscription controls
               </Link>
               {data.devices.map((d: any) => (

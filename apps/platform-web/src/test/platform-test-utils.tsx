@@ -3,7 +3,6 @@ import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { vi } from "vitest";
 import { AppRoutes } from "../App";
-import { AuthProvider } from "../platform/auth";
 import { platformSession } from "../platform/session";
 
 export const ids = {
@@ -155,14 +154,18 @@ function defaultReply({ url, method }: MockRequest): MockReply {
   return { body: {} };
 }
 
-export function renderPlatform(route: string, options: { authenticated?: boolean } = {}) {
+export function renderPlatform(route: string, options: { authenticated?: boolean; hostname?: string } = {}) {
   if (options.authenticated !== false) platformSession.save("test-token", 28800);
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 0 }, mutations: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[route]}>
-        <AuthProvider><AppRoutes /></AuthProvider>
+        <AppRoutes hostname={options.hostname ?? "admin.localhost"} />
       </MemoryRouter>
     </QueryClientProvider>,
   );
+}
+
+export function renderPublic(route: string, options: { authenticated?: boolean } = {}) {
+  return renderPlatform(route, { ...options, hostname: "localhost" });
 }

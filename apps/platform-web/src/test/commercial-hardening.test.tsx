@@ -35,7 +35,7 @@ describe("Commercial operator controls", () => {
         : undefined,
     );
     const user = userEvent.setup();
-    renderPlatform("/admin/plans");
+    renderPlatform("/plans");
     await user.click(await screen.findByRole("button", { name: "Edit plan" }));
     expect(
       screen.queryByRole("checkbox", { name: "Non-fiscal close" }),
@@ -132,7 +132,7 @@ describe("Commercial operator controls", () => {
         ? { body: { ...actor, role: "SUPPORT_READONLY" } }
         : undefined,
     );
-    renderPlatform("/admin/plans");
+    renderPlatform("/plans");
     await screen.findByText("Full Platform");
     expect(screen.queryByRole("button", { name: "Create plan" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Edit plan" })).toBeNull();

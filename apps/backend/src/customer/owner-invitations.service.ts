@@ -274,6 +274,26 @@ export class OwnerInvitationsService {
     };
     return existingTx ? run(existingTx) : this.db.$transaction(run);
   }
+  private async applicantName(
+    db: Prisma.TransactionClient,
+    invitation: OwnerInvitation,
+  ) {
+    const venues = await db.venue.findMany({
+      where: { organizationId: invitation.organizationId },
+      select: { id: true },
+    });
+    const request = await db.onboardingRequest.findFirst({
+      where: {
+        email: invitation.email,
+        status: 'APPROVED',
+        requestedVenueId: null,
+        approvedVenueId: { in: venues.map((venue) => venue.id) },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { applicantName: true },
+    });
+    return request?.applicantName ?? null;
+  }
   async inspect(body: Record<string, unknown>, ip: string) {
     this.throttle(ip);
     const row = await this.db.ownerInvitation.findUnique({
@@ -290,6 +310,7 @@ export class OwnerInvitationsService {
       organizationName: row.organization.name,
       expiresAt: row.expiresAt,
       existingAccount: !!account,
+      displayName: account ? null : await this.applicantName(this.db, row),
     };
   }
   async accept(
@@ -301,9 +322,7 @@ export class OwnerInvitationsService {
     const tokenHash = hash(this.token(body.token));
     // No password handling for existing accounts: only normal Customer JWT authentication.
     let passwordHash: string | undefined;
-    let displayName: string | undefined;
     if (!actor) {
-      displayName = requireText(body.displayName, 'name', { max: 100 });
       passwordHash = await argon2.hash(customerPassword(body.password, true), {
         type: argon2.argon2id,
       });
@@ -338,7 +357,11 @@ export class OwnerInvitationsService {
           account = await tx.customerAccount.create({
             data: {
               email: row.email,
-              displayName: displayName!,
+              displayName: requireText(
+                (await this.applicantName(tx, row)) ?? body.displayName,
+                'name',
+                { max: 100 },
+              ),
               passwordHash: passwordHash!,
             },
           });

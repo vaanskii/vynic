@@ -7,6 +7,7 @@ type Invitation = {
   email: string;
   organizationName: string;
   existingAccount: boolean;
+  displayName?: string | null;
 };
 export function AcceptInvitation() {
   const navigate = useNavigate();
@@ -100,7 +101,7 @@ export function AcceptInvitation() {
                 void accept(Object.fromEntries(new FormData(e.currentTarget)));
               }}
             >
-              {!signedIn && !invitation.existingAccount && (
+              {!signedIn && !invitation.existingAccount && !invitation.displayName && (
                 <label>
                   სახელი
                   <input

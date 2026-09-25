@@ -639,7 +639,9 @@ current transport status.
   session, plan or trial; the old signup POST is denied. Platform approval creates
   a safe Organization/Venue shell and owner invitation, with an explicit choice of
   NO_PLAN or a selected dated Trial in the same transaction. Acceptance grants OWNER
-  membership and dashboard access, independently of product access. Existing
+  membership and dashboard access, independently of product access. Invitation
+  registration reuses the approved access request’s personal name; only manual
+  invitations without a saved applicant name ask for it. Existing
   accounts use the same invited-email sign-in and membership flow. Platform can
   explicitly prepare a chosen TRIAL/ACTIVE plan during assisted onboarding or
   assign it later. Owners with current access cannot request a duplicate Trial.

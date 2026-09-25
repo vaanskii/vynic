@@ -66,6 +66,28 @@ describe("Owner invitation journey", () => {
     );
     expect(window.location.hash).toBe("");
   });
+  it("reuses the access-request name without asking for it again", async () => {
+    const user = userEvent.setup();
+    api.customer.mockImplementation(async (path: string) =>
+      path === "invitations/inspect"
+        ? {
+            email: "owner@test.invalid",
+            organizationName: "Prepared restaurant",
+            existingAccount: false,
+            displayName: "Nino",
+          }
+        : { venueId: "prepared-venue" },
+    );
+    mount();
+    await user.type(await screen.findByLabelText("პაროლი"), "Owner password 123");
+    expect(screen.queryByLabelText("სახელი")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "მოწვევის მიღება" }));
+    expect(await screen.findByText("Existing venue: prepared-venue")).toBeInTheDocument();
+    expect(api.customer).toHaveBeenCalledWith("invitations/register", {
+      token: "test-token",
+      password: "Owner password 123",
+    });
+  });
   it("signs an existing owner in before accepting, without creating a second account", async () => {
     const user = userEvent.setup();
     api.customer.mockImplementation(async (path: string) =>

@@ -108,6 +108,44 @@ export interface WebsiteAccess {
   consistent: boolean;
 }
 
+export type CustomWebsiteStatus =
+  | "NOT_CONFIGURED"
+  | "SETUP_PENDING"
+  | "READY"
+  | "ACTIVE"
+  | "ERROR";
+
+/** The operator's CUSTOM website view: binding, checklist and history. */
+export interface CustomWebsite {
+  venueId: string;
+  mode: WebsiteMode;
+  effectiveMode: WebsiteMode;
+  entitled: boolean;
+  commercialStatus: string;
+  trialEndsAt: string | null;
+  status: CustomWebsiteStatus;
+  siteKey: string | null;
+  statusNote: string | null;
+  updatedAt: string | null;
+  domains: Array<Pick<VenueDomain, "id" | "hostname" | "status" | "createdAt">>;
+  payments: "NOT_INCLUDED" | "NOT_CONFIGURED" | "DISABLED" | "ENABLED";
+  capabilities: Record<
+    "profile" | "menu" | "customerAccounts" | "onlinePayments" | "reservations",
+    boolean
+  >;
+  readiness: {
+    complete: boolean;
+    checks: Record<"entitled" | "customMode" | "siteKey" | "activeDomain", boolean>;
+  };
+  audit: Array<{
+    id: string;
+    action: string;
+    metadata: Record<string, unknown> | null;
+    createdAt: string;
+    actor: string;
+  }>;
+}
+
 export interface VenueDomain {
   id: string;
   venueId: string;

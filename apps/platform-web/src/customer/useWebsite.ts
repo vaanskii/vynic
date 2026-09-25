@@ -53,6 +53,10 @@ export type WebsiteSettings = {
   baseDomain: string | null;
   domains: string[];
   publishedSlug: string | null;
+  /** Operator-tracked setup of a CUSTOM site; null outside CUSTOM. */
+  custom?: {
+    status: "NOT_CONFIGURED" | "SETUP_PENDING" | "READY" | "ACTIVE" | "ERROR";
+  } | null;
 };
 type PreviewSession = {
   token: string;

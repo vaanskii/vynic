@@ -24,6 +24,7 @@ import {
   SectionHeader,
   WebsiteSection,
   WebsiteStateNotice,
+  CustomWebsiteSummary,
   WebsiteStatus,
 } from "./WebsiteSections";
 import { websiteAddress, type Website } from "./useWebsite";
@@ -470,6 +471,8 @@ function Dashboard({
               )}
               <PublishActions website={website} />
             </>
+          ) : venue.websiteState === "CUSTOM" && settings?.mode === "CUSTOM" ? (
+            <CustomWebsiteSummary settings={settings} />
           ) : (
             <WebsiteStateNotice
               state={

@@ -5,6 +5,7 @@ import type {
 } from "./types";
 import type {
   AuditEvent,
+  CustomWebsite,
   Device,
   DeviceEnrollment,
   DeviceStatus,
@@ -266,6 +267,18 @@ export const platformApi = {
     request<WebsiteAccess>(`/platform/venues/${venueId}/website`, {
       method: "PUT",
       body: json({ mode }),
+    }),
+  customWebsite: (venueId: string) =>
+    request<CustomWebsite>(`/platform/venues/${venueId}/custom-website`),
+  updateCustomWebsite: (
+    venueId: string,
+    body: Partial<Pick<CustomWebsite, "siteKey" | "statusNote">> & {
+      status?: Exclude<CustomWebsite["status"], "NOT_CONFIGURED">;
+    },
+  ) =>
+    request<CustomWebsite>(`/platform/venues/${venueId}/custom-website`, {
+      method: "PUT",
+      body: json(body),
     }),
   domains: (venueId: string) =>
     request<VenueDomain[]>(`/platform/venues/${venueId}/domains`),

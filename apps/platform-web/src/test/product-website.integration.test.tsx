@@ -191,3 +191,122 @@ describe("venue product and website controls", () => {
     );
   });
 });
+
+describe("CUSTOM website provisioning", () => {
+  const customView = (patch: Record<string, unknown> = {}) => ({
+    venueId: ids.venue,
+    mode: "CUSTOM",
+    effectiveMode: "CUSTOM",
+    entitled: true,
+    commercialStatus: "TRIAL",
+    trialEndsAt: "2026-10-09T10:00:00.000Z",
+    status: "NOT_CONFIGURED",
+    siteKey: null,
+    statusNote: null,
+    updatedAt: null,
+    domains: [],
+    payments: "NOT_CONFIGURED",
+    capabilities: {
+      profile: true,
+      menu: true,
+      customerAccounts: true,
+      onlinePayments: false,
+      reservations: false,
+    },
+    readiness: {
+      complete: false,
+      checks: {
+        entitled: true,
+        customMode: true,
+        siteKey: false,
+        activeDomain: false,
+      },
+    },
+    audit: [],
+    ...patch,
+  });
+
+  it("records the frontend identity and shows the server's readiness refusal", async () => {
+    const api = installApi((request) => {
+      const path = request.url.pathname;
+      if (path.endsWith("/product"))
+        return {
+          body: {
+            ...product,
+            website: {
+              entitled: true,
+              configuredMode: "CUSTOM",
+              effectiveMode: "CUSTOM",
+              consistent: true,
+            },
+          },
+        };
+      if (path.endsWith("/domains")) return { body: [] };
+      if (path.endsWith("/custom-website") && request.method === "GET")
+        return { body: customView() };
+      if (path.endsWith("/custom-website") && request.method === "PUT")
+        return request.body?.status === "ACTIVE"
+          ? {
+              status: 409,
+              body: {
+                message:
+                  "ACTIVE requires Website access, a frontend identity and an active domain",
+              },
+            }
+          : {
+              body: customView({
+                status: "SETUP_PENDING",
+                siteKey: request.body?.siteKey,
+                readiness: {
+                  complete: false,
+                  checks: {
+                    entitled: true,
+                    customMode: true,
+                    siteKey: true,
+                    activeDomain: false,
+                  },
+                },
+                audit: [
+                  {
+                    id: "e1",
+                    action: "venue.custom_website_site_key_changed",
+                    metadata: { from: null, to: request.body?.siteKey },
+                    createdAt: "2026-09-25T10:00:00.000Z",
+                    actor: "Operator",
+                  },
+                ],
+              }),
+            };
+      return undefined;
+    });
+    const user = userEvent.setup();
+    renderPlatform(`/venues/${ids.venue}/website`);
+
+    expect(
+      await screen.findByText("Custom frontend identity recorded"),
+    ).toBeVisible();
+    expect(screen.getByText("Not recorded")).toBeVisible();
+    await user.type(
+      screen.getByLabelText(/^Custom frontend identity/),
+      "restaurant-x-web",
+    );
+    await user.click(screen.getByRole("button", { name: "Save custom setup" }));
+    await waitFor(() =>
+      expect(
+        api.requests.find(
+          (r) => r.method === "PUT" && r.url.pathname.endsWith("/custom-website"),
+        )?.body,
+      ).toEqual({ siteKey: "restaurant-x-web", status: "SETUP_PENDING" }),
+    );
+    expect(await screen.findByText("Frontend identity changed")).toBeVisible();
+
+    await user.selectOptions(
+      screen.getByLabelText(/^Setup status/),
+      "ACTIVE",
+    );
+    await user.click(screen.getByRole("button", { name: "Save custom setup" }));
+    expect(
+      await screen.findByText(/ACTIVE requires Website access/),
+    ).toBeVisible();
+  });
+});

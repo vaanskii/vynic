@@ -1,3 +1,4 @@
+import { CustomWebsitePanel } from "./CustomWebsitePanel";
 import { HostnameReviews } from "./HostnameReviews";
 import { useState } from "react";
 import { Globe, Plus, WarningCircle } from "@phosphor-icons/react";
@@ -42,9 +43,15 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
   const [feedback, setFeedback] = useState<string | null>(null);
   const refreshProduct = async () => {
     await queryClient.invalidateQueries({ queryKey: ["product", venueId] });
+    await queryClient.invalidateQueries({
+      queryKey: ["custom-website", venueId],
+    });
   };
   const refreshDomains = async () => {
     await queryClient.invalidateQueries({ queryKey: ["domains", venueId] });
+    await queryClient.invalidateQueries({
+      queryKey: ["custom-website", venueId],
+    });
     await queryClient.invalidateQueries({ queryKey: ["audit"] });
   };
   const setModeMutation = useMutation({
@@ -209,6 +216,9 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
           </div>
         </Panel>
       </div>
+      {website.configuredMode === "CUSTOM" ? (
+        <CustomWebsitePanel venueId={venueId} />
+      ) : null}
       <Panel title="Website publication">
         <p>
           Current SaaS address:{" "}

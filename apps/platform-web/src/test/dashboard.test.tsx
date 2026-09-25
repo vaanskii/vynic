@@ -492,11 +492,29 @@ describe("Owner portal", () => {
     expect(screen.getByRole("button", { name: "გამოქვეყნება" })).toBeDisabled();
     view.unmount();
 
-    serve({ site: website({ mode: "CUSTOM" }) });
+    serve({ site: website({ mode: "CUSTOM", custom: { status: "SETUP_PENDING" } }) });
+    const custom = renderPortal("/dashboard/website");
+    expect(await screen.findByText("ინდივიდუალური ვებსაიტი")).toBeVisible();
+    expect(screen.getByText("მომზადება მიმდინარეობს")).toBeVisible();
+    expect(screen.getByText("დომენი ჯერ არ არის მიბმული.")).toBeVisible();
+    // No generic editor, publication or address request for a CUSTOM site.
+    expect(screen.queryByRole("button", { name: "გამოქვეყნება" })).toBeNull();
+    expect(screen.queryByText(/მისამართის შეცვლის მოთხოვნა/)).toBeNull();
+    custom.unmount();
+
+    serve({
+      site: website({
+        mode: "CUSTOM",
+        custom: { status: "ACTIVE" },
+        domains: ["tabla.ge"],
+      }),
+    });
     renderPortal("/dashboard/website");
-    expect(
-      await screen.findByText("თქვენი ინდივიდუალური ვებსაიტი ცალკე იმართება"),
-    ).toBeVisible();
+    expect(await screen.findByText("აქტიური")).toBeVisible();
+    expect(screen.getByRole("link", { name: "tabla.ge" })).toHaveAttribute(
+      "href",
+      "https://tabla.ge",
+    );
   });
 });
 

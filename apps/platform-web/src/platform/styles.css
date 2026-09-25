@@ -219,6 +219,10 @@
 .platform-feature-actions .platform-button { white-space: normal; min-height: 36px; padding: 6px 9px; font-size: 10px; }
 .platform-product-warning { margin-top: 16px; }
 .platform-mode-control { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.platform-checklist { display: grid; gap: 7px; margin: 14px 0; padding: 0; list-style: none; font-size: 11px; }
+.platform-checklist li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.platform-checklist svg { flex: none; color: var(--platform-muted); }
+.platform-checklist svg[aria-label="done"] { color: var(--platform-green); }
 .platform-table__primary strong { display: flex; align-items: center; gap: 6px; }
 .platform-test-command { display: grid; grid-template-columns: minmax(220px, 1fr) auto; align-items: end; gap: 10px; }
 .platform-queued-result { display: flex; align-items: flex-start; gap: 11px; margin-top: 15px; padding: 13px; border: 1px solid #c6d5e4; border-radius: 9px; background: #f3f7fb; }

@@ -69,6 +69,60 @@ export function WebsiteStateNotice({ state }: { state: keyof typeof notices }) {
   );
 }
 
+const customStatus = {
+  NOT_CONFIGURED: "მომზადება მიმდინარეობს",
+  SETUP_PENDING: "მომზადება მიმდინარეობს",
+  READY: "მზადაა გასაშვებად",
+  ACTIVE: "აქტიური",
+  ERROR: "საჭიროებს ყურადღებას — Vynic-ის გუნდი მუშაობს",
+} as const;
+
+/**
+ * A CUSTOM site's read-only summary: the server's setup status and the domains
+ * that serve it. Implementation, frontend and domains are operator-managed;
+ * menu and restaurant details stay editable in their own sections.
+ */
+export function CustomWebsiteSummary({
+  settings,
+}: {
+  settings: NonNullable<Website["settings"]>;
+}) {
+  const status = settings.custom?.status ?? "NOT_CONFIGURED";
+  return (
+    <div className="portal-empty" data-website-state="CUSTOM">
+      <strong>ინდივიდუალური ვებსაიტი</strong>
+      <p>
+        სტატუსი:{" "}
+        <span
+          className={`portal-pill portal-pill--${status === "ACTIVE" ? "live" : status === "ERROR" ? "pending" : "draft"}`}
+        >
+          {customStatus[status]}
+        </span>
+      </p>
+      {settings.domains.length > 0 ? (
+        <p>
+          დომენი:{" "}
+          {settings.domains.map((domain, i) => (
+            <span key={domain}>
+              {i > 0 && ", "}
+              <a href={`https://${domain}`} target="_blank" rel="noreferrer">
+                {domain}
+              </a>
+            </span>
+          ))}
+        </p>
+      ) : (
+        <p>დომენი ჯერ არ არის მიბმული.</p>
+      )}
+      <p className="portal-hint">
+        მენიუს, რესტორნის ინფორმაციას და გადახდებს მართავთ აქედან — საიტი მათ
+        ავტომატურად აჩვენებს. დიზაინის ან დომენის ცვლილებისთვის დაუკავშირდით
+        Vynic-ს.
+      </p>
+    </div>
+  );
+}
+
 /** What to show when the generic SaaS editor does not apply. */
 export function WebsiteUnavailable({ website }: { website: Website }) {
   if (!website.loaded) return <p role="status">იტვირთება…</p>;
@@ -80,6 +134,8 @@ export function WebsiteUnavailable({ website }: { website: Website }) {
       </p>
     );
   const state = website.settings.state;
+  if (state === "CUSTOM")
+    return <CustomWebsiteSummary settings={website.settings} />;
   return (
     <WebsiteStateNotice state={state === "SAAS" ? "SETUP_PENDING" : state} />
   );

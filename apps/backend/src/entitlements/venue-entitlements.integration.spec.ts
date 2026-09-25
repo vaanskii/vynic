@@ -56,11 +56,15 @@ describeDatabase('Venue product entitlements (PostgreSQL)', () => {
     await prisma.$connect();
     entitlements = new VenueEntitlementsService(prisma);
 
+    // Access needs an explicit subscription; the unassigned Venue has none.
     const venue = (id: string, name: string) => ({
       id,
       name,
       timezone: 'Asia/Tbilisi',
       currency: 'GEL',
+      subscription: {
+        create: { status: id === unassigned ? 'NO_PLAN' : 'ACTIVE' } as const,
+      },
     });
 
     await prisma.organization.create({

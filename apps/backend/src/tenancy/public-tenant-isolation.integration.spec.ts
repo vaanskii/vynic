@@ -87,6 +87,7 @@ describeDatabase('Public website tenant isolation (PostgreSQL)', () => {
       name,
       timezone: 'Asia/Tbilisi',
       currency: 'GEL',
+      subscription: { create: { status: 'ACTIVE' as const } },
     });
     await prisma.organization.create({
       data: {

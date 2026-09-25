@@ -384,6 +384,9 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
       expect(
         await prisma.venuePlanAssignment.count({ where: { venueId: a.id } }),
       ).toBe(0);
+      expect(
+        await prisma.venueSubscription.findUnique({ where: { venueId: a.id } }),
+      ).toMatchObject({ status: 'NO_PLAN' });
     });
 
     it('never reuses the deterministic bootstrap ids', () => {
@@ -449,6 +452,14 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
         planId: await planId('POS_WEBSITE_MANAGER'),
       });
       await venues.assignPlan(actor, venueBId, { planId: await planId('POS') });
+      // A plan alone grants nothing; access needs an explicit subscription.
+      expect((await venues.readProduct(venueBId)).effectiveFeatures).toEqual(
+        [],
+      );
+      await prisma.venueSubscription.updateMany({
+        where: { venueId: { in: [venueAId, venueBId] } },
+        data: { status: 'ACTIVE', startedAt: new Date() },
+      });
 
       const productA = await venues.readProduct(venueAId);
       const productB = await venues.readProduct(venueBId);
@@ -581,6 +592,10 @@ describeDatabase('Platform control plane (PostgreSQL)', () => {
     });
 
     it('keeps each venue hostname to itself', async () => {
+      // Hostnames need WEBSITE; the POS-only Venue gets it by override.
+      await venues.setFeatureOverride(actor, venueBId, FeatureKeys.WEBSITE, {
+        effect: FeatureOverrideEffect.ENABLED,
+      });
       await venues.registerDomain(actor, venueBId, { hostname: hostB });
 
       await expect(

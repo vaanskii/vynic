@@ -78,6 +78,7 @@ describeDb('SaaS Manager: real PostgreSQL, HTTP and Socket.IO', () => {
           name,
           timezone: 'Asia/Tbilisi',
           currency: 'GEL',
+          subscription: { create: { status: 'ACTIVE' } },
         },
       });
       venues.push(venue);

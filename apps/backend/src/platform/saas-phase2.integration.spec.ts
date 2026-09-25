@@ -57,6 +57,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
     const pinA = '483921',
       pinB = '571234',
       resetPin = '692481';
+    const trialEndsAt = new Date(Date.now() + 30 * 86_400_000).toISOString();
     const http = () => request(app.getHttpServer());
     const bearer = (token = adminToken) => ({
       Authorization: `Bearer ${token}`,
@@ -154,9 +155,12 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
             })
             .expect(201)
         ).body;
+        // NON_FISCAL_CLOSE is never a plan grant; A receives it by override.
         const keys =
           name === 'A'
-            ? Object.values(FeatureKeys)
+            ? Object.values(FeatureKeys).filter(
+                (key) => key !== FeatureKeys.NON_FISCAL_CLOSE,
+              )
             : [FeatureKeys.POS, FeatureKeys.MANAGER_APP];
         const features = await db.feature.findMany({
           where: { key: { in: keys } },
@@ -172,6 +176,18 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
           .put(`/platform/venues/${venue.id}/plan`)
           .set(bearer())
           .send({ planId: plan.id })
+          .expect(200);
+        if (name === 'A')
+          await http()
+            .put(`/platform/venues/${venue.id}/features/NON_FISCAL_CLOSE`)
+            .set(bearer())
+            .send({ effect: 'ENABLED' })
+            .expect(200);
+        // New Venues start NO_PLAN; access opens only with an explicit status.
+        await http()
+          .put(`/platform/venues/${venue.id}/subscription`)
+          .set(bearer())
+          .send({ status: 'TRIAL', trialEndsAt })
           .expect(200);
         const result = (
           await http()
@@ -299,19 +315,21 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         .set(bearer())
         .send({ effect: 'DISABLED' })
         .expect(200);
+      // Withdrawing the Manager product revokes the Manager identity itself.
       await http()
         .get('/mobile/inventory/stock-items')
         .set(bearer(tokenB))
-        .expect(403);
+        .expect(401);
       await http()
         .delete(`/platform/venues/${b.id}/features/MANAGER_APP`)
         .set(bearer())
         .expect(200);
     });
     it('keeps every subscription status explicit and POS authentication independent', async () => {
+      // A manual ACTIVE opens a billing agreement that later changes must go
+      // through lifecycle actions, so it comes last.
       for (const status of [
         'TRIAL',
-        'ACTIVE',
         'PAST_DUE',
         'SUSPENDED',
         'CANCELLED',
@@ -330,7 +348,14 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         expect(await entitlements.hasFeature(a.id, FeatureKeys.WEBSITE)).toBe(
           allowed,
         );
-        expect(await entitlements.hasFeature(a.id, FeatureKeys.POS)).toBe(true);
+        // Lapsed access withholds commercial features but keeps the plan, and
+        // never stops the POS Device authenticating.
+        expect(await entitlements.hasFeature(a.id, FeatureKeys.POS)).toBe(
+          allowed,
+        );
+        expect(await entitlements.planFeatures(a.id)).toContain(
+          FeatureKeys.POS,
+        );
         expect(
           await new DeviceCredentialService(db).verifyCredential(credential),
         ).toMatchObject({ venueId: a.id });

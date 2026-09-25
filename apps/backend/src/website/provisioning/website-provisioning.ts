@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { Prisma, VenueWebsiteConfig } from '@prisma/client';
 import { commercialState } from '../../entitlements/commercial-state';
+import { cloudMenuAdmission } from '../../platform/cloud-menu-admission';
 
 /** Operator-selected implementation; NONE is never a provisioning choice. */
 export type ProvisionedWebsiteMode = 'SAAS' | 'CUSTOM';
@@ -66,6 +67,8 @@ export async function provisionWebsite(
         ? before.mode
         : requireWebsiteMode(requested)
       : requireWebsiteMode(requested);
+  if (mode === 'SAAS' && !planFeatures.includes('POS'))
+    await admitCloudMenu(tx, venueId, actor, source);
   if (before?.mode === mode) return before;
   const row = await tx.venueWebsiteConfig.upsert({
     where: { venueId },
@@ -82,4 +85,34 @@ export async function provisionWebsite(
     },
   });
   return row;
+}
+
+/**
+ * A POS-less SAAS website needs Cloud menu authoring. The operator's explicit
+ * Website assignment is the admission act; the existing conservative checks
+ * still decide, so any POS evidence keeps POS authority and the operator sees
+ * the recorded reason. Never runs for packages that include POS or CUSTOM.
+ */
+async function admitCloudMenu(
+  tx: Prisma.TransactionClient,
+  venueId: string,
+  actor: { platformUserId?: string | null },
+  source: string,
+) {
+  const admission = await cloudMenuAdmission(tx, venueId);
+  // First admission only: an operator who later disabled Cloud editing stays.
+  if (admission.authority === 'CLOUD' || !admission.canEnableCloud) return;
+  await tx.venue.update({
+    where: { id: venueId },
+    data: { menuAuthority: 'CLOUD', cloudMenuEditingEnabled: true },
+  });
+  await tx.platformAuditEvent.create({
+    data: {
+      platformUserId: actor.platformUserId ?? null,
+      action: 'venue.cloud_menu_enabled',
+      targetType: 'Venue',
+      targetId: venueId,
+      metadata: { from: admission.authority, enabled: true, source },
+    },
+  });
 }

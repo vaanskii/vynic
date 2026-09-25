@@ -16,6 +16,7 @@ type Node = {
 type Catalog = {
   authority: "POS" | "CLOUD";
   editingEnabled?: boolean;
+  posIncluded?: boolean;
   revision: number;
   categories: Node[];
 };
@@ -60,9 +61,13 @@ export function CatalogEditor({
     );
   if (data.authority === "POS")
     return (
-      <p className="portal-hint">მენიუს სტრუქტურა და ფასები იმართება POS-ში.</p>
+      <p className="portal-hint">
+        {data.posIncluded === false
+          ? "მენიუს მართვის ჩართვას Vynic-ის გუნდი ასრულებს."
+          : "მენიუს სტრუქტურა და ფასები იმართება POS-ში."}
+      </p>
     );
-  if (data.editingEnabled === false) return <p className="portal-hint">Dashboard-ში მენიუს რედაქტირება გამორთულია. ჩართვა შესაძლებელია Admin → Product გვერდიდან.</p>;
+  if (data.editingEnabled === false) return <p className="portal-hint">Dashboard-ში მენიუს რედაქტირება გამორთულია. ჩასართავად დაუკავშირდით Vynic-ს.</p>;
   const action = (label: string, value: Edit) => (
     <button
       type="button"

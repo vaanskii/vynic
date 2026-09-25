@@ -56,6 +56,10 @@ export class RestaurantFoundationService {
     return {
       authority: venue.menuAuthority,
       editingEnabled: venue.cloudMenuEditingEnabled,
+      // Without POS a POS authority is an unfinished operator setup, not POS.
+      posIncluded: (await this.entitlements.planFeatures(venueId)).includes(
+        'POS',
+      ),
       revision: venue.catalogRevision,
       categories: await catalog(this.db, venueId),
     };

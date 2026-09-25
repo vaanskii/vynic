@@ -1,4 +1,8 @@
-import { requireCommercialFeature } from '../entitlements/commercial-state';
+import {
+  commercialState,
+  requireCommercialFeature,
+} from '../entitlements/commercial-state';
+import { provisionWebsite } from '../website/provisioning/website-provisioning';
 import { assignCommercialPlan } from './plan-assignment';
 import { CommercialLifecycleService } from '../entitlements/commercial-lifecycle.service';
 import { cloudMenuAdmission } from './cloud-menu-admission';
@@ -331,6 +335,25 @@ export class PlatformVenueConfigService {
     mode: WebsiteMode,
   ) {
     await this.directory.requireVenue(venueId);
+    // A sold Website gets the same provisioning as a plan assignment.
+    if (mode !== WebsiteMode.NONE) {
+      const provisioned = await this.prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
+        if (
+          !(await commercialState(tx, venueId)).planFeatures.includes('WEBSITE')
+        )
+          return false;
+        await provisionWebsite(
+          tx,
+          venueId,
+          mode,
+          actor,
+          'platform.website_mode',
+        );
+        return true;
+      });
+      if (provisioned) return this.entitlements.websiteAccess(venueId);
+    }
     const previous = await this.prisma.venueWebsiteConfig.findUnique({
       where: { venueId },
       select: { mode: true },

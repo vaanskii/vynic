@@ -208,6 +208,53 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
           where: { targetId: venueId, action: 'venue.website_mode_changed' },
         }),
       ).toMatchObject({ metadata: { from: 'NONE', to: 'SAAS' } });
+
+      // No POS in the package: the owner authors the canonical Cloud catalog.
+      expect(
+        await db.venue.findUniqueOrThrow({
+          where: { id: venueId },
+          select: { menuAuthority: true, cloudMenuEditingEnabled: true },
+        }),
+      ).toEqual({ menuAuthority: 'CLOUD', cloudMenuEditingEnabled: true });
+      const catalog = (
+        await http()
+          .get(`/customer/venues/${venueId}/catalog`)
+          .set(bearer(owner.access_token))
+          .expect(200)
+      ).body;
+      expect(catalog).toMatchObject({
+        authority: 'CLOUD',
+        editingEnabled: true,
+        posIncluded: false,
+      });
+      await http()
+        .put(`/customer/venues/${venueId}/catalog/category`)
+        .set(bearer(owner.access_token))
+        .send({
+          expectedRevision: catalog.revision,
+          nameKa: 'სალათები',
+          nameEn: 'Salads',
+        })
+        .expect(200);
+      expect(await db.menuCategory.count({ where: { venueId } })).toBe(1);
+      // Hours live in the SaaS draft, which the owner can now save.
+      await http()
+        .put(`/customer/venues/${venueId}/website/draft`)
+        .set(bearer(owner.access_token))
+        .send({
+          expectedRevision: settings.revision,
+          content: {
+            ...emptyWebsiteContent,
+            slug: 'saas-' + tag,
+            workingHours: [{ day: 1, opens: '10:00', closes: '22:00' }],
+          },
+        })
+        .expect(200);
+      expect(
+        await db.platformAuditEvent.findFirst({
+          where: { targetId: venueId, action: 'venue.cloud_menu_enabled' },
+        }),
+      ).toMatchObject({ metadata: { source: 'subscription.trial' } });
     });
 
     it('provisions an operator-chosen CUSTOM Trial without the generic SaaS editor', async () => {
@@ -244,6 +291,37 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
           })
         ).mode,
       ).toBe('CUSTOM');
+      expect(
+        (
+          await db.venue.findUniqueOrThrow({
+            where: { id: owner.venueId },
+          })
+        ).menuAuthority,
+      ).toBe('POS');
+    });
+
+    it('never hands a POS-bundled Website package to Cloud menu authority', async () => {
+      const { id } = await platformVenue('POS and website');
+      const posWebsite = await db.plan.findUniqueOrThrow({
+        where: { key: 'POS_WEBSITE' },
+      });
+      await http()
+        .post(`/platform/venues/${id}/subscription/actions`)
+        .set(bearer(admin))
+        .send({
+          action: 'TRIAL',
+          planId: posWebsite.id,
+          trialEndsAt: trialEndsAt(),
+          websiteMode: 'SAAS',
+          reason: 'POS and website trial',
+        })
+        .expect(201);
+      expect(
+        await db.venue.findUniqueOrThrow({
+          where: { id },
+          select: { menuAuthority: true, cloudMenuEditingEnabled: true },
+        }),
+      ).toEqual({ menuAuthority: 'POS', cloudMenuEditingEnabled: false });
     });
 
     it('manual Trial on a NO_PLAN Venue ends in the same state as an approval', async () => {
@@ -347,6 +425,17 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
             .expect(200)
         ).body.state,
       ).toBe('SETUP_PENDING');
+
+      // The operator finishes setup from the Venue Website tab.
+      await http()
+        .put(`/platform/venues/${id}/website`)
+        .set(bearer(admin))
+        .send({ mode: 'SAAS' })
+        .expect(200);
+      expect((await portalVenue(owner)).websiteState).toBe('SAAS');
+      expect(
+        (await db.venue.findUniqueOrThrow({ where: { id } })).menuAuthority,
+      ).toBe('CLOUD');
     });
 
     it('keeps a POS-only Trial locked out of Website with no website row', async () => {

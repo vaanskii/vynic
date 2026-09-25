@@ -340,7 +340,9 @@ export function nextSteps(venue: VenueStatus, website: Website): Step[] {
       hint:
         venue.venue.menuAuthority === "CLOUD"
           ? "დაამატეთ კატეგორიები, კერძები და ფასები."
-          : "მენიუ იქმნება POS-ში და ავტომატურად ჩანს საიტზე.",
+          : venue.features.includes("POS")
+            ? "მენიუ იქმნება POS-ში და ავტომატურად ჩანს საიტზე."
+            : "მენიუს მართვის ჩართვას Vynic-ის გუნდი ასრულებს.",
       done: !!venue.checklist?.menu,
       section: "menu",
     },

@@ -90,10 +90,30 @@ The old SaaS hostname stops resolving immediately on approval and becomes
 available to other Venues. There is no redirect or alias: the domain model has
 no redirect concept and adding one would create a second active SaaS binding.
 
+## Losing access and release
+
+When WEBSITE access is lost, every domain of the Venue enters the existing
+30-day retention (`releaseAfter`). During retention the SaaS name stays
+reserved: the domain row and `assignedSlug` both hold it, and regaining access
+cancels retention with the address intact.
+
+When retention expires, `CommercialLifecycleService` deletes the domain row
+and, in the same transaction, `releaseSaasIdentity` clears the Venue's
+`assignedSlug` and closes its pending hostname request (REJECTED, system
+reason), audited as `website.hostname_released`. An operator Release of the
+SaaS domain does the same. Nothing then reserves the name: the published
+`slug` column is only a history mirror (its unique index was dropped), so
+another Venue can be assigned or approved for it. Content and history remain;
+if the Venue regains access it is assigned a fresh address and its draft and
+published names follow it.
+
 ## Migration
 
 `20261005120000_website_hostname_requests` copied existing `slug` into
 `assignedSlug`; `20261006120000_hostname_request_current` adds the nullable
-`currentHostname` column. Existing hostnames (for example
+`currentHostname` column; `20261007120000_release_published_slug_reservation`
+drops the unique index on the published `slug` mirror;
+`20261008120000_hostname_request_fk_on_update` aligns the request's Venue foreign
+key with the schema (ON UPDATE CASCADE). Existing hostnames (for example
 `restaurant-vankisi.vynic.localhost`) are never regenerated; the whitespace
 rule applies only to new assignments and approved changes.

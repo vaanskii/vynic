@@ -703,7 +703,8 @@ current transport status.
   fails closed for unknown or disabled hosts. Effective WEBSITE is required to
   claim/activate domains, edit/preview/publish content and serve SaaS or CUSTOM.
   Losing access stops serving immediately; names are reserved for 30 days from
-  lifecycle reconciliation, then released with audit. Reactivation during grace
+  lifecycle reconciliation, then released with audit, including the Venue's
+  assigned SaaS name, so another Venue can claim it. Reactivation during grace
   cancels retention; after release, republishing claims only an available address.
 - WEBSITE entitlement (commercial right), WebsiteMode (operator-selected
   implementation) and hostname binding are separate. Every Platform path that
@@ -964,8 +965,10 @@ current transport status.
 
 ## Current Migration Versions
 
-- Prisma migration tip: `20261006120000_hostname_request_current`.
-- Previous hostname migration: `20261005120000_website_hostname_requests`.
+- Prisma migration tip: `20261008120000_hostname_request_fk_on_update`.
+- Previous hostname migrations: `20261007120000_release_published_slug_reservation`,
+  `20261006120000_hostname_request_current`,
+  `20261005120000_website_hostname_requests`.
 - Previous lifecycle migration: `20261004120000_subscription_lifecycle`.
 - Previous acquisition migration: `20261003120200_customer_trial_requests`.
 - Commercial access/media/pricing: `20261003120000_commercial_access_hardening`,

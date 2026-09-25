@@ -98,18 +98,45 @@ export const authApi = {
 };
 
 export const platformApi = {
+  hostnameRequests: (venueId: string) =>
+    request<import("../customer/HostnameRequest").HostnameRequestRow[]>(
+      `/platform/venues/${venueId}/hostname-requests`,
+    ),
+  reviewHostname: (
+    venueId: string,
+    id: string,
+    status: string,
+    reason: string,
+  ) =>
+    request(`/platform/venues/${venueId}/hostname-requests/${id}/review`, {
+      method: "POST",
+      body: JSON.stringify({ status, reason }),
+    }),
   paymentStatus: (venueId: string) =>
     request<{ configured: boolean; entitled: boolean }>(
       `/platform/venues/${venueId}/payments/bog`,
     ),
   subscriptionAction: (id: string, body: Record<string, unknown>) =>
-    request(`/platform/venues/${id}/subscription/actions`, { method: "POST", body: JSON.stringify(body) }),
+    request(`/platform/venues/${id}/subscription/actions`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
   subscriptionQuote: (id: string, body: Record<string, unknown>) =>
-    request<import("../subscriptions/types").BillingQuote>(`/platform/venues/${id}/subscription/quote`, { method: "POST", body: JSON.stringify(body) }),
+    request<import("../subscriptions/types").BillingQuote>(
+      `/platform/venues/${id}/subscription/quote`,
+      { method: "POST", body: JSON.stringify(body) },
+    ),
   subscriptionPayment: (id: string, body: Record<string, unknown>) =>
-    request(`/platform/venues/${id}/subscription/manual-success`, { method: "POST", body: JSON.stringify(body) }),
+    request(`/platform/venues/${id}/subscription/manual-success`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
   subscription: (id: string) =>
-    request<(VenueSubscription & import("../subscriptions/types").SubscriptionDetail) | null>(`/platform/venues/${id}/subscription`),
+    request<
+      | (VenueSubscription &
+          import("../subscriptions/types").SubscriptionDetail)
+      | null
+    >(`/platform/venues/${id}/subscription`),
   setSubscription: (
     id: string,
     body: Partial<VenueSubscription> & { planId?: string },

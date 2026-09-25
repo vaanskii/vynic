@@ -10,7 +10,7 @@ import {
 } from "./platform-test-utils";
 
 describe("venue product and website controls", () => {
-  it("shows plan inheritance, explicit overrides, and refetches after a plan mutation", async () => {
+  it("shows capabilities and overrides while commercial plan assignment stays out of Product", async () => {
     let productReads = 0;
     const starterPlan = {
       ...plans[0],
@@ -31,19 +31,8 @@ describe("venue product and website controls", () => {
 
     expect((await screen.findAllByText("პაკეტში შედის")).length).toBe(2);
     expect(screen.getByText("ინდივიდუალურად გამორთულია")).toBeVisible();
-    await user.selectOptions(screen.getByLabelText("პაკეტი"), starterPlan.id);
-    await user.click(screen.getByRole("button", { name: "პაკეტის შეცვლა" }));
-    await user.click(
-      await screen.findByRole("button", { name: "პაკეტის მინიჭება" }),
-    );
-    await waitFor(() =>
-      expect(
-        api.requests.some(
-          (request) =>
-            request.method === "PUT" && request.url.pathname.endsWith("/plan"),
-        ),
-      ).toBe(true),
-    );
+    expect(screen.queryByLabelText("პაკეტი")).toBeNull();
+    expect(screen.queryByRole("button", { name: "პაკეტის შეცვლა" })).toBeNull();
 
     const managerRow = screen
       .getAllByText("მენეჯერის აპლიკაცია")
@@ -96,7 +85,7 @@ describe("venue product and website controls", () => {
     expect(
       screen.getByText(/review the two settings before publishing a hostname/i),
     ).toBeVisible();
-    expect(screen.getByText("INCONSISTENT")).toBeVisible();
+    expect(screen.getAllByText("DRAFT").length).toBeGreaterThan(0);
   });
 
   it("registers, changes status, and releases domains through guarded UI", async () => {

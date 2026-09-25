@@ -43,7 +43,7 @@ describe("Phase 2 commercial controls", () => {
       return undefined;
     });
     const user = userEvent.setup();
-    renderPlatform(`/venues/${ids.venue}/commercial`);
+    renderPlatform(`/venues/${ids.venue}/product`);
     await user.click(
       await screen.findByRole("button", { name: "Create Manager" }),
     );
@@ -75,7 +75,8 @@ describe("Phase 2 commercial controls", () => {
         api.requests.some((r) => r.url.pathname.endsWith("/disable")),
       ).toBe(true),
     );
-    await user.selectOptions(screen.getByLabelText("Commercial action"), "SUSPEND");
+    await user.click(screen.getByRole("link", {name: "Commercial"}));
+    await user.selectOptions(await screen.findByLabelText("Commercial action"), "SUSPEND");
     await user.type(screen.getByLabelText("Operator reason"), "Requested by owner");
     await user.click(screen.getByRole("button", { name: "Review change" }));
     expect(api.requests.filter((r) => r.method === "PUT")).toHaveLength(0);
@@ -94,7 +95,7 @@ describe("Phase 2 commercial controls", () => {
       if (req.url.pathname.endsWith("/managers")) return { body: [] };
       return undefined;
     });
-    renderPlatform(`/venues/${ids.venue}/commercial`);
+    renderPlatform(`/venues/${ids.venue}/product`);
     expect(await screen.findByText("No Manager accounts yet.")).toBeVisible();
     expect(
       screen.queryByRole("button", { name: "Create Manager" }),

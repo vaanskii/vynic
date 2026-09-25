@@ -9,7 +9,6 @@ vi.mock("../customer/api", () => ({
   customerLogout: vi.fn(),
 }));
 import { CustomerDashboard } from "../customer/CustomerDashboard";
-import { suggestAddress } from "../customer/FirstRunSetup";
 import type { OwnerMenu, OwnerMenuItem } from "../customer/WebsiteMenuEditor";
 
 const draft = {
@@ -34,6 +33,8 @@ const draft = {
   gallery: [],
 };
 const website = (patch: Record<string, unknown> = {}) => ({
+  commercialStatus: "TRIAL",
+  hostnameChangeAllowed: false,
   mediaUploadAllowed: true,
   schemaVersion: 2,
   themeKeys: ["classic"],
@@ -149,8 +150,12 @@ function serve({
   api.call.mockImplementation(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async (path: string, body?: any, method?: string) => {
+      if (path.endsWith("/hostname-requests")) return [];
+      if (path.endsWith("/trial-requests")) return null;
       if (path === "access-requests/plans") return [];
-      if (path.endsWith("/subscription")) return state.venues.find(v => path.includes(v.venue.id))?.subscription;
+      if (path.endsWith("/subscription"))
+        return state.venues.find((v) => path.includes(v.venue.id))
+          ?.subscription;
       if (path === "portal")
         return {
           account: { email: "owner@test.invalid" },
@@ -265,18 +270,12 @@ beforeEach(() => {
 });
 
 describe("First-run setup", () => {
-  it("suggests a Latin address from a Georgian name", () => {
-    expect(suggestAddress("ტაბლა")).toBe("tabla");
-    expect(suggestAddress("Café Shavi Lomi!")).toBe("cafe-shavi-lomi");
-    expect(suggestAddress("ხაჭაპური & ღვინო")).toBe("khachapuri-ghvino");
-  });
-
-  it("Website Trial setup requires name and address but no photo upload", async () => {
+  it("Website Trial setup shows a read-only assigned address but no photo upload", async () => {
     const state = serve({
       site: website({
         revision: 0,
         mediaUploadAllowed: false,
-        draft: { ...draft, slug: "", logoUrl: "", heroTitle: "" },
+        draft: { ...draft, slug: "tabla", logoUrl: "", heroTitle: "" },
       }),
     });
     const user = userEvent.setup();
@@ -294,37 +293,15 @@ describe("First-run setup", () => {
     expect(calls("venues/venue-a/website/logo")).toHaveLength(0);
   });
 
-  it("keeps the form when the address is taken and retries without duplicates", async () => {
-    const state = serve({
-      venues: [venueStatus()],
-      site: website({
-        revision: 0,
-        draft: { ...draft, slug: "", logoUrl: "" },
-      }),
-      taken: ["tabla"],
-    });
-    const user = userEvent.setup();
+  it("Trial cannot choose an address or submit a hostname request", async () => {
+    serve({ site: website({ revision: 0, mediaUploadAllowed: false }) });
     renderPortal();
-    expect(await screen.findByLabelText("რესტორნის სახელი")).toHaveValue(
-      "Tabla",
-    );
-    await user.upload(
-      screen.getByLabelText("ლოგოს ატვირთვა"),
-      new File(["png"], "logo.png", { type: "image/png" }),
-    );
-    await user.click(screen.getByRole("button", { name: "გაგრძელება" }));
+    expect(await screen.findByText("თქვენი ვებსაიტის მისამართი")).toBeVisible();
+    expect(screen.getByText("tabla.vynic.localhost")).toBeVisible();
+    expect(screen.queryByLabelText("ვებსაიტის მისამართი")).toBeNull();
     expect(
-      await screen.findByText("ეს მისამართი უკვე დაკავებულია. სცადეთ სხვა."),
-    ).toBeVisible();
-    expect(calls("venues/venue-a/website/draft")).toHaveLength(0);
-
-    const address = screen.getByLabelText("ვებსაიტის მისამართი");
-    await user.clear(address);
-    await user.type(address, "Tabla Vake");
-    expect(address).toHaveValue("tablavake");
-    await user.click(screen.getByRole("button", { name: "გაგრძელება" }));
-    await screen.findByRole("heading", { name: "გამარჯობა, Tabla" });
-    expect(state.site.draft.slug).toBe("tablavake");
+      screen.queryByRole("button", { name: "მისამართის შეცვლის მოთხოვნა" }),
+    ).toBeNull();
   });
 
   it("prefills an invited restaurant and keeps its prepared profile", async () => {
@@ -335,16 +312,14 @@ describe("First-run setup", () => {
       venues: [invited],
       site: website({
         revision: 0,
-        draft: { ...draft, slug: "", logoUrl: "", heroTitle: "" },
+        draft: { ...draft, slug: "tabla", logoUrl: "", heroTitle: "" },
       }),
     });
     const user = userEvent.setup();
     renderPortal();
     const name = await screen.findByLabelText("რესტორნის სახელი");
     expect(name).toHaveValue("Prepared");
-    expect(screen.getByLabelText("ვებსაიტის მისამართი")).toHaveValue(
-      "prepared",
-    );
+    expect(screen.getByText("tabla.vynic.localhost")).toBeVisible();
     await user.clear(name);
     await user.type(name, "Tabla");
     await user.upload(
@@ -367,9 +342,7 @@ describe("First-run setup", () => {
     expect(
       await screen.findByRole("heading", { name: "გამარჯობა, Tabla" }),
     ).toBeVisible();
-    expect(
-      screen.getByText("ვებსაიტის მომზადება მიმდინარეობს"),
-    ).toBeVisible();
+    expect(screen.getByText("ვებსაიტის მომზადება მიმდინარეობს")).toBeVisible();
     expect(
       screen.queryByText("ვებსაიტი თქვენს პაკეტში ჯერ არ არის ჩართული"),
     ).toBeNull();
@@ -473,16 +446,12 @@ describe("Owner portal", () => {
     expect(title).toHaveValue("Tabla");
   });
 
-  it("checks a new website address and hides search settings until asked", async () => {
+  it("shows the assigned website address and hides search settings until asked", async () => {
     serve({ taken: ["taken"] });
     const user = userEvent.setup();
     renderPortal("/dashboard/website");
-    const address = await screen.findByLabelText("ვებსაიტის მისამართი");
-    await user.clear(address);
-    await user.type(address, "taken");
-    expect(
-      await screen.findByText("ეს მისამართი უკვე დაკავებულია."),
-    ).toBeVisible();
+    expect(await screen.findByText("თქვენი ვებსაიტის მისამართი")).toBeVisible();
+    expect(screen.queryByLabelText("ვებსაიტის მისამართი")).toBeNull();
     await user.click(screen.getByRole("button", { name: "დიზაინი" }));
     expect(screen.getByLabelText("სათაური ძიების შედეგებში")).not.toBeVisible();
     await user.click(screen.getByText("Google-ში გამოჩენა"));

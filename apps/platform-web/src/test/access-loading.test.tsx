@@ -28,7 +28,7 @@ describe("Access action feedback", () => {
         { ...device, id: ids.actor, displayName: "New POS", isOperationalPrimary: false },
       ] };
     });
-    renderPlatform(`/venues/${ids.venue}/commercial`);
+    renderPlatform(`/venues/${ids.venue}/product`);
     expect(await screen.findByText(/Primary: Old POS/)).toBeVisible();
     expect(screen.getByText("POS: Waiting for Primary POS")).toBeVisible();
     expect(screen.getByRole("link", { name: "Review POS devices" })).toHaveAttribute("href", `/venues/${ids.venue}/devices`);
@@ -48,7 +48,7 @@ describe("Access action feedback", () => {
       }
     });
     const user = userEvent.setup();
-    renderPlatform(`/venues/${ids.venue}/commercial`);
+    renderPlatform(`/venues/${ids.venue}/product`);
     await user.click(await screen.findByRole("button", { name: "Create Manager" }));
     const dialog = screen.getByRole("dialog", { name: "Create Manager" });
     await user.type(within(dialog).getByLabelText("Display name"), "Giorgi");

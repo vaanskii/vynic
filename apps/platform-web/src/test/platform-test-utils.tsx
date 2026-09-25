@@ -146,6 +146,7 @@ function defaultReply({ url, method }: MockRequest): MockReply {
   if (path === "/platform/plans") return { body: plans };
   if (path === "/platform/features") return { body: features };
   if (path === `/platform/venues/${ids.venue}/product`) return { body: product };
+  if (path === `/platform/venues/${ids.venue}/hostname-requests`) return { body: [] };
   if (path === `/platform/venues/${ids.venue}/domains`) return { body: [] };
   if (path === `/platform/venues/${ids.venue}/devices`) return { body: [device] };
   if (path === `/platform/venues/${ids.venue}/enrollments`) return { body: [] };

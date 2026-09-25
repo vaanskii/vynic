@@ -5,7 +5,7 @@ import { SectionHeader } from "./WebsiteSections";
 import type { VenueStatus } from "./portal-types";
 import { subscriptionLabels } from "./OperationsSections";
 import {
-  day,
+  dateTime as day,
   money,
   type BillingQuote,
   type SubscriptionDetail,

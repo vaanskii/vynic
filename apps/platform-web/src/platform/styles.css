@@ -329,3 +329,15 @@
 .platform-subscription-next { display: block; margin-bottom: 1.25rem; }
 .platform-subscription details { margin-top: 1.5rem; }
 @media (max-width: 640px) { .platform-subscription input, .platform-subscription select { font-size: 16px; } }
+
+.platform-website-mode {
+  display: grid;
+  gap: 0.65rem;
+  border: 1px solid var(--platform-border, #dedbdf);
+  border-radius: 8px;
+  padding: 0.85rem 1rem 1rem;
+}
+.platform-website-mode legend { padding: 0 0.3rem; font-weight: 600; }
+.platform-website-mode label { display: flex; align-items: center; gap: 0.5rem; }
+.platform-website-mode input { flex: none; }
+.platform-subscription-facts dd { overflow-wrap: anywhere; }

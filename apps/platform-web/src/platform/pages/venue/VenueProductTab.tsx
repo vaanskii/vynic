@@ -8,7 +8,7 @@ import { errorMessage, formatDateTime } from "../../format";
 import type { OverrideEffect } from "../../types";
 import { Button } from "../../components/Button";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
-import { Input, Select } from "../../components/Form";
+import { Input } from "../../components/Form";
 import { Panel } from "../../components/Page";
 import { ErrorState, LoadingState } from "../../components/State";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -48,8 +48,6 @@ export function VenueProductTab({ venueId }: { venueId: string }) {
     queryKey: ["features"],
     queryFn: platformApi.features,
   });
-  const [selectedPlanId, setSelectedPlanId] = useState("");
-  const [planConfirm, setPlanConfirm] = useState(false);
   const [pendingOverride, setPendingOverride] =
     useState<PendingOverride | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -64,14 +62,6 @@ export function VenueProductTab({ venueId }: { venueId: string }) {
     onSuccess: async () => {
       await refresh();
       setFeedback("მენიუს მართვის პარამეტრი განახლდა.");
-    },
-  });
-  const assignPlan = useMutation({
-    mutationFn: () => platformApi.assignPlan(venueId, selectedPlanId),
-    onSuccess: async () => {
-      await refresh();
-      setPlanConfirm(false);
-      setFeedback("პაკეტი განახლდა.");
     },
   });
   const override = useMutation({
@@ -111,7 +101,6 @@ export function VenueProductTab({ venueId }: { venueId: string }) {
     return <LoadingState label="ფუნქციები იტვირთება" />;
 
   const state = product.data;
-  const selected = selectedPlanId || state.plan?.id || "";
   const currentPlan = plans.data.find((plan) => plan.id === state.plan?.id);
   const planFeatures = new Set(
     currentPlan?.features.map(({ feature }) => feature.key) ?? [],
@@ -127,20 +116,16 @@ export function VenueProductTab({ venueId }: { venueId: string }) {
     if (enabled) pendingFeatures.add(pendingOverride.featureKey);
     else pendingFeatures.delete(pendingOverride.featureKey);
   }
-  const nextPlanFeatures = new Set(
-    plans.data
-      .find((plan) => plan.id === selectedPlanId)
-      ?.features.map(({ feature }) => feature.key) ?? [],
-  );
-  for (const row of state.overrides) {
-    if (row.effect === "ENABLED") nextPlanFeatures.add(row.featureKey);
-    else nextPlanFeatures.delete(row.featureKey);
-  }
   return (
     <fieldset
       disabled={actor?.role !== "SUPER_ADMIN"}
       style={{ border: 0, padding: 0, minWidth: 0 }}
     >
+      {state.commercialStatus === "TRIAL" && (
+        <p role="status" className="platform-callout">
+          {state.plan?.name} · TRIAL
+        </p>
+      )}
       {state.commercialAccess === false && (
         <p role="status" className="platform-callout">
           ღრუბლოვანი სერვისების წვდომა შეჩერებულია. აღსადგენად გაააქტიურეთ
@@ -210,48 +195,7 @@ export function VenueProductTab({ venueId }: { venueId: string }) {
           )}
         </Panel>
       )}
-      <div className="platform-grid platform-grid--sidebar">
-        <Panel
-          title="მინიჭებული პაკეტი"
-          description="რესტორნისთვის შერჩეული პაკეტი."
-        >
-          <div className="platform-plan-control">
-            <div>
-              <strong>{state.plan?.name ?? "პაკეტი არჩეული არ არის"}</strong>
-              <p>
-                {state.agreedPrice?.priceMinor != null
-                  ? `შეთანხმებული ფასი: ${(state.agreedPrice.priceMinor / 100).toFixed(2)} ${state.agreedPrice.currency} / ${state.agreedPrice.billingPeriod}`
-                  : "შეთანხმებული ფასი არ არის დაფიქსირებული"}
-              </p>
-              <span>
-                {state.planAssignedAt
-                  ? `მინიჭებულია ${formatDateTime(state.planAssignedAt)}`
-                  : "აირჩიეთ პაკეტი."}
-              </span>
-            </div>
-            <div>
-              <Select
-                aria-label="პაკეტი"
-                value={selected}
-                onChange={(event) => setSelectedPlanId(event.target.value)}
-              >
-                <option value="">აირჩიეთ პაკეტი</option>
-                {plans.data.map((plan) => (
-                  <option key={plan.id} value={plan.id}>
-                    {plan.name} ({plan.status})
-                  </option>
-                ))}
-              </Select>
-              <Button
-                tone="primary"
-                disabled={!selectedPlanId || selectedPlanId === state.plan?.id}
-                onClick={() => setPlanConfirm(true)}
-              >
-                პაკეტის შეცვლა
-              </Button>
-            </div>
-          </div>
-        </Panel>
+      <div className="platform-section-gap">
         <Panel
           title="მოქმედი ფუნქციები"
           description="პაკეტისა და ინდივიდუალური პარამეტრების მიხედვით."
@@ -390,17 +334,6 @@ export function VenueProductTab({ venueId }: { venueId: string }) {
           </div>
         </div>
       ) : null}
-      <ConfirmDialog
-        georgian
-        open={planConfirm}
-        onOpenChange={setPlanConfirm}
-        title="შევცვალოთ პაკეტი?"
-        description={`მიმდინარე პაკეტს შეცვლის ${plans.data.find((plan) => plan.id === selectedPlanId)?.name ?? "შერჩეული პაკეტი"}. არსებული ინდივიდუალური პარამეტრები შენარჩუნდება. ${featureWarnings(nextPlanFeatures).join(" ")}`}
-        confirmLabel="პაკეტის მინიჭება"
-        pending={assignPlan.isPending}
-        error={assignPlan.error ? errorMessage(assignPlan.error) : undefined}
-        onConfirm={() => assignPlan.mutate()}
-      />
       <ConfirmDialog
         georgian
         open={Boolean(pendingOverride)}

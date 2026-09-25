@@ -14,6 +14,8 @@ export type BillingQuote = {
 export type SubscriptionDetail = {
   features?: string[];
   status: string;
+  startedAt?: string | null;
+  serverTime?: string;
   trialEndsAt?: string | null;
   currentPeriodStart?: string | null;
   currentPeriodEndsAt?: string | null;
@@ -47,3 +49,23 @@ export const money = (
 ) => (amount == null ? "—" : `${(amount / 100).toFixed(2)} ${currency ?? ""}`);
 export const day = (value?: string | null, locale = "en-GB") =>
   value ? new Date(value).toLocaleDateString(locale) : "—";
+
+export const dateTime = (value?: string | null, locale = "en-GB") =>
+  value
+    ? new Date(value).toLocaleString(locale, {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZoneName: "short",
+      })
+    : "—";
+export const remaining = (end?: string | null, now = Date.now()) => {
+  if (!end) return "—";
+  const minutes = Math.max(
+    0,
+    Math.floor((new Date(end).getTime() - now) / 60000),
+  );
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+};

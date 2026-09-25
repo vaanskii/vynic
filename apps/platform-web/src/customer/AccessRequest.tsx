@@ -136,7 +136,12 @@ export function AccessRequest() {
                     await customerApi("access-requests", body);
                     setSent(true);
                   } catch (e) {
-                    setError((e as Error).message);
+                    if (
+                      (e as Error).message ===
+                      "A request is already awaiting review"
+                    )
+                      setSent(true);
+                    else setError((e as Error).message);
                   } finally {
                     setBusy(false);
                   }

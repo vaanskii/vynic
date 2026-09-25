@@ -68,6 +68,7 @@ export interface Plan {
 }
 
 export interface ProductState {
+  commercialStatus?: string | null;
   menuManagement?: {
     authority: "POS" | "CLOUD";
     canEnableCloud: boolean;
@@ -96,6 +97,11 @@ export interface ProductState {
 }
 
 export interface WebsiteAccess {
+  provisioning?: {
+    status: string;
+    assignedSlug: string | null;
+    publishedAt: string | null;
+  } | null;
   configuredMode: WebsiteMode;
   effectiveMode: WebsiteMode;
   entitled: boolean;

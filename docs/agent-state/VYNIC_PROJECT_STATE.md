@@ -57,6 +57,11 @@ current transport status.
 - Commercial subscription lifecycle connects explicit Trial approval to atomic
   provisioning and adds anchored paid periods, server upgrade quotes, deferred
   downgrades/cancellation, suspension/resume and trusted/manual payment receipts.
+  Platform Commercial owns state-aware lifecycle actions and exact local timestamps
+  with timezone; Product owns capabilities/overrides/menu policy; Website owns
+  provisioning, publication, domains and hostname review. EXTEND_TRIAL preserves
+  the start and requires a later end; confirmed END_TRIAL immediately cancels
+  commercial access with actor/reason/before/after audit and retains data.
   There is no production billing provider. See `docs/COMMERCIAL_SUBSCRIPTION_LIFECYCLE.md`.
   Commercial Access Hardening separates ownership from product assignment. New Venues start NO_PLAN, with Cloud menu editing off.
   Website plans need no POS/Manager. Operators can admit empty Website Venues
@@ -718,11 +723,15 @@ current transport status.
   website presentation layer over the operational menu, owner preview of the
   real frontend, and a sectioned Georgian owner dashboard at `/dashboard`
   (one path per section; `restaurant` is the profile). First-run setup
-  requires only restaurant name and website address (entitled SAAS; name only
-  otherwise); logo is optional; everything else is optional in dedicated sections (profile,
+  confirms the restaurant name and displays the server-assigned SaaS address
+  read-only; logo is optional for ACTIVE Website customers; everything else is optional in dedicated sections (profile,
   website, menu, photos, hours, payments, POS devices, managers, subscription,
-  settings) sharing one website draft with a save bar. The address check is
-  advisory; publication still claims the hostname. The menu section is the
+  settings) sharing one website draft with a save bar. SaaS provisioning assigns
+  a collision-safe address with spaces removed. Existing assigned addresses never
+  follow display-name changes. Only ACTIVE Website owners can submit one pending
+  hostname request; Platform approval rechecks availability under lock and changes
+  the domain and draft/published identity atomically. Trial owners cannot request
+  changes; draft saves/publication cannot choose an address. The menu section is the
   canonical category/subcategory/item/size tree with separate website presentation;
   CLOUD-authoritative Venues author it in the dashboard, while POS-authoritative
   Venues retain their existing POS authoring. SEO and exact map pins use
@@ -951,7 +960,8 @@ current transport status.
 
 ## Current Migration Versions
 
-- Prisma migration tip: `20261004120000_subscription_lifecycle`.
+- Prisma migration tip: `20261005120000_website_hostname_requests`.
+- Previous lifecycle migration: `20261004120000_subscription_lifecycle`.
 - Previous acquisition migration: `20261003120200_customer_trial_requests`.
 - Commercial access/media/pricing: `20261003120000_commercial_access_hardening`,
   `20261003120100_no_plan_default`.

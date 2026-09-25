@@ -33,6 +33,8 @@ export type WebsiteContent = {
   gallery: { url: string; alt: string }[];
 };
 export type WebsiteSettings = {
+  commercialStatus?: string;
+  hostnameChangeAllowed?: boolean;
   mediaUploadAllowed?: boolean;
   schemaVersion: number;
   themeKeys: string[];

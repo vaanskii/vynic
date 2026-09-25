@@ -1,5 +1,6 @@
+import { HostnameRequest } from "./HostnameRequest";
 import { CatalogEditor } from "./CatalogEditor";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { customerApi } from "./api";
 import { WebsiteImageUpload } from "./WebsiteImageUpload";
 import { WebsiteMenuEditor } from "./WebsiteMenuEditor";
@@ -394,80 +395,8 @@ export function WebsiteSection({
   );
 }
 
-/** The website address, with a live availability check as the owner types. */
 function AddressField({ website }: { website: Website }) {
-  const settings = website.settings!;
-  const slug = website.draft!.slug;
-  const [result, setResult] = useState<{
-    slug: string;
-    check: "ok" | "taken" | "invalid";
-  }>();
-  const unchanged = slug === settings.draft.slug;
-  const check = !unchanged && result?.slug === slug ? result.check : "idle";
-  useEffect(() => {
-    if (unchanged) return;
-    const timer = setTimeout(() => {
-      void customerApi<{ valid: boolean; available: boolean }>(
-        `venues/${website.venueId}/website/address/${slug || "-"}`,
-      )
-        .then((r) =>
-          setResult({
-            slug,
-            check: !r.valid ? "invalid" : r.available ? "ok" : "taken",
-          }),
-        )
-        .catch(() => setResult(undefined));
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [slug, unchanged, website.venueId]);
-  return (
-    <>
-      <label htmlFor="website-address">ვებსაიტის მისამართი</label>
-      <span className="first-run__address">
-        <input
-          id="website-address"
-          aria-describedby="website-address-hint"
-          required
-          maxLength={48}
-          autoCapitalize="none"
-          spellCheck={false}
-          value={slug}
-          aria-invalid={check === "taken" || check === "invalid"}
-          onChange={(e) =>
-            website.edit({
-              slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""),
-            })
-          }
-        />
-        {settings.baseDomain && (
-          <span aria-hidden="true">.{settings.baseDomain}</span>
-        )}
-      </span>
-      <p
-        id="website-address-hint"
-        className="portal-hint"
-        role={check === "idle" ? undefined : "status"}
-      >
-        {check === "taken"
-          ? "ეს მისამართი უკვე დაკავებულია."
-          : check === "invalid"
-            ? "გამოიყენეთ ლათინური ასოები, ციფრები და ტირე."
-            : check === "ok"
-              ? "მისამართი თავისუფალია."
-              : "მისამართის შეცვლა ძალაში შევა გამოქვეყნების შემდეგ."}
-      </p>
-      {settings.publishedAt && (
-        <p className="portal-hint">
-          ბოლოს გამოქვეყნდა:{" "}
-          {new Date(settings.publishedAt).toLocaleString("ka-GE")}
-        </p>
-      )}
-      <p className="portal-hint">
-        „ვებსაიტის ნახვა“ გახსნის საიტს ისე, როგორც გამოქვეყნების შემდეგ
-        გამოჩნდება. სტუმრები ცვლილებებს დაინახავენ მხოლოდ გამოქვეყნების შემდეგ.
-      </p>
-    </>
-  );
+  return <HostnameRequest website={website} />;
 }
 
 function ContactFields({

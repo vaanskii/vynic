@@ -10,7 +10,7 @@ describe("Restaurant Code setup", () => {
       window.innerWidth = width;
       const user = userEvent.setup();
       const api = installApi();
-      renderPlatform(`/venues/${ids.venue}`);
+      renderPlatform(`/venues/${ids.venue}/product`);
       expect(
         await screen.findByText("მენეჯერის აპლიკაცია გამორთულია"),
       ).toBeVisible();

@@ -1,0 +1,99 @@
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { platformApi } from "../../api";
+import { useAuth } from "../../auth";
+import { Panel } from "../../components/Page";
+import { Button } from "../../components/Button";
+import { Field, Input } from "../../components/Form";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
+import { ErrorState } from "../../components/State";
+import { errorMessage } from "../../format";
+export function HostnameReviews({ venueId }: { venueId: string }) {
+  const { actor } = useAuth();
+  const client = useQueryClient();
+  const requests = useQuery({
+    queryKey: ["hostname-requests", venueId],
+    queryFn: () => platformApi.hostnameRequests(venueId),
+  });
+  const [status, setStatus] = useState("");
+  const [reason, setReason] = useState("");
+  const pending = requests.data?.find((r) => r.status === "PENDING");
+  const review = useMutation({
+    mutationFn: () =>
+      platformApi.reviewHostname(venueId, pending!.id, status, reason),
+    onSuccess: async () => {
+      setStatus("");
+      setReason("");
+      await Promise.all(
+        ["hostname-requests", "domains", "product", "audit"].map((key) =>
+          client.invalidateQueries({
+            queryKey: key === "audit" ? [key] : [key, venueId],
+          }),
+        ),
+      );
+    },
+  });
+  return (
+    <Panel title="Hostname change request">
+      {requests.isPending ? (
+        <p>Loading requests…</p>
+      ) : requests.error ? (
+        <ErrorState
+          error={errorMessage(requests.error)}
+          retry={() => void requests.refetch()}
+        />
+      ) : pending ? (
+        <>
+          <p>
+            <strong>{pending.hostname}</strong> · PENDING
+          </p>
+          {actor?.role !== "SUPPORT_READONLY" && (
+            <>
+              <Field label="Review reason">
+                <Input
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  maxLength={1000}
+                />
+              </Field>
+              <Button
+                disabled={!reason.trim()}
+                onClick={() => setStatus("APPROVED")}
+              >
+                Approve
+              </Button>
+              <Button
+                disabled={!reason.trim()}
+                onClick={() => setStatus("REJECTED")}
+              >
+                Reject
+              </Button>
+            </>
+          )}
+        </>
+      ) : (
+        <p>No pending hostname change.</p>
+      )}
+      <ConfirmDialog
+        open={!!status}
+        onOpenChange={(open) => {
+          if (!open) setStatus("");
+        }}
+        title={
+          status === "APPROVED"
+            ? "Approve hostname change?"
+            : "Reject hostname change?"
+        }
+        description={
+          status === "APPROVED"
+            ? `The current SaaS address will be replaced with ${pending?.hostname}. Availability and paid access are checked again.`
+            : "The current address stays unchanged."
+        }
+        confirmLabel={status === "APPROVED" ? "Approve" : "Reject"}
+        pending={review.isPending}
+        error={review.error ? errorMessage(review.error) : undefined}
+        onConfirm={() => review.mutate()}
+      />
+    </Panel>
+  );
+}

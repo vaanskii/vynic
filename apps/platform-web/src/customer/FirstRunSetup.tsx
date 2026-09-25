@@ -3,9 +3,9 @@ import { customerApi } from "./api";
 import type { WebsiteSettings } from "./useWebsite";
 
 /**
- * The only blocking step before the owner dashboard: name, logo and address.
+ * The first-run step confirms the restaurant name and its assigned address.
  *
- * Everything else — address, hours, photos, menu, POS — is optional and lives
+ * Everything else — street address, hours, photos, menu, POS — is optional and lives
  * in its own dashboard section. Each write here is convergent (restaurant creation
  * returns the existing one), so a failed step is retried from this same form
  * without creating duplicates.
@@ -18,63 +18,6 @@ type Venue = {
   phone?: string | null;
   legalId?: string | null;
 };
-
-const georgian: Record<string, string> = {
-  ა: "a",
-  ბ: "b",
-  გ: "g",
-  დ: "d",
-  ე: "e",
-  ვ: "v",
-  ზ: "z",
-  თ: "t",
-  ი: "i",
-  კ: "k",
-  ლ: "l",
-  მ: "m",
-  ნ: "n",
-  ო: "o",
-  პ: "p",
-  ჟ: "zh",
-  რ: "r",
-  ს: "s",
-  ტ: "t",
-  უ: "u",
-  ფ: "p",
-  ქ: "k",
-  ღ: "gh",
-  ყ: "q",
-  შ: "sh",
-  ჩ: "ch",
-  ც: "ts",
-  ძ: "dz",
-  წ: "ts",
-  ჭ: "ch",
-  ხ: "kh",
-  ჯ: "j",
-  ჰ: "h",
-};
-const SLUG = /^[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/;
-
-/** A readable Latin address suggestion from a Georgian or Latin name. */
-export function suggestAddress(name: string) {
-  return [...name.toLowerCase()]
-    .map((c) => georgian[c] ?? c)
-    .join("")
-    .normalize("NFKD")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 48)
-    .replace(/-+$/, "");
-}
-/** Keep only what an address may contain while the owner types. */
-function cleanAddress(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, "")
-    .replace(/-{2,}/g, "-")
-    .slice(0, 48);
-}
 
 export function FirstRunSetup({
   venue,
@@ -89,10 +32,6 @@ export function FirstRunSetup({
   onComplete: () => Promise<void>;
 }) {
   const [name, setName] = useState(venue?.name ?? "");
-  const [slug, setSlug] = useState(
-    website?.draft.slug || suggestAddress(venue?.name ?? ""),
-  );
-  const [slugTouched, setSlugTouched] = useState(!!website?.draft.slug);
   const [logo, setLogo] = useState<{ file: File; preview?: string }>();
   const file = logo?.file;
   const preview = logo?.preview;
@@ -106,7 +45,6 @@ export function FirstRunSetup({
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [addressError, setAddressError] = useState("");
   const existingLogo = website?.draft.logoUrl ?? "";
   const domain = baseDomain ?? website?.baseDomain;
 
@@ -118,13 +56,8 @@ export function FirstRunSetup({
 
   async function submit() {
     setError("");
-    setAddressError("");
     const trimmed = name.trim();
     if (!trimmed) return setError("შეიყვანეთ რესტორნის სახელი.");
-    if (website?.mode === "SAAS" && !SLUG.test(slug))
-      return setAddressError(
-        "გამოიყენეთ ლათინური ასოები და ციფრები. სიტყვები შეგიძლიათ გამოყოთ ტირით.",
-      );
     setBusy(true);
     try {
       let venueId = venue?.id;
@@ -143,18 +76,6 @@ export function FirstRunSetup({
       }
       const settings = website;
       if (settings?.mode === "SAAS") {
-        const address = await customerApi<{
-          valid: boolean;
-          available: boolean;
-        }>(`venues/${venueId}/website/address/${slug}`);
-        if (!address.valid || !address.available) {
-          setAddressError(
-            address.valid
-              ? "ეს მისამართი უკვე დაკავებულია. სცადეთ სხვა."
-              : "ეს მისამართი ვერ გამოიყენება. სცადეთ სხვა.",
-          );
-          return;
-        }
         let logoUrl = existingLogo;
         if (file) {
           const data = new FormData();
@@ -172,7 +93,6 @@ export function FirstRunSetup({
             expectedRevision: settings.revision,
             content: {
               ...settings.draft,
-              slug,
               logoUrl,
               heroTitle: settings.draft.heroTitle || trimmed,
             },
@@ -212,7 +132,6 @@ export function FirstRunSetup({
               autoComplete="organization"
               onChange={(e) => {
                 setName(e.target.value);
-                if (!slugTouched) setSlug(suggestAddress(e.target.value));
               }}
             />
           </label>
@@ -267,43 +186,18 @@ export function FirstRunSetup({
           )}
 
           {website?.mode === "SAAS" && (
-            <>
-              <div className="first-run__field">
-                <label htmlFor="first-run-address">ვებსაიტის მისამართი</label>
-                <span className="first-run__address">
-                  <input
-                    id="first-run-address"
-                    value={slug}
-                    required
-                    maxLength={48}
-                    inputMode="url"
-                    autoCapitalize="none"
-                    spellCheck={false}
-                    aria-invalid={!!addressError}
-                    aria-describedby="first-run-address-hint"
-                    onChange={(e) => {
-                      setSlugTouched(true);
-                      setAddressError("");
-                      setSlug(cleanAddress(e.target.value));
-                    }}
-                  />
-                  {domain && <span aria-hidden="true">.{domain}</span>}
-                </span>
-              </div>
-              <p id="first-run-address-hint" className="first-run__hint">
-                {addressError ? (
-                  <span role="alert">{addressError}</span>
-                ) : (
-                  <>
-                    თქვენი საიტი იქნება:{" "}
-                    <strong>
-                      {slug || "restaurant"}
-                      {domain ? `.${domain}` : ""}
-                    </strong>
-                  </>
-                )}
-              </p>
-            </>
+            <div className="first-run__field">
+              <span>თქვენი ვებსაიტის მისამართი</span>
+              <strong>
+                {website.draft.slug}
+                {domain ? `.${domain}` : ""}
+              </strong>
+              {website.commercialStatus === "TRIAL" && (
+                <p>
+                  საცდელი პერიოდის განმავლობაში მისამართის შეცვლა შეუძლებელია.
+                </p>
+              )}
+            </div>
           )}
 
           {error && (

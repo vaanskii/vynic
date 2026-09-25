@@ -1,3 +1,4 @@
+import { dateTime } from "../subscriptions/types";
 import { useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -227,7 +228,13 @@ export function OwnerDashboard({
         {section === "managers" && available(section) && (
           <ManagersSection {...common} />
         )}
-        {section === "subscription" && <SubscriptionSection key={venue.venue.id} venue={venue} onChanged={refresh} />}
+        {section === "subscription" && (
+          <SubscriptionSection
+            key={venue.venue.id}
+            venue={venue}
+            onChanged={refresh}
+          />
+        )}
         {section === "settings" && (
           <SettingsSection
             account={portal.account}
@@ -444,6 +451,11 @@ function Dashboard({
             <>
               <p className="portal-address">{websiteAddress(settings)}</p>
               <WebsiteStatus website={website} />
+              {settings.hostnameChangeAllowed && (
+                <button type="button" onClick={() => go("website")}>
+                  მისამართის შეცვლის მოთხოვნა
+                </button>
+              )}
               {!settings.entitled && (
                 <p className="portal-hint">
                   გამოქვეყნება თქვენს პაკეტში გამორთულია.
@@ -466,8 +478,9 @@ function Dashboard({
           <p className="portal-stat">{venue.plan?.name ?? "—"}</p>
           <p>
             {subscriptionLabels[sub?.status ?? "NO_PLAN"] ?? sub?.status}
-            {sub?.trialEndsAt &&
-              ` · ${new Date(sub.trialEndsAt).toLocaleDateString("ka-GE")}-მდე`}
+            {sub?.status === "TRIAL" &&
+              sub.trialEndsAt &&
+              ` · ${dateTime(sub.trialEndsAt, "ka-GE")}-მდე`}
           </p>
           <button
             type="button"

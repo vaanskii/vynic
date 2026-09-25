@@ -11,20 +11,32 @@ export function TrialRequest({ venueId }: { venueId: string }) {
       billingPeriod: string;
     }[]
   >([]);
+  const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
   useEffect(() => {
-    customerApi<typeof plans>("access-requests/plans")
-      .then(setPlans)
+    Promise.all([
+      customerApi<typeof plans>("access-requests/plans"),
+      customerApi<{ status: string } | null>(
+        `venues/${venueId}/trial-requests`,
+      ),
+    ])
+      .then(([p, pending]) => {
+        setPlans(p);
+        setSent(pending?.status === "PENDING");
+        setLoaded(true);
+      })
       .catch((e) => setError(e.message));
-  }, []);
+  }, [venueId]);
   return (
     <section className="portal-card">
       <h3>მოითხოვეთ საცდელი პერიოდი</h3>
       <p>Vynic-ის გუნდი განიხილავს მოთხოვნას და დაგიკავშირდებათ.</p>
       {sent ? (
         <p role="status">მოთხოვნა გაგზავნილია. დაელოდეთ ჩვენი გუნდის პასუხს.</p>
+      ) : !loaded ? (
+        <p role="status">იტვირთება…</p>
       ) : (
         <form
           onSubmit={async (e) => {

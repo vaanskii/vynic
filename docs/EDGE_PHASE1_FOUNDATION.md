@@ -109,7 +109,7 @@ Windows runtime, service manager integration, ACL provisioning, certificate
 distribution/firewall and physical hardware remain release validation work.
 No printer, updater, fiscal or hardware code belongs in this phase.
 
-`apps/venue-web`/BOG remain the custom one-restaurant website. The generic SaaS
+`apps/vankisi-custom-web`/BOG remain the custom one-restaurant website. The generic SaaS
 website is unbuilt. Its future path stays Website → Cloud → durable Venue command
 → Edge → POS, with payment-provider callbacks and merchant authority in Cloud.
 

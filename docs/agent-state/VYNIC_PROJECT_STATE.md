@@ -22,9 +22,11 @@ current transport status.
   `/admin` and `/admin/*` addresses return to `/` on the same host. Owner routes use only the CustomerAccount session
   and Admin only the PlatformUser session. Old `/portal…`, `/signup` and `/start` links
   redirect to their `/login`, `/request-access`, `/invite` or `/dashboard` equivalents.
-- `apps/venue-web/` is the bespoke Vankisi CUSTOM customer website. Further
-  CUSTOM clients start from `templates/custom-site/` as `apps/<client>-web` over
-  the shared client `packages/website-client/`; one backend serves all of them.
+- `apps/vankisi-custom-web/` (package `vankisi`) is Vankisi's bespoke website and
+  the first production CUSTOM frontend. It stays standalone and does not use the
+  starter or the shared client. Future CUSTOM clients may start from
+  `templates/custom-site/` as `apps/<client>-web` over the optional shared client
+  `packages/website-client/`; one backend serves all of them.
 - `apps/restaurant-web/` is the generic multi-Venue SaaS restaurant website. One
   build serves every SAAS Venue; the request Host decides which restaurant.
 - `packages/contracts/` owns the generated Cloud/Edge command, table-identity
@@ -735,7 +737,7 @@ current transport status.
   Origin equals their Host, a trusted forwarded host is the sole authority, and
   the development fallback applies only to anonymous local hosts. Hours/gallery
   for CUSTOM remain frontend-owned. The existing Vankisi binding is backfilled
-  ACTIVE without a site key; `apps/venue-web` is unchanged. W2
+  ACTIVE without a site key; the operator records `vankisi-web` in Platform. W2
   extends VenueWebsiteConfig with private drafts, explicit audited publication,
   revision conflicts and a Host-authorized generic bootstrap; Platform still
   controls mode and WEBSITE entitlement, and Venue profile remains the public

@@ -173,7 +173,7 @@ stored values survive migration. Operator enablement requires effective WEBSITE
 and conservative first-use admission. Turning editing off preserves CLOUD
 ownership; POS snapshots cannot overwrite it. POS-authoritative venues remain
 protected. Device bootstrap stays frozen/staged; operational handover is not added.
-`apps/operations`, Go Edge, `apps/venue-web`, Sale and payment history are unchanged.
+`apps/operations`, Go Edge, `apps/vankisi-custom-web`, Sale and payment history are unchanged.
 
 ## P. Migrations and rollout
 

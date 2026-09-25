@@ -3,7 +3,7 @@
 The generic Vynic SaaS restaurant website. One build serves every `SAAS` Venue;
 which restaurant a visitor sees is decided by the backend from the request Host.
 
-This is **not** `apps/venue-web`, which is the bespoke Vankisi `CUSTOM` site and
+This is **not** `apps/vankisi-custom-web`, which is the bespoke Vankisi `CUSTOM` site and
 stays a separate product.
 
 ## Rules this app lives by

@@ -2,7 +2,7 @@
 
 ## Boundary and model
 
-`apps/venue-web` remains the CUSTOM Vankisi site; shared NestJS handles BOG.
+`apps/vankisi-custom-web` remains the CUSTOM Vankisi site; shared NestJS handles BOG.
 No generic SaaS site, Go Edge payment callback, POS authority or Manager change.
 
 `pos.PaymentIntegration` holds BOG credential revisions, each owned by a Venue.

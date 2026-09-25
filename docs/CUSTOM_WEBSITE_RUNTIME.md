@@ -14,7 +14,7 @@ automation, DNS/TLS and observability remain manual/deferred.
 | Lifecycle | Operator-attested `SETUP_PENDING → READY → ACTIVE` (`ERROR`), gated by a server checklist. No automation. |
 | Configuration | Venue data lives in Cloud; the frontend holds only its own `SITE_KEY`. |
 | Versioning | Each client app builds and deploys independently. |
-| Repository | Monorepo `apps/<client>-web`, starter in `templates/custom-site`, shared logic in `packages/website-client`. |
+| Repository | Monorepo `apps/<client>-web`; Vankisi is `apps/vankisi-custom-web` (bespoke, standalone). Future sites may start from `templates/custom-site` with shared logic in `packages/website-client`. |
 | Observability | Not implemented. |
 | Deactivation | WEBSITE loss/Trial expiry or a disabled domain stops the public API immediately; the static frontend then renders "unavailable". |
 
@@ -22,7 +22,7 @@ The rest of this document is the original context, kept for history.
 
 ## Context
 
-`apps/venue-web/` is the custom restaurant website built specifically for
+`apps/vankisi-custom-web/` is the custom restaurant website built specifically for
 Vankisi. It is a single compiled site with its own branding, layout, SVG floor
 plans, Three.js behaviour, booking UX, and restaurant-specific presentation.
 It is a real, live product and stays that way.
@@ -94,10 +94,10 @@ this ADR guards against:
 - No domain routing, Host header parsing, or per-site request resolution.
 - No deployment, hosting, or build-registration mechanism.
 - No website credential, API key, or authentication path for a custom site.
-- No change to `apps/venue-web/` — not its branding, layout, floor plans,
+- No change to `apps/vankisi-custom-web/` — not its branding, layout, floor plans,
   Three.js behaviour, booking UX, or configuration. It does not read the new
   entitlement tables and behaves exactly as before.
-- No repurposing of `apps/venue-web/` into the generic SaaS website.
+- No repurposing of `apps/vankisi-custom-web/` into the generic SaaS website.
 - No monorepo-versus-separate-repository decision.
 - No deployment or health status modelled anywhere. "Entitled to a custom
   website" says nothing about whether one is deployed or healthy, and Step 5A's

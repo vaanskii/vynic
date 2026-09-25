@@ -52,7 +52,7 @@ For normal feature/fix work, do not automatically:
 
 - read all docs or the full canonical protocol;
 - read the full Prisma schema when the data model is untouched;
-- inspect `venue-web` for a POS-only task or Platform Admin for an isolated
+- inspect `vankisi-custom-web` for a POS-only task or Platform Admin for an isolated
   Flutter change;
 - inspect broad history, rerun established audits, or open every large file in
   a subsystem.

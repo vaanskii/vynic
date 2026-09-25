@@ -2,7 +2,7 @@
 
 ## Scope and authority
 
-The shared backend now supplies generic website content. `apps/venue-web` remains
+The shared backend now supplies generic website content. `apps/vankisi-custom-web` remains
 Vankisi CUSTOM; its reservation/payment controllers and W1 integration path are
 unchanged. No `apps/restaurant-web`, orders, SaaS payments, Edge website handler,
 reservation redesign, page builder or DNS/TLS automation is included.
@@ -208,7 +208,7 @@ or production access is part of W2 validation.
 All six are implemented; see `docs/WEBSITE_PHASE_W3.md`.
 
 
-1. Build the separate `apps/restaurant-web` consumer; preserve `apps/venue-web`
+1. Build the separate `apps/restaurant-web` consumer; preserve `apps/vankisi-custom-web`
    and route CUSTOM away from the generic renderer. Handle v1 SAAS, CUSTOM and
    unavailable responses explicitly, with no demo/default Venue fallback.
 2. Define the `classic` presentation, mobile/accessibility requirements and asset

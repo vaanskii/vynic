@@ -88,7 +88,7 @@ needs sharing, JSON Schema is the thing to reach for, alongside this.
 Both keep their existing public API, so call sites did not change when the
 implementation moved here.
 
-`apps/venue-web` does not consume this package. It identifies tables by
+`apps/vankisi-custom-web` does not consume this package. It identifies tables by
 `WebsiteTable.websiteTableNumber` strings (`table3`, `f2-table1`) and never
 computes a legacy code; the server maps those to codes on its behalf.
 

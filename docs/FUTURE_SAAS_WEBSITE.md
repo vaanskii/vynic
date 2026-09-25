@@ -37,7 +37,7 @@ Later requirements, when that phase starts:
 
 ## Relationship to the existing custom site
 
-`apps/venue-web/` is **not** this. It is the custom website built for Vankisi,
+`apps/vankisi-custom-web/` is **not** this. It is the custom website built for Vankisi,
 and it stays a custom website: its branding, layout, SVG floor plans, Three.js
 behaviour, booking UX, and restaurant-specific presentation are the product,
 not scaffolding to be generalised away.

@@ -57,7 +57,7 @@ which Venue a request belongs to.
 ### The bootstrap hostname
 
 The repository contains no evidence of the production hostname for the existing
-Vankisi site — `apps/venue-web/` resolves its API from `window.location`, and
+Vankisi site — `apps/vankisi-custom-web/` resolves its API from `window.location`, and
 every committed environment file uses placeholders. Guessing a live domain into
 a migration would be a bad way to find out we guessed wrong, so the Step 4B2B
 migration registers the bootstrap Venue under:
@@ -74,7 +74,7 @@ hide behind a default.
 
 ### Host trust and reverse proxies
 
-`apps/venue-web/` calls `/api` on its own origin in production, so the process
+`apps/vankisi-custom-web/` calls `/api` on its own origin in production, so the process
 receives the site's hostname in `Host` directly. If a deployment terminates TLS
 at a proxy that rewrites `Host`, set:
 
@@ -125,7 +125,7 @@ not how its tenant is established.
 | Venue resolution | `VenueDomain` | `VenueDomain` |
 | Entitlement | `WEBSITE` | `WEBSITE` |
 | Public APIs | shared custom-site surface (`/api/website/custom/*`, bookings, payments, accounts) | generic `/api/website/*` |
-| Frontend | a bespoke build per client (`apps/venue-web/`, `apps/<client>-web`) | one generic app (`apps/restaurant-web`) |
+| Frontend | a bespoke build per client (`apps/vankisi-custom-web/`, `apps/<client>-web`) | one generic app (`apps/restaurant-web`) |
 
 Nothing in the backend branches on `CUSTOM` vs `SAAS` to decide a tenant. The
 resolver returns `configuredMode` as information for a caller that needs it; the

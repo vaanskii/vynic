@@ -1,8 +1,21 @@
 # CUSTOM websites
 
 A CUSTOM website is **a bespoke frontend over the shared Vynic backend**. It is
-not a second backend. Vankisi (`apps/venue-web`) is the first one; every later
+not a second backend. Vankisi (`apps/vankisi-custom-web`) is the first one; every later
 custom client follows the same model.
+
+| Frontend | What it is |
+| --- | --- |
+| `apps/vankisi-custom-web` | Vankisi's bespoke website, the first production CUSTOM frontend. Standalone; not built on the starter or the shared client. |
+| `apps/restaurant-web` | The generic SaaS frontend: one build for every SAAS Venue. |
+| `templates/custom-site` | Starter for **future** custom frontends. |
+| `packages/website-client` | Optional shared client for **future** custom frontends. |
+
+Vankisi does not migrate to the starter or the client package. It already uses
+the shared backend through the same Host-resolved routes (`/api/menu`,
+`/api/tables/*`, `/api/auth/*`, `/api/user/*`, `/api/bog/*`), and rebuilding it
+would add risk without changing what it can do. Bespoke and starter-based
+frontends coexist over one backend.
 
 ```text
 CUSTOM frontend A ─┐
@@ -25,7 +38,7 @@ to Vankisi), **LEGACY**, **SECURITY** (a risk; fixed unless stated),
 
 | Area | Current behaviour | Class |
 | --- | --- | --- |
-| Transport | `apps/venue-web/src/services/api.ts`: on `localhost`/IP it calls `http://<host>:3000/api` (cross-origin, dev only); otherwise `VITE_API_URL` if set, else same-origin `/api` behind nginx. Axios `withCredentials`. | SHARED pattern; `VITE_API_URL` is a trap (below) |
+| Transport | `apps/vankisi-custom-web/src/services/api.ts`: on `localhost`/IP it calls `http://<host>:3000/api` (cross-origin, dev only); otherwise `VITE_API_URL` if set, else same-origin `/api` behind nginx. Axios `withCredentials`. | SHARED pattern; `VITE_API_URL` is a trap (below) |
 | Venue association | Host → `VenueDomain` → Venue in `website/tenancy/website-tenant.service.ts`. No Venue id is sent by the frontend. | SHARED |
 | Host used | Production: the site's own domain through a host-preserving proxy. Local: `localhost:3000` → dev fallback to `WEBSITE_DEV_HOST` (default `vankisi.localhost`, registered by migration). | SHARED / LEGACY fallback |
 | Cross-origin hosting (`vercel.json`, `VITE_API_URL`) | The API would see its **own** Host, so the Venue could only resolve if the API hostname were registered to Vankisi — impossible for a second site — and SameSite=Strict cookies would not travel. | SECURITY / CLEANUP: unsupported; use same-origin proxy |
@@ -38,10 +51,10 @@ to Vankisi), **LEGACY**, **SECURITY** (a risk; fixed unless stated),
 | My bookings | `/api/user/reservations`: global account, this Venue's CONFIRMED/COMPLETED bookings, plus guest bookings whose email matches. | SHARED; email match = SECURITY (open, §9) |
 | Booking account link | Bookings accepted a browser-supplied `userId`. | SECURITY — **fixed**: session cookie only |
 | Website `SUPER_ADMIN` | Global role; `GET /api/tables/reservations` returned the full booking list of **any** Venue to it. | SECURITY — **fixed**: bound via `WebsiteUser.adminVenueId` |
-| Anonymous booking map | `GET /api/tables/reservations` (no login) returned every guest's name and phone. `venue-web` uses only status/tables. | SECURITY — **fixed**: redacted |
+| Anonymous booking map | `GET /api/tables/reservations` (no login) returned every guest's name and phone. `vankisi-custom-web` uses only status/tables. | SECURITY — **fixed**: redacted |
 | Mode | Legacy routes served any WEBSITE Venue, including SAAS ones. | SECURITY — **fixed**: CUSTOM-only |
 | `shared/bootstrap` | For the bootstrap Venue only: seeds Vankisi's `WEBSITE_TABLE_MAPPINGS`, seeds `SUPER_ADMIN` from `SUPER_ADMIN_*` env (now bound to that Venue), logs menu/env gaps. | VANKISI / LEGACY |
-| Hardcoded identity | Frontend: none (no Venue id/domain). Backend: bootstrap Venue id only in the seeder, `LEGACY_MANAGER_TENANT`, and migrations; `vankisi.localhost` dev default. Vankisi branding, 3D floors, storage keys (`vankisi-cart`) live in `venue-web`. | VANKISI (frontend), LEGACY (backend seeder) |
+| Hardcoded identity | Frontend: none (no Venue id/domain). Backend: bootstrap Venue id only in the seeder, `LEGACY_MANAGER_TENANT`, and migrations; `vankisi.localhost` dev default. Vankisi branding, 3D floors, storage keys (`vankisi-cart`) live in `vankisi-custom-web`. | VANKISI (frontend), LEGACY (backend seeder) |
 | CORS | Allow-list from `FRONTEND_URL`/`ALLOWED_ORIGINS` + dev LAN. Every custom domain had to be listed in deployment env. | CLEANUP — **replaced** by same-origin rule (§6) |
 | Forwarded host | With `TRUST_PROXY_HOST`, an unregistered forwarded host fell back to the direct Host. | SECURITY — **fixed**: forwarded host is sole authority |
 | Dev fallback | Any unregistered `*.localhost` became Vankisi in development. | CLEANUP — **fixed**: only anonymous local hosts fall back |
@@ -114,6 +127,27 @@ transaction as the change; the panel lists them with mode/domain/feature events.
 there is no owner route for any of them, the generic draft editor refuses
 non-SAAS Venues, and the SaaS hostname-request flow is SAAS-only.
 
+### Vankisi's binding
+
+Vankisi is an existing live CUSTOM site, so steps 1–3 and 5–7 are already done
+in production. The binding migration recorded it `ACTIVE` without a site key.
+The intended operator state is:
+
+| Setting | Value |
+| --- | --- |
+| Website implementation (mode) | `CUSTOM` |
+| Custom frontend identity (`siteKey`) | `vankisi-web` |
+| Setup status | `ACTIVE` |
+| Domains | Every hostname that reaches the backend for Vankisi, `ACTIVE` (including `www.` if served) |
+
+The one remaining action is to open Platform Admin → Venues → Vankisi →
+Website → **Custom website**, enter `vankisi-web` in **Custom frontend
+identity**, leave **Setup status** at `ACTIVE`, and **Save custom setup**. The
+save is audited and is refused (409, with the checklist) if Website access,
+CUSTOM mode or an active domain is missing. No database edit or migration sets
+it, and `apps/vankisi-custom-web` never reads it: the key is operator metadata,
+the Host still decides the Venue, and the frontend holds no Venue id.
+
 ## 4. Shared public website API
 
 All routes resolve the Venue from the Host; none reads a Venue id, domain or
@@ -182,6 +216,15 @@ With `TRUST_PROXY_HOST=true`, only the first `X-Forwarded-Host` entry is read,
 and when present it is the only candidate (no fallback to the direct Host).
 Only enable it when the proxy overwrites the header.
 
+**Vankisi deployment.** The repository holds only `apps/vankisi-custom-web/vercel.json`
+(SPA rewrite) and the app's own `npm run build` → `dist/`; nothing in Git names
+the directory. Any setting outside Git that points at the old
+`apps/venue-web` path must be changed to `apps/vankisi-custom-web`, with the
+build command (`npm run build`), output (`dist`) and environment left as they
+are: a Vercel project's Root Directory, or a server's checkout/build path. The
+API transport is unchanged: it calls same-origin `/api` unless `VITE_API_URL`
+is set (the cross-origin case above).
+
 ## 6. CORS / origins
 
 Allowed: explicit `FRONTEND_URL`/`ALLOWED_ORIGINS`, development LAN clients,
@@ -236,8 +279,9 @@ WEBSITE exactly as for SAAS (public API 403, owner website settings refused).
 
 - Hours/gallery/content for CUSTOM (needs a Venue-level hours source).
 - Service fee (10%) and GEL are hardcoded in `BogService`.
-- `siteKey` for Vankisi must be recorded by an operator (`vankisi-web`);
-  `apps/venue-web` does not check it (unchanged on purpose).
+- `siteKey` for Vankisi must be recorded by an operator (`vankisi-web`, see
+  §3). `apps/vankisi-custom-web` does not check it (unchanged on purpose), so
+  misattachment detection covers only frontends built on the shared client.
 - No deployment automation, DNS/TLS automation or health checks: status is an
   operator attestation.
 - Remove stale `BOG_*`/`TBC_*` and per-domain `ALLOWED_ORIGINS` entries from
@@ -247,6 +291,9 @@ WEBSITE exactly as for SAAS (public API 403, owner website settings refused).
 
 See [templates/custom-site/README.md](../templates/custom-site/README.md) and
 [packages/website-client/README.md](../packages/website-client/README.md).
+The starter is the default for new clients, not a requirement: a bespoke app
+like Vankisi's may call the shared routes directly, as long as it is served
+behind the same-origin proxy (§5) and holds no Venue id.
 
 | Step | Who | What |
 | --- | --- | --- |

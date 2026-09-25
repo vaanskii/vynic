@@ -13,7 +13,7 @@ import { MenuService } from './menu.service';
  *
  * WebsiteTenantGuard must precede FeatureGuard: it establishes the Venue the
  * entitlement is then checked against. This is the custom-site menu shape
- * (Vankisi's `apps/venue-web`), so only a CUSTOM Venue's host is served.
+ * (Vankisi's `apps/vankisi-custom-web`), so only a CUSTOM Venue's host is served.
  */
 @Controller('api/menu')
 @UseGuards(WebsiteTenantGuard, FeatureGuard, CustomWebsiteGuard)

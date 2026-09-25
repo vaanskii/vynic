@@ -9,7 +9,7 @@ W3 turns the W2 Website Core into a product a restaurant can actually publish:
   previews the *real* frontend, not a summary of the draft;
 - a website presentation layer over the existing operational menu.
 
-`apps/venue-web` is untouched. It stays the bespoke Vankisi CUSTOM site, keeps
+`apps/vankisi-custom-web` is untouched. It stays the bespoke Vankisi CUSTOM site, keeps
 its own reservation/payment path and its W1 BOG semantics, and is never served
 by the generic frontend. `website/auth`, `website/user`, `website/reservation`
 and `website/payment` are unchanged and still back it.
@@ -23,7 +23,7 @@ and a full Restaurant Backoffice.
 
 ```text
 CUSTOM website                    SAAS website
-apps/venue-web                    apps/restaurant-web
+apps/vankisi-custom-web           apps/restaurant-web
 → bespoke Vankisi frontend        → one generic frontend, many Venues
 → website/auth, user,             → website/core + shared public
   reservation, payment              capabilities
@@ -252,7 +252,7 @@ backend                   :3000            apps/backend           npm run start:
 backend website harness   127.0.0.1:3102   apps/backend/scripts/serve-website-w3-local.ts
 restaurant-web (SAAS)     :5175            apps/restaurant-web    npm run dev
 platform-web (portal)     :5173            apps/platform-web      npm run dev
-venue-web (Vankisi)       :5174            apps/venue-web         npm run dev
+vankisi-custom-web        :5174            apps/vankisi-custom-web npm run dev
 ```
 
 `restaurant-web` proxies `/api` to `http://127.0.0.1:3000` by default — the
@@ -331,7 +331,7 @@ To use the `.vynic.local` names instead, add them yourself:
 ```
 
 `vankisi.vynic.local` here is a local CUSTOM stand-in, not the real Vankisi
-site. The real custom frontend is `apps/venue-web`, run separately and
+site. The real custom frontend is `apps/vankisi-custom-web`, run separately and
 unchanged; the generic frontend must never render it.
 
 Checking the JSON contract directly (`.local` can interact with mDNS, so these

@@ -275,6 +275,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Access/trial requests and review: `apps/backend/src/customer/onboarding-requests.ts`; public form: `apps/platform-web/src/customer/AccessRequest.tsx`; owner trial request: `TrialRequest.tsx`; Platform review: `platform/pages/AccessRequests.tsx`.
 - Plan catalog/pricing and agreement snapshots: `apps/backend/src/platform/plan-catalog.service.ts`, `plan-assignment.ts`; UI: `apps/platform-web/src/platform/pages/PlansPage.tsx`.
 - Commercial milestone policy and reproducible validation: `docs/COMMERCIAL_ACCESS_HARDENING.md`; PostgreSQL proof: `apps/backend/src/customer/commercial-access.integration.spec.ts`; upgrade proof: `apps/backend/scripts/prove-commercial-upgrade.py`.
+- Subscription lifecycle/quotes/receipt boundary: `apps/backend/src/subscriptions/subscription.service.ts`, `billing-policy.ts`, `subscription-reconciliation.ts`; proof: `subscription.integration.spec.ts`, `scripts/prove-subscription-upgrade.py`; policy: `docs/COMMERCIAL_SUBSCRIPTION_LIFECYCLE.md`.
 - Manual subscriptions, Manager bootstrap/reset/disable and Platform users: `apps/backend/src/platform/platform-commercial.controller.ts`, `platform-commercial.service.ts`
 - Phase 2 policy and rollout: `docs/SAAS_PHASE2_CONTROL_PLANE.md`; proof: `apps/backend/src/platform/saas-phase2.integration.spec.ts`
 - API reference: `docs/PLATFORM_CONTROL_PLANE_API.md`
@@ -283,7 +284,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 - Route shell (site, owner and Admin routes): `apps/platform-web/src/App.tsx`, `apps/platform-web/src/platform/Shell.tsx`
 - Auth/session/API: `apps/platform-web/src/platform/auth.tsx`, `apps/platform-web/src/platform/session.ts`, `apps/platform-web/src/platform/api.ts`
-- Pages: `apps/platform-web/src/platform/pages/`; Venue commercial/access controls: `venue/VenueCommercialTab.tsx`; Platform users: `PlatformUsersPage.tsx`
+- Pages: `apps/platform-web/src/platform/pages/`; Venue commercial lifecycle: `venue/SubscriptionPanel.tsx`; Manager access: `venue/VenueCommercialTab.tsx`; owner subscription: `customer/SubscriptionSection.tsx`; Platform users: `PlatformUsersPage.tsx`
 - Integration tests: `apps/platform-web/src/test/`
 
 ## Venue Website

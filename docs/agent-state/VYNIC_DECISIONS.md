@@ -252,6 +252,21 @@ are distinct decisions; an absent row must not become a new customer's free plan
 Trials expire server-side; domains have a 30-day reservation grace. Media requires
 ACTIVE Website access and quotas. See `docs/COMMERCIAL_ACCESS_HARDENING.md`.
 
+## D025 — Subscription transitions require trusted commercial authority
+
+**Decision:** VenueSubscription owns access timing; VenuePlanAssignment owns the
+current package/agreed snapshot. Quotes and receipt events are work/history, not
+competing access models. Trusted server payment results or explicit audited manual
+agreements activate paid access. Upgrades retain the anchor; downgrades and customer
+cancellation wait until renewal. Feature additions dominate price-only classification;
+mixed changes require operator review. Timed unpaid renewals fail closed.
+**Reason:** Browser claims, catalog edits and background timers cannot prove payment
+or alter an agreed billing schedule. Historical unknown terms must remain unknown.
+**Implication:** Lock the Venue, fence quotes with subscription versions, deduplicate
+provider events and keep restaurant merchant payments separate. Legacy manual grace
+is preserved until explicitly adopting dated terms. See
+`docs/COMMERCIAL_SUBSCRIPTION_LIFECYCLE.md`.
+
 ## Maintenance
 
 Add an entry only when it prevents repeated architectural debate. Update or

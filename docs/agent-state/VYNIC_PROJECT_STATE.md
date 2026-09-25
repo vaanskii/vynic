@@ -53,8 +53,11 @@ current transport status.
 
 ## Current Phase
 
-- Commercial Access Hardening separates requests, owner approval and explicit
-  product assignment. New Venues start NO_PLAN, with Cloud menu editing off.
+- Commercial subscription lifecycle connects explicit Trial approval to atomic
+  provisioning and adds anchored paid periods, server upgrade quotes, deferred
+  downgrades/cancellation, suspension/resume and trusted/manual payment receipts.
+  There is no production billing provider. See `docs/COMMERCIAL_SUBSCRIPTION_LIFECYCLE.md`.
+  Commercial Access Hardening separates ownership from product assignment. New Venues start NO_PLAN, with Cloud menu editing off.
   Website plans need no POS/Manager. Operators can admit empty Website Venues
   to CLOUD catalog authority; existing operational authority is preserved.
   Admin Plans includes WEBSITE_ONLY (WEBSITE alone); Venue Product offers an
@@ -602,10 +605,12 @@ current transport status.
   Manager consumes effective features; optional POS sections use cached catalog
   keys. Controller and route feature requirements intersect. Existing Manager
   plans/Vankisi retain all previously bundled modules at migration.
-- Manual VenueSubscription is separate from operational Venue status. New shells
-  default to NO_PLAN with no commercial access. Only operator-assigned plans plus
-  ACTIVE, manually managed PAST_DUE grace, or an unexpired dated TRIAL grant
-  access. Expired/missing-end trials deny immediately and reconcile to SUSPENDED
+- VenueSubscription is separate from operational Venue status. New shells
+  default to NO_PLAN. Dated TRIAL and paid ACTIVE periods grant plan access.
+  New paid activations have stable UTC billing anchors and frozen agreement prices.
+  Upgrades require trusted payment success; downgrades/cancellation wait until renewal.
+  Unpaid timed renewals deny access as PAST_DUE; historical manual agreements retain
+  their existing manually managed grace until explicitly migrated to billing terms. Expired/missing-end trials deny immediately and reconcile to SUSPENDED
   with one SYSTEM audit, on reads and a 60-second sweep. Only pre-migration
   missing-subscription Venues carry the server-owned legacy compatibility marker.
   Suspended/cancelled clients receive no effective module keys. POS critical/offline
@@ -626,12 +631,15 @@ current transport status.
 - CustomerAccount owner access is separate from PlatformUser/Staff/WebsiteUser.
   Public `/signup` collects an access request without creating account, tenant,
   session, plan or trial; the old signup POST is denied. Platform approval creates
-  a safe Organization/Venue shell and an owner invitation. Acceptance grants OWNER
+  a safe Organization/Venue shell and owner invitation, with an explicit choice of
+  NO_PLAN or a selected dated Trial in the same transaction. Acceptance grants OWNER
   membership and dashboard access, independently of product access. Existing
   accounts use the same invited-email sign-in and membership flow. Platform can
   explicitly prepare a chosen TRIAL/ACTIVE plan during assisted onboarding or
-  assign it later. Customers request trials; only operators select plan/end date,
-  extend, suspend or activate them. CustomerAccount.organizationId is provenance
+  assign it later. Owners with current access cannot request a duplicate Trial.
+  Operators control Trial dates, paid manual agreements, suspension/resume and
+  immediate cancellation with reasons/audits. Owners can schedule and undo deferred
+  changes; customer payment-success claims cannot activate access. CustomerAccount.organizationId is provenance
   only; live OrganizationMembership authorizes all owner operations.
 - Platform manages plan names/descriptions, prices/currency/period, retirement,
   included features and Website media quotas. Deliberate plan changes snapshot the
@@ -675,7 +683,9 @@ current transport status.
   separately configured site, not automatic SaaS site provisioning.
 - Venue Policy is documented in `docs/VENUE_POLICY_PLAN.md` but not implemented.
   Current operational switches/settings remain local to the POS.
-- Custom restaurant roles/permissions and SaaS billing do not exist.
+- Custom restaurant roles/permissions and a production SaaS billing provider do not exist.
+  The provider-neutral subscription lifecycle, server quotes and audited manual
+  confirmation boundary are implemented; restaurant BOG payments stay separate.
 - Website W1 provides encrypted, versioned Venue BOG integrations, owner settings,
   Platform status inspection and independent ONLINE_PAYMENTS access.
 
@@ -921,7 +931,7 @@ current transport status.
 - General Restaurant Backoffice, Venue Policy, custom roles/RBAC, Inventory
   historical Sale COGS / realized Gross Profit / Waste / Stocktake / inventory variance / expected
   yield and pour loss, cash management,
-  reservation holds and SaaS billing. SaaS website ordering, SaaS online
+  reservation holds and automatic SaaS billing/provider checkout. SaaS website ordering, SaaS online
   payments, generic customer accounts, additional themes, a page builder and
   custom-domain DNS/TLS automation remain deferred; the read-only generic SaaS
   website itself is implemented (W3).
@@ -932,7 +942,8 @@ current transport status.
 
 ## Current Migration Versions
 
-- Prisma migration tip: `20261003120200_customer_trial_requests`.
+- Prisma migration tip: `20261004120000_subscription_lifecycle`.
+- Previous acquisition migration: `20261003120200_customer_trial_requests`.
 - Commercial access/media/pricing: `20261003120000_commercial_access_hardening`,
   `20261003120100_no_plan_default`.
 - Preserved preceding migrations: `20261002120000_remove_non_fiscal_close_from_plans`,

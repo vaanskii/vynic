@@ -1,4 +1,9 @@
-import { assignHostname, lockHostnames } from '../provisioning/hostname';
+import {
+  assignHostname,
+  lockHostnames,
+  requestableSlug,
+  saasNameTaken,
+} from '../provisioning/hostname';
 import { validateMediaReferences } from './website-media';
 import { requireCommercialFeature } from '../../entitlements/commercial-state';
 import {
@@ -20,7 +25,6 @@ import {
   readWebsiteContent,
   websiteContent,
   websiteMutation,
-  websiteSlug,
   websiteThemeKeys,
 } from './website-content';
 import { WebsiteMenuService } from './website-menu.service';
@@ -72,16 +76,28 @@ export class WebsiteCoreService {
       if (current?.mode === 'SAAS' && !current.assignedSlug)
         await assignHostname(tx, venueId);
     });
-    const [row, access, domains, subscription] = await Promise.all([
-      this.db.venueWebsiteConfig.findUnique({ where: { venueId } }),
-      this.access.websiteAccess(venueId),
-      this.db.venueDomain.findMany({
-        where: { venueId, status: 'ACTIVE' },
-        select: { hostname: true },
-      }),
-      this.db.venueSubscription.findUnique({ where: { venueId } }),
-    ]);
+    const [row, access, domains, subscription, pendingHostname] =
+      await Promise.all([
+        this.db.venueWebsiteConfig.findUnique({ where: { venueId } }),
+        this.access.websiteAccess(venueId),
+        this.db.venueDomain.findMany({
+          where: { venueId, status: 'ACTIVE' },
+          select: { hostname: true },
+        }),
+        this.db.venueSubscription.findUnique({ where: { venueId } }),
+        this.db.websiteHostnameRequest.findFirst({
+          where: { venueId, status: 'PENDING' },
+          select: { hostname: true, createdAt: true },
+        }),
+      ]);
+    const base = this.config.get<string>('SAAS_WEBSITE_BASE_DOMAIN');
     return {
+      // The server-owned SaaS address; the draft never chooses it.
+      hostname:
+        access.configuredMode === 'SAAS' && row?.assignedSlug && base
+          ? `${row.assignedSlug}.${base}`
+          : null,
+      pendingHostnameRequest: pendingHostname,
       hostnameChangeAllowed:
         access.configuredMode === 'SAAS' && subscription?.status === 'ACTIVE',
       commercialStatus: subscription?.status ?? 'NO_PLAN',
@@ -106,26 +122,32 @@ export class WebsiteCoreService {
     };
   }
   /**
-   * Whether an address can be published for this Venue right now.
+   * Whether an address could be requested for this Venue right now.
    *
-   * Advisory only: the address is claimed atomically at publication, which
-   * remains the authority if two restaurants race for the same name.
+   * Advisory only: Platform approval re-checks availability under the
+   * hostname lock, which remains the authority if two restaurants race.
    */
   async addressAvailability(venueId: string, value: unknown) {
     let slug: string;
     try {
-      slug = websiteSlug(value);
+      slug = requestableSlug(value);
     } catch {
       return { valid: false, available: false };
     }
-    const domain = await this.db.venueDomain.findUnique({
-      where: { hostname: `${slug}.${this.baseDomain()}` },
-      select: { venueId: true, status: true },
-    });
+    const hostname = `${slug}.${this.baseDomain()}`;
+    const [taken, own] = await Promise.all([
+      saasNameTaken(this.db, slug, hostname, venueId),
+      this.db.venueDomain.findUnique({
+        where: { hostname },
+        select: { venueId: true, status: true },
+      }),
+    ]);
     return {
       valid: true,
+      hostname,
       available:
-        !domain || (domain.venueId === venueId && domain.status === 'ACTIVE'),
+        !taken &&
+        (!own || (own.venueId === venueId && own.status === 'ACTIVE')),
     };
   }
   private requireSaas(row: VenueWebsiteConfig | null) {

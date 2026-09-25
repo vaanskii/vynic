@@ -2151,6 +2151,8 @@ model WebsiteHostnameRequest {
   requestedBy String
   hostname String
   slug String
+  /// The Venue's SaaS hostname when the owner asked; null for requests made before it was recorded.
+  currentHostname String?
   status String @default("PENDING")
   createdAt DateTime @default(now())
   reviewedAt DateTime?

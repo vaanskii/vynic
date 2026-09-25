@@ -49,7 +49,7 @@ export class CustomerWebsiteController {
     @Param('venueId') id: string,
   ) {
     await this.owners.venue(actor, id);
-    return this.hostnames.list(id);
+    return this.hostnames.listForCustomer(id);
   }
   @Post('hostname-requests')
   async requestHostname(

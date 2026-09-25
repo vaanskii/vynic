@@ -1,4 +1,8 @@
-import { ConflictException, ServiceUnavailableException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { normalizeHostname } from '../tenancy/website-host';
 import {
@@ -42,6 +46,70 @@ const georgian: Record<string, string> = {
   ჰ: 'h',
 };
 
+/**
+ * Names a restaurant may not newly receive or request as its SaaS address.
+ *
+ * Broader than the format rule in `websiteSlug`, which also validates content
+ * already stored: an existing address stays valid even if its name is listed.
+ */
+const reservedSaasNames = new Set([
+  'www',
+  'api',
+  'admin',
+  'app',
+  'mail',
+  'platform',
+  'vynic',
+  'dashboard',
+  'login',
+  'auth',
+  'account',
+  'accounts',
+  'billing',
+  'support',
+  'help',
+  'status',
+  'docs',
+  'blog',
+  'media',
+  'static',
+  'assets',
+  'cdn',
+  'preview',
+  'staging',
+  'dev',
+  'test',
+  'demo',
+  'localhost',
+  'webmail',
+  'smtp',
+  'imap',
+  'ftp',
+  'ns1',
+  'ns2',
+  'mx',
+  'manager',
+  'pos',
+  'edge',
+  'portal',
+  'root',
+]);
+
+/** A valid, non-reserved address label for a new assignment or change request. */
+export function requestableSlug(value: unknown) {
+  const slug = websiteSlug(value);
+  if (reservedSaasNames.has(slug))
+    throw new BadRequestException('This website address is reserved');
+  return slug;
+}
+
+/**
+ * The initial address label derived from a restaurant name.
+ *
+ * Whitespace is removed rather than hyphenated: "Restaurant Vankisi" becomes
+ * `restaurantvankisi`. Georgian is transliterated, other letters lose their
+ * accents, and anything else a hostname cannot carry is dropped.
+ */
 export function generatedSlug(name: string) {
   const slug =
     [...name.toLowerCase()]
@@ -53,19 +121,60 @@ export function generatedSlug(name: string) {
       .slice(0, 40)
       .replace(/-+$/, '') || 'restaurant';
   try {
-    return websiteSlug(slug);
+    return requestableSlug(slug);
   } catch {
     return `restaurant-${slug}`;
   }
 }
-export function saasBaseDomain() {
+function configuredBaseDomain() {
   const raw = process.env.SAAS_WEBSITE_BASE_DOMAIN;
   const host = normalizeHostname(raw);
-  if (!raw || !host || host !== raw || !host.includes('.'))
+  return raw && host && host === raw && host.includes('.') ? host : null;
+}
+export function saasBaseDomain() {
+  const host = configuredBaseDomain();
+  if (!host)
     throw new ServiceUnavailableException(
       'SaaS website domain is not configured',
     );
   return host;
+}
+export function saasHostname(slug: string) {
+  return `${slug}.${saasBaseDomain()}`;
+}
+/**
+ * Whether a hostname sits in the SaaS address namespace, which only
+ * provisioning and approved hostname requests may bind.
+ */
+export function isSaasNamespace(hostname: string) {
+  const base = configuredBaseDomain();
+  return !!base && (hostname === base || hostname.endsWith(`.${base}`));
+}
+/**
+ * Whether another Venue holds, or retains, this SaaS address.
+ *
+ * A name is held by its domain row (any status, including one in retention)
+ * and by the Venue whose assigned identity it is, even while that Venue's
+ * domain row has been released.
+ */
+export async function saasNameTaken(
+  tx: Prisma.TransactionClient,
+  slug: string,
+  hostname: string,
+  venueId: string,
+) {
+  const domain = await tx.venueDomain.findUnique({
+    where: { hostname },
+    select: { venueId: true },
+  });
+  const config = await tx.venueWebsiteConfig.findUnique({
+    where: { assignedSlug: slug },
+    select: { venueId: true },
+  });
+  return (
+    (!!domain && domain.venueId !== venueId) ||
+    (!!config && config.venueId !== venueId)
+  );
 }
 /** Shared by provisioning and requests. Lock order: Venue, config, global names. */
 export async function lockHostnames(tx: Prisma.TransactionClient) {
@@ -85,15 +194,12 @@ export async function assignHostname(
   const venue = await tx.venue.findUniqueOrThrow({ where: { id: venueId } });
   const stem = generatedSlug(venue.name);
   let slug = stem;
-  for (let n = 2; ; n++) {
-    const hostname = `${slug}.${base}`;
-    const domain = await tx.venueDomain.findUnique({ where: { hostname } });
-    const config = await tx.venueWebsiteConfig.findUnique({
-      where: { assignedSlug: slug },
-    });
-    if (!config && (!domain || domain.venueId === venueId)) break;
+  for (
+    let n = 2;
+    await saasNameTaken(tx, slug, `${slug}.${base}`, venueId);
+    n++
+  )
     slug = `${stem}-${n}`;
-  }
   const hostname = `${slug}.${base}`;
   const existing = await tx.venueDomain.findUnique({ where: { hostname } });
   if (existing && existing.venueId !== venueId)
@@ -113,7 +219,10 @@ export async function assignHostname(
       action: 'website.hostname_assigned',
       targetType: 'Venue',
       targetId: venueId,
-      metadata: { hostname },
+      metadata: {
+        hostname,
+        source: platformUserId ? 'PLATFORM' : 'SYSTEM',
+      },
     },
   });
   return result;

@@ -150,6 +150,8 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         await http().get(path).set(bearer(owner.access_token)).expect(200)
       ).body;
       expect(settings.draft.slug).toMatch(/^restaurantownership(?:-\d+)?$/);
+      expect(settings.hostname).toBe(settings.draft.slug + '.vynic.localhost');
+      expect(settings.pendingHostnameRequest).toBeNull();
       expect(settings.hostnameChangeAllowed).toBe(false);
       await http()
         .post(path + '/hostname-requests')
@@ -233,6 +235,34 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
       );
       expect(responses.map((r) => r.status).sort()).toEqual([201, 409]);
       const pending = responses.find((r) => r.status === 201)!.body;
+      const oldHost = settings.draft.slug + '.vynic.localhost';
+      const pendingSlug = pending.hostname.split('.')[0];
+      expect(pending).toEqual({
+        id: expect.any(String),
+        hostname: pending.hostname,
+        currentHostname: oldHost,
+        status: 'PENDING',
+        createdAt: expect.any(String),
+        reviewedAt: null,
+        reason: null,
+      });
+      const listed = (
+        await http()
+          .get(path + '/hostname-requests')
+          .set(bearer(owner.access_token))
+          .expect(200)
+      ).body;
+      expect(listed[0]).not.toHaveProperty('reviewedBy');
+      expect(listed[0]).not.toHaveProperty('requestedBy');
+      expect(
+        (await http().get(path).set(bearer(owner.access_token))).body
+          .pendingHostnameRequest,
+      ).toMatchObject({ hostname: pending.hostname });
+      // Before approval the old address alone serves the restaurant.
+      const bootstrap = (host: string) =>
+        http().get('/api/website/bootstrap').set('Host', host);
+      await bootstrap(oldHost).expect(200);
+      await bootstrap(pending.hostname).expect(404);
       expect(
         (
           await db.venueWebsiteConfig.findUniqueOrThrow({
@@ -254,13 +284,43 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
       await db.venueDomain.delete({ where: { hostname: pending.hostname } });
       await approve().expect(201);
       await approve().expect(409);
+      await bootstrap(pending.hostname).expect(200);
+      await bootstrap(oldHost).expect(404);
+      const approvedSettings = (
+        await http().get(path).set(bearer(owner.access_token)).expect(200)
+      ).body;
+      expect(approvedSettings.hostname).toBe(pending.hostname);
+      expect(approvedSettings.pendingHostnameRequest).toBeNull();
+      expect(approvedSettings.hasUnpublishedChanges).toBe(false);
+      // The current address and reserved names are not requestable.
+      await http()
+        .post(path + '/hostname-requests')
+        .set(bearer(owner.access_token))
+        .send({ slug: pendingSlug })
+        .expect(409);
+      await http()
+        .post(path + '/hostname-requests')
+        .set(bearer(owner.access_token))
+        .send({ slug: 'vynic' })
+        .expect(400);
+      // Operators register custom domains only; the SaaS namespace is reviewed.
+      await http()
+        .post(`/platform/venues/${id}/domains`)
+        .set(bearer(admin))
+        .send({ hostname: 'second-' + tag + '.vynic.localhost' })
+        .expect(400);
+      expect(
+        await db.venueDomain.count({
+          where: { venueId: id, hostname: { endsWith: '.vynic.localhost' } },
+        }),
+      ).toBe(1);
       expect(
         (
           await db.venueWebsiteConfig.findUniqueOrThrow({
             where: { venueId: id },
           })
         ).assignedSlug,
-      ).toBe(pending.slug);
+      ).toBe(pendingSlug);
       expect(
         await db.venueDomain.findUnique({
           where: { hostname: pending.hostname },
@@ -328,6 +388,133 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         `restaurantcollision${tag}`,
         `restaurantcollision${tag}-2`,
       ]);
+    });
+
+    it('rechecks a contested address at approval, keeps rejected addresses and never offers CUSTOM a SaaS change', async () => {
+      const activeOwner = async (name: string, websiteMode: string) => {
+        const row = await submit(name);
+        const prepared = (
+          await review(row.id, { outcome: 'NO_PLAN' }).expect(201)
+        ).body.prepared;
+        const owner = await register(prepared.invitationPath);
+        await http()
+          .post(`/platform/venues/${owner.venueId}/subscription/actions`)
+          .set(bearer(admin))
+          .send({
+            action: 'GRANT_ACTIVE',
+            planId: websitePlanId,
+            websiteMode,
+            confirm: true,
+            reason: 'Disposable hostname race',
+          })
+          .expect(201);
+        const settings = (
+          await http()
+            .get(`/customer/venues/${owner.venueId}/website`)
+            .set(bearer(owner.access_token))
+            .expect(200)
+        ).body;
+        return { ...owner, settings };
+      };
+      const ask = (
+        owner: { venueId: string; access_token: string },
+        slug: string,
+      ) =>
+        http()
+          .post(`/customer/venues/${owner.venueId}/website/hostname-requests`)
+          .set(bearer(owner.access_token))
+          .send({ slug });
+      const decide = (venueId: string, id: string, status: string) =>
+        http()
+          .post(`/platform/venues/${venueId}/hostname-requests/${id}/review`)
+          .set(bearer(admin))
+          .send({ status, reason: 'Disposable decision' });
+      const a = await activeOwner('race-a', 'SAAS');
+      const b = await activeOwner('race-b', 'SAAS');
+      expect(a.settings.hostnameChangeAllowed).toBe(true);
+      const contested = 'contested-' + tag;
+      // Both see the name as available: the browser check is advisory only.
+      for (const owner of [a, b])
+        expect(
+          (
+            await http()
+              .get(
+                `/customer/venues/${owner.venueId}/website/address/${contested}`,
+              )
+              .set(bearer(owner.access_token))
+              .expect(200)
+          ).body,
+        ).toMatchObject({ valid: true, available: true });
+      const requestA = (await ask(a, contested).expect(201)).body;
+      const requestB = (await ask(b, contested).expect(201)).body;
+      // Venue B's operator decision lands first; its old binding keeps DISABLED.
+      const bOld = await db.venueDomain.findUniqueOrThrow({
+        where: { hostname: b.settings.hostname },
+      });
+      await db.venueDomain.update({
+        where: { id: bOld.id },
+        data: { status: 'DISABLED' },
+      });
+      await decide(b.venueId, requestB.id, 'APPROVED').expect(201);
+      expect(
+        await db.venueDomain.findUniqueOrThrow({
+          where: { hostname: `${contested}.vynic.localhost` },
+        }),
+      ).toMatchObject({ venueId: b.venueId, status: 'DISABLED' });
+      await decide(a.venueId, requestA.id, 'APPROVED').expect(409);
+      // Venue A keeps its identity and its request stays reviewable.
+      expect(
+        (
+          await db.venueWebsiteConfig.findUniqueOrThrow({
+            where: { venueId: a.venueId },
+          })
+        ).assignedSlug,
+      ).toBe(a.settings.draft.slug);
+      expect(
+        await db.venueDomain.findUniqueOrThrow({
+          where: { hostname: a.settings.hostname },
+        }),
+      ).toMatchObject({ venueId: a.venueId, status: 'ACTIVE' });
+      await decide(a.venueId, requestA.id, 'REJECTED').expect(201);
+      const afterReject = (
+        await http()
+          .get(`/customer/venues/${a.venueId}/website`)
+          .set(bearer(a.access_token))
+          .expect(200)
+      ).body;
+      expect(afterReject.hostname).toBe(a.settings.hostname);
+      expect(afterReject.pendingHostnameRequest).toBeNull();
+      const rejectedAudit = await db.platformAuditEvent.findFirstOrThrow({
+        where: {
+          targetId: a.venueId,
+          action: 'website.hostname_change_rejected',
+        },
+      });
+      expect(rejectedAudit.metadata).toMatchObject({
+        previousHostname: a.settings.hostname,
+        hostname: `${contested}.vynic.localhost`,
+        activeHostname: a.settings.hostname,
+      });
+      const approvedAudit = await db.platformAuditEvent.findFirstOrThrow({
+        where: {
+          targetId: b.venueId,
+          action: 'website.hostname_change_approved',
+        },
+      });
+      expect(approvedAudit.metadata).toMatchObject({
+        previousHostname: b.settings.hostname,
+        activeHostname: `${contested}.vynic.localhost`,
+      });
+      // After a decision another request may follow.
+      await ask(a, 'after-reject-' + tag).expect(201);
+      const custom = await activeOwner('race-custom', 'CUSTOM');
+      expect(custom.settings).toMatchObject({
+        mode: 'CUSTOM',
+        state: 'CUSTOM',
+        hostname: null,
+        hostnameChangeAllowed: false,
+      });
+      await ask(custom, 'custom-change-' + tag).expect(403);
     });
 
     it('deduplicates public requests concurrently and customer Trial requests under the Venue lock', async () => {

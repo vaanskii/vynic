@@ -1,4 +1,7 @@
-import { lockHostnames } from '../website/provisioning/hostname';
+import {
+  isSaasNamespace,
+  lockHostnames,
+} from '../website/provisioning/hostname';
 import {
   commercialState,
   requireCommercialFeature,
@@ -412,6 +415,12 @@ export class PlatformVenueConfigService {
     if (!hostname) {
       throw new BadRequestException('hostname is not a valid host');
     }
+    // One SaaS binding per Venue: provisioning assigns it and only an
+    // approved hostname request moves it. Operators register custom domains.
+    if (isSaasNamespace(hostname))
+      throw new BadRequestException(
+        'SaaS website addresses are assigned by provisioning and changed through hostname review',
+      );
 
     try {
       return await this.prisma.$transaction(async (tx) => {

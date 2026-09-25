@@ -9,8 +9,23 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
 import { requireCommercialFeature } from '../../entitlements/commercial-state';
 import { requireText } from '../../platform/platform-validation';
-import { lockHostnames, saasBaseDomain } from '../provisioning/hostname';
-import { readWebsiteContent, websiteSlug } from './website-content';
+import {
+  lockHostnames,
+  requestableSlug,
+  saasHostname,
+} from '../provisioning/hostname';
+import { readWebsiteContent } from './website-content';
+
+/** What an owner sees of a request: never the reviewing operator's identity. */
+const customerFields = {
+  id: true,
+  hostname: true,
+  currentHostname: true,
+  status: true,
+  createdAt: true,
+  reviewedAt: true,
+  reason: true,
+} as const;
 
 @Injectable()
 export class HostnameRequestsService {
@@ -20,6 +35,14 @@ export class HostnameRequestsService {
       where: { venueId },
       orderBy: { createdAt: 'desc' },
       take: 20,
+    });
+  }
+  listForCustomer(venueId: string) {
+    return this.db.websiteHostnameRequest.findMany({
+      where: { venueId },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+      select: customerFields,
     });
   }
   private async lock(tx: Prisma.TransactionClient, venueId: string) {
@@ -48,36 +71,69 @@ export class HostnameRequestsService {
     )
       throw new ConflictException('Website address is unavailable');
   }
+  /**
+   * Records a paid owner's wish for another address. Nothing is bound here:
+   * the availability check is advisory and is repeated at approval.
+   */
   async create(venueId: string, customerAccountId: string, value: unknown) {
-    const slug = websiteSlug(value);
-    const hostname = `${slug}.${saasBaseDomain()}`;
-    return this.db.$transaction(async (tx) => {
-      await this.lock(tx, venueId);
-      if (
-        await tx.websiteHostnameRequest.findFirst({
-          where: { venueId, status: 'PENDING' },
-        })
-      )
-        throw new ConflictException(
-          'A hostname request is already awaiting review',
-        );
-      await this.available(tx, hostname, slug);
-      const row = await tx.websiteHostnameRequest.create({
-        data: { venueId, requestedBy: customerAccountId, slug, hostname },
+    const slug = requestableSlug(value);
+    const hostname = saasHostname(slug);
+    try {
+      return await this.db.$transaction(async (tx) => {
+        const config = await this.lock(tx, venueId);
+        if (
+          await tx.websiteHostnameRequest.findFirst({
+            where: { venueId, status: 'PENDING' },
+          })
+        )
+          throw new ConflictException(
+            'A hostname request is already awaiting review',
+          );
+        if (slug === config.assignedSlug)
+          throw new ConflictException('This is already your website address');
+        await this.available(tx, hostname, slug);
+        const currentHostname = saasHostname(config.assignedSlug!);
+        const row = await tx.websiteHostnameRequest.create({
+          data: {
+            venueId,
+            requestedBy: customerAccountId,
+            slug,
+            hostname,
+            currentHostname,
+          },
+          select: customerFields,
+        });
+        const event = {
+          action: 'website.hostname_change_requested',
+          targetType: 'Venue',
+          targetId: venueId,
+          metadata: {
+            requestId: row.id,
+            currentHostname,
+            hostname,
+            customerAccountId,
+          },
+        };
+        await tx.customerAuditEvent.create({
+          data: { ...event, customerAccountId },
+        });
+        await tx.platformAuditEvent.create({ data: event });
+        return row;
       });
-      const event = {
-        action: 'website.hostname_change_requested',
-        targetType: 'Venue',
-        targetId: venueId,
-        metadata: { requestId: row.id, hostname, customerAccountId },
-      };
-      await tx.customerAuditEvent.create({
-        data: { ...event, customerAccountId },
-      });
-      await tx.platformAuditEvent.create({ data: event });
-      return row;
-    });
+    } catch (error) {
+      throw unavailableOnConflict(
+        error,
+        'A hostname request is already awaiting review',
+      );
+    }
   }
+  /**
+   * Operator decision. Approval re-validates the name and re-checks, under the
+   * Venue, configuration and global name locks, that nobody claimed it since
+   * the owner asked; only then does the one SaaS binding move. The old SaaS
+   * hostname is removed in the same transaction (no alias or redirect), while
+   * custom domains are never touched.
+   */
   async review(
     venueId: string,
     id: string,
@@ -96,25 +152,38 @@ export class HostnameRequestsService {
         if (!request) throw new NotFoundException('Request not found');
         if (request.status !== 'PENDING')
           throw new ConflictException('Request was already reviewed');
-        let previous: string | null = null;
+        const current = await tx.venueWebsiteConfig.findUnique({
+          where: { venueId },
+          select: { assignedSlug: true },
+        });
+        let previousHostname = current?.assignedSlug
+          ? saasHostname(current.assignedSlug)
+          : null;
         if (body.status === 'APPROVED') {
           const config = await this.lock(tx, venueId);
-          previous = config.assignedSlug;
-          if (request.hostname !== `${request.slug}.${saasBaseDomain()}`)
+          previousHostname = saasHostname(config.assignedSlug!);
+          if (request.hostname !== saasHostname(requestableSlug(request.slug)))
             throw new ConflictException(
               'Website base domain changed; submit a new request',
             );
           await this.available(tx, request.hostname, request.slug);
-          await tx.venueDomain.create({
-            data: { venueId, hostname: request.hostname },
+          const old = await tx.venueDomain.findUnique({
+            where: { hostname: previousHostname },
           });
-          // Release only the old SaaS identity; custom domains remain untouched.
-          await tx.venueDomain.deleteMany({
-            where: {
+          if (old && old.venueId !== venueId)
+            throw new ConflictException(
+              'Current address is not owned by this venue',
+            );
+          // The new binding inherits an operator-set status (e.g. DISABLED).
+          await tx.venueDomain.create({
+            data: {
               venueId,
-              hostname: `${config.assignedSlug}.${saasBaseDomain()}`,
+              hostname: request.hostname,
+              status: old?.status ?? 'ACTIVE',
             },
           });
+          // Release only the old SaaS identity; custom domains remain untouched.
+          if (old) await tx.venueDomain.delete({ where: { id: old.id } });
           await tx.venueWebsiteConfig.update({
             where: { venueId },
             data: {
@@ -159,8 +228,13 @@ export class HostnameRequestsService {
             targetId: venueId,
             metadata: {
               requestId: id,
-              previous,
+              requestedBy: request.requestedBy,
+              previousHostname,
               hostname: request.hostname,
+              activeHostname:
+                body.status === 'APPROVED'
+                  ? request.hostname
+                  : previousHostname,
               reason,
             },
           },
@@ -168,12 +242,15 @@ export class HostnameRequestsService {
         return result;
       });
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      )
-        throw new ConflictException('Website address is unavailable');
-      throw error;
+      throw unavailableOnConflict(error, 'Website address is unavailable');
     }
   }
+}
+
+/** A unique-index race surfaces as the same 409 the explicit checks give. */
+function unavailableOnConflict(error: unknown, message: string) {
+  return error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === 'P2002'
+    ? new ConflictException(message)
+    : error;
 }

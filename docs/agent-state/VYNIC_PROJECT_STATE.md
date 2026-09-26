@@ -735,6 +735,9 @@ current transport status.
   production a Venue's `.localhost` domain is checked at its local frontend,
   port from `CUSTOM_WEBSITE_LOCAL_FRONTENDS=<siteKey>=<port>,…` (no default;
   unmapped = NOT_CONFIGURED, ignored and absent in production; D029).
+  Explicit isolated Docker HTTP mode instead uses registered `*.vynic.localhost`
+  URLs and the fixed Host-preserving ingress, with no frontend port mapping;
+  production public-address SSRF checks remain intact (`docs/DEPLOYMENT.md`).
   Vankisi runs at `http://vankisi.localhost:5174` behind a host-preserving
   Vite `/api` proxy. Menu authority follows the package,
   never SAAS/CUSTOM: Website provisioning without POS admits an empty Venue to
@@ -985,8 +988,9 @@ current transport status.
 - Local POS diagnostics/error-log/restore-wipe remain developer-gated. Customer
   printer setup is available through the owner portal; physical remote test-print
   and real Windows coexistence/hardware validation remain release checks.
-- Production Cloud deployment foundations (origins, HTTPS, CORS, runtime
-  secrets, hosting, and deployment verification) are not established.
+- Production provider deployment (DNS/TLS issuance, registry publication, managed
+  database, backups and host qualification) remains unprovisioned. The local
+  production-like Compose/image foundation is implemented; see `docs/DEPLOYMENT.md`.
 - Full legacy callback retirement depends on real fleet enrollment, not merely
   the existence of enrollment code.
 

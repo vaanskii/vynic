@@ -311,6 +311,13 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Venue payment configuration/encryption: `apps/backend/src/payment-integrations/`; owner/Platform routes: `apps/backend/src/customer/customer-payments.controller.ts`; owner form: `apps/platform-web/src/customer/PaymentSettings.tsx`.
 - W1 migration/import/validation: `docs/WEBSITE_PHASE_W1.md`, `apps/backend/scripts/import-bog-integration.ts`, `apps/backend/src/payment-integrations/payment-integrations.integration.spec.ts`.
 
+## Deployment
+
+- Canonical local production/production foundation: `docs/DEPLOYMENT.md`; proof: `docs/DEPLOYMENT_PROOF.md`.
+- Compose: `compose.yaml` plus `compose.local.yaml` or `compose.production.yaml`; Traefik routes: `deploy/traefik/routes.yml`. Images: `apps/backend/Dockerfile`, `deploy/frontend.Dockerfile`.
+- Local tools: `scripts/docker-init.py`, `scripts/docker.sh`, `scripts/prove-docker-http.py`; guarded samples: `apps/backend/scripts/seed-docker-local.ts`.
+- Startup/local-HTTP security policy: `apps/backend/src/shared/deployment-config.ts`; DB readiness: `apps/backend/src/health.controller.ts`.
+
 ## Prisma / Database
 
 - Schema: `apps/backend/prisma/schema.prisma`

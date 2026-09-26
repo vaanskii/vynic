@@ -327,7 +327,10 @@ a port on the domain or a binding column would put machine-local state into
 tenant identity and the production database.
 **Implication:** No port/origin columns for local development; unmapped
 frontends report NOT_CONFIGURED; production views and checks never include
-local configuration. See `docs/CUSTOM_WEBSITES.md` §3c.
+local configuration. An explicit isolated Docker HTTP deployment instead checks
+registered `*.vynic.localhost` domains through its fixed trusted ingress, with no
+site-key port registry; its backend still uses NODE_ENV=production. See
+`docs/DEPLOYMENT.md` and `docs/CUSTOM_WEBSITES.md` §3c.
 
 ## Maintenance
 

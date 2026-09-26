@@ -135,6 +135,22 @@ export function installApi(handler?: MockHandler) {
   return { requests, fetchMock };
 }
 
+/** A Website-only Venue: payments not in the package, events etc. not built. */
+export const websiteCapabilities = [
+  ["MENU", "Menu", true, true, true, null],
+  ["HOURS", "Hours", true, true, false, "No opening hours yet"],
+  ["RESERVATIONS", "Reservations", true, true, false, "Bookings are paid online, and online payments are not live"],
+  ["GALLERY", "Gallery", true, true, true, null],
+  ["CUSTOMER_ACCOUNTS", "Customer accounts", true, true, true, null],
+  ["ONLINE_PAYMENTS", "Online payments", true, false, false, "Bank of Georgia is not configured"],
+  ["EVENTS", "Events", false, false, false, "Not built"],
+  ["BANQUETS", "Banquets", false, false, false, "Not built"],
+  ["ONLINE_ORDERING", "Online ordering", false, false, false, "Not built"],
+].map(([key, label, built, commercial, ready, readyDetail]) => ({
+  key, label, built, commercial, enabled: built && commercial, canEnable: commercial, ready, readyDetail,
+  available: built && commercial, live: built && commercial && ready, usedByFrontend: null,
+}));
+
 function defaultReply({ url, method }: MockRequest): MockReply {
   const path = url.pathname;
   if (path === "/platform/auth/login" && method === "POST") return { body: { access_token: "test-token", expiresIn: 28800, actor } };
@@ -148,6 +164,7 @@ function defaultReply({ url, method }: MockRequest): MockReply {
   if (path === `/platform/venues/${ids.venue}/product`) return { body: product };
   if (path === `/platform/venues/${ids.venue}/hostname-requests`) return { body: [] };
   if (path === `/platform/venues/${ids.venue}/domains`) return { body: [] };
+  if (path === `/platform/venues/${ids.venue}/website-capabilities`) return { body: websiteCapabilities };
   if (path === `/platform/venues/${ids.venue}/devices`) return { body: [device] };
   if (path === `/platform/venues/${ids.venue}/enrollments`) return { body: [] };
   if (path.startsWith(`/platform/venues/${ids.venue}/test-command/`)) return { body: { commandId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", type: "NOOP", status: "PENDING", attemptCount: 0, maxAttempts: 10, claimedAt: null, acknowledgedAt: null, resultCode: null, resultDetail: null, createdAt: "2026-08-31T10:00:00.000Z", updatedAt: "2026-08-31T10:00:00.000Z", claimedBy: null, device: null } };

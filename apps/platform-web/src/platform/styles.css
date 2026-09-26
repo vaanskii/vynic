@@ -351,3 +351,4 @@
 .platform-feedback--warning { margin: 12px 0 0; border-color: #ead3ac; background: #fffaf1; color: var(--platform-amber); }
 .platform-inline-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 a.platform-button { text-decoration: none; }
+.platform-inline-actions--tight { margin-top: 0; gap: 6px; align-items: center; }

@@ -2,13 +2,15 @@ import { useCallback, useEffect, useState } from "react";
 import { customerApi } from "./api";
 
 /**
- * The owner's website draft, shared by every dashboard section that edits it.
+ * The owner's website edits, shared by every dashboard section that makes them.
  *
- * Saving, reviewing and publishing stay three separate acts: a save changes
- * only the private draft, preview renders that draft in the real public
- * frontend, and publishing is the one explicit step that changes what visitors
- * see. `expectedRevision` travels with every write, so an edit made in another
- * session is refused instead of being silently overwritten.
+ * Two kinds of data are edited together but saved apart. Venue public
+ * information (hours, contact, socials, gallery) is restaurant data every
+ * website reads, SAAS or CUSTOM: saving it is live. The SAAS page (hero, about,
+ * design, SEO) is a private draft: preview renders it in the real frontend and
+ * publishing is the one step that shows it. Both writes carry their own
+ * expected revision, so an edit made in another session is refused instead of
+ * being silently overwritten.
  */
 export type WebsiteContent = {
   slug: string;
@@ -32,6 +34,37 @@ export type WebsiteContent = {
   socials: { label: string; url: string }[];
   gallery: { url: string; alt: string }[];
 };
+/** Venue public information: saved live, identical for SAAS and CUSTOM. */
+export const sharedKeys = [
+  "workingHours",
+  "contactEmail",
+  "mapUrl",
+  "socials",
+  "gallery",
+] as const;
+type SharedKey = (typeof sharedKeys)[number];
+export type WebsiteShared = Pick<WebsiteContent, SharedKey> & {
+  revision: number;
+};
+export type WebsiteCapabilityKey =
+  | "MENU"
+  | "HOURS"
+  | "RESERVATIONS"
+  | "GALLERY"
+  | "CUSTOMER_ACCOUNTS"
+  | "ONLINE_PAYMENTS"
+  | "EVENTS"
+  | "BANQUETS"
+  | "ONLINE_ORDERING";
+export type WebsiteCapability = {
+  key: WebsiteCapabilityKey;
+  label: string;
+  built: boolean;
+  /** Included in the package and switched on for this Venue. */
+  available: boolean;
+  ready: boolean;
+  live: boolean;
+};
 export type WebsiteSettings = {
   commercialStatus?: string;
   /** The server-owned SaaS address; null outside SAAS. */
@@ -49,7 +82,10 @@ export type WebsiteSettings = {
   publishedRevision: number | null;
   publishedAt: string | null;
   hasUnpublishedChanges: boolean;
-  draft: WebsiteContent;
+  /** The SAAS page document; Venue public information lives in `shared`. */
+  draft: Omit<WebsiteContent, SharedKey>;
+  shared: WebsiteShared;
+  capabilities: WebsiteCapability[];
   baseDomain: string | null;
   domains: string[];
   publishedSlug: string | null;
@@ -90,6 +126,36 @@ export function websiteAddress(settings: WebsiteSettings) {
   );
 }
 
+/** The one editable view of a settings answer: page draft plus public info. */
+function editable(s: WebsiteSettings): WebsiteContent {
+  const shared = Object.fromEntries(sharedKeys.map((k) => [k, s.shared[k]]));
+  return { ...s.draft, ...shared } as WebsiteContent;
+}
+
+/** Order-insensitive equality of JSON values: key order is not a change. */
+function canonical(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonical);
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .map((k) => [k, canonical((value as Record<string, unknown>)[k])]),
+    );
+  return value;
+}
+const same = (a: unknown, b: unknown) =>
+  JSON.stringify(canonical(a)) === JSON.stringify(canonical(b));
+
+/** Whether a shared website capability can be managed for this Venue now. */
+export function capabilityAvailable(
+  settings: WebsiteSettings | undefined,
+  key: WebsiteCapabilityKey,
+) {
+  // No website provisioned yet: nothing to manage for it, in either mode.
+  if (!settings || settings.mode === "NONE") return false;
+  return !!settings.capabilities?.some((c) => c.key === key && c.available);
+}
+
 export function useWebsite(venueId: string | undefined) {
   const [settings, setSettings] = useState<WebsiteSettings>();
   const [draft, setDraft] = useState<WebsiteContent>();
@@ -103,7 +169,7 @@ export function useWebsite(venueId: string | undefined) {
 
   const accept = (s: WebsiteSettings) => {
     setSettings(s);
-    setDraft(s.draft);
+    setDraft(editable(s));
     setDirty(false);
     setMessage("");
   };
@@ -131,7 +197,7 @@ export function useWebsite(venueId: string | undefined) {
     setMessage("");
   };
   const discard = () => {
-    if (settings) setDraft(settings.draft);
+    if (settings) setDraft(editable(settings));
     setDirty(false);
     setError("");
   };
@@ -161,32 +227,61 @@ export function useWebsite(venueId: string | undefined) {
     setError("");
     setMessage("");
     try {
-      accept(
-        await customerApi<WebsiteSettings>(
-          `${path}/${kind === "save" ? "draft" : "publish"}`,
-          {
-            expectedRevision: settings.revision,
-            ...(kind === "save"
-              ? {
-                  content: {
-                    ...draft,
-                    mapUrl: normalizeLink(draft.mapUrl),
-                    socials: draft.socials.map((s) => ({
-                      ...s,
-                      url: normalizeLink(s.url),
-                    })),
-                  },
-                }
-              : {}),
-          },
-          kind === "save" ? "PUT" : "POST",
-        ),
-      );
-      setMessage(
-        kind === "save"
-          ? "ცვლილებები შენახულია. საჯარო გვერდი შეიცვლება გამოქვეყნების შემდეგ."
-          : "ვებსაიტი გამოქვეყნებულია.",
-      );
+      if (kind === "publish") {
+        accept(
+          await customerApi<WebsiteSettings>(
+            `${path}/publish`,
+            { expectedRevision: settings.revision },
+            "POST",
+          ),
+        );
+        setMessage("ვებსაიტი გამოქვეყნებულია.");
+      } else {
+        const normalized: WebsiteContent = {
+          ...draft,
+          mapUrl: normalizeLink(draft.mapUrl),
+          socials: draft.socials.map((s) => ({
+            ...s,
+            url: normalizeLink(s.url),
+          })),
+        };
+        let latest = settings;
+        const shared: Partial<WebsiteContent> = {};
+        for (const key of sharedKeys)
+          if (!same(normalized[key], settings.shared[key]))
+            Object.assign(shared, { [key]: normalized[key] });
+        const sharedChanged = Object.keys(shared).length > 0;
+        if (sharedChanged) {
+          latest = await customerApi<WebsiteSettings>(
+            `${path}/public-info`,
+            { expectedRevision: settings.shared.revision, ...shared },
+            "PUT",
+          );
+          // Already live: a failing page save below must not resend it.
+          setSettings(latest);
+        }
+        const page = Object.fromEntries(
+          Object.entries(normalized).filter(
+            ([key]) => !(sharedKeys as readonly string[]).includes(key),
+          ),
+        );
+        const pageChanged =
+          settings.mode === "SAAS" && !same(page, settings.draft);
+        if (pageChanged)
+          latest = await customerApi<WebsiteSettings>(
+            `${path}/draft`,
+            { expectedRevision: latest.revision, content: page },
+            "PUT",
+          );
+        accept(latest);
+        setMessage(
+          pageChanged
+            ? sharedChanged
+              ? "ცვლილებები შენახულია. საათები, კონტაქტები და გალერეა საიტზე უკვე ჩანს; დანარჩენი — გამოქვეყნების შემდეგ."
+              : "ცვლილებები შენახულია. საჯარო გვერდი შეიცვლება გამოქვეყნების შემდეგ."
+            : "ცვლილებები შენახულია და საიტზე უკვე ჩანს.",
+        );
+      }
       // A confirmation, not a state: it should not linger over later work.
       setTimeout(() => setMessage(""), 4000);
       return true;

@@ -27,7 +27,12 @@ import {
   CustomWebsiteSummary,
   WebsiteStatus,
 } from "./WebsiteSections";
-import { websiteAddress, type Website } from "./useWebsite";
+import {
+  capabilityAvailable,
+  websiteAddress,
+  type Website,
+  type WebsiteCapabilityKey,
+} from "./useWebsite";
 
 /**
  * The owner dashboard after first-run setup. Keyed by restaurant, so switching
@@ -95,7 +100,17 @@ export function OwnerDashboard({
         payments: "ONLINE_PAYMENTS",
       } as Record<string, string>
     )[key];
-    return !feature || venue.features.includes(feature);
+    if (feature && !venue.features.includes(feature)) return false;
+    // Shared capabilities decide, never the website mode; until the settings
+    // load the entitlement answer stands.
+    if (!website.settings) return true;
+    if (key === "hours") return capabilityAvailable(website.settings, "HOURS");
+    if (key === "photos")
+      return (
+        website.settings.mode === "SAAS" ||
+        capabilityAvailable(website.settings, "GALLERY")
+      );
+    return true;
   };
   const current = dashboardSections.find(([key]) => key === section)![1];
 
@@ -326,7 +341,10 @@ type Step = {
   hint: string;
   done: boolean;
   section: DashboardSection;
+  /** Only for the generic SAAS page. */
   website?: boolean;
+  /** Only where this shared capability is available, in either mode. */
+  capability?: WebsiteCapabilityKey;
 };
 
 export function nextSteps(venue: VenueStatus, website: Website): Step[] {
@@ -358,9 +376,9 @@ export function nextSteps(venue: VenueStatus, website: Website): Step[] {
       key: "hours",
       label: "სამუშაო საათების დამატება",
       hint: "სტუმრებმა იციან, როდის გეწვიონ.",
-      done: !!draft?.workingHours?.length,
+      done: !!website.settings?.shared?.workingHours?.length,
       section: "hours",
-      website: true,
+      capability: "HOURS",
     },
     {
       key: "address",
@@ -373,9 +391,12 @@ export function nextSteps(venue: VenueStatus, website: Website): Step[] {
       key: "photos",
       label: "ფოტოების დამატება",
       hint: "მთავარი ფოტო და გალერეა.",
-      done: !!(draft?.heroImageUrl || draft?.gallery?.length),
+      done: !!(
+        draft?.heroImageUrl || website.settings?.shared?.gallery?.length
+      ),
       section: "photos",
-      website: true,
+      // The SAAS page has its own photos; any website can have a gallery.
+      website: !capabilityAvailable(website.settings, "GALLERY"),
     },
     {
       key: "pos",
@@ -395,6 +416,8 @@ export function nextSteps(venue: VenueStatus, website: Website): Step[] {
   return steps.filter(
     (step) =>
       (saas || !step.website) &&
+      (!step.capability ||
+        capabilityAvailable(website.settings, step.capability)) &&
       (step.key !== "menu" || venue.features.includes("WEBSITE")) &&
       (step.key !== "photos" ||
         website.settings?.mediaUploadAllowed === true) &&

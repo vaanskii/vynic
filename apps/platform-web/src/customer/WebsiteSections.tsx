@@ -4,7 +4,13 @@ import { useState, type ReactNode } from "react";
 import { customerApi } from "./api";
 import { WebsiteImageUpload } from "./WebsiteImageUpload";
 import { WebsiteMenuEditor } from "./WebsiteMenuEditor";
-import { normalizeLink, websiteAddress, type Website } from "./useWebsite";
+import {
+  capabilityAvailable,
+  normalizeLink,
+  websiteAddress,
+  type Website,
+  type WebsiteCapabilityKey,
+} from "./useWebsite";
 
 /**
  * Dashboard sections that edit the website draft.
@@ -140,8 +146,28 @@ export function WebsiteUnavailable({ website }: { website: Website }) {
     <WebsiteStateNotice state={state === "SAAS" ? "SETUP_PENDING" : state} />
   );
 }
+/** The generic SAAS page (hero, about, design, SEO): SAAS only. */
 const editable = (website: Website) =>
   website.settings?.mode === "SAAS" && !!website.draft;
+
+/**
+ * Venue public information (hours, contact, gallery): any website, SAAS or
+ * CUSTOM, as long as the shared capability is available.
+ */
+const sharedEditable = (website: Website, key?: WebsiteCapabilityKey) =>
+  !!website.draft && (!key || capabilityAvailable(website.settings, key));
+
+function CapabilityOff({ title }: { title: string }) {
+  return (
+    <>
+      <SectionHeader title={title} />
+      <div className="portal-empty">
+        <strong>ეს ფუნქცია თქვენს ვებსაიტზე გამორთულია</strong>
+        <p>ჩასართავად დაუკავშირდით Vynic-ს.</p>
+      </div>
+    </>
+  );
+}
 
 export function WebsiteStatus({ website }: { website: Website }) {
   const s = website.settings;
@@ -311,6 +337,19 @@ export function WebsiteSection({
       <>
         <SectionHeader title="ვებსაიტი" />
         <WebsiteUnavailable website={website} />
+        {/* A custom design shows the same Venue contacts as a SAAS page. */}
+        {website.settings?.mode === "CUSTOM" && sharedEditable(website) && (
+          <section className="portal-card">
+            <h3>კონტაქტები</h3>
+            <fieldset disabled={website.busy}>
+              <ContactFields
+                website={website}
+                address={address}
+                onEditProfile={onEditProfile}
+              />
+            </fieldset>
+          </section>
+        )}
       </>
     );
   const settings = website.settings!;
@@ -467,6 +506,9 @@ function ContactFields({
   const draft = website.draft!;
   const edit = website.edit;
   const known = ["instagram", "facebook", "tiktok", "ვებსაიტი"];
+  // Whether to draw a map is a SAAS page choice; the pin is Venue data.
+  const page = website.settings?.mode === "SAAS";
+  const showMap = !page || draft.showMap !== false;
   return (
     <>
       <div className="portal-inset">
@@ -476,15 +518,17 @@ function ContactFields({
           {address ? "პროფილში შეცვლა" : "მისამართის დამატება"}
         </button>
       </div>
-      <label>
-        <input
-          type="checkbox"
-          checked={draft.showMap !== false}
-          onChange={(e) => edit({ showMap: e.target.checked })}
-        />
-        რუკის ჩვენება
-      </label>
-      {draft.showMap !== false && (
+      {page && (
+        <label>
+          <input
+            type="checkbox"
+            checked={draft.showMap !== false}
+            onChange={(e) => edit({ showMap: e.target.checked })}
+          />
+          რუკის ჩვენება
+        </label>
+      )}
+      {showMap && (
         <details>
           <summary>რუკაზე მდებარეობის დაზუსტება</summary>
           <label>
@@ -668,7 +712,7 @@ export function MenuSection({
           key={catalogVersion}
           venueId={website.venueId}
           disabled={website.busy}
-          canUpload={saas}
+          canUpload={!!website.settings?.mediaUploadAllowed}
         />
       </section>
     </>
@@ -685,8 +729,12 @@ export function PhotosSection({ website }: { website: Website }) {
         <p>ფოტოების ატვირთვა ხელმისაწვდომია აქტიური ვებსაიტის პაკეტით.</p>
       </section>
     );
-  if (!editable(website))
-    return (
+  const page = editable(website);
+  const gallery = sharedEditable(website, "GALLERY");
+  if (!page && !gallery)
+    return website.draft ? (
+      <CapabilityOff title="ფოტოები" />
+    ) : (
       <>
         <SectionHeader title="ფოტოები" />
         <WebsiteUnavailable website={website} />
@@ -714,75 +762,82 @@ export function PhotosSection({ website }: { website: Website }) {
         title="ფოტოები"
         lead="კარგი ფოტოები სტუმარს რესტორნის შეგრძნებას აძლევს. ყველა ფოტო არასავალდებულოა."
       />
-      <div className="portal-grid">
-        <section className="portal-card">
-          <h3>მთავარი ფოტო</h3>
-          <p>ჩანს ვებსაიტის ზედა ნაწილში.</p>
-          {upload(draft.heroImageUrl, (heroImageUrl) => edit({ heroImageUrl }))}
-        </section>
-        <section className="portal-card">
-          <h3>„ჩვენ შესახებ“ ფოტო</h3>
-          <p>ჩანს რესტორნის აღწერის გვერდით.</p>
-          {upload(
-            draft.aboutImageUrl,
-            (aboutImageUrl) => edit({ aboutImageUrl }),
-            {
-              label: "ფოტოს ატვირთვა",
-              alt: "ჩვენ შესახებ",
-              remove: "ფოტოს წაშლა",
-            },
-          )}
-        </section>
-      </div>
-      <section className="portal-card">
-        <h3>გალერეა</h3>
-        <p>{draft.gallery.length} / 20 ფოტო</p>
-        <div className="portal-gallery">
-          {draft.gallery.map((photo, i) => (
-            <figure key={`${photo.url}-${i}`}>
-              <img src={mediaSource(photo.url)} alt={photo.alt} />
-              <figcaption>
-                <label>
-                  აღწერა
-                  <input
-                    maxLength={200}
-                    value={photo.alt}
-                    onChange={(e) =>
-                      edit({
-                        gallery: draft.gallery.map((p, j) =>
-                          i === j ? { ...p, alt: e.target.value } : p,
-                        ),
-                      })
-                    }
-                  />
-                </label>
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() =>
-                    edit({ gallery: draft.gallery.filter((_, j) => i !== j) })
-                  }
-                >
-                  ფოტოს წაშლა
-                </button>
-              </figcaption>
-            </figure>
-          ))}
+      {page && (
+        <div className="portal-grid">
+          <section className="portal-card">
+            <h3>მთავარი ფოტო</h3>
+            <p>ჩანს ვებსაიტის ზედა ნაწილში.</p>
+            {upload(draft.heroImageUrl, (heroImageUrl) =>
+              edit({ heroImageUrl }),
+            )}
+          </section>
+          <section className="portal-card">
+            <h3>„ჩვენ შესახებ“ ფოტო</h3>
+            <p>ჩანს რესტორნის აღწერის გვერდით.</p>
+            {upload(
+              draft.aboutImageUrl,
+              (aboutImageUrl) => edit({ aboutImageUrl }),
+              {
+                label: "ფოტოს ატვირთვა",
+                alt: "ჩვენ შესახებ",
+                remove: "ფოტოს წაშლა",
+              },
+            )}
+          </section>
         </div>
-        {draft.gallery.length < 20 &&
-          upload(
-            "",
-            (url) =>
-              url && edit({ gallery: [...draft.gallery, { url, alt: "" }] }),
-            { label: "ფოტოს დამატება გალერეაში" },
-          )}
-        <GalleryLink
-          disabled={draft.gallery.length >= 20}
-          onAdd={(url) =>
-            edit({ gallery: [...draft.gallery, { url, alt: "" }] })
-          }
-        />
-      </section>
+      )}
+      {gallery && (
+        <section className="portal-card">
+          <h3>გალერეა</h3>
+          <p className="portal-hint">გალერეა შენახვისთანავე ჩანს ვებსაიტზე.</p>
+          <p>{draft.gallery.length} / 20 ფოტო</p>
+          <div className="portal-gallery">
+            {draft.gallery.map((photo, i) => (
+              <figure key={`${photo.url}-${i}`}>
+                <img src={mediaSource(photo.url)} alt={photo.alt} />
+                <figcaption>
+                  <label>
+                    აღწერა
+                    <input
+                      maxLength={200}
+                      value={photo.alt}
+                      onChange={(e) =>
+                        edit({
+                          gallery: draft.gallery.map((p, j) =>
+                            i === j ? { ...p, alt: e.target.value } : p,
+                          ),
+                        })
+                      }
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() =>
+                      edit({ gallery: draft.gallery.filter((_, j) => i !== j) })
+                    }
+                  >
+                    ფოტოს წაშლა
+                  </button>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+          {draft.gallery.length < 20 &&
+            upload(
+              "",
+              (url) =>
+                url && edit({ gallery: [...draft.gallery, { url, alt: "" }] }),
+              { label: "ფოტოს დამატება გალერეაში" },
+            )}
+          <GalleryLink
+            disabled={draft.gallery.length >= 20}
+            onAdd={(url) =>
+              edit({ gallery: [...draft.gallery, { url, alt: "" }] })
+            }
+          />
+        </section>
+      )}
     </>
   );
 }
@@ -829,13 +884,15 @@ function GalleryLink({
 // ---------------------------------------------------------------- hours
 
 export function HoursSection({ website }: { website: Website }) {
-  if (!editable(website))
+  if (!website.draft)
     return (
       <>
         <SectionHeader title="სამუშაო საათები" />
         <WebsiteUnavailable website={website} />
       </>
     );
+  if (!sharedEditable(website, "HOURS"))
+    return <CapabilityOff title="სამუშაო საათები" />;
   const draft = website.draft!;
   const edit = website.edit;
   const hours = draft.workingHours;
@@ -847,7 +904,7 @@ export function HoursSection({ website }: { website: Website }) {
     <>
       <SectionHeader
         title="სამუშაო საათები"
-        lead="ჩანს ვებსაიტზე. ღამის საათები შეიძლება შემდეგ დღეს დასრულდეს; მოუნიშნავი დღე დაკეტილია."
+        lead="შენახვისთანავე ჩანს ვებსაიტზე. ღამის საათები შეიძლება შემდეგ დღეს დასრულდეს; მოუნიშნავი დღე დაკეტილია."
       />
       <section className="portal-card">
         <fieldset disabled={website.busy} className="portal-hours">

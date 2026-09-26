@@ -143,10 +143,6 @@ export interface CustomWebsite {
     needsCloudAuthority: boolean;
   };
   payments: "NOT_INCLUDED" | "NOT_CONFIGURED" | "DISABLED" | "ENABLED";
-  capabilities: Record<
-    "profile" | "menu" | "customerAccounts" | "onlinePayments" | "reservations",
-    boolean
-  >;
   readiness: {
     complete: boolean;
     checks: Record<"entitled" | "customMode" | "siteKey" | "activeDomain", boolean>;
@@ -158,6 +154,33 @@ export interface CustomWebsite {
     createdAt: string;
     actor: string;
   }>;
+}
+
+export type WebsiteCapabilityKey =
+  | "MENU"
+  | "HOURS"
+  | "RESERVATIONS"
+  | "GALLERY"
+  | "CUSTOMER_ACCOUNTS"
+  | "ONLINE_PAYMENTS"
+  | "EVENTS"
+  | "BANQUETS"
+  | "ONLINE_ORDERING";
+
+/** One shared website capability of a Venue; identical for SAAS and CUSTOM. */
+export interface WebsiteCapability {
+  key: WebsiteCapabilityKey;
+  label: string;
+  built: boolean;
+  commercial: boolean;
+  enabled: boolean;
+  canEnable: boolean;
+  ready: boolean;
+  readyDetail: string | null;
+  available: boolean;
+  live: boolean;
+  /** null: decided by the custom frontend build. */
+  usedByFrontend: boolean | null;
 }
 
 /** An on-demand reachability answer; never stored, never a setup status. */

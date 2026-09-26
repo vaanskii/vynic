@@ -31,14 +31,6 @@ const checkLabels: Record<keyof CustomWebsite["readiness"]["checks"], string> =
     activeDomain: "At least one active domain",
   };
 
-const capabilityLabels: Record<keyof CustomWebsite["capabilities"], string> = {
-  profile: "Restaurant profile",
-  menu: "Menu",
-  customerAccounts: "Website customer accounts",
-  onlinePayments: "Online payments (BOG)",
-  reservations: "Paid reservations",
-};
-
 const auditLabels: Record<string, string> = {
   "venue.website_mode_changed": "Website mode changed",
   "venue.custom_website_site_key_changed": "Frontend identity changed",
@@ -50,6 +42,7 @@ const auditLabels: Record<string, string> = {
   "venue.feature_override_removed": "Feature override removed",
   "venue.cloud_menu_enabled": "Dashboard menu editing enabled",
   "venue.cloud_menu_disabled": "Dashboard menu editing disabled",
+  "venue.website_capability_changed": "Website capability changed",
 };
 
 const apiLabels: Record<CustomWebsiteCheck["api"]["state"], string> = {
@@ -326,26 +319,7 @@ export function CustomWebsitePanel({ venueId }: { venueId: string }) {
           ) : null}
         </Panel>
       </div>
-      <div className="platform-grid platform-grid--2 platform-section-gap">
-        <Panel
-          title="Shared capabilities"
-          description="Derived from effective features and configured data; change them in Product access and payments."
-        >
-          <ul className="platform-checklist">
-            {(
-              Object.keys(capabilityLabels) as Array<
-                keyof typeof capabilityLabels
-              >
-            ).map((key) => (
-              <li key={key}>
-                <StatusBadge
-                  value={data.capabilities[key] ? "ENABLED" : "DISABLED"}
-                />{" "}
-                {capabilityLabels[key]}
-              </li>
-            ))}
-          </ul>
-        </Panel>
+      <div className="platform-section-gap">
         <Panel title="Custom website history">
           {data.audit.length === 0 ? (
             <p>No custom website changes recorded yet.</p>

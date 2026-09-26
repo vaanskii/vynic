@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import {
   ids,
+  websiteCapabilities,
   installApi,
   plans,
   product,
@@ -192,6 +193,75 @@ describe("venue product and website controls", () => {
   });
 });
 
+describe("Website capabilities", () => {
+  it("shows every shared capability and offers only possible switches", async () => {
+    const api = installApi((request) => {
+      const path = request.url.pathname;
+      if (path.endsWith("/product"))
+        return {
+          body: {
+            ...product,
+            website: {
+              entitled: true,
+              configuredMode: "SAAS",
+              effectiveMode: "SAAS",
+              consistent: true,
+            },
+          },
+        };
+      if (
+        path.endsWith("/website-capabilities/HOURS") &&
+        request.method === "PUT"
+      )
+        return {
+          body: websiteCapabilities.map((c) =>
+            c.key === "HOURS"
+              ? { ...c, enabled: false, available: false, live: false }
+              : c,
+          ),
+        };
+      return undefined;
+    });
+    const user = userEvent.setup();
+    renderPlatform(`/venues/${ids.venue}/website`);
+    await screen.findByRole("heading", { name: "Website capabilities" });
+    await waitFor(() =>
+      expect(
+        document.querySelector('tr[data-capability="MENU"]'),
+      ).not.toBeNull(),
+    );
+    const row = (key: string) =>
+      within(
+        document.querySelector<HTMLElement>(`tr[data-capability="${key}"]`)!,
+      );
+    expect(row("MENU").getByText("Included")).toBeVisible();
+    // Not in the package: visible, but never switchable on.
+    expect(row("ONLINE_PAYMENTS").getByText("Not included")).toBeVisible();
+    expect(
+      row("ONLINE_PAYMENTS").getByRole("button", { name: /Turn on/ }),
+    ).toBeDisabled();
+    // Not built: no switch at all.
+    expect(row("EVENTS").getByText("Not built")).toBeVisible();
+    expect(row("EVENTS").queryByRole("button")).toBeNull();
+    expect(
+      row("RESERVATIONS").getByText(/online payments are not live/),
+    ).toBeVisible();
+    await user.click(
+      row("HOURS").getByRole("button", { name: "Turn off Hours" }),
+    );
+    await waitFor(() =>
+      expect(
+        api.requests.find(
+          (r) => r.method === "PUT" && r.url.pathname.endsWith("/HOURS"),
+        )?.body,
+      ).toEqual({ enabled: false }),
+    );
+    expect(
+      await row("HOURS").findByRole("button", { name: "Turn on Hours" }),
+    ).toBeEnabled();
+  });
+});
+
 describe("CUSTOM website provisioning", () => {
   const customView = (patch: Record<string, unknown> = {}) => ({
     venueId: ids.venue,
@@ -214,13 +284,6 @@ describe("CUSTOM website provisioning", () => {
       needsCloudAuthority: false,
     },
     payments: "NOT_CONFIGURED",
-    capabilities: {
-      profile: true,
-      menu: true,
-      customerAccounts: true,
-      onlinePayments: false,
-      reservations: false,
-    },
     readiness: {
       complete: false,
       checks: {
@@ -302,16 +365,14 @@ describe("CUSTOM website provisioning", () => {
     await waitFor(() =>
       expect(
         api.requests.find(
-          (r) => r.method === "PUT" && r.url.pathname.endsWith("/custom-website"),
+          (r) =>
+            r.method === "PUT" && r.url.pathname.endsWith("/custom-website"),
         )?.body,
       ).toEqual({ siteKey: "restaurant-x-web", status: "SETUP_PENDING" }),
     );
     expect(await screen.findByText("Frontend identity changed")).toBeVisible();
 
-    await user.selectOptions(
-      screen.getByLabelText(/^Setup status/),
-      "ACTIVE",
-    );
+    await user.selectOptions(screen.getByLabelText(/^Setup status/), "ACTIVE");
     await user.click(screen.getByRole("button", { name: "Save custom setup" }));
     expect(
       await screen.findByText(/ACTIVE requires Website access/),
@@ -393,8 +454,6 @@ describe("CUSTOM website provisioning", () => {
     const menu = within(
       screen.getByRole("heading", { name: "Menu" }).closest("section")!,
     );
-    expect(menu.getByRole("alert")).toHaveTextContent(
-      /still on POS authority/,
-    );
+    expect(menu.getByRole("alert")).toHaveTextContent(/still on POS authority/);
   });
 });

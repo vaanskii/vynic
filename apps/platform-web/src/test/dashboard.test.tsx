@@ -25,13 +25,28 @@ const draft = {
   menuIntro: "",
   seoTitle: "",
   seoDescription: "",
+  footerNote: "",
+};
+/** Venue public information: saved live through `public-info`, in any mode. */
+const shared = {
+  workingHours: [] as { day: number; opens: string; closes: string }[],
   contactEmail: "",
   mapUrl: "",
-  footerNote: "",
-  workingHours: [] as { day: number; opens: string; closes: string }[],
-  socials: [],
-  gallery: [],
+  socials: [] as { label: string; url: string }[],
+  gallery: [] as { url: string; alt: string }[],
+  revision: 0,
 };
+const capabilities = (off: string[] = []) =>
+  ["MENU", "HOURS", "RESERVATIONS", "GALLERY", "CUSTOMER_ACCOUNTS"].map(
+    (key) => ({
+      key,
+      label: key,
+      built: true,
+      available: !off.includes(key),
+      ready: true,
+      live: !off.includes(key),
+    }),
+  );
 const website = (patch: Record<string, unknown> = {}) => ({
   commercialStatus: "TRIAL",
   hostnameChangeAllowed: false,
@@ -46,6 +61,8 @@ const website = (patch: Record<string, unknown> = {}) => ({
   publishedAt: null,
   hasUnpublishedChanges: true,
   draft,
+  shared,
+  capabilities: capabilities(),
   baseDomain: "vynic.localhost",
   domains: [],
   publishedSlug: null,
@@ -183,6 +200,21 @@ function serve({
       }
       if (path.endsWith("/website/logo") || path.endsWith("/website/hero"))
         return { url: "/media/website-logos/new.webp" };
+      if (path.endsWith("/website/public-info")) {
+        if (body.expectedRevision !== state.site.shared.revision)
+          throw new Error("conflict");
+        const fields = { ...body };
+        delete fields.expectedRevision;
+        state.site = {
+          ...state.site,
+          shared: {
+            ...state.site.shared,
+            ...fields,
+            revision: state.site.shared.revision + 1,
+          },
+        };
+        return state.site;
+      }
       if (path.endsWith("/website/draft")) {
         if (body.expectedRevision !== state.site.revision)
           throw new Error("conflict");
@@ -405,14 +437,20 @@ describe("Owner portal", () => {
     expect(screen.getByRole("button", { name: "გამოქვეყნება" })).toBeDisabled();
 
     await user.click(screen.getByRole("button", { name: "შენახვა" }));
+    // Hours are Venue data: saved live, not into the page draft.
     await waitFor(() =>
-      expect(state.site.draft.workingHours).toEqual([
+      expect(state.site.shared.workingHours).toEqual([
         { day: 1, opens: "10:00", closes: "01:00" },
       ]),
     );
-    expect(calls("venues/venue-a/website/draft")[0][1].expectedRevision).toBe(
-      1,
-    );
+    expect(calls("venues/venue-a/website/public-info")[0][1]).toEqual({
+      expectedRevision: 0,
+      workingHours: [{ day: 1, opens: "10:00", closes: "01:00" }],
+    });
+    expect(calls("venues/venue-a/website/draft")).toEqual([]);
+    expect(
+      await screen.findByText("ცვლილებები შენახულია და საიტზე უკვე ჩანს."),
+    ).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: "ვებსაიტის ნახვა" }));
     await waitFor(() =>
@@ -427,7 +465,7 @@ describe("Owner portal", () => {
     await user.click(screen.getByRole("button", { name: "გამოქვეყნება" }));
     await screen.findByText("ვებსაიტი გამოქვეყნებულია.");
     expect(calls("venues/venue-a/website/publish")[0][1]).toEqual({
-      expectedRevision: 2,
+      expectedRevision: 1,
     });
     expect(screen.getAllByText("გამოქვეყნებულია")[0]).toBeVisible();
   });
@@ -476,7 +514,7 @@ describe("Owner portal", () => {
     await user.tab();
     await user.click(screen.getByRole("button", { name: "შენახვა" }));
     await waitFor(() =>
-      expect(state.site.draft.socials).toEqual([
+      expect(state.site.shared.socials).toEqual([
         { label: "Instagram", url: "https://instagram.com/tabla" },
       ]),
     );
@@ -495,7 +533,9 @@ describe("Owner portal", () => {
     expect(screen.getByRole("button", { name: "გამოქვეყნება" })).toBeDisabled();
     view.unmount();
 
-    serve({ site: website({ mode: "CUSTOM", custom: { status: "SETUP_PENDING" } }) });
+    serve({
+      site: website({ mode: "CUSTOM", custom: { status: "SETUP_PENDING" } }),
+    });
     const custom = renderPortal("/dashboard/website");
     expect(await screen.findByText("ინდივიდუალური ვებსაიტი")).toBeVisible();
     expect(screen.getByText("მომზადება მიმდინარეობს")).toBeVisible();
@@ -518,6 +558,70 @@ describe("Owner portal", () => {
       "href",
       "https://tabla.ge",
     );
+  });
+});
+
+describe("Shared website data", () => {
+  const customSite = (patch: Record<string, unknown> = {}) =>
+    website({
+      mode: "CUSTOM",
+      custom: { status: "ACTIVE" },
+      domains: ["tabla.ge"],
+      ...patch,
+    });
+
+  it("lets a CUSTOM owner manage hours and contacts, saved live without a draft", async () => {
+    const state = serve({ site: customSite() });
+    const user = userEvent.setup();
+    renderPortal("/dashboard/hours");
+    await user.click(await screen.findByLabelText("ორშაბათი"));
+    await user.click(screen.getByRole("button", { name: "შენახვა" }));
+    await waitFor(() => expect(state.site.shared.workingHours).toHaveLength(1));
+    expect(calls("venues/venue-a/website/draft")).toEqual([]);
+
+    await user.click((await nav()).getByRole("button", { name: "ვებსაიტი" }));
+    expect(await screen.findByText("ინდივიდუალური ვებსაიტი")).toBeVisible();
+    await user.type(
+      screen.getByLabelText("Instagram", { selector: "input" }),
+      "instagram.com/tabla",
+    );
+    await user.tab();
+    await user.click(screen.getByRole("button", { name: "შენახვა" }));
+    await waitFor(() =>
+      expect(state.site.shared.socials).toEqual([
+        { label: "Instagram", url: "https://instagram.com/tabla" },
+      ]),
+    );
+    // The generic page's own controls never appear for a custom design.
+    expect(screen.queryByText("რუკის ჩვენება")).toBeNull();
+    expect(screen.queryByRole("button", { name: "გამოქვეყნება" })).toBeNull();
+  });
+
+  it("shows gallery management for CUSTOM but not the SAAS page photos", async () => {
+    serve({ site: customSite() });
+    renderPortal("/dashboard/photos");
+    expect(
+      await screen.findByRole("heading", { name: "გალერეა" }),
+    ).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "მთავარი ფოტო" })).toBeNull();
+  });
+
+  it("follows the operator's capability switch, whatever the mode", async () => {
+    for (const mode of ["SAAS", "CUSTOM"]) {
+      serve({
+        site: website({
+          mode,
+          custom: mode === "CUSTOM" ? { status: "ACTIVE" } : null,
+          capabilities: capabilities(["HOURS"]),
+        }),
+      });
+      const view = renderPortal("/dashboard/overview");
+      // The Hours page is not offered to either kind of website.
+      expect(
+        (await nav()).queryByRole("button", { name: "სამუშაო საათები" }),
+      ).toBeNull();
+      view.unmount();
+    }
   });
 });
 

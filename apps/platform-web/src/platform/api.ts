@@ -7,6 +7,7 @@ import type {
   AuditEvent,
   CustomWebsite,
   CustomWebsiteCheck,
+  WebsiteCapability,
   Device,
   DeviceEnrollment,
   DeviceStatus,
@@ -281,6 +282,15 @@ export const platformApi = {
       method: "PUT",
       body: json(body),
     }),
+  websiteCapabilities: (venueId: string) =>
+    request<WebsiteCapability[]>(
+      `/platform/venues/${venueId}/website-capabilities`,
+    ),
+  setWebsiteCapability: (venueId: string, key: string, enabled: boolean) =>
+    request<WebsiteCapability[]>(
+      `/platform/venues/${venueId}/website-capabilities/${key}`,
+      { method: "PUT", body: json({ enabled }) },
+    ),
   checkCustomWebsite: (venueId: string) =>
     request<CustomWebsiteCheck>(
       `/platform/venues/${venueId}/custom-website/check`,

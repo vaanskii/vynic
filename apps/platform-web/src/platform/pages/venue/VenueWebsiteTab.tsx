@@ -1,4 +1,5 @@
 import { CustomWebsitePanel } from "./CustomWebsitePanel";
+import { WebsiteCapabilitiesPanel } from "./WebsiteCapabilitiesPanel";
 import { HostnameReviews } from "./HostnameReviews";
 import { useState } from "react";
 import { Globe, Plus, WarningCircle } from "@phosphor-icons/react";
@@ -43,6 +44,9 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
   const [feedback, setFeedback] = useState<string | null>(null);
   const refreshProduct = async () => {
     await queryClient.invalidateQueries({ queryKey: ["product", venueId] });
+    await queryClient.invalidateQueries({
+      queryKey: ["website-capabilities", venueId],
+    });
     await queryClient.invalidateQueries({
       queryKey: ["custom-website", venueId],
     });
@@ -218,6 +222,11 @@ export function VenueWebsiteTab({ venueId }: { venueId: string }) {
       </div>
       {website.configuredMode === "CUSTOM" ? (
         <CustomWebsitePanel venueId={venueId} />
+      ) : null}
+      {website.configuredMode !== "NONE" ? (
+        <div className="platform-section-gap">
+          <WebsiteCapabilitiesPanel venueId={venueId} />
+        </div>
       ) : null}
       <Panel title="Website publication">
         <p>

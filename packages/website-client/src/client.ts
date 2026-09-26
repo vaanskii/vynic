@@ -94,7 +94,7 @@ export function createWebsiteClient(options: WebsiteClientOptions = {}) {
     /** Identity, frontend binding, profile and capabilities of this site. */
     bootstrap: async () => {
       try {
-        return await call<CustomSiteBootstrap>("/api/website/custom/bootstrap");
+        return await call<CustomSiteBootstrap>("/api/website/venue");
       } catch (error) {
         // At the site level a refusal means Website access is not active
         // (for example an ended Trial); elsewhere 403 is a capability answer.
@@ -104,7 +104,7 @@ export function createWebsiteClient(options: WebsiteClientOptions = {}) {
       }
     },
     /** Canonical menu with the owner's website presentation applied. */
-    menu: () => call<CustomSiteMenu>("/api/website/custom/menu"),
+    menu: () => call<CustomSiteMenu>("/api/website/venue/menu"),
 
     tables: () => call<WebsiteTable[]>("/api/tables"),
     availability: (date: string) =>

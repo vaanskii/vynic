@@ -22,7 +22,9 @@ function fakeFetch(
   return { fn: fn as unknown as typeof fetch, calls };
 }
 
-const bootstrap = (patch: Partial<CustomSiteBootstrap["site"]> = {}) =>
+const bootstrap = (
+  patch: Partial<NonNullable<CustomSiteBootstrap["site"]>> = {},
+) =>
   ({
     schemaVersion: 1,
     mode: "CUSTOM",
@@ -35,9 +37,18 @@ const bootstrap = (patch: Partial<CustomSiteBootstrap["site"]> = {}) =>
       timezone: "Asia/Tbilisi",
       currency: "GEL",
     },
+    info: {
+      workingHours: [],
+      contactEmail: "",
+      mapUrl: "",
+      socials: [],
+      gallery: [],
+    },
     capabilities: {
       profile: true,
       menu: true,
+      hours: false,
+      gallery: false,
       customerAccounts: true,
       onlinePayments: false,
       reservations: false,
@@ -47,8 +58,8 @@ const bootstrap = (patch: Partial<CustomSiteBootstrap["site"]> = {}) =>
 describe("createWebsiteClient", () => {
   it("calls same-origin paths only and never sends a Venue identity", async () => {
     const { fn, calls } = fakeFetch({
-      "GET /api/website/custom/bootstrap": { body: bootstrap() },
-      "GET /api/website/custom/menu": { body: { categories: [] } },
+      "GET /api/website/venue": { body: bootstrap() },
+      "GET /api/website/venue/menu": { body: { categories: [] } },
       "GET /api/tables/availability?date=2026-11-02": { body: [] },
     });
     const client = createWebsiteClient({ fetch: fn });
@@ -57,7 +68,10 @@ describe("createWebsiteClient", () => {
     await client.availability("2026-11-02");
     for (const call of calls) {
       expect(call.url.startsWith("/api/")).toBe(true);
-      expect(call.url).not.toMatch(/venue|domain|organization/i);
+      // No identity travels in a query or as an id in the path.
+      const url = new URL(call.url, "https://site.test");
+      expect(url.search).not.toMatch(/venue|domain|organization/i);
+      expect(url.pathname).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-/i);
       expect(call.init.credentials).toBe("same-origin");
       expect([...new Headers(call.init.headers).keys()]).not.toContain(
         "x-venue-id",
@@ -72,7 +86,7 @@ describe("createWebsiteClient", () => {
     );
     const ended = createWebsiteClient({
       fetch: fakeFetch({
-        "GET /api/website/custom/bootstrap": { status: 403 },
+        "GET /api/website/venue": { status: 403 },
       }).fn,
     });
     await expect(ended.bootstrap()).rejects.toMatchObject({ status: 403 });
@@ -131,6 +145,10 @@ describe("gateSite", () => {
       gateSite(bootstrap({ status: "SETUP_PENDING" }), "restaurant-x-web")
         .kind,
     ).toBe("setup");
+    // A SAAS Venue's host has no custom binding: never dress it in this build.
+    expect(
+      gateSite({ ...bootstrap(), mode: "SAAS", site: null }, "restaurant-x-web"),
+    ).toEqual({ kind: "misattached", expected: "restaurant-x-web", bound: null });
   });
 
   it("formats names and prices", () => {

@@ -18,9 +18,10 @@ export function gateSite(
   bootstrap: CustomSiteBootstrap,
   siteKey: string,
 ): SiteGate {
-  if (bootstrap.site.key !== siteKey)
-    return { kind: "misattached", expected: siteKey, bound: bootstrap.site.key };
-  if (bootstrap.site.status === "ACTIVE") return { kind: "ready", bootstrap };
+  // A SAAS Venue has no custom binding: this build does not belong there.
+  const bound = bootstrap.site?.key ?? null;
+  if (bound !== siteKey) return { kind: "misattached", expected: siteKey, bound };
+  if (bootstrap.site?.status === "ACTIVE") return { kind: "ready", bootstrap };
   return { kind: "setup", bootstrap };
 }
 

@@ -33,8 +33,8 @@ const site = hooks.useSite("restaurant-x-web");       // this build's identity
 
 | Client method | Route |
 | --- | --- |
-| `bootstrap()` | `GET /api/website/custom/bootstrap` (404 → `SiteUnavailableError`, 403 → access ended) |
-| `menu()` | `GET /api/website/custom/menu` |
+| `bootstrap()` | `GET /api/website/venue` (404 → `SiteUnavailableError`, 403 → access ended) |
+| `menu()` | `GET /api/website/venue/menu` |
 | `tables()`, `availability(date)` | `GET /api/tables`, `/api/tables/availability` |
 | `bookAndPay(request)` | `POST /api/bog/create-order` |
 | `paymentStatus(reservationId)` | `GET /api/bog/check-reservation-status/:id` |

@@ -1,6 +1,6 @@
 /**
- * Wire types of the shared Vynic public website API, as a CUSTOM frontend
- * receives them. The Venue is always the one the request Host resolved to;
+ * Wire types of the shared Vynic public website API. SAAS and CUSTOM Venues
+ * answer the same contract; a custom frontend receives it like any other. The Venue is always the one the request Host resolved to;
  * none of these types carries a Venue id the client could choose.
  */
 
@@ -21,9 +21,21 @@ export type CustomSiteStatus =
 export type SiteCapabilities = {
   profile: boolean;
   menu: boolean;
+  hours: boolean;
+  gallery: boolean;
   customerAccounts: boolean;
   onlinePayments: boolean;
   reservations: boolean;
+};
+
+/** Venue-owned public information; hours/gallery are empty when not offered. */
+export type VenueInfo = {
+  /** Day 1 = Monday … 7 = Sunday; an absent day is closed. */
+  workingHours: Array<{ day: number; opens: string; closes: string }>;
+  contactEmail: string;
+  mapUrl: string;
+  socials: Array<{ label: string; url: string }>;
+  gallery: Array<{ url: string; alt: string }>;
 };
 
 export type VenueProfile = {
@@ -35,12 +47,14 @@ export type VenueProfile = {
   currency: string;
 };
 
-/** `GET /api/website/custom/bootstrap` */
+/** `GET /api/website/venue` */
 export type CustomSiteBootstrap = {
   schemaVersion: 1;
-  mode: "CUSTOM";
-  site: { key: string | null; status: CustomSiteStatus };
+  mode: "SAAS" | "CUSTOM";
+  /** The CUSTOM frontend bound to this Venue; null when a SAAS site serves it. */
+  site: { key: string | null; status: CustomSiteStatus } | null;
   profile: VenueProfile;
+  info: VenueInfo;
   capabilities: SiteCapabilities;
 };
 
@@ -70,7 +84,7 @@ export type MenuCategory = {
   }>;
 };
 
-/** `GET /api/website/custom/menu`: hidden and disabled items never appear. */
+/** `GET /api/website/venue/menu`: hidden and disabled items never appear. */
 export type CustomSiteMenu = {
   schemaVersion: 1;
   currency: string;

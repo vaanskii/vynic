@@ -14,9 +14,18 @@ const bootstrap = (site: Record<string, unknown>) => ({
     timezone: "Asia/Tbilisi",
     currency: "GEL",
   },
+  info: {
+    workingHours: [],
+    contactEmail: "",
+    mapUrl: "",
+    socials: [],
+    gallery: [],
+  },
   capabilities: {
     profile: true,
     menu: true,
+    hours: false,
+    gallery: false,
     customerAccounts: true,
     onlinePayments: false,
     reservations: false,
@@ -39,8 +48,8 @@ afterEach(() => vi.unstubAllGlobals());
 describe("custom site template", () => {
   it("renders the Host's restaurant and its menu", async () => {
     serve({
-      "/api/website/custom/bootstrap": { body: bootstrap({}) },
-      "/api/website/custom/menu": {
+      "/api/website/venue": { body: bootstrap({}) },
+      "/api/website/venue/menu": {
         body: {
           schemaVersion: 1,
           currency: "GEL",
@@ -76,7 +85,7 @@ describe("custom site template", () => {
 
   it("refuses to dress another restaurant's domain in this design", async () => {
     const fetchMock = serve({
-      "/api/website/custom/bootstrap": { body: bootstrap({ key: "vankisi-web" }) },
+      "/api/website/venue": { body: bootstrap({ key: "vankisi-web" }) },
     });
     render(<App />);
     expect(
@@ -87,7 +96,7 @@ describe("custom site template", () => {
 
   it("shows coming-soon while setup is pending and nothing on an unknown host", async () => {
     serve({
-      "/api/website/custom/bootstrap": {
+      "/api/website/venue": {
         body: bootstrap({ status: "SETUP_PENDING" }),
       },
     });

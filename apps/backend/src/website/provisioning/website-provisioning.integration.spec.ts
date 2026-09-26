@@ -829,7 +829,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
       ).toMatchObject({ metadata: { source: 'subscription.trial' } });
     });
 
-    it('provisions an operator-chosen CUSTOM Trial without the generic SaaS editor', async () => {
+    it('provisions an operator-chosen CUSTOM Trial with the Cloud catalog and without the generic SaaS editor', async () => {
       const row = await submit('custom');
       const reviewed = (
         await review(row.id, {
@@ -863,13 +863,45 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
           })
         ).mode,
       ).toBe('CUSTOM');
+      // CUSTOM changes only who renders the site: a Website-only package gets
+      // the same Cloud catalog admission as SAAS.
       expect(
-        (
-          await db.venue.findUniqueOrThrow({
-            where: { id: owner.venueId },
-          })
-        ).menuAuthority,
-      ).toBe('POS');
+        await db.venue.findUniqueOrThrow({
+          where: { id: owner.venueId },
+          select: { menuAuthority: true, cloudMenuEditingEnabled: true },
+        }),
+      ).toEqual({ menuAuthority: 'CLOUD', cloudMenuEditingEnabled: true });
+      const catalog = (
+        await http()
+          .get(`/customer/venues/${owner.venueId}/catalog`)
+          .set(bearer(owner.access_token))
+          .expect(200)
+      ).body;
+      expect(catalog).toMatchObject({
+        authority: 'CLOUD',
+        editingEnabled: true,
+        posIncluded: false,
+      });
+      await http()
+        .put(`/customer/venues/${owner.venueId}/catalog/category`)
+        .set(bearer(owner.access_token))
+        .send({
+          expectedRevision: catalog.revision,
+          nameKa: 'სალათები',
+          nameEn: 'Salads',
+        })
+        .expect(200);
+      expect(
+        await db.menuCategory.count({ where: { venueId: owner.venueId } }),
+      ).toBe(1);
+      expect(
+        await db.platformAuditEvent.findFirst({
+          where: {
+            targetId: owner.venueId,
+            action: 'venue.cloud_menu_enabled',
+          },
+        }),
+      ).toMatchObject({ metadata: { from: 'POS', enabled: true } });
     });
 
     it('never hands a POS-bundled Website package to Cloud menu authority', async () => {

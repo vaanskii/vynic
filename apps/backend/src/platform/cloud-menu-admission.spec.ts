@@ -17,8 +17,11 @@ describe('first-use Cloud menu admission', () => {
     tx[model].count.mockResolvedValue(1);
     expect(await cloudMenuAdmission(tx, 'venue-a')).toMatchObject({ canEnableCloud: false, reason: expect.any(String) });
   });
-  it.each([{ websiteConfig: { mode: 'CUSTOM' } }, { activeOperationalDeviceId: 'primary' }])('blocks protected venue configuration %j', async config => {
-    expect(await cloudMenuAdmission(fixture(config), 'venue-a')).toMatchObject({ canEnableCloud: false });
+  it('blocks a Venue with an assigned primary POS', async () => {
+    expect(await cloudMenuAdmission(fixture({ activeOperationalDeviceId: 'primary' }), 'venue-a')).toMatchObject({ canEnableCloud: false });
+  });
+  it('admits an empty CUSTOM Venue exactly like SAAS: the renderer never decides authority', async () => {
+    expect(await cloudMenuAdmission(fixture({ websiteConfig: { mode: 'CUSTOM' } }), 'venue-a')).toMatchObject({ canEnableCloud: true, reason: null });
   });
   it('reports Cloud venues without offering a second transition', async () => {
     expect(await cloudMenuAdmission(fixture({ menuAuthority: 'CLOUD' }), 'venue-a')).toEqual({ authority: 'CLOUD', enabled: true, canEnableCloud: true, reason: null });

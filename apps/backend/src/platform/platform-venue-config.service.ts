@@ -147,6 +147,27 @@ export class PlatformVenueConfigService {
     return this.readProduct(venueId);
   }
 
+  /**
+   * Menu authority for the operator. The website implementation never decides
+   * it; the package does. A Website package without POS left on POS authority
+   * has no catalog writer at all, so it is reported for repair.
+   */
+  private async menuManagement(venueId: string) {
+    const [admission, planFeatures] = await Promise.all([
+      cloudMenuAdmission(this.prisma, venueId),
+      this.entitlements.planFeatures(venueId),
+    ]);
+    const posIncluded = planFeatures.includes('POS');
+    return {
+      ...admission,
+      posIncluded,
+      needsCloudAuthority:
+        planFeatures.includes('WEBSITE') &&
+        !posIncluded &&
+        admission.authority === 'POS',
+    };
+  }
+
   async listFeatures() {
     return this.prisma.feature.findMany({
       orderBy: { key: 'asc' },
@@ -189,7 +210,7 @@ export class PlatformVenueConfigService {
       commercialStatus:
         (await this.prisma.venueSubscription.findUnique({ where: { venueId } }))
           ?.status ?? null,
-      menuManagement: await cloudMenuAdmission(this.prisma, venueId),
+      menuManagement: await this.menuManagement(venueId),
       plan: assignment?.plan ?? null,
       planAssignedAt: assignment?.assignedAt ?? null,
       agreedPrice: assignment

@@ -68,7 +68,9 @@ export async function provisionWebsite(
         ? before.mode
         : requireWebsiteMode(requested)
       : requireWebsiteMode(requested);
-  if (mode === 'SAAS' && !planFeatures.includes('POS'))
+  // Menu authority follows the package, never the implementation: a
+  // Website-only Venue needs a Cloud catalog whether SAAS or CUSTOM renders it.
+  if (!planFeatures.includes('POS'))
     await admitCloudMenu(tx, venueId, actor, source);
   if (before?.mode === mode)
     return mode === 'SAAS'
@@ -94,10 +96,11 @@ export async function provisionWebsite(
 }
 
 /**
- * A POS-less SAAS website needs Cloud menu authoring. The operator's explicit
- * Website assignment is the admission act; the existing conservative checks
- * still decide, so any POS evidence keeps POS authority and the operator sees
- * the recorded reason. Never runs for packages that include POS or CUSTOM.
+ * A POS-less website (SAAS or CUSTOM) needs Cloud menu authoring. The
+ * operator's explicit Website assignment is the admission act; the existing
+ * conservative checks still decide, so any POS evidence keeps POS authority
+ * and the operator sees the recorded reason. Never runs for packages that
+ * include POS.
  */
 async function admitCloudMenu(
   tx: Prisma.TransactionClient,

@@ -2,7 +2,7 @@ import type { Prisma } from '@prisma/client';
 
 /** Conservative first-use admission, not a migration of an established POS. */
 export async function cloudMenuAdmission(tx: Prisma.TransactionClient, venueId: string) {
-  const venue = await tx.venue.findUniqueOrThrow({ where: { id: venueId }, include: { websiteConfig: { select: { mode: true } } } });
+  const venue = await tx.venue.findUniqueOrThrow({ where: { id: venueId } });
   if (venue.menuAuthority === 'CLOUD') return { authority: venue.menuAuthority, canEnableCloud: true, enabled: venue.cloudMenuEditingEnabled, reason: null };
   const checks: Array<[string, Promise<number>]> = [
     ['POS devices', tx.device.count({ where: { venueId } })],
@@ -22,8 +22,9 @@ export async function cloudMenuAdmission(tx: Prisma.TransactionClient, venueId: 
   ];
   const counts = await Promise.all(checks.map(([, count]) => count));
   const existing = checks.filter((_, i) => counts[i] > 0).map(([label]) => label);
-  const reason = venue.websiteConfig?.mode === 'CUSTOM' ? 'Custom websites keep their existing menu management.'
-    : venue.activeOperationalDeviceId ? 'A primary POS is already assigned.'
+  // The website implementation (SAAS/CUSTOM) is presentation only; it never
+  // decides who authors the catalog.
+  const reason = venue.activeOperationalDeviceId ? 'A primary POS is already assigned.'
     : existing.length ? `Cloud menu setup is blocked by existing ${existing.join(', ')}.` : null;
   return { authority: venue.menuAuthority, canEnableCloud: !reason, enabled: false, reason };
 }

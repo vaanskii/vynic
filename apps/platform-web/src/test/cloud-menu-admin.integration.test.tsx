@@ -28,6 +28,15 @@ describe("Cloud menu Admin setup", () => {
     expect(await screen.findByText(/Existing POS devices/)).toBeVisible();
     expect(screen.queryByRole("checkbox")).toBeNull();
   });
+  it("warns when a Website-only venue is left on POS authority and offers the repair", async () => {
+    installApi(request => request.url.pathname.endsWith("/product") ? { body: { ...product, menuManagement: { authority: "POS", enabled: false, canEnableCloud: true, reason: null, posIncluded: false, needsCloudAuthority: true } } } : undefined);
+    renderPlatform(`/venues/${ids.venue}/product`);
+    const heading = await screen.findByRole("heading", { name: "მენიუს მართვა Dashboard-ში" });
+    const panel = within(heading.closest("section")!);
+    expect(panel.getByRole("alert")).toHaveTextContent(/POS-ზეა მიბმული/);
+    expect(panel.getByText(/მენიუს წყარო/)).toHaveTextContent("POS");
+    expect(panel.getByRole("button", { name: "ჩართვა" })).toBeEnabled();
+  });
   it("adds the Website-only plan and refreshes the plan list", async () => {
     let added = false;
     installApi(request => {

@@ -205,6 +205,14 @@ describe("CUSTOM website provisioning", () => {
     statusNote: null,
     updatedAt: null,
     domains: [],
+    primaryDomain: null,
+    publicUrl: null,
+    menu: {
+      authority: "CLOUD",
+      editingEnabled: true,
+      posIncluded: false,
+      needsCloudAuthority: false,
+    },
     payments: "NOT_CONFIGURED",
     capabilities: {
       profile: true,
@@ -308,5 +316,85 @@ describe("CUSTOM website provisioning", () => {
     expect(
       await screen.findByText(/ACTIVE requires Website access/),
     ).toBeVisible();
+  });
+
+  it("opens and checks the live site without treating ACTIVE as reachable", async () => {
+    const url = "http://custom-a.vynic.localhost:5176/";
+    const api = installApi((request) => {
+      const path = request.url.pathname;
+      if (path.endsWith("/product"))
+        return {
+          body: {
+            ...product,
+            website: {
+              entitled: true,
+              configuredMode: "CUSTOM",
+              effectiveMode: "CUSTOM",
+              consistent: true,
+            },
+          },
+        };
+      if (path.endsWith("/domains")) return { body: [] };
+      if (path.endsWith("/custom-website/check"))
+        return {
+          body: {
+            availability: "UNREACHABLE",
+            checkedAt: "2026-09-26T09:00:00.000Z",
+            hostname: "custom-a.vynic.localhost",
+            url,
+            frontend: { status: null, detail: "Connection refused" },
+            api: {
+              state: "FAILED",
+              status: null,
+              detail: "Connection refused",
+            },
+          },
+        };
+      if (path.endsWith("/custom-website"))
+        return {
+          body: customView({
+            status: "ACTIVE",
+            siteKey: "custom-a-web",
+            primaryDomain: "custom-a.vynic.localhost",
+            publicUrl: url,
+            menu: {
+              authority: "POS",
+              editingEnabled: false,
+              posIncluded: false,
+              needsCloudAuthority: true,
+            },
+          }),
+        };
+      return undefined;
+    });
+    const user = userEvent.setup();
+    renderPlatform(`/venues/${ids.venue}/website`);
+
+    const live = within(
+      (await screen.findByRole("heading", { name: "Live site" })).closest(
+        "section",
+      )!,
+    );
+    expect(live.getByText("UNKNOWN")).toBeVisible();
+    expect(live.getByText("Not checked yet")).toBeVisible();
+    expect(live.getByRole("link", { name: /Open website/ })).toHaveAttribute(
+      "href",
+      url,
+    );
+    await user.click(live.getByRole("button", { name: "Check now" }));
+    expect(await live.findByText("UNREACHABLE")).toBeVisible();
+    expect(live.getByText("Connection refused")).toBeVisible();
+    expect(
+      api.requests.filter((r) => r.url.pathname.endsWith("/check")),
+    ).toHaveLength(1);
+    // Configured ACTIVE stays ACTIVE: availability is reported apart.
+    expect(screen.getAllByText("ACTIVE").length).toBeGreaterThan(0);
+
+    const menu = within(
+      screen.getByRole("heading", { name: "Menu" }).closest("section")!,
+    );
+    expect(menu.getByRole("alert")).toHaveTextContent(
+      /still on POS authority/,
+    );
   });
 });

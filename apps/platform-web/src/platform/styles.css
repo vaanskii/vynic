@@ -345,3 +345,9 @@
 .platform-website-mode label { display: flex; align-items: center; gap: 0.5rem; }
 .platform-website-mode input { flex: none; }
 .platform-subscription-facts dd { overflow-wrap: anywhere; }
+.platform-badge--reachable { border-color: #bfdbcd; background: #f1f8f4; color: var(--platform-green); }
+.platform-badge--unreachable { border-color: #e4bfbc; background: #fff5f4; color: var(--platform-red); }
+.platform-badge--cloud { border-color: #c6d5e4; background: #f3f7fb; color: var(--platform-blue); }
+.platform-feedback--warning { margin: 12px 0 0; border-color: #ead3ac; background: #fffaf1; color: var(--platform-amber); }
+.platform-inline-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+a.platform-button { text-decoration: none; }

@@ -158,11 +158,25 @@ export function VenueProductTab({ venueId }: { venueId: string }) {
           title="მენიუს მართვა Dashboard-ში"
           description="კატეგორიების, კერძებისა და ფასების დამატება და რედაქტირება. გამორთვა შენახულ მენიუს არ შლის და ვებგვერდზე მის ჩვენებას არ აჩერებს."
         >
+          <StatusBadge value={state.menuManagement.authority}>
+            მენიუს წყარო:{" "}
+            {state.menuManagement.authority === "CLOUD" ? "Cloud" : "POS"}
+          </StatusBadge>{" "}
           <StatusBadge
             value={state.menuManagement.enabled ? "ENABLED" : "DISABLED"}
           >
             {state.menuManagement.enabled ? "ჩართულია" : "გამორთულია"}
           </StatusBadge>
+          {state.menuManagement.needsCloudAuthority && (
+            <p
+              className="platform-feedback platform-feedback--warning"
+              role="alert"
+            >
+              პაკეტი მხოლოდ ვებსაიტს მოიცავს, მაგრამ მენიუ ჯერ POS-ზეა მიბმული,
+              ამიტომ მის რედაქტირებას ვერავინ ახერხებს. ჩართეთ მენიუს მართვა
+              Dashboard-ში — მენიუ Cloud-ზე გადავა.
+            </p>
+          )}
           <div className="platform-feature-actions">
             <Button
               tone={state.menuManagement.enabled ? "primary" : "secondary"}

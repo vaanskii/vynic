@@ -1,9 +1,13 @@
 import { useState } from "react";
-import { CheckCircle, WarningCircle } from "@phosphor-icons/react";
+import {
+  ArrowSquareOut,
+  CheckCircle,
+  WarningCircle,
+} from "@phosphor-icons/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { platformApi } from "../../api";
 import { errorMessage, formatDateTime } from "../../format";
-import type { CustomWebsite } from "../../types";
+import type { CustomWebsite, CustomWebsiteCheck } from "../../types";
 import { Button } from "../../components/Button";
 import { Field, FormError, Input, Select } from "../../components/Form";
 import { Panel } from "../../components/Page";
@@ -19,12 +23,13 @@ const statusLabels: Record<SettableStatus, string> = {
   ERROR: "Error — deployment or domain problem",
 };
 
-const checkLabels: Record<keyof CustomWebsite["readiness"]["checks"], string> = {
-  entitled: "WEBSITE access is effective",
-  customMode: "Website mode is CUSTOM",
-  siteKey: "Custom frontend identity recorded",
-  activeDomain: "At least one active domain",
-};
+const checkLabels: Record<keyof CustomWebsite["readiness"]["checks"], string> =
+  {
+    entitled: "WEBSITE access is effective",
+    customMode: "Website mode is CUSTOM",
+    siteKey: "Custom frontend identity recorded",
+    activeDomain: "At least one active domain",
+  };
 
 const capabilityLabels: Record<keyof CustomWebsite["capabilities"], string> = {
   profile: "Restaurant profile",
@@ -43,6 +48,15 @@ const auditLabels: Record<string, string> = {
   "venue.domain_released": "Domain released",
   "venue.feature_override_set": "Feature override set",
   "venue.feature_override_removed": "Feature override removed",
+  "venue.cloud_menu_enabled": "Dashboard menu editing enabled",
+  "venue.cloud_menu_disabled": "Dashboard menu editing disabled",
+};
+
+const apiLabels: Record<CustomWebsiteCheck["api"]["state"], string> = {
+  OK: "Answers for this Venue",
+  WRONG_SITE: "Answers for a different restaurant",
+  FAILED: "Not answering",
+  NOT_CHECKED: "Not checked",
 };
 
 /**
@@ -62,6 +76,12 @@ export function CustomWebsitePanel({ venueId }: { venueId: string }) {
   const [status, setStatus] = useState<SettableStatus | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  // Held only for this view: availability is observed, never stored.
+  const [check, setCheck] = useState<CustomWebsiteCheck | null>(null);
+  const runCheck = useMutation({
+    mutationFn: () => platformApi.checkCustomWebsite(venueId),
+    onSuccess: setCheck,
+  });
   const save = useMutation({
     mutationFn: (body: Parameters<typeof platformApi.updateCustomWebsite>[1]) =>
       platformApi.updateCustomWebsite(venueId, body),
@@ -93,9 +113,11 @@ export function CustomWebsitePanel({ venueId }: { venueId: string }) {
     note: note ?? data.statusNote ?? "",
   };
   const changes: Parameters<typeof platformApi.updateCustomWebsite>[1] = {};
-  if (draft.siteKey !== (data.siteKey ?? "")) changes.siteKey = draft.siteKey || null;
+  if (draft.siteKey !== (data.siteKey ?? ""))
+    changes.siteKey = draft.siteKey || null;
   if (draft.status !== data.status) changes.status = draft.status;
-  if (draft.note !== (data.statusNote ?? "")) changes.statusNote = draft.note || null;
+  if (draft.note !== (data.statusNote ?? ""))
+    changes.statusNote = draft.note || null;
   const dirty = Object.keys(changes).length > 0;
 
   return (
@@ -114,8 +136,15 @@ export function CustomWebsitePanel({ venueId }: { venueId: string }) {
             <span>{data.siteKey ?? "Not recorded"}</span>
           </div>
           <div>
-            <span>Commercial</span>
+            <span>Primary domain</span>
+            <span>{data.primaryDomain ?? "No active domain"}</span>
+          </div>
+          <div>
+            <span>Website access</span>
             <span>
+              <StatusBadge value={data.entitled ? "ENABLED" : "DISABLED"}>
+                {data.entitled ? "Effective" : "Not effective"}
+              </StatusBadge>{" "}
               {data.commercialStatus}
               {data.trialEndsAt
                 ? ` · Trial ends ${formatDateTime(data.trialEndsAt)}`
@@ -128,18 +157,18 @@ export function CustomWebsitePanel({ venueId }: { venueId: string }) {
           </div>
         </div>
         <ul className="platform-checklist" aria-label="Readiness">
-          {(
-            Object.keys(checkLabels) as Array<keyof typeof checkLabels>
-          ).map((key) => (
-            <li key={key}>
-              {data.readiness.checks[key] ? (
-                <CheckCircle size={16} weight="fill" aria-label="done" />
-              ) : (
-                <WarningCircle size={16} aria-label="missing" />
-              )}{" "}
-              {checkLabels[key]}
-            </li>
-          ))}
+          {(Object.keys(checkLabels) as Array<keyof typeof checkLabels>).map(
+            (key) => (
+              <li key={key}>
+                {data.readiness.checks[key] ? (
+                  <CheckCircle size={16} weight="fill" aria-label="done" />
+                ) : (
+                  <WarningCircle size={16} aria-label="missing" />
+                )}{" "}
+                {checkLabels[key]}
+              </li>
+            ),
+          )}
         </ul>
         <form
           className="platform-form"
@@ -203,6 +232,102 @@ export function CustomWebsitePanel({ venueId }: { venueId: string }) {
       </Panel>
       <div className="platform-grid platform-grid--2 platform-section-gap">
         <Panel
+          title="Live site"
+          description="Whether the site answers right now. Checked on demand from the server against the primary domain; not stored, not monitored, and independent of the setup status above."
+        >
+          <div className="platform-website-state">
+            <div>
+              <span>Public URL</span>
+              <span>{data.publicUrl ?? "Register an active domain first"}</span>
+            </div>
+            <div>
+              <span>Runtime availability</span>
+              <StatusBadge value={check?.availability ?? "UNKNOWN"} />
+            </div>
+            {check ? (
+              <>
+                <div>
+                  <span>Frontend</span>
+                  <span>{check.frontend.detail}</span>
+                </div>
+                <div>
+                  <span>Backend through this domain</span>
+                  <span>
+                    {apiLabels[check.api.state]}
+                    {check.api.state === "OK" ? "" : ` · ${check.api.detail}`}
+                  </span>
+                </div>
+              </>
+            ) : null}
+            <div>
+              <span>Last checked</span>
+              <span>
+                {check ? formatDateTime(check.checkedAt) : "Not checked yet"}
+              </span>
+            </div>
+          </div>
+          <div className="platform-inline-actions">
+            {data.publicUrl ? (
+              <a
+                className="platform-button platform-button--secondary"
+                href={data.publicUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <ArrowSquareOut size={14} aria-hidden="true" />
+                Open website
+              </a>
+            ) : (
+              <Button disabled>Open website</Button>
+            )}
+            <Button
+              tone="primary"
+              disabled={!data.primaryDomain}
+              loading={runCheck.isPending}
+              loadingLabel="Checking…"
+              onClick={() => runCheck.mutate()}
+            >
+              Check now
+            </Button>
+          </div>
+          <FormError>
+            {runCheck.error ? errorMessage(runCheck.error) : undefined}
+          </FormError>
+        </Panel>
+        <Panel
+          title="Menu"
+          description="The same canonical restaurant catalog as SAAS. The custom frontend only decides how it looks; the package decides who edits it."
+        >
+          <div className="platform-website-state">
+            <div>
+              <span>Menu authority</span>
+              <StatusBadge value={data.menu.authority}>
+                {data.menu.authority === "CLOUD"
+                  ? "Cloud (owner Dashboard)"
+                  : "POS"}
+              </StatusBadge>
+            </div>
+            <div>
+              <span>Dashboard menu editing</span>
+              <StatusBadge
+                value={data.menu.editingEnabled ? "ENABLED" : "DISABLED"}
+              />
+            </div>
+          </div>
+          {data.menu.needsCloudAuthority ? (
+            <p
+              className="platform-feedback platform-feedback--warning"
+              role="alert"
+            >
+              Website-only package, but the menu is still on POS authority, so
+              nobody can edit it. Enable Dashboard menu editing in Product to
+              move it to the Cloud catalog.
+            </p>
+          ) : null}
+        </Panel>
+      </div>
+      <div className="platform-grid platform-grid--2 platform-section-gap">
+        <Panel
           title="Shared capabilities"
           description="Derived from effective features and configured data; change them in Product access and payments."
         >
@@ -228,14 +353,18 @@ export function CustomWebsitePanel({ venueId }: { venueId: string }) {
             <ul className="platform-checklist">
               {data.audit.map((event) => (
                 <li key={event.id}>
-                  <strong>{auditLabels[event.action] ?? event.action}</strong>{" "}
-                  · {event.actor} · {formatDateTime(event.createdAt)}
+                  <strong>{auditLabels[event.action] ?? event.action}</strong> ·{" "}
+                  {event.actor} · {formatDateTime(event.createdAt)}
                   {event.metadata &&
                   ("from" in event.metadata || "hostname" in event.metadata)
                     ? ` · ${
                         "hostname" in event.metadata
                           ? String(event.metadata.hostname)
-                          : `${String(event.metadata.from ?? "—")} → ${String(event.metadata.to ?? "—")}`
+                          : "enabled" in event.metadata
+                            ? event.metadata.enabled
+                              ? `menu ${String(event.metadata.from ?? "—")} → CLOUD`
+                              : "menu editing off"
+                            : `${String(event.metadata.from ?? "—")} → ${String(event.metadata.to ?? "—")}`
                       }`
                     : ""}
                 </li>

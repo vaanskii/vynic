@@ -74,6 +74,10 @@ export interface ProductState {
     canEnableCloud: boolean;
     enabled: boolean;
     reason: string | null;
+    /** Whether the package includes POS; menu authority follows it. */
+    posIncluded?: boolean;
+    /** Website without POS still on POS authority: nobody can edit the menu. */
+    needsCloudAuthority?: boolean;
   };
   commercialAccess?: boolean;
   venueId: string;
@@ -128,6 +132,16 @@ export interface CustomWebsite {
   statusNote: string | null;
   updatedAt: string | null;
   domains: Array<Pick<VenueDomain, "id" | "hostname" | "status" | "createdAt">>;
+  /** Earliest registered ACTIVE domain. */
+  primaryDomain: string | null;
+  /** Where the site is expected; https in production, the dev port for .localhost. */
+  publicUrl: string | null;
+  menu: {
+    authority: "POS" | "CLOUD";
+    editingEnabled: boolean;
+    posIncluded: boolean;
+    needsCloudAuthority: boolean;
+  };
   payments: "NOT_INCLUDED" | "NOT_CONFIGURED" | "DISABLED" | "ENABLED";
   capabilities: Record<
     "profile" | "menu" | "customerAccounts" | "onlinePayments" | "reservations",
@@ -144,6 +158,20 @@ export interface CustomWebsite {
     createdAt: string;
     actor: string;
   }>;
+}
+
+/** An on-demand reachability answer; never stored, never a setup status. */
+export interface CustomWebsiteCheck {
+  availability: "REACHABLE" | "UNREACHABLE";
+  checkedAt: string;
+  hostname: string;
+  url: string;
+  frontend: { status: number | null; detail: string };
+  api: {
+    state: "OK" | "WRONG_SITE" | "FAILED" | "NOT_CHECKED";
+    status: number | null;
+    detail: string;
+  };
 }
 
 export interface VenueDomain {

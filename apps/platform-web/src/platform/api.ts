@@ -6,6 +6,7 @@ import type {
 import type {
   AuditEvent,
   CustomWebsite,
+  CustomWebsiteCheck,
   Device,
   DeviceEnrollment,
   DeviceStatus,
@@ -280,6 +281,11 @@ export const platformApi = {
       method: "PUT",
       body: json(body),
     }),
+  checkCustomWebsite: (venueId: string) =>
+    request<CustomWebsiteCheck>(
+      `/platform/venues/${venueId}/custom-website/check`,
+      { method: "POST" },
+    ),
   domains: (venueId: string) =>
     request<VenueDomain[]>(`/platform/venues/${venueId}/domains`),
   registerDomain: (venueId: string, hostname: string) =>

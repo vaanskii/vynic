@@ -135,11 +135,13 @@ function serve({
   site = website(),
   menu = ownerMenu,
   taken = [] as string[],
+  catalog,
 }: {
   venues?: ReturnType<typeof venueStatus>[];
   site?: ReturnType<typeof website>;
   menu?: OwnerMenu;
   taken?: string[];
+  catalog?: Record<string, unknown>;
 } = {}) {
   // The portal projection carries the same server website state.
   venues = venues.map((v) => ({
@@ -207,6 +209,7 @@ function serve({
           expiresAt: "2026-09-23T10:30:00Z",
           previewOrigin: "http://tabla.vynic.localhost:5175",
         };
+      if (catalog && path.endsWith("/catalog")) return catalog;
       if (path.endsWith("/website/menu")) {
         if (method === "PUT") {
           const [row] = body.items;
@@ -519,6 +522,31 @@ describe("Owner portal", () => {
 });
 
 describe("Menu section", () => {
+  it("lets a Website-only CUSTOM owner author the canonical catalog", async () => {
+    serve({
+      venues: [venueStatus({ features: ["WEBSITE"] })],
+      site: website({
+        mode: "CUSTOM",
+        custom: { status: "ACTIVE" },
+        domains: ["tabla.ge"],
+      }),
+      catalog: {
+        authority: "CLOUD",
+        editingEnabled: true,
+        posIncluded: false,
+        revision: 3,
+        categories: [],
+      },
+    });
+    renderPortal("/dashboard/menu");
+    // The custom design renders it; the menu itself is edited here.
+    expect(
+      await screen.findByRole("button", { name: "კატეგორიის დამატება" }),
+    ).toBeVisible();
+    expect(screen.queryByText(/იმართება POS-ში/)).toBeNull();
+    expect(await screen.findByText("ქართული კერძები")).toBeVisible();
+  });
+
   it("shows the POS hierarchy and saves presentation one item at a time", async () => {
     const state = serve();
     const user = userEvent.setup();

@@ -379,8 +379,8 @@ describe("CUSTOM website provisioning", () => {
     ).toBeVisible();
   });
 
-  it("opens and checks the live site without treating ACTIVE as reachable", async () => {
-    const url = "http://custom-a.vynic.localhost:5176/";
+  it("opens and checks the local frontend without treating ACTIVE as reachable", async () => {
+    const url = "http://vankisi.localhost:5174/";
     const api = installApi((request) => {
       const path = request.url.pathname;
       if (path.endsWith("/product"))
@@ -401,7 +401,7 @@ describe("CUSTOM website provisioning", () => {
           body: {
             availability: "UNREACHABLE",
             checkedAt: "2026-09-26T09:00:00.000Z",
-            hostname: "custom-a.vynic.localhost",
+            hostname: "vankisi.localhost",
             url,
             frontend: { status: null, detail: "Connection refused" },
             api: {
@@ -415,9 +415,19 @@ describe("CUSTOM website provisioning", () => {
         return {
           body: customView({
             status: "ACTIVE",
-            siteKey: "custom-a-web",
-            primaryDomain: "custom-a.vynic.localhost",
-            publicUrl: url,
+            siteKey: "vankisi-web",
+            primaryDomain: "vankisi.localhost",
+            publicUrl: null,
+            localFrontend: {
+              state: "CONFIGURED",
+              siteKey: "vankisi-web",
+              hostname: "vankisi.localhost",
+              port: 5174,
+              url,
+              source: "CUSTOM_WEBSITE_LOCAL_FRONTENDS",
+              detail: "vankisi-web=5174 in CUSTOM_WEBSITE_LOCAL_FRONTENDS",
+              problems: [],
+            },
             menu: {
               authority: "POS",
               editingEnabled: false,
@@ -438,6 +448,12 @@ describe("CUSTOM website provisioning", () => {
     );
     expect(live.getByText("UNKNOWN")).toBeVisible();
     expect(live.getByText("Not checked yet")).toBeVisible();
+    expect(live.getByText(url)).toBeVisible();
+    expect(live.getByText("No public domain")).toBeVisible();
+    expect(
+      live.getByText("vankisi-web=5174 in CUSTOM_WEBSITE_LOCAL_FRONTENDS"),
+    ).toBeVisible();
+    expect(live.queryByText("Configure local development")).toBeNull();
     expect(live.getByRole("link", { name: /Open website/ })).toHaveAttribute(
       "href",
       url,
@@ -455,5 +471,87 @@ describe("CUSTOM website provisioning", () => {
       screen.getByRole("heading", { name: "Menu" }).closest("section")!,
     );
     expect(menu.getByRole("alert")).toHaveTextContent(/still on POS authority/);
+  });
+
+  const liveSite = async (view: Record<string, unknown>) => {
+    const api = installApi((request) => {
+      const path = request.url.pathname;
+      if (path.endsWith("/product"))
+        return {
+          body: {
+            ...product,
+            website: {
+              entitled: true,
+              configuredMode: "CUSTOM",
+              effectiveMode: "CUSTOM",
+              consistent: true,
+            },
+          },
+        };
+      if (path.endsWith("/domains")) return { body: [] };
+      if (path.endsWith("/custom-website")) return { body: customView(view) };
+      return undefined;
+    });
+    renderPlatform(`/venues/${ids.venue}/website`);
+    const live = within(
+      (await screen.findByRole("heading", { name: "Live site" })).closest(
+        "section",
+      )!,
+    );
+    return { api, live };
+  };
+
+  it("says a missing local frontend is not configured instead of guessing a port", async () => {
+    const { api, live } = await liveSite({
+      status: "ACTIVE",
+      siteKey: "restaurant-x-web",
+      primaryDomain: "restaurant-x.localhost",
+      publicUrl: null,
+      localFrontend: {
+        state: "NOT_CONFIGURED",
+        siteKey: "restaurant-x-web",
+        hostname: "restaurant-x.localhost",
+        port: null,
+        url: null,
+        source: "CUSTOM_WEBSITE_LOCAL_FRONTENDS",
+        detail:
+          "Local frontend for restaurant-x-web is not configured: add restaurant-x-web=<port> to CUSTOM_WEBSITE_LOCAL_FRONTENDS in the backend environment and restart it",
+        problems: [
+          "CUSTOM_WEBSITE_DEV_PORT is no longer read; map each frontend in CUSTOM_WEBSITE_LOCAL_FRONTENDS",
+        ],
+      },
+    });
+    expect(live.getByText("Not configured")).toBeVisible();
+    expect(
+      live.getByText(/CUSTOM_WEBSITE_DEV_PORT is no longer read/),
+    ).toBeVisible();
+    expect(live.getByText("Configure local development")).toBeVisible();
+    expect(
+      live.getByText("CUSTOM_WEBSITE_LOCAL_FRONTENDS=restaurant-x-web=<port>"),
+    ).toBeInTheDocument();
+    expect(live.getByRole("button", { name: "Check now" })).toBeDisabled();
+    expect(live.getByRole("button", { name: "Open website" })).toBeDisabled();
+    expect(live.queryByText(/5176/)).toBeNull();
+    expect(api.requests.some((r) => r.url.pathname.endsWith("/check"))).toBe(
+      false,
+    );
+  });
+
+  it("shows only the public URL in production", async () => {
+    const { live } = await liveSite({
+      status: "ACTIVE",
+      siteKey: "vankisi-web",
+      primaryDomain: "vankisi.ge",
+      publicUrl: "https://vankisi.ge/",
+    });
+    expect(live.queryByText("Local frontend")).toBeNull();
+    expect(live.queryByText("Configure local development")).toBeNull();
+    expect(live.getByText("https://vankisi.ge/")).toBeVisible();
+    expect(live.getByRole("link", { name: /Open website/ })).toHaveAttribute(
+      "href",
+      "https://vankisi.ge/",
+    );
+    expect(live.getByRole("button", { name: "Check now" })).toBeEnabled();
+    expect(live.queryByText(/localhost|5174|5176/)).toBeNull();
   });
 });

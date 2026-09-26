@@ -112,6 +112,14 @@ export function CustomWebsitePanel({ venueId }: { venueId: string }) {
   if (draft.note !== (data.statusNote ?? ""))
     changes.statusNote = draft.note || null;
   const dirty = Object.keys(changes).length > 0;
+  // Development only: the server sends it outside production, never in it.
+  const local = data.localFrontend;
+  // A Venue with a .localhost domain is checked at its local dev server.
+  const localTarget = !!local?.hostname;
+  const openUrl = localTarget ? (local?.url ?? null) : data.publicUrl;
+  const canCheck = localTarget
+    ? local?.state === "CONFIGURED"
+    : !!data.primaryDomain;
 
   return (
     <>
@@ -226,12 +234,29 @@ export function CustomWebsitePanel({ venueId }: { venueId: string }) {
       <div className="platform-grid platform-grid--2 platform-section-gap">
         <Panel
           title="Live site"
-          description="Whether the site answers right now. Checked on demand from the server against the primary domain; not stored, not monitored, and independent of the setup status above."
+          description={
+            local
+              ? "Development: checked on demand from the server against the local frontend of this Venue's .localhost domain. Not stored, not monitored, and independent of the setup status above."
+              : "Whether the site answers right now. Checked on demand from the server against the primary domain; not stored, not monitored, and independent of the setup status above."
+          }
         >
           <div className="platform-website-state">
+            {local ? (
+              <div>
+                <span>Local frontend</span>
+                <span className="platform-mono">
+                  {local.url ?? "Not configured"}
+                </span>
+              </div>
+            ) : null}
             <div>
               <span>Public URL</span>
-              <span>{data.publicUrl ?? "Register an active domain first"}</span>
+              <span>
+                {data.publicUrl ??
+                  (data.primaryDomain
+                    ? "No public domain"
+                    : "Register an active domain first")}
+              </span>
             </div>
             <div>
               <span>Runtime availability</span>
@@ -259,11 +284,12 @@ export function CustomWebsitePanel({ venueId }: { venueId: string }) {
               </span>
             </div>
           </div>
+          {local ? <LocalFrontendHelp local={local} /> : null}
           <div className="platform-inline-actions">
-            {data.publicUrl ? (
+            {openUrl ? (
               <a
                 className="platform-button platform-button--secondary"
-                href={data.publicUrl}
+                href={openUrl}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -275,7 +301,7 @@ export function CustomWebsitePanel({ venueId }: { venueId: string }) {
             )}
             <Button
               tone="primary"
-              disabled={!data.primaryDomain}
+              disabled={!canCheck}
               loading={runCheck.isPending}
               loadingLabel="Checking…"
               onClick={() => runCheck.mutate()}
@@ -348,5 +374,51 @@ export function CustomWebsitePanel({ venueId }: { venueId: string }) {
         </Panel>
       </div>
     </>
+  );
+}
+
+/**
+ * Where the checked local frontend comes from, and how to configure it.
+ *
+ * The port is backend environment configuration keyed by frontend identity,
+ * never part of the domain, so the operator is shown the exact setting.
+ */
+function LocalFrontendHelp({
+  local,
+}: {
+  local: NonNullable<CustomWebsite["localFrontend"]>;
+}) {
+  const example = `${local.source}=${local.siteKey ?? "<frontend-identity>"}=${local.port ?? "<port>"}`;
+  return (
+    <div className="platform-local-help">
+      <p>{local.detail}</p>
+      {local.problems.length ? (
+        <ul
+          className="platform-feedback platform-feedback--warning"
+          aria-label="Local development configuration problems"
+        >
+          {local.problems.map((problem) => (
+            <li key={problem}>{problem}</li>
+          ))}
+        </ul>
+      ) : null}
+      {local.state === "CONFIGURED" ? null : (
+        <details>
+          <summary>Configure local development</summary>
+          <p>
+            Add the frontend's dev-server port to the backend environment (
+            <code>apps/backend/.env</code>), keyed by frontend identity, then
+            restart the backend. Several frontends are comma-separated.
+          </p>
+          <pre className="platform-mono">
+            <code>{example}</code>
+          </pre>
+          <p>
+            Open the site at its <code>.localhost</code> domain on that port;
+            production ignores this setting.
+          </p>
+        </details>
+      )}
+    </div>
   );
 }

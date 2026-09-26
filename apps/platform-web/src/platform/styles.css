@@ -349,6 +349,10 @@
 .platform-badge--unreachable { border-color: #e4bfbc; background: #fff5f4; color: var(--platform-red); }
 .platform-badge--cloud { border-color: #c6d5e4; background: #f3f7fb; color: var(--platform-blue); }
 .platform-feedback--warning { margin: 12px 0 0; border-color: #ead3ac; background: #fffaf1; color: var(--platform-amber); }
+.platform-local-help { margin-top: 12px; font-size: 12px; }
+.platform-local-help > p:first-child { margin: 0; color: var(--platform-muted); }
+.platform-local-help pre { overflow-x: auto; padding: 9px 11px; border: 1px solid var(--platform-border); border-radius: 9px; white-space: pre-wrap; word-break: break-all; }
+.platform-local-help ul.platform-feedback { padding-left: 28px; }
 .platform-inline-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 a.platform-button { text-decoration: none; }
 .platform-inline-actions--tight { margin-top: 0; gap: 6px; align-items: center; }

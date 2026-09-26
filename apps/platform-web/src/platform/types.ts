@@ -132,10 +132,12 @@ export interface CustomWebsite {
   statusNote: string | null;
   updatedAt: string | null;
   domains: Array<Pick<VenueDomain, "id" | "hostname" | "status" | "createdAt">>;
-  /** Earliest registered ACTIVE domain. */
+  /** Earliest ACTIVE public domain, else the earliest ACTIVE .localhost one. */
   primaryDomain: string | null;
-  /** Where the site is expected; https in production, the dev port for .localhost. */
+  /** `https://<primary>/`; null when the Venue has no public domain. */
   publicUrl: string | null;
+  /** Development only; the server omits it in production. */
+  localFrontend?: CustomWebsiteLocalFrontend;
   menu: {
     authority: "POS" | "CLOUD";
     editingEnabled: boolean;
@@ -181,6 +183,18 @@ export interface WebsiteCapability {
   live: boolean;
   /** null: decided by the custom frontend build. */
   usedByFrontend: boolean | null;
+}
+
+/** Where this Venue's frontend dev server runs, from backend configuration. */
+export interface CustomWebsiteLocalFrontend {
+  state: "CONFIGURED" | "NO_SITE_KEY" | "NO_LOCAL_DOMAIN" | "NOT_CONFIGURED";
+  siteKey: string | null;
+  hostname: string | null;
+  port: number | null;
+  url: string | null;
+  source: string;
+  detail: string;
+  problems: string[];
 }
 
 /** An on-demand reachability answer; never stored, never a setup status. */

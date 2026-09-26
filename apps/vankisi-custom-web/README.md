@@ -1,4 +1,32 @@
-# React + TypeScript + Vite
+# Vankisi custom website
+
+The CUSTOM frontend `vankisi-web` over the shared Vynic backend.
+
+## Local development
+
+```bash
+npm run dev
+```
+
+Open **http://vankisi.localhost:5174** (not `localhost:5174`). The port is
+fixed; if 5174 is taken the server stops instead of moving elsewhere.
+`/api/*` is proxied to the backend on `http://127.0.0.1:3000` with the
+browser's Host preserved, so the backend resolves Vankisi from its registered
+VenueDomain `vankisi.localhost`; the app never sends a Venue id.
+
+For Platform Admin → Venue → Website → Custom website to find and check this
+server, the backend environment maps the frontend identity to the port:
+
+```bash
+CUSTOM_WEBSITE_LOCAL_FRONTENDS=vankisi-web=5174
+```
+
+Several CUSTOM frontends are comma-separated
+(`vankisi-web=5174,custom-b-web=5176`). `PORT` and `VYNIC_WEBSITE_API`
+override the dev port and API target for a second local stack. See
+`docs/CUSTOM_WEBSITES.md` §3b.
+
+## React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

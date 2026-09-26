@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCart } from '../contexts/CartContext';
+import api from '../services/api';
 
 const PaymentSuccess: React.FC = () => {
   const { t, language } = useLanguage();
@@ -43,21 +44,14 @@ const PaymentSuccess: React.FC = () => {
       }
 
       try {
-        let response;
-        let url;
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'; // Fallback to localhost
-
-        if (reservationId) {
-          // Check by reservation ID (preferred as it's our internal ID)
-          url = `${apiUrl}/api/bog/check-reservation-status/${reservationId}`;
-          response = await fetch(url);
-        } else {
-          // Fallback to order ID
-          url = `${apiUrl}/api/bog/check-status/${orderId}`;
-          response = await fetch(url);
-        }
-
-        const data = await response.json();
+        // Same API base as every other call: same-origin /api on the site's
+        // own domain, so the backend resolves this Venue from the Host.
+        const { data } = await api.get(
+          reservationId
+            ? // Reservation ID is preferred: it is our internal ID.
+              `/bog/check-reservation-status/${reservationId}`
+            : `/bog/check-status/${orderId}`,
+        );
 
         if (data.success && data.status === 'CONFIRMED') {
           setIsValidAccess(true);

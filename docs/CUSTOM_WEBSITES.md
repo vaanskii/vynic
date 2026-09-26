@@ -52,7 +52,7 @@ to Vankisi), **LEGACY**, **SECURITY** (a risk; fixed unless stated),
 | Booking account link | Bookings accepted a browser-supplied `userId`. | SECURITY — **fixed**: session cookie only |
 | Website `SUPER_ADMIN` | Global role; `GET /api/tables/reservations` returned the full booking list of **any** Venue to it. | SECURITY — **fixed**: bound via `WebsiteUser.adminVenueId` |
 | Anonymous booking map | `GET /api/tables/reservations` (no login) returned every guest's name and phone. `vankisi-custom-web` uses only status/tables. | SECURITY — **fixed**: redacted |
-| Mode | Legacy routes served any WEBSITE Venue, including SAAS ones. | SECURITY — **fixed**: CUSTOM-only |
+| Mode | Legacy routes served any WEBSITE Venue, including SAAS ones. | Now shared on purpose: capability-gated for both modes, only after launch ([WEBSITE_FOUNDATION.md](WEBSITE_FOUNDATION.md)) |
 | `shared/bootstrap` | For the bootstrap Venue only: seeds Vankisi's `WEBSITE_TABLE_MAPPINGS`, seeds `SUPER_ADMIN` from `SUPER_ADMIN_*` env (now bound to that Venue), logs menu/env gaps. | VANKISI / LEGACY |
 | Hardcoded identity | Frontend: none (no Venue id/domain). Backend: bootstrap Venue id only in the seeder, `LEGACY_MANAGER_TENANT`, and migrations; `vankisi.localhost` dev default. Vankisi branding, 3D floors, storage keys (`vankisi-cart`) live in `vankisi-custom-web`. | VANKISI (frontend), LEGACY (backend seeder) |
 | CORS | Allow-list from `FRONTEND_URL`/`ALLOWED_ORIGINS` + dev LAN. Every custom domain had to be listed in deployment env. | CLEANUP — **replaced** by same-origin rule (§6) |
@@ -108,7 +108,7 @@ Venue cannot answer "which frontend should be on this domain?":
    import) configures the Venue's own BOG credentials with a return origin on
    one of its ACTIVE domains.
 7. Deploy the frontend (manual, §5) and verify the domain → Venue answer:
-   `curl -H 'Host: <domain>' https://<api>/api/website/custom/bootstrap`
+   `curl -H 'Host: <domain>' https://<api>/api/website/venue`
    shows the right name and `site.key`.
 8. Set status `READY` (deployed, verified) and later `ACTIVE`. READY/ACTIVE are
    refused unless WEBSITE is effective, mode is CUSTOM, a site key is recorded
@@ -162,7 +162,7 @@ status.
 | `REACHABLE` | `GET /` on the primary domain answered 2xx/3xx. |
 | `UNREACHABLE` | No answer, 4xx/5xx, or the domain was refused (below). |
 
-The same check also calls `/api/website/custom/bootstrap` through the domain
+The same check also calls `/api/website/venue` through the domain
 and reports the backend as `OK` (answers for this Venue), `WRONG_SITE`,
 `FAILED` (for example `/api` not proxied) or `NOT_CHECKED`.
 
@@ -202,42 +202,29 @@ the Host still decides the Venue, and the frontend holds no Venue id.
 
 ## 4. Shared public website API
 
-All routes resolve the Venue from the Host; none reads a Venue id, domain or
-organization from the request.
+A CUSTOM frontend reads exactly what a SAAS site reads: the shared website
+foundation. Contract, capability model and the full domain matrix are in
+[WEBSITE_FOUNDATION.md](WEBSITE_FOUNDATION.md). In short:
 
-| Route | Guard | Use |
+| Route | Gate | Use |
 | --- | --- | --- |
-| `GET /api/website/custom/bootstrap` | Host, WEBSITE, CUSTOM | `site {key,status}`, public profile (name, branch, address, phone, timezone, currency), capabilities |
-| `GET /api/website/custom/menu` | Host, WEBSITE, CUSTOM | Canonical menu with the owner's website presentation (hidden/disabled items absent) |
-| `GET /api/tables`, `/availability`, `/availability/:n` | Host, WEBSITE, CUSTOM | Bookable tables, day availability |
-| `POST /api/bog/create-order` | Host, WEBSITE, CUSTOM | Paid booking; account from session cookie |
+| `GET /api/website/venue` | Host, WEBSITE, launched | `mode`, `site {key,status}` (null for SAAS), public profile, `info` (hours, contact, socials, gallery), `capabilities` |
+| `GET /api/website/venue/menu` | + MENU | Canonical menu with the owner's website presentation |
+| `GET /api/menu`, `/api/menu/:slug` | + MENU | Vankisi's original menu shape over the same catalog |
+| `GET /api/tables*`, `POST /api/tables/reservations` | + RESERVATIONS | Bookable tables, availability, anonymous occupancy map |
+| `POST /api/bog/create-order` | + RESERVATIONS, ONLINE_PAYMENTS | Paid booking; account from session cookie |
 | `GET /api/bog/check-reservation-status/:id` | Host + stored payment | Payment result after redirect |
 | `POST /api/bog/payment-callback` | BOG signature | Server-to-server settlement |
-| `/api/auth/*`, `GET/PATCH /api/user/profile` | none / cookie | Global website customer identity |
-| `GET /api/user/reservations` | cookie, Host, WEBSITE, CUSTOM | This site's bookings of the signed-in customer |
-| `GET /api/menu`, `/api/menu/:slug` | Host, WEBSITE, CUSTOM | Vankisi's legacy menu shape; new sites use `/custom/menu` |
-| `GET /api/tables/reservations` | Host, WEBSITE, CUSTOM | Anonymous occupancy map (no names/phones); full list only for a `SUPER_ADMIN` bound to this Venue |
+| `POST /api/auth/signup`, `/signin` | + CUSTOMER_ACCOUNTS | Global website customer identity, offered per site |
+| `GET /api/user/reservations` | cookie + CUSTOMER_ACCOUNTS | This site's bookings of the signed-in customer |
 
-SAAS-only (`/api/website/bootstrap|menu|preview`) is unchanged; for a CUSTOM
-host `bootstrap` still answers only `{schemaVersion:2, mode:"CUSTOM"}`, so the
-generic renderer never draws a CUSTOM Venue.
-
-### Capabilities
-
-Derived, not new flags (`customCapabilities` in `website/custom/custom-website.ts`):
-
-| Capability | True when |
-| --- | --- |
-| `profile`, `menu`, `customerAccounts` | WEBSITE effective |
-| `onlinePayments` | + ONLINE_PAYMENTS effective and an enabled BOG integration |
-| `reservations` | + onlinePayments and ≥1 active website table (bookings are paid) |
-
-Hours, gallery and page content are **not** shared Cloud data for CUSTOM yet:
-working hours live inside the SaaS website document. They stay in the custom
-frontend until hours move to a Venue-level source (gap §10). Banquets, events
-and online ordering do not exist; when built they should be a Feature plus a
-capability here, not a per-site flag. One-off custom behaviour (Vankisi's 3D
-floor plan) stays in that frontend.
+"Launched" means CUSTOM (provisioned) or a published SAAS site. The generic
+page routes (`/api/website/bootstrap|menu|preview`) stay SAAS-only; for a
+CUSTOM host `bootstrap` still answers only `{schemaVersion:2, mode:"CUSTOM"}`.
+Capabilities are the shared ones (MENU, HOURS, RESERVATIONS, GALLERY,
+CUSTOMER_ACCOUNTS, ONLINE_PAYMENTS; events, banquets and online ordering are
+listed as not built) and mean the same in both modes. One-off custom behaviour
+(Vankisi's 3D floor plan, its static events page) stays in that frontend.
 
 ## 5. Host authority and hosting
 
@@ -306,7 +293,8 @@ CUSTOM owners see a read-only **Custom website** card: status (active / setup
 in progress / ready / needs attention) and their active domains. The generic
 editor, publish, preview and SaaS address request are absent. Restaurant
 profile, Menu (the full catalog editor for a Website-only package, §3a;
-website presentation applies to `/custom/menu`), payments and subscription stay
+website presentation applies to `/api/website/venue/menu`), hours, gallery,
+contacts, payments and subscription stay
 available.
 CUSTOM Trial: the operator assigns it and chooses CUSTOM; the owner sees setup
 status, no generic renderer ever serves the Venue, and Trial expiry denies
@@ -330,7 +318,7 @@ WEBSITE exactly as for SAAS (public API 403, owner website settings refused).
 
 ## 10. Remaining gaps
 
-- Hours/gallery/content for CUSTOM (needs a Venue-level hours source).
+- Page text/design for CUSTOM stays in each bespoke frontend by design.
 - Service fee (10%) and GEL are hardcoded in `BogService`.
 - `siteKey` for Vankisi must be recorded by an operator (`vankisi-web`, see
   §3). `apps/vankisi-custom-web` does not check it (unchanged on purpose), so
@@ -338,8 +326,6 @@ WEBSITE exactly as for SAAS (public API 403, owner website settings refused).
 - No deployment automation, DNS/TLS automation or monitoring: status is an
   operator attestation and availability is an on-demand check that is not
   stored (no history or alerts).
-- CUSTOM hours are not owner-editable: hours live in the SAAS draft, which
-  CUSTOM Venues cannot save.
 - Remove stale `BOG_*`/`TBC_*` and per-domain `ALLOWED_ORIGINS` entries from
   deployment env after verifying the same-origin proxy.
 

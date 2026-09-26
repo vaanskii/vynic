@@ -124,7 +124,7 @@ not how its tenant is established.
 |---|---|---|
 | Venue resolution | `VenueDomain` | `VenueDomain` |
 | Entitlement | `WEBSITE` | `WEBSITE` |
-| Public APIs | shared custom-site surface (`/api/website/custom/*`, bookings, payments, accounts) | generic `/api/website/*` |
+| Public APIs | shared Venue contract (`/api/website/venue*`, menu, bookings, payments, accounts) | the same shared contract, plus the generic page `/api/website/bootstrap`, `/menu` |
 | Frontend | a bespoke build per client (`apps/vankisi-custom-web/`, `apps/<client>-web`) | one generic app (`apps/restaurant-web`) |
 
 Nothing in the backend branches on `CUSTOM` vs `SAAS` to decide a tenant. The
@@ -134,11 +134,13 @@ and `VenueEntitlementsService.websiteAccess()` reports the two together
 (`entitled`, `configuredMode`, `effectiveMode`, `consistent`). A configured mode
 that contradicts entitlement is reported, never silently rewritten.
 
-Which *surface* serves a Venue does depend on its effective mode: the
-custom-site routes (bookings, payments, `/api/menu`, `/api/website/custom/*`)
-serve only CUSTOM Venues (`CustomWebsiteGuard`), and the generic renderer's
-routes publish only SAAS ones. The tenant itself is still decided by the Host
-alone.
+The shared routes (`/api/website/venue*`, `/api/menu`, bookings, payments,
+website accounts) serve SAAS and CUSTOM Venues alike, gated by shared website
+capabilities (`WebsiteCapabilityGuard`, see
+[WEBSITE_FOUNDATION.md](WEBSITE_FOUNDATION.md)) once the site is launched
+(SAAS published, CUSTOM provisioned). Only the generic page routes are
+renderer-specific: they publish SAAS Venues. The tenant itself is still decided
+by the Host alone.
 
 ---
 
@@ -246,17 +248,18 @@ public product surface.
 
 | Endpoint | Host → Venue | `WEBSITE` | Notes |
 |---|---|---|---|
-| `GET /api/website/custom/bootstrap`, `/custom/menu` | yes | yes | CUSTOM only. |
-| `GET /api/menu`, `GET /api/menu/:slug` | yes | yes | CUSTOM only (Vankisi shape). |
-| `GET /api/tables`, `/availability`, `/availability/:n` | yes | yes | CUSTOM only. |
-| `POST /api/tables/reservations` | yes | yes | CUSTOM only. Foreign table numbers are simply not found; account from session cookie. |
-| `GET /api/tables/reservations` | yes | yes | CUSTOM only. Anonymous map without names/phones; full list only for a SUPER_ADMIN bound to this Venue. |
-| `POST /api/bog/create-order` | yes | yes | CUSTOM only; account from session cookie. |
+| `GET /api/website/venue`, `/venue/menu` | yes | yes | Launched site; menu needs MENU. Same answer for SAAS and CUSTOM. |
+| `GET /api/menu`, `GET /api/menu/:slug` | yes | yes | Launched; MENU (Vankisi shape). |
+| `GET /api/tables`, `/availability`, `/availability/:n` | yes | yes | Launched; RESERVATIONS. |
+| `POST /api/tables/reservations` | yes | yes | Launched; RESERVATIONS. Foreign table numbers are simply not found; account from session cookie. |
+| `GET /api/tables/reservations` | yes | yes | Launched; RESERVATIONS. Anonymous map without names/phones; full list only for a SUPER_ADMIN bound to this Venue. |
+| `POST /api/bog/create-order` | yes | yes | Launched; RESERVATIONS + ONLINE_PAYMENTS; account from session cookie. |
 | `GET /api/bog/check-status/*`, `POST /api/bog/payment-callback` | no | no | Tenant from the reservation record. |
-| `GET /api/user/reservations` | yes | yes | CUSTOM only. Global account, Venue-scoped bookings. |
-| `GET /api/website/bootstrap`, `/menu` | yes | yes | Generic SaaS; a CUSTOM host gets only the mode marker. |
+| `GET /api/user/reservations` | yes | yes | Launched; CUSTOMER_ACCOUNTS. Global account, Venue-scoped bookings. |
+| `GET /api/website/bootstrap`, `/menu` | yes | yes | Generic SaaS page with projected Venue info; a CUSTOM host gets only the mode marker. |
 | `GET/PATCH /api/user/profile` | no | no | Global customer identity. |
-| `POST /api/auth/*` | no | no | Global customer identity; reads no restaurant data. |
+| `POST /api/auth/signup`, `/signin` | yes | yes | Launched; CUSTOMER_ACCOUNTS. The account is global; the offering is per website. |
+| `POST /api/auth/logout`, `/change-password`, `GET /csrf`, `/verify` | no | no | Session-bound; reads no restaurant data. |
 | `POST /sync/*`, Device auth | **never** | **never** | Entitlement must not gate POS → Cloud sync. |
 
 ---

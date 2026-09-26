@@ -275,9 +275,9 @@ host-preserving same-origin `/api` proxy to the shared NestJS backend. Tenancy
 stays Host -> VenueDomain -> Venue; `CustomWebsiteBinding.siteKey` records which
 frontend build serves the Venue (deployment identity, not authority) and the
 shared client refuses to render on a mismatch. Mode, frontend identity, domains
-and setup status are operator-only and audited. Custom-site public routes serve
-only CUSTOM Venues; capabilities derive from existing Features. CUSTOM uses the
-same canonical catalog and menu authority rules as SAAS (D023). Runtime
+and setup status are operator-only and audited. Data, public routes and
+capabilities are the shared website foundation (D028); CUSTOM uses the same
+canonical catalog and menu authority rules as SAAS (D023). Runtime
 availability is an on-demand server check of the Venue's own domain, separate
 from the attested setup status.
 **Reason:** Cross-origin API hosting loses the Host and SameSite cookies, and a
@@ -298,6 +298,22 @@ copies per agent drift and give the two agents different advice.
 **Implication:** No second skill tree and no hand edits to vendored skills;
 refresh with `scripts/sync-agent-skills.sh`. Skills stay advisory and never
 override the decisions above.
+
+## D028 — Website mode selects the renderer, never data or features
+
+**Decision:** SAAS and CUSTOM share one Venue-level website backend. Venue
+public information (hours, contact, socials, gallery) is `VenuePublicProfile`,
+edited live and projected into the SAAS page payload; the SAAS page document
+holds only renderer content. Shared capabilities go Features (commercial) →
+`VenueWebsiteCapability` (operator policy, no row = on) → readiness, and
+`WebsiteCapabilityGuard` gates public routes by capability. The only
+renderer-specific gate is launch (published SAAS, provisioned CUSTOM).
+**Reason:** Mode-based gates made CUSTOM and SAAS diverge in data and features,
+and would have needed a second hours/gallery/booking backend per renderer.
+**Implication:** No custom menu/hours/gallery/booking/payment backend; a new
+website capability is a Feature (if sold separately) plus a key in
+`website-capabilities.ts`, never a mode check. See
+`docs/WEBSITE_FOUNDATION.md`.
 
 ## Maintenance
 

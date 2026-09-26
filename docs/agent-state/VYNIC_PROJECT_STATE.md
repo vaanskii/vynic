@@ -735,16 +735,24 @@ current transport status.
   `CUSTOM_WEBSITE_DEV_PORT` (default 5176). Menu authority follows the package,
   never SAAS/CUSTOM: Website provisioning without POS admits an empty Venue to
   the CLOUD catalog for either mode, and Platform flags a Website-only Venue
-  left on POS authority (`needsCloudAuthority`) for repair. Custom-site public routes (`/api/website/custom/*`,
-  `/api/menu`, `/api/tables*`, `/api/bog/create-order`, `/api/user/reservations`)
-  serve only CUSTOM Venues; capabilities derive from WEBSITE/ONLINE_PAYMENTS,
-  the BOG integration and website tables. Bookings take the account only from
+  left on POS authority (`needsCloudAuthority`) for repair. SAAS and CUSTOM
+  share one Venue-level website foundation (`docs/WEBSITE_FOUNDATION.md`):
+  hours, contact, socials and gallery live in `VenuePublicProfile` (live owner
+  edits via `PUT .../website/public-info`, projected into the SAAS payload),
+  and shared capabilities (MENU, HOURS, RESERVATIONS, GALLERY,
+  CUSTOMER_ACCOUNTS, ONLINE_PAYMENTS; events/banquets/ordering listed as not
+  built) follow Features → per-Venue operator policy (`VenueWebsiteCapability`,
+  default on, audited) → readiness, never the mode. `WebsiteCapabilityGuard`
+  gates `/api/website/venue*`, `/api/menu`, `/api/tables*`,
+  `/api/bog/create-order`, website sign-up/sign-in and `/api/user/reservations`
+  for any launched site (published SAAS or CUSTOM); Platform shows a Website
+  capabilities table and the Dashboard offers Hours/gallery/contacts by
+  capability in either mode. Bookings take the account only from
   the session cookie, the anonymous booking map omits names/phones, and a
   website SUPER_ADMIN reads only its bound `adminVenueId`. Sites must be served
   behind a host-preserving same-origin `/api` proxy; CORS admits requests whose
   Origin equals their Host, a trusted forwarded host is the sole authority, and
-  the development fallback applies only to anonymous local hosts. Hours/gallery
-  for CUSTOM remain frontend-owned. The existing Vankisi binding is backfilled
+  the development fallback applies only to anonymous local hosts. The existing Vankisi binding is backfilled
   ACTIVE without a site key; the operator records `vankisi-web` in Platform. W2
   extends VenueWebsiteConfig with private drafts, explicit audited publication,
   revision conflicts and a Host-authorized generic bootstrap; Platform still
@@ -994,7 +1002,8 @@ current transport status.
 
 ## Current Migration Versions
 
-- Prisma migration tip: `20261009120000_custom_website_binding`.
+- Prisma migration tip: `20261010120000_shared_website_foundation`.
+- Previous website migration: `20261009120000_custom_website_binding`.
 - Previous hostname migrations: `20261008120000_hostname_request_fk_on_update`,
   `20261007120000_release_published_slug_reservation`,
   `20261006120000_hostname_request_current`,

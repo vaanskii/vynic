@@ -34,6 +34,12 @@ New `WebsitePublicationStatus=DRAFT|PUBLISHED`, validated `draft`/`published` JS
 No existing mode or entitlement is changed by migration
 `20260925120000_website_core`; all existing configs start with no generic publication.
 
+> Since `20261010120000_shared_website_foundation`, working hours, contact
+> email, map URL, socials and gallery are Venue data in `VenuePublicProfile`
+> (live, shared with CUSTOM) and no longer part of the page document; the
+> validation rules below still apply to them. See
+> [WEBSITE_FOUNDATION.md](WEBSITE_FOUNDATION.md).
+
 Content v1 has slug, `themeKey=classic`, heroTitle/heroSubtitle, about,
 seoTitle/seoDescription, workingHours, socials and gallery references. Text lengths,
 list lengths, URL schemes and nested fields are validated; unknown fields, HTML

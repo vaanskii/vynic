@@ -91,6 +91,14 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
 const json = (value: object) => JSON.stringify(value);
 
+export const localToolsApi = {
+  capability: () => request<{ enabled: boolean }>("/platform/developer-tools"),
+  remove: (kind: "venue" | "organization", id: string, confirmation: string) =>
+    request<{ mediaCleanup: { failures: string[] } }>(`/platform/developer-tools/${kind === "venue" ? "venues" : "organizations"}/${encodeURIComponent(id)}/delete`, {
+      method: "POST", body: json({ confirmation }),
+    }),
+};
+
 export const authApi = {
   login: (email: string, password: string) =>
     request<LoginResult>("/platform/auth/login", {

@@ -1,3 +1,7 @@
+import {
+  PlatformLocalToolsCapabilityController,
+  localDeletionControllers,
+} from './platform-local-tools.controller';
 import { WebsiteCoreModule } from '../website/core/website-core.module';
 import { CustomWebsiteModule } from '../website/custom/custom-website.module';
 import { PlatformCustomWebsiteController } from './platform-custom-website.controller';
@@ -46,6 +50,8 @@ import { PlatformVenuesController } from './platform-venues.controller';
     PlatformAuditModule,
   ],
   controllers: [
+    PlatformLocalToolsCapabilityController,
+    ...localDeletionControllers(),
     PlatformHostnameController,
     PlatformCustomWebsiteController,
     PlatformWebsiteCapabilitiesController,

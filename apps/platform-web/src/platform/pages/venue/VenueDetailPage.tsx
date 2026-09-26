@@ -1,3 +1,4 @@
+import { LocalDeletePanel } from "../../components/LocalDeletePanel";
 import { VenueManagerAccess } from "./VenueManagerAccess";
 import { VenueCommercialTab } from "./VenueCommercialTab";
 import { useState } from "react";
@@ -71,6 +72,7 @@ export function VenueDetailPage() {
         <VenueActivityTab venueId={venueId} />
       ) : null}
     {currentTab === "product" && <VenueManagerAccess venue={record} />}
+    {currentTab === "overview" && <LocalDeletePanel kind="venue" id={record.id} name={record.name} />}
     <Dialog open={editOpen} onOpenChange={setEditOpen} title="Edit venue details" description="Basic location metadata only. Product and infrastructure settings live in their own tabs." footer={<><Button onClick={() => setEditOpen(false)}>Cancel</Button><Button tone="primary" type="submit" form="edit-venue" disabled={update.isPending}>Save changes</Button></>}>
       <form id="edit-venue" className="platform-form" onSubmit={(event) => { event.preventDefault(); update.mutate(); }}><Field label="Venue name"><Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required /></Field><div className="platform-form-grid"><Field label="Timezone"><Input value={form.timezone} onChange={(event) => setForm({ ...form, timezone: event.target.value })} required maxLength={64} /></Field><Field label="Currency"><Input value={form.currency} onChange={(event) => setForm({ ...form, currency: event.target.value.toUpperCase(),
                   })} required minLength={3} maxLength={3} /></Field></div><FormError>{update.error ? errorMessage(update.error) : undefined}</FormError></form>

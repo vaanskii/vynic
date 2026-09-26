@@ -23,3 +23,7 @@ coverage/
 
 # ── OS artifacts ──────────────────────────────────────────────────────────────
 Thumbs.db
+
+!.env.docker.example
+!.env.production.example
+deploy/production-tls/

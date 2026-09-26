@@ -105,7 +105,7 @@ describe('CUSTOM website runtime check', () => {
 
     it('reports a reachable frontend and the backend answering for this Venue', async () => {
       answer = (req, res) => {
-        if (req.url === '/api/website/custom/bootstrap') {
+        if (req.url === '/api/website/venue') {
           res.setHeader('content-type', 'application/json');
           res.end(JSON.stringify({ mode: 'CUSTOM', profile: { name: 'A' } }));
         } else res.end('<html></html>');
@@ -121,7 +121,7 @@ describe('CUSTOM website runtime check', () => {
       expect(seen).toEqual([
         { path: '/', host: `custom-a.vynic.localhost:${port}` },
         {
-          path: '/api/website/custom/bootstrap',
+          path: '/api/website/venue',
           host: `custom-a.vynic.localhost:${port}`,
         },
       ]);
@@ -156,10 +156,7 @@ describe('CUSTOM website runtime check', () => {
         detail: 'Answers with a redirect (302)',
       });
       expect(result.api.state).toBe('FAILED');
-      expect(seen.map((s) => s.path)).toEqual([
-        '/',
-        '/api/website/custom/bootstrap',
-      ]);
+      expect(seen.map((s) => s.path)).toEqual(['/', '/api/website/venue']);
     });
 
     it('reports a stopped frontend as unreachable', async () => {

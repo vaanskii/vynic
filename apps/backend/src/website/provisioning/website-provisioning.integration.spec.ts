@@ -175,7 +175,6 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
           content: {
             ...settings.draft,
             heroTitle: 'Retained content',
-            workingHours: [{ day: 1, opens: '10:00', closes: '22:00' }],
           },
         })
         .expect(200);
@@ -809,17 +808,21 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
         })
         .expect(200);
       expect(await db.menuCategory.count({ where: { venueId } })).toBe(1);
-      // Hours live in the SaaS draft, which the owner can now save.
+      // The owner can save the page draft and the Venue's hours.
       await http()
         .put(`/customer/venues/${venueId}/website/draft`)
         .set(bearer(owner.access_token))
         .send({
           expectedRevision: settings.revision,
-          content: {
-            ...emptyWebsiteContent,
-            slug: settings.draft.slug,
-            workingHours: [{ day: 1, opens: '10:00', closes: '22:00' }],
-          },
+          content: { ...emptyWebsiteContent, slug: settings.draft.slug },
+        })
+        .expect(200);
+      await http()
+        .put(`/customer/venues/${venueId}/website/public-info`)
+        .set(bearer(owner.access_token))
+        .send({
+          expectedRevision: 0,
+          workingHours: [{ day: 1, opens: '10:00', closes: '22:00' }],
         })
         .expect(200);
       expect(

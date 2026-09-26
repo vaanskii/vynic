@@ -14,6 +14,14 @@ import { CsrfService } from '../common/csrf.service';
 import { WebsiteAuthService } from './auth.service';
 import { AuthDto, ChangePasswordDto, RegisterDto } from './dto';
 import { WebsiteAuthGuard } from './website-auth.guard';
+import { FeatureKeys } from '../../entitlements/feature-keys';
+import { FeatureGuard } from '../../entitlements/feature.guard';
+import { RequiresFeature } from '../../entitlements/requires-feature.decorator';
+import { WebsiteTenantGuard } from '../tenancy/website-tenant.guard';
+import {
+  RequiresWebsiteCapability,
+  WebsiteCapabilityGuard,
+} from '../tenancy/website-capability.guard';
 
 @Controller('api/auth')
 export class WebsiteAuthController {
@@ -23,7 +31,12 @@ export class WebsiteAuthController {
     private readonly csrfService: CsrfService,
   ) {}
 
+  // Accounts are global, but a website offers sign-up and sign-in only where
+  // the CUSTOMER_ACCOUNTS capability is available for the Host's Venue.
   @Post('signup')
+  @UseGuards(WebsiteTenantGuard, FeatureGuard, WebsiteCapabilityGuard)
+  @RequiresFeature(FeatureKeys.WEBSITE)
+  @RequiresWebsiteCapability('CUSTOMER_ACCOUNTS')
   async signup(
     @Body() dto: RegisterDto,
     @Res({ passthrough: true }) res: Response,
@@ -36,6 +49,9 @@ export class WebsiteAuthController {
   }
 
   @Post('signin')
+  @UseGuards(WebsiteTenantGuard, FeatureGuard, WebsiteCapabilityGuard)
+  @RequiresFeature(FeatureKeys.WEBSITE)
+  @RequiresWebsiteCapability('CUSTOMER_ACCOUNTS')
   async signin(
     @Body() dto: AuthDto,
     @Res({ passthrough: true }) res: Response,

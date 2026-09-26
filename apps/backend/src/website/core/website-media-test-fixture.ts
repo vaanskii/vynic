@@ -20,6 +20,7 @@ export function mediaDatabaseFixture() {
     },
     venueWebsiteConfig: { findUnique: async () => null },
     menuItemWebsitePresentation: { findMany: async () => [] },
+    venuePublicProfile: { findUnique: async () => null },
     $queryRaw: async () => [],
   };
   tx.$transaction = (run: any) => run(tx);

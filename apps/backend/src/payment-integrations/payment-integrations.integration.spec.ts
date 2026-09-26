@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { WebsiteCapabilitiesService } from '../website/tenancy/website-capabilities.service';
 jest.mock('uuid', () => ({ v4: () => require('node:crypto').randomUUID() }));
 jest.mock('axios');
 import axios from 'axios';
@@ -144,6 +145,10 @@ const url = process.env.W1_TEST_DATABASE_URL;
           useValue: new CustomerAuth(db, jwt, new EnrollmentRateLimiter()),
         },
         { provide: VenueEntitlementsService, useValue: entitlements },
+        {
+          provide: WebsiteCapabilitiesService,
+          useValue: new WebsiteCapabilitiesService(db, entitlements),
+        },
         { provide: BogService, useValue: bog },
         // Anonymous browser: bookings take their account from the session only.
         {

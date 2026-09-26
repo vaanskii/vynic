@@ -1,6 +1,8 @@
 import { WebsiteCoreModule } from '../website/core/website-core.module';
 import { CustomWebsiteModule } from '../website/custom/custom-website.module';
 import { PlatformCustomWebsiteController } from './platform-custom-website.controller';
+import { PlatformWebsiteCapabilitiesController } from './platform-website-capabilities.controller';
+import { WebsiteTenancyModule } from '../website/tenancy/website-tenancy.module';
 import { PlatformHostnameController } from './platform-hostname.controller';
 import { PlanCatalogService } from './plan-catalog.service';
 import {
@@ -35,6 +37,7 @@ import { PlatformVenuesController } from './platform-venues.controller';
  */
 @Module({
   imports: [
+    WebsiteTenancyModule,
     WebsiteCoreModule,
     CustomWebsiteModule,
     AuthModule,
@@ -45,6 +48,7 @@ import { PlatformVenuesController } from './platform-venues.controller';
   controllers: [
     PlatformHostnameController,
     PlatformCustomWebsiteController,
+    PlatformWebsiteCapabilitiesController,
     EdgeFoundationController,
     PlatformCommercialController,
     PlatformAuthController,

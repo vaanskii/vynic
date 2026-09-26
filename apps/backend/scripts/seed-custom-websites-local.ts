@@ -43,9 +43,6 @@ async function seedCustomWebsites() {
     PaymentIntegrationsService,
   } = require('../src/payment-integrations/payment-integrations.service');
   const {
-    WebsiteMenuService,
-  } = require('../src/website/core/website-menu.service');
-  const {
     CustomWebsiteService,
   } = require('../src/website/custom/custom-website.service');
 
@@ -64,11 +61,7 @@ async function seedCustomWebsites() {
     new PlatformDirectoryService(db, audit),
     audit,
   );
-  const custom = new CustomWebsiteService(
-    db,
-    access,
-    new WebsiteMenuService(db),
-  );
+  const custom = new CustomWebsiteService(db, access);
   const payments = new PaymentIntegrationsService(db, access);
   const operator = await db.platformUser.create({
     data: {

@@ -228,7 +228,8 @@ function failure(error: unknown) {
 
 /**
  * Checks one server-owned domain: does the frontend answer, and does the
- * shared backend answer for the expected Venue through that same domain.
+ * shared backend (`/api/website/venue`) answer for the expected Venue through
+ * that same domain.
  *
  * The caller passes only a hostname it read from an ACTIVE VenueDomain of the
  * Venue; there is no URL, port or path input.
@@ -270,7 +271,7 @@ export async function checkCustomWebsite(
     const answer = await fetchPinned(
       target,
       where.address,
-      '/api/website/custom/bootstrap',
+      '/api/website/venue',
       true,
     );
     const json =
@@ -286,7 +287,7 @@ export async function checkCustomWebsite(
               ? '/api is not proxied to the Vynic backend'
               : `/api answered ${answer.status}`,
         }
-      : json.mode === 'CUSTOM' && json.profile?.name === expected.venueName
+      : json.profile?.name === expected.venueName
         ? { state: 'OK', status: 200, detail: 'Backend answers for this Venue' }
         : {
             state: 'WRONG_SITE',

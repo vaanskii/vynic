@@ -10,11 +10,8 @@ import { ConfigService } from '@nestjs/config';
 import { CustomWebsiteStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
 import { VenueEntitlementsService } from '../../entitlements/venue-entitlements.service';
-import { WebsiteMenuService } from '../core/website-menu.service';
 import {
-  CUSTOM_WEBSITE_SCHEMA_VERSION,
   CUSTOM_WEBSITE_STATUSES,
-  customCapabilities,
   customReadiness,
   paymentStatus,
   readSiteKey,
@@ -40,35 +37,25 @@ const CUSTOM_AUDIT_ACTIONS = [
   'venue.feature_override_removed',
   'venue.cloud_menu_enabled',
   'venue.cloud_menu_disabled',
+  'venue.website_capability_changed',
 ];
 
 /** One on-demand check per Venue at a time, and not faster than this. */
 const CHECK_INTERVAL_MS = 5000;
 
-// Public identity is live Venue profile data, without legal/account fields.
-const publicProfile = {
-  name: true,
-  branchName: true,
-  address: true,
-  phone: true,
-  timezone: true,
-  currency: true,
-} as const;
-
 /**
- * The CUSTOM website product: one shared backend behind any number of bespoke
- * frontends.
+ * Operator provisioning of a CUSTOM website: which bespoke frontend serves the
+ * Venue, its attested setup status, and an on-demand reachability check.
  *
- * Every public method takes a Venue that WebsiteTenantGuard already resolved
- * from the request Host and CustomWebsiteGuard already confirmed is CUSTOM.
- * Nothing here accepts a Venue, domain or organization from a browser.
+ * Only the renderer is CUSTOM. Data, capabilities and public routes are the
+ * shared website foundation (`website/core`, `website/tenancy`), identical for
+ * SAAS; nothing here accepts a Venue, domain or organization from a browser.
  */
 @Injectable()
 export class CustomWebsiteService {
   constructor(
     private readonly db: PrismaService,
     private readonly entitlements: VenueEntitlementsService,
-    private readonly menu: WebsiteMenuService,
     private readonly config?: ConfigService,
   ) {}
 
@@ -99,8 +86,8 @@ export class CustomWebsiteService {
   }
 
   private async facts(venueId: string) {
-    const [features, access, binding, domains, integration, bookableTables] =
-      await Promise.all([
+    const [features, access, binding, domains, integration] = await Promise.all(
+      [
         this.entitlements.effectiveFeatures(venueId),
         this.entitlements.websiteAccess(venueId),
         this.db.customWebsiteBinding.findUnique({ where: { venueId } }),
@@ -113,69 +100,13 @@ export class CustomWebsiteService {
           where: { venueId, provider: 'BOG' },
           select: { enabled: true },
         }),
-        this.db.websiteTable.count({ where: { venueId, isActive: true } }),
-      ]);
-    const payments = paymentStatus(features, integration);
+      ],
+    );
     return {
-      features,
       access,
       binding,
       domains,
-      payments,
-      capabilities: customCapabilities(features, {
-        paymentsEnabled: payments === 'ENABLED',
-        bookableTables,
-      }),
-    };
-  }
-
-  // ------------------------------------------------------------------ public
-
-  /**
-   * What a custom frontend needs to start: which restaurant this is, which
-   * frontend is meant to serve it, and which shared capabilities it has.
-   *
-   * `site.key` lets a frontend detect that it was deployed on the wrong
-   * Venue's domain. It is information, never authority: the Venue was already
-   * decided by the Host before this ran.
-   */
-  async publicBootstrap(venueId: string) {
-    const [profile, facts] = await Promise.all([
-      this.db.venue.findUniqueOrThrow({
-        where: { id: venueId },
-        select: publicProfile,
-      }),
-      this.facts(venueId),
-    ]);
-    return {
-      schemaVersion: CUSTOM_WEBSITE_SCHEMA_VERSION,
-      mode: 'CUSTOM' as const,
-      site: {
-        key: facts.binding?.siteKey ?? null,
-        status: facts.binding?.status ?? 'NOT_CONFIGURED',
-      },
-      profile,
-      capabilities: facts.capabilities,
-    };
-  }
-
-  /**
-   * The canonical menu with the owner's website presentation applied, in the
-   * same shape the generic SaaS site receives. Hidden and disabled items never
-   * appear; the Vankisi-only `/api/menu` shape stays separate.
-   */
-  async publicMenu(venueId: string) {
-    const [venue, { categories }] = await Promise.all([
-      this.db.venue.findUniqueOrThrow({
-        where: { id: venueId },
-        select: { currency: true },
-      }),
-      this.menu.publicMenu(venueId),
-    ]);
-    return {
-      schemaVersion: CUSTOM_WEBSITE_SCHEMA_VERSION,
-      currency: venue.currency,
-      categories,
+      payments: paymentStatus(features, integration),
     };
   }
 
@@ -255,7 +186,6 @@ export class CustomWebsiteService {
           venue.menuAuthority === 'POS',
       },
       payments: facts.payments,
-      capabilities: facts.capabilities,
       readiness,
       audit: audit.map((event) => ({
         id: event.id,

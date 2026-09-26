@@ -17,7 +17,10 @@ import { FeatureGuard } from '../../entitlements/feature.guard';
 import { RequiresFeature } from '../../entitlements/requires-feature.decorator';
 import type { TenantContext } from '../../tenancy/tenant-context';
 import { WebsiteTenant } from '../tenancy/website-tenant-context';
-import { CustomWebsiteGuard } from '../tenancy/custom-website.guard';
+import {
+  RequiresWebsiteCapability,
+  WebsiteCapabilityGuard,
+} from '../tenancy/website-capability.guard';
 import { WebsiteTenantGuard } from '../tenancy/website-tenant.guard';
 import { ReservationService } from './reservation.service';
 
@@ -43,8 +46,9 @@ interface CreateReservationDto {
  * surface, so only a CUSTOM Venue's host is served.
  */
 @Controller('api/tables')
-@UseGuards(WebsiteTenantGuard, FeatureGuard, CustomWebsiteGuard)
+@UseGuards(WebsiteTenantGuard, FeatureGuard, WebsiteCapabilityGuard)
 @RequiresFeature(FeatureKeys.WEBSITE)
+@RequiresWebsiteCapability('RESERVATIONS')
 export class TableController {
   constructor(
     private readonly reservationService: ReservationService,

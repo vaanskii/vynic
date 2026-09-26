@@ -44,12 +44,19 @@ import { BogService } from '../payment/payment.service';
 import { TableController } from '../reservation/reservation.controller';
 import { ReservationService } from '../reservation/reservation.service';
 import { WebsitePosReservationBridgeService } from '../reservation/website-pos-reservation-bridge.service';
-import { CustomWebsiteGuard } from '../tenancy/custom-website.guard';
+import { WebsiteCapabilitiesService } from '../tenancy/website-capabilities.service';
+import { WebsiteCapabilityGuard } from '../tenancy/website-capability.guard';
+import { PlatformWebsiteCapabilitiesController } from '../../platform/platform-website-capabilities.controller';
+import { VenuePublicProfileService } from '../core/venue-public-profile.service';
+import { WebsiteVenueController } from '../core/website-venue.controller';
+import { WebsiteVenueService } from '../core/website-venue.service';
+import { emptyWebsiteContent } from '../core/website-content';
+import { WebsiteAuthController } from '../auth/auth.controller';
+import { CsrfService } from '../common/csrf.service';
 import { WebsiteTenantGuard } from '../tenancy/website-tenant.guard';
 import { WebsiteTenantService } from '../tenancy/website-tenant.service';
 import { UserController } from '../user/user.controller';
 import { UserService } from '../user/user.service';
-import { CustomWebsiteController } from './custom-website.controller';
 import { CustomWebsiteService } from './custom-website.service';
 
 /**
@@ -326,7 +333,17 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
         },
       });
 
-      const core = new WebsiteCoreService(db, access, tenants, config, menus);
+      const capabilities = new WebsiteCapabilitiesService(db, access);
+      const publicInfo = new VenuePublicProfileService(db, capabilities);
+      const core = new WebsiteCoreService(
+        db,
+        access,
+        tenants,
+        config,
+        menus,
+        capabilities,
+        publicInfo,
+      );
       const customers = new CustomerService(
         db,
         access,
@@ -335,7 +352,9 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
       );
       const mod = await Test.createTestingModule({
         controllers: [
-          CustomWebsiteController,
+          WebsiteVenueController,
+          WebsiteAuthController,
+          PlatformWebsiteCapabilitiesController,
           MenuController,
           TableController,
           BogController,
@@ -352,11 +371,24 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
           { provide: VenueEntitlementsService, useValue: access },
           { provide: WebsiteTenantService, useValue: tenants },
           WebsiteTenantGuard,
-          CustomWebsiteGuard,
+          { provide: WebsiteCapabilitiesService, useValue: capabilities },
+          WebsiteCapabilityGuard,
+          { provide: VenuePublicProfileService, useValue: publicInfo },
+          {
+            provide: WebsiteVenueService,
+            useValue: new WebsiteVenueService(
+              db,
+              access,
+              capabilities,
+              publicInfo,
+              menus,
+            ),
+          },
+          CsrfService,
           { provide: WebsiteMenuService, useValue: menus },
           {
             provide: CustomWebsiteService,
-            useValue: new CustomWebsiteService(db, access, menus, config),
+            useValue: new CustomWebsiteService(db, access, config),
           },
           { provide: MenuService, useValue: new MenuService(db) },
           { provide: PaymentIntegrationsService, useValue: integrations },
@@ -531,12 +563,6 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
         status: 'ACTIVE',
         siteKey: 'custom-a-web',
         payments: 'ENABLED',
-        capabilities: {
-          menu: true,
-          onlinePayments: true,
-          reservations: true,
-          customerAccounts: true,
-        },
         readiness: { complete: true },
       });
       expect(view.domains.map((d: any) => d.hostname)).toEqual([host('a')]);
@@ -561,7 +587,7 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
       ] as const) {
         const boot = (
           await http()
-            .get('/api/website/custom/bootstrap')
+            .get('/api/website/venue')
             .set('Host', `${host(k)}:5176`)
             .expect(200)
         ).body;
@@ -569,14 +595,20 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
           mode: 'CUSTOM',
           site: { key: `custom-${k}-web`, status: 'ACTIVE' },
           profile: { name: `Restaurant ${k.toUpperCase()} ${tag}` },
-          capabilities: { reservations: true, onlinePayments: true },
+          info: { workingHours: [], gallery: [] },
+          capabilities: {
+            menu: true,
+            reservations: true,
+            onlinePayments: true,
+            customerAccounts: true,
+          },
         });
         expect(JSON.stringify(boot)).not.toContain('private-legal');
 
         const menu = JSON.stringify(
           (
             await http()
-              .get('/api/website/custom/menu')
+              .get('/api/website/venue/menu')
               .set('Host', host(k))
               .expect(200)
           ).body,
@@ -596,7 +628,7 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
     it('ignores forged Venue identity in query, headers and body', async () => {
       const forged = (
         await http()
-          .get(`/api/website/custom/bootstrap?venueId=${venues.b.id}`)
+          .get(`/api/website/venue?venueId=${venues.b.id}`)
           .set('Host', host('a'))
           .set('X-Venue-Id', venues.b.id)
           .set('X-Domain', host('b'))
@@ -613,28 +645,102 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
       }).expect(400);
     });
 
-    it('refuses unknown hosts and never serves a SAAS Venue as CUSTOM', async () => {
-      for (const route of [
-        '/api/website/custom/bootstrap',
-        '/api/menu',
-        '/api/tables',
-      ])
+    it('applies one set of capability rules to SAAS and CUSTOM hosts', async () => {
+      for (const route of ['/api/website/venue', '/api/menu', '/api/tables'])
         await http()
           .get(route)
           .set('Host', `unknown-${tag}.vynic.localhost`)
           .expect(404);
 
+      // A SAAS site is not launched until its owner publishes it: nothing
+      // shared answers for its host before that.
       for (const route of [
-        '/api/website/custom/bootstrap',
-        '/api/website/custom/menu',
+        '/api/website/venue',
+        '/api/website/venue/menu',
         '/api/menu',
         '/api/tables',
-        '/api/tables/availability?date=2026-11-02',
       ])
         await http().get(route).set('Host', saasHost).expect(404);
-      await order(saasHost).expect(404);
+      const slug = saasHost.split('.')[0];
+      await http()
+        .put(`/customer/venues/${venues.s.id}/website/draft`)
+        .set(ownerAuth(owners.s))
+        .send({
+          expectedRevision: 0,
+          content: { ...emptyWebsiteContent, slug, heroTitle: 'S' },
+        })
+        .expect(200);
+      await http()
+        .post(`/customer/venues/${venues.s.id}/website/publish`)
+        .set(ownerAuth(owners.s))
+        .send({ expectedRevision: 1 })
+        .expect(201);
 
-      // The generic SaaS contract is unchanged: CUSTOM hosts get the marker only.
+      // Launched, it reads the same shared contract a CUSTOM site does.
+      expect(
+        (
+          await http()
+            .get('/api/website/venue')
+            .set('Host', saasHost)
+            .expect(200)
+        ).body,
+      ).toMatchObject({
+        mode: 'SAAS',
+        site: null,
+        profile: { name: `Restaurant S ${tag}` },
+        capabilities: { onlinePayments: false, reservations: false },
+      });
+      await http().get('/api/menu').set('Host', saasHost).expect(200);
+      expect(
+        (await http().get('/api/tables').set('Host', saasHost).expect(200))
+          .body,
+      ).toEqual([]);
+      // Neither mode can take payments without the commercial feature.
+      await order(saasHost).expect(403);
+
+      // The operator switch means the same thing for either renderer.
+      for (const [id, h] of [
+        [venues.s.id, saasHost],
+        [venues.a.id, host('a')],
+      ]) {
+        await http()
+          .put(`/platform/venues/${id}/website-capabilities/MENU`)
+          .set(platform())
+          .send({ enabled: false })
+          .expect(200);
+        await http().get('/api/menu').set('Host', h).expect(404);
+        await http().get('/api/website/venue/menu').set('Host', h).expect(404);
+        expect(
+          (await http().get('/api/website/venue').set('Host', h).expect(200))
+            .body.capabilities.menu,
+        ).toBe(false);
+        await http()
+          .put(`/platform/venues/${id}/website-capabilities/MENU`)
+          .set(platform())
+          .send({ enabled: true })
+          .expect(200);
+      }
+      // The generic renderer honours it too.
+      await http()
+        .put(`/platform/venues/${venues.s.id}/website-capabilities/MENU`)
+        .set(platform())
+        .send({ enabled: false })
+        .expect(200);
+      expect(
+        (
+          await http()
+            .get('/api/website/menu')
+            .set('Host', saasHost)
+            .expect(200)
+        ).body,
+      ).toMatchObject({ enabled: false, categories: [] });
+      await http()
+        .put(`/platform/venues/${venues.s.id}/website-capabilities/MENU`)
+        .set(platform())
+        .send({ enabled: true })
+        .expect(200);
+
+      // The generic page contract is unchanged: CUSTOM hosts get the marker only.
       expect(
         (
           await http()
@@ -786,20 +892,14 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
         where: { venueId: venues.b.id },
         data: { trialEndsAt: new Date(Date.now() - 60_000) },
       });
-      await http()
-        .get('/api/website/custom/bootstrap')
-        .set('Host', host('b'))
-        .expect(403);
+      await http().get('/api/website/venue').set('Host', host('b')).expect(403);
       await order(host('b')).expect(403);
       await http()
         .get('/api/website/bootstrap')
         .set('Host', host('b'))
         .expect(404);
       // A is unaffected.
-      await http()
-        .get('/api/website/custom/bootstrap')
-        .set('Host', host('a'))
-        .expect(200);
+      await http().get('/api/website/venue').set('Host', host('a')).expect(200);
     });
 
     it('gives a Website-only CUSTOM Venue the same canonical Cloud catalog as SAAS', async () => {
@@ -897,7 +997,7 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
         .expect(201);
       const menu = (
         await http()
-          .get('/api/website/custom/menu')
+          .get('/api/website/venue/menu')
           .set('Host', cHost)
           .expect(200)
       ).body;
@@ -998,7 +1098,7 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
         JSON.stringify(
           (
             await http()
-              .get('/api/website/custom/menu')
+              .get('/api/website/venue/menu')
               .set('Host', dHost)
               .expect(200)
           ).body,
@@ -1171,6 +1271,215 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
         .set(platform())
         .expect(409);
       delete process.env.CUSTOM_WEBSITE_DEV_PORT;
+    });
+    it('keeps hours, contact and gallery as Venue data both renderers read live', async () => {
+      const f = await makeVenue('Custom F info', 'WEBSITE_ONLY');
+      const fHost = `custom-f-${tag}.vynic.localhost`;
+      await http()
+        .put(`/platform/venues/${f.id}/website`)
+        .set(platform())
+        .send({ mode: 'CUSTOM' })
+        .expect(200);
+      await http()
+        .post(`/platform/venues/${f.id}/domains`)
+        .set(platform())
+        .send({ hostname: fHost })
+        .expect(201);
+      const hours = [
+        { day: 1, opens: '10:00', closes: '22:00' },
+        { day: 6, opens: '12:00', closes: '02:00' },
+      ];
+      // The CUSTOM owner edits the same Venue data a SAAS owner does.
+      const settings = (
+        await http()
+          .put(`/customer/venues/${f.id}/website/public-info`)
+          .set(ownerAuth(f.token))
+          .send({
+            expectedRevision: 0,
+            workingHours: hours,
+            contactEmail: 'Hello@Example.test',
+            socials: [{ label: 'Instagram', url: 'https://instagram.com/f' }],
+          })
+          .expect(200)
+      ).body;
+      expect(settings.shared).toMatchObject({
+        revision: 1,
+        workingHours: hours,
+        contactEmail: 'hello@example.test',
+      });
+      expect(
+        settings.capabilities.find((c: any) => c.key === 'HOURS'),
+      ).toMatchObject({ available: true, live: true });
+      // A stale editor is refused rather than overwriting.
+      await http()
+        .put(`/customer/venues/${f.id}/website/public-info`)
+        .set(ownerAuth(f.token))
+        .send({ expectedRevision: 0, contactEmail: '' })
+        .expect(409);
+      // Unknown fields and SAAS page fields are not Venue data.
+      await http()
+        .put(`/customer/venues/${f.id}/website/public-info`)
+        .set(ownerAuth(f.token))
+        .send({ expectedRevision: 1, heroTitle: 'x' })
+        .expect(400);
+      // Another owner cannot write it.
+      await http()
+        .put(`/customer/venues/${f.id}/website/public-info`)
+        .set(ownerAuth(owners.a))
+        .send({ expectedRevision: 1, contactEmail: '' })
+        .expect(404);
+
+      expect(
+        (await http().get('/api/website/venue').set('Host', fHost).expect(200))
+          .body,
+      ).toMatchObject({
+        mode: 'CUSTOM',
+        info: {
+          workingHours: hours,
+          contactEmail: 'hello@example.test',
+          socials: [{ label: 'Instagram', url: 'https://instagram.com/f' }],
+        },
+        capabilities: { hours: true, gallery: false },
+      });
+
+      // Operator policy: hours off means off in public and for owner edits.
+      await http()
+        .put(`/platform/venues/${f.id}/website-capabilities/HOURS`)
+        .set(platform('support-token'))
+        .send({ enabled: false })
+        .expect(403);
+      await http()
+        .put(`/platform/venues/${f.id}/website-capabilities/HOURS`)
+        .set(platform())
+        .send({ enabled: false })
+        .expect(200);
+      expect(
+        (await http().get('/api/website/venue').set('Host', fHost).expect(200))
+          .body,
+      ).toMatchObject({
+        info: { workingHours: [] },
+        capabilities: { hours: false },
+      });
+      await http()
+        .put(`/customer/venues/${f.id}/website/public-info`)
+        .set(ownerAuth(f.token))
+        .send({ expectedRevision: 1, workingHours: [] })
+        .expect(403);
+      // Other fields still save while hours are off.
+      await http()
+        .put(`/customer/venues/${f.id}/website/public-info`)
+        .set(ownerAuth(f.token))
+        .send({ expectedRevision: 1, workingHours: hours, mapUrl: '' })
+        .expect(200);
+      expect(
+        await db.platformAuditEvent.findFirst({
+          where: { targetId: f.id, action: 'venue.website_capability_changed' },
+        }),
+      ).toMatchObject({
+        platformUserId: admin.id,
+        metadata: { capability: 'HOURS', from: true, to: false },
+      });
+
+      // No impossible switches: payments need the package, unbuilt ones do not exist.
+      const states = (
+        await http()
+          .get(`/platform/venues/${f.id}/website-capabilities`)
+          .set(platform('support-token'))
+          .expect(200)
+      ).body;
+      expect(states.map((c: any) => c.key)).toEqual([
+        'MENU',
+        'HOURS',
+        'RESERVATIONS',
+        'GALLERY',
+        'CUSTOMER_ACCOUNTS',
+        'ONLINE_PAYMENTS',
+        'EVENTS',
+        'BANQUETS',
+        'ONLINE_ORDERING',
+      ]);
+      expect(
+        states.find((c: any) => c.key === 'ONLINE_PAYMENTS'),
+      ).toMatchObject({ commercial: false, canEnable: false });
+      await http()
+        .put(`/platform/venues/${f.id}/website-capabilities/ONLINE_PAYMENTS`)
+        .set(platform())
+        .send({ enabled: false })
+        .expect(200);
+      await http()
+        .put(`/platform/venues/${f.id}/website-capabilities/ONLINE_PAYMENTS`)
+        .set(platform())
+        .send({ enabled: true })
+        .expect(409);
+      await http()
+        .put(`/platform/venues/${f.id}/website-capabilities/EVENTS`)
+        .set(platform())
+        .send({ enabled: true })
+        .expect(400);
+
+      // A SAAS owner's hours are the same kind of data, live without publishing.
+      const saasInfo = (
+        await http()
+          .get(`/customer/venues/${venues.s.id}/website`)
+          .set(ownerAuth(owners.s))
+          .expect(200)
+      ).body.shared;
+      await http()
+        .put(`/customer/venues/${venues.s.id}/website/public-info`)
+        .set(ownerAuth(owners.s))
+        .send({ expectedRevision: saasInfo.revision, workingHours: hours })
+        .expect(200);
+      expect(
+        (
+          await http()
+            .get('/api/website/bootstrap')
+            .set('Host', saasHost)
+            .expect(200)
+        ).body.content.workingHours,
+      ).toEqual(hours);
+      expect(
+        (
+          await http()
+            .get('/api/website/venue')
+            .set('Host', saasHost)
+            .expect(200)
+        ).body.info.workingHours,
+      ).toEqual(hours);
+    });
+
+    it('offers website sign-in only where customer accounts are available', async () => {
+      // Guards run before CSRF: 403 here means the host admits accounts.
+      await http()
+        .post('/api/auth/signin')
+        .set('Host', host('a'))
+        .send({ identifier: 'x', password: 'y' })
+        .expect(403);
+      await http()
+        .put(
+          `/platform/venues/${venues.a.id}/website-capabilities/CUSTOMER_ACCOUNTS`,
+        )
+        .set(platform())
+        .send({ enabled: false })
+        .expect(200);
+      for (const route of ['/api/auth/signin', '/api/auth/signup'])
+        await http().post(route).set('Host', host('a')).send({}).expect(404);
+      await http()
+        .get('/api/user/reservations')
+        .set('Host', host('a'))
+        .set('Cookie', await cookieFor(`customer-${tag}@test.invalid`))
+        .expect(404);
+      await http()
+        .put(
+          `/platform/venues/${venues.a.id}/website-capabilities/CUSTOMER_ACCOUNTS`,
+        )
+        .set(platform())
+        .send({ enabled: true })
+        .expect(200);
+      await http()
+        .post('/api/auth/signin')
+        .set('Host', `unknown-${tag}.vynic.localhost`)
+        .send({})
+        .expect(404);
     });
   },
 );

@@ -18,7 +18,10 @@ import { FeatureGuard } from '../../entitlements/feature.guard';
 import { RequiresFeature } from '../../entitlements/requires-feature.decorator';
 import type { TenantContext } from '../../tenancy/tenant-context';
 import { WebsiteTenant } from '../tenancy/website-tenant-context';
-import { CustomWebsiteGuard } from '../tenancy/custom-website.guard';
+import {
+  RequiresWebsiteCapability,
+  WebsiteCapabilityGuard,
+} from '../tenancy/website-capability.guard';
 import { WebsiteTenantGuard } from '../tenancy/website-tenant.guard';
 import { WebsiteAuthService } from '../auth/auth.service';
 import { ReservationService } from '../reservation/reservation.service';
@@ -40,8 +43,9 @@ export class BogController {
   ) {}
 
   @Post('create-order')
-  @UseGuards(WebsiteTenantGuard, FeatureGuard, CustomWebsiteGuard)
+  @UseGuards(WebsiteTenantGuard, FeatureGuard, WebsiteCapabilityGuard)
   @RequiresFeature(FeatureKeys.WEBSITE)
+  @RequiresWebsiteCapability('RESERVATIONS', 'ONLINE_PAYMENTS')
   async createOrder(
     @WebsiteTenant() tenant: TenantContext,
     @Req() request: Request,

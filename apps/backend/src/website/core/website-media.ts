@@ -49,7 +49,7 @@ export async function referencedMedia(
   tx: Prisma.TransactionClient,
   venueId: string,
 ) {
-  const [site, menu] = await Promise.all([
+  const [site, menu, info] = await Promise.all([
     tx.venueWebsiteConfig.findUnique({
       where: { venueId },
       select: { draft: true, published: true },
@@ -58,6 +58,10 @@ export async function referencedMedia(
       where: { venueId },
       select: { imageUrl: true },
     }),
+    tx.venuePublicProfile.findUnique({
+      where: { venueId },
+      select: { gallery: true },
+    }),
   ]);
-  return mediaKeys([site, menu]);
+  return mediaKeys([site, menu, info]);
 }

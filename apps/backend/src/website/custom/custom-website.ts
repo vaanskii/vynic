@@ -7,12 +7,9 @@ import { CustomWebsiteStatus } from '@prisma/client';
  * A CUSTOM website is a bespoke frontend over the shared Vynic backend. The
  * backend already knows which Venue a request is for (Host -> VenueDomain ->
  * Venue); what it additionally records here is which frontend implementation is
- * meant to serve that Venue, how far operator setup has got, and which shared
- * capabilities the Venue's commercial state actually switches on.
+ * meant to serve that Venue and how far operator setup has got. Capabilities
+ * are shared with SAAS (`website/tenancy/website-capabilities.ts`).
  */
-
-/** Payload version of the public custom-site bootstrap. */
-export const CUSTOM_WEBSITE_SCHEMA_VERSION = 1;
 
 /**
  * A custom frontend identity such as `vankisi-web` or `restaurant-x-web`.
@@ -57,34 +54,6 @@ export function paymentStatus(
   if (!integration) return 'NOT_CONFIGURED';
   return integration.enabled ? 'ENABLED' : 'DISABLED';
 }
-
-/**
- * The shared capabilities a custom frontend may offer, derived from the
- * Venue's effective commercial features and its configured data.
- *
- * Existing features decide; nothing here is a new flag. Bookings are paid
- * through the Venue's own BOG integration, so they are available only where
- * online payments are, and only when the Venue has bookable website tables.
- * Hours, gallery and page content are not shared Cloud data for CUSTOM sites
- * yet; the custom frontend owns them.
- */
-export function customCapabilities(
-  features: readonly string[],
-  facts: { paymentsEnabled: boolean; bookableTables: number },
-) {
-  const website = features.includes('WEBSITE');
-  const onlinePayments =
-    website && features.includes('ONLINE_PAYMENTS') && facts.paymentsEnabled;
-  return {
-    profile: website,
-    menu: website,
-    customerAccounts: website,
-    onlinePayments,
-    reservations: onlinePayments && facts.bookableTables > 0,
-  };
-}
-
-export type CustomCapabilities = ReturnType<typeof customCapabilities>;
 
 /** What must be true before an operator may mark a CUSTOM site READY or ACTIVE. */
 export function customReadiness(facts: {

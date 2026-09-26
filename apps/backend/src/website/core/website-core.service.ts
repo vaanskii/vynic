@@ -29,6 +29,8 @@ import {
 } from './website-content';
 import { WebsiteMenuService } from './website-menu.service';
 import { websiteState } from '../provisioning/website-provisioning';
+import { WebsiteCapabilitiesService } from '../tenancy/website-capabilities.service';
+import { VenuePublicProfileService } from './venue-public-profile.service';
 
 // Public identity is live Venue profile data, without legal/account fields.
 const publicProfile = {
@@ -47,6 +49,16 @@ export class WebsiteCoreService {
     private readonly hosts: WebsiteTenantService,
     private readonly config: ConfigService,
     private readonly menu: WebsiteMenuService,
+    // Injected by Nest; hand-built instances (scripts, specs) get the same
+    // implementations over the same database.
+    private readonly capabilities: WebsiteCapabilitiesService = new WebsiteCapabilitiesService(
+      db,
+      access,
+    ),
+    private readonly publicInfo: VenuePublicProfileService = new VenuePublicProfileService(
+      db,
+      capabilities,
+    ),
   ) {}
   private baseDomain() {
     const raw = this.config.get<string>('SAAS_WEBSITE_BASE_DOMAIN');
@@ -76,24 +88,34 @@ export class WebsiteCoreService {
       if (current?.mode === 'SAAS' && !current.assignedSlug)
         await assignHostname(tx, venueId);
     });
-    const [row, access, domains, subscription, pendingHostname, custom] =
-      await Promise.all([
-        this.db.venueWebsiteConfig.findUnique({ where: { venueId } }),
-        this.access.websiteAccess(venueId),
-        this.db.venueDomain.findMany({
-          where: { venueId, status: 'ACTIVE' },
-          select: { hostname: true },
-        }),
-        this.db.venueSubscription.findUnique({ where: { venueId } }),
-        this.db.websiteHostnameRequest.findFirst({
-          where: { venueId, status: 'PENDING' },
-          select: { hostname: true, createdAt: true },
-        }),
-        this.db.customWebsiteBinding.findUnique({
-          where: { venueId },
-          select: { status: true },
-        }),
-      ]);
+    const [
+      row,
+      access,
+      domains,
+      subscription,
+      pendingHostname,
+      custom,
+      shared,
+      capabilities,
+    ] = await Promise.all([
+      this.db.venueWebsiteConfig.findUnique({ where: { venueId } }),
+      this.access.websiteAccess(venueId),
+      this.db.venueDomain.findMany({
+        where: { venueId, status: 'ACTIVE' },
+        select: { hostname: true },
+      }),
+      this.db.venueSubscription.findUnique({ where: { venueId } }),
+      this.db.websiteHostnameRequest.findFirst({
+        where: { venueId, status: 'PENDING' },
+        select: { hostname: true, createdAt: true },
+      }),
+      this.db.customWebsiteBinding.findUnique({
+        where: { venueId },
+        select: { status: true },
+      }),
+      this.publicInfo.read(venueId),
+      this.capabilities.states(venueId),
+    ]);
     const base = this.config.get<string>('SAAS_WEBSITE_BASE_DOMAIN');
     return {
       // The server-owned SaaS address; the draft never chooses it.
@@ -129,7 +151,25 @@ export class WebsiteCoreService {
         access.configuredMode === 'CUSTOM'
           ? { status: custom?.status ?? 'NOT_CONFIGURED' }
           : null,
+      // Venue-owned and live in either mode: hours, contact, socials, gallery.
+      shared,
+      // The same capability answer Platform and the public routes use; the
+      // Dashboard shows management pages from it, not from the mode.
+      capabilities: capabilities.map((c) => ({
+        key: c.key,
+        label: c.label,
+        built: c.built,
+        available: c.available,
+        ready: c.ready,
+        live: c.live,
+      })),
     };
+  }
+
+  /** Owner edit of the Venue's public information; live in either mode. */
+  async saveShared(venueId: string, body: unknown, customerAccountId: string) {
+    await this.publicInfo.save(venueId, body, customerAccountId);
+    return this.settings(venueId);
   }
   /**
    * Whether an address could be requested for this Venue right now.
@@ -404,6 +444,11 @@ export class WebsiteCoreService {
     return this.menuPayload(venueId, readWebsiteContent(row.published));
   }
 
+  /**
+   * The generic renderer's payload. Its `content` keeps the shape it has
+   * always had: the page document plus the Venue's public information
+   * (hours, contact, socials, gallery), projected live from the shared rows.
+   */
   private async payload(
     venueId: string,
     content: ReturnType<typeof readWebsiteContent>,
@@ -413,14 +458,18 @@ export class WebsiteCoreService {
       publishedAt: Date | null;
     },
   ) {
+    const [profile, info] = await Promise.all([
+      this.profile(venueId),
+      this.publicInfo.publicInfo(venueId),
+    ]);
     return {
       schemaVersion: WEBSITE_SCHEMA_VERSION,
       mode: 'SAAS',
       preview: state.preview,
       revision: state.revision,
       publishedAt: state.publishedAt,
-      profile: await this.profile(venueId),
-      content,
+      profile,
+      content: { ...content, ...info },
     };
   }
 
@@ -435,8 +484,11 @@ export class WebsiteCoreService {
     venueId: string,
     content: ReturnType<typeof readWebsiteContent>,
   ) {
-    const venue = await this.profile(venueId);
-    if (!content.showMenu)
+    const [venue, menuAvailable] = await Promise.all([
+      this.profile(venueId),
+      this.capabilities.isAvailable(venueId, 'MENU'),
+    ]);
+    if (!content.showMenu || !menuAvailable)
       return {
         schemaVersion: WEBSITE_SCHEMA_VERSION,
         currency: venue.currency,

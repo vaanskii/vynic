@@ -236,8 +236,16 @@ const url = process.env.W3_TEST_DATABASE_URL;
             expectedRevision: 0,
             content: content(i, {
               logoUrl: `/media/${shapes[i].key}/logo.svg`,
-              gallery: [{ url: `/media/${shapes[i].key}/one.jpg`, alt: 'One' }],
             }),
+          })
+          .expect(200);
+        // The gallery is Venue data, live without a page publication.
+        await http()
+          .put(`${path(i)}/public-info`)
+          .set(auth(i))
+          .send({
+            expectedRevision: 0,
+            gallery: [{ url: `/media/${shapes[i].key}/one.jpg`, alt: 'One' }],
           })
           .expect(200);
         await http()
@@ -282,6 +290,10 @@ const url = process.env.W3_TEST_DATABASE_URL;
           `Hero ${shapes[i].key.toUpperCase()}`,
         );
         expect(site.content.logoUrl).toBe(`/media/${shapes[i].key}/logo.svg`);
+        // Projected from the Venue's public information, in the same shape.
+        expect(site.content.gallery).toEqual([
+          { url: `/media/${shapes[i].key}/one.jpg`, alt: 'One' },
+        ]);
         expect(JSON.stringify(site)).not.toContain(`/media/${other}/`);
         expect(site.profile).not.toHaveProperty('legalId');
 

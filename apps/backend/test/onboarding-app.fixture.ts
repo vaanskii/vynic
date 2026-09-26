@@ -58,6 +58,8 @@ import { VenueEntitlementsService } from '../src/entitlements/venue-entitlements
 import { WebsiteCoreService } from '../src/website/core/website-core.service';
 import { WebsiteCoreController } from '../src/website/core/website-core.controller';
 import { WebsiteMenuService } from '../src/website/core/website-menu.service';
+import { VenuePublicProfileService } from '../src/website/core/venue-public-profile.service';
+import { WebsiteCapabilitiesService } from '../src/website/tenancy/website-capabilities.service';
 import { WebsitePreviewTokens } from '../src/website/core/website-preview';
 import { WebsiteTenantService } from '../src/website/tenancy/website-tenant.service';
 
@@ -124,6 +126,8 @@ export async function onboardingApp(
       HostnameRequestsService,
       WebsiteCoreService,
       WebsiteMenuService,
+      WebsiteCapabilitiesService,
+      VenuePublicProfileService,
       WebsitePreviewTokens,
       WebsiteTenantService,
       PaymentIntegrationsService,

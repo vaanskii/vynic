@@ -120,6 +120,19 @@ export class CustomerWebsiteController {
     await this.owners.venue(actor, id);
     return this.core.addressAvailability(id, slug);
   }
+  /**
+   * The Venue's public information (hours, contact, socials, gallery). Live in
+   * either mode, like the restaurant profile; hours and gallery follow their
+   * shared capability.
+   */
+  @Put('public-info') async savePublicInfo(
+    @CustomerActor() actor: CustomerPrincipal,
+    @Param('venueId') id: string,
+    @Body() body: unknown,
+  ) {
+    await this.owners.venue(actor, id);
+    return this.core.saveShared(id, body, actor.customerAccountId);
+  }
   @Put('draft') async save(
     @CustomerActor() actor: CustomerPrincipal,
     @Param('venueId') id: string,

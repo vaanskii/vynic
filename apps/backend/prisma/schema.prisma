@@ -1204,6 +1204,8 @@ model Venue {
   hostnameRequests          WebsiteHostnameRequest[]
   websiteConfig             VenueWebsiteConfig?
   customWebsite             CustomWebsiteBinding?
+  publicProfile             VenuePublicProfile?
+  websiteCapabilities       VenueWebsiteCapability[]
   websiteAdmins             WebsiteUser[]
   domains                   VenueDomain[]
   websiteTables             WebsiteTable[]
@@ -1533,6 +1535,61 @@ model MenuItemWebsitePresentation {
   venue            Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@index([venueId])
+  @@schema("pos")
+}
+
+/// Venue-owned public information every website renderer reads, whether the
+/// generic SAAS frontend or a bespoke CUSTOM one.
+///
+/// Lives outside `VenueWebsiteConfig.draft` because it is restaurant data, not
+/// SAAS page content: edits are live (like the Venue profile), never drafted or
+/// published, and the SAAS payload projects them into its `content`.
+/// `gallery` holds `{url, alt}` media references; bytes stay in
+/// `WebsiteMediaAsset`.
+model VenuePublicProfile {
+  venueId      String   @id
+  /// `[{day 1-7, opens "HH:MM", closes "HH:MM"}]`; an absent day is closed.
+  workingHours Json     @default("[]")
+  contactEmail String?
+  mapUrl       String?
+  /// `[{label, url}]`, at most 8.
+  socials      Json     @default("[]")
+  /// `[{url, alt}]`, at most 20.
+  gallery      Json     @default("[]")
+  revision     Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  venue        Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@schema("pos")
+}
+
+/// The shared website capabilities an operator can switch per Venue. Events,
+/// banquets and online ordering are not built, so they have no key.
+enum WebsiteCapabilityKey {
+  MENU
+  HOURS
+  GALLERY
+  RESERVATIONS
+  CUSTOMER_ACCOUNTS
+  ONLINE_PAYMENTS
+
+  @@schema("pos")
+}
+
+/// Operator policy for one shared website capability of one Venue.
+///
+/// Policy, not entitlement: the commercial Feature still has to allow it, and
+/// no row means enabled, so existing Venues keep today's behaviour. It never
+/// depends on WebsiteMode: SAAS and CUSTOM read the same answer.
+model VenueWebsiteCapability {
+  venueId    String
+  capability WebsiteCapabilityKey
+  enabled    Boolean
+  updatedAt  DateTime             @updatedAt
+  venue      Venue                @relation(fields: [venueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([venueId, capability])
   @@schema("pos")
 }
 

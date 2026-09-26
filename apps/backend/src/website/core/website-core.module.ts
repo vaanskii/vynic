@@ -8,6 +8,9 @@ import { WebsiteCoreService } from './website-core.service';
 import { WebsiteMenuService } from './website-menu.service';
 import { WebsitePreviewTokens } from './website-preview';
 import { WebsiteCoreController } from './website-core.controller';
+import { VenuePublicProfileService } from './venue-public-profile.service';
+import { WebsiteVenueController } from './website-venue.controller';
+import { WebsiteVenueService } from './website-venue.service';
 @Module({
   imports: [WebsiteTenancyModule, JwtModule.register({})],
   providers: [
@@ -16,14 +19,22 @@ import { WebsiteCoreController } from './website-core.controller';
     WebsiteCoreService,
     WebsiteMenuService,
     WebsitePreviewTokens,
+    VenuePublicProfileService,
+    WebsiteVenueService,
   ],
-  controllers: [WebsiteLogoController, WebsiteCoreController],
+  controllers: [
+    WebsiteLogoController,
+    WebsiteCoreController,
+    WebsiteVenueController,
+  ],
   exports: [
     HostnameRequestsService,
     WebsiteLogoService,
     WebsiteCoreService,
     WebsiteMenuService,
     WebsitePreviewTokens,
+    VenuePublicProfileService,
+    WebsiteVenueService,
   ],
 })
 export class WebsiteCoreModule {}

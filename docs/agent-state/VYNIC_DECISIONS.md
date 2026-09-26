@@ -315,6 +315,20 @@ website capability is a Feature (if sold separately) plus a key in
 `website-capabilities.ts`, never a mode check. See
 `docs/WEBSITE_FOUNDATION.md`.
 
+## D029 — Domains carry no port; local frontend ports are dev config
+
+**Decision:** `VenueDomain.hostname` is a bare hostname. Where a CUSTOM
+frontend's dev server runs is backend environment configuration keyed by
+frontend identity (`CUSTOM_WEBSITE_LOCAL_FRONTENDS=<siteKey>=<port>,…`),
+combined with the Venue's own `.localhost` domain, read only outside
+production, with no default port.
+**Reason:** A single global dev port pointed every CUSTOM site at one port;
+a port on the domain or a binding column would put machine-local state into
+tenant identity and the production database.
+**Implication:** No port/origin columns for local development; unmapped
+frontends report NOT_CONFIGURED; production views and checks never include
+local configuration. See `docs/CUSTOM_WEBSITES.md` §3c.
+
 ## Maintenance
 
 Add an entry only when it prevents repeated architectural debate. Update or

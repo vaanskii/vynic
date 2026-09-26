@@ -731,8 +731,12 @@ current transport status.
   URL and menu authority, and `POST .../custom-website/check` reports runtime
   availability (REACHABLE/UNREACHABLE, UNKNOWN until checked) on demand: only
   that server-owned domain, DNS-pinned, non-public addresses refused, no
-  redirects, nothing stored; `.localhost` outside production maps to
-  `CUSTOM_WEBSITE_DEV_PORT` (default 5176). Menu authority follows the package,
+  redirects, nothing stored. VenueDomain never carries a port; outside
+  production a Venue's `.localhost` domain is checked at its local frontend,
+  port from `CUSTOM_WEBSITE_LOCAL_FRONTENDS=<siteKey>=<port>,…` (no default;
+  unmapped = NOT_CONFIGURED, ignored and absent in production; D029).
+  Vankisi runs at `http://vankisi.localhost:5174` behind a host-preserving
+  Vite `/api` proxy. Menu authority follows the package,
   never SAAS/CUSTOM: Website provisioning without POS admits an empty Venue to
   the CLOUD catalog for either mode, and Platform flags a Website-only Venue
   left on POS authority (`needsCloudAuthority`) for repair. SAAS and CUSTOM

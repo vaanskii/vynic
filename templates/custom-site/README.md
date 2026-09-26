@@ -23,8 +23,12 @@ in Platform Admin → Venue → Website, and registers the domains.
 1. Backend on a local disposable database, with the Venue provisioned as CUSTOM
    and a local domain such as `restaurant-x.vynic.localhost` registered
    (or use `apps/backend/scripts/seed-custom-websites-local.ts`).
-2. `VYNIC_WEBSITE_API=http://127.0.0.1:3000 npm run dev`
+2. `VYNIC_WEBSITE_API=http://127.0.0.1:3000 npm run dev` (port 5176; set
+   `PORT` to run several custom sites side by side).
 3. Open `http://restaurant-x.vynic.localhost:5176`.
+4. For Platform's **Check now**, map the identity to that port in the backend
+   environment: `CUSTOM_WEBSITE_LOCAL_FRONTENDS=restaurant-x-web=5176`
+   (comma-separated for several sites; see `docs/CUSTOM_WEBSITES.md` §3c).
 
 `*.localhost` resolves to your machine; the dev proxy forwards `/api` with the
 browser's Host unchanged, which is how the backend knows the restaurant. Never

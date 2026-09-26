@@ -113,8 +113,9 @@ Venue cannot answer "which frontend should be on this domain?":
 8. Set status `READY` (deployed, verified) and later `ACTIVE`. READY/ACTIVE are
    refused unless WEBSITE is effective, mode is CUSTOM, a site key is recorded
    and at least one domain is ACTIVE. `ERROR` records a known problem.
-9. **Live site**: **Open website** opens the public URL; **Check now** reports
-   whether it answers (§3b). Use it before READY and whenever in doubt.
+9. **Live site**: **Open website** opens the public URL (in development, the
+   local frontend, §3c); **Check now** reports whether it answers (§3b). Use it
+   before READY and whenever in doubt.
 
 No database edits and no Venue ids in frontend code are needed.
 
@@ -166,18 +167,58 @@ The same check also calls `/api/website/venue` through the domain
 and reports the backend as `OK` (answers for this Venue), `WRONG_SITE`,
 `FAILED` (for example `/api` not proxied) or `NOT_CHECKED`.
 
-Safety (`website/custom/custom-website-runtime.ts`): the only destination is the
-Venue's earliest ACTIVE `VenueDomain`; there is no URL, host, port or path input.
+Safety (`website/custom/custom-website-runtime.ts`): the only destination is a
+server-owned ACTIVE `VenueDomain` of the Venue (the primary one, or its
+`.localhost` one in development, §3c); there is no URL, host, port or path input.
 The name is resolved once and every address must be public unicast (private,
 loopback, link-local, CGNAT, multicast, documentation, NAT64, IPv4-mapped
 private all refused), and the connection is pinned to the checked address
 (no rebinding). IP-literal domains are never contacted, redirects are not
 followed, answers are capped at 64 KB, 5 s timeout, one check per Venue per
-5 s, SUPER_ADMIN/operator only (SUPPORT_READONLY cannot trigger it). Outside
-production a `.localhost` domain maps to `http://<domain>:CUSTOM_WEBSITE_DEV_PORT/`
-(default 5176, the starter's port) on 127.0.0.1; everything else uses
-`https://<domain>/`. A reachable frontend does not prove the right build is
-deployed: only frontends on the shared client refuse a mismatched `site.key`.
+5 s, SUPER_ADMIN/operator only (SUPPORT_READONLY cannot trigger it). Production
+always uses `https://<primary domain>/` with the public-address rules above.
+A reachable frontend does not prove the right build is deployed: only
+frontends on the shared client refuse a mismatched `site.key`.
+
+The **primary domain** is the earliest ACTIVE public domain, or the earliest
+ACTIVE `.localhost` one when the Venue has no public domain. **Public URL** is
+`https://<primary>/`, and none when the primary is `.localhost` (never public).
+
+### 3c. Local frontends (development only)
+
+A `VenueDomain` is domain identity only: `vankisi.localhost` or `vankisi.ge`,
+never `vankisi.localhost:5174`. Registration refuses a scheme or path and
+strips a port (`vankisi.localhost:5174` is stored as `vankisi.localhost`), the
+same normalization the public Host lookup uses.
+
+Which port a frontend's dev server listens on is a fact about the developer's
+machine, so it is backend environment configuration keyed by the frontend
+identity (`siteKey`), not a database field:
+
+```bash
+# apps/backend/.env (development); restart the backend after changing it
+CUSTOM_WEBSITE_LOCAL_FRONTENDS=vankisi-web=5174,custom-b-web=5176
+```
+
+| Rule | Behaviour |
+| --- | --- |
+| Local frontend URL | `http://<the Venue's ACTIVE .localhost domain>:<port mapped to its siteKey>/` |
+| Production (`NODE_ENV=production`) | Setting ignored; `localFrontend` absent from the Platform view; no port or `localhost` in any URL |
+| Unmapped identity | `NOT_CONFIGURED`: no URL, **Check now** refused (409) with the exact line to add. There is no default port. |
+| No identity / no `.localhost` domain | `NO_SITE_KEY` / `NO_LOCAL_DOMAIN` |
+| Malformed, out-of-range (not 1024–65535), duplicated or port-clashing entries | Dropped and listed as problems in the panel |
+| `CUSTOM_WEBSITE_DEV_PORT` (former single global port, default 5176) | No longer read; flagged in the panel if still set |
+| Tenant authority | None. The check connects to 127.0.0.1 only, with the domain as Host; the backend still resolves the Venue from that Host. |
+
+In development a Venue with an ACTIVE `.localhost` domain is checked at its
+local frontend; one without is checked at its primary domain as in production.
+Platform → Venue → Website → Custom website shows **Local frontend** (URL or
+*Not configured* with **Configure local development**), the public URL, and
+opens the local frontend from **Open website**. Owners never see any of it.
+
+Each local frontend proxies `/api` to the backend with `changeOrigin: false`
+(Vite), so the backend receives `Host: <domain>:<port>`, strips the port and
+resolves the Venue; no forwarded-host trust, Venue id or header is added.
 
 ### Vankisi's binding
 
@@ -343,7 +384,7 @@ behind the same-origin proxy (§5) and holds no Venue id.
 | 2 | Operator | Select CUSTOM; record `siteKey` = `restaurant-x-web`. |
 | 3 | Developer | `cp -R templates/custom-site apps/restaurant-x-web`; set `SITE_KEY`; `npm install`. |
 | 4 | Operator (local DB) | Register `restaurant-x.vynic.localhost` for the Venue (or run the local fixture). |
-| 5 | Developer | `npm run dev`, open `http://restaurant-x.vynic.localhost:5176`; consume only `@vynic/website-client`. |
+| 5 | Developer | Pick a free port (e.g. 5176); add `restaurant-x-web=5176` to backend `CUSTOM_WEBSITE_LOCAL_FRONTENDS`; `PORT=5176 npm run dev`, open `http://restaurant-x.vynic.localhost:5176`; consume only `@vynic/website-client`. |
 | 6 | Developer | Design; add bespoke modules inside the app only. |
 | 7 | Operator | Register production `restaurantx.ge`; owner sets BOG with that return origin. |
 | 8 | Developer/DevOps | Build, deploy behind a host-preserving `/api` proxy, DNS/TLS (manual). |
@@ -368,7 +409,10 @@ VITE_SITE_KEY=custom-a-web VYNIC_WEBSITE_API=http://127.0.0.1:3000 npm run dev
 # http://custom-a.vynic.localhost:5176 → Custom A Grill, its menu and tables
 # http://custom-b.vynic.localhost:5176 → refused: this build is not B's frontend
 # custom-a/b are Website-only (menu CLOUD); custom-p includes POS (menu POS).
-# Backend env CUSTOM_WEBSITE_DEV_PORT=5176 makes Platform → Check now reach it.
+# Backend env CUSTOM_WEBSITE_LOCAL_FRONTENDS=custom-a-web=5176 makes
+# Platform → Check now reach A; B stays NOT_CONFIGURED until mapped.
+# Vankisi alongside: apps/vankisi-custom-web `npm run dev` →
+# http://vankisi.localhost:5174 with vankisi-web=5174 in the same setting.
 ```
 
 Automated: `CUSTOM_WEBSITE_TEST_DATABASE_URL=<fresh disposable_*> npx jest

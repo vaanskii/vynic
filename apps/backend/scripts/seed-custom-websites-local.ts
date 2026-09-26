@@ -4,8 +4,9 @@
 // Platform Admin routes call, so the fixture exercises the operator workflow
 // rather than writing rows by hand:
 //
-//   custom-a.vynic.localhost  CUSTOM, frontend custom-a-web, ACTIVE, own BOG
-//   custom-b.vynic.localhost  CUSTOM, frontend custom-b-web, ACTIVE, own BOG
+//   custom-a.vynic.localhost  Website-only CUSTOM, Cloud menu, custom-a-web, ACTIVE, own BOG
+//   custom-b.vynic.localhost  Website-only CUSTOM, Cloud menu, custom-b-web, ACTIVE, own BOG
+//   custom-p.vynic.localhost  POS + Website CUSTOM, POS menu kept, custom-p-web, ACTIVE
 //   <assigned>.vynic.local    SAAS (must never be served as CUSTOM)
 //
 // Usage (from apps/backend):
@@ -85,6 +86,7 @@ async function seedCustomWebsites() {
     {
       key: 'a',
       name: 'Custom A Grill',
+      plan: 'WEBSITE_ONLY',
       mode: 'CUSTOM',
       dishes: [
         ['მწვადი', 'Mtsvadi', 24],
@@ -94,14 +96,48 @@ async function seedCustomWebsites() {
     {
       key: 'b',
       name: 'Custom B Wine Bar',
+      plan: 'WEBSITE_ONLY',
       mode: 'CUSTOM',
       dishes: [
         ['საფერავი', 'Saperavi', 18],
         ['ყველი', 'Cheese plate', 22],
       ],
     },
-    { key: 's', name: 'Saas S Cafe', mode: 'SAAS', dishes: [] },
+    {
+      key: 'p',
+      name: 'Custom P Bistro',
+      // Sold with POS: the catalog the POS mirrored before the website.
+      plan: 'POS_WEBSITE',
+      mode: 'CUSTOM',
+      dishes: [['ხინკალი', 'Khinkali (POS)', 1.5]],
+    },
+    {
+      key: 's',
+      name: 'Saas S Cafe',
+      plan: 'WEBSITE_ONLY',
+      mode: 'SAAS',
+      dishes: [],
+    },
   ] as const;
+  const addMenu = async (
+    venueId: string,
+    dishes: ReadonlyArray<readonly [string, string, number]>,
+  ) => {
+    const category = await db.menuCategory.create({
+      data: { venueId, slug: 'menu', nameKa: 'მენიუ', nameEn: 'Menu' },
+    });
+    for (const [i, [nameKa, nameEn, price]] of dishes.entries())
+      await db.menuItem.create({
+        data: {
+          venueId,
+          categoryId: category.id,
+          nameKa,
+          nameEn,
+          price,
+          sortOrder: i,
+        },
+      });
+  };
 
   for (const f of fixtures) {
     const org = await db.organization.create({ data: { name: f.name } });
@@ -110,12 +146,12 @@ async function seedCustomWebsites() {
         organizationId: org.id,
         name: f.name,
         address: `${f.key.toUpperCase()} Street 1, Tbilisi`,
-        phone: `+995 555 00 00 0${f.key === 'a' ? 1 : f.key === 'b' ? 2 : 3}`,
+        phone: `+995 555 00 00 0${'absp'.indexOf(f.key) + 1}`,
         timezone: 'Asia/Tbilisi',
         currency: 'GEL',
         // The commercial state a dated Website Trial leaves.
         planAssignment: {
-          create: { plan: { connect: { key: 'WEBSITE_ONLY' } } },
+          create: { plan: { connect: { key: f.plan } } },
         },
         subscription: {
           create: {
@@ -130,7 +166,9 @@ async function seedCustomWebsites() {
             : undefined,
       },
     });
-    // Operator: select the implementation.
+    if (f.plan === 'POS_WEBSITE') await addMenu(venue.id, f.dishes);
+    // Operator: select the implementation. A Website-only package is admitted
+    // to the Cloud catalog here, exactly as for SAAS.
     await platform.setWebsiteMode(actor, venue.id, f.mode);
     if (f.mode !== 'CUSTOM') {
       console.log(
@@ -156,25 +194,8 @@ async function seedCustomWebsites() {
       },
       { importOperator: 'seed-custom-websites-local' },
     );
-    const category = await db.menuCategory.create({
-      data: {
-        venueId: venue.id,
-        slug: 'menu',
-        nameKa: 'მენიუ',
-        nameEn: 'Menu',
-      },
-    });
-    for (const [i, [nameKa, nameEn, price]] of f.dishes.entries())
-      await db.menuItem.create({
-        data: {
-          venueId: venue.id,
-          categoryId: category.id,
-          nameKa,
-          nameEn,
-          price,
-          sortOrder: i,
-        },
-      });
+    // The Cloud catalog an owner would author in the Dashboard.
+    if (f.plan === 'WEBSITE_ONLY') await addMenu(venue.id, f.dishes);
     for (let n = 1; n <= 3; n++)
       await db.websiteTable.create({
         data: {
@@ -185,7 +206,12 @@ async function seedCustomWebsites() {
           capacity: 2 + n,
         },
       });
-    console.log(`${f.name}: ${hostname} → custom-${f.key}-web (ACTIVE)`);
+    const { menuAuthority } = await db.venue.findUniqueOrThrow({
+      where: { id: venue.id },
+    });
+    console.log(
+      `${f.name}: ${hostname} → custom-${f.key}-web (ACTIVE, menu ${menuAuthority})`,
+    );
   }
   await db.$disconnect();
 }

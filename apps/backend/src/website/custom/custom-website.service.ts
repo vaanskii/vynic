@@ -1,9 +1,12 @@
 import {
   BadRequestException,
   ConflictException,
+  HttpException,
+  HttpStatus,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CustomWebsiteStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
 import { VenueEntitlementsService } from '../../entitlements/venue-entitlements.service';
@@ -17,6 +20,7 @@ import {
   readSiteKey,
   requiresReadiness,
 } from './custom-website';
+import { checkCustomWebsite, runtimeTarget } from './custom-website-runtime';
 
 /** Platform audit actions owned by CUSTOM website provisioning. */
 export const CustomWebsiteAuditAction = {
@@ -34,7 +38,12 @@ const CUSTOM_AUDIT_ACTIONS = [
   'venue.domain_released',
   'venue.feature_override_set',
   'venue.feature_override_removed',
+  'venue.cloud_menu_enabled',
+  'venue.cloud_menu_disabled',
 ];
+
+/** One on-demand check per Venue at a time, and not faster than this. */
+const CHECK_INTERVAL_MS = 5000;
 
 // Public identity is live Venue profile data, without legal/account fields.
 const publicProfile = {
@@ -60,7 +69,34 @@ export class CustomWebsiteService {
     private readonly db: PrismaService,
     private readonly entitlements: VenueEntitlementsService,
     private readonly menu: WebsiteMenuService,
+    private readonly config?: ConfigService,
   ) {}
+
+  private readonly lastChecks = new Map<string, number>();
+
+  private runtimeOptions() {
+    const port = Number(this.config?.get<string>('CUSTOM_WEBSITE_DEV_PORT'));
+    return {
+      production: this.config?.get<string>('NODE_ENV') === 'production',
+      localPort:
+        Number.isInteger(port) && port > 0 && port < 65536 ? port : 5176,
+    };
+  }
+
+  /** The earliest registered ACTIVE domain: what the site is known by. */
+  private primaryDomain(
+    domains: Array<{ hostname: string; status: string; createdAt: Date }>,
+  ) {
+    return (
+      domains
+        .filter((d) => d.status === 'ACTIVE')
+        .sort(
+          (a, b) =>
+            a.createdAt.getTime() - b.createdAt.getTime() ||
+            a.hostname.localeCompare(b.hostname),
+        )[0]?.hostname ?? null
+    );
+  }
 
   private async facts(venueId: string) {
     const [features, access, binding, domains, integration, bookableTables] =
@@ -149,10 +185,16 @@ export class CustomWebsiteService {
   async platformView(venueId: string) {
     const venue = await this.db.venue.findUnique({
       where: { id: venueId },
-      select: { id: true, name: true, organizationId: true },
+      select: {
+        id: true,
+        name: true,
+        organizationId: true,
+        menuAuthority: true,
+        cloudMenuEditingEnabled: true,
+      },
     });
     if (!venue) throw new NotFoundException('Venue not found');
-    const [facts, audit, subscription] = await Promise.all([
+    const [facts, audit, subscription, planFeatures] = await Promise.all([
       this.facts(venueId),
       this.db.platformAuditEvent.findMany({
         where: {
@@ -174,7 +216,10 @@ export class CustomWebsiteService {
         where: { venueId },
         select: { status: true, trialEndsAt: true },
       }),
+      this.entitlements.planFeatures(venueId),
     ]);
+    const primaryDomain = this.primaryDomain(facts.domains);
+    const posIncluded = planFeatures.includes('POS');
     const activeDomains = facts.domains.filter((d) => d.status === 'ACTIVE');
     const readiness = customReadiness({
       entitled: facts.access.entitled,
@@ -194,6 +239,21 @@ export class CustomWebsiteService {
       statusNote: facts.binding?.statusNote ?? null,
       updatedAt: facts.binding?.updatedAt ?? null,
       domains: facts.domains,
+      primaryDomain,
+      publicUrl: primaryDomain
+        ? runtimeTarget(primaryDomain, this.runtimeOptions()).url
+        : null,
+      // Same canonical catalog as SAAS; the mode never decides menu authority.
+      menu: {
+        authority: venue.menuAuthority,
+        editingEnabled: venue.cloudMenuEditingEnabled,
+        posIncluded,
+        // A Website-only Venue left on POS authority has no menu writer at all.
+        needsCloudAuthority:
+          planFeatures.includes('WEBSITE') &&
+          !posIncluded &&
+          venue.menuAuthority === 'POS',
+      },
       payments: facts.payments,
       capabilities: facts.capabilities,
       readiness,
@@ -302,6 +362,45 @@ export class CustomWebsiteService {
         await tx.platformAuditEvent.createMany({ data: events });
     });
     return this.platformView(venueId);
+  }
+
+  /**
+   * Checks, on demand, whether the site answers on its primary ACTIVE domain.
+   *
+   * The only destination is a hostname the server already owns for this Venue:
+   * no URL, host, port or path comes from the operator. The result is returned,
+   * not stored, and never changes the provisioning status: a configured ACTIVE
+   * site can be down, and a SETUP_PENDING one can already answer.
+   */
+  async checkRuntime(venueId: string) {
+    const venue = await this.db.venue.findUnique({
+      where: { id: venueId },
+      select: {
+        name: true,
+        websiteConfig: { select: { mode: true } },
+        domains: {
+          where: { status: 'ACTIVE' },
+          select: { hostname: true, status: true, createdAt: true },
+        },
+      },
+    });
+    if (!venue) throw new NotFoundException('Venue not found');
+    if (venue.websiteConfig?.mode !== 'CUSTOM')
+      throw new ConflictException('This Venue is not a CUSTOM website');
+    const hostname = this.primaryDomain(venue.domains);
+    if (!hostname)
+      throw new ConflictException('Register an active domain before checking');
+    const now = Date.now();
+    const last = this.lastChecks.get(venueId);
+    if (last !== undefined && now - last < CHECK_INTERVAL_MS)
+      throw new HttpException(
+        'A check just ran; try again in a few seconds',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    this.lastChecks.set(venueId, now);
+    return checkCustomWebsite(runtimeTarget(hostname, this.runtimeOptions()), {
+      venueName: venue.name,
+    });
   }
 }
 

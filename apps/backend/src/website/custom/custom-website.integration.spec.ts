@@ -4,6 +4,8 @@ jest.mock('axios');
 import axios from 'axios';
 import * as argon from 'argon2';
 import { randomUUID } from 'node:crypto';
+import * as nodeHttp from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { Test } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -24,6 +26,8 @@ import { PlatformVenuesController } from '../../platform/platform-venues.control
 import { CustomerAuth } from '../../customer/customer-auth';
 import { CustomerService } from '../../customer/customer.service';
 import { CustomerWebsiteController } from '../../customer/customer-website.controller';
+import { CustomerCatalogController } from '../../customer/restaurant-foundation.controller';
+import { RestaurantFoundationService } from '../../customer/restaurant-foundation.service';
 import { EnrollmentRateLimiter } from '../../edge/enrollment-rate-limiter';
 import { WebsiteAuthService } from '../auth/auth.service';
 import { CryptoService } from '../common/crypto.service';
@@ -79,6 +83,12 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
     let admin: { id: string }, support: { id: string };
     let customer: { id: string };
     const host = (k: 'a' | 'b') => `custom-${k}-${tag}.vynic.localhost`;
+    const ownerAuth = (token: string) => ({ Authorization: `Bearer ${token}` });
+    // A further restaurant with its own owner, created as a sale would be.
+    let makeVenue: (
+      label: string,
+      planKey: 'WEBSITE_ONLY' | 'POS_WEBSITE',
+    ) => Promise<{ id: string; token: string }>;
     const http = () => request(app.getHttpServer());
     const platform = (token = 'admin-token') => ({
       Authorization: `Bearer ${token}`,
@@ -170,6 +180,39 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
       const onlinePayments = await db.feature.findUniqueOrThrow({
         where: { key: 'ONLINE_PAYMENTS' },
       });
+      makeVenue = async (label, planKey) => {
+        const org = await db.organization.create({
+          data: { name: `${label} ${tag}` },
+        });
+        const venue = await db.venue.create({
+          data: {
+            organizationId: org.id,
+            name: `${label} ${tag}`,
+            timezone: 'Asia/Tbilisi',
+            currency: 'GEL',
+            planAssignment: { create: { plan: { connect: { key: planKey } } } },
+            subscription: { create: trial },
+          },
+        });
+        const owner = await db.customerAccount.create({
+          data: {
+            organizationId: org.id,
+            memberships: { create: { organizationId: org.id, role: 'OWNER' } },
+            email: `owner-${label.replace(/\W/g, '')}-${tag}@test.invalid`,
+            displayName: 'Owner',
+            passwordHash: 'unused',
+          },
+        });
+        const token = await jwt.signAsync(
+          { sub: owner.id, typ: 'CUSTOMER' },
+          {
+            secret: process.env.JWT_SECRET,
+            audience: 'vynic-customer',
+            issuer: 'vynic',
+          },
+        );
+        return { id: venue.id, token };
+      };
       for (const k of ['a', 'b', 's'] as const) {
         const org = await db.organization.create({
           data: { name: `Custom ${k} ${tag}` },
@@ -284,6 +327,12 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
       });
 
       const core = new WebsiteCoreService(db, access, tenants, config, menus);
+      const customers = new CustomerService(
+        db,
+        access,
+        {} as never,
+        {} as never,
+      );
       const mod = await Test.createTestingModule({
         controllers: [
           CustomWebsiteController,
@@ -294,6 +343,7 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
           PlatformVenuesController,
           PlatformCustomWebsiteController,
           CustomerWebsiteController,
+          CustomerCatalogController,
           WebsiteCoreController,
         ],
         providers: [
@@ -306,7 +356,7 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
           { provide: WebsiteMenuService, useValue: menus },
           {
             provide: CustomWebsiteService,
-            useValue: new CustomWebsiteService(db, access, menus),
+            useValue: new CustomWebsiteService(db, access, menus, config),
           },
           { provide: MenuService, useValue: new MenuService(db) },
           { provide: PaymentIntegrationsService, useValue: integrations },
@@ -344,7 +394,11 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
           },
           {
             provide: CustomerService,
-            useValue: new CustomerService(db, access, {} as never, {} as never),
+            useValue: customers,
+          },
+          {
+            provide: RestaurantFoundationService,
+            useValue: new RestaurantFoundationService(db, customers, access),
           },
           {
             provide: CustomerAuth,
@@ -746,6 +800,377 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
         .get('/api/website/custom/bootstrap')
         .set('Host', host('a'))
         .expect(200);
+    });
+
+    it('gives a Website-only CUSTOM Venue the same canonical Cloud catalog as SAAS', async () => {
+      const c = await makeVenue('Custom C cloud', 'WEBSITE_ONLY');
+      const cHost = `custom-c-${tag}.vynic.localhost`;
+      await http()
+        .put(`/platform/venues/${c.id}/website`)
+        .set(platform())
+        .send({ mode: 'CUSTOM' })
+        .expect(200);
+      // CUSTOM decides only the renderer; no POS in the package means Cloud.
+      expect(
+        await db.venue.findUniqueOrThrow({
+          where: { id: c.id },
+          select: { menuAuthority: true, cloudMenuEditingEnabled: true },
+        }),
+      ).toEqual({ menuAuthority: 'CLOUD', cloudMenuEditingEnabled: true });
+      expect(await db.venueDomain.count({ where: { venueId: c.id } })).toBe(0);
+      expect(await db.menuCategory.count({ where: { venueId: c.id } })).toBe(0);
+
+      // Nothing to check before a domain exists.
+      await http()
+        .post(`/platform/venues/${c.id}/custom-website/check`)
+        .set(platform())
+        .expect(409);
+
+      // The owner authors the catalog from the Dashboard.
+      const read = async () =>
+        (
+          await http()
+            .get(`/customer/venues/${c.id}/catalog`)
+            .set(ownerAuth(c.token))
+            .expect(200)
+        ).body;
+      expect(await read()).toMatchObject({
+        authority: 'CLOUD',
+        editingEnabled: true,
+        posIncluded: false,
+      });
+      const categoryId = randomUUID();
+      const subcategoryId = randomUUID();
+      const itemId = randomUUID();
+      await http()
+        .put(`/customer/venues/${c.id}/catalog/category`)
+        .set(ownerAuth(c.token))
+        .send({
+          id: categoryId,
+          expectedRevision: (await read()).revision,
+          nameKa: 'ცხელი',
+          nameEn: 'Hot dishes',
+        })
+        .expect(200);
+      await http()
+        .put(`/customer/venues/${c.id}/catalog/subcategory`)
+        .set(ownerAuth(c.token))
+        .send({
+          id: subcategoryId,
+          categoryId,
+          expectedRevision: (await read()).revision,
+          nameKa: 'მწვადი',
+          nameEn: 'Grill',
+        })
+        .expect(200);
+      await http()
+        .put(`/customer/venues/${c.id}/catalog/item`)
+        .set(ownerAuth(c.token))
+        .send({
+          id: itemId,
+          subcategoryId,
+          expectedRevision: (await read()).revision,
+          nameKa: 'ღორის მწვადი',
+          nameEn: 'Pork mtsvadi',
+          price: 24,
+          enabled: true,
+        })
+        .expect(200);
+      await http()
+        .put(`/customer/venues/${c.id}/catalog/variant`)
+        .set(ownerAuth(c.token))
+        .send({
+          menuItemId: itemId,
+          expectedRevision: (await read()).revision,
+          nameKa: 'დიდი',
+          nameEn: 'Large',
+          price: 32,
+          size: 1,
+        })
+        .expect(200);
+
+      // The custom frontend on C's domain receives that same catalog.
+      await http()
+        .post(`/platform/venues/${c.id}/domains`)
+        .set(platform())
+        .send({ hostname: cHost })
+        .expect(201);
+      const menu = (
+        await http()
+          .get('/api/website/custom/menu')
+          .set('Host', cHost)
+          .expect(200)
+      ).body;
+      expect(JSON.stringify(menu)).toContain('Pork mtsvadi');
+      const legacy = (
+        await http().get('/api/menu').set('Host', cHost).expect(200)
+      ).body;
+      expect(JSON.stringify(legacy)).toContain('Pork mtsvadi');
+      expect(JSON.stringify(menu)).not.toContain('Shown a');
+
+      // Website only: POS and Manager stay out of the package.
+      const features = (
+        await http()
+          .get(`/platform/venues/${c.id}/product`)
+          .set(platform())
+          .expect(200)
+      ).body;
+      expect(features.effectiveFeatures).toEqual(['WEBSITE']);
+      expect(features.menuManagement).toMatchObject({
+        authority: 'CLOUD',
+        enabled: true,
+        posIncluded: false,
+        needsCloudAuthority: false,
+      });
+      expect(
+        (
+          await http()
+            .get(`/platform/venues/${c.id}/custom-website`)
+            .set(platform())
+            .expect(200)
+        ).body,
+      ).toMatchObject({
+        primaryDomain: cHost,
+        publicUrl: `http://${cHost}:5176/`,
+        menu: { authority: 'CLOUD', editingEnabled: true, posIncluded: false },
+      });
+    });
+
+    it('keeps POS authority for a CUSTOM Venue whose package includes POS', async () => {
+      const d = await makeVenue('Custom D pos', 'POS_WEBSITE');
+      const dHost = `custom-d-${tag}.vynic.localhost`;
+      // The POS-mirrored catalog that exists before the website is sold.
+      const category = await db.menuCategory.create({
+        data: {
+          venueId: d.id,
+          slug: `pos-cat-${tag}`,
+          nameKa: 'POS კატეგორია',
+          nameEn: 'POS category',
+        },
+      });
+      await db.menuItem.create({
+        data: {
+          venueId: d.id,
+          categoryId: category.id,
+          nameKa: 'POS კერძი',
+          nameEn: 'POS dish',
+          price: 15,
+        },
+      });
+      await http()
+        .put(`/platform/venues/${d.id}/website`)
+        .set(platform())
+        .send({ mode: 'CUSTOM' })
+        .expect(200);
+      expect(
+        await db.venue.findUniqueOrThrow({
+          where: { id: d.id },
+          select: { menuAuthority: true, cloudMenuEditingEnabled: true },
+        }),
+      ).toEqual({ menuAuthority: 'POS', cloudMenuEditingEnabled: false });
+
+      // The Dashboard is not a second operational menu writer.
+      const catalog = (
+        await http()
+          .get(`/customer/venues/${d.id}/catalog`)
+          .set(ownerAuth(d.token))
+          .expect(200)
+      ).body;
+      expect(catalog).toMatchObject({ authority: 'POS', posIncluded: true });
+      await http()
+        .put(`/customer/venues/${d.id}/catalog/category`)
+        .set(ownerAuth(d.token))
+        .send({
+          expectedRevision: catalog.revision,
+          nameKa: 'ახალი',
+          nameEn: 'New',
+        })
+        .expect(409);
+      expect(await db.menuCategory.count({ where: { venueId: d.id } })).toBe(1);
+
+      // The custom frontend reads the same canonical projection POS feeds.
+      await http()
+        .post(`/platform/venues/${d.id}/domains`)
+        .set(platform())
+        .send({ hostname: dHost })
+        .expect(201);
+      expect(
+        JSON.stringify(
+          (
+            await http()
+              .get('/api/website/custom/menu')
+              .set('Host', dHost)
+              .expect(200)
+          ).body,
+        ),
+      ).toContain('POS dish');
+      const product = (
+        await http()
+          .get(`/platform/venues/${d.id}/product`)
+          .set(platform())
+          .expect(200)
+      ).body.menuManagement;
+      expect(product).toMatchObject({
+        authority: 'POS',
+        posIncluded: true,
+        needsCloudAuthority: false,
+        canEnableCloud: false,
+      });
+    });
+
+    it('reports and repairs a Website-only CUSTOM Venue left on POS authority', async () => {
+      // The state CUSTOM provisioning used to leave: no POS, no menu writer.
+      const e = await makeVenue('Custom E stuck', 'WEBSITE_ONLY');
+      await db.venueWebsiteConfig.create({
+        data: { venueId: e.id, mode: 'CUSTOM' },
+      });
+      const product = async () =>
+        (
+          await http()
+            .get(`/platform/venues/${e.id}/product`)
+            .set(platform())
+            .expect(200)
+        ).body.menuManagement;
+      expect(await product()).toMatchObject({
+        authority: 'POS',
+        enabled: false,
+        canEnableCloud: true,
+        reason: null,
+        posIncluded: false,
+        needsCloudAuthority: true,
+      });
+      expect(
+        (
+          await http()
+            .get(`/platform/venues/${e.id}/custom-website`)
+            .set(platform())
+            .expect(200)
+        ).body.menu,
+      ).toMatchObject({ authority: 'POS', needsCloudAuthority: true });
+      // The owner is told setup is unfinished, not that POS manages the menu.
+      expect(
+        (
+          await http()
+            .get(`/customer/venues/${e.id}/catalog`)
+            .set(ownerAuth(e.token))
+            .expect(200)
+        ).body,
+      ).toMatchObject({ authority: 'POS', posIncluded: false });
+
+      // Repair: the existing audited Dashboard menu editing control.
+      await http()
+        .put(`/platform/venues/${e.id}/menu-management/cloud`)
+        .set(platform('support-token'))
+        .send({ enabled: true })
+        .expect(403);
+      await http()
+        .put(`/platform/venues/${e.id}/menu-management/cloud`)
+        .set(platform())
+        .send({ enabled: true })
+        .expect(200);
+      expect(await product()).toMatchObject({
+        authority: 'CLOUD',
+        enabled: true,
+        needsCloudAuthority: false,
+      });
+      expect(
+        await db.platformAuditEvent.findFirst({
+          where: { targetId: e.id, action: 'venue.cloud_menu_enabled' },
+        }),
+      ).toMatchObject({ platformUserId: admin.id });
+    });
+
+    it('checks runtime availability on demand, separately from setup status', async () => {
+      // A local frontend behind a host-preserving /api proxy to this backend.
+      const site = nodeHttp.createServer((req, res) => {
+        if (!req.url?.startsWith('/api/')) {
+          res.setHeader('content-type', 'text/html');
+          res.end('<!doctype html><title>custom</title>');
+          return;
+        }
+        void http()
+          .get(req.url)
+          .set('Host', req.headers.host ?? '')
+          .then((answer) => {
+            res.statusCode = answer.status;
+            res.setHeader(
+              'content-type',
+              String(answer.headers['content-type'] ?? 'text/plain'),
+            );
+            res.end(answer.text);
+          });
+      });
+      await new Promise<void>((resolve) =>
+        site.listen(0, '127.0.0.1', resolve),
+      );
+      process.env.CUSTOM_WEBSITE_DEV_PORT = String(
+        (site.address() as AddressInfo).port,
+      );
+      try {
+        const view = (
+          await http()
+            .get(`/platform/venues/${venues.a.id}/custom-website`)
+            .set(platform())
+            .expect(200)
+        ).body;
+        expect(view).toMatchObject({
+          status: 'ACTIVE',
+          primaryDomain: host('a'),
+          publicUrl: `http://${host('a')}:${process.env.CUSTOM_WEBSITE_DEV_PORT}/`,
+        });
+        // Support may look, not trigger outbound requests.
+        await http()
+          .post(`/platform/venues/${venues.a.id}/custom-website/check`)
+          .set(platform('support-token'))
+          .expect(403);
+        const check = (
+          await http()
+            .post(`/platform/venues/${venues.a.id}/custom-website/check`)
+            .set(platform())
+            .expect(200)
+        ).body;
+        expect(check).toMatchObject({
+          availability: 'REACHABLE',
+          hostname: host('a'),
+          url: view.publicUrl,
+          frontend: { status: 200 },
+          api: { state: 'OK' },
+        });
+        expect(Date.parse(check.checkedAt)).toBeGreaterThan(
+          Date.now() - 60_000,
+        );
+        await http()
+          .post(`/platform/venues/${venues.a.id}/custom-website/check`)
+          .set(platform())
+          .expect(429);
+      } finally {
+        await new Promise((resolve) => site.close(resolve));
+      }
+
+      // Configured ACTIVE, yet nothing answers: the two are reported apart.
+      const down = (
+        await http()
+          .post(`/platform/venues/${venues.b.id}/custom-website/check`)
+          .set(platform())
+          .expect(200)
+      ).body;
+      expect(down).toMatchObject({
+        availability: 'UNREACHABLE',
+        frontend: { status: null, detail: 'Connection refused' },
+      });
+      expect(
+        (
+          await db.customWebsiteBinding.findUniqueOrThrow({
+            where: { venueId: venues.b.id },
+          })
+        ).status,
+      ).toBe('ACTIVE');
+      // Only CUSTOM Venues, only their own registered domains.
+      await http()
+        .post(`/platform/venues/${venues.s.id}/custom-website/check`)
+        .set(platform())
+        .expect(409);
+      delete process.env.CUSTOM_WEBSITE_DEV_PORT;
     });
   },
 );

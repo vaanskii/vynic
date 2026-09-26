@@ -1,0 +1,19 @@
+# Provider-neutral starting point: provision DNS, certificates, registry and DB first.
+name: vynic-production
+services:
+  reverse-proxy:
+    ports: ["80:8080", "443:8443"]
+    command:
+      - --entrypoints.web.address=:8080
+      - --entrypoints.web.http.redirections.entrypoint.to=:443
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:8443
+      - --entrypoints.health.address=:8082
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --ping=true
+      - --ping.entrypoint=health
+      - --accesslog=true
+      - --accesslog.format=json
+    environment: {PROXY_TLS: "true"}
+    volumes:
+      - ./deploy/production-tls:/etc/traefik/certs:ro

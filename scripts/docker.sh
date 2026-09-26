@@ -18,6 +18,13 @@ case "$action" in
   status) compose ps -a ;;
   migrate) compose run --rm migrate ;;
   seed) compose exec backend node dist/scripts/seed-docker-local.js --confirm-local ;;
+  studio)
+    compose --profile tools up -d --wait prisma-studio
+    echo 'Prisma Studio: http://127.0.0.1:5555 (stop with ./scripts/docker.sh studio-stop)'
+    ;;
+  studio-stop) compose --profile tools stop prisma-studio ;;
+  reset-customer-data) compose exec -T backend node dist/scripts/reset-docker-customers.js "$@" ;;
+  cleanup-customer-media) compose exec -T backend node dist/scripts/reset-docker-customers.js --cleanup-media "$@" ;;
   admin) compose exec backend node dist/scripts/create-platform-admin.js "$@" ;;
   reset-local-db)
     [[ "${1:-}" == --confirm-local ]] || { echo 'Requires --confirm-local; deletes only vynic-local-prod_postgres-data. Back up first.' >&2; exit 1; }

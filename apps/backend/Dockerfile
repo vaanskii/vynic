@@ -8,7 +8,7 @@ COPY apps/backend/prisma ./prisma
 RUN npm ci
 COPY apps/backend/tsconfig*.json apps/backend/nest-cli.json ./
 COPY apps/backend/src ./src
-COPY apps/backend/scripts/create-platform-admin.ts apps/backend/scripts/seed-docker-local.ts ./scripts/
+COPY apps/backend/scripts/create-platform-admin.ts apps/backend/scripts/seed-docker-local.ts apps/backend/scripts/studio-docker-local.ts apps/backend/scripts/reset-docker-customers.ts ./scripts/
 RUN npm run build && find dist -name '*.map' -delete && find dist -name '*.d.ts' -delete
 RUN npm prune --omit=dev && npm cache clean --force
 

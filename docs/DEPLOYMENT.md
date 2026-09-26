@@ -385,3 +385,28 @@ Checklist before any actual production deployment:
   BOG credentials, disable provider validation or call the live legacy import.
 
 Recorded acceptance and remaining qualification are in `docs/DEPLOYMENT_PROOF.md`.
+
+## Local development database tools
+
+Prisma Studio and customer-only reset use the isolated Docker DB. See
+[Local database tools](LOCAL_DATABASE_TOOLS.md) for the complete deletion matrix,
+account ownership rules, media recovery, production guards and proof limits.
+
+```sh
+./scripts/docker.sh studio                 # http://127.0.0.1:5555
+./scripts/docker.sh studio-stop
+./scripts/docker.sh reset-customer-data --dry-run
+./scripts/docker.sh reset-customer-data --confirm-local
+./scripts/docker.sh seed                   # optional; reset does not reseed
+./scripts/docker.sh cleanup-customer-media --confirm-local
+./scripts/docker.sh reset-local-db --confirm-local
+./scripts/docker.sh --profile tools down -v # nuclear DB + media volume wipe
+```
+
+Customer reset keeps Platform Admin accounts, plans/features/pricing, global
+onboarding/release settings and migrations. Full DB reset deletes those records
+and rebuilds from migrations, keeping the media volume. The nuclear volume wipe
+deletes both DB and media. Authenticated Platform Venue overview and Organization
+detail have local-only typed-confirmation deletion controls; shared accounts and
+other Venues remain protected. Global WebsiteUser identities survive scoped
+cleanup but are removed by the full customer reset.

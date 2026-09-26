@@ -981,6 +981,18 @@ current transport status.
   refuses an unparseable status outright and stores the canonical spelling, so
   no unreadable status reaches Hive from any caller.
 
+## Local Docker Database Maintenance
+
+- `scripts/docker.sh studio` exposes Prisma Studio only on `127.0.0.1:5555`
+  through the local `tools` profile. Production Compose has no Studio service.
+- `reset-customer-data --dry-run|--confirm-local` uses an audited deletion matrix
+  and preserves Platform users, catalogs, onboarding/release settings and migrations.
+  Local-only Platform Venue/Organization deletion requires typed confirmation;
+  shared accounts and other Venues survive. Scoped deletes retain WebsiteUser
+  identities; full customer reset removes them. Media cleanup uses retryable
+  manifests in the retained volume. Guards require the isolated Docker DB.
+  Implementation and proof boundaries: `docs/LOCAL_DATABASE_TOOLS.md`.
+
 ## Known Blockers
 
 - Website reservation availability has no transactional hold; simultaneous

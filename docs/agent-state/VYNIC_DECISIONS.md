@@ -284,6 +284,18 @@ would duplicate tenancy, menu, booking and payment logic.
 allow-list per domain (same-origin rule), no `X-Venue-Id`-style headers. See
 `docs/CUSTOM_WEBSITES.md`.
 
+## D027 — One vendored skill set serves Claude Code and Codex
+
+**Decision:** Third-party agent skills are vendored unmodified in
+`.agents/skills/`, pinned in `.agents/skill-sources.txt`; `.claude/skills/`
+holds relative symlinks to them. Routing lives only in
+`docs/agent-state/VYNIC_SKILL_ROUTING.md`.
+**Reason:** Codex reads `.agents/skills`, Claude Code reads `.claude/skills`;
+copies per agent drift and give the two agents different advice.
+**Implication:** No second skill tree and no hand edits to vendored skills;
+refresh with `scripts/sync-agent-skills.sh`. Skills stay advisory and never
+override the decisions above.
+
 ## Maintenance
 
 Add an entry only when it prevents repeated architectural debate. Update or

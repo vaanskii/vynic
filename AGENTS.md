@@ -25,6 +25,26 @@ Do not re-audit completed architecture unless current code contradicts project
 state, the task explicitly requests an audit, or correctness requires it.
 Repository code, schema, migrations, contracts, and tests are authoritative.
 
+## Skills Routing
+
+Project skills live once in `.agents/skills/`; Claude Code sees them through
+`.claude/skills/` symlinks. Claude Code and Codex follow the same policy in
+`docs/agent-state/VYNIC_SKILL_ROUTING.md`. Read it before loading a design or
+Flutter skill.
+
+- Skills are advisory. Repository code, project state and `VYNIC_DECISIONS.md`
+  win; never rewrite working architecture, switch packages, or restyle an
+  incremental edit because a skill suggests it.
+- Web: `frontend-design` for new pages/components or a real redesign;
+  `design-taste-frontend` when premium polish matters; `image-to-code` when
+  matching a screenshot/mockup; `web-design-guidelines` for UI/a11y review and
+  final QA. Do not run them all on every frontend edit.
+- Flutter: `flutter-build-responsive-layout` for layout,
+  `flutter-fix-layout-issues` for layout errors, `flutter-add-widget-preview`,
+  `flutter-add-widget-test` and `flutter-add-integration-test` after meaningful
+  UI changes. Architecture, routing, HTTP, JSON and localization skills apply
+  only when that layer is actually being built or changed.
+
 ## Context Budget
 
 For a normal focused task, do not automatically read all docs, the full Prisma

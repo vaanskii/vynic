@@ -1,3 +1,4 @@
+import { localDockerHost } from '../../shared/deployment-config';
 import {
   BadRequestException,
   ConflictException,
@@ -19,6 +20,7 @@ import {
 } from './custom-website';
 import {
   checkCustomWebsite,
+  dockerTarget,
   localTarget,
   publicTarget,
   type RuntimeTarget,
@@ -209,11 +211,13 @@ export class CustomWebsiteService {
       updatedAt: facts.binding?.updatedAt ?? null,
       domains: facts.domains,
       primaryDomain,
-      // A .localhost name is never public; its dev server is `localFrontend`.
+      // Docker ingress owns a normal local URL; direct Vite uses localFrontend.
       publicUrl:
-        primaryDomain && !isLocalHostname(primaryDomain)
-          ? publicTarget(primaryDomain).url
-          : null,
+        primaryDomain && localDockerHost(primaryDomain)
+          ? dockerTarget(primaryDomain).url
+          : primaryDomain && !isLocalHostname(primaryDomain)
+            ? publicTarget(primaryDomain).url
+            : null,
       // Development only: absent in production, so no port or local
       // configuration can leak into a production view.
       ...(registry && {
@@ -376,7 +380,10 @@ export class CustomWebsiteService {
     const registry = this.localRegistry();
     const localHost = registry ? this.localHostname(venue.domains) : null;
     let target: RuntimeTarget;
-    if (registry && localHost) {
+    const primary = this.primaryDomain(venue.domains);
+    if (primary && localDockerHost(primary)) {
+      target = dockerTarget(primary);
+    } else if (registry && localHost) {
       const local = localFrontend(
         { siteKey: venue.customWebsite?.siteKey ?? null, hostname: localHost },
         registry,

@@ -1,3 +1,4 @@
+import { websiteCookieSecure } from '../../shared/deployment-config';
 import {
   Body,
   Controller,
@@ -44,7 +45,7 @@ export class WebsiteAuthController {
   ) {
     this.assertCsrf(req);
     const tokens = await this.authService.signup(dto);
-    this.setAuthCookies(res, tokens);
+    this.setAuthCookies(res, tokens, req.headers.host);
     return { message: 'Signup successful' };
   }
 
@@ -59,7 +60,7 @@ export class WebsiteAuthController {
   ) {
     this.assertCsrf(req);
     const tokens = await this.authService.signin(dto);
-    this.setAuthCookies(res, tokens);
+    this.setAuthCookies(res, tokens, req.headers.host);
     return { message: 'Signin successful' };
   }
 
@@ -71,11 +72,11 @@ export class WebsiteAuthController {
   }
 
   @Get('csrf')
-  getCsrfToken(@Res({ passthrough: true }) res: Response) {
+  getCsrfToken(@Res({ passthrough: true }) res: Response, @Req() req: Request) {
     const token = this.csrfService.generateToken();
     res.cookie('csrf_token', token, {
       httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
+      secure: websiteCookieSecure(req.headers.host),
       sameSite: 'strict',
       maxAge: 24 * 60 * 60 * 1000,
     });
@@ -125,8 +126,9 @@ export class WebsiteAuthController {
   private setAuthCookies(
     res: Response,
     tokens: { access_token: string; refresh_token: string },
+    host: string | undefined,
   ) {
-    const secure = process.env.NODE_ENV === 'production';
+    const secure = websiteCookieSecure(host);
     res.cookie(
       'access_token',
       this.cryptoService.encrypt(tokens.access_token),

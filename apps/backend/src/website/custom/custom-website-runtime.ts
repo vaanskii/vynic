@@ -1,3 +1,4 @@
+import { localDockerHost } from '../../shared/deployment-config';
 import { lookup as dnsLookup } from 'node:dns/promises';
 import * as http from 'node:http';
 import * as https from 'node:https';
@@ -21,6 +22,7 @@ export interface RuntimeTarget {
   url: string;
   /** A local dev frontend: loopback only, port from server configuration. */
   local: boolean;
+  dockerProxy?: boolean;
 }
 
 export interface RuntimeCheck {
@@ -95,6 +97,18 @@ export function localTarget(hostname: string, port: number): RuntimeTarget {
   return { hostname, local: true, url: `http://${hostname}:${port}/` };
 }
 
+/** The fixed Compose ingress, with a server-owned registered Host. */
+export function dockerTarget(hostname: string): RuntimeTarget {
+  if (!localDockerHost(hostname))
+    throw new Error('Not a local Docker website host');
+  return {
+    hostname,
+    url: `http://${hostname}/`,
+    local: false,
+    dockerProxy: true,
+  };
+}
+
 type Resolve = (hostname: string) => Promise<string[]>;
 
 const resolveAll: Resolve = async (hostname) =>
@@ -107,6 +121,12 @@ async function destination(
   target: RuntimeTarget,
   resolve: Resolve,
 ): Promise<{ address: string } | { refused: string }> {
+  if (target.dockerProxy) {
+    if (!localDockerHost(target.hostname))
+      return { refused: 'Local Docker mode is disabled' };
+    // Fixed deployment-owned destination, never DNS supplied by a Venue domain.
+    return { address: '172.30.89.2' };
+  }
   if (target.local) return { address: '127.0.0.1' };
   if (isIP(target.hostname) || target.hostname.startsWith('['))
     return { refused: 'IP-address domains are not checked' };
@@ -148,12 +168,13 @@ function fetchPinned(
       {
         protocol: url.protocol,
         hostname: target.hostname,
-        port: url.port || undefined,
+        port: target.dockerProxy ? 8080 : url.port || undefined,
         path: url.pathname,
         method: 'GET',
         agent: false,
         timeout: TIMEOUT_MS,
         headers: {
+          Host: url.host,
           Accept: readBody ? 'application/json' : 'text/html,*/*',
           'User-Agent': 'Vynic-CustomWebsite-Check/1',
         },

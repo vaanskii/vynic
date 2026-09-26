@@ -1,3 +1,4 @@
+import { HealthController } from './health.controller';
 import { CustomerModule } from './customer/customer.module';
 import { FinanceController } from './finance/finance.controller';
 import { PayrollService } from './finance/payroll.service';
@@ -61,6 +62,7 @@ import { WebsiteModule } from './website/website.module';
     WebsiteModule,
   ],
   controllers: [
+    HealthController,
     FinanceController,
     AppController,
     MobileController,

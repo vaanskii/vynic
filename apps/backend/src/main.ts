@@ -5,8 +5,12 @@ import { json, urlencoded } from 'express';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
+import { validateDeploymentEnvironment } from './shared/deployment-config';
+
 import { isDevLanOrigin } from './dev-origins';
 import { isSameOriginRequest } from './website/tenancy/same-origin';
+
+validateDeploymentEnvironment();
 
 function normalizeOrigin(origin: string): string {
   return origin.endsWith('/') ? origin.slice(0, -1) : origin;
@@ -23,11 +27,19 @@ function buildAllowedOrigins(): string[] {
     .filter((value): value is string => Boolean(value))
     .map(normalizeOrigin);
 
-  return ['http://localhost:5173', 'http://127.0.0.1:5173', ...fromEnv];
+  return process.env.NODE_ENV === 'production'
+    ? fromEnv
+    : ['http://localhost:5173', 'http://127.0.0.1:5173', ...fromEnv];
 }
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const proxyIps = process.env.TRUST_PROXY_IPS?.split(',')
+    .map((ip) => ip.trim())
+    .filter(Boolean);
+  if (proxyIps?.length)
+    app.getHttpAdapter().getInstance().set('trust proxy', proxyIps);
+  app.enableShutdownHooks();
   const isProduction = process.env.NODE_ENV === 'production';
   const allowedOrigins = new Set(buildAllowedOrigins());
 

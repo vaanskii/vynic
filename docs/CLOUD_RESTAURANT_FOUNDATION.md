@@ -58,8 +58,10 @@ litre model and existing size ordering.
 
 POS menu snapshots acquire the same Venue lock and reject CLOUD authority,
 including legacy snapshots. POS authority rejects owner catalog writes. Website
-presentation stays independently editable. Existing CUSTOM Vankisi code and BOG
-semantics are untouched. Public reads retain Host -> VenueDomain -> Venue and
+presentation stays independently editable. The website implementation
+(SAAS/CUSTOM) never decides authority: a Website-only CUSTOM Venue authors the
+same Cloud catalog, and a CUSTOM frontend only renders it. Existing CUSTOM
+Vankisi code and BOG semantics are untouched. Public reads retain Host -> VenueDomain -> Venue and
 ignore client tenant IDs. Prices/menu availability remain live catalog reads, as
 in W2; website text uses the existing draft/publication workflow.
 
@@ -174,7 +176,7 @@ For a previously created but unused venue, open **Admin → Venues → Product �
 მენიუს მართვა Dashboard-ში**. Enable/disable acts directly without an
 acknowledgement checkbox. Disabling only stops owner catalog writes; it preserves
 the catalog, public presentation and CLOUD authority. Reenabling resumes editing.
-The server rechecks admission under the Venue lock, blocks CUSTOM websites,
+The server rechecks admission under the Venue lock, blocks
 devices/enrollment history, catalogs and operational records, and audits the
 editing/authority change. This is not a migration path for an established POS.
 Plan assignment alone does not change menu authority. Cloud-to-POS production

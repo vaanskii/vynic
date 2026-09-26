@@ -727,7 +727,15 @@ current transport status.
   require effective WEBSITE, CUSTOM, a site key and an ACTIVE domain. Platform
   `GET|PUT /platform/venues/:id/custom-website` and the Website-tab panel manage
   it with audit; owners see a read-only status/domain card and keep Menu,
-  profile and payments. Custom-site public routes (`/api/website/custom/*`,
+  profile and payments. The panel also shows the primary ACTIVE domain, public
+  URL and menu authority, and `POST .../custom-website/check` reports runtime
+  availability (REACHABLE/UNREACHABLE, UNKNOWN until checked) on demand: only
+  that server-owned domain, DNS-pinned, non-public addresses refused, no
+  redirects, nothing stored; `.localhost` outside production maps to
+  `CUSTOM_WEBSITE_DEV_PORT` (default 5176). Menu authority follows the package,
+  never SAAS/CUSTOM: Website provisioning without POS admits an empty Venue to
+  the CLOUD catalog for either mode, and Platform flags a Website-only Venue
+  left on POS authority (`needsCloudAuthority`) for repair. Custom-site public routes (`/api/website/custom/*`,
   `/api/menu`, `/api/tables*`, `/api/bog/create-order`, `/api/user/reservations`)
   serve only CUSTOM Venues; capabilities derive from WEBSITE/ONLINE_PAYMENTS,
   the BOG integration and website tables. Bookings take the account only from

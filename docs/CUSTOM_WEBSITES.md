@@ -98,8 +98,8 @@ Venue cannot answer "which frontend should be on this domain?":
 2. Assign the Website Trial or ACTIVE plan (Commercial tab). Every WEBSITE
    assignment path requires an explicit SAAS/CUSTOM choice (`provisionWebsite`).
 3. Select **CUSTOM** (audited `venue.website_mode_changed`). A CUSTOM choice
-   never assigns a SaaS address and never admits Cloud menu authoring; enable
-   Dashboard menu editing explicitly in Product if the Venue has no POS.
+   never assigns a SaaS address. Menu authority follows the package, exactly as
+   for SAAS (§3a).
 4. **Custom website** panel: record the frontend identity (`siteKey`).
 5. **Domains**: register the production domain(s). Replace = register new,
    then release old. Disable keeps the name reserved. The SaaS namespace is
@@ -113,10 +113,13 @@ Venue cannot answer "which frontend should be on this domain?":
 8. Set status `READY` (deployed, verified) and later `ACTIVE`. READY/ACTIVE are
    refused unless WEBSITE is effective, mode is CUSTOM, a site key is recorded
    and at least one domain is ACTIVE. `ERROR` records a known problem.
+9. **Live site**: **Open website** opens the public URL; **Check now** reports
+   whether it answers (§3b). Use it before READY and whenever in doubt.
 
 No database edits and no Venue ids in frontend code are needed.
 
-Routes: `GET|PUT /platform/venues/:venueId/custom-website`
+Routes: `GET|PUT /platform/venues/:venueId/custom-website`,
+`POST /platform/venues/:venueId/custom-website/check`
 (`platform/platform-custom-website.controller.ts`,
 `website/custom/custom-website.service.ts`). SUPPORT_READONLY can read only.
 Audit: `venue.custom_website_site_key_changed`,
@@ -126,6 +129,55 @@ transaction as the change; the panel lists them with mode/domain/feature events.
 **Customers cannot** switch SAAS ↔ CUSTOM, choose a frontend, or claim a domain:
 there is no owner route for any of them, the generic draft editor refuses
 non-SAAS Venues, and the SaaS hostname-request flow is SAAS-only.
+
+### 3a. Menu authority
+
+SAAS and CUSTOM only choose who renders the site. Both read the one canonical
+catalog (`MenuCategory`/`MenuSubcategory`/`MenuItem`/variants plus
+`MenuItemWebsitePresentation`) through the same Host-resolved routes; there is
+no CUSTOM menu table or API.
+
+| Package | Menu authority | Owner Dashboard Menu |
+| --- | --- | --- |
+| WEBSITE without POS (SAAS or CUSTOM) | `CLOUD`, admitted when the operator provisions the Website | Full catalog: categories, subcategories, items, variants, prices, enabled, plus website presentation |
+| POS included | `POS` (unchanged) | Presentation only; catalog writes are refused (409) |
+
+Admission is the existing conservative one (`cloud-menu-admission.ts`): any
+POS evidence (devices, enrollment, catalog, orders, sales, …) keeps POS
+authority and records the reason. Vankisi therefore stays POS-authoritative.
+A Website-only Venue still on POS authority (provisioned before this rule) has
+no catalog writer; Platform shows `needsCloudAuthority` as a warning on the
+Product tab and the Custom website panel, and the repair is the existing
+audited **Dashboard menu editing → Enable** control.
+
+### 3b. Runtime availability
+
+Setup status is what the operator attests; runtime availability is what the
+site does now. They are reported separately, and a check never changes the
+status.
+
+| Availability | Meaning |
+| --- | --- |
+| `UNKNOWN` | Not checked in this view. Nothing is stored or monitored. |
+| `REACHABLE` | `GET /` on the primary domain answered 2xx/3xx. |
+| `UNREACHABLE` | No answer, 4xx/5xx, or the domain was refused (below). |
+
+The same check also calls `/api/website/custom/bootstrap` through the domain
+and reports the backend as `OK` (answers for this Venue), `WRONG_SITE`,
+`FAILED` (for example `/api` not proxied) or `NOT_CHECKED`.
+
+Safety (`website/custom/custom-website-runtime.ts`): the only destination is the
+Venue's earliest ACTIVE `VenueDomain`; there is no URL, host, port or path input.
+The name is resolved once and every address must be public unicast (private,
+loopback, link-local, CGNAT, multicast, documentation, NAT64, IPv4-mapped
+private all refused), and the connection is pinned to the checked address
+(no rebinding). IP-literal domains are never contacted, redirects are not
+followed, answers are capped at 64 KB, 5 s timeout, one check per Venue per
+5 s, SUPER_ADMIN/operator only (SUPPORT_READONLY cannot trigger it). Outside
+production a `.localhost` domain maps to `http://<domain>:CUSTOM_WEBSITE_DEV_PORT/`
+(default 5176, the starter's port) on 127.0.0.1; everything else uses
+`https://<domain>/`. A reachable frontend does not prove the right build is
+deployed: only frontends on the shared client refuse a mismatched `site.key`.
 
 ### Vankisi's binding
 
@@ -253,8 +305,9 @@ client id for A's booking, B's for B's).
 CUSTOM owners see a read-only **Custom website** card: status (active / setup
 in progress / ready / needs attention) and their active domains. The generic
 editor, publish, preview and SaaS address request are absent. Restaurant
-profile, Menu (CLOUD-authoritative Venues author it; website presentation
-applies to `/custom/menu`), payments and subscription stay available.
+profile, Menu (the full catalog editor for a Website-only package, §3a;
+website presentation applies to `/custom/menu`), payments and subscription stay
+available.
 CUSTOM Trial: the operator assigns it and chooses CUSTOM; the owner sees setup
 status, no generic renderer ever serves the Venue, and Trial expiry denies
 WEBSITE exactly as for SAAS (public API 403, owner website settings refused).
@@ -282,8 +335,11 @@ WEBSITE exactly as for SAAS (public API 403, owner website settings refused).
 - `siteKey` for Vankisi must be recorded by an operator (`vankisi-web`, see
   §3). `apps/vankisi-custom-web` does not check it (unchanged on purpose), so
   misattachment detection covers only frontends built on the shared client.
-- No deployment automation, DNS/TLS automation or health checks: status is an
-  operator attestation.
+- No deployment automation, DNS/TLS automation or monitoring: status is an
+  operator attestation and availability is an on-demand check that is not
+  stored (no history or alerts).
+- CUSTOM hours are not owner-editable: hours live in the SAAS draft, which
+  CUSTOM Venues cannot save.
 - Remove stale `BOG_*`/`TBC_*` and per-domain `ALLOWED_ORIGINS` entries from
   deployment env after verifying the same-origin proxy.
 
@@ -325,6 +381,8 @@ cd templates/custom-site
 VITE_SITE_KEY=custom-a-web VYNIC_WEBSITE_API=http://127.0.0.1:3000 npm run dev
 # http://custom-a.vynic.localhost:5176 → Custom A Grill, its menu and tables
 # http://custom-b.vynic.localhost:5176 → refused: this build is not B's frontend
+# custom-a/b are Website-only (menu CLOUD); custom-p includes POS (menu POS).
+# Backend env CUSTOM_WEBSITE_DEV_PORT=5176 makes Platform → Check now reach it.
 ```
 
 Automated: `CUSTOM_WEBSITE_TEST_DATABASE_URL=<fresh disposable_*> npx jest

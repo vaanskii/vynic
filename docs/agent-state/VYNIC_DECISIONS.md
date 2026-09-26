@@ -230,7 +230,7 @@ of POS update consent. See `docs/WINDOWS_SETUP.md`.
 ## D023 — Catalog authority is explicit and enrollment is not handover
 
 **Decision:** Existing Venues retain their menu authority. New shells default
-to POS with Cloud editing off; operators admit empty Website Venues to CLOUD. One canonical catalog serves all channels. Owner catalog writes
+to POS with Cloud editing off; operators admit empty Website Venues to CLOUD. The package decides (Website without POS → CLOUD), never the SAAS/CUSTOM renderer. One canonical catalog serves all channels. Owner catalog writes
 and POS snapshots enforce opposite authority under the Venue row lock.
 **Implication:** Dashboard editing can be switched off independently; disabling
 editing retains CLOUD authority so POS snapshots cannot overwrite that catalog.
@@ -276,7 +276,10 @@ stays Host -> VenueDomain -> Venue; `CustomWebsiteBinding.siteKey` records which
 frontend build serves the Venue (deployment identity, not authority) and the
 shared client refuses to render on a mismatch. Mode, frontend identity, domains
 and setup status are operator-only and audited. Custom-site public routes serve
-only CUSTOM Venues; capabilities derive from existing Features.
+only CUSTOM Venues; capabilities derive from existing Features. CUSTOM uses the
+same canonical catalog and menu authority rules as SAAS (D023). Runtime
+availability is an on-demand server check of the Venue's own domain, separate
+from the attested setup status.
 **Reason:** Cross-origin API hosting loses the Host and SameSite cookies, and a
 browser-supplied Venue/site identity cannot be trusted; per-client backends
 would duplicate tenancy, menu, booking and payment logic.

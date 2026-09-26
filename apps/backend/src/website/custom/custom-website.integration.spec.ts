@@ -1031,7 +1031,10 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
         ).body,
       ).toMatchObject({
         primaryDomain: cHost,
-        publicUrl: `http://${cHost}:5176/`,
+        // A .localhost name is not public, and no frontend identity is
+        // recorded yet, so no local URL is invented either.
+        publicUrl: null,
+        localFrontend: { state: 'NO_SITE_KEY', hostname: cHost, url: null },
         menu: { authority: 'CLOUD', editingEnabled: true, posIncluded: false },
       });
     });
@@ -1181,79 +1184,150 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
     });
 
     it('checks runtime availability on demand, separately from setup status', async () => {
-      // A local frontend behind a host-preserving /api proxy to this backend.
-      const site = nodeHttp.createServer((req, res) => {
-        if (!req.url?.startsWith('/api/')) {
-          res.setHeader('content-type', 'text/html');
-          res.end('<!doctype html><title>custom</title>');
-          return;
-        }
-        void http()
-          .get(req.url)
-          .set('Host', req.headers.host ?? '')
-          .then((answer) => {
-            res.statusCode = answer.status;
-            res.setHeader(
-              'content-type',
-              String(answer.headers['content-type'] ?? 'text/plain'),
-            );
-            res.end(answer.text);
-          });
-      });
-      await new Promise<void>((resolve) =>
-        site.listen(0, '127.0.0.1', resolve),
-      );
-      process.env.CUSTOM_WEBSITE_DEV_PORT = String(
-        (site.address() as AddressInfo).port,
-      );
-      try {
-        const view = (
+      // Local frontends behind a host-preserving /api proxy to this backend,
+      // one dev server per custom frontend, each on its own port.
+      const frontend = () =>
+        nodeHttp.createServer((req, res) => {
+          if (!req.url?.startsWith('/api/')) {
+            res.setHeader('content-type', 'text/html');
+            res.end('<!doctype html><title>custom</title>');
+            return;
+          }
+          void http()
+            .get(req.url)
+            .set('Host', req.headers.host ?? '')
+            .then((answer) => {
+              res.statusCode = answer.status;
+              res.setHeader(
+                'content-type',
+                String(answer.headers['content-type'] ?? 'text/plain'),
+              );
+              res.end(answer.text);
+            });
+        });
+      const listen = async (server: nodeHttp.Server) => {
+        await new Promise<void>((resolve) =>
+          server.listen(0, '127.0.0.1', resolve),
+        );
+        return (server.address() as AddressInfo).port;
+      };
+      const siteA = frontend();
+      const siteB = frontend();
+      const portA = await listen(siteA);
+      const portB = await listen(siteB);
+      const view = async (k: 'a' | 'b') =>
+        (
           await http()
-            .get(`/platform/venues/${venues.a.id}/custom-website`)
+            .get(`/platform/venues/${venues[k].id}/custom-website`)
             .set(platform())
             .expect(200)
         ).body;
-        expect(view).toMatchObject({
+      const check = (k: 'a' | 'b') =>
+        http()
+          .post(`/platform/venues/${venues[k].id}/custom-website/check`)
+          .set(platform());
+
+      // Only A is mapped. The former global port is set to B's port and must
+      // not be used for anyone: it is reported as stale instead.
+      process.env.CUSTOM_WEBSITE_LOCAL_FRONTENDS = `custom-a-web=${portA}`;
+      process.env.CUSTOM_WEBSITE_DEV_PORT = String(portB);
+      try {
+        const a = await view('a');
+        expect(a).toMatchObject({
           status: 'ACTIVE',
           primaryDomain: host('a'),
-          publicUrl: `http://${host('a')}:${process.env.CUSTOM_WEBSITE_DEV_PORT}/`,
+          publicUrl: null,
+          localFrontend: {
+            state: 'CONFIGURED',
+            siteKey: 'custom-a-web',
+            hostname: host('a'),
+            port: portA,
+            url: `http://${host('a')}:${portA}/`,
+            source: 'CUSTOM_WEBSITE_LOCAL_FRONTENDS',
+          },
         });
+        expect(a.localFrontend.problems).toContain(
+          'CUSTOM_WEBSITE_DEV_PORT is no longer read; map each frontend in CUSTOM_WEBSITE_LOCAL_FRONTENDS',
+        );
+        // The domain never carries the port.
+        expect(a.domains.map((d: any) => d.hostname)).toEqual([host('a')]);
+        expect((await view('b')).localFrontend).toMatchObject({
+          state: 'NOT_CONFIGURED',
+          port: null,
+          url: null,
+        });
+
         // Support may look, not trigger outbound requests.
         await http()
           .post(`/platform/venues/${venues.a.id}/custom-website/check`)
           .set(platform('support-token'))
           .expect(403);
-        const check = (
-          await http()
-            .post(`/platform/venues/${venues.a.id}/custom-website/check`)
-            .set(platform())
-            .expect(200)
-        ).body;
-        expect(check).toMatchObject({
+        const checkA = (await check('a').expect(200)).body;
+        expect(checkA).toMatchObject({
           availability: 'REACHABLE',
           hostname: host('a'),
-          url: view.publicUrl,
+          url: a.localFrontend.url,
           frontend: { status: 200 },
           api: { state: 'OK' },
         });
-        expect(Date.parse(check.checkedAt)).toBeGreaterThan(
+        expect(Date.parse(checkA.checkedAt)).toBeGreaterThan(
           Date.now() - 60_000,
         );
-        await http()
-          .post(`/platform/venues/${venues.a.id}/custom-website/check`)
-          .set(platform())
-          .expect(429);
+        await check('a').expect(429);
+
+        // Unmapped B: refused as not configured, never sent to a guessed port.
+        const unmapped = await check('b').expect(409);
+        expect(unmapped.body.message).toContain(
+          'Local frontend for custom-b-web is not configured',
+        );
+
+        // Mapping B gives it its own URL without moving A.
+        process.env.CUSTOM_WEBSITE_LOCAL_FRONTENDS = `custom-a-web=${portA},custom-b-web=${portB}`;
+        expect((await view('a')).localFrontend.url).toBe(
+          `http://${host('a')}:${portA}/`,
+        );
+        const b = await view('b');
+        expect(b.localFrontend.url).toBe(`http://${host('b')}:${portB}/`);
+        const checkB = (await check('b').expect(200)).body;
+        expect(checkB).toMatchObject({
+          availability: 'REACHABLE',
+          url: `http://${host('b')}:${portB}/`,
+          frontend: { status: 200 },
+        });
+        // B's Trial ended earlier in this suite: its site answers, the shared
+        // backend refuses to serve it, and never answers with A's data.
+        expect(checkB.api.state).toBe('FAILED');
+        expect(checkB.api.detail).toBe('/api answered 403');
+
+        // Owners see status and domains, never local development config.
+        const owner = JSON.stringify(
+          (
+            await http()
+              .get(`/customer/venues/${venues.a.id}/website`)
+              .set({ Authorization: `Bearer ${owners.a}` })
+              .expect(200)
+          ).body,
+        );
+        expect(owner).not.toContain('localFrontend');
+        expect(owner).not.toContain('CUSTOM_WEBSITE');
+        expect(owner).not.toContain(String(portA));
       } finally {
-        await new Promise((resolve) => site.close(resolve));
+        await new Promise((resolve) => siteA.close(resolve));
+        await new Promise((resolve) => siteB.close(resolve));
       }
 
       // Configured ACTIVE, yet nothing answers: the two are reported apart.
-      const down = (
-        await http()
-          .post(`/platform/venues/${venues.b.id}/custom-website/check`)
-          .set(platform())
-          .expect(200)
-      ).body;
+      // (A fresh service instance, so the per-Venue rate limit is not hit.)
+      const down = await new CustomWebsiteService(
+        db,
+        new VenueEntitlementsService(db),
+        {
+          get: (key: string) =>
+            key === 'CUSTOM_WEBSITE_LOCAL_FRONTENDS'
+              ? `custom-a-web=${portA}`
+              : undefined,
+        } as unknown as ConfigService,
+      ).checkRuntime(venues.a.id);
       expect(down).toMatchObject({
         availability: 'UNREACHABLE',
         frontend: { status: null, detail: 'Connection refused' },
@@ -1261,7 +1335,7 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
       expect(
         (
           await db.customWebsiteBinding.findUniqueOrThrow({
-            where: { venueId: venues.b.id },
+            where: { venueId: venues.a.id },
           })
         ).status,
       ).toBe('ACTIVE');
@@ -1270,8 +1344,96 @@ const url = process.env.CUSTOM_WEBSITE_TEST_DATABASE_URL;
         .post(`/platform/venues/${venues.s.id}/custom-website/check`)
         .set(platform())
         .expect(409);
+      delete process.env.CUSTOM_WEBSITE_LOCAL_FRONTENDS;
       delete process.env.CUSTOM_WEBSITE_DEV_PORT;
     });
+
+    it('keeps domains port-free and local development out of production', async () => {
+      const g = await makeVenue('Custom G prod', 'WEBSITE_ONLY');
+      const gLocal = `custom-g-${tag}.localhost`;
+      const gPublic = `custom-g-${tag}.invalid`;
+      await http()
+        .put(`/platform/venues/${g.id}/website`)
+        .set(platform())
+        .send({ mode: 'CUSTOM' })
+        .expect(200);
+      // Scheme and path are refused; a port is not part of the domain.
+      for (const bad of [
+        `http://${gLocal}:5174/path`,
+        `${gLocal}/path`,
+        `https://${gLocal}`,
+      ])
+        await http()
+          .post(`/platform/venues/${g.id}/domains`)
+          .set(platform())
+          .send({ hostname: bad })
+          .expect(400);
+      const stored = (
+        await http()
+          .post(`/platform/venues/${g.id}/domains`)
+          .set(platform())
+          .send({ hostname: `${gLocal}:5174` })
+          .expect(201)
+      ).body;
+      expect(stored.hostname).toBe(gLocal);
+      await http()
+        .post(`/platform/venues/${g.id}/domains`)
+        .set(platform())
+        .send({ hostname: gPublic })
+        .expect(201);
+      await http()
+        .put(`/platform/venues/${g.id}/custom-website`)
+        .set(platform())
+        .send({ siteKey: 'custom-g-web', status: 'ACTIVE' })
+        .expect(200);
+      expect(
+        (
+          await db.venueDomain.findMany({
+            where: { venueId: g.id },
+            orderBy: { hostname: 'asc' },
+          })
+        ).map((d) => d.hostname),
+      ).toEqual([gPublic, gLocal].sort());
+
+      const env: Record<string, string> = {
+        CUSTOM_WEBSITE_LOCAL_FRONTENDS: 'custom-g-web=5174',
+        CUSTOM_WEBSITE_DEV_PORT: '5176',
+      };
+      const service = (nodeEnv: string) =>
+        new CustomWebsiteService(db, new VenueEntitlementsService(db), {
+          get: (key: string) => (key === 'NODE_ENV' ? nodeEnv : env[key]),
+        } as unknown as ConfigService);
+
+      // Development: the public domain stays the primary identity; the local
+      // frontend is the .localhost domain plus the mapped port.
+      const dev = await service('development').platformView(g.id);
+      expect(dev).toMatchObject({
+        primaryDomain: gPublic,
+        publicUrl: `https://${gPublic}/`,
+        localFrontend: { url: `http://${gLocal}:5174/` },
+      });
+
+      // Production: no local frontend, no port, no dev setting anywhere.
+      const prod = await service('production').platformView(g.id);
+      expect(prod).toMatchObject({
+        primaryDomain: gPublic,
+        publicUrl: `https://${gPublic}/`,
+      });
+      expect(prod).not.toHaveProperty('localFrontend');
+      const text = JSON.stringify(prod);
+      for (const leak of ['5174', '5176', 'localFrontend', 'CUSTOM_WEBSITE'])
+        expect(text).not.toContain(leak);
+      // The production check goes to the public name only, and the existing
+      // public-address rules apply (this name does not resolve).
+      const checked = await service('production').checkRuntime(g.id);
+      expect(checked).toMatchObject({
+        hostname: gPublic,
+        url: `https://${gPublic}/`,
+        availability: 'UNREACHABLE',
+        api: { state: 'NOT_CHECKED' },
+      });
+    }, 20_000);
+
     it('keeps hours, contact and gallery as Venue data both renderers read live', async () => {
       const f = await makeVenue('Custom F info', 'WEBSITE_ONLY');
       const fHost = `custom-f-${tag}.vynic.localhost`;

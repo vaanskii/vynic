@@ -3,7 +3,8 @@ import type { AddressInfo } from 'node:net';
 import {
   checkCustomWebsite,
   isPublicAddress,
-  runtimeTarget,
+  localTarget,
+  publicTarget,
 } from './custom-website-runtime';
 
 describe('CUSTOM website runtime check', () => {
@@ -30,30 +31,31 @@ describe('CUSTOM website runtime check', () => {
       expect(isPublicAddress(bad)).toBe(false);
   });
 
-  it('maps only a .localhost domain outside production to the dev server', () => {
-    const dev = { production: false, localPort: 5176 };
-    expect(runtimeTarget('custom-a.vynic.localhost', dev)).toEqual({
-      hostname: 'custom-a.vynic.localhost',
-      local: true,
-      url: 'http://custom-a.vynic.localhost:5176/',
-    });
-    expect(runtimeTarget('vankisi.ge', dev)).toMatchObject({
+  it('builds public and local targets without any default port', () => {
+    expect(publicTarget('vankisi.ge')).toEqual({
+      hostname: 'vankisi.ge',
       local: false,
       url: 'https://vankisi.ge/',
     });
-    expect(
-      runtimeTarget('custom-a.vynic.localhost', { ...dev, production: true }),
-    ).toMatchObject({
-      local: false,
-      url: 'https://custom-a.vynic.localhost/',
+    expect(localTarget('vankisi.localhost', 5174)).toEqual({
+      hostname: 'vankisi.localhost',
+      local: true,
+      url: 'http://vankisi.localhost:5174/',
     });
+    expect(localTarget('custom-b.localhost', 5176).url).toBe(
+      'http://custom-b.localhost:5176/',
+    );
+    // Loopback pinning is only for .localhost names and sane ports.
+    expect(() => localTarget('vankisi.ge', 5174)).toThrow();
+    expect(() => localTarget('vankisi.localhost', 80)).toThrow();
+    expect(() => localTarget('vankisi.localhost', 70000)).toThrow();
   });
 
   it('refuses a domain that resolves anywhere non-public, before connecting', async () => {
     for (const answer of [['10.0.0.5'], ['8.8.8.8', '127.0.0.1'], []]) {
       const resolve = jest.fn(() => Promise.resolve(answer));
       const result = await checkCustomWebsite(
-        runtimeTarget('internal.example', { production: true, localPort: 1 }),
+        publicTarget('internal.example'),
         { venueName: 'X' },
         resolve,
       );
@@ -70,7 +72,7 @@ describe('CUSTOM website runtime check', () => {
   it('never contacts an IP-address domain', async () => {
     const resolve = jest.fn();
     const result = await checkCustomWebsite(
-      runtimeTarget('169.254.169.254', { production: true, localPort: 1 }),
+      publicTarget('169.254.169.254'),
       { venueName: 'X' },
       resolve,
     );
@@ -97,11 +99,7 @@ describe('CUSTOM website runtime check', () => {
     afterAll(() => new Promise((resolve) => server.close(resolve)));
     beforeEach(() => (seen.length = 0));
 
-    const target = () =>
-      runtimeTarget('custom-a.vynic.localhost', {
-        production: false,
-        localPort: port,
-      });
+    const target = () => localTarget('custom-a.vynic.localhost', port);
 
     it('reports a reachable frontend and the backend answering for this Venue', async () => {
       answer = (req, res) => {
@@ -167,10 +165,7 @@ describe('CUSTOM website runtime check', () => {
       const freePort = (closed.address() as AddressInfo).port;
       await new Promise((resolve) => closed.close(resolve));
       const result = await checkCustomWebsite(
-        runtimeTarget('custom-a.vynic.localhost', {
-          production: false,
-          localPort: freePort,
-        }),
+        localTarget('custom-a.vynic.localhost', freePort),
         { venueName: 'A' },
       );
       expect(result).toMatchObject({

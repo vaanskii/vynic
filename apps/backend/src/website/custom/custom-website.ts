@@ -19,10 +19,14 @@ import { CustomWebsiteStatus } from '@prisma/client';
  */
 const SITE_KEY_PATTERN = /^[a-z0-9][a-z0-9-]{0,62}[a-z0-9]$/;
 
+export function isSiteKey(value: string): boolean {
+  return SITE_KEY_PATTERN.test(value);
+}
+
 /** `null` clears the key; anything else must be a valid key. */
 export function readSiteKey(value: unknown): string | null {
   if (value === null || value === '') return null;
-  if (typeof value !== 'string' || !SITE_KEY_PATTERN.test(value.trim()))
+  if (typeof value !== 'string' || !isSiteKey(value.trim()))
     throw new BadRequestException(
       'siteKey must be 2-64 lowercase letters, digits or hyphens',
     );

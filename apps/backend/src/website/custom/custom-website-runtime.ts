@@ -19,14 +19,8 @@ export interface RuntimeTarget {
   hostname: string;
   /** What an operator opens; never built from request input. */
   url: string;
-  /** A `.localhost` name outside production: loopback only, fixed dev port. */
+  /** A local dev frontend: loopback only, port from server configuration. */
   local: boolean;
-}
-
-export interface RuntimeOptions {
-  production: boolean;
-  /** Port the local custom frontend dev server listens on. */
-  localPort: number;
 }
 
 export interface RuntimeCheck {
@@ -83,25 +77,22 @@ export function isPublicAddress(address: string): boolean {
   return !nonPublic.check(address, 'ipv6');
 }
 
+/** A registered public domain: `https://<domain>/`, public addresses only. */
+export function publicTarget(hostname: string): RuntimeTarget {
+  return { hostname, local: false, url: `https://${hostname}/` };
+}
+
 /**
- * Where a registered domain's site is expected to be.
- *
- * Production and public names: `https://<domain>/`. Only a `.localhost` name
- * outside production maps to the local dev server, because that is the one
- * case where the operator is also the developer running it.
+ * A CUSTOM frontend's dev server on this machine: a `.localhost` domain the
+ * Venue owns plus a port from trusted server configuration
+ * (`custom-website-local.ts`). The caller builds it only outside production.
  */
-export function runtimeTarget(
-  hostname: string,
-  options: RuntimeOptions,
-): RuntimeTarget {
-  const local = !options.production && hostname.endsWith('.localhost');
-  return {
-    hostname,
-    local,
-    url: local
-      ? `http://${hostname}:${options.localPort}/`
-      : `https://${hostname}/`,
-  };
+export function localTarget(hostname: string, port: number): RuntimeTarget {
+  if (!hostname.endsWith('.localhost'))
+    throw new Error('Only a .localhost domain has a local frontend');
+  if (!Number.isInteger(port) || port < 1024 || port > 65535)
+    throw new Error('Local frontend port must be 1024-65535');
+  return { hostname, local: true, url: `http://${hostname}:${port}/` };
 }
 
 type Resolve = (hostname: string) => Promise<string[]>;

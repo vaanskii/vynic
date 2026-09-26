@@ -17,7 +17,20 @@ import {
   readSiteKey,
   requiresReadiness,
 } from './custom-website';
-import { checkCustomWebsite, runtimeTarget } from './custom-website-runtime';
+import {
+  checkCustomWebsite,
+  localTarget,
+  publicTarget,
+  type RuntimeTarget,
+} from './custom-website-runtime';
+import {
+  LEGACY_DEV_PORT_ENV,
+  LOCAL_FRONTENDS_ENV,
+  isLocalHostname,
+  localFrontend,
+  parseLocalFrontends,
+  type LocalFrontendRegistry,
+} from './custom-website-local';
 
 /** Platform audit actions owned by CUSTOM website provisioning. */
 export const CustomWebsiteAuditAction = {
@@ -61,28 +74,52 @@ export class CustomWebsiteService {
 
   private readonly lastChecks = new Map<string, number>();
 
-  private runtimeOptions() {
-    const port = Number(this.config?.get<string>('CUSTOM_WEBSITE_DEV_PORT'));
-    return {
-      production: this.config?.get<string>('NODE_ENV') === 'production',
-      localPort:
-        Number.isInteger(port) && port > 0 && port < 65536 ? port : 5176,
-    };
+  /**
+   * Where local CUSTOM frontends run, or null in production, where local
+   * development configuration is ignored entirely.
+   */
+  private localRegistry(): LocalFrontendRegistry | null {
+    if (this.config?.get<string>('NODE_ENV') === 'production') return null;
+    const registry = parseLocalFrontends(
+      this.config?.get<string>(LOCAL_FRONTENDS_ENV),
+    );
+    if (this.config?.get<string>(LEGACY_DEV_PORT_ENV))
+      registry.problems.push(
+        `${LEGACY_DEV_PORT_ENV} is no longer read; map each frontend in ${LOCAL_FRONTENDS_ENV}`,
+      );
+    return registry;
   }
 
-  /** The earliest registered ACTIVE domain: what the site is known by. */
+  /** ACTIVE domains, earliest registered first. */
+  private activeDomains(
+    domains: Array<{ hostname: string; status: string; createdAt: Date }>,
+  ) {
+    return domains
+      .filter((d) => d.status === 'ACTIVE')
+      .sort(
+        (a, b) =>
+          a.createdAt.getTime() - b.createdAt.getTime() ||
+          a.hostname.localeCompare(b.hostname),
+      )
+      .map((d) => d.hostname);
+  }
+
+  /**
+   * What the site is known by: the earliest ACTIVE public domain, or the
+   * earliest ACTIVE `.localhost` one when it has no public domain.
+   */
   private primaryDomain(
     domains: Array<{ hostname: string; status: string; createdAt: Date }>,
   ) {
-    return (
-      domains
-        .filter((d) => d.status === 'ACTIVE')
-        .sort(
-          (a, b) =>
-            a.createdAt.getTime() - b.createdAt.getTime() ||
-            a.hostname.localeCompare(b.hostname),
-        )[0]?.hostname ?? null
-    );
+    const active = this.activeDomains(domains);
+    return active.find((h) => !isLocalHostname(h)) ?? active[0] ?? null;
+  }
+
+  /** The `.localhost` domain a local dev server is opened on. */
+  private localHostname(
+    domains: Array<{ hostname: string; status: string; createdAt: Date }>,
+  ) {
+    return this.activeDomains(domains).find(isLocalHostname) ?? null;
   }
 
   private async facts(venueId: string) {
@@ -150,6 +187,7 @@ export class CustomWebsiteService {
       this.entitlements.planFeatures(venueId),
     ]);
     const primaryDomain = this.primaryDomain(facts.domains);
+    const registry = this.localRegistry();
     const posIncluded = planFeatures.includes('POS');
     const activeDomains = facts.domains.filter((d) => d.status === 'ACTIVE');
     const readiness = customReadiness({
@@ -171,9 +209,22 @@ export class CustomWebsiteService {
       updatedAt: facts.binding?.updatedAt ?? null,
       domains: facts.domains,
       primaryDomain,
-      publicUrl: primaryDomain
-        ? runtimeTarget(primaryDomain, this.runtimeOptions()).url
-        : null,
+      // A .localhost name is never public; its dev server is `localFrontend`.
+      publicUrl:
+        primaryDomain && !isLocalHostname(primaryDomain)
+          ? publicTarget(primaryDomain).url
+          : null,
+      // Development only: absent in production, so no port or local
+      // configuration can leak into a production view.
+      ...(registry && {
+        localFrontend: localFrontend(
+          {
+            siteKey: facts.binding?.siteKey ?? null,
+            hostname: this.localHostname(facts.domains),
+          },
+          registry,
+        ),
+      }),
       // Same canonical catalog as SAAS; the mode never decides menu authority.
       menu: {
         authority: venue.menuAuthority,
@@ -295,10 +346,14 @@ export class CustomWebsiteService {
   }
 
   /**
-   * Checks, on demand, whether the site answers on its primary ACTIVE domain.
+   * Checks, on demand, whether the site answers.
    *
-   * The only destination is a hostname the server already owns for this Venue:
-   * no URL, host, port or path comes from the operator. The result is returned,
+   * Outside production a Venue with an ACTIVE `.localhost` domain is checked
+   * at its local frontend (that domain plus the port its frontend identity is
+   * mapped to in server configuration, loopback only), and refused as not
+   * configured when unmapped. Otherwise the primary ACTIVE domain is checked
+   * over https with public addresses only. No URL, host, port or path comes
+   * from the operator. The result is returned,
    * not stored, and never changes the provisioning status: a configured ACTIVE
    * site can be down, and a SETUP_PENDING one can already answer.
    */
@@ -308,6 +363,7 @@ export class CustomWebsiteService {
       select: {
         name: true,
         websiteConfig: { select: { mode: true } },
+        customWebsite: { select: { siteKey: true } },
         domains: {
           where: { status: 'ACTIVE' },
           select: { hostname: true, status: true, createdAt: true },
@@ -317,9 +373,25 @@ export class CustomWebsiteService {
     if (!venue) throw new NotFoundException('Venue not found');
     if (venue.websiteConfig?.mode !== 'CUSTOM')
       throw new ConflictException('This Venue is not a CUSTOM website');
-    const hostname = this.primaryDomain(venue.domains);
-    if (!hostname)
-      throw new ConflictException('Register an active domain before checking');
+    const registry = this.localRegistry();
+    const localHost = registry ? this.localHostname(venue.domains) : null;
+    let target: RuntimeTarget;
+    if (registry && localHost) {
+      const local = localFrontend(
+        { siteKey: venue.customWebsite?.siteKey ?? null, hostname: localHost },
+        registry,
+      );
+      if (local.state !== 'CONFIGURED' || local.port === null)
+        throw new ConflictException(local.detail);
+      target = localTarget(localHost, local.port);
+    } else {
+      const hostname = this.primaryDomain(venue.domains);
+      if (!hostname)
+        throw new ConflictException(
+          'Register an active domain before checking',
+        );
+      target = publicTarget(hostname);
+    }
     const now = Date.now();
     const last = this.lastChecks.get(venueId);
     if (last !== undefined && now - last < CHECK_INTERVAL_MS)
@@ -328,9 +400,7 @@ export class CustomWebsiteService {
         HttpStatus.TOO_MANY_REQUESTS,
       );
     this.lastChecks.set(venueId, now);
-    return checkCustomWebsite(runtimeTarget(hostname, this.runtimeOptions()), {
-      venueName: venue.name,
-    });
+    return checkCustomWebsite(target, { venueName: venue.name });
   }
 }
 

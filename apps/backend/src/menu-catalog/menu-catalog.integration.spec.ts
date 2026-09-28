@@ -13,6 +13,7 @@ import { MenuSyncService } from '../pos/sync/snapshot/menu-sync.service';
 import { MenuService } from '../website/menu/menu.service';
 import { MobileMenuService } from '../mobile/services/mobile-menu.service';
 import { MenuCatalogService } from './menu-catalog.service';
+import { menuCutoverReadiness } from './menu-cutover-readiness';
 
 /**
  * Canonical Cloud Menu protocol over real HTTP and PostgreSQL
@@ -741,6 +742,94 @@ const url = process.env.CANONICAL_MENU_TEST_DATABASE_URL;
       );
       expect(new Set(snapshots.map((s) => JSON.stringify(s.body))).size).toBe(
         1,
+      );
+    });
+
+    it('cutover readiness is read-only and explains what blocks an established POS Venue', async () => {
+      const organization = await db.organization.create({
+        data: { name: `Legacy ${tag}` },
+      });
+      const legacy = await db.venue.create({
+        data: {
+          organizationId: organization.id,
+          name: 'Legacy POS',
+          timezone: 'Asia/Tbilisi',
+          currency: 'GEL',
+        },
+      });
+      expect(legacy.menuAuthority).toBe('POS'); // established Venues keep the legacy default
+      let report = await menuCutoverReadiness(db, legacy.id);
+      expect(report.verdict).toBe('BLOCKED');
+      expect(report.blockers).toContain(
+        'No active POS Device holds the authoritative menu',
+      );
+      const device = await db.device.create({
+        data: {
+          venueId: legacy.id,
+          installationId: randomUUID(),
+          displayName: 'Primary',
+          platform: 'WINDOWS',
+          credentialHash: 'unused',
+          firstSyncAt: new Date(),
+          lastSeenAt: new Date(),
+        },
+      });
+      await db.venue.update({
+        where: { id: legacy.id },
+        data: { activeOperationalDeviceId: device.id },
+      });
+      // The POS mirror, exactly as the legacy snapshot writes it.
+      await new MenuSyncService(db).sync(
+        { venueId: legacy.id, organizationId: organization.id } as any,
+        [
+          {
+            id: randomUUID(),
+            slug: 'beer',
+            nameKa: 'ლუდი',
+            nameEn: 'Beer',
+            items: [
+              {
+                id: randomUUID(),
+                nameKa: 'ლაგერი',
+                nameEn: 'Lager',
+                price: 6,
+                variants: [{ id: randomUUID(), size: 0.5, price: 6 }],
+              },
+            ],
+          } as any,
+        ],
+        1,
+      );
+      const before = await db.venue.findUniqueOrThrow({
+        where: { id: legacy.id },
+      });
+      report = await menuCutoverReadiness(db, legacy.id);
+      expect(report).toMatchObject({
+        authority: 'POS',
+        verdict: 'READY_FOR_REHEARSAL',
+        blockers: [],
+        counts: {
+          categories: 1,
+          items: 1,
+          variants: 1,
+          withoutPosIdentity: 0,
+          activeDevices: 1,
+        },
+      });
+      // An unclaimed legacy row (no POS identity) blocks.
+      await db.menuItem.create({
+        data: { venueId: legacy.id, nameKa: 'x', nameEn: 'x', price: 1 },
+      });
+      report = await menuCutoverReadiness(db, legacy.id);
+      expect(report.verdict).toBe('BLOCKED');
+      expect(report.counts.withoutPosIdentity).toBe(1);
+      // Nothing was changed by auditing.
+      const after = await db.venue.findUniqueOrThrow({
+        where: { id: legacy.id },
+      });
+      expect(after).toEqual(before);
+      expect((await menuCutoverReadiness(db, owners[0].id)).verdict).toBe(
+        'ALREADY_CANONICAL',
       );
     });
   },

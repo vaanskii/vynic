@@ -266,6 +266,8 @@ export class CustomerService {
           timezone,
           currency,
           subscription: { create: { status: 'NO_PLAN' } },
+          // New Venues use the canonical Cloud Menu (D030); POS is legacy only.
+          menuAuthority: 'CLOUD',
         },
       });
       await tx.customerAuditEvent.create({

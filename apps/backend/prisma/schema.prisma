@@ -86,6 +86,10 @@ model MenuCategory {
   sendToKitchen     Boolean           @default(true)
   sortOrder         Int               @default(0)
   updatedAt         DateTime          @updatedAt
+  /// Canonical optimistic-concurrency revision (docs/CANONICAL_MENU_SYNC.md).
+  revision          Int               @default(1)
+  /// Venue catalog sequence of this node's last canonical change.
+  changeSeq         Int               @default(0)
   items             MenuItem[]
   subcategories     MenuSubcategory[]
   venue             Venue             @relation(fields: [venueId], references: [id], onDelete: Restrict)
@@ -105,6 +109,10 @@ model MenuSubcategory {
   posMenuSubcategoryId String?
   sortOrder            Int          @default(0)
   updatedAt            DateTime     @updatedAt
+  /// Canonical optimistic-concurrency revision (docs/CANONICAL_MENU_SYNC.md).
+  revision             Int          @default(1)
+  /// Venue catalog sequence of this node's last canonical change.
+  changeSeq            Int          @default(0)
   items                MenuItem[]
   category             MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
@@ -136,6 +144,10 @@ model MenuItem {
   sortOrder          Int                     @default(0)
   updatedAt          DateTime                @updatedAt
   subcategoryId      String?
+  /// Canonical optimistic-concurrency revision (docs/CANONICAL_MENU_SYNC.md).
+  revision           Int                     @default(1)
+  /// Venue catalog sequence of this node's last canonical change.
+  changeSeq          Int                     @default(0)
   category           MenuCategory?           @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   subcategory        MenuSubcategory?        @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
   variants           MenuItemVariant[]
@@ -156,6 +168,10 @@ model MenuItemVariant {
   posMenuVariantId   String?
   size               Float
   price              Float
+  /// Canonical optimistic-concurrency revision (docs/CANONICAL_MENU_SYNC.md).
+  revision           Int                     @default(1)
+  /// Venue catalog sequence of this node's last canonical change.
+  changeSeq          Int                     @default(0)
   menuItem           MenuItem                @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
   consumptionRecipes MenuConsumptionRecipe[]
 
@@ -1136,7 +1152,13 @@ model Organization {
   @@schema("pos")
 }
 
-/// The sole operational catalog author. Enrollment does not change authority.
+/// TRANSITIONAL / compatibility-only (D030, docs/CANONICAL_MENU_SYNC.md).
+/// CLOUD = the canonical converged catalog and its revisioned mutation
+/// protocol: every writer (Dashboard, any POS Device, a future Manager)
+/// submits entity mutations and POS terminals keep local-first projections.
+/// POS = legacy compatibility for established POS Venues: the POS full
+/// snapshot is mirrored and Cloud does not author. Never switched implicitly;
+/// only an explicit, audited cutover moves an established Venue POS -> CLOUD.
 enum MenuAuthority {
   POS
   CLOUD
@@ -1221,6 +1243,8 @@ model Venue {
   consumptionRecipes        MenuConsumptionRecipe[]
   saleConsumptionComponents SaleConsumptionComponent[]
   consumptionComponents     MenuConsumptionComponent[]
+  menuTombstones            MenuCatalogTombstone[]
+  menuMutations             MenuCatalogMutation[]
 
   @@index([organizationId])
   @@schema("pos")
@@ -2259,5 +2283,74 @@ model WebsiteHostnameRequest {
   reviewedBy String?
   reason String?
   @@index([venueId, status])
+  @@schema("pos")
+}
+
+enum MenuEntityKind {
+  CATEGORY
+  SUBCATEGORY
+  ITEM
+  VARIANT
+
+  @@schema("pos")
+}
+
+enum MenuMutationActor {
+  DEVICE
+  CUSTOMER
+  STAFF
+  PLATFORM
+  SYSTEM
+
+  @@schema("pos")
+}
+
+/// Revisioned deletion of a canonical Menu node. Catch-up never infers deletion
+/// from omission; a disconnected client learns it from `seq > since`.
+model MenuCatalogTombstone {
+  venueId    String
+  entityType MenuEntityKind
+  entityId   String
+  /// Venue catalog sequence at which the node was deleted.
+  seq        Int
+  /// The node's revision after deletion (last live revision + 1).
+  revision   Int
+  mutationId String?
+  deletedAt  DateTime       @default(now())
+  venue      Venue          @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@id([venueId, entityId])
+  @@index([venueId, seq])
+  @@schema("pos")
+}
+
+/// Append-only ledger of ACCEPTED canonical Menu mutations. It is the
+/// idempotency record (same Venue + mutationId returns this result and applies
+/// once) and the Menu change audit with actor/source. Conflicts are not
+/// stored: a retried stale mutation re-evaluates against the current revision.
+model MenuCatalogMutation {
+  venueId          String
+  mutationId       String
+  entityType       MenuEntityKind
+  entityId         String
+  operation        String
+  expectedRevision Int
+  resultRevision   Int
+  seq              Int
+  actorType        MenuMutationActor
+  actorId          String
+  source           String
+  /// SHA-256 of the normalized request; a reused id with other content is refused.
+  requestHash      String
+  /// Field-level before/after of what changed; never a whole catalog snapshot.
+  changes          Json
+  /// REAPPLY when an operator re-applied a change after an explicit conflict.
+  resolution       String?
+  createdAt        DateTime          @default(now())
+  venue            Venue             @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@id([venueId, mutationId])
+  @@index([venueId, entityId])
+  @@index([venueId, createdAt])
   @@schema("pos")
 }

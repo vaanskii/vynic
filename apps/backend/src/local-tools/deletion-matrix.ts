@@ -36,6 +36,8 @@ export const venueModels = [
   'CloudSale',
   'SaleLedgerDay',
   'MenuItemWebsitePresentation',
+  'MenuCatalogMutation',
+  'MenuCatalogTombstone',
   'MenuItemVariant',
   'MenuItem',
   'MenuSubcategory',

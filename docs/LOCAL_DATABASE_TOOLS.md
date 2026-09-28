@@ -173,6 +173,7 @@ Venue IDs. Rows are deleted child-first; counts are measured before any cascades
 | `CloudSale` | V by `venueId` |
 | `SaleLedgerDay` | V by `venueId` |
 | `MenuItemWebsitePresentation` | V by `venueId` |
+| `MenuCatalogMutation`, `MenuCatalogTombstone` | V by `venueId` (canonical Menu ledger/tombstones; also cascade with the Venue) |
 | `MenuItemVariant` | V through `menuItem` |
 | `MenuItem` | V by `venueId` |
 | `MenuSubcategory` | V through `category` |

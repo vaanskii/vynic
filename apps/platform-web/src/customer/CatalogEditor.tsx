@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
-import { customerApi } from "./api";
+import { useEffect, useRef, useState } from "react";
+import { CustomerApiError, customerApi } from "./api";
 
 type Node = {
   id: string;
+  /** This node's own revision; edits to other products never conflict with it. */
+  revision: number;
   nameKa: string;
   nameEn: string;
   sortOrder: number;
@@ -17,9 +19,48 @@ type Catalog = {
   authority: "POS" | "CLOUD";
   editingEnabled?: boolean;
   posIncluded?: boolean;
-  revision: number;
+  /** The Venue change sequence (catch-up cursor), not an edit precondition. */
+  sequence: number;
   categories: Node[];
 };
+const kinds: Record<string, string> = {
+  category: "CATEGORY",
+  subcategory: "SUBCATEGORY",
+  item: "ITEM",
+  variant: "VARIANT",
+};
+/** One canonical mutation (docs/CANONICAL_MENU_SYNC.md). */
+type Mutation = {
+  mutationId: string;
+  entityType: string;
+  operation: "UPSERT";
+  entityId: string;
+  expectedRevision: number;
+  patch: Record<string, unknown>;
+  resolution?: "REAPPLY";
+};
+type Conflict = {
+  mutation: Mutation;
+  currentRevision: number;
+  deleted: boolean;
+  current: Record<string, unknown> | null;
+};
+const fieldLabels: Record<string, string> = {
+  nameKa: "სახელი (ქართ.)",
+  nameEn: "სახელი (ინგლ.)",
+  price: "ფასი",
+  size: "ზომა",
+  enabled: "ჩართულია",
+  sortOrder: "რიგითობა",
+};
+const show = (value: unknown) =>
+  typeof value === "boolean"
+    ? value
+      ? "კი"
+      : "არა"
+    : typeof value === "number"
+      ? String(value)
+      : String(value ?? "—");
 type Edit = {
   kind: string;
   node?: Node;
@@ -38,6 +79,39 @@ export function CatalogEditor({
   const [edit, setEdit] = useState<Edit>();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [conflict, setConflict] = useState<Conflict>();
+  // A retry of the SAME change reuses its id, so a lost response never applies twice.
+  const retry = useRef<{ key: string; mutationId: string } | undefined>(
+    undefined,
+  );
+  async function send(mutation: Mutation) {
+    try {
+      await customerApi(`venues/${venueId}/catalog/mutations`, mutation);
+      retry.current = undefined;
+      setConflict(undefined);
+      await load();
+      setEdit(undefined);
+      onSaved();
+    } catch (failure) {
+      if (
+        failure instanceof CustomerApiError &&
+        failure.data?.code === "REVISION_CONFLICT"
+      ) {
+        retry.current = undefined;
+        const c = failure.data.conflict as Omit<Conflict, "mutation">;
+        setConflict({
+          mutation,
+          currentRevision: c.currentRevision,
+          deleted: c.deleted,
+          current: c.current,
+        });
+        return;
+      }
+      setError(
+        "შენახვა ვერ მოხერხდა. გადაამოწმეთ ველები ან განაახლეთ მენიუ და სცადეთ ხელახლა.",
+      );
+    }
+  }
   async function load() {
     setData(await customerApi<Catalog>(`venues/${venueId}/catalog`));
   }
@@ -167,41 +241,44 @@ export function CatalogEditor({
             setBusy(true);
             setError("");
             const f = new FormData(e.currentTarget);
+            const patch: Record<string, unknown> =
+              edit.kind === "variant"
+                ? {
+                    size: Number(f.get("size")),
+                    price: Number(f.get("price")),
+                  }
+                : {
+                    nameKa: f.get("nameKa"),
+                    nameEn: f.get("nameEn"),
+                    sortOrder: Number(f.get("sortOrder")),
+                    ...(edit.kind === "item"
+                      ? {
+                          price: Number(f.get("price")),
+                          enabled: f.has("enabled"),
+                        }
+                      : {}),
+                  };
+            // A new node names its parent; an existing one keeps it.
+            if (!edit.node) {
+              if (edit.categoryId && edit.kind !== "category")
+                patch.categoryId = edit.categoryId;
+              if (edit.subcategoryId) patch.subcategoryId = edit.subcategoryId;
+              if (edit.menuItemId) patch.menuItemId = edit.menuItemId;
+            }
+            const content = {
+              entityType: kinds[edit.kind],
+              operation: "UPSERT" as const,
+              entityId: edit.node?.id ?? crypto.randomUUID(),
+              expectedRevision: edit.node?.revision ?? 0,
+              patch,
+            };
+            const key = JSON.stringify(
+              edit.node ? content : { ...content, entityId: edit.kind },
+            );
+            if (retry.current?.key !== key)
+              retry.current = { key, mutationId: crypto.randomUUID() };
             try {
-              await customerApi(
-                `venues/${venueId}/catalog/${edit.kind}`,
-                {
-                  id: edit.node?.id,
-                  expectedRevision: data.revision,
-                  categoryId: edit.categoryId,
-                  subcategoryId: edit.subcategoryId,
-                  menuItemId: edit.menuItemId,
-                  ...(edit.kind === "variant"
-                    ? {
-                        size: Number(f.get("size")),
-                        price: Number(f.get("price")),
-                      }
-                    : {
-                        nameKa: f.get("nameKa"),
-                        nameEn: f.get("nameEn"),
-                        sortOrder: Number(f.get("sortOrder")),
-                        ...(edit.kind === "item"
-                          ? {
-                              price: Number(f.get("price")),
-                              enabled: f.has("enabled"),
-                            }
-                          : {}),
-                      }),
-                },
-                "PUT",
-              );
-              await load();
-              setEdit(undefined);
-              onSaved();
-            } catch {
-              setError(
-                "შენახვა ვერ მოხერხდა. გადაამოწმეთ ველები ან განაახლეთ მენიუ და სცადეთ ხელახლა.",
-              );
+              await send({ ...content, mutationId: retry.current.mutationId });
             } finally {
               setBusy(false);
             }
@@ -291,6 +368,71 @@ export function CatalogEditor({
             </div>
           </fieldset>
         </form>
+      )}
+      {conflict && (
+        <div className="portal-card" role="alertdialog" aria-label="ცვლილებების კონფლიქტი">
+          <p role="alert">
+            {conflict.deleted
+              ? "ეს ელემენტი სხვა მოწყობილობაზე წაიშალა."
+              : "ეს ელემენტი სხვა მოწყობილობაზე შეიცვალა."}
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th>მიმდინარე</th>
+                <th>თქვენი ცვლილება</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.keys(conflict.mutation.patch)
+                .filter((field) => fieldLabels[field])
+                .map((field) => (
+                  <tr key={field}>
+                    <th>{fieldLabels[field]}</th>
+                    <td>
+                      {conflict.deleted ? "—" : show(conflict.current?.[field])}
+                    </td>
+                    <td>{show(conflict.mutation.patch[field])}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+          <div className="customer-row">
+            <button
+              type="button"
+              onClick={() => {
+                setConflict(undefined);
+                setEdit(undefined);
+                void load();
+              }}
+            >
+              მიმდინარეს გამოყენება
+            </button>
+            {!conflict.deleted && (
+              <button
+                type="button"
+                className="secondary"
+                disabled={busy}
+                onClick={async () => {
+                  setBusy(true);
+                  try {
+                    await send({
+                      ...conflict.mutation,
+                      mutationId: crypto.randomUUID(),
+                      expectedRevision: conflict.currentRevision,
+                      resolution: "REAPPLY",
+                    });
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                ჩემი ცვლილების ხელახლა გამოყენება
+              </button>
+            )}
+          </div>
+        </div>
       )}
       {error && (
         <>

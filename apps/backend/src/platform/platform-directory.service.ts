@@ -171,6 +171,8 @@ export class PlatformDirectoryService {
         timezone: input.timezone,
         currency: input.currency,
         subscription: { create: { status: 'NO_PLAN' } },
+        // New Venues use the canonical Cloud Menu (D030); POS is legacy only.
+        menuAuthority: 'CLOUD',
       },
       select: VENUE_FIELDS,
     });

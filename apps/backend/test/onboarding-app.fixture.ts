@@ -11,7 +11,9 @@ import { RestaurantFoundationService } from '../src/customer/restaurant-foundati
 import {
   CustomerCatalogController,
   DeviceFoundationController,
+  DeviceMenuController,
 } from '../src/customer/restaurant-foundation.controller';
+import { MenuCatalogService } from '../src/menu-catalog/menu-catalog.service';
 import { DeviceEnrollmentController } from '../src/edge/device-enrollment.controller';
 import { WebsiteLogoService } from '../src/website/core/website-logo.service';
 import { WebsiteLogoController } from '../src/website/core/website-logo.controller';
@@ -82,6 +84,7 @@ export async function onboardingApp(
       CustomerTrialRequestsController,
       CustomerCatalogController,
       DeviceFoundationController,
+      DeviceMenuController,
       DeviceEnrollmentController,
       WebsiteLogoController,
       CustomerAuthController,
@@ -104,6 +107,7 @@ export async function onboardingApp(
       OnboardingRequestsService,
       PlanCatalogService,
       RestaurantFoundationService,
+      MenuCatalogService,
       WebsiteLogoService,
       { provide: PrismaService, useValue: db },
       { provide: ConfigService, useValue: config },

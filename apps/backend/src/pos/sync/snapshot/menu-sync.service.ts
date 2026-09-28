@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../prisma.service';
 import type { TenantContext } from '../../../auth/pos-auth-context';
@@ -294,15 +294,16 @@ export class MenuSyncService {
     tenant: TenantContext,
     menu: MenuCategorySync[],
     authoritativeIdentity: boolean,
-  ): Promise<void> {
+  ): Promise<boolean> {
     await db.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${tenant.venueId} FOR UPDATE`;
     const venue = await db.venue.findUniqueOrThrow({
       where: { id: tenant.venueId },
     });
-    if (venue.menuAuthority !== 'POS')
-      throw new ConflictException(
-        'Cloud-authoritative catalog rejects POS snapshots',
-      );
+    // A canonical (CLOUD) catalog is changed only through revisioned
+    // mutations (docs/CANONICAL_MENU_SYNC.md). A full POS snapshot is never a
+    // writer there: its menu is ignored rather than failing the whole snapshot,
+    // so Orders/Sales/audit keep syncing and omission never deletes.
+    if (venue.menuAuthority !== 'POS') return false;
     const categoryIds = new Set<string>();
     const subcategoryIds = new Set<string>();
     const itemIds = new Set<string>();
@@ -360,7 +361,7 @@ export class MenuSyncService {
       }
     }
 
-    if (!authoritativeIdentity) return;
+    if (!authoritativeIdentity) return true;
 
     // Children first. Every predicate is Venue-scoped and only POS-claimed
     // rows are eligible. Unclaimed legacy/custom content is never inferred to
@@ -393,16 +394,20 @@ export class MenuSyncService {
         },
       },
     });
+    return true;
   }
 
   async sync(
     tenant: TenantContext,
     menu: MenuCategorySync[],
     identityVersion?: number,
-  ): Promise<void> {
+  ): Promise<boolean> {
     console.log(`[SYNC] Syncing ${menu.length} categories...`);
-    await this.prisma.$transaction((db) =>
+    const applied = await this.prisma.$transaction((db) =>
       this.applySnapshot(db, tenant, menu, (identityVersion ?? 0) >= 1),
     );
+    if (!applied)
+      console.log('[SYNC] Canonical Cloud menu: snapshot menu ignored');
+    return applied;
   }
 }

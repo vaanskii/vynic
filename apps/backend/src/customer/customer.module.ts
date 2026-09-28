@@ -8,7 +8,9 @@ import { RestaurantFoundationService } from './restaurant-foundation.service';
 import {
   CustomerCatalogController,
   DeviceFoundationController,
+  DeviceMenuController,
 } from './restaurant-foundation.controller';
+import { MenuCatalogService } from '../menu-catalog/menu-catalog.service';
 import { OwnerInvitationsService } from './owner-invitations.service';
 import {
   PlatformOwnerInvitationsController,
@@ -52,6 +54,7 @@ import {
   providers: [
     OnboardingRequestsService,
     RestaurantFoundationService,
+    MenuCatalogService,
     OwnerInvitationsService,
     CustomerAuth,
     CustomerGuard,
@@ -65,6 +68,7 @@ import {
     CustomerTrialRequestsController,
     CustomerCatalogController,
     DeviceFoundationController,
+    DeviceMenuController,
     PlatformOwnerInvitationsController,
     CustomerOwnerInvitationsController,
     CustomerWebsiteController,

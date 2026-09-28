@@ -122,12 +122,15 @@ const url = process.env.FOUNDATION_TEST_DATABASE_URL;
         const read = await http().get(path('catalog')).set(auth()).expect(200);
         expect(read.body.editingEnabled).toBe(false);
         await http()
-          .put(path('catalog/category'))
+          .post(path('catalog/mutations'))
           .set(auth())
           .send({
-            expectedRevision: read.body.revision,
-            nameKa: 'დაბლოკილი',
-            nameEn: 'Blocked',
+            mutationId: randomUUID(),
+            entityType: 'CATEGORY',
+            operation: 'UPSERT',
+            entityId: randomUUID(),
+            expectedRevision: 0,
+            patch: { nameKa: 'დაბლოკილი', nameEn: 'Blocked' },
           })
           .expect(409);
       } finally {
@@ -187,27 +190,42 @@ const url = process.env.FOUNDATION_TEST_DATABASE_URL;
           { id: ids.variant, menuItemId: ids.item, size: 0.5, price: 8.5 },
         ],
       ] as const;
-      for (const [expectedRevision, [kind, body]] of mutations.entries())
-        await http()
-          .put(path(`catalog/${kind}`))
+      for (const [sequence, [kind, { id, ...patch }]] of mutations.entries()) {
+        const saved = await http()
+          .post(path('catalog/mutations'))
           .set(auth())
-          .send({ ...body, expectedRevision, sortOrder: 0 })
+          .send({
+            mutationId: randomUUID(),
+            entityType: kind.toUpperCase(),
+            operation: 'UPSERT',
+            entityId: id,
+            expectedRevision: 0,
+            patch: kind === 'variant' ? patch : { ...patch, sortOrder: 0 },
+          })
           .expect(200);
+        expect(saved.body).toMatchObject({
+          revision: 1,
+          sequence: sequence + 1,
+        });
+      }
       const tree = await http().get(path('catalog')).set(auth()).expect(200);
       expect(tree.body.categories[0].subcategories[0].items[0]).toMatchObject({
         id: ids.item,
-        posMenuItemId: ids.item,
         price: 12.5,
-        variants: [{ id: ids.variant, price: 8.5 }],
+        revision: 1,
+        variants: [{ id: ids.variant, price: 8.5, revision: 1 }],
       });
+      // A stale entity revision is an explicit conflict, never an overwrite.
       await http()
-        .put(path('catalog/category'))
+        .post(path('catalog/mutations'))
         .set(auth())
         .send({
-          id: ids.category,
-          nameKa: 'stale',
-          nameEn: 'stale',
+          mutationId: randomUUID(),
+          entityType: 'CATEGORY',
+          operation: 'UPSERT',
+          entityId: ids.category,
           expectedRevision: 0,
+          patch: { nameKa: 'stale', nameEn: 'stale' },
         })
         .expect(409);
     });
@@ -279,34 +297,43 @@ const url = process.env.FOUNDATION_TEST_DATABASE_URL;
     });
     it('enforces owner isolation, parent ownership and both authority fences', async () => {
       await http().get(path('catalog')).set(auth(1)).expect(404);
-      await http()
-        .put(path('catalog/item', 1))
+      // Another Venue's parent does not exist for this owner.
+      const foreignParent = await http()
+        .post(path('catalog/mutations', 1))
         .set(auth(1))
         .send({
-          id: randomUUID(),
+          mutationId: randomUUID(),
+          entityType: 'ITEM',
+          operation: 'UPSERT',
+          entityId: randomUUID(),
           expectedRevision: 0,
-          subcategoryId: ids.subcategory,
-          nameKa: 'x',
-          nameEn: 'x',
-          price: 1,
-          enabled: true,
+          patch: {
+            subcategoryId: ids.subcategory,
+            nameKa: 'x',
+            nameEn: 'x',
+            price: 1,
+          },
         })
-        .expect(404);
+        .expect(409);
+      expect(foreignParent.body.code).toBe('PARENT_MISSING');
+      // A legacy full snapshot never writes a canonical catalog.
       await expect(
         new MenuSyncService(db).sync({ venueId: owners[0].id } as any, [], 1),
-      ).rejects.toThrow('Cloud-authoritative');
+      ).resolves.toBe(false);
       await db.venue.update({
         where: { id: owners[1].id },
         data: { menuAuthority: 'POS' },
       });
       await http()
-        .put(path('catalog/category', 1))
+        .post(path('catalog/mutations', 1))
         .set(auth(1))
         .send({
-          id: randomUUID(),
+          mutationId: randomUUID(),
+          entityType: 'CATEGORY',
+          operation: 'UPSERT',
+          entityId: randomUUID(),
           expectedRevision: 0,
-          nameKa: 'x',
-          nameEn: 'x',
+          patch: { nameKa: 'x', nameEn: 'x' },
         })
         .expect(409);
       await new MenuSyncService(db).sync(
@@ -345,26 +372,27 @@ const url = process.env.FOUNDATION_TEST_DATABASE_URL;
       expect(JSON.stringify(result.body)).not.toContain(ids.item);
     });
     it('disabled products disappear publicly without changing presentation', async () => {
-      const body = {
-        id: ids.item,
-        subcategoryId: ids.subcategory,
-        nameKa: 'ჩაი',
-        nameEn: 'Tea',
-        price: 12.5,
-        enabled: false,
-        expectedRevision: 4,
-      };
-      await http().put(path('catalog/item')).set(auth()).send(body).expect(200);
+      const toggle = (enabled: boolean, expectedRevision: number) =>
+        http()
+          .post(path('catalog/mutations'))
+          .set(auth())
+          .send({
+            mutationId: randomUUID(),
+            entityType: 'ITEM',
+            operation: 'UPSERT',
+            entityId: ids.item,
+            expectedRevision,
+            patch: { enabled },
+          })
+          .expect(200);
+      const disabled = await toggle(false, 1);
+      expect(disabled.body.revision).toBe(2);
       const hidden = await http()
         .get('/api/website/menu')
         .set('Host', `foundation-${tag}.vynic.localhost`)
         .expect(200);
       expect(JSON.stringify(hidden.body)).not.toContain(ids.item);
-      await http()
-        .put(path('catalog/item'))
-        .set(auth())
-        .send({ ...body, enabled: true, expectedRevision: 5 })
-        .expect(200);
+      await toggle(true, 2);
     });
     it('enables POS on the SAME Venue, enrolls and freezes a server-owned bootstrap', async () => {
       const pos = await db.feature.findUniqueOrThrow({ where: { key: 'POS' } });

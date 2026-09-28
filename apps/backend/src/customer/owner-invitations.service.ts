@@ -202,6 +202,8 @@ export class OwnerInvitationsService {
           timezone: 'Asia/Tbilisi',
           currency: 'GEL',
           profileUpdatedAt: new Date(),
+          // New Venues use the canonical Cloud Menu (D030); POS is legacy only.
+          menuAuthority: 'CLOUD',
           ...(planId && plan
             ? {
                 planAssignment: {

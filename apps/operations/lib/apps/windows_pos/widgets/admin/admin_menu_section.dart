@@ -8,6 +8,9 @@ import 'package:flutter/services.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/models/user.dart';
 import 'package:vynic/core/services/database_service.dart';
+import 'package:vynic/apps/windows_pos/widgets/admin/menu_sync_banner.dart';
+import 'package:vynic/core/services/menu/pos_menu_sync_service.dart';
+import 'package:vynic/core/services/sync/sync_events.dart';
 import 'package:vynic/core/utils/pos_feedback.dart';
 import 'package:vynic/core/widgets/pos_on_screen_text_field.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/shared/admin_design.dart';
@@ -32,9 +35,24 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   int? _selectedCategoryIndex;
+  StreamSubscription<SyncEvent>? _menuProjection;
+
+  @override
+  void initState() {
+    super.initState();
+    // Cloud catch-up re-projects the operational menu; show it immediately.
+    _menuProjection = SyncHub.events.listen((event) {
+      if (mounted &&
+          event.type == SyncEventType.menu &&
+          event.action == PosMenuSyncService.projectedAction) {
+        setState(() {});
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _menuProjection?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -85,6 +103,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                   children: [
                     _buildPageHeader(isMobile, categories.length),
                     const SizedBox(height: 16),
+                    const MenuSyncBanner(),
                     _buildKpiRow(
                       totalItems: allRows.length,
                       categories: categories.length,

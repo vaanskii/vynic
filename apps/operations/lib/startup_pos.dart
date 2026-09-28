@@ -23,6 +23,7 @@ import 'package:vynic/core/services/sync/manager_sync_service.dart';
 import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
 import 'package:vynic/core/services/edge/edge_transport_service.dart';
 import 'package:vynic/core/services/edge/inventory_projection_sync_service.dart';
+import 'package:vynic/core/services/menu/pos_menu_sync_service.dart';
 import 'package:vynic/core/services/auth/session_lock.dart';
 
 import 'core/services/sync/api_config.dart';
@@ -75,6 +76,7 @@ Future<void> startPos() async {
     unawaited(EdgeTransportService.instance().start());
     unawaited(InventoryProjectionSyncService.instance().start());
     unawaited(RuntimeConfigSync.instance.start());
+    unawaited(PosMenuSyncService.instance.start());
   });
 }
 

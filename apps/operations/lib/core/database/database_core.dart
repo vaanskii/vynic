@@ -37,6 +37,8 @@ class DatabaseCore {
   static const String quickOrderBoxName = 'quickOrders';
   static const String closureJournalBoxName = 'closureJournal';
   static const String inventoryBoxName = 'inventoryCatalog';
+  static const String menuCanonicalBoxName = 'menuCanonical';
+  static const String menuJournalBoxName = 'menuMutationJournal';
 
   static Box<User>? userBox;
   static Box<TableModel>? tableBox;
@@ -57,6 +59,11 @@ class DatabaseCore {
   static Box? closureJournalBox;
   static Box? inventoryBox;
   static Box? metaBox;
+
+  /// Canonical Cloud Menu state/baseline and the durable POS Menu mutation
+  /// journal (docs/CANONICAL_MENU_SYNC.md). Unused in legacy POS mode.
+  static Box<String>? menuCanonicalBox;
+  static Box<String>? menuJournalBox;
 
   static late String dataDirectoryPath;
   static int dbVersion = HiveMigrationService.initialVersion;
@@ -172,6 +179,12 @@ class DatabaseCore {
       await Hive.openBox(closureJournalBoxName),
     );
     inventoryBox = UpdateTrackedBox(await Hive.openBox(inventoryBoxName));
+    menuCanonicalBox = UpdateTrackedBox(
+      await Hive.openBox<String>(menuCanonicalBoxName),
+    );
+    menuJournalBox = UpdateTrackedBox(
+      await Hive.openBox<String>(menuJournalBoxName),
+    );
 
     // Run schema migrations before seeding defaults.
     final migrationContext = HiveMigrationContext(

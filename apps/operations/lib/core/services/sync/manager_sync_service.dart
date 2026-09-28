@@ -13,6 +13,7 @@ import 'package:vynic/core/services/sync/sync_timing.dart';
 import 'package:vynic/core/services/sync/pos_callback_config.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'package:vynic/core/database/repositories/menu_repository.dart';
+import 'package:vynic/core/services/menu/pos_menu_sync_service.dart';
 import 'package:vynic/core/models/order.dart';
 import 'package:vynic/core/models/reservation_classification.dart';
 import 'package:vynic/core/services/pos/pos_change_highlight_service.dart';
@@ -881,10 +882,16 @@ class ManagerSyncService {
           'touchedTableHints': touchedTableHints,
         if (touchedReservationHints.isNotEmpty)
           'touchedReservationHints': touchedReservationHints,
-        'menu': menu,
-        // Signals that every persisted menu node has a stable id and this is a
-        // complete authoritative projection, so Cloud may reconcile omissions.
-        'menuIdentityVersion': 1,
+        // A canonical Cloud Menu is changed only by revisioned mutations
+        // (docs/CANONICAL_MENU_SYNC.md); the legacy full-snapshot mirror —
+        // including "missing means deleted" — applies to legacy Venues only.
+        if (!PosMenuSyncService.isCanonical) ...{
+          'menu': menu,
+          // Signals that every persisted menu node has a stable id and this
+          // is a complete authoritative projection, so Cloud may reconcile
+          // omissions.
+          'menuIdentityVersion': 1,
+        },
         // Real expense records, not an empty list beside a derived profit
         // figure. Each carries its POS-side id so re-sending the same record
         // updates it instead of adding a second one.

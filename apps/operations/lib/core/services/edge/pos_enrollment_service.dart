@@ -10,6 +10,7 @@ import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
 import 'package:vynic/core/services/edge/edge_enrollment_client.dart';
 import 'package:vynic/core/services/edge/edge_transport_service.dart';
 import 'package:vynic/core/services/edge/inventory_projection_sync_service.dart';
+import 'package:vynic/core/services/menu/pos_menu_sync_service.dart';
 import 'package:vynic/core/services/sync/api_config.dart';
 
 /// How far an enrollment attempt got.
@@ -166,6 +167,7 @@ class PosEnrollmentService {
     unawaited(EdgeTransportService.instance().start());
     unawaited(InventoryProjectionSyncService.instance().start());
     unawaited(RuntimeConfigSync.instance.start());
+    unawaited(PosMenuSyncService.instance.start());
 
     return PosEnrollmentResult(
       PosEnrollmentStatus.connected,

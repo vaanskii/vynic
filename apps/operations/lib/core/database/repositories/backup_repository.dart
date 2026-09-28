@@ -20,6 +20,7 @@ import 'package:vynic/core/database/repositories/inventory_repository.dart';
 
 import 'package:vynic/core/database/hive_migration_service.dart';
 import 'package:vynic/core/services/audit/global_audit.dart';
+import 'package:vynic/core/services/menu/pos_menu_sync_service.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'business_day_repository.dart';
 import '../database_core.dart';
@@ -394,10 +395,13 @@ class BackupRepository {
     bool silent = false,
   }) => UpdateReadiness.track(
     'importMenuFromJson',
-    () => _updateTrackedImportMenuFromJson(
-      payload,
-      clearExisting: clearExisting,
-      silent: silent,
+    // Restored rows are not operator edits of a canonical Cloud Menu.
+    () => PosMenuSyncService.instance.externalMenuWrite(
+      () => _updateTrackedImportMenuFromJson(
+        payload,
+        clearExisting: clearExisting,
+        silent: silent,
+      ),
     ),
   );
 
@@ -789,13 +793,16 @@ class BackupRepository {
     AuditSource source = AuditSource.pos,
   }) => UpdateReadiness.track(
     'restoreDataBackupFromJson',
-    () => _updateTrackedRestoreDataBackupFromJson(
-      jsonString,
-      clearExisting: clearExisting,
-      backupBeforeRestore: backupBeforeRestore,
-      actorId: actorId,
-      actorName: actorName,
-      source: source,
+    // Restored rows are not operator edits of a canonical Cloud Menu.
+    () => PosMenuSyncService.instance.externalMenuWrite(
+      () => _updateTrackedRestoreDataBackupFromJson(
+        jsonString,
+        clearExisting: clearExisting,
+        backupBeforeRestore: backupBeforeRestore,
+        actorId: actorId,
+        actorName: actorName,
+        source: source,
+      ),
     ),
   );
 

@@ -332,6 +332,24 @@ registered `*.vynic.localhost` domains through its fixed trusted ingress, with n
 site-key port registry; its backend still uses NODE_ENV=production. See
 `docs/DEPLOYMENT.md` and `docs/CUSTOM_WEBSITES.md` §3c.
 
+## D030 — Cloud-canonical Menu with local-first POS projections
+
+**Decision:** Menu configuration is one canonical Cloud catalog changed only
+by revisioned, idempotent entity mutations from any writer (Dashboard, any
+enrolled POS Device, a future Manager). Each POS commits edits locally first,
+journals them durably, and keeps a projection of canonical state plus its
+unresolved journal; catch-up is by Venue change sequence with tombstones.
+`menuAuthority` is transitional: CLOUD = this protocol (all new Venues),
+POS = legacy compatibility until an explicit, audited cutover.
+**Reason:** POS-owned authority locked the Dashboard once POS was added, and a
+single catalog revision or primary-POS writer does not scale to many
+terminals; Cloud-first writes would break offline operation.
+**Implication:** No Cloud acknowledgement on the POS edit path; no
+last-write-wins (explicit conflicts); no omission-means-delete for canonical
+Venues; primary-POS containment stays for operational domains only; Edge may
+coordinate over LAN later but is never a second Menu authority. See
+`docs/CANONICAL_MENU_SYNC.md`.
+
 ## Maintenance
 
 Add an entry only when it prevents repeated architectural debate. Update or

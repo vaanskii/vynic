@@ -74,11 +74,19 @@ current transport status.
   audited Dashboard menu editing on/off control without acknowledgement.
   First enable checks for no devices, enrollment, catalog, or operational history.
   Disabling editing preserves Cloud authority, catalog and public presentation.
-  Owner Dashboard authors the canonical catalog with revision/tenant fencing;
-  POS snapshots reject CLOUD catalogs. Device-bound bootstrap v1 freezes a
-  foundation snapshot and disposable Hive staging preserves it offline.
-  Production POS activation/authority handover remains disabled. See
-  `docs/CLOUD_RESTAURANT_FOUNDATION.md` for the domain matrix and proof boundary.
+  The Menu is one canonical Cloud catalog (D030, `docs/CANONICAL_MENU_SYNC.md`):
+  per-node revisions, idempotent mutations recorded once per (Venue,
+  mutationId) with actor/source, explicit conflicts, tombstones and
+  changes-since catch-up. Writers are the owner Dashboard (not blocked by POS
+  presence) and ANY enrolled POS Device (no primary requirement); Manager and
+  both website renderers read it. POS terminals commit Menu edits locally
+  first, journal them durably and sync asynchronously; the operational menu is
+  a projection of canonical state plus the journal, with explicit conflict
+  choices in Admin Menu. New Venues are created canonical (CLOUD); established
+  POS Venues (Vankisi) stay in legacy POS-snapshot compatibility until an
+  explicit cutover (read-only readiness audit only). Legacy snapshots ignore
+  the menu of canonical Venues. Device-bound bootstrap v1 staging remains. See
+  `docs/CLOUD_RESTAURANT_FOUNDATION.md` for the wider domain matrix.
 
 - Local POS releases have a one-command Mac publisher:
   `apps/edge/tool/publish-local-pos.sh`. It uses the existing Parallels Windows VM,
@@ -739,9 +747,9 @@ current transport status.
   URLs and the fixed Host-preserving ingress, with no frontend port mapping;
   production public-address SSRF checks remain intact (`docs/DEPLOYMENT.md`).
   Vankisi runs at `http://vankisi.localhost:5174` behind a host-preserving
-  Vite `/api` proxy. Menu authority follows the package,
-  never SAAS/CUSTOM: Website provisioning without POS admits an empty Venue to
-  the CLOUD catalog for either mode, and Platform flags a Website-only Venue
+  Vite `/api` proxy. Menu authority never follows SAAS/CUSTOM (new Venues
+  are canonical CLOUD; D030): Website provisioning without POS admits an empty
+  Venue to the CLOUD catalog for either mode, and Platform flags a Website-only Venue
   left on POS authority (`needsCloudAuthority`) for repair. SAAS and CUSTOM
   share one Venue-level website foundation (`docs/WEBSITE_FOUNDATION.md`):
   hours, contact, socials and gallery live in `VenuePublicProfile` (live owner
@@ -782,8 +790,9 @@ current transport status.
   saves/publication cannot choose an address, and operator domain registration
   refuses the SaaS namespace. See `docs/WEBSITE_SAAS_HOSTNAMES.md`. The menu section is the
   canonical category/subcategory/item/size tree with separate website presentation;
-  CLOUD-authoritative Venues author it in the dashboard, while POS-authoritative
-  Venues retain their existing POS authoring. SEO and exact map pins use
+  canonical (CLOUD) Venues author it in the dashboard with per-node revisions and
+  conflict choices, alongside their POS terminals; legacy POS-authority Venues
+  retain POS authoring. SEO and exact map pins use
   progressive disclosure; map visibility defaults on and follows the current
   Venue Profile address unless an exact link is supplied. The additive `showMap`
   flag preserves hidden-map intent without duplicating the address. Disabled
@@ -896,8 +905,9 @@ current transport status.
 - Backups carry the audit box's keys (`auditLogKeys`, additive) and restore
   files each row under its canonical key, so a repeated restore updates rows
   instead of duplicating them. Keyless older backups still restore.
-- Tables, orders, menu, staff, and `salesHistoryByDate` still use broad snapshot
-  payloads; further sync windowing/scaling is deferred.
+- Tables, orders, staff, `salesHistoryByDate` and the legacy-Venue menu still use
+  broad snapshot payloads; canonical Venues sync the Menu by entity mutations and
+  change sequence instead. Further sync windowing/scaling is deferred.
 - The home takeaway panel is Order-backed. `TakeawayTickets.forBusinessDate`
   builds the queue from takeaway orders (`isTakeawayOrder`, the one definition
   of the floor/`TA-` rule), and list, counts, items, totals, status and actions
@@ -1022,7 +1032,8 @@ current transport status.
 
 ## Current Migration Versions
 
-- Prisma migration tip: `20261010120000_shared_website_foundation`.
+- Prisma migration tip: `20261011120000_canonical_menu_sync`.
+- Previous migration: `20261010120000_shared_website_foundation`.
 - Previous website migration: `20261009120000_custom_website_binding`.
 - Previous hostname migrations: `20261008120000_hostname_request_fk_on_update`,
   `20261007120000_release_published_slug_reservation`,

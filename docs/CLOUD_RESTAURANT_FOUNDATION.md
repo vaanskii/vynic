@@ -1,7 +1,7 @@
 # Cloud Restaurant Foundation
 
-Website is independently sellable. New shells have NO_PLAN, POS menu authority,
-and cloudMenuEditingEnabled=false. Explicit operator Website trial/plan assignment
+Website is independently sellable. New shells have NO_PLAN, the canonical
+CLOUD Menu (D030; `CANONICAL_MENU_SYNC.md`) and cloudMenuEditingEnabled=false. Explicit operator Website trial/plan assignment
 plus SAAS setup can enable Cloud menu editing through the existing admission
 checks. WEBSITE and allowed commercial state are required for owner catalog
 reads/writes. POS-authoritative Venues remain protected; assigning a package never
@@ -47,17 +47,16 @@ D = future Backoffice work. No bulk copying of the mixed settings box is allowed
 
 ## Catalog contract and fencing
 
-`GET /customer/venues/:venueId/catalog` and `PUT .../catalog/:kind` resolve
-CustomerAccount -> OWNER membership -> Organization -> Venue first. Parent and
-existing node identities are checked within the Venue. Kinds are category,
-subcategory, item and variant. Each mutation supplies expectedRevision, increments
-catalogRevision and writes CustomerAuditEvent in one transaction under the Venue
-row lock. Stale revisions conflict. No destructive catalog deletion endpoint is
-introduced; products can be disabled. Variant sizes retain the current numeric
-litre model and existing size ordering.
+Superseded by the canonical Menu protocol (D030, `CANONICAL_MENU_SYNC.md`):
+`GET /customer/venues/:venueId/catalog` and `POST .../catalog/mutations`
+resolve CustomerAccount -> OWNER membership -> Organization -> Venue first and
+apply per-node revisioned, idempotent mutations (stale revisions conflict;
+`catalogRevision` is now the Venue change sequence). Enrolled Devices use
+`/edge/menu/*` with the same rules. Variant sizes retain the numeric litre
+model and size ordering.
 
-POS menu snapshots acquire the same Venue lock and reject CLOUD authority,
-including legacy snapshots. POS authority rejects owner catalog writes. Website
+Legacy POS menu snapshots ignore the menu of CLOUD Venues (the rest of the
+snapshot still syncs). POS authority rejects owner and Device catalog writes. Website
 presentation stays independently editable. The website implementation
 (SAAS/CUSTOM) never decides authority: a Website-only CUSTOM Venue authors the
 same Cloud catalog, and a CUSTOM frontend only renders it. Existing CUSTOM
@@ -96,6 +95,13 @@ No production POS adoption/authority handover is claimed. This conservative
 boundary avoids allowing local POS editors to diverge from a Cloud-authored menu.
 
 ## Required future activation/transition contract
+
+For the Menu this section is superseded by `CANONICAL_MENU_SYNC.md`: canonical
+Venues' POS terminals import and project the Cloud Menu with a durable local
+journal (no authority handover). It remains the contract for the other
+foundation domains (profile/media/receipt, tables/layout, policies) and for an
+established POS Venue's explicit Menu cutover.
+
 
 1. Freeze Cloud catalog writes at a specific revision under the Venue lock.
 2. Prove one selected operational Device, bound snapshot/version and a complete

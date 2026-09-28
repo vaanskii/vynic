@@ -161,7 +161,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 - Local macOS data reset: `python3 scripts/reset-local-data.py --yes` backs up and clears `localhost:5432/vynic` restaurant/organization data, local POS stores/enrollment and website media; retains login accounts, product plans and migrations. Backups: `~/Library/Application Support/Vynic Reset Backups/`. Reopen POS and refresh the website afterward.
 
-- Website-only catalog and frozen Device bootstrap: `apps/backend/src/customer/restaurant-foundation.service.ts`, `restaurant-foundation.controller.ts`; owner editor `apps/platform-web/src/customer/CatalogEditor.tsx`; isolated Hive staging `apps/operations/lib/core/services/edge/restaurant_foundation_import.dart`. Authority matrix/activation boundary: `docs/CLOUD_RESTAURANT_FOUNDATION.md`.
+- Website-only catalog (canonical Menu, see Menu section) and frozen Device bootstrap v1: `apps/backend/src/customer/restaurant-foundation.service.ts`, `restaurant-foundation.controller.ts`; owner editor `apps/platform-web/src/customer/CatalogEditor.tsx`; isolated Hive staging `apps/operations/lib/core/services/edge/restaurant_foundation_import.dart`. Authority matrix/activation boundary: `docs/CLOUD_RESTAURANT_FOUNDATION.md`.
 
 - Shared Venue identity: `apps/backend/src/venue-profile/` (validated/audited Owner, Manager and Device writes); profile fields in Venue, migration `20260921120000_venue_profile`. POS cache/pending sync: `apps/operations/lib/core/services/edge/pos_venue_profile.dart`; Manager editor: `apps/operations/lib/apps/mobile_app/presentation/widgets/venue_profile_card.dart`. Owner editor: `apps/platform-web/src/customer/WebsiteSections.tsx` (ProfileSection).
 - Feature descriptions/dependency warnings: `apps/platform-web/src/platform/feature-guidance.ts`; non-fiscal display classification: `apps/operations/lib/core/models/sale_visibility.dart`.
@@ -210,9 +210,11 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 - POS model and stable node identity: `apps/operations/lib/core/models/menu_item_db.dart` (`MenuCategoryDB.id`, `MenuSubcategoryDB.id`, `MenuItemDB.id`, `MenuVariantDB.id`)
 - CRUD, stable-ID audit and one-time rollout: `apps/operations/lib/core/database/repositories/menu_repository.dart` (`ensureStableMenuIds`, called from Hive migration v8 and after backup restore)
-- Cloud mirror and authoritative reconciliation: `apps/backend/src/pos/sync/snapshot/menu-sync.service.ts` (stable identity first; legacy adoption only for unclaimed rows; identity-version gate; transactional child-first cleanup of explicitly POS-owned rows)
+- Canonical Cloud Menu (D030, `docs/CANONICAL_MENU_SYNC.md`): mutation/revision/tombstone/catch-up service `apps/backend/src/menu-catalog/menu-catalog.service.ts`, validation `menu-mutation.ts`, legacy cutover audit `menu-cutover-readiness.ts` + `scripts/menu-cutover-audit.ts`; owner/Device routes in `apps/backend/src/customer/restaurant-foundation.controller.ts`; proofs `menu-catalog.integration.spec.ts`, live harness `scripts/serve-canonical-menu-local.ts`
+- POS local-first projection/journal: `apps/operations/lib/core/services/menu/` (`canonical_menu.dart`, `menu_mutation_journal.dart`, `pos_menu_sync.dart`, `pos_menu_sync_service.dart`); Admin conflict UX `apps/operations/lib/apps/windows_pos/widgets/admin/menu_sync_banner.dart`; proofs `test/unit/canonical_menu_sync_test.dart`, `test/widget/menu_sync_banner_test.dart`, `test/live/canonical_menu_live_test.dart`
+- Legacy (POS-authority) mirror and reconciliation: `apps/backend/src/pos/sync/snapshot/menu-sync.service.ts` (stable identity first; legacy adoption only for unclaimed rows; identity-version gate; child-first cleanup of explicitly POS-owned rows; ignores the menu of canonical Venues)
 - Manager read: `apps/backend/src/mobile/services/mobile-menu.service.ts`; website read: `apps/backend/src/website/menu/menu.service.ts` (publishes the Cloud `MenuItem.id`, not the POS id)
-- Only writer is the POS Admin: `apps/operations/lib/apps/windows_pos/widgets/admin/admin_menu_section.dart`
+- Writers: POS Admin `apps/operations/lib/apps/windows_pos/widgets/admin/admin_menu_section.dart` (local-first; journaled on canonical Venues) and owner Dashboard `apps/platform-web/src/customer/CatalogEditor.tsx`
 - Proofs: `apps/operations/test/unit/menu_item_identity_test.dart`, `apps/backend/src/pos/sync/snapshot/menu-sync.service.spec.ts`, `apps/backend/src/pos/sync/snapshot/menu-sync.integration.spec.ts`
 
 ## Inventory

@@ -69,6 +69,7 @@ export const venueModels = [
   'VenueWebsiteCapability',
   'VenueWebsiteConfig',
   'VenuePublicProfile',
+  'VenuePublicInfoReview',
   'VenueDomain',
   'WebsiteMediaAsset',
 ] as const;

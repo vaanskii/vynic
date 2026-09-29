@@ -49,7 +49,7 @@ export async function referencedMedia(
   tx: Prisma.TransactionClient,
   venueId: string,
 ) {
-  const [site, menu, info] = await Promise.all([
+  const [site, menu, info, review] = await Promise.all([
     tx.venueWebsiteConfig.findUnique({
       where: { venueId },
       select: { draft: true, published: true },
@@ -62,6 +62,11 @@ export async function referencedMedia(
       where: { venueId },
       select: { gallery: true },
     }),
+    // WEB-02: a private draft awaiting a decision keeps its images.
+    tx.venuePublicInfoReview.findFirst({
+      where: { venueId, state: 'PENDING' },
+      select: { draftInfo: true, publishedInfo: true },
+    }),
   ]);
-  return mediaKeys([site, menu, info]);
+  return mediaKeys([site, menu, info, review]);
 }

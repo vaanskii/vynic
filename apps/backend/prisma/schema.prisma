@@ -1227,6 +1227,7 @@ model Venue {
   websiteConfig             VenueWebsiteConfig?
   customWebsite             CustomWebsiteBinding?
   publicProfile             VenuePublicProfile?
+  publicInfoReview          VenuePublicInfoReview?
   websiteCapabilities       VenueWebsiteCapability[]
   websiteAdmins             WebsiteUser[]
   domains                   VenueDomain[]
@@ -1614,6 +1615,80 @@ model VenueWebsiteCapability {
   venue      Venue                @relation(fields: [venueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@id([venueId, capability])
+  @@schema("pos")
+}
+
+/// Where a [VenuePublicInfoReview] row came from.
+enum PublicInfoReviewSource {
+  /// Captured before `20261010120000_shared_website_foundation` ran.
+  PRE_FOUNDATION_SNAPSHOT
+  /// An operator decision about information that migration had already moved.
+  POST_MIGRATION_REVIEW
+
+  @@schema("pos")
+}
+
+/// What the evidence proves about a Venue's migrated public information.
+enum PublicInfoProvenance {
+  EMPTY
+  /// The live values are the published ones (no draft, or draft identical).
+  PUBLISHED
+  /// Only a never-published draft held values.
+  DRAFT_ONLY
+  /// A published version and a different unpublished draft existed.
+  DIVERGENT
+  /// Moved before evidence was kept; draft and published can no longer be told apart.
+  AMBIGUOUS
+
+  @@schema("pos")
+}
+
+enum PublicInfoReviewState {
+  NOT_REQUIRED
+  /// A private draft (or withheld values) awaits an explicit decision.
+  PENDING
+  /// The draft was made live by an explicit decision.
+  APPLIED
+  DISMISSED
+  /// The current live values were explicitly confirmed as approved.
+  CONFIRMED
+
+  @@schema("pos")
+}
+
+/// WEB-02: private publication evidence for a Venue's shared public
+/// information (hours, contact email, map URL, socials, gallery).
+///
+/// Moving that information into the live [VenuePublicProfile] is not
+/// publication consent. This row keeps what the pre-foundation SAAS draft and
+/// published documents held, and the owner/operator decision about a draft
+/// that was never published. No public route reads it; `draftInfo` becomes
+/// live only through an explicit, audited decision. Values use the
+/// `VenuePublicProfile` column shape. See
+/// `docs/WEB02_SAFE_PUBLICATION_MIGRATION.md`.
+model VenuePublicInfoReview {
+  venueId           String                 @id
+  source            PublicInfoReviewSource
+  provenance        PublicInfoProvenance
+  state             PublicInfoReviewState  @default(PENDING)
+  /// Private draft (or withheld) values; null = none.
+  draftInfo         Json?
+  /// Approved values: the published version, or what a decision left public;
+  /// null = never published.
+  publishedInfo     Json?
+  /// What the foundation migration wrote live; null = no row.
+  migratedInfo      Json?
+  draftRevision     Int?
+  publishedRevision Int?
+  capturedAt        DateTime               @default(now())
+  decidedAt         DateTime?
+  /// PlatformUser id; the matching PlatformAuditEvent is authoritative.
+  decidedBy         String?
+  decisionNote      String?
+  updatedAt         DateTime               @updatedAt
+  venue             Venue                  @relation(fields: [venueId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([state])
   @@schema("pos")
 }
 

@@ -49,64 +49,27 @@ export class BogController {
   async createOrder(
     @WebsiteTenant() tenant: TenantContext,
     @Req() request: Request,
-    @Body()
-    body: {
-      selectedTables: string[];
-      selectedDate: string;
-      selectedTime: string;
-      menuItems?: Array<{ id: string; quantity: number; price?: number }>;
-      totalAmount?: number;
-      customerName?: string;
-      customerEmail?: string;
-      customerPhone?: string;
-      /** Ignored: the booking's account comes from the session cookie. */
-      userId?: string;
-      notes?: string;
-      language?: string;
-      numberOfGuests?: number;
-    },
+    @Body() body: unknown,
   ) {
     const user = await this.authService.tryGetUserFromRequest(request);
-    const validatedData = await this.bogService.validateAndCalculateOrder(
+    const result = await this.reservationService.createReservation(
       tenant,
-      {
-        menuItems: body.menuItems || [],
-        selectedTables: body.selectedTables,
-      },
+      body,
+      user?.id,
     );
-
-    const result = await this.reservationService.createReservation(tenant, {
-      selectedTables: body.selectedTables,
-      selectedDate: body.selectedDate,
-      selectedTime: body.selectedTime,
-      menuItems: validatedData.menuItems as Array<{
-        id: string;
-        quantity: number;
-        price: number;
-      }>,
-      totalAmount: validatedData.totalAmount,
-      customerName: body.customerName,
-      customerEmail: body.customerEmail,
-      customerPhone: body.customerPhone,
-      userId: user?.id,
-      notes: body.notes,
-      language: body.language || 'en',
-      numberOfGuests: body.numberOfGuests,
-    });
-
     return {
       success: true,
       redirect_url: result.paymentUrl,
       reservation_id: result.reservation.id,
       message: 'Reservation created, redirect to payment',
       validation: {
-        serverCalculatedTotal: validatedData.totalAmount,
-        subtotal: validatedData.subtotal,
-        serviceFee: validatedData.serviceFee,
-        validatedItems: validatedData.menuItems,
-        priceManipulationDetected:
-          body.totalAmount !== validatedData.totalAmount,
-        correctedCartItems: validatedData.menuItems,
+        ...result.validation,
+        // Existing Vankisi carts identify variant selections by the variant ID.
+        // Preserve that request shape when the client replaces a corrected cart.
+        correctedCartItems: result.validation.validatedItems.map((item) => ({
+          ...item,
+          id: item.variantId ?? item.id,
+        })),
       },
     };
   }

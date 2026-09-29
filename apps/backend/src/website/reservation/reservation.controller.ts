@@ -24,26 +24,10 @@ import {
 import { WebsiteTenantGuard } from '../tenancy/website-tenant.guard';
 import { ReservationService } from './reservation.service';
 
-interface CreateReservationDto {
-  selectedTables: string[];
-  selectedDate: string;
-  selectedTime: string;
-  menuItems?: Array<{ id: string; quantity: number; price: number }>;
-  totalAmount?: number;
-  customerName?: string;
-  customerEmail?: string;
-  customerPhone?: string;
-  /** Ignored: the booking's account comes from the session cookie. */
-  userId?: string;
-  notes?: string;
-  numberOfGuests?: number;
-}
-
 /**
  * Public tables, availability and bookings for the restaurant that owns the
  * requested host. Every handler is scoped to that Venue; none of them accepts a
- * venue identifier from the caller. Bookings belong to the shared custom-site
- * surface, so only a CUSTOM Venue's host is served.
+ * venue identifier from the caller. Both launched website renderers share it.
  */
 @Controller('api/tables')
 @UseGuards(WebsiteTenantGuard, FeatureGuard, WebsiteCapabilityGuard)
@@ -91,18 +75,16 @@ export class TableController {
   }
 
   @Post('reservations')
+  @RequiresWebsiteCapability('RESERVATIONS', 'ONLINE_PAYMENTS')
   async createReservation(
     @WebsiteTenant() tenant: TenantContext,
-    @Body() data: CreateReservationDto,
+    @Body() data: unknown,
     @Req() request: Request,
   ) {
     // A browser-supplied account id would let anyone attach a booking to
     // someone else's account; only the signed-in customer's own id is used.
     const user = await this.authService.tryGetUserFromRequest(request);
-    return this.reservationService.createReservation(tenant, {
-      ...data,
-      userId: user?.id,
-    });
+    return this.reservationService.createReservation(tenant, data, user?.id);
   }
 
   /**

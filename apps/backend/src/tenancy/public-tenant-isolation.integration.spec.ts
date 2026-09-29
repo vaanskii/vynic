@@ -10,6 +10,7 @@ import { FeatureKeys } from '../entitlements/feature-keys';
 import { FeatureGuard } from '../entitlements/feature.guard';
 import { VenueEntitlementsService } from '../entitlements/venue-entitlements.service';
 import { MenuService } from '../website/menu/menu.service';
+import { priceBookingCart } from '../website/payment/booking-pricing';
 import { PosReservationMirrorService } from '../pos/pos-reservation-mirror.service';
 import { ReservationService } from '../website/reservation/reservation.service';
 import { WebsitePosReservationBridgeService } from '../website/reservation/website-pos-reservation-bridge.service';
@@ -75,6 +76,10 @@ describeDatabase('Public website tenant isolation (PostgreSQL)', () => {
       // Payment is a separate concern; an order that returns nothing leaves the
       // booking PENDING, exactly as an unpaid booking is today.
       {
+        validateAndCalculateOrder: (
+          tenant: TenantContext,
+          data: { menuItems?: unknown },
+        ) => priceBookingCart(menu, tenant, data.menuItems),
         preparePayment: () => Promise.resolve(null),
         createOrder: () => Promise.resolve(null),
       } as never,

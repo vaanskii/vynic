@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import type { TenantContext } from '../../tenancy/tenant-context';
 
@@ -41,6 +45,48 @@ type SubcategoryContext = {
 @Injectable()
 export class MenuService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /** Canonical rows only: display minimum prices are never payable prices. */
+  async getBookableSelection(
+    tenant: TenantContext,
+    id: string,
+    variantId?: string,
+  ) {
+    const include = { variants: true, websitePresentation: true } as const;
+    let item = await this.prisma.menuItem.findFirst({
+      where: { id, venueId: tenant.venueId },
+      include,
+    });
+    let selectedVariantId = variantId;
+    if (!item) {
+      // Existing Vankisi carts send the selected variant's ID as `id`.
+      // Resolve its parent through the same Venue boundary, never client price.
+      const legacy = await this.prisma.menuItemVariant.findFirst({
+        where: { id, menuItem: { venueId: tenant.venueId } },
+        include: { menuItem: { include } },
+      });
+      if (!legacy || (variantId !== undefined && variantId !== legacy.id))
+        throw new BadRequestException('Menu selection is unavailable');
+      item = legacy.menuItem;
+      selectedVariantId = legacy.id;
+    }
+    if (!item.enabled || item.websitePresentation?.visibleOnWebsite === false)
+      throw new BadRequestException('Menu selection is unavailable');
+    const variant = item.variants.find((v) => v.id === selectedVariantId);
+    if (
+      (selectedVariantId !== undefined && !variant) ||
+      (item.variants.length && !variant)
+    )
+      throw new BadRequestException('A valid menu variant is required');
+    const suffix = variant ? ` ${variant.size}L` : '';
+    return {
+      itemId: item.id,
+      variantId: variant?.id,
+      price: variant?.price ?? item.price,
+      nameEn: `${item.nameEn}${suffix}`,
+      nameKa: `${item.nameKa}${suffix}`,
+    };
+  }
 
   /** Full menu tree — categories in POS order, for the resolved Venue only. */
   async getAllCategories(tenant: TenantContext) {

@@ -7,6 +7,11 @@ import {
 import axios from 'axios';
 import * as crypto from 'crypto';
 import { MenuService } from '../menu/menu.service';
+import {
+  bookingAmountInGel,
+  priceBookingCart,
+  type BookingPaymentIntent,
+} from './booking-pricing';
 import type { TenantContext } from '../../tenancy/tenant-context';
 
 import { PaymentIntegrationsService } from '../../payment-integrations/payment-integrations.service';
@@ -58,9 +63,12 @@ export class BogService {
     tenant: TenantContext,
     integrationId: string,
     reservationId: string,
-    totalAmount: number,
+    payment: BookingPaymentIntent,
     language = 'en',
   ) {
+    if (payment.currency !== 'GEL' || payment.amountMinor < 100)
+      throw new BadRequestException('Invalid booking payment intent');
+    const amountInGel = bookingAmountInGel(payment.amountMinor);
     const current = await this.integrations.requireEnabled(tenant.venueId);
     if (current.id !== integrationId)
       throw new BadRequestException(
@@ -71,7 +79,6 @@ export class BogService {
       tenant.venueId,
       integrationId,
     );
-    const amountInGel = Math.max(totalAmount, 1);
     const apiUrl =
       process.env.API_URL || `http://127.0.0.1:${process.env.PORT ?? 3000}`;
 
@@ -79,7 +86,7 @@ export class BogService {
       callback_url: `${apiUrl}/api/bog/payment-callback`,
       external_order_id: reservationId,
       purchase_units: {
-        currency: 'GEL',
+        currency: payment.currency,
         total_amount: amountInGel,
         basket: [
           {
@@ -98,7 +105,10 @@ export class BogService {
     };
 
     try {
-      const response = await axios.post(this.orderUrl, body, {
+      const response = await axios.post<{
+        id?: unknown;
+        _links?: { redirect?: { href?: unknown } };
+      }>(this.orderUrl, body, {
         timeout: 15000,
         headers: {
           Authorization: `Bearer ${token}`,
@@ -107,7 +117,11 @@ export class BogService {
         },
       });
 
-      return response.data;
+      const id = response.data?.id;
+      const href = response.data?._links?.redirect?.href;
+      if (typeof id !== 'string' || typeof href !== 'string')
+        throw new Error('Invalid payment provider order response');
+      return { id, _links: { redirect: { href } } };
     } catch {
       throw new BadGatewayException('Payment provider order failed');
     }
@@ -165,71 +179,11 @@ PwIDAQAB
     }
   }
 
-  /**
-   * Re-prices a cart from the Venue's own menu, ignoring client prices.
-   *
-   * Venue-scoped: an item id belonging to another restaurant is not found here,
-   * so a cart cannot be priced against a menu the site does not sell.
-   */
+  /** Shared server pricing; called inside reservation creation, never only by a controller. */
   async validateAndCalculateOrder(
     tenant: TenantContext,
-    data: {
-      menuItems: Array<{ id: string; quantity: number; price?: number }>;
-      selectedTables: string[];
-    },
+    data: { menuItems?: unknown },
   ) {
-    const validatedMenuItems: Array<Record<string, unknown>> = [];
-    let totalAmount = 0;
-
-    if (data.menuItems?.length) {
-      for (const item of data.menuItems) {
-        const menuItem = await this.menuService.getMenuItemById(
-          tenant,
-          item.id,
-        );
-        if (!menuItem) {
-          throw new Error(`Menu item with ID ${item.id} not found`);
-        }
-
-        const quantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
-        const realPrice = Number(menuItem.price);
-        const itemTotal = realPrice * quantity;
-        totalAmount += itemTotal;
-
-        validatedMenuItems.push({
-          id: item.id,
-          quantity,
-          price: realPrice,
-          name: menuItem.translations.find((t) => t.language === 'en')?.name,
-          imageUrl: menuItem.imageUrl,
-          total: itemTotal,
-          translations: {
-            en: {
-              name:
-                menuItem.translations.find((t) => t.language === 'en')?.name ||
-                item.id,
-            },
-            ka: {
-              name:
-                menuItem.translations.find((t) => t.language === 'ka')?.name ||
-                item.id,
-            },
-          },
-        });
-      }
-    }
-
-    const subtotal = totalAmount;
-    const serviceFee = subtotal > 0 ? subtotal * 0.1 : 0;
-    totalAmount += serviceFee;
-    totalAmount = Math.max(totalAmount, 1);
-
-    return {
-      menuItems: validatedMenuItems,
-      subtotal,
-      serviceFee,
-      totalAmount,
-      validationTimestamp: new Date().toISOString(),
-    };
+    return priceBookingCart(this.menuService, tenant, data.menuItems);
   }
 }

@@ -8,6 +8,7 @@ import {
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { BogService } from '../payment/payment.service';
+import { bookingIntent, claimedBookingTotal } from './booking-request';
 import {
   WebsitePosReservationBridgeService,
   normalizeMapReservationStatus,
@@ -110,27 +111,17 @@ export class ReservationService {
 
   async createReservation(
     tenant: TenantContext,
-    data: {
-      selectedTables: string[];
-      selectedDate: string;
-      selectedTime: string;
-      menuItems?: Array<{ id: string; quantity: number; price: number }>;
-      totalAmount?: number;
-      customerName?: string;
-      customerEmail?: string;
-      customerPhone?: string;
-      userId?: string;
-      notes?: string;
-      language?: string;
-      numberOfGuests?: number;
-    },
+    input: unknown,
+    authenticatedUserId?: string,
   ) {
+    const data = bookingIntent(input);
     // Scoped by Venue, so a table belonging to another restaurant simply is not
     // found — a booking can never reach across the tenant boundary.
     const tables = await this.prisma.websiteTable.findMany({
       where: {
         venueId: tenant.venueId,
         websiteTableNumber: { in: data.selectedTables },
+        isActive: true,
       },
     });
 
@@ -160,6 +151,10 @@ export class ReservationService {
       data.numberOfGuests ??
       tables.reduce((sum, table) => sum + table.capacity, 0);
 
+    const priced = await this.bogService.validateAndCalculateOrder(
+      tenant,
+      data,
+    );
     const paymentIntegrationId = await this.bogService.preparePayment(tenant);
     const reservation = await this.prisma.websiteReservation.create({
       data: {
@@ -170,12 +165,12 @@ export class ReservationService {
         customerName: data.customerName,
         customerEmail: data.customerEmail,
         customerPhone: data.customerPhone,
-        userId: data.userId,
+        userId: authenticatedUserId,
         notes: data.notes,
         status: 'PENDING',
-        totalAmount: data.totalAmount || 0,
+        totalAmount: priced.totalAmount,
         numberOfGuests,
-        menuItems: data.menuItems ? JSON.stringify(data.menuItems) : null,
+        menuItems: JSON.stringify(priced.menuItems),
         tables: {
           create: tables.map((table) => ({ tableId: table.id })),
         },
@@ -190,7 +185,7 @@ export class ReservationService {
       tenant,
       paymentIntegrationId,
       reservation.id,
-      reservation.totalAmount || 0,
+      priced.payment,
       data.language || 'en',
     );
 
@@ -220,11 +215,19 @@ export class ReservationService {
           posFloor: rt.table.posFloor,
           capacity: rt.table.capacity,
         })),
-        menuItems: data.menuItems || [],
+        menuItems: priced.menuItems,
         totalAmount: reservation.totalAmount,
         status: reservation.status,
         notes: reservation.notes,
         numberOfGuests,
+      },
+      validation: {
+        serverCalculatedTotal: priced.totalAmount,
+        subtotal: priced.subtotal,
+        serviceFee: priced.serviceFee,
+        validatedItems: priced.menuItems,
+        priceManipulationDetected:
+          claimedBookingTotal(input) !== priced.totalAmount,
       },
       paymentUrl: bogOrder?._links?.redirect?.href,
     };

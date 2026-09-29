@@ -263,6 +263,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Manager backend: `apps/backend/src/mobile/services/mobile-reservations.service.ts`
 - Website booking: `apps/backend/src/website/reservation/`
 - SEC-01 shared booking intent/pricing: `apps/backend/src/website/reservation/booking-request.ts`, `apps/backend/src/website/payment/booking-pricing.ts`, invoked inside `ReservationService.createReservation`; canonical selections: `MenuService.getBookableSelection`. Proof/status: `docs/SEC01_TRUSTED_BOOKING_AMOUNT.md`, `apps/backend/src/website/payment/booking-payment.spec.ts`, `booking-payment.integration.spec.ts` beside it.
+- SEC-02 customer booking ownership: `apps/backend/src/website/user/user.service.ts` (`getUserReservations`, Host Venue + authenticated user ID); public payment status projection: `website/payment/payment.controller.ts`. Tests: `website/user/guest-booking-ownership.spec.ts`, `guest-booking-ownership.integration.spec.ts` beside it. Historical guest policy, response inventory and proof: `docs/SEC02_GUEST_BOOKING_OWNERSHIP.md`.
 - Cloud POS mirror: `apps/backend/src/pos/pos-reservation-mirror.service.ts`, `apps/backend/src/pos/sync/snapshot/reservation-sync.service.ts`
 - Public UI route: `apps/vankisi-custom-web/src/routes/reservation.ts`
 

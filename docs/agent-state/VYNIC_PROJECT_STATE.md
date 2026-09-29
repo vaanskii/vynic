@@ -727,6 +727,13 @@ current transport status.
   projections expose a server `websiteState`: NOT_ENTITLED, SETUP_PENDING
   (entitled but no mode), SAAS or CUSTOM; the dashboard never re-derives it.
 - `WebsiteUser` remains global; each `WebsiteReservation` is Venue-owned.
+  SEC-02 ownership reads require both Host-derived Venue and authenticated
+  `userId` in the database query. Unverified contact email never claims guest
+  history; guest rows and existing user links remain intact. No guest claim
+  lifecycle is implemented. Anonymous payment checks return only status, never
+  the private reservation row. Status is DONE: 14 service/controller and 25 real
+  PostgreSQL/HTTP cases pass, with SEC-01 and affected regressions passing.
+  See `docs/SEC02_GUEST_BOOKING_OWNERSHIP.md`.
 - Payment callbacks derive Venue from the server-owned reservation.
 - CUSTOM websites are bespoke frontends over the one backend
   (`docs/CUSTOM_WEBSITES.md`). `CustomWebsiteBinding` records the operator's

@@ -1,0 +1,585 @@
+{
+  "issue": "SEC-02",
+  "status": "DONE",
+  "closed_local_date": "2026-09-30",
+  "timezone": "Asia/Tbilisi",
+  "recorded_at_utc": "2026-09-29T20:09:29.581313+00:00",
+  "baseline": {
+    "branch": "codex/docker-deployment-foundation",
+    "head": "a4036379931387e5a36bdcf03e297e0893558ee8",
+    "git_status": [
+      " M .env.docker.example",
+      " M .env.production.example",
+      " M apps/backend/src/customer/commercial-access.integration.spec.ts",
+      " M apps/backend/src/dev-origins.spec.ts",
+      " M apps/backend/src/dev-origins.ts",
+      " M apps/backend/src/subscriptions/subscription.integration.spec.ts",
+      " M apps/backend/src/subscriptions/subscription.service.ts",
+      " M apps/backend/src/website/custom/custom-website.integration.spec.ts",
+      " M apps/backend/src/website/provisioning/website-provisioning.integration.spec.ts",
+      " M apps/backend/src/website/provisioning/website-provisioning.ts",
+      " M apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart",
+      " M apps/operations/lib/core/services/edge/pos_enrollment_service.dart",
+      " M apps/operations/lib/core/services/sync/api_config.dart",
+      " M apps/operations/test/unit/pos_enrollment_test.dart",
+      " M apps/platform-web/src/platform/pages/venue/SubscriptionPanel.tsx",
+      " M apps/platform-web/src/subscriptions/operator-actions.ts",
+      " M apps/platform-web/src/subscriptions/types.ts",
+      " M apps/platform-web/src/test/commercial-control-ux.test.tsx",
+      " M apps/platform-web/src/test/subscription-lifecycle.test.tsx",
+      " M compose.local.yaml",
+      " M compose.yaml",
+      " M deploy/traefik/routes.yml",
+      " M docs/CANONICAL_MENU_SYNC.md",
+      " M docs/COMMERCIAL_SUBSCRIPTION_LIFECYCLE.md",
+      " M docs/DEPLOYMENT.md",
+      " M docs/DEPLOYMENT_PROOF.md",
+      " M docs/agent-state/VYNIC_CODE_MAP.md",
+      " M docs/agent-state/VYNIC_DECISIONS.md",
+      " M docs/agent-state/VYNIC_PROJECT_STATE.md",
+      " M scripts/docker.sh",
+      "?? apps/operations/test/live/native_ingress_live_test.dart",
+      "?? compose.lan.yaml",
+      "?? docs/audits/2026-09-29-f7bb982/"
+    ],
+    "recorded_files": 1958,
+    "manifest_sha256": "7ce031acf0b8a791ca63950a705e01b3743dbfeda9d282b44b5fc487c4e2b995",
+    "proof_applies_to": "HEAD plus recorded owner WIP and SEC-02 changes",
+    "sec01_implementation_commit": "cb283d9e483a2d757d845faccd2519987a0051bd",
+    "sec01_proof_commit": "a4036379931387e5a36bdcf03e297e0893558ee8",
+    "sec01_status": "DONE",
+    "auth_user_read_unchanged_since_audit": true,
+    "sec01_authenticated_creation_binding_reused": true
+  },
+  "ownership": {
+    "database_predicate": [
+      "Host -> VenueDomain -> Venue.id",
+      "encrypted session -> live WebsiteUser.id"
+    ],
+    "raw_email_confers_ownership": false,
+    "claim_flow_implemented": false,
+    "historical_guest_rows_preserved": true,
+    "existing_user_links_preserved": true,
+    "schema_or_migration_changes": false,
+    "anonymous_payment_status_projection": [
+      "success",
+      "status"
+    ],
+    "owner_decision": "Whether/how to offer historical booking-scoped guest claims; default is fail closed."
+  },
+  "runtime": {
+    "postgresql": "postgres (PostgreSQL) 17.10 (Homebrew)",
+    "host": "127.0.0.1",
+    "port": 64598,
+    "private_cluster_path": "/private/tmp/disposable_sec02_proof_20260929t200024z_2ee44ead/pgdata",
+    "acceptance_database": "disposable_sec02_2ee44ead_sec02",
+    "real_nest_http": true,
+    "real_prisma": true,
+    "real_csrf_signup_signin_encrypted_cookie_jwt_live_user": true,
+    "real_cloud_mirror_availability": true,
+    "synthetic_venues": [
+      "CUSTOM (Organization A)",
+      "published SAAS (Organization B)"
+    ]
+  },
+  "databases": [
+    {
+      "name": "disposable_sec02_2ee44ead_before_http",
+      "absent_before": true,
+      "created": true,
+      "dropped": true,
+      "absent_after": true
+    },
+    {
+      "name": "disposable_sec02_2ee44ead_sec02",
+      "absent_before": true,
+      "created": true,
+      "dropped": true,
+      "absent_after": true
+    },
+    {
+      "name": "disposable_sec01_sec02_2ee44ead_sec01",
+      "absent_before": true,
+      "created": true,
+      "dropped": true,
+      "absent_after": true
+    },
+    {
+      "name": "disposable_sec02_2ee44ead_payment",
+      "absent_before": true,
+      "created": true,
+      "dropped": true,
+      "absent_after": true
+    },
+    {
+      "name": "disposable_sec02_2ee44ead_tenant",
+      "absent_before": true,
+      "created": true,
+      "dropped": true,
+      "absent_after": true
+    },
+    {
+      "name": "disposable_sec02_2ee44ead_provisioning",
+      "absent_before": true,
+      "created": true,
+      "dropped": true,
+      "absent_after": true
+    },
+    {
+      "name": "disposable_sec02_2ee44ead_custom",
+      "absent_before": true,
+      "created": true,
+      "dropped": true,
+      "absent_after": true
+    },
+    {
+      "name": "disposable_sec02_2ee44ead_commercial",
+      "absent_before": true,
+      "created": true,
+      "dropped": true,
+      "absent_after": true
+    },
+    {
+      "name": "disposable_sec02_2ee44ead_subscription",
+      "absent_before": true,
+      "created": true,
+      "dropped": true,
+      "absent_after": true
+    },
+    {
+      "name": "disposable_sec02_2ee44ead_website_provisioning",
+      "absent_before": true,
+      "created": true,
+      "dropped": true,
+      "absent_after": true
+    }
+  ],
+  "migrations": {
+    "count": 60,
+    "ledger_schema": "pos",
+    "all_finished": true,
+    "all_checksums_match": true,
+    "checksums": {
+      "20261005120000_website_hostname_requests": "e82c9628394492333fa0dc99ef32ca5e110375c8d63c574ddb328918c6444e20",
+      "20260903090000_device_enrollment": "459c58e7491381261060c0ca62de86e620c322c1253eccb0848d8195498169ac",
+      "20261007120000_release_published_slug_reservation": "36957b217f4c5b8e9dd2e0cdec7023d556368adbeb461d0cd314804069edc483",
+      "20260901140000_platform_control_plane": "63c6b20a6bbfb0c5cffeaa24c2a4f4739477fc5da776fd81ce57964e2bccf0b6",
+      "20261004120000_subscription_lifecycle": "39d5a007ab1cefa3eba591fb425f9fcb73bd5967ea197fca510ab102a15704e7",
+      "20261011120000_canonical_menu_sync": "25b9cbb8d6d8590b702acdf2a35f38852c8110f7c21a752887bbbf49061049ac",
+      "20260903120000_audit_report_sync_revision": "f0a7bce7579e319975a73ca13751354c69bdb0b93cd1062d98c0fd13b6b53aad",
+      "20260618200000_website_pos_reservation_bridge": "62d78ce7e5a81c2ed6399db29616daafa19bd6dc6823f9cc8506d875b6422a8e",
+      "20261003120200_customer_trial_requests": "0d7196f45cb61fb453c0b8957fac7f4af294c2f56eaba36d14d5a126f862fc56",
+      "20260922120000_operational_primary": "a9156483af5d57ef9cd6f4a5b97fb0cbf1b9361a999179d0fca8e440167d632d",
+      "20260918120000_saas_phase2_control_plane": "500edce1497fab44fabb1a8a62c885c81c4e336668a1e6019faad84a19ebbc1a",
+      "20260909120000_inventory_step2_receiving": "f1f2ec52f98ec0c03262ea91425ae5fa29541636a01428e79b29dbf82710a1ff",
+      "20260831100000_organization_venue_foundation": "ff714f5a2158979278267f1acd7d001b0652cb8a7209a05cf79cdcbb43b1835f",
+      "20260912120000_inventory_step45_catalog_cost": "5c9f7517bebf37857db1e988a053f81bf5fef29e18b200924c7fcac2cc16d2f1",
+      "20261009120000_custom_website_binding": "1ab1fa5cc735a56edb56c9b66056978432103ab693526d138809cedbc5b94b42",
+      "20260920120000_non_fiscal_close_feature": "1ee92684c7555d9693250c896ea9c4b84f5fa1b70f43de38ee0348f9b429feea",
+      "20260902090000_money_reconciliation_fields": "a5a51efdbaa5e7d2c77b5f7d2d35f36d19d38c17e51a6ff825dd3f721c7758a0",
+      "20260901120000_edge_command_transport": "4abd0645975b013c5e6e7bebdfdd4f3497a7105f6be0c16475542b55fa280b7d",
+      "20260901100000_website_booking_tenant_ownership": "4dec36e5c0eea4db8b2a65c1724840b864bc931c28c90222f33d0b5400357492",
+      "20260906140000_complete_menu_identity": "ecb715633e98ff3b4b9902453aa38fb015fe938e7300875f702c50e0b0b46ebf",
+      "20260906120000_menu_item_pos_identity": "b97c4346eca4dea052e9c1260bdeafba00f405d561d4123412cfea90e33db3f7",
+      "20260929120000_website_only_plan": "79735cf1ef29071ab373d9a44d207a5a26f1387a773a964d4c14c493d1df1af1",
+      "20260831160000_product_entitlements_website_mode": "3f6719090833276d904a6727a22b2ce7c8f47ed0af2abefb57d1937effa30993",
+      "20260923120000_edge_foundation": "18565dd3198ed5330dbb4a016ecf1573106401642d6a38b21221bb6195eecb4a",
+      "20260910120000_inventory_step3_menu_consumption": "56d691149131d53de86d44ad7aac845c077d681a98c79984116ca68ad1c0f818",
+      "20260903140000_pos_reservation_mirror": "fbb299291b25ad44bf8ae92beeba15e67145c2b736bd686953327986ad7c04f6",
+      "20260916123000_procurement_request_identity": "3d72a96ec0f554d3f458cff22a2ec5fed25fdc0eff2b0ce8b729fedabe14c965",
+      "20260830090000_device_identity_foundation": "2ef833921dc7c21418c023f9dc40a78f6de7552dcb79229f9eba41dac3580884",
+      "20260915120000_manager_login_code": "89682b1b948ba634f54a3381cd439871fbd638dfa767851d5a26b91335945a3c",
+      "20260911120000_inventory_step4_sale_consumption": "017ad2908c1caaff1e047412f57ddd43415fc3184a3c98e7b0bba05a62cec05f",
+      "20260930120000_cloud_menu_editing": "cbdb9b2a4a5f400da3b437e7dbc7df30ac81b91f7e7f3fc45e9f91db99bc5f9e",
+      "20260917120000_receiving_self_purchase": "ef90f2a5d7a8458dd830d097e9c0322145734f094360820062ba8568f5b881c4",
+      "20260907120000_cloud_sale_ledger": "b8508fbf6c0725bd7564d637dfea2becbaf7779252c0f50eb20a71c2cb688334",
+      "20261008120000_hostname_request_fk_on_update": "e20c99eeab545a9b9fecc4fe0b1fb41e19b28b7f0016e260a8fd3a561b8ec514",
+      "20261002120000_remove_non_fiscal_close_from_plans": "a0e6fb70c966a2d44ad7bc04ef6f41f166e43116becbd4eecea5463b51eef687",
+      "20260904120000_audit_closure_semantics": "a1e5123f2cd22bebe94328025e930540ac25fc09f0a6654f38c4cf34c8cd50bb",
+      "20260927120000_organization_owner_invitations": "cd678cb83cc43839bd343e074a305421a0e070eba7b8fce2d10fb7354cfab892",
+      "20260831190000_manager_tenant_ownership": "fdcab86ac917701a7231154abdee7b9146110568009c3d0479b5acd355c7ff4a",
+      "20260921120000_venue_profile": "9157eda4089412d57f5ec278a0c57964770c0a2690317af463ffbb74400102f2",
+      "20260905090000_audit_event_sequence_tenancy": "155b1abb4e8e5a2c10dbd1f78f930504d674b83042babc99e88ffa0fae36dd04",
+      "20260831130000_pos_operational_tenant_scoping": "da36e466be9c160f58ccaa992506db901aaaacd74fe939f930e06d292a58bf8d",
+      "20261010120000_shared_website_foundation": "88e7406332b9e90af622674e545f8ba4d515d556951285cec9865749808c8d50",
+      "20260928120000_restaurant_foundation": "f2c23a7fc305775f2e08198a29d115f51215f36dffe2472e6adabd4a74e0b09e",
+      "20261003120000_commercial_access_hardening": "babf266d4aec44f5a4a75a328740575e638c6a0b8ccedb143f1de0545f304e0f",
+      "20260924120000_venue_payment_integrations": "a50a6541c985b9d02b4f91480ab05405f74cf425bd4a7fc4a665e3e438ed6220",
+      "20261006120000_hostname_request_current": "bd35c373037275e020097b457cfc8afe615a976624a6e680f67d96514989abc2",
+      "20260905140000_audit_event_log_entity": "5c84760ac1ceac476e00f455b30f883db4e752bae06e179ab54230b233e378fe",
+      "20260925120000_website_core": "f278722e87fe66d96733760a747d86f66d827e95a906cf5d70b4d8074796f0c6",
+      "20260926120000_website_menu_presentation": "a06667d57c9174687513f0506cc75f199664b3e4d4cf15b212f13633d7c39408",
+      "20260721120000_order_closure_id": "992ad891abfeabcdc9744a5b53042e32042d6298d55be299349e3ebb1b69a339",
+      "20260919120000_customer_onboarding_runtime": "f1cf76a1e18156c44786d3cdb18b3ac860fb52dc8eb7747c5a05cf6dcf9ddb8f",
+      "20260901090000_venue_domain_identity": "160d08c192cdf2eb1a18a9be766b166729d244241ee5cb22b08785dee600a50e",
+      "20260908120000_inventory_step1_core": "a71db4e9f239c998970c91b94bafcc5be87adc36fc04911289487973ea5fd444",
+      "20260618193000_menu_sort_order": "79879928e70c3c3bf16e0379f67c9d0b9aa36cbb1d2b2d803341788c28a55727",
+      "20260913120000_payroll_obligations": "4ee713bf8c1a60f14e191a462cc164add4fc2b5159fdccbdafdc1ae0d9c6aba4",
+      "20260618150314_init": "69ffb0dfacfc448000fed5dda5056292d156071de46f6b4f9f946926b82566e4",
+      "20260916120000_inventory_procurement": "9203eeaaa3ab1a35a6665b9fe1ab47221c92a3f438c93f140417fd048a4f5108",
+      "20261001120000_payment_integration_fk_on_update_cascade": "b16bef558b3a79d956c85423b4c62290ffd53d56aef091d4388a99335c374481",
+      "20260914120000_payroll_day_adjustments": "919a4430a0b5467ba546667578e58d918f5f08438a730ec1f80576adb831e38e",
+      "20261003120100_no_plan_default": "987ef6e860607931f570b921bd1149e4ea480cbbb7d2cd91558bfb360c505ea5"
+    },
+    "tip": "20261011120000_canonical_menu_sync"
+  },
+  "before_fix": {
+    "unit_service": {
+      "numPassedTests": 9,
+      "numFailedTests": 5,
+      "numPendingTests": 0,
+      "numTotalTests": 14
+    },
+    "postgresql_http": {
+      "numPassedTests": 22,
+      "numFailedTests": 3,
+      "numPendingTests": 0,
+      "numTotalTests": 25
+    },
+    "expected_failures": [
+      "unverified signup exposes guest booking and private data",
+      "reservation query admits unowned guest rows",
+      "anonymous payment status exposes raw booking row"
+    ]
+  },
+  "final_suites": {
+    "sec02": {
+      "numPassedTests": 39,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numTotalTests": 39
+    },
+    "sec01": {
+      "numPassedTests": 128,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numTotalTests": 128
+    },
+    "payment": {
+      "numPassedTests": 8,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numTotalTests": 8
+    },
+    "tenant": {
+      "numPassedTests": 20,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numTotalTests": 20
+    },
+    "website_provisioning": {
+      "numPassedTests": 14,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numTotalTests": 14
+    },
+    "custom": {
+      "numPassedTests": 15,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numTotalTests": 15
+    },
+    "commercial": {
+      "numPassedTests": 16,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numTotalTests": 16
+    },
+    "subscription": {
+      "numPassedTests": 16,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numTotalTests": 16
+    },
+    "related-unit": {
+      "numPassedTests": 91,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numTotalTests": 91
+    },
+    "saas-tests": {
+      "numPassedTests": 19,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numTotalTests": 19
+    },
+    "website-client-tests": {
+      "numPassedTests": 6,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "numTotalTests": 6
+    }
+  },
+  "sec02_http_cases": [
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP unverified victim-email signup returns zero guest bookings and zero private fields at either Venue",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) /api/tables/reservations binds only the session user and Host; owner alone sees the confirmed booking",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) /api/bog/create-order binds only the session user and Host; owner alone sees the confirmed booking",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) /api/tables/reservations keeps anonymous creation operational and discards forged body ownership",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) /api/bog/create-order keeps anonymous creation operational and discards forged body ownership",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) ignores forged query identities and reservation ID; no guest claim endpoint exists",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) anonymous and ordinary-user maps keep the public occupancy projection without private data",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) denies anonymous, tampered and unrelated principal cookies on my reservations",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP Venue 0 (CUSTOM / SAAS) rechecks the live WebsiteUser and rejects a valid cookie after that identity is removed",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) /api/tables/reservations binds only the session user and Host; owner alone sees the confirmed booking",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) /api/bog/create-order binds only the session user and Host; owner alone sees the confirmed booking",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) /api/tables/reservations keeps anonymous creation operational and discards forged body ownership",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) /api/bog/create-order keeps anonymous creation operational and discards forged body ownership",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) ignores forged query identities and reservation ID; no guest claim endpoint exists",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) anonymous and ordinary-user maps keep the public occupancy projection without private data",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) denies anonymous, tampered and unrelated principal cookies on my reservations",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP Venue 1 (CUSTOM / SAAS) rechecks the live WebsiteUser and rejects a valid cookie after that identity is removed",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP preserves historical authenticated ownership and does not require matching contact email",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP limits the restaurant administrator to its explicit adminVenueId",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP fails closed for unknown despite forged browser Venue identity",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP fails closed for disabled-host despite forged browser Venue identity",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP fails closed for disabled-venue despite forged browser Venue identity",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP keeps commercial and CUSTOMER_ACCOUNTS guards authoritative on ownership reads",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP payment status for Venue 0 never grants private booking access from an identifier",
+      "status": "passed"
+    },
+    {
+      "test": "SEC-02 real PostgreSQL / Nest HTTP payment status for Venue 1 never grants private booking access from an identifier",
+      "status": "passed"
+    }
+  ],
+  "compatibility_commands": [
+    {
+      "name": "saas-tests",
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "--reporter=json",
+        "--outputFile=/private/tmp/disposable_sec02_proof_20260929t200024z_2ee44ead/saas-tests.json"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "saas-build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "website-client-tests",
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "--reporter=json",
+        "--outputFile=/private/tmp/disposable_sec02_proof_20260929t200024z_2ee44ead/website-client-tests.json"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "website-client-typecheck",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "vankisi-build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "backend-build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit": 0
+    }
+  ],
+  "static_checks": {
+    "backend_build": "passed",
+    "sec02_typecheck": "passed",
+    "new_tests_and_user_service_lint": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "payment_controller_lint": {
+      "errors": 9,
+      "warnings": 4,
+      "same_as_baseline": true,
+      "new_diagnostics": 0
+    },
+    "git_diff_check": "passed"
+  },
+  "persisted_synthetic_evidence": {
+    "reservations": 13,
+    "anonymous_preserved": 8,
+    "user_bound": 5,
+    "confirmed_guest_private_notes_preserved": 2,
+    "historical_completed_user_link_preserved": 1,
+    "trusted_priced_bookings": 12,
+    "only_fake_provider_ids": true,
+    "alice_owned_venues": 2,
+    "victim_email_attacker_owned_bookings": 0
+  },
+  "provider_proof": {
+    "real_bank_network_calls": 0,
+    "real_charges": 0,
+    "axios_provider_functions_asserted_mock": true,
+    "external_node_socket_guard": true,
+    "blocked_prisma_telemetry_attempts": 13
+  },
+  "cleanup": {
+    "owned_databases_dropped": 10,
+    "cluster_stopped": true,
+    "private_port_closed": true,
+    "cluster_directory_removed": true,
+    "docker_container_id_name_image_mount_summary_state_unchanged": true,
+    "normal_database_connections": 0,
+    "docker_mutation_commands": 0,
+    "copied_dependencies_and_build_outputs_removed": true
+  },
+  "tested_source_sha256": {
+    "apps/backend/src/website/user/user.service.ts": "76e0e64ce931c44baf46f60377f45065fd648489fdba2f558839434e5617ecaa",
+    "apps/backend/src/website/payment/payment.controller.ts": "c4499605f677afcb67baf1f3a12ad974b7e60150f30fa0fb78079fb770b57bfc",
+    "apps/backend/src/website/user/guest-booking-ownership.spec.ts": "2ff00d98d6ceb408eaa1cddabbecce47473090123e372d3203f64f03912b6431",
+    "apps/backend/src/website/user/guest-booking-ownership.integration.spec.ts": "de10272a360eb0d8d1d31fffaeeb9f7046fa8907017df874cf3574cfbe75ce44"
+  },
+  "preservation": {
+    "unexpected_original_file_changes": [],
+    "historical_audit_unchanged": true,
+    "sec01_proof_unchanged": true,
+    "unrelated_wip_preserved": true,
+    "preexisting_state_map_content_preserved": true
+  },
+  "local_raw_evidence": "/private/tmp/disposable_sec02_proof_20260929t200024z_2ee44ead",
+  "remaining_roadmap_issues": [
+    "COM-01",
+    "EDGE-01",
+    "INV-01",
+    "INV-02",
+    "INV-04",
+    "MENU-01",
+    "MENU-02",
+    "MENU-03",
+    "MENU-05",
+    "MENU-06",
+    "MENU-07",
+    "MENU-08",
+    "MENU-09",
+    "MENU-10",
+    "MGR-01",
+    "MGR-02",
+    "MGR-03",
+    "MGR-04",
+    "MGR-05",
+    "MGR-06",
+    "OPS-01",
+    "OPS-02",
+    "OPS-03",
+    "POS-01",
+    "POS-02",
+    "POS-03",
+    "POS-05",
+    "PROD-01",
+    "PROD-02",
+    "SEC-03",
+    "SEC-04",
+    "SEC-05",
+    "SEC-06",
+    "TECH-01",
+    "UX-01",
+    "UX-02",
+    "WEB-01",
+    "WEB-02",
+    "WEB-03",
+    "WEB-04",
+    "WEB-05",
+    "WEB-06",
+    "WEB-07"
+  ],
+  "next_milestone_not_started": "WEB-02",
+  "limitations": [
+    "No historical guest claim feature; no email verification or SEC-03 redesign",
+    "Public map/payment status remain limited anonymous projections, not ownership proof",
+    "No full browser UI journey or real bank sandbox",
+    "Other Master Plan release gates remain open"
+  ],
+  "implementation_commit": "038ece4e8e216098175dac9d7a17d306a251c8c1"
+}

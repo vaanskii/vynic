@@ -262,6 +262,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Booking-vs-bookkeeping rule and Cloud projection: `apps/operations/lib/core/models/reservation_classification.dart`, proof in `apps/operations/test/unit/reservation_projection_test.dart`
 - Manager backend: `apps/backend/src/mobile/services/mobile-reservations.service.ts`
 - Website booking: `apps/backend/src/website/reservation/`
+- SEC-01 shared booking intent/pricing: `apps/backend/src/website/reservation/booking-request.ts`, `apps/backend/src/website/payment/booking-pricing.ts`, invoked inside `ReservationService.createReservation`; canonical selections: `MenuService.getBookableSelection`. Proof/status: `docs/SEC01_TRUSTED_BOOKING_AMOUNT.md`, `apps/backend/src/website/payment/booking-payment.spec.ts`, `booking-payment.integration.spec.ts` beside it.
 - Cloud POS mirror: `apps/backend/src/pos/pos-reservation-mirror.service.ts`, `apps/backend/src/pos/sync/snapshot/reservation-sync.service.ts`
 - Public UI route: `apps/vankisi-custom-web/src/routes/reservation.ts`
 

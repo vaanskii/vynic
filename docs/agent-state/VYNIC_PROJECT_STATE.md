@@ -818,6 +818,16 @@ current transport status.
   the operational name, and presentation writes are proved Venue-scoped. Core
   menu authority remains POS/Cloud. Custom-site deployment, DNS/TLS and health
   are manual; only operator-attested status exists.
+- SEC-01 public booking creation now shares runtime intent validation and one
+  server pricing boundary inside ReservationService. Both creation routes use
+  Venue-owned enabled/visible catalog selections and bounded quantities, ignore
+  client money, and persist/send the same GEL amount calculated in minor units
+  (existing 10% service and 1 GEL minimum). Both require payment capability;
+  Vankisi's variant-ID payload remains compatible. Status is DONE: 83 regressions,
+  45 real disposable PostgreSQL/HTTP cases and 89 affected integration tests pass;
+  migrations, compatibility builds/type checks and zero real bank calls are
+  verified. All verification-owned databases were removed. See
+  `docs/SEC01_TRUSTED_BOOKING_AMOUNT.md`; later payment/security issues remain open.
 - BOG credentials and return origins are encrypted per Venue using the deployment
   PAYMENT_INTEGRATION_MASTER_KEY. New payments require ONLINE_PAYMENTS and an
   enabled integration; reservations retain the original encrypted revision. Browser

@@ -99,22 +99,22 @@ export class BogController {
       const isSuccess = confirmedStatuses.includes(statusKey);
       const isFailed = failedStatuses.includes(statusKey);
 
-      const reservation =
-        await this.reservationService.updateReservationPaymentStatus(
-          externalOrderId,
-          status,
-          isSuccess
-            ? 'Payment confirmed via status check'
-            : isFailed
-              ? 'Payment failed (checked via status check)'
-              : `Status check: ${status}`,
-          orderId,
-        );
+      await this.reservationService.updateReservationPaymentStatus(
+        externalOrderId,
+        status,
+        isSuccess
+          ? 'Payment confirmed via status check'
+          : isFailed
+            ? 'Payment failed (checked via status check)'
+            : `Status check: ${status}`,
+        orderId,
+      );
 
+      // This anonymous bank-return route proves payment status, not customer
+      // ownership. Booking/payment IDs must never unlock the private row.
       return {
         success: true,
         status: isSuccess ? 'CONFIRMED' : isFailed ? 'FAILED' : 'PENDING',
-        reservation,
       };
     } catch (error) {
       if (error instanceof HttpException) throw error;

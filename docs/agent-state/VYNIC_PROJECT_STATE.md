@@ -734,6 +734,16 @@ current transport status.
   the private reservation row. Status is DONE: 14 service/controller and 25 real
   PostgreSQL/HTTP cases pass, with SEC-01 and affected regressions passing.
   See `docs/SEC02_GUEST_BOOKING_OWNERSHIP.md`.
+- WEB-02: migration is not publication consent. `20261010110000` (ordered
+  before the shared-foundation migration; a no-op where that already ran)
+  captures each Venue's pre-foundation draft/published hours, contact, map,
+  socials and gallery; `20261012120000` restores the published values live and
+  keeps a differing draft private in `VenuePublicInfoReview` (never read
+  publicly; its images retained) until an explicit audited decision. Databases
+  upgraded earlier are reported (PUBLISHED / DRAFT_ONLY / AMBIGUOUS) and decided
+  through `apps/backend/scripts/web02-public-info.ts`, never guessed. Status is
+  DONE with reproduction, upgrade, already-migrated and fresh-install PostgreSQL/
+  HTTP proofs. See `docs/WEB02_SAFE_PUBLICATION_MIGRATION.md`.
 - Payment callbacks derive Venue from the server-owned reservation.
 - CUSTOM websites are bespoke frontends over the one backend
   (`docs/CUSTOM_WEBSITES.md`). `CustomWebsiteBinding` records the operator's
@@ -1049,8 +1059,11 @@ current transport status.
 
 ## Current Migration Versions
 
-- Prisma migration tip: `20261011120000_canonical_menu_sync`.
-- Previous migration: `20261010120000_shared_website_foundation`.
+- Prisma migration tip: `20261012120000_web02_restore_public_info_authority`.
+- Previous migrations: `20261011120000_canonical_menu_sync`,
+  `20261010120000_shared_website_foundation`, and WEB-02's evidence capture
+  `20261010110000_web02_capture_public_info_evidence`, ordered before the
+  foundation (applied late, as a no-op, where the foundation already ran).
 - Previous website migration: `20261009120000_custom_website_binding`.
 - Previous hostname migrations: `20261008120000_hostname_request_fk_on_update`,
   `20261007120000_release_published_slug_reservation`,

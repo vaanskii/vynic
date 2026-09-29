@@ -91,6 +91,13 @@ public at deploy. `referencedMedia` counts the Venue gallery, so moved photos
 are never collected. No capability rows are created: every Venue keeps today's
 behaviour.
 
+WEB-02 corrects that draft-wins rule without editing the file: migration is
+not publication consent. `20261010110000` (ordered before it) captures each
+draft/published pair; `20261012120000` restores the published values and keeps
+a differing draft private in `VenuePublicInfoReview` until an explicit, audited
+decision. Databases upgraded before those migrations are reported, not guessed.
+See `docs/WEB02_SAFE_PUBLICATION_MIGRATION.md`.
+
 ## Dashboard
 
 One draft state and one save bar, two writes: Venue public information goes to

@@ -205,6 +205,7 @@ Venue IDs. Rows are deleted child-first; counts are measured before any cascades
 | `VenueWebsiteCapability` | V by `venueId` |
 | `VenueWebsiteConfig` | V by `venueId` |
 | `VenuePublicProfile` | V by `venueId` |
+| `VenuePublicInfoReview` | V by `venueId` (WEB-02 private evidence) |
 | `VenueDomain` | V by `venueId` |
 | `WebsiteMediaAsset` | V by `venueId` |
 | `Venue` | Selected roots; all for full reset. Operational-primary FK cleared first. |

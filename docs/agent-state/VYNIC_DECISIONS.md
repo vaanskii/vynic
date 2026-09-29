@@ -312,8 +312,9 @@ renderer-specific gate is launch (published SAAS, provisioned CUSTOM).
 and would have needed a second hours/gallery/booking backend per renderer.
 **Implication:** No custom menu/hours/gallery/booking/payment backend; a new
 website capability is a Feature (if sold separately) plus a key in
-`website-capabilities.ts`, never a mode check. See
-`docs/WEBSITE_FOUNDATION.md`.
+`website-capabilities.ts`, never a mode check. Moving content into live
+storage is never publication consent: a migration keeps published authority and
+an unpublished draft private (WEB-02). See `docs/WEBSITE_FOUNDATION.md`.
 
 ## D029 — Domains carry no port; local frontend ports are dev config
 

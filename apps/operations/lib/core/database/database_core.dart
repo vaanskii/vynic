@@ -11,6 +11,8 @@ import 'package:vynic/core/models/reservation.dart';
 import 'package:vynic/core/models/quick_order_draft.dart';
 import 'package:vynic/core/models/package.dart';
 import 'package:vynic/core/models/sale_record.dart';
+import 'package:vynic/core/services/menu/menu_local_store.dart';
+import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
 
 import 'package:vynic/core/database/hive_migration_service.dart';
 
@@ -185,6 +187,15 @@ class DatabaseCore {
     menuJournalBox = UpdateTrackedBox(
       await Hive.openBox<String>(menuJournalBoxName),
     );
+
+    // Recover Menu intent/projection BEFORE identity migrations, defaults or UI.
+    // No network is involved; credential loading later enforces Venue binding.
+    await MenuLocalStore.attach(
+      menuBox: menuBox!,
+      stateBox: menuCanonicalBox!,
+      journalBox: menuJournalBox!,
+      venueId: () => EdgeDeviceCredentialStore.venueId,
+    ).initialize();
 
     // Run schema migrations before seeding defaults.
     final migrationContext = HiveMigrationContext(

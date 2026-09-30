@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/services/menu/canonical_menu.dart';
 import 'package:vynic/core/services/menu/menu_mutation_journal.dart';
+import 'package:vynic/core/services/menu/menu_local_store.dart';
 
 /// One HTTP exchange with the canonical Menu API. `status == 0` = unreachable.
 class MenuTransportResult {
@@ -116,14 +117,8 @@ class _Serial {
   }
 }
 
-/// Local-first canonical Menu engine for one POS (docs/CANONICAL_MENU_SYNC.md).
-///
-/// The operational Hive menu is a projection of (canonical Cloud state ⊕ this
-/// POS's unresolved journal). Local edits land in the operational menu first
-/// (instant, offline) and are captured into the journal by diffing against the
-/// projection last written — never against a newer Cloud state, so a catch-up
-/// can never be mistaken for a local edit. The network only ever runs after
-/// the local commit, and its failures never touch local operation.
+/// Local-first canonical Menu engine. All local writes use MenuLocalStore;
+/// this separate network queue never blocks an operator's durable local edit.
 class PosMenuSync {
   PosMenuSync({
     required this.stateBox,
@@ -132,30 +127,25 @@ class PosMenuSync {
     required this.transport,
     required this.venueId,
     String Function()? newMutationId,
-  }) : journal = MenuMutationJournal(journalBox),
+  }) : local = MenuLocalStore.attach(
+         menuBox: menuBox,
+         stateBox: stateBox,
+         journalBox: journalBox,
+         venueId: venueId,
+         newMutationId: newMutationId,
+       ),
        _newId = newMutationId ?? CanonicalMenu.newMutationId;
 
   final Box<String> stateBox;
-  final MenuMutationJournal journal;
   final Box<MenuCategoryDB> menuBox;
   final MenuSyncTransport transport;
   final String? Function() venueId;
   final String Function() _newId;
-  final _Serial _serial = _Serial();
-  final StreamController<void> _projected = StreamController<void>.broadcast();
-
-  /// Fires after the operational menu was rewritten from canonical state.
-  Stream<void> get projected => _projected.stream;
-
-  static const _state = 'state';
-  static const _baseline = 'baseline';
-  static const _mode = 'mode';
-  static const _rebuilding = 'rebuilding';
-
-  CanonicalMenu? get state {
-    final raw = stateBox.get(_state);
-    return raw == null ? null : CanonicalMenu.fromJsonString(raw);
-  }
+  final MenuLocalStore local;
+  final _Serial _network = _Serial();
+  MenuMutationJournal get journal => local.journal;
+  Stream<void> get projected => local.projected;
+  CanonicalMenu? get state => local.state;
 
   MenuSyncMode get mode {
     final current = state;
@@ -164,8 +154,7 @@ class PosMenuSync {
           ? MenuSyncMode.canonical
           : MenuSyncMode.venueMismatch;
     }
-    final stored = stateBox.get(_mode);
-    return switch (stored) {
+    return switch (stateBox.get('mode')) {
       'legacy' => MenuSyncMode.legacy,
       'adoptionBlocked' => MenuSyncMode.adoptionBlocked,
       _ => MenuSyncMode.unknown,
@@ -173,281 +162,9 @@ class PosMenuSync {
   }
 
   bool get isCanonical => mode == MenuSyncMode.canonical;
-
-  List<MenuMutationEntry> _mine() {
-    final venue = venueId();
-    return journal.unresolved().where((e) => e.venueId == venue).toList();
-  }
-
-  List<MenuMutationEntry> get unresolved => _mine();
-
-  CanonicalMenu _projection(CanonicalMenu base) {
-    final projection = base.copy();
-    for (final entry in _mine()) {
-      // A rejected create/move never reached Cloud; it stays local until the
-      // operator discards it, so nothing typed locally silently disappears.
-      projection.applyLocal(
-        MenuKindWire.parse(entry.entityType),
-        entry.operation,
-        entry.entityId,
-        entry.patch,
-      );
-    }
-    return projection;
-  }
-
-  CanonicalMenu? _storedBaseline() {
-    final raw = stateBox.get(_baseline);
-    return raw == null ? null : CanonicalMenu.fromJsonString(raw);
-  }
-
-  // ------------------------------------------------------------ capture
-
-  /// Journals local operator edits made since the last projection.
-  Future<int> captureLocalEdits() => _serial.run(_capture);
-
-  Future<int> _capture() async {
-    final current = state;
-    if (current == null || current.venueId != venueId()) return 0;
-    // An interrupted projection write is not an operator edit.
-    if (stateBox.get(_rebuilding) != null) {
-      await _write(_projection(current));
-      return 0;
-    }
-    final baseline = _storedBaseline() ?? _projection(current);
-    final changes = CanonicalMenu.diff(baseline, menuBox.values);
-    for (final change in changes) {
-      await journal.append(
-        mutationId: _newId(),
-        venueId: current.venueId,
-        entityType: change.kind.wire,
-        operation: change.operation,
-        entityId: change.entityId,
-        expectedRevision: current.nodes[change.entityId]?.revision ?? 0,
-        patch: change.patch,
-      );
-      baseline.applyLocal(
-        change.kind,
-        change.operation,
-        change.entityId,
-        change.patch,
-      );
-    }
-    if (changes.isNotEmpty) {
-      await stateBox.put(_baseline, baseline.toJsonString());
-      await stateBox.flush();
-    }
-    return changes.length;
-  }
-
-  // ---------------------------------------------------------- projection
-
-  Future<void> _write(CanonicalMenu projection) async {
-    final hive = projection.toHive();
-    final now = jsonEncode(
-      CanonicalMenu.readHive(
-        menuBox.values,
-      ).map((k, v) => MapEntry(k, [v.kind.wire, v.fields, v.position])),
-    );
-    final next = jsonEncode(
-      CanonicalMenu.readHive(
-        hive,
-      ).map((k, v) => MapEntry(k, [v.kind.wire, v.fields, v.position])),
-    );
-    if (now != next) {
-      await stateBox.put(_rebuilding, '1');
-      await stateBox.flush();
-      await menuBox.clear();
-      await menuBox.addAll(hive);
-      await menuBox.flush();
-    }
-    await stateBox.put(_baseline, projection.toJsonString());
-    await stateBox.delete(_rebuilding);
-    await stateBox.flush();
-    if (now != next) _projected.add(null);
-  }
-
-  /// Captures outstanding local edits, then rewrites the operational menu.
-  Future<void> rebuildProjection() => _serial.run(() async {
-    final current = state;
-    if (current == null || current.venueId != venueId()) return;
-    await _capture();
-    await _write(_projection(current));
-  });
-
-  /// The operational menu was replaced by something that is not an operator
-  /// edit (backup restore): re-project instead of journaling the difference.
-  Future<void> reprojectDiscardingExternal() => _serial.run(() async {
-    final current = state;
-    if (current == null || current.venueId != venueId()) return;
-    await _write(_projection(current));
-  });
-
-  // ----------------------------------------------------------- bootstrap
-
-  /// Imports the Venue's canonical Menu into durable local state.
-  ///
-  /// A fresh POS (empty operational menu) is projected directly. A POS that
-  /// already holds exactly the same catalog is adopted. Any other local menu
-  /// is left untouched ([MenuSyncMode.adoptionBlocked]) until [adopt] is
-  /// explicitly requested; an established POS Venue stays [legacy].
-  Future<MenuSyncMode> bootstrap({bool adopt = false}) => _serial.run(() async {
-    final current = mode;
-    if (current == MenuSyncMode.canonical ||
-        current == MenuSyncMode.venueMismatch) {
-      return current;
-    }
-    final venue = venueId();
-    if (venue == null) return MenuSyncMode.unknown;
-    final response = await transport.catalog();
-    if (!response.ok || response.body == null) return current;
-    final body = response.body!;
-    if (body['authority'] != 'CLOUD') {
-      await stateBox.put(_mode, 'legacy');
-      await stateBox.flush();
-      return MenuSyncMode.legacy;
-    }
-    final snapshot = CanonicalMenu.fromSnapshot(body);
-    if (snapshot.venueId != venue) {
-      throw StateError('Canonical menu belongs to another Venue');
-    }
-    final local = menuBox.values.toList();
-    if (local.isNotEmpty && !adopt) {
-      final same =
-          jsonEncode(_shape(local)) == jsonEncode(_shape(snapshot.toHive()));
-      if (!same) {
-        await stateBox.put(_mode, 'adoptionBlocked');
-        await stateBox.flush();
-        return MenuSyncMode.adoptionBlocked;
-      }
-    }
-    await stateBox.put(_state, snapshot.toJsonString());
-    await stateBox.delete(_mode);
-    await stateBox.flush();
-    // The previous local menu (if explicitly adopted over) is not an edit.
-    await _write(_projection(snapshot));
-    return MenuSyncMode.canonical;
-  });
-
-  static Map<String, Object?> _shape(Iterable<MenuCategoryDB> menu) =>
-      CanonicalMenu.readHive(
-        menu,
-      ).map((k, v) => MapEntry(k, [v.kind.wire, v.fields]));
-
-  // ---------------------------------------------------------------- sync
-
-  bool _blocked(MenuMutationEntry entry, List<MenuMutationEntry> earlier) =>
-      earlier.any(
-        (e) =>
-            e.entityId == entry.entityId &&
-            (e.status == MenuMutationStatus.conflict ||
-                e.status == MenuMutationStatus.rejected),
-      );
-
-  /// Pushes pending mutations in order, then catches up from Cloud, then
-  /// re-projects. Returns false when Cloud was unreachable (nothing is lost).
-  Future<bool> syncOnce() => _serial.run(() async {
-    final stored = state;
-    if (stored == null || stored.venueId != venueId()) return false;
-    var current = stored;
-    await _capture();
-    var reachable = true;
-    final entries = _mine();
-    for (final (index, entry) in entries.indexed) {
-      if (!entry.sendable) continue;
-      if (_blocked(entry, entries.sublist(0, index))) continue;
-      final response = await transport.mutate(entry.toWire());
-      if (response.ok && response.body != null) {
-        current.applyAccepted(response.body!);
-        final revision = (response.body!['revision'] as num).toInt();
-        final base = entry.expectedRevision;
-        entry
-          ..status = MenuMutationStatus.synced
-          ..lastError = null;
-        await journal.save(entry);
-        // Later local edits of the same node were built on this one.
-        for (final later in entries.skip(index + 1)) {
-          if (later.entityId == entry.entityId &&
-              later.expectedRevision == base &&
-              later.unresolved) {
-            later.expectedRevision = revision;
-            await journal.save(later);
-          }
-        }
-        await stateBox.put(_state, current.toJsonString());
-        continue;
-      }
-      if (response.status == 409 && response.code == 'REVISION_CONFLICT') {
-        final conflict = Map<String, dynamic>.from(
-          response.body!['conflict'] as Map,
-        );
-        entry
-          ..status = MenuMutationStatus.conflict
-          ..conflict = conflict
-          ..lastError = 'REVISION_CONFLICT';
-        await journal.save(entry);
-        final node = conflict['current'];
-        if (node is Map) {
-          current.applyAccepted({
-            'entityId': entry.entityId,
-            'entityType': entry.entityType,
-            'entity': node,
-          });
-        } else if (conflict['deleted'] == true) {
-          current.applyAccepted({
-            'entityId': entry.entityId,
-            'entityType': entry.entityType,
-            'deleted': true,
-          });
-        }
-        await stateBox.put(_state, current.toJsonString());
-        continue;
-      }
-      if (response.status == 400 ||
-          response.status == 404 ||
-          (response.status == 409 && response.code != 'LEGACY_POS_MENU')) {
-        entry
-          ..status = MenuMutationStatus.rejected
-          ..lastError = response.code ?? 'HTTP_${response.status}';
-        await journal.save(entry);
-        continue;
-      }
-      // Offline, 5xx, auth: keep order, retry later.
-      entry
-        ..status = MenuMutationStatus.failedRetryable
-        ..attempts += 1
-        ..lastError = response.status == 0
-            ? 'UNREACHABLE'
-            : 'HTTP_${response.status}';
-      await journal.save(entry);
-      reachable = false;
-      break;
-    }
-    if (reachable) {
-      final changes = await transport.changes(current.sequence);
-      if (changes.ok && changes.body != null) {
-        current.applyChanges(changes.body!);
-      } else if (changes.status == 409 && changes.code == 'RESYNC_REQUIRED') {
-        final snapshot = await transport.catalog();
-        if (snapshot.ok && snapshot.body != null) {
-          current = CanonicalMenu.fromSnapshot(snapshot.body!);
-        } else {
-          reachable = false;
-        }
-      } else {
-        reachable = false;
-      }
-      await stateBox.put(_state, current.toJsonString());
-    }
-    await stateBox.flush();
-    await journal.compact();
-    await _write(_projection(current));
-    return reachable;
-  });
-
-  // ---------------------------------------------------------- resolution
-
-  List<MenuMutationEntry> get conflicts => _mine()
+  List<MenuMutationEntry> get unresolved =>
+      journal.unresolved().where((e) => e.venueId == venueId()).toList();
+  List<MenuMutationEntry> get conflicts => unresolved
       .where(
         (e) =>
             e.status == MenuMutationStatus.conflict ||
@@ -455,57 +172,253 @@ class PosMenuSync {
       )
       .toList();
 
-  /// "Use current": discard my pending change(s) to this node.
-  Future<void> useCurrent(String mutationId) => _serial.run(() async {
-    final entries = _mine();
-    final target = entries.where((e) => e.mutationId == mutationId).firstOrNull;
-    if (target == null) return;
-    for (final entry in entries.where(
-      (e) => e.entityId == target.entityId && e.seq >= target.seq,
-    )) {
-      await journal.remove(entry);
+  Future<int> captureLocalEdits() => local.run(local.capture);
+  Future<void> rebuildProjection() => local.run(() async {
+    if (!isCanonical) return;
+    await local.capture();
+    await local.commit(state!, expectedGeneration: local.generation);
+  });
+  Future<void> reprojectDiscardingExternal() => local.run(() async {
+    if (isCanonical) {
+      await local.commit(state!, expectedGeneration: local.generation);
     }
-    final current = state;
-    if (current != null) await _write(_projection(current));
   });
 
-  /// "Re-apply my change" against the current Cloud revision (explicit, audited).
-  Future<void> reapply(String mutationId) => _serial.run(() async {
-    final entries = _mine();
+  /// Fresh installs import; existing differing menus require explicit adoption.
+  /// Check the LIVE local menu after the request; never adopt a stale snapshot
+  /// of the local menu taken before a network wait.
+  Future<MenuSyncMode> bootstrap({bool adopt = false}) =>
+      _network.run(() async {
+        final before = mode;
+        if (before == MenuSyncMode.venueMismatch) return before;
+        if (before == MenuSyncMode.canonical) {
+          await local.initialize();
+          return before;
+        }
+        final venue = venueId();
+        if (venue == null) return MenuSyncMode.unknown;
+        final response = await transport.catalog();
+        if (!response.ok || response.body == null) return before;
+        return local.run(() async {
+          if (venueId() != venue)
+            throw StateError('Menu identity changed during bootstrap');
+          if (isCanonical) return mode;
+          final body = response.body!;
+          if (body['authority'] != 'CLOUD') {
+            await stateBox.put('mode', 'legacy');
+            await stateBox.flush();
+            return MenuSyncMode.legacy;
+          }
+          final snapshot = CanonicalMenu.fromSnapshot(body);
+          if (snapshot.venueId != venue)
+            throw StateError('Canonical menu belongs to another Venue');
+          final localMenu = menuBox.values.toList();
+          if (localMenu.isNotEmpty &&
+              !adopt &&
+              jsonEncode(_shape(localMenu)) !=
+                  jsonEncode(_shape(snapshot.toHive()))) {
+            await stateBox.put('mode', 'adoptionBlocked');
+            await stateBox.flush();
+            return MenuSyncMode.adoptionBlocked;
+          }
+          await local.commit(snapshot, expectedGeneration: local.generation);
+          await stateBox.delete('mode');
+          await stateBox.flush();
+          return MenuSyncMode.canonical;
+        });
+      });
+
+  static Map<String, Object?> _shape(Iterable<MenuCategoryDB> menu) =>
+      CanonicalMenu.readHive(
+        menu,
+      ).map((k, v) => MapEntry(k, [v.kind.wire, v.fields]));
+
+  bool _blocked(MenuMutationEntry entry, List<MenuMutationEntry> entries) =>
+      entries.any(
+        (e) =>
+            e.seq < entry.seq &&
+            e.entityId == entry.entityId &&
+            (e.status == MenuMutationStatus.conflict ||
+                e.status == MenuMutationStatus.rejected),
+      );
+
+  /// Each response merges with CURRENT durable state and CURRENT journal under
+  /// the local queue. No projection or generation captured before HTTP is ever
+  /// committed after HTTP. New edits therefore survive both mutate and pull.
+  Future<bool> syncOnce() => _network.run(() async {
+    final ids = await local.run(() async {
+      if (!isCanonical) return <String>[];
+      await local.capture();
+      return unresolved.map((e) => e.mutationId).toList();
+    });
+    if (!isCanonical) return false;
+    var reachable = true;
+    for (final id in ids) {
+      final entry = await local.run(() async {
+        if (!isCanonical) return null;
+        final entries = unresolved;
+        final entry = entries.where((e) => e.mutationId == id).firstOrNull;
+        return entry == null || !entry.sendable || _blocked(entry, entries)
+            ? null
+            : entry;
+      });
+      if (entry == null) continue;
+      final response = await transport.mutate(entry.toWire());
+      await local.run(() async {
+        if (!isCanonical) throw StateError('Menu identity changed during sync');
+        final current = state!;
+        final entries = unresolved;
+        // A resolution can replace/remove an entry while a response is pending.
+        // The response must never resurrect that old intent.
+        final live = entries.where((e) => e.mutationId == id).firstOrNull;
+        final puts = <MenuMutationEntry>[];
+        if (response.ok && response.body != null) {
+          current.applyAccepted(response.body!);
+          if (live != null) {
+            final revision = (response.body!['revision'] as num).toInt();
+            live
+              ..status = MenuMutationStatus.synced
+              ..lastError = null;
+            puts.add(live);
+            for (final later in entries.where(
+              (e) =>
+                  e.seq > live.seq &&
+                  e.entityId == live.entityId &&
+                  e.expectedRevision == entry.expectedRevision,
+            )) {
+              later.expectedRevision = revision;
+              puts.add(later);
+            }
+          }
+        } else if (response.status == 409 &&
+            response.code == 'REVISION_CONFLICT') {
+          final conflict = Map<String, dynamic>.from(
+            response.body!['conflict'] as Map,
+          );
+          if (live != null) {
+            live
+              ..status = MenuMutationStatus.conflict
+              ..conflict = conflict
+              ..lastError = 'REVISION_CONFLICT';
+            puts.add(live);
+          }
+          final node = conflict['current'];
+          if (node is Map || conflict['deleted'] == true) {
+            current.applyAccepted({
+              'entityId': entry.entityId,
+              'entityType': entry.entityType,
+              'entity': node,
+              'deleted': conflict['deleted'] == true,
+            });
+          }
+        } else if (response.status == 400 ||
+            response.status == 404 ||
+            (response.status == 409 && response.code != 'LEGACY_POS_MENU')) {
+          if (live != null) {
+            live
+              ..status = MenuMutationStatus.rejected
+              ..lastError = response.code ?? 'HTTP_${response.status}';
+            puts.add(live);
+          }
+        } else {
+          if (live != null) {
+            live
+              ..status = MenuMutationStatus.failedRetryable
+              ..attempts += 1
+              ..lastError = response.status == 0
+                  ? 'UNREACHABLE'
+                  : 'HTTP_${response.status}';
+            puts.add(live);
+          }
+          reachable = false;
+        }
+        await local.commit(
+          current,
+          puts: puts,
+          expectedGeneration: local.generation,
+        );
+      });
+      if (!reachable) break;
+    }
+    if (reachable) {
+      final since = await local.run(() async => state!.sequence);
+      var changes = await transport.changes(since);
+      final resync = changes.status == 409 && changes.code == 'RESYNC_REQUIRED';
+      if (resync) changes = await transport.catalog();
+      await local.run(() async {
+        if (!isCanonical) throw StateError('Menu identity changed during pull');
+        var current = state!;
+        if (changes.ok && changes.body != null) {
+          if (resync) {
+            current = CanonicalMenu.fromSnapshot(changes.body!);
+          } else {
+            current.applyChanges(changes.body!);
+          }
+          await local.commit(current, expectedGeneration: local.generation);
+        } else {
+          reachable = false;
+        }
+      });
+    }
+    await local.run(() => journal.compact());
+    return reachable;
+  });
+
+  /// One recoverable discard includes the target and all same-entity successors.
+  Future<void> useCurrent(String mutationId) => local.run(() async {
+    if (!isCanonical) return;
+    await local.capture();
+    final entries = unresolved;
+    final target = entries.where((e) => e.mutationId == mutationId).firstOrNull;
+    if (target == null) return;
+    await local.commit(
+      state!,
+      removes: entries
+          .where((e) => e.entityId == target.entityId && e.seq >= target.seq)
+          .toList(),
+      expectedGeneration: local.generation,
+    );
+  });
+
+  /// Durable replacement at the SAME sequence (no remove→put gap), together
+  /// with every later rebase. Recovery retains the chosen replacement ID.
+  Future<void> reapply(String mutationId) => local.run(() async {
+    if (!isCanonical) return;
+    await local.capture();
+    final entries = unresolved;
     final target = entries.where((e) => e.mutationId == mutationId).firstOrNull;
     final conflict = target?.conflict;
     if (target == null ||
         target.status != MenuMutationStatus.conflict ||
         conflict == null ||
-        conflict['deleted'] == true) {
+        conflict['deleted'] == true)
       return;
-    }
     final revision = (conflict['currentRevision'] as num).toInt();
-    final base = target.expectedRevision;
-    await journal.remove(target);
-    await journal.box.put(
-      target.seq.toString().padLeft(12, '0'),
-      jsonEncode({
-        ...target.toJson(),
-        'mutationId': _newId(),
-        'expectedRevision': revision,
-        'status': MenuMutationStatus.pending.name,
-        'conflict': null,
-        'lastError': null,
-        'resolution': 'REAPPLY',
-      }),
-    );
+    final replacement = MenuMutationEntry.fromJson({
+      ...target.toJson(),
+      'mutationId': _newId(),
+      'expectedRevision': revision,
+      'status': MenuMutationStatus.pending.name,
+      'conflict': null,
+      'lastError': null,
+      'resolution': 'REAPPLY',
+    });
+    final puts = [replacement];
     for (final later in entries.where(
       (e) =>
           e.entityId == target.entityId &&
           e.seq > target.seq &&
-          e.expectedRevision == base,
+          e.expectedRevision == target.expectedRevision,
     )) {
       later.expectedRevision = revision;
-      await journal.save(later);
+      puts.add(later);
     }
-    await journal.box.flush();
+    await local.commit(
+      state!,
+      puts: puts,
+      expectedGeneration: local.generation,
+    );
   });
 
-  Future<void> close() => _projected.close();
+  Future<void> close() => local.close();
 }

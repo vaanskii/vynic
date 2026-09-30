@@ -1,0 +1,15 @@
+{
+  "seq": 1,
+  "mutationId": "40000000-0000-4000-8000-000000000001",
+  "venueId": "menu02-synthetic-venue",
+  "entityType": "ITEM",
+  "operation": "UPSERT",
+  "entityId": "10000000-0000-4000-8000-000000000002",
+  "expectedRevision": 1,
+  "patch": {"price": 12.0},
+  "status": "pending",
+  "createdAt": "2026-09-29T00:00:00.000Z",
+  "attempts": 0,
+  "lastError": null,
+  "conflict": null
+}

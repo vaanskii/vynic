@@ -4,8 +4,9 @@ import 'package:hive/hive.dart';
 
 /// Durable POS Menu mutation journal (docs/CANONICAL_MENU_SYNC.md).
 ///
-/// Every local Menu edit is committed to the operational menu FIRST and then
-/// recorded here, in order, before any network attempt. The journal lives in
+/// MenuLocalStore durably records the complete local commit BEFORE writing
+/// its journal/state/projection, and replays interrupted commits on startup.
+/// Entries are recorded here in order before any network attempt. The journal lives in
 /// Hive, so it survives app restart, Windows restart and days of backend
 /// outage. Cloud acceptance only decides global convergence; it never decides
 /// whether this POS may keep operating with its local change.
@@ -118,7 +119,7 @@ class MenuMutationJournal {
 
   final Box<String> box;
 
-  static String _key(int seq) => seq.toString().padLeft(12, '0');
+  static String key(int seq) => seq.toString().padLeft(12, '0');
 
   /// All entries in local order.
   List<MenuMutationEntry> all() {
@@ -134,7 +135,7 @@ class MenuMutationJournal {
   List<MenuMutationEntry> unresolved() =>
       all().where((entry) => entry.unresolved).toList();
 
-  int _nextSeq() {
+  int get nextSeq {
     final keys = box.keys.cast<String>().toList()..sort();
     return keys.isEmpty ? 1 : int.parse(keys.last) + 1;
   }
@@ -150,7 +151,7 @@ class MenuMutationJournal {
     String? resolution,
   }) async {
     final entry = MenuMutationEntry(
-      seq: _nextSeq(),
+      seq: nextSeq,
       mutationId: mutationId,
       venueId: venueId,
       entityType: entityType,
@@ -167,12 +168,12 @@ class MenuMutationJournal {
   }
 
   Future<void> save(MenuMutationEntry entry) async {
-    await box.put(_key(entry.seq), jsonEncode(entry.toJson()));
+    await box.put(key(entry.seq), jsonEncode(entry.toJson()));
     await box.flush();
   }
 
   Future<void> remove(MenuMutationEntry entry) async {
-    await box.delete(_key(entry.seq));
+    await box.delete(key(entry.seq));
     await box.flush();
   }
 
@@ -183,7 +184,7 @@ class MenuMutationJournal {
         .toList();
     if (synced.length <= keepSynced) return;
     for (final entry in synced.take(synced.length - keepSynced)) {
-      await box.delete(_key(entry.seq));
+      await box.delete(key(entry.seq));
     }
     await box.flush();
   }

@@ -879,7 +879,9 @@ class BackupRepository {
   static Future<String?> wipeAllData({bool backupFirst = true}) =>
       UpdateReadiness.track(
         'wipeAllData',
-        () => _updateTrackedWipeAllData(backupFirst: backupFirst),
+        () => PosMenuSyncService.instance.externalMenuWrite(
+          () => _updateTrackedWipeAllData(backupFirst: backupFirst),
+        ),
       );
 
   static Future<String?> _updateTrackedWipeAllData({

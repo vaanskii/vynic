@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:vynic/core/database/database_core.dart';
 import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
 import 'package:vynic/core/services/menu/menu_mutation_journal.dart';
+import 'package:vynic/core/services/menu/menu_local_store.dart';
 import 'package:vynic/core/services/menu/pos_menu_sync.dart';
 import 'package:vynic/core/services/sync/api_config.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
@@ -31,7 +32,7 @@ class MenuSyncStatus {
 
 /// Runs the local-first canonical Menu engine for this POS
 /// (docs/CANONICAL_MENU_SYNC.md). Everything here is asynchronous and
-/// best-effort: the operational menu is already committed locally, and an
+/// best-effort: repository success already includes durable local intent, and an
 /// unreachable Cloud only delays global convergence.
 class PosMenuSyncService {
   PosMenuSyncService._();
@@ -86,6 +87,9 @@ class PosMenuSyncService {
     if (!EdgeDeviceCredentialStore.hasCredential) return;
     _engine ??= _build();
     if (_engine == null) return;
+    if (_engine!.mode != MenuSyncMode.venueMismatch) {
+      await _engine!.local.initialize();
+    }
     _running = true;
     _projected = _engine!.projected.listen((_) {
       SyncHub.notify(
@@ -108,7 +112,7 @@ class PosMenuSyncService {
   Future<void> _afterLocalEdit() async {
     final engine = _engine;
     if (engine == null || !engine.isCanonical) return;
-    await engine.captureLocalEdits();
+    // Repository writes already committed intent and projection together.
     _publish();
     _debounce?.cancel();
     _debounce = Timer(const Duration(seconds: 1), () => unawaited(tick()));
@@ -191,13 +195,12 @@ class PosMenuSyncService {
   /// restore). In canonical mode the restored rows are not edits: capture is
   /// suspended and the menu is re-projected from canonical state afterwards.
   Future<T> externalMenuWrite<T>(Future<T> Function() write) async {
-    final engine = _engine;
-    if (engine == null || !engine.isCanonical) return write();
+    final menu = DatabaseCore.menuBox;
+    if (menu == null) return write();
     _suspended = true;
     try {
-      return await write();
+      return await MenuLocalStore.forBox(menu).external(write);
     } finally {
-      await engine.reprojectDiscardingExternal();
       _suspended = false;
       _publish();
     }

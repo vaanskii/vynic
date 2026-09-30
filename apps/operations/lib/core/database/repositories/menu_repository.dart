@@ -4,6 +4,7 @@ import 'dart:developer' as developer;
 import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:vynic/core/models/menu_item_db.dart';
+import 'package:vynic/core/services/menu/menu_local_store.dart';
 
 import 'package:vynic/core/services/sync/sync_events.dart';
 import '../database_core.dart';
@@ -172,12 +173,14 @@ class MenuRepository {
       final String jsonString = await rootBundle.loadString('data/menu.json');
       final List<dynamic> jsonList = json.decode(jsonString);
 
-      for (final categoryJson in jsonList) {
-        final category = _convertJsonToMenuCategory(categoryJson);
-        await DatabaseCore.menuBox!.add(category);
-      }
+      await MenuLocalStore.forBox(DatabaseCore.menuBox!).edit((menu) async {
+        for (final categoryJson in jsonList) {
+          await menu.add(_convertJsonToMenuCategory(categoryJson));
+        }
+      });
     } catch (e) {
       developer.log(e.toString(), name: 'DatabaseService', error: e);
+      rethrow;
     }
   }
 
@@ -262,26 +265,28 @@ class MenuRepository {
       return;
     }
 
-    bool updated = false;
-    for (final category in DatabaseCore.menuBox!.values) {
-      final shouldSend = _shouldCategorySendToKitchen(
-        category.slug,
-        nameEn: category.translationsEn['name'],
-        nameKa: category.translationsKa['name'],
-      );
-      if (!shouldSend && category.sendToKitchen) {
-        category.sendToKitchen = false;
-        await category.save();
-        updated = true;
+    await MenuLocalStore.forBox(DatabaseCore.menuBox!).edit((menu) async {
+      bool updated = false;
+      for (final category in menu.values) {
+        final shouldSend = _shouldCategorySendToKitchen(
+          category.slug,
+          nameEn: category.translationsEn['name'],
+          nameKa: category.translationsKa['name'],
+        );
+        if (!shouldSend && category.sendToKitchen) {
+          category.sendToKitchen = false;
+          await menu.commit();
+          updated = true;
+        }
       }
-    }
 
-    if (updated) {
-      developer.log(
-        'Updated kitchen routing defaults for bar/drink categories',
-        name: 'DatabaseService',
-      );
-    }
+      if (updated) {
+        developer.log(
+          'Updated kitchen routing defaults for bar/drink categories',
+          name: 'DatabaseService',
+        );
+      }
+    });
   }
 
   // ==================== MENU AUDIT ====================
@@ -322,36 +327,39 @@ class MenuRepository {
   static Future<int> ensureStableItemIds([Box<MenuCategoryDB>? box]) async {
     final menuBox = box ?? DatabaseCore.menuBox;
     if (menuBox == null) return 0;
-    var assigned = 0;
-    for (final category in menuBox.values) {
-      var touched = false;
-      for (final item in category.items ?? const <MenuItemDB>[]) {
-        if ((item.id?.trim() ?? '').isEmpty) {
-          item.id = newMenuItemId();
-          assigned++;
-          touched = true;
-        }
-      }
-      for (final sub in category.subcategories ?? const <MenuSubcategoryDB>[]) {
-        for (final item in sub.items) {
+    return MenuLocalStore.forBox(menuBox).edit((menu) async {
+      var assigned = 0;
+      for (final category in menu.values) {
+        var touched = false;
+        for (final item in category.items ?? const <MenuItemDB>[]) {
           if ((item.id?.trim() ?? '').isEmpty) {
             item.id = newMenuItemId();
             assigned++;
             touched = true;
           }
         }
+        for (final sub
+            in category.subcategories ?? const <MenuSubcategoryDB>[]) {
+          for (final item in sub.items) {
+            if ((item.id?.trim() ?? '').isEmpty) {
+              item.id = newMenuItemId();
+              assigned++;
+              touched = true;
+            }
+          }
+        }
+        // Items are nested values, not their own rows: the category is what
+        // Hive writes, so the save has to happen here.
+        if (touched) await menu.commit();
       }
-      // Items are nested values, not their own rows: the category is what
-      // Hive writes, so the save has to happen here.
-      if (touched) await category.save();
-    }
-    if (assigned > 0) {
-      developer.log(
-        '[Menu] assigned $assigned stable menu item id(s)',
-        name: 'MenuRepository',
-      );
-    }
-    return assigned;
+      if (assigned > 0) {
+        developer.log(
+          '[Menu] assigned $assigned stable menu item id(s)',
+          name: 'MenuRepository',
+        );
+      }
+      return assigned;
+    });
   }
 
   /// Assigns identities to every category, subcategory, item and variant that
@@ -360,35 +368,16 @@ class MenuRepository {
   static Future<int> ensureStableMenuIds([Box<MenuCategoryDB>? box]) async {
     final menuBox = box ?? DatabaseCore.menuBox;
     if (menuBox == null) return 0;
-    var assigned = 0;
-    for (final category in menuBox.values) {
-      var touched = false;
-      if ((category.id?.trim() ?? '').isEmpty) {
-        category.id = newMenuNodeId();
-        assigned++;
-        touched = true;
-      }
-      for (final item in category.items ?? const <MenuItemDB>[]) {
-        if ((item.id?.trim() ?? '').isEmpty) {
-          item.id = newMenuItemId();
+    return MenuLocalStore.forBox(menuBox).edit((menu) async {
+      var assigned = 0;
+      for (final category in menu.values) {
+        var touched = false;
+        if ((category.id?.trim() ?? '').isEmpty) {
+          category.id = newMenuNodeId();
           assigned++;
           touched = true;
         }
-        for (final variant in item.variants ?? const <MenuVariantDB>[]) {
-          if ((variant.id?.trim() ?? '').isEmpty) {
-            variant.id = newMenuNodeId();
-            assigned++;
-            touched = true;
-          }
-        }
-      }
-      for (final sub in category.subcategories ?? const <MenuSubcategoryDB>[]) {
-        if ((sub.id?.trim() ?? '').isEmpty) {
-          sub.id = newMenuNodeId();
-          assigned++;
-          touched = true;
-        }
-        for (final item in sub.items) {
+        for (final item in category.items ?? const <MenuItemDB>[]) {
           if ((item.id?.trim() ?? '').isEmpty) {
             item.id = newMenuItemId();
             assigned++;
@@ -402,16 +391,38 @@ class MenuRepository {
             }
           }
         }
+        for (final sub
+            in category.subcategories ?? const <MenuSubcategoryDB>[]) {
+          if ((sub.id?.trim() ?? '').isEmpty) {
+            sub.id = newMenuNodeId();
+            assigned++;
+            touched = true;
+          }
+          for (final item in sub.items) {
+            if ((item.id?.trim() ?? '').isEmpty) {
+              item.id = newMenuItemId();
+              assigned++;
+              touched = true;
+            }
+            for (final variant in item.variants ?? const <MenuVariantDB>[]) {
+              if ((variant.id?.trim() ?? '').isEmpty) {
+                variant.id = newMenuNodeId();
+                assigned++;
+                touched = true;
+              }
+            }
+          }
+        }
+        if (touched) await menu.commit();
       }
-      if (touched) await category.save();
-    }
-    if (assigned > 0) {
-      developer.log(
-        '[Menu] assigned $assigned stable menu node id(s)',
-        name: 'MenuRepository',
-      );
-    }
-    return assigned;
+      if (assigned > 0) {
+        developer.log(
+          '[Menu] assigned $assigned stable menu node id(s)',
+          name: 'MenuRepository',
+        );
+      }
+      return assigned;
+    });
   }
 
   static void _ensureVariantIds(List<MenuVariantDB>? variants) {
@@ -590,7 +601,7 @@ class MenuRepository {
     String actorId = _unknownActor,
     String? actorName,
     AuditSource source = AuditSource.pos,
-  }) async {
+  }) => MenuLocalStore.forBox(DatabaseCore.menuBox!).edit((menu) async {
     try {
       final category = MenuCategoryDB.create(
         slug: slug,
@@ -602,7 +613,7 @@ class MenuRepository {
             sendToKitchen ??
             _shouldCategorySendToKitchen(slug, nameEn: nameEn, nameKa: nameKa),
       );
-      await DatabaseCore.menuBox!.add(category);
+      await menu.add(category);
       SyncHub.notify(
         SyncEvent(
           type: SyncEventType.menu,
@@ -632,7 +643,7 @@ class MenuRepository {
       );
       return false;
     }
-  }
+  });
 
   // Update category
   static Future<bool> updateCategory({
@@ -644,9 +655,9 @@ class MenuRepository {
     String actorId = _unknownActor,
     String? actorName,
     AuditSource source = AuditSource.pos,
-  }) async {
+  }) => MenuLocalStore.forBox(DatabaseCore.menuBox!).edit((menu) async {
     try {
-      final category = DatabaseCore.menuBox!.getAt(index);
+      final category = menu.getAt(index);
       if (category != null) {
         final previousSlug = category.slug;
         final previousNameEn = (category.translationsEn['name'] ?? '')
@@ -658,7 +669,7 @@ class MenuRepository {
         category.translationsEn = {'name': nameEn};
         category.translationsKa = {'name': nameKa};
         category.sendToKitchen = sendToKitchen ?? category.sendToKitchen;
-        await category.save();
+        await menu.commit();
         SyncHub.notify(
           SyncEvent(
             type: SyncEventType.menu,
@@ -715,7 +726,7 @@ class MenuRepository {
       );
       return false;
     }
-  }
+  });
 
   // Delete category
   static Future<bool> deleteCategory(
@@ -723,13 +734,13 @@ class MenuRepository {
     String actorId = _unknownActor,
     String? actorName,
     AuditSource source = AuditSource.pos,
-  }) async {
+  }) => MenuLocalStore.forBox(DatabaseCore.menuBox!).edit((menu) async {
     try {
-      final category = DatabaseCore.menuBox!.getAt(index);
+      final category = menu.getAt(index);
       final slug = category?.slug ?? 'index:$index';
       final itemCount = category?.items?.length ?? 0;
       final subcategoryCount = category?.subcategories?.length ?? 0;
-      await DatabaseCore.menuBox!.deleteAt(index);
+      await menu.deleteAt(index);
       SyncHub.notify(SyncEvent(type: SyncEventType.menu, action: 'deleted'));
       await GlobalAudit.menuCategory(
         action: GlobalAuditAction.menuCategoryDeleted,
@@ -752,7 +763,7 @@ class MenuRepository {
       );
       return false;
     }
-  }
+  });
 
   // Add item to category
   static Future<bool> addItemToCategory({
@@ -765,9 +776,9 @@ class MenuRepository {
     String actorId = _unknownActor,
     String? actorName,
     AuditSource source = AuditSource.pos,
-  }) async {
+  }) => MenuLocalStore.forBox(DatabaseCore.menuBox!).edit((menu) async {
     try {
-      final category = DatabaseCore.menuBox!.getAt(categoryIndex);
+      final category = menu.getAt(categoryIndex);
       if (category != null) {
         _ensureVariantIds(variants);
         final item = MenuItemDB.create(
@@ -779,7 +790,7 @@ class MenuRepository {
         );
         category.items ??= [];
         category.items!.add(item);
-        await category.save();
+        await menu.commit();
         SyncHub.notify(
           SyncEvent(
             type: SyncEventType.menu,
@@ -822,7 +833,7 @@ class MenuRepository {
       );
       return false;
     }
-  }
+  });
 
   // Update item in category
   static Future<bool> updateItemInCategory({
@@ -836,9 +847,9 @@ class MenuRepository {
     String actorId = _unknownActor,
     String? actorName,
     AuditSource source = AuditSource.pos,
-  }) async {
+  }) => MenuLocalStore.forBox(DatabaseCore.menuBox!).edit((menu) async {
     try {
-      final category = DatabaseCore.menuBox!.getAt(categoryIndex);
+      final category = menu.getAt(categoryIndex);
       if (category != null &&
           category.items != null &&
           itemIndex < category.items!.length) {
@@ -857,7 +868,7 @@ class MenuRepository {
         if (sendToKitchen != null) {
           category.items![itemIndex].sendToKitchen = sendToKitchen;
         }
-        await category.save();
+        await menu.commit();
         SyncHub.notify(
           SyncEvent(
             type: SyncEventType.menu,
@@ -917,7 +928,7 @@ class MenuRepository {
       );
       return false;
     }
-  }
+  });
 
   // Delete item from category
   static Future<bool> deleteItemFromCategory({
@@ -926,9 +937,9 @@ class MenuRepository {
     String actorId = _unknownActor,
     String? actorName,
     AuditSource source = AuditSource.pos,
-  }) async {
+  }) => MenuLocalStore.forBox(DatabaseCore.menuBox!).edit((menu) async {
     try {
-      final category = DatabaseCore.menuBox!.getAt(categoryIndex);
+      final category = menu.getAt(categoryIndex);
       if (category != null &&
           category.items != null &&
           itemIndex < category.items!.length) {
@@ -937,7 +948,7 @@ class MenuRepository {
         final removedNameKa = (removed.translationsKa['name'] ?? '').toString();
         final removedPrice = removed.price;
         category.items!.removeAt(itemIndex);
-        await category.save();
+        await menu.commit();
         SyncHub.notify(
           SyncEvent(
             type: SyncEventType.menu,
@@ -981,7 +992,7 @@ class MenuRepository {
       );
       return false;
     }
-  }
+  });
 
   // Add subcategory
   static Future<bool> addSubcategory({
@@ -992,9 +1003,9 @@ class MenuRepository {
     String actorId = _unknownActor,
     String? actorName,
     AuditSource source = AuditSource.pos,
-  }) async {
+  }) => MenuLocalStore.forBox(DatabaseCore.menuBox!).edit((menu) async {
     try {
-      final category = DatabaseCore.menuBox!.getAt(categoryIndex);
+      final category = menu.getAt(categoryIndex);
       if (category != null) {
         final subcategory = MenuSubcategoryDB.create(
           slug: slug,
@@ -1004,7 +1015,7 @@ class MenuRepository {
         );
         category.subcategories ??= <MenuSubcategoryDB>[];
         category.subcategories!.add(subcategory);
-        await category.save();
+        await menu.commit();
         SyncHub.notify(
           SyncEvent(
             type: SyncEventType.menu,
@@ -1034,7 +1045,7 @@ class MenuRepository {
       );
       return false;
     }
-  }
+  });
 
   // Update subcategory
   static Future<bool> updateSubcategory({
@@ -1046,9 +1057,9 @@ class MenuRepository {
     String actorId = _unknownActor,
     String? actorName,
     AuditSource source = AuditSource.pos,
-  }) async {
+  }) => MenuLocalStore.forBox(DatabaseCore.menuBox!).edit((menu) async {
     try {
-      final category = DatabaseCore.menuBox!.getAt(categoryIndex);
+      final category = menu.getAt(categoryIndex);
       final subcategories = category?.subcategories;
       if (category != null &&
           subcategories != null &&
@@ -1062,7 +1073,7 @@ class MenuRepository {
         subcategory.slug = slug;
         subcategory.translationsEn = {'name': nameEn};
         subcategory.translationsKa = {'name': nameKa};
-        await category.save();
+        await menu.commit();
         SyncHub.notify(
           SyncEvent(
             type: SyncEventType.menu,
@@ -1114,7 +1125,7 @@ class MenuRepository {
       );
       return false;
     }
-  }
+  });
 
   // Delete subcategory
   static Future<bool> deleteSubcategory({
@@ -1123,9 +1134,9 @@ class MenuRepository {
     String actorId = _unknownActor,
     String? actorName,
     AuditSource source = AuditSource.pos,
-  }) async {
+  }) => MenuLocalStore.forBox(DatabaseCore.menuBox!).edit((menu) async {
     try {
-      final category = DatabaseCore.menuBox!.getAt(categoryIndex);
+      final category = menu.getAt(categoryIndex);
       final subcategories = category?.subcategories;
       if (category != null &&
           subcategories != null &&
@@ -1134,7 +1145,7 @@ class MenuRepository {
         final removedSlug = removed.slug;
         final removedItemCount = removed.items.length;
         subcategories.removeAt(subcategoryIndex);
-        await category.save();
+        await menu.commit();
         SyncHub.notify(
           SyncEvent(
             type: SyncEventType.menu,
@@ -1164,7 +1175,7 @@ class MenuRepository {
       );
       return false;
     }
-  }
+  });
 
   // Add item to subcategory
   static Future<bool> addItemToSubcategory({
@@ -1178,9 +1189,9 @@ class MenuRepository {
     String actorId = _unknownActor,
     String? actorName,
     AuditSource source = AuditSource.pos,
-  }) async {
+  }) => MenuLocalStore.forBox(DatabaseCore.menuBox!).edit((menu) async {
     try {
-      final category = DatabaseCore.menuBox!.getAt(categoryIndex);
+      final category = menu.getAt(categoryIndex);
       final subcategories = category?.subcategories;
       if (category != null &&
           subcategories != null &&
@@ -1194,7 +1205,7 @@ class MenuRepository {
           sendToKitchen: sendToKitchen ?? true,
         );
         subcategories[subcategoryIndex].items.add(item);
-        await category.save();
+        await menu.commit();
         SyncHub.notify(
           SyncEvent(
             type: SyncEventType.menu,
@@ -1242,7 +1253,7 @@ class MenuRepository {
       );
       return false;
     }
-  }
+  });
 
   // Update item in subcategory
   static Future<bool> updateItemInSubcategory({
@@ -1257,9 +1268,9 @@ class MenuRepository {
     String actorId = _unknownActor,
     String? actorName,
     AuditSource source = AuditSource.pos,
-  }) async {
+  }) => MenuLocalStore.forBox(DatabaseCore.menuBox!).edit((menu) async {
     try {
-      final category = DatabaseCore.menuBox!.getAt(categoryIndex);
+      final category = menu.getAt(categoryIndex);
       final subcategories = category?.subcategories;
       if (category != null &&
           subcategories != null &&
@@ -1281,7 +1292,7 @@ class MenuRepository {
           if (sendToKitchen != null) {
             item.sendToKitchen = sendToKitchen;
           }
-          await category.save();
+          await menu.commit();
           SyncHub.notify(
             SyncEvent(
               type: SyncEventType.menu,
@@ -1345,7 +1356,7 @@ class MenuRepository {
       developer.log('Error updating subcategory item: $e');
       return false;
     }
-  }
+  });
 
   // Delete item from subcategory
   static Future<bool> deleteItemFromSubcategory({
@@ -1355,9 +1366,9 @@ class MenuRepository {
     String actorId = _unknownActor,
     String? actorName,
     AuditSource source = AuditSource.pos,
-  }) async {
+  }) => MenuLocalStore.forBox(DatabaseCore.menuBox!).edit((menu) async {
     try {
-      final category = DatabaseCore.menuBox!.getAt(categoryIndex);
+      final category = menu.getAt(categoryIndex);
       final subcategories = category?.subcategories;
       if (category != null &&
           subcategories != null &&
@@ -1371,7 +1382,7 @@ class MenuRepository {
               .toString();
           final removedPrice = removed.price;
           items.removeAt(itemIndex);
-          await category.save();
+          await menu.commit();
           SyncHub.notify(
             SyncEvent(
               type: SyncEventType.menu,
@@ -1421,5 +1432,5 @@ class MenuRepository {
       developer.log('Error deleting subcategory item: $e');
       return false;
     }
-  }
+  });
 }

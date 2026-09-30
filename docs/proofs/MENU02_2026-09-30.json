@@ -1,0 +1,295 @@
+{
+  "schemaVersion": 1,
+  "milestone": "MENU-02",
+  "status": "DONE",
+  "date": "2026-09-30",
+  "timezone": "Asia/Tbilisi",
+  "baseline": {
+    "branch": "codex/docker-deployment-foundation",
+    "head": "102b089886ac771a2d30eb94d122cd78fd388d5d",
+    "gitStatus": " M .env.docker.example\n M .env.production.example\n M apps/backend/src/customer/commercial-access.integration.spec.ts\n M apps/backend/src/dev-origins.spec.ts\n M apps/backend/src/dev-origins.ts\n M apps/backend/src/subscriptions/subscription.integration.spec.ts\n M apps/backend/src/subscriptions/subscription.service.ts\n M apps/backend/src/website/custom/custom-website.integration.spec.ts\n M apps/backend/src/website/provisioning/website-provisioning.integration.spec.ts\n M apps/backend/src/website/provisioning/website-provisioning.ts\n M apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart\n M apps/operations/lib/core/services/edge/pos_enrollment_service.dart\n M apps/operations/lib/core/services/sync/api_config.dart\n M apps/operations/test/unit/pos_enrollment_test.dart\n M apps/platform-web/src/components/layout/Navbar.tsx\n M apps/platform-web/src/components/product/PosScreenReplica.tsx\n M apps/platform-web/src/components/product/ProductLaunchMenu.tsx\n M apps/platform-web/src/components/sections/FloorPlanSection.tsx\n M apps/platform-web/src/components/sections/Hero.tsx\n M apps/platform-web/src/components/sections/ProductTour.tsx\n M apps/platform-web/src/components/ui/Button.tsx\n M apps/platform-web/src/components/ui/Reveal.tsx\n M apps/platform-web/src/components/ui/SectionHeading.tsx\n M apps/platform-web/src/lib/motion.ts\n M apps/platform-web/src/pages/HomePage.tsx\n M apps/platform-web/src/platform/pages/venue/SubscriptionPanel.tsx\n M apps/platform-web/src/styles/index.css\n M apps/platform-web/src/subscriptions/operator-actions.ts\n M apps/platform-web/src/subscriptions/types.ts\n M apps/platform-web/src/test/commercial-control-ux.test.tsx\n M apps/platform-web/src/test/subscription-lifecycle.test.tsx\n M compose.local.yaml\n M compose.yaml\n M deploy/traefik/routes.yml\n M docs/CANONICAL_MENU_SYNC.md\n M docs/COMMERCIAL_SUBSCRIPTION_LIFECYCLE.md\n M docs/DEPLOYMENT.md\n M docs/DEPLOYMENT_PROOF.md\n M docs/agent-state/VYNIC_CODE_MAP.md\n M docs/agent-state/VYNIC_DECISIONS.md\n M docs/agent-state/VYNIC_PROJECT_STATE.md\n M scripts/docker.sh\n?? .claude/launch.json\n?? apps/operations/test/live/native_ingress_live_test.dart\n?? apps/platform-web/src/components/motion/\n?? apps/platform-web/src/components/sections/PlatformStory.tsx\n?? apps/platform-web/src/test/site-motion.test.tsx\n?? compose.lan.yaml\n?? docs/audits/2026-09-29-f7bb982/\n?? experiments/\n",
+    "originalWipFileCount": 153,
+    "completedMilestones": {
+      "SEC-01": {
+        "status": "DONE",
+        "implementation": "cb283d9",
+        "proof": "a403637"
+      },
+      "SEC-02": {
+        "status": "DONE",
+        "implementation": "038ece4",
+        "proof": "64d668f"
+      },
+      "WEB-02": {
+        "status": "DONE",
+        "implementation": "f453ab7",
+        "proof": "102b089"
+      }
+    },
+    "appVersion": "1.0.0+1",
+    "dartConstraint": "^3.9.2",
+    "hiveVersion": "2.2.3",
+    "hiveSchemaTarget": 9,
+    "canonicalWireVersion": 2
+  },
+  "implementation": {
+    "commit": "a6da94a19ee293498ec0d01d0343e312a9c73dfb",
+    "files": [
+      "apps/operations/lib/core/database/database_core.dart",
+      "apps/operations/lib/core/database/repositories/backup_repository.dart",
+      "apps/operations/lib/core/database/repositories/menu_repository.dart",
+      "apps/operations/lib/core/services/menu/menu_local_store.dart",
+      "apps/operations/lib/core/services/menu/menu_mutation_journal.dart",
+      "apps/operations/lib/core/services/menu/pos_menu_sync.dart",
+      "apps/operations/lib/core/services/menu/pos_menu_sync_service.dart",
+      "apps/operations/test/fixtures/menu02_legacy_journal.json",
+      "apps/operations/test/live/menu02_process_restart_test.dart",
+      "apps/operations/test/unit/menu02_durability_test.dart",
+      "apps/operations/tool/prove_menu02_restart.py"
+    ],
+    "sha256": {
+      "apps/operations/lib/core/database/database_core.dart": "a2992b5cc99b4629b6d93f123d79ce70f632942f6d6a7dde6f5226a5c2a0d852",
+      "apps/operations/lib/core/database/repositories/backup_repository.dart": "fc2d4c16761b15779b02a4e9f7a2895974e761fd281d433493dd8526945dad95",
+      "apps/operations/lib/core/database/repositories/menu_repository.dart": "1233f00c6b7927861cd661454bfa96a9791e7f50f948bfb89e20d4b2fa5a1458",
+      "apps/operations/lib/core/services/menu/menu_local_store.dart": "4948e37adbf957570affeef69f812425c4bd66cc365bd59e168e45c5791f0fe8",
+      "apps/operations/lib/core/services/menu/menu_mutation_journal.dart": "12b90d532ffc6cffa851ee226d70e756ef84dd627a883cbebed25bb9731cee1b",
+      "apps/operations/lib/core/services/menu/pos_menu_sync.dart": "4aa4a5f643c763ff95ba72ae5b84b14f582df6b23828fa4dd3badfae091cd426",
+      "apps/operations/lib/core/services/menu/pos_menu_sync_service.dart": "03c250e1b569fe2262f3a0387d72b4ac7a42d3bb519468d137d45b8495ee104a",
+      "apps/operations/test/fixtures/menu02_legacy_journal.json": "fd393410c2a81e4009a6b9cd4c45c0147f5b82ff43a3566fd4223512693e16e1",
+      "apps/operations/test/live/menu02_process_restart_test.dart": "3350ac24e57284337a92646260c0b4e2a4a7c5448fcd57f8930010b3b1e53664",
+      "apps/operations/test/unit/menu02_durability_test.dart": "7e571769338f87cd5a19d97de15fdd9c32c84c50785435c80755f62bcc90e164",
+      "apps/operations/tool/prove_menu02_restart.py": "f5587f383abeb10a7fe8ccc8eb9aaff8d3c3420109b986e8cb912a09a869c874"
+    },
+    "authority": "Cloud canonical plus local unresolved journal; legacy POS-authority remains",
+    "durability": "single flushed localCommit descriptor before journal/state/projection; idempotent startup replay",
+    "localQueue": "shared by all discovered repository, projection, bootstrap, resolution and external writers",
+    "networkQueue": "separate; no HTTP wait before local success",
+    "generationCheck": true,
+    "journalEntrySchemaChanged": false,
+    "globalHiveSchemaChanged": false,
+    "localProtocolMigration": {
+      "from": "unversioned legacy state",
+      "to": 1,
+      "entry": "MenuLocalStore.initialize",
+      "fixture": "apps/operations/test/fixtures/menu02_legacy_journal.json",
+      "originalMutationId": "40000000-0000-4000-8000-000000000001",
+      "pendingIdPreserved": true,
+      "duplicateCaptureCount": 0
+    },
+    "rollback": "finish recovery using new binary, verify localCommit/rebuilding absent, preserve all three boxes; old reader parses unchanged state/journal but ignores unfinished v1 WAL"
+  },
+  "preFixReproduction": {
+    "beforeProductionChanges": true,
+    "productionHead": "102b089886ac771a2d30eb94d122cd78fd388d5d",
+    "command": "FLUTTER_SUPPRESS_ANALYTICS=true /private/tmp/vynic-menu02-flutter/bin/flutter test --no-pub test/unit/menu02_durability_test.dart --reporter expanded",
+    "exitCode": 1,
+    "intentionalInvariantFailures": 2,
+    "race": {
+      "transportBarrier": "captured changes response held by completer",
+      "repositorySuccess": true,
+      "acknowledgedPrice": 12,
+      "observedPriceAfterPull": 10.0,
+      "assertion": "Expected: <12>; Actual: <10.0>"
+    },
+    "reapply": {
+      "fault": "replacement journal put before I/O, following old deletion+flush",
+      "reopenedUnresolvedEntries": 0,
+      "assertion": "Expected length 1; Actual []"
+    },
+    "logSha256": "09e87988fe5530e6f55deaa03b26b13cb05ead7622ab9d0f33fc1df8c5a00104"
+  },
+  "faultInjection": {
+    "totalDurabilityTests": 41,
+    "writeCheckpoints": 21,
+    "matrix": {
+      "A": "PASS: descriptor put fails before local persistence; no success/no new intent",
+      "B": "PASS: detached drafts remove acknowledged menu-before-journal gap; failures never report success; WAL recovers",
+      "C": "PASS: journal/state/generation/version/baseline faults replay exact IDs without duplicates",
+      "D": "PASS: local repository success while pull/mutation ACK awaits; new intent survives/rebases",
+      "E": "PASS: clear/addAll/flush/baseline/marker faults and real SIGKILL recover projection",
+      "F": "PASS: ACK loss + reopen retries same ID without another synthetic Cloud side effect",
+      "G": "PASS: conflict survives interrupted state update and reopen",
+      "H": "PASS: replacement put and successor-rebase faults recover recorded new ID",
+      "I": "PASS: partially removed multi-entry discard completes deterministically",
+      "J": "PASS: 12 rapid edits retain ordered sequences/unique IDs and converge",
+      "K": "PASS: independent entity edits converge without a global revision conflict"
+    },
+    "additional": [
+      "all Admin CRUD kinds",
+      "bootstrap interruption",
+      "stale generation refusal",
+      "external restore and nested migration",
+      "expired restore callback scope",
+      "future protocol refusal",
+      "existing-format fixture migration",
+      "unresolved journal retention"
+    ]
+  },
+  "tests": {
+    "command": [
+      "flutter",
+      "test",
+      "--no-pub",
+      "test/unit/menu02_durability_test.dart",
+      "test/unit/canonical_menu_sync_test.dart",
+      "test/unit/menu_item_identity_test.dart",
+      "test/unit/menu_line_identity_test.dart",
+      "test/unit/backup_completeness_test.dart",
+      "test/widget/menu_sync_banner_test.dart",
+      "--reporter",
+      "json"
+    ],
+    "passed": 96,
+    "failed": 0,
+    "skipped": 0,
+    "suites": [
+      {
+        "suite": "/Users/vaanskii/Developer/vynic/apps/operations/test/unit/canonical_menu_sync_test.dart",
+        "result": "success",
+        "skipped": false,
+        "count": 15
+      },
+      {
+        "suite": "/Users/vaanskii/Developer/vynic/apps/operations/test/unit/menu02_durability_test.dart",
+        "result": "success",
+        "skipped": false,
+        "count": 41
+      },
+      {
+        "suite": "/Users/vaanskii/Developer/vynic/apps/operations/test/unit/menu_item_identity_test.dart",
+        "result": "success",
+        "skipped": false,
+        "count": 24
+      },
+      {
+        "suite": "/Users/vaanskii/Developer/vynic/apps/operations/test/unit/menu_line_identity_test.dart",
+        "result": "success",
+        "skipped": false,
+        "count": 3
+      },
+      {
+        "suite": "/Users/vaanskii/Developer/vynic/apps/operations/test/unit/backup_completeness_test.dart",
+        "result": "success",
+        "skipped": false,
+        "count": 9
+      },
+      {
+        "suite": "/Users/vaanskii/Developer/vynic/apps/operations/test/widget/menu_sync_banner_test.dart",
+        "result": "success",
+        "skipped": false,
+        "count": 4
+      }
+    ],
+    "durationMs": 2328,
+    "resultLogSha256": "85193df48d62452b96775f390e3910437b8b262c4637d20f811da7193d02bb0c",
+    "analysis": {
+      "status": "PASS",
+      "result": "No issues found",
+      "scope": [
+        "lib/core/services/menu",
+        "database_core.dart",
+        "menu_repository.dart",
+        "backup_repository.dart",
+        "menu02_durability_test.dart",
+        "menu02_process_restart_test.dart"
+      ],
+      "logSha256": "19058f933dce088410722dc70b7a607110a3546e179720a35e6ba8cba2997c28"
+    }
+  },
+  "realFlutterHiveRestart": {
+    "status": "PASS",
+    "writerPid": 51588,
+    "readerPid": 51632,
+    "mutationId": "ad68c5e0-5cc8-4e8a-a9e9-24c7451f9a05",
+    "pendingEntries": 1,
+    "localPrice": 12.0,
+    "otherCloudPrice": 24.0,
+    "journalStatus": "pending",
+    "cloudReachableDuringRecovery": false,
+    "walCleared": true,
+    "projectionMarkerCleared": true,
+    "duplicateCaptureCount": 0,
+    "signal": "SIGKILL",
+    "checkpoint": "clear:after",
+    "projectionEmptyAtKill": true,
+    "writerExit": 1,
+    "readerExit": 0,
+    "platform": "macOS-27.0-arm64-arm-64bit",
+    "command": [
+      "/private/tmp/vynic-menu02-flutter/bin/flutter",
+      "test",
+      "--no-pub",
+      "--reporter",
+      "expanded",
+      "test/live/menu02_process_restart_test.dart"
+    ],
+    "writerLogSha256": "dba1f630ddf21caa263be67d7022ea205bcfaea744b05734df0e49638445d391",
+    "readerLogSha256": "0b030a6f90ae6d6606b3cd40275a21676aa17c8a4daa4b3920a4016b090d2001",
+    "temporaryDirectoryRemoved": true
+  },
+  "runtime": {
+    "frameworkVersion": "3.44.1",
+    "channel": "stable",
+    "repositoryUrl": "https://github.com/flutter/flutter.git",
+    "frameworkRevision": "924134a44c189315be2148659913dda1671cbe99",
+    "frameworkCommitDate": "2026-05-29 12:13:22 -0400",
+    "engineRevision": "c416acfeb8126e097f758c664aaa3da929e27da0",
+    "engineCommitDate": "2026-05-27 20:19:31.000Z",
+    "engineContentHash": "39b1f7043775b9578bbb26a1676e79c4e31c8b5e",
+    "engineBuildDate": "2026-05-27 13:50:43.210",
+    "dartSdkVersion": "3.12.1",
+    "devToolsVersion": "2.57.0",
+    "flutterVersion": "3.44.1",
+    "flutterRoot": "/private/tmp/vynic-menu02-flutter"
+  },
+  "performance": {
+    "items": 500,
+    "samples": 20,
+    "localEditP50Ms": 21.129,
+    "localEditP95Ms": 25.825,
+    "localEditMaxMs": 26.944,
+    "fullProjectionRebuildMs": 20.142,
+    "pendingEntries": 20,
+    "menuNetworkAttemptsDuringEdits": 0
+  },
+  "SEC_WEB_Regression": {
+    "status": "PRESERVED",
+    "backendOrContractFilesChangedByMENU02": [],
+    "existingBackendWipBytePreserved": true,
+    "milestonesRemainDone": [
+      "SEC-01",
+      "SEC-02",
+      "WEB-02"
+    ],
+    "postgresSuitesRerun": false,
+    "reason": "Flutter/local-only milestone; no backend/shared contract behavior changed"
+  },
+  "wipProtection": {
+    "verifiedByteUnchangedCount": 151,
+    "unexpectedChanges": [],
+    "sharedDocsWithNarrowAdditions": [
+      "docs/agent-state/VYNIC_CODE_MAP.md",
+      "docs/agent-state/VYNIC_PROJECT_STATE.md"
+    ],
+    "originalSharedDocSha256": {
+      "docs/agent-state/VYNIC_PROJECT_STATE.md": "5e9f149f3a895a53283fc89e4cdd259934cd855a34681c833c0e865728195016",
+      "docs/agent-state/VYNIC_CODE_MAP.md": "59565137b6abaf003a26a571a6686a969cbbe709e3929dece5078dc3df339a08"
+    },
+    "noResetStashRebaseUnrelatedMergeOrPush": true,
+    "noCustomerDatabaseOrActivePOSStorageUsed": true
+  },
+  "documentation": "docs/MENU02_LOCAL_MENU_DURABILITY.md",
+  "remainingIssues": [
+    "MENU-01",
+    "MENU-03",
+    "MENU-05",
+    "MENU-06",
+    "MENU-07",
+    "MENU-08",
+    "MENU-09",
+    "MENU-10",
+    "COM-01 (MENU-04 alias)",
+    "EDGE-01"
+  ],
+  "stoppedAfter": "MENU-02"
+}

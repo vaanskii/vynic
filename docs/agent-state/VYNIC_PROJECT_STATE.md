@@ -79,9 +79,14 @@ current transport status.
   mutationId) with actor/source, explicit conflicts, tombstones and
   changes-since catch-up. Writers are the owner Dashboard (not blocked by POS
   presence) and ANY enrolled POS Device (no primary requirement); Manager and
-  both website renderers read it. POS terminals commit Menu edits locally
-  first, journal them durably and sync asynchronously; the operational menu is
-  a projection of canonical state plus the journal, with explicit conflict
+  both website renderers read it. POS Menu edits use a shared local queue and
+  flushed write-ahead commit before journal/state/projection writes and UI
+  success (MENU-02, `docs/MENU02_LOCAL_MENU_DURABILITY.md`). Startup replays
+  interrupted commits before migrations/defaults; sync HTTP waits use a separate
+  queue. Reapply and multi-entry discard are recoverable; mutation IDs survive
+  restart. Hive remains v9, with additive local Menu protocol v1 and unchanged
+  journal entry format. The operational menu is a projection of canonical state
+  plus the journal, with explicit conflict
   choices in Admin Menu. New Venues are created canonical (CLOUD); established
   POS Venues (Vankisi) stay in legacy POS-snapshot compatibility until an
   explicit cutover (read-only readiness audit only). Legacy snapshots ignore

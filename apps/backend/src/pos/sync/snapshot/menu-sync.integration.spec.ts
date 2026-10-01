@@ -79,13 +79,13 @@ describeDatabase('Menu identity in the Cloud mirror (PostgreSQL)', () => {
 
   const itemsOf = (venueId: string) =>
     prisma.menuItem.findMany({
-      where: { venueId },
+      where: { venueId, retiredAt: null },
       orderBy: { nameEn: 'asc' },
     });
 
   const categoriesOf = (venueId: string) =>
     prisma.menuCategory.findMany({
-      where: { venueId },
+      where: { venueId, retiredAt: null },
       orderBy: { slug: 'asc' },
     });
 
@@ -338,7 +338,7 @@ describeDatabase('Menu identity in the Cloud mirror (PostgreSQL)', () => {
     expect(items[0].price).toBe(4);
   });
 
-  it('reconciles deleted variants, items and categories from an authoritative snapshot', async () => {
+  it('retires omitted variants, items and categories from an authoritative snapshot', async () => {
     await service.sync(
       tenantA,
       menu({
@@ -368,7 +368,7 @@ describeDatabase('Menu identity in the Cloud mirror (PostgreSQL)', () => {
     );
     expect(
       await prisma.menuItemVariant.findMany({
-        where: { menuItemId: item.id },
+        where: { menuItemId: item.id, retiredAt: null },
         select: { posMenuVariantId: true },
       }),
     ).toEqual([{ posMenuVariantId: 'variant-20' }]);
@@ -383,11 +383,13 @@ describeDatabase('Menu identity in the Cloud mirror (PostgreSQL)', () => {
 
     await service.sync(tenantA, [], 1);
     expect(
-      await prisma.menuCategory.count({ where: { venueId: venueAId } }),
+      await prisma.menuCategory.count({
+        where: { venueId: venueAId, retiredAt: null },
+      }),
     ).toBe(0);
   });
 
-  it('authoritative cleanup deletes only this Venue POS rows and keeps legacy content', async () => {
+  it('authoritative cleanup retires only this Venue POS rows and keeps legacy content', async () => {
     await service.sync(
       tenantA,
       menu({

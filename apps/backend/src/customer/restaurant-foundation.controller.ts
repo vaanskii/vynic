@@ -29,6 +29,14 @@ export class CustomerCatalogController {
   ) {
     return this.foundation.read(actor, id);
   }
+  @Get('retired')
+  @Header('Cache-Control', 'private, no-store')
+  retired(
+    @CustomerActor() actor: CustomerPrincipal,
+    @Param('venueId') id: string,
+  ) {
+    return this.foundation.retired(actor, id);
+  }
   @Post('mutations')
   @HttpCode(200)
   mutate(
@@ -63,6 +71,11 @@ export class DeviceMenuController {
   @Header('Cache-Control', 'private, no-store')
   catalog(@EdgeDevice() actor: EdgeDeviceContext) {
     return this.catalogs.snapshot(actor.venueId);
+  }
+  @Get('retired')
+  @Header('Cache-Control', 'private, no-store')
+  retired(@EdgeDevice() actor: EdgeDeviceContext) {
+    return this.catalogs.retired(actor.venueId);
   }
   @Get('changes')
   @Header('Cache-Control', 'private, no-store')

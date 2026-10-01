@@ -9,6 +9,7 @@ import { InventoryCostService } from './inventory-cost.service';
 import { SupplierPayments } from './supplier-payments';
 import { Prisma, StockItemClassification } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
+import { activeMenuItem } from '../menu-catalog/menu-active';
 import type { TenantContext } from '../tenancy/tenant-context';
 import {
   INVENTORY_UNIT_DEFINITIONS,
@@ -823,8 +824,12 @@ export class InventoryService {
         await tx.$queryRaw`SELECT id FROM pos."MenuItem" WHERE id=${menuId} AND "venueId"=${actor.venueId} FOR UPDATE`;
       const menu = menuId
         ? await tx.menuItem.findFirst({
-            where: { id: menuId, venueId: actor.venueId },
-            include: { variants: true, category: true, subcategory: true },
+            where: { id: menuId, venueId: actor.venueId, ...activeMenuItem },
+            include: {
+              variants: { where: { retiredAt: null } },
+              category: true,
+              subcategory: true,
+            },
           })
         : null;
       if (menuId && !menu) throw new NotFoundException('Menu item not found');

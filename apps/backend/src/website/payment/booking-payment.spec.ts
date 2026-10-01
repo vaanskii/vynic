@@ -46,7 +46,12 @@ function setup() {
     enabled: boolean;
     nameEn: string;
     nameKa: string;
-    variants: Array<{ id: string; size: number; price: number }>;
+    variants: Array<{
+      id: string;
+      size: number;
+      price: number;
+      retiredAt: Date | null;
+    }>;
     websitePresentation: { visibleOnWebsite: boolean } | null;
   }> = [
     {
@@ -66,7 +71,7 @@ function setup() {
       enabled: true,
       nameEn: 'Foreign',
       nameKa: 'Foreign',
-      variants: [{ id: 'foreign-v', size: 1, price: 1 }],
+      variants: [{ id: 'foreign-v', size: 1, price: 1, retiredAt: null }],
       websitePresentation: null,
     },
     {
@@ -97,8 +102,8 @@ function setup() {
       nameEn: 'Drink',
       nameKa: 'Drink',
       variants: [
-        { id: 'small', size: 0.5, price: 10 },
-        { id: 'large', size: 1, price: 20 },
+        { id: 'small', size: 0.5, price: 10, retiredAt: null },
+        { id: 'large', size: 1, price: 20, retiredAt: null },
       ],
       websitePresentation: null,
     },

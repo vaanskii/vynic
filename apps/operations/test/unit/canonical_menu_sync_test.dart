@@ -423,6 +423,36 @@ void main() {
   );
 
   test(
+    'MENU06 retirement hides ordering but preserves both pending edits across restart',
+    () async {
+      final a = await terminal('retirement');
+      await a.sync.bootstrap();
+      await a.setPrice(ids['khinkali']!, 2.2);
+      await a.setPrice(ids['khinkali']!, 2.3);
+      final mutationIds = a.entries.map((e) => e.mutationId).toList();
+      expect(
+        cloud.mutate({
+          'mutationId': const Uuid().v4(),
+          'entityType': 'ITEM',
+          'operation': 'DELETE',
+          'entityId': ids['khinkali'],
+          'expectedRevision': 1,
+        }).status,
+        200,
+      );
+      expect(await a.sync.syncOnce(), isTrue);
+      expect(a.has(ids['khinkali']!), isFalse);
+      expect(a.sync.conflicts.single.conflict!['deleted'], isTrue);
+      expect(a.entries.map((e) => e.mutationId).toList(), mutationIds);
+      expect(a.sync.unresolved, hasLength(2));
+      await a.restart();
+      expect(a.has(ids['khinkali']!), isFalse);
+      expect(a.sync.unresolved.map((e) => e.mutationId).toList(), mutationIds);
+      expect(a.sync.unresolved.map((e) => e.patch['price']), [2.2, 2.3]);
+    },
+  );
+
+  test(
     '4/5/6/7. offline: menu loads, local edit is instant, survives restart, syncs later',
     () async {
       final a = await terminal('a');

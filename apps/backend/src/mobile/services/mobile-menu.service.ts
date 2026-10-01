@@ -11,6 +11,11 @@ import { EdgeCommandTypes } from '../../shared/contracts/edge-command';
 import { readRestaurantServiceFeeSettings } from '../util/mobile-date.util';
 import { quickOrderDraftIdentity } from '../../tenancy/tenant-identity';
 import type { TenantContext } from '../../tenancy/tenant-context';
+import {
+  activeCategory,
+  activeSubcategory,
+  activeMenuItem,
+} from '../../menu-catalog/menu-active';
 
 /** WS exclude options for the REST client that initiated a mutation. */
 type BroadcastExclude = { excludeSocketIds: string[] } | undefined;
@@ -35,16 +40,19 @@ export class MobileMenuService {
 
   async getMenu(tenant: TenantContext) {
     const cats = await (this.prisma as any).menuCategory.findMany({
-      where: { venueId: tenant.venueId },
+      where: { venueId: tenant.venueId, ...activeCategory },
       include: {
         items: {
-          include: { variants: true },
+          where: activeMenuItem,
+          include: { variants: { where: { retiredAt: null } } },
           orderBy: { sortOrder: 'asc' },
         },
         subcategories: {
+          where: activeSubcategory,
           include: {
             items: {
-              include: { variants: true },
+              where: activeMenuItem,
+              include: { variants: { where: { retiredAt: null } } },
               orderBy: { sortOrder: 'asc' },
             },
           },

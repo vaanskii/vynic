@@ -22,6 +22,8 @@ export interface MenuMutation {
 }
 
 export interface MenuPatch {
+  /** Explicit same-identity unretirement; ordinary edits never resurrect. */
+  restore?: true;
   nameKa?: string;
   nameEn?: string;
   slug?: string;
@@ -43,8 +45,22 @@ const KINDS: Record<string, MenuEntityKind> = {
   VARIANT: 'VARIANT',
 };
 const FIELDS: Record<MenuEntityKind, readonly (keyof MenuPatch)[]> = {
-  CATEGORY: ['nameKa', 'nameEn', 'slug', 'sortOrder', 'sendToKitchen'],
-  SUBCATEGORY: ['nameKa', 'nameEn', 'slug', 'sortOrder', 'categoryId'],
+  CATEGORY: [
+    'nameKa',
+    'nameEn',
+    'slug',
+    'sortOrder',
+    'sendToKitchen',
+    'restore',
+  ],
+  SUBCATEGORY: [
+    'nameKa',
+    'nameEn',
+    'slug',
+    'sortOrder',
+    'categoryId',
+    'restore',
+  ],
   ITEM: [
     'nameKa',
     'nameEn',
@@ -54,8 +70,9 @@ const FIELDS: Record<MenuEntityKind, readonly (keyof MenuPatch)[]> = {
     'price',
     'categoryId',
     'subcategoryId',
+    'restore',
   ],
-  VARIANT: ['size', 'price', 'menuItemId'],
+  VARIANT: ['size', 'price', 'menuItemId', 'restore'],
 };
 
 function bad(message: string): never {
@@ -102,6 +119,10 @@ function patchOf(kind: MenuEntityKind, raw: unknown): MenuPatch {
     if (!allowed.includes(key as keyof MenuPatch))
       bad(`${key} is not a ${kind.toLowerCase()} field`);
     switch (key) {
+      case 'restore':
+        if (value !== true) bad('restore must be true');
+        patch.restore = true;
+        break;
       case 'nameKa':
       case 'nameEn':
         patch[key] = name(value, key);

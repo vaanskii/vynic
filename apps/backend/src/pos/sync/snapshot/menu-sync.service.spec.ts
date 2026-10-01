@@ -16,25 +16,25 @@ function makeDatabase() {
       findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
-      deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+      updateMany: jest.fn().mockResolvedValue({ count: 0 }),
     },
     menuSubcategory: {
       findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
-      deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+      updateMany: jest.fn().mockResolvedValue({ count: 0 }),
     },
     menuItem: {
       findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
-      deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+      updateMany: jest.fn().mockResolvedValue({ count: 0 }),
     },
     menuItemVariant: {
       findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
-      deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+      updateMany: jest.fn().mockResolvedValue({ count: 0 }),
     },
   };
   const prisma = {
@@ -152,33 +152,43 @@ describe('MenuSyncService stable identity reconciliation', () => {
 
   it('reconciles only Venue-scoped POS-owned rows in child-first order', async () => {
     const { db, service } = makeDatabase();
+    const retiredAt = new Date('2026-10-01T10:00:00.000Z');
+    jest.useFakeTimers().setSystemTime(retiredAt);
+    try {
+      await service.sync(tenant, [], 1);
+    } finally {
+      jest.useRealTimers();
+    }
 
-    await service.sync(tenant, [], 1);
-
-    const itemOrder = db.menuItem.deleteMany.mock.invocationCallOrder[0];
+    const itemOrder = db.menuItem.updateMany.mock.invocationCallOrder[0];
     const subcategoryOrder =
-      db.menuSubcategory.deleteMany.mock.invocationCallOrder[0];
+      db.menuSubcategory.updateMany.mock.invocationCallOrder[0];
     const categoryOrder =
-      db.menuCategory.deleteMany.mock.invocationCallOrder[0];
+      db.menuCategory.updateMany.mock.invocationCallOrder[0];
     expect(itemOrder).toBeLessThan(subcategoryOrder);
     expect(subcategoryOrder).toBeLessThan(categoryOrder);
 
-    expect(db.menuItem.deleteMany).toHaveBeenCalledWith({
+    expect(db.menuItem.updateMany).toHaveBeenCalledWith({
       where: {
         venueId: 'venue-a',
+        retiredAt: null,
         posMenuItemId: { not: null },
       },
+      data: { retiredAt },
     });
-    expect(db.menuSubcategory.deleteMany).toHaveBeenCalledWith({
+    expect(db.menuSubcategory.updateMany).toHaveBeenCalledWith({
       where: {
         category: { venueId: 'venue-a' },
+        retiredAt: null,
         posMenuSubcategoryId: { not: null },
         items: { none: { posMenuItemId: null } },
       },
+      data: { retiredAt },
     });
-    expect(db.menuCategory.deleteMany).toHaveBeenCalledWith({
+    expect(db.menuCategory.updateMany).toHaveBeenCalledWith({
       where: {
         venueId: 'venue-a',
+        retiredAt: null,
         posMenuCategoryId: { not: null },
         items: { none: { posMenuItemId: null } },
         subcategories: {
@@ -190,18 +200,19 @@ describe('MenuSyncService stable identity reconciliation', () => {
           },
         },
       },
+      data: { retiredAt },
     });
   });
 
-  it('does not delete anything for a legacy snapshot without identityVersion', async () => {
+  it('does not retire anything for a legacy snapshot without identityVersion', async () => {
     const { db, service } = makeDatabase();
 
     await service.sync(tenant, []);
 
-    expect(db.menuItemVariant.deleteMany).not.toHaveBeenCalled();
-    expect(db.menuItem.deleteMany).not.toHaveBeenCalled();
-    expect(db.menuSubcategory.deleteMany).not.toHaveBeenCalled();
-    expect(db.menuCategory.deleteMany).not.toHaveBeenCalled();
+    expect(db.menuItemVariant.updateMany).not.toHaveBeenCalled();
+    expect(db.menuItem.updateMany).not.toHaveBeenCalled();
+    expect(db.menuSubcategory.updateMany).not.toHaveBeenCalled();
+    expect(db.menuCategory.updateMany).not.toHaveBeenCalled();
   });
 
   it('makes a repeated identical snapshot a persistence no-op', async () => {

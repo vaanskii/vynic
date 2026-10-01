@@ -8,6 +8,12 @@ import type { MenuEntityKind, MenuMutationActor, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { replayAcceptedMutation } from './menu-mutation-result';
 import {
+  activeCategory,
+  activeSubcategory,
+  activeMenuItem,
+  activeVariant,
+} from './menu-active';
+import {
   normalizeMutation,
   requestHash,
   type MenuMutation,
@@ -72,12 +78,26 @@ export class MenuCatalogService {
 
   // ---------------------------------------------------------------- reads
 
-  private async rows(tx: Tx, venueId: string) {
+  private async rows(tx: Tx, venueId: string, includeRetired = false) {
     const [categories, subcategories, items, variants] = await Promise.all([
-      tx.menuCategory.findMany({ where: { venueId } }),
-      tx.menuSubcategory.findMany({ where: { category: { venueId } } }),
-      tx.menuItem.findMany({ where: { venueId } }),
-      tx.menuItemVariant.findMany({ where: { menuItem: { venueId } } }),
+      tx.menuCategory.findMany({
+        where: { venueId, ...(!includeRetired ? activeCategory : {}) },
+      }),
+      tx.menuSubcategory.findMany({
+        where: {
+          ...(!includeRetired ? activeSubcategory : {}),
+          category: { venueId, ...(!includeRetired ? activeCategory : {}) },
+        },
+      }),
+      tx.menuItem.findMany({
+        where: { venueId, ...(!includeRetired ? activeMenuItem : {}) },
+      }),
+      tx.menuItemVariant.findMany({
+        where: {
+          ...(!includeRetired ? activeVariant : {}),
+          menuItem: { venueId, ...(!includeRetired ? activeMenuItem : {}) },
+        },
+      }),
     ]);
     const catKey = new Map(
       categories.map((c) => [c.id, key(c.posMenuCategoryId, c.id)]),
@@ -88,22 +108,39 @@ export class MenuCatalogService {
     const itemKey = new Map(
       items.map((i) => [i.id, key(i.posMenuItemId, i.id)]),
     );
+    const metadata = (row: { retiredAt: Date | null }) =>
+      includeRetired ? { retiredAt: row.retiredAt?.toISOString() ?? null } : {};
     return {
-      categories: categories.map((c) => this.category(c)).sort(byOrder),
+      categories: categories
+        .map((c): CatalogNode => ({ ...this.category(c), ...metadata(c) }))
+        .sort(byOrder),
       subcategories: subcategories
-        .map((s) => this.subcategory(s, catKey.get(s.categoryId)!))
+        .map(
+          (s): CatalogNode => ({
+            ...this.subcategory(s, catKey.get(s.categoryId)!),
+            ...metadata(s),
+          }),
+        )
         .sort(byOrder),
       items: items
-        .map((i) =>
-          this.item(
-            i,
-            i.categoryId ? (catKey.get(i.categoryId) ?? null) : null,
-            i.subcategoryId ? (subKey.get(i.subcategoryId) ?? null) : null,
-          ),
+        .map(
+          (i): CatalogNode => ({
+            ...this.item(
+              i,
+              i.categoryId ? (catKey.get(i.categoryId) ?? null) : null,
+              i.subcategoryId ? (subKey.get(i.subcategoryId) ?? null) : null,
+            ),
+            ...metadata(i),
+          }),
         )
         .sort(byOrder),
       variants: variants
-        .map((v) => this.variant(v, itemKey.get(v.menuItemId)!))
+        .map(
+          (v): CatalogNode => ({
+            ...this.variant(v, itemKey.get(v.menuItemId)!),
+            ...metadata(v),
+          }),
+        )
         .sort(
           (a, b) =>
             (a.size as number) - (b.size as number) || a.id.localeCompare(b.id),
@@ -233,6 +270,28 @@ export class MenuCatalogService {
           authority: venue.menuAuthority,
           sequence: venue.catalogRevision,
           ...(await this.rows(tx, venueId)),
+        };
+      },
+      { isolationLevel: 'RepeatableRead' },
+    );
+  }
+
+  /** Explicit authenticated recovery view; never mixed into the active catalog. */
+  async retired(venueId: string) {
+    return this.db.$transaction(
+      async (tx) => {
+        const venue = await this.venue(tx, venueId);
+        const all = await this.rows(tx, venueId, true);
+        return {
+          version: 2,
+          venueId,
+          sequence: venue.catalogRevision,
+          categories: all.categories.filter((row) => row.retiredAt != null),
+          subcategories: all.subcategories.filter(
+            (row) => row.retiredAt != null,
+          ),
+          items: all.items.filter((row) => row.retiredAt != null),
+          variants: all.variants.filter((row) => row.retiredAt != null),
         };
       },
       { isolationLevel: 'RepeatableRead' },
@@ -398,7 +457,8 @@ export class MenuCatalogService {
 
   private async parentCategory(tx: Tx, venueId: string, id: string) {
     const row = await this.find(tx, venueId, 'CATEGORY', id);
-    if (!row) this.reject('PARENT_MISSING', 'Category not found');
+    if (!row || row.retiredAt)
+      this.reject('PARENT_MISSING', 'Active category not found');
     return row as { id: string };
   }
 
@@ -418,7 +478,13 @@ export class MenuCatalogService {
     const out: Record<string, { from: unknown; to: unknown }> = {};
     for (const [field, value] of Object.entries(after))
       if (before[field] !== value)
-        out[field] = { from: before[field] ?? null, to: value };
+        out[field] = {
+          from:
+            before[field] instanceof Date
+              ? before[field].toISOString()
+              : (before[field] ?? null),
+          to: value instanceof Date ? value.toISOString() : value,
+        };
     return out;
   }
 
@@ -472,9 +538,9 @@ export class MenuCatalogService {
       let deleted = false;
 
       if (m.operation === 'DELETE') {
-        if (!current) {
+        if (!current || current.retiredAt) {
           // Idempotent: already deleted (tombstone) or never existed here.
-          revision = tombstone?.revision ?? 0;
+          revision = current?.revision ?? tombstone?.revision ?? 0;
           deleted = true;
           changes = { alreadyDeleted: true };
         } else {
@@ -491,6 +557,11 @@ export class MenuCatalogService {
           changes = await this.remove(tx, venueId, m, current, seq);
         }
       } else if (!current) {
+        if (m.patch.restore)
+          this.reject(
+            'HISTORICAL_IDENTITY_UNAVAILABLE',
+            'The original retained identity is unavailable; restore requires trustworthy historical evidence',
+          );
         if (tombstone) this.conflict(m, tombstone.revision, null, true);
         if (m.expectedRevision !== 0) this.conflict(m, 0, null, false);
         if (await this.idTaken(tx, m.entityType, m.entityId))
@@ -499,13 +570,22 @@ export class MenuCatalogService {
         revision = 1;
         changes = await this.create(tx, venueId, m, seq);
       } else {
+        if (current.retiredAt && !m.patch.restore)
+          this.conflict(m, current.revision, null, true);
         if (current.revision !== m.expectedRevision)
           this.conflict(
             m,
             current.revision,
-            await this.node(tx, venueId, m.entityType, m.entityId),
-            false,
+            current.retiredAt
+              ? null
+              : await this.node(tx, venueId, m.entityType, m.entityId),
+            !!current.retiredAt,
           );
+        if (m.patch.restore) {
+          if (!current.retiredAt)
+            this.reject('NOT_RETIRED', 'This identity is already active');
+          await this.restoreParents(tx, venueId, m, current);
+        }
         const diff = await this.update(
           tx,
           venueId,
@@ -518,6 +598,10 @@ export class MenuCatalogService {
           revision = current.revision + 1;
         } else revision = current.revision;
         changes = diff;
+        if (m.patch.restore)
+          await tx.menuCatalogTombstone.deleteMany({
+            where: { venueId, entityId: m.entityId },
+          });
       }
 
       if (seq !== venue.catalogRevision)
@@ -618,7 +702,16 @@ export class MenuCatalogService {
         'SUBCATEGORY',
         patch.subcategoryId,
       );
-      if (!sub) this.reject('PARENT_MISSING', 'Subcategory not found');
+      if (
+        !sub ||
+        sub.retiredAt ||
+        (
+          sub as Prisma.MenuSubcategoryGetPayload<{
+            include: { category: true };
+          }>
+        ).category.retiredAt
+      )
+        this.reject('PARENT_MISSING', 'Active subcategory not found');
       return { categoryId: null, subcategoryId: sub.id };
     }
     if (patch.categoryId)
@@ -711,7 +804,13 @@ export class MenuCatalogService {
     }
     this.required(m, ['menuItemId', 'size', 'price']);
     const item = await this.find(tx, venueId, 'ITEM', p.menuItemId!);
-    if (!item) this.reject('PARENT_MISSING', 'Item not found');
+    if (
+      !item ||
+      !(await tx.menuItem.count({
+        where: { id: item.id, venueId, ...activeMenuItem },
+      }))
+    )
+      this.reject('PARENT_MISSING', 'Active item not found');
     const data = { size: p.size!, price: p.price! };
     await tx.menuItemVariant.create({
       data: {
@@ -737,6 +836,7 @@ export class MenuCatalogService {
     if (m.entityType === 'CATEGORY') {
       const row = current as Prisma.MenuCategoryGetPayload<object>;
       const after: Record<string, unknown> = {};
+      if (p.restore) after.retiredAt = null;
       for (const f of [
         'nameKa',
         'nameEn',
@@ -766,6 +866,7 @@ export class MenuCatalogService {
         include: { category: true };
       }>;
       const after: Record<string, unknown> = {};
+      if (p.restore) after.retiredAt = null;
       for (const f of ['nameKa', 'nameEn', 'sortOrder'] as const)
         if (p[f] !== undefined) after[f] = p[f];
       let categoryId = row.categoryId;
@@ -793,6 +894,7 @@ export class MenuCatalogService {
     if (m.entityType === 'ITEM') {
       const row = current as Prisma.MenuItemGetPayload<object>;
       const after: Record<string, unknown> = {};
+      if (p.restore) after.retiredAt = null;
       for (const f of [
         'nameKa',
         'nameEn',
@@ -824,6 +926,7 @@ export class MenuCatalogService {
         message: 'A variant cannot move to another item',
       });
     const after: Record<string, unknown> = {};
+    if (p.restore) after.retiredAt = null;
     for (const f of ['size', 'price'] as const)
       if (p[f] !== undefined) after[f] = p[f];
     const diff = this.changed(row, after);
@@ -852,11 +955,10 @@ export class MenuCatalogService {
   }
 
   /**
-   * Deletes one node. Categories/subcategories must be empty (their children
+   * Retires one node. Categories/subcategories must have no active children (their children
    * are separate nodes that other devices may still be editing); an item's
-   * variants are owned by it and are tombstoned with it. Historical Sales and
-   * Orders keep their frozen names/prices and nullable ids, so nothing they
-   * rely on is removed.
+   * variants are owned by it and are retired/tombstoned with it. Identities,
+   * recipes and presentation remain available to historical consumption.
    */
   private async remove(
     tx: Tx,
@@ -866,23 +968,37 @@ export class MenuCatalogService {
     seq: number,
   ) {
     const revision = current.revision + 1;
+    const retiredAt = new Date();
+    const data = { retiredAt, revision, changeSeq: seq };
     if (m.entityType === 'CATEGORY') {
       const [subs, items] = await Promise.all([
-        tx.menuSubcategory.count({ where: { categoryId: current.id } }),
-        tx.menuItem.count({ where: { categoryId: current.id } }),
+        tx.menuSubcategory.count({
+          where: { categoryId: current.id, retiredAt: null },
+        }),
+        tx.menuItem.count({
+          where: { categoryId: current.id, retiredAt: null },
+        }),
       ]);
       if (subs || items)
         this.reject('NOT_EMPTY', 'Remove the category contents first');
-      await tx.menuCategory.delete({ where: { id: current.id } });
+      await tx.menuCategory.update({ where: { id: current.id }, data });
     } else if (m.entityType === 'SUBCATEGORY') {
-      if (await tx.menuItem.count({ where: { subcategoryId: current.id } }))
+      if (
+        await tx.menuItem.count({
+          where: { subcategoryId: current.id, retiredAt: null },
+        })
+      )
         this.reject('NOT_EMPTY', 'Remove the subcategory items first');
-      await tx.menuSubcategory.delete({ where: { id: current.id } });
+      await tx.menuSubcategory.update({ where: { id: current.id }, data });
     } else if (m.entityType === 'ITEM') {
       const variants = await tx.menuItemVariant.findMany({
-        where: { menuItemId: current.id },
+        where: { menuItemId: current.id, retiredAt: null },
       });
-      for (const v of variants)
+      for (const v of variants) {
+        await tx.menuItemVariant.update({
+          where: { id: v.id },
+          data: { retiredAt, revision: v.revision + 1, changeSeq: seq },
+        });
         await this.tombstone(
           tx,
           venueId,
@@ -892,9 +1008,10 @@ export class MenuCatalogService {
           seq,
           m.mutationId,
         );
-      await tx.menuItem.delete({ where: { id: current.id } });
+      }
+      await tx.menuItem.update({ where: { id: current.id }, data });
     } else {
-      await tx.menuItemVariant.delete({ where: { id: current.id } });
+      await tx.menuItemVariant.update({ where: { id: current.id }, data });
     }
     await this.tombstone(
       tx,
@@ -905,7 +1022,58 @@ export class MenuCatalogService {
       seq,
       m.mutationId,
     );
-    return { deleted: true };
+    return {
+      retiredAt: { from: null, to: retiredAt.toISOString() },
+      deleted: true,
+    };
+  }
+
+  private async restoreParents(
+    tx: Tx,
+    venueId: string,
+    m: MenuMutation,
+    current: NonNullable<Awaited<ReturnType<MenuCatalogService['find']>>>,
+  ) {
+    if (m.entityType === 'SUBCATEGORY') {
+      const row = current as Prisma.MenuSubcategoryGetPayload<object>;
+      if (
+        !m.patch.categoryId &&
+        !(await tx.menuCategory.count({
+          where: { id: row.categoryId, venueId, ...activeCategory },
+        }))
+      )
+        this.reject('PARENT_MISSING', 'Restore the category first');
+    } else if (m.entityType === 'ITEM') {
+      const row = current as Prisma.MenuItemGetPayload<object>;
+      if (!m.patch.categoryId && !m.patch.subcategoryId) {
+        if (
+          row.categoryId &&
+          !(await tx.menuCategory.count({
+            where: { id: row.categoryId, venueId, ...activeCategory },
+          }))
+        )
+          this.reject('PARENT_MISSING', 'Restore the category first');
+        if (
+          row.subcategoryId &&
+          !(await tx.menuSubcategory.count({
+            where: {
+              id: row.subcategoryId,
+              ...activeSubcategory,
+              category: { venueId, ...activeCategory },
+            },
+          }))
+        )
+          this.reject('PARENT_MISSING', 'Restore the subcategory first');
+      }
+    } else if (m.entityType === 'VARIANT') {
+      const row = current as Prisma.MenuItemVariantGetPayload<object>;
+      if (
+        !(await tx.menuItem.count({
+          where: { id: row.menuItemId, venueId, ...activeMenuItem },
+        }))
+      )
+        this.reject('PARENT_MISSING', 'Restore the item first');
+    }
   }
 }
 

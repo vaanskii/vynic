@@ -5,6 +5,12 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import type { TenantContext } from '../../tenancy/tenant-context';
+import {
+  activeCategory,
+  activeSubcategory,
+  activeMenuItem,
+  activeVariant,
+} from '../../menu-catalog/menu-active';
 
 type MenuItemRow = {
   id: string;
@@ -54,7 +60,7 @@ export class MenuService {
   ) {
     const include = { variants: true, websitePresentation: true } as const;
     let item = await this.prisma.menuItem.findFirst({
-      where: { id, venueId: tenant.venueId },
+      where: { id, venueId: tenant.venueId, ...activeMenuItem },
       include,
     });
     let selectedVariantId = variantId;
@@ -62,7 +68,11 @@ export class MenuService {
       // Existing Vankisi carts send the selected variant's ID as `id`.
       // Resolve its parent through the same Venue boundary, never client price.
       const legacy = await this.prisma.menuItemVariant.findFirst({
-        where: { id, menuItem: { venueId: tenant.venueId } },
+        where: {
+          id,
+          ...activeVariant,
+          menuItem: { venueId: tenant.venueId, ...activeMenuItem },
+        },
         include: { menuItem: { include } },
       });
       if (!legacy || (variantId !== undefined && variantId !== legacy.id))
@@ -72,7 +82,9 @@ export class MenuService {
     }
     if (!item.enabled || item.websitePresentation?.visibleOnWebsite === false)
       throw new BadRequestException('Menu selection is unavailable');
-    const variant = item.variants.find((v) => v.id === selectedVariantId);
+    const variant = item.variants.find(
+      (v) => v.id === selectedVariantId && v.retiredAt === null,
+    );
     if (
       (selectedVariantId !== undefined && !variant) ||
       (item.variants.length && !variant)
@@ -91,7 +103,7 @@ export class MenuService {
   /** Full menu tree — categories in POS order, for the resolved Venue only. */
   async getAllCategories(tenant: TenantContext) {
     const categories = await this.prisma.menuCategory.findMany({
-      where: { venueId: tenant.venueId },
+      where: { venueId: tenant.venueId, ...activeCategory },
       include: this.menuInclude(),
       orderBy: { sortOrder: 'asc' },
     });
@@ -101,9 +113,11 @@ export class MenuService {
 
   /** Single category — use when user picks e.g. "beer" / "ლუდი". */
   async getCategoryBySlug(tenant: TenantContext, slug: string) {
-    const category = await this.prisma.menuCategory.findUnique({
+    const category = await this.prisma.menuCategory.findFirst({
       where: {
-        venueId_slug: { venueId: tenant.venueId, slug },
+        venueId: tenant.venueId,
+        slug,
+        ...activeCategory,
       },
       include: this.menuInclude(),
     });
@@ -117,8 +131,12 @@ export class MenuService {
 
   async getMenuItemById(tenant: TenantContext, itemId: string) {
     const item = await this.prisma.menuItem.findFirst({
-      where: { id: itemId, venueId: tenant.venueId },
-      include: { variants: true, category: true, subcategory: true },
+      where: { id: itemId, venueId: tenant.venueId, ...activeMenuItem },
+      include: {
+        variants: { where: { retiredAt: null } },
+        category: true,
+        subcategory: true,
+      },
     });
     if (!item) return null;
 
@@ -140,7 +158,7 @@ export class MenuService {
     itemId: string,
   ): Promise<string | null> {
     const item = await this.prisma.menuItem.findFirst({
-      where: { id: itemId, venueId: tenant.venueId },
+      where: { id: itemId, venueId: tenant.venueId, ...activeMenuItem },
       select: { posMenuItemId: true },
     });
     return item?.posMenuItemId ?? null;
@@ -149,13 +167,16 @@ export class MenuService {
   private menuInclude() {
     return {
       items: {
-        include: { variants: true },
+        where: activeMenuItem,
+        include: { variants: { where: { retiredAt: null } } },
         orderBy: { sortOrder: 'asc' as const },
       },
       subcategories: {
+        where: activeSubcategory,
         include: {
           items: {
-            include: { variants: true },
+            where: activeMenuItem,
+            include: { variants: { where: { retiredAt: null } } },
             orderBy: { sortOrder: 'asc' as const },
           },
         },

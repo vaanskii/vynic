@@ -139,6 +139,14 @@ class MenuLocalStore {
     final next = current.copy();
     for (final e in entries ?? this.entries(current)) {
       if (!e.unresolved) continue;
+      // A historical edit cannot recreate a node removed by the server. Keep
+      // every journal entry for explicit conflict resolution, but only new
+      // local identities (revision zero) may appear before server acceptance.
+      if (e.operation == 'UPSERT' &&
+          e.expectedRevision > 0 &&
+          !current.nodes.containsKey(e.entityId)) {
+        continue;
+      }
       next.applyLocal(
         MenuKindWire.parse(e.entityType),
         e.operation,

@@ -77,6 +77,8 @@ model OrderItem {
 }
 
 model MenuCategory {
+  /// Removal from active catalogs; durable identity/references remain.
+  retiredAt         DateTime?
   id                String            @id @default(uuid())
   venueId           String
   posMenuCategoryId String?
@@ -101,6 +103,7 @@ model MenuCategory {
 }
 
 model MenuSubcategory {
+  retiredAt            DateTime?
   id                   String       @id @default(uuid())
   slug                 String
   nameKa               String
@@ -122,6 +125,8 @@ model MenuSubcategory {
 }
 
 model MenuItem {
+  /// Historical retirement is separate from temporary enabled/availability.
+  retiredAt          DateTime?
   enabled            Boolean                 @default(true)
   id                 String                  @id @default(uuid())
   venueId            String
@@ -163,6 +168,7 @@ model MenuItem {
 }
 
 model MenuItemVariant {
+  retiredAt          DateTime?
   id                 String                  @id @default(uuid())
   menuItemId         String
   posMenuVariantId   String?
@@ -501,8 +507,8 @@ model MenuConsumptionRecipe {
   updatedAt            DateTime @updatedAt
 
   venue      Venue                      @relation(fields: [venueId], references: [id], onDelete: Restrict)
-  menuItem   MenuItem                   @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
-  variant    MenuItemVariant?           @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  menuItem   MenuItem                   @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
+  variant    MenuItemVariant?           @relation(fields: [variantId], references: [id], onDelete: Restrict)
   components MenuConsumptionComponent[]
 
   @@unique([menuItemId, variantKey])
@@ -1539,7 +1545,7 @@ model CustomWebsiteBinding {
 /// model, so the website never keeps a second restaurant menu that can drift
 /// from the one the kitchen and the till use.
 ///
-/// The row is keyed by the menu item, cascades with it, and carries [venueId]
+/// The row is keyed by the retained menu item and carries [venueId]
 /// so a presentation write can be scoped to one restaurant without joining
 /// through the item. Absence of a row means "visible under its operational
 /// name": a restaurant that has never opened the website editor still gets a
@@ -1556,7 +1562,7 @@ model MenuItemWebsitePresentation {
   sortOrder        Int      @default(0)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
-  menuItem         MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  menuItem         MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
   venue            Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
 
   @@index([venueId])

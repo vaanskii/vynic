@@ -578,12 +578,18 @@ const url = process.env.W3_TEST_DATABASE_URL;
           ],
         })
         .expect(200);
-      await db.menuItem.delete({ where: { id: doomed.id } });
+      await expect(
+        db.menuItem.delete({ where: { id: doomed.id } }),
+      ).rejects.toMatchObject({ code: 'P2003' });
+      await db.menuItem.update({
+        where: { id: doomed.id },
+        data: { retiredAt: new Date() },
+      });
       expect(
         await db.menuItemWebsitePresentation.findUnique({
           where: { menuItemId: doomed.id },
         }),
-      ).toBeNull();
+      ).not.toBeNull();
       expect(JSON.stringify((await publicGet(0, 'menu')).body)).not.toContain(
         'Retired',
       );

@@ -482,7 +482,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             dense: true,
             leading: Icon(Icons.delete_outline, color: AdminDesign.danger),
             title: PosText(
-              'წაშლა',
+              'არქივში გადატანა',
               style: TextStyle(color: AdminDesign.danger),
             ),
           ),
@@ -1020,7 +1020,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                                     PopupMenuItem(
                                       value: 'delete',
                                       child: PosText(
-                                        'წაშლა',
+                                        'არქივში გადატანა',
                                         style: TextStyle(
                                           color: AdminDesign.danger,
                                         ),
@@ -1114,7 +1114,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                                                 PopupMenuItem(
                                                   value: 'delete',
                                                   child: PosText(
-                                                    'წაშლა',
+                                                    'არქივში გადატანა',
                                                     style: TextStyle(
                                                       color: AdminDesign.danger,
                                                     ),
@@ -1387,7 +1387,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                 size: isMobile ? 20 : 24,
               ),
               onPressed: () => _confirmDeleteCategory(categoryIndex, nameEn),
-              tooltip: 'კატეგორიის წაშლა',
+              tooltip: 'კატეგორიის არქივში გადატანა',
               padding: isMobile ? EdgeInsets.zero : const EdgeInsets.all(8),
               constraints: isMobile ? const BoxConstraints() : null,
             ),
@@ -1572,7 +1572,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
                             subcategoryIndex,
                             subNameEn,
                           ),
-                          tooltip: 'ქვეკატეგორიის წაშლა',
+                          tooltip: 'ქვეკატეგორიის არქივში გადატანა',
                           padding: isMobile
                               ? EdgeInsets.zero
                               : const EdgeInsets.all(8),
@@ -2056,11 +2056,11 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       builder: (context) => AlertDialog(
         backgroundColor: AdminDesign.text,
         title: const PosText(
-          'კატეგორიის წაშლა',
+          'კატეგორიის არქივში გადატანა',
           style: TextStyle(color: Colors.white),
         ),
         content: PosText(
-          'დარწმუნებული ხართ, რომ გსურთ „$name“ წაშლა?\nამ კატეგორიის ყველა პროდუქტიც წაიშლება.',
+          'დარწმუნებული ხართ, რომ გსურთ „$name“ არქივში გადატანა?\nამ კატეგორიის ყველა პროდუქტიც აქტიური მენიუდან მოიხსნება.',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
@@ -2073,7 +2073,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AdminDesign.danger,
             ),
-            child: const PosText('წაშლა'),
+            child: const PosText('არქივში გადატანა'),
           ),
         ],
       ),
@@ -2271,11 +2271,11 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       builder: (context) => AlertDialog(
         backgroundColor: AdminDesign.text,
         title: const PosText(
-          'ქვეკატეგორიის წაშლა',
+          'ქვეკატეგორიის არქივში გადატანა',
           style: TextStyle(color: Colors.white),
         ),
         content: PosText(
-          'დარწმუნებული ხართ, რომ გსურთ „$name“ წაშლა?\nამ ქვეკატეგორიის ყველა პროდუქტიც წაიშლება.',
+          'დარწმუნებული ხართ, რომ გსურთ „$name“ არქივში გადატანა?\nამ ქვეკატეგორიის ყველა პროდუქტიც აქტიური მენიუდან მოიხსნება.',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
@@ -2288,7 +2288,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AdminDesign.danger,
             ),
-            child: const PosText('წაშლა'),
+            child: const PosText('არქივში გადატანა'),
           ),
         ],
       ),
@@ -2852,11 +2852,11 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       builder: (context) => AlertDialog(
         backgroundColor: AdminDesign.text,
         title: const PosText(
-          'პროდუქტის წაშლა',
+          'პროდუქტის არქივში გადატანა',
           style: TextStyle(color: Colors.white),
         ),
         content: PosText(
-          'დარწმუნებული ხართ, რომ გსურთ „$name“ წაშლა?',
+          'დარწმუნებული ხართ, რომ გსურთ „$name“ არქივში გადატანა?',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
@@ -2869,7 +2869,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AdminDesign.danger,
             ),
-            child: const PosText('წაშლა'),
+            child: const PosText('არქივში გადატანა'),
           ),
         ],
       ),
@@ -3079,11 +3079,11 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
       builder: (context) => AlertDialog(
         backgroundColor: AdminDesign.text,
         title: const PosText(
-          'პროდუქტის წაშლა',
+          'პროდუქტის არქივში გადატანა',
           style: TextStyle(color: Colors.white),
         ),
         content: PosText(
-          'დარწმუნებული ხართ, რომ გსურთ „$name“ წაშლა?',
+          'დარწმუნებული ხართ, რომ გსურთ „$name“ არქივში გადატანა?',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
@@ -3096,7 +3096,7 @@ class _AdminMenuSectionState extends State<AdminMenuSection> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AdminDesign.danger,
             ),
-            child: const PosText('წაშლა'),
+            child: const PosText('არქივში გადატანა'),
           ),
         ],
       ),

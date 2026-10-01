@@ -4,6 +4,11 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
 import {
+  activeCategory,
+  activeSubcategory,
+  activeMenuItem,
+} from '../../menu-catalog/menu-active';
+import {
   websiteMenuPresentationInput,
   type WebsiteMenuPresentationInput,
 } from './website-menu';
@@ -27,6 +32,7 @@ const itemArgs = Prisma.validator<Prisma.MenuItemDefaultArgs>()({
     sortOrder: true,
     subcategoryId: true,
     variants: {
+      where: { retiredAt: null },
       select: { id: true, size: true, price: true },
       orderBy: [{ size: 'asc' }, { id: 'asc' }],
     },
@@ -68,7 +74,7 @@ export class WebsiteMenuService {
 
   private tree(venueId: string) {
     return this.db.menuCategory.findMany({
-      where: { venueId },
+      where: { venueId, ...activeCategory },
       orderBy: [{ sortOrder: 'asc' }, { nameEn: 'asc' }],
       select: {
         id: true,
@@ -76,8 +82,9 @@ export class WebsiteMenuService {
         nameKa: true,
         nameEn: true,
         sortOrder: true,
-        items: itemArgs,
+        items: { ...itemArgs, where: activeMenuItem },
         subcategories: {
+          where: activeSubcategory,
           orderBy: [{ sortOrder: 'asc' }, { nameEn: 'asc' }],
           select: {
             id: true,
@@ -85,7 +92,7 @@ export class WebsiteMenuService {
             nameKa: true,
             nameEn: true,
             sortOrder: true,
-            items: itemArgs,
+            items: { ...itemArgs, where: activeMenuItem },
           },
         },
       },
@@ -221,7 +228,11 @@ export class WebsiteMenuService {
         await tx.$queryRaw`SELECT "id" FROM "pos"."Venue" WHERE "id"=${venueId} FOR UPDATE`;
         await requireCommercialFeature(tx, venueId, 'WEBSITE');
         const owned = await tx.menuItem.findMany({
-          where: { venueId, id: { in: rows.map((r) => r.menuItemId) } },
+          where: {
+            venueId,
+            ...activeMenuItem,
+            id: { in: rows.map((r) => r.menuItemId) },
+          },
           select: { id: true },
         });
         if (owned.length !== rows.length)

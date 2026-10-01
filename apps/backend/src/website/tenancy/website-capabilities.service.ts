@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma, WebsiteCapabilityKey } from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
+import { activeMenuItem } from '../../menu-catalog/menu-active';
 import { VenueEntitlementsService } from '../../entitlements/venue-entitlements.service';
 import {
   CapabilityFacts,
@@ -33,7 +34,9 @@ export class WebsiteCapabilitiesService {
       await Promise.all([
         this.entitlements.effectiveFeatures(venueId),
         this.db.venueWebsiteCapability.findMany({ where: { venueId } }),
-        this.db.menuItem.count({ where: { venueId, enabled: true } }),
+        this.db.menuItem.count({
+          where: { venueId, enabled: true, ...activeMenuItem },
+        }),
         this.db.venuePublicProfile.findUnique({
           where: { venueId },
           select: { workingHours: true, gallery: true },

@@ -19,6 +19,7 @@ import { WebsiteLogoService } from '../src/website/core/website-logo.service';
 import { WebsiteLogoController } from '../src/website/core/website-logo.controller';
 import 'reflect-metadata';
 import { Test } from '@nestjs/testing';
+import type { ModuleMetadata } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../src/prisma.service';
@@ -69,6 +70,7 @@ import { WebsiteTenantService } from '../src/website/tenancy/website-tenant.serv
 export async function onboardingApp(
   db: PrismaService,
   corsOrigin?: string | string[],
+  extra: Pick<ModuleMetadata, 'controllers' | 'providers'> = {},
 ) {
   const config = new ConfigService({
     WEBSITE_MEDIA_DIR: '/tmp/vynic-foundation-test-media',
@@ -79,6 +81,7 @@ export async function onboardingApp(
   });
   const module = await Test.createTestingModule({
     controllers: [
+      ...(extra.controllers ?? []),
       PublicAccessRequestsController,
       PlatformAccessRequestsController,
       CustomerTrialRequestsController,
@@ -104,6 +107,7 @@ export async function onboardingApp(
       PlatformPaymentsController,
     ],
     providers: [
+      ...(extra.providers ?? []),
       OnboardingRequestsService,
       PlanCatalogService,
       RestaurantFoundationService,

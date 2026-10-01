@@ -1,3 +1,4 @@
+import '../menu/menu_client_compatibility.dart';
 import 'dart:io';
 import 'local_lab_api.dart';
 import 'package:flutter/foundation.dart';
@@ -63,6 +64,7 @@ class ApiConfig {
   static String? get posSyncApiKey => null;
   static Map<String, String> get posSyncHeaders => {
     'Content-Type': 'application/json',
+    ...MenuClientCompatibility.headers,
     if (EdgeDeviceCredentialStore.credential case final String credential)
       'X-POS-Sync-Key': credential,
   };

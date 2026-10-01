@@ -1,3 +1,4 @@
+import '../menu/menu_client_compatibility.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
@@ -968,6 +969,13 @@ class ManagerSyncService {
       );
       timing.mark('http');
 
+      final menuResponse = jsonDecode(response.body);
+      MenuClientCompatibility.observe(response.statusCode, menuResponse);
+      if (response.statusCode == 426 &&
+          menuResponse is Map &&
+          menuResponse['code'] == 'CANONICAL_MENU_SNAPSHOT_UNSUPPORTED') {
+        unawaited(PosMenuSyncService.instance.refreshAuthority());
+      }
       if (response.statusCode != 201 && response.statusCode != 200) {
         debugPrint(
           'Manager Sync Failed (${response.statusCode}) → $serverUrl: ${response.body}',

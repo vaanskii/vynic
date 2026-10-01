@@ -1,5 +1,10 @@
 import { requireCommercialFeature } from '../entitlements/commercial-state';
 import {
+  assertMenuCompatibility,
+  menuClientReport,
+} from '../menu-catalog/menu-client-policy';
+import { Prisma } from '@prisma/client';
+import {
   lockOperationalVenue,
   selectFirstOperationalDevice,
 } from './operational-authority';
@@ -95,6 +100,7 @@ export interface RedeemEnrollmentInput {
   displayName?: string;
   /** For rate limiting only. Never persisted. */
   clientIp?: string;
+  menuClient?: unknown;
 }
 
 export interface RedeemedEnrollment {
@@ -396,6 +402,7 @@ export class DeviceEnrollmentService {
         status: true,
         timezone: true,
         currency: true,
+        menuAuthority: true,
       },
     });
     if (!venue || venue.status !== VenueStatus.ACTIVE) {
@@ -404,6 +411,12 @@ export class DeviceEnrollmentService {
         'This venue is not active. Contact Vynic support.',
       );
     }
+
+    assertMenuCompatibility(
+      venue.menuAuthority,
+      platform,
+      menuClientReport(input.menuClient),
+    );
 
     if (enrollment.redeemedAt) {
       return this.retryRedemption(enrollment, venue, input, now);
@@ -446,10 +459,27 @@ export class DeviceEnrollmentService {
 
     const { secret, credentialHash } =
       await this.credentials.mintCredentialMaterial();
-    const device = await this.prisma.device.update({
-      where: { id: enrollment.deviceId },
-      data: { credentialHash, status: DeviceStatus.ACTIVE },
-      select: DEVICE_SELECT,
+    const deviceId = enrollment.deviceId;
+    const device = await this.prisma.$transaction(async (tx) => {
+      const current = await lockOperationalVenue(tx, enrollment.venueId);
+      const retainedDevice = await tx.device.findFirstOrThrow({
+        where: { id: deviceId, venueId: enrollment.venueId },
+        select: { platform: true },
+      });
+      assertMenuCompatibility(
+        current.menuAuthority,
+        retainedDevice.platform,
+        menuClientReport(input.menuClient),
+      );
+      return tx.device.update({
+        where: { id: deviceId },
+        data: {
+          credentialHash,
+          status: DeviceStatus.ACTIVE,
+          ...reportedClient(input.menuClient, now),
+        },
+        select: DEVICE_SELECT,
+      });
     });
 
     await this.audit.record(
@@ -495,7 +525,12 @@ export class DeviceEnrollmentService {
       await this.credentials.mintCredentialMaterial();
 
     const device = await this.prisma.$transaction(async (tx) => {
-      await lockOperationalVenue(tx, enrollment.venueId);
+      const current = await lockOperationalVenue(tx, enrollment.venueId);
+      assertMenuCompatibility(
+        current.menuAuthority,
+        platform,
+        menuClientReport(input.menuClient),
+      );
       await requireCommercialFeature(tx, enrollment.venueId, 'POS');
       // The single-use guarantee. Two terminals racing the same code: exactly
       // one update matches, and the loser creates nothing.
@@ -521,6 +556,7 @@ export class DeviceEnrollmentService {
               credentialHash,
               displayName,
               platform,
+              ...reportedClient(input.menuClient, now),
               // The administrator who minted this code authorized the terminal
               // to come back. A previously disabled or revoked machine is
               // reinstated here with a brand-new secret; the old one is dead.
@@ -535,6 +571,7 @@ export class DeviceEnrollmentService {
               displayName,
               platform,
               credentialHash,
+              ...reportedClient(input.menuClient, now),
             },
             select: DEVICE_SELECT,
           });
@@ -646,6 +683,14 @@ export class DeviceEnrollmentService {
 
 const INVALID_CODE_MESSAGE =
   'That enrollment code is not valid. Check it and try again.';
+
+function reportedClient(raw: unknown, now: Date) {
+  const report = menuClientReport(raw);
+  return {
+    menuClientReport: report ? { ...report } : Prisma.JsonNull,
+    menuClientObservedAt: now,
+  };
+}
 
 /**
  * What a read of an enrollment may show.

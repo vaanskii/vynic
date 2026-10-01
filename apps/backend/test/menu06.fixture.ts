@@ -1,3 +1,4 @@
+import { supportedMenuClientHeader } from './menu-client.fixture';
 import { randomUUID } from 'node:crypto';
 import type { INestApplication } from '@nestjs/common';
 import { PrismaService } from '../src/prisma.service';
@@ -115,6 +116,7 @@ export async function menu06Http(
     method,
     headers: {
       'Content-Type': 'application/json',
+      'X-Vynic-Menu-Client': supportedMenuClientHeader,
       ...(owner
         ? { Authorization: `Bearer ${venue.ownerToken}` }
         : { 'X-POS-Sync-Key': venue.credential }),

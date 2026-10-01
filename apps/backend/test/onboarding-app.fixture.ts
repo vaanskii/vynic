@@ -1,3 +1,9 @@
+import { MenuClientGuard } from '../src/menu-catalog/menu-client.guard';
+import { MenuRolloutService } from '../src/menu-catalog/menu-rollout.service';
+import {
+  CustomerMenuRolloutController,
+  DeviceMenuClientController,
+} from '../src/menu-catalog/menu-rollout.controller';
 import { HostnameRequestsService } from '../src/website/core/hostname-requests';
 import { PlatformHostnameController } from '../src/platform/platform-hostname.controller';
 import {
@@ -85,6 +91,8 @@ export async function onboardingApp(
       PublicAccessRequestsController,
       PlatformAccessRequestsController,
       CustomerTrialRequestsController,
+      CustomerMenuRolloutController,
+      DeviceMenuClientController,
       CustomerCatalogController,
       DeviceFoundationController,
       DeviceMenuController,
@@ -111,6 +119,8 @@ export async function onboardingApp(
       OnboardingRequestsService,
       PlanCatalogService,
       RestaurantFoundationService,
+      MenuClientGuard,
+      MenuRolloutService,
       MenuCatalogService,
       WebsiteLogoService,
       { provide: PrismaService, useValue: db },

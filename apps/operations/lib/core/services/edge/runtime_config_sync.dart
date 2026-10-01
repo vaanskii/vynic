@@ -9,6 +9,7 @@ import '../printing/printer_service.dart';
 import '../printing/print_queue.dart';
 import 'edge_device_credential_store.dart';
 import '../../database/repositories/inventory_repository.dart';
+import '../menu/menu_client_compatibility.dart';
 
 /// One complete durable configuration value; failed pulls retain the last good copy.
 class RuntimeConfigSync {
@@ -41,6 +42,11 @@ class RuntimeConfigSync {
         Uri.parse('${ApiConfig.baseUrl}/edge/runtime-config'),
         headers: ApiConfig.posSyncHeaders,
       ).timeout(const Duration(seconds: 15));
+      if (!MenuClientCompatibility.observe(
+        response.statusCode,
+        jsonDecode(response.body),
+      ))
+        return;
       if (response.statusCode != 200)
         throw StateError('Configuration request: ${response.statusCode}');
       final snapshot = jsonDecode(response.body) as Map<String, dynamic>;

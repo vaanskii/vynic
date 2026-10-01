@@ -213,6 +213,7 @@ class PosEnrollmentService {
         return PosEnrollmentStatus.connected;
       case EdgeEnrollmentOutcome.unreachable:
         return PosEnrollmentStatus.unreachable;
+      case EdgeEnrollmentOutcome.updateRequired:
       case EdgeEnrollmentOutcome.rejected:
         return PosEnrollmentStatus.rejected;
       case EdgeEnrollmentOutcome.conflict:
@@ -229,6 +230,8 @@ class PosEnrollmentService {
       case EdgeEnrollmentOutcome.unreachable:
         return 'Nothing answered at $url. Check the address and that the '
             'terminal is on the same network as the server.';
+      case EdgeEnrollmentOutcome.updateRequired:
+        return 'განაახლეთ Vynic POS. რესტორნის მონაცემები არ შეცვლილა.';
       case EdgeEnrollmentOutcome.rejected:
         return 'That enrollment code was not accepted. Check it, or ask for a '
             'new one.';

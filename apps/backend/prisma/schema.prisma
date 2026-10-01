@@ -1179,6 +1179,7 @@ model Venue {
   mediaAssets WebsiteMediaAsset[]
   menuAuthority             MenuAuthority              @default(POS)
   catalogRevision           Int                        @default(0)
+  menuCutover               Json?
   paymentIntegrations PaymentIntegration[]
   edgeFoundations EdgeFoundationInstallation[]
   activeOperationalDeviceId String? @unique
@@ -1272,6 +1273,9 @@ model Device {
   firstSyncAt    DateTime?
   foundationBootstrap Json?
   runtimeConfig Json?
+  menuClientReport Json?
+  menuClientObservedAt DateTime?
+  lastLegacyMenuSyncAt DateTime?
   lastSeenAt     DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt

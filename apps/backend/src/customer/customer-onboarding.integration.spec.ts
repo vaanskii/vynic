@@ -1,4 +1,8 @@
 import {
+  supportedMenuClient,
+  supportedMenuClientHeader,
+} from '../../test/menu-client.fixture';
+import {
   ManagerVenueProfileController,
   DeviceVenueProfileController,
 } from '../venue-profile/venue-profile.controller';
@@ -290,6 +294,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
               enrollmentCode: code.code,
               installationId,
               platform: 'WINDOWS',
+              menuClient: supportedMenuClient,
             })
             .expect(201)
         ).body;
@@ -301,6 +306,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
             enrollmentCode: code.code,
             installationId: randomUUID(),
             platform: 'WINDOWS',
+            menuClient: supportedMenuClient,
           })
           .expect(409);
         const login = (
@@ -385,6 +391,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
           await http()
             .get('/edge/runtime-config')
             .set('X-POS-Sync-Key', o.credential)
+            .set('X-Vynic-Menu-Client', supportedMenuClientHeader)
             .expect(200)
         ).body;
       expect((await read(a)).device.runtimeConfig.printers).toEqual(printers);
@@ -438,11 +445,13 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
       const runtime = await http()
         .get('/edge/runtime-config')
         .set('X-POS-Sync-Key', a.credential)
+        .set('X-Vynic-Menu-Client', supportedMenuClientHeader)
         .expect(200);
       expect(runtime.body.venue.branchName).toBe('საბურთალო');
       await http()
         .put('/edge/venue-profile')
         .set('X-POS-Sync-Key', a.credential)
+        .set('X-Vynic-Menu-Client', supportedMenuClientHeader)
         .send({ ...profile, branchName: 'დიდუბე', venueId: b.venue.id })
         .expect(200);
       expect((await read(a).expect(200)).body.branchName).toBe('დიდუბე');
@@ -455,6 +464,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
       await http()
         .put('/edge/venue-profile')
         .set('X-POS-Sync-Key', a.credential)
+        .set('X-Vynic-Menu-Client', supportedMenuClientHeader)
         .send({ ...profile, address: 'x'.repeat(301) })
         .expect(400);
       await http()
@@ -488,6 +498,7 @@ const url = process.env.TENANT_INTEGRATION_DATABASE_URL;
           enrollmentCode: code.code,
           installationId: randomUUID(),
           platform: 'WINDOWS',
+          menuClient: supportedMenuClient,
         })
         .expect(401);
       const owner = await db.customerAccount.findFirstOrThrow({

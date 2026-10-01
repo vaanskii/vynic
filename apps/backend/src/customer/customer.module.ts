@@ -1,3 +1,9 @@
+import { MenuClientGuard } from '../menu-catalog/menu-client.guard';
+import { MenuRolloutService } from '../menu-catalog/menu-rollout.service';
+import {
+  CustomerMenuRolloutController,
+  DeviceMenuClientController,
+} from '../menu-catalog/menu-rollout.controller';
 import {
   OnboardingRequestsService,
   PublicAccessRequestsController,
@@ -54,6 +60,8 @@ import {
   providers: [
     OnboardingRequestsService,
     RestaurantFoundationService,
+    MenuClientGuard,
+    MenuRolloutService,
     MenuCatalogService,
     OwnerInvitationsService,
     CustomerAuth,
@@ -66,6 +74,8 @@ import {
     PublicAccessRequestsController,
     PlatformAccessRequestsController,
     CustomerTrialRequestsController,
+    CustomerMenuRolloutController,
+    DeviceMenuClientController,
     CustomerCatalogController,
     DeviceFoundationController,
     DeviceMenuController,

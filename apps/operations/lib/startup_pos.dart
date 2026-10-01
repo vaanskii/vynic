@@ -1,3 +1,4 @@
+import 'core/widgets/menu_update_required.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:vynic/core/services/pos/pos_locale.dart';
 import 'dart:io' show Platform;
@@ -150,7 +151,11 @@ class _PosAppState extends State<PosApp> with WidgetsBindingObserver {
                   child: PosUpdateHost(
                     navigatorKey: navigatorKey,
                     child: PosInputScope(
-                      child: ConnectionFeedback.pos(child: activityAwareChild),
+                      child: MenuUpdateRequired(
+                        child: ConnectionFeedback.pos(
+                          child: activityAwareChild,
+                        ),
+                      ),
                     ),
                   ),
                 );

@@ -7,6 +7,7 @@ import 'package:vynic/core/models/menu_item_db.dart';
 import 'package:vynic/core/services/menu/canonical_menu.dart';
 import 'package:vynic/core/services/menu/menu_mutation_journal.dart';
 import 'package:vynic/core/services/menu/menu_local_store.dart';
+import 'menu_client_compatibility.dart';
 
 /// One HTTP exchange with the canonical Menu API. `status == 0` = unreachable.
 class MenuTransportResult {
@@ -30,12 +31,14 @@ class HttpMenuSyncTransport implements MenuSyncTransport {
     required this.credential,
     http.Client? client,
     this.timeout = const Duration(seconds: 15),
+    this.menuClient,
   }) : _http = client ?? http.Client();
 
   final String Function() baseUrl;
   final String? Function() credential;
   final http.Client _http;
   final Duration timeout;
+  final Map<String, Object?>? menuClient;
 
   Future<MenuTransportResult> _send(
     Future<http.Response> Function() call,
@@ -49,6 +52,7 @@ class HttpMenuSyncTransport implements MenuSyncTransport {
       } catch (_) {
         body = null;
       }
+      MenuClientCompatibility.observe(response.statusCode, body);
       return MenuTransportResult(response.statusCode, body);
     } catch (_) {
       return const MenuTransportResult(0);
@@ -59,6 +63,9 @@ class HttpMenuSyncTransport implements MenuSyncTransport {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
     'X-POS-Sync-Key': credential() ?? '',
+    'X-Vynic-Menu-Client': jsonEncode(
+      menuClient ?? MenuClientCompatibility.report,
+    ),
   };
 
   @override
@@ -265,6 +272,12 @@ class PosMenuSync {
       });
       if (entry == null) continue;
       final response = await transport.mutate(entry.toWire());
+      if (response.status == 426 &&
+          (response.code == 'MENU_UPDATE_REQUIRED' ||
+              response.code == 'CANONICAL_MENU_SNAPSHOT_UNSUPPORTED')) {
+        // Hold the original intent unchanged until this build is supported.
+        return false;
+      }
       await local.run(() async {
         if (!isCanonical) throw StateError('Menu identity changed during sync');
         final current = state!;

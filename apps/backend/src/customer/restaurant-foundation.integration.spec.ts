@@ -1,3 +1,7 @@
+import {
+  supportedMenuClient,
+  supportedMenuClientHeader,
+} from '../../test/menu-client.fixture';
 import { isFreshDisposableDatabase } from '../../test/disposable-database';
 import { OwnerInvitationsService } from './owner-invitations.service';
 import { PlatformVenueConfigService } from '../platform/platform-venue-config.service';
@@ -423,11 +427,13 @@ const url = process.env.FOUNDATION_TEST_DATABASE_URL;
           enrollmentCode: issued.body.code,
           installationId: randomUUID(),
           platform: 'WINDOWS',
+          menuClient: supportedMenuClient,
         })
         .expect(201);
       const first = await http()
         .post('/edge/restaurant-foundation/bootstrap')
         .set('X-POS-Sync-Key', enrolled.body.credential)
+        .set('X-Vynic-Menu-Client', supportedMenuClientHeader)
         .send({ venueId: owners[1].id })
         .expect(201);
       expect(first.body).toMatchObject({
@@ -442,6 +448,7 @@ const url = process.env.FOUNDATION_TEST_DATABASE_URL;
       const retry = await http()
         .post('/edge/restaurant-foundation/bootstrap')
         .set('X-POS-Sync-Key', enrolled.body.credential)
+        .set('X-Vynic-Menu-Client', supportedMenuClientHeader)
         .expect(201);
       expect(retry.body).toEqual(first.body);
       writeFileSync(

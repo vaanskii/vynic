@@ -5,6 +5,8 @@ import {
   Get,
   OnModuleInit,
   Post,
+  Headers,
+  HttpException,
   UseGuards,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
@@ -17,6 +19,10 @@ import { PosConnectionRegistry } from './pos-connection.registry';
 // `import type`: interfaces named in a decorated signature must not be value
 // imports while isolatedModules + emitDecoratorMetadata are both on.
 import type { AuditEventLogSync, SyncPayload } from './sync-payload';
+import {
+  MENU_CLIENT_HEADER,
+  requireMenuClient,
+} from '../../menu-catalog/menu-client-policy';
 
 /**
  * HTTP surface of POS → server synchronization.
@@ -56,12 +62,32 @@ export class SyncController implements OnModuleInit {
   async syncManagerData(
     @Body() data: SyncPayload,
     @PosAuth() authContext: PosAuthContext,
+    @Headers(MENU_CLIENT_HEADER) menuClient?: string,
   ) {
     const afterCommit: Array<() => Promise<void>> = [];
     const result = await withOperationalAuthority(
       this.prisma,
       authContext,
       async (db) => {
+        const compatibility =
+          data.realtimeOnly !== true || data.menu !== undefined
+            ? await requireMenuClient(
+                db,
+                authContext.venueId,
+                authContext.deviceId,
+                menuClient,
+              )
+            : null;
+        if (compatibility?.authority === 'CLOUD' && data.menu !== undefined) {
+          throw new HttpException(
+            {
+              code: 'CANONICAL_MENU_SNAPSHOT_UNSUPPORTED',
+              message:
+                'Canonical Menu requires entity mutations. This snapshot was not applied.',
+            },
+            426,
+          );
+        }
         const result = await this.ingestSnapshot.execute(
           data,
           authContext,
@@ -77,8 +103,30 @@ export class SyncController implements OnModuleInit {
             },
             data: { firstSyncAt: new Date() },
           });
+          if (
+            compatibility?.authority === 'POS' &&
+            data.menu !== undefined &&
+            data.menuIdentityVersion === 1
+          ) {
+            await db.device.update({
+              where: { id: authContext.deviceId },
+              data: { lastLegacyMenuSyncAt: new Date() },
+            });
+          }
         }
-        return result;
+        return {
+          ...result,
+          menu: {
+            outcome:
+              data.realtimeOnly === true
+                ? 'NOT_REQUESTED'
+                : compatibility?.authority === 'CLOUD'
+                  ? 'CANONICAL_SEPARATE'
+                  : data.menu !== undefined
+                    ? 'LEGACY_APPLIED'
+                    : 'NOT_REQUESTED',
+          },
+        };
       },
     );
     for (const notify of afterCommit) await notify();

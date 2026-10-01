@@ -1,3 +1,4 @@
+import { MenuClientGuard } from '../menu-catalog/menu-client.guard';
 import { SubscriptionService } from '../subscriptions/subscription.service';
 import { profileSelect } from '../venue-profile/venue-profile';
 import { FeatureKeys } from '../entitlements/feature-keys';
@@ -263,7 +264,7 @@ export class PlatformOnboardingController {
   }
 }
 @Controller('edge/runtime-config')
-@UseGuards(EdgeDeviceGuard)
+@UseGuards(EdgeDeviceGuard, MenuClientGuard)
 export class DeviceRuntimeConfigController {
   constructor(
     private readonly db: PrismaService,

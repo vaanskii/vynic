@@ -1,3 +1,4 @@
+import { supportedMenuClientHeader } from './menu-client.fixture';
 import { randomUUID } from 'node:crypto';
 import type { INestApplication } from '@nestjs/common';
 import { PrismaService } from '../src/prisma.service';
@@ -98,6 +99,7 @@ export async function menu03Request(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'X-Vynic-Menu-Client': supportedMenuClientHeader,
         ...(writer === 'DEVICE'
           ? { 'X-POS-Sync-Key': venue.credential }
           : { Authorization: `Bearer ${venue.ownerToken}` }),

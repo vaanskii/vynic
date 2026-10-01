@@ -16,6 +16,7 @@ import { EdgeDevice } from '../edge/edge-device-context';
 import type { EdgeDeviceContext } from '../edge/edge-device-context';
 import { RestaurantFoundationService } from './restaurant-foundation.service';
 import { MenuCatalogService } from '../menu-catalog/menu-catalog.service';
+import { MenuClientGuard } from '../menu-catalog/menu-client.guard';
 
 @Controller('customer/venues/:venueId/catalog')
 @UseGuards(CustomerGuard)
@@ -48,7 +49,7 @@ export class CustomerCatalogController {
   }
 }
 @Controller('edge/restaurant-foundation')
-@UseGuards(EdgeDeviceGuard)
+@UseGuards(EdgeDeviceGuard, MenuClientGuard)
 export class DeviceFoundationController {
   constructor(private readonly foundation: RestaurantFoundationService) {}
   @Post('bootstrap')
@@ -64,7 +65,7 @@ export class DeviceFoundationController {
  * and calls these asynchronously; they never gate local operation.
  */
 @Controller('edge/menu')
-@UseGuards(EdgeDeviceGuard)
+@UseGuards(EdgeDeviceGuard, MenuClientGuard)
 export class DeviceMenuController {
   constructor(private readonly catalogs: MenuCatalogService) {}
   @Get('catalog')

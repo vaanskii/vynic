@@ -1,3 +1,7 @@
+import {
+  supportedMenuClient,
+  supportedMenuClientHeader,
+} from '../../test/menu-client.fixture';
 import 'reflect-metadata';
 jest.mock('uuid', () => ({ v4: () => require('node:crypto').randomUUID() }));
 import { randomUUID } from 'node:crypto';
@@ -49,9 +53,13 @@ const url = process.env.CANONICAL_MENU_TEST_DATABASE_URL;
       http()
         .post('/edge/menu/mutations')
         .set('X-POS-Sync-Key', devices[device])
+        .set('X-Vynic-Menu-Client', supportedMenuClientHeader)
         .send({ mutationId: randomUUID(), ...body });
     const catalog = (device: number) =>
-      http().get('/edge/menu/catalog').set('X-POS-Sync-Key', devices[device]);
+      http()
+        .get('/edge/menu/catalog')
+        .set('X-POS-Sync-Key', devices[device])
+        .set('X-Vynic-Menu-Client', supportedMenuClientHeader);
     const node = async (
       kind: 'items' | 'variants' | 'categories',
       entityId: string,
@@ -70,6 +78,7 @@ const url = process.env.CANONICAL_MENU_TEST_DATABASE_URL;
           enrollmentCode: issued.body.code,
           installationId: randomUUID(),
           platform: 'WINDOWS',
+          menuClient: supportedMenuClient,
         })
         .expect(201);
       return enrolled.body.credential as string;
@@ -419,6 +428,7 @@ const url = process.env.CANONICAL_MENU_TEST_DATABASE_URL;
       const since = await http()
         .get('/edge/menu/changes?since=6')
         .set('X-POS-Sync-Key', devices[2])
+        .set('X-Vynic-Menu-Client', supportedMenuClientHeader)
         .expect(200);
       expect(
         since.body.items.find((i: any) => i.id === id.khachapuri),
@@ -492,6 +502,7 @@ const url = process.env.CANONICAL_MENU_TEST_DATABASE_URL;
       const caught = await http()
         .get(`/edge/menu/changes?since=${offlineSince}`)
         .set('X-POS-Sync-Key', devices[2])
+        .set('X-Vynic-Menu-Client', supportedMenuClientHeader)
         .expect(200);
       expect(caught.body.tombstones).toEqual(
         expect.arrayContaining([
@@ -527,6 +538,7 @@ const url = process.env.CANONICAL_MENU_TEST_DATABASE_URL;
       await http()
         .get('/edge/menu/changes?since=999999')
         .set('X-POS-Sync-Key', devices[2])
+        .set('X-Vynic-Menu-Client', supportedMenuClientHeader)
         .expect(409);
     });
 
@@ -628,6 +640,7 @@ const url = process.env.CANONICAL_MENU_TEST_DATABASE_URL;
       await http()
         .post('/edge/menu/mutations')
         .set('X-POS-Sync-Key', credential)
+        .set('X-Vynic-Menu-Client', supportedMenuClientHeader)
         .send({
           mutationId: randomUUID(),
           entityType: 'CATEGORY',
@@ -700,6 +713,7 @@ const url = process.env.CANONICAL_MENU_TEST_DATABASE_URL;
           http()
             .post('/edge/menu/mutations')
             .set('X-POS-Sync-Key', credentials[i])
+            .set('X-Vynic-Menu-Client', supportedMenuClientHeader)
             .send({
               mutationId: randomUUID(),
               entityType: 'ITEM',
@@ -723,6 +737,7 @@ const url = process.env.CANONICAL_MENU_TEST_DATABASE_URL;
           http()
             .post('/edge/menu/mutations')
             .set('X-POS-Sync-Key', credential)
+            .set('X-Vynic-Menu-Client', supportedMenuClientHeader)
             .send({
               mutationId: randomUUID(),
               entityType: 'ITEM',
@@ -737,7 +752,10 @@ const url = process.env.CANONICAL_MENU_TEST_DATABASE_URL;
       expect(race.filter((r) => r.status === 409)).toHaveLength(9);
       const snapshots = await Promise.all(
         credentials.map((c) =>
-          http().get('/edge/menu/catalog').set('X-POS-Sync-Key', c),
+          http()
+            .get('/edge/menu/catalog')
+            .set('X-POS-Sync-Key', c)
+            .set('X-Vynic-Menu-Client', supportedMenuClientHeader),
         ),
       );
       expect(new Set(snapshots.map((s) => JSON.stringify(s.body))).size).toBe(

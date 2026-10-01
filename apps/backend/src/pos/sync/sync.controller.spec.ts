@@ -70,7 +70,23 @@ function makeController(): Stubs {
   const restore = jest.fn(() => Promise.resolve());
   const markSync = jest.fn().mockResolvedValue({ count: 1 });
   const controller = new SyncController(
-    { device: { updateMany: markSync } } as unknown as CtorArgs[0],
+    {
+      venue: {
+        findUniqueOrThrow: jest
+          .fn()
+          .mockResolvedValue({ menuAuthority: 'POS' }),
+      },
+      device: {
+        updateMany: markSync,
+        findFirstOrThrow: jest.fn().mockResolvedValue({
+          id: 'synthetic-device',
+          platform: 'WINDOWS',
+          menuClientReport: null,
+          menuClientObservedAt: null,
+        }),
+        update: jest.fn().mockResolvedValue({}),
+      },
+    } as unknown as CtorArgs[0],
     { execute } as unknown as CtorArgs[1],
     {
       withDatabase: () => ({ ingestReports, ingestEventLogs }),
@@ -190,7 +206,7 @@ describe('SyncController — delegation', () => {
     expect((execute.mock.calls as unknown[][])[0][0]).toBe(body);
   });
 
-  it('returns the use case result unchanged', async () => {
+  it('returns aggregate result with explicit Menu disposition', async () => {
     const { controller } = makeController();
 
     await expect(
@@ -203,7 +219,11 @@ describe('SyncController — delegation', () => {
           organizationId: 'organization-1',
         },
       ),
-    ).resolves.toEqual({ success: true, syncedAt: 'stamped' });
+    ).resolves.toEqual({
+      success: true,
+      syncedAt: 'stamped',
+      menu: { outcome: 'NOT_REQUESTED' },
+    });
   });
 
   it('keeps client-supplied venue identity out of the authenticated context', async () => {

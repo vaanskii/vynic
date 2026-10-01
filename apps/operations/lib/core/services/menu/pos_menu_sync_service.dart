@@ -57,6 +57,13 @@ class PosMenuSyncService {
   static const syncInterval = Duration(seconds: 20);
   static const legacyRecheck = Duration(minutes: 10);
 
+  /// A typed snapshot refusal means the server mode changed. Reconcile through
+  /// existing explicit adoption, preserving a differing local Menu.
+  Future<void> refreshAuthority() async {
+    _lastBootstrapAttempt = null;
+    await tick();
+  }
+
   /// True when this POS uses the canonical Menu; its full snapshot then omits
   /// the menu (the Cloud would ignore it anyway).
   static bool get isCanonical => instance._engine?.isCanonical ?? false;

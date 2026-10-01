@@ -57,6 +57,7 @@ Future<void> _openBoxes() async {
   DatabaseCore.auditLogBox = await Hive.openBox('to_audit');
   DatabaseCore.errorLogBox = await Hive.openBox('to_errors');
   DatabaseCore.metaBox = await Hive.openBox('to_meta');
+  DatabaseCore.inventoryBox = await Hive.openBox('backup_inventory_fixture');
 }
 
 final DateTime _businessDate = DateTime(2026, 9, 3);

@@ -1,3 +1,4 @@
+import 'package:vynic/core/database/repositories/backup_repository.dart';
 import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'dart:io';
 
@@ -140,23 +141,37 @@ class DatabaseCore {
     dataDirectoryPath = dataDirectory.path;
 
     // Initialize Hive with custom path unique per machine to avoid shared locks
-    await Hive.initFlutter(dataDirectoryPath);
+    Hive.init(dataDirectoryPath);
 
     // Register adapters
-    Hive.registerAdapter(UserAdapter());
-    Hive.registerAdapter(TableModelAdapter());
-    Hive.registerAdapter(OrderAdapter());
-    Hive.registerAdapter(OrderItemAdapter());
-    Hive.registerAdapter(MenuCategoryDBAdapter());
-    Hive.registerAdapter(MenuSubcategoryDBAdapter());
-    Hive.registerAdapter(MenuItemDBAdapter());
-    Hive.registerAdapter(MenuVariantDBAdapter());
-    Hive.registerAdapter(ReservationAdapter());
-    Hive.registerAdapter(QuickOrderDraftAdapter());
-    Hive.registerAdapter(PackageAdapter());
-    Hive.registerAdapter(PackageItemAdapter());
-    Hive.registerAdapter(SaleRecordAdapter());
-    Hive.registerAdapter(SaleRecordItemAdapter());
+    if (!Hive.isAdapterRegistered(UserAdapter().typeId))
+      Hive.registerAdapter(UserAdapter());
+    if (!Hive.isAdapterRegistered(TableModelAdapter().typeId))
+      Hive.registerAdapter(TableModelAdapter());
+    if (!Hive.isAdapterRegistered(OrderAdapter().typeId))
+      Hive.registerAdapter(OrderAdapter());
+    if (!Hive.isAdapterRegistered(OrderItemAdapter().typeId))
+      Hive.registerAdapter(OrderItemAdapter());
+    if (!Hive.isAdapterRegistered(MenuCategoryDBAdapter().typeId))
+      Hive.registerAdapter(MenuCategoryDBAdapter());
+    if (!Hive.isAdapterRegistered(MenuSubcategoryDBAdapter().typeId))
+      Hive.registerAdapter(MenuSubcategoryDBAdapter());
+    if (!Hive.isAdapterRegistered(MenuItemDBAdapter().typeId))
+      Hive.registerAdapter(MenuItemDBAdapter());
+    if (!Hive.isAdapterRegistered(MenuVariantDBAdapter().typeId))
+      Hive.registerAdapter(MenuVariantDBAdapter());
+    if (!Hive.isAdapterRegistered(ReservationAdapter().typeId))
+      Hive.registerAdapter(ReservationAdapter());
+    if (!Hive.isAdapterRegistered(QuickOrderDraftAdapter().typeId))
+      Hive.registerAdapter(QuickOrderDraftAdapter());
+    if (!Hive.isAdapterRegistered(PackageAdapter().typeId))
+      Hive.registerAdapter(PackageAdapter());
+    if (!Hive.isAdapterRegistered(PackageItemAdapter().typeId))
+      Hive.registerAdapter(PackageItemAdapter());
+    if (!Hive.isAdapterRegistered(SaleRecordAdapter().typeId))
+      Hive.registerAdapter(SaleRecordAdapter());
+    if (!Hive.isAdapterRegistered(SaleRecordItemAdapter().typeId))
+      Hive.registerAdapter(SaleRecordItemAdapter());
 
     metaBox = UpdateTrackedBox(await Hive.openBox(metaBoxName));
 
@@ -188,8 +203,11 @@ class DatabaseCore {
       await Hive.openBox<String>(menuJournalBoxName),
     );
 
+    await EdgeDeviceCredentialStore.load();
+    await BackupRepository.recoverInterruptedRestore();
+
     // Recover Menu intent/projection BEFORE identity migrations, defaults or UI.
-    // No network is involved; credential loading later enforces Venue binding.
+    // No network is involved; loaded enrollment metadata validates Venue binding.
     await MenuLocalStore.attach(
       menuBox: menuBox!,
       stateBox: menuCanonicalBox!,

@@ -1063,8 +1063,13 @@ class DatabaseService {
   static Future<void> setCloseReceiptServiceFeeLineVisible(bool visible) =>
       SettingsRepository.setCloseReceiptServiceFeeLineVisible(visible);
 
-  static Future<File> createDataBackup({String? targetFilePath}) =>
-      BackupRepository.createDataBackup(targetFilePath: targetFilePath);
+  static Future<File> createDataBackup({
+    String? targetFilePath,
+    String? password,
+  }) => BackupRepository.createDataBackup(
+    targetFilePath: targetFilePath,
+    password: password,
+  );
 
   static List<Map<String, dynamic>> exportMenu() =>
       BackupRepository.exportMenu();
@@ -1135,6 +1140,8 @@ class DatabaseService {
     String actorId = 'unknown',
     String? actorName,
     AuditSource source = AuditSource.pos,
+    String? password,
+    bool allowLegacyIncomplete = false,
   }) => BackupRepository.restoreDataBackupFromFile(
     backupFile,
     clearExisting: clearExisting,
@@ -1142,6 +1149,8 @@ class DatabaseService {
     actorId: actorId,
     actorName: actorName,
     source: source,
+    password: password,
+    allowLegacyIncomplete: allowLegacyIncomplete,
   );
 
   static Future<void> restoreDataBackupFromJson(
@@ -1151,6 +1160,8 @@ class DatabaseService {
     String actorId = 'unknown',
     String? actorName,
     AuditSource source = AuditSource.pos,
+    String? password,
+    bool allowLegacyIncomplete = false,
   }) => BackupRepository.restoreDataBackupFromJson(
     jsonString,
     clearExisting: clearExisting,
@@ -1158,6 +1169,8 @@ class DatabaseService {
     actorId: actorId,
     actorName: actorName,
     source: source,
+    password: password,
+    allowLegacyIncomplete: allowLegacyIncomplete,
   );
 
   // Close current day and move to next date

@@ -1,3 +1,4 @@
+import 'package:vynic/core/database/local_data_admission.dart';
 import 'dart:async';
 
 /// One process-wide admission barrier. Only the Windows POS updater enables it.
@@ -23,6 +24,8 @@ class UpdateReadiness {
   };
 
   static String? get blockedReason {
+    if (LocalDataAdmission.blocked)
+      return 'მიმდინარეობს სარეზერვო ასლის აღდგენა ან შექმნა';
     if (!startupReady) return 'პროგრამა ჯერ მზად არ არის';
     if (failure != null) return 'საჭიროა ოპერაციის აღდგენა';
     if (frozen) return 'განახლება მიმდინარეობს';
@@ -43,20 +46,18 @@ class UpdateReadiness {
     return (status: reason == null ? 'READY' : 'BLOCKED', reason: reason);
   }
 
-  static Future<T> track<T>(
-    String operation,
-    Future<T> Function() action,
-  ) async {
-    if (!enabled) return action();
-    if (frozen) throw StateError('POS update has frozen new operations');
-    final token = Object();
-    _active[token] = operation;
-    try {
-      return await action();
-    } finally {
-      _active.remove(token);
-    }
-  }
+  static Future<T> track<T>(String operation, Future<T> Function() action) =>
+      LocalDataAdmission.track(() async {
+        if (!enabled) return action();
+        if (frozen) throw StateError('POS update has frozen new operations');
+        final token = Object();
+        _active[token] = operation;
+        try {
+          return await action();
+        } finally {
+          _active.remove(token);
+        }
+      });
 
   /// Acquires synchronously before any await, closing check/use races.
   static Future<String?> freeze(Future<void> Function() flushAndClose) async {

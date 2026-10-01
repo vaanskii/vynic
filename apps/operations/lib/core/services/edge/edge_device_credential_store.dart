@@ -105,7 +105,19 @@ class EdgeDeviceCredentialStore {
   static DateTime? get enrolledAt => _enrolledAt;
 
   /// The raw credential, for the `X-POS-Sync-Key` header only.
-  static String? get credential => _credential;
+  static String? get credential {
+    final settings = DatabaseCore.settingsBox;
+    if (_credential != null && settings != null && settings.isOpen) {
+      final venue = settings.get('restoreVenueBinding');
+      if (settings.get('restoreLegacyIncomplete') == true ||
+          (venue != null && venue != _venueId)) {
+        throw StateError(
+          'Restored restaurant data requires matching enrollment and controlled replacement before Cloud sync',
+        );
+      }
+    }
+    return _credential;
+  }
 
   /// Stores a credential issued by the platform for this installation.
   ///

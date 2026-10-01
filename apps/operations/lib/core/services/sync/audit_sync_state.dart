@@ -56,7 +56,7 @@ class AuditSyncState {
   /// degrades to "nothing is acknowledged" — every report looks dirty and is
   /// sent — rather than stopping audit sync altogether.
   static Future<void> open() async {
-    if (_box != null) return;
+    if (_box?.isOpen ?? false) return;
     try {
       _box = await Hive.openBox<Map>(boxName);
     } catch (error) {
@@ -67,6 +67,12 @@ class AuditSyncState {
   static Future<void> close() async {
     await _box?.close();
     _box = null;
+  }
+
+  static Future<void> resetAfterRestore() async {
+    await open();
+    await _box?.clear();
+    await _box?.flush();
   }
 
   @visibleForTesting

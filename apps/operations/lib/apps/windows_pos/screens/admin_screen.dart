@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:vynic/apps/windows_pos/widgets/admin/backup_password_dialog.dart';
 import 'package:vynic/core/widgets/pos_text.dart';
 import 'package:vynic/apps/windows_pos/widgets/admin/admin_about_section.dart';
 import 'package:vynic/core/database/database_core.dart';
@@ -43,7 +45,6 @@ import 'package:vynic/core/services/database_service.dart';
 import 'package:vynic/core/services/printing/printer_service.dart';
 import 'package:vynic/core/services/pos/pos_display_settings_controller.dart';
 import 'package:vynic/core/services/pos/monthly_report_service.dart';
-import 'package:vynic/core/services/sync/manager_sync_service.dart';
 import 'package:vynic/core/services/audit/money_audit.dart';
 import 'package:vynic/core/services/security/developer_access.dart';
 
@@ -2358,6 +2359,40 @@ class _AdminScreenState extends State<AdminScreen> {
         return;
       }
 
+      final header = jsonDecode(await backupFile.readAsString());
+      if (!mounted) return;
+      String? backupPassword;
+      if (header is Map && header.containsKey('encryption')) {
+        backupPassword = await BackupPasswordDialog.show(
+          context,
+          creating: false,
+        );
+        if (backupPassword == null || !mounted) return;
+      }
+      final legacyIncomplete =
+          header is Map && !header.containsKey('formatVersion');
+      if (legacyIncomplete) {
+        final accepted = await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('ძველი სარეზერვო ასლი'),
+            content: const Text(
+              'ამ ასლს არ აქვს მენიუს ცვლილებების, დახურვისა და ბრძანებების აღდგენის ჟურნალები. გამოტოვებული სამუშაო ვერ აღდგება. Cloud სინქრონიზაცია დარჩება შეჩერებული მონაცემებისა და მოწყობილობის მიბმის შემოწმებამდე.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('გაუქმება'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('ძველი ასლის იმპორტი'),
+              ),
+            ],
+          ),
+        );
+        if (accepted != true || !mounted) return;
+      }
       setState(() {
         _isRestoringBackup = true;
       });
@@ -2367,6 +2402,8 @@ class _AdminScreenState extends State<AdminScreen> {
         backupFile,
         actorId: widget.user.username,
         actorName: widget.user.username,
+        password: backupPassword,
+        allowLegacyIncomplete: legacyIncomplete,
       );
       debugPrint('[BackupFlow] Restore completed in DatabaseService');
 
@@ -2385,12 +2422,7 @@ class _AdminScreenState extends State<AdminScreen> {
         _selectedAuditMonth = currentDate.month;
       });
 
-      // Push restored business date + state immediately so mobile reflects
-      // close-day/current-date correctly right after backup import.
-      debugPrint(
-        '[BackupFlow] Triggering ManagerSyncService.syncToManagerApp()',
-      );
-      unawaited(ManagerSyncService.syncToManagerApp());
+      // Startup completes recovered closures before normal sync resumes.
 
       final acknowledged = await showDialog<bool>(
         context: context,
@@ -2526,9 +2558,16 @@ class _AdminScreenState extends State<AdminScreen> {
     });
 
     try {
+      if (!mounted) return;
+      final backupPassword = await BackupPasswordDialog.show(
+        context,
+        creating: true,
+      );
+      if (backupPassword == null || !mounted) return;
       debugPrint('[BackupFlow] Creating backup at: $selectedPath');
       final backupFile = await DatabaseService.createDataBackup(
         targetFilePath: selectedPath,
+        password: backupPassword,
       );
       debugPrint('[BackupFlow] Backup file created: ${backupFile.path}');
       if (!mounted) return;

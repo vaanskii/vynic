@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/tracked_box.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
@@ -74,12 +75,25 @@ class EdgeCommandJournal {
   static String _runId = _uuid.v4();
 
   /// Opens the journal and settles anything a previous run left mid-flight.
-  static Future<void> open() async {
-    if (_box != null) return;
-    _box = await Hive.openBox<Map>(boxName);
+  static Future<void> open({bool pruneExpired = true}) async {
+    if (_box?.isOpen ?? false) return;
+    _box = UpdateTrackedBox(await Hive.openBox<Map>(boxName));
     _runId = _uuid.v4();
     await _settleInterrupted();
-    await prune();
+    if (pruneExpired) await prune();
+  }
+
+  static Map<dynamic, Map> snapshot() => _box?.toMap() ?? {};
+
+  static Future<void> restoreSnapshot(Map<dynamic, Map> rows) async {
+    if (!(_box?.isOpen ?? false)) await open();
+    await _box!.clear();
+    await _box!.putAll(rows);
+    // Restored running work belongs to the captured installation/run, even
+    // when restore occurs without closing this process's journal first.
+    _runId = _uuid.v4();
+    await _settleInterrupted();
+    await _box!.flush();
   }
 
   static bool get isOpen => _box != null;

@@ -61,7 +61,7 @@ class StaffCredentialSyncState {
   /// degrades to "nothing is acknowledged" — every PIN is carried, as it was
   /// before — rather than stopping staff sync altogether.
   static Future<void> open() async {
-    if (_box != null) return;
+    if (_box?.isOpen ?? false) return;
     try {
       _box = await Hive.openBox<Map>(boxName);
     } catch (error) {
@@ -72,6 +72,12 @@ class StaffCredentialSyncState {
   static Future<void> close() async {
     await _box?.close();
     _box = null;
+  }
+
+  static Future<void> resetAfterRestore() async {
+    await open();
+    await _box?.clear();
+    await _box?.flush();
   }
 
   @visibleForTesting
@@ -113,7 +119,8 @@ class StaffCredentialSyncState {
       final pin = user.pinCode.trim();
       final fingerprint = pin.isEmpty ? null : fingerprintOf(pin);
       final carriesPin =
-          fingerprint != null && acknowledgedFingerprint(username) != fingerprint;
+          fingerprint != null &&
+          acknowledgedFingerprint(username) != fingerprint;
       entries.add(<String, dynamic>{
         'username': username,
         if (carriesPin) 'pin': pin,

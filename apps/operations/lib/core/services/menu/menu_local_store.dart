@@ -1,3 +1,4 @@
+import 'package:vynic/core/database/local_data_admission.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -148,7 +149,10 @@ class MenuLocalStore {
     return next;
   }
 
-  Future<T> run<T>(Future<T> Function() task) {
+  Future<T> run<T>(Future<T> Function() task) =>
+      LocalDataAdmission.track(() => _run(task));
+
+  Future<T> _run<T>(Future<T> Function() task) {
     final result = _tail.then((_) {
       final scope = _MenuWriteScope(this);
       return runZoned(() async {

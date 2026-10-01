@@ -49,6 +49,7 @@ Future<void> _openBoxes() async {
   DatabaseCore.expenseBox = await Hive.openBox('rp_expenses');
   DatabaseCore.auditLogBox = await Hive.openBox('rp_audit');
   DatabaseCore.errorLogBox = await Hive.openBox('rp_errors');
+  DatabaseCore.inventoryBox = await Hive.openBox('rp_inventory');
   DatabaseCore.metaBox = await Hive.openBox('rp_meta');
 }
 

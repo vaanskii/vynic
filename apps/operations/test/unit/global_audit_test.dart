@@ -85,6 +85,7 @@ void main() {
   setUpAll(() {
     tempDir = Directory.systemTemp.createTempSync('vynic_global_audit');
     Hive.init(tempDir.path);
+    DatabaseCore.dataDirectoryPath = tempDir.path;
     registerAdapters();
     Order.serviceFeeRateResolver = () => 0.0;
   });
@@ -591,6 +592,7 @@ void main() {
         payload,
         clearExisting: true,
         backupBeforeRestore: false,
+        allowLegacyIncomplete: true,
         actorId: 'avtandil',
       );
 
@@ -622,6 +624,7 @@ void main() {
         jsonEncode(<String, dynamic>{'auditLog': <dynamic>[]}),
         clearExisting: true,
         backupBeforeRestore: false,
+        allowLegacyIncomplete: true,
         actorId: 'avtandil',
       );
 

@@ -351,6 +351,24 @@ Venues; primary-POS containment stays for operational domains only; Edge may
 coordinate over LAN later but is never a second Menu authority. See
 `docs/CANONICAL_MENU_SYNC.md`.
 
+## D032 — Menu removal retires identity; tombstones remove only active projections
+
+**Decision:** Normal Menu removal retains Category/Subcategory/Item/Variant rows
+with `retiredAt`, independently of availability. Recipes and website presentation
+remain attached to the same identities. Canonical DELETE still emits tombstones;
+restoration is an explicit revisioned UPSERT with `restore: true`, with active
+parents required. Parents reject active children. No normal permanent purge is
+supported. Legacy POS-authority omission retires claimed rows; reappearance keeps
+their IDs. A POS edit against a removed canonical node stays recoverable in the
+journal but cannot recreate it in the ordering projection.
+**Reason:** An already-closed offline Sale must retain recipe authority for delayed
+consumption and reversal. Projection deletion cannot destroy that authority.
+**Implication:** Active reads exclude retirement and inactive parents; historical
+resolution remains Venue-scoped and includes retained rows. Physical recipe and
+presentation dependencies restrict item/variant purge. Old missing rows require
+trustworthy evidence, never invented reconstruction. Downgrading to destructive
+writers is unsupported. See `docs/MENU06_SAFE_MENU_RETIREMENT.md`.
+
 ## Maintenance
 
 Add an entry only when it prevents repeated architectural debate. Update or

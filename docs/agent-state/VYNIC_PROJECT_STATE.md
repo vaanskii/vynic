@@ -81,6 +81,16 @@ current transport status.
   mutation transaction; retries preserve its outcome after edit/delete/restart.
   Legacy null results force resync/review; conflicts are not persisted. Real
   HTTP/PostgreSQL and native POS lost-ACK proof: `docs/MENU03_EXACT_RETRY_OUTCOME.md`.
+  MENU-06 removal retires retained identities (`retiredAt`, separate from
+  `enabled`) and emits the existing DELETE/tombstone projection contract.
+  Recipes and website presentation survive; ordinary edits cannot resurrect.
+  Authenticated retired views and explicit revisioned `patch.restore: true`
+  restore the same ID, with active parents required. Parent removal rejects
+  active children; item retirement also retires its active variants. Pending
+  historical POS edits remain in the journal but cannot recreate an absent
+  canonical ordering node. Delayed consumption, reversal, same-ID restoration,
+  native Hive restart and portable restore are proven in
+  `docs/MENU06_SAFE_MENU_RETIREMENT.md`. MENU-05 UI and MENU-09 remain separate.
   Writers are the owner Dashboard (not blocked by POS
   presence) and ANY enrolled POS Device (no primary requirement); Manager and
   both website renderers read it. POS Menu edits use a shared local queue and
@@ -548,9 +558,10 @@ current transport status.
   unclaimed legacy row through its prior natural key, and updates only changed
   fields. Snapshots carrying `menuIdentityVersion >= 1` reconcile absent
   POS-owned variants/items/subcategories/categories in one child-first
-  transaction; Venue scoping and explicit non-null POS ownership protect
+  retirement transaction; Venue scoping and explicit non-null POS ownership protect
   foreign, website/custom, and unclaimed legacy content. Older snapshots never
-  trigger deletion. `MenuItem.id` remains the Cloud/public website key.
+  trigger retirement. Reappearance restores retained IDs in POS-authority mode.
+  `MenuItem.id` remains the Cloud/public website key.
 - `OrderItem` and `PackageItem` carry additive nullable `menuItemId` and
   `variantId` references. POS/Manager selection, Edge/LAN commands, reservation
   activation, Takeaway, Walk-In, package application, quick drafts, transfer,
@@ -851,7 +862,8 @@ current transport status.
   product boundary, local runbook and the four-Venue isolation proof.
 - `MenuItemWebsitePresentation` (migration `20260926120000_website_menu_presentation`)
   decides whether and how an existing `MenuItem` appears publicly. No MenuItem is
-  duplicated, the row cascades with its item, an absent row means visible under
+  duplicated; MENU-06 retains this row on retirement and restricts physical item
+  deletion while it exists. An absent row means visible under
   the operational name, and presentation writes are proved Venue-scoped. Core
   menu authority remains POS/Cloud. Custom-site deployment, DNS/TLS and health
   are manual; only operator-attested status exists.

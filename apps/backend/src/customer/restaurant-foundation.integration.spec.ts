@@ -16,7 +16,7 @@ const url = process.env.FOUNDATION_TEST_DATABASE_URL;
   'Website-only restaurant foundation (disposable PostgreSQL)',
   () => {
     let db: PrismaService, app: any;
-    const owners: { token: string; id: string }[] = [];
+    const owners: { token: string; id: string; slug: string }[] = [];
     const tag = randomUUID().slice(0, 8);
     const ids = {
       category: randomUUID(),
@@ -91,6 +91,7 @@ const url = process.env.FOUNDATION_TEST_DATABASE_URL;
             email: `${label}-${tag}@foundation.test.invalid`,
             planId: plan.id,
             subscriptionStatus: 'ACTIVE',
+            websiteMode: 'SAAS',
           });
         const accepted = await http()
           .post('/customer/invitations/register')
@@ -106,7 +107,15 @@ const url = process.env.FOUNDATION_TEST_DATABASE_URL;
         owners.push({
           token: accepted.body.access_token,
           id: prepared.venue.id,
+          slug: '',
         });
+        const fixtureOwner = owners[owners.length - 1];
+        const website = await db.venueWebsiteConfig.findUniqueOrThrow({
+          where: { venueId: fixtureOwner.id },
+        });
+        if (!website.assignedSlug)
+          throw Error('Assigned fixture hostname required');
+        fixtureOwner.slug = website.assignedSlug;
       }
     });
     afterAll(async () => {
@@ -268,7 +277,7 @@ const url = process.env.FOUNDATION_TEST_DATABASE_URL;
           expectedRevision: settings.body.revision,
           content: {
             ...settings.body.draft,
-            slug: `foundation-${tag}`,
+            slug: owners[0].slug,
             heroTitle: 'Cloud Restaurant',
             logoUrl: upload.body.url,
             showMenu: true,
@@ -283,7 +292,7 @@ const url = process.env.FOUNDATION_TEST_DATABASE_URL;
         .expect(201);
       const publicMenu = await http()
         .get('/api/website/menu')
-        .set('Host', `foundation-${tag}.vynic.localhost`)
+        .set('Host', `${owners[0].slug}.vynic.localhost`)
         .expect(200);
       expect(JSON.stringify(publicMenu.body)).toContain('Mountain Tea');
       expect(JSON.stringify(publicMenu.body)).toContain(ids.item);
@@ -354,7 +363,7 @@ const url = process.env.FOUNDATION_TEST_DATABASE_URL;
           expectedRevision: settings.body.revision,
           content: {
             ...settings.body.draft,
-            slug: `foundation-b-${tag}`,
+            slug: owners[1].slug,
             heroTitle: 'Second restaurant',
             showMenu: true,
           },
@@ -367,7 +376,7 @@ const url = process.env.FOUNDATION_TEST_DATABASE_URL;
         .expect(201);
       const result = await http()
         .get('/api/website/menu?venueId=' + owners[0].id)
-        .set('Host', `foundation-b-${tag}.vynic.localhost`)
+        .set('Host', `${owners[1].slug}.vynic.localhost`)
         .expect(200);
       expect(JSON.stringify(result.body)).not.toContain(ids.item);
     });
@@ -389,7 +398,7 @@ const url = process.env.FOUNDATION_TEST_DATABASE_URL;
       expect(disabled.body.revision).toBe(2);
       const hidden = await http()
         .get('/api/website/menu')
-        .set('Host', `foundation-${tag}.vynic.localhost`)
+        .set('Host', `${owners[0].slug}.vynic.localhost`)
         .expect(200);
       expect(JSON.stringify(hidden.body)).not.toContain(ids.item);
       await toggle(true, 2);

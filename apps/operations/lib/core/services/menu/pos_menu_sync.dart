@@ -253,6 +253,7 @@ class PosMenuSync {
     });
     if (!isCanonical) return false;
     var reachable = true;
+    var legacyResultMissing = false;
     for (final id in ids) {
       final entry = await local.run(() async {
         if (!isCanonical) return null;
@@ -311,6 +312,18 @@ class PosMenuSync {
               'deleted': conflict['deleted'] == true,
             });
           }
+        } else if (response.status == 409 &&
+            response.code == 'MUTATION_RESULT_UNAVAILABLE') {
+          // The old server accepted this ID without preserving its response.
+          // Keep the intent visible for explicit review; never invent an ACK
+          // entity or silently acknowledge its pending successors.
+          legacyResultMissing = true;
+          if (live != null) {
+            live
+              ..status = MenuMutationStatus.rejected
+              ..lastError = 'MUTATION_RESULT_UNAVAILABLE';
+            puts.add(live);
+          }
         } else if (response.status == 400 ||
             response.status == 404 ||
             (response.status == 409 && response.code != 'LEGACY_POS_MENU')) {
@@ -342,9 +355,13 @@ class PosMenuSync {
     }
     if (reachable) {
       final since = await local.run(() async => state!.sequence);
-      var changes = await transport.changes(since);
-      final resync = changes.status == 409 && changes.code == 'RESYNC_REQUIRED';
-      if (resync) changes = await transport.catalog();
+      var changes = legacyResultMissing
+          ? await transport.catalog()
+          : await transport.changes(since);
+      final resync =
+          legacyResultMissing ||
+          (changes.status == 409 && changes.code == 'RESYNC_REQUIRED');
+      if (resync && !legacyResultMissing) changes = await transport.catalog();
       await local.run(() async {
         if (!isCanonical) throw StateError('Menu identity changed during pull');
         var current = state!;

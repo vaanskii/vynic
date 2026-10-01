@@ -195,6 +195,11 @@ class CanonicalMenu {
 
   /// Records one accepted mutation result (entity is null when deleted).
   void applyAccepted(Map<String, dynamic> result) {
+    // A historical ACK may arrive after its change was already covered by a
+    // complete feed. In particular, it must not resurrect a later tombstone or
+    // let an old already-missing DELETE remove a subsequently created node.
+    final acceptedSequence = result['sequence'];
+    if (acceptedSequence is num && acceptedSequence <= sequence) return;
     final id = result['entityId'] as String;
     if (result['deleted'] == true || result['entity'] == null) {
       nodes.remove(id);

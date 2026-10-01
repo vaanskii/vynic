@@ -2419,6 +2419,8 @@ model MenuCatalogMutation {
   requestHash      String
   /// Field-level before/after of what changed; never a whole catalog snapshot.
   changes          Json
+  /// Immutable server-serialized accepted response. Null only for pre-MENU-03 rows.
+  acceptedResult   Json?
   /// REAPPLY when an operator re-applied a change after an explicit conflict.
   resolution       String?
   createdAt        DateTime          @default(now())

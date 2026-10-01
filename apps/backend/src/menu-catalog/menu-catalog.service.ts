@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import type { MenuEntityKind, MenuMutationActor, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
+import { replayAcceptedMutation } from './menu-mutation-result';
 import {
   normalizeMutation,
   requestHash,
@@ -455,26 +456,7 @@ export class MenuCatalogService {
             'MUTATION_ID_REUSED',
             'This mutation id was already used for a different change',
           );
-        const current = await this.find(
-          tx,
-          venueId,
-          prior.entityType,
-          prior.entityId,
-        );
-        return {
-          status: 'ACCEPTED',
-          duplicate: true,
-          mutationId: prior.mutationId,
-          entityType: prior.entityType,
-          entityId: prior.entityId,
-          operation: prior.operation as 'UPSERT' | 'DELETE',
-          revision: prior.resultRevision,
-          sequence: prior.seq,
-          deleted: prior.operation === 'DELETE',
-          entity: current
-            ? await this.node(tx, venueId, prior.entityType, prior.entityId)
-            : null,
-        };
+        return replayAcceptedMutation(prior);
       }
 
       const current = await this.find(tx, venueId, m.entityType, m.entityId);
@@ -543,6 +525,22 @@ export class MenuCatalogService {
           where: { id: venueId },
           data: { catalogRevision: seq },
         });
+      // Serialize under the same Venue lock and transaction as the catalog write.
+      // Retry must never consult a newer entity (or its later tombstone).
+      const result: MutationAccepted = {
+        status: 'ACCEPTED',
+        duplicate: false,
+        mutationId: m.mutationId,
+        entityType: m.entityType,
+        entityId: m.entityId,
+        operation: m.operation,
+        revision,
+        sequence: seq,
+        deleted,
+        entity: deleted
+          ? null
+          : await this.node(tx, venueId, m.entityType, m.entityId),
+      };
       await tx.menuCatalogMutation.create({
         data: {
           venueId,
@@ -558,6 +556,7 @@ export class MenuCatalogService {
           source: actor.source,
           requestHash: hash,
           changes: changes as Prisma.InputJsonValue,
+          acceptedResult: result as unknown as Prisma.InputJsonValue,
           resolution: m.resolution,
         },
       });
@@ -571,20 +570,7 @@ export class MenuCatalogService {
             metadata: { mutationId: m.mutationId, revision, sequence: seq },
           },
         });
-      return {
-        status: 'ACCEPTED',
-        duplicate: false,
-        mutationId: m.mutationId,
-        entityType: m.entityType,
-        entityId: m.entityId,
-        operation: m.operation,
-        revision,
-        sequence: seq,
-        deleted,
-        entity: deleted
-          ? null
-          : await this.node(tx, venueId, m.entityType, m.entityId),
-      };
+      return result;
     });
   }
 

@@ -30,6 +30,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Shared persistence facade: `apps/operations/lib/core/services/database_service.dart`
 - Hive boxes/init: `apps/operations/lib/core/database/database_core.dart`
 - Hive migrations: `apps/operations/lib/core/database/hive_migration_service.dart`
+- MENU-01 backup/recoverable restore: `apps/operations/lib/core/database/repositories/backup_repository.dart`, format/encryption `pos_backup_format.dart`, admission `local_data_admission.dart`; startup marker replay in `database_core.dart`; Admin password dialog `apps/operations/lib/apps/windows_pos/widgets/admin/backup_password_dialog.dart`. Proof: `docs/MENU01_BACKUP_RESTORE.md`, `test/unit/menu01_backup_restore_test.dart`, `test/live/menu01_process_restore_test.dart`, `tool/prove_menu01_restore.py`, `tool/prove_menu01_authority.cjs` under `apps/operations/`.
 
 ## Money / Closing
 

@@ -93,6 +93,17 @@ current transport status.
   the menu of canonical Venues. Device-bound bootstrap v1 staging remains. See
   `docs/CLOUD_RESTAURANT_FOUNDATION.md` for the wider domain matrix.
 
+- MENU-01 complete restaurant backup/restore is implemented and proven on native
+  macOS processes (`docs/MENU01_BACKUP_RESTORE.md`). Format 2 includes 17 explicitly
+  classified stores, stable Menu generation/cursor/intents, closure/Sale lifecycle
+  and command outcomes; a local admission boundary drains Menu WAL before snapshot.
+  Checksum/model/Venue validation precedes replacement, a flushed restore marker
+  replays before startup defaults, and a digest receipt makes repeat restore a no-op.
+  Admin portable export uses password-authenticated encryption; fresh installations
+  keep their own Device identity and require matching enrollment/operator handoff.
+  Legacy imports retain an incomplete-history sync quarantine. Hive remains v9;
+  SEC-05 local secret custody and OPS-01 Windows replacement qualification remain.
+
 - Local POS releases have a one-command Mac publisher:
   `apps/edge/tool/publish-local-pos.sh`. It uses the existing Parallels Windows VM,
   detects the active registered LAN, builds real Windows POS, transfers/validates

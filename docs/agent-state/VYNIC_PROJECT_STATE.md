@@ -90,7 +90,16 @@ current transport status.
   historical POS edits remain in the journal but cannot recreate an absent
   canonical ordering node. Delayed consumption, reversal, same-ID restoration,
   native Hive restart and portable restore are proven in
-  `docs/MENU06_SAFE_MENU_RETIREMENT.md`. MENU-05 UI and MENU-09 remain separate.
+  `docs/MENU06_SAFE_MENU_RETIREMENT.md`. MENU-05 UI remains separate.
+  MENU-09 requires authenticated current-request `CANONICAL_MENU_V2` support
+  for CLOUD enrollment, bootstrap/runtime-config and Menu/full-sync boundaries;
+  optional deployment-owned integer build floors supplement capability admission.
+  Full canonical snapshots return HTTP 426 before any snapshot writes. All ACTIVE
+  Devices need fresh compatible reports and a final primary legacy sync before
+  an explicit Owner cutover, with stable UUID/adoption checks and offline-edit
+  confirmations. Native Hive/portable restore and real HTTP/PG proof pass in
+  `docs/MENU09_CLIENT_COMPATIBILITY_GATE.md`; physical old Windows artifacts
+  remain OPS-01 qualification. Offline operation and primary containment remain.
   Writers are the owner Dashboard (not blocked by POS
   presence) and ANY enrolled POS Device (no primary requirement); Manager and
   both website renderers read it. POS Menu edits use a shared local queue and
@@ -103,8 +112,9 @@ current transport status.
   plus the journal, with explicit conflict
   choices in Admin Menu. New Venues are created canonical (CLOUD); established
   POS Venues (Vankisi) stay in legacy POS-snapshot compatibility until an
-  explicit cutover (read-only readiness audit only). Legacy snapshots ignore
-  the menu of canonical Venues. Device-bound bootstrap v1 staging remains. See
+  explicit Owner cutover through the MENU-09 fleet/readiness gate. Canonical
+  snapshot HTTP requests fail explicitly; compatible clients use separate
+  journal/change-feed sync. Device-bound bootstrap v1 staging remains. See
   `docs/CLOUD_RESTAURANT_FOUNDATION.md` for the wider domain matrix.
 
 - MENU-01 complete restaurant backup/restore is implemented and proven on native
@@ -1091,10 +1101,13 @@ current transport status.
 
 ## Current Migration Versions
 
-- Prisma migration tip: `20261013120000_menu03_exact_mutation_result` (nullable
-  immutable accepted-result JSONB; no historical backfill). Fresh/upgrade,
-  63 checksums and empty schema diff pass on disposable PostgreSQL.
-- Previous migration: `20261012120000_web02_restore_public_info_authority`.
+- Prisma migration tip: `20261015120000_menu09_client_compatibility` (nullable
+  Device capability/freshness/final-legacy-sync metadata and Venue cutover JSONB).
+  Fresh and immediate-previous/populated upgrades, all 65 checksums, Prisma
+  validation and empty schema diff pass on disposable PostgreSQL.
+- Previous migrations: `20261014120000_menu06_safe_retirement`,
+  `20261013120000_menu03_exact_mutation_result`,
+  `20261012120000_web02_restore_public_info_authority`.
 - Previous migrations: `20261011120000_canonical_menu_sync`,
   `20261010120000_shared_website_foundation`, and WEB-02's evidence capture
   `20261010110000_web02_capture_public_info_evidence`, ordered before the

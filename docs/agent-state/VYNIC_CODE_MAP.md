@@ -209,6 +209,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## Menu
 
+- MENU-09 admission/check-in policy: `apps/backend/src/menu-catalog/menu-client-policy.ts`, `menu-client.guard.ts`; Owner fleet readiness/cutover: `menu-rollout.controller.ts`, `menu-rollout.service.ts`; Device enrollment/full-sync boundaries: `edge/device-enrollment.service.ts`, `pos/sync/sync.controller.ts`. POS process-owned report/status: `apps/operations/lib/core/services/menu/menu_client_compatibility.dart`, `core/widgets/menu_update_required.dart`. Real HTTP/PG matrix: `menu09.integration.spec.ts`; native backup/enrollment/restart proof: `apps/operations/tool/prove_menu09_gate.py`; contract/runbook: `docs/MENU09_CLIENT_COMPATIBILITY_GATE.md`.
 - MENU-03 durable result replay: `apps/backend/src/menu-catalog/menu-mutation-result.ts`; additive `20261013120000_menu03_exact_mutation_result`; real HTTP/PostgreSQL + native ACK-loss proof `docs/MENU03_EXACT_RETRY_OUTCOME.md`, `apps/backend/scripts/prove-menu03.py`, `apps/operations/test/live/menu03_ack_loss_test.dart`.
 - POS model and stable node identity: `apps/operations/lib/core/models/menu_item_db.dart` (`MenuCategoryDB.id`, `MenuSubcategoryDB.id`, `MenuItemDB.id`, `MenuVariantDB.id`)
 - CRUD, stable-ID audit and one-time rollout: `apps/operations/lib/core/database/repositories/menu_repository.dart` (`ensureStableMenuIds`, called from Hive migration v8 and after backup restore)

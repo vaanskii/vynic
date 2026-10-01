@@ -369,6 +369,23 @@ presentation dependencies restrict item/variant purge. Old missing rows require
 trustworthy evidence, never invented reconstruction. Downgrading to destructive
 writers is unsupported. See `docs/MENU06_SAFE_MENU_RETIREMENT.md`.
 
+## D033 — Menu admission uses current Device capability; cutover is explicit
+
+**Decision:** CLOUD Menu requires `CANONICAL_MENU_V2` on the authenticated
+current request and enrollment code. An optional deployment-owned integer build
+floor supplements it; marketing versions and cached Device reports never grant
+admission. Reports are authenticated self-reports, not binary attestation.
+Legacy POS Venues retain snapshot behavior until an Owner explicitly confirms
+fleet readiness, final primary sync and reconciled offline edits. All ACTIVE
+Devices must have fresh compatible reports; DISABLED/REVOKED lifecycle excludes a Device.
+**Reason:** Silently skipping old snapshots creates false full-sync success, and
+primary-only readiness misses forgotten terminals. Cloud cannot prove absence
+of local offline edits or merge independent histories on rollback.
+**Implication:** Canonical snapshot requests fail before writes, incompatible
+Menu work holds local intents, safe recovery/offline operation stays available,
+and CLOUD-to-POS downgrade is unsupported. Stable identities and explicit POS
+adoption survive cutover. See `docs/MENU09_CLIENT_COMPATIBILITY_GATE.md`.
+
 ## Maintenance
 
 Add an entry only when it prevents repeated architectural debate. Update or

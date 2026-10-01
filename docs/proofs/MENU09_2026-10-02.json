@@ -1,0 +1,2703 @@
+{
+  "milestone": "MENU-09",
+  "status": "DONE",
+  "date": "2026-10-02",
+  "timezone": "Asia/Tbilisi",
+  "scope": "Only capability/minimum-build admission and explicit cutover; one linear plan; STOP after MENU-09",
+  "branch": "codex/docker-deployment-foundation",
+  "startHead": "583d328b7f3a1dc7519310b4bcee661710d8f715",
+  "implementationCommit": "bda0f07d65c4ccd296682d7810a9e8a4c0db2c85",
+  "documentationCommit": "The commit containing this proof; final hash reported in task response",
+  "completedPriorCommitPairs": {
+    "SEC-01": [
+      "cb283d9e483a2d757d845faccd2519987a0051bd",
+      "a4036379931387e5a36bdcf03e297e0893558ee8"
+    ],
+    "SEC-02": [
+      "038ece4e8e216098175dac9d7a17d306a251c8c1",
+      "64d668fe20f43dd822e5ae31dbdef78cad5bcfa9"
+    ],
+    "WEB-02": [
+      "f453ab75728088a7b497880457e8a441d6a97b91",
+      "102b089886ac771a2d30eb94d122cd78fd388d5d"
+    ],
+    "MENU-02": [
+      "a6da94a19ee293498ec0d01d0343e312a9c73dfb",
+      "e5997d63bb4da0bea4c0bcbcd6c3a79fff785cc5"
+    ],
+    "MENU-01": [
+      "74931378ced5c25522e3f6fa4a916a3af819bd54",
+      "a6398a9b6e5332f9865cf1e1c39ec32a859a746e"
+    ],
+    "MENU-03": [
+      "f720bbc527fd31dac658cc43da36fc8df3eedf69",
+      "c906ee2d5e45716cc4f05411e970e2d35090f253"
+    ],
+    "MENU-06": [
+      "1b5f5b17e1fc6e0798e780c59ae579d54b593f2c",
+      "583d328b7f3a1dc7519310b4bcee661710d8f715"
+    ]
+  },
+  "baseline": {
+    "migrationTip": "20261014120000_menu06_safe_retirement",
+    "migrationCount": 64,
+    "originalStatus": " M .env.docker.example\n M .env.production.example\n M apps/backend/src/customer/commercial-access.integration.spec.ts\n M apps/backend/src/dev-origins.spec.ts\n M apps/backend/src/dev-origins.ts\n M apps/backend/src/subscriptions/subscription.integration.spec.ts\n M apps/backend/src/subscriptions/subscription.service.ts\n M apps/backend/src/website/custom/custom-website.integration.spec.ts\n M apps/backend/src/website/provisioning/website-provisioning.integration.spec.ts\n M apps/backend/src/website/provisioning/website-provisioning.ts\n M apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart\n M apps/operations/lib/core/services/edge/pos_enrollment_service.dart\n M apps/operations/lib/core/services/sync/api_config.dart\n M apps/operations/test/unit/pos_enrollment_test.dart\n M apps/platform-web/src/components/layout/Navbar.tsx\n M apps/platform-web/src/components/product/PosScreenReplica.tsx\n M apps/platform-web/src/components/product/ProductLaunchMenu.tsx\n M apps/platform-web/src/components/sections/FloorPlanSection.tsx\n M apps/platform-web/src/components/sections/Hero.tsx\n M apps/platform-web/src/components/sections/ProductTour.tsx\n M apps/platform-web/src/components/ui/Button.tsx\n M apps/platform-web/src/components/ui/Reveal.tsx\n M apps/platform-web/src/components/ui/SectionHeading.tsx\n M apps/platform-web/src/lib/motion.ts\n M apps/platform-web/src/pages/HomePage.tsx\n M apps/platform-web/src/platform/pages/venue/SubscriptionPanel.tsx\n M apps/platform-web/src/styles/index.css\n M apps/platform-web/src/subscriptions/operator-actions.ts\n M apps/platform-web/src/subscriptions/types.ts\n M apps/platform-web/src/test/commercial-control-ux.test.tsx\n M apps/platform-web/src/test/subscription-lifecycle.test.tsx\n M compose.local.yaml\n M compose.yaml\n M deploy/traefik/routes.yml\n M docs/CANONICAL_MENU_SYNC.md\n M docs/COMMERCIAL_SUBSCRIPTION_LIFECYCLE.md\n M docs/DEPLOYMENT.md\n M docs/DEPLOYMENT_PROOF.md\n M docs/agent-state/VYNIC_CODE_MAP.md\n M docs/agent-state/VYNIC_DECISIONS.md\n M docs/agent-state/VYNIC_PROJECT_STATE.md\n M scripts/docker.sh\n?? .claude/launch.json\n?? apps/operations/test/live/native_ingress_live_test.dart\n?? apps/platform-web/src/components/motion/\n?? apps/platform-web/src/components/sections/PlatformStory.tsx\n?? apps/platform-web/src/test/site-motion.test.tsx\n?? compose.lan.yaml\n?? docs/audits/2026-09-29-f7bb982/\n?? experiments/\n",
+    "stash": "stash@{0}: On main: reorg-wip-holdout\n",
+    "wipFileCount": 267,
+    "wipSha256": {
+      ".claude/launch.json": "6bd0455559c258e988069490247c6ad38efc500044b0e424b64f598f441110ec",
+      ".env.docker.example": "b6f3dcef568a42632e4f454be5ffad3a7ebdc9c7fdb0d320d0933df184ee8cde",
+      ".env.production.example": "236e7eba797e914af0b699c5712a6bb86144c5b6a3104e7d9e11330ebf0340db",
+      "apps/backend/src/customer/commercial-access.integration.spec.ts": "6c50c46532c138b1385628326edff177110058177ce6659fe2ebb0bda1abe16c",
+      "apps/backend/src/dev-origins.spec.ts": "a9286e281ff1acb93220c570f3dc62f9cfd56d898123bb15e36a22154903f865",
+      "apps/backend/src/dev-origins.ts": "c26fde879be51dccb39e7c3df33342479b70b6268a8f3df95c7c19488d523c2a",
+      "apps/backend/src/subscriptions/subscription.integration.spec.ts": "a2f9d331ee793452581c3c364fab22fec1f619dd8a1f29994231c63edcbd09f2",
+      "apps/backend/src/subscriptions/subscription.service.ts": "a576913281d3b6bcc1731d631e5459c5a1cc2597ccb8d0dff2f37e7f91292689",
+      "apps/backend/src/website/custom/custom-website.integration.spec.ts": "c7458bfb9beb362347ed601d189d470df2bf44af6df5c98b9000a7d5f25f2c6b",
+      "apps/backend/src/website/provisioning/website-provisioning.integration.spec.ts": "9c1bf36aa0a07e580b14979143eed3b145f4e8535228bdae56a3e45df4aed66b",
+      "apps/backend/src/website/provisioning/website-provisioning.ts": "83b453426cbfd9700bfac01baf6b60053c4d1ba0f6cfb507bbcebf510f6723bc",
+      "apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart": "4e5d4f7fb0efda229352a6342b75311a8d892413181e762952a99a57eb80c8b4",
+      "apps/operations/lib/core/services/edge/pos_enrollment_service.dart": "c75f8d49e8f73dc6b4b8c9516e015cd1332465f1e6b405f61051dfa89dab13fc",
+      "apps/operations/lib/core/services/sync/api_config.dart": "924c14ca8df4f9efeb701bc1aa5c45ac22588b9236cb24eced3a7b8d41cf3f60",
+      "apps/operations/test/live/native_ingress_live_test.dart": "efd6c0b98fabde49ecfb99665ea1ccf25c8cdf59af6ea76b97547318a0d5a44d",
+      "apps/operations/test/unit/pos_enrollment_test.dart": "beb81f40a7df3f9f86af19c4d8113fdf908b775778b5ba6208521c5dc03bd6f9",
+      "apps/platform-web/src/components/layout/Navbar.tsx": "5ddb95884d722f283d865efde45e333fdd494397166de0ad628e98e249fcc1b3",
+      "apps/platform-web/src/components/motion/MotionMedia.tsx": "e4d89041b5b5edaedf352dcf485e0973e1fdfb17634804d5455fd9476ae34e29",
+      "apps/platform-web/src/components/motion/SplitWords.tsx": "cd90cf7097aee17c0be6f9435d04219edf7866c43ba78f036881092c58e07a0c",
+      "apps/platform-web/src/components/motion/usePointerDepth.ts": "591ba4da87b8f3312aaff74268949c79b5a5f474a250f545d158eac601d83942",
+      "apps/platform-web/src/components/product/PosScreenReplica.tsx": "5e4691ce0c654ced9336cf4f2d4dfc57e657cfde6d38af329222ff617cd9fc8f",
+      "apps/platform-web/src/components/product/ProductLaunchMenu.tsx": "bc9a5341067e3d3ac309b3839405b19de25a951beebf497e1fa78a9e039dd4e7",
+      "apps/platform-web/src/components/sections/FloorPlanSection.tsx": "7edb682e648f2d3b77b7adb2ea8248e3129707e3b58f5f6e9e5ea582042d0a90",
+      "apps/platform-web/src/components/sections/Hero.tsx": "0cc6a597744e4a38d8e44578d0065a199f3b6607d4120851cb5e4bef0df64aed",
+      "apps/platform-web/src/components/sections/PlatformStory.tsx": "c591257c8d0101123dfa0bcc0dc5c6a69bec6c58b7326bc7fed680310b23626d",
+      "apps/platform-web/src/components/sections/ProductTour.tsx": "80a39b2c25ab466c22c8db508c34ab120b3cbbe6d5159372acaea2b49dca2df8",
+      "apps/platform-web/src/components/ui/Button.tsx": "5aa88e7a7d2fdbe2cf74608852c33b5222a0caee4e4ce306ed762fdb42ba1c6e",
+      "apps/platform-web/src/components/ui/Reveal.tsx": "542f6edcfc03dc7d2c75e14b51e1808f35f84179a2b68657c7db07e0f182235a",
+      "apps/platform-web/src/components/ui/SectionHeading.tsx": "30213e796b97d0677d5089e5690e00e1006de8aebfb95816518244b00d033812",
+      "apps/platform-web/src/lib/motion.ts": "dd638281b523eb525b6c5e21f7b8f83486a7cbc3a7261acb5f7d17b8b537619a",
+      "apps/platform-web/src/pages/HomePage.tsx": "72469c7ca6f0a05dca173b5127fbdd72d94107c01a68bd001778914664e42f38",
+      "apps/platform-web/src/platform/pages/venue/SubscriptionPanel.tsx": "985031f47a5dd5b7c0cb67077dd86988522e2c57f6d62f8c5e5d2162c9bd2b33",
+      "apps/platform-web/src/styles/index.css": "067e6c6a57617767b96ed5e78728ea0b2ea1009fab85588f02bd3b7fdca5ec20",
+      "apps/platform-web/src/subscriptions/operator-actions.ts": "0ddbdb108e5d6588a11cb74c3bd7fd1fea376848d77f0c5d2bf43549a56d5f3a",
+      "apps/platform-web/src/subscriptions/types.ts": "661d18edc90a63ac9d9f9e963d9f863002b41efff096f2d0612a6ad8bcc993b9",
+      "apps/platform-web/src/test/commercial-control-ux.test.tsx": "c15615fbe5eb3c7ead3c17a5ee2fd67e0ab052d447dd51a2c022565446314596",
+      "apps/platform-web/src/test/site-motion.test.tsx": "2b5cfd024f7652f52eb8c8381ad503f1db3815e707b55ad846fcd9202de6700f",
+      "apps/platform-web/src/test/subscription-lifecycle.test.tsx": "ef846e16344f2b03c57a82fc30faad4eec3b448b24b572b6e2ada35dea8bed56",
+      "compose.lan.yaml": "245a879e8491c33513dcb258dddf46205b30528b59e19d0d535ec7522579b1b3",
+      "compose.local.yaml": "b768fb294b3b193d5889d004000a71698386a8efdf4b8fa1b214dfe0f8fa3d3e",
+      "compose.yaml": "ee71e021b7391db5c2d53447f09d665a4c90aa551af012498d12d3b773144824",
+      "deploy/traefik/routes.yml": "2ec45fcbb76a751738d357b6d2d68ad1e5b3e9fd57a337714d3cca934b672e2c",
+      "docs/CANONICAL_MENU_SYNC.md": "5bdfeee1e75c628a49412ed1899b7ee022de8a2ef70401a8c980166743033356",
+      "docs/COMMERCIAL_SUBSCRIPTION_LIFECYCLE.md": "1e14aa72d46f2a87e70b30a36593cfcc032d0c7945942fd76b1c93d7f951e3a1",
+      "docs/DEPLOYMENT.md": "d0365a90c6f2eaa19464b97c8fd906e1cb5f35ef78131e7d04b3a6769a5e55ec",
+      "docs/DEPLOYMENT_PROOF.md": "fbc66efc01b40b731608d8a3664051e7f186c06a47af225231ff6ec7b51cca46",
+      "docs/agent-state/VYNIC_CODE_MAP.md": "cbba74fc5e28c350d5ff95bdf6f143986fda1a4b3a1c3e5376b9fee41a3921b6",
+      "docs/agent-state/VYNIC_DECISIONS.md": "6fb07a18e62e09a3e1ec5c1482e4bac169f91a7163be424715890b3b26669455",
+      "docs/agent-state/VYNIC_PROJECT_STATE.md": "31bf26a03053285f1f7d51729635688430c6986164409cc5969556896a10136a",
+      "docs/audits/2026-09-29-f7bb982/AUDIT_CHECKLIST.md": "44a92a0deb7b9432f4b615ad84834183fb8a844b0b810e1374d16f96ab769a4e",
+      "docs/audits/2026-09-29-f7bb982/EVIDENCE_AND_MATRICES.md": "501a19237555f4586c3a14916ad18c34dd672a2bdbc3c61ed4c92761f8c08019",
+      "docs/audits/2026-09-29-f7bb982/IMPLEMENTATION_ROADMAP.md": "6582b679e445f520dff22838a1d59989bdec10244032b6f4c744bb5be2386ad9",
+      "docs/audits/2026-09-29-f7bb982/INVENTORY_MANAGER_FINDINGS.md": "72a00311a83f100d064ae9be3919a576affa95e6d2a65d48b9d888fa4eefc71e",
+      "docs/audits/2026-09-29-f7bb982/INVENTORY_MANAGER_UX.md": "5b24404462d64642f37cb23d01d982912437923e5c7a9d912c01043dbc8e3468",
+      "docs/audits/2026-09-29-f7bb982/MARKET_BENCHMARK.md": "9fccb6e9e23c157ca08e4610744ff59f027c5cf74ec7224a1bf651c887c79ac1",
+      "docs/audits/2026-09-29-f7bb982/MASTER_BACKLOG.md": "10003926f45c9203fc9eecd0318fc3c9e4cbdbe7a3a18597a83e85eddf2671d1",
+      "docs/audits/2026-09-29-f7bb982/POS_MENU_EDGE.md": "f4abef7c22f620b0ca516d4c2d14437cc24626d0220d7b658f0c4f5697c9488c",
+      "docs/audits/2026-09-29-f7bb982/README.md": "3aa8639755716e0547476d3446e0971c5d92157a4b1faa00ba25ec313cbcc957",
+      "docs/audits/2026-09-29-f7bb982/RESOURCE_MANIFEST.md": "51c3aa40c823e8071f0af51f56f95c1132c7f877f14293617e3dd10c19246abd",
+      "docs/audits/2026-09-29-f7bb982/SECURITY_AND_RELIABILITY.md": "92a994adbea7af360c1c8ba2858ba5a8faf1ebfeb1f7068dc3bc9cc9a0e02812",
+      "docs/audits/2026-09-29-f7bb982/SYSTEM_AND_ARCHITECTURE.md": "f2378e4a36d35c262a42490418c806f49f71eee33a18007deaa63c19c2723241",
+      "docs/audits/2026-09-29-f7bb982/UI_UX_AUDIT.md": "1151d52bd3d0d238bd2b739babb14f101d586cd383d6f56b3d9547cf415ca2dc",
+      "docs/audits/2026-09-29-f7bb982/VYNIC_MASTER_STABILIZATION_AND_RELEASE_PLAN_2026-09-29.md": "ef4aa7a343a86e809aea151da2938ee38c265bd3559680687725217e6f0a5a8f",
+      "docs/audits/2026-09-29-f7bb982/WEB_COMMERCIAL_SECURITY.md": "3831867b566387fb9446e5d97c2e672d1bd354e8e928f5cbc35728c1a763476c",
+      "experiments/hyperframes/vynic-launch-film/.gitignore": "e476d41f5fe892f8b28f294d5454c5225ca60a50a4dc8c782c0f53b051bc6c5a",
+      "experiments/hyperframes/vynic-launch-film/AGENTS.md": "c59e72fc9090855ff01deecbdef7cb71d69c9db03d4ec690bca8be3d394b3b14",
+      "experiments/hyperframes/vynic-launch-film/BRIEF.md": "31985cbeef10aa6b624a5290e8017f3de63ec78aae09d57937b976c91fb2ee77",
+      "experiments/hyperframes/vynic-launch-film/CAPTIONS_GE.md": "ad3875f6d5986c607dddeea74261a460da2796532c7b9608a27f377bf7677635",
+      "experiments/hyperframes/vynic-launch-film/CLAUDE.md": "c59e72fc9090855ff01deecbdef7cb71d69c9db03d4ec690bca8be3d394b3b14",
+      "experiments/hyperframes/vynic-launch-film/MOTION_DIRECTION.md": "db1636ecab8fa91747eb6ea666435d4e62126dc3f19f0681502f5420098709d7",
+      "experiments/hyperframes/vynic-launch-film/README.md": "becb66b480211443280db7c12b229061992e49322d0d0fc4c0ef8c8e827f824c",
+      "experiments/hyperframes/vynic-launch-film/STORYBOARD.md": "548af7cb0a8a02930a2be9dc36d345070e7aaa88b67a7e4c5bef384303ea9c92",
+      "experiments/hyperframes/vynic-launch-film/VOICEOVER_GE.md": "4cddcc4522f5fe962ae1a85b98c3c481b41253cd81ce9bc154140a6458959230",
+      "experiments/hyperframes/vynic-launch-film/VOICEOVER_GE_V2.md": "5f77f3338c825a2612b7b40ff0b2fec39844a658fd9ee718d11f9a6b137a2660",
+      "experiments/hyperframes/vynic-launch-film/VOICEOVER_TIMING.md": "603a8ee261c17bdb73f10ba9a30e0622c5b57ba5f677f09951c2d1c16bd5e502",
+      "experiments/hyperframes/vynic-launch-film/assets/audio/music.wav": "0155561e0912dbe3cffa7b8ddfb5e9d08c9914ebe5283fe838404721b91cdc49",
+      "experiments/hyperframes/vynic-launch-film/assets/audio/sfx.wav": "27c7c1b8797c0c79731657e5a532455afc23dee3b96b7cf6795d0c8337a167fa",
+      "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-01.wav": "a2a08575325f29184a19b053a353785ecc979a2d11d37a725e3eb2ddb68c65f2",
+      "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-02.wav": "a03179e11cd9795fff1c7892fbf58a16e6c165c0824724546bd53b7e6f45a8ec",
+      "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-03.wav": "1a9c7b58376d00587af9049a7f64c7b591061b68907f3c1664c5598a8acfc8aa",
+      "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-04.wav": "27f4ad9c804fcedcf0c0dcece4cdb7233389b71b0ac06d798891d883edf5243a",
+      "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-05.wav": "3f5f267516c3bf8d94cc003f60e457e71476fe8749323e6f30aff59a4b690d3e",
+      "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-06.wav": "914ca8a76dbbefe88f3e157902546d2a10e48b483eb10513e169c7c352ed1dcc",
+      "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-07.wav": "476896be0917eb37120cc4de33d93f4575347217dc6ed0527ae7c91e2df2e51a",
+      "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-08.wav": "053cffc045630cc823f43045a9d10d83a4bb722c8ad612cd1f27ef8c74393a5b",
+      "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-09.wav": "99e5b593eb1b202ac5363bd6562fc8b0c8867338c4972ffc71fb439fa069eb93",
+      "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-11.wav": "5782117030f07c1744a485d28720acdb5d7a016c19517af5860142345d6380bd",
+      "experiments/hyperframes/vynic-launch-film/assets/audio/vo/vo-12.wav": "09962acb57affef617515d760f7d9765c292843f5551fbd65a43c371f526ae45",
+      "experiments/hyperframes/vynic-launch-film/assets/fonts/FONTS.md": "3220bcbb45ff442e89f71af9155e9ad7c2ac8f8a84fcbe37a3697c65bbf00878",
+      "experiments/hyperframes/vynic-launch-film/assets/fonts/Geist-Bold.ttf": "f032f37d12e82a37977fd1159c01e1a14415672244d2e6865d57e28c74886d03",
+      "experiments/hyperframes/vynic-launch-film/assets/fonts/Geist-OFL.txt": "930853ee1daa68554d9e35c8a9175affb74f699fad9a5da6ee5ebe76379d9137",
+      "experiments/hyperframes/vynic-launch-film/assets/fonts/Geist-Regular.ttf": "09af32bab931f1ccc6e4776c5c39c8ea6c0d59b096f6f6c2959b1fdf18df0901",
+      "experiments/hyperframes/vynic-launch-film/assets/fonts/Geist-SemiBold.ttf": "4c11a19d17e7a608f797e6a7e1f266778cc75510861f61063acaa2c0dec7c906",
+      "experiments/hyperframes/vynic-launch-film/assets/fonts/GeistMono-Variable-latin.woff2": "b7ac144b394cbd81052d6397ec0c33397977b1d7e9bc095e744e652a378c6fb3",
+      "experiments/hyperframes/vynic-launch-film/assets/fonts/NotoSansGeorgian.ttf": "d96c44584566c7106f7fdea7c07ad09f63e481bf9066e89b1d14195a967d4ca2",
+      "experiments/hyperframes/vynic-launch-film/assets/fonts/NotoSerif-Italic.ttf": "749e80e313ef711f9373c6cce17c72297ef05490b3dcda7967d1d5d90bf1183f",
+      "experiments/hyperframes/vynic-launch-film/assets/fonts/NotoSerifGeorgian-Bold.ttf": "f7fc391a93f8d50a5e19649c2e6706a00c9c8412cd820c860fc2e3c28c2c5084",
+      "experiments/hyperframes/vynic-launch-film/assets/fonts/NotoSerifGeorgian-Regular.ttf": "eea3e8415a37dd496dbb6fad16e95b1513d3fc14863c6cc8886456f273eb1cdf",
+      "experiments/hyperframes/vynic-launch-film/assets/fonts/Vankisi-HeaderFont.ttf": "a64e987042fedb59d4e6ef4b86ad1b63d8a5297f9dc170c95599167f81cc73d3",
+      "experiments/hyperframes/vynic-launch-film/assets/img/saas/g1.jpg": "24b93366398a7e1d8c2eda73629a7665cc04f62fad45799f70939f8e2c82426e",
+      "experiments/hyperframes/vynic-launch-film/assets/img/saas/g2.jpg": "51b5717e7e2b9ba608387b6f2b174137dffaa7892e54b14a73254d11998bc215",
+      "experiments/hyperframes/vynic-launch-film/assets/img/saas/g3.jpg": "944e0bb5fee058d650f2d182d41b6e59671ea4289912b93550764d9f4c71037a",
+      "experiments/hyperframes/vynic-launch-film/assets/img/saas/g4.jpg": "a7640c907a43fc6c409220536d5793ae38f4e11ea4672a63406e8b298bed49d7",
+      "experiments/hyperframes/vynic-launch-film/assets/img/saas/hero.jpg": "157f34b5a85b6b973ac0fa245eea9b960d07fb1fc74344f07487ca35e897beed",
+      "experiments/hyperframes/vynic-launch-film/assets/img/vankisi/atmosphere.jpg": "b2db62656decabdecacdc0ab78d634b331ce723ccb5c2009f90a5a81a95b927b",
+      "experiments/hyperframes/vynic-launch-film/assets/img/vankisi/khinkali.jpg": "1c7f3519461e2cbde750adf47a4378ce342db525a71b8b0ee3b3a716a9ac8b65",
+      "experiments/hyperframes/vynic-launch-film/assets/img/vankisi/logo.svg": "d479d4085c116187b722fd66f0c746c8807bf377245eb47ed9768f0570f243c1",
+      "experiments/hyperframes/vynic-launch-film/assets/img/vankisi/signaturedish.jpg": "a0ba803b4bfa504d7e3d38ca5ec28f9f9e359810ca5726c9f6cdb88e0b51feb4",
+      "experiments/hyperframes/vynic-launch-film/audio/lib.mjs": "4977b49fd6ccfd4f50acd8175b4558b8f48e4b1a916d28b4a087cbedfbab3b23",
+      "experiments/hyperframes/vynic-launch-film/audio/music.mjs": "8c43f3dd8ddd2b014917fe73b034b61da75cee018cb8fce3ba7a3a6d92595ca4",
+      "experiments/hyperframes/vynic-launch-film/audio/sfx.mjs": "6f23df80a02341e33878b760dd62c859fbcbd453c081b4cd85ed9949d86f1372",
+      "experiments/hyperframes/vynic-launch-film/audio/tts.mjs": "0ee58e252446ee80ab0699b21d8d3dddc88a543882581e46aa85393d2e44a6ab",
+      "experiments/hyperframes/vynic-launch-film/audio/vo-lines.json": "a77de1262247cf64adc02cf5712615be9e6efdcae54bc93c7fef48ddd0d03d82",
+      "experiments/hyperframes/vynic-launch-film/audio/vo-v2-lines.json": "0e8f35c573795a068c97749e3545b99a64d68386f5b2720a21c53cb391a3c3e0",
+      "experiments/hyperframes/vynic-launch-film/audio/voice-review.mjs": "cd699d978e383eff6acff614c9431b56938c23acdf65ec033261501dc8a6208f",
+      "experiments/hyperframes/vynic-launch-film/film.css": "35663e16df15f95924dd8a13553781e0aa602156d98752d44e3f30a67d0c9154",
+      "experiments/hyperframes/vynic-launch-film/hyperframes.json": "ad5dadeef78a520800a9e5cdd27a92ff5ac37f11b6a07f611b6b52b9f8c79a17",
+      "experiments/hyperframes/vynic-launch-film/index.html": "b09af3c5c601e17a8f52391fd7d2501f55c17769b0b44e87c12a6532f1b9eacd",
+      "experiments/hyperframes/vynic-launch-film/meta.json": "787073bb39ca83660fe6d0b4455e6f0a92c976e8760c33258cee656c6de6b53b",
+      "experiments/hyperframes/vynic-launch-film/package.json": "f97091b30a8012a3568586fcf335df8b8eb95167cfdd4a0cdb3a2af373d8da71",
+      "experiments/hyperframes/vynic-launch-film/real-ui/REAL_UI_NOTES.md": "67b4ee3096def713c804df0d7d5cd160422fdacc0651ea692baefc637310df4b",
+      "experiments/hyperframes/vynic-launch-film/real-ui/STYLE_NOTES.md": "215a0aaa573f48e8fc2479f5fa6103a50f64746dca6f956f02e113de200b604f",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/audio/music.wav": "a1d12731affdd05a9463cca13acdd5c71bd6b44b9a57d2a50d2d79629d2ee5da",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/audio/sfx.wav": "f49d563933c52af8c8993a0a8bd92bf3dca338befab63eaed441cbcaa5d95b3a",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/FONTS.md": "3220bcbb45ff442e89f71af9155e9ad7c2ac8f8a84fcbe37a3697c65bbf00878",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/Geist-Bold.ttf": "f032f37d12e82a37977fd1159c01e1a14415672244d2e6865d57e28c74886d03",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/Geist-OFL.txt": "930853ee1daa68554d9e35c8a9175affb74f699fad9a5da6ee5ebe76379d9137",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/Geist-Regular.ttf": "09af32bab931f1ccc6e4776c5c39c8ea6c0d59b096f6f6c2959b1fdf18df0901",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/Geist-SemiBold.ttf": "4c11a19d17e7a608f797e6a7e1f266778cc75510861f61063acaa2c0dec7c906",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/GeistMono-Variable-latin.woff2": "b7ac144b394cbd81052d6397ec0c33397977b1d7e9bc095e744e652a378c6fb3",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/NotoSansGeorgian.ttf": "d96c44584566c7106f7fdea7c07ad09f63e481bf9066e89b1d14195a967d4ca2",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/NotoSerif-Italic.ttf": "749e80e313ef711f9373c6cce17c72297ef05490b3dcda7967d1d5d90bf1183f",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/NotoSerifGeorgian-Bold.ttf": "f7fc391a93f8d50a5e19649c2e6706a00c9c8412cd820c860fc2e3c28c2c5084",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/NotoSerifGeorgian-Regular.ttf": "eea3e8415a37dd496dbb6fad16e95b1513d3fc14863c6cc8886456f273eb1cdf",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/fonts/Vankisi-HeaderFont.ttf": "a64e987042fedb59d4e6ef4b86ad1b63d8a5297f9dc170c95599167f81cc73d3",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/img/saas/g1.jpg": "24b93366398a7e1d8c2eda73629a7665cc04f62fad45799f70939f8e2c82426e",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/img/saas/g2.jpg": "51b5717e7e2b9ba608387b6f2b174137dffaa7892e54b14a73254d11998bc215",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/img/saas/g3.jpg": "944e0bb5fee058d650f2d182d41b6e59671ea4289912b93550764d9f4c71037a",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/img/saas/g4.jpg": "a7640c907a43fc6c409220536d5793ae38f4e11ea4672a63406e8b298bed49d7",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/img/saas/hero.jpg": "157f34b5a85b6b973ac0fa245eea9b960d07fb1fc74344f07487ca35e897beed",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/img/vankisi/atmosphere.jpg": "b2db62656decabdecacdc0ab78d634b331ce723ccb5c2009f90a5a81a95b927b",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/img/vankisi/khinkali.jpg": "1c7f3519461e2cbde750adf47a4378ce342db525a71b8b0ee3b3a716a9ac8b65",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/img/vankisi/logo.svg": "d479d4085c116187b722fd66f0c746c8807bf377245eb47ed9768f0570f243c1",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/img/vankisi/signaturedish.jpg": "a0ba803b4bfa504d7e3d38ca5ec28f9f9e359810ca5726c9f6cdb88e0b51feb4",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_01_dash_before.png": "93bc3b7d5c0bae159edf6fcf016b67f70e4d9a78907905b1c836308d413522c8",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_02_pull.png": "8d31ff593a5b314bff3aaa8d8179270418a48ab215081e6753637bcab07a2f78",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_03_dash_after.png": "c06660920558d00bb0539247734b1bced54c450cd8e5ac9cd9fceda8e99692a4",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_04_dash_scrolled.png": "93aa84c8e7f37db9b26ba954d4c8717c4c3b7213a920fffd34552e0be713ecc4",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_05_tables.png": "90d2561681cef14574d97197309b19daadd955d7bdd24f8b2d62dd1e51d634fe",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_06_inventory.png": "0a513996788db6ebbe22ca0431bd28a9a9716473bc8b19be57a3bbe514807cbd",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_07_reservations.png": "f9365fc4cdded98b61da05bce6880a6916dc434f3cfdf02577b6c7a967d6afce",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_08_recv_editor.png": "a41cd410852fc95865ff83f65f21c42fb8d9604ab968cc80c0bb5c7dffbf61fa",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_09_recv_lines.png": "26dcdb9e1b7379cd58f602368fbbf6212b7cba775b89995d567b57471fb70fa2",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_09b_recv_payment.png": "4dbdc145939059d7909be3f08ebb4bb6ae09f7175cc2cc4e14ac4efda2d6e462",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_09c_recv_review.png": "a74ad5dcb1fa9d2fda3bafd628b638fdea9cafa088154c14a4d4bde4c1a8b47a",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_09d_after_save.png": "bfa2a86beaf9a42d04463d0f9514b6d88410f98415877dd260da3ea8efac7100",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_09e_stock.png": "3f2a4a84bff9e3b25c7450d90dc63c38f661a7bdc7780ee93e4b51cdc76b5d8d",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_10_res_detail.png": "72eb8ef4e0bedd0127c3e6261a4879bf739956ba87538bf1818ffa8b9f63f0dd",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/mgr_11_res_confirmed.png": "011ff8de3e242ef2cf10de3edfe644503b566c47f8fdb75ed1aadcd0419ff488",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_01_floor.png": "145b48f329c8491a133d7feb6dc13cfb21bf6d69c5f6210e3ada4f6480c9f088",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_02_editor_empty.png": "f4b721c0d5ce816e8eeefeabf35082146fd679166a37e9a110de619a7ded68bd",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_03_item1.png": "9b6688536634e7cb188b90eabb570d69dccb83224424787344ac8ddf3a2a67a8",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_03a_pad.png": "4938c1dbabca5ba77d65795ca431c523fa443f3cc549a3f166f0522d0e8ae421",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_04_item2.png": "33e86ba764ebd83edfd72d3c86c60b032dda23b154dfc912301fecc43295d896",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_05_item3.png": "eace4169d3d1d5f6d79b878f6d5e0842c85a0932f65e853cca1dc87bc63b0367",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_06_detail_pending.png": "720f0ed6a36298e0574e9e1303b0e453caa5e3f674eb0f69b8b16dfbc842241e",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_07_detail_confirmed.png": "c7e6b7e609e9f03a70d7281d488e34047ec377838facd63959b09b99bd047d8a",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_08_floor_after.png": "a9aa1d4d683f8ae7f08d21e260250ddb33aaf9595271d9a8a7520a74c1249014",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_10_calc.png": "695d193f1dcdede06dc595ad41927fd046c58c4d35b54ce23956aba89278f094",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_11_takeaway.png": "0537606540cc24b1a321a43f7542be1dce353ef750949bcdbc209fcf1e0fc87c",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_12_reservations.png": "f5deb010fd3060b65e961b95b4f62fe26312ae6b46d846050b091052cb4aba0f",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_14_xreport.png": "6a89693d21eac6bef86a73b8e465646f85ce87194b8c24fe74938148d6f49fb9",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_20_admin.png": "e62277c52c8de2f68a3aa1c9ac910c5c8dcc9586912279118d214eaadbcdf8d7",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_21_admin_menu.png": "654edbe2ca3635335d28474631a117b81707b0d0a3a4558ec12fdbeff6a021bd",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_22_admin_tables.png": "a3be562df74f89277b1bb32b9c68dffc49af92635c8fa35cf8660129da97318a",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_23_admin_close.png": "cfa7e07d7acbedbc68c65c27b27ac717efb506b4be10e3c0d9f3631df3b8b4ec",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_24_admin_res.png": "d01a0ebd35662c8f9a7c75b47fc7994424f47242c8bdc6097f6b5430e9c2e2a9",
+      "experiments/hyperframes/vynic-launch-film/real-ui/assets/ui/pos_25_admin_inventory.png": "52562f1e627aee72048ada361141be9a7a9a22dfb226512837835740758d77a5",
+      "experiments/hyperframes/vynic-launch-film/real-ui/audio/music.mjs": "84e4ea28508637d9ad91870fe00476cce48b93c4c69a446837d38800577cdd9a",
+      "experiments/hyperframes/vynic-launch-film/real-ui/audio/sfx.mjs": "f4724d12547cc34bf325210f01c09e085363254598409e3129d2695cc56b9739",
+      "experiments/hyperframes/vynic-launch-film/real-ui/base.css": "35663e16df15f95924dd8a13553781e0aa602156d98752d44e3f30a67d0c9154",
+      "experiments/hyperframes/vynic-launch-film/real-ui/capture/debug_res_test.dart": "27d59ea188e1297224faa87cd816928f007eb35c8cfe83aebad67d6755747679",
+      "experiments/hyperframes/vynic-launch-film/real-ui/capture/fonts.dart": "fb20f59a66ccd8bea7479d0b234cca65b1d5e70881197b006cc8012177861e59",
+      "experiments/hyperframes/vynic-launch-film/real-ui/capture/harness.dart": "4c04509fa701463bb8e49b3cca6bdc0ab32b2babcf15762e9cc96bf37700a09b",
+      "experiments/hyperframes/vynic-launch-film/real-ui/capture/manager_api.dart": "232d7aa3724a93ec84e64a33e9c1d6a284d48f36162f7f489e2e74546fcc57e2",
+      "experiments/hyperframes/vynic-launch-film/real-ui/capture/manager_capture_test.dart": "80f2ba66292fe922c568a60e7e9dbcfd10dccabea9e6ca33c9073e2b21b5507c",
+      "experiments/hyperframes/vynic-launch-film/real-ui/capture/mgr_rects.json": "4f9631da5ad3c161b1deeba97377087ca55970c5c7575ec25d48be976ec2961a",
+      "experiments/hyperframes/vynic-launch-film/real-ui/capture/pos_flow_capture_test.dart": "937f33ae44953619dad8594b75446f2a6a9c2eaa2cc50b2a3609f1432278ac23",
+      "experiments/hyperframes/vynic-launch-film/real-ui/capture/pos_home_capture_test.dart": "e4b4667bc48439eb4fcc26df13913e9cb1451f25294a3777c606e1e3fb9eb338",
+      "experiments/hyperframes/vynic-launch-film/real-ui/capture/pos_rects.json": "a9bedeb1d31c4737339fec82763d6b5e62ef0f5089544a4500c7a7eb7a17a9be",
+      "experiments/hyperframes/vynic-launch-film/real-ui/capture/run.sh": "b8a31cad6d7cb88ee754015703eea2dac0b8c90f20ebda4829398cfd1beca6eb",
+      "experiments/hyperframes/vynic-launch-film/real-ui/capture/seed.dart": "588658c88952b175c922758df79576730f35aefaa0a9b9621a295ce0d240e0f8",
+      "experiments/hyperframes/vynic-launch-film/real-ui/fast.css": "9fd6b2f1c04ee30ff8511ebfec1123c3b55c6b34b24bbe75707d3c2aa38f08c3",
+      "experiments/hyperframes/vynic-launch-film/real-ui/hyperframes.json": "ad5dadeef78a520800a9e5cdd27a92ff5ac37f11b6a07f611b6b52b9f8c79a17",
+      "experiments/hyperframes/vynic-launch-film/real-ui/index.html": "373e14dfcdd8c753ded8281adad3b6e2e19d5bc8db9db65a4b7e84f288df4a2d",
+      "experiments/hyperframes/vynic-launch-film/real-ui/meta.json": "8bc130ba4f295821b4db0ff316047451efb7ef3953240b5b6be0c940339ee8a6",
+      "experiments/hyperframes/vynic-launch-film/real-ui/package.json": "b1a47a3281e9377309f387f165fd0870572cadc6236cacc26e13779b6cd5f259",
+      "experiments/hyperframes/vynic-launch-film/real-ui/timeline.js": "8393ce32daf9b39974e8d6fbd2462eeb2fdf610f77f2041d53944858dd64d0f0",
+      "experiments/hyperframes/vynic-launch-film/real-ui/tools/deliver.sh": "24c6cf3a5866d1432b442068933c3dcbcc75aed8a7ea330de101ac7fa08d44a8",
+      "experiments/hyperframes/vynic-launch-film/real-ui/tools/inline.py": "b6e2e6b9c87dbfe870f06af523ee4351aa34ad6fefab77f694cd7cd5439802d7",
+      "experiments/hyperframes/vynic-launch-film/style-refine/STYLE_NOTES.md": "215a0aaa573f48e8fc2479f5fa6103a50f64746dca6f956f02e113de200b604f",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/audio/music.wav": "48166a8ecfcd1ed05ad7c65182bda1b3f141196988085f23fafd547656f9bda9",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/audio/sfx.wav": "717d9183548f449207f8b0165ff7b5d1754f932b5038961ae3da34dd18fa1b0c",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/FONTS.md": "3220bcbb45ff442e89f71af9155e9ad7c2ac8f8a84fcbe37a3697c65bbf00878",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/Geist-Bold.ttf": "f032f37d12e82a37977fd1159c01e1a14415672244d2e6865d57e28c74886d03",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/Geist-OFL.txt": "930853ee1daa68554d9e35c8a9175affb74f699fad9a5da6ee5ebe76379d9137",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/Geist-Regular.ttf": "09af32bab931f1ccc6e4776c5c39c8ea6c0d59b096f6f6c2959b1fdf18df0901",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/Geist-SemiBold.ttf": "4c11a19d17e7a608f797e6a7e1f266778cc75510861f61063acaa2c0dec7c906",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/GeistMono-Variable-latin.woff2": "b7ac144b394cbd81052d6397ec0c33397977b1d7e9bc095e744e652a378c6fb3",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/NotoSansGeorgian.ttf": "d96c44584566c7106f7fdea7c07ad09f63e481bf9066e89b1d14195a967d4ca2",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/NotoSerif-Italic.ttf": "749e80e313ef711f9373c6cce17c72297ef05490b3dcda7967d1d5d90bf1183f",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/NotoSerifGeorgian-Bold.ttf": "f7fc391a93f8d50a5e19649c2e6706a00c9c8412cd820c860fc2e3c28c2c5084",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/NotoSerifGeorgian-Regular.ttf": "eea3e8415a37dd496dbb6fad16e95b1513d3fc14863c6cc8886456f273eb1cdf",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/fonts/Vankisi-HeaderFont.ttf": "a64e987042fedb59d4e6ef4b86ad1b63d8a5297f9dc170c95599167f81cc73d3",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/img/saas/g1.jpg": "24b93366398a7e1d8c2eda73629a7665cc04f62fad45799f70939f8e2c82426e",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/img/saas/g2.jpg": "51b5717e7e2b9ba608387b6f2b174137dffaa7892e54b14a73254d11998bc215",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/img/saas/g3.jpg": "944e0bb5fee058d650f2d182d41b6e59671ea4289912b93550764d9f4c71037a",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/img/saas/g4.jpg": "a7640c907a43fc6c409220536d5793ae38f4e11ea4672a63406e8b298bed49d7",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/img/saas/hero.jpg": "157f34b5a85b6b973ac0fa245eea9b960d07fb1fc74344f07487ca35e897beed",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/img/vankisi/atmosphere.jpg": "b2db62656decabdecacdc0ab78d634b331ce723ccb5c2009f90a5a81a95b927b",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/img/vankisi/khinkali.jpg": "1c7f3519461e2cbde750adf47a4378ce342db525a71b8b0ee3b3a716a9ac8b65",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/img/vankisi/logo.svg": "d479d4085c116187b722fd66f0c746c8807bf377245eb47ed9768f0570f243c1",
+      "experiments/hyperframes/vynic-launch-film/style-refine/assets/img/vankisi/signaturedish.jpg": "a0ba803b4bfa504d7e3d38ca5ec28f9f9e359810ca5726c9f6cdb88e0b51feb4",
+      "experiments/hyperframes/vynic-launch-film/style-refine/audio/music.mjs": "f6f89e0f7debbaa71df13f7d6251627c1be9bbed039edd90df57037cab93716c",
+      "experiments/hyperframes/vynic-launch-film/style-refine/audio/sfx.mjs": "b7567077932ecbe563dbf7f4439c7364369705044b45d724c416551546623ae7",
+      "experiments/hyperframes/vynic-launch-film/style-refine/base.css": "35663e16df15f95924dd8a13553781e0aa602156d98752d44e3f30a67d0c9154",
+      "experiments/hyperframes/vynic-launch-film/style-refine/fast.css": "1a3ef2489c3bceab89601c6ba1718bd5387a4433bf0f424ee5f0c87c66b2e097",
+      "experiments/hyperframes/vynic-launch-film/style-refine/hyperframes.json": "ad5dadeef78a520800a9e5cdd27a92ff5ac37f11b6a07f611b6b52b9f8c79a17",
+      "experiments/hyperframes/vynic-launch-film/style-refine/index.html": "555efbe4bb640c5e7b5b445b227165463c5062e7fec16892e800a505995c6fbf",
+      "experiments/hyperframes/vynic-launch-film/style-refine/meta.json": "789b7c16fd078632da1d2eadd6ec02670c16e5980f08a0c75fee23609b7bb531",
+      "experiments/hyperframes/vynic-launch-film/style-refine/package.json": "a2ab07d3e0407db11ad4361a7e4a873c82169e814e4b0308cd4a3d1112b68ea7",
+      "experiments/hyperframes/vynic-launch-film/style-refine/timeline.js": "af22e74c0d34d0cfe7a22791f8f5f13f2d9c52c184d669666560289c6aa458a4",
+      "experiments/hyperframes/vynic-launch-film/style-refine/tools/deliver.sh": "fc1db9e6e79a65fcd50dc8726d6926a55eb8b2460b5e6472753ab072fea0bf01",
+      "experiments/hyperframes/vynic-launch-film/style-refine/tools/inline.py": "b6e2e6b9c87dbfe870f06af523ee4351aa34ad6fefab77f694cd7cd5439802d7",
+      "experiments/hyperframes/vynic-launch-film/tools/deliver.sh": "67d44e52e2dc1197c349057e9d72c22238e2f1a7877d6511345266c40ade315a",
+      "experiments/hyperframes/vynic-product-film/.gitignore": "a01c408a0d7b3d60a7ca13b4ac03c1fb2668553671b02e9fe030bfe7b1e16fb4",
+      "experiments/hyperframes/vynic-product-film/.media/preferences.json": "32325a6a14ce42d3f7c0896d86c083bf409904a315407d2c0de9526d364d4e4e",
+      "experiments/hyperframes/vynic-product-film/AGENTS.md": "c59e72fc9090855ff01deecbdef7cb71d69c9db03d4ec690bca8be3d394b3b14",
+      "experiments/hyperframes/vynic-product-film/BRIEF.md": "ecf3b8022dde7b0fbdfc3da98f01d51cd10c5fe97c50fb7839a8136f8129d306",
+      "experiments/hyperframes/vynic-product-film/CLAUDE.md": "c59e72fc9090855ff01deecbdef7cb71d69c9db03d4ec690bca8be3d394b3b14",
+      "experiments/hyperframes/vynic-product-film/MOTION_DIRECTION.md": "42863ea5f61fa3ebe048bae7a5ef3fbe3610adab33c7215a30a0c0cbbe4692f7",
+      "experiments/hyperframes/vynic-product-film/README.md": "9814bc596c895e4b275f8a5f575f116a4ce49412a6469ce7a37413ae897b2809",
+      "experiments/hyperframes/vynic-product-film/STORYBOARD.md": "e8af8ccb4c2ec614fdfabf518e5775bc3f52418b8f047cc864826fd62fa5f09c",
+      "experiments/hyperframes/vynic-product-film/assets/audio/vynic-score.wav": "4da66b76ca881053aaf194fa47f2cc2547371c3205b14633fa95160b1580799f",
+      "experiments/hyperframes/vynic-product-film/assets/fonts/CormorantGaramond-400-latin.woff2": "8048ac209bec741e1c29cd0cfac5aac1c0c2ba8c3ddbd4a58fa9bd92ef5c63c2",
+      "experiments/hyperframes/vynic-product-film/assets/fonts/CormorantGaramond-700-latin.woff2": "21a0fc1c5c22708cf4aa0c147fd32982e25bf9e21efec0ca31a4495ba41753eb",
+      "experiments/hyperframes/vynic-product-film/assets/fonts/FONTS.md": "69896120f5e314cd080716d7a6f30f04ac828372193629c8caa9aab343630756",
+      "experiments/hyperframes/vynic-product-film/assets/fonts/Geist-Bold.ttf": "f032f37d12e82a37977fd1159c01e1a14415672244d2e6865d57e28c74886d03",
+      "experiments/hyperframes/vynic-product-film/assets/fonts/Geist-OFL.txt": "930853ee1daa68554d9e35c8a9175affb74f699fad9a5da6ee5ebe76379d9137",
+      "experiments/hyperframes/vynic-product-film/assets/fonts/Geist-Regular.ttf": "09af32bab931f1ccc6e4776c5c39c8ea6c0d59b096f6f6c2959b1fdf18df0901",
+      "experiments/hyperframes/vynic-product-film/assets/fonts/Geist-SemiBold.ttf": "4c11a19d17e7a608f797e6a7e1f266778cc75510861f61063acaa2c0dec7c906",
+      "experiments/hyperframes/vynic-product-film/assets/fonts/GeistMono-Variable-latin.woff2": "b7ac144b394cbd81052d6397ec0c33397977b1d7e9bc095e744e652a378c6fb3",
+      "experiments/hyperframes/vynic-product-film/assets/fonts/NotoSans-Bold.ttf": "3a08a47daa00cade516425c15c57615aef2fd418ec9811a7b9f465088f92cc05",
+      "experiments/hyperframes/vynic-product-film/assets/fonts/NotoSans-Regular.ttf": "f5f552c8c5edb61fe6efb824baf4d4de47b1a8689ab4925ff43f7bd6a4ebece5",
+      "experiments/hyperframes/vynic-product-film/assets/fonts/NotoSerif-Bold.ttf": "96656aa5cec8f1d6fd0e804c1fad397e1a1cfa082e6642124e0bda68cd8363ce",
+      "experiments/hyperframes/vynic-product-film/assets/fonts/NotoSerif-Italic.ttf": "749e80e313ef711f9373c6cce17c72297ef05490b3dcda7967d1d5d90bf1183f",
+      "experiments/hyperframes/vynic-product-film/assets/fonts/NotoSerif-Regular.ttf": "19e72cd8d595fae5bd74a5206f5d938512e1183d4fed7abb1ec1be1d7efa5f88",
+      "experiments/hyperframes/vynic-product-film/audio/synth.mjs": "7010d97a06b8f3e551521adbd25add420d3c750d4d9137c384baa701a003bbd7",
+      "experiments/hyperframes/vynic-product-film/frame.md": "8d876e84da180d4bf4a4ba63b070ecf9db7bbc54ee5c16deae543c46cd0ab9e9",
+      "experiments/hyperframes/vynic-product-film/hyperframes.json": "ad5dadeef78a520800a9e5cdd27a92ff5ac37f11b6a07f611b6b52b9f8c79a17",
+      "experiments/hyperframes/vynic-product-film/index.html": "774c628e69b968940d4f3a08f83f3979606da4b414c80bbd50a0c26cd2c82baa",
+      "experiments/hyperframes/vynic-product-film/meta.json": "7a3f8f8d0d897d454203affce4f15e496884d8e1c04778bd1b15e1cd6ee0215f",
+      "experiments/hyperframes/vynic-product-film/package.json": "9521239befb7dfab276837dc6707ff77e522de6613764c97adcc15d036374c3d",
+      "experiments/hyperframes/vynic-product-film/tools/contact-sheet.sh": "6e1e1b899c52de70ab3d2a71555a7960204ca140beff2f04179dc8adc3d888c4",
+      "experiments/hyperframes/vynic-product-film/tools/render-preview.sh": "42165debf726b4cef8b2daca4a8bf2e05a51fd367e6642b97a20d30c90474e25",
+      "experiments/hyperframes/vynic-product-film/tools/strip-audio.sh": "85a1f9e981e882b9c0df7a9e75d7e8defb871f754a3a18fdf2827726a389d789",
+      "scripts/docker.sh": "6b3d7c7e2834d9ba00fdf2a588504c5c8b07eaf1dec35f55730d3aa41f694bc8"
+    },
+    "existingMigrationSha256": {
+      "apps/backend/prisma/migrations/20260618150314_init/migration.sql": "69ffb0dfacfc448000fed5dda5056292d156071de46f6b4f9f946926b82566e4",
+      "apps/backend/prisma/migrations/20260618193000_menu_sort_order/migration.sql": "79879928e70c3c3bf16e0379f67c9d0b9aa36cbb1d2b2d803341788c28a55727",
+      "apps/backend/prisma/migrations/20260618200000_website_pos_reservation_bridge/migration.sql": "62d78ce7e5a81c2ed6399db29616daafa19bd6dc6823f9cc8506d875b6422a8e",
+      "apps/backend/prisma/migrations/20260721120000_order_closure_id/migration.sql": "992ad891abfeabcdc9744a5b53042e32042d6298d55be299349e3ebb1b69a339",
+      "apps/backend/prisma/migrations/20260830090000_device_identity_foundation/migration.sql": "2ef833921dc7c21418c023f9dc40a78f6de7552dcb79229f9eba41dac3580884",
+      "apps/backend/prisma/migrations/20260831100000_organization_venue_foundation/migration.sql": "ff714f5a2158979278267f1acd7d001b0652cb8a7209a05cf79cdcbb43b1835f",
+      "apps/backend/prisma/migrations/20260831130000_pos_operational_tenant_scoping/migration.sql": "da36e466be9c160f58ccaa992506db901aaaacd74fe939f930e06d292a58bf8d",
+      "apps/backend/prisma/migrations/20260831160000_product_entitlements_website_mode/migration.sql": "3f6719090833276d904a6727a22b2ce7c8f47ed0af2abefb57d1937effa30993",
+      "apps/backend/prisma/migrations/20260831190000_manager_tenant_ownership/migration.sql": "fdcab86ac917701a7231154abdee7b9146110568009c3d0479b5acd355c7ff4a",
+      "apps/backend/prisma/migrations/20260901090000_venue_domain_identity/migration.sql": "160d08c192cdf2eb1a18a9be766b166729d244241ee5cb22b08785dee600a50e",
+      "apps/backend/prisma/migrations/20260901100000_website_booking_tenant_ownership/migration.sql": "4dec36e5c0eea4db8b2a65c1724840b864bc931c28c90222f33d0b5400357492",
+      "apps/backend/prisma/migrations/20260901120000_edge_command_transport/migration.sql": "4abd0645975b013c5e6e7bebdfdd4f3497a7105f6be0c16475542b55fa280b7d",
+      "apps/backend/prisma/migrations/20260901140000_platform_control_plane/migration.sql": "63c6b20a6bbfb0c5cffeaa24c2a4f4739477fc5da776fd81ce57964e2bccf0b6",
+      "apps/backend/prisma/migrations/20260902090000_money_reconciliation_fields/migration.sql": "a5a51efdbaa5e7d2c77b5f7d2d35f36d19d38c17e51a6ff825dd3f721c7758a0",
+      "apps/backend/prisma/migrations/20260903090000_device_enrollment/migration.sql": "459c58e7491381261060c0ca62de86e620c322c1253eccb0848d8195498169ac",
+      "apps/backend/prisma/migrations/20260903120000_audit_report_sync_revision/migration.sql": "f0a7bce7579e319975a73ca13751354c69bdb0b93cd1062d98c0fd13b6b53aad",
+      "apps/backend/prisma/migrations/20260903140000_pos_reservation_mirror/migration.sql": "fbb299291b25ad44bf8ae92beeba15e67145c2b736bd686953327986ad7c04f6",
+      "apps/backend/prisma/migrations/20260904120000_audit_closure_semantics/migration.sql": "a1e5123f2cd22bebe94328025e930540ac25fc09f0a6654f38c4cf34c8cd50bb",
+      "apps/backend/prisma/migrations/20260905090000_audit_event_sequence_tenancy/migration.sql": "155b1abb4e8e5a2c10dbd1f78f930504d674b83042babc99e88ffa0fae36dd04",
+      "apps/backend/prisma/migrations/20260905140000_audit_event_log_entity/migration.sql": "5c84760ac1ceac476e00f455b30f883db4e752bae06e179ab54230b233e378fe",
+      "apps/backend/prisma/migrations/20260906120000_menu_item_pos_identity/migration.sql": "b97c4346eca4dea052e9c1260bdeafba00f405d561d4123412cfea90e33db3f7",
+      "apps/backend/prisma/migrations/20260906140000_complete_menu_identity/migration.sql": "ecb715633e98ff3b4b9902453aa38fb015fe938e7300875f702c50e0b0b46ebf",
+      "apps/backend/prisma/migrations/20260907120000_cloud_sale_ledger/migration.sql": "b8508fbf6c0725bd7564d637dfea2becbaf7779252c0f50eb20a71c2cb688334",
+      "apps/backend/prisma/migrations/20260908120000_inventory_step1_core/migration.sql": "a71db4e9f239c998970c91b94bafcc5be87adc36fc04911289487973ea5fd444",
+      "apps/backend/prisma/migrations/20260909120000_inventory_step2_receiving/migration.sql": "f1f2ec52f98ec0c03262ea91425ae5fa29541636a01428e79b29dbf82710a1ff",
+      "apps/backend/prisma/migrations/20260910120000_inventory_step3_menu_consumption/migration.sql": "56d691149131d53de86d44ad7aac845c077d681a98c79984116ca68ad1c0f818",
+      "apps/backend/prisma/migrations/20260911120000_inventory_step4_sale_consumption/migration.sql": "017ad2908c1caaff1e047412f57ddd43415fc3184a3c98e7b0bba05a62cec05f",
+      "apps/backend/prisma/migrations/20260912120000_inventory_step45_catalog_cost/migration.sql": "5c9f7517bebf37857db1e988a053f81bf5fef29e18b200924c7fcac2cc16d2f1",
+      "apps/backend/prisma/migrations/20260913120000_payroll_obligations/migration.sql": "4ee713bf8c1a60f14e191a462cc164add4fc2b5159fdccbdafdc1ae0d9c6aba4",
+      "apps/backend/prisma/migrations/20260914120000_payroll_day_adjustments/migration.sql": "919a4430a0b5467ba546667578e58d918f5f08438a730ec1f80576adb831e38e",
+      "apps/backend/prisma/migrations/20260915120000_manager_login_code/migration.sql": "89682b1b948ba634f54a3381cd439871fbd638dfa767851d5a26b91335945a3c",
+      "apps/backend/prisma/migrations/20260916120000_inventory_procurement/migration.sql": "9203eeaaa3ab1a35a6665b9fe1ab47221c92a3f438c93f140417fd048a4f5108",
+      "apps/backend/prisma/migrations/20260916123000_procurement_request_identity/migration.sql": "3d72a96ec0f554d3f458cff22a2ec5fed25fdc0eff2b0ce8b729fedabe14c965",
+      "apps/backend/prisma/migrations/20260917120000_receiving_self_purchase/migration.sql": "ef90f2a5d7a8458dd830d097e9c0322145734f094360820062ba8568f5b881c4",
+      "apps/backend/prisma/migrations/20260918120000_saas_phase2_control_plane/migration.sql": "500edce1497fab44fabb1a8a62c885c81c4e336668a1e6019faad84a19ebbc1a",
+      "apps/backend/prisma/migrations/20260919120000_customer_onboarding_runtime/migration.sql": "f1cf76a1e18156c44786d3cdb18b3ac860fb52dc8eb7747c5a05cf6dcf9ddb8f",
+      "apps/backend/prisma/migrations/20260920120000_non_fiscal_close_feature/migration.sql": "1ee92684c7555d9693250c896ea9c4b84f5fa1b70f43de38ee0348f9b429feea",
+      "apps/backend/prisma/migrations/20260921120000_venue_profile/migration.sql": "9157eda4089412d57f5ec278a0c57964770c0a2690317af463ffbb74400102f2",
+      "apps/backend/prisma/migrations/20260922120000_operational_primary/migration.sql": "a9156483af5d57ef9cd6f4a5b97fb0cbf1b9361a999179d0fca8e440167d632d",
+      "apps/backend/prisma/migrations/20260923120000_edge_foundation/migration.sql": "18565dd3198ed5330dbb4a016ecf1573106401642d6a38b21221bb6195eecb4a",
+      "apps/backend/prisma/migrations/20260924120000_venue_payment_integrations/migration.sql": "a50a6541c985b9d02b4f91480ab05405f74cf425bd4a7fc4a665e3e438ed6220",
+      "apps/backend/prisma/migrations/20260925120000_website_core/migration.sql": "f278722e87fe66d96733760a747d86f66d827e95a906cf5d70b4d8074796f0c6",
+      "apps/backend/prisma/migrations/20260926120000_website_menu_presentation/migration.sql": "a06667d57c9174687513f0506cc75f199664b3e4d4cf15b212f13633d7c39408",
+      "apps/backend/prisma/migrations/20260927120000_organization_owner_invitations/migration.sql": "cd678cb83cc43839bd343e074a305421a0e070eba7b8fce2d10fb7354cfab892",
+      "apps/backend/prisma/migrations/20260928120000_restaurant_foundation/migration.sql": "f2c23a7fc305775f2e08198a29d115f51215f36dffe2472e6adabd4a74e0b09e",
+      "apps/backend/prisma/migrations/20260929120000_website_only_plan/migration.sql": "79735cf1ef29071ab373d9a44d207a5a26f1387a773a964d4c14c493d1df1af1",
+      "apps/backend/prisma/migrations/20260930120000_cloud_menu_editing/migration.sql": "cbdb9b2a4a5f400da3b437e7dbc7df30ac81b91f7e7f3fc45e9f91db99bc5f9e",
+      "apps/backend/prisma/migrations/20261001120000_payment_integration_fk_on_update_cascade/migration.sql": "b16bef558b3a79d956c85423b4c62290ffd53d56aef091d4388a99335c374481",
+      "apps/backend/prisma/migrations/20261002120000_remove_non_fiscal_close_from_plans/migration.sql": "a0e6fb70c966a2d44ad7bc04ef6f41f166e43116becbd4eecea5463b51eef687",
+      "apps/backend/prisma/migrations/20261003120000_commercial_access_hardening/migration.sql": "babf266d4aec44f5a4a75a328740575e638c6a0b8ccedb143f1de0545f304e0f",
+      "apps/backend/prisma/migrations/20261003120100_no_plan_default/migration.sql": "987ef6e860607931f570b921bd1149e4ea480cbbb7d2cd91558bfb360c505ea5",
+      "apps/backend/prisma/migrations/20261003120200_customer_trial_requests/migration.sql": "0d7196f45cb61fb453c0b8957fac7f4af294c2f56eaba36d14d5a126f862fc56",
+      "apps/backend/prisma/migrations/20261004120000_subscription_lifecycle/migration.sql": "39d5a007ab1cefa3eba591fb425f9fcb73bd5967ea197fca510ab102a15704e7",
+      "apps/backend/prisma/migrations/20261005120000_website_hostname_requests/migration.sql": "e82c9628394492333fa0dc99ef32ca5e110375c8d63c574ddb328918c6444e20",
+      "apps/backend/prisma/migrations/20261006120000_hostname_request_current/migration.sql": "bd35c373037275e020097b457cfc8afe615a976624a6e680f67d96514989abc2",
+      "apps/backend/prisma/migrations/20261007120000_release_published_slug_reservation/migration.sql": "36957b217f4c5b8e9dd2e0cdec7023d556368adbeb461d0cd314804069edc483",
+      "apps/backend/prisma/migrations/20261008120000_hostname_request_fk_on_update/migration.sql": "e20c99eeab545a9b9fecc4fe0b1fb41e19b28b7f0016e260a8fd3a561b8ec514",
+      "apps/backend/prisma/migrations/20261009120000_custom_website_binding/migration.sql": "1ab1fa5cc735a56edb56c9b66056978432103ab693526d138809cedbc5b94b42",
+      "apps/backend/prisma/migrations/20261010110000_web02_capture_public_info_evidence/migration.sql": "08e3b087da28d31541b28f5b2daeee5fd4b49c83057875b3cf22782a8fd290e8",
+      "apps/backend/prisma/migrations/20261010120000_shared_website_foundation/migration.sql": "88e7406332b9e90af622674e545f8ba4d515d556951285cec9865749808c8d50",
+      "apps/backend/prisma/migrations/20261011120000_canonical_menu_sync/migration.sql": "25b9cbb8d6d8590b702acdf2a35f38852c8110f7c21a752887bbbf49061049ac",
+      "apps/backend/prisma/migrations/20261012120000_web02_restore_public_info_authority/migration.sql": "62035f02e44bcadc44ab2f36fbe68fb65ccc9909cbdfb335c80d75eebbe03ac8",
+      "apps/backend/prisma/migrations/20261013120000_menu03_exact_mutation_result/migration.sql": "47aea97a35898a29d9facd6b3d7244b8fbc67da31c44729d1cde62b50806aa30",
+      "apps/backend/prisma/migrations/20261014120000_menu06_safe_retirement/migration.sql": "aca2fd15eb8f8ef15c45f9cd675e27d0d885135483965a0fe8b1bb7232cbc30b"
+    },
+    "protocols": {
+      "canonicalMenuWire": 2,
+      "localMenu": 1,
+      "hive": 9,
+      "portableBackup": 2,
+      "foundationBootstrap": 1,
+      "edgeContract": 1,
+      "posPubspecVersion": "1.0.0+1",
+      "integerRunningBuildBefore": "not reported",
+      "capabilityBefore": "no explicit admission contract"
+    },
+    "originalDeviceFields": [
+      "id",
+      "venueId",
+      "installationId",
+      "displayName",
+      "platform",
+      "credentialHash",
+      "status",
+      "firstSyncAt",
+      "foundationBootstrap",
+      "runtimeConfig",
+      "lastSeenAt",
+      "createdAt",
+      "updatedAt"
+    ]
+  },
+  "capabilityContract": {
+    "reportVersion": 1,
+    "capabilities": [
+      "CANONICAL_MENU_V2"
+    ],
+    "header": "X-Vynic-Menu-Client",
+    "enrollmentField": "menuClient",
+    "authenticatedSelfReportNotBinaryAttestation": true,
+    "cachedReportNeverGrantsCurrentAdmission": true,
+    "defaultMinimumBuild": null,
+    "minimumBuildPolicy": "MENU_CANONICAL_MIN_BUILD_<WINDOWS|MACOS|LINUX>, strict safe unsigned integer, no SemVer inference",
+    "runtimeBuildSource": "VYNIC_APP_BUILD compile define; unknown null",
+    "freshnessMs": 900000,
+    "unchangedReportWriteThrottleMs": 60000
+  },
+  "authority": {
+    "tenant": "Authenticated Device/code -> Venue; Owner membership -> Venue",
+    "legacyPreserved": true,
+    "cutover": "Owner explicit confirmations, all ACTIVE devices fresh/compatible, final primary sync, valid unique retained UUIDs, locked recheck/token/audit",
+    "pendingLocalEdits": "Server cannot attest absence; all-online/final-sync/no-pending operator confirmations mandatory",
+    "rollback": "No CLOUD -> POS downgrade/automatic merge",
+    "operationalPrimaryUnchanged": true,
+    "noPerOrderCloudDependency": true
+  },
+  "database": {
+    "status": "PASS",
+    "chain": 65,
+    "previousChain": 64,
+    "tip": "20261015120000_menu09_client_compatibility",
+    "historicalMigrationsUnchanged": 64,
+    "databases": {
+      "fresh": {
+        "status": {
+          "exitCode": 0,
+          "output": "Prisma schema loaded from prisma/schema.prisma\nDatasource \"db\": PostgreSQL database \"disposable_menu09_63fd4096_fresh\", schemas \"pos, website\" at \"127.0.0.1:55447\"\n\n65 migrations found in prisma/migrations\n\nDatabase schema is up to date!\nLoaded Prisma config from prisma.config.ts.\n\nPrisma config detected, skipping environment variable loading.\n"
+        },
+        "validate": {
+          "exitCode": 0,
+          "output": "Prisma schema loaded from prisma/schema.prisma\nThe schema at prisma/schema.prisma is valid 🚀\nLoaded Prisma config from prisma.config.ts.\n\nPrisma config detected, skipping environment variable loading.\n"
+        },
+        "diff": {
+          "exitCode": 0,
+          "output": "No difference detected.\n\nLoaded Prisma config from prisma.config.ts.\n\n"
+        },
+        "matchingChecksums": 65
+      },
+      "upgrade": {
+        "status": {
+          "exitCode": 0,
+          "output": "Prisma schema loaded from prisma/schema.prisma\nDatasource \"db\": PostgreSQL database \"disposable_menu09_63fd4096_upgrade\", schemas \"pos, website\" at \"127.0.0.1:55447\"\n\n65 migrations found in prisma/migrations\n\nDatabase schema is up to date!\nLoaded Prisma config from prisma.config.ts.\n\nPrisma config detected, skipping environment variable loading.\n"
+        },
+        "validate": {
+          "exitCode": 0,
+          "output": "Prisma schema loaded from prisma/schema.prisma\nThe schema at prisma/schema.prisma is valid 🚀\nLoaded Prisma config from prisma.config.ts.\n\nPrisma config detected, skipping environment variable loading.\n"
+        },
+        "diff": {
+          "exitCode": 0,
+          "output": "No difference detected.\n\nLoaded Prisma config from prisma.config.ts.\n\n"
+        },
+        "matchingChecksums": 65
+      },
+      "prefix": {
+        "status": {
+          "exitCode": 0,
+          "output": "Prisma schema loaded from prisma/schema.prisma\nDatasource \"db\": PostgreSQL database \"disposable_menu09_63fd4096_prefix\", schemas \"pos, website\" at \"127.0.0.1:55447\"\n\n65 migrations found in prisma/migrations\n\nDatabase schema is up to date!\nLoaded Prisma config from prisma.config.ts.\n\nPrisma config detected, skipping environment variable loading.\n"
+        },
+        "validate": {
+          "exitCode": 0,
+          "output": "Prisma schema loaded from prisma/schema.prisma\nThe schema at prisma/schema.prisma is valid 🚀\nLoaded Prisma config from prisma.config.ts.\n\nPrisma config detected, skipping environment variable loading.\n"
+        },
+        "diff": {
+          "exitCode": 0,
+          "output": "No difference detected.\n\nLoaded Prisma config from prisma.config.ts.\n\n"
+        },
+        "matchingChecksums": 65
+      }
+    },
+    "ledger": [
+      {
+        "name": "20260911120000_inventory_step4_sale_consumption",
+        "checksum": "017ad2908c1caaff1e047412f57ddd43415fc3184a3c98e7b0bba05a62cec05f",
+        "finished": true
+      },
+      {
+        "name": "20260618150314_init",
+        "checksum": "69ffb0dfacfc448000fed5dda5056292d156071de46f6b4f9f946926b82566e4",
+        "finished": true
+      },
+      {
+        "name": "20260902090000_money_reconciliation_fields",
+        "checksum": "a5a51efdbaa5e7d2c77b5f7d2d35f36d19d38c17e51a6ff825dd3f721c7758a0",
+        "finished": true
+      },
+      {
+        "name": "20260618193000_menu_sort_order",
+        "checksum": "79879928e70c3c3bf16e0379f67c9d0b9aa36cbb1d2b2d803341788c28a55727",
+        "finished": true
+      },
+      {
+        "name": "20260618200000_website_pos_reservation_bridge",
+        "checksum": "62d78ce7e5a81c2ed6399db29616daafa19bd6dc6823f9cc8506d875b6422a8e",
+        "finished": true
+      },
+      {
+        "name": "20260906140000_complete_menu_identity",
+        "checksum": "ecb715633e98ff3b4b9902453aa38fb015fe938e7300875f702c50e0b0b46ebf",
+        "finished": true
+      },
+      {
+        "name": "20260721120000_order_closure_id",
+        "checksum": "992ad891abfeabcdc9744a5b53042e32042d6298d55be299349e3ebb1b69a339",
+        "finished": true
+      },
+      {
+        "name": "20260903090000_device_enrollment",
+        "checksum": "459c58e7491381261060c0ca62de86e620c322c1253eccb0848d8195498169ac",
+        "finished": true
+      },
+      {
+        "name": "20260830090000_device_identity_foundation",
+        "checksum": "2ef833921dc7c21418c023f9dc40a78f6de7552dcb79229f9eba41dac3580884",
+        "finished": true
+      },
+      {
+        "name": "20260831100000_organization_venue_foundation",
+        "checksum": "ff714f5a2158979278267f1acd7d001b0652cb8a7209a05cf79cdcbb43b1835f",
+        "finished": true
+      },
+      {
+        "name": "20260831130000_pos_operational_tenant_scoping",
+        "checksum": "da36e466be9c160f58ccaa992506db901aaaacd74fe939f930e06d292a58bf8d",
+        "finished": true
+      },
+      {
+        "name": "20260903120000_audit_report_sync_revision",
+        "checksum": "f0a7bce7579e319975a73ca13751354c69bdb0b93cd1062d98c0fd13b6b53aad",
+        "finished": true
+      },
+      {
+        "name": "20260831160000_product_entitlements_website_mode",
+        "checksum": "3f6719090833276d904a6727a22b2ce7c8f47ed0af2abefb57d1937effa30993",
+        "finished": true
+      },
+      {
+        "name": "20260831190000_manager_tenant_ownership",
+        "checksum": "fdcab86ac917701a7231154abdee7b9146110568009c3d0479b5acd355c7ff4a",
+        "finished": true
+      },
+      {
+        "name": "20260901090000_venue_domain_identity",
+        "checksum": "160d08c192cdf2eb1a18a9be766b166729d244241ee5cb22b08785dee600a50e",
+        "finished": true
+      },
+      {
+        "name": "20260903140000_pos_reservation_mirror",
+        "checksum": "fbb299291b25ad44bf8ae92beeba15e67145c2b736bd686953327986ad7c04f6",
+        "finished": true
+      },
+      {
+        "name": "20260901100000_website_booking_tenant_ownership",
+        "checksum": "4dec36e5c0eea4db8b2a65c1724840b864bc931c28c90222f33d0b5400357492",
+        "finished": true
+      },
+      {
+        "name": "20260901120000_edge_command_transport",
+        "checksum": "4abd0645975b013c5e6e7bebdfdd4f3497a7105f6be0c16475542b55fa280b7d",
+        "finished": true
+      },
+      {
+        "name": "20260907120000_cloud_sale_ledger",
+        "checksum": "b8508fbf6c0725bd7564d637dfea2becbaf7779252c0f50eb20a71c2cb688334",
+        "finished": true
+      },
+      {
+        "name": "20260901140000_platform_control_plane",
+        "checksum": "63c6b20a6bbfb0c5cffeaa24c2a4f4739477fc5da776fd81ce57964e2bccf0b6",
+        "finished": true
+      },
+      {
+        "name": "20260904120000_audit_closure_semantics",
+        "checksum": "a1e5123f2cd22bebe94328025e930540ac25fc09f0a6654f38c4cf34c8cd50bb",
+        "finished": true
+      },
+      {
+        "name": "20260905090000_audit_event_sequence_tenancy",
+        "checksum": "155b1abb4e8e5a2c10dbd1f78f930504d674b83042babc99e88ffa0fae36dd04",
+        "finished": true
+      },
+      {
+        "name": "20260917120000_receiving_self_purchase",
+        "checksum": "ef90f2a5d7a8458dd830d097e9c0322145734f094360820062ba8568f5b881c4",
+        "finished": true
+      },
+      {
+        "name": "20260905140000_audit_event_log_entity",
+        "checksum": "5c84760ac1ceac476e00f455b30f883db4e752bae06e179ab54230b233e378fe",
+        "finished": true
+      },
+      {
+        "name": "20260908120000_inventory_step1_core",
+        "checksum": "a71db4e9f239c998970c91b94bafcc5be87adc36fc04911289487973ea5fd444",
+        "finished": true
+      },
+      {
+        "name": "20260906120000_menu_item_pos_identity",
+        "checksum": "b97c4346eca4dea052e9c1260bdeafba00f405d561d4123412cfea90e33db3f7",
+        "finished": true
+      },
+      {
+        "name": "20260912120000_inventory_step45_catalog_cost",
+        "checksum": "5c9f7517bebf37857db1e988a053f81bf5fef29e18b200924c7fcac2cc16d2f1",
+        "finished": true
+      },
+      {
+        "name": "20260909120000_inventory_step2_receiving",
+        "checksum": "f1f2ec52f98ec0c03262ea91425ae5fa29541636a01428e79b29dbf82710a1ff",
+        "finished": true
+      },
+      {
+        "name": "20260910120000_inventory_step3_menu_consumption",
+        "checksum": "56d691149131d53de86d44ad7aac845c077d681a98c79984116ca68ad1c0f818",
+        "finished": true
+      },
+      {
+        "name": "20260915120000_manager_login_code",
+        "checksum": "89682b1b948ba634f54a3381cd439871fbd638dfa767851d5a26b91335945a3c",
+        "finished": true
+      },
+      {
+        "name": "20260913120000_payroll_obligations",
+        "checksum": "4ee713bf8c1a60f14e191a462cc164add4fc2b5159fdccbdafdc1ae0d9c6aba4",
+        "finished": true
+      },
+      {
+        "name": "20260916123000_procurement_request_identity",
+        "checksum": "3d72a96ec0f554d3f458cff22a2ec5fed25fdc0eff2b0ce8b729fedabe14c965",
+        "finished": true
+      },
+      {
+        "name": "20260914120000_payroll_day_adjustments",
+        "checksum": "919a4430a0b5467ba546667578e58d918f5f08438a730ec1f80576adb831e38e",
+        "finished": true
+      },
+      {
+        "name": "20260916120000_inventory_procurement",
+        "checksum": "9203eeaaa3ab1a35a6665b9fe1ab47221c92a3f438c93f140417fd048a4f5108",
+        "finished": true
+      },
+      {
+        "name": "20260918120000_saas_phase2_control_plane",
+        "checksum": "500edce1497fab44fabb1a8a62c885c81c4e336668a1e6019faad84a19ebbc1a",
+        "finished": true
+      },
+      {
+        "name": "20260919120000_customer_onboarding_runtime",
+        "checksum": "f1cf76a1e18156c44786d3cdb18b3ac860fb52dc8eb7747c5a05cf6dcf9ddb8f",
+        "finished": true
+      },
+      {
+        "name": "20260920120000_non_fiscal_close_feature",
+        "checksum": "1ee92684c7555d9693250c896ea9c4b84f5fa1b70f43de38ee0348f9b429feea",
+        "finished": true
+      },
+      {
+        "name": "20260921120000_venue_profile",
+        "checksum": "9157eda4089412d57f5ec278a0c57964770c0a2690317af463ffbb74400102f2",
+        "finished": true
+      },
+      {
+        "name": "20260922120000_operational_primary",
+        "checksum": "a9156483af5d57ef9cd6f4a5b97fb0cbf1b9361a999179d0fca8e440167d632d",
+        "finished": true
+      },
+      {
+        "name": "20260923120000_edge_foundation",
+        "checksum": "18565dd3198ed5330dbb4a016ecf1573106401642d6a38b21221bb6195eecb4a",
+        "finished": true
+      },
+      {
+        "name": "20261004120000_subscription_lifecycle",
+        "checksum": "39d5a007ab1cefa3eba591fb425f9fcb73bd5967ea197fca510ab102a15704e7",
+        "finished": true
+      },
+      {
+        "name": "20260924120000_venue_payment_integrations",
+        "checksum": "a50a6541c985b9d02b4f91480ab05405f74cf425bd4a7fc4a665e3e438ed6220",
+        "finished": true
+      },
+      {
+        "name": "20260925120000_website_core",
+        "checksum": "f278722e87fe66d96733760a747d86f66d827e95a906cf5d70b4d8074796f0c6",
+        "finished": true
+      },
+      {
+        "name": "20261011120000_canonical_menu_sync",
+        "checksum": "25b9cbb8d6d8590b702acdf2a35f38852c8110f7c21a752887bbbf49061049ac",
+        "finished": true
+      },
+      {
+        "name": "20260926120000_website_menu_presentation",
+        "checksum": "a06667d57c9174687513f0506cc75f199664b3e4d4cf15b212f13633d7c39408",
+        "finished": true
+      },
+      {
+        "name": "20261005120000_website_hostname_requests",
+        "checksum": "e82c9628394492333fa0dc99ef32ca5e110375c8d63c574ddb328918c6444e20",
+        "finished": true
+      },
+      {
+        "name": "20260927120000_organization_owner_invitations",
+        "checksum": "cd678cb83cc43839bd343e074a305421a0e070eba7b8fce2d10fb7354cfab892",
+        "finished": true
+      },
+      {
+        "name": "20260928120000_restaurant_foundation",
+        "checksum": "f2c23a7fc305775f2e08198a29d115f51215f36dffe2472e6adabd4a74e0b09e",
+        "finished": true
+      },
+      {
+        "name": "20260929120000_website_only_plan",
+        "checksum": "79735cf1ef29071ab373d9a44d207a5a26f1387a773a964d4c14c493d1df1af1",
+        "finished": true
+      },
+      {
+        "name": "20261006120000_hostname_request_current",
+        "checksum": "bd35c373037275e020097b457cfc8afe615a976624a6e680f67d96514989abc2",
+        "finished": true
+      },
+      {
+        "name": "20260930120000_cloud_menu_editing",
+        "checksum": "cbdb9b2a4a5f400da3b437e7dbc7df30ac81b91f7e7f3fc45e9f91db99bc5f9e",
+        "finished": true
+      },
+      {
+        "name": "20261001120000_payment_integration_fk_on_update_cascade",
+        "checksum": "b16bef558b3a79d956c85423b4c62290ffd53d56aef091d4388a99335c374481",
+        "finished": true
+      },
+      {
+        "name": "20261002120000_remove_non_fiscal_close_from_plans",
+        "checksum": "a0e6fb70c966a2d44ad7bc04ef6f41f166e43116becbd4eecea5463b51eef687",
+        "finished": true
+      },
+      {
+        "name": "20261007120000_release_published_slug_reservation",
+        "checksum": "36957b217f4c5b8e9dd2e0cdec7023d556368adbeb461d0cd314804069edc483",
+        "finished": true
+      },
+      {
+        "name": "20261003120000_commercial_access_hardening",
+        "checksum": "babf266d4aec44f5a4a75a328740575e638c6a0b8ccedb143f1de0545f304e0f",
+        "finished": true
+      },
+      {
+        "name": "20261003120100_no_plan_default",
+        "checksum": "987ef6e860607931f570b921bd1149e4ea480cbbb7d2cd91558bfb360c505ea5",
+        "finished": true
+      },
+      {
+        "name": "20261012120000_web02_restore_public_info_authority",
+        "checksum": "62035f02e44bcadc44ab2f36fbe68fb65ccc9909cbdfb335c80d75eebbe03ac8",
+        "finished": true
+      },
+      {
+        "name": "20261003120200_customer_trial_requests",
+        "checksum": "0d7196f45cb61fb453c0b8957fac7f4af294c2f56eaba36d14d5a126f862fc56",
+        "finished": true
+      },
+      {
+        "name": "20261008120000_hostname_request_fk_on_update",
+        "checksum": "e20c99eeab545a9b9fecc4fe0b1fb41e19b28b7f0016e260a8fd3a561b8ec514",
+        "finished": true
+      },
+      {
+        "name": "20261009120000_custom_website_binding",
+        "checksum": "1ab1fa5cc735a56edb56c9b66056978432103ab693526d138809cedbc5b94b42",
+        "finished": true
+      },
+      {
+        "name": "20261010110000_web02_capture_public_info_evidence",
+        "checksum": "08e3b087da28d31541b28f5b2daeee5fd4b49c83057875b3cf22782a8fd290e8",
+        "finished": true
+      },
+      {
+        "name": "20261013120000_menu03_exact_mutation_result",
+        "checksum": "47aea97a35898a29d9facd6b3d7244b8fbc67da31c44729d1cde62b50806aa30",
+        "finished": true
+      },
+      {
+        "name": "20261010120000_shared_website_foundation",
+        "checksum": "88e7406332b9e90af622674e545f8ba4d515d556951285cec9865749808c8d50",
+        "finished": true
+      },
+      {
+        "name": "20261014120000_menu06_safe_retirement",
+        "checksum": "aca2fd15eb8f8ef15c45f9cd675e27d0d885135483965a0fe8b1bb7232cbc30b",
+        "finished": true
+      },
+      {
+        "name": "20261015120000_menu09_client_compatibility",
+        "checksum": "e897c5560fadcabe8d9098ecad687fab29e81db78f93c469fe1a6ad6dcc229da",
+        "finished": true
+      }
+    ],
+    "populatedUpgradeAuthorityHashesIdentical": true
+  },
+  "validation": {
+    "backendRegression": {
+      "status": "PASS",
+      "passedTests": 192,
+      "passedSuites": 13,
+      "skipped": 0,
+      "suites": [
+        {
+          "file": "apps/backend/src/menu-catalog/menu06.integration.spec.ts",
+          "passed": 12
+        },
+        {
+          "file": "apps/backend/src/menu-catalog/menu-catalog.integration.spec.ts",
+          "passed": 14
+        },
+        {
+          "file": "apps/backend/src/menu-catalog/menu03-exact-retry.integration.spec.ts",
+          "passed": 11
+        },
+        {
+          "file": "apps/backend/src/edge/device-enrollment.integration.spec.ts",
+          "passed": 19
+        },
+        {
+          "file": "apps/backend/src/customer/restaurant-foundation.integration.spec.ts",
+          "passed": 8
+        },
+        {
+          "file": "apps/backend/src/edge/enrolled-pos-sync.integration.spec.ts",
+          "passed": 5
+        },
+        {
+          "file": "apps/backend/src/inventory/sale-consumption.integration.spec.ts",
+          "passed": 10
+        },
+        {
+          "file": "apps/backend/src/pos/sync/application/ingest-pos-snapshot.characterization.spec.ts",
+          "passed": 51
+        },
+        {
+          "file": "apps/backend/src/auth/device-credential.service.spec.ts",
+          "passed": 19
+        },
+        {
+          "file": "apps/backend/src/pos/sync/snapshot/menu-sync.integration.spec.ts",
+          "passed": 12
+        },
+        {
+          "file": "apps/backend/src/pos/sync/sync.controller.spec.ts",
+          "passed": 16
+        },
+        {
+          "file": "apps/backend/src/pos/sync/snapshot/menu-sync.service.spec.ts",
+          "passed": 5
+        },
+        {
+          "file": "apps/backend/src/menu-catalog/menu-mutation-result.spec.ts",
+          "passed": 10
+        }
+      ]
+    },
+    "onboarding": {
+      "status": "PASS",
+      "passedTests": 6,
+      "passedSuites": 1,
+      "skipped": 0,
+      "environment": "Separate verification-owned phase3-named database required by existing safety guard; no guard relaxed"
+    },
+    "menu09Http": {
+      "status": "PASS",
+      "passed": 17,
+      "skipped": 0,
+      "command": "MENU09_TEST_DATABASE_URL=<owned disposable> jest --runInBand src/menu-catalog/menu09.integration.spec.ts"
+    },
+    "policyUnit": {
+      "status": "PASS",
+      "passed": 4,
+      "command": "jest --runInBand src/menu-catalog/menu-client-policy.spec.ts"
+    },
+    "flutterRegression": {
+      "status": "PASS",
+      "passed": 130,
+      "command": "import subprocess,pathlib\np=pathlib.Path(__file__).parent\nfiles=['test/unit/menu09_client_compatibility_test.dart','test/widget/menu09_update_required_test.dart','test/unit/pos_enrollment_test.dart','test/unit/menu01_backup_restore_test.dart','test/unit/menu02_durability_test.dart','test/unit/canonical_menu_sync_test.dart','test/unit/sale_consumption_test.dart','test/unit/menu_line_identity_test.dart','test/widget/menu_sync_banner_test.dart']\nwith (p/'flutter-regress.log').open('w') as f:r=subprocess.run(['/opt/homebrew/bin/flutter','test','--no-pub','--reporter','expanded',*files],cwd='/Users/vaanskii/Developer/vynic/apps/operations',stdout=f,stderr=f)\nprint('Flutter exit',r.returncode);print((p/'flutter-regress.log').read_text()[-4500:])\n"
+    },
+    "productionBuild": {
+      "status": "PASS",
+      "command": "npm run build"
+    },
+    "targetedDartAnalysis": {
+      "status": "PASS",
+      "files": 13,
+      "command": "dart analyze (10 changed production and 3 new test files; CLI equivalent)"
+    },
+    "newBackendLint": {
+      "status": "PASS",
+      "errors": 0,
+      "warnings": 0,
+      "files": 9
+    },
+    "existingTouchedBackendLint": {
+      "before": {
+        "errors": 297,
+        "warnings": 50
+      },
+      "after": {
+        "errors": 297,
+        "warnings": 50
+      },
+      "noNewFindings": true
+    },
+    "globalTypecheck": {
+      "status": "PRE_EXISTING_DEBT",
+      "command": "tsc --noEmit",
+      "errors": 5,
+      "output": "src/edge-foundation/edge-foundation.integration.spec.ts(97,52): error TS2322: Type '\"bad\"' is not assignable to type '`${string}-${string}-${string}-${string}-${string}`'.\nsrc/platform/platform-control-plane.integration.spec.ts(812,20): error TS18047: 'event.actor' is possibly 'null'.\nsrc/platform/platform-control-plane.integration.spec.ts(835,16): error TS18047: 'event.actor' is possibly 'null'.\nsrc/platform/platform-password.spec.ts(15,30): error TS2345: Argument of type '{ readonly platformUserId: \"admin\"; readonly role: \"SUPER_ADMIN\"; }' is not assignable to parameter of type 'PlatformPrincipal'.\n  Type '{ readonly platformUserId: \"admin\"; readonly role: \"SUPER_ADMIN\"; }' is missing the following properties from type 'PlatformPrincipal': email, displayName\nsrc/platform/platform-password.spec.ts(21,37): error TS2345: Argument of type '{ readonly platformUserId: \"admin\"; readonly role: \"SUPER_ADMIN\"; }' is not assignable to parameter of type 'PlatformPrincipal'.\n  Type '{ readonly platformUserId: \"admin\"; readonly role: \"SUPER_ADMIN\"; }' is missing the following properties from type 'PlatformPrincipal': email, displayName\n",
+      "allThreeFilesByteIdenticalToStartHead": true
+    },
+    "gitDiffCheck": "PASS",
+    "requiredAcceptanceSkipped": 0,
+    "backendTotalTestsPassed": 219,
+    "backendTotalSuitesPassed": 16
+  },
+  "artifacts": {
+    "prefix.json": {
+      "sha256": "b3e88961e5700d5c7bb8662f9a9eacc39bed3ff660afacfd9f5d8024c4d1cacb",
+      "result": {
+        "enrollmentStatus": 201,
+        "deviceId": "bc74a99b-3ff6-41a1-90ab-e2793bada135",
+        "venueId": "b991fa44-665c-430d-8fa2-e7fc6a33a9a3",
+        "input": {
+          "menu": [
+            {
+              "id": "2fe96939-39ee-4c63-ba5a-cdaafc3daa1c",
+              "slug": "synthetic",
+              "nameKa": "Synthetic",
+              "nameEn": "Synthetic",
+              "items": [
+                {
+                  "id": "e668a57d-4cb9-40e5-8b4c-83ab4a22c7b8",
+                  "nameKa": "Synthetic dish",
+                  "nameEn": "Synthetic dish",
+                  "price": 777
+                }
+              ]
+            }
+          ],
+          "menuIdentityVersion": 1,
+          "tables": [
+            {
+              "tableNumber": "M09",
+              "floor": "synthetic",
+              "isReserved": true,
+              "currentBill": 70
+            }
+          ]
+        },
+        "sync": {
+          "status": 201,
+          "body": {
+            "success": true,
+            "syncedAt": "2026-10-01T21:17:31.531Z"
+          }
+        },
+        "cloudPrice": 10,
+        "localPrice": 777,
+        "otherSyncPersisted": true,
+        "menuUnchanged": true
+      }
+    },
+    "http.json": {
+      "sha256": "9c18309a1598ace718eeca1db2fd2ca55f4d4064594ffd1eb96f86327edcf525",
+      "result": [
+        {
+          "name": "oldEnrollment",
+          "value": {
+            "status": 426,
+            "body": {
+              "code": "MENU_UPDATE_REQUIRED",
+              "result": "CAPABILITY_MISSING",
+              "authority": "CLOUD",
+              "requiredCapabilities": [
+                "CANONICAL_MENU_V2"
+              ],
+              "minimumBuild": null,
+              "message": "ამ POS ვერსიას ამ რესტორნის მენიუს რეჟიმი აღარ უჭერს მხარს. განაახლეთ Vynic POS. რესტორნის მონაცემები არ შეცვლილა."
+            },
+            "businessRowsUnchanged": true
+          }
+        },
+        {
+          "name": "currentEnrollment",
+          "value": {
+            "status": 201,
+            "catalog": {
+              "version": 2,
+              "venueId": "96bb3299-e7aa-4f94-a28c-b1f65e7f7774",
+              "authority": "CLOUD",
+              "sequence": 0,
+              "categories": [],
+              "subcategories": [],
+              "items": [],
+              "variants": []
+            }
+          }
+        },
+        {
+          "name": "legacyOld",
+          "value": {
+            "status": 201,
+            "body": {
+              "success": true,
+              "syncedAt": "2026-10-01T21:53:55.641Z",
+              "menu": {
+                "outcome": "LEGACY_APPLIED"
+              }
+            }
+          }
+        },
+        {
+          "name": "legacyCurrent",
+          "value": {
+            "status": 200,
+            "body": {
+              "version": 2,
+              "venueId": "69db039d-feb5-4f4f-a5de-3b006ec413b1",
+              "authority": "POS",
+              "sequence": 0,
+              "categories": [],
+              "subcategories": [],
+              "items": [],
+              "variants": []
+            }
+          }
+        },
+        {
+          "name": "enrolledOld",
+          "value": {
+            "rejection": {
+              "status": 426,
+              "body": {
+                "code": "MENU_UPDATE_REQUIRED",
+                "result": "CAPABILITY_MISSING",
+                "authority": "CLOUD",
+                "requiredCapabilities": [
+                  "CANONICAL_MENU_V2"
+                ],
+                "minimumBuild": null,
+                "message": "ამ POS ვერსიას ამ რესტორნის მენიუს რეჟიმი აღარ უჭერს მხარს. განაახლეთ Vynic POS. რესტორნის მონაცემები არ შეცვლილა."
+              }
+            },
+            "noPartialRows": true,
+            "safeRecovery": true
+          }
+        },
+        {
+          "name": "incompatibleFleet",
+          "value": {
+            "status": 200,
+            "body": {
+              "venueId": "f9ecca87-eb7b-4a11-8014-3a157bc0d47c",
+              "authority": "POS",
+              "verdict": "BLOCKED",
+              "blockers": [
+                "DEVICE_REPORT_STALE_OR_UNKNOWN:c79f16e7-6efd-4e9f-9ef7-9cf08f8ac5b5",
+                "DEVICE_CAPABILITY_MISSING:c79f16e7-6efd-4e9f-9ef7-9cf08f8ac5b5"
+              ],
+              "warnings": [
+                "2 active POS Devices: every one must adopt the same baseline, and secondary local menus are replaced only by explicit adoption"
+              ],
+              "counts": {
+                "categories": 1,
+                "subcategories": 0,
+                "items": 1,
+                "variants": 0,
+                "withoutPosIdentity": 0,
+                "websitePresentations": 0,
+                "consumptionRecipes": 0,
+                "activeDevices": 2
+              },
+              "primaryDeviceId": "bae9e64c-617a-4681-be42-312e022e6eca",
+              "lastPrimarySeenAt": "2026-10-01T21:53:56.213Z",
+              "fleet": [
+                {
+                  "id": "bae9e64c-617a-4681-be42-312e022e6eca",
+                  "displayName": "Synthetic POS",
+                  "platform": "WINDOWS",
+                  "status": "ACTIVE",
+                  "lastSeenAt": "2026-10-01T21:53:56.213Z",
+                  "menuClientReport": {
+                    "version": 1,
+                    "appVersion": "synthetic-current+9",
+                    "buildNumber": 9,
+                    "capabilities": [
+                      "CANONICAL_MENU_V2"
+                    ]
+                  },
+                  "menuClientObservedAt": "2026-10-01T21:53:56.215Z",
+                  "lastLegacyMenuSyncAt": "2026-10-01T21:53:56.247Z",
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ],
+                  "fresh": true,
+                  "compatibility": {
+                    "result": "SUPPORTED",
+                    "authority": "CLOUD",
+                    "requiredCapabilities": [
+                      "CANONICAL_MENU_V2"
+                    ],
+                    "minimumBuild": null
+                  },
+                  "isOperationalPrimary": true
+                },
+                {
+                  "id": "c79f16e7-6efd-4e9f-9ef7-9cf08f8ac5b5",
+                  "displayName": "Forgotten old POS",
+                  "platform": "WINDOWS",
+                  "status": "ACTIVE",
+                  "lastSeenAt": null,
+                  "menuClientReport": null,
+                  "menuClientObservedAt": null,
+                  "lastLegacyMenuSyncAt": null,
+                  "appVersion": null,
+                  "buildNumber": null,
+                  "capabilities": [],
+                  "fresh": false,
+                  "compatibility": {
+                    "result": "CAPABILITY_MISSING",
+                    "authority": "CLOUD",
+                    "requiredCapabilities": [
+                      "CANONICAL_MENU_V2"
+                    ],
+                    "minimumBuild": null
+                  },
+                  "isOperationalPrimary": false
+                }
+              ],
+              "readinessToken": "907393e8f6bd00ad6142fc0b907b9776d3038d13086c8b485ee59ea5d333baca",
+              "readinessExpiresAfterSeconds": 900,
+              "operatorRequirements": [
+                "ALL_POS_ONLINE",
+                "FINAL_LEGACY_SYNC_CONFIRMED",
+                "NO_PENDING_LOCAL_MENU_EDITS",
+                "EXPLICIT_CLOUD_ADOPTION_ON_EACH_POS"
+              ]
+            }
+          }
+        },
+        {
+          "name": "staleFleet",
+          "value": {
+            "status": 200,
+            "body": {
+              "venueId": "1c02ddd7-0fe4-4b4d-93bb-fe34659ce0da",
+              "authority": "POS",
+              "verdict": "BLOCKED",
+              "blockers": [
+                "DEVICE_REPORT_STALE_OR_UNKNOWN:7ef6184e-3753-42f5-8126-91278544f63f"
+              ],
+              "warnings": [],
+              "counts": {
+                "categories": 1,
+                "subcategories": 0,
+                "items": 1,
+                "variants": 0,
+                "withoutPosIdentity": 0,
+                "websitePresentations": 0,
+                "consumptionRecipes": 0,
+                "activeDevices": 1
+              },
+              "primaryDeviceId": "7ef6184e-3753-42f5-8126-91278544f63f",
+              "lastPrimarySeenAt": "2026-10-01T21:53:56.429Z",
+              "fleet": [
+                {
+                  "id": "7ef6184e-3753-42f5-8126-91278544f63f",
+                  "displayName": "Synthetic POS",
+                  "platform": "WINDOWS",
+                  "status": "ACTIVE",
+                  "lastSeenAt": "2026-10-01T21:53:56.429Z",
+                  "menuClientReport": {
+                    "version": 1,
+                    "appVersion": "synthetic-current+9",
+                    "buildNumber": 9,
+                    "capabilities": [
+                      "CANONICAL_MENU_V2"
+                    ]
+                  },
+                  "menuClientObservedAt": "2026-10-01T21:37:56.429Z",
+                  "lastLegacyMenuSyncAt": "2026-10-01T21:53:56.422Z",
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ],
+                  "fresh": false,
+                  "compatibility": {
+                    "result": "SUPPORTED",
+                    "authority": "CLOUD",
+                    "requiredCapabilities": [
+                      "CANONICAL_MENU_V2"
+                    ],
+                    "minimumBuild": null
+                  },
+                  "isOperationalPrimary": true
+                }
+              ],
+              "readinessToken": "1e8f3c1d15981396e8946106981ec87f7293f2e1770625556edbb67a972facb3",
+              "readinessExpiresAfterSeconds": 900,
+              "operatorRequirements": [
+                "ALL_POS_ONLINE",
+                "FINAL_LEGACY_SYNC_CONFIRMED",
+                "NO_PENDING_LOCAL_MENU_EDITS",
+                "EXPLICIT_CLOUD_ADOPTION_ON_EACH_POS"
+              ]
+            }
+          }
+        },
+        {
+          "name": "revokedExcluded",
+          "value": {
+            "status": 200,
+            "body": {
+              "venueId": "10a4f44b-dabb-411e-aa82-56d01108984e",
+              "authority": "POS",
+              "verdict": "READY_FOR_CUTOVER",
+              "blockers": [],
+              "warnings": [],
+              "counts": {
+                "categories": 1,
+                "subcategories": 0,
+                "items": 1,
+                "variants": 0,
+                "withoutPosIdentity": 0,
+                "websitePresentations": 0,
+                "consumptionRecipes": 0,
+                "activeDevices": 1
+              },
+              "primaryDeviceId": "1c1a9adb-7ea6-4df9-ad74-ead89eabec50",
+              "lastPrimarySeenAt": "2026-10-01T21:53:56.527Z",
+              "fleet": [
+                {
+                  "id": "1c1a9adb-7ea6-4df9-ad74-ead89eabec50",
+                  "displayName": "Synthetic POS",
+                  "platform": "WINDOWS",
+                  "status": "ACTIVE",
+                  "lastSeenAt": "2026-10-01T21:53:56.527Z",
+                  "menuClientReport": {
+                    "version": 1,
+                    "appVersion": "synthetic-current+9",
+                    "buildNumber": 9,
+                    "capabilities": [
+                      "CANONICAL_MENU_V2"
+                    ]
+                  },
+                  "menuClientObservedAt": "2026-10-01T21:53:56.529Z",
+                  "lastLegacyMenuSyncAt": "2026-10-01T21:53:56.562Z",
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ],
+                  "fresh": true,
+                  "compatibility": {
+                    "result": "SUPPORTED",
+                    "authority": "CLOUD",
+                    "requiredCapabilities": [
+                      "CANONICAL_MENU_V2"
+                    ],
+                    "minimumBuild": null
+                  },
+                  "isOperationalPrimary": true
+                },
+                {
+                  "id": "ae4b3a8d-348c-4b6d-b415-43091e667ff4",
+                  "displayName": "Old secondary",
+                  "platform": "WINDOWS",
+                  "status": "REVOKED",
+                  "lastSeenAt": null,
+                  "menuClientReport": null,
+                  "menuClientObservedAt": null,
+                  "lastLegacyMenuSyncAt": null,
+                  "appVersion": null,
+                  "buildNumber": null,
+                  "capabilities": [],
+                  "fresh": false,
+                  "compatibility": {
+                    "result": "CAPABILITY_MISSING",
+                    "authority": "CLOUD",
+                    "requiredCapabilities": [
+                      "CANONICAL_MENU_V2"
+                    ],
+                    "minimumBuild": null
+                  },
+                  "isOperationalPrimary": false
+                }
+              ],
+              "readinessToken": "906b3e6c8dfd8ad9c6298a4f6aff533c1839fe3383ccc30abcfa486fee9c3678",
+              "readinessExpiresAfterSeconds": 900,
+              "operatorRequirements": [
+                "ALL_POS_ONLINE",
+                "FINAL_LEGACY_SYNC_CONFIRMED",
+                "NO_PENDING_LOCAL_MENU_EDITS",
+                "EXPLICIT_CLOUD_ADOPTION_ON_EACH_POS"
+              ]
+            }
+          }
+        },
+        {
+          "name": "controlledCutover",
+          "value": {
+            "status": 201,
+            "body": {
+              "authority": "CLOUD",
+              "cutover": {
+                "version": 1,
+                "from": "POS",
+                "to": "CLOUD",
+                "at": "2026-10-01T21:53:56.743Z",
+                "customerAccountId": "c71111ae-0bc6-4b27-a9c5-003d5ae6559c",
+                "reason": "Synthetic operator reconciliation",
+                "readinessToken": "76b0b21f224f93423823c61c20be27ff9f5a9469780dba4aff62036e50bb3dd5",
+                "deviceIds": [
+                  "193f1268-655f-4c1b-b464-f0aa57a2c716"
+                ],
+                "operatorConfirmations": {
+                  "allPosOnline": true,
+                  "finalLegacySyncConfirmed": true,
+                  "noPendingLocalMenuEdits": true
+                }
+              },
+              "adoptionRequired": true
+            }
+          }
+        },
+        {
+          "name": "oldAfterCutover",
+          "value": {
+            "status": 426,
+            "body": {
+              "code": "MENU_UPDATE_REQUIRED",
+              "result": "CAPABILITY_MISSING",
+              "authority": "CLOUD",
+              "requiredCapabilities": [
+                "CANONICAL_MENU_V2"
+              ],
+              "minimumBuild": null,
+              "message": "ამ POS ვერსიას ამ რესტორნის მენიუს რეჟიმი აღარ უჭერს მხარს. განაახლეთ Vynic POS. რესტორნის მონაცემები არ შეცვლილა."
+            }
+          }
+        },
+        {
+          "name": "bootstrapAfterCutover",
+          "value": {
+            "status": 200,
+            "body": {
+              "version": 2,
+              "venueId": "96115921-71f7-4afd-a790-5831f008350c",
+              "authority": "CLOUD",
+              "sequence": 0,
+              "categories": [
+                {
+                  "id": "8ee2f47f-f4e5-426b-a0a9-82a20b500cb2",
+                  "slug": "synthetic",
+                  "nameKa": "Synthetic",
+                  "nameEn": "Synthetic",
+                  "sendToKitchen": true,
+                  "sortOrder": 0,
+                  "revision": 1,
+                  "changeSeq": 0
+                }
+              ],
+              "subcategories": [],
+              "items": [
+                {
+                  "id": "0ea62a32-e116-4713-9ffc-971cb4c560c5",
+                  "categoryId": "8ee2f47f-f4e5-426b-a0a9-82a20b500cb2",
+                  "subcategoryId": null,
+                  "nameKa": "Synthetic dish",
+                  "nameEn": "Synthetic dish",
+                  "price": 10,
+                  "enabled": true,
+                  "sendToKitchen": true,
+                  "sortOrder": 0,
+                  "revision": 1,
+                  "changeSeq": 0
+                }
+              ],
+              "variants": []
+            }
+          }
+        },
+        {
+          "name": "canonicalAfterCutover",
+          "value": {
+            "edit": {
+              "status": 200,
+              "body": {
+                "status": "ACCEPTED",
+                "duplicate": false,
+                "mutationId": "4cb88933-6ca7-459c-b5f7-608735ee6990",
+                "entityType": "ITEM",
+                "entityId": "cf12ed86-ac62-4017-8cc0-967b681c9e17",
+                "operation": "UPSERT",
+                "revision": 2,
+                "sequence": 1,
+                "deleted": false,
+                "entity": {
+                  "id": "cf12ed86-ac62-4017-8cc0-967b681c9e17",
+                  "categoryId": "549979fe-17e1-4a97-9587-b23f0cdb22f2",
+                  "subcategoryId": null,
+                  "nameKa": "Synthetic dish",
+                  "nameEn": "Synthetic dish",
+                  "price": 21,
+                  "enabled": true,
+                  "sendToKitchen": true,
+                  "sortOrder": 0,
+                  "revision": 2,
+                  "changeSeq": 1
+                }
+              }
+            },
+            "removal": {
+              "status": 200,
+              "body": {
+                "status": "ACCEPTED",
+                "duplicate": false,
+                "mutationId": "2bcecff0-bcb2-4d57-8f1d-5ad1144275d1",
+                "entityType": "ITEM",
+                "entityId": "cf12ed86-ac62-4017-8cc0-967b681c9e17",
+                "operation": "DELETE",
+                "revision": 3,
+                "sequence": 2,
+                "deleted": true,
+                "entity": null
+              }
+            },
+            "restore": {
+              "status": 200,
+              "body": {
+                "status": "ACCEPTED",
+                "duplicate": false,
+                "mutationId": "6d4fc38c-c356-4d1a-815f-d1098c35483c",
+                "entityType": "ITEM",
+                "entityId": "cf12ed86-ac62-4017-8cc0-967b681c9e17",
+                "operation": "UPSERT",
+                "revision": 4,
+                "sequence": 3,
+                "deleted": false,
+                "entity": {
+                  "id": "cf12ed86-ac62-4017-8cc0-967b681c9e17",
+                  "categoryId": "549979fe-17e1-4a97-9587-b23f0cdb22f2",
+                  "subcategoryId": null,
+                  "nameKa": "Synthetic dish",
+                  "nameEn": "Synthetic dish",
+                  "price": 21,
+                  "enabled": true,
+                  "sendToKitchen": true,
+                  "sortOrder": 0,
+                  "revision": 4,
+                  "changeSeq": 3
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "serverOwnedPolicy",
+          "value": {
+            "status": 426,
+            "body": {
+              "code": "MENU_UPDATE_REQUIRED",
+              "result": "CAPABILITY_MISSING",
+              "authority": "CLOUD",
+              "requiredCapabilities": [
+                "CANONICAL_MENU_V2"
+              ],
+              "minimumBuild": null,
+              "message": "ამ POS ვერსიას ამ რესტორნის მენიუს რეჟიმი აღარ უჭერს მხარს. განაახლეთ Vynic POS. რესტორნის მონაცემები არ შეცვლილა."
+            }
+          }
+        },
+        {
+          "name": "tenantMatrix",
+          "value": {
+            "foreignOwner": 404,
+            "foreignMetadata": 400,
+            "unauthenticated": 401,
+            "otherVenueUnchanged": true
+          }
+        },
+        {
+          "name": "invalidIdentity",
+          "value": {
+            "invalidUuidBlocked": true,
+            "crossKindCollisionBlocked": true
+          }
+        },
+        {
+          "name": "changedSnapshot",
+          "value": {
+            "status": 409,
+            "body": {
+              "code": "MENU_READINESS_CHANGED",
+              "message": "Refresh fleet readiness before cutover"
+            }
+          }
+        },
+        {
+          "name": "restart",
+          "value": {
+            "cutoverRetained": true,
+            "compatibilityEnforced": true,
+            "rollbackRejected": true
+          }
+        }
+      ]
+    },
+    "native.json": {
+      "sha256": "4478981dd0b2ea6d655bd7e0087ac5072fb6ecd895184dd663d0ec5945df67f2",
+      "result": {
+        "status": "PASS",
+        "writer": {
+          "pid": 90900,
+          "deviceId": "59777870-2f89-4313-829f-d7fa192bf883",
+          "saleHash": "c485b665494a8c52254044ab07289a23c41e5224c5d12bf1fc3dd48cc57ae1ef",
+          "mutationIds": [
+            "2c033ce5-4442-471e-b30d-62ec73d7872c"
+          ],
+          "offlineEditAndSale": true
+        },
+        "reader": {
+          "pid": 90970,
+          "normalRestart": true,
+          "saleHash": "c485b665494a8c52254044ab07289a23c41e5224c5d12bf1fc3dd48cc57ae1ef",
+          "restoredMutationIds": [
+            "2c033ce5-4442-471e-b30d-62ec73d7872c"
+          ],
+          "sourceDeviceId": "59777870-2f89-4313-829f-d7fa192bf883",
+          "freshDeviceId": "0b6c9bd0-d7d1-4a99-8553-12804188c8c8",
+          "unsupportedEnrollmentStatus": "updateRequired",
+          "oldCatalogStatus": 426,
+          "freshEnrollmentRequired": true,
+          "cloudPrice": 15,
+          "noLocalDataLoss": true
+        },
+        "nativeCommand": [
+          "/opt/homebrew/share/flutter/bin/flutter",
+          "test",
+          "--no-pub",
+          "--reporter",
+          "expanded",
+          "test/live/menu09_client_gate_test.dart"
+        ],
+        "restart": {
+          "backendBefore": 90851,
+          "backendAfter": 90919,
+          "databaseRestarted": true,
+          "durableCutoversAfterRestart": 10,
+          "reportsAndCutoversIdentical": true,
+          "durableState": {
+            "reports": [
+              {
+                "id": "021d70fe-599c-4e76-a25d-c8c27f8aeab9",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:28:24.347"
+              },
+              {
+                "id": "07463be9-3414-484c-a222-c77e9df61e0c",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:28:23.558"
+              },
+              {
+                "id": "0bd28e39-23d3-4ea2-90ef-d066b5289d44",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:48:13.998"
+              },
+              {
+                "id": "12baa814-3432-4a3b-8d99-b2218e4c7274",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:48:13.8"
+              },
+              {
+                "id": "13b4cef3-3f51-45fb-91af-fd06effec71b",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:28:25.453"
+              },
+              {
+                "id": "29d00d7c-b95b-4a87-9fad-a592af764c60",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:28:24.817"
+              },
+              {
+                "id": "2fb2d6c8-bac0-4737-b0ac-4e1910548f15",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:48:12.211"
+              },
+              {
+                "id": "2fb6bc7e-6c44-4081-91fc-699e40702cb3",
+                "report": null,
+                "observedAt": "2026-10-01T21:28:23.735"
+              },
+              {
+                "id": "3481ba49-889d-413a-9e23-2691a8be9c4e",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:48:15.044"
+              },
+              {
+                "id": "3dd25f6b-4700-4d34-a510-9211a33a145d",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:28:24.954"
+              },
+              {
+                "id": "3f8b0eee-28d9-4cbd-807c-535c249a44f7",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:28:25.914"
+              },
+              {
+                "id": "41906a9c-d5a0-4e7e-b506-36b24e76f422",
+                "report": {
+                  "version": 1,
+                  "appVersion": "1.0.0+1",
+                  "buildNumber": null,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:35:23.792"
+              },
+              {
+                "id": "46c84e4c-bc83-4a37-8d49-5adca0d6924a",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:28:25.204"
+              },
+              {
+                "id": "55dddc9f-dc07-49be-bfd7-f975c0bdd4d3",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:48:13.097"
+              },
+              {
+                "id": "56d75264-1ff6-47f3-874a-5964a6df385d",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:48:14.906"
+              },
+              {
+                "id": "59777870-2f89-4313-829f-d7fa192bf883",
+                "report": {
+                  "version": 1,
+                  "appVersion": "1.0.0+1",
+                  "buildNumber": null,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:49:14.163"
+              },
+              {
+                "id": "6ae763e6-b700-4a63-ae3a-df64658a498f",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:48:12.667"
+              },
+              {
+                "id": "755beaab-e740-40f2-bab4-01e35a466972",
+                "report": null,
+                "observedAt": "2026-10-01T21:48:12.45"
+              },
+              {
+                "id": "7b22c174-dd4c-429d-8920-808200aa33df",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:48:12.723"
+              },
+              {
+                "id": "8059a5c6-18a6-49a8-90f9-e923bd0fbb59",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:12:24.526"
+              },
+              {
+                "id": "8555571e-969e-4427-aca8-960f3ef89c71",
+                "report": {
+                  "version": 1,
+                  "appVersion": "1.0.0+1",
+                  "buildNumber": null,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:32:52.99"
+              },
+              {
+                "id": "9540da3e-b3d4-415c-9fef-6ddbbcb2e008",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:48:13.629"
+              },
+              {
+                "id": "9eb321e5-19fe-4845-89b1-d2f86e65b4ac",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:28:23.903"
+              },
+              {
+                "id": "a2cd8cb9-a57e-4750-a533-9b7c6ebc6d9e",
+                "report": {
+                  "version": 1,
+                  "appVersion": "1.0.0+1",
+                  "buildNumber": null,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:35:19.808"
+              },
+              {
+                "id": "b20a4554-5462-42ca-b4e8-9ceabab691a7",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:48:13.455"
+              },
+              {
+                "id": "b40ee33b-23a7-464b-aef6-5c31d5407a1c",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:48:14.525"
+              },
+              {
+                "id": "cbc5f36c-93bb-4e17-86c3-b223df630c40",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:28:24.657"
+              },
+              {
+                "id": "cc667ecb-85d5-4bdf-b2d0-01b40931f670",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:32:13.323"
+              },
+              {
+                "id": "d2123c64-6eaa-488f-b6a3-c4a61fcf4327",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:28:25.598"
+              },
+              {
+                "id": "d90f87ac-06de-4e56-a3ac-c34cb99f8464",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:28:23.958"
+              },
+              {
+                "id": "da1a5731-0a61-47d9-bcab-27323fc10cc4",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:48:14.2"
+              },
+              {
+                "id": "e1244ce5-9cdf-49b3-a3c8-52192bd4b57b",
+                "report": {
+                  "version": 1,
+                  "appVersion": "synthetic-current+9",
+                  "buildNumber": 9,
+                  "capabilities": [
+                    "CANONICAL_MENU_V2"
+                  ]
+                },
+                "observedAt": "2026-10-01T21:48:14.75"
+              },
+              {
+                "id": "f39fcf4c-5fbf-490e-bbb3-d5bd61ec1066",
+                "report": null,
+                "observedAt": "2026-10-01T21:48:12.507"
+              },
+              {
+                "id": "ffc32e45-1eba-4e35-a4f1-00c164b092f6",
+                "report": null,
+                "observedAt": "2026-10-01T21:28:23.678"
+              }
+            ],
+            "cutovers": [
+              {
+                "id": "0bbae16b-9440-4302-90a0-190fd4813a08",
+                "cutover": {
+                  "at": "2026-10-01T21:48:14.048Z",
+                  "to": "CLOUD",
+                  "from": "POS",
+                  "reason": "Synthetic operator reconciliation",
+                  "version": 1,
+                  "deviceIds": [
+                    "0bd28e39-23d3-4ea2-90ef-d066b5289d44"
+                  ],
+                  "readinessToken": "dce832fd5a60899dd3c0f0ab4e236ef16ce0034eaf596296abc69f5de7beb99c",
+                  "customerAccountId": "b97d9304-44d7-4294-840b-b592acc23500",
+                  "operatorConfirmations": {
+                    "allPosOnline": true,
+                    "noPendingLocalMenuEdits": true,
+                    "finalLegacySyncConfirmed": true
+                  }
+                },
+                "authority": "CLOUD"
+              },
+              {
+                "id": "1dcc4399-fdb9-41ef-9fca-d0730e27761e",
+                "cutover": {
+                  "at": "2026-10-01T21:48:14.248Z",
+                  "to": "CLOUD",
+                  "from": "POS",
+                  "reason": "Synthetic operator reconciliation",
+                  "version": 1,
+                  "deviceIds": [
+                    "da1a5731-0a61-47d9-bcab-27323fc10cc4"
+                  ],
+                  "readinessToken": "1496ba88293b13da7d3a6c611311874f3a8b342e478219e887d1305991be7e64",
+                  "customerAccountId": "9e958068-a747-4344-8c03-f1c811669f05",
+                  "operatorConfirmations": {
+                    "allPosOnline": true,
+                    "noPendingLocalMenuEdits": true,
+                    "finalLegacySyncConfirmed": true
+                  }
+                },
+                "authority": "CLOUD"
+              },
+              {
+                "id": "234c28e7-60fd-4f9d-9b0f-55d384ae3fcf",
+                "cutover": {
+                  "at": "2026-10-01T21:28:25.846Z",
+                  "to": "CLOUD",
+                  "from": "POS",
+                  "reason": "Synthetic operator reconciliation",
+                  "version": 1,
+                  "deviceIds": [
+                    "3f8b0eee-28d9-4cbd-807c-535c249a44f7"
+                  ],
+                  "readinessToken": "03463de35bf5e89feb063d2682807b3764cfd3f398799814bd75ad9403f1522f",
+                  "customerAccountId": "e73f2ffb-a1ea-4dc0-851a-db71218d6b8b",
+                  "operatorConfirmations": {
+                    "allPosOnline": true,
+                    "noPendingLocalMenuEdits": true,
+                    "finalLegacySyncConfirmed": true
+                  }
+                },
+                "authority": "CLOUD"
+              },
+              {
+                "id": "5dc4b737-8231-4b90-80fd-f9de8b41246d",
+                "cutover": {
+                  "at": "2026-10-01T21:48:13.686Z",
+                  "to": "CLOUD",
+                  "from": "POS",
+                  "reason": "Synthetic operator reconciliation",
+                  "version": 1,
+                  "deviceIds": [
+                    "9540da3e-b3d4-415c-9fef-6ddbbcb2e008"
+                  ],
+                  "readinessToken": "202cab01eaf67fe3eac38d590b76f2b568fb962fcc30581f40ce146916cd32cd",
+                  "customerAccountId": "f3a2b60c-91c6-459e-8ac0-ca4521ae789c",
+                  "operatorConfirmations": {
+                    "allPosOnline": true,
+                    "noPendingLocalMenuEdits": true,
+                    "finalLegacySyncConfirmed": true
+                  }
+                },
+                "authority": "CLOUD"
+              },
+              {
+                "id": "6fe314a1-110a-48d2-9525-e719fb58dbfe",
+                "cutover": {
+                  "at": "2026-10-01T21:48:15.087Z",
+                  "to": "CLOUD",
+                  "from": "POS",
+                  "reason": "Synthetic operator reconciliation",
+                  "version": 1,
+                  "deviceIds": [
+                    "3481ba49-889d-413a-9e23-2691a8be9c4e"
+                  ],
+                  "readinessToken": "f90705b5a2f4142be64b37123d0ef9925e763fe47fadee22762790992de8167c",
+                  "customerAccountId": "e5aeaa65-ef74-4c15-9154-36af4fbc9305",
+                  "operatorConfirmations": {
+                    "allPosOnline": true,
+                    "noPendingLocalMenuEdits": true,
+                    "finalLegacySyncConfirmed": true
+                  }
+                },
+                "authority": "CLOUD"
+              },
+              {
+                "id": "8b1f7896-d9ff-4fc2-b4db-afc1a43cf1da",
+                "cutover": {
+                  "at": "2026-10-01T21:28:25.334Z",
+                  "to": "CLOUD",
+                  "from": "POS",
+                  "reason": "Synthetic operator reconciliation",
+                  "version": 1,
+                  "deviceIds": [
+                    "13b4cef3-3f51-45fb-91af-fd06effec71b"
+                  ],
+                  "readinessToken": "a9a4db173940d6d150c329f2ecb3d115f15df38ae3b8af99d532c04865f1037e",
+                  "customerAccountId": "c6f44018-06ed-4905-820f-279817434997",
+                  "operatorConfirmations": {
+                    "allPosOnline": true,
+                    "noPendingLocalMenuEdits": true,
+                    "finalLegacySyncConfirmed": true
+                  }
+                },
+                "authority": "CLOUD"
+              },
+              {
+                "id": "b1650191-2c2a-4c97-9211-aff75330b987",
+                "cutover": {
+                  "at": "2026-10-01T21:48:13.850Z",
+                  "to": "CLOUD",
+                  "from": "POS",
+                  "reason": "Synthetic operator reconciliation",
+                  "version": 1,
+                  "deviceIds": [
+                    "12baa814-3432-4a3b-8d99-b2218e4c7274"
+                  ],
+                  "readinessToken": "ddfc7c39ef2558639f8604814a63a00c26863336315eeaaff2f3b16282ff04a4",
+                  "customerAccountId": "df67e9c2-5475-415f-ac07-fb25cd1ba0aa",
+                  "operatorConfirmations": {
+                    "allPosOnline": true,
+                    "noPendingLocalMenuEdits": true,
+                    "finalLegacySyncConfirmed": true
+                  }
+                },
+                "authority": "CLOUD"
+              },
+              {
+                "id": "bc66155c-5924-4829-a5d8-cb1f08d6d128",
+                "cutover": {
+                  "at": "2026-10-01T21:28:24.970Z",
+                  "to": "CLOUD",
+                  "from": "POS",
+                  "reason": "Synthetic operator reconciliation",
+                  "version": 1,
+                  "deviceIds": [
+                    "3dd25f6b-4700-4d34-a510-9211a33a145d"
+                  ],
+                  "readinessToken": "2434e20621fabce27e1ae0a5aec78a25f9a2f866d84531a4b6c1b5a9e1a41c16",
+                  "customerAccountId": "8e64589e-2af3-4b4d-aaa5-96b12b55e91a",
+                  "operatorConfirmations": {
+                    "allPosOnline": true,
+                    "noPendingLocalMenuEdits": true,
+                    "finalLegacySyncConfirmed": true
+                  }
+                },
+                "authority": "CLOUD"
+              },
+              {
+                "id": "cfd3ee81-318c-47d4-be1b-d19c6388d47d",
+                "cutover": {
+                  "at": "2026-10-01T21:28:25.150Z",
+                  "to": "CLOUD",
+                  "from": "POS",
+                  "reason": "Synthetic operator reconciliation",
+                  "version": 1,
+                  "deviceIds": [
+                    "46c84e4c-bc83-4a37-8d49-5adca0d6924a"
+                  ],
+                  "readinessToken": "9b5b50eded92fa04edd78836be5c5169b18bbe4955be4cbc320407a259b68c06",
+                  "customerAccountId": "768a5834-d42b-4d6a-8f7e-b1210e3d969e",
+                  "operatorConfirmations": {
+                    "allPosOnline": true,
+                    "noPendingLocalMenuEdits": true,
+                    "finalLegacySyncConfirmed": true
+                  }
+                },
+                "authority": "CLOUD"
+              },
+              {
+                "id": "e41061d0-0448-4bf5-b71b-0f0a0f6c5602",
+                "cutover": {
+                  "at": "2026-10-01T21:28:24.841Z",
+                  "to": "CLOUD",
+                  "from": "POS",
+                  "reason": "Synthetic operator reconciliation",
+                  "version": 1,
+                  "deviceIds": [
+                    "29d00d7c-b95b-4a87-9fad-a592af764c60"
+                  ],
+                  "readinessToken": "daa4882c52e2f237638e891ef909f269e4aca8ffcdf03771b858dc185d105a3d",
+                  "customerAccountId": "3ce231ee-94aa-4222-b4b6-a0f5a3391813",
+                  "operatorConfirmations": {
+                    "allPosOnline": true,
+                    "noPendingLocalMenuEdits": true,
+                    "finalLegacySyncConfirmed": true
+                  }
+                },
+                "authority": "CLOUD"
+              }
+            ]
+          }
+        },
+        "temporaryHiveRemoved": true,
+        "credentialsRemoved": true
+      }
+    },
+    "menu01-native.json": {
+      "sha256": "bc8e00d183483e020074f7a24c4a6f597dd65f18722316f885eaca215051689c",
+      "result": {
+        "status": "PASS",
+        "platform": "macOS-27.0-arm64-arm-64bit",
+        "command": [
+          "/opt/homebrew/share/flutter/bin/flutter",
+          "test",
+          "--no-pub",
+          "--reporter",
+          "expanded",
+          "test/live/menu01_process_restore_test.dart"
+        ],
+        "writer": {
+          "pid": 88832,
+          "mutationIds": [
+            "b0242a9a-b83f-4fbc-b915-aadec44f5679",
+            "conflict-original-id",
+            "accepted-diagnostic-id"
+          ],
+          "generation": 3,
+          "backupSha256": "359a56a3c1f8ae61fea1592fa762d44db80d9691a4e85b0fd73399bbe7f4d273",
+          "metrics": {
+            "barrierMs": 7.044,
+            "durationMs": 726.098,
+            "bytes": 23641
+          },
+          "sourceDirectory": "source"
+        },
+        "freshRestore": {
+          "status": "PASS",
+          "pid": 88884,
+          "writerPid": 88832,
+          "freshDirectory": "fresh",
+          "initiallyEmpty": true,
+          "reopenedBeforeVerification": true,
+          "repeatedRestore": "PASS",
+          "metrics": {
+            "barrierMs": 40.806,
+            "durationMs": 751.273
+          },
+          "sales": 1,
+          "recoveryActions": [],
+          "closurePhase": "completed",
+          "capturedOrderPrice": 7.0,
+          "salePrice": 7.0,
+          "menuPrice": 12.0,
+          "conflictPrice": 22.0,
+          "menuMutationIds": [
+            "b0242a9a-b83f-4fbc-b915-aadec44f5679",
+            "conflict-original-id",
+            "accepted-diagnostic-id"
+          ],
+          "menuStatuses": [
+            "pending",
+            "conflict",
+            "synced"
+          ],
+          "cursor": 15,
+          "generation": 3,
+          "orderUuid": "stable-order-42",
+          "saleKey": 0,
+          "duplicateCommand": false,
+          "commandHandlersExecuted": 0,
+          "commandsSkippedAlreadyDone": 2,
+          "commandAcknowledgements": 2,
+          "uncertainCommand": "interrupted",
+          "uncertainCommandResult": "interrupted_not_repeated",
+          "hasCredential": false,
+          "installationId": "ba025cc6-09bb-4c1e-87a0-d6fa402c1186",
+          "identityBinding": "menu01-venue-a",
+          "staffPinPresent": true,
+          "pendingSales": 1
+        },
+        "interruptedRestore": {
+          "signal": "SIGKILL",
+          "expectedRunnerExit": 1,
+          "pid": 88930,
+          "checkpoint": "sales.clear:after",
+          "restoreMarkerPresent": true,
+          "salesEmpty": true
+        },
+        "startupReplay": {
+          "status": "PASS",
+          "pid": 88982,
+          "writerPid": 88832,
+          "freshDirectory": "crash-fresh",
+          "initiallyEmpty": false,
+          "reopenedBeforeVerification": true,
+          "repeatedRestore": "PASS",
+          "metrics": {},
+          "sales": 1,
+          "recoveryActions": [],
+          "closurePhase": "completed",
+          "capturedOrderPrice": 7.0,
+          "salePrice": 7.0,
+          "menuPrice": 12.0,
+          "conflictPrice": 22.0,
+          "menuMutationIds": [
+            "b0242a9a-b83f-4fbc-b915-aadec44f5679",
+            "conflict-original-id",
+            "accepted-diagnostic-id"
+          ],
+          "menuStatuses": [
+            "pending",
+            "conflict",
+            "synced"
+          ],
+          "cursor": 15,
+          "generation": 3,
+          "orderUuid": "stable-order-42",
+          "saleKey": 0,
+          "duplicateCommand": false,
+          "commandHandlersExecuted": 0,
+          "commandsSkippedAlreadyDone": 2,
+          "commandAcknowledgements": 2,
+          "uncertainCommand": "interrupted",
+          "uncertainCommandResult": "interrupted_not_repeated",
+          "hasCredential": false,
+          "installationId": "da85686f-0fe6-48d6-9e32-6ff3b99ad6c9",
+          "identityBinding": "menu01-venue-a",
+          "staffPinPresent": true,
+          "pendingSales": 1
+        },
+        "logSha256": {
+          "writer": "aae6b1430f0ed869928316b8f6877396162bc75ffc4ddbe643c21c02bf169c3f",
+          "reader": "1b9115394d837253dbae3570729f412e93418c28741cc6ec8173fb150336dacd",
+          "crash-restore": "cacc71c53165928a8a287dfe5ad36b096070af9ef9dc3e2c0463b189b7614e6e",
+          "recover": "b55aee74a0d95771c7c48877b5f962fdfdfe82e589fd5a4f364ffd8505a630c7"
+        },
+        "allRealHttpBlocked": true,
+        "temporaryDirectoryRemoved": true
+      }
+    },
+    "performance.json": {
+      "sha256": "1e4ad4d7ebc88b56463e9f42432f13d48869ae592b673db022e914ddd8460b60",
+      "result": {
+        "status": "PASS",
+        "enrollmentMs": 72.998333,
+        "stats": {
+          "checkIn": {
+            "samples": 10,
+            "medianMs": 26.31970799999999,
+            "maxMs": 27.43054200000006
+          },
+          "bootstrap": {
+            "samples": 10,
+            "medianMs": 28.483582999999953,
+            "maxMs": 30.7454580000001
+          },
+          "compatibilityTransaction": {
+            "samples": 10,
+            "medianMs": 1.0636250000000018,
+            "maxMs": 1.1692089999999098
+          }
+        },
+        "fixture": "loopback one Venue/Device, empty Menu, 2 warmups; observational, not load qualification"
+      }
+    },
+    "cleanup.json": {
+      "sha256": "0f7e27eb3b8614e9277f4501fb02e574fd2a9a616922b5908c5cdd035878f6e1",
+      "result": {
+        "status": "PASS",
+        "verificationOwnedDatabasesDropped": [
+          "disposable_menu09_63fd4096_prefix",
+          "disposable_menu09_63fd4096_fresh",
+          "disposable_menu09_63fd4096_upgrade",
+          "disposable_menu09_63fd4096_regress",
+          "disposable_menu09_63fd4096_phase3"
+        ],
+        "clusterStopped": true,
+        "clusterDirectoryRemoved": true,
+        "nativePrivateCredentialFixturesRemoved": true,
+        "nativeHiveRemoved": true,
+        "noExistingDatabaseTouched": true
+      }
+    },
+    "ownership.json": {
+      "sha256": "a1e6692ed6757c8b7ea4ce4f930462e3dbc303007ba4a6489b87797b30cb9083",
+      "result": [
+        {
+          "name": "disposable_menu09_63fd4096_prefix",
+          "absentBefore": true,
+          "verificationOwned": true
+        },
+        {
+          "name": "disposable_menu09_63fd4096_fresh",
+          "absentBefore": true,
+          "verificationOwned": true
+        },
+        {
+          "name": "disposable_menu09_63fd4096_upgrade",
+          "absentBefore": true,
+          "verificationOwned": true
+        },
+        {
+          "name": "disposable_menu09_63fd4096_regress",
+          "absentBefore": true,
+          "verificationOwned": true
+        },
+        {
+          "name": "disposable_menu09_63fd4096_phase3",
+          "absentBefore": true,
+          "verificationOwned": true
+        }
+      ]
+    },
+    "upgrade-before.json": {
+      "sha256": "d3d6b59d918f8f34c6f701da1150e4a7b31378ac61f6785bb65800303cdb75cb",
+      "result": {
+        "Venue": "9bd08d1a81e1a7303cc846346b1db5b8147bfb7536764b728cf847b07cfac92f",
+        "Device": "aea5fb9f9b34bfff7063030ba718f9f39350dce299561c30d0f210f26102945b",
+        "DeviceEnrollment": "44800baef651b9636f266d50e19b76b296a274d2d2fd809fa9f77960927fe822",
+        "MenuCategory": "281ca236995a2392dcfdd23f524ee2723dce63cb2cf58a8a7ec96cc91c9f1650",
+        "MenuSubcategory": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "MenuItem": "b8832afa2ab0fb6719d5bfbb76bab0dd5a36caeca85f74985abd6b12b9588778",
+        "MenuItemVariant": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "MenuCatalogMutation": "451dc44b28b750fa51d15d7b3becb32bce4302a713a8642f33a7b4a9158545ba",
+        "MenuCatalogTombstone": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "CustomerAuditEvent": "877474c0a76b178a1b08f48816827f85f31cc314cde6f309f36cc28be3d0bd8f"
+      }
+    },
+    "upgrade-after.json": {
+      "sha256": "d3d6b59d918f8f34c6f701da1150e4a7b31378ac61f6785bb65800303cdb75cb",
+      "result": {
+        "Venue": "9bd08d1a81e1a7303cc846346b1db5b8147bfb7536764b728cf847b07cfac92f",
+        "Device": "aea5fb9f9b34bfff7063030ba718f9f39350dce299561c30d0f210f26102945b",
+        "DeviceEnrollment": "44800baef651b9636f266d50e19b76b296a274d2d2fd809fa9f77960927fe822",
+        "MenuCategory": "281ca236995a2392dcfdd23f524ee2723dce63cb2cf58a8a7ec96cc91c9f1650",
+        "MenuSubcategory": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "MenuItem": "b8832afa2ab0fb6719d5bfbb76bab0dd5a36caeca85f74985abd6b12b9588778",
+        "MenuItemVariant": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "MenuCatalogMutation": "451dc44b28b750fa51d15d7b3becb32bce4302a713a8642f33a7b4a9158545ba",
+        "MenuCatalogTombstone": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "CustomerAuditEvent": "877474c0a76b178a1b08f48816827f85f31cc314cde6f309f36cc28be3d0bd8f"
+      }
+    }
+  },
+  "logs": [
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/backend-regress.log",
+      "sha256": "cc9fc8a015ddd77855737e9957bbce1b9dd34493e9976c8760bfa9af85dea247"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/build.log",
+      "sha256": "54acc67ff6e9998ee00d3667a317176f1b6189016655735b6cf52c9c94c9e0e3"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/flutter-regress.log",
+      "sha256": "c3de088190dc581100e8de261e95253b958af24dc156321775d05917e83547ac"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/fresh-diff.log",
+      "sha256": "3417e4b20617991171441c4df1e747f35643e27400e00ae586a79d59a91678c9"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/fresh-status.log",
+      "sha256": "a602262a0457f5628296622ea103da6fc28cff5cd69b42c9ba580781cde3a6aa"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/fresh-validate.log",
+      "sha256": "7434e2c1653719b4867a1d2004f4a7cb7120bd166934b358d972c2f3e264c772"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/http.log",
+      "sha256": "873aa7faa83645b51a06124562867d0f2c575f33bc0c0ea88ea2758425304f60"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/menu01-native.crash-restore.log",
+      "sha256": "cacc71c53165928a8a287dfe5ad36b096070af9ef9dc3e2c0463b189b7614e6e"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/menu01-native.reader.log",
+      "sha256": "1b9115394d837253dbae3570729f412e93418c28741cc6ec8173fb150336dacd"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/menu01-native.recover.log",
+      "sha256": "b55aee74a0d95771c7c48877b5f962fdfdfe82e589fd5a4f364ffd8505a630c7"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/menu01-native.writer.log",
+      "sha256": "aae6b1430f0ed869928316b8f6877396162bc75ffc4ddbe643c21c02bf169c3f"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/migrate-fresh.log",
+      "sha256": "bf11604666bef3b7ec4e8947827a25f8be17de84ef974b3af8dd0483cd8fa6ad"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/migrate-phase3.log",
+      "sha256": "61a7e14d9f608ca01d587130f447970a91762fac4aec11db249930a782dbac80"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/migrate-prefix-before.log",
+      "sha256": "f29d07f69142148456f3ba8ab3300469206e25174ba3b64ff9e75a60eee1447d"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/migrate-prefix-upgrade.log",
+      "sha256": "85cdbe0e89744b6dd7a5218fc5d8c247fe3fc25b680629fbeb118db8ba481bbd"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/migrate-prefix.log",
+      "sha256": "cdc5842f68b96efb2344c9dcf2910cb24b14ddc48436b4ad761bc1f33304f165"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/migrate-regress.log",
+      "sha256": "c268cea1efcd0f973342360824b6fa9af689ae588883e69ee9ddabf74a708e75"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/migrate-upgrade-before.log",
+      "sha256": "20d02644886c567a3d27a7a91cc73a971cc141ce1c3ac168f67ce58595e5ec49"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/migrate-upgrade.log",
+      "sha256": "7601fb34924a7b7a9e6a64030b111911566a7506a575b49a4f1312f415c6ed1d"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/native-backend-after.log",
+      "sha256": "f705be406aa36e04178b128aaeb795542bff7994f9a27a54fd7eadd1926bae0f"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/native-backend-before.log",
+      "sha256": "f705be406aa36e04178b128aaeb795542bff7994f9a27a54fd7eadd1926bae0f"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/native-reader.log",
+      "sha256": "71cea9106f64910d79ca3b26c7cc6f5e7e2c3efbf1fc519215fde35b4f4a0258"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/native-writer.log",
+      "sha256": "414bd1d07099525a106d942ee391e7a46bda2447f53cc4a7f65962b2ff314a21"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/onboarding.log",
+      "sha256": "66ad42b72ca912a5c27c31b71d121e96dd8dbd3e8cf0b6366d4bbe715056133e"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/performance.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/policy-unit.log",
+      "sha256": "928238d52cabcf1260d0c4ed3b268709173459844d17688f8c8d2c23cc8d2baf"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/postgres-restart.log",
+      "sha256": "8db95e2a0ec84c72c6d7118a29a204a2513b26251c88fbc2e2f5eb0bd8fbbd6a"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/postgres-setup.log",
+      "sha256": "dd7537d79074e1578c9b759302b465fc6de4389dd8e92421530f5577b48c6453"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/prefix-diff.log",
+      "sha256": "3417e4b20617991171441c4df1e747f35643e27400e00ae586a79d59a91678c9"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/prefix-status.log",
+      "sha256": "5004e83bc3620dc1c7d30660b63caa40cbf3f6c934424ed871be10c1fb7c430a"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/prefix-validate.log",
+      "sha256": "7434e2c1653719b4867a1d2004f4a7cb7120bd166934b358d972c2f3e264c772"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/prefix.log",
+      "sha256": "2ed83182e89ed52160eef97f1099a7503f3d80ba510a96842da12b3b677d71d6"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/typecheck.log",
+      "sha256": "4f91fc8cda04c23760666bc1c33b65e2fe2f4e8ebf6a227809ff63825e3bd21e"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/upgrade-diff.log",
+      "sha256": "3417e4b20617991171441c4df1e747f35643e27400e00ae586a79d59a91678c9"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/upgrade-status.log",
+      "sha256": "19f3a3335d503437849b3202594076cf287ee2861d1984b800a21a74bd60a7a3"
+    },
+    {
+      "path": "/private/tmp/vynic-menu09-63fd4096/upgrade-validate.log",
+      "sha256": "7434e2c1653719b4867a1d2004f4a7cb7120bd166934b358d972c2f3e264c772"
+    }
+  ],
+  "sourceSha256": {
+    "apps/backend/prisma/migrations/20261015120000_menu09_client_compatibility/migration.sql": "e897c5560fadcabe8d9098ecad687fab29e81db78f93c469fe1a6ad6dcc229da",
+    "apps/backend/prisma/schema.prisma": "4bb3615bb309d0315eb186fdd835b5ef2aa8fa540074eca085c6c0d6690283ac",
+    "apps/backend/src/customer/customer-onboarding.integration.spec.ts": "83de123ac528149734a594fab75339219dccc46c32497aeec4b8c6d2580cadfb",
+    "apps/backend/src/customer/customer.controller.ts": "945b3978048421387cc9a51fe84f11a4d0fee0cd29308b38e021147245365379",
+    "apps/backend/src/customer/customer.module.ts": "84865bfbbfb985bad842c2e2a8503d6820df91b590d430e04ba95dcb1585e39b",
+    "apps/backend/src/customer/restaurant-foundation.controller.ts": "3613373d4e5456de7fc3d84c5b6b3bd141a9aa91bd798fd5e0ebb832e486f1b4",
+    "apps/backend/src/customer/restaurant-foundation.integration.spec.ts": "0bfc97fe52ac02202ee0e993a4e28d3389e627aae2c0a42139ed0ce2747dbd0a",
+    "apps/backend/src/edge/device-enrollment.controller.ts": "d865dd1987a7a3f8b73f6915058efdb5d94adf4c655e0d6ec9dc93a8dab6c990",
+    "apps/backend/src/edge/device-enrollment.service.ts": "7a340b7bc2e4d44b8f64eed8560047359d57a98cafff471845c5403882d91655",
+    "apps/backend/src/menu-catalog/menu-catalog.integration.spec.ts": "639ace7a822108338f3fa608397031426da4889257ece52407f12c5a9123677a",
+    "apps/backend/src/menu-catalog/menu-client-policy.spec.ts": "512501ca2dd5e24969bff87f9b710c178bb0f63ab9f22fa3e22fa04f95d77a7b",
+    "apps/backend/src/menu-catalog/menu-client-policy.ts": "7575bca36d74eb32419dba79e0d3161802772c3371715389cbe813b2d14cded8",
+    "apps/backend/src/menu-catalog/menu-client.guard.ts": "925013fc39421800b837d926a24f555625296817ebb2d0bdbda05c81eaf9774d",
+    "apps/backend/src/menu-catalog/menu-rollout.controller.ts": "0fdb2d533758e5e113c8501f5959f9def8d0ccbb41bed7c47aabfb869d3056d8",
+    "apps/backend/src/menu-catalog/menu-rollout.service.ts": "474639ad7dbc00f26a074755e1848a5a3054b36609f451c4f55d553b3d296fa7",
+    "apps/backend/src/menu-catalog/menu09.integration.spec.ts": "b8f4d68b4df5f100dd67a13d76abd7e85b5a0fb61b1a3e6a6a574754cc0ece79",
+    "apps/backend/src/pos/sync/sync.controller.spec.ts": "0800e88c491b6e10c3c3fc8dd98e8dacf571877459ae778f2ea587284cac4900",
+    "apps/backend/src/pos/sync/sync.controller.ts": "1c28f656e3ccb1d85451b2edfdabd50611832ce8e48bbc901546084e64823e03",
+    "apps/backend/test/menu-client.fixture.ts": "053a75490e7876f1e50cce41d001b9c178310648953835ca407141131cce3fe0",
+    "apps/backend/test/menu03.fixture.ts": "69998a0e244a1e2bfbae49d52250c41a89a42865d75528843ce45cc1d0929da7",
+    "apps/backend/test/menu06.fixture.ts": "e2051f07f4db1326aaef3ee4e2218d742355c0c4b66e19fc75d1109d0a183ccf",
+    "apps/backend/test/menu09-server.ts": "f74f2ecbfcfdfa8940964ac2d066a0e7577da5e6233874d6815f5c0b7ef466fe",
+    "apps/backend/test/menu09.fixture.ts": "5fc33474a4c2b48cca03a1c1f855a4f11d60a3c37a221704893b1319c88a4128",
+    "apps/backend/test/onboarding-app.fixture.ts": "247137782ecc8dfd174eb7807beb36c12a2de85dbfb86268775df5da1fb114b3",
+    "apps/operations/lib/core/services/edge/edge_enrollment_client.dart": "8749478d0c9a08fd4922556e6d4972987a56fd873067cecd5310d2a1c753bf18",
+    "apps/operations/lib/core/services/edge/pos_enrollment_service.dart": "a4511f09db5304349a0efa566a2b27a51522ff44607896c3b0279ba09ec822e2",
+    "apps/operations/lib/core/services/edge/runtime_config_sync.dart": "ae4712bb485ca2fbb356160806192f9ddbc7b16340b516c24a3a57297b30fe80",
+    "apps/operations/lib/core/services/menu/menu_client_compatibility.dart": "ab00c2fbf8d4d7b889c7c4ea7856bcd34dd40f99511b732b08c8a4649e96196d",
+    "apps/operations/lib/core/services/menu/pos_menu_sync.dart": "3513cbd3e3adb381163e8cf5314d38a425b54c288d4c7d06c8b5ee8955bf675b",
+    "apps/operations/lib/core/services/menu/pos_menu_sync_service.dart": "ec81f230633529448d45a11970b058e24b2ba5f9a91cf50377e0a76e83a63435",
+    "apps/operations/lib/core/services/sync/api_config.dart": "ce85828bcfd3ffdfd8706521648fcc84d88a976a55f0ffd01906a04cb6db76cb",
+    "apps/operations/lib/core/services/sync/manager_sync_service.dart": "f974e53bd5a46c51df0ec01ad5dff3ea48e81c46462aba4930c67c8bbdf45bb5",
+    "apps/operations/lib/core/widgets/menu_update_required.dart": "ccb4a3dd074a7e69929c8e27ed514917e97772fe4343b030ef8bafd76e75bbff",
+    "apps/operations/lib/startup_pos.dart": "788bdae009757c73937d19dc977ece1347d64fa752bc6a69aef25a50c455591d",
+    "apps/operations/test/live/menu09_client_gate_test.dart": "f233c40044277da9627d9377bda78e4483f2d4f21634b0d99b57d26e227c33dc",
+    "apps/operations/test/unit/menu09_client_compatibility_test.dart": "e2cd017d1ed0876b06fcb400a1b5f3f7ea0d3555acc905a8a7320e6e83a0451a",
+    "apps/operations/test/widget/menu09_update_required_test.dart": "26d4d4dddc44f2fda4325383996e647b00e9d8996abdb0d90935b6ac75100661",
+    "apps/operations/tool/prove_menu09_gate.py": "cd42b398a5e290fb5da193132b7d7188598f7d5979dc35b0b20f145f28c0170f"
+  },
+  "committedImplementationSha256": {
+    "apps/backend/prisma/migrations/20261015120000_menu09_client_compatibility/migration.sql": "e897c5560fadcabe8d9098ecad687fab29e81db78f93c469fe1a6ad6dcc229da",
+    "apps/backend/prisma/schema.prisma": "4bb3615bb309d0315eb186fdd835b5ef2aa8fa540074eca085c6c0d6690283ac",
+    "apps/backend/src/customer/customer-onboarding.integration.spec.ts": "83de123ac528149734a594fab75339219dccc46c32497aeec4b8c6d2580cadfb",
+    "apps/backend/src/customer/customer.controller.ts": "945b3978048421387cc9a51fe84f11a4d0fee0cd29308b38e021147245365379",
+    "apps/backend/src/customer/customer.module.ts": "84865bfbbfb985bad842c2e2a8503d6820df91b590d430e04ba95dcb1585e39b",
+    "apps/backend/src/customer/restaurant-foundation.controller.ts": "3613373d4e5456de7fc3d84c5b6b3bd141a9aa91bd798fd5e0ebb832e486f1b4",
+    "apps/backend/src/customer/restaurant-foundation.integration.spec.ts": "0bfc97fe52ac02202ee0e993a4e28d3389e627aae2c0a42139ed0ce2747dbd0a",
+    "apps/backend/src/edge/device-enrollment.controller.ts": "d865dd1987a7a3f8b73f6915058efdb5d94adf4c655e0d6ec9dc93a8dab6c990",
+    "apps/backend/src/edge/device-enrollment.service.ts": "7a340b7bc2e4d44b8f64eed8560047359d57a98cafff471845c5403882d91655",
+    "apps/backend/src/menu-catalog/menu-catalog.integration.spec.ts": "639ace7a822108338f3fa608397031426da4889257ece52407f12c5a9123677a",
+    "apps/backend/src/menu-catalog/menu-client-policy.spec.ts": "512501ca2dd5e24969bff87f9b710c178bb0f63ab9f22fa3e22fa04f95d77a7b",
+    "apps/backend/src/menu-catalog/menu-client-policy.ts": "7575bca36d74eb32419dba79e0d3161802772c3371715389cbe813b2d14cded8",
+    "apps/backend/src/menu-catalog/menu-client.guard.ts": "925013fc39421800b837d926a24f555625296817ebb2d0bdbda05c81eaf9774d",
+    "apps/backend/src/menu-catalog/menu-rollout.controller.ts": "0fdb2d533758e5e113c8501f5959f9def8d0ccbb41bed7c47aabfb869d3056d8",
+    "apps/backend/src/menu-catalog/menu-rollout.service.ts": "474639ad7dbc00f26a074755e1848a5a3054b36609f451c4f55d553b3d296fa7",
+    "apps/backend/src/menu-catalog/menu09.integration.spec.ts": "b8f4d68b4df5f100dd67a13d76abd7e85b5a0fb61b1a3e6a6a574754cc0ece79",
+    "apps/backend/src/pos/sync/sync.controller.spec.ts": "0800e88c491b6e10c3c3fc8dd98e8dacf571877459ae778f2ea587284cac4900",
+    "apps/backend/src/pos/sync/sync.controller.ts": "1c28f656e3ccb1d85451b2edfdabd50611832ce8e48bbc901546084e64823e03",
+    "apps/backend/test/menu-client.fixture.ts": "053a75490e7876f1e50cce41d001b9c178310648953835ca407141131cce3fe0",
+    "apps/backend/test/menu03.fixture.ts": "69998a0e244a1e2bfbae49d52250c41a89a42865d75528843ce45cc1d0929da7",
+    "apps/backend/test/menu06.fixture.ts": "e2051f07f4db1326aaef3ee4e2218d742355c0c4b66e19fc75d1109d0a183ccf",
+    "apps/backend/test/menu09-server.ts": "f74f2ecbfcfdfa8940964ac2d066a0e7577da5e6233874d6815f5c0b7ef466fe",
+    "apps/backend/test/menu09.fixture.ts": "5fc33474a4c2b48cca03a1c1f855a4f11d60a3c37a221704893b1319c88a4128",
+    "apps/backend/test/onboarding-app.fixture.ts": "247137782ecc8dfd174eb7807beb36c12a2de85dbfb86268775df5da1fb114b3",
+    "apps/operations/lib/core/services/edge/edge_enrollment_client.dart": "8749478d0c9a08fd4922556e6d4972987a56fd873067cecd5310d2a1c753bf18",
+    "apps/operations/lib/core/services/edge/pos_enrollment_service.dart": "4a25a70e4a5aec6ff4a9dd02d2e6d9068584b4d74308e58b08e3fecb40c642df",
+    "apps/operations/lib/core/services/edge/runtime_config_sync.dart": "ae4712bb485ca2fbb356160806192f9ddbc7b16340b516c24a3a57297b30fe80",
+    "apps/operations/lib/core/services/menu/menu_client_compatibility.dart": "ab00c2fbf8d4d7b889c7c4ea7856bcd34dd40f99511b732b08c8a4649e96196d",
+    "apps/operations/lib/core/services/menu/pos_menu_sync.dart": "3513cbd3e3adb381163e8cf5314d38a425b54c288d4c7d06c8b5ee8955bf675b",
+    "apps/operations/lib/core/services/menu/pos_menu_sync_service.dart": "ec81f230633529448d45a11970b058e24b2ba5f9a91cf50377e0a76e83a63435",
+    "apps/operations/lib/core/services/sync/api_config.dart": "df718dd7708bcf0f427acb6ab2572e8ed821e050692cd442ffa6aaed7df0f2dc",
+    "apps/operations/lib/core/services/sync/manager_sync_service.dart": "f974e53bd5a46c51df0ec01ad5dff3ea48e81c46462aba4930c67c8bbdf45bb5",
+    "apps/operations/lib/core/widgets/menu_update_required.dart": "ccb4a3dd074a7e69929c8e27ed514917e97772fe4343b030ef8bafd76e75bbff",
+    "apps/operations/lib/startup_pos.dart": "788bdae009757c73937d19dc977ece1347d64fa752bc6a69aef25a50c455591d",
+    "apps/operations/test/live/menu09_client_gate_test.dart": "f233c40044277da9627d9377bda78e4483f2d4f21634b0d99b57d26e227c33dc",
+    "apps/operations/test/unit/menu09_client_compatibility_test.dart": "e2cd017d1ed0876b06fcb400a1b5f3f7ea0d3555acc905a8a7320e6e83a0451a",
+    "apps/operations/test/widget/menu09_update_required_test.dart": "26d4d4dddc44f2fda4325383996e647b00e9d8996abdb0d90935b6ac75100661",
+    "apps/operations/tool/prove_menu09_gate.py": "cd42b398a5e290fb5da193132b7d7188598f7d5979dc35b0b20f145f28c0170f"
+  },
+  "preFixHarnessSha256": "ed6a881dd10df09d398ddd6d17a4d94cfe4e8d0f601407a9c87a470c21b37df0",
+  "wipVerification": {
+    "all267OriginalContentsRecoverExactly": true,
+    "unshared262ByteIdentical": true,
+    "sharedFiles": [
+      {
+        "path": "apps/operations/lib/core/services/edge/pos_enrollment_service.dart",
+        "originalSha256": "c75f8d49e8f73dc6b4b8c9516e015cd1332465f1e6b405f61051dfa89dab13fc",
+        "recoveredSha256": "c75f8d49e8f73dc6b4b8c9516e015cd1332465f1e6b405f61051dfa89dab13fc",
+        "taskHunksStagedSeparately": true
+      },
+      {
+        "path": "apps/operations/lib/core/services/sync/api_config.dart",
+        "originalSha256": "924c14ca8df4f9efeb701bc1aa5c45ac22588b9236cb24eced3a7b8d41cf3f60",
+        "recoveredSha256": "924c14ca8df4f9efeb701bc1aa5c45ac22588b9236cb24eced3a7b8d41cf3f60",
+        "taskHunksStagedSeparately": true
+      },
+      {
+        "path": "docs/agent-state/VYNIC_PROJECT_STATE.md",
+        "originalSha256": "31bf26a03053285f1f7d51729635688430c6986164409cc5969556896a10136a",
+        "recoveredSha256": "31bf26a03053285f1f7d51729635688430c6986164409cc5969556896a10136a",
+        "taskHunksStagedSeparately": true
+      },
+      {
+        "path": "docs/agent-state/VYNIC_CODE_MAP.md",
+        "originalSha256": "cbba74fc5e28c350d5ff95bdf6f143986fda1a4b3a1c3e5376b9fee41a3921b6",
+        "recoveredSha256": "cbba74fc5e28c350d5ff95bdf6f143986fda1a4b3a1c3e5376b9fee41a3921b6",
+        "taskHunksStagedSeparately": true
+      },
+      {
+        "path": "docs/agent-state/VYNIC_DECISIONS.md",
+        "originalSha256": "6fb07a18e62e09a3e1ec5c1482e4bac169f91a7163be424715890b3b26669455",
+        "recoveredSha256": "6fb07a18e62e09a3e1ec5c1482e4bac169f91a7163be424715890b3b26669455",
+        "taskHunksStagedSeparately": true
+      }
+    ],
+    "stashUnchanged": true,
+    "historicalAuditsUnmodified": true,
+    "finalStatusExpected": " M .env.docker.example\n M .env.production.example\n M apps/backend/src/customer/commercial-access.integration.spec.ts\n M apps/backend/src/dev-origins.spec.ts\n M apps/backend/src/dev-origins.ts\n M apps/backend/src/subscriptions/subscription.integration.spec.ts\n M apps/backend/src/subscriptions/subscription.service.ts\n M apps/backend/src/website/custom/custom-website.integration.spec.ts\n M apps/backend/src/website/provisioning/website-provisioning.integration.spec.ts\n M apps/backend/src/website/provisioning/website-provisioning.ts\n M apps/operations/lib/apps/windows_pos/screens/pos_first_run.dart\n M apps/operations/lib/core/services/edge/pos_enrollment_service.dart\n M apps/operations/lib/core/services/sync/api_config.dart\n M apps/operations/test/unit/pos_enrollment_test.dart\n M apps/platform-web/src/components/layout/Navbar.tsx\n M apps/platform-web/src/components/product/PosScreenReplica.tsx\n M apps/platform-web/src/components/product/ProductLaunchMenu.tsx\n M apps/platform-web/src/components/sections/FloorPlanSection.tsx\n M apps/platform-web/src/components/sections/Hero.tsx\n M apps/platform-web/src/components/sections/ProductTour.tsx\n M apps/platform-web/src/components/ui/Button.tsx\n M apps/platform-web/src/components/ui/Reveal.tsx\n M apps/platform-web/src/components/ui/SectionHeading.tsx\n M apps/platform-web/src/lib/motion.ts\n M apps/platform-web/src/pages/HomePage.tsx\n M apps/platform-web/src/platform/pages/venue/SubscriptionPanel.tsx\n M apps/platform-web/src/styles/index.css\n M apps/platform-web/src/subscriptions/operator-actions.ts\n M apps/platform-web/src/subscriptions/types.ts\n M apps/platform-web/src/test/commercial-control-ux.test.tsx\n M apps/platform-web/src/test/subscription-lifecycle.test.tsx\n M compose.local.yaml\n M compose.yaml\n M deploy/traefik/routes.yml\n M docs/CANONICAL_MENU_SYNC.md\n M docs/COMMERCIAL_SUBSCRIPTION_LIFECYCLE.md\n M docs/DEPLOYMENT.md\n M docs/DEPLOYMENT_PROOF.md\n M docs/agent-state/VYNIC_CODE_MAP.md\n M docs/agent-state/VYNIC_DECISIONS.md\n M docs/agent-state/VYNIC_PROJECT_STATE.md\n M scripts/docker.sh\n?? .claude/launch.json\n?? apps/operations/test/live/native_ingress_live_test.dart\n?? apps/platform-web/src/components/motion/\n?? apps/platform-web/src/components/sections/PlatformStory.tsx\n?? apps/platform-web/src/test/site-motion.test.tsx\n?? compose.lan.yaml\n?? docs/audits/2026-09-29-f7bb982/\n?? experiments/\n",
+    "verificationMethod": "Undo only baseline-to-task patch in independent temporary copies; recovered original bytes match all five shared files, every other WIP file matches baseline SHA256"
+  },
+  "limitations": [
+    "Authenticated declaration is not binary attestation",
+    "No trustworthy archived historical Windows artifact; exact old protocol fixture proven, physical artifact qualification remains OPS-01",
+    "Integer release build stamping required before configured build floor",
+    "Offline pending edits include mandatory operator reconciliation; no server claim they are absent",
+    "No automatic rollback across divergent Menu histories",
+    "Small loopback latency is not fleet capacity; MENU-10/EDGE-01 remain deferred",
+    "Five pre-existing global TypeScript errors and unchanged touched legacy lint debt remain TECH-01"
+  ],
+  "noPush": true,
+  "noExistingDatabaseTouched": true,
+  "noParallelMilestoneStarted": true,
+  "nextMilestone": "POS-01 (not started)",
+  "documentationFiles": [
+    "docs/MENU09_CLIENT_COMPATIBILITY_GATE.md",
+    "docs/proofs/MENU09_2026-10-02.json",
+    "docs/agent-state/VYNIC_PROJECT_STATE.md",
+    "docs/agent-state/VYNIC_CODE_MAP.md",
+    "docs/agent-state/VYNIC_DECISIONS.md"
+  ],
+  "testedSourceIdentity": "Implementation commit plus recorded original WIP; two shared Flutter source files include unstaged native-origin WIP during validation",
+  "preFixProductionSourceIdentity": "583d328b7f3a1dc7519310b4bcee661710d8f715"
+}

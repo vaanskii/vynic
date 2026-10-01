@@ -77,7 +77,11 @@ current transport status.
   The Menu is one canonical Cloud catalog (D030, `docs/CANONICAL_MENU_SYNC.md`):
   per-node revisions, idempotent mutations recorded once per (Venue,
   mutationId) with actor/source, explicit conflicts, tombstones and
-  changes-since catch-up. Writers are the owner Dashboard (not blocked by POS
+  changes-since catch-up. MENU-03 stores the complete accepted response in the
+  mutation transaction; retries preserve its outcome after edit/delete/restart.
+  Legacy null results force resync/review; conflicts are not persisted. Real
+  HTTP/PostgreSQL and native POS lost-ACK proof: `docs/MENU03_EXACT_RETRY_OUTCOME.md`.
+  Writers are the owner Dashboard (not blocked by POS
   presence) and ANY enrolled POS Device (no primary requirement); Manager and
   both website renderers read it. POS Menu edits use a shared local queue and
   flushed write-ahead commit before journal/state/projection writes and UI
@@ -1075,7 +1079,10 @@ current transport status.
 
 ## Current Migration Versions
 
-- Prisma migration tip: `20261012120000_web02_restore_public_info_authority`.
+- Prisma migration tip: `20261013120000_menu03_exact_mutation_result` (nullable
+  immutable accepted-result JSONB; no historical backfill). Fresh/upgrade,
+  63 checksums and empty schema diff pass on disposable PostgreSQL.
+- Previous migration: `20261012120000_web02_restore_public_info_authority`.
 - Previous migrations: `20261011120000_canonical_menu_sync`,
   `20261010120000_shared_website_foundation`, and WEB-02's evidence capture
   `20261010110000_web02_capture_public_info_evidence`, ordered before the

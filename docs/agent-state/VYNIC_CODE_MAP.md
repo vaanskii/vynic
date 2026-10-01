@@ -209,6 +209,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 
 ## Menu
 
+- MENU-03 durable result replay: `apps/backend/src/menu-catalog/menu-mutation-result.ts`; additive `20261013120000_menu03_exact_mutation_result`; real HTTP/PostgreSQL + native ACK-loss proof `docs/MENU03_EXACT_RETRY_OUTCOME.md`, `apps/backend/scripts/prove-menu03.py`, `apps/operations/test/live/menu03_ack_loss_test.dart`.
 - POS model and stable node identity: `apps/operations/lib/core/models/menu_item_db.dart` (`MenuCategoryDB.id`, `MenuSubcategoryDB.id`, `MenuItemDB.id`, `MenuVariantDB.id`)
 - CRUD, stable-ID audit and one-time rollout: `apps/operations/lib/core/database/repositories/menu_repository.dart` (`ensureStableMenuIds`, called from Hive migration v8 and after backup restore)
 - Canonical Cloud Menu (D030, `docs/CANONICAL_MENU_SYNC.md`): mutation/revision/tombstone/catch-up service `apps/backend/src/menu-catalog/menu-catalog.service.ts`, validation `menu-mutation.ts`, legacy cutover audit `menu-cutover-readiness.ts` + `scripts/menu-cutover-audit.ts`; owner/Device routes in `apps/backend/src/customer/restaurant-foundation.controller.ts`; proofs `menu-catalog.integration.spec.ts`, live harness `scripts/serve-canonical-menu-local.ts`

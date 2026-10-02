@@ -15,32 +15,41 @@ architecture evidence has been supplied. Do not install tools or alter VM
 settings implicitly. ARM64 Windows running the x64 test engine is emulation
 evidence; physical x64 and printer qualification remain separate.
 
-After the POS-03 prerequisite block has established `$pos03Flutter` and
-`$pos03Repo`, copy the candidate into a fresh Windows-local directory:
+After the POS-03 prerequisite block establishes `$pos03Flutter` and
+`$pos03Repo`, obtain a clean frozen Git export of `ec430880` through the Mac
+coordinator. Set `$pos05Source` to its Windows-shared root. This export must
+contain Operations, generated Dart Contracts and the committed contract vector;
+do not point it at the original dirty working directory. Then copy it locally:
 
 ```powershell
 $ErrorActionPreference = 'Stop'
 $pos05Flutter = $pos03Flutter
 $pos05Repo = $pos03Repo
+if (-not $pos05Source -or -not (Test-Path -LiteralPath "$pos05Source\apps\operations")) { throw 'Clean frozen ec430880 export is required' }
 $pos05Root = Join-Path $env:LOCALAPPDATA ('VynicPos05Smoke\' + [guid]::NewGuid().ToString())
 $pos05Ops = Join-Path $pos05Root 'apps\operations'
 $pos05Contracts = Join-Path $pos05Root 'packages\contracts\generated\dart'
 New-Item -ItemType Directory -Path $pos05Ops, $pos05Contracts | Out-Null
-& robocopy "$pos05Repo\apps\operations" $pos05Ops /E /R:0 /W:0 /XD build .dart_tool .git .idea .gradle Pods ephemeral .symlinks /XF .env* *.hive *.hivec local.properties key.properties *.jks *.keystore *.p12 *.mobileprovision .flutter-plugins-dependencies | Out-Null
+& robocopy "$pos05Source\apps\operations" $pos05Ops /E /R:0 /W:0 /XD build .dart_tool .git .idea .gradle Pods ephemeral .symlinks /XF .env* *.hive *.hivec local.properties key.properties *.jks *.keystore *.p12 *.mobileprovision .flutter-plugins-dependencies | Out-Null
 if ($LASTEXITCODE -ge 8) { throw 'Operations source copy failed' }
-& robocopy "$pos05Repo\packages\contracts\generated\dart" $pos05Contracts /E /R:0 /W:0 /XD .dart_tool build | Out-Null
+& robocopy "$pos05Source\packages\contracts\generated\dart" $pos05Contracts /E /R:0 /W:0 /XD .dart_tool build | Out-Null
 if ($LASTEXITCODE -ge 8) { throw 'Contracts source copy failed' }
+$pos05EdgeContracts = Join-Path $pos05Root 'packages\contracts\generated\edge_dart'
+& robocopy "$pos05Source\packages\contracts\generated\edge_dart" $pos05EdgeContracts /E /R:0 /W:0 /XD .dart_tool build | Out-Null
+if ($LASTEXITCODE -ge 8) { throw 'Edge Dart Contracts source copy failed' }
+$pos05Schema = Join-Path $pos05Root 'packages\contracts\schema'
+New-Item -ItemType Directory -Path $pos05Schema | Out-Null
+Copy-Item -LiteralPath "$pos05Source\packages\contracts\schema\table-identity.vectors.json" -Destination $pos05Schema
 $pos05Proof = Join-Path $pos05Root 'POS05-frozen-source.json'
-Copy-Item -LiteralPath "$pos05Repo\docs\proofs\POS05_2026-10-02.json" -Destination $pos05Proof
+Copy-Item -LiteralPath "$pos05Repo\docs\proofs\POS05_COMMITTED_ec430880_2026-10-02.json" -Destination $pos05Proof
 Set-Location -LiteralPath $pos05Ops
 ```
 
 The normal POS application and its workers remain closed for this smoke.
 
 Verify the copied runtime and selected test/support/config sources against
-`docs/proofs/POS05_2026-10-02.json` before testing. The manifest covers the
-tested working profile, including three explicitly listed existing runtime WIP
-files. A bare commit archive is a different profile unless separately tested.
+`docs/proofs/POS05_COMMITTED_ec430880_2026-10-02.json` before testing. The manifest covers
+exact committed ec430880 runtime and tests, with no runtime WIP included.
 If any source hash differs, stop and obtain the frozen validated profile or a
 new validated milestone manifest. Do not disable checks or substitute the old
 POS-03 proof, whose runtime hashes precede the shared POS-05 writer changes.
@@ -50,7 +59,7 @@ From the new copy's `apps\operations` directory, run:
 ```powershell
 $ErrorActionPreference = 'Stop'
 $pos05Evidence = Get-Content -LiteralPath $pos05Proof -Raw | ConvertFrom-Json
-if ($pos05Evidence.status -ne 'DONE' -or -not $pos05Evidence.allRequiredMacChecksPassed) { throw 'POS-05 source acceptance is incomplete' }
+if ($pos05Evidence.status -ne 'VERIFIED_COMMITTED_SOURCE' -or -not $pos05Evidence.allRequiredMacChecksPassed -or $pos05Evidence.validatedCommit -ne 'ec430880fc092a6847dbbc7e937ea083533534ba') { throw 'POS-05 source acceptance is incomplete' }
 if (@($pos05Evidence.sourceSha256.PSObject.Properties).Count -ne 382) { throw 'Incomplete frozen runtime manifest' }
 foreach ($pos05Group in @('sourceSha256', 'testSha256', 'supportSha256')) {
   $pos05Entries = @($pos05Evidence.$pos05Group.PSObject.Properties)
@@ -61,8 +70,13 @@ foreach ($pos05Group in @('sourceSha256', 'testSha256', 'supportSha256')) {
     if ($pos05Actual -ne $pos05File.Value) { throw "Frozen profile differs: $pos05Path" }
   }
 }
+foreach ($pos05File in $pos05Evidence.committedFiles.PSObject.Properties) {
+  if ($pos05File.Name -notmatch '^(apps/operations/|packages/contracts/)') { continue }
+  $pos05Actual = (Get-FileHash -LiteralPath (Join-Path $pos05Root $pos05File.Name) -Algorithm SHA256).Hash.ToLowerInvariant()
+  if ($pos05Actual -ne $pos05File.Value.sha256) { throw "Committed file differs: $($pos05File.Name)" }
+}
 'Frozen runtime, tests and support/config hashes verified'
-& $pos05Flutter --suppress-analytics pub get --offline 2>&1 | Tee-Object -FilePath "$pos05Root\dependencies.log"
+& $pos05Flutter --suppress-analytics pub get --offline --enforce-lockfile 2>&1 | Tee-Object -FilePath "$pos05Root\dependencies.log"
 if ($LASTEXITCODE -ne 0) { throw "Cached dependencies unavailable; report $pos05Root\dependencies.log" }
 ```
 

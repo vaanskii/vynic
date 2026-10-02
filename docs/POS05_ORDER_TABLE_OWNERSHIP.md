@@ -1,6 +1,6 @@
 # POS-05: one active Order per physical Table
 
-Status: **DONE — frozen Mac source checks passed; Windows acceptance pending**.
+Status: **ACCEPTED for exact committed `ec430880`; Windows acceptance pending**.
 Scope: one operational POS process, its local screens, and incoming Manager/
 Edge writers. This does not enable independent offline multi-POS authority.
 Windows VM operations are held. No customer storage or running POS is used.
@@ -76,11 +76,14 @@ current date, invent an owner or launch an older binary to bypass the check.
 
 ## Verification gates
 
-Final evidence is recorded in `docs/proofs/POS05_2026-10-02.json` and the
-native crash proof. 723 distinct Flutter tests in 61 suites pass; all
-280 ownership and 88 transfer SIGKILL/restart checkpoints pass.
-All of these gates passed on the same final runtime
-hashes before the local DONE commit:
+Exact committed-source evidence is recorded in
+`docs/proofs/POS05_COMMITTED_ec430880_2026-10-02.json`. Clean Git copies of
+`ec430880fc092a6847dbbc7e937ea083533534ba` pass 738 distinct Flutter tests
+in 62 suites, including the original 723 cases and 15 committed enrollment
+cases. All 280 ownership and 88 transfer SIGKILL/restart checkpoints,
+52-file format, 55-file analysis and the main_pos development build pass.
+No uncommitted runtime code or tests are included. The following gates
+passed on the exact committed runtime:
 
 1. Independent public-entry properties: stale edits and money, local/local and
    local/remote create, cancel/payment, manual/stale Table release, legacy
@@ -103,11 +106,18 @@ macOS development compilation is not Windows or printer qualification.
 
 ## Validated source identity and rollout
 
-The tested working profile includes three existing protected runtime WIP files:
-`pos_first_run.dart`, `pos_enrollment_service.dart`, and `sync/api_config.dart`.
-Their exact paths/hashes are recorded with all runtime sources. They are not
-part of the POS-05 change. A bare commit archive must not be described as this
-tested profile without separate validation.
+The initial working-profile proof in `docs/proofs/POS05_2026-10-02.json`
+included three unrelated runtime WIP files: `pos_first_run.dart`,
+`pos_enrollment_service.dart`, and `sync/api_config.dart`. Their changes
+predate POS-05 and concern development URL helper text, loopback
+classification and default HTTP ports. The exact committed-source rerun
+excludes all three changes and passes; they are not required for POS-05
+acceptance and remain user-owned WIP. Historical working-profile proofs
+are retained, but the committed-source proof above is authoritative.
+
+The original working directory still contains those changes. Windows
+smoke must use a clean frozen export of `ec430880` with the committed-source
+manifest, not copy the dirty working directory. Source hashes must match.
 
 Windows smoke remains **PENDING_NOT_RUN / HELD**. It must use a frozen validated
 source/checklist or a separately validated committed profile, with matching

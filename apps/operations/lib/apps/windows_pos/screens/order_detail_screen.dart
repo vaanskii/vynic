@@ -1412,8 +1412,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   /// it existed the only route was cancelling and re-keying, which loses the
   /// audit trail and, on a booked table, the reservation with it.
   Future<void> _showMoveItemsDialog() async {
-    final order = _order;
+    final order = _order?.clone();
     if (order == null) return;
+    final expectedBusinessDate = DatabaseService.getCurrentDate()
+        .toIso8601String()
+        .split('T')[0];
 
     if (order.items.isEmpty) {
       unawaited(
@@ -1464,6 +1467,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       user: widget.user,
       sourceLabel: sourceLabel,
       destinationLabel: destinationLabel,
+      expectedBusinessDate: expectedBusinessDate,
     );
 
     if (!mounted) return;
@@ -1479,19 +1483,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       return;
     }
 
-    // Everything went. The table it went from is now open with an empty bill
-    // on it, which reads as occupied on the floor and holds its booking against
-    // the day close — so it is released. Deliberately without a sale record:
-    // see `OrderItemTransfer.releaseEmptiedOrder`.
-    var released = false;
-    if (result.sourceLeftEmpty) {
-      await OrderItemTransfer.releaseEmptiedOrder(
-        order,
-        user: widget.user,
-        destination: destination,
-      );
-      released = true;
-    }
+    // The durable transfer has already finished empty-source cleanup/audits.
+    final released = result.sourceLeftEmpty;
 
     if (!mounted) return;
 
@@ -1767,6 +1760,23 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         return 'პროდუქტი არ არის არჩეული';
       case OrderTransferError.quantityOutOfRange:
         return 'არჩეული რაოდენობა შეკვეთაზე არ არის — გვერდი განახლდა';
+      case OrderTransferError.staleSource:
+      case OrderTransferError.staleDestination:
+      case OrderTransferError.identityConflict:
+      case OrderTransferError.businessDateChanged:
+        return 'შეკვეთა შეიცვალა — განაახლეთ გვერდი და აირჩიეთ თავიდან';
+      case OrderTransferError.auditLocked:
+        return 'შეკვეთის ისტორია დაბლოკილია — გადატანა ვერ შესრულდა';
+      case OrderTransferError.tableOwnership:
+        return 'მაგიდა სხვა შეკვეთას ეკუთვნის — გადატანა ვერ შესრულდა';
+      case OrderTransferError.transferIdConflict:
+        return 'გადატანის მოთხოვნა შეიცვალა — აირჩიეთ თავიდან';
+      case OrderTransferError.busy:
+        return 'მიმდინარეობს სხვა ოპერაცია — სცადეთ ხელახლა';
+      case OrderTransferError.recoveryRequired:
+        return 'გადატანა შეწყდა — გადატვირთეთ პროგრამა აღდგენისათვის';
+      case OrderTransferError.persistenceFailure:
+        return 'გადატანა ვერ შეინახა — სცადეთ ხელახლა';
     }
   }
 

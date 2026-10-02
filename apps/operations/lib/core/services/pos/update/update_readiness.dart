@@ -17,6 +17,7 @@ class UpdateReadiness {
       'მიმდინარეობს გადახდა — დაასრულეთ ან გააუქმეთ გადახდის ფანჯარა',
     'closeTable' || 'completeExistingSale' => 'მიმდინარეობს მაგიდის დახურვა',
     'closeDay' => 'მიმდინარეობს დღის დახურვა',
+    'transferItems' => 'მიმდინარეობს პროდუქტების გადატანა',
     'cancelOrder' => 'მიმდინარეობს შეკვეთის გაუქმება',
     'Cloud command' => 'სრულდება სერვერიდან მიღებული ოპერაცია',
     'Hive write' || 'Hive model write' => 'მიმდინარეობს მონაცემების შენახვა',
@@ -27,6 +28,8 @@ class UpdateReadiness {
     if (LocalDataAdmission.failure != null) return 'საჭიროა ოპერაციის აღდგენა';
     if (LocalDataAdmission.exclusiveOperation == 'closeDay')
       return operationLabel('closeDay');
+    if (LocalDataAdmission.exclusiveOperation == 'transferItems')
+      return operationLabel('transferItems');
     if (LocalDataAdmission.blocked)
       return 'მიმდინარეობს სარეზერვო ასლის აღდგენა ან შექმნა';
     if (!startupReady) return 'პროგრამა ჯერ მზად არ არის';

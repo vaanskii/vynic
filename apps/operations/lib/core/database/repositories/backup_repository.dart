@@ -40,6 +40,8 @@ import 'package:vynic/core/services/sync/sync_events.dart';
 import 'business_day_repository.dart';
 import 'closure_journal_repository.dart';
 import 'close_day_journal_repository.dart';
+import 'order_transfer_journal_repository.dart';
+import 'package:vynic/core/services/pos/order_item_transfer.dart';
 import '../transactions/close_day_transaction.dart';
 import '../database_core.dart';
 import 'menu_repository.dart';
@@ -362,7 +364,7 @@ class BackupRepository {
       case 'tables':
         return _deserializeTable(model());
       case 'orders':
-        return _deserializeOrder(model(), recalculate: false);
+        return deserializeOrderSnapshot(model());
       case 'packages':
         return _deserializePackage(model());
       case 'menu':
@@ -527,6 +529,39 @@ class BackupRepository {
           out['settings']!['currentDate'] != intent.fromDate &&
           out['settings']!['currentDate'] != intent.toDate) {
         throw const FormatException('Close Day date disagrees with backup');
+      }
+    }
+    var pendingTransfers = 0;
+    for (final entry in out['meta']!.entries) {
+      if (entry.key is! String ||
+          !(entry.key as String).startsWith(
+            OrderTransferJournalRepository.prefix,
+          ))
+        continue;
+      final intent = OrderTransferJournalRepository.decode(
+        entry.key as String,
+        entry.value,
+      );
+      if (intent.pending) {
+        if (++pendingTransfers > 1) {
+          throw const FormatException(
+            'Multiple pending Order transfers in backup',
+          );
+        }
+        if (dayClose != null && CloseDayIntent.fromMap(dayClose).pending ||
+            BusinessDayRepository.dateKey(
+                  DateTime.parse(out['settings']!['currentDate'] as String),
+                ) !=
+                intent.request['businessDate']) {
+          throw const FormatException(
+            'Order transfer backup date/recovery disagrees',
+          );
+        }
+        OrderTransferJournalRepository.validateCurrent(
+          intent,
+          (store, key) =>
+              OrderItemTransfer.persistedImage(store, key, stores: out),
+        );
       }
     }
     if (menu[MenuLocalStore.versionKey] != null &&
@@ -847,6 +882,7 @@ class BackupRepository {
     // Restore already owns admission; finish the restored transition before
     // Menu recovery, rebuilt ACKs or any UI/worker can admit business writes.
     await CloseDayTransaction.recoverUnderAdmission();
+    await OrderItemTransfer.recoverUnderAdmission();
     // Rebuildable ACKs must not hide unsent data on this destination.
     await AuditSyncState.resetAfterRestore();
     await StaffCredentialSyncState.resetAfterRestore();
@@ -1204,6 +1240,15 @@ class BackupRepository {
   static Map<String, dynamic> serializeOrder(Order order) =>
       _serializeOrder(order);
 
+  /// Lossless local/format-2 image, including hand-priced line totals.
+  /// Legacy imports keep their existing recalculating decoder.
+  static Order deserializeOrderSnapshot(Map<String, dynamic> value) =>
+      _deserializeOrder(
+        value,
+        recalculate: false,
+        preserveStoredLineTotals: true,
+      );
+
   /// Creates a takeaway order received from the mobile app, with a server-assigned ID.
   /// This bypasses the standard createOrder flow (which auto-assigns IDs and reserves tables)
   /// to allow mobile-originated orders to appear on the POS with a known posOrderId.
@@ -1542,7 +1587,15 @@ class BackupRepository {
           throw StateError('Required restore stores are not open');
       }
       if (!modern &&
-          ((DatabaseCore.metaBox?.containsKey(CloseDayJournalRepository.key) ??
+          ((DatabaseCore.metaBox?.keys.any(
+                    (key) =>
+                        key is String &&
+                        key.startsWith(OrderTransferJournalRepository.prefix),
+                  ) ??
+                  false) ||
+              (DatabaseCore.metaBox?.containsKey(
+                    CloseDayJournalRepository.key,
+                  ) ??
                   false) ||
               (DatabaseCore.menuJournalBox?.isNotEmpty ?? false) ||
               (DatabaseCore.menuCanonicalBox?.containsKey(
@@ -2028,14 +2081,25 @@ class BackupRepository {
   static Order _deserializeOrder(
     Map<String, dynamic> json, {
     bool recalculate = true,
+    bool preserveStoredLineTotals = false,
   }) {
     final items = ((json['items'] as List?) ?? const [])
         .whereType<Map>()
-        .map((it) => _deserializeOrderItem(Map<String, dynamic>.from(it)))
+        .map(
+          (it) => _deserializeOrderItem(
+            Map<String, dynamic>.from(it),
+            preserveStoredTotal: preserveStoredLineTotals,
+          ),
+        )
         .toList();
     final packageItems = ((json['packageItems'] as List?) ?? const [])
         .whereType<Map>()
-        .map((it) => _deserializeOrderItem(Map<String, dynamic>.from(it)))
+        .map(
+          (it) => _deserializeOrderItem(
+            Map<String, dynamic>.from(it),
+            preserveStoredTotal: preserveStoredLineTotals,
+          ),
+        )
         .toList();
 
     final order = Order(
@@ -2244,10 +2308,15 @@ class BackupRepository {
     );
   }
 
-  static OrderItem _deserializeOrderItem(Map<String, dynamic> json) {
+  static OrderItem _deserializeOrderItem(
+    Map<String, dynamic> json, {
+    bool preserveStoredTotal = false,
+  }) {
     final unitPrice = (json['unitPrice'] as num?)?.toDouble() ?? 0.0;
     final quantity = (json['quantity'] as num?)?.toInt() ?? 0;
-    final total = unitPrice * quantity;
+    final total = preserveStoredTotal && json['total'] is num
+        ? (json['total'] as num).toDouble()
+        : unitPrice * quantity;
     return OrderItem(
       lineUuid: json['lineUuid'] as String?,
       itemKey: json['itemKey'] as String? ?? '',

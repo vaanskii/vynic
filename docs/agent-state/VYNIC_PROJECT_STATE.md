@@ -13,6 +13,8 @@ current transport status.
 
 - `apps/operations/` is one Flutter codebase for the offline-first desktop POS
   and the mobile/desktop Manager client.
+  POS targets Windows first; Manager targets Windows/macOS/Android/iOS. This
+  macOS development host does not replace Windows release/device qualification.
 - `apps/backend/` is the modular NestJS service over PostgreSQL through Prisma.
 - `apps/platform-web/` is one customer-facing product: the public Vynic site
   (`/ka`, `/en`; `/features`, `/pricing` open home sections), owner sign-in
@@ -433,6 +435,16 @@ current transport status.
   close the next day. Format-2 backup validates and preserves pending/completed
   transitions; Hive remains v9. Native SIGKILL/restart proof and compatibility
   limits: `docs/POS01_RECOVERABLE_CLOSE_DAY.md`; physical Windows remains OPS-01.
+- POS-03 item transfer journals stable request/Order identities and lossless
+  before/after effects in existing `meta`, with exclusive admission and startup/
+  restore replay before business writers. Both audits and empty-source closure,
+  exact table release and genuine booking completion are one operation, with no
+  Sale or menu repricing. Completed ID retries preserve later normal edits;
+  malformed/pending identity conflicts fail closed. Format-2 snapshots preserve
+  frozen line totals, package/advance fields and pending/completed receipts; Hive
+  remains v9. Status DONE, with verified native crash recovery and development
+  build evidence: `docs/POS03_CRASH_SAFE_ITEM_TRANSFER.md`. Windows smoke remains
+  pending (`docs/POS03_WINDOWS_SMOKE.md`); physical release qualification is OPS-01.
 - Every Order audit report opens with a typed creation event carrying
   `orderKind` (`WALK_IN`, `TAKEAWAY`, `PACKAGE`, `RESERVATION`), `tableRefs`,
   `source`, `actorId`, `actorName`, `businessDate`: `CREATE_WALKIN` for POS

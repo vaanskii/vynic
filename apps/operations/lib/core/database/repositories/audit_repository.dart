@@ -30,6 +30,9 @@ class AuditRepository {
     _onAuditChanged = cb;
   }
 
+  /// Durable multi-store operations notify only after releasing admission.
+  static void notifyAuditChanged() => _onAuditChanged?.call();
+
   static String buildAuditReportKey(int orderId) =>
       '$_auditReportKeyPrefix$orderId';
 

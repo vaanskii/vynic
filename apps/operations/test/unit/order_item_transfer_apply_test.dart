@@ -83,6 +83,7 @@ void main() {
     DatabaseCore.tableBox = await Hive.openBox<TableModel>('tx_tables');
     DatabaseCore.salesBox = await Hive.openBox('tx_sales');
     DatabaseCore.reservationBox = await Hive.openBox<Reservation>('tx_res');
+    DatabaseCore.metaBox = await Hive.openBox('tx_meta');
     await DatabaseCore.settingsBox!.put(
       'currentDate',
       DateTime(2026, 8, 23).toIso8601String(),
@@ -98,6 +99,7 @@ void main() {
     await DatabaseCore.tableBox!.clear();
     await DatabaseCore.salesBox!.clear();
     await DatabaseCore.reservationBox!.clear();
+    await DatabaseCore.metaBox!.clear();
   });
 
   tearDownAll(() async {
@@ -108,6 +110,7 @@ void main() {
     DatabaseCore.tableBox = null;
     DatabaseCore.salesBox = null;
     DatabaseCore.reservationBox = null;
+    DatabaseCore.metaBox = null;
     if (_tempDir.existsSync()) _tempDir.deleteSync(recursive: true);
   });
 
@@ -170,7 +173,11 @@ void main() {
 
     // A typed move on each side, with the quantities still saying which way
     // the line went so an older reader degrades to remove / add.
-    final left = sourceReport!.events.single;
+    expect(sourceReport!.events, hasLength(2));
+    expect(sourceReport.events.last.type, AuditEventType.transferClose);
+    expect(sourceReport.locked, isTrue);
+    expect(DatabaseCore.salesBox!.isEmpty, isTrue);
+    final left = sourceReport.events.first;
     expect(left.type, AuditEventType.moveItems);
     expect(left.itemName, 'საფერავი');
     expect(left.previousQty, 2);

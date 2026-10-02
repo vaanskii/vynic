@@ -62,6 +62,7 @@ void main() {
   }
 
   const boxes = [
+    'oc_meta',
     'oc_settings',
     'oc_sales',
     'oc_expenses',
@@ -80,6 +81,7 @@ void main() {
   });
 
   setUp(() async {
+    DatabaseCore.metaBox = await Hive.openBox('oc_meta');
     DatabaseCore.settingsBox = await Hive.openBox('oc_settings');
     DatabaseCore.salesBox = await Hive.openBox('oc_sales');
     DatabaseCore.expenseBox = await Hive.openBox('oc_expenses');
@@ -100,6 +102,7 @@ void main() {
     for (final name in boxes) {
       await Hive.deleteBoxFromDisk(name);
     }
+    DatabaseCore.metaBox = null;
     DatabaseCore.settingsBox = null;
     DatabaseCore.salesBox = null;
     DatabaseCore.expenseBox = null;

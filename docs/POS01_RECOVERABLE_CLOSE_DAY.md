@@ -5,8 +5,8 @@
 Close Day now records a stable transition and resumes interrupted local work
 before business writers are admitted. A failure after the date write can no
 longer leave the new date open with the previous day's daily total. The change
-is confined to POS-01 and passed final coordinator review. POS-03 is next and
-has not started.
+is confined to POS-01 and passed final coordinator review. POS-03 transfer durability is documented in
+[its runbook](POS03_CRASH_SAFE_ITEM_TRANSFER.md).
 
 ## Transition and admission
 

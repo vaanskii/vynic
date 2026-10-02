@@ -44,6 +44,7 @@ the implementation and nearby tests. Do not treat this as architecture truth.
 - Money mirrors (`RECORD_ADVANCE`, `ADJUST_ORDER`, `VOID_SALE`): `apps/operations/lib/core/services/audit/money_audit.dart`, proof in `apps/operations/test/unit/money_audit_mirror_test.dart`
 - Backend audit type normalizer (deploy before POS emits a new type): `apps/backend/src/pos/audit/audit-event-type.ts`
 - Close-day transaction: `apps/operations/lib/core/database/transactions/close_day_transaction.dart`
+- POS-01 Close Day intent/phases: `apps/operations/lib/core/database/repositories/close_day_journal_repository.dart`; shared writer/date admission `local_data_admission.dart`; startup before Menu/migrations in `database_core.dart`. Proof/runbook `docs/POS01_RECOVERABLE_CLOSE_DAY.md`; `test/unit/pos01_close_day_recovery_test.dart`, `test/unit/pos01_backup_legacy_test.dart`, `test/widget/pos01_close_day_admission_test.dart`, `test/live/pos01_process_recovery_test.dart`, `tool/prove_pos01_recovery.py` under `apps/operations/`.
 - Closure journal: `apps/operations/lib/core/database/repositories/closure_journal_repository.dart`
 - Startup recovery: `apps/operations/lib/core/services/pos/closure_recovery_service.dart`
 - Money split: `apps/operations/lib/core/models/closure_money.dart`

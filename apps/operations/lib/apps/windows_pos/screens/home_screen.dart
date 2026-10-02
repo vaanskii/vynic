@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'package:vynic/core/services/pos/pos_locale.dart';
 import 'package:vynic/core/widgets/pos_text.dart';
 import 'dart:async';
@@ -918,7 +919,13 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _handleReservedTableTap(TableModel table) async {
+  Future<void> _handleReservedTableTap(TableModel table) =>
+      UpdateReadiness.track(
+        'handleReservedTableTap',
+        () => _admittedhandleReservedTableTap(table),
+      );
+
+  Future<void> _admittedhandleReservedTableTap(TableModel table) async {
     if (table.activeOrderId != null) {
       _openOrderDetail(table.activeOrderId!);
       return;

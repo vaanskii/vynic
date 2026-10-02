@@ -991,7 +991,7 @@ class OrderRepository {
     final canonical = parsed.storageValue;
     final order = getOrder(orderId);
     if (order != null) {
-      order.updateStatus(canonical);
+      await order.updateStatus(canonical);
       await order.save();
 
       // A settled order no longer holds its tables. Previously spelled
@@ -1121,7 +1121,7 @@ class OrderRepository {
   }) async {
     final order = getOrder(orderId);
     if (order != null) {
-      order.addItem(item);
+      await order.addItem(item);
       await updateOrder(order);
     }
   }
@@ -1141,7 +1141,7 @@ class OrderRepository {
   }) async {
     final order = getOrder(orderId);
     if (order != null) {
-      order.removeItem(itemKey);
+      await order.removeItem(itemKey);
       await updateOrder(order);
     }
   }
@@ -1167,7 +1167,7 @@ class OrderRepository {
   }) async {
     final order = getOrder(orderId);
     if (order != null) {
-      order.updateItemQuantity(itemKey, quantity);
+      await order.updateItemQuantity(itemKey, quantity);
       await updateOrder(order);
     }
   }

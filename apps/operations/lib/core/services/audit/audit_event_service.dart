@@ -10,6 +10,31 @@ class AuditEventService {
   static bool _isSyncing = false;
   static Timer? _syncTimer;
 
+  /// A journal owns this immutable event identity. A crash after append but
+  /// before its phase receipt must retain the same row (including sync ACK).
+  /// Unlike the ordinary best-effort logger, storage failure is propagated.
+  static Future<void> appendDurableOnce(AuditEventLog event) async {
+    final box = DatabaseService.getAuditLogBox();
+    final existing = box.get(event.id);
+    if (existing != null) {
+      final recorded = AuditEventLog.fromMap(
+        Map<String, dynamic>.from(existing),
+      );
+      if (recorded.action != event.action ||
+          recorded.userId != event.userId ||
+          recorded.entityType != event.entityType ||
+          recorded.entityId != event.entityId ||
+          recorded.createdAt != event.createdAt ||
+          recorded.deviceType != event.deviceType ||
+          jsonEncode(recorded.data) != jsonEncode(event.data)) {
+        throw StateError('Conflicting durable audit identity ${event.id}');
+      }
+    } else {
+      await box.put(event.id, event.toMap());
+    }
+    await box.flush();
+  }
+
   /// Initialize the background sync service.
   static void initialize() {
     if (_syncTimer != null) return;

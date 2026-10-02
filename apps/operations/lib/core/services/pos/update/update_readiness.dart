@@ -24,6 +24,9 @@ class UpdateReadiness {
   };
 
   static String? get blockedReason {
+    if (LocalDataAdmission.failure != null) return 'საჭიროა ოპერაციის აღდგენა';
+    if (LocalDataAdmission.exclusiveOperation == 'closeDay')
+      return operationLabel('closeDay');
     if (LocalDataAdmission.blocked)
       return 'მიმდინარეობს სარეზერვო ასლის აღდგენა ან შექმნა';
     if (!startupReady) return 'პროგრამა ჯერ მზად არ არის';

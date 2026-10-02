@@ -39,6 +39,8 @@ import 'package:vynic/core/services/menu/pos_menu_sync_service.dart';
 import 'package:vynic/core/services/sync/sync_events.dart';
 import 'business_day_repository.dart';
 import 'closure_journal_repository.dart';
+import 'close_day_journal_repository.dart';
+import '../transactions/close_day_transaction.dart';
 import '../database_core.dart';
 import 'menu_repository.dart';
 import 'order_repository.dart';
@@ -518,6 +520,15 @@ class BackupRepository {
       out[name] = rows;
     }
     final menu = out['menuCanonical']!;
+    final dayClose = out['meta']![CloseDayJournalRepository.key];
+    if (dayClose != null) {
+      final intent = CloseDayIntent.fromMap(dayClose);
+      if (intent.pending &&
+          out['settings']!['currentDate'] != intent.fromDate &&
+          out['settings']!['currentDate'] != intent.toDate) {
+        throw const FormatException('Close Day date disagrees with backup');
+      }
+    }
     if (menu[MenuLocalStore.versionKey] != null &&
         menu[MenuLocalStore.versionKey] != '1')
       throw const FormatException('Unknown local Menu protocol');
@@ -833,6 +844,9 @@ class BackupRepository {
           venue == null ||
           payload['recoveryCompleteness'] != 'complete-current-state',
     );
+    // Restore already owns admission; finish the restored transition before
+    // Menu recovery, rebuilt ACKs or any UI/worker can admit business writes.
+    await CloseDayTransaction.recoverUnderAdmission();
     // Rebuildable ACKs must not hide unsent data on this destination.
     await AuditSyncState.resetAfterRestore();
     await StaffCredentialSyncState.resetAfterRestore();
@@ -1528,7 +1542,9 @@ class BackupRepository {
           throw StateError('Required restore stores are not open');
       }
       if (!modern &&
-          ((DatabaseCore.menuJournalBox?.isNotEmpty ?? false) ||
+          ((DatabaseCore.metaBox?.containsKey(CloseDayJournalRepository.key) ??
+                  false) ||
+              (DatabaseCore.menuJournalBox?.isNotEmpty ?? false) ||
               (DatabaseCore.menuCanonicalBox?.containsKey(
                     MenuLocalStore.stateKey,
                   ) ??

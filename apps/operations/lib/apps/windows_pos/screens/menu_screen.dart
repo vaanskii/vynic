@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'package:vynic/core/services/pos/pos_locale.dart';
 import 'package:vynic/core/services/pos/pos_input_settings.dart';
 import 'package:vynic/core/database/database_core.dart';
@@ -763,7 +764,10 @@ class _MenuScreenState extends State<MenuScreen> {
     });
   }
 
-  Future<void> _placeOrder() async {
+  Future<void> _placeOrder() =>
+      UpdateReadiness.track('placeOrder', () => _admittedplaceOrder());
+
+  Future<void> _admittedplaceOrder() async {
     // If in pre-order mode, return the cart items without creating an order
     if (widget.isPreOrderMode) {
       final orderItems = _cart.values.map((cartEntry) {

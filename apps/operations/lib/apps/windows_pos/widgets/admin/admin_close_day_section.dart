@@ -1639,7 +1639,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                 if (ctx.mounted) setS(() => step = 0);
                 await Future.delayed(const Duration(milliseconds: 450));
 
-                final currentDate = DatabaseService.getCurrentDate();
+                final currentDate = currentBusinessDate;
                 final currentDateKey = currentDate.toIso8601String().split(
                   'T',
                 )[0];
@@ -1739,6 +1739,7 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                 final closeFuture = DatabaseService.closeDay(
                   actorId: widget.user.username,
                   actorName: widget.user.username,
+                  expectedBusinessDate: currentDateKey,
                 );
                 await Future.delayed(const Duration(milliseconds: 500));
 
@@ -1763,14 +1764,28 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                     unawaited(
                       showErrorToast(
                         context,
-                        'დღის დახურვა შეუძლებელია!\nდახურეთ ყველა აქტიური ჩანაწერი',
+                        DatabaseService.closeDayFailureReason ??
+                            'დღის დახურვა ვერ შესრულდა',
                       ),
                     );
                   }
                 }
               }
 
-              unawaited(doWork());
+              unawaited(
+                doWork().catchError((Object error, StackTrace stack) {
+                  if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+                  if (mounted) {
+                    unawaited(
+                      showErrorToast(
+                        context,
+                        DatabaseService.closeDayFailureReason ??
+                            'დღის დახურვა ვერ შესრულდა; სცადეთ ხელახლა',
+                      ),
+                    );
+                  }
+                }),
+              );
             }
 
             // ── Blocked view (phase 2) ──
@@ -2034,18 +2049,20 @@ class _AdminCloseDaySectionState extends State<AdminCloseDaySection> {
                                       : null,
                                 ),
                                 const SizedBox(width: 10),
-                                Text(
-                                  label,
-                                  style: TextStyle(
-                                    color: isDone
-                                        ? AdminTones.successText
-                                        : isCurrent
-                                        ? AdminDesign.text
-                                        : VynicFloorTokens.textFaint,
-                                    fontSize: 13,
-                                    fontWeight: isCurrent
-                                        ? FontWeight.w600
-                                        : FontWeight.w400,
+                                Expanded(
+                                  child: Text(
+                                    label,
+                                    style: TextStyle(
+                                      color: isDone
+                                          ? AdminTones.successText
+                                          : isCurrent
+                                          ? AdminDesign.text
+                                          : VynicFloorTokens.textFaint,
+                                      fontSize: 13,
+                                      fontWeight: isCurrent
+                                          ? FontWeight.w600
+                                          : FontWeight.w400,
+                                    ),
                                   ),
                                 ),
                               ],

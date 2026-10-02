@@ -4,14 +4,16 @@ class _AdmissionScope {
   bool active = true;
 }
 
-/// Process-local snapshot admission. Network requests are outside this gate.
-/// Existing local operations finish; new ones wait during the short snapshot.
+/// Shared admission for local mutations, snapshots and business-day transitions.
+/// Network requests are outside this gate. Admitted operations finish; new
+/// operations wait before reading or changing business state.
 abstract final class LocalDataAdmission {
   static final Object _scopeKey = Object();
   static final Set<Object> _active = {};
   static Completer<void>? _released;
   static Completer<void>? _drained;
   static String? failure;
+  static String? exclusiveOperation;
 
   static bool get blocked => _released != null || failure != null;
   static bool get _inside {
@@ -22,8 +24,11 @@ abstract final class LocalDataAdmission {
   static Future<T> track<T>(Future<T> Function() action) async {
     if (!_inside) {
       if (failure != null) throw StateError(failure!);
-      final released = _released;
-      if (released != null) await released.future;
+      // Another exclusive operation can acquire the gate before this waiter
+      // resumes. Recheck instead of admitting it under that second operation.
+      while (_released != null) {
+        await _released!.future;
+      }
       if (failure != null) throw StateError(failure!);
     }
     final token = Object();
@@ -43,12 +48,15 @@ abstract final class LocalDataAdmission {
     Future<T> Function() action, {
     Duration drainTimeout = const Duration(seconds: 2),
     bool recovery = false,
+    String operation = 'backup/restore',
   }) async {
-    if (_inside) throw StateError('Snapshot cannot run inside a local write');
-    if (_released != null) throw StateError('Another backup/restore is active');
+    if (_inside) throw StateError('Exclusive admission cannot nest in a write');
+    if (_released != null)
+      throw StateError('Another local transition is active');
     if (!recovery && failure != null) throw StateError(failure!);
     final released = Completer<void>();
     _released = released;
+    exclusiveOperation = operation;
     final scope = _AdmissionScope();
     try {
       if (_active.isNotEmpty) {
@@ -67,6 +75,7 @@ abstract final class LocalDataAdmission {
       scope.active = false;
       _drained = null;
       _released = null;
+      exclusiveOperation = null;
       released.complete();
     }
   }

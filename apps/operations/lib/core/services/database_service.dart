@@ -1179,11 +1179,16 @@ class DatabaseService {
     String actorId = 'unknown',
     String? actorName,
     AuditSource source = AuditSource.pos,
+    String? expectedBusinessDate,
   }) => CloseDayTransaction.run(
     actorId: actorId,
     actorName: actorName,
     source: source,
+    expectedBusinessDate: expectedBusinessDate,
   );
+
+  static String? get closeDayFailureReason =>
+      CloseDayTransaction.lastFailureReason;
 
   // Get date in Georgian format
   static String getGeorgianFormattedDate(DateTime date) =>

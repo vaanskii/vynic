@@ -1,4 +1,5 @@
 import 'package:vynic/core/services/pos/update/tracked_box.dart';
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'package:hive/hive.dart';
 import 'order_status.dart';
 import 'package:uuid/uuid.dart';
@@ -455,31 +456,33 @@ class Order extends HiveObject with UpdateTrackedHiveObject {
       double.parse((totalAmount + effectiveAdvanceAmount).toStringAsFixed(2));
 
   // Toggle service fee
-  void toggleServiceFee({double? serviceFeeRate}) {
-    includeServiceFee = !includeServiceFee;
-    recalculateTotal(serviceFeeRate: serviceFeeRate);
-    updatedAt = _resolveTimestamp();
-    save();
-  }
+  Future<void> toggleServiceFee({double? serviceFeeRate}) =>
+      UpdateReadiness.track('toggleServiceFee', () async {
+        includeServiceFee = !includeServiceFee;
+        recalculateTotal(serviceFeeRate: serviceFeeRate);
+        updatedAt = _resolveTimestamp();
+        await save();
+      });
 
   // Set discount amount
-  void setDiscount(double amount, {double? serviceFeeRate}) {
-    discountAmount = amount;
-    recalculateTotal(serviceFeeRate: serviceFeeRate);
-    updatedAt = _resolveTimestamp();
-    save();
-  }
+  Future<void> setDiscount(double amount, {double? serviceFeeRate}) =>
+      UpdateReadiness.track('setDiscount', () async {
+        discountAmount = amount;
+        recalculateTotal(serviceFeeRate: serviceFeeRate);
+        updatedAt = _resolveTimestamp();
+        await save();
+      });
 
   /// Sets the advance already collected against this order.
   ///
   /// [collectedOn] is the business date the money was taken, which the
   /// closure needs because it is often not the date the order closes on.
-  void setAdvance(
+  Future<void> setAdvance(
     double amount, {
     required String collectedOn,
     String? receiptId,
     double? serviceFeeRate,
-  }) {
+  }) => UpdateReadiness.track('setAdvance', () async {
     advanceAmount = double.parse(amount.toStringAsFixed(2));
     if (advanceAmount <= 0) {
       advanceAmount = 0.0;
@@ -491,22 +494,24 @@ class Order extends HiveObject with UpdateTrackedHiveObject {
     }
     recalculateTotal(serviceFeeRate: serviceFeeRate);
     updatedAt = _resolveTimestamp();
-    save();
-  }
+    await save();
+  });
 
-  void setManualAdjustment(double amount, {double? serviceFeeRate}) {
-    manualAdjustmentAmount = double.parse(amount.toStringAsFixed(2));
-    recalculateTotal(serviceFeeRate: serviceFeeRate);
-    updatedAt = _resolveTimestamp();
-    save();
-  }
+  Future<void> setManualAdjustment(double amount, {double? serviceFeeRate}) =>
+      UpdateReadiness.track('setManualAdjustment', () async {
+        manualAdjustmentAmount = double.parse(amount.toStringAsFixed(2));
+        recalculateTotal(serviceFeeRate: serviceFeeRate);
+        updatedAt = _resolveTimestamp();
+        await save();
+      });
 
   // Update order status
-  void updateStatus(String newStatus) {
-    status = newStatus;
-    updatedAt = _resolveTimestamp();
-    save();
-  }
+  Future<void> updateStatus(String newStatus) =>
+      UpdateReadiness.track('updateStatus', () async {
+        status = newStatus;
+        updatedAt = _resolveTimestamp();
+        await save();
+      });
 
   /// Typed view of [status]. Storage stays the raw `String` field (Hive
   /// field 7, unchanged) — this is a computed read/write wrapper, not a new
@@ -515,44 +520,49 @@ class Order extends HiveObject with UpdateTrackedHiveObject {
   set statusEnum(OrderStatus value) => status = value.storageValue;
 
   // Add item to order
-  void addItem(OrderItem item) {
-    // Check if item already exists
-    final existingIndex = items.indexWhere((i) => i.itemKey == item.itemKey);
-    if (existingIndex != -1) {
-      items[existingIndex].quantity += item.quantity;
-      items[existingIndex].total =
-          items[existingIndex].unitPrice * items[existingIndex].quantity;
-    } else {
-      items.add(item);
-    }
-    recalculateTotal();
-    updatedAt = _resolveTimestamp();
-    save();
-  }
+  Future<void> addItem(OrderItem item) => UpdateReadiness.track(
+    'addItem',
+    () async {
+      // Check if item already exists
+      final existingIndex = items.indexWhere((i) => i.itemKey == item.itemKey);
+      if (existingIndex != -1) {
+        items[existingIndex].quantity += item.quantity;
+        items[existingIndex].total =
+            items[existingIndex].unitPrice * items[existingIndex].quantity;
+      } else {
+        items.add(item);
+      }
+      recalculateTotal();
+      updatedAt = _resolveTimestamp();
+      await save();
+    },
+  );
 
   // Remove item from order
-  void removeItem(String itemKey) {
-    items.removeWhere((item) => item.itemKey == itemKey);
-    recalculateTotal();
-    updatedAt = _resolveTimestamp();
-    save();
-  }
-
-  // Update item quantity
-  void updateItemQuantity(String itemKey, int newQuantity) {
-    final index = items.indexWhere((i) => i.itemKey == itemKey);
-    if (index != -1) {
-      if (newQuantity <= 0) {
-        removeItem(itemKey);
-      } else {
-        items[index].quantity = newQuantity;
-        items[index].total = items[index].unitPrice * newQuantity;
+  Future<void> removeItem(String itemKey) =>
+      UpdateReadiness.track('removeItem', () async {
+        items.removeWhere((item) => item.itemKey == itemKey);
         recalculateTotal();
         updatedAt = _resolveTimestamp();
-        save();
-      }
-    }
-  }
+        await save();
+      });
+
+  // Update item quantity
+  Future<void> updateItemQuantity(String itemKey, int newQuantity) =>
+      UpdateReadiness.track('updateItemQuantity', () async {
+        final index = items.indexWhere((i) => i.itemKey == itemKey);
+        if (index != -1) {
+          if (newQuantity <= 0) {
+            await removeItem(itemKey);
+          } else {
+            items[index].quantity = newQuantity;
+            items[index].total = items[index].unitPrice * newQuantity;
+            recalculateTotal();
+            updatedAt = _resolveTimestamp();
+            await save();
+          }
+        }
+      });
 
   double getEffectiveServiceFeePercentage({double? globalDefaultPercentage}) {
     final custom = customServiceFeePercentage;

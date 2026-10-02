@@ -16,6 +16,7 @@ import 'package:vynic/core/services/menu/menu_local_store.dart';
 import 'package:vynic/core/services/edge/edge_device_credential_store.dart';
 
 import 'package:vynic/core/database/hive_migration_service.dart';
+import 'package:vynic/core/database/transactions/close_day_transaction.dart';
 
 /// Owns the Hive storage bootstrap and the opened boxes for the POS database.
 ///
@@ -205,6 +206,7 @@ class DatabaseCore {
 
     await EdgeDeviceCredentialStore.load();
     await BackupRepository.recoverInterruptedRestore();
+    await CloseDayTransaction.recoverPending();
 
     // Recover Menu intent/projection BEFORE identity migrations, defaults or UI.
     // No network is involved; loaded enrollment metadata validates Venue binding.

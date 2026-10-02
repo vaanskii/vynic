@@ -454,6 +454,20 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   void _loadOrder() {
+    unawaited(
+      UpdateReadiness.track('loadOrder', () async {
+        if (mounted) _admittedloadOrder();
+      }).catchError((Object error, StackTrace stack) {
+        developer.log(
+          'POS mutation could not be admitted',
+          error: error,
+          stackTrace: stack,
+        );
+      }),
+    );
+  }
+
+  void _admittedloadOrder() {
     final fetchedOrder = DatabaseService.getOrder(widget.orderId);
     final serviceFeeAvailable = DatabaseService.isServiceFeeAvailable();
     Reservation? linkedReservation;
@@ -763,6 +777,20 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   void _toggleServiceFee() {
+    unawaited(
+      UpdateReadiness.track('toggleServiceFee', () async {
+        if (mounted) _admittedtoggleServiceFee();
+      }).catchError((Object error, StackTrace stack) {
+        developer.log(
+          'POS mutation could not be admitted',
+          error: error,
+          stackTrace: stack,
+        );
+      }),
+    );
+  }
+
+  void _admittedtoggleServiceFee() {
     final order = _order;
     if (order == null || _isTakeAwayOrder) {
       return;
@@ -815,7 +843,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     unawaited(_showServiceFeeAdjustDialog());
   }
 
-  Future<void> _showServiceFeeAdjustDialog() async {
+  Future<void> _showServiceFeeAdjustDialog() => UpdateReadiness.track(
+    'showServiceFeeAdjustDialog',
+    () => _admittedshowServiceFeeAdjustDialog(),
+  );
+
+  Future<void> _admittedshowServiceFeeAdjustDialog() async {
     final order = _order;
     if (order == null || _isTakeAwayOrder) {
       return;
@@ -885,7 +918,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
-  Future<void> _showDiscountDialog() async {
+  Future<void> _showDiscountDialog() => UpdateReadiness.track(
+    'showDiscountDialog',
+    () => _admittedshowDiscountDialog(),
+  );
+
+  Future<void> _admittedshowDiscountDialog() async {
     if (_order == null) return;
     if (!PosPermissions.has(widget.user, PosPermission.applyDiscount)) {
       unawaited(
@@ -1094,13 +1132,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         controller.dispose();
         return;
       }
-      setState(() {
-        order.setAdvance(
-          discount,
-          collectedOn: order.advanceCollectedOn ?? collectedOn,
-          receiptId: receiptId,
-        );
-      });
+      await order.setAdvance(
+        discount,
+        collectedOn: order.advanceCollectedOn ?? collectedOn,
+        receiptId: receiptId,
+      );
+      if (mounted) setState(() {});
       await DatabaseService.refreshDailySalesTotalForDate(
         DatabaseService.getCurrentDate(),
       );
@@ -1125,7 +1162,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     controller.dispose();
   }
 
-  Future<void> _showManualAdjustmentDialog() async {
+  Future<void> _showManualAdjustmentDialog() => UpdateReadiness.track(
+    'showManualAdjustmentDialog',
+    () => _admittedshowManualAdjustmentDialog(),
+  );
+
+  Future<void> _admittedshowManualAdjustmentDialog() async {
     if (_order == null) return;
     if (!PosPermissions.has(widget.user, PosPermission.applyDiscount)) {
       unawaited(
@@ -1304,9 +1346,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       final order = _order!;
       final previousAdjustment = order.manualAdjustmentAmount;
       final previousTotal = order.totalAmount;
-      setState(() {
-        order.setManualAdjustment(adjustment);
-      });
+      await order.setManualAdjustment(adjustment);
+      if (mounted) setState(() {});
       unawaited(
         MoneyAudit.orderManualAdjustmentChanged(
           actorId: widget.user.username,
@@ -1977,7 +2018,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
-  Future<void> _changeTables(List<String> selectedTableIds) async {
+  Future<void> _changeTables(List<String> selectedTableIds) =>
+      UpdateReadiness.track(
+        'changeTables',
+        () => _admittedchangeTables(selectedTableIds),
+      );
+
+  Future<void> _admittedchangeTables(List<String> selectedTableIds) async {
     if (_order == null || selectedTableIds.isEmpty) return;
 
     final fromTables = List<String>.from(_order!.tableNumbers);

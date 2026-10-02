@@ -425,6 +425,14 @@ current transport status.
   `OrderRepository.hardDeleteOrderForRepair`, which has no operational caller,
   preserves the audit report, and logs `ORDER_HARD_DELETED`. Close Day still
   deletes already-closed Order rows because their Sale is the durable record.
+- POS-01 Close Day has a stable, flushed protocol-v1 intent in existing Hive
+  `meta` and idempotent phase/audit replay before Menu recovery, migrations,
+  defaults or business admission. The shared local gate drains admitted
+  actions and queues new writers before their date reads and mutable model
+  changes, including when the updater is disabled. Stale confirmations cannot
+  close the next day. Format-2 backup validates and preserves pending/completed
+  transitions; Hive remains v9. Native SIGKILL/restart proof and compatibility
+  limits: `docs/POS01_RECOVERABLE_CLOSE_DAY.md`; physical Windows remains OPS-01.
 - Every Order audit report opens with a typed creation event carrying
   `orderKind` (`WALK_IN`, `TAKEAWAY`, `PACKAGE`, `RESERVATION`), `tableRefs`,
   `source`, `actorId`, `actorName`, `businessDate`: `CREATE_WALKIN` for POS

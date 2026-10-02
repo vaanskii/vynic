@@ -51,6 +51,7 @@ void main() {
   }
 
   const boxes = [
+    'seq_meta',
     'seq_settings',
     'seq_sales',
     'seq_expenses',
@@ -69,6 +70,7 @@ void main() {
   });
 
   setUp(() async {
+    DatabaseCore.metaBox = await Hive.openBox('seq_meta');
     DatabaseCore.settingsBox = await Hive.openBox('seq_settings');
     DatabaseCore.salesBox = await Hive.openBox('seq_sales');
     DatabaseCore.expenseBox = await Hive.openBox('seq_expenses');
@@ -89,6 +91,7 @@ void main() {
     for (final name in boxes) {
       await Hive.deleteBoxFromDisk(name);
     }
+    DatabaseCore.metaBox = null;
     DatabaseCore.settingsBox = null;
     DatabaseCore.salesBox = null;
     DatabaseCore.expenseBox = null;
@@ -182,9 +185,7 @@ void main() {
 
         // Every event was written at one instant on purpose. If time were the
         // ordering key there would be nothing here to order by.
-        final instants = report.events
-            .map((event) => event.timestamp)
-            .toSet();
+        final instants = report.events.map((event) => event.timestamp).toSet();
         expect(instants, hasLength(1));
 
         // Re-read from Hive: deserialization must not reorder.
@@ -197,10 +198,7 @@ void main() {
         // Cloud `seq` is the POS's sequence rather than an arrival position.
         final payload = wirePayload(report);
         expect(wireSequences(payload), List<int>.generate(101, (i) => i));
-        expect(
-          (payload['events'] as List).first['type'],
-          'CREATE_WALKIN',
-        );
+        expect((payload['events'] as List).first['type'], 'CREATE_WALKIN');
 
         // Newest-first display is the same timeline reversed, not a re-sort.
         expect(reloaded.sortedEvents.last.type, AuditEventType.createWalkIn);
@@ -278,11 +276,7 @@ void main() {
         ],
       });
 
-      expect(labelsOf(legacy), [
-        '1. CREATE_WALKIN',
-        '2. ADD_ITEM',
-        '3. CLOSE',
-      ]);
+      expect(labelsOf(legacy), ['1. CREATE_WALKIN', '2. ADD_ITEM', '3. CLOSE']);
     });
 
     test('a settled report keeps one revision across reads', () async {
@@ -347,39 +341,36 @@ void main() {
       ]);
     });
 
-    test(
-      'an event stamped earlier than the report still lands last',
-      () async {
-        await seedTable('10');
-        final order = await OrderRepository.createOrder(
-          tableNumbers: const ['10'],
-          floor: 'first',
-          createdBy: 'Nino',
-          items: [line('Khinkali', 1)],
-        );
+    test('an event stamped earlier than the report still lands last', () async {
+      await seedTable('10');
+      final order = await OrderRepository.createOrder(
+        tableNumbers: const ['10'],
+        floor: 'first',
+        createdBy: 'Nino',
+        items: [line('Khinkali', 1)],
+      );
 
-        // A backdated clock must not rewrite what already happened.
-        await AuditRepository.appendOrderAuditEvents(
-          orderId: order.orderId,
-          events: [
-            AuditEvent(
-              type: AuditEventType.adjustOrder,
-              itemName: 'ORDER',
-              previousQty: 0,
-              newQty: 0,
-              waiterId: 'Nino',
-              waiterName: 'Nino',
-              timestamp: order.createdAt.subtract(const Duration(hours: 3)),
-            ),
-          ],
-        );
+      // A backdated clock must not rewrite what already happened.
+      await AuditRepository.appendOrderAuditEvents(
+        orderId: order.orderId,
+        events: [
+          AuditEvent(
+            type: AuditEventType.adjustOrder,
+            itemName: 'ORDER',
+            previousQty: 0,
+            newQty: 0,
+            waiterId: 'Nino',
+            waiterName: 'Nino',
+            timestamp: order.createdAt.subtract(const Duration(hours: 3)),
+          ),
+        ],
+      );
 
-        final report = reportOf(order.orderId);
-        expect(report.events.last.type, AuditEventType.adjustOrder);
-        expect(report.events.last.sequence, 2);
-        expect(report.events.first.type, AuditEventType.createWalkIn);
-      },
-    );
+      final report = reportOf(order.orderId);
+      expect(report.events.last.type, AuditEventType.adjustOrder);
+      expect(report.events.last.sequence, 2);
+      expect(report.events.first.type, AuditEventType.createWalkIn);
+    });
 
     test('close, restore and re-close keep climbing', () async {
       await seedTable('11');
@@ -477,9 +468,9 @@ void main() {
       expect(sequencesOf(reportOf(order.orderId)), afterFirst);
       expect(afterFirst, [0, 1, 2]);
       expect(
-        typesOf(reportOf(order.orderId)).where(
-          (type) => type == AuditEventType.restore,
-        ),
+        typesOf(
+          reportOf(order.orderId),
+        ).where((type) => type == AuditEventType.restore),
         hasLength(1),
       );
     });
@@ -556,8 +547,8 @@ void main() {
       );
       reportOf(4242);
 
-      final stored = DatabaseCore.auditLogBox!.get('audit_report_order_4242')
-          as Map;
+      final stored =
+          DatabaseCore.auditLogBox!.get('audit_report_order_4242') as Map;
       final storedEvents = (stored['events'] as List).cast<Map>();
       expect(
         storedEvents.every((event) => !event.containsKey('sequence')),
@@ -583,7 +574,8 @@ void main() {
 
       final rewritten =
           (DatabaseCore.auditLogBox!.get('audit_report_order_4242')
-              as Map)['events'] as List;
+                  as Map)['events']
+              as List;
       expect(
         rewritten.cast<Map>().every((event) => event.containsKey('sequence')),
         isTrue,

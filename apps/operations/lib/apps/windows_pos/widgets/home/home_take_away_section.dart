@@ -1,3 +1,4 @@
+import 'package:vynic/core/services/pos/update/update_readiness.dart';
 import 'package:vynic/core/widgets/pos_text.dart';
 import 'dart:async';
 import 'dart:io';
@@ -380,7 +381,13 @@ class _HomeTakeAwaySectionState extends State<HomeTakeAwaySection> {
     unawaited(showSuccessToast(context, 'შეკვეთა გაუქმდა'));
   }
 
-  Future<void> _closeTakeAwayOrder(TakeawayTicket ticket) async {
+  Future<void> _closeTakeAwayOrder(TakeawayTicket ticket) =>
+      UpdateReadiness.track(
+        'closeTakeAwayOrder',
+        () => _admittedcloseTakeAwayOrder(ticket),
+      );
+
+  Future<void> _admittedcloseTakeAwayOrder(TakeawayTicket ticket) async {
     final orderId = ticket.orderId;
     // Re-read rather than closing the copy the panel was built with: the
     // order may have been edited on the detail screen since.
